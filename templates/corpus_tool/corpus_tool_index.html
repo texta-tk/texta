@@ -1,0 +1,242 @@
+{% extends "index.html" %}
+{% block app %}
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}corpus_tool/corpus_tool.css">
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="application/javascript" src="{{STATIC_URL}}local-cache.js"></script>
+<script type="application/javascript" src="{{STATIC_URL}}corpus_tool/corpus_tool.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/s/dt/dt-1.10.10/datatables.min.css"/>
+<script type="text/javascript" src="https://cdn.datatables.net/s/dt/dt-1.10.10/datatables.min.js"></script>
+
+	<div class="row">
+		<div class="col-lg-3">
+			<form id="filters">
+			<div class="panel">
+				<div class="panel-heading">Current Search</div>
+				<div class="panel-body">
+					<div class="form-group">
+						<div class="row">
+							<div class="col-sm-6">Add constraint:</div>
+							<div class="col-sm-6">
+								<select id="constraint_field" name="constraint_field" onchange="javascript:add_field('{{date_range.min}}','{{date_range.max}}');" class="form-control input-sm">
+									<option></option>
+									{% for field in fields %}
+										<option value="{{field.0}}____{{field.1}}">{{field.0}}</option>
+									{% endfor %}
+								</select>
+							</div>
+						</div>
+						<div class="row">
+							<div id="constraints" class="container-fluid"></div>
+						</div>
+						<div class="row">
+							<div class="col-sm-6"></div>
+							<div class="col-sm-6"><button class="btn btn-default form-control" type="button" onclick="javascript:save();"><span class="glyphicon glyphicon-floppy-disk"></span> Save search</button></div>
+						</div>
+						<div class="row">
+							<div class="col-sm-6"></div>
+							<div class="col-sm-6"><button type="button" onclick="javascript:query();" class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span> Display results</button></div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="panel">
+				<div class="panel-heading">Aggregations</div>
+				<div class="panel-body">
+					<div class="form-group">
+						<div class="row">
+							<div class="col-sm-6">Aggregate matches over:</div>
+							<div class="col-sm-6">
+								<select id="aggregate_over" name="aggregate_over" class="form-control input-sm">
+									{% for field in fields %}
+										<option value="{{field.0}}">{{field.0}}</option>
+									{% endfor %}
+								</select>
+							</div>
+						</div>				
+						<div class="row">
+							<div class="col-sm-6">Frequency normalisation:</div>
+							<div class="col-sm-6">
+								<select id="frequency_normalisation" name="frequency_normalisation" class="form-control input-sm">
+									<option value="raw_frquency" selected="selected">raw frequency</option>
+									<option value="relative_frequency">relative frequency</option>
+								</select>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-6">Interval (dates only):</div>
+							<div class="col-sm-6">
+								<select id="interval" name="interval" class="form-control input-sm">
+									<option value="day">day</option>
+									<option value="month" selected="selected">month</option>
+									<option value="quarter">quarter</option>
+									<option value="year">year</option>
+								</select>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-6">Sort by (discrete only):</div>
+							<div class="col-sm-6">
+								<select id="sort_by" name="sort_by" class="form-control input-sm">
+									<option value="terms" selected="selected">count</option>
+									<option value="significant_terms">significance</option>
+								</select>
+							</div>
+						</div>	
+						<div class="row">
+							<div class="col-sm-6">Saved searches:</div>
+							<div class="col-sm-6" id="saved_searches"></div>
+						</div>	
+						<div class="row">
+							<div class="col-sm-6"></div>
+							<div class="col-sm-6">
+								<button	type="button" onclick="javascript:aggregate();" class="btn btn-default form-control"><span class="glyphicon glyphicon-filter"></span> Aggregate</button>
+								<input type="hidden" name="search_description" id="search_description">
+								<input type="hidden" name="chart_type" id="chart_type">
+								<input type="hidden" name="scroll_id" id="scroll_id">						
+							</div>
+						</div>					
+					</div>
+				</div>
+			</div>
+		</form>
+	
+		</div>
+		<div class="col-lg-9">
+			<div class="panel">
+				<div class="panel-heading">
+                    Results
+                    <div id="actions-btn" class="dropdown pull-right invisible">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-scissors"></span> Actions<span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="#" data-toggle="modal" data-target="#export-modal"><span class="glyphicon glyphicon-save"></span> Export</a></li>
+                        </ul>
+                    </div>
+                </div>
+				<div class="panel-body" id="right"></div>
+				
+                <div class="modal fade" id="export-modal" role="dialog">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">Export</h4>
+                            </div>
+                            
+                            <div class="invisible" id="export-examples-modal">
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label><input type="radio" name="export-extent" value="page" checked>Current page</label><br>
+                                        <label><input type="radio" name="export-extent" value="pages">Pages</label>
+                                        <input type="text" id="export-start-page" placeholder="start" size="3">
+                                        to
+                                        <input type="text" id="export-end-page" placeholder="end" size="3"><br>
+                                        <label><input type="radio" name="export-extent" value="rows">Rows</label>
+                                        <input type="text" id="export-rows" placeholder="number" size="4"><br>
+                                        <label><input type="radio" name="export-extent" value="all">All pages</label><br>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label><input type="radio" name="export-features" value="selected" checked>Selected features</label><br>
+                                        <label><input type="radio" name="export-features" value="all">All features</label><br>
+                                    </div>
+                                    
+                                    <div class="form-group form-inline">
+                                        <label for="export-file-name">Save as: </label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="export-file-name-example" value="{{dataset}}">
+                                            <span class="input-group-addon">.csv</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="export_data('example');">Export</button>
+                                </div>
+                            
+                            </div>
+                            
+                            
+                            <div class="invisible" id="export-aggregation-modal">
+                                <div class="modal-body">
+                                    <div class="form-group form-inline">
+                                        <label for="export-file-name">Save as: </label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="export-file-name-agg" value="{{dataset}}">
+                                            <span class="input-group-addon">.csv</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="export_data('agg');">Export</button>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+				
+			</div>
+		</div>
+	</div>
+	<div id="field_hidden" class="panel panel-default" style="display: none;">
+		<input type="hidden" name="match_field_" id="match_field_">
+		<div class="panel-heading">
+			<span id="selected_field_"></span>
+			<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+		</div>
+		<div class="panel-body">
+			<div class="row">
+				<div class="col-sm-4">
+					<b>Bool:</b><br>
+					<select id="match_operator_" name="match_operator_" class="form-control input-sm">
+						<option value="must" selected="selected">and</option>
+						<option value="should">or</option>
+						<option value="must_not">not</option>
+					</select>
+				</div>
+				<div class="col-sm-5">
+					<b>Match type:</b><br>
+					<select id="match_type_" name="match_type_" class="form-control input-sm">
+						<option value="match">match</option>
+						<option value="match_phrase" selected="selected">match phrase</option>
+						<option value="match_phrase_prefix">match phrase prefix</option>
+					</select> 
+				</div>
+				<div class="col-sm-3">
+					<b>Slop:</b><br>
+					<select id="match_slop_" name="match_slop_" class="form-control input-sm">
+						<option value="0">0</option>
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3">3</option>
+						<option value="4">4</option>
+						<option value="2">5</option>
+					</select> 
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
+					<textarea id="match_txt_" name="match_txt_" class="form-control"></textarea>
+					<ul name="suggestions_" id="suggestions_" class="list-group"></ul>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="field_hidden_date" class="panel panel-default" style="display: none;">
+		<input type="hidden" name="daterange_field_" id="daterange_field_">
+		<div class="panel-heading">
+			<span id="selected_field_"></span>
+			<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+		</div>
+		<div class="panel-body">
+				<b>Date range (yyyy-mm-dd):</b>
+				<input type="text" placeholder="from" id="daterange_from_" class="form-control input-sm">
+				<input type="text" id="daterange_to_" placeholder="to" class="form-control input-sm">			
+		</div>
+	</div>
+{% endblock %}

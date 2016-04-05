@@ -1,0 +1,100 @@
+{% extends "index.html" %}
+{% block app %}
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}conceptualiser/concept.css">
+<script src="{{STATIC_URL}}d3.min.js"></script>
+
+<div class="row">
+	<div class="col-sm-3">
+		<div class="panel">
+			<div class="panel-heading">Plotting Options</div>
+			<div class="panel-body">
+					<form id="plot_settings_form" onsubmit="plot_lexicons(); return false;">
+						<div class="row">
+							<div class="col-sm-6">Lexicons:</div>
+							<div class="col-sm-6">
+							    {% for lexicon in lexicons %}
+									<div class="row">
+										<input type="checkbox" value="{{lexicon.pk}}" title="{{lexicon.description}}" name="plot_cb" id="cb{{lexicon.pk}}"> <span><a href="javascript:void(0)" onclick="go_to(LINK_LEXMINER + '/select?id={{lexicon.id}}')" target="blank">{{lexicon.name}}</a> ({{lexicon.size}})</span>
+									</div>
+								{% endfor %}
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-6">Method:</div>
+							<div class="col-sm-6">
+								<select id="method_name" class="form-control">
+									{% for method in methods %}
+										<option value="{{method}}">{{method}}</option>
+									{% endfor %}
+								</select>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-6">
+							</div>
+							<div class="col-sm-6">
+								<button type="submit" class="btn btn-default form-control">Plot</button>
+							</div>
+							</div>
+					<form>
+			</div>
+		</div>
+		<div class="panel">
+			<div class="panel-heading">Shortcuts</div>
+			<div class="panel-body">
+				<ul>
+					<li>
+						<b>Drag the selection box </b> for selecting the nodes.
+					</li>
+					<li>
+						<b>Press Enter </b> to merge selected terms into a concept.
+					</li>
+					<li>
+						<b>Press Del </b> to dissolve the concept.
+					</li>
+					<li>
+						<b>Select term in concept view </b> to remove term from concept.
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+	<div class="col-sm-9">
+		<div class="panel">
+			<div class="panel-heading">Plot</div>
+			<div class="panel-body">
+				<div id="onto_svg_and_menu">
+					<div id="concept_content" class="panel panel-default">					
+						<fieldset id="concept_label">
+							<legend>Label</legend>
+							<select id="label_selection_field" class="form-control input-sm"></select>
+							</br>
+							<input type="button" value="Change" onclick="handle_concept_label_selection();" class="btn btn-default btn-sm pull-right"></input>
+						</fieldset>
+						<fieldset>
+							<legend>Terms</legend>
+							<div id="concept_terms">
+								<table id="content_table">
+									<thead>
+									<tr>
+										<td>Term</td>
+									</tr>
+									</thead>
+								</table>
+							</div>
+						</fieldset>
+					</div>
+					<div id="svg_div"><span id="save_btn" class="btn btn-default pull-right pull-bottom">Commit results</span>
+						<svg id="svg"></svg>
+						<div id="tooltip"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+<script type="application/javascript" src="{{STATIC_URL}}conceptualiser/concept.js"></script>
+<!--
+<div id="bottom_line"></div>
+-->
+{% endblock %}

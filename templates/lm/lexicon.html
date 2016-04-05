@@ -1,0 +1,36 @@
+{% extends "lm/lm_index.html" %}
+	{% block lex %}
+	Selected lexicon: {{selected}}<br>
+		<textarea class="form-control" rows="20" name="lexicon" id="lexicon">{% for word in words %}{{word}}
+{% endfor %}</textarea>
+		<div class="row">
+			<div class="col-sm-12">
+				<button class="btn btn-danger form-control" type="button" onclick="javascript:reset_suggestions();"><span class="glyphicon glyphicon-alert"></span> Reset suggestions</button>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<button class="btn btn-default form-control" type="button" onclick="javascript:save();"><span class="glyphicon glyphicon-floppy-disk"></span> Save lexicon</button>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+					<select id="method" name="method" class="form-control">
+						<option value="most_similar" selected="selected">mean vector</option>
+						<option value="most_similar_cosmul">multiplicative combination objective</option>
+						<option value="simple_precluster most_similar">mean vector with preclustering</option>
+						<option value="simple_precluster most_similar_cosmul">multiplicative combination objective with preclustering</option>
+						<option value="precluster most_similar">mean vector with preclustering and rank aggregation</option>
+						<option value="precluster most_similar_cosmul">multiplicative combination objective with preclustering and rank aggregation</option>
+						<option value="rra most_similar">RRA</option>
+					</select>
+			</div>
+		</div>
+		<input type="hidden" id="lid" name="id" value={{selected}}>
+		<div class="row">
+			<div class="col-sm-12">
+				<button type="button" class="btn btn-default form-control" onclick="query();">Suggest words</button>
+			</div>
+		</div>
+
+{% endblock %}

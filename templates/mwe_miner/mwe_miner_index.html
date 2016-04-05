@@ -1,0 +1,144 @@
+{% extends "index.html" %}
+{% block app %}
+<script type="application/javascript" src="{{STATIC_URL}}mwe_miner/mwe_miner.js"></script>
+<div class="row">
+	<div class="col-sm-3">
+		<div class="panel">
+			<div class="panel-heading">Start a New MWE Task</div>
+			<div class="panel-body">
+				<div class="row">
+					<div class="col-sm-6">Select field to match:</div>
+					<div class="col-sm-6">
+						<select id="match_field" name="match_field" class="form-control">
+							{% for field in fields %}
+								<option value="{{field}}">{{field}}</option>
+								{% endfor %}
+						</select>					
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-sm-6">Minimum Expression Length:</div>
+					<div class="col-sm-6">
+							<select id="min_len" class="form-control">
+								<option value="1">1 word</option>
+								<option value="2" selected="selected">2 words</option>
+								<option value="3">3 words</option>
+								<option value="4">4 words</option>
+							</select>					
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-sm-6">Maximum Expression Length:</div>
+					<div class="col-sm-6">
+							<select id="max_len" class="form-control">
+								<option value="1">1 word</option>
+								<option value="2" selected="selected">2 words</option>
+								<option value="3">3 words</option>
+								<option value="4">4 words</option>
+							</select>				
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-sm-6">Frequency Threshold:</div>
+					<div class="col-sm-6">
+							<select id="min_freq" class="form-control">
+								<option value="1">1</option>
+								<option value="5">5</option>
+								<option value="10" selected="selected">10</option>
+								<option value="100">100</option>
+								<option value="1000">1000</option>
+								<option value="10000">10000</option>
+							</select>			
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-sm-6">Slop:</div>
+					<div class="col-sm-6">
+							<select id="slop" class="form-control">
+								<option value="0">0</option>
+								<option value="1">1</option>
+								<option value="2">2</option>
+								<option value="3">3</option>
+								<option value="4">4</option>
+								<option value="5">5</option>
+							</select>			
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-sm-6">Description:</div>
+					<div class="col-sm-6">
+						<input type="text" id="description" class="form-control">		
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-sm-6">Select base lexicons:</div>
+					<div class="col-sm-6">
+							{% if lexicons|length != 0 %}
+								{% for lexicon in lexicons %}
+									<div class="row">
+										<input type="checkbox" id="lex_select_{{lexicon.id}}" onclick="javascript:select_lexicon({{lexicon.id}});">
+										<a href="javascript:void(0)" onclick="go_to(LINK_LEXMINER + '/select?id={{lexicon.id}}')" target="blank">{{lexicon}}</a> ({{lexicon.size}})
+									</div>
+								{% endfor %}
+							{% else %}
+								<span class="text-danger">No base lexicons!</span>
+							{% endif %}	
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-sm-6">				
+
+					</div>
+					<div class="col-sm-6">				
+						<button type="button" onclick="javascript:start_job();" class="btn btn-default form-control"><span class="glyphicon glyphicon-ok"></span> Start task</button>
+					</div>
+					</div>		
+			</div>
+		</div>
+	</div>
+	<div class="col-sm-9">
+		<div class="panel">
+			<div class="panel-heading">Results</div>
+			<div class="panel-body">
+				<table class="table table-striped">
+					<thead>
+						<tr>
+							<th>Job ID</th>
+							<th>Description</th>
+							<th>Committed</th>
+							<th>Groups</th>
+							<th>MWEs</th>
+							<th>Job status</th>
+							<th>Job started</th>
+							<th>Job completed</th>
+							<th>Results</th>
+							<th>Remove</th>
+						</tr>
+					</thead>
+					{% for run in runs %}
+						<tr>
+							<td>{{run.pk}}</td>
+							<td>{{run.description}}</td>
+							<td>{{run.committed}}</td>
+							<td>{{run.num_groups}}</td>
+							<td>{{run.num_mwes}}</td>
+							<td>{{run.run_status}}</td>
+							<td>{{run.run_started|date:"d.m.Y H:i"}}</td>
+							<td>{{run.run_completed|date:"d.m.Y H:i"}}</td>
+							<td>
+								{% if run.run_status == 'completed' %}
+									<a href="javascript:void(0)" onclick="go_to(LINK_MWE + '/results?run_id={{run.pk}}')"><span class="glyphicon glyphicon-th-list"></span></a>
+								{% endif %}
+							</td>
+							<td><a href="javascript:void(0)" onclick="go_to(LINK_MWE + '/delete_result?run_id={{run.pk}}')"><span class="glyphicon glyphicon-remove"></span></a></td>
+						</tr>
+					{% endfor %}
+				</table>
+			</div>
+		</div>
+	</div>
+
+
+
+</div>
+{% endblock %}

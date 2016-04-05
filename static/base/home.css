@@ -1,0 +1,8 @@
+.holder {
+	display: inline-block;    
+}
+
+.holder img {
+	width: 30%;
+	height: auto;
+}

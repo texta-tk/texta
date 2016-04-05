@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="{{STATIC_URL}}jquery-1.11.2.min.js"></script>
+<script type="application/javascript" src="{{STATIC_URL}}datatables/datatables.min.js"></script>
+<script src="{{STATIC_URL}}jquery-textrange.js"></script>
+<script src="{{STATIC_URL}}navigation.js"></script>
+<script src="{{STATIC_URL}}bootstrap/js/bootstrap.min.js"></script>
+<script type="application/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-datepicker.js"></script>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="application/javascript" src="{{STATIC_URL}}local-cache.js"></script>
+
+<link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}datatables/datatables.min.css">
+<link rel="stylesheet" href="{{STATIC_URL}}bootstrap/css/datepicker.css">
+<link rel="stylesheet" href="{{STATIC_URL}}bootstrap/css/bootstrap-theme.min.css">
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}base/frame.css">
+
+<title>TEXTA Toolkit</title>
+</head>
+
+<body>
+    <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+		<div class="container-fluid">
+            <ul class="nav navbar-nav">
+                <li id="home"><a href="#"><span class="glyphicon glyphicon-home"></span> Home</a></li>
+                {% if request.user.is_authenticated %}
+                <li id="corpus_tool"><a href="#"><span class="glyphicon glyphicon-search"></span> Searcher</a></li>
+                {% endif %}
+                {% if request.user.is_authenticated %}				
+					<li class="dropdown">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-pencil"></span> Terminology Management<span class="caret"></span></a>
+						<ul class="dropdown-menu">
+							<li id="ontology_viewer"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Terminology Overview</a></li>
+							<li id="lex_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Base Lexicon Miner</a></li>
+							<li id="conceptualizer"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Conceptualiser</a></li>
+							<li id="mwe_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> MWE Miner</a></li>
+							<li id="grammar_builder"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Grammar Miner</a></li>
+						</ul>
+					</li>
+					<li class="dropdown">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-file"></span> Document Management<span class="caret"></span></a>
+						<ul class="dropdown-menu">
+							{% if perms.model_manager.change_modelrun %}
+								<li id="model_manager"><a href="#"><span class="glyphicon glyphicon-lock"></span> Model Manager</a></li>
+							{% endif %}
+							<li id="document_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Document Miner</a></li>
+						</ul>
+					</li>
+                    {% if request.user.is_superuser %}
+                        <li id="permission_admin"><a href="#"><span class='glyphicon glyphicon-wrench'></span> Admin</a></li>
+                    {% endif %}
+		        {% endif %}
+            </ul>
+            {% if request.user.is_authenticated %}
+				<form class="navbar-form navbar-right user-data" id="log_out_form" onsubmit="go_to(LINK_ACCOUNT + '/account/log_out','log_out_form')">
+					<span> Logged in as {{request.user.get_username}}. </span>
+					<div class="form-group">
+						<button type="submit" class="btn btn-danger btn-sm"><span class="glyphicon glyphicon-log-out"></span></button>
+					</div>
+				</form> 
+            {% else %}
+				<form class="navbar-form form-inline navbar-right" id="login_form" onsubmit="go_to(LINK_ROOT+'account/login','login_form')" method="POST">
+					<div class="form-group">
+						<label class="sr-only" for="loginUsername">Username</label>
+						<input type="text" class="form-control input-sm" id="loginUsername" name="username" placeholder="Username">
+					</div>
+					<div class="form-group">
+						<label class="sr-only" for="loginPassword">Password</label>
+						<input type="password" class="form-control input-sm" id="loginPassword" name="password" placeholder="Password">
+					</div>
+					<button type="submit" class="btn btn-success btn-sm"><span class="glyphicon glyphicon-log-in"></button>
+				</form>
+            {% endif %}
+		</div>
+    </nav>	
+		{% if not request.user.is_authenticated %}
+		<div id="registration" class="pull-right pull-top">
+			<span id="notRegistered"><span class="glyphicon glyphicon-user"></span> Create user</span>
+			<form id="registrationForm" onsubmit="registerAccount(); return false;">
+				<div class="form-group">
+					<label for="registrationUsername" class="sr-only">Username</label>
+					<input type="text" class="form-control input-sm" id="registrationUsername" name="username" placeholder="Username">
+				</div>
+				<div class="form-group">
+					<label for="registrationPassword" class="sr-only">Password</label>
+					<input type="password" class="form-control input-sm" id="registrationPassword" name="password" placeholder="Password">
+				</div>
+				<div class="form-group">
+					<label for="registrationPasswordAgain" class="sr-only">Password again</label>
+					<input type="password" class="form-control input-sm" id="registrationPasswordAgain" name="password_again" placeholder="Password again">
+				</div>
+				<div class="form-group">
+					<label for="registrationEmail" class="sr-only">E-mail</label>
+					<input type="email" class="form-control input-sm" id="registrationEmail" name="email" placeholder="E-mail">
+				</div>
+				<!--
+				<div class="checkbox">
+					<label><input type="checkbox">Request permissions</label>
+				</div> -->
+				<button type="button" class="btn btn-warning btn-sm pull-right" id="cancelRegistrationBtn">No thanks</button>
+				<button type="submit" class="btn btn-success btn-sm pull-right">Register</button>
+			</form>
+		</div>
+		{% endif %}
+<div class="container-fluid">{% block app %}{% endblock %}</div>
+<script src="{{STATIC_URL}}base/index.js"></script>
+</body>
+</html>

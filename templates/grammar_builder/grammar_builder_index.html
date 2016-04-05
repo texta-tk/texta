@@ -1,0 +1,140 @@
+{% extends "index.html" %}
+{% block app %}
+<script type="application/javascript" src="{{STATIC_URL}}grammar_builder/grammar_builder.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/s/dt/dt-1.10.10/datatables.min.css"/>
+<script type="text/javascript" src="https://cdn.datatables.net/s/dt/dt-1.10.10/datatables.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/s/dt/dt-1.10.10/datatables.min.css"/>
+<script type="text/javascript" src="https://cdn.datatables.net/s/dt/dt-1.10.10/datatables.min.js"></script>
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}grammar_builder/grammar_builder.css">
+
+    <div class="row">
+        <div class="col-lg-5">
+            <div class="panel">
+                <div class="panel-heading">
+                    Grammar components
+                </div>
+                
+                <div class="panel-body">
+                
+                    <div id="new-component-panel" class="panel panel-default">
+                        <div class="panel-heading">
+                            New component
+                        </div>
+                        <div class="panel-body">
+                            <div class="form-group">
+                                <label for="new-component-name" class="control-label">Name:</label>
+                                <input type="text" id="new-component-name" class="form-control" placeholder="Component's keyword">
+                            </div>
+                            <div class="form-group">
+                                <label for="new-component-type" class="control-label">Type:</label>
+                                <select id="new-component-type" class="form-control">
+                                    <option></option>
+                                    <option value="Regex">Regular Expression</option>
+                                    <option value="Lemmas">Lemmas</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="new-component-content" class="control-label">Content:</label>
+                                <textarea id="new-component-content" class="form-control"></textarea>
+                            </div>
+                            <button class="btn btn-md btn-success pull-right" onclick="addComponent();">Add component</button>
+                            
+                        </div>
+                    </div>
+                    
+                    <div id="components"></div>
+                   
+                    <div id="component-info-template" class="hidden">
+                        <div class="panel panel-success">
+                            <div class="panel-heading" name="component-name"></div>
+                            <div class="panel-body">
+                                <div class="form-group">
+                                    <span name="component-type"></span><br>
+                                    <pre name="component-content"></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            
+            <div class="panel">
+                <div class="panel-heading">Grammar Constructs</div>
+                <div class="panel-body">
+                    
+                    <div id="new-construct-panel" class="panel panel-default">
+                        <div class="panel-heading">
+                            New construct
+                        </div>
+                        <div class="panel-body">
+                            <div class="form-group">
+                                <label for="new-construct-name" class="control-label">Name:</label>
+                                <input type="text" id="new-construct-name" class="form-control" placeholder="Construct's keyword">
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-sm-5">
+                                        <select id="component-to-add" class="form-control">
+                                        <select>
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <button class="btn btn-md btn-default" onclick="addComponentToConstruct()">Add Component</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="added-components"></div>
+                            
+                            <button class="btn btn-sm btn-info hidden" id="added-component-template"></button>
+                            
+                            <div class="form-group">
+                                <label for="new-construct-separator" class="control-label">Custom separator:</label>
+                                <input type="text" id="new-construct-separator" class="form-control" placeholder="Default=\\s+">
+                            </div>
+                            
+                            <button class="btn btn-md btn-success pull-right" onclick="addConstruct();">Add construct</button>
+                            
+                        </div>
+                    </div>
+                    
+                    <div id="constructs"></div>
+                    
+                    <div class="panel panel-success hidden" id="added-construct-template">
+                        <div class="panel-heading" name="construct-name"></div>
+                        <div class="panel-body">
+                            <div name="construct-components"></div>
+                            <p name="construct-separator"></p>
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="panel">
+                <div class="panel-heading">Results</div>
+                <div class="panel-body">
+                    <div>
+                        Choose search:
+                        <select id="search-selector">
+                            {% for search in searches %}
+                            <option value="{{search.id}}">{{search.desc}}</option>
+                            {% endfor %}
+                        </select>
+                        <select id="feature-selector">
+                            {% for feature in features %}
+                            <option value="{{feature}}">{{feature}}</option>
+                            {% endfor %}
+                        </select>
+                        <button id="display-btn" class="btn btn-md btn-default" onclick="display();">Display</button>
+                    </div>
+                    <div id="result"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

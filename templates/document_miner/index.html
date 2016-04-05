@@ -1,0 +1,49 @@
+{% extends "index.html" %}
+{% block app %}
+<script src="{{STATIC_URL}}jquery-textrange.js"></script>
+<script type="application/javascript" src="{{STATIC_URL}}document_miner/document_miner.js"></script>
+	<div class="row">
+		<div class="col-lg-3">
+			<div class="panel">
+				<div class="panel-heading">Documents</div>
+				<div class="panel-body">
+					<div class="row">
+						<div class="col-lg-12">
+							<b>Field used for comparing documents:</b>
+							<select id="field" name="field" class="form-control input-sm">
+								{% for field in fields %}
+									<option value="{{field}}">{{field}}</option>
+								{% endfor %}
+							</select>
+							<br>
+							<b>Accepted IDs:</b>
+							<textarea class="form-control" rows="5" id="docs"></textarea>
+							<br>
+							<b>Stop words:</b>
+							<textarea class="form-control" rows="5" id="stopwords"></textarea>
+							<br>
+							<b>Handle negatives by:</b>
+							<br>
+							<select id="handle_negatives" name="handle_negatives" class="form-control">
+								<option value="ids" selected="selected">ignoring negatives</option>
+								<option value="unlike">using unlike</option>
+							</select>
+							<br>
+							<input type="hidden" id="docs_declined" name="docs_declined">
+							<button class="btn btn-default form-control" type="button" onclick="javascript:query();">Suggest Candidates</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-lg-9">
+			<div class="panel">
+				<div class="panel-heading">Document Candidates</div>
+				<div class="panel-body">
+					<div id="suggestions"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</html>
+{% endblock %}

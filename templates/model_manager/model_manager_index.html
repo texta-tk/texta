@@ -1,0 +1,143 @@
+{% extends "index.html" %}
+{% block app %}
+<script type="application/javascript" src="{{STATIC_URL}}model_manager/model_manager.js"></script>
+<div class="row">
+  <div class="col-sm-3">
+	<div class="panel">
+	  <div class="panel-heading">Train a Model</div>
+	  <div class="panel-body">
+		<form class="form-horizontal" role="form">
+		  <div class="form-group">
+			  <div class="col-sm-12">
+			  <div class="row">
+				<div class="col-sm-6">Select a search:</div>
+				<div class="col-sm-6">
+								<select id="search" class="form-control">
+									<option></option>
+									{% for search in searches %}
+										<option value="{{search.id}}">{{search.description}}</option>
+									{% endfor %}
+								</select>
+				</div>
+			  </div>
+			  <div class="row">
+				<div class="col-sm-6">Select field:</div>
+				<div class="col-sm-6">
+								<select id="field" class="form-control">
+									<option></option>
+									{% for field in fields %}
+									<option value="{{field}}">{{field}}</option>
+									{% endfor %}
+								</select>			
+				</div>
+			  </div>
+			  <div class="row">
+				<div class="col-sm-6">No of dimensions:</div>
+				<div class="col-sm-6">
+								<select id="num_dimensions" class="form-control">
+									<option value="50">50</option>
+									<option value="100" selected="selected">100</option>
+									<option value="150">150</option>
+									<option value="200">200</option>
+								</select>		
+				</div>
+			  </div>
+			  <div class="row">
+				<div class="col-sm-6">No of workers:</div>
+				<div class="col-sm-6">
+								<select id="num_workers" class="form-control">
+									<option value="1">1</option>
+									<option value="2" selected="selected">2</option>
+									<option value="3">3</option>
+									<option value="4">4</option>
+									<option value="5">5</option>
+									<option value="6">6</option>
+									<option value="7">7</option>
+									<option value="8">8</option>
+									<option value="9">9</option>
+									<option value="10">10</option>
+								</select>
+				</div>
+			  </div>
+			  <div class="row">
+				<div class="col-sm-6">Frequency threshold:</div>
+				<div class="col-sm-6">
+								<select id="min_freq" class="form-control">
+									<option value="1">1</option>
+									<option value="5">5</option>
+									<option value="10" selected="selected">10</option>
+									<option value="100">100</option>
+									<option value="250">250</option>
+									<option value="500">500</option>
+									<option value="1000">1000</option>
+								</select>
+				</div>
+			  </div>
+			  <div class="row">
+				<div class="col-sm-6">Reduce lexicon:</div>
+				<div class="col-sm-6">
+					<div class="row">
+						<input type="checkbox" id="remove_punctuation" onclick="javascript:tick('remove_punctuation');"> <span>unify punctuation</span>
+					</div>
+					<div class="row">
+						<input type="checkbox" id="remove_numbers" onclick="javascript:tick('remove_numbers');"> <span>unify numbers</span>
+					</div>
+				</div>
+			  </div>		  
+			  <div class="row">
+				<div class="col-sm-6">Description:</div>
+				<div class="col-sm-6">
+				  <input name="description" id="description" class="form-control input-sm">	
+				</div>
+			  </div>	
+			  <div class="row">
+				<div class="col-sm-6"></div>
+				<div class="col-sm-6">
+				  <button type="button" onclick="javascript:train_model();" class="btn btn-default form-control"><span class="glyphicon glyphicon-ok"></span> Start task</button>
+				</div>
+			  </div>				  
+		  </div>
+		</form>
+		</div>
+	  </div>
+	</div>
+  </div>
+  <div class="col-lg-9">
+	<div class="panel">
+	  <div class="panel-heading">Models</div>
+	  <div class="panel-body">
+		<table class="table table-striped">
+			<thead>
+			  <tr>
+				<th>Model ID</th>
+				<th>Author</th>
+				<th>Description</th>
+				<th>Dimensions</th>
+				<th>Min Freq</th>
+				<th>Task Status</th>
+				<th>Task Started</th>
+				<th>Task Completed</th>
+				<th>Lexicon Size</th>
+				<th>Remove</th>
+			  </tr>
+			</thead>
+					{% for run in runs %}
+						<tr>
+							<td>{{run.pk}}</td>
+							<td>{{run.user}}</td>
+							<td>{{run.run_description}}</td>
+							<td>{{run.num_dimensions}}</td>
+							<td>{{run.min_freq}}</td>
+							<td>{{run.run_status}}</td>
+							<td>{{run.run_started|date:"d.m.Y H:i"}}</td>
+							<td>{{run.run_completed|date:"d.m.Y H:i"}}</td>
+							<td>{{run.lexicon_size}}</td>
+							<td><a href="javascript:void(0)" onclick="go_to(LINK_MODEL_MANAGER + '/delete_model?model_id={{run.pk}}')"><span class="glyphicon glyphicon-remove"></span></a></td>
+						</tr>
+					{% endfor %}
+				</table>	  
+	  </div>
+	</div>
+  </div>
+</div>
+{% endblock %}

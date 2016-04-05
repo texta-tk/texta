@@ -1,0 +1,114 @@
+{% extends "index.html" %}
+{% block app %}
+<script type="application/javascript" src="{{STATIC_URL}}permission_admin/permission_admin.js"></script>
+<div class="row">
+	<div class="col-lg-6">
+		<div class="panel">
+			<div class="panel-heading">User Management</div>
+			<div class="panel-body">
+					<table class="table table-striped">
+						<thead>
+							<th>Username</th>
+							<th>Superuser</th>
+							<th>Model Manager Access</th>
+							<th>Last Login</th>
+							<th>E-mail</th>
+							<th></th>
+						</thead>
+							<form action="/permission_admin/save_permissions" method='POST'>
+								{% for fields in users %}
+									<tr>
+										<td>
+											{{ fields.username }}
+										</td>
+										<td>
+											{% if fields.superuser == 1 %}
+											<input name="superuser" type="checkbox" value={{ fields.username }} checked="checked">
+											{% else %}
+												<input name="superuser" type="checkbox" value={{ fields.username }}>
+											{% endif %}
+										</td>
+										<td>
+											{% if fields.change_modelrun == 1 %}
+											<input name="change_modelrun" type="checkbox" value={{ fields.username }} checked="checked">
+											{% else %}
+												<input name="change_modelrun" type="checkbox" value={{ fields.username }}>
+											{% endif %}
+										</td>
+										<td>
+											{{ fields.last_login }}
+										</td>
+										<td>
+											{{ fields.e_mail }}
+										</td>
+										<td>
+											<button class="btn btn-danger" type='button' onclick="delete_user('{{fields.username}}');">Delete</button>
+										</td>
+									</tr>
+								{% endfor %}
+								<tr>
+									<td colspan="6">
+										<button class="btn btn-default" id="save-button" type="submit" id="submit_button">Save</button>
+									</td>
+								</tr>
+							</form>
+					</table>
+			</div>
+		</div>
+	</div>
+	<div class="col-lg-6">
+		<div class="panel">
+			<div class="panel-heading">Dataset Management</div>
+			<div class="panel-body">
+				<div class="row">
+					<form action="/permission_admin/add_index" method='POST'>
+						<div class="col-lg-3">
+							<input type="text" class="form-control input-sm" id="index" placeholder="Index">
+						</div>
+						<div class="col-lg-3">
+							<input type="text" class="form-control input-sm" id="mapping" placeholder="Mapping">
+						</div>
+						<div class="col-lg-2">
+							<input type="text" placeholder="Daterange from" id="daterange_from" class="form-control input-sm">
+						</div>
+						<div class="col-lg-2">
+							<input type="text" id="daterange_to" placeholder="Daterage to" class="form-control input-sm">	
+						</div>
+						<div class="col-lg-2">
+							<button class="btn btn-default" type='button' onclick="add_dataset();">Add</button>
+						</div>
+					</form>
+				</div>
+				<table class="table table-striped">
+					<thead>
+						<th>Index</th>
+						<th>Mapping</th>
+						<th>Author</th>
+						<th>Daterange</th>
+						<th>Delete</th>
+					</thead>
+					{% for dataset in datasets %}
+						<tr>
+							<td>
+								{{dataset.index}}
+							</td>
+							<td>
+								{{dataset.mapping}}
+							</td>
+							<td>
+								{{dataset.author}}
+							</td>
+							<td>
+								{{dataset.daterange}}
+							</td>
+							<td>
+								<button class="btn btn-danger" type='button' onclick="remove_index('{{dataset.pk}}');">Delete</button>
+							</td>
+							</tr>
+					{% endfor %}
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

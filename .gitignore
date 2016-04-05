@@ -1,0 +1,6 @@
+data/models/*
+data/usermodels/*
+log/*
+.idea/
+*.pyc
+lex.db

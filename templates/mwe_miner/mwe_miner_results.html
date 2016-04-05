@@ -1,0 +1,62 @@
+{% extends "index.html" %}
+	{% block app %}
+		<script type="application/javascript" src="{{STATIC_URL}}mwe_miner/mwe_miner.js"></script>
+
+<div class="row">
+	<div class="col-sm-5">
+		<div class="panel">
+			<div class="panel-heading">MWE Task Results</div>
+			<div class="panel-body">
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th>Frequency</th>
+								<th>Terms</th>
+								<th></th>
+								<th>MWE</th>
+								<th>Accepted</th>
+							</tr>
+						</thead>						
+						{% for grouped_mwe in results %}
+							<tr>
+								<td>{{grouped_mwe.total_freq}}</td>
+								<td>{{grouped_mwe.mwes|length}}</td>
+								<td><input type="checkbox" id="concept_{{grouped_mwe.id}}" onclick="javascript:tick_concept({{grouped_mwe.id|safe}},{{grouped_mwe.mwe_ids|safe}});"></td>
+								<td>{{grouped_mwe.display_name.label}}</td>
+								<td><a href="#" onclick="javascript:toggle_group({{grouped_mwe.id}})"><img src="{{STATIC_URL}}img/plus.png"></a></td>
+							</tr>
+							<tr id="group_{{grouped_mwe.id}}" style="display:none;">
+								<td colspan="5">
+									<table class="table">
+										{% for mwe in grouped_mwe.mwes %}
+											<tr>
+												<td>{{mwe.freq}}</td>
+												<td></td>
+												<td><input type="checkbox" id="term_{{mwe.id}}" onclick="javascript:tick_term({{grouped_mwe.id|safe}},{{mwe.id|safe}})"></td>
+												<td>{{mwe.mwe}}</td>
+												<td>{{mwe.accepted}}</td>
+											</tr>
+										{% endfor %}
+									</table>
+								</td>
+							</tr>
+						{% endfor %}
+				</table>
+							<div class="row">
+								<div class="col-xs-6">
+									<select id="operator" class="form-control input-sm">
+										<option value="reverse" selected="selected">Reverse value</option>
+										<option value="alltrue">Force all True</option>
+										<option value="allfalse">Force all False</option>
+									</select>
+								</div>
+								<div class="col-xs-6">
+									<input type="hidden" id="run_id" value="{{run_id}}">
+									<button type="button" value="Apply" onclick="javascript:apply_changes();" class="btn btn-default btn-sm pull-right"><span class="glyphicon glyphicon-arrow-right"></span></button>
+								</div>
+							</div>
+			</div>
+		</div>
+	</div>
+</div>		
+{% endblock %}
