@@ -461,8 +461,8 @@ def autocomplete(request):
             return HttpResponse(suggestions)
 
 @login_required
-def get_saved_searches(request):
-    searches = Search.objects.filter(author=request.user).filter(pk=int(request.session['dataset']))
+def get_saved_searches(request):  
+    searches = Search.objects.filter(author=request.user).filter(dataset=Dataset(pk=int(request.session['dataset'])))
     return HttpResponse(json.dumps([{'id':search.pk,'desc':search.description} for search in searches],ensure_ascii=False))
 
 @login_required
