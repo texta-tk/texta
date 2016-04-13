@@ -79,11 +79,18 @@ def train_model(search_id, field, num_dimensions, num_workers, min_freq, usr, de
     print 'Run added to db.'
     query = json.loads(Search.objects.get(pk=search_id).query)
 
-    sentences = esIterator(query, field, request, reduction_methods)
+    num_passes = 5
+    # Number of word2vec passes + one pass to vocabulary building
+    total_passes = num_passes + 1
+    show_progress = ShowProgress(new_run.pk, multiplier=total_passes)
+    show_progress.update_view(0)
+
+    sentences = esIterator(query, field, request, reduction_methods, callback_progress=show_progress)
 
     model = word2vec.Word2Vec(sentences, min_count = min_freq,
                                          size = num_dimensions,
-                                         workers = num_workers)
+                                         workers = num_workers,
+                                         iter = num_passes)
 
     model_name = 'model_'+str(new_run.pk)
     output_model_file = os.path.join(MODELS_DIR, model_name)
@@ -102,6 +109,34 @@ def train_model(search_id, field, num_dimensions, num_workers, min_freq, usr, de
     print 'job is done'
 
 
+class ShowProgress(object):
+    """ Show model training progress
+    """
+    def __init__(self, model_pk, multiplier=None):
+        self.n_total = None
+        self.n_count = 0
+        self.model_pk = model_pk
+        self.multiplier = multiplier
+
+    def set_total(self, total):
+        self.n_total = total
+        if self.multiplier:
+            self.n_total = self.multiplier*total
+
+    def update(self, amount):
+        if amount == 0:
+            return
+        self.n_count += amount
+        percentage = (100.0*self.n_count)/self.n_total
+        self.update_view(percentage)
+
+    def update_view(self, percentage):
+        print('--- progress: {0:3.0f} %'.format(percentage))
+        r = ModelRun.objects.get(pk=self.model_pk)
+        r.run_status = 'running [{0:3.0f} %]'.format(percentage)
+        r.save()
+
+
 class esIterator(object):
     """  ElasticSearch Iterator
     """
@@ -110,7 +145,7 @@ class esIterator(object):
     PUNCTUATION_TOKEN = ' [punct] '
     NUMBER_TOKEN = ' [number] '
 
-    def __init__(self, query, field, request, reduction_methods):
+    def __init__(self, query, field, request, reduction_methods, callback_progress = None):
         self.query = query
         self.field = field
         self.request = request
@@ -120,6 +155,11 @@ class esIterator(object):
         self.dataset = self.datasets[self.selected_mapping]['index']
         self.mapping = self.datasets[self.selected_mapping]['mapping']
         self.reduction_methods = reduction_methods
+        self.callback_progress = callback_progress
+
+        if self.callback_progress:
+            total_elements = self.get_total_documents()
+            callback_progress.set_total(total_elements)
 
     def __iter__(self):
         search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'.format(es_url, self.dataset, self.mapping)
@@ -148,6 +188,15 @@ class esIterator(object):
                         continue
                     words = [self.transform_word(w) for w in words]
                     yield words
+            if self.callback_progress:
+                self.callback_progress.update(l)
+
+    def get_total_documents(self):
+        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'.format(es_url, self.dataset, self.mapping)
+        data = json.dumps(self.query)
+        response = requests.post(search_url, data = data).json()
+        total = response['hits']['total']
+        return long(total)
 
     def transform_sentence(self, sentence):
         """ Applies string transformations and reduction methods to the input sentence
