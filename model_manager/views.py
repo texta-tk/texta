@@ -2,11 +2,11 @@
 import json
 import logging
 import os
-import re
 import string
 import threading
 from datetime import datetime
 
+import nltk
 import requests
 from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponse, HttpResponseRedirect
@@ -30,7 +30,6 @@ def index(request):
     selected_mapping = int(request.session['dataset'])
     dataset = datasets[selected_mapping]['index']
     mapping = datasets[selected_mapping]['mapping']
-    
     template = loader.get_template('model_manager/model_manager_index.html')
     return HttpResponse(template.render({'searches':Search.objects.filter(author=request.user,dataset=Dataset(pk=selected_mapping)),'STATIC_URL':STATIC_URL,'runs':ModelRun.objects.all().order_by('-pk'),'fields':requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']},request))
 
@@ -57,10 +56,13 @@ def start_training_job(request):
     field = request.POST['field']
     min_freq = int(request.POST['min_freq'])
     search_id = int(request.POST['search'])
-    threading.Thread(target=train_model,args=(search_id,field,num_dimensions,num_workers,min_freq,request.user,description,request)).start()
+    reduction_methods = request.POST.getlist('lexicon_reduction[]')
+    threading.Thread(target= train_model,
+                     args= (search_id, field, num_dimensions, num_workers, min_freq, request.user, description, request, reduction_methods)).start()
     return HttpResponse()
 
-def train_model(search_id,field,num_dimensions,num_workers,min_freq,usr,description,request):
+
+def train_model(search_id, field, num_dimensions, num_workers, min_freq, usr, description, request, reduction_methods):
     # add Run to db
     dataset_pk = int(request.session['dataset'])
     new_run = ModelRun(run_description=description,
@@ -76,11 +78,18 @@ def train_model(search_id,field,num_dimensions,num_workers,min_freq,usr,descript
     
     print 'Run added to db.'
     query = json.loads(Search.objects.get(pk=search_id).query)
-    sentences = esIterator(query,field,request)
-    model = word2vec.Word2Vec(sentences,min_count=min_freq,size=num_dimensions,workers=num_workers)
-    model.save(os.path.join(MODELS_DIR,'model_'+str(new_run.pk)))
 
-    #lm_model_manager.add_model(str(new_run.pk),model)
+    sentences = esIterator(query, field, request, reduction_methods)
+
+    model = word2vec.Word2Vec(sentences, min_count = min_freq,
+                                         size = num_dimensions,
+                                         workers = num_workers)
+
+    model_name = 'model_'+str(new_run.pk)
+    output_model_file = os.path.join(MODELS_DIR, model_name)
+    model.save(output_model_file)
+
+    #lm_model_manager.add_model(str(new_run.pk), model)
 
     logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE MODEL','event':'model_training_completed','args':{'user_name':request.user.username},'data':{'run_id':new_run.id}}))
 
@@ -92,35 +101,73 @@ def train_model(search_id,field,num_dimensions,num_workers,min_freq,usr,descript
     r.save()
     print 'job is done'
 
+
 class esIterator(object):
-    def __init__(self,query,field,request):
+    """  ElasticSearch Iterator
+    """
+
+    MIN_SENTENCE_LENGHT = 2
+
+    def __init__(self, query, field, request, reduction_methods):
         self.query = query
         self.field = field
         self.request = request
-        self.punct_re = re.compile('[%s]' % re.escape(string.punctuation))
-
         # Define selected mapping
         self.datasets = get_datasets()
         self.selected_mapping = int(request.session['dataset'])
         self.dataset = self.datasets[self.selected_mapping]['index']
         self.mapping = self.datasets[self.selected_mapping]['mapping']
+        self.reduction_methods = reduction_methods
 
     def __iter__(self):
-        response = requests.post(es_url+'/'+self.dataset+'/'+self.mapping+'/_search?search_type=scan&scroll=1m&size=1000',data=json.dumps(self.query)).json()
+        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'.format(es_url, self.dataset, self.mapping)
+        scroll_url = '{0}/_search/scroll?scroll=1m'.format(es_url)
+        data = json.dumps(self.query)
+        response = requests.post(search_url, data = data).json()
         scroll_id = response['_scroll_id']
         l = response['hits']['total']
+
         while l > 0:
-            response = requests.post(es_url+'/_search/scroll?scroll=1m',data=scroll_id).json()
+
+            response = requests.post(scroll_url,data = scroll_id).json()
             l = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
             for hit in response['hits']['hits']:
-                sentences = hit['_source'][self.field].split('\n')
-                reduction_methods = self.request.POST.getlist('lexicon_reduction[]')
-                if u'remove_numbers' in reduction_methods:
-                    # remove numbers
-                    sentences = [re.sub('(\d)+','n',sentence) for sentence in sentences]
-                if u'remove_punctuation' in reduction_methods:
-                    # remove punctuation
-                    sentences = [self.punct_re.sub('[punct]',sentence) for sentence in sentences]
+                document = hit['_source'][self.field]
+                # Divide the document hit into sentences
+                sentences = nltk.sent_tokenize(document)
                 for sentence in sentences:
-                    yield [smart_str(word.strip().lower()) for word in sentence.split(' ')]
+                    # Divide every sentence into words
+                    words = nltk.word_tokenize(sentence)
+                    # If sentence is too short, continue
+                    if len(words) <= self.MIN_SENTENCE_LENGHT:
+                        continue
+                    words = [self.transform_word(w) for w in words]
+                    yield words
+
+    def transform_word(self, w):
+        """ Applies string transformations and reduction methods to the input word w
+            Returns: the transformed word string
+        """
+        if u'remove_punctuation' in self.reduction_methods:
+            # remove punctuation
+            w = '[punct]' if w in string.punctuation else w
+        if u'remove_numbers' in self.reduction_methods:
+            # remove numbers
+            w = '[number]' if self.is_number(w) else w
+
+        w = w.strip().lower()
+        w = smart_str(w)
+        return w
+
+    @staticmethod
+    def is_number(s):
+        """ Checks if input string s is a valid number
+            Returns: True if the string can be converted to a float number, False otherwise
+        """
+        try:
+            float(s)
+            return True
+        except ValueError:
+            pass
+        return False
