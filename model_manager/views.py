@@ -106,7 +106,9 @@ class esIterator(object):
     """  ElasticSearch Iterator
     """
 
-    MIN_SENTENCE_LENGHT = 2
+    MIN_SENTENCE_LENGTH = 2
+    PUNCTUATION_TOKEN = ' [punct] '
+    NUMBER_TOKEN = ' [number] '
 
     def __init__(self, query, field, request, reduction_methods):
         self.query = query
@@ -128,22 +130,35 @@ class esIterator(object):
         l = response['hits']['total']
 
         while l > 0:
-
             response = requests.post(scroll_url,data = scroll_id).json()
             l = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
+
             for hit in response['hits']['hits']:
                 document = hit['_source'][self.field]
                 # Divide the document hit into sentences
                 sentences = nltk.sent_tokenize(document)
                 for sentence in sentences:
+                    # Apply transformations to the sentence
+                    sentence = self.transform_sentence(sentence)
                     # Divide every sentence into words
                     words = nltk.word_tokenize(sentence)
                     # If sentence is too short, continue
-                    if len(words) <= self.MIN_SENTENCE_LENGHT:
+                    if len(words) <= self.MIN_SENTENCE_LENGTH:
                         continue
                     words = [self.transform_word(w) for w in words]
                     yield words
+
+    def transform_sentence(self, sentence):
+        """ Applies string transformations and reduction methods to the input sentence
+            Returns: the transformed sentence string
+        """
+        all_punct = string.punctuation
+        all_punct += '\xc2\xab\xc2\xbb\xc2\xba'.decode('utf-8')
+        for c in all_punct:
+            new_c = self.PUNCTUATION_TOKEN if u'remove_punctuation' in self.reduction_methods else u' {0} '.format(c)
+            sentence = sentence.replace(c, new_c)
+        return sentence
 
     def transform_word(self, w):
         """ Applies string transformations and reduction methods to the input word w
@@ -151,10 +166,10 @@ class esIterator(object):
         """
         if u'remove_punctuation' in self.reduction_methods:
             # remove punctuation
-            w = '[punct]' if w in string.punctuation else w
+            w = self.PUNCTUATION_TOKEN if w in string.punctuation else w
         if u'remove_numbers' in self.reduction_methods:
             # remove numbers
-            w = '[number]' if self.is_number(w) else w
+            w = self.NUMBER_TOKEN if self.is_number(w) else w
 
         w = w.strip().lower()
         w = smart_str(w)
