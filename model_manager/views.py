@@ -18,7 +18,7 @@ from corpus_tool.models import Search
 from lm.views import model_manager as lm_model_manager
 from model_manager.models import ModelRun
 from permission_admin.models import Dataset
-from settings import STATIC_URL, es_url, URL_PREFIX, MODELS_DIR, INFO_LOGGER
+from settings import STATIC_URL, es_url, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ERROR_LOGGER
 
 from utils.datasets import get_datasets
 
@@ -106,7 +106,7 @@ def train_model(search_id,field,num_dimensions,num_workers,min_freq,usr,descript
         model_status = 'completed'
 
     except Exception, e:
-        # TODO: add error msg to logging system
+        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE MODEL','event':'model_training_failed','args':{'user_name':request.user.username}}),exc_info=True)
         print '--- Error: {0}'.format(e)
         model_status = 'failed'
 
@@ -147,7 +147,7 @@ class ShowProgress(object):
         self.update_view(percentage)
 
     def update_view(self, percentage):
-        print('--- progress: {0:3.0f} %'.format(percentage))
+#        print('--- progress: {0:3.0f} %'.format(percentage))
         r = ModelRun.objects.get(pk=self.model_pk)
         r.run_status = 'running [{0:3.0f} %]'.format(percentage)
         r.save()
