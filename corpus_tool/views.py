@@ -30,8 +30,23 @@ except:
 def ngrams(input_list, n):
   return zip(*[input_list[i:] for i in range(n)])
 
+
 def convert_date(date_string,frmt):
     return datetime.strptime(date_string,frmt).date()
+
+
+def get_fields(es_url,dataset,mapping):
+    out = {}
+    items = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties'].items()
+    for item in items:
+        if item[1]['type'] != 'nested':
+            # flat field
+            out[item[0]] = {'type':item[1]['type']}
+        else:
+            # layered field
+            out[item[0]] = {'type':'nested','layers':item[1]['properties'].keys()}
+    return out
+
 
 @login_required
 def index(request):
@@ -42,9 +57,8 @@ def index(request):
     mapping = datasets[selected_mapping]['mapping']
     date_range = datasets[selected_mapping]['date_range']
 
-    # Get field names and types
-    fields = [(a[0],a[1]['type']) for a in requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties'].items()]
-    fields = sorted(fields,key=lambda l:l[0])
+
+    fields = get_fields(es_url,dataset,mapping)
 
     template = loader.get_template('corpus_tool/corpus_tool_index.html')
     return HttpResponse(template.render({'STATIC_URL':STATIC_URL,
@@ -54,65 +68,6 @@ def index(request):
                        'searches':Search.objects.filter(author=request.user),
                        'dataset':dataset},request))
 
-def query(request):
-    combined_query = {"query":{"bool":{"should":[],"must":[]}}}
-    string_constraints = {}
-    date_constraints = {}
-    
-    for item in request.POST:
-        if 'match' in item:
-            item = item.split('_')
-            first_part = '_'.join(item[:2])
-            second_part = item[2]
-            if second_part not in string_constraints:
-                string_constraints[second_part] = {}
-            if first_part not in string_constraints[second_part]:
-                string_constraints[second_part][first_part] = request.POST['_'.join(item)]
-        elif 'daterange' in item:
-            item = item.split('_')
-            first_part = '_'.join(item[:2])
-            second_part = item[2]
-            if second_part not in date_constraints:
-                date_constraints[second_part] = {}
-            if first_part not in date_constraints[second_part]:
-                date_constraints[second_part][first_part] = request.POST['_'.join(item)]
-    
-    for string_constraint in string_constraints.values():
-        query_strings = [s.replace('\r','') for s in string_constraint['match_txt'].split('\n')]
-        sub_queries = []
-        for query_string in query_strings:
-            if query_string:
-                synonyms = []
-                ### check if string is a concept identifier
-                concept = re.search('^@(\d)+-',query_string)
-                if concept:
-                    concept_id = int(concept.group()[1:-1])
-                    for term in TermConcept.objects.filter(concept=Concept.objects.get(pk=concept_id)):
-                        synonyms.append(term.term.term)
-                else:
-                    synonyms.append(query_string)
-
-                ### resolve synonymy
-                if string_constraint['match_type'] == 'match':
-                    synonym_queries = []
-                    for synonym in synonyms:
-                        synonym_queries.append({string_constraint['match_type']:{string_constraint['match_field']:{'query':synonym,'operator':'and'}}})
-                    sub_queries.append({'bool': {'minimum_should_match':1,'should':synonym_queries}})                        
-                else:
-                    synonym_queries = []
-                    for synonym in synonyms:
-                        synonym_queries.append({string_constraint['match_type']:{string_constraint['match_field']:{'query':synonym,'slop':string_constraint['match_slop']}}})
-                    sub_queries.append({'bool': {'minimum_should_match':1,'should':synonym_queries}})
-        combined_query["query"]["bool"]["should"].append({"bool":{string_constraint['match_operator']:sub_queries}})
-    combined_query["query"]["bool"]["minimum_should_match"] = len(string_constraints)
-
-    for date_constraint in date_constraints.values():    
-        date_range_start = {"range": {date_constraint['daterange_field']: {"gte": date_constraint['daterange_from']}}}
-        date_range_end= {"range": {date_constraint['daterange_field']: {"lte": date_constraint['daterange_to']}}}
-        combined_query['query']['bool']['must'].append(date_range_start)
-        combined_query['query']['bool']['must'].append(date_range_end)
-
-    return combined_query
 
 def highlight(text,spans,prefix,suffix):
     offset = 0
@@ -534,17 +489,16 @@ def search2(es_params,request):
         
         for hit in response['hits']['hits']:
             row = []
-            for field,content in sorted(hit['_source'].items(),key = lambda x: x[0]):  
-#                tech_field_name = selected_field+'__mappings'
-#                if tech_field_name in q['highlight']['fields']:
-#                    content = highlight(content,json.loads(hit['highlight'][tech_field_name][0]),pre_tag,post_tag)
+            for field,content in sorted(hit['_source'].items(),key = lambda x: x[0]):
+                if type(content) == dict:
+                    content = json.dumps(content,ensure_ascii=False, encoding='utf8')
 
-                # HIGHTLIGHT MATCHES
-                if field in q['highlight']['fields']:
-                    try:
-                        content = hit['highlight'][field][0]
-                    except:
-                        pass
+#                # HIGHTLIGHT MATCHES
+#                if field in q['highlight']['fields']:
+#                    try:
+#                        content = hit['highlight'][field][0]
+#                    except:
+#                        pass
                 ### CHECK FOR EXTERNAL RESOURCES
                 link_key = (dataset,mapping,field)
                 if link_key in es_links:
@@ -560,12 +514,12 @@ def search2(es_params,request):
 
         out['lag'] = time.time()-start
         
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'documents_queried','args':{'user_name':request.user.username}}))
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'documents_queried','args':{'query':q,'user_name':request.user.username}}))
         
         return out
     except Exception as e:        
         print "Exception", e
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'documents_queried','args':{'user_name':request.user.username}}),exc_info=True)
+        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'documents_queried','args':{'query':q,'user_name':request.user.username}}),exc_info=True)
         template = loader.get_template('corpus_tool/corpus_tool_results.html')
         context = Context({'STATIC_URL': STATIC_URL,
                         'name':request.user.username,
@@ -597,9 +551,11 @@ def query2(es_params):
                 date_constraints[second_part] = {}
             if first_part not in date_constraints[second_part]:
                 date_constraints[second_part][first_part] = es_params['_'.join(item)]
+
     
     for string_constraint in string_constraints.values():
         query_strings = [s.replace('\r','') for s in string_constraint['match_txt'].split('\n')]
+
         sub_queries = []
         for query_string in query_strings:
             if query_string:
@@ -617,12 +573,22 @@ def query2(es_params):
                 if string_constraint['match_type'] == 'match':
                     synonym_queries = []
                     for synonym in synonyms:
-                        synonym_queries.append({string_constraint['match_type']:{string_constraint['match_field']:{'query':synonym,'operator':'and'}}})
-                    sub_queries.append({'bool': {'minimum_should_match':1,'should':synonym_queries}})                        
+                        # check if matching a nested field
+                        if 'match_layer' in string_constraint:
+                            synonym_queries.append({"nested":{"path":string_constraint['match_field'],"query":{string_constraint['match_type']:{string_constraint['match_field']+"."+string_constraint["match_layer"]:{"query":synonym,"operator":"and"}}}}})
+                        else:
+                            synonym_queries.append({string_constraint['match_type']:{string_constraint['match_field']:{'query':synonym,'operator':'and'}}})
+#         
+                    sub_queries.append({'bool': {'minimum_should_match':1,'should':synonym_queries}})                    
                 else:
                     synonym_queries = []
                     for synonym in synonyms:
-                        synonym_queries.append({string_constraint['match_type']:{string_constraint['match_field']:{'query':synonym,'slop':string_constraint['match_slop']}}})
+                        # check if matching a nested field
+                        if 'match_layer' in string_constraint:
+                            synonym_queries.append({"nested":{"path":string_constraint['match_field'],"query":{string_constraint['match_type']:{string_constraint['match_field']+"."+string_constraint["match_layer"]:{"query":synonym,"slop":string_constraint['match_slop']}}}}})
+                        else:
+                            synonym_queries.append({string_constraint['match_type']:{string_constraint['match_field']:{'query':synonym,'slop':string_constraint['match_slop']}}})
+                    
                     sub_queries.append({'bool': {'minimum_should_match':1,'should':synonym_queries}})
         combined_query["query"]["bool"]["should"].append({"bool":{string_constraint['match_operator']:sub_queries}})
     combined_query["query"]["bool"]["minimum_should_match"] = len(string_constraints)
@@ -632,7 +598,7 @@ def query2(es_params):
         date_range_end= {"range": {date_constraint['daterange_field']: {"lte": date_constraint['daterange_to']}}}
         combined_query['query']['bool']['must'].append(date_range_start)
         combined_query['query']['bool']['must'].append(date_range_end)
-
+    
     return combined_query
     
 @login_required

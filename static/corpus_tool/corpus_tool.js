@@ -3,6 +3,8 @@ var PREFIX = LINK_CORPUS_TOOL;
 
 var examplesTable;
 
+var layers = ['text','lemmas','facts'];
+
 $(document).ready(function() {
     get_searches();
  
@@ -40,10 +42,24 @@ $(document).ready(function() {
 
 google.load('visualization', '1', {packages: ['corechart', 'line']});
 
+
+function in_array(value, array) {
+  return array.indexOf(value) > -1;
+}
+
+
 function add_field(date_range_min,date_range_max){
 	var field = $("#constraint_field").val().split('____');
-	var field_name = field[0];
-	var field_type = field[1];
+	
+	if(in_array(field[1],layers) == true){
+		var field_name = field[0];
+		var field_type = 'string';
+		var field_layer = field[1]
+	}else{
+		var field_name = field[0];
+		var field_type = field[1];	
+	}
+	
 	if(field_name){
 		counter+=1;
 		new_id = 'field_'+counter.toString();
@@ -57,8 +73,18 @@ function add_field(date_range_min,date_range_max){
 		}else{
 			$("#field_hidden").clone().attr('id',new_id).appendTo("#constraints");
 			$("#field_"+counter.toString()+" #match_operator_").attr('id','match_operator_'+counter.toString()).attr('name','match_operator_'+counter.toString());
+			
+			
+			if (typeof field_layer !== 'undefined') {
+				$("#field_"+counter.toString()+" #match_layer_").attr('id','match_layer_'+counter.toString()).attr('name','match_layer_'+counter.toString()).val(field_layer);
+				$("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).html(field_name+' ('+field_layer+')');
+			}else{
+				$("#field_"+counter.toString()+" #match_layer_").remove();
+				$("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).html(field_name);
+			}
+			
+			
 			$("#field_"+counter.toString()+" #match_field_").attr('id','match_field_'+counter.toString()).attr('name','match_field_'+counter.toString()).val(field_name);
-			$("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).html(field_name);
 			$("#field_"+counter.toString()+" #match_type_").attr('id','match_type_'+counter.toString()).attr('name','match_type_'+counter.toString());
 			$("#field_"+counter.toString()+" #match_slop_").attr('id','match_slop_'+counter.toString()).attr('name','match_slop_'+counter.toString());
 			$("#field_"+counter.toString()+" #remove_link").attr('onclick',"javascript:remove_field('"+new_id+"');");

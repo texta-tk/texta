@@ -19,8 +19,14 @@
 							<div class="col-sm-6">
 								<select id="constraint_field" name="constraint_field" onchange="javascript:add_field('{{date_range.min}}','{{date_range.max}}');" class="form-control input-sm">
 									<option></option>
-									{% for field in fields %}
-										<option value="{{field.0}}____{{field.1}}">{{field.0}}</option>
+									{% for field in fields.items %}
+										{% if field.1.type == 'nested' %}
+											{% for layer in field.1.layers %}
+												<option value="{{field.0}}____{{layer}}">{{field.0}} ({{layer}})</option>
+											{% endfor %}
+										{% else %}
+											<option value="{{field.0}}____{{field.1.type}}">{{field.0}}</option>
+										{% endif %}
 									{% endfor %}
 								</select>
 							</div>
@@ -47,8 +53,14 @@
 							<div class="col-sm-6">Aggregate matches over:</div>
 							<div class="col-sm-6">
 								<select id="aggregate_over" name="aggregate_over" class="form-control input-sm">
-									{% for field in fields %}
-										<option value="{{field.0}}">{{field.0}}</option>
+									{% for field in fields.items %}
+										{% if field.1.type == 'nested' %}
+											{% for layer in field.1.layers %}
+												<option value="{{field.0}}____{{layer}}">{{field.0}} ({{layer}})</option>
+											{% endfor %}
+										{% else %}
+											<option value="{{field.0}}____{{field.1.type}}">{{field.0}}</option>
+										{% endif %}
 									{% endfor %}
 								</select>
 							</div>
@@ -185,6 +197,7 @@
 	</div>
 	<div id="field_hidden" class="panel panel-default" style="display: none;">
 		<input type="hidden" name="match_field_" id="match_field_">
+		<input type="hidden" name="match_layer_" id="match_layer_">
 		<div class="panel-heading">
 			<span id="selected_field_"></span>
 			<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
@@ -225,6 +238,7 @@
 					<ul name="suggestions_" id="suggestions_" class="list-group"></ul>
 				</div>
 			</div>
+
 		</div>
 	</div>
 	<div id="field_hidden_date" class="panel panel-default" style="display: none;">
