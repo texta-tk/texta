@@ -365,7 +365,7 @@ def aggregate(request):
 @login_required
 def save(request):
     try:
-        q = query(request)
+        q = query2(request)
         desc = request.POST['search_description']
         
         search = Search(author=request.user,description=desc,dataset=Dataset.objects.get(pk=int(request.session['dataset'])),query=json.dumps(q))
