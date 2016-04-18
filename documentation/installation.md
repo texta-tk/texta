@@ -21,6 +21,5 @@ pip install scipy
 pip install sklearn
 pip install gensim
 pip install django
+pip install nltk
 ```
-
-
