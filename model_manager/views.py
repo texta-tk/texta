@@ -39,7 +39,7 @@ def index(request):
 def delete_model(request):
     model_id = request.GET['model_id']
     run = ModelRun.objects.get(pk=model_id)
-    if run.user == request.user:
+    if run.user == request.user or request.user.is_superuser:
         lm_model_manager.remove_model(run.pk)
         run.delete()
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DELETE MODEL','event':'model_deleted','args':{'user_name':request.user.username,'model_id':model_id}}))
