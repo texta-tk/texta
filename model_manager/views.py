@@ -22,6 +22,20 @@ from settings import STATIC_URL, es_url, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ER
 
 from utils.datasets import get_datasets
 
+
+def get_fields(es_url,dataset,mapping):
+    out = {}
+    items = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties'].items()
+    for item in items:
+        if item[1]['type'] != 'nested':
+            # flat field
+            out[item[0]] = {'type':item[1]['type']}
+        else:
+            # layered field
+            out[item[0]] = {'type':'nested','layers':item[1]['properties'].keys()}
+    return out
+
+
 @login_required
 @permission_required('model_manager.change_modelrun')
 def index(request):    
@@ -30,9 +44,16 @@ def index(request):
     selected_mapping = int(request.session['dataset'])
     dataset = datasets[selected_mapping]['index']
     mapping = datasets[selected_mapping]['mapping']
-    
+
+    #fields = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']
+    fields = get_fields(es_url, dataset, mapping)
+
     template = loader.get_template('model_manager/model_manager_index.html')
-    return HttpResponse(template.render({'searches':Search.objects.filter(author=request.user,dataset=Dataset(pk=selected_mapping)),'STATIC_URL':STATIC_URL,'runs':ModelRun.objects.all().order_by('-pk'),'fields':requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']},request))
+    return HttpResponse(template.render({'searches': Search.objects.filter(author=request.user,dataset=Dataset(pk=selected_mapping)),
+                                         'STATIC_URL': STATIC_URL,
+                                         'runs': ModelRun.objects.all().order_by('-pk'),
+                                         'fields': fields}, request))
+
 
 @login_required
 @permission_required('model_manager.change_modelrun')
@@ -200,7 +221,14 @@ class esIterator(object):
                 raise esIteratorError(msg)
 
             for hit in response['hits']['hits']:
-                sentences = hit['_source'][self.field].split('\n')
+
+                # Take into account nested fields encoded as: 'field____layer'
+                decoded_text = hit['_source']
+                for k in self.field.split('____'):
+                    decoded_text = decoded_text[k]
+
+                sentences = decoded_text.split('\n')
+
                 reduction_methods = self.request.POST.getlist('lexicon_reduction[]')
                 if u'remove_numbers' in reduction_methods:
                     # remove numbers
