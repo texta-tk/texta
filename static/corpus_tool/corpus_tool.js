@@ -75,7 +75,7 @@ function add_field(date_range_min,date_range_max){
 			$("#field_"+counter.toString()+" #match_operator_").attr('id','match_operator_'+counter.toString()).attr('name','match_operator_'+counter.toString());
 			
 			
-			if (typeof field_layer !== 'undefined') {
+			if (typeof field_layer != 'undefined') {
 				$("#field_"+counter.toString()+" #match_layer_").attr('id','match_layer_'+counter.toString()).attr('name','match_layer_'+counter.toString()).val(field_layer);
 				$("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).html(field_name+' ('+field_layer+')');
 			}else{
