@@ -39,12 +39,12 @@ def get_fields(es_url,dataset,mapping):
     out = {}
     items = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties'].items()
     for item in items:
-        if item[1]['type'] != 'nested':
+        try:
             # flat field
             out[item[0]] = {'type':item[1]['type']}
-        else:
+        except KeyError:
             # layered field
-            out[item[0]] = {'type':'nested','layers':item[1]['properties'].keys()}
+            out[item[0]] = {'type':'object','layers':item[1]['properties'].keys()}
     return out
 
 
@@ -576,7 +576,7 @@ def query2(es_params):
                     for synonym in synonyms:
                         # check if matching a nested field
                         if 'match_layer' in string_constraint:
-                            synonym_queries.append({"nested":{"path":string_constraint['match_field'],"query":{string_constraint['match_type']:{string_constraint['match_field']+"."+string_constraint["match_layer"]:{"query":synonym,"operator":"and"}}}}})
+                            synonym_queries.append({"query":{string_constraint['match_type']:{string_constraint['match_field']+"."+string_constraint["match_layer"]:{"query":synonym,"operator":"and"}}}})
                         else:
                             synonym_queries.append({string_constraint['match_type']:{string_constraint['match_field']:{'query':synonym,'operator':'and'}}})
 #         
@@ -586,7 +586,7 @@ def query2(es_params):
                     for synonym in synonyms:
                         # check if matching a nested field
                         if 'match_layer' in string_constraint:
-                            synonym_queries.append({"nested":{"path":string_constraint['match_field'],"query":{string_constraint['match_type']:{string_constraint['match_field']+"."+string_constraint["match_layer"]:{"query":synonym,"slop":string_constraint['match_slop']}}}}})
+                            synonym_queries.append({"query":{string_constraint['match_type']:{string_constraint['match_field']+"."+string_constraint["match_layer"]:{"query":synonym,"slop":string_constraint['match_slop']}}}})
                         else:
                             synonym_queries.append({string_constraint['match_type']:{string_constraint['match_field']:{'query':synonym,'slop':string_constraint['match_slop']}}})
                     
