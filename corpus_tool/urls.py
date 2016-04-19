@@ -6,7 +6,7 @@ from corpus_tool.views import *
 urlpatterns = [
     url(r'^$', index, name='index'),
     url(r'search',search, name='search'),
-    url(r'aggregate',aggregate, name='aggregate'),
+#    url(r'aggregate',aggregate, name='aggregate'),
     url(r'save',save, name='save'),
     url(r'delete',delete, name='delete'),
     url(r'autocomplete',autocomplete, name='autocomplete'),
