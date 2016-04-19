@@ -81,6 +81,7 @@
 				</div>
 				<table class="table table-striped">
 					<thead>
+						<th>ID</th>
 						<th>Index</th>
 						<th>Mapping</th>
 						<th>Author</th>
@@ -89,6 +90,9 @@
 					</thead>
 					{% for dataset in datasets %}
 						<tr>
+							<td>
+								{{dataset.pk}}
+							</td>
 							<td>
 								{{dataset.index}}
 							</td>
