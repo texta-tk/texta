@@ -364,10 +364,11 @@ def aggregate(request):
 
 @login_required
 def save(request):
+    # TODO: Why is here an exception without calling request.POST???
+    request.POST
     try:
         q = query2(request)
         desc = request.POST['search_description']
-        
         search = Search(author=request.user,description=desc,dataset=Dataset.objects.get(pk=int(request.session['dataset'])),query=json.dumps(q))
         search.save()
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SAVE SEARCH','event':'search_saved','args':{'user_name':request.user.username,'desc':desc},'data':{'search_id':search.id}}))
