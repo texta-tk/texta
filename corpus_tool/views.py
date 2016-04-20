@@ -203,7 +203,6 @@ def get_saved_searches(request):
 
 @login_required
 def get_examples_table(request):
-
     # Define selected mapping
     datasets = get_datasets()
     selected_mapping = int(request.session['dataset'])
@@ -228,14 +227,10 @@ def get_examples_table(request):
 
 @login_required
 def get_examples(request):
-    
     filter_params = json.loads(request.GET['filterParams'])
-    
-    
     es_params = {filter_param['name']:filter_param['value'] for filter_param in filter_params}
     es_params['examples_start'] = request.GET['iDisplayStart']
     es_params['num_examples'] = request.GET['iDisplayLength']
-    
     return HttpResponse(json.dumps(search(es_params,request),ensure_ascii=False))
 
 
@@ -245,8 +240,6 @@ def search(es_params,request):
         selected_fields = []     
         out = {'column_names':[],'aaData':[],'iTotalRecords':0,'iTotalDisplayRecords':0,'lag':0}
         q = query(es_params)
-
-        print q
 
         ### DEFINING THE EXAMPLE SIZE
         q["from"] = es_params['examples_start']
@@ -523,7 +516,8 @@ def get_all_rows(es_params,selected_mapping):
         hits = requests.post(es_url+'/'+'_search/scroll',data=scroll_query).json()['hits']['hits']
 
          
-def get_aggregation_data(es_params,request):
+def aggregate(request):
+    es_params = request.POST
     try:
         aggregation_field = es_params['aggregate_over']
 
@@ -534,17 +528,22 @@ def get_aggregation_data(es_params,request):
         mapping = datasets[selected_mapping]['mapping']
         date_range = datasets[selected_mapping]['date_range']
         
-        response = requests.get(es_url+'/'+dataset+'/_mapping/'+mapping).json()
-        field_type = response[dataset]['mappings'][mapping]['properties'][aggregation_field]['type']
+#        response = requests.get(es_url+'/'+dataset+'/_mapping/'+mapping).json()
+#        field_type = response[dataset]['mappings'][mapping]['properties'][aggregation_field]['type']
+
+        field_type = aggregation_field.split('____')[-1]
 
         if field_type == 'date':
-            data = timeline2(es_params,request)
+            data = timeline(es_params,request)
             for i, str_val in enumerate(data['data'][0]):
                 data['data'][0][i] = str_val.decode('unicode-escape')
         else:
-            data = discrete_agg2(es_params,request)
+            data = discrete_agg(es_params,request)
             
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'aggregation_queried','args':{'user_name':request.user.username}}))
+
+
+        print data['data']
         
         return data['data']
         
@@ -581,14 +580,14 @@ def timeline(es_params,request):
                 saved_query = json.loads(s.query)
                 saved_query["aggs"] = aggregations
                 response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(saved_query)).json()
-                normalised_counts,_ = normalise_agg2(response,saved_query,es_params,request,'ranges')
+                normalised_counts,_ = normalise_agg(response,saved_query,es_params,request,'ranges')
                 series.append({'name':name.encode('latin1'),'data':normalised_counts})
         # add current search
         q = query(es_params)
         if len(q['query']['bool']['should']) > 0 or len(q['query']['bool']['must']) > 0:
             q["aggs"] = aggregations
             response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
-            normalised_counts,_ = normalise_agg2(response,q,es_params,request,'ranges')
+            normalised_counts,_ = normalise_agg(response,q,es_params,request,'ranges')
             series.append({'name':'Query','data':normalised_counts})
         data.append(['Date']+labels)
         for serie in series:
@@ -605,6 +604,10 @@ def discrete_agg(es_params,request):
     distinct_values = []
     query_results = []
     lexicon = []
+
+    # HACK
+    aggregate_over = es_params['aggregate_over'].split('____')[0]
+    
     try:
         aggregations = {"strings" : {es_params['sort_by']: {"field": es_params['aggregate_over'],'size':50}},
                         "distinct_values": {"cardinality": {"field":es_params['aggregate_over']}}}
@@ -622,16 +625,17 @@ def discrete_agg(es_params,request):
                 saved_query = json.loads(s.query)
                 saved_query["aggs"] = aggregations
                 response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(saved_query)).json()
-                normalised_counts,labels = normalise_agg2(response,saved_query,es_params,request,'strings')
+                normalised_counts,labels = normalise_agg(response,saved_query,es_params,request,'strings')
                 lexicon = list(set(lexicon+labels))
                 query_results.append({'name':name,'data':normalised_counts,'labels':labels})
                 distinct_values.append({'name':name,'data':response['aggregations']['distinct_values']['value']})
 
         q = query(es_params)
+        
         if len(q['query']['bool']['should']) > 0 or len(q['query']['bool']['must']) > 0:
             q["aggs"] = aggregations
             response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
-            normalised_counts,labels = normalise_agg2(response,q,es_params,request,'strings')
+            normalised_counts,labels = normalise_agg(response,q,es_params,request,'strings')
             lexicon = list(set(lexicon+labels))
             query_results.append({'name':'Query','data':normalised_counts,'labels':labels})
             distinct_values.append({'name':'Query','data':response['aggregations']['distinct_values']['value']})
