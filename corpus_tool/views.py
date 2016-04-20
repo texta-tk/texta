@@ -536,6 +536,7 @@ def aggregate(request):
 
         if field_type == 'date':
             data = timeline(es_params,request)
+            
             for i, str_val in enumerate(data['data'][0]):
                 data['data'][0][i] = str_val.decode('unicode-escape')
         else:
@@ -567,9 +568,13 @@ def timeline(es_params,request):
         mapping = datasets[selected_mapping]['mapping']
         date_range = datasets[selected_mapping]['date_range']
 
+        # HACK
+        aggregate_over = es_params['aggregate_over'].split('____')[0]
+
         # temporary
         ranges,labels = date_ranges(date_range,interval)
-        aggregations = {"ranges" : {"date_range" : {"field": es_params['aggregate_over'], "format": date_format, "ranges": ranges}}}
+        aggregations = {"ranges" : {"date_range" : {"field": aggregate_over, "format": date_format, "ranges": ranges}}}
+        
         # find saved searches
         for item in es_params:
             if 'saved_search' in item:
@@ -582,8 +587,10 @@ def timeline(es_params,request):
                 series.append({'name':name.encode('latin1'),'data':normalised_counts})
         # add current search
         q = query(es_params)
+        
         if len(q['query']['bool']['should']) > 0 or len(q['query']['bool']['must']) > 0:
             q["aggs"] = aggregations
+            
             response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
             normalised_counts,_ = normalise_agg(response,q,es_params,request,'ranges')
             series.append({'name':'Query','data':normalised_counts})
