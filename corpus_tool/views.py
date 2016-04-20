@@ -518,6 +518,7 @@ def get_all_rows(es_params,selected_mapping):
          
 def aggregate(request):
     es_params = request.POST
+    
     try:
         aggregation_field = es_params['aggregate_over']
 
@@ -539,13 +540,10 @@ def aggregate(request):
                 data['data'][0][i] = str_val.decode('unicode-escape')
         else:
             data = discrete_agg(es_params,request)
-            
+        
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'aggregation_queried','args':{'user_name':request.user.username}}))
 
-
-        print data['data']
-        
-        return data['data']
+        return HttpResponse(json.dumps(data))
         
     except Exception as e:
         print e
@@ -609,8 +607,8 @@ def discrete_agg(es_params,request):
     aggregate_over = es_params['aggregate_over'].split('____')[0]
     
     try:
-        aggregations = {"strings" : {es_params['sort_by']: {"field": es_params['aggregate_over'],'size':50}},
-                        "distinct_values": {"cardinality": {"field":es_params['aggregate_over']}}}
+        aggregations = {"strings" : {es_params['sort_by']: {"field":aggregate_over,'size':50}},
+                        "distinct_values": {"cardinality": {"field":aggregate_over}}}
 
         # Define selected mapping
         datasets = get_datasets()
@@ -631,11 +629,14 @@ def discrete_agg(es_params,request):
                 distinct_values.append({'name':name,'data':response['aggregations']['distinct_values']['value']})
 
         q = query(es_params)
-        
+
+        # this is confusing for the user
         if len(q['query']['bool']['should']) > 0 or len(q['query']['bool']['must']) > 0:
             q["aggs"] = aggregations
             response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
+            
             normalised_counts,labels = normalise_agg(response,q,es_params,request,'strings')
+
             lexicon = list(set(lexicon+labels))
             query_results.append({'name':'Query','data':normalised_counts,'labels':labels})
             distinct_values.append({'name':'Query','data':response['aggregations']['distinct_values']['value']})
@@ -658,6 +659,7 @@ def discrete_agg(es_params,request):
 
 def normalise_agg(response,q,es_params,request,agg_type):
     raw_counts = [bucket['doc_count'] for bucket in response['aggregations'][agg_type]['buckets']]
+    
     bucket_labels = []
     if agg_type == 'strings':
         for a in response['aggregations']['strings']['buckets']:
