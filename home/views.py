@@ -46,7 +46,8 @@ def index(request):
         except:
             IndexError
 
-    sem_models = ModelRun.objects.all().filter(run_status='completed').order_by('-pk') 
+    # We should check if the model is actually present on the disk
+    sem_models = ModelRun.objects.all().filter(run_status='completed').order_by('-pk')
 
     try:
         request.session['model']

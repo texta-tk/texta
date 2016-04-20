@@ -29,7 +29,7 @@ def index(request):
     dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
     
     template = loader.get_template('model_manager/model_manager_index.html')
-    return HttpResponse(template.render({'searches':Search.objects.filter(author=request.user,dataset=Dataset(pk=selected_mapping)),'STATIC_URL':STATIC_URL,'runs':ModelRun.objects.all().order_by('-pk'),'fields':requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']},request))
+    return HttpResponse(template.render({'searches':Search.objects.filter(author=request.user,dataset=Dataset(pk=int(request.session['dataset']))),'STATIC_URL':STATIC_URL,'runs':ModelRun.objects.all().order_by('-pk'),'fields':requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']},request))
 
 @login_required
 @permission_required('model_manager.change_modelrun')
