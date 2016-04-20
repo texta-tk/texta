@@ -3,7 +3,7 @@ from settings import STATIC_URL, URL_PREFIX, es_url
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
-from utils.datasets import get_datasets
+from utils.datasets import get_active_dataset
 import requests
 import json
 
@@ -13,10 +13,7 @@ def index(request):
     request.session['seen_docs'] = []
 
     # Define selected mapping
-    datasets = get_datasets()
-    selected_mapping = int(request.session['dataset'])
-    dataset = datasets[selected_mapping]['index']
-    mapping = datasets[selected_mapping]['mapping']
+    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
 
     # Get field names and types
     fields = sorted(requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties'])
@@ -36,10 +33,7 @@ def query(request):
     field = request.POST['field']
 
     # Define selected mapping
-    datasets = get_datasets()
-    selected_mapping = int(request.session['dataset'])
-    dataset = datasets[selected_mapping]['index']
-    mapping = datasets[selected_mapping]['mapping']
+    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
     
     handle_negatives = request.POST['handle_negatives']
     ids = [a.strip() for a in request.POST['docs'].split('\n')]

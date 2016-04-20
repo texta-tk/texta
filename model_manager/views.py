@@ -20,16 +20,13 @@ from model_manager.models import ModelRun
 from permission_admin.models import Dataset
 from settings import STATIC_URL, es_url, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ERROR_LOGGER
 
-from utils.datasets import get_datasets
+from utils.datasets import get_active_dataset
 
 @login_required
 @permission_required('model_manager.change_modelrun')
 def index(request):    
     # Define selected mapping
-    datasets = get_datasets()
-    selected_mapping = int(request.session['dataset'])
-    dataset = datasets[selected_mapping]['index']
-    mapping = datasets[selected_mapping]['mapping']
+    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
     
     template = loader.get_template('model_manager/model_manager_index.html')
     return HttpResponse(template.render({'searches':Search.objects.filter(author=request.user,dataset=Dataset(pk=selected_mapping)),'STATIC_URL':STATIC_URL,'runs':ModelRun.objects.all().order_by('-pk'),'fields':requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']},request))

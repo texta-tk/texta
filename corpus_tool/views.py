@@ -18,7 +18,7 @@ from corpus_tool.models import Search
 from settings import STATIC_URL, URL_PREFIX, es_url, date_format, es_links, INFO_LOGGER, ERROR_LOGGER
 from permission_admin.models import Dataset
 
-from utils.datasets import get_datasets
+from utils.datasets import get_active_dataset
 
 ES_SCROLL_BATCH = 100
 
@@ -52,12 +52,7 @@ def get_fields(es_url,dataset,mapping):
 @login_required
 def index(request):
     # Define selected mapping
-    datasets = get_datasets()
-    selected_mapping = int(request.session['dataset'])
-    dataset = datasets[selected_mapping]['index']
-    mapping = datasets[selected_mapping]['mapping']
-    date_range = datasets[selected_mapping]['date_range']
-
+    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
 
     fields = get_fields(es_url,dataset,mapping)
 
@@ -204,11 +199,7 @@ def get_saved_searches(request):
 @login_required
 def get_examples_table(request):
     # Define selected mapping
-    datasets = get_datasets()
-    selected_mapping = int(request.session['dataset'])
-    dataset = datasets[selected_mapping]['index']
-    mapping = datasets[selected_mapping]['mapping']
-    date_range = datasets[selected_mapping]['date_range']
+    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
 
     # Get field names and types
     fields = [field for field in requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']]
@@ -233,7 +224,6 @@ def get_examples(request):
     es_params['num_examples'] = request.GET['iDisplayLength']
     return HttpResponse(json.dumps(search(es_params,request),ensure_ascii=False))
 
-
 def search(es_params,request):   
     try:
         start = time.time()
@@ -255,11 +245,7 @@ def search(es_params,request):
                 q['highlight']['fields'][f] = {"number_of_fragments":0}
 
         # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
-        date_range = datasets[selected_mapping]['date_range']
+        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
         
         response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
         out['iTotalRecords'] = response['hits']['total']
@@ -420,10 +406,7 @@ def get_rows(es_params,selected_mapping):
     features = { feature:None for feature in es_params['features'] }
     
     # Define selected mapping
-    datasets = get_datasets()
-#    selected_mapping = int(request.session['dataset'])
-    dataset = datasets[selected_mapping]['index']
-    mapping = datasets[selected_mapping]['mapping']
+    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
     
     response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search?scroll=1m',data=json.dumps(q)).json()
     scroll_id = response['_scroll_id']
@@ -487,10 +470,7 @@ def get_all_rows(es_params,selected_mapping):
     features = { feature:None for feature in es_params['features'] }
     
     # Define selected mapping
-    datasets = get_datasets()
-    selected_mapping = int(request.session['dataset'])
-    dataset = datasets[selected_mapping]['index']
-    mapping = datasets[selected_mapping]['mapping']
+    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
     
     response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search?scroll=1m',data=json.dumps(q)).json()
     
@@ -523,14 +503,7 @@ def aggregate(request):
         aggregation_field = es_params['aggregate_over']
 
         # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
-        date_range = datasets[selected_mapping]['date_range']
-        
-#        response = requests.get(es_url+'/'+dataset+'/_mapping/'+mapping).json()
-#        field_type = response[dataset]['mappings'][mapping]['properties'][aggregation_field]['type']
+        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
 
         field_type = aggregation_field.split('____')[-1]
 
@@ -562,11 +535,7 @@ def timeline(es_params,request):
         interval = es_params['interval']
 
         # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
-        date_range = datasets[selected_mapping]['date_range']
+        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
 
         # HACK
         aggregate_over = es_params['aggregate_over'].split('____')[0]
@@ -618,10 +587,7 @@ def discrete_agg(es_params,request):
                         "distinct_values": {"cardinality": {"field":aggregate_over}}}
 
         # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
+        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
 
         for item in es_params:
             if 'saved_search' in item:
@@ -678,11 +644,7 @@ def normalise_agg(response,q,es_params,request,agg_type):
         q["query"] = {"match_all":{}}
         
         # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
-
+        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
 
         response_all = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
         total_counts = [bucket['doc_count'] for bucket in response_all['aggregations'][agg_type]['buckets']]

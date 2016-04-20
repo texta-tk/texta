@@ -13,7 +13,7 @@ from model_manager.models import ModelRun
 from settings import URL_PREFIX, STATIC_URL, INFO_LOGGER, ERROR_LOGGER
 from utils.model_manager import get_model_manager
 from utils.precluster import PreclusterMaker
-from utils.datasets import get_datasets
+from utils.datasets import get_active_dataset
 
 from settings import es_url, es_links
 import requests
@@ -106,10 +106,7 @@ def selectLexicon(request):
         lexicons = Lexicon.objects.filter(author=request.user)
 
         # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
+        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
 
         features = [feature for feature in requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']]
         
@@ -160,10 +157,7 @@ def query(request):
         tooltip_feature = model_run_obj.fields
         
         # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
+        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
         
         if request.POST['method'][:12] == 'most_similar':
             for a in getattr(model,request.POST['method'])(positive=positives,topn=40,ignored_idxes = ignored_idxes):

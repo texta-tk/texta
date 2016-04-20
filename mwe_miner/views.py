@@ -15,7 +15,7 @@ from conceptualiser.models import Term,TermConcept,Concept
 from lm.models import Lexicon,Word
 from mwe_miner.models import Run
 from settings import URL_PREFIX, STATIC_URL, es_url, INFO_LOGGER, ERROR_LOGGER
-from utils.datasets import get_datasets
+from utils.datasets import get_active_dataset
 
 @login_required
 def index(request):
@@ -38,10 +38,7 @@ def index(request):
         lexicons.append(lexicon)
 
     # Define selected mapping
-    datasets = get_datasets()
-    selected_mapping = int(request.session['dataset'])
-    dataset = datasets[selected_mapping]['index']
-    mapping = datasets[selected_mapping]['mapping']
+    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
 
     fields = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']
 
@@ -227,10 +224,7 @@ def find_mappings(request):
         description = request.POST['description']
 
         # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
+        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
         
         lexicon = []
         word_index = {}
