@@ -6,15 +6,12 @@ import json
 import requests
 from estnltk import Regex, Lemmas, Concatenation, Union, Text
 from corpus_tool.views import Search
-from utils.datasets import get_datasets
+from utils.datasets import get_active_dataset
 
 @login_required
 def index(request):
     # Define selected mapping
-    datasets = get_datasets()
-    selected_mapping = int(request.session['dataset'])
-    dataset = datasets[selected_mapping]['index']
-    mapping = datasets[selected_mapping]['mapping']
+    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
 
     # Get field names and types
     fields = [a[0] for a in requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties'].items()]
@@ -93,10 +90,7 @@ def scroll_data(query,request):
         q = query
 
         # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
+        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
         
         response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
 

@@ -9,14 +9,11 @@ from model_manager.models import ModelRun
 from settings import STATIC_URL, es_url, URL_PREFIX, INFO_LOGGER
 import time
 
-from utils.datasets import get_datasets
+from utils.datasets import get_datasets,get_active_dataset
 
 def autocomplete_data(request,datasets):
     # Define selected mapping
-    
-    selected_mapping = int(request.session['dataset'])
-    index = datasets[selected_mapping]['index']
-    mapping = datasets[selected_mapping]['mapping']
+    dataset,mapping,_ = get_active_dataset(request.session['dataset'])
 
     fields = [(a[0],a[1]['type']) for a in requests.get(es_url+'/'+index).json()[index]['mappings'][mapping]['properties'].items()]
     fields = sorted(fields,key=lambda l:l[0])
@@ -49,7 +46,8 @@ def index(request):
         except:
             IndexError
 
-    sem_models = ModelRun.objects.all().filter(run_status='completed').order_by('-pk') 
+    # We should check if the model is actually present on the disk
+    sem_models = ModelRun.objects.all().filter(run_status='completed').order_by('-pk')
 
     try:
         request.session['model']

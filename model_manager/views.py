@@ -20,7 +20,7 @@ from model_manager.models import ModelRun
 from permission_admin.models import Dataset
 from settings import STATIC_URL, es_url, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ERROR_LOGGER
 
-from utils.datasets import get_datasets
+from utils.datasets import get_active_dataset
 
 
 def get_fields(es_url,dataset,mapping):
@@ -39,17 +39,13 @@ def get_fields(es_url,dataset,mapping):
 @login_required
 @permission_required('model_manager.change_modelrun')
 def index(request):    
-    # Define selected mapping
-    datasets = get_datasets()
-    selected_mapping = int(request.session['dataset'])
-    dataset = datasets[selected_mapping]['index']
-    mapping = datasets[selected_mapping]['mapping']
 
-    #fields = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']
+    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+
     fields = get_fields(es_url, dataset, mapping)
 
     template = loader.get_template('model_manager/model_manager_index.html')
-    return HttpResponse(template.render({'searches': Search.objects.filter(author=request.user,dataset=Dataset(pk=selected_mapping)),
+    return HttpResponse(template.render({'searches': Search.objects.filter(author=request.user,dataset=Dataset(pk=int(request.session['dataset']))),
                                          'STATIC_URL': STATIC_URL,
                                          'runs': ModelRun.objects.all().order_by('-pk'),
                                          'fields': fields}, request))
@@ -60,7 +56,7 @@ def index(request):
 def delete_model(request):
     model_id = request.GET['model_id']
     run = ModelRun.objects.get(pk=model_id)
-    if run.user == request.user:
+    if run.user == request.user or request.user.is_superuser:
         lm_model_manager.remove_model(run.pk)
         run.delete()
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DELETE MODEL','event':'model_deleted','args':{'user_name':request.user.username,'model_id':model_id}}))

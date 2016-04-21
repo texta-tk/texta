@@ -1,5 +1,4 @@
 from time import strftime
-#from utils.elasticsearch import parse_mappings
 import os
 
 DEBUG = True
@@ -23,10 +22,10 @@ if SERVER_TYPE == 'DEV':
     STATIC_URL = URL_PREFIX_DOMAIN + '/static/'
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 else:
-    URL_PREFIX_DOMAIN = 'https://ehr.stacc.ee'
-    URL_PREFIX_RESOURCE = '/public/texta'
-    ROOT_URLCONF = 'lexminer.urls'
-    STATIC_URL = '/public/texta/static/'
+    URL_PREFIX_DOMAIN = 'http://yourdomain.com'
+    URL_PREFIX_RESOURCE = '/texta'
+    ROOT_URLCONF = 'texta.urls'
+    STATIC_URL = '/texta/static/'
 
 URL_PREFIX = URL_PREFIX_DOMAIN + URL_PREFIX_RESOURCE
 
@@ -122,37 +121,6 @@ date_format = 'yyyy-MM-dd'
 es_url = os.getenv('TEXTA_ELASTICSEARCH_URL')
 if es_url is None:
     es_url = 'http://localhost:9200'
-
-# Define Elasticsearch datasets here!
-
-datasets = [{'name':'texta_open_data',
-             'date_range':{
-                     'min':'1995-01-01',
-                     'max':'2007-12-31'}
-             },
-             {'name':'ohtuleht',
-             'date_range':{
-                     'min':'2014-05-01',
-                     'max':'2015-12-31'}
-             },
-             {'name':'kohtulahendid_full',
-              'date_range':{
-                     'min':'1996-01-01',
-                     'max':'2015-12-31'}
-             },
-             {'name':'kohtulahendid_grammar',
-              'date_range':{
-                     'min':'1996-01-01',
-                     'max':'2015-12-31'}
-             },
-            ]
-
-
-
-# Get mappings from Elasticsearch
-#mappings = parse_mappings(datasets,es_url)
-
-mapping_fields = []
 
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')

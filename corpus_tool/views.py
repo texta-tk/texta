@@ -18,7 +18,7 @@ from corpus_tool.models import Search
 from settings import STATIC_URL, URL_PREFIX, es_url, date_format, es_links, INFO_LOGGER, ERROR_LOGGER
 from permission_admin.models import Dataset
 
-from utils.datasets import get_datasets
+from utils.datasets import get_active_dataset
 
 ES_SCROLL_BATCH = 100
 
@@ -26,6 +26,7 @@ try:
     from cStringIO import StringIO
 except:
     from StringIO import StringIO
+
 
 def ngrams(input_list, n):
   return zip(*[input_list[i:] for i in range(n)])
@@ -39,24 +40,19 @@ def get_fields(es_url,dataset,mapping):
     out = {}
     items = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties'].items()
     for item in items:
-        if item[1]['type'] != 'nested':
+        try:
             # flat field
             out[item[0]] = {'type':item[1]['type']}
-        else:
+        except KeyError:
             # layered field
-            out[item[0]] = {'type':'nested','layers':item[1]['properties'].keys()}
+            out[item[0]] = {'type':'object','layers':item[1]['properties'].keys()}
     return out
 
 
 @login_required
 def index(request):
     # Define selected mapping
-    datasets = get_datasets()
-    selected_mapping = int(request.session['dataset'])
-    dataset = datasets[selected_mapping]['index']
-    mapping = datasets[selected_mapping]['mapping']
-    date_range = datasets[selected_mapping]['date_range']
-
+    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
 
     fields = get_fields(es_url,dataset,mapping)
 
@@ -81,80 +77,6 @@ def highlight(text,spans,prefix,suffix):
         text = text.replace(text[a[1][0]:a[1][1]],prefix+text[a[1][0]:a[1][1]]+suffix)
     return text
 
-@login_required
-def search(request):   
-    try:
-        start = time.time()
-        selected_fields = []     
-        out = {'column_names':[],'rows':[],'total_hits':0,'lag':0}
-        q = query(request)
-
-        ### DEFINING THE EXAMPLE SIZE
-        q["from"] = 0
-        q["size"] = request.POST['num_examples']
-
-        ### HIGHLIGHTING THE MATCHING FIELDS
-        pre_tag = "<span style='background-color:#FFD119'>"
-        post_tag = "</span>"
-        q["highlight"] = {"fields":{},"pre_tags":[pre_tag],"post_tags":[post_tag]}
-        for field in request.POST:
-            if 'match_field' in field and request.POST['match_operator_'+field.split('_')[-1]] != 'must_not':
-                f = request.POST[field]
-                q['highlight']['fields'][f] = {"number_of_fragments":0}
-
-        # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
-        date_range = datasets[selected_mapping]['date_range']
-        
-        response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
-        out['total_hits'] = response['hits']['total']
-        
-        for hit in response['hits']['hits']:
-            row = []
-            for field,content in hit['_source'].items():  
-#                tech_field_name = selected_field+'__mappings'
-#                if tech_field_name in q['highlight']['fields']:
-#                    content = highlight(content,json.loads(hit['highlight'][tech_field_name][0]),pre_tag,post_tag)
-
-                # HIGHTLIGHT MATCHES
-                if field in q['highlight']['fields']:
-                    content = hit['highlight'][field][0]
-                ### CHECK FOR EXTERNAL RESOURCES
-                link_key = (dataset,mapping,field)
-                if link_key in es_links:
-                    link_prefix,link_suffix = es_links[link_key]
-                    content = '<a href="'+str(link_prefix)+str(content)+str(link_suffix)+'" target="_blank">'+str(content)+'</a>'
-                row.append(content)
-            out['rows'].append(row)
-        try:
-            out['column_names'] = hit['_source'].keys()
-        except UnboundLocalError as e:
-            ### no hits, thus no column names : (
-            print e
-
-        out['lag'] = time.time()-start
-        template = loader.get_template('corpus_tool/corpus_tool_results.html')
-        context = Context({'STATIC_URL': STATIC_URL,
-                        'name':request.user.username,
-                        'logged_in':True,
-                        'data':out})
-        
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'documents_queried','args':{'user_name':request.user.username}}))
-        
-        return HttpResponse(template.render(context))
-    except Exception as e:
-        print "Exception", e
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'documents_queried','args':{'user_name':request.user.username}}),exc_info=True)
-        template = loader.get_template('corpus_tool/corpus_tool_results.html')
-        context = Context({'STATIC_URL': STATIC_URL,
-                        'name':request.user.username,
-                        'logged_in':True,
-                        'data':'',
-                        'error':'query failed'})
-        return HttpResponse(template.render(context))
 
 def date_ranges(date_range,interval):
     frmt = "%Y-%m-%d"
@@ -196,81 +118,11 @@ def date_ranges(date_range,interval):
 
     return ranges,labels
 
-@login_required
-def timeline(request):
-    series_names = ['Date']
-    data = []
-    series = []
-    labels = []
-    
-    try:
-        interval = request.POST['interval']
-
-        # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
-        date_range = datasets[selected_mapping]['date_range']
-
-        # temporary
-        ranges,labels = date_ranges(date_range,interval)
-        aggregations = {"ranges" : {"date_range" : {"field": request.POST['aggregate_over'], "format": date_format, "ranges": ranges}}}
-        # find saved searches
-        for item in request.POST:
-            if 'saved_search' in item:
-                s = Search.objects.get(pk=request.POST[item])
-                name = s.description
-                saved_query = json.loads(s.query)
-                saved_query["aggs"] = aggregations
-                response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(saved_query)).json()
-                normalised_counts,_ = normalise_agg(response,saved_query,request,'ranges')
-                series.append({'name':name.encode('latin1'),'data':normalised_counts})
-        # add current search
-        q = query(request)
-        if len(q['query']['bool']['should']) > 0 or len(q['query']['bool']['must']) > 0:
-            q["aggs"] = aggregations
-            response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
-            normalised_counts,_ = normalise_agg(response,q,request,'ranges')
-            series.append({'name':'Query','data':normalised_counts})
-        data.append(['Date']+labels)
-        for serie in series:
-            data.append([serie['name']]+serie['data'])
-        data = map(list, zip(*data))
-        
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'timeline_queried','args':{'user_name':request.user.username}}))
-    except Exception as e:
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'timeline_query_failed','args':{'user_name':request.user.username}}),exc_info=True)
-    return {'data':data,'type':'line','height':'500','distinct_values':None}
-
-def normalise_agg(response,q,request,agg_type):
-    raw_counts = [bucket['doc_count'] for bucket in response['aggregations'][agg_type]['buckets']]
-    bucket_labels = []
-    if agg_type == 'strings':
-        for a in response['aggregations']['strings']['buckets']:
-            try:
-                bucket_labels.append(a['key'])
-            except KeyError:
-                bucket_labels.append(smart_str(a['key']))
-    if request.POST['frequency_normalisation'] == 'relative_frequency':
-        q["query"] = {"match_all":{}}
-        
-        # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
-
-        response_all = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
-        total_counts = [bucket['doc_count'] for bucket in response_all['aggregations'][agg_type]['buckets']]
-        relative_counts = [float(raw_counts[i])/total_counts[i] if total_counts[i] != 0 else 0 for i in range(len(total_counts))]
-        return relative_counts,bucket_labels
-    else:
-        return raw_counts,bucket_labels
 
 def zero_list(n):
     listofzeros = [0] * n
     return listofzeros
+
 
 def display_encode(s):
     try:
@@ -280,94 +132,13 @@ def display_encode(s):
         #TODO: What is the intention here?  Why is latin1 first? What are the appropriate exceptions instead of catchall)
         return s.encode('utf8')
 
-@login_required
-def discrete_agg(request):
-    distinct_values = []
-    query_results = []
-    lexicon = []
-    try:
-        aggregations = {"strings" : {request.POST['sort_by']: {"field": request.POST['aggregate_over'],'size':50}},
-                        "distinct_values": {"cardinality": {"field":request.POST['aggregate_over']}}}
-
-        # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
-
-        for item in request.POST:
-            if 'saved_search' in item:
-                s = Search.objects.get(pk=request.POST[item])
-                name = s.description
-                saved_query = json.loads(s.query)
-                saved_query["aggs"] = aggregations
-                response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(saved_query)).json()
-                normalised_counts,labels = normalise_agg(response,saved_query,request,'strings')
-                lexicon = list(set(lexicon+labels))
-                query_results.append({'name':name,'data':normalised_counts,'labels':labels})
-                distinct_values.append({'name':name,'data':response['aggregations']['distinct_values']['value']})
-
-        q = query(request)
-        if len(q['query']['bool']['should']) > 0 or len(q['query']['bool']['must']) > 0:
-            q["aggs"] = aggregations
-            response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
-            normalised_counts,labels = normalise_agg(response,q,request,'strings')
-            lexicon = list(set(lexicon+labels))
-            query_results.append({'name':'Query','data':normalised_counts,'labels':labels})
-            distinct_values.append({'name':'Query','data':response['aggregations']['distinct_values']['value']})
-
-        data = [a+zero_list(len(query_results)) for a in map(list, zip(*[lexicon]))]
-        data = [['Word']+[query_result['name'] for query_result in query_results]]+data
-
-        for i,word in enumerate(lexicon):          
-            for j,query_result in enumerate(query_results):               
-                for k,label in enumerate(query_result['labels']):
-                    if word == label:
-                        data[i+1][j+1] = query_result['data'][k]
-        
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'discrete_aggregation_queried','args':{'user_name':request.user.username}}))
-    except Exception as e:
-        print 'Exception',e
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'discrete_aggregation_query_failed','args':{'user_name':request.user.username}}),exc_info=True)
-    return {'data':[data[0]]+sorted(data[1:], key=lambda x: sum(x[1:]), reverse=True),'height':len(data)*15,'type':'bar','distinct_values':json.dumps(distinct_values)}
-
-@login_required
-def aggregate(request):
-    try:
-        aggregation_field = request.POST['aggregate_over']
-
-        # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
-        date_range = datasets[selected_mapping]['date_range']
-            
-        response = requests.get(es_url+'/'+dataset+'/_mapping/'+mapping).json()
-        field_type = response[dataset]['mappings'][mapping]['properties'][aggregation_field]['type']
-
-        if field_type == 'date':
-            data = timeline(request)
-            for i, str_val in enumerate(data['data'][0]):
-                data['data'][0][i] = str_val.decode('unicode-escape')
-        else:
-            data = discrete_agg(request)
-            
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'aggregation_queried','args':{'user_name':request.user.username}}))
-        
-        return HttpResponse(json.dumps(data,ensure_ascii=False))
-        
-    except Exception as e:
-        print e
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'aggregation_query_failed','args':{'user_name':request.user.username}}),exc_info=True)
-        return HttpResponse()
 
 @login_required
 def save(request):
     # TODO: Why is here an exception without calling request.POST???
     request.POST
     try:
-        q = query2(request)
+        q = query(request)
         desc = request.POST['search_description']
         search = Search(author=request.user,description=desc,dataset=Dataset.objects.get(pk=int(request.session['dataset'])),query=json.dumps(q))
         search.save()
@@ -376,6 +147,7 @@ def save(request):
         print 'Exception', e
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SAVE SEARCH','event':'search_saving_failed','args':{'user_name':request.user.username}}),exc_info=True)
     return HttpResponse()
+
 
 @login_required
 def delete(request):
@@ -386,6 +158,7 @@ def delete(request):
         print e
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'DELETE SEARCH','event':'search_deletion_failed','args':{'user_name':request.user.username,'search_id':int(request.GET['pk'])}}),exc_info=True)
     return HttpResponse(request.GET['pk'])
+
 
 def autocomplete(request):
     field_name = request.POST['field_name']
@@ -416,20 +189,17 @@ def autocomplete(request):
                         suggestions.append("<li class=\"list-group-item\" onclick=\"insert('"+str(concept.pk)+"','"+str(field_id)+"','"+smart_str(concept.descriptive_term.term)+"');\">"+display_text+"</li>")
             return HttpResponse(suggestions)
 
+
 @login_required
 def get_saved_searches(request):  
     searches = Search.objects.filter(author=request.user).filter(dataset=Dataset(pk=int(request.session['dataset'])))
     return HttpResponse(json.dumps([{'id':search.pk,'desc':search.description} for search in searches],ensure_ascii=False))
 
+
 @login_required
 def get_examples_table(request):
-
     # Define selected mapping
-    datasets = get_datasets()
-    selected_mapping = int(request.session['dataset'])
-    dataset = datasets[selected_mapping]['index']
-    mapping = datasets[selected_mapping]['mapping']
-    date_range = datasets[selected_mapping]['date_range']
+    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
 
     # Get field names and types
     fields = [field for field in requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']]
@@ -445,24 +215,21 @@ def get_examples_table(request):
                        'dataset':dataset,
                        'mapping':mapping}),request)
 
+
 @login_required
 def get_examples(request):
-    
     filter_params = json.loads(request.GET['filterParams'])
-    
-    
     es_params = {filter_param['name']:filter_param['value'] for filter_param in filter_params}
     es_params['examples_start'] = request.GET['iDisplayStart']
     es_params['num_examples'] = request.GET['iDisplayLength']
-    
-    return HttpResponse(json.dumps(search2(es_params,request),ensure_ascii=False))
+    return HttpResponse(json.dumps(search(es_params,request),ensure_ascii=False))
 
-def search2(es_params,request):   
+def search(es_params,request):   
     try:
         start = time.time()
         selected_fields = []     
         out = {'column_names':[],'aaData':[],'iTotalRecords':0,'iTotalDisplayRecords':0,'lag':0}
-        q = query2(es_params)
+        q = query(es_params)
 
         ### DEFINING THE EXAMPLE SIZE
         q["from"] = es_params['examples_start']
@@ -478,11 +245,7 @@ def search2(es_params,request):
                 q['highlight']['fields'][f] = {"number_of_fragments":0}
 
         # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
-        date_range = datasets[selected_mapping]['date_range']
+        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
         
         response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
         out['iTotalRecords'] = response['hits']['total']
@@ -520,7 +283,7 @@ def search2(es_params,request):
         return out
     except Exception as e:        
         print "Exception", e
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'documents_queried','args':{'query':q,'user_name':request.user.username}}),exc_info=True)
+        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'documents_queried','args':{'user_name':request.user.username}}),exc_info=True)
         template = loader.get_template('corpus_tool/corpus_tool_results.html')
         context = Context({'STATIC_URL': STATIC_URL,
                         'name':request.user.username,
@@ -530,7 +293,7 @@ def search2(es_params,request):
         return out
     
 
-def query2(es_params):
+def query(es_params):
     combined_query = {"query":{"bool":{"should":[],"must":[]}}}
     string_constraints = {}
     date_constraints = {}
@@ -553,10 +316,8 @@ def query2(es_params):
             if first_part not in date_constraints[second_part]:
                 date_constraints[second_part][first_part] = es_params['_'.join(item)]
 
-    
     for string_constraint in string_constraints.values():
         query_strings = [s.replace('\r','') for s in string_constraint['match_txt'].split('\n')]
-
         sub_queries = []
         for query_string in query_strings:
             if query_string:
@@ -570,27 +331,40 @@ def query2(es_params):
                 else:
                     synonyms.append(query_string)
 
-                ### resolve synonymy
-                if string_constraint['match_type'] == 'match':
-                    synonym_queries = []
-                    for synonym in synonyms:
-                        # check if matching a nested field
-                        if 'match_layer' in string_constraint:
-                            synonym_queries.append({"nested":{"path":string_constraint['match_field'],"query":{string_constraint['match_type']:{string_constraint['match_field']+"."+string_constraint["match_layer"]:{"query":synonym,"operator":"and"}}}}})
+
+                
+                ### construct synonym queries
+                synonym_queries = []
+                for synonym in synonyms:
+                    nested = False
+                    match_query = {'query':synonym}
+                    if string_constraint['match_type'] == 'match':
+                        # match query
+                        match_query['operator'] = 'and'
+                    else:
+                        # match phrase (prefix) query
+                        match_query['slop'] = string_constraint["match_slop"]
+                    if 'match_layer' in string_constraint:
+                        # match child element
+                        layer = string_constraint['match_layer']
+                        if layer == 'facts':
+                            ### try on a nested object query
+                            match_field = '.'.join([string_constraint['match_field'],layer])
+                            nested = {"nested": { "path": match_field, "query": {string_constraint['match_type']:{'.'.join([match_field,'fact']):match_query}}}}
                         else:
-                            synonym_queries.append({string_constraint['match_type']:{string_constraint['match_field']:{'query':synonym,'operator':'and'}}})
-#         
-                    sub_queries.append({'bool': {'minimum_should_match':1,'should':synonym_queries}})                    
-                else:
-                    synonym_queries = []
-                    for synonym in synonyms:
-                        # check if matching a nested field
-                        if 'match_layer' in string_constraint:
-                            synonym_queries.append({"nested":{"path":string_constraint['match_field'],"query":{string_constraint['match_type']:{string_constraint['match_field']+"."+string_constraint["match_layer"]:{"query":synonym,"slop":string_constraint['match_slop']}}}}})
-                        else:
-                            synonym_queries.append({string_constraint['match_type']:{string_constraint['match_field']:{'query':synonym,'slop':string_constraint['match_slop']}}})
-                    
-                    sub_queries.append({'bool': {'minimum_should_match':1,'should':synonym_queries}})
+                            match_field = '.'.join([string_constraint['match_field'],layer])
+                    else:
+                        # match element
+                        match_field = string_constraint['match_field']
+
+                    if nested == False:
+                        synonym_queries.append({string_constraint['match_type']:{match_field:match_query}})
+                    else:
+                        synonym_queries.append(nested)
+
+
+
+                sub_queries.append({'bool': {'minimum_should_match':1,'should':synonym_queries}})      
         combined_query["query"]["bool"]["should"].append({"bool":{string_constraint['match_operator']:sub_queries}})
     combined_query["query"]["bool"]["minimum_should_match"] = len(string_constraints)
 
@@ -601,20 +375,22 @@ def query2(es_params):
         combined_query['query']['bool']['must'].append(date_range_end)
     
     return combined_query
-    
+
+
 @login_required
 def export_pages(request):
 
     es_params = {entry['name']:entry['value'] for entry in json.loads(request.GET['args'])}
 
     if (es_params['num_examples'] == '*'):
-        response = StreamingHttpResponse(get_all_rows(es_params,int(request.session['mapping'])),content_type='text/csv')
+        response = StreamingHttpResponse(get_all_rows(es_params,int(request.session['dataset'])),content_type='text/csv')
     else:
-        response = StreamingHttpResponse(get_rows(es_params,int(request.session['mapping'])),content_type='text/csv')
+        response = StreamingHttpResponse(get_rows(es_params,int(request.session['dataset'])),content_type='text/csv')
     
     response['Content-Disposition'] = 'attachment; filename="%s"'%(es_params['filename'])
 
     return response
+
 
 def get_rows(es_params,selected_mapping):
     buffer_ = StringIO()
@@ -622,7 +398,7 @@ def get_rows(es_params,selected_mapping):
     
     writer.writerow(es_params['features'])
 
-    q = query2(es_params)
+    q = query(es_params)
     
     q["from"] = es_params['examples_start']
     q["size"] = es_params['num_examples'] if es_params['num_examples'] <= ES_SCROLL_BATCH else ES_SCROLL_BATCH
@@ -630,10 +406,7 @@ def get_rows(es_params,selected_mapping):
     features = { feature:None for feature in es_params['features'] }
     
     # Define selected mapping
-    datasets = get_datasets()
-    selected_mapping = int(request.session['dataset'])
-    dataset = datasets[selected_mapping]['index']
-    mapping = datasets[selected_mapping]['mapping']
+    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
     
     response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search?scroll=1m',data=json.dumps(q)).json()
     scroll_id = response['_scroll_id']
@@ -683,23 +456,21 @@ def get_rows(es_params,selected_mapping):
             
             break
 
+
 def get_all_rows(es_params,selected_mapping):
     buffer_ = StringIO()
     writer = csv.writer(buffer_)
     
     writer.writerow(es_params['features'])
     
-    q = query2(es_params)
+    q = query(es_params)
     
     q["size"] = ES_SCROLL_BATCH
     
     features = { feature:None for feature in es_params['features'] }
     
     # Define selected mapping
-    datasets = get_datasets()
-    selected_mapping = int(request.session['dataset'])
-    dataset = datasets[selected_mapping]['index']
-    mapping = datasets[selected_mapping]['mapping']
+    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
     
     response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search?scroll=1m',data=json.dumps(q)).json()
     
@@ -723,38 +494,38 @@ def get_all_rows(es_params,selected_mapping):
         yield data
         
         hits = requests.post(es_url+'/'+'_search/scroll',data=scroll_query).json()['hits']['hits']
-            
-def get_aggregation_data(es_params,request):
+
+         
+def aggregate(request):
+    es_params = request.POST
+    
     try:
         aggregation_field = es_params['aggregate_over']
 
         # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
-        date_range = datasets[selected_mapping]['date_range']
-        
-        response = requests.get(es_url+'/'+dataset+'/_mapping/'+mapping).json()
-        field_type = response[dataset]['mappings'][mapping]['properties'][aggregation_field]['type']
+        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
+
+        field_type = aggregation_field.split('____')[-1]
 
         if field_type == 'date':
-            data = timeline2(es_params,request)
+            data = timeline(es_params,request)
+            
             for i, str_val in enumerate(data['data'][0]):
                 data['data'][0][i] = str_val.decode('unicode-escape')
         else:
-            data = discrete_agg2(es_params,request)
-            
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'aggregation_queried','args':{'user_name':request.user.username}}))
+            data = discrete_agg(es_params,request)
         
-        return data['data']
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'aggregation_queried','args':{'user_name':request.user.username}}))
+
+        return HttpResponse(json.dumps(data))
         
     except Exception as e:
         print e
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'aggregation_query_failed','args':{'user_name':request.user.username}}),exc_info=True)
         return HttpResponse()
-    
-def timeline2(es_params,request):
+
+ 
+def timeline(es_params,request):
     series_names = ['Date']
     data = []
     series = []
@@ -764,15 +535,15 @@ def timeline2(es_params,request):
         interval = es_params['interval']
 
         # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
-        date_range = datasets[selected_mapping]['date_range']
+        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
+
+        # HACK
+        aggregate_over = es_params['aggregate_over'].split('____')[0]
 
         # temporary
         ranges,labels = date_ranges(date_range,interval)
-        aggregations = {"ranges" : {"date_range" : {"field": es_params['aggregate_over'], "format": date_format, "ranges": ranges}}}
+        aggregations = {"ranges" : {"date_range" : {"field": aggregate_over, "format": date_format, "ranges": ranges}}}
+        
         # find saved searches
         for item in es_params:
             if 'saved_search' in item:
@@ -781,14 +552,16 @@ def timeline2(es_params,request):
                 saved_query = json.loads(s.query)
                 saved_query["aggs"] = aggregations
                 response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(saved_query)).json()
-                normalised_counts,_ = normalise_agg2(response,saved_query,es_params,request,'ranges')
+                normalised_counts,_ = normalise_agg(response,saved_query,es_params,request,'ranges')
                 series.append({'name':name.encode('latin1'),'data':normalised_counts})
         # add current search
-        q = query2(es_params)
+        q = query(es_params)
+        
         if len(q['query']['bool']['should']) > 0 or len(q['query']['bool']['must']) > 0:
             q["aggs"] = aggregations
+            
             response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
-            normalised_counts,_ = normalise_agg2(response,q,es_params,request,'ranges')
+            normalised_counts,_ = normalise_agg(response,q,es_params,request,'ranges')
             series.append({'name':'Query','data':normalised_counts})
         data.append(['Date']+labels)
         for serie in series:
@@ -801,19 +574,20 @@ def timeline2(es_params,request):
     return {'data':data,'type':'line','height':'500','distinct_values':None}
 
 
-def discrete_agg2(es_params,request):
+def discrete_agg(es_params,request):
     distinct_values = []
     query_results = []
     lexicon = []
+
+    # HACK
+    aggregate_over = es_params['aggregate_over'].split('____')[0]
+    
     try:
-        aggregations = {"strings" : {es_params['sort_by']: {"field": es_params['aggregate_over'],'size':50}},
-                        "distinct_values": {"cardinality": {"field":es_params['aggregate_over']}}}
+        aggregations = {"strings" : {es_params['sort_by']: {"field":aggregate_over,'size':50}},
+                        "distinct_values": {"cardinality": {"field":aggregate_over}}}
 
         # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
+        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
 
         for item in es_params:
             if 'saved_search' in item:
@@ -822,16 +596,20 @@ def discrete_agg2(es_params,request):
                 saved_query = json.loads(s.query)
                 saved_query["aggs"] = aggregations
                 response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(saved_query)).json()
-                normalised_counts,labels = normalise_agg2(response,saved_query,es_params,request,'strings')
+                normalised_counts,labels = normalise_agg(response,saved_query,es_params,request,'strings')
                 lexicon = list(set(lexicon+labels))
                 query_results.append({'name':name,'data':normalised_counts,'labels':labels})
                 distinct_values.append({'name':name,'data':response['aggregations']['distinct_values']['value']})
 
-        q = query2(es_params)
+        q = query(es_params)
+
+        # this is confusing for the user
         if len(q['query']['bool']['should']) > 0 or len(q['query']['bool']['must']) > 0:
             q["aggs"] = aggregations
             response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
-            normalised_counts,labels = normalise_agg2(response,q,es_params,request,'strings')
+            
+            normalised_counts,labels = normalise_agg(response,q,es_params,request,'strings')
+
             lexicon = list(set(lexicon+labels))
             query_results.append({'name':'Query','data':normalised_counts,'labels':labels})
             distinct_values.append({'name':'Query','data':response['aggregations']['distinct_values']['value']})
@@ -851,8 +629,10 @@ def discrete_agg2(es_params,request):
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'discrete_aggregation_query_failed','args':{'user_name':request.user.username}}),exc_info=True)
     return {'data':[data[0]]+sorted(data[1:], key=lambda x: sum(x[1:]), reverse=True),'height':len(data)*15,'type':'bar','distinct_values':json.dumps(distinct_values)}
 
-def normalise_agg2(response,q,es_params,request,agg_type):
+
+def normalise_agg(response,q,es_params,request,agg_type):
     raw_counts = [bucket['doc_count'] for bucket in response['aggregations'][agg_type]['buckets']]
+    
     bucket_labels = []
     if agg_type == 'strings':
         for a in response['aggregations']['strings']['buckets']:
@@ -864,11 +644,7 @@ def normalise_agg2(response,q,es_params,request,agg_type):
         q["query"] = {"match_all":{}}
         
         # Define selected mapping
-        datasets = get_datasets()
-        selected_mapping = int(request.session['dataset'])
-        dataset = datasets[selected_mapping]['index']
-        mapping = datasets[selected_mapping]['mapping']
-
+        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
 
         response_all = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
         total_counts = [bucket['doc_count'] for bucket in response_all['aggregations'][agg_type]['buckets']]
