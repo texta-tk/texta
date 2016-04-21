@@ -7,15 +7,16 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from model_manager.models import ModelRun
 from settings import STATIC_URL, es_url, URL_PREFIX, INFO_LOGGER
-import time
+
 
 from utils.datasets import get_datasets,get_active_dataset
+
 
 def autocomplete_data(request,datasets):
     # Define selected mapping
     dataset,mapping,_ = get_active_dataset(request.session['dataset'])
 
-    fields = [(a[0],a[1]['type']) for a in requests.get(es_url+'/'+index).json()[index]['mappings'][mapping]['properties'].items()]
+    fields = [(a[0],a[1]['type']) for a in requests.get(es_url+'/'+dataset).json()[index]['mappings'][mapping]['properties'].items()]
     fields = sorted(fields,key=lambda l:l[0])
 
     # Get term aggregations for fields (for autocomplete)
@@ -25,7 +26,7 @@ def autocomplete_data(request,datasets):
     for field in fields:
         if field[1] == 'string':
             query["aggs"][field[0]] = {"terms":{"field":field[0],"size":unique_limit+1}}
-    response = requests.post(es_url+'/'+index+'/'+mapping+'/_search',data=json.dumps(query)).json()
+    response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(query)).json()
 
     for a in response["aggregations"].items():
         terms = [b["key"] for b in a[1]["buckets"]]
