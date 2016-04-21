@@ -186,10 +186,10 @@ class esIterator(object):
         self.punct_re = re.compile('[%s]' % re.escape(string.punctuation))
 
         # Define selected mapping
-        self.datasets = get_datasets()
-        self.selected_mapping = int(request.session['dataset'])
-        self.dataset = self.datasets[self.selected_mapping]['index']
-        self.mapping = self.datasets[self.selected_mapping]['mapping']
+        dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+
+        self.dataset = dataset
+        self.mapping = mapping
 
         self.callback_progress = callback_progress
 
