@@ -23,17 +23,16 @@ from settings import STATIC_URL, es_url, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ER
 from utils.datasets import get_active_dataset
 
 
-def get_fields(es_url,dataset,mapping):
+def get_fields(es_url, dataset, mapping):
     out = {}
     items = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties'].items()
     for item in items:
-        if item[1]['type'] != 'nested':
-            # flat field
-            out[item[0]] = {'type':item[1]['type']}
-        else:
+        if 'properties' in item[1]:
             # layered field
-            out[item[0]] = {'type':'nested','layers':item[1]['properties'].keys()}
-    return out
+            out[item[0]] = {'type': 'object', 'layers': item[1]['properties'].keys()}
+        else:
+            # flat field
+            out[item[0]] = {'type': item[1]['type']}
 
 
 @login_required
