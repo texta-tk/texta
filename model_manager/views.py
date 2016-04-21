@@ -22,14 +22,33 @@ from settings import STATIC_URL, es_url, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ER
 
 from utils.datasets import get_active_dataset
 
+
+def get_fields(es_url, dataset, mapping):
+    out = {}
+    items = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties'].items()
+    for item in items:
+        if 'properties' in item[1]:
+            # layered field
+            out[item[0]] = {'type': 'object', 'layers': item[1]['properties'].keys()}
+        else:
+            # flat field
+            out[item[0]] = {'type': item[1]['type']}
+    return out
+
+
 @login_required
 @permission_required('model_manager.change_modelrun')
-def index(request):    
-    # Define selected mapping
-    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
-    
+def index(request):
+
+    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+    fields = get_fields(es_url, dataset, mapping)
+
     template = loader.get_template('model_manager/model_manager_index.html')
-    return HttpResponse(template.render({'searches':Search.objects.filter(author=request.user,dataset=Dataset(pk=int(request.session['dataset']))),'STATIC_URL':STATIC_URL,'runs':ModelRun.objects.all().order_by('-pk'),'fields':requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']},request))
+    return HttpResponse(template.render({'searches': Search.objects.filter(author=request.user,dataset=Dataset(pk=int(request.session['dataset']))),
+                                         'STATIC_URL': STATIC_URL,
+                                         'runs': ModelRun.objects.all().order_by('-pk'),
+                                         'fields': fields}, request))
+
 
 @login_required
 @permission_required('model_manager.change_modelrun')
@@ -167,10 +186,10 @@ class esIterator(object):
         self.punct_re = re.compile('[%s]' % re.escape(string.punctuation))
 
         # Define selected mapping
-        self.datasets = get_datasets()
-        self.selected_mapping = int(request.session['dataset'])
-        self.dataset = self.datasets[self.selected_mapping]['index']
-        self.mapping = self.datasets[self.selected_mapping]['mapping']
+        dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+
+        self.dataset = dataset
+        self.mapping = mapping
 
         self.callback_progress = callback_progress
 
@@ -197,7 +216,14 @@ class esIterator(object):
                 raise esIteratorError(msg)
 
             for hit in response['hits']['hits']:
-                sentences = hit['_source'][self.field].split('\n')
+
+                # Take into account nested fields encoded as: 'field____layer'
+                decoded_text = hit['_source']
+                for k in self.field.split('____'):
+                    decoded_text = decoded_text[k]
+
+                sentences = decoded_text.split('\n')
+
                 reduction_methods = self.request.POST.getlist('lexicon_reduction[]')
                 if u'remove_numbers' in reduction_methods:
                     # remove numbers

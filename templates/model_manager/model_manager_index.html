@@ -25,8 +25,14 @@
 				<div class="col-sm-6">
 								<select id="field" class="form-control">
 									<option></option>
-									{% for field in fields %}
-									<option value="{{field}}">{{field}}</option>
+									{% for field in fields.items %}
+										{% if field.1.type == 'object' %}
+											{% for layer in field.1.layers %}
+												<option value="{{field.0}}____{{layer}}">{{field.0}} ({{layer}})</option>
+											{% endfor %}
+										{% else %}
+											<option value="{{field.0}}">{{field.0}}</option>
+										{% endif %}
 									{% endfor %}
 								</select>			
 				</div>
