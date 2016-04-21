@@ -33,14 +33,14 @@ def get_fields(es_url, dataset, mapping):
         else:
             # flat field
             out[item[0]] = {'type': item[1]['type']}
+    return out
 
 
 @login_required
 @permission_required('model_manager.change_modelrun')
-def index(request):    
+def index(request):
 
     dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-
     fields = get_fields(es_url, dataset, mapping)
 
     template = loader.get_template('model_manager/model_manager_index.html')
