@@ -73,14 +73,21 @@ def _decode_mapping_structure(structure, root_path=list()):
     return mapping_data
 
 
+def get_mapped_fields(es_url, dataset, mapping):
+    """ Get flat structure of fields from Elasticsearch mapping
+    """
+    mapping_structure = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']
+    mapping_data = _decode_mapping_structure(mapping_structure)
+    return mapping_data
+
+
 def get_fields(es_url, dataset, mapping):
     """ Crete field list from fields in the Elasticsearch mapping
     """
     fields = []
-    mapping_structure = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']
-    mapping_data = _decode_mapping_structure(mapping_structure)
+    mapped_fields = get_mapped_fields(es_url, dataset, mapping)
 
-    for data in mapping_data:
+    for data in mapped_fields:
         path = data['path']
         path_list = path.split('.')
         label = '{0} --> {1}'.format(path_list[0], ' --> '.join(path_list[1:])) if len(path_list) > 1 else path_list[0]
