@@ -95,12 +95,12 @@ def get_fields(es_url, dataset, mapping):
         field = {'data': json.dumps(data), 'label': label}
         fields.append(field)
 
-    # Check if field has facts
-    for field in fields:
-        data = json.loads(field['data'])
-        path = data['path']
-        path_list = path.split('.')
-        field['has_fact'] = _check_if_has_facts(es_url, dataset, mapping, path_list)
+        # Add additional field if it has fact
+        if _check_if_has_facts(es_url, dataset, mapping, path_list):
+            data['type'] = 'facts'
+            label += ' [facts]'
+            field = {'data': json.dumps(data), 'label': label}
+            fields.append(field)
 
     return fields
 
