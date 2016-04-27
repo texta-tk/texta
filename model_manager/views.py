@@ -68,6 +68,9 @@ def get_fields(es_url, dataset, mapping):
         field = {'data': json.dumps(data), 'label': label}
         fields.append(field)
 
+    # Sort fields by label
+    fields = sorted(fields, key=lambda l: l['label'])
+
     return fields
 
 
