@@ -23,17 +23,55 @@ from settings import STATIC_URL, es_url, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ER
 from utils.datasets import get_active_dataset
 
 
-def get_fields(es_url, dataset, mapping):
-    out = {}
-    items = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties'].items()
-    for item in items:
+
+def _decode_mapping_structure(structure, root_path=list()):
+    """ Decode mapping structure (nested dictionary) to a flat structure
+    """
+    mapping_data = []
+
+    for item in structure.items():
         if 'properties' in item[1]:
-            # layered field
-            out[item[0]] = {'type': 'object', 'layers': item[1]['properties'].keys()}
+            sub_structure = item[1]['properties']
+            path_list = root_path[:]
+            path_list.append(item[0])
+            sub_mapping = _decode_mapping_structure(sub_structure, root_path=path_list)
+            mapping_data.extend(sub_mapping)
         else:
-            # flat field
-            out[item[0]] = {'type': item[1]['type']}
-    return out
+            path_list = root_path[:]
+            path_list.append(item[0])
+            path = '.'.join(path_list)
+            data = {'path': path, 'type': item[1]['type']}
+            mapping_data.append(data)
+
+    return mapping_data
+
+
+def get_mapped_fields(es_url, dataset, mapping):
+    """ Get flat structure of fields from Elasticsearch mapping
+    """
+    mapping_structure = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']
+    mapping_data = _decode_mapping_structure(mapping_structure)
+    return mapping_data
+
+
+def get_fields(es_url, dataset, mapping):
+    """ Crete field list from fields in the Elasticsearch mapping
+    """
+    fields = []
+    mapped_fields = get_mapped_fields(es_url, dataset, mapping)
+
+    for data in mapped_fields:
+        path = data['path']
+        path_list = path.split('.')
+        label = '{0} --> {1}'.format(path_list[0], ' --> '.join(path_list[1:])) if len(path_list) > 1 else path_list[0]
+        label = label.replace('-->', u'→')
+        field = {'data': json.dumps(data), 'label': label}
+        fields.append(field)
+
+    # Sort fields by label
+    fields = sorted(fields, key=lambda l: l['label'])
+
+    return fields
 
 
 @login_required
@@ -70,14 +108,16 @@ def start_training_job(request):
     num_dimensions = int(request.POST['num_dimensions'])
     num_workers = int(request.POST['num_workers'])
     description = request.POST['description']
-    field = request.POST['field']
+    mapped_field = request.POST['field']
+    mapped_field = json.loads(mapped_field)
+    field_path = mapped_field['path']
     min_freq = int(request.POST['min_freq'])
     search_id = int(request.POST['search'])
-    threading.Thread(target=train_model,args=(search_id,field,num_dimensions,num_workers,min_freq,request.user,description,request)).start()
+    threading.Thread(target=train_model,args=(search_id,field_path,num_dimensions,num_workers,min_freq,request.user,description,request)).start()
     return HttpResponse()
 
 
-def train_model(search_id,field,num_dimensions,num_workers,min_freq,usr,description,request):
+def train_model(search_id,field_path,num_dimensions,num_workers,min_freq,usr,description,request):
     # add Run to db
     dataset_pk = int(request.session['dataset'])
 
@@ -87,14 +127,14 @@ def train_model(search_id,field,num_dimensions,num_workers,min_freq,usr,descript
                        min_freq=min_freq,
                        num_dimensions=num_dimensions,
                        num_workers=num_workers,
-                       fields=field,
+                       fields=field_path,
                        search=Search.objects.get(pk=search_id).query, run_status=model_status,
                        run_started=datetime.now(), run_completed=None, user=usr)
     new_run.save()
 
     logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_started',
                                                     'args': {'user_name': request.user.username, 'search_id': search_id,
-                                                             'field': field, 'num_dimensions': num_dimensions,
+                                                             'field': field_path, 'num_dimensions': num_dimensions,
                                                              'num_workers': num_workers, 'min_freq': min_freq,
                                                              'desc': description}, 'data': {'run_id': new_run.id}}))
     print 'Run added to db.'
@@ -109,7 +149,7 @@ def train_model(search_id,field,num_dimensions,num_workers,min_freq,usr,descript
     model = word2vec.Word2Vec()
 
     try:
-        sentences = esIterator(query, field, request, callback_progress=show_progress)
+        sentences = esIterator(query, field_path, request, callback_progress=show_progress)
 
         model = word2vec.Word2Vec(sentences, min_count=min_freq,
                                   size=num_dimensions,
@@ -163,7 +203,6 @@ class ShowProgress(object):
         self.update_view(percentage)
 
     def update_view(self, percentage):
-#        print('--- progress: {0:3.0f} %'.format(percentage))
         r = ModelRun.objects.get(pk=self.model_pk)
         r.run_status = 'running [{0:3.0f} %]'.format(percentage)
         r.save()
@@ -217,9 +256,9 @@ class esIterator(object):
 
             for hit in response['hits']['hits']:
 
-                # Take into account nested fields encoded as: 'field____layer'
+                # Take into account nested fields encoded as: 'field.sub_field'
                 decoded_text = hit['_source']
-                for k in self.field.split('____'):
+                for k in self.field.split('.'):
                     decoded_text = decoded_text[k]
 
                 sentences = decoded_text.split('\n')

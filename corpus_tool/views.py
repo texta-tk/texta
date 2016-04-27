@@ -36,25 +36,94 @@ def convert_date(date_string,frmt):
     return datetime.strptime(date_string,frmt).date()
 
 
-def get_fields(es_url,dataset,mapping):
-    out = {}
-    items = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties'].items()
-    for item in items:
-        try:
-            # flat field
-            out[item[0]] = {'type':item[1]['type']}
-        except KeyError:
-            # layered field
-            out[item[0]] = {'type':'object','layers':item[1]['properties'].keys()}
-    return out
+def _check_if_has_facts(es_url, _index, _type, sub_fields):
+    """ Check if field is associate with facts in Elasticsearch
+    """
+    doc_type = _type.lower()
+    doc_path = [s.lower() for s in sub_fields]
+    request_url = '{0}/{1}/{2}/_count'.format(es_url, _index, 'texta')
+    q = {"query": { "bool": { "filter": {'and': []}}}}
+    q['query']['bool']['filter']['and'].append({ "term": {'facts.doc_type': doc_type }})
+    for p in doc_path:
+        q['query']['bool']['filter']['and'].append({ "term": {'facts.doc_path': p }})
+    q = json.dumps(q)
+    response = requests.post(request_url, data=q).json()
+    return response['count'] > 0
+
+
+def _decode_mapping_structure(structure, root_path=list()):
+    """ Decode mapping structure (nested dictionary) to a flat structure
+    """
+    mapping_data = []
+
+    for item in structure.items():
+        if 'properties' in item[1]:
+            sub_structure = item[1]['properties']
+            path_list = root_path[:]
+            path_list.append(item[0])
+            sub_mapping = _decode_mapping_structure(sub_structure, root_path=path_list)
+            mapping_data.extend(sub_mapping)
+        else:
+            path_list = root_path[:]
+            path_list.append(item[0])
+            path = '.'.join(path_list)
+            data = {'path': path, 'type': item[1]['type']}
+            mapping_data.append(data)
+
+    return mapping_data
+
+
+def get_mapped_fields(es_url, dataset, mapping):
+    """ Get flat structure of fields from Elasticsearch mapping
+    """
+    mapping_structure = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']
+    mapping_data = _decode_mapping_structure(mapping_structure)
+    return mapping_data
+
+
+def get_fields(es_url, dataset, mapping):
+    """ Crete field list from fields in the Elasticsearch mapping
+    """
+    fields = []
+    mapped_fields = get_mapped_fields(es_url, dataset, mapping)
+
+    for data in mapped_fields:
+        path = data['path']
+        path_list = path.split('.')
+        label = '{0} --> {1}'.format(path_list[0], ' --> '.join(path_list[1:])) if len(path_list) > 1 else path_list[0]
+        label = label.replace('-->', u'→')
+        field = {'data': json.dumps(data), 'label': label}
+        fields.append(field)
+
+        # Add additional field if it has fact
+        if _check_if_has_facts(es_url, dataset, mapping, path_list):
+            data['type'] = 'facts'
+            label += ' [facts]'
+            field = {'data': json.dumps(data), 'label': label}
+            fields.append(field)
+
+    # Sort fields by label
+    fields = sorted(fields, key=lambda l: l['label'])
+
+    return fields
+
+
+def get_column_names(es_url, dataset, mapping):
+    """ Get Column names from flat mapping structure
+        Returns: sorted list of names
+    """
+    mapped_fields = get_mapped_fields(es_url, dataset, mapping)
+    column_names = [c['path'] for c in mapped_fields]
+    column_names.sort()
+    return column_names
 
 
 @login_required
 def index(request):
     # Define selected mapping
-    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
+    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
 
-    fields = get_fields(es_url,dataset,mapping)
+    fields = get_fields(es_url, dataset, mapping)
 
     template = loader.get_template('corpus_tool/corpus_tool_index.html')
     return HttpResponse(template.render({'STATIC_URL':STATIC_URL,
@@ -161,19 +230,21 @@ def delete(request):
 
 
 def autocomplete(request):
+
     field_name = request.POST['field_name']
     field_id = request.POST['id']
+    content = request.POST['content']
     autocomplete_data = request.session['autocomplete_data']
+
+    suggestions = []
+
     if field_name in autocomplete_data.keys():
-        suggestions = []
         for term in autocomplete_data[field_name]:
             suggestions.append("<li class=\"list-group-item\" onclick=\"insert('','"+str(field_id)+"','"+smart_str(term)+"');\">"+smart_str(term)+"</li>")
-        return HttpResponse(suggestions)
     else:
-        if request.POST['content']:
-            last_line = request.POST['content'].split('\n')[-1]
-        else:
-            return HttpResponse()
+
+        last_line = content.split('\n')[-1] if content else ''
+
         if len(last_line) > 0:
             terms = Term.objects.filter(term__startswith=last_line).filter(author=request.user)
             seen = {}
@@ -187,7 +258,8 @@ def autocomplete(request):
                         display_term = term.term.replace(last_line,'<font color="red">'+last_line+'</font>')
                         display_text = "<b>"+smart_str(display_term)+"</b> @"+smart_str(concept.pk)+"-"+smart_str(concept.descriptive_term.term)
                         suggestions.append("<li class=\"list-group-item\" onclick=\"insert('"+str(concept.pk)+"','"+str(field_id)+"','"+smart_str(concept.descriptive_term.term)+"');\">"+display_text+"</li>")
-            return HttpResponse(suggestions)
+
+    return HttpResponse(suggestions)
 
 
 @login_required
@@ -199,11 +271,10 @@ def get_saved_searches(request):
 @login_required
 def get_examples_table(request):
     # Define selected mapping
-    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
+    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
 
-    # Get field names and types
-    fields = [field for field in requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']]
-    fields.sort()
+    # get columns names from ES mapping
+    fields = get_column_names(es_url, dataset, mapping)
 
     template = loader.get_template('corpus_tool/corpus_tool_results.html')
     return HttpResponse(template.render({'STATIC_URL':STATIC_URL,
@@ -219,16 +290,24 @@ def get_examples_table(request):
 @login_required
 def get_examples(request):
     filter_params = json.loads(request.GET['filterParams'])
-    es_params = {filter_param['name']:filter_param['value'] for filter_param in filter_params}
+    es_params = {filter_param['name']: filter_param['value'] for filter_param in filter_params}
     es_params['examples_start'] = request.GET['iDisplayStart']
     es_params['num_examples'] = request.GET['iDisplayLength']
-    return HttpResponse(json.dumps(search(es_params,request),ensure_ascii=False))
+    result = search(es_params, request)
 
-def search(es_params,request):   
+    return HttpResponse(json.dumps(result, ensure_ascii=False))
+
+
+def search(es_params, request):
+
     try:
         start = time.time()
-        selected_fields = []     
-        out = {'column_names':[],'aaData':[],'iTotalRecords':0,'iTotalDisplayRecords':0,'lag':0}
+        out = {'column_names': [],
+               'aaData': [],
+               'iTotalRecords': 0,
+               'iTotalDisplayRecords': 0,
+               'lag': 0}
+
         q = query(es_params)
 
         ### DEFINING THE EXAMPLE SIZE
@@ -245,51 +324,68 @@ def search(es_params,request):
                 q['highlight']['fields'][f] = {"number_of_fragments":0}
 
         # Define selected mapping
-        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
-        
-        response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
+        dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+
+        search_url = '{0}/{1}/{2}/_search'.format(es_url, dataset, mapping)
+        response = requests.post(search_url, data=json.dumps(q)).json()
+
         out['iTotalRecords'] = response['hits']['total']
         out['iTotalDisplayRecords'] = response['hits']['total']
-        
-        for hit in response['hits']['hits']:
-            row = []
-            for field,content in sorted(hit['_source'].items(),key = lambda x: x[0]):
-                if type(content) == dict:
-                    content = json.dumps(content,ensure_ascii=False, encoding='utf8')
 
-#                # HIGHTLIGHT MATCHES
-#                if field in q['highlight']['fields']:
-#                    try:
-#                        content = hit['highlight'][field][0]
-#                    except:
-#                        pass
-                ### CHECK FOR EXTERNAL RESOURCES
-                link_key = (dataset,mapping,field)
+        # get columns names from ES mapping
+        out['column_names'] = get_column_names(es_url, dataset, mapping)
+
+        for hit in response['hits']['hits']:
+
+            row = []
+            # Fill the row content respecting the order of the columns
+            for col in out['column_names']:
+
+                # If the content is nested, need to break the flat name in a path list
+                filed_path = col.split('.')
+
+                # Get content for this field path:
+                #   - Starts with the hit structure
+                #   - For every field in field_path, retrieve the specific content
+                #   - Repeat this until arrives at the last field
+                #   - If the field in the field_path is not in this hit structure,
+                #     make content empty (to allow dynamic mapping without breaking alignment)
+                content = hit['_source']
+                for p in filed_path:
+                    content = content[p] if p in content else ''
+
+                # If content in the highlight structure, replace it with the tagged hit['highlight']
+                if col in q['highlight']['fields'] and 'highlight' in hit:
+                    content = hit['highlight'][col][0]
+
+                # CHECK FOR EXTERNAL RESOURCES
+                link_key = (dataset, mapping, col)
                 if link_key in es_links:
-                    link_prefix,link_suffix = es_links[link_key]
+                    link_prefix, link_suffix = es_links[link_key]
                     content = '<a href="'+str(link_prefix)+str(content)+str(link_suffix)+'" target="_blank">'+str(content)+'</a>'
+
+                # Append the final content of this col to the row
                 row.append(content)
+
             out['aaData'].append(row)
-        try:
-            out['column_names'] = hit['_source'].keys()
-        except UnboundLocalError as e:
-            ### no hits, thus no column names : (
-            print e
 
         out['lag'] = time.time()-start
-        
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'documents_queried','args':{'query':q,'user_name':request.user.username}}))
-        
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'SEARCH CORPUS',
+                                                        'event': 'documents_queried',
+                                                        'args': {'query': q, 'user_name': request.user.username}}))
         return out
-    except Exception as e:        
-        print "Exception", e
+
+    except Exception, e:
+        print "--- Exception: {0} ".format(e)
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'documents_queried','args':{'user_name':request.user.username}}),exc_info=True)
         template = loader.get_template('corpus_tool/corpus_tool_results.html')
         context = Context({'STATIC_URL': STATIC_URL,
-                        'name':request.user.username,
-                        'logged_in':True,
-                        'data':'',
-                        'error':'query failed'})
+                           'name': request.user.username,
+                           'logged_in': True,
+                           'data': '',
+                           'error': 'query failed'})
+        # TODO: review this behavior - No error msgs is shown to the user
+        out = {'column_names': [], 'aaData': [], 'iTotalRecords': 0, 'iTotalDisplayRecords': 0, 'lag': 0}
         return out
     
 
@@ -498,22 +594,23 @@ def get_all_rows(es_params,selected_mapping):
          
 def aggregate(request):
     es_params = request.POST
-    
+
     try:
-        aggregation_field = es_params['aggregate_over']
+
+        aggregation_data = es_params['aggregate_over']
+        aggregation_data = json.loads(aggregation_data)
+        field_type = aggregation_data['type']
 
         # Define selected mapping
-        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
-
-        field_type = aggregation_field.split('____')[-1]
+        dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
 
         if field_type == 'date':
-            data = timeline(es_params,request)
+            data = timeline(es_params, request)
             
             for i, str_val in enumerate(data['data'][0]):
                 data['data'][0][i] = str_val.decode('unicode-escape')
         else:
-            data = discrete_agg(es_params,request)
+            data = discrete_agg(es_params, request)
         
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'aggregation_queried','args':{'user_name':request.user.username}}))
 
@@ -574,17 +671,18 @@ def timeline(es_params,request):
     return {'data':data,'type':'line','height':'500','distinct_values':None}
 
 
-def discrete_agg(es_params,request):
+def discrete_agg(es_params, request):
     distinct_values = []
     query_results = []
     lexicon = []
 
-    # HACK
-    aggregate_over = es_params['aggregate_over'].split('____')[0]
-    
+    aggregation_data = es_params['aggregate_over']
+    aggregation_data = json.loads(aggregation_data)
+    aggregation_field = aggregation_data['path']
+
     try:
-        aggregations = {"strings" : {es_params['sort_by']: {"field":aggregate_over,'size':50}},
-                        "distinct_values": {"cardinality": {"field":aggregate_over}}}
+        aggregations = {"strings" : {es_params['sort_by']: {"field":aggregation_field,'size':50}},
+                        "distinct_values": {"cardinality": {"field":aggregation_field}}}
 
         # Define selected mapping
         dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
@@ -625,7 +723,7 @@ def discrete_agg(es_params,request):
         
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'discrete_aggregation_queried','args':{'user_name':request.user.username}}))
     except Exception as e:
-        print 'Exception',e
+        print 'Exception', e
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'discrete_aggregation_query_failed','args':{'user_name':request.user.username}}),exc_info=True)
     return {'data':[data[0]]+sorted(data[1:], key=lambda x: sum(x[1:]), reverse=True),'height':len(data)*15,'type':'bar','distinct_values':json.dumps(distinct_values)}
 

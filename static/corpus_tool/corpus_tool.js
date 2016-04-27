@@ -49,55 +49,73 @@ function in_array(value, array) {
 
 
 function add_field(date_range_min,date_range_max){
-	var field = $("#constraint_field").val().split('____');
-	
-	if(in_array(field[1],layers) == true){
-		var field_name = field[0];
-		var field_type = 'string';
-		var field_layer = field[1]
-	}else{
-		var field_name = field[0];
-		var field_type = field[1];	
-	}
-	
-	if(field_name){
-		counter+=1;
-		new_id = 'field_'+counter.toString();
-		if(field_type == 'date'){
-			$("#field_hidden_date").clone().attr('id',new_id).appendTo("#constraints");
-			$("#field_"+counter.toString()+" #daterange_field_").attr('id','daterange_field_'+counter.toString()).attr('name','daterange_field_'+counter.toString()).val(field_name);			
-			$("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).attr('name','selected_field_'+counter.toString()).html(field_name);
-			$("#field_"+counter.toString()+" #remove_link").attr('onclick',"javascript:remove_field('"+new_id+"');");
-			$("#field_"+counter.toString()+" #daterange_from_").attr('id','#daterange_from_'+counter.toString()).attr('name','daterange_from_'+counter.toString()).datepicker({format: "yyyy-mm-dd",startView:2,startDate:date_range_min,endDate:date_range_max});
-			$("#field_"+counter.toString()+" #daterange_to_").attr('id','#daterange_to_'+counter.toString()).attr('name','daterange_to_'+counter.toString()).datepicker({format: "yyyy-mm-dd",startView:2,startDate:date_range_min,endDate:date_range_max});
-		}else{
-			$("#field_hidden").clone().attr('id',new_id).appendTo("#constraints");
-			$("#field_"+counter.toString()+" #match_operator_").attr('id','match_operator_'+counter.toString()).attr('name','match_operator_'+counter.toString());
-			
-			
-			if (typeof field_layer != 'undefined') {
-				$("#field_"+counter.toString()+" #match_layer_").attr('id','match_layer_'+counter.toString()).attr('name','match_layer_'+counter.toString()).val(field_layer);
-				$("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).html(field_name+' ('+field_layer+')');
-			}else{
-				$("#field_"+counter.toString()+" #match_layer_").remove();
-				$("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).html(field_name);
-			}
-			
-			
-			$("#field_"+counter.toString()+" #match_field_").attr('id','match_field_'+counter.toString()).attr('name','match_field_'+counter.toString()).val(field_name);
-			$("#field_"+counter.toString()+" #match_type_").attr('id','match_type_'+counter.toString()).attr('name','match_type_'+counter.toString());
-			$("#field_"+counter.toString()+" #match_slop_").attr('id','match_slop_'+counter.toString()).attr('name','match_slop_'+counter.toString());
-			$("#field_"+counter.toString()+" #remove_link").attr('onclick',"javascript:remove_field('"+new_id+"');");
-			$("#field_"+counter.toString()+" #suggestions_").attr('id','suggestions_'+counter.toString()).attr('name','suggestions_'+counter.toString());
-			$("#field_"+counter.toString()+" #match_txt_").attr('id','match_txt_'+counter.toString()).attr('name','match_txt_'+counter.toString());
-			$("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onkeyup','lookup($(this).val(),'+counter.toString()+',"keyup","'+field_name+'");').attr('onfocus','lookup($(this).val(),"'+counter.toString()+'","focus","'+field_name+'");');
-			$("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onblur','hide("'+counter.toString()+'");');
-		}
-		$("#field_"+counter.toString()).show();	
-		$("#constraint_field").val('');
-	}else{
-		alert('No field selected.');
-	}
+
+	var field = $("#constraint_field").val();
+
+    if( !field ){
+        alert('No field selected.');
+        return;
+    }
+
+    counter++;
+
+    var data = JSON.parse(field);
+    var field_path = data.path;
+    var field_type = data.type;
+    var path_list = data.path.split('.');
+
+	var field_name = path_list[0];
+	if(path_list.length > 1){
+	    var sub_field = path_list[path_list.length-1];
+	    field_name += ' ('+sub_field+')';
+    }
+
+    new_id = 'field_'+counter.toString();
+
+    if(field_type == 'date'){
+        $("#field_hidden_date").clone().attr('id',new_id).appendTo("#constraints");
+        $("#field_"+counter.toString()+" #daterange_field_").attr('id','daterange_field_'+counter.toString()).attr('name','daterange_field_'+counter.toString()).val(field_path);
+        $("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).attr('name','selected_field_'+counter.toString()).html(field_name);
+        $("#field_"+counter.toString()+" #remove_link").attr('onclick',"javascript:remove_field('"+new_id+"');");
+        $("#field_"+counter.toString()+" #daterange_from_").attr('id','#daterange_from_'+counter.toString());
+        $("#field_"+counter.toString()+" #daterange_from_").attr('name','daterange_from_'+counter.toString());
+        $("#field_"+counter.toString()+" #daterange_from_").datepicker({format: "yyyy-mm-dd",startView:2,startDate:date_range_min,endDate:date_range_max});
+        $("#field_"+counter.toString()+" #daterange_to_").attr('id','#daterange_to_'+counter.toString());
+        $("#field_"+counter.toString()+" #daterange_to_").attr('name','daterange_to_'+counter.toString());
+        $("#field_"+counter.toString()+" #daterange_to_").datepicker({format: "yyyy-mm-dd",startView:2,startDate:date_range_min,endDate:date_range_max});
+    }
+
+    if(field_type == 'facts'){
+        $("#field_hidden_fact").clone().attr('id',new_id).appendTo("#constraints");
+        $("#field_"+counter.toString()+" #match_operator_").attr('id','match_operator_'+counter.toString()).attr('name','match_operator_'+counter.toString());
+        $("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).html(field_name);
+        $("#field_"+counter.toString()+" #match_field_").attr('id','match_field_'+counter.toString()).attr('name','match_field_'+counter.toString()).val(field_path);
+        $("#field_"+counter.toString()+" #remove_link").attr('onclick',"javascript:remove_field('"+new_id+"');");
+        $("#field_"+counter.toString()+" #suggestions_").attr('id','suggestions_'+counter.toString()).attr('name','suggestions_'+counter.toString());
+        $("#field_"+counter.toString()+" #match_txt_").attr('id','match_txt_'+counter.toString()).attr('name','match_txt_'+counter.toString());
+        $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onkeyup','lookup($(this).val(),'+counter.toString()+',"keyup","'+field_path+'");');
+        $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onfocus','lookup($(this).val(),"'+counter.toString()+'","focus","'+field_path+'");');
+        $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onblur','hide("'+counter.toString()+'");');
+    }
+
+    else{
+        $("#field_hidden").clone().attr('id',new_id).appendTo("#constraints");
+        $("#field_"+counter.toString()+" #match_operator_").attr('id','match_operator_'+counter.toString()).attr('name','match_operator_'+counter.toString());
+        $("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).html(field_name);
+        $("#field_"+counter.toString()+" #match_field_").attr('id','match_field_'+counter.toString()).attr('name','match_field_'+counter.toString()).val(field_path);
+        $("#field_"+counter.toString()+" #match_type_").attr('id','match_type_'+counter.toString()).attr('name','match_type_'+counter.toString());
+        $("#field_"+counter.toString()+" #match_slop_").attr('id','match_slop_'+counter.toString()).attr('name','match_slop_'+counter.toString());
+        $("#field_"+counter.toString()+" #remove_link").attr('onclick',"javascript:remove_field('"+new_id+"');");
+        $("#field_"+counter.toString()+" #suggestions_").attr('id','suggestions_'+counter.toString()).attr('name','suggestions_'+counter.toString());
+        $("#field_"+counter.toString()+" #match_txt_").attr('id','match_txt_'+counter.toString()).attr('name','match_txt_'+counter.toString());
+        $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onkeyup','lookup($(this).val(),'+counter.toString()+',"keyup","'+field_path+'");');
+        $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onfocus','lookup($(this).val(),"'+counter.toString()+'","focus","'+field_path+'");');
+        $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onblur','hide("'+counter.toString()+'");');
+    }
+
+    $("#field_"+counter.toString()).show();
+    $("#constraint_field").val('');
+
 }
 
 function select_all_fields(){
