@@ -105,6 +105,16 @@ def get_fields(es_url, dataset, mapping):
     return fields
 
 
+def get_column_names(es_url, dataset, mapping):
+    """ Get Column names from flat mapping structure
+        Returns: sorted list of names
+    """
+    mapped_fields = get_mapped_fields(es_url, dataset, mapping)
+    column_names = [c['path'] for c in mapped_fields]
+    column_names.sort()
+    return column_names
+
+
 @login_required
 def index(request):
     # Define selected mapping
@@ -258,11 +268,10 @@ def get_saved_searches(request):
 @login_required
 def get_examples_table(request):
     # Define selected mapping
-    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
+    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
 
-    # Get field names and types
-    fields = [field for field in requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']]
-    fields.sort()
+    # get columns names from ES mapping
+    fields = get_column_names(es_url, dataset, mapping)
 
     template = loader.get_template('corpus_tool/corpus_tool_results.html')
     return HttpResponse(template.render({'STATIC_URL':STATIC_URL,
@@ -278,21 +287,24 @@ def get_examples_table(request):
 @login_required
 def get_examples(request):
     filter_params = json.loads(request.GET['filterParams'])
-
     es_params = {filter_param['name']: filter_param['value'] for filter_param in filter_params}
     es_params['examples_start'] = request.GET['iDisplayStart']
     es_params['num_examples'] = request.GET['iDisplayLength']
-
     result = search(es_params, request)
 
     return HttpResponse(json.dumps(result, ensure_ascii=False))
 
 
-def search(es_params,request):   
+def search(es_params, request):
+
     try:
         start = time.time()
-        selected_fields = []     
-        out = {'column_names':[],'aaData':[],'iTotalRecords':0,'iTotalDisplayRecords':0,'lag':0}
+        out = {'column_names': [],
+               'aaData': [],
+               'iTotalRecords': 0,
+               'iTotalDisplayRecords': 0,
+               'lag': 0}
+
         q = query(es_params)
 
         ### DEFINING THE EXAMPLE SIZE
@@ -309,51 +321,68 @@ def search(es_params,request):
                 q['highlight']['fields'][f] = {"number_of_fragments":0}
 
         # Define selected mapping
-        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
-        
-        response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
+        dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+
+        search_url = '{0}/{1}/{2}/_search'.format(es_url, dataset, mapping)
+        response = requests.post(search_url, data=json.dumps(q)).json()
+
         out['iTotalRecords'] = response['hits']['total']
         out['iTotalDisplayRecords'] = response['hits']['total']
-        
-        for hit in response['hits']['hits']:
-            row = []
-            for field,content in sorted(hit['_source'].items(),key = lambda x: x[0]):
-                if type(content) == dict:
-                    content = json.dumps(content,ensure_ascii=False, encoding='utf8')
 
-#                # HIGHTLIGHT MATCHES
-#                if field in q['highlight']['fields']:
-#                    try:
-#                        content = hit['highlight'][field][0]
-#                    except:
-#                        pass
-                ### CHECK FOR EXTERNAL RESOURCES
-                link_key = (dataset,mapping,field)
+        # get columns names from ES mapping
+        out['column_names'] = get_column_names(es_url, dataset, mapping)
+
+        for hit in response['hits']['hits']:
+
+            row = []
+            # Fill the row content respecting the order of the columns
+            for col in out['column_names']:
+
+                # If the content is nested, need to break the flat name in a path list
+                filed_path = col.split('.')
+
+                # Get content for this field path:
+                #   - Starts with the hit structure
+                #   - For every field in field_path, retrieve the specific content
+                #   - Repeat this until arrives at the last field
+                #   - If the field in the field_path is not in this hit structure,
+                #     make content empty (to allow dynamic mapping without breaking alignment)
+                content = hit['_source']
+                for p in filed_path:
+                    content = content[p] if p in content else ''
+
+                # If content in the highlight structure, replace it with the tagged hit['highlight']
+                if col in q['highlight']['fields'] and 'highlight' in hit:
+                    content = hit['highlight'][col][0]
+
+                # CHECK FOR EXTERNAL RESOURCES
+                link_key = (dataset, mapping, col)
                 if link_key in es_links:
-                    link_prefix,link_suffix = es_links[link_key]
+                    link_prefix, link_suffix = es_links[link_key]
                     content = '<a href="'+str(link_prefix)+str(content)+str(link_suffix)+'" target="_blank">'+str(content)+'</a>'
+
+                # Append the final content of this col to the row
                 row.append(content)
+
             out['aaData'].append(row)
-        try:
-            out['column_names'] = hit['_source'].keys()
-        except UnboundLocalError as e:
-            ### no hits, thus no column names : (
-            print e
 
         out['lag'] = time.time()-start
-        
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'documents_queried','args':{'query':q,'user_name':request.user.username}}))
-        
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'SEARCH CORPUS',
+                                                        'event': 'documents_queried',
+                                                        'args': {'query': q, 'user_name': request.user.username}}))
         return out
-    except Exception as e:        
-        print "Exception", e
+
+    except Exception, e:
+        print "--- Exception: {0} ".format(e)
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'documents_queried','args':{'user_name':request.user.username}}),exc_info=True)
         template = loader.get_template('corpus_tool/corpus_tool_results.html')
         context = Context({'STATIC_URL': STATIC_URL,
-                        'name':request.user.username,
-                        'logged_in':True,
-                        'data':'',
-                        'error':'query failed'})
+                           'name': request.user.username,
+                           'logged_in': True,
+                           'data': '',
+                           'error': 'query failed'})
+        # TODO: review this behavior - No error msgs is shown to the user
+        out = {'column_names': [], 'aaData': [], 'iTotalRecords': 0, 'iTotalDisplayRecords': 0, 'lag': 0}
         return out
     
 
