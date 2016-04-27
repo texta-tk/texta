@@ -476,19 +476,19 @@ def query(es_params):
 @login_required
 def export_pages(request):
 
-    es_params = {entry['name']:entry['value'] for entry in json.loads(request.GET['args'])}
+    es_params = {entry['name']: entry['value'] for entry in json.loads(request.GET['args'])}
 
-    if (es_params['num_examples'] == '*'):
-        response = StreamingHttpResponse(get_all_rows(es_params,int(request.session['dataset'])),content_type='text/csv')
+    if es_params['num_examples'] == '*':
+        response = StreamingHttpResponse(get_all_rows(es_params, request), content_type='text/csv')
     else:
-        response = StreamingHttpResponse(get_rows(es_params,int(request.session['dataset'])),content_type='text/csv')
+        response = StreamingHttpResponse(get_rows(es_params, request), content_type='text/csv')
     
-    response['Content-Disposition'] = 'attachment; filename="%s"'%(es_params['filename'])
+    response['Content-Disposition'] = 'attachment; filename="%s"' % (es_params['filename'])
 
     return response
 
 
-def get_rows(es_params,selected_mapping):
+def get_rows(es_params, request):
     buffer_ = StringIO()
     writer = csv.writer(buffer_)
     
@@ -553,7 +553,7 @@ def get_rows(es_params,selected_mapping):
             break
 
 
-def get_all_rows(es_params,selected_mapping):
+def get_all_rows(es_params, request):
     buffer_ = StringIO()
     writer = csv.writer(buffer_)
     
@@ -621,7 +621,7 @@ def aggregate(request):
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'aggregation_query_failed','args':{'user_name':request.user.username}}),exc_info=True)
         return HttpResponse()
 
- 
+
 def timeline(es_params,request):
     series_names = ['Date']
     data = []
