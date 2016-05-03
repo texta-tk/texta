@@ -40,14 +40,16 @@ def _check_if_has_facts(es_url, _index, _type, sub_fields):
     """ Check if field is associate with facts in Elasticsearch
     """
     doc_type = _type.lower()
-    doc_path = [s.lower() for s in sub_fields]
+    field_path = [s.lower() for s in sub_fields]
+    doc_path = '.'.join(field_path)
+
     request_url = '{0}/{1}/{2}/_count'.format(es_url, _index, 'texta')
-    q = {"query": { "bool": { "filter": {'and': []}}}}
-    q['query']['bool']['filter']['and'].append({ "term": {'facts.doc_type': doc_type }})
-    for p in doc_path:
-        q['query']['bool']['filter']['and'].append({ "term": {'facts.doc_path': p }})
+    q = {"query": {"bool": {"filter": {'and': []}}}}
+    q['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': doc_type}})
+    q['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
     q = json.dumps(q)
     response = requests.post(request_url, data=q).json()
+
     return response['count'] > 0
 
 
@@ -301,6 +303,7 @@ def get_examples(request):
 def search(es_params, request):
 
     try:
+
         start = time.time()
         out = {'column_names': [],
                'aaData': [],
@@ -308,7 +311,9 @@ def search(es_params, request):
                'iTotalDisplayRecords': 0,
                'lag': 0}
 
-        q = query(es_params)
+        combined_query = get_query(es_params)
+
+        q = {"query": combined_query['query']}
 
         ### DEFINING THE EXAMPLE SIZE
         q["from"] = es_params['examples_start']
@@ -326,6 +331,30 @@ def search(es_params, request):
         # Define selected mapping
         dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
 
+        facts_map = {}
+        if len(combined_query["facts"]["bool"]["should"]) > 0:
+            q_facts = {"query": combined_query['facts']}
+
+            # Application Joint
+            q_facts = json.dumps(q_facts)
+            search_url = '{0}/{1}/texta/_search?size=1000'.format(es_url, dataset)
+            response = requests.post(search_url, data=q_facts).json()
+
+            for hit in response['hits']['hits']:
+                doc_id = hit['_source']['facts']['doc_id']
+                doc_path = hit['_source']['facts']['doc_path']
+                spans = hit['_source']['facts']['spans']
+                spans = json.loads(spans)
+                if doc_id not in facts_map:
+                    facts_map[doc_id] = {}
+                if doc_path not in facts_map[doc_id]:
+                    facts_map[doc_id][doc_path] = []
+                facts_map[doc_id][doc_path].extend(spans)
+
+            doc_ids = facts_map.keys()
+            ids_join = {"ids": {"values": doc_ids}}
+            q['query']['bool']['must'].append(ids_join)
+
         search_url = '{0}/{1}/{2}/_search'.format(es_url, dataset, mapping)
         response = requests.post(search_url, data=json.dumps(q)).json()
 
@@ -336,6 +365,8 @@ def search(es_params, request):
         out['column_names'] = get_column_names(es_url, dataset, mapping)
 
         for hit in response['hits']['hits']:
+
+            hit_id = hit['_id']
 
             row = []
             # Fill the row content respecting the order of the columns
@@ -353,6 +384,26 @@ def search(es_params, request):
                 content = hit['_source']
                 for p in filed_path:
                     content = content[p] if p in content else ''
+
+                # If has facts, highlight
+                if hit_id in facts_map and col in facts_map[hit_id]:
+                    fact_spans = facts_map[hit_id][col]
+                    rest_sentence = content
+                    corpus_facts = ''
+                    last_cut = 0
+                    for span in fact_spans:
+                        start = span[0] - last_cut
+                        end = span[1] - last_cut
+                        b_sentence = rest_sentence[0:start]
+                        f_sencente = rest_sentence[start:end]
+                        rest_sentence = rest_sentence[end:]
+                        last_cut = span[1]
+                        corpus_facts += b_sentence
+                        corpus_facts += "<span style='background-color:#A3E4D7'>"
+                        corpus_facts += f_sencente
+                        corpus_facts += "</span>"
+                    corpus_facts += rest_sentence
+                    content = corpus_facts
 
                 # If content in the highlight structure, replace it with the tagged hit['highlight']
                 if col in q['highlight']['fields'] and 'highlight' in hit:
@@ -389,79 +440,109 @@ def search(es_params, request):
         return out
     
 
-def query(es_params):
-    combined_query = {"query":{"bool":{"should":[],"must":[]}}}
-    string_constraints = {}
-    date_constraints = {}
-    
+def _get_match_constraints(es_params):
+    _constraints = {}
     for item in es_params:
         if 'match' in item:
             item = item.split('_')
             first_part = '_'.join(item[:2])
             second_part = item[2]
-            if second_part not in string_constraints:
-                string_constraints[second_part] = {}
-            if first_part not in string_constraints[second_part]:
-                string_constraints[second_part][first_part] = es_params['_'.join(item)]
-        elif 'daterange' in item:
+            if second_part not in _constraints:
+                _constraints[second_part] = {}
+            _constraints[second_part][first_part] = es_params['_'.join(item)]
+    return _constraints
+
+
+def _get_daterange_constraints(es_params):
+    _constraints = {}
+    for item in es_params:
+        if 'daterange' in item:
             item = item.split('_')
             first_part = '_'.join(item[:2])
             second_part = item[2]
-            if second_part not in date_constraints:
-                date_constraints[second_part] = {}
-            if first_part not in date_constraints[second_part]:
-                date_constraints[second_part][first_part] = es_params['_'.join(item)]
+            if second_part not in _constraints:
+                _constraints[second_part] = {}
+            _constraints[second_part][first_part] = es_params['_'.join(item)]
+    return _constraints
+
+
+def _get_fact_constraints(es_params):
+    _constraints = {}
+    for item in es_params:
+        if 'fact' in item:
+            item = item.split('_')
+            first_part = '_'.join(item[:2])
+            second_part = item[2]
+            if second_part not in _constraints:
+                _constraints[second_part] = {}
+            _constraints[second_part][first_part] = es_params['_'.join(item)]
+    return _constraints
+
+
+def _get_list_synonyms(query_string):
+    """ check if string is a concept identifier
+    """
+    synonyms = []
+    concept = re.search('^@(\d)+-', query_string)
+    if concept:
+        concept_id = int(concept.group()[1:-1])
+        for term in TermConcept.objects.filter(concept=Concept.objects.get(pk=concept_id)):
+            synonyms.append(term.term.term)
+    else:
+        synonyms.append(query_string)
+    return synonyms
+
+
+def get_query(es_params):
+
+    combined_query = {"query": {"bool": {"should": [], "must": []}},
+                      "facts": {"bool": {"should": [], "must": []}}}
+
+    string_constraints = _get_match_constraints(es_params)
+    date_constraints = _get_daterange_constraints(es_params)
+    fact_constraints = _get_fact_constraints(es_params)
 
     for string_constraint in string_constraints.values():
+
+        match_field = string_constraint['match_field'] if 'match_field' in string_constraint else ''
+        match_type = string_constraint['match_type'] if 'match_type' in string_constraint else ''
+        match_slop = string_constraint["match_slop"] if 'match_slop' in string_constraint else ''
+        match_operator = string_constraint['match_operator'] if 'match_operator' in string_constraint else ''
+
         query_strings = [s.replace('\r','') for s in string_constraint['match_txt'].split('\n')]
+        query_strings = [s for s in query_strings if s]
         sub_queries = []
+
         for query_string in query_strings:
-            if query_string:
-                synonyms = []
-                ### check if string is a concept identifier
-                concept = re.search('^@(\d)+-',query_string)
-                if concept:
-                    concept_id = int(concept.group()[1:-1])
-                    for term in TermConcept.objects.filter(concept=Concept.objects.get(pk=concept_id)):
-                        synonyms.append(term.term.term)
-                else:
-                    synonyms.append(query_string)
 
+            synonyms = _get_list_synonyms(query_string)
+            ### construct synonym queries
+            synonym_queries = []
 
-                
-                ### construct synonym queries
-                synonym_queries = []
-                for synonym in synonyms:
-                    nested = False
-                    match_query = {'query':synonym}
-                    if string_constraint['match_type'] == 'match':
-                        # match query
-                        match_query['operator'] = 'and'
-                    else:
-                        # match phrase (prefix) query
-                        match_query['slop'] = string_constraint["match_slop"]
-                    if 'match_layer' in string_constraint:
-                        # match child element
-                        layer = string_constraint['match_layer']
-                        if layer == 'facts':
-                            ### try on a nested object query
-                            match_field = '.'.join([string_constraint['match_field'],layer])
-                            nested = {"nested": { "path": match_field, "query": {string_constraint['match_type']:{'.'.join([match_field,'fact']):match_query}}}}
-                        else:
-                            match_field = '.'.join([string_constraint['match_field'],layer])
-                    else:
-                        # match element
-                        match_field = string_constraint['match_field']
+            for synonym in synonyms:
 
-                    if nested == False:
-                        synonym_queries.append({string_constraint['match_type']:{match_field:match_query}})
-                    else:
-                        synonym_queries.append(nested)
+                synonym_query = {}
 
+                if match_type == 'match':
+                    # match query
+                    sub_query = {'query': synonym, 'operator': 'and'}
+                    synonym_query['match'] = {match_field: sub_query}
 
+                if match_type == 'match_phrase':
+                    # match phrase query
+                    sub_query = {'query': synonym, 'slop': match_slop}
+                    synonym_query['match_phrase'] = {match_field: sub_query}
 
-                sub_queries.append({'bool': {'minimum_should_match':1,'should':synonym_queries}})      
-        combined_query["query"]["bool"]["should"].append({"bool":{string_constraint['match_operator']:sub_queries}})
+                if match_type == 'match_phrase_prefix':
+                    # match phrase prefix query
+                    sub_query = {'query': synonym, 'slop': match_slop}
+                    synonym_query['match_phrase_prefix'] = {match_field: sub_query}
+
+                synonym_queries.append(synonym_query)
+
+            sub_queries.append({'bool': {'minimum_should_match': 1,'should': synonym_queries}})
+
+        combined_query["query"]["bool"]["should"].append({"bool": {match_operator: sub_queries}})
     combined_query["query"]["bool"]["minimum_should_match"] = len(string_constraints)
 
     for date_constraint in date_constraints.values():    
@@ -469,7 +550,20 @@ def query(es_params):
         date_range_end= {"range": {date_constraint['daterange_field']: {"lte": date_constraint['daterange_to']}}}
         combined_query['query']['bool']['must'].append(date_range_start)
         combined_query['query']['bool']['must'].append(date_range_end)
-    
+
+    for fact_constraint in fact_constraints.values():
+        fact_field = fact_constraint['fact_field'] if 'fact_field' in fact_constraint else ''
+        fact_txt = fact_constraint['fact_txt'] if 'fact_txt' in fact_constraint else ''
+        query_strings = [s.replace('\r', '') for s in fact_txt.split('\n')]
+        query_strings = [s for s in query_strings if s]
+        #sub_queries = []
+        for query_string in query_strings:
+            q = {"query": {"bool": {"filter": {'and': []}}}}
+            q['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': 'en'}})
+            q['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': fact_field}})
+            q['query']['bool']['filter']['and'].append({"prefix": {'facts.fact': query_string}})
+            combined_query["facts"]["bool"]["should"].append(q)
+
     return combined_query
 
 
