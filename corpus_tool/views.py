@@ -411,7 +411,7 @@ def get_rows(es_params, request):
             left -= len(rows)
             response = es_m.scroll(scroll_id=scroll_id)
             hits = response['hits']['hits']
-            # FIXME: should update scroll_id
+            scroll_id = response['_scroll_id']
 
         elif left == len(rows):
             for row in rows:
@@ -470,7 +470,7 @@ def get_all_rows(es_params, request):
 
         response = es_m.scroll(scroll_id=scroll_id)
         hits = response['hits']['hits']
-        # FIXME: should update scroll_id
+        scroll_id = response['_scroll_id']
 
 
 def aggregate(request):
