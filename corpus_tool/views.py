@@ -49,7 +49,7 @@ def get_fields(es_m):
         fields.append(field)
 
         # Add additional field if it has fact
-        if es_m.has_facts(path_list):
+        if es_m.check_if_field_has_facts(path_list):
             data['type'] = 'facts'
             label += ' [facts]'
             field = {'data': json.dumps(data), 'label': label}

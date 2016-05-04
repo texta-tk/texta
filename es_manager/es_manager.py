@@ -10,6 +10,10 @@ from settings import es_url
 
 
 class ES_Manager:
+    """ Manage Elasticsearch operations and interface
+    """
+
+    TEXTA_MAPPING = 'texta'
 
     def __init__(self, index, mapping, date_range, url=None):
         self.es_url = url if url else es_url
@@ -19,14 +23,14 @@ class ES_Manager:
         self.combined_query = None
         self._facts_map = None
 
-    def has_facts(self, sub_fields):
+    def check_if_field_has_facts(self, sub_fields):
         """ Check if field is associate with facts in Elasticsearch
         """
         doc_type = self.mapping.lower()
         field_path = [s.lower() for s in sub_fields]
         doc_path = '.'.join(field_path)
 
-        request_url = '{0}/{1}/{2}/_count'.format(es_url, self.index, 'texta')
+        request_url = '{0}/{1}/{2}/_count'.format(es_url, self.index, self.TEXTA_MAPPING)
         q = {"query": {"bool": {"filter": {'and': []}}}}
         q['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': doc_type}})
         q['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
@@ -125,7 +129,14 @@ class ES_Manager:
         return synonyms
 
     def build(self, es_params):
+        """ Build internal representation for queries using es_params
 
+            A combined query is a dictionary D containing:
+
+                D['main']   ->  the main elasticsearch query
+                D['facts']  ->  the restrictive fact query
+
+        """
         _combined_query = {"main": {"query": {"bool": {"should": [], "must": []}}},
                            "facts": {"query": {"bool": {"should": [], "must": []}}}}
 
@@ -204,6 +215,8 @@ class ES_Manager:
         self.combined_query = combined_query
 
     def set_query_parameter(self, key, value):
+        """ Set query[key] = value in the main query structure
+        """
         self.combined_query['main'][key] = value
 
     def _check_if_empty(self, key):
@@ -235,6 +248,8 @@ class ES_Manager:
                 self._facts_map[doc_id][doc_path].extend(spans)
 
     def get_facts_map(self):
+        """ Returns facts map with doc ids and spans values
+        """
         if not self._facts_map:
             self._process_facts()
         return self._facts_map
