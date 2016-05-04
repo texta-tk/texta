@@ -235,6 +235,26 @@ def get_examples(request):
     return HttpResponse(json.dumps(result, ensure_ascii=False))
 
 
+def merge_spans(spans):
+    """ Merge spans range
+    """
+    merged_spans = []
+    sort_spans = sorted(spans, key=lambda l:l[0])
+    total_spans = len(sort_spans)
+    if total_spans:
+        merged_spans.append(sort_spans[0])
+        i = 1
+        while i < total_spans:
+            m_last = list(merged_spans[-1])
+            s_next = list(sort_spans[i])
+            if s_next[0] > m_last[1]:
+                merged_spans.append(s_next)
+            if (s_next[0] <= m_last[1]) and (s_next[1] > m_last[1]):
+                merged_spans[-1] = [m_last[0], s_next[1]]
+            i += 1
+    return merged_spans
+
+
 def search(es_params, request):
 
     try:
@@ -299,9 +319,12 @@ def search(es_params, request):
                 # If has facts, highlight
                 if hit_id in facts_map and col in facts_map[hit_id]:
                     fact_spans = facts_map[hit_id][col]
+                    # Merge overlapping spans
+                    fact_spans = merge_spans(fact_spans)
                     rest_sentence = content
                     corpus_facts = ''
                     last_cut = 0
+                    # Apply span tagging
                     for span in fact_spans:
                         start = span[0] - last_cut
                         end = span[1] - last_cut
