@@ -16,12 +16,12 @@ def _check_if_has_facts(es_url, _index, _type, sub_fields):
     """ Check if field is associate with facts in Elasticsearch
     """
     doc_type = _type.lower()
-    doc_path = [s.lower() for s in sub_fields]
+    field_path = [s.lower() for s in sub_fields]
+    doc_path = '.'.join(field_path)
     request_url = '{0}/{1}/{2}/_count'.format(es_url, _index, 'texta')
     q = {"query": { "bool": { "filter": {'and': []}}}}
     q['query']['bool']['filter']['and'].append({ "term": {'facts.doc_type': doc_type }})
-    for p in doc_path:
-        q['query']['bool']['filter']['and'].append({ "term": {'facts.doc_path': p }})
+    q['query']['bool']['filter']['and'].append({ "term": {'facts.doc_path': doc_path }})
     q = json.dumps(q)
     response = requests.post(request_url, data=q).json()
     return response['count'] > 0
@@ -62,7 +62,6 @@ def autocomplete_data(request, datasets):
     dataset, mapping, _ = get_active_dataset(request.session['dataset'])
 
     fields = get_mapped_fields(es_url, dataset, mapping)
-
     fields = sorted(fields, key=lambda l: l['path'])
 
     # Get term aggregations for fields (for autocomplete)
@@ -71,7 +70,7 @@ def autocomplete_data(request, datasets):
     field_values = {}
     for field in fields:
         if field['type'] == 'string':
-            query["aggs"][field[0]] = {"terms": {"field": field['path'], "size": unique_limit+1}}
+            query["aggs"][field['path']] = {"terms": {"field": field['path'], "size": unique_limit+1}}
 
     response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search', data=json.dumps(query)).json()
 
@@ -117,7 +116,7 @@ def update(request):
             request.session['model'] = str(request.POST['model'])
             #logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CHANGE_SETTINGS','event':'model_updated','args':{'user_name':request.user.username,'new_model':request.POST['model']}}))
     except KeyError as e:
-        pass
+        print 'Exception: ', e
         # TODO shall not pass...
 
     try:
@@ -127,7 +126,7 @@ def update(request):
             request.session['autocomplete_data'] = autocomplete_data(request,datasets)
             #logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CHANGE_SETTINGS','event':'dataset_updated','args':{'user_name':request.user.username,'new_dataset':request.POST['mapping']}}))
     except KeyError as e:
-        pass
+        print 'Exception: ', e
         # TODO shall not pass...
 
     return HttpResponseRedirect(URL_PREFIX + '/')

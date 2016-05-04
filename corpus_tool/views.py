@@ -3,21 +3,19 @@ import calendar
 import json
 import csv
 import logging
-import re
 import time
 from datetime import datetime, timedelta as td
 
-import requests
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseRedirect, StreamingHttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.template import loader, Context
 from django.utils.encoding import smart_str
 
-from conceptualiser.models import Concept,Term,TermConcept
+from conceptualiser.models import Term,TermConcept
 from corpus_tool.models import Search
-from settings import STATIC_URL, URL_PREFIX, es_url, date_format, es_links, INFO_LOGGER, ERROR_LOGGER
+from es_manager.es_manager import ES_Manager
+from settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER
 from permission_admin.models import Dataset
-
 from utils.datasets import get_active_dataset
 
 ES_SCROLL_BATCH = 100
@@ -36,56 +34,11 @@ def convert_date(date_string,frmt):
     return datetime.strptime(date_string,frmt).date()
 
 
-def _check_if_has_facts(es_url, _index, _type, sub_fields):
-    """ Check if field is associate with facts in Elasticsearch
-    """
-    doc_type = _type.lower()
-    doc_path = [s.lower() for s in sub_fields]
-    request_url = '{0}/{1}/{2}/_count'.format(es_url, _index, 'texta')
-    q = {"query": { "bool": { "filter": {'and': []}}}}
-    q['query']['bool']['filter']['and'].append({ "term": {'facts.doc_type': doc_type }})
-    for p in doc_path:
-        q['query']['bool']['filter']['and'].append({ "term": {'facts.doc_path': p }})
-    q = json.dumps(q)
-    response = requests.post(request_url, data=q).json()
-    return response['count'] > 0
-
-
-def _decode_mapping_structure(structure, root_path=list()):
-    """ Decode mapping structure (nested dictionary) to a flat structure
-    """
-    mapping_data = []
-
-    for item in structure.items():
-        if 'properties' in item[1]:
-            sub_structure = item[1]['properties']
-            path_list = root_path[:]
-            path_list.append(item[0])
-            sub_mapping = _decode_mapping_structure(sub_structure, root_path=path_list)
-            mapping_data.extend(sub_mapping)
-        else:
-            path_list = root_path[:]
-            path_list.append(item[0])
-            path = '.'.join(path_list)
-            data = {'path': path, 'type': item[1]['type']}
-            mapping_data.append(data)
-
-    return mapping_data
-
-
-def get_mapped_fields(es_url, dataset, mapping):
-    """ Get flat structure of fields from Elasticsearch mapping
-    """
-    mapping_structure = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']
-    mapping_data = _decode_mapping_structure(mapping_structure)
-    return mapping_data
-
-
-def get_fields(es_url, dataset, mapping):
+def get_fields(es_m):
     """ Crete field list from fields in the Elasticsearch mapping
     """
     fields = []
-    mapped_fields = get_mapped_fields(es_url, dataset, mapping)
+    mapped_fields = es_m.get_mapped_fields()
 
     for data in mapped_fields:
         path = data['path']
@@ -96,7 +49,7 @@ def get_fields(es_url, dataset, mapping):
         fields.append(field)
 
         # Add additional field if it has fact
-        if _check_if_has_facts(es_url, dataset, mapping, path_list):
+        if es_m.check_if_field_has_facts(path_list):
             data['type'] = 'facts'
             label += ' [facts]'
             field = {'data': json.dumps(data), 'label': label}
@@ -108,22 +61,13 @@ def get_fields(es_url, dataset, mapping):
     return fields
 
 
-def get_column_names(es_url, dataset, mapping):
-    """ Get Column names from flat mapping structure
-        Returns: sorted list of names
-    """
-    mapped_fields = get_mapped_fields(es_url, dataset, mapping)
-    column_names = [c['path'] for c in mapped_fields]
-    column_names.sort()
-    return column_names
-
-
 @login_required
 def index(request):
     # Define selected mapping
     dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+    es_m = ES_Manager(dataset, mapping, date_range)
 
-    fields = get_fields(es_url, dataset, mapping)
+    fields = get_fields(es_m)
 
     template = loader.get_template('corpus_tool/corpus_tool_index.html')
     return HttpResponse(template.render({'STATIC_URL':STATIC_URL,
@@ -132,19 +76,6 @@ def index(request):
                        'date_range':date_range,
                        'searches':Search.objects.filter(author=request.user),
                        'dataset':dataset},request))
-
-
-def highlight(text,spans,prefix,suffix):
-    offset = 0
-    to_be_highlighted = []
-    for key,group in spans.iteritems():
-        if key.startswith(prefix):
-            for span in group:
-                to_be_highlighted.append((key,span))
-    
-    for a in sorted(to_be_highlighted,key=lambda l:l[1][1],reverse=True):
-        text = text.replace(text[a[1][0]:a[1][1]],prefix+text[a[1][0]:a[1][1]]+suffix)
-    return text
 
 
 def date_ranges(date_range,interval):
@@ -204,10 +135,15 @@ def display_encode(s):
 
 @login_required
 def save(request):
-    # TODO: Why is here an exception without calling request.POST???
-    request.POST
+
+    es_params = request.POST
+    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+    es_m = ES_Manager(dataset, mapping, date_range)
+    es_m.build(es_params)
+    combined_query = es_m.get_combined_query()
+
     try:
-        q = query(request)
+        q = combined_query
         desc = request.POST['search_description']
         search = Search(author=request.user,description=desc,dataset=Dataset.objects.get(pk=int(request.session['dataset'])),query=json.dumps(q))
         search.save()
@@ -272,9 +208,10 @@ def get_saved_searches(request):
 def get_examples_table(request):
     # Define selected mapping
     dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+    es_m = ES_Manager(dataset, mapping, date_range)
 
     # get columns names from ES mapping
-    fields = get_column_names(es_url, dataset, mapping)
+    fields = es_m.get_column_names()
 
     template = loader.get_template('corpus_tool/corpus_tool_results.html')
     return HttpResponse(template.render({'STATIC_URL':STATIC_URL,
@@ -298,9 +235,30 @@ def get_examples(request):
     return HttpResponse(json.dumps(result, ensure_ascii=False))
 
 
+def merge_spans(spans):
+    """ Merge spans range
+    """
+    merged_spans = []
+    sort_spans = sorted(spans, key=lambda l:l[0])
+    total_spans = len(sort_spans)
+    if total_spans:
+        merged_spans.append(sort_spans[0])
+        i = 1
+        while i < total_spans:
+            m_last = list(merged_spans[-1])
+            s_next = list(sort_spans[i])
+            if s_next[0] > m_last[1]:
+                merged_spans.append(s_next)
+            if (s_next[0] <= m_last[1]) and (s_next[1] > m_last[1]):
+                merged_spans[-1] = [m_last[0], s_next[1]]
+            i += 1
+    return merged_spans
+
+
 def search(es_params, request):
 
     try:
+
         start = time.time()
         out = {'column_names': [],
                'aaData': [],
@@ -308,34 +266,38 @@ def search(es_params, request):
                'iTotalDisplayRecords': 0,
                'lag': 0}
 
-        q = query(es_params)
+        # Define selected mapping
+        dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+        es_m = ES_Manager(dataset, mapping, date_range)
+
+        es_m.build(es_params)
 
         ### DEFINING THE EXAMPLE SIZE
-        q["from"] = es_params['examples_start']
-        q["size"] = es_params['num_examples']
+        es_m.set_query_parameter('from', es_params['examples_start'])
+        es_m.set_query_parameter('size', es_params['num_examples'])
 
         ### HIGHLIGHTING THE MATCHING FIELDS
         pre_tag = "<span style='background-color:#FFD119'>"
         post_tag = "</span>"
-        q["highlight"] = {"fields":{},"pre_tags":[pre_tag],"post_tags":[post_tag]}
+        highlight_config = {"fields": {}, "pre_tags": [pre_tag], "post_tags": [post_tag]}
         for field in es_params:
             if 'match_field' in field and es_params['match_operator_'+field.split('_')[-1]] != 'must_not':
                 f = es_params[field]
-                q['highlight']['fields'][f] = {"number_of_fragments":0}
+                highlight_config['fields'][f] = {"number_of_fragments": 0}
+        es_m.set_query_parameter('highlight', highlight_config)
 
-        # Define selected mapping
-        dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-
-        search_url = '{0}/{1}/{2}/_search'.format(es_url, dataset, mapping)
-        response = requests.post(search_url, data=json.dumps(q)).json()
+        response = es_m.search()
+        facts_map = es_m.get_facts_map()
 
         out['iTotalRecords'] = response['hits']['total']
         out['iTotalDisplayRecords'] = response['hits']['total']
 
         # get columns names from ES mapping
-        out['column_names'] = get_column_names(es_url, dataset, mapping)
+        out['column_names'] = es_m.get_column_names()
 
         for hit in response['hits']['hits']:
+
+            hit_id = hit['_id']
 
             row = []
             # Fill the row content respecting the order of the columns
@@ -354,8 +316,31 @@ def search(es_params, request):
                 for p in filed_path:
                     content = content[p] if p in content else ''
 
+                # If has facts, highlight
+                if hit_id in facts_map and col in facts_map[hit_id]:
+                    fact_spans = facts_map[hit_id][col]
+                    # Merge overlapping spans
+                    fact_spans = merge_spans(fact_spans)
+                    rest_sentence = content
+                    corpus_facts = ''
+                    last_cut = 0
+                    # Apply span tagging
+                    for span in fact_spans:
+                        start = span[0] - last_cut
+                        end = span[1] - last_cut
+                        b_sentence = rest_sentence[0:start]
+                        f_sencente = rest_sentence[start:end]
+                        rest_sentence = rest_sentence[end:]
+                        last_cut = span[1]
+                        corpus_facts += b_sentence
+                        corpus_facts += "<span style='background-color:#A3E4D7'>"
+                        corpus_facts += f_sencente
+                        corpus_facts += "</span>"
+                    corpus_facts += rest_sentence
+                    content = corpus_facts
+
                 # If content in the highlight structure, replace it with the tagged hit['highlight']
-                if col in q['highlight']['fields'] and 'highlight' in hit:
+                if col in highlight_config['fields'] and 'highlight' in hit:
                     content = hit['highlight'][col][0]
 
                 # CHECK FOR EXTERNAL RESOURCES
@@ -372,7 +357,8 @@ def search(es_params, request):
         out['lag'] = time.time()-start
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'SEARCH CORPUS',
                                                         'event': 'documents_queried',
-                                                        'args': {'query': q, 'user_name': request.user.username}}))
+                                                        'args': {'query': es_m.get_combined_query(),
+                                                                 'user_name': request.user.username}}))
         return out
 
     except Exception, e:
@@ -387,127 +373,43 @@ def search(es_params, request):
         # TODO: review this behavior - No error msgs is shown to the user
         out = {'column_names': [], 'aaData': [], 'iTotalRecords': 0, 'iTotalDisplayRecords': 0, 'lag': 0}
         return out
-    
-
-def query(es_params):
-    combined_query = {"query":{"bool":{"should":[],"must":[]}}}
-    string_constraints = {}
-    date_constraints = {}
-    
-    for item in es_params:
-        if 'match' in item:
-            item = item.split('_')
-            first_part = '_'.join(item[:2])
-            second_part = item[2]
-            if second_part not in string_constraints:
-                string_constraints[second_part] = {}
-            if first_part not in string_constraints[second_part]:
-                string_constraints[second_part][first_part] = es_params['_'.join(item)]
-        elif 'daterange' in item:
-            item = item.split('_')
-            first_part = '_'.join(item[:2])
-            second_part = item[2]
-            if second_part not in date_constraints:
-                date_constraints[second_part] = {}
-            if first_part not in date_constraints[second_part]:
-                date_constraints[second_part][first_part] = es_params['_'.join(item)]
-
-    for string_constraint in string_constraints.values():
-        query_strings = [s.replace('\r','') for s in string_constraint['match_txt'].split('\n')]
-        sub_queries = []
-        for query_string in query_strings:
-            if query_string:
-                synonyms = []
-                ### check if string is a concept identifier
-                concept = re.search('^@(\d)+-',query_string)
-                if concept:
-                    concept_id = int(concept.group()[1:-1])
-                    for term in TermConcept.objects.filter(concept=Concept.objects.get(pk=concept_id)):
-                        synonyms.append(term.term.term)
-                else:
-                    synonyms.append(query_string)
-
-
-                
-                ### construct synonym queries
-                synonym_queries = []
-                for synonym in synonyms:
-                    nested = False
-                    match_query = {'query':synonym}
-                    if string_constraint['match_type'] == 'match':
-                        # match query
-                        match_query['operator'] = 'and'
-                    else:
-                        # match phrase (prefix) query
-                        match_query['slop'] = string_constraint["match_slop"]
-                    if 'match_layer' in string_constraint:
-                        # match child element
-                        layer = string_constraint['match_layer']
-                        if layer == 'facts':
-                            ### try on a nested object query
-                            match_field = '.'.join([string_constraint['match_field'],layer])
-                            nested = {"nested": { "path": match_field, "query": {string_constraint['match_type']:{'.'.join([match_field,'fact']):match_query}}}}
-                        else:
-                            match_field = '.'.join([string_constraint['match_field'],layer])
-                    else:
-                        # match element
-                        match_field = string_constraint['match_field']
-
-                    if nested == False:
-                        synonym_queries.append({string_constraint['match_type']:{match_field:match_query}})
-                    else:
-                        synonym_queries.append(nested)
-
-
-
-                sub_queries.append({'bool': {'minimum_should_match':1,'should':synonym_queries}})      
-        combined_query["query"]["bool"]["should"].append({"bool":{string_constraint['match_operator']:sub_queries}})
-    combined_query["query"]["bool"]["minimum_should_match"] = len(string_constraints)
-
-    for date_constraint in date_constraints.values():    
-        date_range_start = {"range": {date_constraint['daterange_field']: {"gte": date_constraint['daterange_from']}}}
-        date_range_end= {"range": {date_constraint['daterange_field']: {"lte": date_constraint['daterange_to']}}}
-        combined_query['query']['bool']['must'].append(date_range_start)
-        combined_query['query']['bool']['must'].append(date_range_end)
-    
-    return combined_query
 
 
 @login_required
 def export_pages(request):
 
-    es_params = {entry['name']:entry['value'] for entry in json.loads(request.GET['args'])}
+    es_params = {entry['name']: entry['value'] for entry in json.loads(request.GET['args'])}
 
-    if (es_params['num_examples'] == '*'):
-        response = StreamingHttpResponse(get_all_rows(es_params,int(request.session['dataset'])),content_type='text/csv')
+    if es_params['num_examples'] == '*':
+        response = StreamingHttpResponse(get_all_rows(es_params, request), content_type='text/csv')
     else:
-        response = StreamingHttpResponse(get_rows(es_params,int(request.session['dataset'])),content_type='text/csv')
+        response = StreamingHttpResponse(get_rows(es_params, request), content_type='text/csv')
     
-    response['Content-Disposition'] = 'attachment; filename="%s"'%(es_params['filename'])
+    response['Content-Disposition'] = 'attachment; filename="%s"' % (es_params['filename'])
 
     return response
 
 
-def get_rows(es_params,selected_mapping):
+def get_rows(es_params, request):
+
     buffer_ = StringIO()
     writer = csv.writer(buffer_)
     
     writer.writerow(es_params['features'])
 
-    q = query(es_params)
-    
-    q["from"] = es_params['examples_start']
-    q["size"] = es_params['num_examples'] if es_params['num_examples'] <= ES_SCROLL_BATCH else ES_SCROLL_BATCH
-    
-    features = { feature:None for feature in es_params['features'] }
-    
-    # Define selected mapping
-    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
-    
-    response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search?scroll=1m',data=json.dumps(q)).json()
+    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+    es_m = ES_Manager(dataset, mapping, date_range)
+    es_m.build(es_params)
+
+    es_m.set_query_parameter('from', es_params['examples_start'])
+    q_size = es_params['num_examples'] if es_params['num_examples'] <= ES_SCROLL_BATCH else ES_SCROLL_BATCH
+    es_m.set_query_parameter('size', q_size)
+
+    features = {feature: None for feature in es_params['features'] }
+
+    response = es_m.scroll()
+
     scroll_id = response['_scroll_id']
-    scroll_query = json.dumps({"scroll":"1m","scroll_id":scroll_id})
-    
     left = es_params['num_examples']
     hits = response['hits']['hits']
     
@@ -530,7 +432,10 @@ def get_rows(es_params,selected_mapping):
             yield data
             
             left -= len(rows)
-            hits = requests.post(es_url+'/'+'_search/scroll',data=scroll_query).json()['hits']['hits']
+            response = es_m.scroll(scroll_id=scroll_id)
+            hits = response['hits']['hits']
+            scroll_id = response['_scroll_id']
+
         elif left == len(rows):
             for row in rows:
                 writer.writerow([element.encode('utf-8') if isinstance(element,unicode) else element for element in row])
@@ -553,26 +458,23 @@ def get_rows(es_params,selected_mapping):
             break
 
 
-def get_all_rows(es_params,selected_mapping):
+def get_all_rows(es_params, request):
     buffer_ = StringIO()
     writer = csv.writer(buffer_)
     
     writer.writerow(es_params['features'])
     
-    q = query(es_params)
-    
-    q["size"] = ES_SCROLL_BATCH
-    
-    features = { feature:None for feature in es_params['features'] }
-    
-    # Define selected mapping
-    dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
-    
-    response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search?scroll=1m',data=json.dumps(q)).json()
-    
+    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+    es_m = ES_Manager(dataset, mapping, date_range)
+    es_m.build(es_params)
+
+    es_m.set_query_parameter('size', ES_SCROLL_BATCH)
+
+    features = {feature: None for feature in es_params['features']}
+
+    response = es_m.scroll()
+
     scroll_id = response['_scroll_id']
-    scroll_query = json.dumps({"scroll":"1m","scroll_id":scroll_id})
-    
     hits = response['hits']['hits']
     
     while hits:
@@ -588,10 +490,12 @@ def get_all_rows(es_params,selected_mapping):
         buffer_.seek(0)
         buffer_.truncate()
         yield data
-        
-        hits = requests.post(es_url+'/'+'_search/scroll',data=scroll_query).json()['hits']['hits']
 
-         
+        response = es_m.scroll(scroll_id=scroll_id)
+        hits = response['hits']['hits']
+        scroll_id = response['_scroll_id']
+
+
 def aggregate(request):
     es_params = request.POST
 
@@ -621,8 +525,9 @@ def aggregate(request):
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'aggregation_query_failed','args':{'user_name':request.user.username}}),exc_info=True)
         return HttpResponse()
 
- 
-def timeline(es_params,request):
+
+def timeline(es_params, request):
+
     series_names = ['Date']
     data = []
     series = []
@@ -632,39 +537,44 @@ def timeline(es_params,request):
         interval = es_params['interval']
 
         # Define selected mapping
-        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
+        dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+        es_m = ES_Manager(dataset, mapping, date_range)
 
-        # HACK
-        aggregate_over = es_params['aggregate_over'].split('____')[0]
+
+        aggregation_data = es_params['aggregate_over']
+        aggregation_data = json.loads(aggregation_data)
+        aggregation_field = aggregation_data['path']
 
         # temporary
         ranges,labels = date_ranges(date_range,interval)
-        aggregations = {"ranges" : {"date_range" : {"field": aggregate_over, "format": date_format, "ranges": ranges}}}
-        
+        aggregations = {"ranges": {"date_range": {"field": aggregation_field, "format": date_format, "ranges": ranges}}}
+
         # find saved searches
         for item in es_params:
             if 'saved_search' in item:
                 s = Search.objects.get(pk=es_params[item])
                 name = s.description
                 saved_query = json.loads(s.query)
-                saved_query["aggs"] = aggregations
-                response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(saved_query)).json()
-                normalised_counts,_ = normalise_agg(response,saved_query,es_params,request,'ranges')
-                series.append({'name':name.encode('latin1'),'data':normalised_counts})
+                es_m.load_combined_query(saved_query)
+                es_m.set_query_parameter('aggs', aggregations)
+                response = es_m.search()
+                normalised_counts,_ = normalise_agg(response, es_m, es_params, 'ranges')
+                series.append({'name': name.encode('latin1'), 'data': normalised_counts})
+
         # add current search
-        q = query(es_params)
-        
-        if len(q['query']['bool']['should']) > 0 or len(q['query']['bool']['must']) > 0:
-            q["aggs"] = aggregations
-            
-            response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
-            normalised_counts,_ = normalise_agg(response,q,es_params,request,'ranges')
+        es_m.build(es_params)
+
+        if not es_m.is_combined_query_empty():
+            es_m.set_query_parameter('aggs', aggregations)
+            response = es_m.search()
+            normalised_counts,_ = normalise_agg(response, es_m, es_params, 'ranges')
             series.append({'name':'Query','data':normalised_counts})
+
         data.append(['Date']+labels)
         for serie in series:
             data.append([serie['name']]+serie['data'])
         data = map(list, zip(*data))
-        
+
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'timeline_queried','args':{'user_name':request.user.username}}))
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'timeline_query_failed','args':{'user_name':request.user.username}}),exc_info=True)
@@ -686,28 +596,28 @@ def discrete_agg(es_params, request):
 
         # Define selected mapping
         dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
+        es_m = ES_Manager(dataset, mapping, date_range)
 
         for item in es_params:
             if 'saved_search' in item:
                 s = Search.objects.get(pk=es_params[item])
                 name = s.description
                 saved_query = json.loads(s.query)
-                saved_query["aggs"] = aggregations
-                response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(saved_query)).json()
-                normalised_counts,labels = normalise_agg(response,saved_query,es_params,request,'strings')
+                es_m.load_combined_query(saved_query)
+                es_m.set_query_parameter('aggs', aggregations)
+                response = es_m.search()
+                normalised_counts,labels = normalise_agg(response, es_m, es_params, 'strings')
                 lexicon = list(set(lexicon+labels))
                 query_results.append({'name':name,'data':normalised_counts,'labels':labels})
                 distinct_values.append({'name':name,'data':response['aggregations']['distinct_values']['value']})
 
-        q = query(es_params)
-
+        es_m.build(es_params)
+        # FIXME
         # this is confusing for the user
-        if len(q['query']['bool']['should']) > 0 or len(q['query']['bool']['must']) > 0:
-            q["aggs"] = aggregations
-            response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
-            
-            normalised_counts,labels = normalise_agg(response,q,es_params,request,'strings')
-
+        if not es_m.is_combined_query_empty():
+            es_m.set_query_parameter('aggs', aggregations)
+            response = es_m.search()
+            normalised_counts,labels = normalise_agg(response, es_m, es_params, 'strings')
             lexicon = list(set(lexicon+labels))
             query_results.append({'name':'Query','data':normalised_counts,'labels':labels})
             distinct_values.append({'name':'Query','data':response['aggregations']['distinct_values']['value']})
@@ -728,9 +638,9 @@ def discrete_agg(es_params, request):
     return {'data':[data[0]]+sorted(data[1:], key=lambda x: sum(x[1:]), reverse=True),'height':len(data)*15,'type':'bar','distinct_values':json.dumps(distinct_values)}
 
 
-def normalise_agg(response,q,es_params,request,agg_type):
+def normalise_agg(response, es_m, es_params, agg_type):
+
     raw_counts = [bucket['doc_count'] for bucket in response['aggregations'][agg_type]['buckets']]
-    
     bucket_labels = []
     if agg_type == 'strings':
         for a in response['aggregations']['strings']['buckets']:
@@ -738,13 +648,12 @@ def normalise_agg(response,q,es_params,request,agg_type):
                 bucket_labels.append(a['key'])
             except KeyError:
                 bucket_labels.append(smart_str(a['key']))
-    if es_params['frequency_normalisation'] == 'relative_frequency':
-        q["query"] = {"match_all":{}}
-        
-        # Define selected mapping
-        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
 
-        response_all = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
+    if es_params['frequency_normalisation'] == 'relative_frequency':
+
+        es_m.set_query_parameter('query', {"match_all": {}})
+        response_all = es_m.search(apply_facts=False)
+
         total_counts = [bucket['doc_count'] for bucket in response_all['aggregations'][agg_type]['buckets']]
         relative_counts = [float(raw_counts[i])/total_counts[i] if total_counts[i] != 0 else 0 for i in range(len(total_counts))]
         return relative_counts,bucket_labels

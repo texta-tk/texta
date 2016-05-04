@@ -232,8 +232,7 @@
 	</div>
 
 	<div id="field_hidden_fact" class="panel panel-default" style="display: none;">
-		<input type="hidden" name="match_field_" id="match_field_">
-		<input type="hidden" name="match_layer_" id="match_layer_">
+		<input type="hidden" name="fact_field_" id="fact_field_">
 		<div class="panel-heading">
 			<span id="selected_field_"></span>
 			<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
@@ -242,7 +241,7 @@
 			<div class="row">
 				<div class="col-sm-4">
 					<b>Bool:</b><br>
-					<select id="match_operator_" name="match_operator_" class="form-control input-sm">
+					<select id="fact_operator_" name="fact_operator_" class="form-control input-sm">
 						<option value="must" selected="selected">and</option>
 						<option value="should">or</option>
 						<option value="must_not">not</option>
@@ -250,7 +249,7 @@
 				</div>
 				<div class="col-sm-8">
 					<b>Facts:</b><br>
-					<textarea id="match_txt_" name="match_txt_" class="form-control"></textarea>
+					<textarea id="fact_txt_" name="fact_txt_" class="form-control"></textarea>
 					<ul name="suggestions_" id="suggestions_" class="list-group"></ul>
 				</div>
 			</div>

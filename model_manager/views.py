@@ -7,7 +7,6 @@ import string
 import threading
 from datetime import datetime
 
-import requests
 from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
@@ -15,50 +14,19 @@ from django.utils.encoding import smart_str
 from gensim.models import word2vec
 
 from corpus_tool.models import Search
+from es_manager.es_manager import ES_Manager
 from lm.views import model_manager as lm_model_manager
 from model_manager.models import ModelRun
 from permission_admin.models import Dataset
-from settings import STATIC_URL, es_url, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ERROR_LOGGER
-
+from settings import STATIC_URL, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ERROR_LOGGER
 from utils.datasets import get_active_dataset
 
 
-
-def _decode_mapping_structure(structure, root_path=list()):
-    """ Decode mapping structure (nested dictionary) to a flat structure
-    """
-    mapping_data = []
-
-    for item in structure.items():
-        if 'properties' in item[1]:
-            sub_structure = item[1]['properties']
-            path_list = root_path[:]
-            path_list.append(item[0])
-            sub_mapping = _decode_mapping_structure(sub_structure, root_path=path_list)
-            mapping_data.extend(sub_mapping)
-        else:
-            path_list = root_path[:]
-            path_list.append(item[0])
-            path = '.'.join(path_list)
-            data = {'path': path, 'type': item[1]['type']}
-            mapping_data.append(data)
-
-    return mapping_data
-
-
-def get_mapped_fields(es_url, dataset, mapping):
-    """ Get flat structure of fields from Elasticsearch mapping
-    """
-    mapping_structure = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']
-    mapping_data = _decode_mapping_structure(mapping_structure)
-    return mapping_data
-
-
-def get_fields(es_url, dataset, mapping):
+def get_fields(es_m):
     """ Crete field list from fields in the Elasticsearch mapping
     """
     fields = []
-    mapped_fields = get_mapped_fields(es_url, dataset, mapping)
+    mapped_fields = es_m.get_mapped_fields()
 
     for data in mapped_fields:
         path = data['path']
@@ -79,7 +47,9 @@ def get_fields(es_url, dataset, mapping):
 def index(request):
 
     dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-    fields = get_fields(es_url, dataset, mapping)
+    es_m = ES_Manager(dataset, mapping, date_range)
+
+    fields = get_fields(es_m)
 
     template = loader.get_template('model_manager/model_manager_index.html')
     return HttpResponse(template.render({'searches': Search.objects.filter(author=request.user,dataset=Dataset(pk=int(request.session['dataset']))),
@@ -101,6 +71,7 @@ def delete_model(request):
         logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'DELETE MODEL','event':'model_deletion_failed','args':{'user_name':request.user.username,'model_id':model_id},'reason':"Created by someone else."}))
         
     return HttpResponseRedirect(URL_PREFIX + '/model_manager')
+
 
 @login_required
 @permission_required('model_manager.change_modelrun')
@@ -219,16 +190,14 @@ class esIterator(object):
     """
 
     def __init__(self, query, field, request, callback_progress=None):
-        self.query = query
         self.field = field
         self.request = request
         self.punct_re = re.compile('[%s]' % re.escape(string.punctuation))
 
         # Define selected mapping
         dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-
-        self.dataset = dataset
-        self.mapping = mapping
+        self.es_m = ES_Manager(dataset, mapping, date_range)
+        self.es_m.load_combined_query(query)
 
         self.callback_progress = callback_progress
 
@@ -237,14 +206,15 @@ class esIterator(object):
             callback_progress.set_total(total_elements)
 
     def __iter__(self):
-        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=100'.format(es_url, self.dataset, self.mapping)
-        scroll_url = '{0}/_search/scroll?scroll=1m'.format(es_url)
-        response = requests.post(search_url, data=json.dumps(self.query)).json()
+
+        self.es_m.set_query_parameter('size', 100)
+        response = self.es_m.scroll()
+
         scroll_id = response['_scroll_id']
         l = response['hits']['total']
 
         while l > 0:
-            response = requests.post(scroll_url, data=scroll_id).json()
+            response = self.es_m.scroll(scroll_id=scroll_id)
             l = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
 
@@ -277,8 +247,4 @@ class esIterator(object):
                 self.callback_progress.update(l)
 
     def get_total_documents(self):
-        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=100'.format(es_url, self.dataset, self.mapping)
-        data = json.dumps(self.query)
-        response = requests.post(search_url, data=data).json()
-        total = response['hits']['total']
-        return long(total)
+        return self.es_m.get_total_documents()
