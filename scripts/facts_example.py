@@ -1,6 +1,8 @@
-### Example script to create Facts form a given index and mapping
-### >> python facts_example.py DIR_HTML_CASES MY_INDEX MY_MAPPING
+""" Example script to create Facts form a given index and mapping
 
+>> python facts_example.py MY_INDEX MY_MAPPING
+
+"""
 import json
 import requests
 import sys
