@@ -1,3 +1,5 @@
+# TODO: gensim license
+
 import numpy as np
 from six import string_types
 import gensim
