@@ -189,7 +189,7 @@ class ES_Manager:
             fact_txt = fact_constraint['fact_txt'] if 'fact_txt' in fact_constraint else ''
             fact_operator = fact_constraint['fact_operator'] if 'fact_operator' in fact_constraint else ''
             query_strings = [s.replace('\r', '') for s in fact_txt.split('\n')]
-            query_strings = [s for s in query_strings if s]
+            query_strings = [s.lower() for s in query_strings if s]
             for query_string in query_strings:
                 q = {"query": {"bool": {"filter": {'and': []}}}}
                 q['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': self.mapping.lower()}})
@@ -245,16 +245,18 @@ class ES_Manager:
             return fm
 
     def _process_facts(self, max_size=10000):
-        self._facts_map = {'include': {}, 'exclude': {}}
+        self._facts_map = {'include': {}, 'exclude': {}, 'has_include': False, 'has_exclude': False}
         if not self._check_if_qfacts_is_empty():
             q_facts = self.combined_query['facts']
             if len( q_facts['should']) > 0 or len( q_facts['must']) > 0:
                 q = {"query": {"bool": {"should": q_facts['should'], "must": q_facts['must']}}}
                 self._facts_map['include'] = self._get_facts_ids_map(q, max_size)
+                self._facts_map['has_include'] = True
             if len( q_facts['must_not']) > 0:
                 # MUST include the ids that are added as MUST NOT later...
                 q = {"query": {"bool": {"must": q_facts['must_not']}}}
                 self._facts_map['exclude'] = self._get_facts_ids_map(q, max_size)
+                self._facts_map['has_exclude'] = True
 
     def get_facts_map(self):
         """ Returns facts map with doc ids and spans values
@@ -268,11 +270,11 @@ class ES_Manager:
         if apply_facts_join:
             # Application Joint
             facts_map = self.get_facts_map()
-            if facts_map['include']:
+            if facts_map['has_include']:
                 doc_ids = facts_map['include'].keys()
                 ids_join = {"ids": {"values": doc_ids}}
                 q['query']['bool']['must'].append(ids_join)
-            if facts_map['exclude']:
+            if facts_map['has_exclude']:
                 doc_ids = facts_map['exclude'].keys()
                 ids_join = {"ids": {"values": doc_ids}}
                 q['query']['bool']['must_not'].append(ids_join)
