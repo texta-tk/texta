@@ -234,7 +234,7 @@ class ES_Manager:
         if not self._check_if_empty('facts'):
             q_facts = self.combined_query['facts']
             q_facts = json.dumps(q_facts)
-            search_url = '{0}/{1}/texta/_search?size={2}'.format(es_url, self.index, max_size)
+            search_url = '{0}/{1}/{2}/_search?size={3}'.format(es_url, self.index, self.TEXTA_MAPPING, max_size)
             response = requests.post(search_url, data=q_facts).json()
             for hit in response['hits']['hits']:
                 doc_id = hit['_source']['facts']['doc_id']
