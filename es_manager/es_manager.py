@@ -189,7 +189,7 @@ class ES_Manager:
             fact_txt = fact_constraint['fact_txt'] if 'fact_txt' in fact_constraint else ''
             fact_operator = fact_constraint['fact_operator'] if 'fact_operator' in fact_constraint else ''
             query_strings = [s.replace('\r', '') for s in fact_txt.split('\n')]
-            query_strings = [s for s in query_strings if s]
+            query_strings = [s.lower() for s in query_strings if s]
             for query_string in query_strings:
                 q = {"query": {"bool": {"filter": {'and': []}}}}
                 q['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': self.mapping.lower()}})
