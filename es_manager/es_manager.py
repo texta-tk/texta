@@ -137,8 +137,8 @@ class ES_Manager:
                 D['facts']  ->  the restrictive fact query
 
         """
-        _combined_query = {"main": {"query": {"bool": {"should": [], "must": []}}},
-                           "facts": {"query": {"bool": {"should": [], "must": []}}}}
+        _combined_query = {"main": {"query": {"bool": {"should": [], "must": [], "must_not": []}}},
+                           "facts": {"should": [], "must": [], "must_not": []}}
 
         string_constraints = self._get_match_constraints(es_params)
         date_constraints = self._get_daterange_constraints(es_params)
@@ -156,34 +156,25 @@ class ES_Manager:
             sub_queries = []
 
             for query_string in query_strings:
-
                 synonyms = self._get_list_synonyms(query_string)
                 ### construct synonym queries
                 synonym_queries = []
-
                 for synonym in synonyms:
-
                     synonym_query = {}
-
                     if match_type == 'match':
                         # match query
                         sub_query = {'query': synonym, 'operator': 'and'}
                         synonym_query['match'] = {match_field: sub_query}
-
                     if match_type == 'match_phrase':
                         # match phrase query
                         sub_query = {'query': synonym, 'slop': match_slop}
                         synonym_query['match_phrase'] = {match_field: sub_query}
-
                     if match_type == 'match_phrase_prefix':
                         # match phrase prefix query
                         sub_query = {'query': synonym, 'slop': match_slop}
                         synonym_query['match_phrase_prefix'] = {match_field: sub_query}
-
                     synonym_queries.append(synonym_query)
-
                 sub_queries.append({'bool': {'minimum_should_match': 1,'should': synonym_queries}})
-
             _combined_query["main"]["query"]["bool"]["should"].append({"bool": {match_operator: sub_queries}})
         _combined_query["main"]["query"]["bool"]["minimum_should_match"] = len(string_constraints)
 
@@ -196,15 +187,15 @@ class ES_Manager:
         for fact_constraint in fact_constraints.values():
             fact_field = fact_constraint['fact_field'] if 'fact_field' in fact_constraint else ''
             fact_txt = fact_constraint['fact_txt'] if 'fact_txt' in fact_constraint else ''
+            fact_operator = fact_constraint['fact_operator'] if 'fact_operator' in fact_constraint else ''
             query_strings = [s.replace('\r', '') for s in fact_txt.split('\n')]
             query_strings = [s for s in query_strings if s]
-            #sub_queries = []
             for query_string in query_strings:
                 q = {"query": {"bool": {"filter": {'and': []}}}}
                 q['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': self.mapping.lower()}})
                 q['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': fact_field}})
                 q['query']['bool']['filter']['and'].append({"prefix": {'facts.fact': query_string}})
-                _combined_query["facts"]["query"]["bool"]["should"].append(q)
+                _combined_query["facts"][fact_operator].append(q)
 
         self.combined_query = _combined_query
 
@@ -219,33 +210,51 @@ class ES_Manager:
         """
         self.combined_query['main'][key] = value
 
-    def _check_if_empty(self, key):
-        _must = len(self.combined_query[key]["query"]["bool"]["must"])
-        _should = len(self.combined_query[key]["query"]["bool"]["should"])
-        return _must == 0 and _should == 0
+    def _check_if_qmain_is_empty(self):
+        _must = len(self.combined_query['main']["query"]["bool"]["must"])
+        _should = len(self.combined_query['main']["query"]["bool"]["should"])
+        _must_not = len(self.combined_query['main']["query"]["bool"]["must_not"])
+        return _must == 0 and _should == 0 and _must_not == 0
+
+    def _check_if_qfacts_is_empty(self):
+        _must = len(self.combined_query['facts']["must"])
+        _should = len(self.combined_query['facts']["should"])
+        _must_not = len(self.combined_query['facts']["must_not"])
+        return _must == 0 and _should == 0 and _must_not == 0
 
     def is_combined_query_empty(self):
-        _empty_facts = self._check_if_empty('facts')
-        _empty_main = self._check_if_empty('main')
+        _empty_facts = self._check_if_qmain_is_empty()
+        _empty_main = self._check_if_qfacts_is_empty()
         return _empty_facts and _empty_main
 
-    def _process_facts(self, max_size=10000):
-        self._facts_map = {}
-        if not self._check_if_empty('facts'):
-            q_facts = self.combined_query['facts']
-            q_facts = json.dumps(q_facts)
+    def _get_facts_ids_map(self, q, max_size):
+            fm = {}
+            q = json.dumps(q)
             search_url = '{0}/{1}/{2}/_search?size={3}'.format(es_url, self.index, self.TEXTA_MAPPING, max_size)
-            response = requests.post(search_url, data=q_facts).json()
+            response = requests.post(search_url, data=q).json()
             for hit in response['hits']['hits']:
                 doc_id = hit['_source']['facts']['doc_id']
                 doc_path = hit['_source']['facts']['doc_path']
                 spans = hit['_source']['facts']['spans']
                 spans = json.loads(spans)
-                if doc_id not in self._facts_map:
-                    self._facts_map[doc_id] = {}
-                if doc_path not in self._facts_map[doc_id]:
-                    self._facts_map[doc_id][doc_path] = []
-                self._facts_map[doc_id][doc_path].extend(spans)
+                if doc_id not in fm:
+                    fm[doc_id] = {}
+                if doc_path not in fm[doc_id]:
+                    fm[doc_id][doc_path] = []
+                fm[doc_id][doc_path].extend(spans)
+            return fm
+
+    def _process_facts(self, max_size=10000):
+        self._facts_map = {'include': {}, 'exclude': {}}
+        if not self._check_if_qfacts_is_empty():
+            q_facts = self.combined_query['facts']
+            if len( q_facts['should']) > 0 or len( q_facts['must']) > 0:
+                q = {"query": {"bool": {"should": q_facts['should'], "must": q_facts['must']}}}
+                self._facts_map['include'] = self._get_facts_ids_map(q, max_size)
+            if len( q_facts['must_not']) > 0:
+                # MUST include the ids that are added as MUST NOT later...
+                q = {"query": {"bool": {"must": q_facts['must_not']}}}
+                self._facts_map['exclude'] = self._get_facts_ids_map(q, max_size)
 
     def get_facts_map(self):
         """ Returns facts map with doc ids and spans values
@@ -256,12 +265,17 @@ class ES_Manager:
 
     def _get_joint_query(self, apply_facts_join = True):
         q = self.combined_query['main']
-        facts_map = self.get_facts_map()
-        if facts_map and apply_facts_join:
+        if apply_facts_join:
             # Application Joint
-            doc_ids = facts_map.keys()
-            ids_join = {"ids": {"values": doc_ids}}
-            q['query']['bool']['must'].append(ids_join)
+            facts_map = self.get_facts_map()
+            if facts_map['include']:
+                doc_ids = facts_map['include'].keys()
+                ids_join = {"ids": {"values": doc_ids}}
+                q['query']['bool']['must'].append(ids_join)
+            if facts_map['exclude']:
+                doc_ids = facts_map['exclude'].keys()
+                ids_join = {"ids": {"values": doc_ids}}
+                q['query']['bool']['must_not'].append(ids_join)
         return q
 
     def search(self, apply_facts=True):

@@ -288,6 +288,7 @@ def search(es_params, request):
 
         response = es_m.search()
         facts_map = es_m.get_facts_map()
+        facts_highlight = facts_map['include']
 
         out['iTotalRecords'] = response['hits']['total']
         out['iTotalDisplayRecords'] = response['hits']['total']
@@ -317,8 +318,8 @@ def search(es_params, request):
                     content = content[p] if p in content else ''
 
                 # If has facts, highlight
-                if hit_id in facts_map and col in facts_map[hit_id]:
-                    fact_spans = facts_map[hit_id][col]
+                if hit_id in facts_highlight and col in facts_highlight[hit_id]:
+                    fact_spans = facts_highlight[hit_id][col]
                     # Merge overlapping spans
                     fact_spans = merge_spans(fact_spans)
                     rest_sentence = content
@@ -591,8 +592,9 @@ def discrete_agg(es_params, request):
     aggregation_field = aggregation_data['path']
 
     try:
-        aggregations = {"strings" : {es_params['sort_by']: {"field":aggregation_field,'size':50}},
-                        "distinct_values": {"cardinality": {"field":aggregation_field}}}
+
+        aggregations = {"strings" : {es_params['sort_by']: {"field": aggregation_field,'size': 50}},
+                        "distinct_values": {"cardinality": {"field": aggregation_field}}}
 
         # Define selected mapping
         dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
