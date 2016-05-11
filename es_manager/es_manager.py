@@ -138,7 +138,8 @@ class ES_Manager:
 
         """
         _combined_query = {"main": {"query": {"bool": {"should": [], "must": [], "must_not": []}}},
-                           "facts": {"should": [], "must": [], "must_not": []}}
+                           "facts": {"include": [], 'total_include': 0,
+                                     "exclude": [], 'total_exclude': 0}}
 
         string_constraints = self._get_match_constraints(es_params)
         date_constraints = self._get_daterange_constraints(es_params)
@@ -184,18 +185,32 @@ class ES_Manager:
             _combined_query["main"]['query']['bool']['must'].append(date_range_start)
             _combined_query["main"]['query']['bool']['must'].append(date_range_end)
 
+        total_include = 0
+        total_exclude = 0
         for fact_constraint in fact_constraints.values():
             fact_field = fact_constraint['fact_field'] if 'fact_field' in fact_constraint else ''
             fact_txt = fact_constraint['fact_txt'] if 'fact_txt' in fact_constraint else ''
             fact_operator = fact_constraint['fact_operator'] if 'fact_operator' in fact_constraint else ''
             query_strings = [s.replace('\r', '') for s in fact_txt.split('\n')]
             query_strings = [s.lower() for s in query_strings if s]
+            if len(query_strings) == 0:
+                continue
+            fact_queries = []
             for query_string in query_strings:
-                q = {"query": {"bool": {"filter": {'and': []}}}}
-                q['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': self.mapping.lower()}})
-                q['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': fact_field}})
-                q['query']['bool']['filter']['and'].append({"prefix": {'facts.fact': query_string}})
-                _combined_query["facts"][fact_operator].append(q)
+                fact_q = {"bool": {"must": []}}
+                fact_q['bool']['must'].append({'match_phrase': {'facts.fact': {'query': query_string, 'slop': 1}}})
+                fact_q['bool']['must'].append({'term': {'facts.doc_type': self.mapping.lower()}})
+                fact_q['bool']['must'].append({'term': {'facts.doc_path': fact_field}})
+                fact_queries.append(fact_q)
+            if fact_operator in ['must', 'should']:
+                _combined_query['facts']['include'].append({'query': {"bool": {fact_operator: fact_queries}}})
+                total_include += 1
+            if fact_operator == 'must_not':
+                _combined_query['facts']['exclude'].append({'query': {"bool": {'must': fact_queries}}})
+                total_exclude += 1
+
+        _combined_query['facts']['total_include'] = total_include
+        _combined_query['facts']['total_exclude'] = total_exclude
 
         self.combined_query = _combined_query
 
@@ -217,10 +232,9 @@ class ES_Manager:
         return _must == 0 and _should == 0 and _must_not == 0
 
     def _check_if_qfacts_is_empty(self):
-        _must = len(self.combined_query['facts']["must"])
-        _should = len(self.combined_query['facts']["should"])
-        _must_not = len(self.combined_query['facts']["must_not"])
-        return _must == 0 and _should == 0 and _must_not == 0
+        _include = self.combined_query['facts']['total_include']
+        _exclude = self.combined_query['facts']['total_exclude']
+        return _include == 0 and _exclude == 0
 
     def is_combined_query_empty(self):
         _empty_facts = self._check_if_qmain_is_empty()
@@ -254,18 +268,48 @@ class ES_Manager:
                 fm[doc_id][doc_path].extend(spans)
         return fm
 
+    @staticmethod
+    def _merge_maps(temp_map_list, union=False):
+        final_map = {}
+        key_set_list = [set(m.keys()) for m in temp_map_list]
+        if union:
+            intersection_set = reduce(lambda a, b: a | b, key_set_list)
+        else:
+            intersection_set = reduce(lambda a, b: a & b, key_set_list)
+        # Merge all maps:
+        for k in intersection_set:
+            for m in temp_map_list:
+                if k not in final_map:
+                    final_map[k] = {}
+                for sub_k in m[k]:
+                    if sub_k not in final_map[k]:
+                        final_map[k][sub_k] = []
+                        final_map[k][sub_k].extend(m[k][sub_k])
+        return final_map
+
     def _process_facts(self, max_size=1000000):
         self._facts_map = {'include': {}, 'exclude': {}, 'has_include': False, 'has_exclude': False}
         if not self._check_if_qfacts_is_empty():
             q_facts = self.combined_query['facts']
-            if len( q_facts['should']) > 0 or len( q_facts['must']) > 0:
-                q = {"query": {"bool": {"should": q_facts['should'], "must": q_facts['must']}}}
-                self._facts_map['include'] = self._get_facts_ids_map(q, max_size)
+
+            if q_facts['total_include'] > 0:
+                # Include queries should be merged with intersection of their doc_ids
+                temp_map_list = []
+                for sub_q in q_facts['include']:
+                    q = {"query": sub_q['query']}
+                    temp_map = self._get_facts_ids_map(q, max_size)
+                    temp_map_list.append(temp_map)
+                self._facts_map['include'] = self._merge_maps(temp_map_list)
                 self._facts_map['has_include'] = True
-            if len( q_facts['must_not']) > 0:
-                # MUST include the ids that are added as MUST NOT later...
-                q = {"query": {"bool": {"must": q_facts['must_not']}}}
-                self._facts_map['exclude'] = self._get_facts_ids_map(q, max_size)
+
+            if q_facts['total_exclude'] > 0:
+                # Exclude queries should be merged with union of their doc_ids
+                temp_map_list = []
+                for sub_q in q_facts['exclude']:
+                    q = {"query": sub_q['query']}
+                    temp_map = self._get_facts_ids_map(q, max_size)
+                    temp_map_list.append(temp_map)
+                self._facts_map['exclude'] = self._merge_maps(temp_map_list, union=True)
                 self._facts_map['has_exclude'] = True
 
     def get_facts_map(self):
