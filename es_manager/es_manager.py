@@ -284,7 +284,7 @@ class ES_Manager:
                 for sub_k in m[k]:
                     if sub_k not in final_map[k]:
                         final_map[k][sub_k] = []
-                        final_map[k][sub_k].extend(m[k][sub_k])
+                    final_map[k][sub_k].extend(m[k][sub_k])
         return final_map
 
     def _process_facts(self, max_size=1000000):
