@@ -77,15 +77,16 @@ function add_field(date_range_min,date_range_max){
         $("#field_"+counter.toString()+" #daterange_field_").attr('id','daterange_field_'+counter.toString()).attr('name','daterange_field_'+counter.toString()).val(field_path);
         $("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).attr('name','selected_field_'+counter.toString()).html(field_name);
         $("#field_"+counter.toString()+" #remove_link").attr('onclick',"javascript:remove_field('"+new_id+"');");
-        $("#field_"+counter.toString()+" #daterange_from_").attr('id','#daterange_from_'+counter.toString());
-        $("#field_"+counter.toString()+" #daterange_from_").attr('name','daterange_from_'+counter.toString());
-        $("#field_"+counter.toString()+" #daterange_from_").datepicker({format: "yyyy-mm-dd",startView:2,startDate:date_range_min,endDate:date_range_max});
-        $("#field_"+counter.toString()+" #daterange_to_").attr('id','#daterange_to_'+counter.toString());
-        $("#field_"+counter.toString()+" #daterange_to_").attr('name','daterange_to_'+counter.toString());
-        $("#field_"+counter.toString()+" #daterange_to_").datepicker({format: "yyyy-mm-dd",startView:2,startDate:date_range_min,endDate:date_range_max});
+		
+        $("#field_"+counter.toString()+" #daterange_from_").attr('id','daterange_from_'+counter.toString());
+        $("#field_"+counter.toString()+" #daterange_from_"+counter.toString()).attr('name','daterange_from_'+counter.toString());
+        $("#field_"+counter.toString()+" #daterange_from_"+counter.toString()).datepicker({format: "yyyy-mm-dd",startView:2,startDate:date_range_min,endDate:date_range_max});
+        $("#field_"+counter.toString()+" #daterange_to_").attr('id','daterange_to_'+counter.toString());
+        $("#field_"+counter.toString()+" #daterange_to_"+counter.toString()).attr('name','daterange_to_'+counter.toString());
+        $("#field_"+counter.toString()+" #daterange_to_"+counter.toString()).datepicker({format: "yyyy-mm-dd",startView:2,startDate:date_range_min,endDate:date_range_max});
     }
 
-    if(field_type == 'facts'){
+    else if(field_type == 'facts'){
         $("#field_hidden_fact").clone().attr('id',new_id).appendTo("#constraints");
         $("#field_"+counter.toString()+" #fact_operator_").attr('id','fact_operator_'+counter.toString()).attr('name','fact_operator_'+counter.toString());
         $("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).html(field_name);
