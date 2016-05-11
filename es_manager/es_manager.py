@@ -228,10 +228,20 @@ class ES_Manager:
         return _empty_facts and _empty_main
 
     def _get_facts_ids_map(self, q, max_size):
-            fm = {}
-            q = json.dumps(q)
-            search_url = '{0}/{1}/{2}/_search?size={3}'.format(es_url, self.index, self.TEXTA_MAPPING, max_size)
-            response = requests.post(search_url, data=q).json()
+        fm = {}
+        q = json.dumps(q)
+        scroll_url = '{0}/_search/scroll?scroll=1m'.format(es_url, self.index, self.TEXTA_MAPPING)
+        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'.format(es_url, self.index,
+                                                                                       self.TEXTA_MAPPING)
+        response = requests.post(search_url, data=q).json()
+        scroll_id = response['_scroll_id']
+        total_msg = response['hits']['total']
+        count_limit = 0
+        while (total_msg > 0) and (count_limit < max_size):
+            response = requests.post(scroll_url, data=scroll_id).json()
+            scroll_id = response['_scroll_id']
+            total_msg = len(response['hits']['hits'])
+            count_limit += total_msg
             for hit in response['hits']['hits']:
                 doc_id = hit['_source']['facts']['doc_id']
                 doc_path = hit['_source']['facts']['doc_path']
@@ -242,9 +252,9 @@ class ES_Manager:
                 if doc_path not in fm[doc_id]:
                     fm[doc_id][doc_path] = []
                 fm[doc_id][doc_path].extend(spans)
-            return fm
+        return fm
 
-    def _process_facts(self, max_size=10000):
+    def _process_facts(self, max_size=1000000):
         self._facts_map = {'include': {}, 'exclude': {}, 'has_include': False, 'has_exclude': False}
         if not self._check_if_qfacts_is_empty():
             q_facts = self.combined_query['facts']
