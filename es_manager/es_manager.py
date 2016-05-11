@@ -230,7 +230,7 @@ class ES_Manager:
     def _get_facts_ids_map(self, q, max_size):
         fm = {}
         q = json.dumps(q)
-        scroll_url = '{0}/_search/scroll?scroll=1m'.format(es_url, self.index, self.TEXTA_MAPPING)
+        scroll_url = '{0}/_search/scroll?scroll=1m'.format(es_url)
         search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'.format(es_url, self.index,
                                                                                        self.TEXTA_MAPPING)
         response = requests.post(search_url, data=q).json()
