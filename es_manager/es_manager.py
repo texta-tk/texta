@@ -9,6 +9,55 @@ from conceptualiser.models import TermConcept
 from settings import es_url
 
 
+class Singleton(type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class ES_Cache:
+    """ ES Cache for facts index
+    """
+    __metaclass__ = Singleton
+
+    MAX_LIMIT = 10000
+
+    def __init__(self):
+        self._cache = {}
+        self._last_used = []
+
+    def cache_hit(self, q):
+        return q in self._cache
+
+    def get_data(self, q):
+        self._update_usage(q)
+        return self._cache[q]
+
+    def _update_usage(self, q):
+        if q in self._last_used:
+            self._last_used.remove(q)
+        self._last_used.insert(0, q)
+
+    def _check_limit(self):
+        # If is over limit, clean 1/3 of last used data
+        if len(self._last_used) > self.MAX_LIMIT:
+            keep_index = int(self.MAX_LIMIT * 0.66)
+            for i in self._last_used[keep_index:]:
+                del self._cache[i]
+            self._last_used = self._last_used[0:keep_index]
+
+    def set_data(self, q, data):
+        self._cache[q] = data
+        self._update_usage(q)
+        self._check_limit()
+
+    def clean_cache(self):
+        self._cache = {}
+        self._last_used = []
+
+
 class ES_Manager:
     """ Manage Elasticsearch operations and interface
     """
@@ -22,6 +71,7 @@ class ES_Manager:
         self.date_range = date_range
         self.combined_query = None
         self._facts_map = None
+        self.es_cache = ES_Cache()
 
     def check_if_field_has_facts(self, sub_fields):
         """ Check if field is associate with facts in Elasticsearch
@@ -244,6 +294,10 @@ class ES_Manager:
     def _get_facts_ids_map(self, q, max_size):
         fm = {}
         q = json.dumps(q)
+
+        if self.es_cache.cache_hit(q):
+            return self.es_cache.get_data(q)
+
         scroll_url = '{0}/_search/scroll?scroll=1m'.format(es_url)
         search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'.format(es_url, self.index,
                                                                                        self.TEXTA_MAPPING)
@@ -266,6 +320,8 @@ class ES_Manager:
                 if doc_path not in fm[doc_id]:
                     fm[doc_id][doc_path] = []
                 fm[doc_id][doc_path].extend(spans)
+
+        self.es_cache.set_data(q, fm)
         return fm
 
     @staticmethod
