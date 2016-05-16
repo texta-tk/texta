@@ -167,16 +167,20 @@ def delete(request):
 
 def autocomplete(request):
 
+    lookup_type = request.POST['lookup_type']
     field_name = request.POST['field_name']
     field_id = request.POST['id']
     content = request.POST['content']
-    autocomplete_data = request.session['autocomplete_data']
 
+    autocomplete_data = request.session['autocomplete_data']
     suggestions = []
 
-    if field_name in autocomplete_data.keys():
-        for term in autocomplete_data[field_name]:
-            suggestions.append("<li class=\"list-group-item\" onclick=\"insert('','"+str(field_id)+"','"+smart_str(term)+"');\">"+smart_str(term)+"</li>")
+    if (lookup_type in autocomplete_data) and (field_name in autocomplete_data[lookup_type].keys()):
+        for term in autocomplete_data[lookup_type][field_name]:
+            term = smart_str(term)
+            insert_function = "insert('','{0}','{1}','{2}');".format(field_id, term, lookup_type)
+            html_suggestion = '<li class="list-group-item" onclick="{0}">{1}</li>'.format(insert_function, term)
+            suggestions.append(html_suggestion)
     else:
 
         last_line = content.split('\n')[-1] if content else ''

@@ -90,7 +90,10 @@ def index(request):
     except KeyError:
         try:
             request.session['dataset'] = datasets.keys()[0]
-            request.session['autocomplete_data'] = autocomplete_data(request,datasets)
+            autocomplete_dict = dict()
+            autocomplete_dict['TEXT'] = autocomplete_data(request,datasets)
+            autocomplete_dict['FACT'] = {'document.text': ['doc_order']}
+            request.session['autocomplete_data'] = autocomplete_dict
         except:
             IndexError
 
@@ -123,7 +126,10 @@ def update(request):
         if request.POST['dataset']:
             datasets = get_datasets()
             request.session['dataset'] = request.POST['dataset']
-            request.session['autocomplete_data'] = autocomplete_data(request,datasets)
+            autocomplete_dict = dict()
+            autocomplete_dict['TEXT'] = autocomplete_data(request, datasets)
+            autocomplete_dict['FACT'] = {'document.text': ['doc_order']}
+            request.session['autocomplete_data'] = autocomplete_dict
             #logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CHANGE_SETTINGS','event':'dataset_updated','args':{'user_name':request.user.username,'new_dataset':request.POST['mapping']}}))
     except KeyError as e:
         print 'Exception: ', e
