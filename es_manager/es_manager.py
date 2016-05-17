@@ -418,3 +418,28 @@ class ES_Manager:
         response = requests.post(search_url, data=q).json()
         total = response['count']
         return long(total)
+
+    def get_facts_structure(self):
+        """ Get facts structure
+            Returns: dictionary in the form {fact: [set of fields]}
+        """
+        # TODO: change to aggregation over unique elements
+        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'.format(es_url,
+                                                                                       self.index, self.TEXTA_MAPPING)
+        query = {"query": {"term": {"facts.doc_type": self.mapping.lower()}}}
+        query = json.dumps(query)
+        response = requests.post(search_url, data=query).json()
+        scroll_id = response['_scroll_id']
+        total = response['hits']['total']
+        facts_structure = {}
+        while total > 0:
+            response = requests.post('{0}/_search/scroll?scroll=1m'.format(es_url), data=scroll_id).json()
+            total = len(response['hits']['hits'])
+            scroll_id = response['_scroll_id']
+            for hit in response['hits']['hits']:
+                fact = hit['_source']['facts']['fact']
+                doc_path = hit['_source']['facts']['doc_path']
+                if fact not in facts_structure:
+                    facts_structure[fact] = set()
+                facts_structure[fact].add(doc_path)
+        return facts_structure

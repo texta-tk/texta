@@ -8,62 +8,18 @@ from django.template import loader
 from model_manager.models import ModelRun
 from settings import STATIC_URL, es_url, URL_PREFIX, INFO_LOGGER
 
-
+from es_manager.es_manager import ES_Manager
 from utils.datasets import get_datasets,get_active_dataset
-
-
-def _check_if_has_facts(es_url, _index, _type, sub_fields):
-    """ Check if field is associate with facts in Elasticsearch
-    """
-    doc_type = _type.lower()
-    field_path = [s.lower() for s in sub_fields]
-    doc_path = '.'.join(field_path)
-    request_url = '{0}/{1}/{2}/_count'.format(es_url, _index, 'texta')
-    q = {"query": { "bool": { "filter": {'and': []}}}}
-    q['query']['bool']['filter']['and'].append({ "term": {'facts.doc_type': doc_type }})
-    q['query']['bool']['filter']['and'].append({ "term": {'facts.doc_path': doc_path }})
-    q = json.dumps(q)
-    response = requests.post(request_url, data=q).json()
-    return response['count'] > 0
-
-
-def _decode_mapping_structure(structure, root_path=list()):
-    """ Decode mapping structure (nested dictionary) to a flat structure
-    """
-    mapping_data = []
-
-    for item in structure.items():
-        if 'properties' in item[1]:
-            sub_structure = item[1]['properties']
-            path_list = root_path[:]
-            path_list.append(item[0])
-            sub_mapping = _decode_mapping_structure(sub_structure, root_path=path_list)
-            mapping_data.extend(sub_mapping)
-        else:
-            path_list = root_path[:]
-            path_list.append(item[0])
-            path = '.'.join(path_list)
-            data = {'path': path, 'type': item[1]['type']}
-            mapping_data.append(data)
-
-    return mapping_data
-
-
-def get_mapped_fields(es_url, dataset, mapping):
-    """ Get flat structure of fields from Elasticsearch mapping
-    """
-    mapping_structure = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']
-    mapping_data = _decode_mapping_structure(mapping_structure)
-    return mapping_data
 
 
 def autocomplete_data(request, datasets):
     # Define selected mapping
-    dataset, mapping, _ = get_active_dataset(request.session['dataset'])
+    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
 
-    fields = get_mapped_fields(es_url, dataset, mapping)
-    fields = sorted(fields, key=lambda l: l['path'])
+    es_m = ES_Manager(dataset, mapping, date_range)
+    fields = es_m.get_mapped_fields()
 
+    # TODO: move to ES Manager
     # Get term aggregations for fields (for autocomplete)
     unique_limit = 10
     query = {"aggs":{}}
@@ -82,7 +38,23 @@ def autocomplete_data(request, datasets):
     return field_values
 
 
+def get_facts_autocomplete(es_m):
+    facts_structure = es_m.get_facts_structure()
+    # invert facts_structure to have {field: [list of facts]}
+    inverted_facts_structure = {}
+    for k, v in facts_structure.items():
+        for field in v:
+            if field not in inverted_facts_structure:
+                inverted_facts_structure[field] = []
+            inverted_facts_structure[field].append(k)
+    return inverted_facts_structure
+
+
 def index(request):
+    # Define selected mapping
+    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+    es_m = ES_Manager(dataset, mapping, date_range)
+
     datasets = get_datasets()
     template = loader.get_template('home/home_index.html')
     try:
@@ -91,8 +63,8 @@ def index(request):
         try:
             request.session['dataset'] = datasets.keys()[0]
             autocomplete_dict = dict()
-            autocomplete_dict['TEXT'] = autocomplete_data(request,datasets)
-            autocomplete_dict['FACT'] = {'document.text': ['doc_order']}
+            autocomplete_dict['TEXT'] = autocomplete_data(request, datasets)
+            autocomplete_dict['FACT'] = get_facts_autocomplete(es_m)
             request.session['autocomplete_data'] = autocomplete_dict
         except:
             IndexError
@@ -112,6 +84,9 @@ def index(request):
 @login_required
 def update(request):
 
+    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+    es_m = ES_Manager(dataset, mapping, date_range)
+
     # TODO: code refactoring
 
     try:
@@ -128,7 +103,7 @@ def update(request):
             request.session['dataset'] = request.POST['dataset']
             autocomplete_dict = dict()
             autocomplete_dict['TEXT'] = autocomplete_data(request, datasets)
-            autocomplete_dict['FACT'] = {'document.text': ['doc_order']}
+            autocomplete_dict['FACT'] = get_facts_autocomplete(es_m)
             request.session['autocomplete_data'] = autocomplete_dict
             #logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CHANGE_SETTINGS','event':'dataset_updated','args':{'user_name':request.user.username,'new_dataset':request.POST['mapping']}}))
     except KeyError as e:
