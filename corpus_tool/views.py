@@ -505,24 +505,22 @@ def aggregate(request):
     es_params = request.POST
 
     try:
-
         aggregation_data = es_params['aggregate_over']
         aggregation_data = json.loads(aggregation_data)
         field_type = aggregation_data['type']
 
-        # Define selected mapping
-        dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-
         if field_type == 'date':
             data = timeline(es_params, request)
-            
             for i, str_val in enumerate(data['data'][0]):
                 data['data'][0][i] = str_val.decode('unicode-escape')
+
+        elif field_type == 'facts':
+            data = facts_agg(es_params, request)
+
         else:
             data = discrete_agg(es_params, request)
         
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'aggregation_queried','args':{'user_name':request.user.username}}))
-
         return HttpResponse(json.dumps(data))
         
     except Exception as e:
@@ -544,8 +542,6 @@ def timeline(es_params, request):
         # Define selected mapping
         dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
         es_m = ES_Manager(dataset, mapping, date_range)
-
-
         aggregation_data = es_params['aggregate_over']
         aggregation_data = json.loads(aggregation_data)
         aggregation_field = aggregation_data['path']
@@ -584,6 +580,87 @@ def timeline(es_params, request):
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'timeline_query_failed','args':{'user_name':request.user.username}}),exc_info=True)
     return {'data':data,'type':'line','height':'500','distinct_values':None}
+
+
+def _get_facts_agg_count(es_m, facts):
+    counts = {}
+    doc_ids = set()
+    response = es_m.scroll()
+    total_docs = response['hits']['total']
+    scroll_id = response['_scroll_id']
+    while total_docs > 0:
+        response = es_m.scroll(scroll_id=scroll_id)
+        total_docs = len(response['hits']['hits'])
+        scroll_id = response['_scroll_id']
+        for hit in response['hits']['hits']:
+            doc_ids.add(hit['_id'])
+    # Count the intersection ids
+    for k in facts.keys():
+        counts[k] = len(facts[k] & doc_ids)
+    return counts
+
+
+def facts_agg(es_params, request):
+    """ Perform facts aggregation
+        Return: aggregation data in a table format (type bar)
+    """
+    aggregation_data = es_params['aggregate_over']
+    aggregation_data = json.loads(aggregation_data)
+    aggregation_field = aggregation_data['path']
+    counts = {}
+
+    # Define selected mapping
+    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+    es_m = ES_Manager(dataset, mapping, date_range)
+    # Get all facts for the user aggregation_field
+    facts = es_m.get_facts_from_field(aggregation_field)
+
+    # Get all counts for saved searches
+    for item in es_params:
+        if 'saved_search' in item:
+            s = Search.objects.get(pk=es_params[item])
+            name = s.description
+            saved_query = json.loads(s.query)
+            es_m.load_combined_query(saved_query)
+            es_m.set_query_parameter('fields', [])
+            counts[name] = _get_facts_agg_count(es_m, facts)
+
+    # Get all documents ids from the user query
+    name = 'Current Search'
+    counts[name] = []
+    es_m.build(es_params)
+    es_m.set_query_parameter('fields', [])
+    counts[name] = _get_facts_agg_count(es_m, facts)
+
+    # Build total table
+    total_table = []
+    header = sorted(counts.keys())
+    for k in header:
+        total = sum([counts[k][sub_k] for sub_k in counts[k]])
+        total_agg = {'name': k, 'data': total}
+        total_table.append(total_agg)
+
+    # Sort facts using the total of documents
+    sorted_facts = sorted(facts.keys(), key=lambda x: sum([counts[k][x] for k in counts]), reverse=True)
+
+    # Build aggregation table
+    rows = {}
+    for i, c in enumerate(counts):
+        for k in sorted_facts:
+            if k not in rows:
+                rows[k] = [0] * len(counts.keys())
+            rows[k][i] = counts[c][k]
+
+    # Build response table
+    agg_data = dict()
+    agg_data['type'] = 'bar'
+    agg_data['data'] = [['Fact'] + header]
+    for k in sorted_facts:
+        agg_data['data'].append([k] + rows[k])
+    agg_data['distinct_values'] = json.dumps(total_table)
+    table_height = (len(rows.keys()) + 1)*15
+    agg_data['height'] = table_height if table_height > 500 else 500
+    return agg_data
 
 
 def discrete_agg(es_params, request):
@@ -641,7 +718,10 @@ def discrete_agg(es_params, request):
     except Exception as e:
         print 'Exception', e
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'discrete_aggregation_query_failed','args':{'user_name':request.user.username}}),exc_info=True)
-    return {'data':[data[0]]+sorted(data[1:], key=lambda x: sum(x[1:]), reverse=True),'height':len(data)*15,'type':'bar','distinct_values':json.dumps(distinct_values)}
+
+    table_height = len(data)*15
+    table_height = table_height if table_height > 500 else 500
+    return {'data':[data[0]]+sorted(data[1:], key=lambda x: sum(x[1:]), reverse=True),'height':table_height,'type':'bar','distinct_values':json.dumps(distinct_values)}
 
 
 def normalise_agg(response, es_m, es_params, agg_type):
