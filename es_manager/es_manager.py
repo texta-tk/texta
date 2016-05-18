@@ -463,13 +463,16 @@ class ES_Manager:
         total = response['hits']['total']
         facts = {}
         while total > 0:
-            response = requests.post('http://localhost:9200/_search/scroll?scroll=1m', data=scroll_id).json()
+            response = requests.post('{0}/_search/scroll?scroll=1m'.format(es_url), data=scroll_id).json()
             total = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
             for hit in response['hits']['hits']:
-                fact = hit['fields']['facts.fact'][0]
-                doc_id = hit['fields']['facts.doc_id'][0]
-                if fact not in facts:
-                    facts[fact] = set()
-                facts[fact].add(doc_id)
+                try:
+                    fact = hit['fields']['facts.fact'][0]
+                    doc_id = hit['fields']['facts.doc_id'][0]
+                    if fact not in facts:
+                        facts[fact] = set()
+                    facts[fact].add(doc_id)
+                except:
+                    KeyError
         return facts
