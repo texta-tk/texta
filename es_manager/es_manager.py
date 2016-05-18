@@ -443,3 +443,33 @@ class ES_Manager:
                     facts_structure[fact] = set()
                 facts_structure[fact].add(doc_path)
         return facts_structure
+
+    def get_facts_from_field(self, field):
+        """ Get all facts from a specific field
+            Returns: Dictionary in the from {fact: [set of doc_id]}
+        """
+        doc_type = self.mapping.lower()
+        doc_path = field.lower()
+
+        query = {"query": {"bool": {"filter": {'and': []}}}, 'fields': ['facts.fact', 'facts.doc_id']}
+        query['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': doc_type}})
+        query['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
+        query = json.dumps(query)
+
+        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'.format(es_url,
+                                                                                       self.index, self.TEXTA_MAPPING)
+        response = requests.post(search_url, data=query).json()
+        scroll_id = response['_scroll_id']
+        total = response['hits']['total']
+        facts = {}
+        while total > 0:
+            response = requests.post('http://localhost:9200/_search/scroll?scroll=1m', data=scroll_id).json()
+            total = len(response['hits']['hits'])
+            scroll_id = response['_scroll_id']
+            for hit in response['hits']['hits']:
+                fact = hit['fields']['facts.fact'][0]
+                doc_id = hit['fields']['facts.doc_id'][0]
+                if fact not in facts:
+                    facts[fact] = set()
+                facts[fact].add(doc_id)
+        return facts
