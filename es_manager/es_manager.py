@@ -463,7 +463,7 @@ class ES_Manager:
         total = response['hits']['total']
         facts = {}
         while total > 0:
-            response = requests.post('http://localhost:9200/_search/scroll?scroll=1m', data=scroll_id).json()
+            response = requests.post('{0}/_search/scroll?scroll=1m'.format(es_url), data=scroll_id).json()
             total = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
             for hit in response['hits']['hits']:
