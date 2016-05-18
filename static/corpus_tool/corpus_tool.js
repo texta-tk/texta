@@ -94,8 +94,8 @@ function add_field(date_range_min,date_range_max){
         $("#field_"+counter.toString()+" #remove_link").attr('onclick',"javascript:remove_field('"+new_id+"');");
         $("#field_"+counter.toString()+" #suggestions_").attr('id','suggestions_'+counter.toString()).attr('name','suggestions_'+counter.toString());
         $("#field_"+counter.toString()+" #fact_txt_").attr('id','fact_txt_'+counter.toString()).attr('name','fact_txt_'+counter.toString());
-        $("#field_"+counter.toString()+" #fact_txt_"+counter.toString()).attr('onkeyup','lookup($(this).val(),'+counter.toString()+',"keyup","'+field_path+'");');
-        $("#field_"+counter.toString()+" #fact_txt_"+counter.toString()).attr('onfocus','lookup($(this).val(),"'+counter.toString()+'","focus","'+field_path+'");');
+        $("#field_"+counter.toString()+" #fact_txt_"+counter.toString()).attr('onkeyup','lookup($(this).val(),'+counter.toString()+',"keyup","'+field_path+'", "FACT");');
+        $("#field_"+counter.toString()+" #fact_txt_"+counter.toString()).attr('onfocus','lookup($(this).val(),"'+counter.toString()+'","focus","'+field_path+'", "FACT");');
         $("#field_"+counter.toString()+" #fact_txt_"+counter.toString()).attr('onblur','hide("'+counter.toString()+'");');
     }
 
@@ -109,8 +109,8 @@ function add_field(date_range_min,date_range_max){
         $("#field_"+counter.toString()+" #remove_link").attr('onclick',"javascript:remove_field('"+new_id+"');");
         $("#field_"+counter.toString()+" #suggestions_").attr('id','suggestions_'+counter.toString()).attr('name','suggestions_'+counter.toString());
         $("#field_"+counter.toString()+" #match_txt_").attr('id','match_txt_'+counter.toString()).attr('name','match_txt_'+counter.toString());
-        $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onkeyup','lookup($(this).val(),'+counter.toString()+',"keyup","'+field_path+'");');
-        $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onfocus','lookup($(this).val(),"'+counter.toString()+'","focus","'+field_path+'");');
+        $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onkeyup','lookup($(this).val(),'+counter.toString()+',"keyup","'+field_path+'", "TEXT");');
+        $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onfocus','lookup($(this).val(),"'+counter.toString()+'","focus","'+field_path+'", "TEXT");');
         $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onblur','hide("'+counter.toString()+'");');
     }
 
@@ -137,15 +137,20 @@ function hide(id){
 	}, 500);
 }
 
-function insert(concept_id,field_id,descriptive_term){
+function insert(concept_id,field_id,descriptive_term, lookup_type){
 	if(concept_id){
 		$('#field_'+field_id+" #match_txt_"+field_id).val(function(index, value) {return value.replace(/[^(\n)]*$/, '');});
 		$('#field_'+field_id+" #match_txt_"+field_id).val($('#field_'+field_id+" #match_txt_"+field_id).val()+"@"+concept_id+"-"+descriptive_term+"\n");
 		$('#field_'+field_id+" #match_txt_"+field_id).focus();
 	}else{
-		$('#field_'+field_id+" #match_txt_"+field_id).val(function(index, value) {return value.replace(/[^(\n)]*$/, '');});
-		$('#field_'+field_id+" #match_txt_"+field_id).val($('#field_'+field_id+" #match_txt_"+field_id).val()+descriptive_term+"\n");
-
+	    if(lookup_type == 'TEXT'){
+	        $('#field_'+field_id+" #match_txt_"+field_id).val(function(index, value) {return value.replace(/[^(\n)]*$/, '');});
+		    $('#field_'+field_id+" #match_txt_"+field_id).val($('#field_'+field_id+" #match_txt_"+field_id).val()+descriptive_term+"\n");
+	    }
+	    if(lookup_type == 'FACT'){
+	        $('#field_'+field_id+" #fact_txt_"+field_id).val(function(index, value) {return value.replace(/[^(\n)]*$/, '');});
+		    $('#field_'+field_id+" #fact_txt_"+field_id).val($('#field_'+field_id+" #fact_txt_"+field_id).val()+descriptive_term+"\n");
+	    }
 	}
 }
 
@@ -184,8 +189,9 @@ function query(){
     
 }
 
-function lookup(content,id,action,field_name){
-	$.post(PREFIX+'/autocomplete', {content:content,id:id,action:action,field_name:field_name}, function(data) {	
+function lookup(content,id,action,field_name, lookup_type){
+    var lookup_data = {content: content, id: id, action: action, field_name: field_name, lookup_type: lookup_type}
+	$.post(PREFIX+'/autocomplete', lookup_data, function(data) {
 		if(data.length > 0){
 			$("#field_"+id+" #suggestions_"+id).html(data).show();
 		}else{
