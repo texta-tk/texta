@@ -13,10 +13,10 @@ from django.utils.encoding import smart_str
 
 from conceptualiser.models import Term,TermConcept
 from corpus_tool.models import Search
-from es_manager.es_manager import ES_Manager
 from settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER
 from permission_admin.models import Dataset
 from utils.datasets import get_active_dataset
+from utils.es_manager import ES_Manager
 
 ES_SCROLL_BATCH = 100
 

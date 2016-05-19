@@ -8,8 +8,8 @@ from django.template import loader
 from model_manager.models import ModelRun
 from settings import STATIC_URL, es_url, URL_PREFIX, INFO_LOGGER
 
-from es_manager.es_manager import ES_Manager
 from utils.datasets import get_datasets,get_active_dataset
+from utils.es_manager import ES_Manager
 
 
 def autocomplete_data(request, datasets):

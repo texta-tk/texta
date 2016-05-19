@@ -14,12 +14,12 @@ from django.utils.encoding import smart_str
 from gensim.models import word2vec
 
 from corpus_tool.models import Search
-from es_manager.es_manager import ES_Manager
 from lm.views import model_manager as lm_model_manager
 from model_manager.models import ModelRun
 from permission_admin.models import Dataset
 from settings import STATIC_URL, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ERROR_LOGGER
 from utils.datasets import get_active_dataset
+from utils.es_manager import ES_Manager
 
 
 def get_fields(es_m):
