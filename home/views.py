@@ -51,10 +51,6 @@ def get_facts_autocomplete(es_m):
 
 
 def index(request):
-    # Define selected mapping
-    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-    es_m = ES_Manager(dataset, mapping, date_range)
-
     datasets = get_datasets()
     template = loader.get_template('home/home_index.html')
     try:
@@ -62,6 +58,9 @@ def index(request):
     except KeyError:
         try:
             request.session['dataset'] = datasets.keys()[0]
+            # Define selected mapping
+            dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+            es_m = ES_Manager(dataset, mapping, date_range)
             autocomplete_dict = dict()
             autocomplete_dict['TEXT'] = autocomplete_data(request, datasets)
             autocomplete_dict['FACT'] = get_facts_autocomplete(es_m)
