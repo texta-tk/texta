@@ -178,7 +178,7 @@ def delete(request):
 
     except Exception as e:
         print '-- Exception[{0}] {1}'.format(__name__, e)
-        logger.info('search_deletion_failed')
+        logger.exception('search_deletion_failed')
 
     return HttpResponse(search_id)
 
@@ -764,7 +764,7 @@ def discrete_agg(es_params, request):
     except Exception, e:
         print '-- Exception[{0}] {1}'.format(__name__, e)
         logger.set_context('user_name', request.user.username)
-        logger.info('discrete_aggregation_query_failed')
+        logger.exception('discrete_aggregation_query_failed')
 
     table_height = len(data)*15
     table_height = table_height if table_height > 500 else 500
