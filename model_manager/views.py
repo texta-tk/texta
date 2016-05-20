@@ -18,7 +18,7 @@ from lm.views import model_manager as lm_model_manager
 from model_manager.models import ModelRun
 from permission_admin.models import Dataset
 from settings import STATIC_URL, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ERROR_LOGGER
-from utils.datasets import get_active_dataset
+from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 
 
@@ -46,8 +46,8 @@ def get_fields(es_m):
 @permission_required('model_manager.change_modelrun')
 def index(request):
 
-    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-    es_m = ES_Manager(dataset, mapping, date_range)
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
 
     fields = get_fields(es_m)
 
@@ -195,8 +195,8 @@ class esIterator(object):
         self.punct_re = re.compile('[%s]' % re.escape(string.punctuation))
 
         # Define selected mapping
-        dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-        self.es_m = ES_Manager(dataset, mapping, date_range)
+        ds = Datasets().activate_dataset(request.session)
+        self.es_m = ds.build_manager(ES_Manager)
         self.es_m.load_combined_query(query)
 
         self.callback_progress = callback_progress

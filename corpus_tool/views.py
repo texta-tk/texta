@@ -14,7 +14,7 @@ from conceptualiser.models import Term,TermConcept
 from corpus_tool.models import Search
 from settings import STATIC_URL, URL_PREFIX, date_format, es_links
 from permission_admin.models import Dataset
-from utils.datasets import get_active_dataset
+from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
 
@@ -64,18 +64,21 @@ def get_fields(es_m):
 
 @login_required
 def index(request):
-    # Define selected mapping
-    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-    es_m = ES_Manager(dataset, mapping, date_range)
+
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
+
     fields = get_fields(es_m)
 
+    template_params = {'STATIC_URL': STATIC_URL,
+                       'URL_PREFIX': URL_PREFIX,
+                       'fields': fields,
+                       'date_range': ds.get_date_range(),
+                       'searches': Search.objects.filter(author=request.user),
+                       'dataset': ds.get_index()}
+
     template = loader.get_template('corpus_tool/corpus_tool_index.html')
-    return HttpResponse(template.render({'STATIC_URL':STATIC_URL,
-                       'URL_PREFIX':URL_PREFIX,
-                       'fields':fields,
-                       'date_range':date_range,
-                       'searches':Search.objects.filter(author=request.user),
-                       'dataset':dataset},request))
+    return HttpResponse(template.render(template_params, request))
 
 
 def date_ranges(date_range,interval):
@@ -137,9 +140,10 @@ def display_encode(s):
 def save(request):
     logger = LogManager(__name__, 'SAVE SEARCH')
 
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
+
     es_params = request.POST
-    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-    es_m = ES_Manager(dataset, mapping, date_range)
     es_m.build(es_params)
     combined_query = es_m.get_combined_query()
 
@@ -227,22 +231,21 @@ def get_saved_searches(request):
 
 @login_required
 def get_examples_table(request):
-    # Define selected mapping
-    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-    es_m = ES_Manager(dataset, mapping, date_range)
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
 
     # get columns names from ES mapping
     fields = es_m.get_column_names()
-
+    template_params = {'STATIC_URL': STATIC_URL,
+                       'URL_PREFIX': URL_PREFIX,
+                       'fields': fields,
+                       'date_range': ds.get_date_range(),
+                       'searches': Search.objects.filter(author=request.user),
+                       'columns': [{'index':index, 'name':field_name} for index, field_name in enumerate(fields)],
+                       'dataset': ds.get_index(),
+                       'mapping': ds.get_mapping()}
     template = loader.get_template('corpus_tool/corpus_tool_results.html')
-    return HttpResponse(template.render({'STATIC_URL':STATIC_URL,
-                       'URL_PREFIX':URL_PREFIX,
-                       'fields':fields,
-                       'date_range':date_range,
-                       'searches':Search.objects.filter(author=request.user),
-                       'columns':[{'index':index, 'name':field_name} for index, field_name in enumerate(fields)],
-                       'dataset':dataset,
-                       'mapping':mapping}),request)
+    return HttpResponse(template.render(template_params, request))
 
 
 @login_required
@@ -288,9 +291,8 @@ def search(es_params, request):
                'iTotalDisplayRecords': 0,
                'lag': 0}
 
-        # Define selected mapping
-        dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-        es_m = ES_Manager(dataset, mapping, date_range)
+        ds = Datasets().activate_dataset(request.session)
+        es_m = ds.build_manager(ES_Manager)
 
         es_m.build(es_params)
 
@@ -367,7 +369,7 @@ def search(es_params, request):
                     content = hit['highlight'][col][0]
 
                 # CHECK FOR EXTERNAL RESOURCES
-                link_key = (dataset, mapping, col)
+                link_key = (ds.get_index(), ds.get_mapping(), col)
                 if link_key in es_links:
                     link_prefix, link_suffix = es_links[link_key]
                     content = '<a href="'+str(link_prefix)+str(content)+str(link_suffix)+'" target="_blank">'+str(content)+'</a>'
@@ -416,8 +418,8 @@ def get_rows(es_params, request):
     
     writer.writerow(es_params['features'])
 
-    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-    es_m = ES_Manager(dataset, mapping, date_range)
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
     es_m.set_query_parameter('from', es_params['examples_start'])
@@ -482,9 +484,9 @@ def get_all_rows(es_params, request):
     writer = csv.writer(buffer_)
     
     writer.writerow(es_params['features'])
-    
-    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-    es_m = ES_Manager(dataset, mapping, date_range)
+
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
     es_m.set_query_parameter('size', ES_SCROLL_BATCH)
@@ -558,8 +560,12 @@ def timeline(es_params, request):
         interval = es_params['interval']
 
         # Define selected mapping
-        dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+        ds = Datasets().activate_dataset(request.session)
+        dataset = ds.get_index()
+        mapping = ds.get_mapping()
+        date_range = ds.get_date_range()
         es_m = ES_Manager(dataset, mapping, date_range)
+
         aggregation_data = es_params['aggregate_over']
         aggregation_data = json.loads(aggregation_data)
         aggregation_field = aggregation_data['path']
@@ -636,7 +642,10 @@ def facts_agg(es_params, request):
     counts = {}
 
     # Define selected mapping
-    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+    ds = Datasets().activate_dataset(request.session)
+    dataset = ds.get_index()
+    mapping = ds.get_mapping()
+    date_range = ds.get_date_range()
     es_m = ES_Manager(dataset, mapping, date_range)
     # Get all facts for the user aggregation_field
     facts = es_m.get_facts_from_field(aggregation_field)
@@ -710,7 +719,10 @@ def discrete_agg(es_params, request):
                         "distinct_values": {"cardinality": {"field": aggregation_field}}}
 
         # Define selected mapping
-        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
+        ds = Datasets().activate_dataset(request.session)
+        dataset = ds.get_index()
+        mapping = ds.get_mapping()
+        date_range = ds.get_date_range()
         es_m = ES_Manager(dataset, mapping, date_range)
 
         for item in es_params:
