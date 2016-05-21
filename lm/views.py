@@ -13,7 +13,7 @@ from model_manager.models import ModelRun
 from settings import URL_PREFIX, STATIC_URL, INFO_LOGGER, ERROR_LOGGER
 from utils.model_manager import get_model_manager
 from utils.precluster import PreclusterMaker
-from utils.datasets import get_active_dataset
+from utils.datasets import Datasets
 
 from settings import es_url, es_links
 import requests
@@ -88,7 +88,7 @@ def saveLexicon(request):
                 Word.objects.bulk_create(word_objects[i:i+step])
                 i += step
                 
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_saved','args':{'user_name':request.user.username,'lexicon_id':lexId,'lexicon_terms':len(lexicon_word)}}))
+            logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_saved','args':{'user_name':request.user.username,'lexicon_id':lexId,'lexicon_terms':len(lexicon_words)}}))
         else:
             logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'CREATE LEXICON','event':'lexicon_saving_failed','args':{'user_name':request.user.username,'lexicon_id':lexId},'reason':'No lexicon ID provided.'}))
     except Exception as e:
@@ -106,7 +106,9 @@ def selectLexicon(request):
         lexicons = Lexicon.objects.filter(author=request.user)
 
         # Define selected mapping
-        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
+        ds = Datasets().activate_dataset(request.session)
+        dataset = ds.get_index()
+        mapping = ds.get_mapping()
 
         features = [feature for feature in requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']]
         
@@ -157,8 +159,10 @@ def query(request):
         tooltip_feature = model_run_obj.fields
         
         # Define selected mapping
-        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
-        
+        ds = Datasets().activate_dataset(request.session)
+        dataset = ds.get_index()
+        mapping = ds.get_mapping()
+
         if request.POST['method'][:12] == 'most_similar':
             for a in getattr(model,request.POST['method'])(positive=positives,topn=40,ignored_idxes = ignored_idxes):
                 encoded_a = encode_for_id(a[0])
