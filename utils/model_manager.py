@@ -6,6 +6,8 @@ from time import sleep,time
 
 import gensim
 
+import traceback
+
 from gensim_wrapper.masked_word2vec import MaskedWord2Vec
 from settings import USER_MODELS, MODELS_DIR
 
@@ -138,6 +140,7 @@ class ModelManager(threading.Thread):
                     os.makedirs(negatives_dir)
                 except os.error:
                     #directory existed
+                    print(traceback.format_exc())
                     pass
 
                 with open(negatives_path,'w') as fout:
