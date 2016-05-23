@@ -55,7 +55,11 @@ MEDIA_URL = '/files/'
 ADMIN_MEDIA_PREFIX = '/media/'
 
 USER_MODELS = 'data/usermodels'
+
 MODELS_DIR = 'data/models'
+if not os.path.exists(MODELS_DIR):
+    os.makedirs(MODELS_DIR)
+
 
 if not os.path.exists(MODELS_DIR):
     os.makedirs(MODELS_DIR)

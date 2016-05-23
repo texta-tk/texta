@@ -2,7 +2,6 @@
 import calendar
 import json
 import csv
-import logging
 import time
 from datetime import datetime, timedelta as td
 
@@ -13,10 +12,12 @@ from django.utils.encoding import smart_str
 
 from conceptualiser.models import Term,TermConcept
 from corpus_tool.models import Search
-from es_manager.es_manager import ES_Manager
-from settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER
+from settings import STATIC_URL, URL_PREFIX, date_format, es_links
 from permission_admin.models import Dataset
-from utils.datasets import get_active_dataset
+from utils.datasets import Datasets
+from utils.es_manager import ES_Manager
+from utils.log_manager import LogManager
+
 
 ES_SCROLL_BATCH = 100
 
@@ -63,19 +64,21 @@ def get_fields(es_m):
 
 @login_required
 def index(request):
-    # Define selected mapping
-    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-    es_m = ES_Manager(dataset, mapping, date_range)
+
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
 
     fields = get_fields(es_m)
 
+    template_params = {'STATIC_URL': STATIC_URL,
+                       'URL_PREFIX': URL_PREFIX,
+                       'fields': fields,
+                       'date_range': ds.get_date_range(),
+                       'searches': Search.objects.filter(author=request.user),
+                       'dataset': ds.get_index()}
+
     template = loader.get_template('corpus_tool/corpus_tool_index.html')
-    return HttpResponse(template.render({'STATIC_URL':STATIC_URL,
-                       'URL_PREFIX':URL_PREFIX,
-                       'fields':fields,
-                       'date_range':date_range,
-                       'searches':Search.objects.filter(author=request.user),
-                       'dataset':dataset},request))
+    return HttpResponse(template.render(template_params, request))
 
 
 def date_ranges(date_range,interval):
@@ -135,10 +138,12 @@ def display_encode(s):
 
 @login_required
 def save(request):
+    logger = LogManager(__name__, 'SAVE SEARCH')
+
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
 
     es_params = request.POST
-    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-    es_m = ES_Manager(dataset, mapping, date_range)
     es_m.build(es_params)
     combined_query = es_m.get_combined_query()
 
@@ -147,22 +152,35 @@ def save(request):
         desc = request.POST['search_description']
         search = Search(author=request.user,description=desc,dataset=Dataset.objects.get(pk=int(request.session['dataset'])),query=json.dumps(q))
         search.save()
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SAVE SEARCH','event':'search_saved','args':{'user_name':request.user.username,'desc':desc},'data':{'search_id':search.id}}))
+        logger.set_context('user_name', request.user.username)
+        logger.set_context('search_id', search.id)
+        logger.info('search_saved')
+
     except Exception as e:
-        print 'Exception', e
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SAVE SEARCH','event':'search_saving_failed','args':{'user_name':request.user.username}}),exc_info=True)
+        print '-- Exception[{0}] {1}'.format(__name__, e)
+        logger.set_context('es_params', es_params)
+        logger.exception('search_saving_failed')
+
     return HttpResponse()
 
 
 @login_required
 def delete(request):
+
+    logger = LogManager(__name__, 'DELETE SEARCH')
+    search_id = request.GET['pk']
+    logger.set_context('user_name', request.user.username)
+    logger.set_context('search_id', search_id)
+
     try:
-        Search.objects.get(pk=request.GET['pk']).delete()
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DELETE SEARCH','event':'search_deleted','args':{'user_name':request.user.username,'search_id':int(request.GET['pk'])}}))
+        Search.objects.get(pk=search_id).delete()
+        logger.info('search_deleted')
+
     except Exception as e:
-        print e
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'DELETE SEARCH','event':'search_deletion_failed','args':{'user_name':request.user.username,'search_id':int(request.GET['pk'])}}),exc_info=True)
-    return HttpResponse(request.GET['pk'])
+        print '-- Exception[{0}] {1}'.format(__name__, e)
+        logger.exception('search_deletion_failed')
+
+    return HttpResponse(search_id)
 
 
 def autocomplete(request):
@@ -172,7 +190,10 @@ def autocomplete(request):
     field_id = request.POST['id']
     content = request.POST['content']
 
-    autocomplete_data = request.session['autocomplete_data']
+    autocomplete_data = {}
+    if 'autocomplete_data' in request.session:
+        autocomplete_data = request.session['autocomplete_data']
+
     suggestions = []
 
     if (lookup_type in autocomplete_data) and (field_name in autocomplete_data[lookup_type].keys()):
@@ -210,22 +231,21 @@ def get_saved_searches(request):
 
 @login_required
 def get_examples_table(request):
-    # Define selected mapping
-    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-    es_m = ES_Manager(dataset, mapping, date_range)
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
 
     # get columns names from ES mapping
     fields = es_m.get_column_names()
-
+    template_params = {'STATIC_URL': STATIC_URL,
+                       'URL_PREFIX': URL_PREFIX,
+                       'fields': fields,
+                       'date_range': ds.get_date_range(),
+                       'searches': Search.objects.filter(author=request.user),
+                       'columns': [{'index':index, 'name':field_name} for index, field_name in enumerate(fields)],
+                       'dataset': ds.get_index(),
+                       'mapping': ds.get_mapping()}
     template = loader.get_template('corpus_tool/corpus_tool_results.html')
-    return HttpResponse(template.render({'STATIC_URL':STATIC_URL,
-                       'URL_PREFIX':URL_PREFIX,
-                       'fields':fields,
-                       'date_range':date_range,
-                       'searches':Search.objects.filter(author=request.user),
-                       'columns':[{'index':index, 'name':field_name} for index, field_name in enumerate(fields)],
-                       'dataset':dataset,
-                       'mapping':mapping}),request)
+    return HttpResponse(template.render(template_params, request))
 
 
 @login_required
@@ -260,6 +280,7 @@ def merge_spans(spans):
 
 
 def search(es_params, request):
+    logger = LogManager(__name__, 'SEARCH CORPUS')
 
     try:
 
@@ -270,9 +291,8 @@ def search(es_params, request):
                'iTotalDisplayRecords': 0,
                'lag': 0}
 
-        # Define selected mapping
-        dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-        es_m = ES_Manager(dataset, mapping, date_range)
+        ds = Datasets().activate_dataset(request.session)
+        es_m = ds.build_manager(ES_Manager)
 
         es_m.build(es_params)
 
@@ -349,7 +369,7 @@ def search(es_params, request):
                     content = hit['highlight'][col][0]
 
                 # CHECK FOR EXTERNAL RESOURCES
-                link_key = (dataset, mapping, col)
+                link_key = (ds.get_index(), ds.get_mapping(), col)
                 if link_key in es_links:
                     link_prefix, link_suffix = es_links[link_key]
                     content = '<a href="'+str(link_prefix)+str(content)+str(link_suffix)+'" target="_blank">'+str(content)+'</a>'
@@ -360,22 +380,18 @@ def search(es_params, request):
             out['aaData'].append(row)
 
         out['lag'] = time.time()-start
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'SEARCH CORPUS',
-                                                        'event': 'documents_queried',
-                                                        'args': {'query': es_m.get_combined_query(),
-                                                                 'user_name': request.user.username}}))
+
+        logger.set_context('query', es_m.get_combined_query())
+        logger.set_context('user_name', request.user.username)
+        logger.info('documents_queried')
+
         return out
 
     except Exception, e:
-        print "--- Exception: {0} ".format(e)
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'documents_queried','args':{'user_name':request.user.username}}),exc_info=True)
-        template = loader.get_template('corpus_tool/corpus_tool_results.html')
-        context = Context({'STATIC_URL': STATIC_URL,
-                           'name': request.user.username,
-                           'logged_in': True,
-                           'data': '',
-                           'error': 'query failed'})
-        # TODO: review this behavior - No error msgs is shown to the user
+        print '-- Exception[{0}] {1}'.format(__name__, e)
+        logger.set_context('user_name', request.user.username)
+        logger.exception('documents_queried_failed')
+
         out = {'column_names': [], 'aaData': [], 'iTotalRecords': 0, 'iTotalDisplayRecords': 0, 'lag': 0}
         return out
 
@@ -402,8 +418,8 @@ def get_rows(es_params, request):
     
     writer.writerow(es_params['features'])
 
-    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-    es_m = ES_Manager(dataset, mapping, date_range)
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
     es_m.set_query_parameter('from', es_params['examples_start'])
@@ -468,9 +484,9 @@ def get_all_rows(es_params, request):
     writer = csv.writer(buffer_)
     
     writer.writerow(es_params['features'])
-    
-    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
-    es_m = ES_Manager(dataset, mapping, date_range)
+
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
     es_m.set_query_parameter('size', ES_SCROLL_BATCH)
@@ -503,6 +519,7 @@ def get_all_rows(es_params, request):
 
 def aggregate(request):
     es_params = request.POST
+    logger = LogManager(__name__, 'SEARCH CORPUS')
 
     try:
         aggregation_data = es_params['aggregate_over']
@@ -519,17 +536,20 @@ def aggregate(request):
 
         else:
             data = discrete_agg(es_params, request)
-        
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'aggregation_queried','args':{'user_name':request.user.username}}))
+
+        logger.set_context('user_name', request.user.username)
+        logger.info('aggregation_queried')
         return HttpResponse(json.dumps(data))
         
     except Exception as e:
         print e
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'aggregation_query_failed','args':{'user_name':request.user.username}}),exc_info=True)
+        logger.set_context('user_name', request.user.username)
+        logger.exception('aggregation_query_failed')
         return HttpResponse()
 
 
 def timeline(es_params, request):
+    logger = LogManager(__name__, 'SEARCH CORPUS')
 
     series_names = ['Date']
     data = []
@@ -540,8 +560,12 @@ def timeline(es_params, request):
         interval = es_params['interval']
 
         # Define selected mapping
-        dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+        ds = Datasets().activate_dataset(request.session)
+        dataset = ds.get_index()
+        mapping = ds.get_mapping()
+        date_range = ds.get_date_range()
         es_m = ES_Manager(dataset, mapping, date_range)
+
         aggregation_data = es_params['aggregate_over']
         aggregation_data = json.loads(aggregation_data)
         aggregation_field = aggregation_data['path']
@@ -576,10 +600,16 @@ def timeline(es_params, request):
             data.append([serie['name']]+serie['data'])
         data = map(list, zip(*data))
 
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'timeline_queried','args':{'user_name':request.user.username}}))
-    except Exception as e:
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'timeline_query_failed','args':{'user_name':request.user.username}}),exc_info=True)
-    return {'data':data,'type':'line','height':'500','distinct_values':None}
+        logger.set_context('user_name', request.user.username)
+        logger.info('timeline_queried')
+
+    except Exception, e:
+        print '-- Exception[{0}] {1}'.format(__name__, e)
+        logger.set_context('user_name', request.user.username)
+        logger.exception('timeline_query_failed')
+
+    out = {'data': data, 'type': 'line', 'height': '500', 'distinct_values': None}
+    return out
 
 
 def _get_facts_agg_count(es_m, facts):
@@ -604,13 +634,18 @@ def facts_agg(es_params, request):
     """ Perform facts aggregation
         Return: aggregation data in a table format (type bar)
     """
+    logger = LogManager(__name__, 'SEARCH CORPUS')
+
     aggregation_data = es_params['aggregate_over']
     aggregation_data = json.loads(aggregation_data)
     aggregation_field = aggregation_data['path']
     counts = {}
 
     # Define selected mapping
-    dataset, mapping, date_range = get_active_dataset(request.session['dataset'])
+    ds = Datasets().activate_dataset(request.session)
+    dataset = ds.get_index()
+    mapping = ds.get_mapping()
+    date_range = ds.get_date_range()
     es_m = ES_Manager(dataset, mapping, date_range)
     # Get all facts for the user aggregation_field
     facts = es_m.get_facts_from_field(aggregation_field)
@@ -660,10 +695,16 @@ def facts_agg(es_params, request):
     agg_data['distinct_values'] = json.dumps(total_table)
     table_height = (len(rows.keys()) + 1)*15
     agg_data['height'] = table_height if table_height > 500 else 500
+
+    logger.set_context('user_name', request.user.username)
+    logger.info('facts_aggregation_queried')
+
     return agg_data
 
 
 def discrete_agg(es_params, request):
+    logger = LogManager(__name__, 'SEARCH CORPUS')
+
     distinct_values = []
     query_results = []
     lexicon = []
@@ -678,7 +719,10 @@ def discrete_agg(es_params, request):
                         "distinct_values": {"cardinality": {"field": aggregation_field}}}
 
         # Define selected mapping
-        dataset,mapping,date_range = get_active_dataset(request.session['dataset'])
+        ds = Datasets().activate_dataset(request.session)
+        dataset = ds.get_index()
+        mapping = ds.get_mapping()
+        date_range = ds.get_date_range()
         es_m = ES_Manager(dataset, mapping, date_range)
 
         for item in es_params:
@@ -713,11 +757,14 @@ def discrete_agg(es_params, request):
                 for k,label in enumerate(query_result['labels']):
                     if word == label:
                         data[i+1][j+1] = query_result['data'][k]
-        
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'SEARCH CORPUS','event':'discrete_aggregation_queried','args':{'user_name':request.user.username}}))
-    except Exception as e:
-        print 'Exception', e
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'SEARCH CORPUS','event':'discrete_aggregation_query_failed','args':{'user_name':request.user.username}}),exc_info=True)
+
+        logger.set_context('user_name', request.user.username)
+        logger.info('discrete_aggregation_queried')
+
+    except Exception, e:
+        print '-- Exception[{0}] {1}'.format(__name__, e)
+        logger.set_context('user_name', request.user.username)
+        logger.exception('discrete_aggregation_query_failed')
 
     table_height = len(data)*15
     table_height = table_height if table_height > 500 else 500

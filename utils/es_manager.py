@@ -7,6 +7,7 @@ import requests
 from conceptualiser.models import Concept
 from conceptualiser.models import TermConcept
 from settings import es_url
+from utils.log_manager import LogManager
 
 
 class Singleton(type):
@@ -448,6 +449,8 @@ class ES_Manager:
         """ Get all facts from a specific field
             Returns: Dictionary in the from {fact: [set of doc_id]}
         """
+        logger = LogManager(__name__, 'ES MANAGER')
+
         doc_type = self.mapping.lower()
         doc_path = field.lower()
 
@@ -456,8 +459,8 @@ class ES_Manager:
         query['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
         query = json.dumps(query)
 
-        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'.format(es_url,
-                                                                                       self.index, self.TEXTA_MAPPING)
+        search_param = 'search_type=scan&scroll=1m&size=1000'
+        search_url = '{0}/{1}/{2}/_search?{3}'.format(es_url, self.index, self.TEXTA_MAPPING, search_param)
         response = requests.post(search_url, data=query).json()
         scroll_id = response['_scroll_id']
         total = response['hits']['total']
@@ -473,6 +476,8 @@ class ES_Manager:
                     if fact not in facts:
                         facts[fact] = set()
                     facts[fact].add(doc_id)
-                except:
-                    KeyError
+                except Exception, e:
+                    print '-- Exception[{0}] {1}'.format(__name__, e)
+                    logger.set_context('hit', hit)
+                    logger.exception('facts_error', msg='Problem with facts structure')
         return facts
