@@ -26,9 +26,10 @@ class Datasets:
             information about the dataset, initiates with the first valid dataset
             Returns: the session object containing the active dataset mapping_id
         """
-        if 'dataset' not in session:
-            session['dataset'] = self.datasets.keys()[0]
-        self.mapping_id = int(session['dataset'])
+        if len(self.datasets.keys()) > 0:
+            if 'dataset' not in session:
+                session['dataset'] = self.datasets.keys()[0]
+            self.mapping_id = int(session['dataset'])
         return self
 
     def is_active(self):

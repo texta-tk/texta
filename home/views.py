@@ -60,16 +60,15 @@ def index(request):
     ds = Datasets().activate_dataset(request.session)
     datasets = ds.get_datasets()
 
-    es_m = ds.build_manager(ES_Manager)
-
-    autocomplete_dict = dict()
-    autocomplete_dict['TEXT'] = autocomplete_data(request)
-    autocomplete_dict['FACT'] = get_facts_autocomplete(es_m)
-    request.session['autocomplete_data'] = autocomplete_dict
+    if ds.is_active():
+        es_m = ds.build_manager(ES_Manager)
+        autocomplete_dict = dict()
+        autocomplete_dict['TEXT'] = autocomplete_data(request)
+        autocomplete_dict['FACT'] = get_facts_autocomplete(es_m)
+        request.session['autocomplete_data'] = autocomplete_dict
 
     # TODO: We should check if the model is actually present on the disk
     sem_models = ModelRun.objects.all().filter(run_status='completed').order_by('-pk')
-
     try:
         request.session['model']
     except KeyError:
