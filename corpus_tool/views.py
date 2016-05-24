@@ -322,7 +322,7 @@ def search(es_params, request):
 
         for hit in response['hits']['hits']:
 
-            hit_id = hit['_id']
+            hit_id = str(hit['_id'])
 
             row = []
             # Fill the row content respecting the order of the columns
