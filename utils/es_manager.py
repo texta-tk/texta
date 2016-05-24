@@ -312,7 +312,7 @@ class ES_Manager:
             total_msg = len(response['hits']['hits'])
             count_limit += total_msg
             for hit in response['hits']['hits']:
-                doc_id = hit['_source']['facts']['doc_id']
+                doc_id = str(hit['_source']['facts']['doc_id'])
                 doc_path = hit['_source']['facts']['doc_path']
                 spans = hit['_source']['facts']['spans']
                 spans = json.loads(spans)
