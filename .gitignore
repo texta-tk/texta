@@ -1,7 +1,6 @@
 data/models/*
 data/usermodels/*
 log/*
-migrations/
 .idea/
 *.pyc
 lex.db
