@@ -1,6 +1,18 @@
+.idea/
+*.pyc
+
+# Exclude user data
 data/models/*
 data/usermodels/*
 log/*
-.idea/
-*.pyc
 lex.db
+
+# Exclude migrations files but not the migrations module.
+texta/corpus_tool/migrations/
+!texta/corpus_tool/migrations/__init__.py
+texta/grammar_builder/migrations/
+!texta/grammar_builder/migrations/__init__.py
+texta/model_manager/migrations/
+!texta/model_manager/migrations/__init__.py
+texta/permission_admin/migrations/
+!texta/permission_admin/migrations/__init__.py

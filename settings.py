@@ -18,7 +18,7 @@ MANAGERS = ADMINS
 if SERVER_TYPE == 'DEV':
     URL_PREFIX_DOMAIN = 'http://localhost:8000'
     URL_PREFIX_RESOURCE = ''
-    ROOT_URLCONF = 'urls'
+    ROOT_URLCONF = 'texta.urls'
     STATIC_URL = URL_PREFIX_DOMAIN + '/static/'
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 else:
@@ -109,19 +109,19 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.admin',
     'django.contrib.staticfiles',
-    'lm',
-    'conceptualiser',
-    'ontologiser',
-    'mwe_miner',
-    'account',
-    'home',
-    'corpus_tool',
-    'model_manager',
-    'ontology_viewer',
-    'base',
-    'permission_admin',
-    'grammar_builder',
-    'document_miner'
+    'texta.lm',
+    'texta.conceptualiser',
+    'texta.ontologiser',
+    'texta.mwe_miner',
+    'texta.account',
+    'texta.home',
+    'texta.corpus_tool',
+    'texta.model_manager',
+    'texta.ontology_viewer',
+    'texta.base',
+    'texta.permission_admin',
+    'texta.grammar_builder',
+    'texta.document_miner'
 )
 
 # Elasticsearch parameters
