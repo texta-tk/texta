@@ -7,6 +7,39 @@ import time
 import requests
 
 
+class Progress:
+    def __init__(self, total, wait=0.5):
+        self.n_total = total
+        self.n_count = 0
+        self.last_update = 0
+        self.wait_time = wait
+
+    def update(self, count, and_show=True):
+        self.n_count = count
+        if and_show:
+            self.show()
+
+    def show(self, force_show=False):
+        now = time.time()
+        if now < (self.last_update + self.wait_time) and not force_show:
+            return
+        self.last_update = now
+        BAR_SIZE = 20
+        p = (1.0 * self.n_count) / self.n_total
+        p = 1.0 if p > 1.0 else p
+        total = int((BAR_SIZE * p))
+        f = '#' * total
+        e = ' ' * (BAR_SIZE - total)
+        bar = '\r [{0}] - {1:3.0f} %   '.format(f + e, 100 * p)
+        sys.stdout.write(bar)
+        sys.stdout.flush()
+
+    def done(self):
+        self.update(self.n_total, and_show=False)
+        self.show(force_show=True)
+        print '\n'
+
+
 class CheckCritical(Exception):
     def __init__(self, msg):
         self.msg = msg
@@ -181,7 +214,7 @@ class FactsCheck:
         request_url = 'http://localhost:9200/{0}/{1}/{2}'.format(self._index, doc_type, doc_id)
         response = requests.get(request_url).json()
         if not response['found']:
-            error_msg = 'Fact _id:{0} points to an invalid document [doc_id:{1}]'.format(_id, doc_id)
+            error_msg = 'Fact _id:{0} has an invalid document [doc_id:{1}]'.format(_id, doc_id)
             raise CheckError(error_msg)
 
         try:
@@ -217,24 +250,31 @@ class FactsCheck:
         self.maybe_print('--', 'Checking facts associations ...')
         n_count = 0
         n_total = self._get_total_facts()
+        prog = Progress(n_total)
         for hit in self._get_fact_hits():
             n_count += 1
-            if n_count % (n_total / 10) == 0:
-                print('Total: {0} %'.format(int((100.0 * n_count) / n_total)))
+            prog.update(n_count)
             _id = hit['_id']
             fact = hit['_source']['facts']
             self._check_types(_id, fact)
             self._check_element(_id, fact)
-
+        prog.done()
         self.maybe_print('--', 'Done [{0}]'.format(n_count))
 
     def _set_warning(self, msg):
         self.warnings.append(msg)
         self.maybe_print('WARNING', msg)
 
+    def _check_es_error(self, r):
+        # Check errors in the database request
+        if (r['_shards']['total'] > 0 and r['_shards']['successful'] == 0) or r['timed_out']:
+            msg_base = 'Elasticsearch: *** Shards: {0} *** Timeout: {1} *** Took: {2}'
+            msg = msg_base.format(r['_shards'], r['timed_out'], r['took'])
+            raise CheckCritical(msg)
+
     def _get_fact_hits(self):
         scroll_url = '{0}/_search/scroll?scroll=1m'.format(self.es_url)
-        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=5000'.format(self.es_url, self._index, self.TEXTA)
+        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=100'.format(self.es_url, self._index, self.TEXTA)
         query = {u'query': {u'bool': {u'should': [], u'must': []}}}
         q = json.dumps(query)
         response = requests.post(search_url, data=q).json()
@@ -244,6 +284,7 @@ class FactsCheck:
             response = requests.post(scroll_url, data=scroll_id).json()
             scroll_id = response['_scroll_id']
             total_msg = len(response['hits']['hits'])
+            self._check_es_error(response)
             for hit in response['hits']['hits']:
                 yield hit
 
