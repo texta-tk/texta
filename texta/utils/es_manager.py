@@ -252,7 +252,7 @@ class ES_Manager:
                 fact_q = {"bool": {"must": []}}
                 fact_q['bool']['must'].append({'match_phrase': {'facts.fact': {'query': query_string, 'slop': 1}}})
                 fact_q['bool']['must'].append({'term': {'facts.doc_type': self.mapping.lower()}})
-                fact_q['bool']['must'].append({'term': {'facts.doc_path': fact_field}})
+                fact_q['bool']['must'].append({'term': {'facts.doc_path': fact_field.lower()}})
                 fact_queries.append(fact_q)
             if fact_operator in ['must', 'should']:
                 _combined_query['facts']['include'].append({'query': {"bool": {fact_operator: fact_queries}}})

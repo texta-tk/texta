@@ -167,10 +167,11 @@ function query(){
         if (request.readyState==4 && request.status==200) {
             $("#right").html(request.responseText);
             examplesTable = $('#examples').DataTable({"bAutoWidth": false,
+                                                      "deferRender": true,
                                                       "bServerSide":true,
-                                                      "sAjaxSource": PREFIX+"/get_examples",
+                                                      "sAjaxSource": PREFIX+"/table_content",
                                                       "sDom": '<"H"ipr>t<"F"lp>',
-                                                      "sServerMethod":"GET",
+                                                      "sServerMethod":"POST",
                                                       "fnServerParams":function(aoData){
                                                           aoData.push({'name':'filterParams','value':JSON.stringify($("#filters").serializeArray())});
                                                        }
@@ -184,7 +185,7 @@ function query(){
         }
     }
 
-    request.open("POST",PREFIX+'/examples');
+    request.open("POST",PREFIX+'/table_header');
     request.send(new FormData(formElement));    
     
 }

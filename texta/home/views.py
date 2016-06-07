@@ -15,6 +15,7 @@ from settings import STATIC_URL, es_url, URL_PREFIX
 
 
 def autocomplete_data(request):
+    logger = LogManager(__name__, 'AUTOCOMPLETE')
 
     session = request.session
     datasets = Datasets().activate_dataset(session)
@@ -37,10 +38,13 @@ def autocomplete_data(request):
 
     response = requests.post(es_url+'/'+es_index+'/'+mapping+'/_search', data=json.dumps(query)).json()
 
-    for a in response["aggregations"].items():
-        terms = [b["key"] for b in a[1]["buckets"]]
-        if len(terms) <= unique_limit:
-            field_values[a[0]] = terms
+    try:
+        for a in response["aggregations"].items():
+            terms = [b["key"] for b in a[1]["buckets"]]
+            if len(terms) <= unique_limit:
+                field_values[a[0]] = terms
+    except KeyError:
+        logger.exception('autocomplete_data')
 
     return field_values
 

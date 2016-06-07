@@ -230,7 +230,7 @@ def get_saved_searches(request):
 
 
 @login_required
-def get_examples_table(request):
+def get_table_header(request):
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
 
@@ -249,13 +249,16 @@ def get_examples_table(request):
 
 
 @login_required
-def get_examples(request):
-    filter_params = json.loads(request.GET['filterParams'])
-    es_params = {filter_param['name']: filter_param['value'] for filter_param in filter_params}
-    es_params['examples_start'] = request.GET['iDisplayStart']
-    es_params['num_examples'] = request.GET['iDisplayLength']
-    result = search(es_params, request)
+def get_table_content(request):
 
+    request_param = request.POST
+    echo = int(request_param['sEcho'])
+    filter_params = json.loads(request_param['filterParams'])
+    es_params = {filter_param['name']: filter_param['value'] for filter_param in filter_params}
+    es_params['examples_start'] = request_param['iDisplayStart']
+    es_params['num_examples'] = request_param['iDisplayLength']
+    result = search(es_params, request)
+    result['sEcho'] = echo
     return HttpResponse(json.dumps(result, ensure_ascii=False))
 
 
@@ -284,7 +287,7 @@ def search(es_params, request):
 
     try:
 
-        start = time.time()
+        start_time = time.time()
         out = {'column_names': [],
                'aaData': [],
                'iTotalRecords': 0,
@@ -310,6 +313,7 @@ def search(es_params, request):
                 highlight_config['fields'][f] = {"number_of_fragments": 0}
         es_m.set_query_parameter('highlight', highlight_config)
 
+        # TODO: improve this speed
         response = es_m.search()
         facts_map = es_m.get_facts_map()
         facts_highlight = facts_map['include']
@@ -323,7 +327,6 @@ def search(es_params, request):
         for hit in response['hits']['hits']:
 
             hit_id = str(hit['_id'])
-
             row = []
             # Fill the row content respecting the order of the columns
             for col in out['column_names']:
@@ -379,8 +382,7 @@ def search(es_params, request):
 
             out['aaData'].append(row)
 
-        out['lag'] = time.time()-start
-
+        out['lag'] = time.time()-start_time
         logger.set_context('query', es_m.get_combined_query())
         logger.set_context('user_name', request.user.username)
         logger.info('documents_queried')
