@@ -65,6 +65,7 @@ class ES_Manager:
     """
 
     TEXTA_MAPPING = 'texta'
+    TEXTA_RESERVED = ['texta_link']
 
     def __init__(self, index, mapping, date_range, url=None):
         self.es_url = url if url else es_url
@@ -123,9 +124,18 @@ class ES_Manager:
             Returns: sorted list of names
         """
         mapped_fields = self.get_mapped_fields()
-        column_names = [c['path'] for c in mapped_fields]
+        column_names = [c['path'] for c in mapped_fields if not self._is_reserved_field(c['path'])]
         column_names.sort()
         return column_names
+
+    def _is_reserved_field(self, field_name):
+        """ Check if a field is a TEXTA reserved name
+        """
+        reserved = False
+        for r in self.TEXTA_RESERVED:
+            if r in field_name:
+                reserved = True
+        return reserved
 
     @staticmethod
     def _get_match_constraints(es_params):
@@ -186,7 +196,7 @@ class ES_Manager:
             A combined query is a dictionary D containing:
 
                 D['main']   ->  the main elasticsearch query
-                D['facts']  ->  the restrictive fact query
+                D['facts']  ->  the fact query
 
         """
         _combined_query = {"main": {"query": {"bool": {"should": [], "must": [], "must_not": []}}},
@@ -210,7 +220,7 @@ class ES_Manager:
 
             for query_string in query_strings:
                 synonyms = self._get_list_synonyms(query_string)
-                ### construct synonym queries
+                # construct synonym queries
                 synonym_queries = []
                 for synonym in synonyms:
                     synonym_query = {}
@@ -238,15 +248,14 @@ class ES_Manager:
             _combined_query["main"]['query']['bool']['must'].append(date_range_end)
 
         total_include = 0
-        total_exclude = 0
         for fact_constraint in fact_constraints.values():
             fact_field = fact_constraint['fact_field'] if 'fact_field' in fact_constraint else ''
             fact_txt = fact_constraint['fact_txt'] if 'fact_txt' in fact_constraint else ''
             fact_operator = fact_constraint['fact_operator'] if 'fact_operator' in fact_constraint else ''
             query_strings = [s.replace('\r', '') for s in fact_txt.split('\n')]
             query_strings = [s.lower() for s in query_strings if s]
-            if len(query_strings) == 0:
-                continue
+            sub_queries = []
+            # Add facts query to search in facts mapping
             fact_queries = []
             for query_string in query_strings:
                 fact_q = {"bool": {"must": []}}
@@ -257,13 +266,17 @@ class ES_Manager:
             if fact_operator in ['must', 'should']:
                 _combined_query['facts']['include'].append({'query': {"bool": {fact_operator: fact_queries}}})
                 total_include += 1
-            if fact_operator == 'must_not':
-                _combined_query['facts']['exclude'].append({'query': {"bool": {'must': fact_queries}}})
-                total_exclude += 1
 
+            # Fact queries are executed against the fact in texta_link
+            for query_string in query_strings:
+                fact_link = '{0}.{1}'.format(fact_field, query_string)
+                sub_query = { "match_phrase" : { "texta_link.facts" : fact_link } }
+                sub_queries.append(sub_query)
+            _combined_query["main"]["query"]["bool"]["should"].append({"bool": {fact_operator: sub_queries}})
+
+        _combined_query["main"]["query"]["bool"]["minimum_should_match"] += len(fact_constraints)
         _combined_query['facts']['total_include'] = total_include
-        _combined_query['facts']['total_exclude'] = total_exclude
-
+        _combined_query['facts']['total_exclude'] = 0
         self.combined_query = _combined_query
 
     def get_combined_query(self):
@@ -301,8 +314,7 @@ class ES_Manager:
             return self.es_cache.get_data(q)
 
         scroll_url = '{0}/_search/scroll?scroll=1m'.format(es_url)
-        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'.format(es_url, self.index,
-                                                                                       self.TEXTA_MAPPING)
+        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'.format(es_url, self.index, self.TEXTA_MAPPING)
         response = requests.post(search_url, data=q).json()
         scroll_id = response['_scroll_id']
         total_msg = response['hits']['total']
@@ -345,57 +357,75 @@ class ES_Manager:
                     final_map[k][sub_k].extend(m[k][sub_k])
         return final_map
 
-    def _process_facts(self, max_size=1000000):
-        self._facts_map = {'include': {}, 'exclude': {}, 'has_include': False, 'has_exclude': False}
+    # def _process_facts(self, max_size=1000000):
+    #     self._facts_map = {'include': {}, 'exclude': {}, 'has_include': False, 'has_exclude': False}
+    #     if not self._check_if_qfacts_is_empty():
+    #         q_facts = self.combined_query['facts']
+    #
+    #         if q_facts['total_include'] > 0:
+    #             # Include queries should be merged with intersection of their doc_ids
+    #             temp_map_list = []
+    #             for sub_q in q_facts['include']:
+    #                 q = {"query": sub_q['query']}
+    #                 temp_map = self._get_facts_ids_map(q, max_size)
+    #                 temp_map_list.append(temp_map)
+    #             self._facts_map['include'] = self._merge_maps(temp_map_list)
+    #             self._facts_map['has_include'] = True
+    #
+    #         if q_facts['total_exclude'] > 0:
+    #             # Exclude queries should be merged with union of their doc_ids
+    #             temp_map_list = []
+    #             for sub_q in q_facts['exclude']:
+    #                 q = {"query": sub_q['query']}
+    #                 temp_map = self._get_facts_ids_map(q, max_size)
+    #                 temp_map_list.append(temp_map)
+    #             self._facts_map['exclude'] = self._merge_maps(temp_map_list, union=True)
+    #             self._facts_map['has_exclude'] = True
+
+    def _get_restricted_facts(self, doc_ids, max_size=500):
+        facts_map = {'include': {}, 'exclude': {}, 'has_include': False, 'has_exclude': False}
         if not self._check_if_qfacts_is_empty():
             q_facts = self.combined_query['facts']
-
             if q_facts['total_include'] > 0:
                 # Include queries should be merged with intersection of their doc_ids
                 temp_map_list = []
                 for sub_q in q_facts['include']:
                     q = {"query": sub_q['query']}
+                    q['query']['bool']['filter'] = {'and': []}
+                    q['query']['bool']['filter']['and'].append({"terms": {'facts.doc_id': doc_ids}})
                     temp_map = self._get_facts_ids_map(q, max_size)
                     temp_map_list.append(temp_map)
-                self._facts_map['include'] = self._merge_maps(temp_map_list)
-                self._facts_map['has_include'] = True
+                facts_map['include'] = self._merge_maps(temp_map_list)
+                facts_map['has_include'] = True
+        return facts_map
 
-            if q_facts['total_exclude'] > 0:
-                # Exclude queries should be merged with union of their doc_ids
-                temp_map_list = []
-                for sub_q in q_facts['exclude']:
-                    q = {"query": sub_q['query']}
-                    temp_map = self._get_facts_ids_map(q, max_size)
-                    temp_map_list.append(temp_map)
-                self._facts_map['exclude'] = self._merge_maps(temp_map_list, union=True)
-                self._facts_map['has_exclude'] = True
-
-    def get_facts_map(self):
+    def get_facts_map(self, doc_ids=[]):
         """ Returns facts map with doc ids and spans values
         """
-        if not self._facts_map:
-            self._process_facts()
-        return self._facts_map
+        return self._get_restricted_facts(doc_ids)
+        # if not self._facts_map:
+        #    self._process_facts()
+        # return self._facts_map
 
-    def _get_joint_query(self, apply_facts_join = True):
-        q = self.combined_query['main']
-        if apply_facts_join:
-            # Application Joint
-            facts_map = self.get_facts_map()
-            if facts_map['has_include']:
-                doc_ids = facts_map['include'].keys()
-                ids_join = {"ids": {"values": doc_ids}}
-                q['query']['bool']['must'].append(ids_join)
-            if facts_map['has_exclude']:
-                doc_ids = facts_map['exclude'].keys()
-                ids_join = {"ids": {"values": doc_ids}}
-                q['query']['bool']['must_not'].append(ids_join)
-        return q
+    # def _get_joint_query(self, apply_facts_join = True):
+    #    q = self.combined_query['main']
+    #    if apply_facts_join:
+    #        # Application Joint
+    #        facts_map = self.get_facts_map()
+    #        if facts_map['has_include']:
+    #            doc_ids = facts_map['include'].keys()
+    #            ids_join = {"ids": {"values": doc_ids}}
+    #            q['query']['bool']['must'].append(ids_join)
+    #        if facts_map['has_exclude']:
+    #            doc_ids = facts_map['exclude'].keys()
+    #            ids_join = {"ids": {"values": doc_ids}}
+    #            q['query']['bool']['must_not'].append(ids_join)
+    #    return q
 
-    def search(self, apply_facts=True):
+    def search(self):
         """ Search
         """
-        q = json.dumps(self._get_joint_query(apply_facts_join=apply_facts))
+        q = json.dumps(self.combined_query['main'])
         search_url = '{0}/{1}/{2}/_search'.format(es_url, self.index, self.mapping)
         response = requests.post(search_url, data=q).json()
         return response
@@ -407,16 +437,16 @@ class ES_Manager:
             q = json.dumps({"scroll": time_out, "scroll_id": scroll_id})
             search_url = '{0}/_search/scroll'.format(es_url)
         else:
-            q = json.dumps(self._get_joint_query())
+            q = json.dumps(self.combined_query['main'])
             search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll={3}'.format(es_url, self.index,
                                                                                   self.mapping, time_out)
 
         response = requests.post(search_url, data=q).json()
         return response
 
-    def get_total_documents(self, apply_facts=True):
+    def get_total_documents(self):
         search_url = '{0}/{1}/{2}/_count'.format(es_url, self.index, self.mapping)
-        q = json.dumps(self._get_joint_query(apply_facts_join=apply_facts))
+        q = json.dumps(self.combined_query['main'])
         response = requests.post(search_url, data=q).json()
         total = response['count']
         return long(total)
@@ -426,8 +456,7 @@ class ES_Manager:
             Returns: dictionary in the form {fact: [set of fields]}
         """
         # TODO: change to aggregation over unique elements
-        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'.format(es_url,
-                                                                                       self.index, self.TEXTA_MAPPING)
+        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'.format(es_url, self.index, self.TEXTA_MAPPING)
         query = {"query": {"term": {"facts.doc_type": self.mapping.lower()}}}
         query = json.dumps(query)
         response = requests.post(search_url, data=query).json()

@@ -299,11 +299,11 @@ def search(es_params, request):
 
         es_m.build(es_params)
 
-        ### DEFINING THE EXAMPLE SIZE
+        # DEFINING THE EXAMPLE SIZE
         es_m.set_query_parameter('from', es_params['examples_start'])
         es_m.set_query_parameter('size', es_params['num_examples'])
 
-        ### HIGHLIGHTING THE MATCHING FIELDS
+        # HIGHLIGHTING THE MATCHING FIELDS
         pre_tag = "<span style='background-color:#FFD119'>"
         post_tag = "</span>"
         highlight_config = {"fields": {}, "pre_tags": [pre_tag], "post_tags": [post_tag]}
@@ -313,9 +313,15 @@ def search(es_params, request):
                 highlight_config['fields'][f] = {"number_of_fragments": 0}
         es_m.set_query_parameter('highlight', highlight_config)
 
-        # TODO: improve this speed
         response = es_m.search()
-        facts_map = es_m.get_facts_map()
+
+        # Get the ids of all documents to be presented in the results page
+        doc_hit_ids = []
+        for hit in response['hits']['hits']:
+            hit_id = str(hit['_id'])
+            doc_hit_ids.append(hit_id)
+        # Use the doc_ids to restrict the facts search (fast!)
+        facts_map = es_m.get_facts_map(doc_ids=doc_hit_ids)
         facts_highlight = facts_map['include']
 
         out['iTotalRecords'] = response['hits']['total']
