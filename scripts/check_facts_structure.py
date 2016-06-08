@@ -25,7 +25,7 @@ class Progress:
             return
         self.last_update = now
         BAR_SIZE = 20
-        p = (1.0 * self.n_count) / self.n_total
+        p = (1.0 * self.n_count) / self.n_total if self.n_total else 0
         p = 1.0 if p > 1.0 else p
         total = int((BAR_SIZE * p))
         f = '#' * total
@@ -397,6 +397,7 @@ class FactsLink:
     def link_all(self):
 
         self._build_facts_structure()
+        print '- Total of facts: {0}'.format(len(self.facts_structure.keys()))
         print 'Linking ... '
 
         search_url_base = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=100'
