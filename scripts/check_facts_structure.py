@@ -203,14 +203,22 @@ class FactsCheck:
         doc_id = fact['doc_id']
         spans = fact['spans']
 
+        # Check fact name size
         if len(fact_name) == 0:
             error_msg = 'Fact _id:{0} has empty fact_name'.format(_id)
             raise CheckError(error_msg)
 
+        # Check fact name with dots
+        if '.' in fact_name:
+            error_msg = 'Fact _id:{0} contains dot (.) - {1}'.format(_id, fact_name)
+            raise CheckError(error_msg)
+
+        # Check fact name max size (warning)
         if len(fact_name) > 20:
             warning_msg = 'Fact _id:{0} has long fact_name'.format(_id)
             self._set_warning(warning_msg)
 
+        # Check doc_id and recover document
         request_url = 'http://localhost:9200/{0}/{1}/{2}'.format(self._index, doc_type, doc_id)
         response = requests.get(request_url).json()
         if not response['found']:
@@ -224,14 +232,17 @@ class FactsCheck:
             error_msg = 'Fact _id:{0} has invalid spans field '.format(_id)
             raise CheckError(error_msg)
 
+        _source = response['_source']
+
+        # Check spans
         len_spans = len(spans)
         if len_spans == 0:
             warning_msg = 'Fact _id:{0} has empty spans'.format(_id)
             self._set_warning(warning_msg)
 
-        doc = response['_source']
+        # Check doc_path
+        doc = _source
         path_parts = doc_path.split('.')
-
         try:
             for p in path_parts:
                 doc = doc[p]
@@ -239,6 +250,18 @@ class FactsCheck:
             error_msg = 'Fact _id:{0} has invalid doc_path [doc_path:{1}]'.format(_id, doc_path)
             raise CheckError(error_msg)
 
+        # Check fact link
+        is_linked = False
+        if 'texta_link' not in _source or 'facts' not in _source['texta_link']:
+            is_linked = False
+        else:
+            for fact_link in _source['texta_link']['facts']:
+                is_linked = is_linked or (doc_path in fact_link)
+        if not is_linked:
+            error_msg = 'Fact _id:{0} is not linked with document [doc_id:{1}]'.format(_id, doc_id)
+            raise CheckError(error_msg)
+
+        # Check spanned content
         len_field = len(doc) + 1
         max_span = max([s[1] for s in spans])
         if max_span > len_field:
@@ -312,34 +335,176 @@ class FactsCheck:
         print('\tExecuted tests: \t{0}'.format(self.count_tests))
 
 
-def main():
-    arguments = sys.argv
-    if len(arguments) != 3 and len(arguments) != 2:
-        print('Wrong number of arguments. Use one of those:')
-        print('\t1) python {0} --indexes'.format(arguments[0]))
-        print('\t2) python {0} index'.format(arguments[0]))
-        print('\t3) python {0} index port'.format(arguments[0]))
-        print('')
-        return
+class FactsLink:
 
-    _index = arguments[1]
-    _port = arguments[2] if len(arguments) == 3 else 9200
-    es_url = 'http://localhost:{0}'.format(_port)
+    def __init__(self, es_url, _index, _type):
+        self.es_url = es_url
+        self._index = _index
+        self._type = _type
+        self.facts_structure = None
 
-    if _index == '--indexes':
-        request_url = '{0}/_aliases'.format(es_url)
+    def get_texta_link_facts_by_id(self, doc_id):
+        base_url = '{0}/{1}/{2}/{3}?fields=texta_link.facts'
+        request_url = base_url.format(self.es_url, self._index, self._type, doc_id)
         response = requests.get(request_url).json()
-        for k in response.keys():
-            print k
-        return
+        doc = None
+        try:
+            if response['found']:
+                doc = []
+            if 'fields' in response:
+                doc = response['fields']['texta_link.facts']
+        except KeyError:
+            return None
+        return doc
 
-    print('Starting... {0}/{1} \n'.format(es_url, _index))
-    start_time = time.time()
-    check = FactsCheck(es_url, _index)
-    check.check_all()
-    check.summary()
-    end_time = time.time()
-    print '\n... total time: {0:2.2f} [min]'.format((end_time-start_time)/60.0)
+    def update_texta_link_by_id(self, doc_id, texta_link):
+        base_url = '{0}/{1}/{2}/{3}/_update'
+        request_url = base_url.format(self.es_url, self._index, self._type, doc_id)
+        d = json.dumps({'doc': texta_link})
+        response = requests.post(request_url, data=d).json()
+        return response
+
+    def get_facts_structure(self):
+        base_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=100'
+        search_url = base_url.format(self.es_url, self._index, 'texta')
+        query = {"query": {"term": {"facts.doc_type": self._type.lower()}}}
+        query = json.dumps(query)
+        response = requests.post(search_url, data=query).json()
+        scroll_id = response['_scroll_id']
+        total = response['hits']['total']
+        prog = Progress(total)
+        n_count = 0
+        facts_structure = {}
+        while total > 0:
+            response = requests.post('{0}/_search/scroll?scroll=1m'.format(self.es_url), data=scroll_id).json()
+            total = len(response['hits']['hits'])
+            scroll_id = response['_scroll_id']
+            for hit in response['hits']['hits']:
+                n_count += 1
+                prog.update(n_count)
+                fact = hit['_source']['facts']['fact']
+                doc_path = hit['_source']['facts']['doc_path']
+                if fact not in facts_structure:
+                    facts_structure[fact] = set()
+                facts_structure[fact].add(doc_path)
+        prog.done()
+        return facts_structure
+
+    def _build_facts_structure(self):
+        print 'Build facts structure ...'
+        self.facts_structure = self.get_facts_structure()
+
+    def link_all(self):
+
+        self._build_facts_structure()
+        print 'Linking ... '
+
+        search_url_base = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=100'
+        search_url = search_url_base.format(self.es_url, self._index, 'texta')
+
+        query = {"query": {"term": {"facts.doc_type": self._type.lower()}}}
+        query = json.dumps(query)
+        response = requests.post(search_url, data=query).json()
+        scroll_id = response['_scroll_id']
+        total = response['hits']['total']
+        n_total = total
+        n_count = 0
+        prog = Progress(n_total)
+        while total > 0:
+            response = requests.post('{0}/_search/scroll?scroll=1m'.format(self.es_url), data=scroll_id).json()
+            total = len(response['hits']['hits'])
+            scroll_id = response['_scroll_id']
+            for hit in response['hits']['hits']:
+                n_count += 1
+                prog.update(n_count)
+
+                fact = hit['_source']['facts']['fact']
+                doc_path = hit['_source']['facts']['doc_path']
+                if fact not in self.facts_structure:
+                    self.facts_structure[fact] = set()
+                self.facts_structure[fact].add(doc_path)
+                fact_link = '{0}.{1}'.format(doc_path, fact)
+                doc_id = hit['_source']['facts']['doc_id']
+                links = self.get_texta_link_facts_by_id(doc_id)
+                if links is not None:
+                    texta_link = {'texta_link': {'facts': links}}
+                    if fact_link not in texta_link['texta_link']['facts']:
+                        texta_link['texta_link']['facts'].append(fact_link)
+                        self.update_texta_link_by_id(doc_id, texta_link)
+
+            # Check errors in the database request
+            if (response['_shards']['total'] > 0 and response['_shards']['successful'] == 0) or response['timed_out']:
+                msg_base = 'Elasticsearch: *** Shards: {0} *** Timeout: {1} *** Took: {2}'
+                msg = msg_base.format(response['_shards'], response['timed_out'], response['took'])
+                print msg
+        prog.done()
+
+
+def print_help(commands):
+    print('Something went wrong.... valid commands:\n')
+    for i,c in enumerate(commands):
+        print('{0}) {1}'.format(i+1, c[2]))
+    print('')
+
+
+def main():
+
+    args = sys.argv
+    script_name = args[0]
+    commands = []
+    commands.append(['--indexes', 0, 'python {0} port --indexes'.format(script_name)])
+    commands.append(['--check', 1, 'python {0} port --maps index_name'.format(script_name)])
+    commands.append(['--check', 1, 'python {0} port --check index_name'.format(script_name)])
+    commands.append(['--link', 1, 'python {0} port --link index_name map_name'.format(script_name)])
+    try:
+
+        port = long(args[1])
+        c = args[2]
+        es_url = 'http://localhost:{0}'.format(port)
+
+        if c == '--indexes':
+            request_url = '{0}/_aliases'.format(es_url)
+            response = requests.get(request_url).json()
+            for k in response.keys():
+                print k
+            return
+
+        if c == '--maps':
+            _index = u'{0}'.format(args[3])
+            request_url = '{0}/{1}'.format(es_url, _index)
+            response = requests.get(request_url).json()
+            for k in response[_index]['mappings'].keys():
+                print k
+            return
+
+        if c == '--check':
+            _index = u'{0}'.format(args[3])
+            print('Checking... URL: {0}/{1} \n'.format(es_url, _index))
+            start_time = time.time()
+            check = FactsCheck(es_url, _index)
+            check.check_all()
+            check.summary()
+            end_time = time.time()
+            print '\n... total time: {0:2.2f} [min]'.format((end_time - start_time) / 60.0)
+            return
+
+        if c == '--link':
+            _index = u'{0}'.format(args[3])
+            _type = u'{0}'.format(args[4])
+            if _type == u'texta':
+                raise Exception('Mapping link cant be texta!')
+            print('Linking... URL: {0}/{1} - mapping: {2} \n'.format(es_url, _index, _type))
+            start_time = time.time()
+            link = FactsLink(es_url, _index, _type)
+            link.link_all()
+            end_time = time.time()
+            print '\n... total time: {0:2.2f} [min]'.format((end_time - start_time) / 60.0)
+            return
+
+    except Exception as e:
+        print '--- Error: {0} \n'.format(e)
+    print_help(commands)
+
 
 if __name__ == '__main__':
     main()
