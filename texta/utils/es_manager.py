@@ -106,9 +106,10 @@ class ES_Manager:
             else:
                 path_list = root_path[:]
                 path_list.append(item[0])
-                path = '.'.join(path_list)
-                data = {'path': path, 'type': item[1]['type']}
-                mapping_data.append(data)
+                if path_list[0] not in self.TEXTA_RESERVED:
+                    path = '.'.join(path_list)
+                    data = {'path': path, 'type': item[1]['type']}
+                    mapping_data.append(data)
 
         return mapping_data
 
