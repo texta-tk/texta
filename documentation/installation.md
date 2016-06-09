@@ -14,6 +14,9 @@ apt-get -y  install python-pip python-dev
 #c compiler for gensim
 apt-get -y install build-essential manpages-dev
 
+#fortran compiler & linear algebra for scipy
+apt-get install libblas-dev liblapack-dev libatlas-base-dev gfortran
+
 pip install requests
 pip install numpy
 pip install cython #needed for fast gensim
