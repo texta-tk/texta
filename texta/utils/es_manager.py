@@ -409,18 +409,34 @@ class ES_Manager:
         total = response['count']
         return long(total)
 
-    def get_facts_structure(self):
-        """ Get facts structure
-            Returns: dictionary in the form {fact: [set of fields]}
-        """
-        # TODO: change to aggregation over unique elements
-        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'.format(es_url, self.index, self.TEXTA_MAPPING)
+    def _get_facts_structure_agg(self):
+        query = {"query": {"term": {"facts.doc_type": self.mapping.lower()}}}
+        aggregations = {"fact": {'terms': {"field": 'facts.fact'},
+                                 'aggs': {"doc_path": {"terms": {"field": 'facts.doc_path'}}}}}
+        query['aggs'] = aggregations
+        query = json.dumps(query)
+        request_url = '{0}/{1}/{2}/_search?_source=false'.format(es_url, self.index, self.TEXTA_MAPPING)
+        response = requests.get(request_url, data=query).json()
+        agg = response['aggregations']
+        facts_agg_structure = {}
+        for fact in agg['fact']['buckets']:
+            fact_name = fact['key']
+            if fact_name not in facts_agg_structure:
+                facts_agg_structure[fact_name] = set()
+            for t in fact['doc_path']['buckets']:
+                doc_path = t['key']
+                facts_agg_structure[fact_name].add(doc_path)
+        return facts_agg_structure
+
+    def _get_facts_structure_no_agg(self):
+        facts_structure = {}
+        base_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'
+        search_url = base_url.format(es_url, self.index, self.TEXTA_MAPPING)
         query = {"query": {"term": {"facts.doc_type": self.mapping.lower()}}}
         query = json.dumps(query)
         response = requests.post(search_url, data=query).json()
         scroll_id = response['_scroll_id']
         total = response['hits']['total']
-        facts_structure = {}
         while total > 0:
             response = requests.post('{0}/_search/scroll?scroll=1m'.format(es_url), data=scroll_id).json()
             total = len(response['hits']['hits'])
@@ -431,6 +447,24 @@ class ES_Manager:
                 if fact not in facts_structure:
                     facts_structure[fact] = set()
                 facts_structure[fact].add(doc_path)
+        return facts_structure
+
+    def get_facts_structure(self):
+        """ Get facts structure
+            Returns: dictionary in the form {fact: [set of fields]}
+        """
+        logger = LogManager(__name__, 'ES MANAGER')
+        facts_structure = {}
+        no_aggs = False
+        try:
+            facts_structure = self._get_facts_structure_agg()
+        except KeyError:
+            no_aggs = True
+
+        if no_aggs:
+            facts_structure = self._get_facts_structure_no_agg()
+            logger.error('facts_error', msg='Could not use aggregation in facts structure')
+
         return facts_structure
 
     def get_facts_from_field(self, field):
