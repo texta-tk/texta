@@ -230,7 +230,7 @@ def get_saved_searches(request):
 
 
 @login_required
-def get_examples_table(request):
+def get_table_header(request):
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
 
@@ -249,13 +249,16 @@ def get_examples_table(request):
 
 
 @login_required
-def get_examples(request):
-    filter_params = json.loads(request.GET['filterParams'])
-    es_params = {filter_param['name']: filter_param['value'] for filter_param in filter_params}
-    es_params['examples_start'] = request.GET['iDisplayStart']
-    es_params['num_examples'] = request.GET['iDisplayLength']
-    result = search(es_params, request)
+def get_table_content(request):
 
+    request_param = request.POST
+    echo = int(request_param['sEcho'])
+    filter_params = json.loads(request_param['filterParams'])
+    es_params = {filter_param['name']: filter_param['value'] for filter_param in filter_params}
+    es_params['examples_start'] = request_param['iDisplayStart']
+    es_params['num_examples'] = request_param['iDisplayLength']
+    result = search(es_params, request)
+    result['sEcho'] = echo
     return HttpResponse(json.dumps(result, ensure_ascii=False))
 
 
@@ -284,7 +287,7 @@ def search(es_params, request):
 
     try:
 
-        start = time.time()
+        start_time = time.time()
         out = {'column_names': [],
                'aaData': [],
                'iTotalRecords': 0,
@@ -296,11 +299,11 @@ def search(es_params, request):
 
         es_m.build(es_params)
 
-        ### DEFINING THE EXAMPLE SIZE
+        # DEFINING THE EXAMPLE SIZE
         es_m.set_query_parameter('from', es_params['examples_start'])
         es_m.set_query_parameter('size', es_params['num_examples'])
 
-        ### HIGHLIGHTING THE MATCHING FIELDS
+        # HIGHLIGHTING THE MATCHING FIELDS
         pre_tag = "<span style='background-color:#FFD119'>"
         post_tag = "</span>"
         highlight_config = {"fields": {}, "pre_tags": [pre_tag], "post_tags": [post_tag]}
@@ -311,7 +314,14 @@ def search(es_params, request):
         es_m.set_query_parameter('highlight', highlight_config)
 
         response = es_m.search()
-        facts_map = es_m.get_facts_map()
+
+        # Get the ids of all documents to be presented in the results page
+        doc_hit_ids = []
+        for hit in response['hits']['hits']:
+            hit_id = str(hit['_id'])
+            doc_hit_ids.append(hit_id)
+        # Use the doc_ids to restrict the facts search (fast!)
+        facts_map = es_m.get_facts_map(doc_ids=doc_hit_ids)
         facts_highlight = facts_map['include']
 
         out['iTotalRecords'] = response['hits']['total']
@@ -323,7 +333,6 @@ def search(es_params, request):
         for hit in response['hits']['hits']:
 
             hit_id = str(hit['_id'])
-
             row = []
             # Fill the row content respecting the order of the columns
             for col in out['column_names']:
@@ -379,8 +388,7 @@ def search(es_params, request):
 
             out['aaData'].append(row)
 
-        out['lag'] = time.time()-start
-
+        out['lag'] = time.time()-start_time
         logger.set_context('query', es_m.get_combined_query())
         logger.set_context('user_name', request.user.username)
         logger.info('documents_queried')
@@ -631,75 +639,98 @@ def _get_facts_agg_count(es_m, facts):
 
 
 def facts_agg(es_params, request):
-    """ Perform facts aggregation
-        Return: aggregation data in a table format (type bar)
-    """
     logger = LogManager(__name__, 'SEARCH CORPUS')
 
+    distinct_values = []
+    query_results = []
+    lexicon = []
     aggregation_data = es_params['aggregate_over']
     aggregation_data = json.loads(aggregation_data)
-    aggregation_field = aggregation_data['path']
-    counts = {}
+    original_aggregation_field = aggregation_data['path']
+    aggregation_field = 'texta_link.facts'
 
-    # Define selected mapping
-    ds = Datasets().activate_dataset(request.session)
-    dataset = ds.get_index()
-    mapping = ds.get_mapping()
-    date_range = ds.get_date_range()
-    es_m = ES_Manager(dataset, mapping, date_range)
-    # Get all facts for the user aggregation_field
-    facts = es_m.get_facts_from_field(aggregation_field)
+    try:
+        aggregation_size = 50
+        aggregations = {"strings": {es_params['sort_by']: {"field": aggregation_field, 'size': 0}},
+                        "distinct_values": {"cardinality": {"field": aggregation_field}}}
 
-    # Get all counts for saved searches
-    for item in es_params:
-        if 'saved_search' in item:
-            s = Search.objects.get(pk=es_params[item])
-            name = s.description
-            saved_query = json.loads(s.query)
-            es_m.load_combined_query(saved_query)
-            es_m.set_query_parameter('fields', [])
-            counts[name] = _get_facts_agg_count(es_m, facts)
+        # Define selected mapping
+        ds = Datasets().activate_dataset(request.session)
+        dataset = ds.get_index()
+        mapping = ds.get_mapping()
+        date_range = ds.get_date_range()
+        es_m = ES_Manager(dataset, mapping, date_range)
 
-    # Get all documents ids from the user query
-    name = 'Current Search'
-    counts[name] = []
-    es_m.build(es_params)
-    es_m.set_query_parameter('fields', [])
-    counts[name] = _get_facts_agg_count(es_m, facts)
+        for item in es_params:
+            if 'saved_search' in item:
+                s = Search.objects.get(pk=es_params[item])
+                name = s.description
+                saved_query = json.loads(s.query)
+                es_m.load_combined_query(saved_query)
+                es_m.set_query_parameter('aggs', aggregations)
+                response = es_m.search()
 
-    # Build total table
-    total_table = []
-    header = sorted(counts.keys())
-    for k in header:
-        total = sum([counts[k][sub_k] for sub_k in counts[k]])
-        total_agg = {'name': k, 'data': total}
-        total_table.append(total_agg)
+                # Filter response
+                bucket_filter = '{0}.'.format(original_aggregation_field.lower())
+                final_bucket = []
+                for b in response['aggregations']['strings']['buckets']:
+                    if bucket_filter in b['key']:
+                        fact_name = b['key'].split('.')[-1]
+                        b['key'] = fact_name
+                        final_bucket.append(b)
+                final_bucket = final_bucket[:aggregation_size]
+                response['aggregations']['distinct_values']['value'] = len(final_bucket)
+                response['aggregations']['strings']['buckets'] = final_bucket
 
-    # Sort facts using the total of documents
-    sorted_facts = sorted(facts.keys(), key=lambda x: sum([counts[k][x] for k in counts]), reverse=True)
+                normalised_counts,labels = normalise_agg(response, es_m, es_params, 'strings')
+                lexicon = list(set(lexicon+labels))
+                query_results.append({'name':name,'data':normalised_counts,'labels':labels})
+                distinct_values.append({'name':name,'data':response['aggregations']['distinct_values']['value']})
 
-    # Build aggregation table
-    rows = {}
-    for i, c in enumerate(counts):
-        for k in sorted_facts:
-            if k not in rows:
-                rows[k] = [0] * len(counts.keys())
-            rows[k][i] = counts[c][k]
+        es_m.build(es_params)
+        # FIXME
+        # this is confusing for the user
+        if not es_m.is_combined_query_empty():
+            es_m.set_query_parameter('aggs', aggregations)
+            response = es_m.search()
 
-    # Build response table
-    agg_data = dict()
-    agg_data['type'] = 'bar'
-    agg_data['data'] = [['Fact'] + header]
-    for k in sorted_facts:
-        agg_data['data'].append([k] + rows[k])
-    agg_data['distinct_values'] = json.dumps(total_table)
-    table_height = (len(rows.keys()) + 1)*15
-    agg_data['height'] = table_height if table_height > 500 else 500
+            # Filter response
+            bucket_filter = '{0}.'.format(original_aggregation_field.lower())
+            final_bucket = []
+            for b in response['aggregations']['strings']['buckets']:
+                if bucket_filter in b['key']:
+                    fact_name = b['key'].split('.')[-1]
+                    b['key'] = fact_name
+                    final_bucket.append(b)
+            final_bucket = final_bucket[:aggregation_size]
+            response['aggregations']['distinct_values']['value'] = len(final_bucket)
+            response['aggregations']['strings']['buckets'] = final_bucket
 
-    logger.set_context('user_name', request.user.username)
-    logger.info('facts_aggregation_queried')
+            normalised_counts,labels = normalise_agg(response, es_m, es_params, 'strings')
+            lexicon = list(set(lexicon+labels))
+            query_results.append({'name':'Query','data':normalised_counts,'labels':labels})
+            distinct_values.append({'name':'Query','data':response['aggregations']['distinct_values']['value']})
 
-    return agg_data
+        data = [a+zero_list(len(query_results)) for a in map(list, zip(*[lexicon]))]
+        data = [['Word']+[query_result['name'] for query_result in query_results]]+data
+
+        for i,word in enumerate(lexicon):
+            for j,query_result in enumerate(query_results):
+                for k,label in enumerate(query_result['labels']):
+                    if word == label:
+                        data[i+1][j+1] = query_result['data'][k]
+
+        logger.set_context('user_name', request.user.username)
+        logger.info('facts_aggregation_queried')
+
+    except Exception, e:
+        print '-- Exception[{0}] {1}'.format(__name__, e)
+        logger.set_context('user_name', request.user.username)
+        logger.exception('facts_aggregation_query_failed')
+
+    table_height = len(data)*15
+    table_height = table_height if table_height > 500 else 500
+    return {'data':[data[0]]+sorted(data[1:], key=lambda x: sum(x[1:]), reverse=True),'height':table_height,'type':'bar','distinct_values':json.dumps(distinct_values)}
 
 
 def discrete_agg(es_params, request):

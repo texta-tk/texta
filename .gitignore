@@ -16,3 +16,9 @@ texta/model_manager/migrations/
 !texta/model_manager/migrations/__init__.py
 texta/permission_admin/migrations/
 !texta/permission_admin/migrations/__init__.py
+texta/conceptualiser/migrations/
+!texta/conceptualiser/migrations/__init__.py
+texta/lm/migrations/
+!texta/lm/migrations/__init__.py
+texta/mwe_miner/migrations/
+!texta/mwe_miner/migrations/__init__.py
