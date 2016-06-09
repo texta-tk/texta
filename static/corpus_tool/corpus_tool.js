@@ -166,15 +166,18 @@ function query(){
     request.onreadystatechange=function() {
         if (request.readyState==4 && request.status==200) {
             $("#right").html(request.responseText);
-            examplesTable = $('#examples').DataTable({"bAutoWidth": false,
-                                                      "deferRender": true,
-                                                      "bServerSide":true,
-                                                      "sAjaxSource": PREFIX+"/table_content",
-                                                      "sDom": '<"H"ipr>t<"F"lp>',
-                                                      "sServerMethod":"POST",
-                                                      "fnServerParams":function(aoData){
-                                                          aoData.push({'name':'filterParams','value':JSON.stringify($("#filters").serializeArray())});
-                                                       }
+            examplesTable = $('#examples').DataTable({
+                  "bAutoWidth": false,
+                  "deferRender": true,
+                  "bServerSide": true,
+                  'processing': true,
+                  "sAjaxSource": PREFIX+"/table_content",
+                  "sDom": '<"H"ipr>t<"F"lp>',
+                  "sServerMethod":"POST",
+                  "fnServerParams":function(aoData){
+                      aoData.push({'name':'filterParams','value':JSON.stringify($("#filters").serializeArray())});
+                   },
+                  "oLanguage": { "sProcessing": "Loading..."}
             });
             var dataset = $("#dataset").val();
             var mapping = $("#mapping").val();
