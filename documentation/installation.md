@@ -17,6 +17,9 @@ apt-get -y install build-essential manpages-dev
 #fortran compiler & linear algebra for scipy
 apt-get install libblas-dev liblapack-dev libatlas-base-dev gfortran
 
+# interface compiler for estnltk
+apt-get install swig
+
 pip install requests
 pip install numpy
 pip install cython #needed for fast gensim
