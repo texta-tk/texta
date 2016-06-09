@@ -358,31 +358,6 @@ class ES_Manager:
                     final_map[k][sub_k].extend(m[k][sub_k])
         return final_map
 
-    # def _process_facts(self, max_size=1000000):
-    #     self._facts_map = {'include': {}, 'exclude': {}, 'has_include': False, 'has_exclude': False}
-    #     if not self._check_if_qfacts_is_empty():
-    #         q_facts = self.combined_query['facts']
-    #
-    #         if q_facts['total_include'] > 0:
-    #             # Include queries should be merged with intersection of their doc_ids
-    #             temp_map_list = []
-    #             for sub_q in q_facts['include']:
-    #                 q = {"query": sub_q['query']}
-    #                 temp_map = self._get_facts_ids_map(q, max_size)
-    #                 temp_map_list.append(temp_map)
-    #             self._facts_map['include'] = self._merge_maps(temp_map_list)
-    #             self._facts_map['has_include'] = True
-    #
-    #         if q_facts['total_exclude'] > 0:
-    #             # Exclude queries should be merged with union of their doc_ids
-    #             temp_map_list = []
-    #             for sub_q in q_facts['exclude']:
-    #                 q = {"query": sub_q['query']}
-    #                 temp_map = self._get_facts_ids_map(q, max_size)
-    #                 temp_map_list.append(temp_map)
-    #             self._facts_map['exclude'] = self._merge_maps(temp_map_list, union=True)
-    #             self._facts_map['has_exclude'] = True
-
     def _get_restricted_facts(self, doc_ids, max_size=500):
         facts_map = {'include': {}, 'exclude': {}, 'has_include': False, 'has_exclude': False}
         if not self._check_if_qfacts_is_empty():
@@ -404,24 +379,6 @@ class ES_Manager:
         """ Returns facts map with doc ids and spans values
         """
         return self._get_restricted_facts(doc_ids)
-        # if not self._facts_map:
-        #    self._process_facts()
-        # return self._facts_map
-
-    # def _get_joint_query(self, apply_facts_join = True):
-    #    q = self.combined_query['main']
-    #    if apply_facts_join:
-    #        # Application Joint
-    #        facts_map = self.get_facts_map()
-    #        if facts_map['has_include']:
-    #            doc_ids = facts_map['include'].keys()
-    #            ids_join = {"ids": {"values": doc_ids}}
-    #            q['query']['bool']['must'].append(ids_join)
-    #        if facts_map['has_exclude']:
-    #            doc_ids = facts_map['exclude'].keys()
-    #            ids_join = {"ids": {"values": doc_ids}}
-    #            q['query']['bool']['must_not'].append(ids_join)
-    #    return q
 
     def search(self):
         """ Search

@@ -644,11 +644,6 @@ def facts_agg(es_params, request):
     distinct_values = []
     query_results = []
     lexicon = []
-
-    # 1) Perform aggregation over all in _(dataset, mapping, texta_link)
-    # 2) Filter facts relative to original_aggregation_field
-    # 3) Remove fact name form 'field.fact' structure
-
     aggregation_data = es_params['aggregate_over']
     aggregation_data = json.loads(aggregation_data)
     original_aggregation_field = aggregation_data['path']
@@ -736,78 +731,6 @@ def facts_agg(es_params, request):
     table_height = len(data)*15
     table_height = table_height if table_height > 500 else 500
     return {'data':[data[0]]+sorted(data[1:], key=lambda x: sum(x[1:]), reverse=True),'height':table_height,'type':'bar','distinct_values':json.dumps(distinct_values)}
-
-
-# def facts_agg_old(es_params, request):
-#     """ Perform facts aggregation
-#         Return: aggregation data in a table format (type bar)
-#     """
-#     logger = LogManager(__name__, 'SEARCH CORPUS')
-#
-#     aggregation_data = es_params['aggregate_over']
-#     aggregation_data = json.loads(aggregation_data)
-#     aggregation_field = aggregation_data['path']
-#     counts = {}
-#
-#     # Define selected mapping
-#     ds = Datasets().activate_dataset(request.session)
-#     dataset = ds.get_index()
-#     mapping = ds.get_mapping()
-#     date_range = ds.get_date_range()
-#     es_m = ES_Manager(dataset, mapping, date_range)
-#     # Get all facts for the user aggregation_field
-#     facts = es_m.get_facts_from_field(aggregation_field)
-#
-#     # Get all counts for saved searches
-#     for item in es_params:
-#         if 'saved_search' in item:
-#             s = Search.objects.get(pk=es_params[item])
-#             name = s.description
-#             saved_query = json.loads(s.query)
-#             es_m.load_combined_query(saved_query)
-#             es_m.set_query_parameter('fields', [])
-#             counts[name] = _get_facts_agg_count(es_m, facts)
-#
-#     # Get all documents ids from the user query
-#     name = 'Current Search'
-#     counts[name] = []
-#     es_m.build(es_params)
-#     es_m.set_query_parameter('fields', [])
-#     counts[name] = _get_facts_agg_count(es_m, facts)
-#
-#     # Build total table
-#     total_table = []
-#     header = sorted(counts.keys())
-#     for k in header:
-#         total = sum([counts[k][sub_k] for sub_k in counts[k]])
-#         total_agg = {'name': k, 'data': total}
-#         total_table.append(total_agg)
-#
-#     # Sort facts using the total of documents
-#     sorted_facts = sorted(facts.keys(), key=lambda x: sum([counts[k][x] for k in counts]), reverse=True)
-#
-#     # Build aggregation table
-#     rows = {}
-#     for i, c in enumerate(counts):
-#         for k in sorted_facts:
-#             if k not in rows:
-#                 rows[k] = [0] * len(counts.keys())
-#             rows[k][i] = counts[c][k]
-#
-#     # Build response table
-#     agg_data = dict()
-#     agg_data['type'] = 'bar'
-#     agg_data['data'] = [['Fact'] + header]
-#     for k in sorted_facts:
-#         agg_data['data'].append([k] + rows[k])
-#     agg_data['distinct_values'] = json.dumps(total_table)
-#     table_height = (len(rows.keys()) + 1)*15
-#     agg_data['height'] = table_height if table_height > 500 else 500
-#
-#     logger.set_context('user_name', request.user.username)
-#     logger.info('facts_aggregation_queried')
-#
-#     return agg_data
 
 
 def discrete_agg(es_params, request):
