@@ -397,7 +397,7 @@ class FactsLink:
     def link_all(self):
 
         self._build_facts_structure()
-        print '- Total of facts: {0}'.format(len(self.facts_structure.keys()))
+        print '- Total of unique facts.fact: {0}'.format(len(self.facts_structure.keys()))
         print 'Linking ... '
 
         search_url_base = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=100'
@@ -424,7 +424,7 @@ class FactsLink:
                 if fact not in self.facts_structure:
                     self.facts_structure[fact] = set()
                 self.facts_structure[fact].add(doc_path)
-                fact_link = '{0}.{1}'.format(doc_path, fact)
+                fact_link = u'{0}.{1}'.format(doc_path, fact)
                 doc_id = hit['_source']['facts']['doc_id']
                 links = self.get_texta_link_facts_by_id(doc_id)
                 if links is not None:
