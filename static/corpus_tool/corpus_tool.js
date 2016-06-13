@@ -19,7 +19,7 @@ $(document).ready(function() {
         // Toggle the visibility
         column.visible( ! column.visible() );
         
-        examplesTable.columns.adjust().draw();
+        examplesTable.columns.adjust();
         
         var dataset = $("#dataset").val();
         var mapping = $("#mapping").val();
