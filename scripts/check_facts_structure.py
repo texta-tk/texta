@@ -214,7 +214,7 @@ class FactsCheck:
             raise CheckError(error_msg)
 
         # Check fact name max size (warning)
-        if len(fact_name) > 20:
+        if len(fact_name) > 100:
             warning_msg = 'Fact _id:{0} has long fact_name'.format(_id)
             self._set_warning(warning_msg)
 
