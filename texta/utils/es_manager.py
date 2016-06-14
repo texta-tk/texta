@@ -270,7 +270,7 @@ class ES_Manager:
 
             # Fact queries are executed against the fact in texta_link
             for query_string in query_strings:
-                fact_link = '{0}.{1}'.format(fact_field, query_string)
+                fact_link = u'{0}.{1}'.format(fact_field, query_string)
                 sub_query = { "match_phrase" : { "texta_link.facts" : fact_link } }
                 sub_queries.append(sub_query)
             _combined_query["main"]["query"]["bool"]["should"].append({"bool": {fact_operator: sub_queries}})
