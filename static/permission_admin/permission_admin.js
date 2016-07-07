@@ -12,7 +12,7 @@ function delete_user(username){
     var delete_user = confirm('Delete user '.concat(username).concat('?'));
     console.log(delete_user);
     if(delete_user === true){
-        $.post('/permission_admin/delete_user', {username: username}, function(){
+        $.post(LINK_ROOT+'permission_admin/delete_user', {username: username}, function(){
             location.reload();
         });
     }
@@ -23,7 +23,7 @@ function add_dataset(){
 	var mapping = $('#mapping').val();
 	var daterange_from = $('#daterange_from').val();
 	var daterange_to = $('#daterange_to').val();
-    $.post('/permission_admin/add_dataset', {index: index, mapping: mapping, daterange_from: daterange_from, daterange_to: daterange_to}, function(){
+    $.post(LINK_ROOT+'permission_admin/add_dataset', {index: index, mapping: mapping, daterange_from: daterange_from, daterange_to: daterange_to}, function(){
         location.reload();
     });	
 }
@@ -32,7 +32,7 @@ function remove_index(index){
     var delete_index = confirm('Remove?');
     console.log(remove_index);
     if(delete_index === true){
-        $.post('/permission_admin/delete_dataset', {index: index}, function(){
+        $.post(LINK_ROOT+'permission_admin/delete_dataset', {index: index}, function(){
             location.reload();
         });
     }
