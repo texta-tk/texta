@@ -54,16 +54,14 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'files')
 MEDIA_URL = '/files/'
 ADMIN_MEDIA_PREFIX = '/media/'
 
-USER_MODELS = 'data/usermodels'
-
-MODELS_DIR = 'data/models'
-if not os.path.exists(MODELS_DIR):
-    os.makedirs(MODELS_DIR)
-
+USER_MODELS = os.path.join(BASE_DIR,'data','usermodels')
+MODELS_DIR = os.path.join(BASE_DIR,'data,','models')
 
 if not os.path.exists(MODELS_DIR):
     os.makedirs(MODELS_DIR)
 
+if not os.path.exists(MODELS_DIR):
+    os.makedirs(MODELS_DIR)
 
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static_general'),)
 
@@ -72,7 +70,7 @@ SECRET_KEY = '+$18(*8p_h0u6-)z&zu^@=$2h@=8qe+3uwyv+3#v9*)fy9hy&f'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['templates'],
+        'DIRS': [os.path.join(BASE_DIR,'templates')],
         'APP_DIRS': False,
         'OPTIONS': {
             'context_processors': [
@@ -138,7 +136,7 @@ es_links = {
     }
 
 # Logging settings
-LOG_PATH = 'log'
+LOG_PATH = os.path.join(BASE_DIR,'log')
 if not os.path.exists(LOG_PATH):
     os.makedirs(LOG_PATH)
 

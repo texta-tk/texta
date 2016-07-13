@@ -4,8 +4,8 @@ if (SERVER_TYPE == 'DEV') {
     var LINK_PREFIX = '';
     var STATIC_URL = '/static/'
 } else {
-    var LINK_PREFIX = 'https://ehr.stacc.ee/public/texta';
-    var STATIC_URL = '/public/texta/static/';
+    var LINK_PREFIX = 'https://yourdomain.com';
+    var STATIC_URL = '/texta/static/';
 }
 
 var LINK_LEXMINER = LINK_PREFIX + '/lm';
