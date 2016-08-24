@@ -55,7 +55,7 @@ MEDIA_URL = '/files/'
 ADMIN_MEDIA_PREFIX = '/media/'
 
 USER_MODELS = os.path.join(BASE_DIR,'data','usermodels')
-MODELS_DIR = os.path.join(BASE_DIR,'data,','models')
+MODELS_DIR = os.path.join(BASE_DIR,'data','models')
 
 if not os.path.exists(MODELS_DIR):
     os.makedirs(MODELS_DIR)
@@ -127,6 +127,7 @@ date_format = 'yyyy-MM-dd'
 es_url = os.getenv('TEXTA_ELASTICSEARCH_URL')
 if es_url is None:
     es_url = 'http://localhost:9200'
+#    es_url = 'http://elasticsearch2.stacc.ee:9201'
 
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')

@@ -388,6 +388,35 @@ class ES_Manager:
         response = requests.post(search_url, data=q).json()
         return response
 
+    def process_bulk(self,hits):
+        data = ''
+        for hit in hits:
+            data += json.dumps({"delete":{"_index":self.index,"_type":self.mapping,"_id":hit['_id']}})+'\n'
+        return data
+
+    def delete(self, time_out='1m'):
+        """ Deletes the selected rows
+        """
+
+        q = json.dumps(self.combined_query['main'])
+        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll={3}'.format(es_url, self.index, self.mapping, time_out)
+        response = requests.post(search_url, data=q).json()
+
+        scroll_id = response['_scroll_id']
+        l = response['hits']['total']
+    
+        while l > 0:
+            search_url = '{0}/_search/scroll?scroll={1}'.format(es_url,time_out)
+            response = requests.post(search_url, data=scroll_id).json()
+            l = len(response['hits']['hits'])
+            scroll_id = response['_scroll_id']
+ 
+            data = self.process_bulk(response['hits']['hits'])
+            delete_url = '{0}/{1}/{2}/_bulk'.format(es_url, self.index, self.mapping)
+            deleted = requests.post(delete_url, data=data)
+
+        return True
+
     def scroll(self, scroll_id=None, time_out='1m'):
         """ Search and Scroll
         """
