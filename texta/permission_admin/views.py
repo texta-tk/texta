@@ -83,10 +83,10 @@ def get_user_fields():
         else:
             user_fields['superuser'] = 0
 
-        if user.groups.filter(name='change_modelrun').exists():
-            user_fields['change_modelrun'] = 1
-        else:
-            user_fields['change_modelrun'] = 0
+#        if user.groups.filter(name='change_modelrun').exists():
+#            user_fields['change_modelrun'] = 1
+#        else:
+#            user_fields['change_modelrun'] = 0
 
         user_fields['last_login'] = user.last_login
         user_fields['e_mail'] = user.email
