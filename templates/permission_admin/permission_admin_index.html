@@ -10,7 +10,6 @@
 						<thead>
 							<th>Username</th>
 							<th>Superuser</th>
-							<th>Model Manager Access</th>
 							<th>Last Login</th>
 							<th>E-mail</th>
 							<th></th>
@@ -26,13 +25,6 @@
 											<input name="superuser" type="checkbox" value={{ fields.username }} checked="checked">
 											{% else %}
 												<input name="superuser" type="checkbox" value={{ fields.username }}>
-											{% endif %}
-										</td>
-										<td>
-											{% if fields.change_modelrun == 1 %}
-											<input name="change_modelrun" type="checkbox" value={{ fields.username }} checked="checked">
-											{% else %}
-												<input name="change_modelrun" type="checkbox" value={{ fields.username }}>
 											{% endif %}
 										</td>
 										<td>

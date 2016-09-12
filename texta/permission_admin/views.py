@@ -47,14 +47,14 @@ def delete_user(request):
     username_to_delete = request.POST['username']
     user_to_delete = User.objects.get(username = username_to_delete)
     user_to_delete.delete()
-    return HttpResponseRedirect(reverse('index'))
+    return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def save_permissions(request):
     usernames = get_usernames()
     new_superusers = request.POST.getlist('superuser')
-    new_chmodelrun_users = request.POST.getlist('change_modelrun')
+#    new_chmodelrun_users = request.POST.getlist('change_modelrun')
 
     for username in usernames:
         user = User.objects.get(username=username)
@@ -63,14 +63,14 @@ def save_permissions(request):
         else:
             user.is_superuser = False
 
-        if username in new_chmodelrun_users:
-            user.groups.add(modelrun_group)
-        else:
-            user.groups.remove(modelrun_group)
+#        if username in new_chmodelrun_users:
+#            user.groups.add(modelrun_group)
+#        else:
+#            user.groups.remove(modelrun_group)
 
         user.save()
-        modelrun_group.save()
-    return HttpResponseRedirect(reverse('index'))
+#        modelrun_group.save()
+    return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
 
 def get_user_fields():
     user_objects = User.objects.all()
