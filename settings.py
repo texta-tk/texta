@@ -135,6 +135,11 @@ es_links = {
     ('etsa_new', 'event_dgn', 'patId'): ('https://p12.stacc.ee/common/aegread/index.php/aegrida/get/?id=', '')
     }
 
+# Elasticsearch LDAP credentials
+es_use_ldap = False
+es_ldap_user = os.getenv('TEXTA_LDAP_USER')
+es_ldap_password = os.getenv('TEXTA_LDAP_PASSWORD')
+
 # Logging settings
 LOG_PATH = os.path.join(BASE_DIR,'log')
 if not os.path.exists(LOG_PATH):

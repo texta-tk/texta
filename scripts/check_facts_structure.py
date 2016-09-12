@@ -6,6 +6,19 @@ import time
 
 import requests
 
+import sys
+import os.path
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, 'texta','utils'))) # Add texta.utils temporarily to allow es_manager import 
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))) # Add .. temporarily to allow TEXTA settings import through es_manager
+
+from es_manager import ES_Manager
+
+# Remove temporary paths to avoid future conflicts
+sys.path.pop()
+sys.path.pop()
+
 
 class Progress:
     def __init__(self, total, wait=0.5):
@@ -133,14 +146,14 @@ class FactsCheck:
     @check
     def check_version(self):
         request_url = '{0}'.format(self.es_url)
-        response = requests.get(request_url).json()
+        response = ES_Manager.plain_get(request_url)
         ver = response['version']['number']
         self.maybe_print('OK', 'ES version {0}'.format(ver))
 
     @check
     def check_index_present(self):
         request_url = '{0}/_aliases'.format(self.es_url)
-        response = requests.get(request_url).json()
+        response = ES_Manager.plain_get(request_url)
         indexes = response.keys()
         if self._index not in indexes:
             error_msg = 'Index {0} was not found'.format(self._index)
@@ -151,7 +164,7 @@ class FactsCheck:
     @check
     def check_if_has_texta_mapping(self):
         request_url = '{0}/{1}'.format(self.es_url, self._index)
-        response = requests.get(request_url).json()
+        response = ES_Manager.plain_get(request_url)
         mappings = response[self._index]['mappings']
         if self.TEXTA not in mappings:
             error_msg = 'Mapping [{0}] was not found'.format(self.TEXTA)
@@ -220,7 +233,7 @@ class FactsCheck:
 
         # Check doc_id and recover document
         request_url = 'http://localhost:9200/{0}/{1}/{2}'.format(self._index, doc_type, doc_id)
-        response = requests.get(request_url).json()
+        response = ES_Manager.plain_get(request_url)
         if not response['found']:
             error_msg = 'Fact _id:{0} has an invalid document [doc_id:{1}]'.format(_id, doc_id)
             raise CheckError(error_msg)
@@ -300,11 +313,11 @@ class FactsCheck:
         search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=100'.format(self.es_url, self._index, self.TEXTA)
         query = {u'query': {u'bool': {u'should': [], u'must': []}}}
         q = json.dumps(query)
-        response = requests.post(search_url, data=q).json()
+        response = ES_Manager.plain_post(search_url, data=q)
         scroll_id = response['_scroll_id']
         total_msg = response['hits']['total']
         while total_msg > 0:
-            response = requests.post(scroll_url, data=scroll_id).json()
+            response = ES_Manager.plain_post(scroll_url, data=scroll_id)
             scroll_id = response['_scroll_id']
             total_msg = len(response['hits']['hits'])
             self._check_es_error(response)
@@ -313,7 +326,7 @@ class FactsCheck:
 
     def _get_total_facts(self):
         request_url = 'http://localhost:9200/{0}/{1}/_count'.format(self._index, self.TEXTA)
-        response = requests.post(request_url).json()
+        response = ES_Manager.plain_post(request_url)
         return response['count']
 
     def check_all(self):
@@ -346,7 +359,7 @@ class FactsLink:
     def get_texta_link_facts_by_id(self, doc_id):
         base_url = '{0}/{1}/{2}/{3}?fields=texta_link.facts'
         request_url = base_url.format(self.es_url, self._index, self._type, doc_id)
-        response = requests.get(request_url).json()
+        response = ES_Manager.plain_get(request_url)
         doc = None
         try:
             if response['found']:
@@ -361,7 +374,7 @@ class FactsLink:
         base_url = '{0}/{1}/{2}/{3}/_update'
         request_url = base_url.format(self.es_url, self._index, self._type, doc_id)
         d = json.dumps({'doc': texta_link})
-        response = requests.post(request_url, data=d).json()
+        response = ES_Manager.plain_post(request_url, data=d)
         return response
 
     def get_facts_structure(self):
@@ -369,14 +382,14 @@ class FactsLink:
         search_url = base_url.format(self.es_url, self._index, 'texta')
         query = {"query": {"term": {"facts.doc_type": self._type.lower()}}}
         query = json.dumps(query)
-        response = requests.post(search_url, data=query).json()
+        response = ES_Manager.plain_post(search_url, data=query)
         scroll_id = response['_scroll_id']
         total = response['hits']['total']
         prog = Progress(total)
         n_count = 0
         facts_structure = {}
         while total > 0:
-            response = requests.post('{0}/_search/scroll?scroll=1m'.format(self.es_url), data=scroll_id).json()
+            response = ES_Manager.plain_post('{0}/_search/scroll?scroll=1m'.format(self.es_url), data=scroll_id)
             total = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
             for hit in response['hits']['hits']:
@@ -405,14 +418,14 @@ class FactsLink:
 
         query = {"query": {"term": {"facts.doc_type": self._type.lower()}}}
         query = json.dumps(query)
-        response = requests.post(search_url, data=query).json()
+        response = ES_Manager.plain_post(search_url, data=query)
         scroll_id = response['_scroll_id']
         total = response['hits']['total']
         n_total = total
         n_count = 0
         prog = Progress(n_total)
         while total > 0:
-            response = requests.post('{0}/_search/scroll?scroll=1m'.format(self.es_url), data=scroll_id).json()
+            response = ES_Manager.plain_post('{0}/_search/scroll?scroll=1m'.format(self.es_url), data=scroll_id)
             total = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
             for hit in response['hits']['hits']:
@@ -465,7 +478,7 @@ def main():
 
         if c == '--indexes':
             request_url = '{0}/_aliases'.format(es_url)
-            response = requests.get(request_url).json()
+            response = ES_Manager.plain_get(request_url)
             for k in response.keys():
                 print k
             return
@@ -473,7 +486,7 @@ def main():
         if c == '--maps':
             _index = u'{0}'.format(args[3])
             request_url = '{0}/{1}'.format(es_url, _index)
-            response = requests.get(request_url).json()
+            response = ES_Manager.plain_get(request_url).json()
             for k in response[_index]['mappings'].keys():
                 print k
             return

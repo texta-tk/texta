@@ -14,6 +14,7 @@ from ..conceptualiser.models import Term,TermConcept,Concept
 from ..lm.models import Lexicon,Word
 from ..mwe_miner.models import Run
 from ..utils.datasets import Datasets
+from ..utils.es_manager import ES_Manager
 
 from settings import URL_PREFIX, STATIC_URL, es_url, INFO_LOGGER, ERROR_LOGGER
 
@@ -40,10 +41,8 @@ def index(request):
 
     # Define selected mapping
     ds = Datasets().activate_dataset(request.session)
-    dataset = ds.get_index()
-    mapping = ds.get_mapping()
-
-    fields = requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']
+    es_m = ds.build_manager(ES_Manager)
+    fields = es_m.get_column_names()
 
     return HttpResponse(template.render({'lexicons':lexicons,'STATIC_URL':STATIC_URL,'runs':runs,'fields':fields},request))
 
@@ -266,7 +265,7 @@ def find_mappings(request):
                     data.append(json.dumps({"index":dataset,"mapping":mapping})+'\n'+json.dumps(query))
                     phrases.append(permutation)
                     if len(data) == 250:
-                        for j,response in enumerate(requests.post(es_url+'/'+dataset+'/'+mapping+'/_msearch',data='\n'.join(data)).json()['responses']):
+                        for j,response in enumerate(ES_Manager.plain_multisearch(es_url, dataset, mapping, data)):
                             try:
                                 if response['hits']['total'] >= min_freq:
                                     sorted_phrase = ' '.join(sorted(phrases[j].split(' ')))
@@ -286,7 +285,7 @@ def find_mappings(request):
                         data = []
                         phrases = []
             logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'MINE MWEs','event':'mwe_mining_progress','args':{'user_name':request.user.username,'run_id':new_run.id},'data':{'permutations_processed':i+1-min_len,'total_permutations':max_len-min_len+1}}))
-        for j,response in enumerate(requests.post(es_url+'/'+dataset+'/'+mapping+'/_msearch',data='\n'.join(data)).json()['responses']):
+        for j,response in enumerate(ES_Manager.plain_multisearch(es_url, dataset, mapping, data)):
             try:
                 if response['hits']['total'] >= min_freq:
                     sorted_phrase = ' '.join(sorted(phrases[j].split(' ')))

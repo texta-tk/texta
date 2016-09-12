@@ -4,11 +4,14 @@ import re
 
 import requests
 
-from ..conceptualiser.models import Concept
-from ..conceptualiser.models import TermConcept
-from ..utils.log_manager import LogManager
+import sys
 
-from settings import es_url
+if 'django' in sys.modules: # Import django-stuff only if imported from the django application / prevent errors when importing from scripts
+    from ..conceptualiser.models import Concept
+    from ..conceptualiser.models import TermConcept
+    from ..utils.log_manager import LogManager
+
+from settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password
 
 
 class Singleton(type):
@@ -66,6 +69,13 @@ class ES_Manager:
 
     TEXTA_MAPPING = 'texta'
     TEXTA_RESERVED = ['texta_link']
+    
+    # Redefine requests if LDAP authentication is used
+    if es_use_ldap:
+        requests = requests.Session()
+        requests.auth = (es_ldap_user, es_ldap_password)
+    else:
+        requests = requests
 
     def __init__(self, index, mapping, date_range, url=None):
         self.es_url = url if url else es_url
@@ -88,7 +98,7 @@ class ES_Manager:
         q['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': doc_type}})
         q['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
         q = json.dumps(q)
-        response = requests.post(request_url, data=q).json()
+        response = self.requests.post(request_url, data=q).json()
         return response['count'] > 0
 
     def _decode_mapping_structure(self, structure, root_path=list()):
@@ -113,10 +123,30 @@ class ES_Manager:
 
         return mapping_data
 
+    @staticmethod
+    def plain_get(url):
+        return ES_Manager.requests.get(url).json()
+    
+    @staticmethod
+    def plain_post(url, data=None):
+        return ES_Manager.requests.post(url, data=data).json()
+    
+    @staticmethod
+    def plain_search(es_url, dataset, mapping, query):
+        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(query)).json()
+    
+    @staticmethod
+    def plain_multisearch(es_url, dataset, mapping, data):
+        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_msearch',data='\n'.join(data)).json()['responses']
+    
+    @staticmethod
+    def plain_scroll(es_url, dataset, mapping, query, expiration_str='1m'):
+        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_search?scroll='+expiration_str, data=query).json()
+
     def get_mapped_fields(self):
         """ Get flat structure of fields from Elasticsearch mapping
         """
-        mapping_structure = requests.get(es_url+'/'+self.index).json()[self.index]['mappings'][self.mapping]['properties']
+        mapping_structure = self.requests.get(es_url+'/'+self.index).json()[self.index]['mappings'][self.mapping]['properties']
         mapping_data = self._decode_mapping_structure(mapping_structure)
         return mapping_data
 
@@ -316,12 +346,12 @@ class ES_Manager:
 
         scroll_url = '{0}/_search/scroll?scroll=1m'.format(es_url)
         search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'.format(es_url, self.index, self.TEXTA_MAPPING)
-        response = requests.post(search_url, data=q).json()
+        response = self.requests.post(search_url, data=q).json()
         scroll_id = response['_scroll_id']
         total_msg = response['hits']['total']
         count_limit = 0
         while (total_msg > 0) and (count_limit < max_size):
-            response = requests.post(scroll_url, data=scroll_id).json()
+            response = self.requests.post(scroll_url, data=scroll_id).json()
             scroll_id = response['_scroll_id']
             total_msg = len(response['hits']['hits'])
             count_limit += total_msg
@@ -385,7 +415,7 @@ class ES_Manager:
         """
         q = json.dumps(self.combined_query['main'])
         search_url = '{0}/{1}/{2}/_search'.format(es_url, self.index, self.mapping)
-        response = requests.post(search_url, data=q).json()
+        response = self.requests.post(search_url, data=q).json()
         return response
 
     def scroll(self, scroll_id=None, time_out='1m'):
@@ -399,13 +429,13 @@ class ES_Manager:
             search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll={3}'.format(es_url, self.index,
                                                                                   self.mapping, time_out)
 
-        response = requests.post(search_url, data=q).json()
+        response = self.requests.post(search_url, data=q).json()
         return response
 
     def get_total_documents(self):
         search_url = '{0}/{1}/{2}/_count'.format(es_url, self.index, self.mapping)
         q = json.dumps(self.combined_query['main'])
-        response = requests.post(search_url, data=q).json()
+        response = self.requests.post(search_url, data=q).json()
         total = response['count']
         return long(total)
 
@@ -416,7 +446,7 @@ class ES_Manager:
         query['aggs'] = aggregations
         query = json.dumps(query)
         request_url = '{0}/{1}/{2}/_search?_source=false'.format(es_url, self.index, self.TEXTA_MAPPING)
-        response = requests.get(request_url, data=query).json()
+        response = self.requests.get(request_url, data=query).json()
         agg = response['aggregations']
         facts_agg_structure = {}
         for fact in agg['fact']['buckets']:
@@ -434,11 +464,11 @@ class ES_Manager:
         search_url = base_url.format(es_url, self.index, self.TEXTA_MAPPING)
         query = {"query": {"term": {"facts.doc_type": self.mapping.lower()}}}
         query = json.dumps(query)
-        response = requests.post(search_url, data=query).json()
+        response = self.requests.post(search_url, data=query).json()
         scroll_id = response['_scroll_id']
         total = response['hits']['total']
         while total > 0:
-            response = requests.post('{0}/_search/scroll?scroll=1m'.format(es_url), data=scroll_id).json()
+            response = self.requests.post('{0}/_search/scroll?scroll=1m'.format(es_url), data=scroll_id).json()
             total = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
             for hit in response['hits']['hits']:
@@ -483,12 +513,12 @@ class ES_Manager:
 
         search_param = 'search_type=scan&scroll=1m&size=1000'
         search_url = '{0}/{1}/{2}/_search?{3}'.format(es_url, self.index, self.TEXTA_MAPPING, search_param)
-        response = requests.post(search_url, data=query).json()
+        response = self.requests.post(search_url, data=query).json()
         scroll_id = response['_scroll_id']
         total = response['hits']['total']
         facts = {}
         while total > 0:
-            response = requests.post('{0}/_search/scroll?scroll=1m'.format(es_url), data=scroll_id).json()
+            response = self.requests.post('{0}/_search/scroll?scroll=1m'.format(es_url), data=scroll_id).json()
             total = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
             for hit in response['hits']['hits']:

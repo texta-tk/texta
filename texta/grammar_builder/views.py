@@ -8,9 +8,9 @@ import requests
 
 from ..corpus_tool.views import Search
 from ..utils.datasets import Datasets
+from ..utils.es_manager import ES_Manager
 
 from settings import STATIC_URL, URL_PREFIX, es_url
-
 
 @login_required
 def index(request):
@@ -19,11 +19,9 @@ def index(request):
     dataset = ds.get_index()
     mapping = ds.get_mapping()
 
-    # Get field names and types
-    fields = [a[0] for a in requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties'].items()]
-    fields.sort()
-
-    print fields
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
+    fields = es_m.get_column_names()
 
     searches = [{'id':search.pk,'desc':search.description} for search in Search.objects.filter(author=request.user)]
 
@@ -100,7 +98,7 @@ def scroll_data(query,request):
         dataset = ds.get_index()
         mapping = ds.get_mapping()
 
-        response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(q)).json()
+        response = ES_Manager.plain_search(es_url, dataset, mapping, q)
 
         out['iTotalRecords'] = response['hits']['total']
         out['iTotalDisplayRecords'] = response['hits']['total']

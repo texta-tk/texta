@@ -15,6 +15,7 @@ from ..utils.robust_rank_aggregation import aggregate_ranks
 from ..utils.model_manager import get_model_manager
 from ..utils.precluster import PreclusterMaker
 from ..utils.datasets import Datasets
+from ..utils.es_manager import ES_Manager
 
 from settings import URL_PREFIX, STATIC_URL, INFO_LOGGER, ERROR_LOGGER
 from settings import es_url, es_links
@@ -109,14 +110,12 @@ def selectLexicon(request):
 
         # Define selected mapping
         ds = Datasets().activate_dataset(request.session)
-        dataset = ds.get_index()
-        mapping = ds.get_mapping()
-
-        features = [feature for feature in requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties']]
+        es_m = ds.build_manager(ES_Manager)
+        fields = es_m.get_column_names()
         
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_selected','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']},'data':{'lexicon_terms':words}}))
         
-        return HttpResponse(template.render({'words':words,'selected':request.GET['id'],'lexicons':lexicons,'STATIC_URL':STATIC_URL,'features':features},request))
+        return HttpResponse(template.render({'words':words,'selected':request.GET['id'],'lexicons':lexicons,'STATIC_URL':STATIC_URL,'features':fields},request))
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_selection_failed','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}),exc_info=True)
         
@@ -170,7 +169,7 @@ def query(request):
                 encoded_a = encode_for_id(a[0])
                 
                 query = json.dumps({ "size":10, "fields":[tooltip_feature], "query": { "match": {tooltip_feature: a[0]} } })
-                response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search?scroll=1m',data=query).json()
+                response = ES_Manager.plain_scroll(es_url, dataset, mapping, query)
                 matched_sentences = []
                 for hit in response['hits']['hits']:
                     matched_sentences.append(hit['fields'][tooltip_feature][0].encode('utf-8') if isinstance(hit['fields'][tooltip_feature][0],unicode) else hit['fields'][tooltip_feature][0])
@@ -194,7 +193,7 @@ def query(request):
                 encoded_a = encode_for_id(a[0])
                 
                 query = json.dumps({ "size":10, "fields":[tooltip_feature], "query": { "match": {model_run_obj.fields: a[0]} } })
-                response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search?scroll=1m',data=query).json()
+                response = ES_Manager.plain_scroll(es_url, dataset, mapping, query)
                 matched_sentences = []
                 for hit in response['hits']['hits']:
                     matched_sentences.append(hit['fields'][tooltip_feature][0].encode('utf-8') if isinstance(hit['fields'][tooltip_feature][0],unicode) else hit['fields'][tooltip_feature][0])
@@ -242,7 +241,7 @@ def RRA_suggestions(suggestions_list,modelrun,es_dataset,es_mapping,tooltip_feat
     for (name,encoded) in encoded_suggestions:
         
         query = json.dumps({ "size":10, "fields":[tooltip_feature], "query": { "match": {modelrun.fields: name} } })
-        response = requests.post(es_url+'/'+es_dataset+'/'+es_mapping+'/_search?scroll=1m',data=query).json()
+        response = ES_Manager.plain_scroll(es_url, es_dataset, es_mapping, query)
         matched_sentences = []
         for hit in response['hits']['hits']:
             matched_sentences.append(hit['fields'][tooltip_feature][0].encode('utf-8') if isinstance(hit['fields'][tooltip_feature][0],unicode) else hit['fields'][tooltip_feature][0])

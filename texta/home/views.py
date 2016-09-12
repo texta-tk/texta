@@ -36,7 +36,7 @@ def autocomplete_data(request):
         if field['type'] == 'string':
             query["aggs"][field['path']] = {"terms": {"field": field['path'], "size": unique_limit+1}}
 
-    response = requests.post(es_url+'/'+es_index+'/'+mapping+'/_search', data=json.dumps(query)).json()
+    response = ES_Manager.plain_search(es_url, es_index, mapping, query)
 
     try:
         for a in response["aggregations"].items():

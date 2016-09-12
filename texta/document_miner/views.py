@@ -8,6 +8,7 @@ from django.template import loader
 import requests
 
 from ..utils.datasets import Datasets
+from ..utils.es_manager import ES_Manager
 
 from settings import STATIC_URL, URL_PREFIX, es_url
 
@@ -22,8 +23,9 @@ def index(request):
     mapping = ds.get_mapping()
 
     # Get field names and types
-    fields = sorted(requests.get(es_url+'/'+dataset).json()[dataset]['mappings'][mapping]['properties'])
-    fields = sorted(fields)
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
+    fields = es_m.get_column_names()
     
     return HttpResponse(template.render({'STATIC_URL':STATIC_URL,'fields':fields},request))
 
@@ -86,7 +88,7 @@ def query(request):
 
     print query
 
-    response = requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(query)).json()
+    response = ES_Manager.plain_search(es_url, dataset, mapping, query)
     
     try:
         for hit in response['hits']['hits']:
