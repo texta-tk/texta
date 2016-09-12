@@ -243,6 +243,24 @@ function aggregate(){
     request.send(new FormData(formElement),true);
 }
 
+
+function remove_by_query(){
+    var formElement = document.getElementById("filters");
+    var request = new XMLHttpRequest();
+    
+    request.onreadystatechange=function() {
+        if (request.readyState==4 && request.status==200) {
+            if (request.responseText.length > 0) {
+				alert('The documents are being deleted. Check the progress by searching again.');
+            }
+        }
+    }
+
+    request.open("POST",PREFIX+'/remove_by_query');
+    request.send(new FormData(formElement),true);	
+}
+
+
 function save(){
 	var description = prompt("Enter description for the search.");
 	$('#search_description').val(description);

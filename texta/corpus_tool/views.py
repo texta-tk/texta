@@ -1,5 +1,6 @@
 # -*- coding: utf8 -*-
 import calendar
+import threading
 import json
 import csv
 import time
@@ -525,9 +526,24 @@ def get_all_rows(es_params, request):
         scroll_id = response['_scroll_id']
 
 
+def remove_by_query(request):
+    es_params = request.POST
+
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
+    es_m.build(es_params)
+    
+    threading.Thread(target=remove_worker,args=(es_m,'notimetothink')).start()
+    return HttpResponse(True)
+
+
+def remove_worker(es_m,dummy):
+    response = es_m.delete()
+    # TODO: add logging
+
 def aggregate(request):
     es_params = request.POST
-    logger = LogManager(__name__, 'SEARCH CORPUS')
+    logger = LogManager(__name__, 'AGGREGATION')
 
     try:
         aggregation_data = es_params['aggregate_over']
@@ -557,7 +573,7 @@ def aggregate(request):
 
 
 def timeline(es_params, request):
-    logger = LogManager(__name__, 'SEARCH CORPUS')
+    logger = LogManager(__name__, 'TIMELINE AGGREGATION')
 
     series_names = ['Date']
     data = []
@@ -639,7 +655,7 @@ def _get_facts_agg_count(es_m, facts):
 
 
 def facts_agg(es_params, request):
-    logger = LogManager(__name__, 'SEARCH CORPUS')
+    logger = LogManager(__name__, 'FACTS AGGREGATION')
 
     distinct_values = []
     query_results = []
@@ -734,7 +750,7 @@ def facts_agg(es_params, request):
 
 
 def discrete_agg(es_params, request):
-    logger = LogManager(__name__, 'SEARCH CORPUS')
+    logger = LogManager(__name__, 'DISCRETE AGGREGATION')
 
     distinct_values = []
     query_results = []
