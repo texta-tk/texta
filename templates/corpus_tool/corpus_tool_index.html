@@ -5,8 +5,6 @@
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="application/javascript" src="{{STATIC_URL}}local-cache.js"></script>
 <script type="application/javascript" src="{{STATIC_URL}}corpus_tool/corpus_tool.js"></script>
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/s/dt/dt-1.10.10/datatables.min.css"/>
-<script type="text/javascript" src="https://cdn.datatables.net/s/dt/dt-1.10.10/datatables.min.js"></script>
 
 	<div class="row">
 		<div class="col-lg-3">
@@ -48,61 +46,90 @@
 				</div>
 			</div>			
 			
+
+			
+
+			<input type="hidden" name="search_description" id="search_description">
+			<input type="hidden" name="chart_type" id="chart_type">
+			<input type="hidden" name="scroll_id" id="scroll_id">						
+
+
+
 			<div class="panel">
 				<div class="panel-heading">Aggregations</div>
 				<div class="panel-body">
-					<div class="form-group">
+				
+					<div class="panel panel-grey">
 						<div class="row">
-							<div class="col-sm-6">Aggregate matches over:</div>
 							<div class="col-sm-6">
-								<select id="aggregate_over" name="aggregate_over" class="form-control input-sm">
+								<b>Select field:</b>
+								<select id="agg_field_1" name="agg_field_1" class="form-control input-sm" onchange="change_agg_field('1');">
 									{% for field in fields %}
 										<option value="{{field.data}}">{{field.label}}</option>
 									{% endfor %}
-								</select>
+								</select>			
 							</div>
-						</div>				
-						<div class="row">
-							<div class="col-sm-6">Frequency normalisation:</div>
 							<div class="col-sm-6">
-								<select id="frequency_normalisation" name="frequency_normalisation" class="form-control input-sm">
-									<option value="raw_frquency" selected="selected">raw frequency</option>
-									<option value="relative_frequency">relative frequency</option>
-								</select>
+								<div id="sort_by_1">
+									<b>Sort by:</b>
+									<select id="sort_by_1" name="sort_by_1" class="form-control input-sm">
+										<option value="terms">count</option>
+										<option value="significant_terms" selected="selected">significance</option>
+									</select>
+								</div>
+								<div id="freq_norm_1" class="hidden">
+									<b>Frequency:</b>
+									<select id="freq_norm_1" name="freq_norm_1" class="form-control input-sm">
+										<option value="raw_frquency" selected="selected">raw frequency</option>
+										<option value="relative_frequency">relative frequency</option>
+									</select>
+								</div>
 							</div>
 						</div>
-						<div class="row">
-							<div class="col-sm-6">Interval (dates only):</div>
-							<div class="col-sm-6">
-								<select id="interval" name="interval" class="form-control input-sm">
-									<option value="day">day</option>
-									<option value="month" selected="selected">month</option>
-									<option value="quarter">quarter</option>
-									<option value="year">year</option>
-								</select>
+					</div>	
+
+					<div class="panel panel-grey">
+						<div class="row" id="agg_field_2_button">
+							<div class="col-sm-12 text-center">
+								<a onclick="toggle_agg_field_2('add');"><span class="glyphicon glyphicon-plus pointer"></span></a>
 							</div>
 						</div>
-						<div class="row">
-							<div class="col-sm-6">Sort by (discrete only):</div>
+						<div class="row hidden" id="agg_field_2_container">
+							<input type="hidden" id="agg_field_2_selected" name="agg_field_2_selected" value="false">
 							<div class="col-sm-6">
-								<select id="sort_by" name="sort_by" class="form-control input-sm">
-									<option value="terms" selected="selected">count</option>
-									<option value="significant_terms">significance</option>
-								</select>
+								<b>Select field:</b>
+								<select id="agg_field_2" name="agg_field_2" class="form-control input-sm" onchange="change_agg_field('2');">
+									{% for field in fields %}
+										<option value="{{field.data}}">{{field.label}}</option>
+									{% endfor %}
+								</select>			
 							</div>
-						</div>	
-						<div class="row">
-							<div class="col-sm-6"></div>
 							<div class="col-sm-6">
-								<button	type="button" onclick="javascript:aggregate();" class="btn btn-default form-control"><span class="glyphicon glyphicon-filter"></span> Aggregate</button>
-								<input type="hidden" name="search_description" id="search_description">
-								<input type="hidden" name="chart_type" id="chart_type">
-								<input type="hidden" name="scroll_id" id="scroll_id">						
+								<div id="sort_by_2">
+									<b>Sort by:</b></b><a onclick="toggle_agg_field_2('remove');"><span class="glyphicon glyphicon-minus pull-right pointer"></span></a>
+									<select id="sort_by_2" name="sort_by_2" class="form-control input-sm">
+										<option value="terms">count</option>
+										<option value="significant_terms" selected="selected">significance</option>
+									</select>
+								</div>
+								<div id="freq_norm_2" class="hidden">
+									<b>Frequency:</b>
+									<select id="freq_norm_2" name="freq_norm_2" class="form-control input-sm">
+										<option value="raw_frquency" selected="selected">raw frequency</option>
+										<option value="relative_frequency">relative frequency</option>
+									</select>
+								</div>
 							</div>
-						</div>					
-					</div>
+						</div>
+					</div>					
+					
+					
+					<button	type="button" onclick="javascript:aggregate();" class="btn btn-default form-control"><span class="glyphicon glyphicon-filter"></span> Aggregate</button>
+					
 				</div>
-			</div>			
+			</div>
+
+
 			
 		</form>
 	

@@ -231,7 +231,10 @@ function aggregate(){
     request.onreadystatechange=function() {
         if (request.readyState==4 && request.status==200) {
             if (request.responseText.length > 0) {
-                displayAggregation(JSON.parse(request.responseText));
+				
+				displayAgg(JSON.parse(request.responseText));
+				
+//                displayAggregation(JSON.parse(request.responseText));
                 $("#actions-btn").removeClass("invisible");
                 $("#export-examples-modal").addClass("invisible");
                 $("#export-aggregation-modal").removeClass("invisible");
@@ -243,6 +246,61 @@ function aggregate(){
     request.send(new FormData(formElement),true);
 }
 
+
+function displayAgg(response){
+	
+	var data = response;
+	var container = $("#right");
+	container.empty();
+	
+	var chart_container = $("<div id='chart'></div>");
+	chart_container.height(500);
+	
+	container.append(chart_container);
+	
+	if(data.chart_type == 'line'){
+		drawLine(data.morris_data);		
+	}else if(data.chart_type == 'bar'){
+		drawBar(data.morris_data);
+	}
+	
+}
+
+function drawLine(data){
+
+	new Morris.Line({
+		  element: 'chart',
+		  resize: true,
+		  data: data.data,
+		  // The name of the data record attribute that contains x-values.
+		  xkey: 'key',
+		  // A list of names of data record attributes that contain y-values.
+		  ykeys: data.ykeys,
+		  // Labels for the ykeys -- will be displayed when you hover over the
+		  // chart.
+		  labels: data.labels,
+	
+		});
+
+}
+
+function drawBar(data){
+
+	new Morris.Bar({
+		  element: 'chart',
+		  resize: true,
+		  data: data.data,
+		  // The name of the data record attribute that contains x-values.
+		  xkey: 'key',
+		  // A list of names of data record attributes that contain y-values.
+		  ykeys: data.ykeys,
+		  // Labels for the ykeys -- will be displayed when you hover over the
+		  // chart.
+		  labels: data.labels,
+	
+		});	
+	
+}
 
 function remove_by_query(){
     var formElement = document.getElementById("filters");
@@ -523,4 +581,35 @@ function export_data(exportType) {
     var query = PREFIX+'/export?args='+JSON.stringify(query_args);
 
     window.open(query);
+}
+
+
+function change_agg_field(field_nr){	
+	var field_component = $("#agg_field_"+field_nr);
+	var selected_field = field_component.val();
+	var selected_type = JSON.parse(selected_field)['type'];
+	
+	if(selected_type == 'string'){
+		$("#sort_by_"+field_nr).removeClass('hidden');
+		$("#freq_norm_"+field_nr).addClass('hidden');
+	}else if (selected_type == 'date'){
+		$("#freq_norm_"+field_nr).removeClass('hidden');
+		$("#sort_by_"+field_nr).addClass('hidden');		
+	}
+	
+}
+
+function toggle_agg_field_2(action){
+	
+	if(action == 'add'){
+		$("#agg_field_2_container").removeClass('hidden');
+		$("#agg_field_2_button").addClass('hidden');
+		$("#agg_field_2_selected").val('true');
+	}else{
+		$("#agg_field_2_button").removeClass('hidden');
+		$("#agg_field_2_container").addClass('hidden');
+		$("#agg_field_2_selected").val('false');		
+	}
+
+	
 }

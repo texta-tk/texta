@@ -48,3 +48,7 @@
 .invisible {
     display:none;
 }
+
+.panel-grey {
+	background: #EFEFEF;
+}

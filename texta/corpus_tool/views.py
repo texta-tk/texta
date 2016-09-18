@@ -17,6 +17,7 @@ from ..permission_admin.models import Dataset
 from ..utils.datasets import Datasets
 from ..utils.es_manager import ES_Manager
 from ..utils.log_manager import LogManager
+from ..utils.agg_manager import AggManager
 
 from settings import STATIC_URL, URL_PREFIX, date_format, es_links
 
@@ -47,14 +48,14 @@ def get_fields(es_m):
         path_list = path.split('.')
         label = '{0} --> {1}'.format(path_list[0], ' --> '.join(path_list[1:])) if len(path_list) > 1 else path_list[0]
         label = label.replace('-->', u'→')
-        field = {'data': json.dumps(data), 'label': label}
+        field = {'data': json.dumps(data), 'label': label, 'type': data['type']}
         fields.append(field)
 
         # Add additional field if it has fact
         if es_m.check_if_field_has_facts(path_list):
             data['type'] = 'facts'
             label += ' [facts]'
-            field = {'data': json.dumps(data), 'label': label}
+            field = {'data': json.dumps(data), 'label': label, 'type':'facts'}
             fields.append(field)
 
     # Sort fields by label
@@ -297,7 +298,6 @@ def search(es_params, request):
 
         ds = Datasets().activate_dataset(request.session)
         es_m = ds.build_manager(ES_Manager)
-
         es_m.build(es_params)
 
         # DEFINING THE EXAMPLE SIZE
@@ -335,6 +335,7 @@ def search(es_params, request):
 
             hit_id = str(hit['_id'])
             row = []
+            
             # Fill the row content respecting the order of the columns
             for col in out['column_names']:
 
@@ -541,35 +542,20 @@ def remove_worker(es_m,dummy):
     response = es_m.delete()
     # TODO: add logging
 
+
+    
+
+
+
 def aggregate(request):
-    es_params = request.POST
-    logger = LogManager(__name__, 'AGGREGATION')
 
-    try:
-        aggregation_data = es_params['aggregate_over']
-        aggregation_data = json.loads(aggregation_data)
-        field_type = aggregation_data['type']
+    agg_m = AggManager(request)
+    data = agg_m.output()
 
-        if field_type == 'date':
-            data = timeline(es_params, request)
-            for i, str_val in enumerate(data['data'][0]):
-                data['data'][0][i] = str_val.decode('unicode-escape')
 
-        elif field_type == 'facts':
-            data = facts_agg(es_params, request)
+    return HttpResponse(json.dumps(data))
 
-        else:
-            data = discrete_agg(es_params, request)
 
-        logger.set_context('user_name', request.user.username)
-        logger.info('aggregation_queried')
-        return HttpResponse(json.dumps(data))
-        
-    except Exception as e:
-        print e
-        logger.set_context('user_name', request.user.username)
-        logger.exception('aggregation_query_failed')
-        return HttpResponse()
 
 
 def timeline(es_params, request):
