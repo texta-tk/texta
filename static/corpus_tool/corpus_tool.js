@@ -253,53 +253,61 @@ function displayAgg(response){
 	var container = $("#right");
 	container.empty();
 	
-	var chart_container = $("<div id='chart'></div>");
+	var chart_container = $("<div id='daterange_agg_container'></div>");
 	chart_container.height(500);
-	
 	container.append(chart_container);
+
+	var string_container = $("<div id='string_agg_container'></div>");
+	string_container.height(500);
+	container.append(string_container);	
 	
-	if(data.chart_type == 'line'){
-		drawLine(data.morris_data);		
-	}else if(data.chart_type == 'bar'){
-		drawBar(data.morris_data);
-	}
+
+	for (var i in data) {
+		if(data.hasOwnProperty(i)){
+			if(data[i].type == 'daterange'){
+				drawLine(data[i]);	
+			}
+		} 
+	} 	
 	
 }
 
 function drawLine(data){
 
 	new Morris.Line({
-		  element: 'chart',
+		  element: 'daterange_agg_container',
 		  resize: true,
 		  data: data.data,
 		  // The name of the data record attribute that contains x-values.
-		  xkey: 'key',
+		  xkey: 'date',
 		  // A list of names of data record attributes that contain y-values.
 		  ykeys: data.ykeys,
 		  // Labels for the ykeys -- will be displayed when you hover over the
 		  // chart.
 		  labels: data.labels,
 	
+		}).on('click', function(i, row) {
+			show_children(row.date,data.children);
 		});
 
 }
 
-function drawBar(data){
+function show_children(date,data){
 
-	new Morris.Bar({
-		  element: 'chart',
-		  resize: true,
-		  data: data.data,
-		  // The name of the data record attribute that contains x-values.
-		  xkey: 'key',
-		  // A list of names of data record attributes that contain y-values.
-		  ykeys: data.ykeys,
-		  // Labels for the ykeys -- will be displayed when you hover over the
-		  // chart.
-		  labels: data.labels,
+	$("#string_agg_container").empty();
+	var data = data[date];
 	
-		});	
-	
+	$.each(data, function(i,data_list){
+		var serie_container = $("<div></div>");
+		serie_container.append("<h1>"+i.toString()+"</h1>");
+		$.each(data_list, function(j,row){
+			var row_container = $("<div class='row'></div>");
+			row_container.html(row.key);
+			serie_container.append(row_container);
+		});
+		$("#string_agg_container").append(serie_container);
+	});
+
 }
 
 function remove_by_query(){

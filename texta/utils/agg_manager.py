@@ -28,7 +28,7 @@ class AggManager:
         # EXECUTE AGGREGATION
         responses = self.aggregate()
 
-        # PARSE RESPONSES INTO DICTS
+        # PARSE RESPONSES INTO JSON OBJECT
         self.agg_data = self.parse_responses(responses)
 
 
@@ -94,63 +94,79 @@ class AggManager:
 
 
     def parse_responses(self,responses):
-        """ Parses ES responses into dict structure
+        """ Parses ES responses into JSON structure
         """
-        agg_data = {0:{},1:{}}
+        agg_data = []
         
         for i,response in enumerate(responses):
             aggs = response["response"]["aggregations"]
-
-            agg_data[0][i] = {"data_dict":defaultdict(int),
-                              "key_dict":defaultdict(bool)}
-            agg_data[1][i] = {"data_dict":defaultdict(int),
-                              "key_dict":defaultdict(bool)}
+            output_type = None
+            response_out = []
             
-            for agg in aggs.items():               
-                for bucket in agg[1]["buckets"]:
-                    agg_data[0][i]["data_dict"][bucket["key"]] = bucket["doc_count"]
-                    agg_data[0][i]["key_dict"][bucket["key"]] = True
+            for agg_name,agg_results in aggs.items():
+                output_type = agg_name
+                for bucket in agg_results["buckets"]:
+                    new = {"children":[]}
 
-                    # 2nd LEVEL AGG
-                    for agg_2 in ["string","daterange"]:
-                        try:
-                            for bucket_2 in bucket[agg_2]["buckets"]:
-                                agg_data[1][i]["data_dict"][bucket_2["key"]] = bucket_2["doc_count"]
-                                agg_data[1][i]["key_dict"][bucket_2["key"]] = True
-                        except:
-                            KeyError
+                    if agg_name == "daterange":
+                        new["key"] = bucket["from_as_string"]
+                        new["val"] = bucket["doc_count"]
+                        
+                    elif agg_name == "string":
+                        new["key"] = bucket["key"]
+                        new["val"] = bucket["doc_count"]
+
+                    if "string" in bucket:
+                        new_children = []
+                        for bucket_2 in bucket["string"]["buckets"]:
+                            child = {}
+                            child["key"] = bucket_2["key"]
+                            child["val"] = bucket_2["doc_count"]
+                            new["children"].append(child)
+
+                    response_out.append(new)
+
+            agg_data.append({"data":response_out,"type":output_type,"label":response["label"]})
 
         return agg_data
 
-
-    def output(self):
-
-        data = self.morris()
-
-#        print data
-        
-        output = {"morris_data":data,"chart_type":"bar"}
-
-        return output
         
 
-    def morris(self):
-        data = []
+    def output_to_searcher(self):
+        count_dict = defaultdict(defaultdict)
+        children_dict = defaultdict(dict)
+        i = 0
 
-        print self.agg_data
+        data_out = []
 
-        for key in self.key_dict.keys():
-            row = {"key": key}
-            for serie in self.data_dict.keys():
-                try:
-                    row[serie] = self.data_dict[serie][key]
-                except KeyError:
-                    row[serie] = 0
-            data.append(row)
+        for agg in self.agg_data:
+            if agg["type"] == "daterange":
+                i+=1
+                for row in agg["data"]:
+                    to_append = row["val"]
+                    count_dict[row["key"]][i] = row["val"]
+                    if row["children"]:
+                        children_dict[row["key"]][i] = row["children"]
+            else:
+                data_out.append(agg)
 
-        ykeys = self.data_dict.keys()
+        combined_daterange_data = []
+        labels = []
+        
+        for row in sorted(count_dict.items(),key=lambda l:l[0]):
+            new_row = dict(row[1])
+            new_row["date"] = row[0]
+            combined_daterange_data.append(new_row)
+            labels.append(row[0])
 
-        return {"data":data,"ykeys":ykeys,"labels":ykeys}
+        daterange_data = {"type":"daterange",
+                          "data":combined_daterange_data,
+                          "ykeys":range(1,i+1),
+                          "labels":labels,
+                          "children":dict(children_dict)}
+        data_out.append(daterange_data)
+
+        return data_out
 
 
     def date_ranges(self,date_range,interval):

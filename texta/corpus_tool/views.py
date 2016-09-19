@@ -550,8 +550,9 @@ def remove_worker(es_m,dummy):
 def aggregate(request):
 
     agg_m = AggManager(request)
-    data = agg_m.output()
+    data = agg_m.output_to_searcher()
 
+    print data
 
     return HttpResponse(json.dumps(data))
 
