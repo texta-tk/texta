@@ -29,7 +29,7 @@ class AggManager:
         responses = self.aggregate()
 
         # PARSE RESPONSES INTO DICTS
-        self.data_dict,self.key_dict = self.parse_responses(responses)
+        self.agg_data = self.parse_responses(responses)
 
 
     def prepare_agg_query(self):
@@ -94,27 +94,40 @@ class AggManager:
 
 
     def parse_responses(self,responses):
-        """ Parses ES responses into 2 dicts
+        """ Parses ES responses into dict structure
         """
-        data_dict = defaultdict(defaultdict)
-        key_dict = defaultdict(bool)
+        agg_data = {0:{},1:{}}
         
         for i,response in enumerate(responses):
             aggs = response["response"]["aggregations"]
-            for agg in aggs.items():
-                agg_name = agg[0]+'_'+str(i)
-                for bucket in agg[1]["buckets"]:
-                    key_dict[bucket["key"]] = True
-                    data_dict[agg_name][bucket["key"]] = bucket["doc_count"]
 
-        return data_dict,key_dict
+            agg_data[0][i] = {"data_dict":defaultdict(int),
+                              "key_dict":defaultdict(bool)}
+            agg_data[1][i] = {"data_dict":defaultdict(int),
+                              "key_dict":defaultdict(bool)}
+            
+            for agg in aggs.items():               
+                for bucket in agg[1]["buckets"]:
+                    agg_data[0][i]["data_dict"][bucket["key"]] = bucket["doc_count"]
+                    agg_data[0][i]["key_dict"][bucket["key"]] = True
+
+                    # 2nd LEVEL AGG
+                    for agg_2 in ["string","daterange"]:
+                        try:
+                            for bucket_2 in bucket[agg_2]["buckets"]:
+                                agg_data[1][i]["data_dict"][bucket_2["key"]] = bucket_2["doc_count"]
+                                agg_data[1][i]["key_dict"][bucket_2["key"]] = True
+                        except:
+                            KeyError
+
+        return agg_data
 
 
     def output(self):
 
         data = self.morris()
 
-        print data
+#        print data
         
         output = {"morris_data":data,"chart_type":"bar"}
 
@@ -123,6 +136,8 @@ class AggManager:
 
     def morris(self):
         data = []
+
+        print self.agg_data
 
         for key in self.key_dict.keys():
             row = {"key": key}
