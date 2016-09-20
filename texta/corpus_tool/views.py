@@ -543,84 +543,12 @@ def remove_worker(es_m,dummy):
     # TODO: add logging
 
 
-    
-
-
-
 def aggregate(request):
 
     agg_m = AggManager(request)
     data = agg_m.output_to_searcher()
 
-    print data
-
     return HttpResponse(json.dumps(data))
-
-
-
-
-def timeline(es_params, request):
-    logger = LogManager(__name__, 'TIMELINE AGGREGATION')
-
-    series_names = ['Date']
-    data = []
-    series = []
-    labels = []
-    
-    try:
-        interval = es_params['interval']
-
-        # Define selected mapping
-        ds = Datasets().activate_dataset(request.session)
-        dataset = ds.get_index()
-        mapping = ds.get_mapping()
-        date_range = ds.get_date_range()
-        es_m = ES_Manager(dataset, mapping, date_range)
-
-        aggregation_data = es_params['aggregate_over']
-        aggregation_data = json.loads(aggregation_data)
-        aggregation_field = aggregation_data['path']
-
-        # temporary
-        ranges,labels = date_ranges(date_range,interval)
-        aggregations = {"ranges": {"date_range": {"field": aggregation_field, "format": date_format, "ranges": ranges}}}
-
-        # find saved searches
-        for item in es_params:
-            if 'saved_search' in item:
-                s = Search.objects.get(pk=es_params[item])
-                name = s.description
-                saved_query = json.loads(s.query)
-                es_m.load_combined_query(saved_query)
-                es_m.set_query_parameter('aggs', aggregations)
-                response = es_m.search()
-                normalised_counts,_ = normalise_agg(response, es_m, es_params, 'ranges')
-                series.append({'name': name.encode('latin1'), 'data': normalised_counts})
-
-        # add current search
-        es_m.build(es_params)
-
-        if not es_m.is_combined_query_empty():
-            es_m.set_query_parameter('aggs', aggregations)
-            response = es_m.search()
-            normalised_counts,_ = normalise_agg(response, es_m, es_params, 'ranges')
-            series.append({'name':'Query','data':normalised_counts})
-
-        data.append(['Date']+labels)
-        for serie in series:
-            data.append([serie['name']]+serie['data'])
-        data = map(list, zip(*data))
-
-        logger.set_context('user_name', request.user.username)
-        logger.info('timeline_queried')
-
-    except Exception, e:
-        print '-- Exception[{0}] {1}'.format(__name__, e)
-        logger.set_context('user_name', request.user.username)
-        logger.exception('timeline_query_failed')
-
-    out = {'data': data, 'type': 'line', 'height': '500', 'distinct_values': None}
-    return out
 
 
 def _get_facts_agg_count(es_m, facts):
@@ -730,75 +658,6 @@ def facts_agg(es_params, request):
         print '-- Exception[{0}] {1}'.format(__name__, e)
         logger.set_context('user_name', request.user.username)
         logger.exception('facts_aggregation_query_failed')
-
-    table_height = len(data)*15
-    table_height = table_height if table_height > 500 else 500
-    return {'data':[data[0]]+sorted(data[1:], key=lambda x: sum(x[1:]), reverse=True),'height':table_height,'type':'bar','distinct_values':json.dumps(distinct_values)}
-
-
-def discrete_agg(es_params, request):
-    logger = LogManager(__name__, 'DISCRETE AGGREGATION')
-
-    distinct_values = []
-    query_results = []
-    lexicon = []
-
-    aggregation_data = es_params['aggregate_over']
-    aggregation_data = json.loads(aggregation_data)
-    aggregation_field = aggregation_data['path']
-
-    try:
-
-        aggregations = {"strings" : {es_params['sort_by']: {"field": aggregation_field,'size': 50}},
-                        "distinct_values": {"cardinality": {"field": aggregation_field}}}
-
-        # Define selected mapping
-        ds = Datasets().activate_dataset(request.session)
-        dataset = ds.get_index()
-        mapping = ds.get_mapping()
-        date_range = ds.get_date_range()
-        es_m = ES_Manager(dataset, mapping, date_range)
-
-        for item in es_params:
-            if 'saved_search' in item:
-                s = Search.objects.get(pk=es_params[item])
-                name = s.description
-                saved_query = json.loads(s.query)
-                es_m.load_combined_query(saved_query)
-                es_m.set_query_parameter('aggs', aggregations)
-                response = es_m.search()
-                normalised_counts,labels = normalise_agg(response, es_m, es_params, 'strings')
-                lexicon = list(set(lexicon+labels))
-                query_results.append({'name':name,'data':normalised_counts,'labels':labels})
-                distinct_values.append({'name':name,'data':response['aggregations']['distinct_values']['value']})
-
-        es_m.build(es_params)
-        # FIXME
-        # this is confusing for the user
-        if not es_m.is_combined_query_empty():
-            es_m.set_query_parameter('aggs', aggregations)
-            response = es_m.search()
-            normalised_counts,labels = normalise_agg(response, es_m, es_params, 'strings')
-            lexicon = list(set(lexicon+labels))
-            query_results.append({'name':'Query','data':normalised_counts,'labels':labels})
-            distinct_values.append({'name':'Query','data':response['aggregations']['distinct_values']['value']})
-
-        data = [a+zero_list(len(query_results)) for a in map(list, zip(*[lexicon]))]
-        data = [['Word']+[query_result['name'] for query_result in query_results]]+data
-
-        for i,word in enumerate(lexicon):          
-            for j,query_result in enumerate(query_results):               
-                for k,label in enumerate(query_result['labels']):
-                    if word == label:
-                        data[i+1][j+1] = query_result['data'][k]
-
-        logger.set_context('user_name', request.user.username)
-        logger.info('discrete_aggregation_queried')
-
-    except Exception, e:
-        print '-- Exception[{0}] {1}'.format(__name__, e)
-        logger.set_context('user_name', request.user.username)
-        logger.exception('discrete_aggregation_query_failed')
 
     table_height = len(data)*15
     table_height = table_height if table_height > 500 else 500

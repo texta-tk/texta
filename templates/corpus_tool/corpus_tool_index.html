@@ -60,7 +60,7 @@
 				<div class="panel-body">
 				
 					<div class="panel panel-grey">
-						<div class="row">
+						<div class="row padded-row">
 							<div class="col-sm-6">
 								<b>Select field:</b>
 								<select id="agg_field_1" name="agg_field_1" class="form-control input-sm" onchange="change_agg_field('1');">
@@ -73,8 +73,8 @@
 								<div id="sort_by_1">
 									<b>Sort by:</b>
 									<select id="sort_by_1" name="sort_by_1" class="form-control input-sm">
-										<option value="terms">count</option>
-										<option value="significant_terms" selected="selected">significance</option>
+										<option value="terms" selected="selected">count</option>
+										<option value="significant_terms">significance</option>
 									</select>
 								</div>
 								<div id="freq_norm_1" class="hidden">
@@ -86,7 +86,7 @@
 								</div>
 							</div>
 						</div>
-					</div>	
+					</div>
 
 					<div class="panel panel-grey">
 						<div class="row" id="agg_field_2_button">
@@ -94,13 +94,15 @@
 								<a onclick="toggle_agg_field_2('add');"><span class="glyphicon glyphicon-plus pointer"></span></a>
 							</div>
 						</div>
-						<div class="row hidden" id="agg_field_2_container">
+						<div class="row padded-row hidden" id="agg_field_2_container">
 							<input type="hidden" id="agg_field_2_selected" name="agg_field_2_selected" value="false">
 							<div class="col-sm-6">
 								<b>Select field:</b>
 								<select id="agg_field_2" name="agg_field_2" class="form-control input-sm" onchange="change_agg_field('2');">
 									{% for field in fields %}
-										<option value="{{field.data}}">{{field.label}}</option>
+										{% if field.type == 'string' %}
+											<option value="{{field.data}}">{{field.label}}</option>
+										{% endif %}
 									{% endfor %}
 								</select>			
 							</div>
@@ -122,14 +124,22 @@
 							</div>
 						</div>
 					</div>					
-					
+
+					<div class="panel panel-grey">
+						<div class="row padded-row">
+							<div class="col-sm-6">
+							</div>
+							<div class="col-sm-6">
+								<b>Ignore active search:</b>
+								<input type="checkbox" name="ignore_active_search" class="pull-right">
+							</div>
+						</div>
+					</div>					
 					
 					<button	type="button" onclick="javascript:aggregate();" class="btn btn-default form-control"><span class="glyphicon glyphicon-filter"></span> Aggregate</button>
 					
 				</div>
 			</div>
-
-
 			
 		</form>
 	
@@ -323,5 +333,7 @@
 				<input type="text" id="daterange_to_" placeholder="to" class="form-control input-sm">			
 		</div>
 	</div>
+	
+	<div id="popup"></div>
 
 {% endblock %}

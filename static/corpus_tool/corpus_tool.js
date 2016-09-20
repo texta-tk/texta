@@ -7,6 +7,8 @@ var layers = ['text','lemmas','facts'];
 
 $(document).ready(function() {
     get_searches();
+	
+	change_agg_field(1);
  
     $(document.body).on( 'click','a.toggle-visibility', function (e) {
         e.preventDefault();
@@ -40,7 +42,11 @@ $(document).ready(function() {
     } );
 });
 
-google.load('visualization', '1', {packages: ['corechart', 'line']});
+
+$(document).mousemove(function(e) {
+    window.MOUSE_X = e.pageX;
+    window.MOUSE_Y = e.pageY;
+});	
 
 
 function in_array(value, array) {
@@ -204,24 +210,6 @@ function lookup(content,id,action,field_name, lookup_type){
 	});
 }
 
-function timeline(){
-    
-    var formElement = document.getElementById("filters");
-    var request = new XMLHttpRequest();
-    
-    request.onreadystatechange=function() {
-        if (request.readyState==4 && request.status==200) {
-            $("#right").html(request.responseText);
-            $("#actions-btn").removeClass("invisible");
-            $("#export-examples-modal").addClass("invisible");
-            $("#export-aggregation-modal").removeClass("invisible");
-        }
-    }
-
-    request.open("POST",PREFIX+'/timeline');
-    request.send(new FormData(formElement)); 
-    
-}
 
 function aggregate(){
     
@@ -231,10 +219,7 @@ function aggregate(){
     request.onreadystatechange=function() {
         if (request.readyState==4 && request.status==200) {
             if (request.responseText.length > 0) {
-				
 				displayAgg(JSON.parse(request.responseText));
-				
-//                displayAggregation(JSON.parse(request.responseText));
                 $("#actions-btn").removeClass("invisible");
                 $("#export-examples-modal").addClass("invisible");
                 $("#export-aggregation-modal").removeClass("invisible");
@@ -253,26 +238,85 @@ function displayAgg(response){
 	var container = $("#right");
 	container.empty();
 	
-	var chart_container = $("<div id='daterange_agg_container'></div>");
-	chart_container.height(500);
-	container.append(chart_container);
-
-	var string_container = $("<div id='string_agg_container'></div>");
-	string_container.height(500);
-	container.append(string_container);	
+	$("#popup").empty();
 	
+	var string_container = $("<div id='string_agg_container'></div>");
+	var chart_container = $("<div id='daterange_agg_container'></div>");
 
+	container.append(chart_container);	
+	container.append(string_container);
+	
 	for (var i in data) {
 		if(data.hasOwnProperty(i)){
 			if(data[i].type == 'daterange'){
-				drawLine(data[i]);	
+				drawTimeline(data[i]);
+			}else if(data[i].type == 'string'){
+				drawStringAggs(data[i]);
 			}
 		} 
-	} 	
+	}
 	
 }
 
-function drawLine(data){
+
+function show_children(data) {
+	var popup = $("#popup");
+	popup.empty();
+
+	$.each(data, function(i,data_list){
+		var response_container = $("<div class='panel-grey' style='float: left; padding-left: 20px; padding-right: 20px;'></div>");
+		response_container.append("<h2>"+data_list.label+"</h2>");
+		$.each(data_list.data, function(j,row){
+			var row_container = $("<div class'row'></div>");
+			var key_container = $("<div class='col-md-3'>"+row.val+"</div>");
+			var val_container = $("<div class='col-md-9'>"+row.key+"</div>");
+
+			row_container.append(key_container);
+			row_container.append(val_container);
+			response_container.append(row_container);			
+
+		});
+		popup.append(response_container);
+	});
+
+    popup.fadeIn("fast");
+    popup.css("top", MOUSE_Y);
+    popup.css("left", MOUSE_X);
+	popup.css("position","absolute");
+	
+}
+
+
+function show_string_children(data) {
+	var popup = $("#popup");
+	popup.empty();
+
+	var response_container = $("<div class='panel-grey' style='float: left; padding-left: 20px; padding-right: 20px;'></div>");
+//	response_container.append("<h2>"+data_list.label+"</h2>");
+			
+	$.each(data, function(i,data_list){
+
+		var row_container = $("<div class'row'></div>");
+		var key_container = $("<div class='col-md-3'>"+data_list.val+"</div>");
+		var val_container = $("<div class='col-md-9'>"+data_list.key+"</div>");
+
+		row_container.append(key_container);
+		row_container.append(val_container);
+		response_container.append(row_container);			
+
+	});
+
+	popup.append(response_container);
+	
+    popup.fadeIn("fast");
+    popup.css("top", MOUSE_Y);
+    popup.css("left", MOUSE_X);
+	popup.css("position","absolute");
+	
+}
+
+
+function drawTimeline(data){
 
 	new Morris.Line({
 		  element: 'daterange_agg_container',
@@ -285,29 +329,71 @@ function drawLine(data){
 		  // Labels for the ykeys -- will be displayed when you hover over the
 		  // chart.
 		  labels: data.labels,
-	
+
 		}).on('click', function(i, row) {
-			show_children(row.date,data.children);
+			var children_data = data.children[row.date];
+			show_children(children_data);
 		});
 
 }
 
-function show_children(date,data){
-
-	$("#string_agg_container").empty();
-	var data = data[date];
+function drawStringAggs(data){
+	var response_container = $("<div class='panel' style='float: left; padding-left: 20px; padding-right: 20px; min-width: 400px;'></div>");
+	response_container.append("<div class='panel-body'><h2>"+data.label+"</h2></div>");
 	
-	$.each(data, function(i,data_list){
-		var serie_container = $("<div></div>");
-		serie_container.append("<h1>"+i.toString()+"</h1>");
-		$.each(data_list, function(j,row){
-			var row_container = $("<div class='row'></div>");
-			row_container.html(row.key);
-			serie_container.append(row_container);
-		});
-		$("#string_agg_container").append(serie_container);
-	});
+	var list_group = $("<ul class='list-group'></ul>");
+	
+	$.each(data.data, function(i,row){
+		var row_container = $("<div class='row'></div>");
+		var key_container = $("<div class='col-lg-7 pull-right'>"+row.key+"</div>");
+		var val_container = $("<div class='col-lg-5 pull-left'>"+row.val+"</div>");
 
+		if(row.children.length > 0){
+			row_container.mouseover(function(){show_string_children(row.children)}).mouseout(function(){$("#popup").hide();});
+		}
+		
+		row_container.append(val_container);
+		row_container.append(key_container);
+
+		var li_container = $("<li class='list-group-item'></li>");
+		li_container.append(row_container);
+		list_group.append(li_container);
+	});
+	
+	response_container.append(list_group);
+	
+	$("#string_agg_container").append(response_container);
+}
+
+
+function change_agg_field(field_nr){	
+	var field_component = $("#agg_field_"+field_nr);
+	var selected_field = field_component.val();
+	var selected_type = JSON.parse(selected_field)['type'];
+	
+	if(selected_type == 'string'){
+		$("#sort_by_"+field_nr).removeClass('hidden');
+		$("#freq_norm_"+field_nr).addClass('hidden');
+	}else if (selected_type == 'date'){
+		$("#freq_norm_"+field_nr).removeClass('hidden');
+		$("#sort_by_"+field_nr).addClass('hidden');		
+	}
+	
+}
+
+function toggle_agg_field_2(action){
+	
+	if(action == 'add'){
+		$("#agg_field_2_container").removeClass('hidden');
+		$("#agg_field_2_button").addClass('hidden');
+		$("#agg_field_2_selected").val('true');
+	}else{
+		$("#agg_field_2_button").removeClass('hidden');
+		$("#agg_field_2_container").addClass('hidden');
+		$("#agg_field_2_selected").val('false');		
+	}
+
+	
 }
 
 function remove_by_query(){
@@ -343,117 +429,6 @@ function save(){
     request.open("POST",PREFIX+'/save');
     request.send(new FormData(formElement),true);
     
-}
-
-function drawTimeline(input_data) {
-    var data = google.visualization.arrayToDataTable(input_data.data);
-    var options = {
-        tooltip: {
-            textStyle: {
-                fontSize: 12
-            },
-        },
-        legend: {
-            position: 'top',
-            textStyle: {
-                fontSize: 12
-            },
-        },
-        chartArea: {
-            width: '85%',
-            height: '70%',
-        },
-        hAxis: {
-            title: data.title,
-            slantedText:true,
-            slantedTextAngle:90,
-            textStyle: {
-                fontSize: 12
-            },
-        },
-        vAxis: {
-            title: 'Hit count',
-            textStyle: {
-                fontSize: 12
-            },
-        },
-    };
-    var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-    chart.draw(data, options);
-}
-
-function drawBars(input_data) {
-    var data = google.visualization.arrayToDataTable(input_data.data);
-    var options = {
-        isStacked: true,
-        legend: {
-            position: 'top',
-            textStyle: {
-                fontSize: 12
-            },
-        },
-        tooltip: {
-            textStyle: {
-                fontSize: 12
-            },
-        },
-        chartArea: {
-            width: '50%',
-            height: '90%'
-        },
-        hAxis: {
-            title: 'Hit count',
-            textStyle: {
-                fontSize: 12
-            },
-        },
-        vAxis: {
-            title: 'Word',
-            textStyle: {
-            fontSize: 12
-            },
-        },
-    };
-    var chart = new google.visualization.BarChart(document.getElementById('chart_div'));
-    chart.draw(data, options);
-}
-
-function displayAggregation(data) {
-
-    // Clear the #right div
-    var right = document.getElementById("right");
-    while (right.firstChild) {
-        right.removeChild(right.firstChild);
-    }
-
-	if(data.distinct_values){
-		// Create #distinct_counts_div
-		var distinct_counts_div = document.createElement("div");
-		distinct_counts_div.id = "distinct_counts_div"
-		distinct_counts_div.class = "cell"
-		document.getElementById("right").appendChild(distinct_counts_div)
-		$("#distinct_counts_div").append('<b>Distinct values in searches:</b><br>');
-		
-		// Populate #distinct_counts_div
-		var distinct_values = JSON.parse(data.distinct_values);
-		distinct_values.forEach(function(a) {
-			$("#distinct_counts_div").append(a.name+': '+a.data+'<br>');
-		});		
-	}
-	
-    // Create #chart_div into #right div
-    var chart_div = document.createElement("div");
-    chart_div.id = "chart_div"
-    document.getElementById("right").appendChild(chart_div)
-
-    $("#chart_div").height(data.height);
-
-    if(data.type == 'line'){
-        drawTimeline(data);
-    }else{
-        drawBars(data);
-    }
-
 }
 
 function get_searches() {
@@ -591,33 +566,3 @@ function export_data(exportType) {
     window.open(query);
 }
 
-
-function change_agg_field(field_nr){	
-	var field_component = $("#agg_field_"+field_nr);
-	var selected_field = field_component.val();
-	var selected_type = JSON.parse(selected_field)['type'];
-	
-	if(selected_type == 'string'){
-		$("#sort_by_"+field_nr).removeClass('hidden');
-		$("#freq_norm_"+field_nr).addClass('hidden');
-	}else if (selected_type == 'date'){
-		$("#freq_norm_"+field_nr).removeClass('hidden');
-		$("#sort_by_"+field_nr).addClass('hidden');		
-	}
-	
-}
-
-function toggle_agg_field_2(action){
-	
-	if(action == 'add'){
-		$("#agg_field_2_container").removeClass('hidden');
-		$("#agg_field_2_button").addClass('hidden');
-		$("#agg_field_2_selected").val('true');
-	}else{
-		$("#agg_field_2_button").removeClass('hidden');
-		$("#agg_field_2_container").addClass('hidden');
-		$("#agg_field_2_selected").val('false');		
-	}
-
-	
-}

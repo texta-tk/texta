@@ -85,10 +85,11 @@ class AggManager:
                 responses.append({"id":"search_"+str(s.pk),"label":name,"response":response})
 
         # EXECUTE THE LIVE QUERY
-        self.es_m.build(self.es_params)
-        self.es_m.set_query_parameter("aggs", self.agg_query)
-        response = self.es_m.search()
-        responses.append({"id":"query","label":"Query","response":response})
+        if "ignore_active_search" not in self.es_params:
+            self.es_m.build(self.es_params)
+            self.es_m.set_query_parameter("aggs", self.agg_query)
+            response = self.es_m.search()
+            responses.append({"id":"query","label":"Query","response":response})
 
         return responses
 
@@ -143,10 +144,9 @@ class AggManager:
             if agg["type"] == "daterange":
                 i+=1
                 for row in agg["data"]:
-                    to_append = row["val"]
                     count_dict[row["key"]][i] = row["val"]
                     if row["children"]:
-                        children_dict[row["key"]][i] = row["children"]
+                        children_dict[row["key"]][i] = {"data":row["children"],"label":agg["label"]}
             else:
                 data_out.append(agg)
 
@@ -164,7 +164,9 @@ class AggManager:
                           "ykeys":range(1,i+1),
                           "labels":labels,
                           "children":dict(children_dict)}
-        data_out.append(daterange_data)
+
+        if daterange_data["data"]:
+            data_out.append(daterange_data)
 
         return data_out
 
