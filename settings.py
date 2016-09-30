@@ -109,7 +109,6 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'texta.lm',
     'texta.conceptualiser',
-    'texta.ontologiser',
     'texta.mwe_miner',
     'texta.account',
     'texta.home',
@@ -119,15 +118,15 @@ INSTALLED_APPS = (
     'texta.base',
     'texta.permission_admin',
     'texta.grammar_builder',
-    'texta.document_miner'
+    'texta.document_miner',
 )
 
 # Elasticsearch parameters
 date_format = 'yyyy-MM-dd'
 es_url = os.getenv('TEXTA_ELASTICSEARCH_URL')
 if es_url is None:
-    es_url = 'http://localhost:9200'
-#    es_url = 'http://elasticsearch2.stacc.ee:9201'
+#    es_url = 'http://localhost:9200'
+    es_url = 'http://elasticsearch2.stacc.ee:9201'
 
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')

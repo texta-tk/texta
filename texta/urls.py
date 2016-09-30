@@ -6,7 +6,6 @@ urlpatterns = [
     url(r'', include('texta.home.urls')),
     url(r'lm', include('texta.lm.urls')),
     url(r'conceptualiser', include('texta.conceptualiser.urls')),
-    url(r'ontologiser', include('texta.ontologiser.urls')),
     url(r'mwe_miner', include('texta.mwe_miner.urls')),
     url(r'corpus_tool', include('texta.corpus_tool.urls')),
     url(r'account', include('texta.account.urls')),
