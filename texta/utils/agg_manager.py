@@ -19,7 +19,7 @@ class AggManager:
         self.date_range = ds.get_date_range()
         self.es_m = ES_Manager(self.dataset, self.mapping, self.date_range)
 
-        self.ranges,self.date_labels = self.date_ranges(self.es_m.date_range,"month")
+        self.ranges,self.date_labels = self.date_ranges(self.es_m.date_range,"day")
 
         # PREPARE AGGREGATION
         self.es_params = request.POST
@@ -205,7 +205,7 @@ class AggManager:
             d2 = date_max+td(days=1)
             delta = d2-d1
             dates = [d1+td(days=i) for i in range(delta.days+1)]
-            for date_pair in ngrams(dates,2):
+            for date_pair in self.ngrams(dates,2):
                 ranges.append({'from':date_pair[0].strftime(frmt),'to':date_pair[1].strftime(frmt)})
                 labels.append(date_pair[0].strftime(frmt))
 
@@ -213,3 +213,7 @@ class AggManager:
 
     def convert_date(self,date_string,frmt):
         return datetime.strptime(date_string,frmt).date()
+
+
+    def ngrams(self,input_list,n):
+        return zip(*[input_list[i:] for i in range(n)])

@@ -264,7 +264,7 @@ function show_children(data) {
 	popup.empty();
 
 	$.each(data, function(i,data_list){
-		var response_container = $("<div class='panel-grey' style='float: left; padding-left: 20px; padding-right: 20px;'></div>");
+		var response_container = $("<div class='bg-grey' style='float: left; padding-left: 20px; padding-right: 20px;'></div>");
 		response_container.append("<h2>"+data_list.label+"</h2>");
 		$.each(data_list.data, function(j,row){
 			var row_container = $("<div class'row'></div>");
@@ -291,7 +291,7 @@ function show_string_children(data) {
 	var popup = $("#popup");
 	popup.empty();
 
-	var response_container = $("<div class='panel-grey' style='float: left; padding-left: 20px; padding-right: 20px;'></div>");
+	var response_container = $("<div class='bg-grey' style='float: left; padding-left: 20px; padding-right: 20px;'></div>");
 //	response_container.append("<h2>"+data_list.label+"</h2>");
 			
 	$.each(data, function(i,data_list){

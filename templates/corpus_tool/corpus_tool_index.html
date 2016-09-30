@@ -59,7 +59,7 @@
 				<div class="panel-heading">Aggregations</div>
 				<div class="panel-body">
 				
-					<div class="panel panel-grey">
+					<div class="panel bg-grey">
 						<div class="row padded-row">
 							<div class="col-sm-6">
 								<b>Select field:</b>
@@ -88,7 +88,7 @@
 						</div>
 					</div>
 
-					<div class="panel panel-grey">
+					<div class="panel bg-grey">
 						<div class="row" id="agg_field_2_button">
 							<div class="col-sm-12 text-center">
 								<a onclick="toggle_agg_field_2('add');"><span class="glyphicon glyphicon-plus pointer"></span></a>
@@ -125,12 +125,17 @@
 						</div>
 					</div>					
 
-					<div class="panel panel-grey">
+					<div class="panel bg-grey">
 						<div class="row padded-row">
 							<div class="col-sm-6">
+							<b>Background corpus:</b>
+								<select id="custom_bg" name="custom_bg" class="form-control input-sm">
+									<option value="all_docs" selected="selected">All documents</option>
+									<option value="">Search: online</option>
+								</select>							
 							</div>
 							<div class="col-sm-6">
-								<b>Ignore active search:</b>
+								<b>Ignore current search:</b><br>
 								<input type="checkbox" name="ignore_active_search" class="pull-right">
 							</div>
 						</div>
