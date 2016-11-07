@@ -11,6 +11,8 @@ from ..permission_admin.models import Dataset
 
 from settings import STATIC_URL, URL_PREFIX
 
+import datetime
+
 
 # new group to assign model run permissions to users
 #modelrun_group = Group.objects.get_or_create(name='change_modelrun')[0]
@@ -92,7 +94,7 @@ def get_user_fields():
         user_fields['e_mail'] = user.email
 
         users.append(user_fields)
-    users = sorted(users, key=lambda u: u['last_login'], reverse=True)
+    users = sorted(users, key=lambda u: u['last_login'] if u['last_login'] else datetime.datetime(year=1900,month=1,day=1), reverse=True)
     return users
 
 def get_usernames():
