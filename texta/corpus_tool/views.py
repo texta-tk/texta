@@ -762,7 +762,7 @@ def discrete_agg(es_params, request):
 
     try:
 
-        aggregations = {"strings" : {es_params['sort_by']: {"field": aggregation_field,'size': 50}},
+        aggregations = {"strings" : {es_params['sort_by']: {"field": aggregation_field, "exclude": "[0-9]+(,|.[0-9]+)*", 'size': 50}},
                         "distinct_values": {"cardinality": {"field": aggregation_field}}}
 
         # Define selected mapping
@@ -813,7 +813,7 @@ def discrete_agg(es_params, request):
         logger.set_context('user_name', request.user.username)
         logger.exception('discrete_aggregation_query_failed')
 
-    table_height = len(data)*15
+    table_height = len(data)*20
     table_height = table_height if table_height > 500 else 500
     return {'data':[data[0]]+sorted(data[1:], key=lambda x: sum(x[1:]), reverse=True),'height':table_height,'type':'bar','distinct_values':json.dumps(distinct_values)}
 
