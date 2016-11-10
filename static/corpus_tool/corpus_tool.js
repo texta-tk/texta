@@ -347,15 +347,16 @@ function drawStringAggs(data){
 		var row_container = $("<div class='row'></div>");
 		var key_container = $("<div class='col-lg-7 pull-right'>"+row.key+"</div>");
 		var val_container = $("<div class='col-lg-5 pull-left'>"+row.val+"</div>");
-
-		if(row.children.length > 0){
-			row_container.mouseover(function(){show_string_children(row.children)}).mouseout(function(){$("#popup").hide();});
-		}
 		
 		row_container.append(val_container);
 		row_container.append(key_container);
 
 		var li_container = $("<li class='list-group-item'></li>");
+		
+		if(row.children.length > 0){
+			li_container.mouseover(function(){show_string_children(row.children)}).mouseout(function(){$("#popup").hide();});
+		}
+		
 		li_container.append(row_container);
 		list_group.append(li_container);
 	});
