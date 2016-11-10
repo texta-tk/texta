@@ -832,7 +832,7 @@ def normalise_agg(response, es_m, es_params, agg_type):
     if es_params['frequency_normalisation'] == 'relative_frequency':
 
         es_m.set_query_parameter('query', {"match_all": {}})
-        response_all = es_m.search(apply_facts=False)
+        response_all = es_m.search()
 
         total_counts = [bucket['doc_count'] for bucket in response_all['aggregations'][agg_type]['buckets']]
         relative_counts = [float(raw_counts[i])/total_counts[i] if total_counts[i] != 0 else 0 for i in range(len(total_counts))]
