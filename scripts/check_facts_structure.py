@@ -232,7 +232,7 @@ class FactsCheck:
             self._set_warning(warning_msg)
 
         # Check doc_id and recover document
-        request_url = 'http://localhost:9200/{0}/{1}/{2}'.format(self._index, doc_type, doc_id)
+        request_url = '{0}/{1}/{2}/{3}'.format(self.es_url, self._index, doc_type, doc_id)
         response = ES_Manager.plain_get(request_url)
         if not response['found']:
             error_msg = 'Fact _id:{0} has an invalid document [doc_id:{1}]'.format(_id, doc_id)
@@ -325,7 +325,7 @@ class FactsCheck:
                 yield hit
 
     def _get_total_facts(self):
-        request_url = 'http://localhost:9200/{0}/{1}/_count'.format(self._index, self.TEXTA)
+        request_url = '{0}/{0}/{1}/_count'.format(self.es_url,self._index, self.TEXTA)
         response = ES_Manager.plain_post(request_url)
         return response['count']
 
@@ -466,15 +466,14 @@ def main():
     args = sys.argv
     script_name = args[0]
     commands = []
-    commands.append(['--indexes', 0, 'python {0} port --indexes'.format(script_name)])
-    commands.append(['--check', 1, 'python {0} port --maps index_name'.format(script_name)])
-    commands.append(['--check', 1, 'python {0} port --check index_name'.format(script_name)])
-    commands.append(['--link', 1, 'python {0} port --link index_name map_name'.format(script_name)])
+    commands.append(['--indexes', 0, 'python {0} es_url --indexes'.format(script_name)])
+    commands.append(['--check', 1, 'python {0} es_url --maps index_name'.format(script_name)])
+    commands.append(['--check', 1, 'python {0} es_url --check index_name'.format(script_name)])
+    commands.append(['--link', 1, 'python {0} es_url --link index_name map_name'.format(script_name)])
     try:
 
-        port = long(args[1])
         c = args[2]
-        es_url = 'http://localhost:{0}'.format(port)
+        es_url = args[1]
 
         if c == '--indexes':
             request_url = '{0}/_aliases'.format(es_url)
