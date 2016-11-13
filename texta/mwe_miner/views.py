@@ -225,6 +225,8 @@ def find_mappings(request):
         match_field = request.POST['match_field']
         description = request.POST['description']
 
+        batch_size = 50
+
         # Define selected mapping
         ds = Datasets().activate_dataset(request.session)
         dataset = ds.get_index()
@@ -264,7 +266,7 @@ def find_mappings(request):
                         query = {"query": {"match_phrase": {match_field: {"query": permutation}}}}
                     data.append(json.dumps({"index":dataset,"mapping":mapping})+'\n'+json.dumps(query))
                     phrases.append(permutation)
-                    if len(data) == 250:
+                    if len(data) == batch_size:
                         for j,response in enumerate(ES_Manager.plain_multisearch(es_url, dataset, mapping, data)):
                             try:
                                 if response['hits']['total'] >= min_freq:
