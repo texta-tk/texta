@@ -455,7 +455,9 @@ class ES_Manager:
             search_url = '{0}/_search/scroll'.format(es_url)
         else:
             q = json.dumps(self.combined_query['main'])
-            search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll={3}'.format(es_url, self.index,
+            #search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll={3}'.format(es_url, self.index,
+                                                                                  #self.mapping, time_out)
+            search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index,
                                                                                   self.mapping, time_out)
 
         response = self.requests.post(search_url, data=q).json()
