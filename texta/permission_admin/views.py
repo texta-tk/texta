@@ -41,7 +41,7 @@ def index(request):
     datasets = Dataset.objects.all()
     users = get_user_fields()
     template = loader.get_template('permission_admin/permission_admin_index.html')
-    return HttpResponse(template.render({'users':users,'datasets':datasets,'STATIC_URL':STATIC_URL},request))
+    return HttpResponse(template.render({'users':users,'datasets':datasets,'STATIC_URL':STATIC_URL,'URL_PREFIX':URL_PREFIX},request))
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
