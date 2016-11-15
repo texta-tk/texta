@@ -68,7 +68,7 @@ class AggManager:
             return {agg_name: {"date_range": {"field": path, "format": date_format, "ranges": self.ranges}}}
         else:
             # NOTE: Exclude numbers from discrete aggregation ouput
-            return {agg_name: {sort_by: {"field": path, "exclude": "[0-9]+(,|.[0-9]+)*", "size": 20}}}
+            return {agg_name: {sort_by: {"field": path, "exclude": "[0-9]+(,|.[0-9]+)*", "size": 30}}}
 
 
     def aggregate(self):
@@ -130,7 +130,7 @@ class AggManager:
                         new["key"] = bucket["from_as_string"]
                         # Normalises frequencies
                         if self.es_params["freq_norm_1"] == "relative_frequency":
-                            new["val"] = str(float(bucket["doc_count"])/float(total_freqs[bucket["from_as_string"]]))
+                            new["val"] = str(round(float(bucket["doc_count"])/float(total_freqs[bucket["from_as_string"]]),5))
                         else:
                             new["val"] = bucket["doc_count"]
                     elif agg_name == "string":
@@ -145,8 +145,6 @@ class AggManager:
                             new["children"].append(child)
                     response_out.append(new)
             agg_data.append({"data":response_out,"type":output_type,"label":response["label"]})
-
-#        print agg_data
 
         return agg_data
         

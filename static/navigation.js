@@ -5,7 +5,7 @@ if (SERVER_TYPE == 'DEV') {
     var STATIC_URL = '/static/'
 } else {
     var LINK_PREFIX = 'https://yourdomain.com';
-    var STATIC_URL = '/texta/static/';
+    var STATIC_URL = LINK_PREFIX + '/texta/static/';
 }
 
 var LINK_LEXMINER = LINK_PREFIX + '/lm';
