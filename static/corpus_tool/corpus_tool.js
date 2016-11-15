@@ -375,8 +375,10 @@ function change_agg_field(field_nr){
 	if(selected_type == 'string'){
 		$("#sort_by_"+field_nr).removeClass('hidden');
 		$("#freq_norm_"+field_nr).addClass('hidden');
+		$("#interval_"+field_nr).addClass('hidden');
 	}else if (selected_type == 'date'){
 		$("#freq_norm_"+field_nr).removeClass('hidden');
+		$("#interval_"+field_nr).removeClass('hidden');
 		$("#sort_by_"+field_nr).addClass('hidden');		
 	}
 	

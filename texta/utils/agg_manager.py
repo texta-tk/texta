@@ -19,10 +19,9 @@ class AggManager:
         self.date_range = ds.get_date_range()
         self.es_m = ES_Manager(self.dataset, self.mapping, self.date_range)
 
-        self.ranges,self.date_labels = self.date_ranges(self.es_m.date_range,"day")
-
         # PREPARE AGGREGATION
         self.es_params = request.POST
+        self.ranges,self.date_labels = self.date_ranges(self.es_m.date_range,self.es_params['interval_1'])
         self.agg_query = self.prepare_agg_query()
 
         # EXECUTE AGGREGATION

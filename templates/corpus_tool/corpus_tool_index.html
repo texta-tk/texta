@@ -61,15 +61,16 @@
 				
 					<div class="panel bg-grey">
 						<div class="row padded-row">
-							<div class="col-sm-6">
+							<div class="col-sm-12 text-center">
+								<b>Field #1</b>
+							</div>
+							<div class="col-sm-12">
 								<b>Select field:</b>
 								<select id="agg_field_1" name="agg_field_1" class="form-control input-sm" onchange="change_agg_field('1');">
 									{% for field in fields %}
 										<option value="{{field.data}}">{{field.label}}</option>
 									{% endfor %}
-								</select>			
-							</div>
-							<div class="col-sm-6">
+								</select>
 								<div id="sort_by_1">
 									<b>Sort by:</b>
 									<select id="sort_by_1" name="sort_by_1" class="form-control input-sm">
@@ -84,6 +85,15 @@
 										<option value="relative_frequency">relative frequency</option>
 									</select>
 								</div>
+								<div id="interval_1" class="hidden">
+									<b>Interval:</b>
+									<select id="interval_1" name="interval_1" class="form-control input-sm">
+										<option value="day">day</option>
+										<option value="month" selected="selected">month</option>
+										<option value="quarter">quarter</option>
+										<option value="year">year</option>
+									</select>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -95,25 +105,28 @@
 							</div>
 						</div>
 						<div class="row padded-row hidden" id="agg_field_2_container">
+							<div class="col-sm-12 text-center">
+								<b>Field #2</b> <a onclick="toggle_agg_field_2('remove');"><span class="glyphicon glyphicon-minus pull-right pointer"></span></a>
+							</div>
 							<input type="hidden" id="agg_field_2_selected" name="agg_field_2_selected" value="false">
-							<div class="col-sm-6">
+							<div class="col-sm-12">
 								<b>Select field:</b>
-								<select id="agg_field_2" name="agg_field_2" class="form-control input-sm" onchange="change_agg_field('2');">
+								<select id="agg_field_2" name="agg_field_2" class="form-control input-sm">
 									{% for field in fields %}
 										{% if field.type == 'string' %}
 											<option value="{{field.data}}">{{field.label}}</option>
 										{% endif %}
 									{% endfor %}
 								</select>			
-							</div>
-							<div class="col-sm-6">
+							
 								<div id="sort_by_2">
-									<b>Sort by:</b></b><a onclick="toggle_agg_field_2('remove');"><span class="glyphicon glyphicon-minus pull-right pointer"></span></a>
+									<b>Sort by:</b>
 									<select id="sort_by_2" name="sort_by_2" class="form-control input-sm">
 										<option value="terms">count</option>
 										<option value="significant_terms" selected="selected">significance</option>
 									</select>
 								</div>
+								
 								<div id="freq_norm_2" class="hidden">
 									<b>Frequency:</b>
 									<select id="freq_norm_2" name="freq_norm_2" class="form-control input-sm">
@@ -121,20 +134,22 @@
 										<option value="relative_frequency">relative frequency</option>
 									</select>
 								</div>
+								
 							</div>
 						</div>
 					</div>					
 
 					<div class="panel bg-grey">
 						<div class="row padded-row">
-							<div class="col-sm-6">
+							<div class="col-sm-12 text-center">
+								<b>Options</b>
+							</div>
+							<div class="col-sm-12">
 							<b>Background corpus:</b>
 								<select id="custom_bg" name="custom_bg" class="form-control input-sm">
 									<option value="all_docs" selected="selected">All documents</option>
 									<option value="">Search: online</option>
 								</select>							
-							</div>
-							<div class="col-sm-6">
 								<b>Ignore current search:</b><br>
 								<input type="checkbox" name="ignore_active_search" class="pull-right">
 							</div>
