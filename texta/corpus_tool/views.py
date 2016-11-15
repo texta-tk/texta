@@ -664,78 +664,6 @@ def facts_agg(es_params, request):
     return {'data':[data[0]]+sorted(data[1:], key=lambda x: sum(x[1:]), reverse=True),'height':table_height,'type':'bar','distinct_values':json.dumps(distinct_values)}
 
 
-<<<<<<< HEAD
-def discrete_agg(es_params, request):
-    logger = LogManager(__name__, 'DISCRETE AGGREGATION')
-
-    distinct_values = []
-    query_results = []
-    lexicon = []
-
-    aggregation_data = es_params['aggregate_over']
-    aggregation_data = json.loads(aggregation_data)
-    aggregation_field = aggregation_data['path']
-
-    try:
-
-        aggregations = {"strings" : {es_params['sort_by']: {"field": aggregation_field, "exclude": "[0-9]+(,|.[0-9]+)*", 'size': 50}},
-                        "distinct_values": {"cardinality": {"field": aggregation_field}}}
-
-        # Define selected mapping
-        ds = Datasets().activate_dataset(request.session)
-        dataset = ds.get_index()
-        mapping = ds.get_mapping()
-        date_range = ds.get_date_range()
-        es_m = ES_Manager(dataset, mapping, date_range)
-
-        for item in es_params:
-            if 'saved_search' in item:
-                s = Search.objects.get(pk=es_params[item])
-                name = s.description
-                saved_query = json.loads(s.query)
-                es_m.load_combined_query(saved_query)
-                es_m.set_query_parameter('aggs', aggregations)
-                response = es_m.search()
-                normalised_counts,labels = normalise_agg(response, es_m, es_params, 'strings')
-                lexicon = list(set(lexicon+labels))
-                query_results.append({'name':name,'data':normalised_counts,'labels':labels})
-                distinct_values.append({'name':name,'data':response['aggregations']['distinct_values']['value']})
-
-        es_m.build(es_params)
-        # FIXME
-        # this is confusing for the user
-        if not es_m.is_combined_query_empty():
-            es_m.set_query_parameter('aggs', aggregations)
-            response = es_m.search()
-            normalised_counts,labels = normalise_agg(response, es_m, es_params, 'strings')
-            lexicon = list(set(lexicon+labels))
-            query_results.append({'name':'Query','data':normalised_counts,'labels':labels})
-            distinct_values.append({'name':'Query','data':response['aggregations']['distinct_values']['value']})
-
-        data = [a+zero_list(len(query_results)) for a in map(list, zip(*[lexicon]))]
-        data = [['Word']+[query_result['name'] for query_result in query_results]]+data
-
-        for i,word in enumerate(lexicon):          
-            for j,query_result in enumerate(query_results):               
-                for k,label in enumerate(query_result['labels']):
-                    if word == label:
-                        data[i+1][j+1] = query_result['data'][k]
-
-        logger.set_context('user_name', request.user.username)
-        logger.info('discrete_aggregation_queried')
-
-    except Exception, e:
-        print '-- Exception[{0}] {1}'.format(__name__, e)
-        logger.set_context('user_name', request.user.username)
-        logger.exception('discrete_aggregation_query_failed')
-
-    table_height = len(data)*20
-    table_height = table_height if table_height > 500 else 500
-    return {'data':[data[0]]+sorted(data[1:], key=lambda x: sum(x[1:]), reverse=True),'height':table_height,'type':'bar','distinct_values':json.dumps(distinct_values)}
-
-
-=======
->>>>>>> agg_manager
 def normalise_agg(response, es_m, es_params, agg_type):
 
     raw_counts = [bucket['doc_count'] for bucket in response['aggregations'][agg_type]['buckets']]
@@ -750,7 +678,7 @@ def normalise_agg(response, es_m, es_params, agg_type):
     if es_params['frequency_normalisation'] == 'relative_frequency':
 
         es_m.set_query_parameter('query', {"match_all": {}})
-        response_all = es_m.search()
+        response_all = es_m.search(apply_facts=False)
 
         total_counts = [bucket['doc_count'] for bucket in response_all['aggregations'][agg_type]['buckets']]
         relative_counts = [float(raw_counts[i])/total_counts[i] if total_counts[i] != 0 else 0 for i in range(len(total_counts))]
