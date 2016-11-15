@@ -26,7 +26,7 @@ function addWord(word){
 	for (var name in name_to_punct) {
 	    word = word.replace(name,name_to_punct[name]);
 	}
-	$('#lexicon').val($('#lexicon').val()+word+'\n');
+	$('#lexicon').val($('#lexicon').val()+'\n'+word);
 }
 
 function query(){
