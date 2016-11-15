@@ -89,7 +89,7 @@ class AggManager:
             self.es_m.build(self.es_params)
             self.es_m.set_query_parameter("aggs", self.agg_query)
             response = self.es_m.search()
-            responses.append({"id":"query","label":"Query","response":response})
+            responses.append({"id":"query","label":"Current Search","response":response})
 
         return responses
 
@@ -212,7 +212,11 @@ class AggManager:
         return ranges,labels
 
     def convert_date(self,date_string,frmt):
-        return datetime.strptime(date_string,frmt).date()
+        # Check if min/max dates defined in database
+        if date_string:
+            return datetime.strptime(date_string,frmt).date()
+        else:
+            return datetime.now().date()
 
 
     def ngrams(self,input_list,n):

@@ -212,6 +212,10 @@ function lookup(content,id,action,field_name, lookup_type){
 
 
 function aggregate(){
+
+	var container = $("#right");
+	container.empty();
+	container.append("Loading...");
     
     var formElement = document.getElementById("filters");
     var request = new XMLHttpRequest();
@@ -233,7 +237,6 @@ function aggregate(){
 
 
 function displayAgg(response){
-	
 	var data = response;
 	var container = $("#right");
 	container.empty();
@@ -256,6 +259,28 @@ function displayAgg(response){
 		} 
 	}
 	
+}
+
+
+function drawTimeline(data){
+
+	new Morris.Line({
+		  element: 'daterange_agg_container',
+		  resize: true,
+		  data: data.data,
+		  // The name of the data record attribute that contains x-values.
+		  xkey: 'date',
+		  // A list of names of data record attributes that contain y-values.
+		  ykeys: data.ykeys,
+		  // Labels for the ykeys -- will be displayed when you hover over the
+		  // chart.
+		  labels: data.labels,
+
+		}).on('click', function(i, row) {
+			var children_data = data.children[row.date];
+			show_children(children_data);
+		});
+
 }
 
 
@@ -287,83 +312,54 @@ function show_children(data) {
 }
 
 
-function show_string_children(data) {
-	var popup = $("#popup");
-	popup.empty();
-
-	var response_container = $("<div class='bg-grey' style='float: left; padding-left: 20px; padding-right: 20px;'></div>");
-//	response_container.append("<h2>"+data_list.label+"</h2>");
-			
-	$.each(data, function(i,data_list){
-
-		var row_container = $("<div class'row'></div>");
-		var key_container = $("<div class='col-md-3'>"+data_list.val+"</div>");
-		var val_container = $("<div class='col-md-9'>"+data_list.key+"</div>");
-
-		row_container.append(key_container);
-		row_container.append(val_container);
-		response_container.append(row_container);			
-
-	});
-
-	popup.append(response_container);
-	
-    popup.fadeIn("fast");
-    popup.css("top", MOUSE_Y);
-    popup.css("left", MOUSE_X);
-	popup.css("position","absolute");
-	
-}
-
-
-function drawTimeline(data){
-
-	new Morris.Line({
-		  element: 'daterange_agg_container',
-		  resize: true,
-		  data: data.data,
-		  // The name of the data record attribute that contains x-values.
-		  xkey: 'date',
-		  // A list of names of data record attributes that contain y-values.
-		  ykeys: data.ykeys,
-		  // Labels for the ykeys -- will be displayed when you hover over the
-		  // chart.
-		  labels: data.labels,
-
-		}).on('click', function(i, row) {
-			var children_data = data.children[row.date];
-			show_children(children_data);
-		});
-
-}
-
 function drawStringAggs(data){
-	var response_container = $("<div class='panel' style='float: left; padding-left: 20px; padding-right: 20px; min-width: 400px;'></div>");
-	response_container.append("<div class='panel-body'><h2>"+data.label+"</h2></div>");
+	var response_container = $("<div style='float: left; padding-left: 20px;'></div>");
+	var table_container = $("<div style='float: left'></div>");
+	var children_container = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
 	
-	var list_group = $("<ul class='list-group'></ul>");
+	var tbody = $("<tbody></tbody>");
 	
 	$.each(data.data, function(i,row){
-		var row_container = $("<div class='row'></div>");
-		var key_container = $("<div class='col-lg-7 pull-right'>"+row.key+"</div>");
-		var val_container = $("<div class='col-lg-5 pull-left'>"+row.val+"</div>");
-		
-		row_container.append(val_container);
-		row_container.append(key_container);
-
-		var li_container = $("<li class='list-group-item'></li>");
-		
+		var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td></tr>");
 		if(row.children.length > 0){
-			li_container.mouseover(function(){show_string_children(row.children)}).mouseout(function(){$("#popup").hide();});
+			row_container.click(function(){show_string_children(row.children,children_container)});
+			row_container.addClass("pointer");
 		}
-		
-		li_container.append(row_container);
-		list_group.append(li_container);
+		tbody.append(row_container);
 	});
 	
-	response_container.append(list_group);
+	var table = $("<table class='table table-striped table-hover'></table>");
+	table.append("<thead><th colspan='2'>Field #1</th></head>");
+	table.append(tbody);
+	
+	table_container.append(table);
+	
+	response_container.append("<div class='row text-center'><h3>"+data.label+"</h3></div>");
+	response_container.append(table_container);
+	response_container.append(children_container);
 	
 	$("#string_agg_container").append(response_container);
+}
+
+
+function show_string_children(data,children_container) {
+	children_container.empty();
+
+	var tbody = $("<tbody></tbody>");
+	
+	$.each(data, function(i,data_list){
+		var row_container = $("<tr><td>"+data_list.val+"</td><td>"+data_list.key+"</td></tr>");
+		tbody.append(row_container);
+	});
+	
+	var table = $("<table class='table table-striped table-hover'></table>");
+	table.append("<thead><th colspan='2'>Field #2</th></head>").click(function(){children_container.addClass('hidden')});;
+
+	table.append(tbody);
+	
+	children_container.append(table);
+	children_container.removeClass("hidden");
+	
 }
 
 
