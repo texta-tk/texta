@@ -241,8 +241,6 @@ function displayAgg(response){
 	var container = $("#right");
 	container.empty();
 	
-	$("#popup").empty();
-	
 	var string_container = $("<div id='string_agg_container'></div>");
 	var chart_container = $("<div id='daterange_agg_container'></div>");
 
@@ -264,6 +262,8 @@ function displayAgg(response){
 
 function drawTimeline(data){
 
+	var timeline_children_container = $("<div></div>");
+
 	new Morris.Line({
 		  element: 'daterange_agg_container',
 		  resize: true,
@@ -278,36 +278,33 @@ function drawTimeline(data){
 
 		}).on('click', function(i, row) {
 			var children_data = data.children[row.date];
-			show_children(children_data);
+			show_children(children_data,row.date,timeline_children_container);
 		});
+	
+	$("#daterange_agg_container").append(timeline_children_container);
 
 }
 
 
-function show_children(data) {
-	var popup = $("#popup");
-	popup.empty();
+function show_children(data,date,timeline_children_container) {
+	timeline_children_container.empty();
 
 	$.each(data, function(i,data_list){
-		var response_container = $("<div class='bg-grey' style='float: left; padding-left: 20px; padding-right: 20px;'></div>");
-		response_container.append("<h2>"+data_list.label+"</h2>");
+		var response_container = $("<div style='float: left; padding-left: 20px;'></div>");		
+		var tbody = $("<tbody></tbody>");
+		
 		$.each(data_list.data, function(j,row){
-			var row_container = $("<div class'row'></div>");
-			var key_container = $("<div class='col-md-3'>"+row.val+"</div>");
-			var val_container = $("<div class='col-md-9'>"+row.key+"</div>");
-
-			row_container.append(key_container);
-			row_container.append(val_container);
-			response_container.append(row_container);			
+			var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td></tr>");
+			tbody.append(row_container);			
 
 		});
-		popup.append(response_container);
+		
+		var table = $("<table class='table table-striped table-hover'></table>");
+		table.append("<thead><th colspan='2'>"+data_list.label+"</th></head>");
+		table.append(tbody);
+		response_container.append(table);
+		timeline_children_container.append(response_container);
 	});
-
-    popup.fadeIn("fast");
-    popup.css("top", MOUSE_Y);
-    popup.css("left", MOUSE_X);
-	popup.css("position","absolute");
 	
 }
 

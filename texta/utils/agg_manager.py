@@ -21,14 +21,15 @@ class AggManager:
 
         # PREPARE AGGREGATION
         self.es_params = request.POST
-        self.ranges,self.date_labels = self.date_ranges(self.es_m.date_range,self.es_params['interval_1'])
+        interval = self.es_params['interval_1']
+        self.ranges,self.date_labels = self.date_ranges(self.es_m.date_range,interval)
         self.agg_query = self.prepare_agg_query()
 
         # EXECUTE AGGREGATION
-        responses = self.aggregate()
+        agg_results = self.aggregate()
 
         # PARSE RESPONSES INTO JSON OBJECT
-        self.agg_data = self.parse_responses(responses)
+        self.agg_data = self.parse_responses(agg_results)
 
 
     def prepare_agg_query(self):
@@ -67,11 +68,12 @@ class AggManager:
             return {agg_name: {"date_range": {"field": path, "format": date_format, "ranges": self.ranges}}}
         else:
             # NOTE: Exclude numbers from discrete aggregation ouput
-            return {agg_name: {sort_by: {"field": path, "exclude": "[0-9]+(,|.[0-9]+)*", "size": 20}}}        
+            return {agg_name: {sort_by: {"field": path, "exclude": "[0-9]+(,|.[0-9]+)*", "size": 20}}}
 
 
     def aggregate(self):
         responses = []
+        out = {}
 
         # EXECUTE SAVED SEARCHES
         for item in self.es_params:
@@ -91,32 +93,49 @@ class AggManager:
             response = self.es_m.search()
             responses.append({"id":"query","label":"Current Search","response":response})
 
-        return responses
+        out["responses"] = responses
+
+        # EXECUTE EMPTY TIMELINE QUERY IF RELATIVE FREQUENCY SELECTED     
+        if json.loads(self.es_params["agg_field_1"])["type"] == "date" and self.es_params["freq_norm_1"] == "relative_frequency":
+            empty_params = {}
+            self.es_m.build(empty_params)
+            self.es_m.set_query_parameter("aggs", self.agg_query)
+            response = self.es_m.search()
+            out["empty_timeline_response"] = response
+
+        return out
 
 
-    def parse_responses(self,responses):
-        """ Parses ES responses into JSON structure
+    def parse_responses(self,agg_results):
+        """ Parses ES responses into JSON structure and normalises daterange frequencies if necessary
         """
+
+        total_freqs = {}
         agg_data = []
+
+        if "empty_timeline_response" in agg_results:
+            for bucket in agg_results["empty_timeline_response"]["aggregations"]["daterange"]["buckets"]:
+                total_freqs[bucket["from_as_string"]] = bucket["doc_count"]
         
-        for i,response in enumerate(responses):
+        for i,response in enumerate(agg_results["responses"]):
             aggs = response["response"]["aggregations"]
             output_type = None
             response_out = []
-            
+                
             for agg_name,agg_results in aggs.items():
                 output_type = agg_name
                 for bucket in agg_results["buckets"]:
                     new = {"children":[]}
-
                     if agg_name == "daterange":
                         new["key"] = bucket["from_as_string"]
-                        new["val"] = bucket["doc_count"]
-                        
+                        # Normalises frequencies
+                        if self.es_params["freq_norm_1"] == "relative_frequency":
+                            new["val"] = str(float(bucket["doc_count"])/float(total_freqs[bucket["from_as_string"]]))
+                        else:
+                            new["val"] = bucket["doc_count"]
                     elif agg_name == "string":
                         new["key"] = bucket["key"]
                         new["val"] = bucket["doc_count"]
-
                     if "string" in bucket:
                         new_children = []
                         for bucket_2 in bucket["string"]["buckets"]:
@@ -124,13 +143,12 @@ class AggManager:
                             child["key"] = bucket_2["key"]
                             child["val"] = bucket_2["doc_count"]
                             new["children"].append(child)
-
                     response_out.append(new)
-
             agg_data.append({"data":response_out,"type":output_type,"label":response["label"]})
 
-        return agg_data
+#        print agg_data
 
+        return agg_data
         
 
     def output_to_searcher(self):
@@ -151,13 +169,12 @@ class AggManager:
                 data_out.append(agg)
 
         combined_daterange_data = []
-        labels = []
+        labels = [a["label"] for a in self.agg_data]
         
         for row in sorted(count_dict.items(),key=lambda l:l[0]):
             new_row = dict(row[1])
             new_row["date"] = row[0]
             combined_daterange_data.append(new_row)
-            labels.append(row[0])
 
         daterange_data = {"type":"daterange",
                           "data":combined_daterange_data,
