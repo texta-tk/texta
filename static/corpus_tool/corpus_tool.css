@@ -48,3 +48,13 @@
 .invisible {
     display:none;
 }
+
+.bg-grey {
+	background: #EFEFEF;
+}
+
+.padded-row {
+	padding-left: 5px;
+	padding-right: 5px;
+	
+}

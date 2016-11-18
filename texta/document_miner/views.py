@@ -86,8 +86,6 @@ def query(request):
             declined = [{'ids':{'values':docs_declined}}]
             query["query"]["bool"]["must_not"] = declined
 
-    print query
-
     response = ES_Manager.plain_search(es_url, dataset, mapping, query)
     
     try:

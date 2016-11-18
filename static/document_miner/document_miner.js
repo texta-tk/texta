@@ -45,11 +45,8 @@ function accept_document(id){
 }
 
 function decline_document(id){
-	if($('#declined').val().length > 0){
-		var addition = '\n'+id;
-	}else{
-		var addition = id;
-	}
-	$('#declined').val($('#declined').val()+addition);
+	var declined_as_list = JSON.parse($('#docs_declined').val());
+	declined_as_list.push(id);
+	$('#docs_declined').val(JSON.stringify(declined_as_list));
 	$('#row_'+id).remove();
 }

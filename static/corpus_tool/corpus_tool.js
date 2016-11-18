@@ -7,6 +7,8 @@ var layers = ['text','lemmas','facts'];
 
 $(document).ready(function() {
     get_searches();
+	
+	change_agg_field(1);
  
     $(document.body).on( 'click','a.toggle-visibility', function (e) {
         e.preventDefault();
@@ -40,7 +42,11 @@ $(document).ready(function() {
     } );
 });
 
-google.load('visualization', '1', {packages: ['corechart', 'line']});
+
+$(document).mousemove(function(e) {
+    window.MOUSE_X = e.pageX;
+    window.MOUSE_Y = e.pageY;
+});	
 
 
 function in_array(value, array) {
@@ -204,26 +210,12 @@ function lookup(content,id,action,field_name, lookup_type){
 	});
 }
 
-function timeline(){
-    
-    var formElement = document.getElementById("filters");
-    var request = new XMLHttpRequest();
-    
-    request.onreadystatechange=function() {
-        if (request.readyState==4 && request.status==200) {
-            $("#right").html(request.responseText);
-            $("#actions-btn").removeClass("invisible");
-            $("#export-examples-modal").addClass("invisible");
-            $("#export-aggregation-modal").removeClass("invisible");
-        }
-    }
-
-    request.open("POST",PREFIX+'/timeline');
-    request.send(new FormData(formElement)); 
-    
-}
 
 function aggregate(){
+
+	var container = $("#right");
+	container.empty();
+	container.append("Loading...");
     
     var formElement = document.getElementById("filters");
     var request = new XMLHttpRequest();
@@ -231,7 +223,7 @@ function aggregate(){
     request.onreadystatechange=function() {
         if (request.readyState==4 && request.status==200) {
             if (request.responseText.length > 0) {
-                displayAggregation(JSON.parse(request.responseText));
+				displayAgg(JSON.parse(request.responseText));
                 $("#actions-btn").removeClass("invisible");
                 $("#export-examples-modal").addClass("invisible");
                 $("#export-aggregation-modal").removeClass("invisible");
@@ -243,6 +235,162 @@ function aggregate(){
     request.send(new FormData(formElement),true);
 }
 
+
+function displayAgg(response){
+	var data = response;
+	var container = $("#right");
+	container.empty();
+	
+	var string_container = $("<div id='string_agg_container'></div>");
+	var chart_container = $("<div id='daterange_agg_container'></div>");
+
+	container.append(chart_container);	
+	container.append(string_container);
+	
+	for (var i in data) {
+		if(data.hasOwnProperty(i)){
+			if(data[i].type == 'daterange'){
+				drawTimeline(data[i]);
+			}else if(data[i].type == 'string'){
+				drawStringAggs(data[i]);
+			}
+		} 
+	}
+	
+}
+
+
+function drawTimeline(data){
+
+	var timeline_children_container = $("<div></div>");
+
+	new Morris.Line({
+		  element: 'daterange_agg_container',
+		  resize: true,
+		  data: data.data,
+		  // The name of the data record attribute that contains x-values.
+		  xkey: 'date',
+		  // A list of names of data record attributes that contain y-values.
+		  ykeys: data.ykeys,
+		  // Labels for the ykeys -- will be displayed when you hover over the
+		  // chart.
+		  labels: data.labels,
+
+		}).on('click', function(i, row) {
+			var children_data = data.children[row.date];
+			show_children(children_data,row.date,timeline_children_container);
+		});
+	
+	$("#daterange_agg_container").append(timeline_children_container);
+
+}
+
+
+function show_children(data,date,timeline_children_container) {
+	timeline_children_container.empty();
+
+	$.each(data, function(i,data_list){
+		var response_container = $("<div style='float: left; padding-left: 20px;'></div>");		
+		var tbody = $("<tbody></tbody>");
+		
+		$.each(data_list.data, function(j,row){
+			var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td></tr>");
+			tbody.append(row_container);			
+
+		});
+		
+		var table = $("<table class='table table-striped table-hover'></table>");
+		table.append("<thead><th colspan='2'>"+data_list.label+"</th></head>");
+		table.append(tbody);
+		response_container.append(table);
+		timeline_children_container.append(response_container);
+	});
+	
+}
+
+
+function drawStringAggs(data){
+	var response_container = $("<div style='float: left; padding-left: 20px;'></div>");
+	var table_container = $("<div style='float: left'></div>");
+	var children_container = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
+	
+	var tbody = $("<tbody></tbody>");
+	
+	$.each(data.data, function(i,row){
+		var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td></tr>");
+		if(row.children.length > 0){
+			row_container.click(function(){show_string_children(row.children,children_container)});
+			row_container.addClass("pointer");
+		}
+		tbody.append(row_container);
+	});
+	
+	var table = $("<table class='table table-striped table-hover'></table>");
+	table.append("<thead><th colspan='2'>Field #1</th></head>");
+	table.append(tbody);
+	
+	table_container.append(table);
+	
+	response_container.append("<div class='row text-center'><h3>"+data.label+"</h3></div>");
+	response_container.append(table_container);
+	response_container.append(children_container);
+	
+	$("#string_agg_container").append(response_container);
+}
+
+
+function show_string_children(data,children_container) {
+	children_container.empty();
+
+	var tbody = $("<tbody></tbody>");
+	
+	$.each(data, function(i,data_list){
+		var row_container = $("<tr><td>"+data_list.val+"</td><td>"+data_list.key+"</td></tr>");
+		tbody.append(row_container);
+	});
+	
+	var table = $("<table class='table table-striped table-hover'></table>");
+	table.append("<thead><th colspan='2'>Field #2</th></head>").click(function(){children_container.addClass('hidden')});;
+
+	table.append(tbody);
+	
+	children_container.append(table);
+	children_container.removeClass("hidden");
+	
+}
+
+
+function change_agg_field(field_nr){	
+	var field_component = $("#agg_field_"+field_nr);
+	var selected_field = field_component.val();
+	var selected_type = JSON.parse(selected_field)['type'];
+	
+	if(selected_type == 'string'){
+		$("#sort_by_"+field_nr).removeClass('hidden');
+		$("#freq_norm_"+field_nr).addClass('hidden');
+		$("#interval_"+field_nr).addClass('hidden');
+	}else if (selected_type == 'date'){
+		$("#freq_norm_"+field_nr).removeClass('hidden');
+		$("#interval_"+field_nr).removeClass('hidden');
+		$("#sort_by_"+field_nr).addClass('hidden');		
+	}
+	
+}
+
+function toggle_agg_field_2(action){
+	
+	if(action == 'add'){
+		$("#agg_field_2_container").removeClass('hidden');
+		$("#agg_field_2_button").addClass('hidden');
+		$("#agg_field_2_selected").val('true');
+	}else{
+		$("#agg_field_2_button").removeClass('hidden');
+		$("#agg_field_2_container").addClass('hidden');
+		$("#agg_field_2_selected").val('false');		
+	}
+
+	
+}
 
 function remove_by_query(){
     var formElement = document.getElementById("filters");
@@ -277,117 +425,6 @@ function save(){
     request.open("POST",PREFIX+'/save');
     request.send(new FormData(formElement),true);
     
-}
-
-function drawTimeline(input_data) {
-    var data = google.visualization.arrayToDataTable(input_data.data);
-    var options = {
-        tooltip: {
-            textStyle: {
-                fontSize: 12
-            },
-        },
-        legend: {
-            position: 'top',
-            textStyle: {
-                fontSize: 12
-            },
-        },
-        chartArea: {
-            width: '85%',
-            height: '70%',
-        },
-        hAxis: {
-            title: data.title,
-            slantedText:true,
-            slantedTextAngle:90,
-            textStyle: {
-                fontSize: 12
-            },
-        },
-        vAxis: {
-            title: 'Hit count',
-            textStyle: {
-                fontSize: 12
-            },
-        },
-    };
-    var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-    chart.draw(data, options);
-}
-
-function drawBars(input_data) {
-    var data = google.visualization.arrayToDataTable(input_data.data);
-    var options = {
-        isStacked: true,
-        legend: {
-            position: 'top',
-            textStyle: {
-                fontSize: 12
-            },
-        },
-        tooltip: {
-            textStyle: {
-                fontSize: 12
-            },
-        },
-        chartArea: {
-            width: '50%',
-            height: '90%'
-        },
-        hAxis: {
-            title: 'Hit count',
-            textStyle: {
-                fontSize: 12
-            },
-        },
-        vAxis: {
-            title: 'Word',
-            textStyle: {
-            fontSize: 12
-            },
-        },
-    };
-    var chart = new google.visualization.BarChart(document.getElementById('chart_div'));
-    chart.draw(data, options);
-}
-
-function displayAggregation(data) {
-
-    // Clear the #right div
-    var right = document.getElementById("right");
-    while (right.firstChild) {
-        right.removeChild(right.firstChild);
-    }
-
-	if(data.distinct_values){
-		// Create #distinct_counts_div
-		var distinct_counts_div = document.createElement("div");
-		distinct_counts_div.id = "distinct_counts_div"
-		distinct_counts_div.class = "cell"
-		document.getElementById("right").appendChild(distinct_counts_div)
-		$("#distinct_counts_div").append('<b>Distinct values in searches:</b><br>');
-		
-		// Populate #distinct_counts_div
-		var distinct_values = JSON.parse(data.distinct_values);
-		distinct_values.forEach(function(a) {
-			$("#distinct_counts_div").append(a.name+': '+a.data+'<br>');
-		});		
-	}
-	
-    // Create #chart_div into #right div
-    var chart_div = document.createElement("div");
-    chart_div.id = "chart_div"
-    document.getElementById("right").appendChild(chart_div)
-
-    $("#chart_div").height(data.height);
-
-    if(data.type == 'line'){
-        drawTimeline(data);
-    }else{
-        drawBars(data);
-    }
-
 }
 
 function get_searches() {
@@ -524,3 +561,4 @@ function export_data(exportType) {
 
     window.open(query);
 }
+

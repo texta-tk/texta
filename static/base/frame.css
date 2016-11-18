@@ -110,3 +110,7 @@ body {
 #new_lexicon_button {
     cursor: pointer;
 }
+
+.pointer {
+	cursor: pointer;
+}
