@@ -325,7 +325,7 @@ class FactsCheck:
                 yield hit
 
     def _get_total_facts(self):
-        request_url = '{0}/{0}/{1}/_count'.format(self.es_url,self._index, self.TEXTA)
+        request_url = '{0}/{1}/{2}/_count'.format(self.es_url,self._index, self.TEXTA)
         response = ES_Manager.plain_post(request_url)
         return response['count']
 
