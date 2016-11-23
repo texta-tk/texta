@@ -351,7 +351,6 @@ class ES_Manager:
         total_msg = response['hits']['total']
         count_limit = 0
         while 'hits' in response and 'hits' in response['hits'] and response['hits']['hits'] and (count_limit < max_size):
-            scroll_id = response['_scroll_id']
             total_msg = len(response['hits']['hits'])
             count_limit += total_msg
             for hit in response['hits']['hits']:
