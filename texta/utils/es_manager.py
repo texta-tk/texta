@@ -345,13 +345,12 @@ class ES_Manager:
             return self.es_cache.get_data(q)
 
         scroll_url = '{0}/_search/scroll?scroll=1m'.format(es_url)
-        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'.format(es_url, self.index, self.TEXTA_MAPPING)
+        search_url = '{0}/{1}/{2}/_search?scroll=1m&size=500'.format(es_url, self.index, self.TEXTA_MAPPING)
         response = self.requests.post(search_url, data=q).json()
-        scroll_id = response['_scroll_id']
+        scroll_id = json.dumps({'scroll_id':response['_scroll_id']})
         total_msg = response['hits']['total']
         count_limit = 0
-        while (total_msg > 0) and (count_limit < max_size):
-            response = self.requests.post(scroll_url, data=scroll_id).json()
+        while 'hits' in response and 'hits' in response['hits'] and response['hits']['hits'] and (count_limit < max_size):
             scroll_id = response['_scroll_id']
             total_msg = len(response['hits']['hits'])
             count_limit += total_msg
@@ -365,6 +364,7 @@ class ES_Manager:
                 if doc_path not in fm[doc_id]:
                     fm[doc_id][doc_path] = []
                 fm[doc_id][doc_path].extend(spans)
+            response = self.requests.post(scroll_url, data=scroll_id).json()
 
         self.es_cache.set_data(q, fm)
         return fm
