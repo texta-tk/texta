@@ -27,6 +27,8 @@ else:
     ROOT_URLCONF = 'texta.urls'
     STATIC_URL = '/texta/static/'
 
+ALLOWED_HOSTS = ['yourdomain.dom']
+
 URL_PREFIX = URL_PREFIX_DOMAIN + URL_PREFIX_RESOURCE
 
 LOGIN_URL = URL_PREFIX
