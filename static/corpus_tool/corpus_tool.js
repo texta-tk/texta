@@ -54,6 +54,26 @@ function in_array(value, array) {
 }
 
 
+function get_query(){
+    
+    var formElement = document.getElementById("filters");
+    var request = new XMLHttpRequest();
+    
+    request.onreadystatechange=function() {
+        if (request.readyState==4 && request.status==200) {
+            if (request.responseText.length > 0) {
+				var query_container = $("#query-modal-content");
+				query_container.html(JSON.stringify(JSON.parse(request.responseText)));
+            }
+        }
+    }
+
+    request.open("POST",PREFIX+'/get_query');
+    request.send(new FormData(formElement),true);
+	
+}
+
+
 function add_field(date_range_min,date_range_max){
 
 	var field = $("#constraint_field").val();

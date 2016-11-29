@@ -83,6 +83,17 @@ def index(request):
     return HttpResponse(template.render(template_params, request))
 
 
+@login_required
+def get_query(request):
+    es_params = request.POST
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
+    es_m.build(es_params)
+    # GET ONLY MAIN QUERY
+    query = es_m.combined_query['main']
+    return HttpResponse(json.dumps(query))
+
+
 def date_ranges(date_range,interval):
     frmt = "%Y-%m-%d"
     

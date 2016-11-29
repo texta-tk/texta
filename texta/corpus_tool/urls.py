@@ -7,6 +7,7 @@ urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'search', views.search, name='search'),
     url(r'remove_by_query', views.remove_by_query, name='remove_by_query'),
+    url(r'get_query', views.get_query, name='get_query'),
     url(r'aggregate', views.aggregate, name='aggregate'),
     url(r'save', views.save, name='save'),
     url(r'delete', views.delete, name='delete'),

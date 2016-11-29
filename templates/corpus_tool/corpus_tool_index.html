@@ -10,7 +10,7 @@
 		<div class="col-lg-3">
 			<form id="filters">
 			<div class="panel">
-				<div class="panel-heading">Current Search</div>
+				<div class="panel-heading">Current Search <a href="#" onclick="get_query();" data-toggle="modal" data-target="#query-modal"><span class="glyphicon glyphicon-sunglasses pull-right pointer"></span></a></div>
 				<div class="panel-body">
 					<div class="form-group">
 						<div class="row">
@@ -28,12 +28,10 @@
 							<div id="constraints" class="container-fluid"></div>
 						</div>
 						<div class="row">
-							<div class="col-sm-6"></div>
-							<div class="col-sm-6"><button class="btn btn-default form-control" type="button" onclick="javascript:save();"><span class="glyphicon glyphicon-floppy-disk"></span> Save</button></div>
+							<div class="col-sm-12"><button class="btn btn-default form-control" type="button" onclick="javascript:save();"><span class="glyphicon glyphicon-floppy-disk"></span> Save Search</button></div>
 						</div>
 						<div class="row">
-							<div class="col-sm-6"></div>
-							<div class="col-sm-6"><button type="button" onclick="javascript:query();" class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span> Search</button></div>
+							<div class="col-sm-12"><button type="button" onclick="javascript:query();" class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span> Search</button></div>
 						</div>
 					</div>
 				</div>
@@ -258,7 +256,23 @@
                         </div>
                     </div>
                 </div>
-				
+
+
+				<div class="modal fade" id="query-modal" role="dialog">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">Query</h4>
+                            </div>
+                            <div class="modal-body" id="query-modal-content"></div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>				
 				
 			</div>
 		</div>
