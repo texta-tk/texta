@@ -22,12 +22,12 @@ if SERVER_TYPE == 'DEV':
     STATIC_URL = URL_PREFIX_DOMAIN + '/static/'
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 else:
-    URL_PREFIX_DOMAIN = 'http://yourdomain.com'
+    URL_PREFIX_DOMAIN = 'http://textadev.stacc.ee'
     URL_PREFIX_RESOURCE = '/texta'
     ROOT_URLCONF = 'texta.urls'
     STATIC_URL = '/texta/static/'
 
-ALLOWED_HOSTS = ['yourdomain.dom']
+ALLOWED_HOSTS = ['localhost','texta.stacc.ee','textadev.stacc.ee']
 
 URL_PREFIX = URL_PREFIX_DOMAIN + URL_PREFIX_RESOURCE
 
