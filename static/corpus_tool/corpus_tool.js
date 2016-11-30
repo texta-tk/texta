@@ -470,17 +470,17 @@ function remove_search_callback(response_text) {
 }
 
 function display_searches(searches) {
-
-    var searches_div = document.getElementById("saved_searches");
-    while (searches_div.firstChild) {
-        searches_div.removeChild(searches_div.firstChild);
+    var searches_container = document.getElementById("saved_searches");
+	
+    while (searches_container.firstChild) {
+        searches_container.removeChild(searches_container.firstChild);
     }
-        
+	
     for (var i = 0; i < searches.length; i++) {
-        search_div = document.createElement("div")
-        inputElement = document.createElement("input");
-        aElement = document.createElement("a");
-        imgElement = document.createElement("img");
+		search_div = document.createElement("tr");
+
+		inputElement = document.createElement("input");
+        aElement = document.createElement("span");
         
         search_div.id = "search_" + searches[i].id;
         
@@ -488,25 +488,25 @@ function display_searches(searches) {
         inputElement.name = "saved_search_" + i;
         inputElement.value = searches[i].id;
         
-        aElement.href = "javascript:void(0)";
+		aElement.className = "glyphicon glyphicon-minus-sign pointer";
         aElement.onclick = function(id) {
             return function() {async_get_query(PREFIX + "/corpus_tool/delete?pk=" + id,remove_search_callback); };
-        }(searches[i].id);
-        
-        imgElement.src = STATIC_URL + "img/delete.png";
-        
-        search_div.appendChild(inputElement);
-        search_div.appendChild(document.createTextNode(searches[i].desc + "  "));
-        
-        aElement.appendChild(imgElement);
-        
-        search_div.appendChild(aElement);
-        
+        }(searches[i].id);      
+		
+		input_col = document.createElement("td");
+		input_col.appendChild(inputElement);   
+        search_div.appendChild(input_col);
 
-        searches_div.appendChild(search_div);
-        
+		text_col = document.createElement("td");
+		text_col.appendChild(document.createTextNode(searches[i].desc));
+        search_div.appendChild(text_col);
+
+		remove_col = document.createElement("td");
+		remove_col.appendChild(aElement);   
+        search_div.appendChild(remove_col);
+
+        searches_container.appendChild(search_div);
     }
-
 }
 
 function loadUserPreference(dataset,mapping) {

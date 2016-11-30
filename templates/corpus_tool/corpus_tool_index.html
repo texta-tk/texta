@@ -10,7 +10,7 @@
 		<div class="col-lg-3">
 			<form id="filters">
 			<div class="panel">
-				<div class="panel-heading">Current Search <a href="#" onclick="get_query();" data-toggle="modal" data-target="#query-modal"><span class="glyphicon glyphicon-sunglasses pull-right pointer"></span></a></div>
+				<div class="panel-heading">Current Search <span onclick="get_query();" data-toggle="modal" data-target="#query-modal" class="glyphicon glyphicon-sunglasses pull-right pointer"></span></div>
 				<div class="panel-body">
 					<div class="form-group">
 						<div class="row">
@@ -40,18 +40,23 @@
 			<div class="panel">
 				<div class="panel-heading">Saved Searches</div>
 				<div class="panel-body">
-					<div id="saved_searches"></div>
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th>Select</th>
+								<th>Search Desc.</th>
+								<th>Delete</th>
+							</tr>
+						</thead>
+						<tbody id="saved_searches">
+						</tbody>
+					</table>
 				</div>
 			</div>			
 			
-
-			
-
 			<input type="hidden" name="search_description" id="search_description">
 			<input type="hidden" name="chart_type" id="chart_type">
 			<input type="hidden" name="scroll_id" id="scroll_id">						
-
-
 
 			<div class="panel">
 				<div class="panel-heading">Aggregations</div>
