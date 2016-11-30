@@ -130,7 +130,10 @@ class AggManager:
                         new["key"] = bucket["from_as_string"]
                         # Normalises frequencies
                         if self.es_params["freq_norm_1"] == "relative_frequency":
-                            new["val"] = str(round(float(bucket["doc_count"])/float(total_freqs[bucket["from_as_string"]]),5))
+                            try:
+                                new["val"] = str(round(float(bucket["doc_count"])/float(total_freqs[bucket["from_as_string"]]),5))
+                            except ZeroDivisionError:
+                                new["val"] = 0
                         else:
                             new["val"] = bucket["doc_count"]
                     elif agg_name == "string":
