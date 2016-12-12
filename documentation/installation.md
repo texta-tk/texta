@@ -28,6 +28,7 @@ pip install sklearn
 pip install gensim
 pip install django
 pip install estnltk
+pip install pathlib
 ```
 
 
