@@ -206,9 +206,6 @@ INSTALLED_APPS = (
 # TEXTA to store the analyzed documents.
 # 
 
-# Date format used in Elasticsearch fields.
-# 
-date_format = 'yyyy-MM-dd'
 
 # Elasticsearch URL with protocol specification. Can be either localhost
 # or remote address.
@@ -224,6 +221,10 @@ es_links = {
     ('etsa_new', 'event_dgn', 'epiId'): ('https://p12.stacc.ee/common/epicrisis/?id=', ''),
     ('etsa_new', 'event_dgn', 'patId'): ('https://p12.stacc.ee/common/aegread/index.php/aegrida/get/?id=', '')
     }
+
+# Date format used in Elasticsearch fields.
+# 
+date_format = 'yyyy-MM-dd'
 
 # Set to True if Elasticsearch needs authentication. Tested with basic auth.
 es_use_ldap = False
