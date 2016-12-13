@@ -1,0 +1,203 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Installation &#8212; TEXTA 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="installation">
+<span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Installation instructions are currently only for Debian based Linux distributions and tested on Ubuntu.</p>
+</div>
+<div class="section" id="downloading">
+<h2>Downloading<a class="headerlink" href="#downloading" title="Permalink to this headline">¶</a></h2>
+<p>TEXTA can be downloaded from Git repository. If you are missing <em>git</em>, you can download it with</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo apt-get -y install git
+</pre></div>
+</div>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>git clone https://github.com/ekt68/texta.git
+</pre></div>
+</div>
+<p>This generates a directory called <em>texta</em>, which contains the code base.</p>
+</div>
+<div class="section" id="resolving-system-wide-dependencies">
+<h2>Resolving system-wide dependencies<a class="headerlink" href="#resolving-system-wide-dependencies" title="Permalink to this headline">¶</a></h2>
+<p>First lets update our aptitude&#8217;s package list to get the most up-to-date software versions.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo apt-get update
+</pre></div>
+</div>
+<p>To compile some of the Python libraries, we need the Python header files, which are included in <em>python-dev</em> package.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo apt-get -y install python-dev
+</pre></div>
+</div>
+<p>For speeding up <em>gensim</em> and <em>scipy</em> modules, we have to download the following libraries.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo apt-get -y install build-essential manpages-dev
+sudo apt-get install libblas-dev liblapack-dev libatlas-base-dev gfortran
+</pre></div>
+</div>
+</div>
+<div class="section" id="resolving-python-dependencies">
+<h2>Resolving Python dependencies<a class="headerlink" href="#resolving-python-dependencies" title="Permalink to this headline">¶</a></h2>
+<p>Since TEXTA is a Python application, it is highly recommended to use some sort of virtual Python environment.
+Python stores its libraries globally and if some other Python applications are installed after TEXTA which use some of the same libraries, the
+conflicting libraries may have changed to incompatible versions for TEXTA.
+We recommend <a class="reference external" href="https://www.continuum.io/downloads">Anaconda</a> and it is referenced in the following code snippets
+by <em>conda</em>. <a class="reference external" href="https://virtualenv.pypa.io/en/stable/">Virtualenv</a> is fine as well, but it doesn&#8217;t have the libraries precompiled.</p>
+<p>To create a new <em>Anaconda</em> environment called <em>texta</em> that uses Python 2.7, we issue the command</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>conda create --name texta <span class="nv">python</span><span class="o">=</span>2.7
+</pre></div>
+</div>
+<p>After we have created the environment, we have to activate it. Activating an environment changes the current terminal session&#8217;s paths to switch
+the original Python&#8217;s executables to that of the isolated environment&#8217;s.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">source</span> activate texta
+</pre></div>
+</div>
+<p>Now that we have our Python sandbox, we need to install the necessary dependencies.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>pip install requests
+pip install numpy
+pip install cython <span class="c1">#needed for fast gensim</span>
+pip install scipy
+pip install sklearn
+pip install gensim
+pip install django
+pip install estnltk
+pip install pathlib
+</pre></div>
+</div>
+</div>
+<div class="section" id="elasticsearch">
+<h2>Elasticsearch<a class="headerlink" href="#elasticsearch" title="Permalink to this headline">¶</a></h2>
+<p>TEXTA uses <a class="reference external" href="https://www.elastic.co/products/elasticsearch">Elasticsearch</a> to store and query data. Elasticsearch allows full-text indexing,
+meaning that not only can we query by specific columns, but we can also query documents using specific words or phrases in a column.</p>
+<p>Elasticsearch behaves like a RESTful server, which accepts queries with JSON data. The server can either run locally or remotely.
+Small datasets can be maintained on personal computer, while gigabytes of data should preferably be kept on a remote server. It is vital to
+configure Elasticsearch&#8217;s address if remote approach is used.</p>
+<p>In Elasticsearch terminology a database is called an index and table is called either mapping or type.</p>
+</div>
+<div class="section" id="final-touches">
+<h2>Final touches<a class="headerlink" href="#final-touches" title="Permalink to this headline">¶</a></h2>
+<p>All that is left is to synchronize database state by running</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>python manage.py makemigrations
+python manage.py migrate
+</pre></div>
+</div>
+<p>and create a superuser for TEXTA to assign application permissions</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>python manage.py createsuperuser
+</pre></div>
+</div>
+</div>
+<div class="section" id="running-texta">
+<h2>Running TEXTA<a class="headerlink" href="#running-texta" title="Permalink to this headline">¶</a></h2>
+<p>To start TEXTA on localhost:8000, it suffices to run</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>python manage.py runserver
+</pre></div>
+</div>
+<p>If we want to run on some other network interface or port, we can specify it via IP-port pair.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>python manage.py runserver localhost:80
+python manage.py runserver 0.0.0.0:8080
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Installation</a><ul>
+<li><a class="reference internal" href="#downloading">Downloading</a></li>
+<li><a class="reference internal" href="#resolving-system-wide-dependencies">Resolving system-wide dependencies</a></li>
+<li><a class="reference internal" href="#resolving-python-dependencies">Resolving Python dependencies</a></li>
+<li><a class="reference internal" href="#elasticsearch">Elasticsearch</a></li>
+<li><a class="reference internal" href="#final-touches">Final touches</a></li>
+<li><a class="reference internal" href="#running-texta">Running TEXTA</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/installation.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Raul Sirel, Karl-Oskar Masing, Carlos Bentes.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/installation.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

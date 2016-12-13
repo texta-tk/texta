@@ -1,0 +1,229 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Configuration &#8212; TEXTA 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="configuration">
+<span id="id1"></span><h1>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h1>
+<p>TEXTA&#8217;s configuration is in <a class="reference download internal" href="_downloads/settings.py" download=""><code class="xref download docutils literal"><span class="pre">settings.py</span></code></a> file, which contains both adjustable and unadjustable options.
+Adjustable options allow to tailor the paths, addresses and backend to one&#8217;s needs, while altering unadjustable options will break the
+application. Unadjustable options are mostly related to Django.</p>
+<p>For most part, TEXTA has dual settings. This means that one can switch between development and production configuration,
+while having to change just a single variable <em>SERVER_TYPE</em>.</p>
+<p>SERVER_TYPE determines several paths and addresses, which should be changed if not running on local host.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">URL_PREFIX_DOMAIN</span> <span class="o">=</span> <span class="s1">&#39;http://localhost:8000&#39;</span>
+<span class="n">URL_PREFIX_RESOURCE</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+<span class="n">ROOT_URLCONF</span> <span class="o">=</span> <span class="s1">&#39;texta.urls&#39;</span>
+<span class="n">STATIC_URL</span> <span class="o">=</span> <span class="n">URL_PREFIX_DOMAIN</span> <span class="o">+</span> <span class="s1">&#39;/static/&#39;</span>
+<span class="n">STATIC_ROOT</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s1">&#39;static&#39;</span><span class="p">)</span>
+<span class="n">DEBUG</span> <span class="o">=</span> <span class="bp">True</span>
+</pre></div>
+</div>
+<p>The most important variables are <em>URL_PREFIX_*</em>. <em>URL_PREFIX_DOMAIN</em> specifies the address of the server hosting TEXTA and
+<em>URL_PREFIX_RESOURCE</em> yields the resource path of TEXTA, if many applications are registered for a single domain.</p>
+<p><em>ROOT_URLCONF</em> is for Django&#8217;s inner workings and should not be changed unless package structure is altered. <em>STATIC*</em> should be changed
+only when running development version locally and for some reason static paths are aletered.</p>
+<p><em>DEBUG</em> determines whether stacktrace and variable values are shown when error occurs while server is generating a response.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">ALLOWED_HOSTS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span><span class="s1">&#39;texta.stacc.ee&#39;</span><span class="p">,</span><span class="s1">&#39;textadev.stacc.ee&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p><em>ALLOWED_HOSTS</em> lists all allowed host headers to which the server responds. Prevents host poisoning. Should change when running TEXTA remotely.</p>
+<div class="section" id="user-data">
+<h2>User data<a class="headerlink" href="#user-data" title="Permalink to this headline">¶</a></h2>
+<p>By default TEXTA uses <a class="reference external" href="https://sqlite.org/">SQLITE</a> to store user created content. This can be changed by altering the <em>DATABASES</em> dictionary.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">DATABASES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;ENGINE&#39;</span><span class="p">:</span> <span class="s1">&#39;django.db.backends.sqlite3&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;NAME&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span><span class="s1">&#39;lex.db&#39;</span><span class="p">),</span>
+        <span class="s1">&#39;USER&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;PASSWORD&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;HOST&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;PORT&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Other possible engines include <em>postgresql_psycopg2</em>, <em>postgresql</em>, <em>mysql</em> and <em>oracle</em>.</p>
+<p>If <strong>privacy</strong> is an issue, then a new <em>SECRET_KEY</em> should be generated and kept private. <em>SECRET_KEY</em> is used in Django as a seed for several
+hashes.</p>
+</div>
+<div class="section" id="elasticsearch">
+<h2>Elasticsearch<a class="headerlink" href="#elasticsearch" title="Permalink to this headline">¶</a></h2>
+<p>TEXTA relies heavily on Elasticsearch to allow full-text indexing and other text related queries.</p>
+<p>The most important is to specify Elasticsearch address. It can be either edited in the <em>settings.py</em></p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">es_url</span> <span class="o">=</span> <span class="s1">&#39;http://localhost:9200&#39;</span>
+<span class="n">es_url</span> <span class="o">=</span> <span class="s1">&#39;http://elasticsearch2.stacc.ee:9201&#39;</span>
+</pre></div>
+</div>
+<p>or set in the environment variables as <em>TEXTA_ELASTICSEARCH_URL</em>.</p>
+<p>To fully utilize TEXTA&#8217;s text summarization power, the temporal data in Elasticsearch should follow a certain format.</p>
+<p>By default TEXTA assumes</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">date_format</span> <span class="o">=</span> <span class="s1">&#39;yyyy-MM-dd&#39;</span>
+</pre></div>
+</div>
+<p>but it can be changed, if it&#8217;s more convenient.</p>
+<p>If Elastichsearch is protected by authentication</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">es_use_ldap</span> <span class="o">=</span> <span class="bp">False</span>
+</pre></div>
+</div>
+<p>should be set to True and <em>TEXTA_LDAP_USER</em> and <em>TEXTA_LDAP_PASSWORD</em> environment variables should have appropriate values.</p>
+<p>Another possibility is to edit</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">es_ldap_user</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;TEXTA_LDAP_USER&#39;</span><span class="p">)</span>
+<span class="n">es_ldap_password</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;TEXTA_LDAP_PASSWORD&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="logging">
+<h2>Logging<a class="headerlink" href="#logging" title="Permalink to this headline">¶</a></h2>
+<p>TEXTA logs info and errors separately. Info includes requests, calculation results etc. Logging behaviour can be changed by altering</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">LOGGING</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s1">&#39;disable_existing_loggers&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
+    <span class="s1">&#39;formatters&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;detailed&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="n">logging_separator</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="p">[</span><span class="s1">&#39;</span><span class="si">%(levelname)s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(module)s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(name)s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(process)d</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(thread)d</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1">&#39;</span><span class="p">])</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;normal&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="n">logging_separator</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;</span><span class="si">%(levelname)s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(module)s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1">&#39;</span><span class="p">])</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;detailed_error&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">logging_separator</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="p">[</span><span class="s1">&#39;</span><span class="si">%(levelname)s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(module)s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(name)s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(process)d</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(thread)d</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1">&#39;</span><span class="p">])</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;handlers&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;info_file&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;level&#39;</span><span class="p">:</span> <span class="s1">&#39;DEBUG&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;logging.FileHandler&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;formatter&#39;</span><span class="p">:</span> <span class="s1">&#39;detailed&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="n">info_log_file_name</span><span class="p">,</span>
+            <span class="s1">&#39;encoding&#39;</span><span class="p">:</span> <span class="s1">&#39;utf8&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s1">&#39;a&#39;</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;error_file&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;level&#39;</span><span class="p">:</span> <span class="s1">&#39;ERROR&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;logging.FileHandler&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;formatter&#39;</span><span class="p">:</span> <span class="s1">&#39;detailed_error&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="n">error_log_file_name</span><span class="p">,</span>
+            <span class="s1">&#39;encoding&#39;</span><span class="p">:</span> <span class="s1">&#39;utf8&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s1">&#39;a&#39;</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;loggers&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="n">INFO_LOGGER</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;level&#39;</span><span class="p">:</span> <span class="s1">&#39;DEBUG&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;handlers&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;info_file&#39;</span><span class="p">]</span>
+        <span class="p">},</span>
+        <span class="n">ERROR_LOGGER</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;level&#39;</span><span class="p">:</span> <span class="s1">&#39;ERROR&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;handlers&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;error_file&#39;</span><span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>By default TEXTA uses simple <em>FileHandler</em> to store entire logs. If space is of issue, <em>RotatingFileHandler</em> should be considered.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Configuration</a><ul>
+<li><a class="reference internal" href="#user-data">User data</a></li>
+<li><a class="reference internal" href="#elasticsearch">Elasticsearch</a></li>
+<li><a class="reference internal" href="#logging">Logging</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/configuration.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Raul Sirel, Karl-Oskar Masing, Carlos Bentes.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/configuration.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
