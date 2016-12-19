@@ -43,23 +43,55 @@ For speeding up *gensim* and *scipy* modules, we have to download the following 
 .. code-block:: bash
 
     sudo apt-get -y install build-essential manpages-dev
-    sudo apt-get install libblas-dev liblapack-dev libatlas-base-dev gfortran    
+    sudo apt-get -y install libblas-dev liblapack-dev libatlas-base-dev gfortran    
 
+
+*Estnltk* library uses `SWIG <http://www.swig.org/>`_.
+
+.. code-block:: bash
+
+    apt-get -y install swig
     
 Resolving Python dependencies
 -----------------------------
 
-Since TEXTA is a Python application, it is highly recommended to use some sort of virtual Python environment.
-Python stores its libraries globally and if some other Python applications are installed after TEXTA which use some of the same libraries, the
-conflicting libraries may have changed to incompatible versions for TEXTA.
-We recommend `Anaconda <https://www.continuum.io/downloads>`_ and it is referenced in the following code snippets
-by *conda*. `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ is fine as well, but it doesn't have the libraries precompiled.
+Next, we need to get the Python libraries that TEXTA relies on.
+
+Virtual Python environment
+++++++++++++++++++++++++++
+
+Since TEXTA is a Python application, we highly recommend to use a virtual Python environment. This is due to the fact that Python stores its
+libraries globally and if some other Python application shares libraries with TEXTA, but they use incompatible versions, 
+the previously installed application might seize to work.
+
+.. note::
+
+    If you are not concerned about potential Python library conflicts between several applications, you can skip this part and head on to
+    `installing Python dependencies`_.
+
+Two frequently used Python sandbox tools are `Anaconda <https://www.continuum.io/downloads>`_ and 
+`Virtualenv <https://virtualenv.pypa.io/en/stable/>`_. Both allow to create a local version of Python interpreter by duplicating Python
+executables and libraries. In this section we cover *Anaconda*, as it enables to install many precompiled libraries with
+
+.. code-block:: bash
+
+    conda install python_library_name
+
+and therefore is significantly faster than *virtualenv*. However, not all third-party libraries are available. In this case we still have to
+use *pip* or one of its alternatives.
+
+Installation instructions are at `Anaconda <https://www.continuum.io/downloads>`_.
 
 To create a new *Anaconda* environment called *texta* that uses Python 2.7, we issue the command
 
 .. code-block:: bash
 
     conda create --name texta python=2.7
+
+.. note::
+
+    It's a good practice to give environments descriptive names and to create an environment for each separate application. In our case we
+    created an environement called "texta".
     
 After we have created the environment, we have to activate it. Activating an environment changes the current terminal session's paths to switch
 the original Python's executables to that of the isolated environment's.
@@ -67,8 +99,16 @@ the original Python's executables to that of the isolated environment's.
 .. code-block:: bash
 
     source activate texta
+
     
-Now that we have our Python sandbox, we need to install the necessary dependencies. 
+.. _`installing Python dependencies`:    
+    
+Installing Python dependencies
+++++++++++++++++++++++++++++++
+
+
+The following code block lists all the Python libraries that TEXTA depends on along with Python's library downloading tool *pip*'s commands.
+
 
 .. code-block:: bash
 
@@ -82,6 +122,9 @@ Now that we have our Python sandbox, we need to install the necessary dependenci
     pip install estnltk
     pip install pathlib
     
+.. note::
+
+    If using `Anaconda <https://www.continuum.io/downloads>`_, all but *estnltk* can be substituted with *conda install library_name*.
 
 Elasticsearch
 -------------
@@ -94,6 +137,8 @@ Small datasets can be maintained on personal computer, while gigabytes of data s
 configure Elasticsearch's address if remote approach is used.
 
 In Elasticsearch terminology a database is called an index and table is called either mapping or type.
+    
+Elasticsearch can be downloaded from `here <https://www.elastic.co/products/elasticsearch>`_.
     
 Final touches
 -------------
