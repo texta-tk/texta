@@ -306,3 +306,7 @@ LOGGING = {
         }
     }
 }
+
+from texta.utils.setup import write_navigation_file
+
+write_navigation_file(URL_PREFIX, STATIC_URL)
