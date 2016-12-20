@@ -239,8 +239,6 @@ es_ldap_password = os.getenv('TEXTA_LDAP_PASSWORD')
 # Path to the log directory. Default is /log
 # 
 LOG_PATH = os.path.join(BASE_DIR,'log')
-if not os.path.exists(LOG_PATH):
-    os.makedirs(LOG_PATH)
 
 # Separator used to join different logged features.
 #
@@ -307,6 +305,13 @@ LOGGING = {
     }
 }
 
-from texta.utils.setup import write_navigation_file
+############################ Boot scripts ###########################
+
+# Several scripts ran during the boot to set up files and directories
+
+from texta.utils.setup import write_navigation_file, ensure_dir_existence
 
 write_navigation_file(URL_PREFIX, STATIC_URL)
+ensure_dir_existence(LOG_PATH)
+ensure_dir_existence(MODELS_DIR)
+ensure_dir_existence(USER_MODELS)

@@ -147,7 +147,7 @@ All that is left is to synchronize database state by running
 
 .. code-block:: bash
 
-    python manage.py makemigrations
+    python manage.py makemigrations lm conceptualiser mwe_miner account home corpus_tool model_manager ontology_viewer base permission_admin grammar_builder document_miner
     python manage.py migrate
     
 and create a superuser for TEXTA to assign application permissions

@@ -16,3 +16,7 @@ def write_navigation_file(link_prefix, static_url):
          fout.write(variables_template.format(**variables))
          
          fout.write(raw_navigation_content)
+         
+def ensure_dir_existence(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
