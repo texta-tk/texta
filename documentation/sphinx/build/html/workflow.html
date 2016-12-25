@@ -26,6 +26,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Configuration" href="configuration.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -42,7 +43,86 @@
           <div class="body" role="main">
             
   <div class="section" id="workflow">
-<span id="id1"></span><h1>Workflow<a class="headerlink" href="#workflow" title="Permalink to this headline">¶</a></h1>
+<h1>Workflow<a class="headerlink" href="#workflow" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="the-beginning">
+<h2>The beginning<a class="headerlink" href="#the-beginning" title="Permalink to this headline">¶</a></h2>
+<p>After starting TEXTA, as described in the <a class="reference internal" href="installation.html#running-texta"><span class="std std-ref">installation step</span></a>, the next intuitive thing is to start using it.
+Since it is a web application, we have to navigate to the corresponding address in our browser
+(e.g. <a class="reference external" href="http://localhost:8000/">http://localhost:8000/</a> if running locally). We are welcomed by a login page as depicted in
+Figure 1.</p>
+<div class="figure" id="id1">
+<span id="figure-1"></span><img alt="_images/01_welcome.png" src="_images/01_welcome.png" />
+<p class="caption"><span class="caption-text">Figure 1. <em>Welcome screen</em></span></p>
+<div class="legend">
+<ol class="arabic simple">
+<li>Login area</li>
+<li>Create user</li>
+</ol>
+</div>
+</div>
+<p>Login page allows to login, as well as create a user.</p>
+<p>When using the TEXTA instance for the first time, it is crucial to login with the super user account set up in the
+<a class="reference internal" href="installation.html#final-touches"><span class="std std-ref">installation&#8217;s final touches</span></a>. Super user account is much like an account one can create from the &#8220;Create user&#8221; button,
+with the difference that it has additional rights to access some sensitive features like user permissions, user deletion and defining datasets.</p>
+</div>
+<div class="section" id="after-the-log-in">
+<h2>After the log in<a class="headerlink" href="#after-the-log-in" title="Permalink to this headline">¶</a></h2>
+<p>Once we have logged in with our super user (currently by the name of &#8220;superkom&#8221;), we reach the home page, which looks much like the page before,
+with the exception of a list of tools and some global settings.</p>
+<div class="figure" id="id2">
+<span id="figure-2"></span><img alt="_images/02_after_login.png" src="_images/02_after_login.png" />
+<p class="caption"><span class="caption-text">Figure 2. <em>Home page</em></span></p>
+<div class="legend">
+<ol class="arabic simple">
+<li>Tools</li>
+<li>Global settings</li>
+<li>Admin panel</li>
+</ol>
+</div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Admin panel is only visible to super users.</p>
+</div>
+<p>As we can see from the global settings panel, we don&#8217;t have access to any datasets. A data analytics tool without data is not too intriguing.
+Therefore, we need to link our data, which resides in Elasticsearch.</p>
+</div>
+<div class="section" id="setting-up-datasets">
+<h2>Setting up datasets<a class="headerlink" href="#setting-up-datasets" title="Permalink to this headline">¶</a></h2>
+<p>First off, we need a populated Elasticsearch index such as defined in TODOOOOOO.</p>
+<p>Once we have a dataset in Elasticsearch, we have to tell TEXTA that we are interested in accessing it. We can do that from the &#8220;Admin panel&#8221;.</p>
+<div class="figure" id="id3">
+<span id="figure-3"></span><img alt="_images/03_admin_panel.png" src="_images/03_admin_panel.png" />
+<p class="caption"><span class="caption-text">Figure 3. <em>Admin panel</em></span></p>
+<div class="legend">
+<ol class="arabic simple">
+<li>User management</li>
+<li>Dataset management</li>
+</ol>
+</div>
+</div>
+<p>One TEXTA instance can have only one Elasticsearch database which may have many indices. In dataset management, we can list the indices and
+mappings we are interested in. By filling in the &#8220;Index&#8221;, &#8220;Mapping&#8221; and daterange fields, we can link the dataset to TEXTA. Daterange acts as a
+filter for [TODOOOOO map searcher] Searcher&#8217;s aggregations. If we are not interested, we can set the &#8220;to&#8221; and &#8220;from&#8221; to
+some arbitrarily late and early dates respectively.</p>
+<p>If we are using the example dataset, we should insert something like on the following fugure (date range may differ). We&#8217;re adding mapping
+&#8220;articles&#8221; from index &#8220;journal&#8221;.</p>
+<div class="figure" id="id4">
+<img alt="_images/03-1_admin_panel_filled_in.png" src="_images/03-1_admin_panel_filled_in.png" />
+<p class="caption"><span class="caption-text">Figure 3.1. <em>Filled dataset management fields</em></span></p>
+</div>
+<p>After successfully linking an Elasticsearch mapping to TEXTA, we should see a panel with the following entry.</p>
+<div class="figure" id="id5">
+<img alt="_images/03-2_admin_panel_first_entry.png" src="_images/03-2_admin_panel_first_entry.png" />
+<p class="caption"><span class="caption-text">Figure 3.2. <em>First dataset entry</em></span></p>
+</div>
+<p>If we now head back to the home page, we should see that our new entry is chosen by default in the &#8220;Global settings&#8221; panel.</p>
+<div class="figure" id="id6">
+<img alt="_images/03-3_home_page.png" src="_images/03-3_home_page.png" />
+<p class="caption"><span class="caption-text">Figure 3.3. <em>Back on home page</em></span></p>
+</div>
+<p>Clicking on &#8220;Updage settings&#8221; will activate the chosen entry. Activated dataset will be used in all our tools.</p>
+</div>
 </div>
 
 
@@ -50,10 +130,21 @@
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper"><div class="relations">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Workflow</a><ul>
+<li><a class="reference internal" href="#the-beginning">The beginning</a></li>
+<li><a class="reference internal" href="#after-the-log-in">After the log in</a></li>
+<li><a class="reference internal" href="#setting-up-datasets">Setting up datasets</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="configuration.html" title="previous chapter">Configuration</a></li>
   </ul></li>
 </ul>
 </div>

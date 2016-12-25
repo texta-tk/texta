@@ -1,6 +1,5 @@
 {% extends "index.html" %}
 {% block app %}
-<script type="application/javascript" src="{{STATIC_URL}}permission_admin/permission_admin.js"></script>
 <div class="row">
 	<div class="col-lg-6">
 		<div class="panel">
@@ -55,10 +54,14 @@
 				<div class="row">
 					<form action="/permission_admin/add_index" method='POST'>
 						<div class="col-lg-3">
-							<input type="text" class="form-control input-sm" id="index" placeholder="Index">
+							<select class="form-control input-sm" id="index">
+							{% for index in indices %}
+                                <option value="{{index}}">{{index}}</option>
+							{% endfor %}
+							</select>
 						</div>
 						<div class="col-lg-3">
-							<input type="text" class="form-control input-sm" id="mapping" placeholder="Mapping">
+							<select class="form-control input-sm" id="mapping"></select>
 						</div>
 						<div class="col-lg-2">
 							<input type="text" placeholder="Daterange from" id="daterange_from" class="form-control input-sm">
@@ -107,4 +110,5 @@
 		</div>
 	</div>
 </div>
+<script type="application/javascript" src="{{STATIC_URL}}permission_admin/permission_admin.js"></script>
 {% endblock %}

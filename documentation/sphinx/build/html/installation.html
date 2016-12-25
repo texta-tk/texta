@@ -26,6 +26,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Configuration" href="configuration.html" />
+    <link rel="prev" title="TEXTA’s documentation" href="index.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -74,7 +76,7 @@ sudo apt-get -y install libblas-dev liblapack-dev libatlas-base-dev gfortran
 </pre></div>
 </div>
 <p><em>Estnltk</em> library uses <a class="reference external" href="http://www.swig.org/">SWIG</a>.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>apt-get -y install swig
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo apt-get -y install swig
 </pre></div>
 </div>
 </div>
@@ -146,7 +148,7 @@ configure Elasticsearch&#8217;s address if remote approach is used.</p>
 <p>Elasticsearch can be downloaded from <a class="reference external" href="https://www.elastic.co/products/elasticsearch">here</a>.</p>
 </div>
 <div class="section" id="final-touches">
-<h2>Final touches<a class="headerlink" href="#final-touches" title="Permalink to this headline">¶</a></h2>
+<span id="id6"></span><h2>Final touches<a class="headerlink" href="#final-touches" title="Permalink to this headline">¶</a></h2>
 <p>All that is left is to synchronize database state by running</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span>python manage.py makemigrations lm conceptualiser mwe_miner account home corpus_tool model_manager ontology_viewer base permission_admin grammar_builder document_miner
 python manage.py migrate
@@ -156,9 +158,13 @@ python manage.py migrate
 <div class="highlight-bash"><div class="highlight"><pre><span></span>python manage.py createsuperuser
 </pre></div>
 </div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><strong>Superuser</strong> is important, as it is also used for defining the datasets we want to work on. Remember the credentials.</p>
+</div>
 </div>
 <div class="section" id="running-texta">
-<h2>Running TEXTA<a class="headerlink" href="#running-texta" title="Permalink to this headline">¶</a></h2>
+<span id="id7"></span><h2>Running TEXTA<a class="headerlink" href="#running-texta" title="Permalink to this headline">¶</a></h2>
 <p>To start TEXTA on localhost:8000, it suffices to run</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span>python manage.py runserver
 </pre></div>
@@ -197,6 +203,8 @@ python manage.py runserver 0.0.0.0:8080
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">TEXTA&#8217;s documentation</a></li>
+      <li>Next: <a href="configuration.html" title="next chapter">Configuration</a></li>
   </ul></li>
 </ul>
 </div>

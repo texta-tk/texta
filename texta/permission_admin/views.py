@@ -8,6 +8,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 
 from ..permission_admin.models import Dataset
+from ..utils.es_manager import ES_Manager
 
 from settings import STATIC_URL, URL_PREFIX
 
@@ -40,8 +41,9 @@ def delete_dataset(request):
 def index(request):
     datasets = Dataset.objects.all()
     users = get_user_fields()
+    indices = ES_Manager.get_indices()
     template = loader.get_template('permission_admin/permission_admin_index.html')
-    return HttpResponse(template.render({'users':users,'datasets':datasets,'STATIC_URL':STATIC_URL,'URL_PREFIX':URL_PREFIX},request))
+    return HttpResponse(template.render({'users':users,'datasets':datasets,'indices':indices,'STATIC_URL':STATIC_URL,'URL_PREFIX':URL_PREFIX},request))
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -73,6 +75,13 @@ def save_permissions(request):
         user.save()
 #        modelrun_group.save()
     return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def get_mappings(request):
+    index = request.GET['index']
+    print(ES_Manager.get_mappings(index))
+    return HttpResponse(json.dumps(ES_Manager.get_mappings(index)))
 
 def get_user_fields():
     user_objects = User.objects.all()

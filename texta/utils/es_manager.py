@@ -563,3 +563,17 @@ class ES_Manager:
                     logger.set_context('hit', hit)
                     logger.exception('facts_error', msg='Problem with facts structure')
         return facts
+
+    @staticmethod
+    def get_indices():
+        url = '{0}/_cat/indices?format=json'.format(es_url)
+        response = ES_Manager.requests.get(url).json()
+        
+        return sorted([index_data['index'] for index_data in response])
+    
+    @staticmethod
+    def get_mappings(index):
+        url = '{0}/{1}'.format(es_url, index)
+        response = ES_Manager.requests.get(url).json()
+        
+        return sorted([mapping for mapping in response[index]['mappings']])

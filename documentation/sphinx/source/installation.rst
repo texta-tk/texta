@@ -50,7 +50,7 @@ For speeding up *gensim* and *scipy* modules, we have to download the following 
 
 .. code-block:: bash
 
-    apt-get -y install swig
+    sudo apt-get -y install swig
     
 Resolving Python dependencies
 -----------------------------
@@ -140,6 +140,8 @@ In Elasticsearch terminology a database is called an index and table is called e
     
 Elasticsearch can be downloaded from `here <https://www.elastic.co/products/elasticsearch>`_.
     
+.. _final-touches:
+    
 Final touches
 -------------
 
@@ -155,8 +157,14 @@ and create a superuser for TEXTA to assign application permissions
 .. code-block:: bash
 
     python manage.py createsuperuser
+
+.. note::
+
+    **Superuser** is important, as it is also used for defining the datasets we want to work on. Remember the credentials.
     
 
+.. _running-texta:
+    
 Running TEXTA
 -------------
 

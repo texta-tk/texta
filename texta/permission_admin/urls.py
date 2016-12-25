@@ -9,4 +9,5 @@ urlpatterns = [
     url(r'^delete_user/?', views.delete_user),
     url(r'^add_dataset/?', views.add_dataset),
     url(r'^delete_dataset/?', views.delete_dataset),
+    url(r'^get_mappings/?', views.get_mappings),
 ]

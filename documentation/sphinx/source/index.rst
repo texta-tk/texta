@@ -7,20 +7,10 @@ TEXTA's documentation
 =================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-   
-    installation.rst
-    configuration.rst
-    workflow.rst
-
-
-Indices and tables
-==================
-
-* :ref:`installation`
-* :ref:`configuration`
-* :ref:`workflow`
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+    :maxdepth: 2
+    :caption: Contents:
+    
+    installation
+    configuration
+    workflow
+    elastic_schema
