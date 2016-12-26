@@ -163,8 +163,16 @@ python manage.py migrate
 <p class="last"><strong>Superuser</strong> is important, as it is also used for defining the datasets we want to work on. Remember the credentials.</p>
 </div>
 </div>
+<div class="section" id="example-dataset">
+<span id="id7"></span><h2>Example dataset<a class="headerlink" href="#example-dataset" title="Permalink to this headline">¶</a></h2>
+<p>TEXTA comes with example dataset to play around with. After Elasticsearch has been started and the correct Elasticsearch URL has been set in
+<a class="reference internal" href="configuration.html#configuration"><span class="std std-ref">configuration steps</span></a>, we have to run</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>python scripts/example/example_import.py
+</pre></div>
+</div>
+</div>
 <div class="section" id="running-texta">
-<span id="id7"></span><h2>Running TEXTA<a class="headerlink" href="#running-texta" title="Permalink to this headline">¶</a></h2>
+<span id="id8"></span><h2>Running TEXTA<a class="headerlink" href="#running-texta" title="Permalink to this headline">¶</a></h2>
 <p>To start TEXTA on localhost:8000, it suffices to run</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span>python manage.py runserver
 </pre></div>
@@ -195,6 +203,7 @@ python manage.py runserver 0.0.0.0:8080
 </li>
 <li><a class="reference internal" href="#elasticsearch">Elasticsearch</a></li>
 <li><a class="reference internal" href="#final-touches">Final touches</a></li>
+<li><a class="reference internal" href="#example-dataset">Example dataset</a></li>
 <li><a class="reference internal" href="#running-texta">Running TEXTA</a></li>
 </ul>
 </li>

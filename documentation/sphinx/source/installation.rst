@@ -161,7 +161,18 @@ and create a superuser for TEXTA to assign application permissions
 .. note::
 
     **Superuser** is important, as it is also used for defining the datasets we want to work on. Remember the credentials.
+
+.. _example-dataset:
     
+Example dataset
+---------------
+
+TEXTA comes with example dataset to play around with. After Elasticsearch has been started and the correct Elasticsearch URL has been set in
+:ref:`configuration steps <configuration>`, we have to run 
+
+.. code-block:: bash
+
+    python scripts/example/example_import.py
 
 .. _running-texta:
     

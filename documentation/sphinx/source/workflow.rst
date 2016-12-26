@@ -50,7 +50,7 @@ Therefore, we need to link our data, which resides in Elasticsearch.
 Setting up datasets
 -------------------
 
-First off, we need a populated Elasticsearch index such as defined in TODOOOOOO.
+First off, we need a populated Elasticsearch index such as defined in :ref:`setting up example dataset <example-dataset>`.
 
 Once we have a dataset in Elasticsearch, we have to tell TEXTA that we are interested in accessing it. We can do that from the "Admin panel".
 
@@ -64,7 +64,7 @@ Once we have a dataset in Elasticsearch, we have to tell TEXTA that we are inter
     2. Dataset management
     
 One TEXTA instance can have only one Elasticsearch database which may have many indices. In dataset management, we can list the indices and 
-mappings we are interested in. By filling in the "Index", "Mapping" and daterange fields, we can link the dataset to TEXTA. Daterange acts as a
+mappings we are interested in. By choosing the desired index, corresponding mapping and a daterange, we can link the dataset to TEXTA. Daterange acts as a
 filter for [TODOOOOO map searcher] Searcher's aggregations. If we are not interested, we can set the "to" and "from" to
 some arbitrarily late and early dates respectively.
 

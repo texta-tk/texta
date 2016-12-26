@@ -132,6 +132,14 @@ class ES_Manager:
         return ES_Manager.requests.post(url, data=data).json()
     
     @staticmethod
+    def plain_put(url, data=None):
+        return ES_Manager.requests.put(url, data=data).json()
+    
+    @staticmethod
+    def plain_delete(url, data=None):
+        return ES_Manager.requests.delete(url, data=data).json()
+    
+    @staticmethod
     def plain_search(es_url, dataset, mapping, query):
         return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(query)).json()
     

@@ -21,6 +21,8 @@ $('#index').on('change', function() {
     });
 });
 
+$('#index').trigger('change');
+
 function delete_user(username){
     var delete_user = confirm('Delete user '.concat(username).concat('?'));
     console.log(delete_user);

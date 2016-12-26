@@ -26,6 +26,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Elasticsearch data layout" href="elastic_schema.html" />
     <link rel="prev" title="Configuration" href="configuration.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -89,7 +90,7 @@ Therefore, we need to link our data, which resides in Elasticsearch.</p>
 </div>
 <div class="section" id="setting-up-datasets">
 <h2>Setting up datasets<a class="headerlink" href="#setting-up-datasets" title="Permalink to this headline">¶</a></h2>
-<p>First off, we need a populated Elasticsearch index such as defined in TODOOOOOO.</p>
+<p>First off, we need a populated Elasticsearch index such as defined in <a class="reference internal" href="installation.html#example-dataset"><span class="std std-ref">setting up example dataset</span></a>.</p>
 <p>Once we have a dataset in Elasticsearch, we have to tell TEXTA that we are interested in accessing it. We can do that from the &#8220;Admin panel&#8221;.</p>
 <div class="figure" id="id3">
 <span id="figure-3"></span><img alt="_images/03_admin_panel.png" src="_images/03_admin_panel.png" />
@@ -102,7 +103,7 @@ Therefore, we need to link our data, which resides in Elasticsearch.</p>
 </div>
 </div>
 <p>One TEXTA instance can have only one Elasticsearch database which may have many indices. In dataset management, we can list the indices and
-mappings we are interested in. By filling in the &#8220;Index&#8221;, &#8220;Mapping&#8221; and daterange fields, we can link the dataset to TEXTA. Daterange acts as a
+mappings we are interested in. By choosing the desired index, corresponding mapping and a daterange, we can link the dataset to TEXTA. Daterange acts as a
 filter for [TODOOOOO map searcher] Searcher&#8217;s aggregations. If we are not interested, we can set the &#8220;to&#8221; and &#8220;from&#8221; to
 some arbitrarily late and early dates respectively.</p>
 <p>If we are using the example dataset, we should insert something like on the following fugure (date range may differ). We&#8217;re adding mapping
@@ -145,6 +146,7 @@ some arbitrarily late and early dates respectively.</p>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="configuration.html" title="previous chapter">Configuration</a></li>
+      <li>Next: <a href="elastic_schema.html" title="next chapter">Elasticsearch data layout</a></li>
   </ul></li>
 </ul>
 </div>
