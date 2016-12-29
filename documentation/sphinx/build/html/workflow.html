@@ -106,7 +106,7 @@ Therefore, we need to link our data, which resides in Elasticsearch.</p>
 mappings we are interested in. By choosing the desired index, corresponding mapping and a daterange, we can link the dataset to TEXTA. Daterange acts as a
 filter for [TODOOOOO map searcher] Searcher&#8217;s aggregations. If we are not interested, we can set the &#8220;to&#8221; and &#8220;from&#8221; to
 some arbitrarily late and early dates respectively.</p>
-<p>If we are using the example dataset, we should insert something like on the following fugure (date range may differ). We&#8217;re adding mapping
+<p>If we are using the example dataset, we should insert something like on the following figure (date range may differ). We&#8217;re adding mapping
 &#8220;articles&#8221; from index &#8220;journal&#8221;.</p>
 <div class="figure" id="id4">
 <img alt="_images/03-1_admin_panel_filled_in.png" src="_images/03-1_admin_panel_filled_in.png" />
@@ -123,6 +123,237 @@ some arbitrarily late and early dates respectively.</p>
 <p class="caption"><span class="caption-text">Figure 3.3. <em>Back on home page</em></span></p>
 </div>
 <p>Clicking on &#8220;Updage settings&#8221; will activate the chosen entry. Activated dataset will be used in all our tools.</p>
+<p>In figure 3.3 there is still a gap - we are missing a language model. Language model is used to generate topic related lexicons and much more.
+To train language models, we have to navigate to &#8220;Model Manager&#8221; under &#8220;Document Management&#8221; tab in the tool menu.</p>
+<p>However, training language models needs a <em>search</em> to limit the number of processed documements. Training on all will often take too long.</p>
+</div>
+<div class="section" id="searches">
+<h2>Searches<a class="headerlink" href="#searches" title="Permalink to this headline">¶</a></h2>
+<p>&#8220;Searcher&#8221; tool is responsible for both creating the searches for language models and browsing-summarizing the data. After we have activated
+a dataset, we can familiarize ourselves with the data using the tool.</p>
+<p>Searcher&#8217;s graphical interface consists of serveral important panels, which are depicted in figure 4.</p>
+<div class="figure" id="id7">
+<img alt="_images/04_corpus_tool.png" src="_images/04_corpus_tool.png" />
+<p class="caption"><span class="caption-text">Figure 4. <em>Searcher&#8217;s first look</em></span></p>
+<div class="legend">
+<ol class="arabic simple">
+<li>Current Search</li>
+<li>Saved Searches</li>
+<li>Aggregations</li>
+<li>Results</li>
+</ol>
+</div>
+</div>
+<div class="section" id="creating-a-new-search">
+<h3>Creating a new search<a class="headerlink" href="#creating-a-new-search" title="Permalink to this headline">¶</a></h3>
+<p>Data browsing and summarization depend on searches. Search consists of a set of constraints on feature values. We can define our constraints on
+the data using the &#8220;Current Search&#8221; panel. Without saving the constraints, we are in a &#8220;test mode&#8221;, which means that we can use the search in
+Searcher, but we cannot use the search in other tools. After saving the search, it is available also to other tools.</p>
+<p>In order to add a constraint, we must first choose a field. After the field is selected, we can then specify which textual tokens should or
+must occur in the interested document subset.</p>
+<p>Suppose we are interested in finding all the documents which contains &#8220;bribery&#8221; in Estonian. It makes sense to abuse lemmas
+whenever possible to account for inflection.</p>
+<div class="figure" id="id8">
+<img alt="_images/04-1_bribe_search_constraints.png" src="_images/04-1_bribe_search_constraints.png" />
+<p class="caption"><span class="caption-text">Figure 4.1. <em>&#8220;Bribe&#8221; search constraints</em></span></p>
+</div>
+<p>Figure 4.1 shows how we have defined that we want to find all the documents which contain either &#8220;pistis&#8221; <em>or</em> &#8220;altkäemaks&#8221;
+(&#8220;bribery&#8221; in Estonian). &#8220;Match&#8221; and &#8220;Match phrase&#8221; mean that we want to find exact matches, whereas &#8220;Match phrase prefix&#8221; matches prefixes
+(meaning suffixes may differ).</p>
+<p>Should we be interested in more detailed searches, we can add more constraints like the previous one.</p>
+<p>After we have come up with a suitable search, we can save it for later uses.</p>
+</div>
+<div class="section" id="browsing-data">
+<h3>Browsing data<a class="headerlink" href="#browsing-data" title="Permalink to this headline">¶</a></h3>
+<p>If we click on &#8220;Search&#8221; button, we will see the matching data in a tabular form, where layered features share feature name&#8217;s prefix, and
+matches are highlighted.</p>
+<div class="figure" id="id9">
+<img alt="_images/04-2_bribe_results.png" src="_images/04-2_bribe_results.png" />
+<p class="caption"><span class="caption-text">Figure 4.2. <em>Bribe search results</em></span></p>
+</div>
+<p>We can see some basic statistics and if there are too many features, we can hide them by clicking on their green names.</p>
+</div>
+<div class="section" id="exporting-data">
+<h3>Exporting data<a class="headerlink" href="#exporting-data" title="Permalink to this headline">¶</a></h3>
+<p>Sometimes we want to work with a subset of data in some other application or external calculation. For example, we might want to train a
+classifier on enriched sample. To get the enriched sample (in which some classes or tokens are over-represented), we can apply the search
+constraints to retrieve the data and then use query result actions, such as <em>export</em>.</p>
+<div class="figure" id="id10">
+<img alt="_images/04-3_export_panel.png" src="_images/04-3_export_panel.png" />
+<p class="caption"><span class="caption-text">Figure 4.3. <em>Export panel</em></span></p>
+</div>
+<p>Export panel allows to specify, how many rows and which features are we interested in.</p>
+</div>
+<div class="section" id="deleting-data">
+<h3>Deleting data<a class="headerlink" href="#deleting-data" title="Permalink to this headline">¶</a></h3>
+<p>The second action on search results is deletion - if we detect some malformed data or are simply not interested in some subset, we can remove it
+permanently from the Elasticsearch.</p>
+</div>
+<div class="section" id="using-saved-searches">
+<h3>Using saved searches<a class="headerlink" href="#using-saved-searches" title="Permalink to this headline">¶</a></h3>
+<p>Searches can be saved. If we save our &#8220;bribery&#8221; search under &#8220;bribery&#8221;, we can see it being listed in &#8220;Saved Searches&#8221; panel.</p>
+<div class="figure" id="id11">
+<img alt="_images/04-4_saved_search.png" src="_images/04-4_saved_search.png" />
+<p class="caption"><span class="caption-text">Figure 4.4. <em>Saved searches</em></span></p>
+</div>
+<p>Now, whenever we check it, we can use it to browse data or apply in summarization.</p>
+</div>
+<div class="section" id="summarizing-data">
+<h3>Summarizing data<a class="headerlink" href="#summarizing-data" title="Permalink to this headline">¶</a></h3>
+<p>As fun as browsing through the data is, it is not always enough. Sometimes we want to get an overview of our data, such as topics over time or
+word distributions. Searcher allows to do all of that and more through the &#8220;Aggregations&#8221; panel.</p>
+<p>Aggregations have two components - data and features it aggregates over. Selecting a search determines the sample we get our data from. By defining a feature, we can group by that feature and get
+category counts. For example, lets assume we are interested in seeing how are the top words distributed in our sample data defined by our
+&#8220;bribery&#8221; search. By requesting aggregation as shown on figure 4.5, we get the result on the same figure.</p>
+<div class="figure" id="id12">
+<img alt="_images/04-5_simple_aggregation.png" src="_images/04-5_simple_aggregation.png" />
+<p class="caption"><span class="caption-text">Figure 4.5. <em>Simple aggregation</em></span></p>
+</div>
+<p>From the results we can see raw word distributions for both checked &#8220;bribery&#8221; search and &#8220;Current Search&#8221; (which doesn&#8217;t have any constraints,
+a.k.a sample is all the data we have). Since we queried raw count, many common words overlap. We can change &#8220;Sort by&#8221; setting to significance
+in order to get uncommon over-represented words for that specific sample dataset.</p>
+<div class="figure" id="id13">
+<img alt="_images/04-6_significance_aggregation.png" src="_images/04-6_significance_aggregation.png" />
+<p class="caption"><span class="caption-text">Figure 4.6. <em>Aggregation sorted by significance</em></span></p>
+</div>
+<p>In figure 4.6 we can see that now the words are much more specific to the &#8220;bribery&#8221; dataset. &#8220;Current Search&#8221; has no results, because it is
+used as prior.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Let&#8217;s also define and save an empty search (without any constriants) under &#8220;all&#8221; to include all the data.</p>
+</div>
+</div>
+</div>
+<div class="section" id="training-language-models">
+<h2>Training language models<a class="headerlink" href="#training-language-models" title="Permalink to this headline">¶</a></h2>
+<p>Now that we have saved some searches, we can train a language model to start creating topic specific lexicons. Language models can be trained
+with &#8220;Model Manager&#8221; tool under &#8220;Document Management&#8221;.</p>
+<div class="figure" id="id14">
+<img alt="_images/05_model_manager.png" src="_images/05_model_manager.png" />
+<p class="caption"><span class="caption-text">Figure 5. <em>Model Manager</em></span></p>
+<div class="legend">
+<ol class="arabic simple">
+<li>New model parameters</li>
+<li>Trained models</li>
+</ol>
+</div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Language models can currently be trained and the tool be seen only by super users.</p>
+</div>
+<p>To train a model, we need to specify the training data (by using the corresponding search), feature, and hyperparameters. When we are interested
+in creating lexicons, lemma layer is often the wisest, as it reduces data sparsity.</p>
+<p>We can reduce the lexicon or data sparsity further by coding punctuation and numbers. This means that we replace all occurrences of
+punctuation marks with a single token and numbers with another one. Replacing numbers makes often sense when training language models, as
+different numerical values rarely add any semantical value.</p>
+<p>Let&#8217;s train a new language model on our whole data. For that we use our &#8220;all&#8221; search without any constraints.</p>
+<div class="figure" id="id15">
+<img alt="_images/05-1_model_parameters.png" src="_images/05-1_model_parameters.png" />
+<p class="caption"><span class="caption-text">Figure 5.1. <em>Model parameters</em></span></p>
+</div>
+<p>After starting the model training task, we can see the progress. For progress upgrade, we have to refresh the page.</p>
+<div class="figure" id="id16">
+<img alt="_images/05-2_model_training_progress.png" src="_images/05-2_model_training_progress.png" />
+<p class="caption"><span class="caption-text">Figure 5.2. <em>Model training progress</em></span></p>
+</div>
+<p>Once the training completes, we can see the following.</p>
+<div class="figure" id="id17">
+<img alt="_images/05-3_model_training_completed.png" src="_images/05-3_model_training_completed.png" />
+<p class="caption"><span class="caption-text">Figure 5.3. <em>Training completed</em></span></p>
+</div>
+</div>
+<div class="section" id="setting-up-a-language-model">
+<h2>Setting up a language model<a class="headerlink" href="#setting-up-a-language-model" title="Permalink to this headline">¶</a></h2>
+<p>Now that we have trained a language model, we can activate it from the home page by selecting the model and updating settings.</p>
+<div class="figure" id="id18">
+<img alt="_images/06_activating_language_model.png" src="_images/06_activating_language_model.png" />
+<p class="caption"><span class="caption-text">Figure 6. <em>Activating language model</em></span></p>
+</div>
+</div>
+<div class="section" id="creating-lexicons">
+<h2>Creating lexicons<a class="headerlink" href="#creating-lexicons" title="Permalink to this headline">¶</a></h2>
+<p>We can start creating topic-related lexicons. From toolbar we can find &#8220;Base Lexicon Miner&#8221; under &#8220;Terminology Management&#8221;.</p>
+<p>Let&#8217;s create a lexicon that contains verbs accompanied with &#8220;bribery&#8221;.</p>
+<div class="figure" id="id19">
+<img alt="_images/07_creating_verb_lexicon.png" src="_images/07_creating_verb_lexicon.png" />
+<p class="caption"><span class="caption-text">Figure 7. <em>Creating lexicon of bribery verbs</em></span></p>
+</div>
+<p>After clicking on the newly created lexicon, we have to provide some seed words.</p>
+<div class="figure" id="id20">
+<img alt="_images/07-1_lexicon_seed_words.png" src="_images/07-1_lexicon_seed_words.png" />
+<p class="caption"><span class="caption-text">Figure 7.1. <em>Providing seed words</em></span></p>
+</div>
+<p>The process of creating (or expanding) the lexicon is iterative. We keep asking for suggestions and from those we have to pick the ones that
+make sense to us. We keep asking for suggestions until we get no more meaningful responses. Then we should either change to some approach with
+&#8220;preclustering&#8221; in it or end the process, as the training data didn&#8217;t give us more.</p>
+<p>The first batch of suggested words are shown in figure 7.2.</p>
+<div class="figure" id="id21">
+<img alt="_images/07-2_first_suggestion_batch.png" src="_images/07-2_first_suggestion_batch.png" />
+<p class="caption"><span class="caption-text">Figure 7.2. <em>First suggestion batch</em></span></p>
+</div>
+<p>The first suggested word - &#8220;kahtlustama&#8221; - makes sense, while the others not so much. To add it to the lexicon, we simply have to click on it. In the next batches
+we also get &#8220;seostama&#8221; and &#8220;avastama&#8221;. However, the yield is not as good as we hoped for. The reason behind this is that the training data is
+too small. We had less than 5000 documents, most of which didn&#8217;t even contain the relevant words and therefore the model had difficulties during
+the training phase.</p>
+</div>
+<div class="section" id="creating-concepts">
+<h2>Creating concepts<a class="headerlink" href="#creating-concepts" title="Permalink to this headline">¶</a></h2>
+<p>Once we have saved the lexicons we are interested in, the next step would be to group parts of them into concepts. A lexicon may contain
+somewhat similar words which still differ from one another in some important aspects. Concepts are created with &#8220;Conceptualiser&#8221; under
+&#8220;Terminology Management&#8221;. It takes lexicons as input and outputs concepts, which user defines using the graphical tool. Words are displayed on
+scatter plot and user can group them using selection box or merge one by one using the <em>enter</em> key.</p>
+<p>Word coordinates in scatter plot are derived by applying dimension reduction on high dimension word vectors. Word vectors are relying on
+distributional semantics, meaning that words with similar context are similar and have in our case similar vectors - or are close to each other
+in 2-dimensional space.</p>
+<p>One of several dimension reduction methods can be chosen, but they give approximately the same results.</p>
+<p>In our scenario, we have small and homogeneous lexicons and therefore each lexicon forms just one concept.</p>
+<p>After checking the lexicons and plotting them, we get to the state depicted in figure 8.</p>
+<div class="figure" id="id22">
+<img alt="_images/08_conceptualiser_initial_plot.png" src="_images/08_conceptualiser_initial_plot.png" />
+<p class="caption"><span class="caption-text">Figure 8. <em>Conceptualiser&#8217;s initial plot</em></span></p>
+</div>
+<p>We can visually detect that two more or less coherent clusters have formed and &#8220;avastama&#8221; is an outlier. It was also the last word suggested by
+<em>Lexicon Miner</em>. For that reason we leave that word out from our concepts.</p>
+<div class="figure" id="id23">
+<img alt="_images/08-1_grouped_concepts.png" src="_images/08-1_grouped_concepts.png" />
+<p class="caption"><span class="caption-text">Figure 8.1. <em>After grouping the words into concepts</em></span></p>
+</div>
+<p>Now that we have found the concepts, we can commit the changes to save them.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Concepts can be used in <em>Searcher</em> by prepending an &#8220;&#64;&#8221;-sign. So we don&#8217;t have to list words one by one. They can also be used in the same
+manner in <em>Grammar tool</em>.</p>
+</div>
+</div>
+<div class="section" id="mining-multi-word-expressions">
+<h2>Mining multi-word expressions<a class="headerlink" href="#mining-multi-word-expressions" title="Permalink to this headline">¶</a></h2>
+<p>Mining multi-word expressions is a way to find actually used phrases. We approched the problem bottom-up. First we defined the individual tokens
+and now we try to find which of them are located nearby or side-by-side. Ideally, phrases should be found using the words with inflection data,
+but since our dataset is small, we have to make it with lemmas and low frequency threshold.</p>
+<p>Mining task requires parameters - much like training language models. In figure 9 we can see the parameters we can use.</p>
+<div class="figure" id="id24">
+<img alt="_images/09-mwe_parameters.png" src="_images/09-mwe_parameters.png" />
+<p class="caption"><span class="caption-text">Figure 9. <em>Multi-word expression mining parameters</em></span></p>
+</div>
+<p>We have to define the feature or field, which should be the same we trained our language models on for mining lexicons. Expression lengths
+determine the output phrase lengths (or combination lengths, which are searched for). Phrase occurrencies below frequency threshold are ignored
+and slop determines, how far apart can the words be from one another. Finally, we have to specify the lexicons used. Since we want to find
+bribery phrases which contain both noun and accusing verb, we check both lexicons.</p>
+<p>Because the data and lexicons are small, the task completes instantly.</p>
+<div class="figure" id="id25">
+<img alt="_images/09-1_mwe_progress.png" src="_images/09-1_mwe_progress.png" />
+<p class="caption"><span class="caption-text">Figure 9.1. <em>Multi-word expression task progress</em></span></p>
+</div>
+<p>By looking at the results, we can see that the only frequent enough phrase included &#8220;süüdistama&#8221; and &#8220;altkäemaks&#8221;, meaning that the articles
+did not make any allegations before the cases reached the attention of the court.</p>
+<div class="figure" id="id26">
+<img alt="_images/09-2_mwe_results.png" src="_images/09-2_mwe_results.png" />
+<p class="caption"><span class="caption-text">Figure 9.2. <em>Multi-word expression results</em></span></p>
+</div>
+</div>
+<div class="section" id="exracting-information">
+<h2>Exracting information<a class="headerlink" href="#exracting-information" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -138,6 +369,21 @@ some arbitrarily late and early dates respectively.</p>
 <li><a class="reference internal" href="#the-beginning">The beginning</a></li>
 <li><a class="reference internal" href="#after-the-log-in">After the log in</a></li>
 <li><a class="reference internal" href="#setting-up-datasets">Setting up datasets</a></li>
+<li><a class="reference internal" href="#searches">Searches</a><ul>
+<li><a class="reference internal" href="#creating-a-new-search">Creating a new search</a></li>
+<li><a class="reference internal" href="#browsing-data">Browsing data</a></li>
+<li><a class="reference internal" href="#exporting-data">Exporting data</a></li>
+<li><a class="reference internal" href="#deleting-data">Deleting data</a></li>
+<li><a class="reference internal" href="#using-saved-searches">Using saved searches</a></li>
+<li><a class="reference internal" href="#summarizing-data">Summarizing data</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#training-language-models">Training language models</a></li>
+<li><a class="reference internal" href="#setting-up-a-language-model">Setting up a language model</a></li>
+<li><a class="reference internal" href="#creating-lexicons">Creating lexicons</a></li>
+<li><a class="reference internal" href="#creating-concepts">Creating concepts</a></li>
+<li><a class="reference internal" href="#mining-multi-word-expressions">Mining multi-word expressions</a></li>
+<li><a class="reference internal" href="#exracting-information">Exracting information</a></li>
 </ul>
 </li>
 </ul>

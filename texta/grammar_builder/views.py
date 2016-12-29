@@ -4,7 +4,6 @@ import pprint
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader, Context
 from django.contrib.auth.decorators import login_required
-from estnltk import Regex, Lemmas, Concatenation, Union, Text
 import requests
 
 from ..corpus_tool.views import Search
@@ -18,8 +17,6 @@ from ..grammar_builder.models import GrammarComponent, GrammarPageMapping, Gramm
 import multilayer_matcher as matcher
 
 from elastic_grammar_query import ElasticGrammarQuery
-
-from estnltk import AllGaps, Gaps, Concatenation, Intersection, Regex, Symbol, Union
 
 from collections import defaultdict
 
