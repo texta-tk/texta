@@ -585,3 +585,30 @@ class ES_Manager:
         response = ES_Manager.requests.get(url).json()
         
         return sorted([mapping for mapping in response[index]['mappings']])
+    
+    def merge_combined_query_with_query_dict(self, query_dict):
+        """ Merge the current query with the provided query
+            Merges the dictonaries entry-wise and uses conjunction in boolean queries, where needed. Alters the current query in place.
+        """
+        
+        try:
+            query_dict['main']['query']['bool']
+        except:
+            raise Exception('Incompatible queries.')
+        
+        print(query_dict)
+        if 'must' in query_dict['main']['query']['bool'] and query_dict['main']['query']['bool']['must']:
+            for constraint in query_dict['main']['query']['bool']['must']:
+                print(constraint)
+                self.combined_query['main']['query']['bool']['must'].append(constraint)
+        if 'should' in query_dict['main']['query']['bool'] and query_dict['main']['query']['bool']['should']:
+            if len(query_dict['main']['query']['bool']['should']) > 1:
+                target_list = []
+                self.combined_query['main']['query']['bool']['must'].append({'or':target_list})
+            else:
+                target_list = self.combined_query['main']['query']['bool']['must']
+            for constraint in query_dict['main']['query']['bool']['should']:
+                target_list.append(constraint)
+        if 'must_not' in query_dict['main']['query']['bool'] and query_dict['main']['query']['bool']['must_not']:
+            for constraint in query_dict['main']['query']['bool']['must_not']:
+                self.combined_query['main']['query']['bool']['must_not'].append(constraint)
