@@ -45,12 +45,6 @@ For speeding up *gensim* and *scipy* modules, we have to download the following 
     sudo apt-get -y install build-essential manpages-dev
     sudo apt-get -y install libblas-dev liblapack-dev libatlas-base-dev gfortran    
 
-
-*Estnltk* library uses `SWIG <http://www.swig.org/>`_.
-
-.. code-block:: bash
-
-    sudo apt-get -y install swig
     
 Resolving Python dependencies
 -----------------------------
@@ -119,12 +113,11 @@ The following code block lists all the Python libraries that TEXTA depends on al
     pip install sklearn
     pip install gensim
     pip install django
-    pip install estnltk
     pip install pathlib
     
 .. note::
 
-    If using `Anaconda <https://www.continuum.io/downloads>`_, all but *estnltk* can be substituted with *conda install library_name*.
+    If using `Anaconda <https://www.continuum.io/downloads>`_, all can be substituted with *conda install library_name*.
 
 Elasticsearch
 -------------
