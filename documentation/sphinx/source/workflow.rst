@@ -87,7 +87,7 @@ If we now head back to the home page, we should see that our new entry is chosen
 
     Figure 3.3. *Back on home page*
     
-Clicking on "Updage settings" will activate the chosen entry. Activated dataset will be used in all our tools.
+Clicking on "Update settings" will activate the chosen entry. Activated dataset will be used in all our tools.
 
 In figure 3.3 there is still a gap - we are missing a language model. Language model is used to generate topic related lexicons and much more. 
 To train language models, we have to navigate to "Model Manager" under "Document Management" tab in the tool menu.
@@ -162,7 +162,7 @@ constraints to retrieve the data and then use query result actions, such as *exp
 
     Figure 4.3. *Export panel*
 
-Export panel allows to specify, how many rows and which features are we interested in.
+Export panel allows to specify, how many rows and which features are we interested in. Exported data is in CSV format.
     
     
 Deleting data
@@ -344,7 +344,7 @@ but since our dataset is small, we have to make it with lemmas and low frequency
 
 Mining task requires parameters - much like training language models. In figure 9 we can see the parameters we can use.
 
-.. figure:: images/09-mwe_parameters.png
+.. figure:: images/09_mwe_parameters.png
 
     Figure 9. *Multi-word expression mining parameters*
 
@@ -359,13 +359,165 @@ Because the data and lexicons are small, the task completes instantly.
 
     Figure 9.1. *Multi-word expression task progress*
 
-By looking at the results, we can see that the only frequent enough phrase included "süüdistama" and "altkäemaks", meaning that the articles
-did not make any allegations before the cases reached the attention of the court.
+By looking at the results, we can see that there are 9 different patterns (denoted by "Terms" feature) containing "süüdistama" and "altkäemaks"
+concepts' lemmas which are frequent enough to catch our interest. 
 
 .. figure:: images/09-2_mwe_results.png
 
     Figure 9.2. *Multi-word expression results*
 
+We can expand the result by clicking on the "plus"-sign under "Accepted" feature to see which patterns actually existed and with which
+frequency.
+    
+.. figure:: images/09-3_expanded_results.png
+
+    Figure 9.3. *Expanded results*
+
+The expanded results show how some patterns are much more common in real use of language.
+
+We can approve specific patterns to turn them into a concept containing multi-word expressions and therefore use the more complicated structures
+in other tools, such as in the *Searcher*.
+    
 Exracting information
 ---------------------
 
+TEXTA comes with an interactive grammar building tool *Grammar Miner*. "Grammars" are rule-based formulas which allow to match specific
+content using exact matching, context, and logical operators. The simplest grammar can just match a fixed word, for example "bribe", or be
+a regular expression, while more complicated ones may cover whole phrase and sentence structures.
+
+We build grammars from top to bottom using a graphical tree building tool *jstree*. Once a suitable grammar expression in the form of a tree is
+created, we can test it on a data sample and see, which documents matched and how and which did not. *Grammar Miner* is under *Terminology
+Management* tools.
+
+.. figure:: images/10_grammar_miner.png
+
+    Figure 10. *Grammar Miner's first look*
+    
+    1. View tab
+    2. Grammar building area
+    3. Grammar component details
+    
+Building a new grammar begins with assigning an operation to the root node.
+
+.. figure:: images/10-1_root_node_operation.png
+
+    Figure 10.1. *Assigning operation to aggregative node*
+    
+.. note::
+
+    Whenever making changes to a node, make sure to click on "Change" button.
+
+Node types
+++++++++++
+
+Each node has an icon, indicating which type of node it is. Nodes can be either **terminal** (regular expression, exact match) or 
+**aggregative** (logical or sequential operations).
+Logical operations are intersection and union, where intersection needs all of its child expressions to
+match, but union just one.
+
+Sequential operations are concatenation and gap. Concatenation requires matches to reside side by side. For example, when we have a
+concatenation of "took", "the", and "bribe", the concatenation matches only documents in which there are substrings "took the bribe". The gap
+on the other hand can have matches with some distance from one another, defined by *slop* parameter. If we were looking for "took" and "bribe",
+gap with *slop* of at least 1, it would match the documents which have "took the bribe" in them.
+
+.. note::
+
+    Logical operations don't take match order into account, whereas sequential operations do.
+
+For a better overview, nodes with different operations have different icons.
+    
+.. |na_icon| image:: ../../../static/grammar_builder/icons/na.ico
+    
+.. |exact_icon| image:: ../../../static/grammar_builder/icons/exact.ico
+    
+.. |regex_icon| image:: ../../../static/grammar_builder/icons/regex.ico
+    
+.. |and_icon| image:: ../../../static/grammar_builder/icons/and.ico
+    
+.. |or_icon| image:: ../../../static/grammar_builder/icons/or.ico
+    
+.. |concat_icon| image:: ../../../static/grammar_builder/icons/concat.ico
+
+.. |gap_icon| image:: ../../../static/grammar_builder/icons/gap.ico
+
+
+=============    ==================
+Icon             Operation    
+=============    ==================
+|na_icon|        Not assigned
+|exact_icon|     Exact match
+|regex_icon|     Regular expression
+|and_icon|       Intersection
+|or_icon|        Union
+|concat_icon|    Concatenation
+|gap_icon|       Gap
+=============    ==================
+
+Root node is always aggregative. Aggregative nodes can have both terminal and aggregative nodes as children. Terminal nodes can't have any
+children.
+
+
+Adding a child
+++++++++++++++
+
+Aggregative nodes can (must) have child nodes (at least one). A child can be added by opening context menu with right click on the appropriate
+node. This allows to add either a *basic* (terminal) or *aggregation* node.
+
+.. figure:: images/10-2_node_context_menu.png
+
+    Figure 10.2. *Context menu for adding child nodes*
+
+After adding a terminal node and clicking on it, we can edit the details in opened "Component Details" panel.
+
+.. figure:: images/10-3_basic_component_details.png
+
+    Figure 10.3. *Specifying terminal node details*
+    
+We can choose either "Exact match" or "Regular Expression" for *Type* and one of the features or feature-layer combinations for the *Layer*.
+Content is a list of words on separate lines for an *Exact match* or a one-liner regular expression for *Regular Expression*.
+
+Testing grammar
++++++++++++++++
+
+We can either test the whole grammar tree by clicking on the "Test whole tree" button or a subtree by clicking on "Test" in the appropriate
+node's context menu.
+
+Suppose we are interested in finding (and later labeling) the documents which talk about bribery accusations. We have already found out that 
+the most frequent pattern in the corresponding documents contain the lemmas "süüdistama" and "altkäemaks" in that order with the slop of 3.
+Let's create the grammar tree.
+
+.. figure:: images/10-4_bribery_grammar.png
+
+    Figure 10.4. *Simple bribery grammar*
+
+So far we have been on the "Grammar" tab. If we test our grammar by clicking on "Test whole tree", for example, we are taken to the "Test" tab
+and all the positive matches (documents which our grammar matched) are displayed along with the match highlights.
+    
+.. figure:: images/10-5_bribery_positive_results.png
+
+    Figure 10.5. *Positive results when testing*
+    
+When navigating to "Unmatched documents" subtab, we can see the documents which didn't match our grammar.
+    
+.. figure:: images/10-6_bribery_negative_results.png
+
+    Figure 10.6. *Negative results when testing*
+    
+We can see that all our highlighted words are "süüdistama" and "altkäemaks", where they are no more than 3 tokens apart - just as our grammar
+required. Also, all the features which are displayed in the result table occur in the grammar, except for *id*.
+
+By default, "Full search" is used. We can change it to our "bribery", navigate back to "Grammar" tab and test the grammar again to test our
+grammar on more relevant dataset.
+
+Saving and loading grammar
+++++++++++++++++++++++++++
+
+Grammar tree can be stored for later use by clicking "Save". Root node's label is used for the name.
+
+Whenever we want to reuse a saved grammar, we can simply select it from drop-down menu and press "Load".
+
+
+Deleting grammar
+++++++++++++++++
+
+We can delete grammar trees by selecting the appropriate grammar from the drop-down menu and clicking on "Delete".

@@ -122,7 +122,7 @@ some arbitrarily late and early dates respectively.</p>
 <img alt="_images/03-3_home_page.png" src="_images/03-3_home_page.png" />
 <p class="caption"><span class="caption-text">Figure 3.3. <em>Back on home page</em></span></p>
 </div>
-<p>Clicking on &#8220;Updage settings&#8221; will activate the chosen entry. Activated dataset will be used in all our tools.</p>
+<p>Clicking on &#8220;Update settings&#8221; will activate the chosen entry. Activated dataset will be used in all our tools.</p>
 <p>In figure 3.3 there is still a gap - we are missing a language model. Language model is used to generate topic related lexicons and much more.
 To train language models, we have to navigate to &#8220;Model Manager&#8221; under &#8220;Document Management&#8221; tab in the tool menu.</p>
 <p>However, training language models needs a <em>search</em> to limit the number of processed documements. Training on all will often take too long.</p>
@@ -182,7 +182,7 @@ constraints to retrieve the data and then use query result actions, such as <em>
 <img alt="_images/04-3_export_panel.png" src="_images/04-3_export_panel.png" />
 <p class="caption"><span class="caption-text">Figure 4.3. <em>Export panel</em></span></p>
 </div>
-<p>Export panel allows to specify, how many rows and which features are we interested in.</p>
+<p>Export panel allows to specify, how many rows and which features are we interested in. Exported data is in CSV format.</p>
 </div>
 <div class="section" id="deleting-data">
 <h3>Deleting data<a class="headerlink" href="#deleting-data" title="Permalink to this headline">¶</a></h3>
@@ -333,7 +333,7 @@ and now we try to find which of them are located nearby or side-by-side. Ideally
 but since our dataset is small, we have to make it with lemmas and low frequency threshold.</p>
 <p>Mining task requires parameters - much like training language models. In figure 9 we can see the parameters we can use.</p>
 <div class="figure" id="id24">
-<img alt="_images/09-mwe_parameters.png" src="_images/09-mwe_parameters.png" />
+<img alt="_images/09_mwe_parameters.png" src="_images/09_mwe_parameters.png" />
 <p class="caption"><span class="caption-text">Figure 9. <em>Multi-word expression mining parameters</em></span></p>
 </div>
 <p>We have to define the feature or field, which should be the same we trained our language models on for mining lexicons. Expression lengths
@@ -345,15 +345,154 @@ bribery phrases which contain both noun and accusing verb, we check both lexicon
 <img alt="_images/09-1_mwe_progress.png" src="_images/09-1_mwe_progress.png" />
 <p class="caption"><span class="caption-text">Figure 9.1. <em>Multi-word expression task progress</em></span></p>
 </div>
-<p>By looking at the results, we can see that the only frequent enough phrase included &#8220;süüdistama&#8221; and &#8220;altkäemaks&#8221;, meaning that the articles
-did not make any allegations before the cases reached the attention of the court.</p>
+<p>By looking at the results, we can see that there are 9 different patterns (denoted by &#8220;Terms&#8221; feature) containing &#8220;süüdistama&#8221; and &#8220;altkäemaks&#8221;
+concepts&#8217; lemmas which are frequent enough to catch our interest.</p>
 <div class="figure" id="id26">
 <img alt="_images/09-2_mwe_results.png" src="_images/09-2_mwe_results.png" />
 <p class="caption"><span class="caption-text">Figure 9.2. <em>Multi-word expression results</em></span></p>
 </div>
+<p>We can expand the result by clicking on the &#8220;plus&#8221;-sign under &#8220;Accepted&#8221; feature to see which patterns actually existed and with which
+frequency.</p>
+<div class="figure" id="id27">
+<img alt="_images/09-3_expanded_results.png" src="_images/09-3_expanded_results.png" />
+<p class="caption"><span class="caption-text">Figure 9.3. <em>Expanded results</em></span></p>
+</div>
+<p>The expanded results show how some patterns are much more common in real use of language.</p>
+<p>We can approve specific patterns to turn them into a concept containing multi-word expressions and therefore use the more complicated structures
+in other tools, such as in the <em>Searcher</em>.</p>
 </div>
 <div class="section" id="exracting-information">
 <h2>Exracting information<a class="headerlink" href="#exracting-information" title="Permalink to this headline">¶</a></h2>
+<p>TEXTA comes with an interactive grammar building tool <em>Grammar Miner</em>. &#8220;Grammars&#8221; are rule-based formulas which allow to match specific
+content using exact matching, context, and logical operators. The simplest grammar can just match a fixed word, for example &#8220;bribe&#8221;, or be
+a regular expression, while more complicated ones may cover whole phrase and sentence structures.</p>
+<p>We build grammars from top to bottom using a graphical tree building tool <em>jstree</em>. Once a suitable grammar expression in the form of a tree is
+created, we can test it on a data sample and see, which documents matched and how and which did not. <em>Grammar Miner</em> is under <em>Terminology
+Management</em> tools.</p>
+<div class="figure" id="id28">
+<img alt="_images/10_grammar_miner.png" src="_images/10_grammar_miner.png" />
+<p class="caption"><span class="caption-text">Figure 10. <em>Grammar Miner&#8217;s first look</em></span></p>
+<div class="legend">
+<ol class="arabic simple">
+<li>View tab</li>
+<li>Grammar building area</li>
+<li>Grammar component details</li>
+</ol>
+</div>
+</div>
+<p>Building a new grammar begins with assigning an operation to the root node.</p>
+<div class="figure" id="id29">
+<img alt="_images/10-1_root_node_operation.png" src="_images/10-1_root_node_operation.png" />
+<p class="caption"><span class="caption-text">Figure 10.1. <em>Assigning operation to aggregative node</em></span></p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Whenever making changes to a node, make sure to click on &#8220;Change&#8221; button.</p>
+</div>
+<div class="section" id="node-types">
+<h3>Node types<a class="headerlink" href="#node-types" title="Permalink to this headline">¶</a></h3>
+<p>Each node has an icon, indicating which type of node it is. Nodes can be either <strong>terminal</strong> (regular expression, exact match) or
+<strong>aggregative</strong> (logical or sequential operations).
+Logical operations are intersection and union, where intersection needs all of its child expressions to
+match, but union just one.</p>
+<p>Sequential operations are concatenation and gap. Concatenation requires matches to reside side by side. For example, when we have a
+concatenation of &#8220;took&#8221;, &#8220;the&#8221;, and &#8220;bribe&#8221;, the concatenation matches only documents in which there are substrings &#8220;took the bribe&#8221;. The gap
+on the other hand can have matches with some distance from one another, defined by <em>slop</em> parameter. If we were looking for &#8220;took&#8221; and &#8220;bribe&#8221;,
+gap with <em>slop</em> of at least 1, it would match the documents which have &#8220;took the bribe&#8221; in them.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Logical operations don&#8217;t take match order into account, whereas sequential operations do.</p>
+</div>
+<p>For a better overview, nodes with different operations have different icons.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="42%" />
+<col width="58%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Icon</th>
+<th class="head">Operation</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><img alt="na_icon" src="_images/na.ico" /></td>
+<td>Not assigned</td>
+</tr>
+<tr class="row-odd"><td><img alt="exact_icon" src="_images/exact.ico" /></td>
+<td>Exact match</td>
+</tr>
+<tr class="row-even"><td><img alt="regex_icon" src="_images/regex.ico" /></td>
+<td>Regular expression</td>
+</tr>
+<tr class="row-odd"><td><img alt="and_icon" src="_images/and.ico" /></td>
+<td>Intersection</td>
+</tr>
+<tr class="row-even"><td><img alt="or_icon" src="_images/or.ico" /></td>
+<td>Union</td>
+</tr>
+<tr class="row-odd"><td><img alt="concat_icon" src="_images/concat.ico" /></td>
+<td>Concatenation</td>
+</tr>
+<tr class="row-even"><td><img alt="gap_icon" src="_images/gap.ico" /></td>
+<td>Gap</td>
+</tr>
+</tbody>
+</table>
+<p>Root node is always aggregative. Aggregative nodes can have both terminal and aggregative nodes as children. Terminal nodes can&#8217;t have any
+children.</p>
+</div>
+<div class="section" id="adding-a-child">
+<h3>Adding a child<a class="headerlink" href="#adding-a-child" title="Permalink to this headline">¶</a></h3>
+<p>Aggregative nodes can (must) have child nodes (at least one). A child can be added by opening context menu with right click on the appropriate
+node. This allows to add either a <em>basic</em> (terminal) or <em>aggregation</em> node.</p>
+<div class="figure" id="id30">
+<img alt="_images/10-2_node_context_menu.png" src="_images/10-2_node_context_menu.png" />
+<p class="caption"><span class="caption-text">Figure 10.2. <em>Context menu for adding child nodes</em></span></p>
+</div>
+<p>After adding a terminal node and clicking on it, we can edit the details in opened &#8220;Component Details&#8221; panel.</p>
+<div class="figure" id="id31">
+<img alt="_images/10-3_basic_component_details.png" src="_images/10-3_basic_component_details.png" />
+<p class="caption"><span class="caption-text">Figure 10.3. <em>Specifying terminal node details</em></span></p>
+</div>
+<p>We can choose either &#8220;Exact match&#8221; or &#8220;Regular Expression&#8221; for <em>Type</em> and one of the features or feature-layer combinations for the <em>Layer</em>.
+Content is a list of words on separate lines for an <em>Exact match</em> or a one-liner regular expression for <em>Regular Expression</em>.</p>
+</div>
+<div class="section" id="testing-grammar">
+<h3>Testing grammar<a class="headerlink" href="#testing-grammar" title="Permalink to this headline">¶</a></h3>
+<p>We can either test the whole grammar tree by clicking on the &#8220;Test whole tree&#8221; button or a subtree by clicking on &#8220;Test&#8221; in the appropriate
+node&#8217;s context menu.</p>
+<p>Suppose we are interested in finding (and later labeling) the documents which talk about bribery accusations. We have already found out that
+the most frequent pattern in the corresponding documents contain the lemmas &#8220;süüdistama&#8221; and &#8220;altkäemaks&#8221; in that order with the slop of 3.
+Let&#8217;s create the grammar tree.</p>
+<div class="figure" id="id32">
+<img alt="_images/10-4_bribery_grammar.png" src="_images/10-4_bribery_grammar.png" />
+<p class="caption"><span class="caption-text">Figure 10.4. <em>Simple bribery grammar</em></span></p>
+</div>
+<p>So far we have been on the &#8220;Grammar&#8221; tab. If we test our grammar by clicking on &#8220;Test whole tree&#8221;, for example, we are taken to the &#8220;Test&#8221; tab
+and all the positive matches (documents which our grammar matched) are displayed along with the match highlights.</p>
+<div class="figure" id="id33">
+<img alt="_images/10-5_bribery_positive_results.png" src="_images/10-5_bribery_positive_results.png" />
+<p class="caption"><span class="caption-text">Figure 10.5. <em>Positive results when testing</em></span></p>
+</div>
+<p>When navigating to &#8220;Unmatched documents&#8221; subtab, we can see the documents which didn&#8217;t match our grammar.</p>
+<div class="figure" id="id34">
+<img alt="_images/10-6_bribery_negative_results.png" src="_images/10-6_bribery_negative_results.png" />
+<p class="caption"><span class="caption-text">Figure 10.6. <em>Negative results when testing</em></span></p>
+</div>
+<p>We can see that all our highlighted words are &#8220;süüdistama&#8221; and &#8220;altkäemaks&#8221;, where they are no more than 3 tokens apart - just as our grammar
+required. Also, all the features which are displayed in the result table occur in the grammar, except for <em>id</em>.</p>
+<p>By default, &#8220;Full search&#8221; is used. We can change it to our &#8220;bribery&#8221;, navigate back to &#8220;Grammar&#8221; tab and test the grammar again to test our
+grammar on more relevant dataset.</p>
+</div>
+<div class="section" id="saving-and-loading-grammar">
+<h3>Saving and loading grammar<a class="headerlink" href="#saving-and-loading-grammar" title="Permalink to this headline">¶</a></h3>
+<p>Grammar tree can be stored for later use by clicking &#8220;Save&#8221;. Root node&#8217;s label is used for the name.</p>
+<p>Whenever we want to reuse a saved grammar, we can simply select it from drop-down menu and press &#8220;Load&#8221;.</p>
+</div>
+<div class="section" id="deleting-grammar">
+<h3>Deleting grammar<a class="headerlink" href="#deleting-grammar" title="Permalink to this headline">¶</a></h3>
+<p>We can delete grammar trees by selecting the appropriate grammar from the drop-down menu and clicking on &#8220;Delete&#8221;.</p>
+</div>
 </div>
 </div>
 
@@ -383,7 +522,14 @@ did not make any allegations before the cases reached the attention of the court
 <li><a class="reference internal" href="#creating-lexicons">Creating lexicons</a></li>
 <li><a class="reference internal" href="#creating-concepts">Creating concepts</a></li>
 <li><a class="reference internal" href="#mining-multi-word-expressions">Mining multi-word expressions</a></li>
-<li><a class="reference internal" href="#exracting-information">Exracting information</a></li>
+<li><a class="reference internal" href="#exracting-information">Exracting information</a><ul>
+<li><a class="reference internal" href="#node-types">Node types</a></li>
+<li><a class="reference internal" href="#adding-a-child">Adding a child</a></li>
+<li><a class="reference internal" href="#testing-grammar">Testing grammar</a></li>
+<li><a class="reference internal" href="#saving-and-loading-grammar">Saving and loading grammar</a></li>
+<li><a class="reference internal" href="#deleting-grammar">Deleting grammar</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

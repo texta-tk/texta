@@ -24,5 +24,6 @@ texta/mwe_miner/migrations/
 !texta/mwe_miner/migrations/__init__.py
 
 # Exclude documentation build files but not the html, js etc
-documentation/sphinx/build/doctrees
+documentation/sphinx/build/doctrees/*
 documentation/sphinx/build/html/objects.inv
+documentation/sphinx/source/images_bu/*

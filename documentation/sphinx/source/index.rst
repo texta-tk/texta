@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-TEXTA's documentation
-=================================
+.. image:: ../../../static/img/texta_logo.png
+    :alt: Texta
 
 .. toctree::
     :maxdepth: 2

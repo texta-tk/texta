@@ -212,8 +212,8 @@ INSTALLED_APPS = (
 #
 es_url = os.getenv('TEXTA_ELASTICSEARCH_URL')
 if es_url is None:
-#    es_url = 'http://localhost:9200'
-    es_url = 'http://elasticsearch2.stacc.ee:9201'
+    es_url = 'http://localhost:9200'
+    #es_url = 'http://elasticsearch2.stacc.ee:9201'
 
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')
@@ -239,8 +239,6 @@ es_ldap_password = os.getenv('TEXTA_LDAP_PASSWORD')
 # Path to the log directory. Default is /log
 # 
 LOG_PATH = os.path.join(BASE_DIR,'log')
-if not os.path.exists(LOG_PATH):
-    os.makedirs(LOG_PATH)
 
 # Separator used to join different logged features.
 #
@@ -306,3 +304,17 @@ LOGGING = {
         }
     }
 }
+
+############################ Boot scripts ###########################
+
+# Several scripts ran during the boot to set up files and directories.
+# Scripts will only be run if settings is imported from 'texta' directory, e.g. as a result of manager.py
+
+if os.path.split(os.getcwd())[1] == 'texta':
+
+    from texta.utils.setup import write_navigation_file, ensure_dir_existence
+
+    write_navigation_file(URL_PREFIX, STATIC_URL)
+    ensure_dir_existence(LOG_PATH)
+    ensure_dir_existence(MODELS_DIR)
+    ensure_dir_existence(USER_MODELS)

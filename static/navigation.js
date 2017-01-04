@@ -1,12 +1,5 @@
-var SERVER_TYPE = 'DEV';
-
-if (SERVER_TYPE == 'DEV') {
-    var LINK_PREFIX = '';
-    var STATIC_URL = '/static/'
-} else {
-    var LINK_PREFIX = 'https://yourdomain.com';
-    var STATIC_URL = LINK_PREFIX + '/texta/static/';
-}
+var LINK_PREFIX = 'http://localhost:8000';
+var STATIC_URL = 'http://localhost:8000/static/'
 
 var LINK_LEXMINER = LINK_PREFIX + '/lm';
 var LINK_CORPUS_TOOL = LINK_PREFIX + '/corpus_tool';
