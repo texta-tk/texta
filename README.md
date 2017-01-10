@@ -1,6 +1,6 @@
 # TEXTA
 
-TEXTA (Terminology EXtraction and Text Analytics Toolkit).
+Terminology EXtraction and Text Analytics (TEXTA) Toolkit provides resources for analysing free text datasets.
 
 [Documentation](https://texta-tk.github.io)
 
