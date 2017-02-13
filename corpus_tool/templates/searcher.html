@@ -1,0 +1,372 @@
+{% extends "index.html" %}
+{% block app %}
+
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}corpus_tool/corpus_tool.css">
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="application/javascript" src="{{STATIC_URL}}local-cache.js"></script>
+<script type="application/javascript" src="{{STATIC_URL}}corpus_tool/corpus_tool.js"></script>
+
+	<div class="row">
+		<div class="col-lg-3">
+			<form id="filters">
+			<div class="panel">
+				<div class="panel-heading">Current Search <span onclick="get_query();" data-toggle="modal" data-target="#query-modal" class="glyphicon glyphicon-sunglasses pull-right pointer"></span></div>
+				<div class="panel-body">
+					<div class="form-group">
+						<div class="row">
+							<div class="col-sm-6">Add constraint:</div>
+							<div class="col-sm-6">
+								<select id="constraint_field" name="constraint_field" onchange="javascript:add_field('{{date_range.min}}','{{date_range.max}}');" class="form-control input-sm">
+									<option></option>
+									{% for field in fields %}
+										<option value="{{field.data}}">{{field.label}}</option>
+									{% endfor %}
+								</select>
+							</div>
+						</div>
+						<div class="row">
+							<div id="constraints" class="container-fluid"></div>
+						</div>
+						<div class="row">
+							<div class="col-sm-12"><button class="btn btn-default form-control" type="button" onclick="javascript:save();"><span class="glyphicon glyphicon-floppy-disk"></span> Save Search</button></div>
+						</div>
+						<div class="row">
+							<div class="col-sm-12"><button type="button" onclick="javascript:query();" class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span> Search</button></div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel">
+				<div class="panel-heading">Saved Searches</div>
+				<div class="panel-body">
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th>Select</th>
+								<th>Search Description</th>
+								<th>Remove</th>
+							</tr>
+						</thead>
+						<tbody id="saved_searches">
+						</tbody>
+					</table>
+				</div>
+			</div>			
+			
+			<input type="hidden" name="search_description" id="search_description">
+			<input type="hidden" name="chart_type" id="chart_type">
+			<input type="hidden" name="scroll_id" id="scroll_id">						
+
+			<div class="panel">
+				<div class="panel-heading">Aggregations</div>
+				<div class="panel-body">
+				
+					<div class="panel bg-grey">
+						<div class="row padded-row">
+							<div class="col-sm-12 text-center">
+								<b>Field #1</b>
+							</div>
+							<div class="col-sm-12">
+								<b>Select field:</b>
+								<select id="agg_field_1" name="agg_field_1" class="form-control input-sm" onchange="change_agg_field('1');">
+									{% for field in fields %}
+										<option value="{{field.data}}">{{field.label}}</option>
+									{% endfor %}
+								</select>
+								<div id="sort_by_1">
+									<b>Sort by:</b>
+									<select id="sort_by_1" name="sort_by_1" class="form-control input-sm">
+										<option value="terms" selected="selected">count</option>
+										<option value="significant_terms">significance</option>
+									</select>
+								</div>
+								<div id="freq_norm_1" class="hidden">
+									<b>Frequency:</b>
+									<select id="freq_norm_1" name="freq_norm_1" class="form-control input-sm">
+										<option value="raw_frquency" selected="selected">raw frequency</option>
+										<option value="relative_frequency">relative frequency</option>
+									</select>
+								</div>
+								<div id="interval_1" class="hidden">
+									<b>Interval:</b>
+									<select id="interval_1" name="interval_1" class="form-control input-sm">
+										<option value="day">day</option>
+										<option value="month" selected="selected">month</option>
+										<option value="quarter">quarter</option>
+										<option value="year">year</option>
+									</select>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="panel bg-grey">
+						<div class="row" id="agg_field_2_button">
+							<div class="col-sm-12 text-center">
+								<span class="glyphicon glyphicon-plus pointer" onclick="toggle_agg_field_2('add');"></span>
+							</div>
+						</div>
+						<div class="row padded-row hidden" id="agg_field_2_container">
+							<div class="col-sm-12 text-center">
+								<b>Field #2</b> <span class="glyphicon glyphicon-minus pull-right pointer" onclick="toggle_agg_field_2('remove');"></span>
+							</div>
+							<input type="hidden" id="agg_field_2_selected" name="agg_field_2_selected" value="false">
+							<div class="col-sm-12">
+								<b>Select field:</b>
+								<select id="agg_field_2" name="agg_field_2" class="form-control input-sm">
+									{% for field in fields %}
+										{% if field.type == 'string' %}
+											<option value="{{field.data}}">{{field.label}}</option>
+										{% endif %}
+									{% endfor %}
+								</select>			
+							
+								<div id="sort_by_2">
+									<b>Sort by:</b>
+									<select id="sort_by_2" name="sort_by_2" class="form-control input-sm">
+										<option value="terms">count</option>
+										<option value="significant_terms" selected="selected">significance</option>
+									</select>
+								</div>
+								
+							</div>
+						</div>
+					</div>					
+
+					<div class="panel bg-grey">
+						<div class="row padded-row">
+							<div class="col-sm-12 text-center">
+								<b>Additional Options</b>
+							</div>
+							<div class="col-sm-12">
+							<!--
+							<b>Background corpus:</b>
+								<select id="custom_bg" name="custom_bg" class="form-control input-sm">
+									<option value="all_docs" selected="selected">All documents</option>
+									<option value="">Search: online</option>
+								</select>
+							-->
+								Hide current search in results:
+								<input type="checkbox" name="ignore_active_search" class="pull-right">
+							</div>
+						</div>
+					</div>					
+					
+					<button	type="button" onclick="javascript:aggregate();" class="btn btn-default form-control"><span class="glyphicon glyphicon-filter"></span> Aggregate</button>
+					
+				</div>
+			</div>
+			
+		</form>
+	
+		</div>
+		<div class="col-lg-9">
+			<div class="panel">
+				<div class="panel-heading">
+                    Results
+                    <div id="actions-btn" class="dropdown pull-right invisible">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-scissors"></span> Actions<span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="#" data-toggle="modal" data-target="#export-modal"><span class="glyphicon glyphicon-save"></span> Export results</a></li>
+							{% if request.user.is_superuser %}
+								<li><a href="#" data-toggle="modal" data-target="#delete-modal"><span class="glyphicon glyphicon-remove"></span> Delete results</a></li>
+							{% endif %}
+                        </ul>
+                    </div>
+                </div>
+				<div class="panel-body" id="right"></div>
+				
+					<div class="modal fade" id="export-modal" role="dialog">
+						<div class="modal-dialog">
+							<div class="modal-content">
+								<div class="modal-header">
+									<button type="button" class="close" data-dismiss="modal">&times;</button>
+									<h4 class="modal-title">Export</h4>
+								</div>
+								
+								<div class="invisible" id="export-examples-modal">
+									<div class="modal-body">
+										<div class="form-group">
+											<label><input type="radio" name="export-extent" value="page" checked>Current page</label><br>
+											<label><input type="radio" name="export-extent" value="pages">Pages</label>
+											<input type="text" id="export-start-page" placeholder="start" size="3">
+											to
+											<input type="text" id="export-end-page" placeholder="end" size="3"><br>
+											<label><input type="radio" name="export-extent" value="rows">Rows</label>
+											<input type="text" id="export-rows" placeholder="number" size="4"><br>
+											<label><input type="radio" name="export-extent" value="all">All pages</label><br>
+										</div>
+										
+										<div class="form-group">
+											<label><input type="radio" name="export-features" value="selected" checked>Selected features</label><br>
+											<label><input type="radio" name="export-features" value="all">All features</label><br>
+										</div>
+										
+										<div class="form-group form-inline">
+											<label for="export-file-name">Save as: </label>
+											<div class="input-group">
+												<input type="text" class="form-control" id="export-file-name-example" value="{{dataset}}">
+												<span class="input-group-addon">.csv</span>
+											</div>
+										</div>
+									</div>
+									
+								
+									<div class="modal-footer">
+										<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+										<button type="button" class="btn btn-default" data-dismiss="modal" onclick="export_data('example');">Export</button>
+									</div>
+								
+								</div>
+								
+								
+								<div class="invisible" id="export-aggregation-modal">
+									<div class="modal-body">
+										<div class="form-group form-inline">
+											<label for="export-file-name">Save as: </label>
+											<div class="input-group">
+												<input type="text" class="form-control" id="export-file-name-agg" value="{{dataset}}">
+												<span class="input-group-addon">.csv</span>
+											</div>
+										</div>
+									</div>
+									
+								
+									<div class="modal-footer">
+										<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+										<button type="button" class="btn btn-default" data-dismiss="modal" onclick="export_data('agg');">Export</button>
+									</div>
+								</div>
+								
+							</div>
+						</div>
+					</div>
+
+				<div class="modal fade" id="delete-modal" role="dialog">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">Delete</h4>
+                            </div>
+                            <div class="modal-body">
+								<b>Important:</b> This action will permanently remove the queried documents. The operation may take some time.
+                            </div>
+                            <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="javascript:remove_by_query();">Delete</button>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+
+
+				<div class="modal fade" id="query-modal" role="dialog">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">Query</h4>
+                            </div>
+                            <div class="modal-body" id="query-modal-content"></div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>				
+				
+			</div>
+		</div>
+	</div>
+
+	<div id="field_hidden" class="panel panel-default" style="display: none;">
+		<input type="hidden" name="match_field_" id="match_field_">
+		<div class="panel-heading">
+			<span id="selected_field_"></span>
+			<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+		</div>
+		<div class="panel-body">
+			<div class="row">
+				<div class="col-sm-4">
+					<b>Bool:</b><br>
+					<select id="match_operator_" name="match_operator_" class="form-control input-sm">
+						<option value="must" selected="selected">and</option>
+						<option value="should">or</option>
+						<option value="must_not">not</option>
+					</select>
+				</div>
+				<div class="col-sm-5">
+					<b>Match type:</b><br>
+					<select id="match_type_" name="match_type_" class="form-control input-sm">
+						<option value="match">match</option>
+						<option value="match_phrase" selected="selected">match phrase</option>
+						<option value="match_phrase_prefix">match phrase prefix</option>
+					</select> 
+				</div>
+				<div class="col-sm-3">
+					<b>Slop:</b><br>
+					<select id="match_slop_" name="match_slop_" class="form-control input-sm">
+						<option value="0">0</option>
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3">3</option>
+						<option value="4">4</option>
+						<option value="2">5</option>
+					</select> 
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
+					<textarea id="match_txt_" name="match_txt_" class="form-control"></textarea>
+					<ul name="suggestions_" id="suggestions_" class="list-group"></ul>
+				</div>
+			</div>
+
+		</div>
+	</div>
+
+	<div id="field_hidden_fact" class="panel panel-default" style="display: none;">
+		<input type="hidden" name="fact_field_" id="fact_field_">
+		<div class="panel-heading">
+			<span id="selected_field_"></span>
+			<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+		</div>
+		<div class="panel-body">
+			<div class="row">
+				<div class="col-sm-4">
+					<b>Bool:</b><br>
+					<select id="fact_operator_" name="fact_operator_" class="form-control input-sm">
+						<option value="must" selected="selected">and</option>
+						<option value="should">or</option>
+						<option value="must_not">not</option>
+					</select>
+				</div>
+				<div class="col-sm-8">
+					<b>Facts:</b><br>
+					<textarea id="fact_txt_" name="fact_txt_" class="form-control"></textarea>
+					<ul name="suggestions_" id="suggestions_" class="list-group"></ul>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="field_hidden_date" class="panel panel-default" style="display: none;">
+		<input type="hidden" name="daterange_field_" id="daterange_field_">
+		<div class="panel-heading">
+			<span id="selected_field_"></span>
+			<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+		</div>
+		<div class="panel-body">
+				<b>Date range (yyyy-mm-dd):</b>
+				<input type="text" placeholder="from" id="daterange_from_" class="form-control input-sm">
+				<input type="text" id="daterange_to_" placeholder="to" class="form-control input-sm">			
+		</div>
+	</div>
+	
+	<div id="popup"></div>
+
+{% endblock %}
