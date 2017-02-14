@@ -48,7 +48,7 @@ def index(request):
 
 @login_required
 def results(request):
-    template = loader.get_template('results.html')
+    template = loader.get_template('mwe_results.html')
     run_id  = request.GET['run_id']
     results = json.loads(Run.objects.get(pk=run_id).results)
     results = sorted([results[key] for key in results],key=lambda x: x[u'total_freq'],reverse=True)

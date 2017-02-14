@@ -1,4 +1,4 @@
-{% extends "lm/lm_index.html" %}
+{% extends "lm.html" %}
 	{% block lex %}
 	Selected lexicon: {{selected}}<br>
 		<textarea class="form-control" rows="20" name="lexicon" id="lexicon">{% for word in words %}{{word}}

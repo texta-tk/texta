@@ -257,7 +257,7 @@ def get_table_header(request):
                        'columns': [{'index':index, 'name':field_name} for index, field_name in enumerate(fields)],
                        'dataset': ds.get_index(),
                        'mapping': ds.get_mapping()}
-    template = loader.get_template('results.html')
+    template = loader.get_template('searcher_results.html')
     return HttpResponse(template.render(template_params, request))
 
 
