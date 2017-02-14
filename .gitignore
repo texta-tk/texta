@@ -2,28 +2,28 @@
 *.pyc
 
 # Exclude user data
-data/models/*
-data/usermodels/*
-log/*
-lex.db
+texta/data/models/*
+texta/data/usermodels/*
+texta/log/*
+texta/lex.db
 
 # Exclude migrations files but not the migrations module.
-texta/corpus_tool/migrations/
-!texta/corpus_tool/migrations/__init__.py
-texta/grammar_builder/migrations/
-!texta/grammar_builder/migrations/__init__.py
-texta/model_manager/migrations/
-!texta/model_manager/migrations/__init__.py
-texta/permission_admin/migrations/
-!texta/permission_admin/migrations/__init__.py
-texta/conceptualiser/migrations/
-!texta/conceptualiser/migrations/__init__.py
-texta/lm/migrations/
-!texta/lm/migrations/__init__.py
-texta/mwe_miner/migrations/
-!texta/mwe_miner/migrations/__init__.py
+corpus_tool/migrations/
+!corpus_tool/migrations/__init__.py
+grammar_builder/migrations/
+!grammar_builder/migrations/__init__.py
+model_manager/migrations/
+!model_manager/migrations/__init__.py
+permission_admin/migrations/
+!permission_admin/migrations/__init__.py
+conceptualiser/migrations/
+!conceptualiser/migrations/__init__.py
+lm/migrations/
+!lm/migrations/__init__.py
+mwe_miner/migrations/
+!mwe_miner/migrations/__init__.py
 
 # Exclude documentation build files but not the html, js etc
-documentation/sphinx/build/doctrees/*
-documentation/sphinx/build/html/objects.inv
-documentation/sphinx/source/images_bu/*
+texta/documentation/sphinx/build/doctrees/*
+texta/documentation/sphinx/build/html/objects.inv
+texta/documentation/sphinx/source/images_bu/*
