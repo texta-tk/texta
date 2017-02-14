@@ -9,6 +9,6 @@ sys.path.append("/var/www/texta/")
 sys.path.append("/usr/lib/python2.7/dist-packages/")
 sys.path.append("/")
 
-os.environ["DJANGO_SETTINGS_MODULE"] = "settings"
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "texta.settings")
 
 application = get_wsgi_application()
