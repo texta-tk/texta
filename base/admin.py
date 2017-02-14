@@ -7,7 +7,7 @@ from django.http import HttpResponseRedirect
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 
-from settings import URL_PREFIX_RESOURCE
+from texta.settings import URL_PREFIX_RESOURCE
 
 
 def admin_view(self, view, cacheable=False):
