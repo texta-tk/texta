@@ -25,4 +25,4 @@ install:
   - pip install sklearn
 
 
-script: python runtests.py
+script: python texta/runtests.py
