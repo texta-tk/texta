@@ -290,39 +290,39 @@ function initializeTree(data) {
                 "valid_children" : ["root"]
             },
             "root" : {
-                "icon" : "/static/grammar_builder/icons/na.ico",
+                "icon" : STATIC_URL+"grammar_builder/icons/na.ico",
                  "valid_children" : aggregationChildren
             },
             "new_basic" : {
-                "icon" : "/static/grammar_builder/icons/na.ico",
+                "icon" : STATIC_URL+"grammar_builder/icons/na.ico",
                  "valid_children" : ["none"]
             },
             "exact" : {
-                "icon" : "/static/grammar_builder/icons/exact.ico",
+                "icon" : STATIC_URL+"grammar_builder/icons/exact.ico",
                  "valid_children" : ["none"]
             },
             "regex" : {
-                "icon" : "/static/grammar_builder/icons/regex.ico",
+                "icon" : STATIC_URL+"grammar_builder/icons/regex.ico",
                  "valid_children" : ["none"]
             },
             "new_aggregation" : {
-                "icon" : "/static/grammar_builder/icons/na.ico",
+                "icon" : STATIC_URL+"grammar_builder/icons/na.ico",
                 "valid_children" : aggregationChildren
             },
             "intersect" : {
-                "icon" : "/static/grammar_builder/icons/and.ico",
+                "icon" : STATIC_URL+"grammar_builder/icons/and.ico",
                  "valid_children" : aggregationChildren
             },
             "union" : {
-                "icon" : "/static/grammar_builder/icons/or.ico",
+                "icon" : STATIC_URL+"grammar_builder/icons/or.ico",
                  "valid_children" : aggregationChildren
             },
             "concat" : {
-                "icon" : "/static/grammar_builder/icons/concat.ico",
+                "icon" : STATIC_URL+"grammar_builder/icons/concat.ico",
                  "valid_children" : aggregationChildren
             },
             "gap" : {
-                "icon" : "/static/grammar_builder/icons/gap.ico",
+                "icon" : STATIC_URL+"grammar_builder/icons/gap.ico",
                  "valid_children" : aggregationChildren
             },
         },

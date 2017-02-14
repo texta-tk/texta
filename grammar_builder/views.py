@@ -160,7 +160,7 @@ def get_table(request):
         exclusive_metaquery = generate_metaquery_dict(exclusive_id, component={})
         layers = ['id'] + sorted(extract_layers(inclusive_metaquery) | extract_layers(exclusive_metaquery))
     
-    template = loader.get_template('grammar_builder/table.html')
+    template = loader.get_template('grammar_builder_table.html')
     return HttpResponse(template.render({'features':layers, 'polarity':polarity},request))
 
 @login_required
