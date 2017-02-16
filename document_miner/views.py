@@ -87,11 +87,10 @@ def query(request):
     mapping = ds.get_mapping()
 
     handle_negatives = request.POST['handle_negatives']
-    ids = [a.strip() for a in request.POST['docs'].split('\n')]
+    ids = [a.strip() for a in request.POST['docs'].split('\n') if a]
     docs_declined = json.loads(request.POST['docs_declined'])
 
     stopwords = [a.strip() for a in request.POST['stopwords'].split('\n')]
-
 
     # Merge ids
     ids = ids+docs_from_searches
@@ -132,32 +131,32 @@ def query(request):
             query["query"]["bool"]["must_not"] = declined
 
     response = ES_Manager.plain_search(es_url, dataset, mapping, query)
-    
-    try:
-        for hit in response['hits']['hits']:
-            try:
-                row = '''
-                    <tr id="row_'''+hit['_id']+'''">
-                        <td><a not_yet_accepted="'''+hit['_id']+'''" href="javascript:accept_document('''+hit['_id']+''')">Accept</a></td>
-                        <td>'''+hit['_id']+'''</td>
-                        <td>'''+'\n'.join(hit['highlight'][field])+'''</td>
-                    </tr>
-                '''
-            except KeyError:
-                row = '''
+
+    for hit in response['hits']['hits']:
+        field_content = get_field_content(hit,field)
+        row = '''
                     <tr id="row_'''+hit['_id']+'''">
                         <td><a href="javascript:accept_document('''+hit['_id']+''')">Accept</a></td>
                         <td><a href="javascript:decline_document('''+hit['_id']+''')">Reject</a></td>
                         <td>'''+hit['_id']+'''</td>
-                        <td>'''+hit['_source'][field]+'''</td>
+                        <td>'''+field_content+'''</td>
                     </tr>
-                '''            
-            out.append(row)
-    except:
-        KeyError
+        '''
+        out.append(row)
 
     if not out:
         out.append('No matches from supported IDs.')
 
     return HttpResponse('<table class="table">'+''.join(out)+'</table>')
 
+
+def get_field_content(hit,field):
+
+    #TODO Highlight
+
+    field_content = hit['_source']
+    for field_element in field.split('.'):
+        field_content = field_content[field_element]
+
+    return field_content
+    
