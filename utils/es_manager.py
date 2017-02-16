@@ -454,7 +454,7 @@ class ES_Manager:
 
         return True
 
-    def scroll(self, scroll_id=None, time_out='1m'):
+    def scroll(self, scroll_id=None, time_out='1m', id_scroll=False):
         """ Search and Scroll
         """
         if scroll_id:
@@ -462,10 +462,10 @@ class ES_Manager:
             search_url = '{0}/_search/scroll'.format(es_url)
         else:
             q = json.dumps(self.combined_query['main'])
-            #search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll={3}'.format(es_url, self.index,
-                                                                                  #self.mapping, time_out)
-            search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index,
-                                                                                  self.mapping, time_out)
+            if id_scroll:
+                search_url = '{0}/{1}/{2}/_search?scroll={3}&fields='.format(es_url, self.index, self.mapping, time_out)
+            else:
+                search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
 
         response = self.requests.post(search_url, data=q).json()
         return response
@@ -612,3 +612,7 @@ class ES_Manager:
         if 'must_not' in query_dict['main']['query']['bool'] and query_dict['main']['query']['bool']['must_not']:
             for constraint in query_dict['main']['query']['bool']['must_not']:
                 self.combined_query['main']['query']['bool']['must_not'].append(constraint)
+
+
+    def more_like_this_search(self):
+        pass

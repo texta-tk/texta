@@ -9,8 +9,17 @@ import requests
 
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
+from corpus_tool.models import Search
+from permission_admin.models import Dataset
 
 from texta.settings import STATIC_URL, URL_PREFIX, es_url
+
+
+@login_required
+def get_saved_searches(request):  
+    searches = Search.objects.filter(author=request.user).filter(dataset=Dataset(pk=int(request.session['dataset'])))
+    return HttpResponse(json.dumps([{'id':search.pk,'desc':search.description} for search in searches],ensure_ascii=False))
+
 
 @login_required
 def index(request):
@@ -35,10 +44,42 @@ def add_documents(ids,index,mapping):
         out.append({"_index" : index, "_type" : mapping, "_id" : id})
     return out
 
+
+def get_docs_from_searches(request):
+    document_ids = {}
+    searches = [x for x in request.POST.keys() if x.startswith('saved_search')]
+
+    for search in searches:
+        search_id = request.POST[search]
+        s = json.loads(Search.objects.get(pk=search_id).query)
+
+        ds = Datasets().activate_dataset(request.session)
+        es_m = ds.build_manager(ES_Manager)
+
+        es_m.load_combined_query(s)
+
+        # Scroll the results
+        response = es_m.scroll(id_scroll=True)
+        scroll_id = response['_scroll_id']
+        hits = response['hits']['hits']
+
+        while hits:
+            hits = response['hits']['hits']
+            for hit in hits:
+                document_ids[hit['_id']] = True
+            response = es_m.scroll(scroll_id=scroll_id)
+            scroll_id = response['_scroll_id']
+
+    return document_ids.keys()
+
+
 @login_required
 def query(request):
+    
     out = []
     field = request.POST['field']
+
+    docs_from_searches = get_docs_from_searches(request)
 
     # Define selected mapping
     ds = Datasets().activate_dataset(request.session)
@@ -50,6 +91,10 @@ def query(request):
     docs_declined = json.loads(request.POST['docs_declined'])
 
     stopwords = [a.strip() for a in request.POST['stopwords'].split('\n')]
+
+
+    # Merge ids
+    ids = ids+docs_from_searches
 
     mlt = {
         "more_like_this": {

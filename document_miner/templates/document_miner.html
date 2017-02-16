@@ -8,6 +8,7 @@
 				<div class="panel-heading">Documents</div>
 				<div class="panel-body">
 					<div class="row">
+						<form id="filters">
 						<div class="col-lg-12">
 							<b>Field used for comparing documents:</b>
 							<select id="field" name="field" class="form-control input-sm">
@@ -16,11 +17,26 @@
 								{% endfor %}
 							</select>
 							<br>
+							<b>Searches:</b>
+							<br>
+
+							<table class="table table-striped">
+								<thead>
+									<tr>
+										<th>Select</th>
+										<th>Search Description</th>
+										<th>Remove</th>
+									</tr>
+								</thead>
+								<tbody id="saved_searches">
+								</tbody>
+							</table>						
+
 							<b>Accepted IDs:</b>
-							<textarea class="form-control" rows="5" id="docs"></textarea>
+							<textarea class="form-control" rows="5" id="docs" name="docs"></textarea>
 							<br>
 							<b>Stop words:</b>
-							<textarea class="form-control" rows="5" id="stopwords"></textarea>
+							<textarea class="form-control" rows="5" id="stopwords" name="stopwords"></textarea>
 							<br>
 							<b>Handle negatives by:</b>
 							<br>
@@ -32,6 +48,7 @@
 							<input type="hidden" id="docs_declined" name="docs_declined">
 							<button class="btn btn-default form-control" type="button" onclick="javascript:query();">Suggest Candidates</button>
 						</div>
+						</form>
 					</div>
 				</div>
 			</div>
