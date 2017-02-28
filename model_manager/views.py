@@ -227,22 +227,24 @@ class esIterator(object):
 
             for hit in response['hits']['hits']:
 
-                # Take into account nested fields encoded as: 'field.sub_field'
-                decoded_text = hit['_source']
-                for k in self.field.split('.'):
-                    decoded_text = decoded_text[k]
-
-                sentences = decoded_text.split('\n')
-
-                reduction_methods = self.request.POST.getlist('lexicon_reduction[]')
-                if u'remove_numbers' in reduction_methods:
-                    # remove numbers
-                    sentences = [re.sub('(\d)+','n',sentence) for sentence in sentences]
-                if u'remove_punctuation' in reduction_methods:
-                    # remove punctuation
-                    sentences = [self.punct_re.sub('[punct]',sentence) for sentence in sentences]
-                for sentence in sentences:
-                    yield [smart_str(word.strip().lower()) for word in sentence.split(' ')]
+                try:
+                    # Take into account nested fields encoded as: 'field.sub_field'
+                    decoded_text = hit['_source']
+                    for k in self.field.split('.'):
+                        decoded_text = decoded_text[k]
+                    sentences = decoded_text.split('\n')
+                    reduction_methods = self.request.POST.getlist('lexicon_reduction[]')
+                    if u'remove_numbers' in reduction_methods:
+                        # remove numbers
+                        sentences = [re.sub('(\d)+','n',sentence) for sentence in sentences]
+                    if u'remove_punctuation' in reduction_methods:
+                        # remove punctuation
+                        sentences = [self.punct_re.sub('[punct]',sentence) for sentence in sentences]
+                    for sentence in sentences:
+                        yield [smart_str(word.strip().lower()) for word in sentence.split(' ')]
+                except:
+                    # If the field is missing from the document
+                    KeyError
 
             if self.callback_progress:
                 self.callback_progress.update(l)
