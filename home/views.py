@@ -62,7 +62,7 @@ def get_facts_autocomplete(es_m):
 
 
 def index(request):
-    template = loader.get_template('index.html')
+    template = loader.get_template('home.html')
     ds = Datasets().activate_dataset(request.session)
     datasets = ds.get_datasets()
 
