@@ -614,16 +614,17 @@ class ES_Manager:
                 self.combined_query['main']['query']['bool']['must_not'].append(constraint)
 
 
-    def more_like_this_search(self,field,stopwords=None):
-        
-        doc_ids = self._scroll_doc_ids()
+    def more_like_this_search(self,field,stopwords=[],docs_accepted=[],docs_rejected=[],handle_negatives='ignore'):
 
-        print doc_ids
+        # Get ids from basic search
+        docs_search = self._scroll_doc_ids()
+        # Combine ids from basic search and mlt search
+        docs_combined = list(set().union(docs_search,docs_accepted))
 
         mlt = {
             "more_like_this": {
                 "fields" : [field],
-                "like" : self._add_doc_ids_to_query(doc_ids,self.index,self.mapping),
+                "like" : self._add_doc_ids_to_query(docs_combined),
                 "min_term_freq" : 1,
                 "max_query_terms" : 12,
             }
@@ -648,27 +649,38 @@ class ES_Manager:
             }
         }
 
+        if docs_rejected:
+            if handle_negatives == 'unlike':
+                mlt["more_like_this"]["unlike"] = self._add_doc_ids_to_query(docs_rejected)
+            elif handle_negatives == 'ignore':
+                rejected = [{'ids':{'values':docs_rejected}}]
+                query["query"]["bool"]["must_not"] = rejected
+
+
         response = ES_Manager.plain_search(self.es_url, self.index, self.mapping, query)
         
         return response
 
 
-    def _add_doc_ids_to_query(self,ids,index,mapping):
+    def _add_doc_ids_to_query(self,ids):
         out = []
         for id in ids:
-            out.append({"_index" : index, "_type" : mapping, "_id" : id})
+            out.append({"_index" : self.index, "_type" : self.mapping, "_id" : id})
         return out
 
 
-    def _scroll_doc_ids(self):
+    def _scroll_doc_ids(self,limit=100):
         ids = []
         response = self.scroll(id_scroll=True)
         scroll_id = response['_scroll_id']
         hits = response['hits']['hits']
+
         while hits:
             hits = response['hits']['hits']
             for hit in hits:
                 ids.append(hit['_id'])
+                if len(ids) == limit:
+                    return ids
             response = self.scroll(scroll_id=scroll_id)
             scroll_id = response['_scroll_id']
         return ids

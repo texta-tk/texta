@@ -301,21 +301,26 @@ def mlt_query(request):
     es_params = request.POST
     mlt_field = json.loads(es_params['mlt_field'])['path']
 
+    handle_negatives = request.POST['handle_negatives']
+    docs_accepted = [a.strip() for a in request.POST['docs'].split('\n') if a]
+    docs_rejected = [a.strip() for a in request.POST['docs_rejected'].split('\n') if a]
+
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
-    response = es_m.more_like_this_search(mlt_field)
+    response = es_m.more_like_this_search(mlt_field,docs_accepted=docs_accepted,docs_rejected=docs_rejected,handle_negatives=handle_negatives)
 
     documents = []
     
     for hit in response['hits']['hits']:
         field_content = get_field_content(hit,mlt_field)
-        documents.append({'id':hit['_id'],mlt_field:field_content})
+        documents.append({'id':hit['_id'],'content':field_content})
 
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'documents':documents}
+    
     template = loader.get_template('mlt_results.html')
     return HttpResponse(template.render(template_params, request))
 

@@ -40,24 +40,17 @@
 										</div>
 									</div>
 								</div>
-								<div class="panel bg-grey">
-									<div class="row padded-row">
-
-										<div class="col-sm-12 text-center">
-											<b>Filters</b>
-										</div>
-										<div class="col-sm-12">
-											<div id="constraints" class="container-fluid"></div>
-										</div>
-									</div>
-								</div>
+								
+								<div id="constraints"></div>
+								
+								
 								<div class="row">
 									<div class="col-sm-12"><button type="button" onclick="javascript:query();" class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span> Search</button></div>
 								</div>
 							</div>
 							
 							<div id="mlt_params" class="tab-pane fade">							
-							
+								<input type="hidden" id="docs_rejected" name="docs_rejected">
 								<div class="panel bg-grey">
 									<div class="row padded-row">
 										<div class="col-sm-12">
@@ -78,6 +71,22 @@
 										<div class="col-sm-12">
 											<textarea class="form-control input-sm" rows="5" id="docs" name="docs"></textarea>
 										</div>
+										<div class="col-sm-12">
+											<b>Stop words:</b>
+										</div>
+										<div class="col-sm-12">
+											<textarea class="form-control input-sm" rows="5" id="stopwords" name="stopwords"></textarea>
+										</div>
+
+										<div class="col-sm-12">
+											<b>Handle rejected documents:</b>
+										</div>
+										<div class="col-sm-12">
+											<select id="handle_negatives" name="handle_negatives" class="form-control">
+												<option value="ignore" selected="selected">ignore rejected</option>
+												<option value="unlike">unlike rejected</option>
+											</select>
+										</div>																				
 									</div>
 								</div>
 								<div class="row">
@@ -339,12 +348,14 @@
 		</div>
 	</div>
 
-	<div id="field_hidden" style="display: none;">
+	<div id="field_hidden" style="display: none;" class="panel bg-grey">
 		<input type="hidden" name="match_field_" id="match_field_">
 
 			<div class="row padded-row">
-				<b><span id="selected_field_"></span></b>
-				<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+				<div class="col-sm-12">
+					<b><span id="selected_field_"></span></b>
+					<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+				</div>
 			</div>
 			<div class="row padded-row">
 				<div class="col-sm-4">
@@ -409,7 +420,7 @@
 		</div>
 	</div>
 
-	<div id="field_hidden_date" style="display: none;">
+	<div id="field_hidden_date" style="display: none;" class="panel bg-grey">
 		<input type="hidden" name="daterange_field_" id="daterange_field_">
 		<div class="row padded-row">
 			<div class="col-sm-12">
