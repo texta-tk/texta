@@ -1,0 +1,10 @@
+<table class="table">
+
+{% for doc in documents %}
+	<tr>
+	{% for key,val in doc.items %}
+		<td>{{val}}</td>
+	{% endfor %}
+	</tr>
+{% endfor %}
+</table>

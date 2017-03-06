@@ -6,6 +6,7 @@ from corpus_tool import views
 urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'search', views.search, name='search'),
+    url(r'mlt_query', views.mlt_query, name='mlt_query'),
     url(r'remove_by_query', views.remove_by_query, name='remove_by_query'),
     url(r'get_query', views.get_query, name='get_query'),
     url(r'aggregate', views.aggregate, name='aggregate'),

@@ -614,5 +614,61 @@ class ES_Manager:
                 self.combined_query['main']['query']['bool']['must_not'].append(constraint)
 
 
-    def more_like_this_search(self):
-        pass
+    def more_like_this_search(self,field,stopwords=None):
+        
+        doc_ids = self._scroll_doc_ids()
+
+        print doc_ids
+
+        mlt = {
+            "more_like_this": {
+                "fields" : [field],
+                "like" : self._add_doc_ids_to_query(doc_ids,self.index,self.mapping),
+                "min_term_freq" : 1,
+                "max_query_terms" : 12,
+            }
+        }
+
+        if stopwords:
+            mlt["more_like_this"]["stop_words"] = stopwords
+
+        query = {
+            "query":{
+                "bool":{
+                    "must":[mlt]
+                }
+            },
+            "size":10,
+            "highlight" : {
+                "pre_tags" : ["<b>"],
+                "post_tags" : ["</b>"],
+                "fields" : {
+                    field : {}
+                }
+            }
+        }
+
+        response = ES_Manager.plain_search(self.es_url, self.index, self.mapping, query)
+        
+        return response
+
+
+    def _add_doc_ids_to_query(self,ids,index,mapping):
+        out = []
+        for id in ids:
+            out.append({"_index" : index, "_type" : mapping, "_id" : id})
+        return out
+
+
+    def _scroll_doc_ids(self):
+        ids = []
+        response = self.scroll(id_scroll=True)
+        scroll_id = response['_scroll_id']
+        hits = response['hits']['hits']
+        while hits:
+            hits = response['hits']['hits']
+            for hit in hits:
+                ids.append(hit['_id'])
+            response = self.scroll(scroll_id=scroll_id)
+            scroll_id = response['_scroll_id']
+        return ids
