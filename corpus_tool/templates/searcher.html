@@ -10,7 +10,7 @@
 		<div class="col-lg-3">
 			<form id="filters">
 			<div class="panel">
-				<div class="panel-heading">Current Search <span onclick="get_query();" data-toggle="modal" data-target="#query-modal" class="glyphicon glyphicon-sunglasses pull-right pointer"></span></div>
+				<div class="panel-heading">Current Search <div class="pull-right"><span class="glyphicon glyphicon-floppy-disk pointer" onclick="javascript:save();"></span> <span onclick="get_query();" data-toggle="modal" data-target="#query-modal" class="glyphicon glyphicon-sunglasses pointer"></span></div></div>
 				<div class="panel-body">
 					<div class="form-group">
 
@@ -38,6 +38,10 @@
 												{% endfor %}
 											</select>
 										</div>
+									</div>
+								</div>
+								<div class="panel bg-grey">
+									<div class="row padded-row">
 
 										<div class="col-sm-12 text-center">
 											<b>Filters</b>
@@ -46,9 +50,6 @@
 											<div id="constraints" class="container-fluid"></div>
 										</div>
 									</div>
-								</div>
-								<div class="row">
-									<div class="col-sm-12"><button class="btn btn-default form-control" type="button" onclick="javascript:save();"><span class="glyphicon glyphicon-floppy-disk"></span> Save Search</button></div>
 								</div>
 								<div class="row">
 									<div class="col-sm-12"><button type="button" onclick="javascript:query();" class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span> Search</button></div>
@@ -338,14 +339,14 @@
 		</div>
 	</div>
 
-	<div id="field_hidden" class="panel panel-default" style="display: none;">
+	<div id="field_hidden" style="display: none;">
 		<input type="hidden" name="match_field_" id="match_field_">
-		<div class="panel-heading">
-			<span id="selected_field_"></span>
-			<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
-		</div>
-		<div class="panel-body">
-			<div class="row">
+
+			<div class="row padded-row">
+				<b><span id="selected_field_"></span></b>
+				<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+			</div>
+			<div class="row padded-row">
 				<div class="col-sm-4">
 					<b>Bool:</b><br>
 					<select id="match_operator_" name="match_operator_" class="form-control input-sm">
@@ -374,13 +375,13 @@
 					</select> 
 				</div>
 			</div>
-			<div class="row">
+			<div class="row padded-row">
 				<div class="col-sm-12">
 					<textarea id="match_txt_" name="match_txt_" class="form-control"></textarea>
 					<ul name="suggestions_" id="suggestions_" class="list-group"></ul>
 				</div>
 			</div>
-		</div>
+
 	</div>
 
 	<div id="field_hidden_fact" class="panel panel-default" style="display: none;">
@@ -408,16 +409,20 @@
 		</div>
 	</div>
 
-	<div id="field_hidden_date" class="panel panel-default" style="display: none;">
+	<div id="field_hidden_date" style="display: none;">
 		<input type="hidden" name="daterange_field_" id="daterange_field_">
-		<div class="panel-heading">
-			<span id="selected_field_"></span>
-			<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+		<div class="row padded-row">
+			<div class="col-sm-12">
+				<b><span id="selected_field_"></span></b>
+				<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+			</div>
 		</div>
-		<div class="panel-body">
+		<div class="row padded-row">
+			<div class="col-sm-12">
 				<b>Date range (yyyy-mm-dd):</b>
 				<input type="text" placeholder="from" id="daterange_from_" class="form-control input-sm">
-				<input type="text" id="daterange_to_" placeholder="to" class="form-control input-sm">			
+				<input type="text" id="daterange_to_" placeholder="to" class="form-control input-sm">
+			</div>
 		</div>
 	</div>
 	
