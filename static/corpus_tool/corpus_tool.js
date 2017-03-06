@@ -226,6 +226,7 @@ function mlt_query(){
     var request = new XMLHttpRequest();
 
     request.onreadystatechange=function() {
+		$("#right").html('Loading...');
         if (request.readyState==4 && request.status==200) {
             $("#right").html(request.responseText);
         }

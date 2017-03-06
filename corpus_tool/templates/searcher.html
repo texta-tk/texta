@@ -13,36 +13,85 @@
 				<div class="panel-heading">Current Search <span onclick="get_query();" data-toggle="modal" data-target="#query-modal" class="glyphicon glyphicon-sunglasses pull-right pointer"></span></div>
 				<div class="panel-body">
 					<div class="form-group">
-						<div class="row">
-							<div class="col-sm-6">Add constraint:</div>
-							<div class="col-sm-6">
-								<select id="constraint_field" name="constraint_field" onchange="javascript:add_field('{{date_range.min}}','{{date_range.max}}');" class="form-control input-sm">
-									<option></option>
-									{% for field in fields %}
-										<option value="{{field.data}}">{{field.label}}</option>
-									{% endfor %}
-								</select>
+
+						<ul class="nav nav-tabs">
+							<li class="active"><a data-toggle="tab" href="#search_params">Basic Search</a></li>
+							<li><a data-toggle="tab" href="#mlt_params">Similarity Search</a></li>
+						</ul>
+
+						<div class="tab-content">
+							<div id="search_params" class="tab-pane fade in active">
+
+								<div class="panel bg-grey">
+									<div class="row padded-row">
+										<div class="col-sm-12 text-center">
+											<b>Add Filter</b>
+										</div>
+										<div class="col-sm-12">
+											<b>Select field:</b>
+										</div>
+										<div class="col-sm-12">
+											<select id="constraint_field" name="constraint_field" onchange="javascript:add_field('{{date_range.min}}','{{date_range.max}}');" class="form-control input-sm">
+												<option></option>
+												{% for field in fields %}
+													<option value="{{field.data}}">{{field.label}}</option>
+												{% endfor %}
+											</select>
+										</div>
+									</div>
+								</div>
+
+								<div class="panel bg-grey">
+									<div class="row padded-row">
+										<div class="col-sm-12 text-center">
+											<b>Filters</b>
+										</div>
+										<div class="col-sm-12">
+											<div id="constraints" class="container-fluid"></div>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-sm-12"><button class="btn btn-default form-control" type="button" onclick="javascript:save();"><span class="glyphicon glyphicon-floppy-disk"></span> Save Search</button></div>
+								</div>
+								<div class="row">
+									<div class="col-sm-12"><button type="button" onclick="javascript:query();" class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span> Search</button></div>
+								</div>
+							</div>
+							
+							<div id="mlt_params" class="tab-pane fade">							
+							
+								<div class="panel bg-grey">
+									<div class="row padded-row">
+										<div class="col-sm-12">
+											<b>Select field:</b>
+										</div>
+										<div class="col-sm-12">
+											<select name="mlt_field" id="mlt_field" class="form-control input-sm">
+												{% for field in fields %}
+													{% if field.type == 'string' %}
+														<option value="{{field.data}}">{{field.label}}</option>
+													{% endif %}
+												{% endfor %}							
+											</select>
+										</div>
+										<div class="col-sm-12">
+											<b>Selected documents:</b>
+										</div>
+										<div class="col-sm-12">
+											<textarea class="form-control input-sm" rows="5" id="docs" name="docs"></textarea>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-sm-12">
+										<button type="button" onclick="javascript:mlt_query();" class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span> Search for Similar</button>
+									
+									</div>
+								</div>
 							</div>
 						</div>
-						<div class="row">
-							<div id="constraints" class="container-fluid"></div>
-						</div>
-						<div class="row">
-							<div class="col-sm-12"><button class="btn btn-default form-control" type="button" onclick="javascript:save();"><span class="glyphicon glyphicon-floppy-disk"></span> Save Search</button></div>
-						</div>
-						<div class="row">
-							<div class="col-sm-12"><button type="button" onclick="javascript:query();" class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span> Search</button></div>
-						</div>
-						<div class="row">
-							<div class="col-sm-12">
-							<select name="mlt_field" id="mlt_field" class="form-control">
-								{% for field in fields %}
-									<option value="{{field.data}}">{{field.label}}</option>
-								{% endfor %}							
-							</select>
-							<button type="button" onclick="javascript:mlt_query();" class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span> More Like This</button>
-							</div>
-						</div>
+						
 					</div>
 				</div>
 			</div>
