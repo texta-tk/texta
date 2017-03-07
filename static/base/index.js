@@ -34,10 +34,6 @@ $('#grammar_builder').click(function() {
     window.location = LINK_GRAMMAR_BUILDER;
 })
 
-$('#document_miner').click(function() {
-    window.location = LINK_DOCUMENT_MINER;
-})
-
 $('#notRegistered').click(function() {
     $(this).hide()
     $('#registrationForm').slideDown(1000);

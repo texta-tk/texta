@@ -8,113 +8,130 @@
 
 <link rel="stylesheet" href="{{STATIC_URL}}grammar_builder/themes/default/style.min.css" />
 <script src="{{STATIC_URL}}grammar_builder/jstree.min.js"></script>
+		
+        <div class="container-fluid">
 
-    <div class="panel">
-        <div class="panel-body">
-            <ul class="nav nav-pills">
-                <li class="nav-item">
-                    <a class="nav-link active" data-toggle="tab" href="#new-component-tab">Grammar</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-toggle="tab" href="#test-grammar-tab">Test</a>
-                </li>
-            </ul>
-        </div>
-        
-        <div class="tab-content">
-            <div class="tab-pane active" id="new-component-tab" role="tabpanel">
                 <div class="row">
-                    <div class="col-sm-6">
+                    <div class="col-lg-4">
                         <div class="panel">
-                            <div class="panel-heading">
-                                Grammar tree
-                            </div>
-                            
+                            <div class="panel-heading">Grammar</div>                         
                             <div class="panel-body">
-                                <div class="form-inline">
-                                    <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-6">
                                         <select class="form-control" id="selected-grammar">
                                             <option value="new">New grammar...</option>
                                         </select>
                                     </div>
-                                    <button type="button" class="btn btn-success" id="load-grammar-btn">Load</button> 
-                                    <button type="button" class="btn btn-success" id="save-grammar-btn">Save</button>
-                                    <button type="button" class="btn btn-danger" id="delete-grammar-btn">Delete</button>
-                                </div>    
-                                <div id="new-grammar-tree"></div>
-                            <button type="button" class="btn btn-primary center-block" id="test-whole-tree-btn">Test whole tree</button>
-                            </div>
-                            
+									<div class="col-md-6">
+                                    <button type="button" class="btn btn-default" id="load-grammar-btn"><span class="glyphicon glyphicon-floppy-open"></span></button> 
+                                    <button type="button" class="btn btn-default" id="save-grammar-btn"><span class="glyphicon glyphicon-floppy-save"></span></button>
+                                    <button type="button" class="btn btn-danger" id="delete-grammar-btn"><span class="glyphicon glyphicon-floppy-remove"></span></button>
+									</div>
+                                </div>
+								<div class="row">
+									<div class="col-md-12">
+										<div id="new-grammar-tree"></div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-12">
+										<button type="button" class="btn btn-default form-control" id="test-whole-tree-btn">Test Grammar</button>
+									</div>
+								</div>
+                            </div>                           
                         </div>
-                    </div>
-                    
-                    <div class="col-sm-5">
+
                         <div class="panel">
                             <div class="panel-heading">
-                                Component details
+                                Component Details
                             </div>
-                        </div>
-                        <div class="panel-body">
-                            <div class="hidden" id="basic-details">
-                                <div class="form-group">
-                                    <label for="basic-type" class="control-label">Type</label>
-                                    <select class="form-control" id="basic-type">
-                                        <option value="exact">Exact match</option>
-                                        <option value="regex">Regular expression</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="basic-layer" class="control-label">Layer</label>
-                                    <select class="form-control" id="basic-layer">
-                                        <option value="" selected></option>
-                                        {% for feature in features %}
-                                        <option value="{{feature}}">{{feature}}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="basic-content" class="control-label">Content</label>
-                                    <textarea class="form-control" rows="3" id="basic-content" placeholder=""></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label for="basic-sensitivity" class="control-label">Case-sensitive</label>
-                                    <input type="checkbox" id="basic-sensitivity">
-                                </div>
-                            </div>
-                            
-                            <div class="hidden" id="aggregation-details">
-                                <div class="form-group">
-                                    <label for="aggregation-type" class="control-label">Type</label>
-                                    <select class="form-control" id="aggregation-type">
-                                        <option value="intersect">Intersection</option>
-                                        <option value="union">Union</option>
-                                        <option value="concat">Concatenation</option>
-                                        <option value="gap">Gap</option>
-                                    </select>
-                                </div>
 
-                                <div id="gap-params" class="hidden form-inline">
-                                    <div class="form-group">
-                                        <label for="gap-slop">Slop</label>
-                                        <input type="text" class="form-control" id="gap-slop" placeholder="Integer">
-                                    </div>
-                                    <div class="form-group">
-                                        <div class="checkbox">
-                                            <label for="gap-match-first" class="control-label">Match first</label>
-                                            <input type="checkbox" class="form-control" id="gap-match-first">
-                                        </div>
-                                    </div>
-                                </div>
-                                    
-                            </div>
-                            <button id="save-details-btn" type="button" class="btn btn-success">Change</button>
-                        </div>
+							<div class="panel-body">
+								<div class="hidden" id="basic-details">
+									<div class="form-group">
+										<label for="basic-type" class="control-label">Type</label>
+										<select class="form-control" id="basic-type">
+											<option value="exact">Exact match</option>
+											<option value="regex">Regular expression</option>
+										</select>
+									</div>
+									
+									<div class="form-group">
+										<label for="basic-layer" class="control-label">Layer</label>
+										<select class="form-control" id="basic-layer">
+											<option value="" selected></option>
+											{% for feature in features %}
+											<option value="{{feature}}">{{feature}}</option>
+											{% endfor %}
+										</select>
+									</div>
+									<div class="form-group">
+										<label for="basic-content" class="control-label">Content</label>
+										<textarea class="form-control" rows="3" id="basic-content" placeholder=""></textarea>
+									</div>
+									<div class="form-group">
+										<label for="basic-sensitivity" class="control-label">Case-sensitive</label>
+										<input type="checkbox" id="basic-sensitivity">
+									</div>
+								</div>
+								
+								<div class="hidden" id="aggregation-details">
+									<div class="form-group">
+										<label for="aggregation-type" class="control-label">Type</label>
+										<select class="form-control" id="aggregation-type">
+											<option value="intersect">Intersection</option>
+											<option value="union">Union</option>
+											<option value="concat">Concatenation</option>
+											<option value="gap">Gap</option>
+										</select>
+									</div>
+
+									<div id="gap-params" class="hidden form-inline">
+										<div class="form-group">
+											<label for="gap-slop">Slop</label>
+											<input type="text" class="form-control" id="gap-slop" placeholder="Integer">
+										</div>
+										<div class="form-group">
+											<div class="checkbox">
+												<label for="gap-match-first" class="control-label">Match first</label>
+												<input type="checkbox" class="form-control" id="gap-match-first">
+											</div>
+										</div>
+									</div>
+										
+								</div>
+								<button id="save-details-btn" type="button" class="btn btn-default form-control">Change Component</button>
+							</div>
+						</div>
                     </div>
-                </div>
-                
-            </div>
-            <div class="tab-pane" id="test-grammar-tab" role="tabpanel">
+					
+					<div class="col-lg-8">
+						<div class="panel">
+							<div class="panel-heading">
+								Grammar Results
+							</div>
+							<div class="panel-body">
+								<ul class="nav nav-pills">
+									<li class="active"><a data-toggle="tab" href="#matched-documents-tab" role="tab">Matched documents</a></li>
+									<li><a data-toggle="tab" href="#unmatched-documents-tab" role="tab">Unmatched documents</a></li>
+								</ul>
+								<div class="tab-content">
+									<div class="tab-pane active" id="matched-documents-tab" role="tabpanel">
+										<div class="panel">
+											<div class="panel-body" id="matched-documents-content">
+											</div>
+										</div>
+									</div>
+									<div class="tab-pane" id="unmatched-documents-tab" role="tabpanel">
+										<div class="panel">
+											<div class="panel-body" id="unmatched-documents-content">
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
                 <div class="panel">
                     <div class="panel-body">
                         <div class="form-inline">
@@ -137,37 +154,24 @@
                                 <select id="exclusive-grammar-selection">
                                 </select>
                             </div>
-                            <button type="button" class="btn btn-success" id="match-grammar-btn">Match</button>
+                            <button type="button" class="btn btn-default" id="match-grammar-btn">Match</button>
                         </div>
                     </div>
+                </div>						
+						
+					</div>
+					
+					
+					
                 </div>
                 
-                <div>
-                    <ul class="nav nav-tabs">
-                        <li class="nav-item">
-                            <a class="nav-link active" data-toggle="tab" href="#matched-documents-tab" role="tab">Matched documents</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" data-toggle="tab" href="#unmatched-documents-tab" role="tab">Unmatched documents</a>
-                        </li>
-                    </ul>
-                    <div class="tab-content">
-                        <div class="tab-pane active" id="matched-documents-tab" role="tabpanel">
-                            <div class="panel">
-                                <div class="panel-body" id="matched-documents-content">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="tab-pane" id="unmatched-documents-tab" role="tabpanel">
-                            <div class="panel">
-                                <div class="panel-body" id="unmatched-documents-content">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            </div>
+			
+
+                
+                
             </div>
         </div>
-    </div>
+
 <script type="application/javascript" src="{{STATIC_URL}}grammar_builder/grammar_builder.js"></script>
 {% endblock %}

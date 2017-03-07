@@ -1,0 +1,20 @@
+<table class="table table-striped">
+	<thead>
+		<tr>
+			<th>Doc ID</th>
+			<th>Accept</th>
+			<th>Reject</th>
+			<th>Text</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for doc in documents %}
+			<tr id="row_{{doc.id}}">
+				<td>{{doc.id}}</td>
+				<td><a href="javascript:accept_document({{doc.id}})"><span class="glyphicon glyphicon-plus"></span></a></td>
+				<td><a href="javascript:reject_document({{doc.id}})"><span class="glyphicon glyphicon-remove"></span></a></a></td>
+				<td>{{doc.content}}</td>
+			</tr>
+		{% endfor %}
+	</tbody>
+</table>

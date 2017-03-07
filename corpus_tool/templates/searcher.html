@@ -10,29 +10,94 @@
 		<div class="col-lg-3">
 			<form id="filters">
 			<div class="panel">
-				<div class="panel-heading">Current Search <span onclick="get_query();" data-toggle="modal" data-target="#query-modal" class="glyphicon glyphicon-sunglasses pull-right pointer"></span></div>
+				<div class="panel-heading">Current Search <div class="pull-right"><span class="glyphicon glyphicon-floppy-disk pointer" onclick="javascript:save();"></span> <span onclick="get_query();" data-toggle="modal" data-target="#query-modal" class="glyphicon glyphicon-sunglasses pointer"></span></div></div>
 				<div class="panel-body">
 					<div class="form-group">
-						<div class="row">
-							<div class="col-sm-6">Add constraint:</div>
-							<div class="col-sm-6">
-								<select id="constraint_field" name="constraint_field" onchange="javascript:add_field('{{date_range.min}}','{{date_range.max}}');" class="form-control input-sm">
-									<option></option>
-									{% for field in fields %}
-										<option value="{{field.data}}">{{field.label}}</option>
-									{% endfor %}
-								</select>
+
+						<ul class="nav nav-tabs">
+							<li class="active"><a data-toggle="tab" href="#search_params">Basic Search</a></li>
+							<li><a data-toggle="tab" href="#mlt_params">Similarity Search</a></li>
+						</ul>
+
+						<div class="tab-content">
+							<div id="search_params" class="tab-pane fade in active">
+
+								<div class="panel bg-grey">
+									<div class="row padded-row">
+										<div class="col-sm-12 text-center">
+											<b>Add Filter</b>
+										</div>
+										<div class="col-sm-12">
+											<b>Select field:</b>
+										</div>
+										<div class="col-sm-12">
+											<select id="constraint_field" name="constraint_field" onchange="javascript:add_field('{{date_range.min}}','{{date_range.max}}');" class="form-control input-sm">
+												<option></option>
+												{% for field in fields %}
+													<option value="{{field.data}}">{{field.label}}</option>
+												{% endfor %}
+											</select>
+										</div>
+									</div>
+								</div>
+								
+								<div id="constraints"></div>
+								
+								
+								<div class="row">
+									<div class="col-sm-12"><button type="button" onclick="javascript:query();" class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span> Search</button></div>
+								</div>
+							</div>
+							
+							<div id="mlt_params" class="tab-pane fade">							
+								<input type="hidden" id="docs_rejected" name="docs_rejected">
+								<div class="panel bg-grey">
+									<div class="row padded-row">
+										<div class="col-sm-12">
+											<b>Select field:</b>
+										</div>
+										<div class="col-sm-12">
+											<select name="mlt_field" id="mlt_field" class="form-control input-sm">
+												{% for field in fields %}
+													{% if field.type == 'string' %}
+														<option value="{{field.data}}">{{field.label}}</option>
+													{% endif %}
+												{% endfor %}							
+											</select>
+										</div>
+										<div class="col-sm-12">
+											<b>Selected documents:</b>
+										</div>
+										<div class="col-sm-12">
+											<textarea class="form-control input-sm" rows="5" id="docs" name="docs"></textarea>
+										</div>
+										<div class="col-sm-12">
+											<b>Stop words:</b>
+										</div>
+										<div class="col-sm-12">
+											<textarea class="form-control input-sm" rows="5" id="stopwords" name="stopwords"></textarea>
+										</div>
+
+										<div class="col-sm-12">
+											<b>Handle rejected documents:</b>
+										</div>
+										<div class="col-sm-12">
+											<select id="handle_negatives" name="handle_negatives" class="form-control">
+												<option value="ignore" selected="selected">ignore rejected</option>
+												<option value="unlike">unlike rejected</option>
+											</select>
+										</div>																				
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-sm-12">
+										<button type="button" onclick="javascript:mlt_query();" class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span> Search for Similar</button>
+									
+									</div>
+								</div>
 							</div>
 						</div>
-						<div class="row">
-							<div id="constraints" class="container-fluid"></div>
-						</div>
-						<div class="row">
-							<div class="col-sm-12"><button class="btn btn-default form-control" type="button" onclick="javascript:save();"><span class="glyphicon glyphicon-floppy-disk"></span> Save Search</button></div>
-						</div>
-						<div class="row">
-							<div class="col-sm-12"><button type="button" onclick="javascript:query();" class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span> Search</button></div>
-						</div>
+						
 					</div>
 				</div>
 			</div>
@@ -283,14 +348,16 @@
 		</div>
 	</div>
 
-	<div id="field_hidden" class="panel panel-default" style="display: none;">
+	<div id="field_hidden" style="display: none;" class="panel bg-grey">
 		<input type="hidden" name="match_field_" id="match_field_">
-		<div class="panel-heading">
-			<span id="selected_field_"></span>
-			<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
-		</div>
-		<div class="panel-body">
-			<div class="row">
+
+			<div class="row padded-row">
+				<div class="col-sm-12">
+					<b><span id="selected_field_"></span></b>
+					<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+				</div>
+			</div>
+			<div class="row padded-row">
 				<div class="col-sm-4">
 					<b>Bool:</b><br>
 					<select id="match_operator_" name="match_operator_" class="form-control input-sm">
@@ -319,14 +386,13 @@
 					</select> 
 				</div>
 			</div>
-			<div class="row">
+			<div class="row padded-row">
 				<div class="col-sm-12">
 					<textarea id="match_txt_" name="match_txt_" class="form-control"></textarea>
 					<ul name="suggestions_" id="suggestions_" class="list-group"></ul>
 				</div>
 			</div>
 
-		</div>
 	</div>
 
 	<div id="field_hidden_fact" class="panel panel-default" style="display: none;">
@@ -354,16 +420,20 @@
 		</div>
 	</div>
 
-	<div id="field_hidden_date" class="panel panel-default" style="display: none;">
+	<div id="field_hidden_date" style="display: none;" class="panel bg-grey">
 		<input type="hidden" name="daterange_field_" id="daterange_field_">
-		<div class="panel-heading">
-			<span id="selected_field_"></span>
-			<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+		<div class="row padded-row">
+			<div class="col-sm-12">
+				<b><span id="selected_field_"></span></b>
+				<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+			</div>
 		</div>
-		<div class="panel-body">
+		<div class="row padded-row">
+			<div class="col-sm-12">
 				<b>Date range (yyyy-mm-dd):</b>
 				<input type="text" placeholder="from" id="daterange_from_" class="form-control input-sm">
-				<input type="text" id="daterange_to_" placeholder="to" class="form-control input-sm">			
+				<input type="text" id="daterange_to_" placeholder="to" class="form-control input-sm">
+			</div>
 		</div>
 	</div>
 	

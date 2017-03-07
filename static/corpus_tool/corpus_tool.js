@@ -219,6 +219,37 @@ function query(){
     
 }
 
+
+function mlt_query(){
+
+    var formElement = document.getElementById("filters");
+    var request = new XMLHttpRequest();
+
+    request.onreadystatechange=function() {
+		$("#right").html('Loading...');
+        if (request.readyState==4 && request.status==200) {
+            $("#right").html(request.responseText);
+        }
+    }
+
+    request.open("POST",PREFIX+'/mlt_query');
+    request.send(new FormData(formElement));   
+	
+}
+
+
+function accept_document(id){
+	$('#docs').val($('#docs').val()+id+'\n');
+	$('#row_'+id).remove();
+}
+
+
+function reject_document(id){
+	$('#docs_rejected').val($('#docs_rejected').val()+id+'\n');
+	$('#row_'+id).remove();
+}
+
+
 function lookup(content,id,action,field_name, lookup_type){
     var lookup_data = {content: content, id: id, action: action, field_name: field_name, lookup_type: lookup_type}
 	$.post(PREFIX+'/autocomplete', lookup_data, function(data) {

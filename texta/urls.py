@@ -14,6 +14,5 @@ urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^permission_admin/', include('permission_admin.urls')),
     url(r'^grammar_builder/', include('grammar_builder.urls')),
-    url(r'^document_miner/', include('document_miner.urls')),
     url(r'static/(?P<path>.*)$',static.serve,{'document_root': 'static'})
 ]
