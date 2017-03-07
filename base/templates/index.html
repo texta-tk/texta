@@ -47,17 +47,14 @@
 						</ul>
 					</li>
 					<li class="dropdown">
-						<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-file"></span> Document Management<span class="caret"></span></a>
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-lock"></span> Restricted<span class="caret"></span></a>
 						<ul class="dropdown-menu">
-							{% if perms.model_manager.change_modelrun %}
-								<li id="model_manager"><a href="#"><span class="glyphicon glyphicon-lock"></span> Model Manager</a></li>
+							{% if request.user.is_superuser %}
+								<li id="model_manager"><a href="#"><span class="glyphicon glyphicon-sort-by-alphabet"></span> Model Manager</a></li>
+								<li id="permission_admin"><a href="#"><span class='glyphicon glyphicon-wrench'></span> Administration</a></li>
 							{% endif %}
-							<li id="document_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Document Miner</a></li>
 						</ul>
 					</li>
-                    {% if request.user.is_superuser %}
-                        <li id="permission_admin"><a href="#"><span class='glyphicon glyphicon-wrench'></span> Admin</a></li>
-                    {% endif %}
 		        {% endif %}
             </ul>
             {% if request.user.is_authenticated %}

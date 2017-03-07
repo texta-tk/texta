@@ -197,7 +197,6 @@ INSTALLED_APPS = (
     'base',
     'permission_admin',
     'grammar_builder',
-    'document_miner',
 )
 
 ############################ Elasticsearch ###########################
