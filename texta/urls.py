@@ -10,6 +10,7 @@ urlpatterns = [
     url(r'corpus_tool', include('corpus_tool.urls')),
     url(r'account', include('account.urls')),
     url(r'model_manager', include('model_manager.urls')),
+    url(r'classification_manager', include('classification_manager.urls')),
     url(r'ontology_viewer', include('ontology_viewer.urls')),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^permission_admin/', include('permission_admin.urls')),

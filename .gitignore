@@ -14,6 +14,8 @@ grammar_builder/migrations/
 !grammar_builder/migrations/__init__.py
 model_manager/migrations/
 !model_manager/migrations/__init__.py
+classification_manager/migrations/
+!classification_manager/migrations/__init__.py
 permission_admin/migrations/
 !permission_admin/migrations/__init__.py
 conceptualiser/migrations/

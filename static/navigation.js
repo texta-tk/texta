@@ -8,6 +8,7 @@ var LINK_ROOT = LINK_PREFIX + '/';
 var LINK_CONCEPTUALISER = LINK_PREFIX + '/conceptualiser';
 var LINK_ACCOUNT = LINK_PREFIX + '/account';
 var LINK_MODEL_MANAGER = LINK_PREFIX + '/model_manager';
+var LINK_CLASSIFICATION_MANAGER = LINK_PREFIX + '/classification_manager';
 var LINK_ONTOLOGY_VIEWER = LINK_PREFIX + '/ontology_viewer';
 var LINK_PERMISSION_ADMIN = LINK_PREFIX + '/permission_admin';
 var LINK_GRAMMAR_BUILDER = LINK_PREFIX + '/grammar_builder';

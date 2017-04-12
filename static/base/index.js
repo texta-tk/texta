@@ -1,54 +1,58 @@
 $('#lex_miner').click(function() {
     window.location = LINK_LEXMINER;
-})
+});
 
 $('#corpus_tool').click(function() {
     window.location = LINK_CORPUS_TOOL;
-})
+});
 
 $('#mwe_miner').click(function() {
     window.location = LINK_MWE;
-})
+});
 
 $('#home').click(function() {
     window.location = LINK_ROOT;
-})
+});
 
 $('#conceptualizer').click(function() {
     window.location = LINK_CONCEPTUALISER;
-})
+});
 
 $('#model_manager').click(function() {
     window.location = LINK_MODEL_MANAGER;
-})
+});
+
+$('#classification_manager').click(function() {
+    window.location = LINK_CLASSIFICATION_MANAGER;
+});
 
 $('#ontology_viewer').click(function() {
     window.location = LINK_ONTOLOGY_VIEWER;
-})
+});
 
 $('#permission_admin').click(function() {
     window.location = LINK_PERMISSION_ADMIN;
-})
+});
 
 $('#grammar_builder').click(function() {
     window.location = LINK_GRAMMAR_BUILDER;
-})
+});
 
 $('#notRegistered').click(function() {
-    $(this).hide()
+    $(this).hide();
     $('#registrationForm').slideDown(1000);
-})
+});
 
 $('#cancelRegistrationBtn').click(function() {
     $('#registrationForm').slideUp(1000, function() {
         $('#notRegistered').slideDown(300);
     });
     clearRegistrationForm();
-})
+});
 
 $('#registrationForm > .form-group > .form-control').focus(function() {
     validateInput($(this).attr('id'));
-})
+});
 
 function registerAccount() {
 
