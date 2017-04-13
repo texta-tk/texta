@@ -124,7 +124,7 @@
                     <td>{{run.run_started|date:"d.m.Y H:i"}}</td>
                     <td>{{run.run_completed|date:"d.m.Y H:i"}}</td>
                     <td>
-                        <a href="javascript:void(0)" onclick="go_to(LINK_CLASSIFICATION_MANAGER + '/delete_model?model_id={{run.pk}}')">
+                        <a href="javascript:void(0)" onclick="confirm_and_remove({{run.pk}})">
                             <span class="glyphicon glyphicon-remove"></span>
                         </a>
                     </td>

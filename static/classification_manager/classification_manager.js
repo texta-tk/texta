@@ -29,3 +29,10 @@ function train_classifier(){
 			alert('Parameters not set!');
 		}
 }
+
+
+function confirm_and_remove(model_id) {
+    if (confirm('Are you sure you want to delete the model ID '+model_id+' ?')) {
+        window.location = LINK_CLASSIFICATION_MANAGER + '/delete_model?model_id=' + model_id;
+    }
+}

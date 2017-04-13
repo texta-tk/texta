@@ -7,10 +7,9 @@ import string
 import threading
 from datetime import datetime
 
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
-from django.utils.encoding import smart_str
 
 from corpus_tool.models import Search
 from lm.views import model_manager as lm_model_manager
@@ -24,8 +23,6 @@ import numpy as np
 
 from classification_manager.models import ModelClassification
 from classification_manager import model_pipeline
-
-# TODO: add permission_required
 
 
 def get_fields(es_m):
@@ -87,6 +84,7 @@ def delete_model(request):
         
     return HttpResponseRedirect(URL_PREFIX + '/classification_manager')
 
+from multiprocessing import Process
 
 @login_required
 def start_training_job(request):
@@ -108,7 +106,11 @@ def start_training_job(request):
 
     clf_args = (request, usr, search_id, field_path, extractor_opt, reductor_opt,
                 normalizer_opt, classifier_opt, description)
-    clf_job = threading.Thread( target=train_classifier, args=clf_args)
+
+    # clf_job = threading.Thread( target=train_classifier, args=clf_args)
+    # clf_job.start()
+
+    clf_job = Process(target=train_classifier, args=clf_args)
     clf_job.start()
 
     return HttpResponse()
@@ -140,14 +142,17 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
         pipe_builder = model_pipeline.get_pipeline_builder()
         pipe_builder.set_pipeline_options(extractor_opt, reductor_opt, normalizer_opt, classifier_opt)
         clf_arch = pipe_builder.pipeline_representation()
-        c_pipe = pipe_builder.build()
+        c_pipe, params = pipe_builder.build()
+
+        print '---> Here is ok? ', params
+
         es_data = EsData(query, field_path, request)
         data_sample_x, data_sample_y = es_data.get_data_samples()
 
         show_progress.update(1)
-        model, score = model_pipeline.train_model_with_cv(c_pipe, data_sample_x, data_sample_y)
-        model_score = "{0:.2f}".format(score)
+        model, score, training_log = model_pipeline.train_model_with_cv(c_pipe, params, data_sample_x, data_sample_y)
 
+        model_score = "{0:.2f}".format(score['f1_score'])
         show_progress.update(2)
         model_name = 'classifier_{0}.pkl'.format(new_run.pk)
         output_model_file = os.path.join(MODELS_DIR, model_name)
@@ -308,5 +313,5 @@ class EsData(object):
         positive_samples, positive_set = self._get_positive_samples(sample_size)
         negative_samples = self._get_negative_samples(positive_set)
         data_sample_x = np.asarray(positive_samples + negative_samples)
-        data_sample_y = np.asarray(['P'] * len(positive_samples) + ['N'] * len(negative_samples))
+        data_sample_y = np.asarray([1] * len(positive_samples) + [0] * len(negative_samples))
         return data_sample_x, data_sample_y
