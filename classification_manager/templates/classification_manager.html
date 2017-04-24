@@ -110,6 +110,7 @@
 			<thead>
 			  <tr>
 				<th>Model ID</th>
+                <th>Key</th>
 				<th>Author</th>
                 <th>Tag</th>
 				<th>Description</th>
@@ -125,6 +126,7 @@
             {% for run in runs %}
                 <tr>
                     <td>{{run.pk}}</td>
+                    <td><a href="javascript:alert('{{run.model_key}}');">view</a></td>
                     <td>{{run.user}}</td>
                     <td>{{run.tag_label}}</td>
                     <td>{{run.run_description}}</td>

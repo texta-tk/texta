@@ -21,3 +21,4 @@ class ModelClassification(models.Model):
     tag_label = models.CharField(max_length=MAX_STR_LEN)
     train_summary = models.CharField(max_length=MAX_STR_LEN)
     dataset_pk = models.CharField(max_length=MAX_STR_LEN)
+    model_key = models.CharField(max_length=MAX_STR_LEN)

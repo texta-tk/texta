@@ -4,6 +4,8 @@ import logging
 import os
 from multiprocessing import Process
 from datetime import datetime
+import hashlib
+import random
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
@@ -120,21 +122,22 @@ def api_list_models(request):
         model['score'] = m.score
         model['tag_label'] = m.tag_label
         model['fields'] = m.fields
-        model['dataset_pk'] = m.dataset_pk
         model['architecture'] = m.clf_arch
         model['task_status'] = m.run_status
-
         data.append(model)
+
     return HttpResponse(json.dumps(data), content_type="application/json")
 
 
 def api_classify(request):
 
     data = {}
+
     try:
         req = request.GET
         model_id = req['model_id']
         docs = req['docs']
+        model_key = req['key']
 
         if docs == "all":
             docs_list = None
@@ -143,37 +146,41 @@ def api_classify(request):
 
         model = ModelClassification.objects.get(pk=model_id)
 
-        # Load model info
-        data['model_info'] = {}
-        data['model_info']['model_id'] = model_id
-        data['model_info']['training_score'] = model.score
-        data['model_info']['tag_label'] = model.tag_label
-        data['model_info']['task_status'] = model.run_status
-        data['model_info']['dataset_pk'] = model.dataset_pk
+        if model.model_key != model_key:
+            data['status'] = ['failed', 'invalid model key']
 
-        # Load dataset info
-        model_dataset = Dataset.objects.get(pk=model.dataset_pk)
-        data['dataset_info'] = {}
-        data['dataset_info']['index'] = model_dataset.index
-        data['dataset_info']['mapping'] = model_dataset.mapping
-        data['dataset_info']['daterange'] = model_dataset.daterange
-        data['dataset_info']['author'] = model_dataset.author.username
-
-        es_index = model_dataset.index
-        es_mapping = model_dataset.mapping
-        es_daterange = model_dataset.daterange
-        field_path = model.fields
-
-        if model.run_status == 'completed':
-            model_name = 'classifier_{0}.pkl'.format(model_id)
-            output_model_file = os.path.join(MODELS_DIR, model_name)
-            clf_model = model_pipeline.load_model(output_model_file)
-            es_classification = EsDataClassification(es_index, es_mapping, es_daterange, field_path)
-            _data = es_classification.apply_classifier(clf_model, model.tag_label, filter_ids=docs_list)
-            data.update(_data)
-            data['status'] = ['ok', 'classification completed']
         else:
-            data['status'] = ['failed', 'model has invalid status']
+            # Load model info
+            data['model_info'] = {}
+            data['model_info']['model_id'] = model_id
+            data['model_info']['training_score'] = model.score
+            data['model_info']['tag_label'] = model.tag_label
+            data['model_info']['task_status'] = model.run_status
+            data['model_info']['dataset_pk'] = model.dataset_pk
+
+            # Load dataset info
+            model_dataset = Dataset.objects.get(pk=model.dataset_pk)
+            data['dataset_info'] = {}
+            data['dataset_info']['index'] = model_dataset.index
+            data['dataset_info']['mapping'] = model_dataset.mapping
+            data['dataset_info']['daterange'] = model_dataset.daterange
+            data['dataset_info']['author'] = model_dataset.author.username
+
+            es_index = model_dataset.index
+            es_mapping = model_dataset.mapping
+            es_daterange = model_dataset.daterange
+            field_path = model.fields
+
+            if model.run_status == 'completed':
+                model_name = 'classifier_{0}.pkl'.format(model_id)
+                output_model_file = os.path.join(MODELS_DIR, model_name)
+                clf_model = model_pipeline.load_model(output_model_file)
+                es_classification = EsDataClassification(es_index, es_mapping, es_daterange, field_path)
+                _data = es_classification.apply_classifier(clf_model, model.tag_label, filter_ids=docs_list)
+                data.update(_data)
+                data['status'] = ['ok', 'classification completed']
+            else:
+                data['status'] = ['failed', 'model has invalid status']
 
     except Exception as e:
         print 'Error: ', e
@@ -206,13 +213,18 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
     model_status = 'running'
     model_score = "---"
     clf_arch = "---"
-    train_sumarry = "---"
+    train_summary = "---"
+
+    key_str = '{0}-{1}'.format(dataset_pk, random.random() * 100000)
+    model_key = hashlib.md5(key_str).hexdigest()
 
     new_run = ModelClassification(run_description=description, tag_label=tag_label, fields=field_path,
                                   score=model_score, search=Search.objects.get(pk=search_id).query,
                                   run_status=model_status, run_started=datetime.now(), run_completed=None,
-                                  user=usr, clf_arch=clf_arch, train_summary=train_sumarry, dataset_pk=dataset_pk)
+                                  user=usr, clf_arch=clf_arch, train_summary=train_summary,
+                                  dataset_pk=dataset_pk, model_key=model_key)
     new_run.save()
+
     print 'Run added to db.'
     query = json.loads(Search.objects.get(pk=search_id).query)
     steps = ["preparing data", "training", "done"]
@@ -237,7 +249,7 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
         statistics['time'] = _total_training_time
         statistics['params'] = params
         model_score = "{0:.2f}".format(statistics['f1_score'])
-        train_sumarry = json.dumps(jsonify(statistics))
+        train_summary = json.dumps(jsonify(statistics))
         show_progress.update(2)
         model_name = 'classifier_{0}.pkl'.format(new_run.pk)
         output_model_file = os.path.join(MODELS_DIR, model_name)
@@ -259,7 +271,7 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
     r.run_status = model_status
     r.score = model_score
     r.clf_arch = clf_arch
-    r.train_summary = train_sumarry
+    r.train_summary = train_summary
     r.save()
 
     print 'job is done'
