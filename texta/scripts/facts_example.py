@@ -45,7 +45,7 @@ def main():
 
     total_acc = 0
     query = json.dumps({u'query': {u'bool': {u'minimum_should_match': 0, u'should': [], u'must': []}}})
-    request_url = 'http://localhost:9200/{0}/{1}/_search?search_type=scan&scroll=1m&size=100'.format(_index, _type)
+    request_url = 'http://localhost:9200/{0}/{1}/_search?scroll=1m&size=100'.format(_index, _type)
     response = requests.post(request_url, data=query).json()
     scroll_id = response['_scroll_id']
     total_msg = response['hits']['total']

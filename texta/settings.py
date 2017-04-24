@@ -193,6 +193,7 @@ INSTALLED_APPS = (
     'home',
     'corpus_tool',
     'model_manager',
+    'classification_manager',
     'ontology_viewer',
     'base',
     'permission_admin',

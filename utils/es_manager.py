@@ -99,7 +99,7 @@ class ES_Manager:
         q['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
         q = json.dumps(q)
         response = self.requests.post(request_url, data=q).json()
-        return response['count'] > 0
+        return 'count' in response and response['count'] > 0
 
     def _decode_mapping_structure(self, structure, root_path=list()):
         """ Decode mapping structure (nested dictionary) to a flat structure
@@ -154,8 +154,10 @@ class ES_Manager:
     def get_mapped_fields(self):
         """ Get flat structure of fields from Elasticsearch mapping
         """
-        mapping_structure = self.requests.get(es_url+'/'+self.index).json()[self.index]['mappings'][self.mapping]['properties']
-        mapping_data = self._decode_mapping_structure(mapping_structure)
+        mapping_data = []
+        if self.index:
+            mapping_structure = self.requests.get(es_url+'/'+self.index).json()[self.index]['mappings'][self.mapping]['properties']
+            mapping_data = self._decode_mapping_structure(mapping_structure)
         return mapping_data
 
     def get_column_names(self):
@@ -436,7 +438,7 @@ class ES_Manager:
         """
 
         q = json.dumps(self.combined_query['main'])
-        search_url = '{0}/{1}/{2}/_search?search_type=scan&scroll={3}'.format(es_url, self.index, self.mapping, time_out)
+        search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
         response = requests.post(search_url, data=q).json()
 
         scroll_id = response['_scroll_id']
@@ -462,6 +464,22 @@ class ES_Manager:
             search_url = '{0}/_search/scroll'.format(es_url)
         else:
             q = json.dumps(self.combined_query['main'])
+            if id_scroll:
+                search_url = '{0}/{1}/{2}/_search?scroll={3}&fields='.format(es_url, self.index, self.mapping, time_out)
+            else:
+                search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
+
+        response = self.requests.post(search_url, data=q).json()
+        return response
+
+    def scroll_all_match(self, scroll_id=None, time_out='1m', id_scroll=False):
+        """ Search and Scroll in a match all search
+        """
+        if scroll_id:
+            q = json.dumps({"scroll": time_out, "scroll_id": scroll_id})
+            search_url = '{0}/_search/scroll'.format(es_url)
+        else:
+            q = json.dumps({'query': {"match_all": {}}})
             if id_scroll:
                 search_url = '{0}/{1}/{2}/_search?scroll={3}&fields='.format(es_url, self.index, self.mapping, time_out)
             else:
@@ -498,7 +516,7 @@ class ES_Manager:
 
     def _get_facts_structure_no_agg(self):
         facts_structure = {}
-        base_url = '{0}/{1}/{2}/_search?search_type=scan&scroll=1m&size=1000'
+        base_url = '{0}/{1}/{2}/_search?scroll=1m&size=1000'
         search_url = base_url.format(es_url, self.index, self.TEXTA_MAPPING)
         query = {"query": {"term": {"facts.doc_type": self.mapping.lower()}}}
         query = json.dumps(query)
@@ -549,7 +567,7 @@ class ES_Manager:
         query['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
         query = json.dumps(query)
 
-        search_param = 'search_type=scan&scroll=1m&size=1000'
+        search_param = 'scroll=1m&size=1000'
         search_url = '{0}/{1}/{2}/_search?{3}'.format(es_url, self.index, self.TEXTA_MAPPING, search_param)
         response = self.requests.post(search_url, data=query).json()
         scroll_id = response['_scroll_id']
@@ -612,7 +630,6 @@ class ES_Manager:
         if 'must_not' in query_dict['main']['query']['bool'] and query_dict['main']['query']['bool']['must_not']:
             for constraint in query_dict['main']['query']['bool']['must_not']:
                 self.combined_query['main']['query']['bool']['must_not'].append(constraint)
-
 
     def more_like_this_search(self,field,stopwords=[],docs_accepted=[],docs_rejected=[],handle_negatives='ignore'):
 
