@@ -2,9 +2,7 @@
 import json
 import logging
 import os
-import re
-import string
-import threading
+from multiprocessing import Process
 from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
@@ -19,10 +17,12 @@ from utils.es_manager import ES_Manager
 
 from texta.settings import STATIC_URL, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ERROR_LOGGER
 
-import numpy as np
+import time
 
 from classification_manager.models import ModelClassification
 from classification_manager import model_pipeline
+from classification_manager.data_manager import EsDataSample
+from classification_manager.data_manager import EsDataClassification
 
 
 def get_fields(es_m):
@@ -78,13 +78,12 @@ def delete_model(request):
     if run.user == request.user or request.user.is_superuser:
         lm_model_manager.remove_model(run.pk)
         run.delete()
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DELETE MODEL','event':'model_deleted','args':{'user_name':request.user.username,'model_id':model_id}}))
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DELETE CLASSIFIER','event':'model_deleted','args':{'user_name':request.user.username,'model_id':model_id}}))
     else:
-        logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'DELETE MODEL','event':'model_deletion_failed','args':{'user_name':request.user.username,'model_id':model_id},'reason':"Created by someone else."}))
+        logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'DELETE CLASSIFIER','event':'model_deletion_failed','args':{'user_name':request.user.username,'model_id':model_id},'reason':"Created by someone else."}))
         
     return HttpResponseRedirect(URL_PREFIX + '/classification_manager')
 
-from multiprocessing import Process
 
 @login_required
 def start_training_job(request):
@@ -97,18 +96,13 @@ def start_training_job(request):
     reductor_opt = int(request.POST['reductor_opt'])
     normalizer_opt = int(request.POST['normalizer_opt'])
     classifier_opt = int(request.POST['classifier_opt'])
+    tag_label = request.POST['tag_label']
     description = request.POST['description']
 
     usr = request.user
 
-    print '---> Start model training: ', search_id, field_path
-    print '---> Param: ', (extractor_opt, reductor_opt, normalizer_opt, classifier_opt)
-
     clf_args = (request, usr, search_id, field_path, extractor_opt, reductor_opt,
-                normalizer_opt, classifier_opt, description)
-
-    # clf_job = threading.Thread( target=train_classifier, args=clf_args)
-    # clf_job.start()
+                normalizer_opt, classifier_opt, description, tag_label)
 
     clf_job = Process(target=train_classifier, args=clf_args)
     clf_job.start()
@@ -116,20 +110,109 @@ def start_training_job(request):
     return HttpResponse()
 
 
+def api_list_models(request):
+    data = []
+    models = ModelClassification.objects.all()
+
+    for m in models:
+        model = {}
+        model['model_id'] = m.pk
+        model['score'] = m.score
+        model['tag_label'] = m.tag_label
+        model['fields'] = m.fields
+        model['dataset_pk'] = m.dataset_pk
+        model['architecture'] = m.clf_arch
+        model['task_status'] = m.run_status
+
+        data.append(model)
+    return HttpResponse(json.dumps(data), content_type="application/json")
+
+
+def api_classify(request):
+
+    data = {}
+    try:
+        req = request.GET
+        model_id = req['model_id']
+        docs = req['docs']
+
+        if docs == "all":
+            docs_list = None
+        else:
+            docs_list = json.loads(docs)
+
+        model = ModelClassification.objects.get(pk=model_id)
+
+        # Load model info
+        data['model_info'] = {}
+        data['model_info']['model_id'] = model_id
+        data['model_info']['training_score'] = model.score
+        data['model_info']['tag_label'] = model.tag_label
+        data['model_info']['task_status'] = model.run_status
+        data['model_info']['dataset_pk'] = model.dataset_pk
+
+        # Load dataset info
+        model_dataset = Dataset.objects.get(pk=model.dataset_pk)
+        data['dataset_info'] = {}
+        data['dataset_info']['index'] = model_dataset.index
+        data['dataset_info']['mapping'] = model_dataset.mapping
+        data['dataset_info']['daterange'] = model_dataset.daterange
+        data['dataset_info']['author'] = model_dataset.author.username
+
+        es_index = model_dataset.index
+        es_mapping = model_dataset.mapping
+        es_daterange = model_dataset.daterange
+        field_path = model.fields
+
+        if model.run_status == 'completed':
+            model_name = 'classifier_{0}.pkl'.format(model_id)
+            output_model_file = os.path.join(MODELS_DIR, model_name)
+            clf_model = model_pipeline.load_model(output_model_file)
+            es_classification = EsDataClassification(es_index, es_mapping, es_daterange, field_path)
+            _data = es_classification.apply_classifier(clf_model, model.tag_label, filter_ids=docs_list)
+            data.update(_data)
+            data['status'] = ['ok', 'classification completed']
+        else:
+            data['status'] = ['failed', 'model has invalid status']
+
+    except Exception as e:
+        print 'Error: ', e
+        data['status'] = ['failed', 'exception']
+
+    return HttpResponse(json.dumps(data), content_type="application/json")
+
+
+# Ref: http://stackoverflow.com/questions/26646362/numpy-array-is-not-json-serializable
+def jsonify(data):
+    json_data = dict()
+    for key, value in data.iteritems():
+        if isinstance(value, list):
+            value = [ jsonify(item) if isinstance(item, dict) else item for item in value ]
+        if isinstance(value, dict):
+            value = jsonify(value)
+        if isinstance(key, int):
+            key = str(key)
+        if type(value).__module__=='numpy':
+            value = value.tolist()
+        json_data[key] = value
+    return json_data
+
+
 def train_classifier(request, usr, search_id, field_path, extractor_opt, reductor_opt,
-                     normalizer_opt, classifier_opt, description):
+                     normalizer_opt, classifier_opt, description, tag_label):
 
     # add Run to db
     dataset_pk = int(request.session['dataset'])
     model_status = 'running'
     model_score = "---"
     clf_arch = "---"
+    train_sumarry = "---"
 
-    new_run = ModelClassification(run_description=description, fields=field_path, score=model_score,
-                                  search=Search.objects.get(pk=search_id).query, run_status=model_status,
-                                  run_started=datetime.now(), run_completed=None, user=usr, clf_arch=clf_arch)
+    new_run = ModelClassification(run_description=description, tag_label=tag_label, fields=field_path,
+                                  score=model_score, search=Search.objects.get(pk=search_id).query,
+                                  run_status=model_status, run_started=datetime.now(), run_completed=None,
+                                  user=usr, clf_arch=clf_arch, train_summary=train_sumarry, dataset_pk=dataset_pk)
     new_run.save()
-
     print 'Run added to db.'
     query = json.loads(Search.objects.get(pk=search_id).query)
     steps = ["preparing data", "training", "done"]
@@ -137,22 +220,24 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
     show_progress.update_view()
 
     try:
-
         show_progress.update(0)
         pipe_builder = model_pipeline.get_pipeline_builder()
         pipe_builder.set_pipeline_options(extractor_opt, reductor_opt, normalizer_opt, classifier_opt)
         clf_arch = pipe_builder.pipeline_representation()
         c_pipe, params = pipe_builder.build()
 
-        print '---> Here is ok? ', params
-
-        es_data = EsData(query, field_path, request)
-        data_sample_x, data_sample_y = es_data.get_data_samples()
+        es_data = EsDataSample(query, field_path, request)
+        data_sample_x, data_sample_y, statistics = es_data.get_data_samples()
 
         show_progress.update(1)
-        model, score, training_log = model_pipeline.train_model_with_cv(c_pipe, params, data_sample_x, data_sample_y)
-
-        model_score = "{0:.2f}".format(score['f1_score'])
+        _start_training_time = time.time()
+        model, _s_train = model_pipeline.train_model_with_cv(c_pipe, params, data_sample_x, data_sample_y)
+        _total_training_time = time.time() - _start_training_time
+        statistics.update(_s_train)
+        statistics['time'] = _total_training_time
+        statistics['params'] = params
+        model_score = "{0:.2f}".format(statistics['f1_score'])
+        train_sumarry = json.dumps(jsonify(statistics))
         show_progress.update(2)
         model_name = 'classifier_{0}.pkl'.format(new_run.pk)
         output_model_file = os.path.join(MODELS_DIR, model_name)
@@ -160,11 +245,11 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
         model_status = 'completed'
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE MODEL','event':'model_training_failed','args':{'user_name':request.user.username}}),exc_info=True)
+        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE CLASSIFIER','event':'model_training_failed','args':{'user_name':request.user.username}}),exc_info=True)
         print '--- Error: {0}'.format(e)
         model_status = 'failed'
 
-    logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL',
+    logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE CLASSIFIER',
                                                     'event': 'model_training_completed',
                                                     'args': {'user_name': request.user.username},
                                                     'data': {'run_id': new_run.id}}))
@@ -174,6 +259,7 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
     r.run_status = model_status
     r.score = model_score
     r.clf_arch = clf_arch
+    r.train_summary = train_sumarry
     r.save()
 
     print 'job is done'
@@ -198,120 +284,3 @@ class ShowSteps(object):
         r.run_status = '{0} [{1}/{2}]'.format(self.step_messages[i], i+1, self.n_total)
         r.save()
 
-
-def test_model(request):
-    print '---> Test model ... '
-    return HttpResponse()
-
-
-class esIteratorError(Exception):
-    """ esIterator Exception
-    """
-    pass
-
-
-class EsData(object):
-
-    def __init__(self, query, field, request):
-        self.field = field
-        self.request = request
-        self.punct_re = re.compile('[%s]' % re.escape(string.punctuation))
-
-        # Define selected mapping
-        ds = Datasets().activate_dataset(request.session)
-        self.es_m = ds.build_manager(ES_Manager)
-        self.es_m.load_combined_query(query)
-
-    def _lexicon_reduction(self, doc_text):
-        sentences = doc_text.split('\n')
-        reduction_methods = self.request.POST.getlist('lexicon_reduction[]')
-
-        if u'remove_numbers' in reduction_methods:
-            sentences = [re.sub('(\d)+', 'n', sentence) for sentence in sentences]
-
-        if u'remove_punctuation' in reduction_methods:
-            sentences = [self.punct_re.sub('[punct]', sentence) for sentence in sentences]
-
-        doc_text = ' '.join(sentences)
-        return doc_text
-
-    def _get_positive_samples(self, sample_size):
-        positive_samples = []
-        positive_set = set()
-
-        self.es_m.set_query_parameter('size', 100)
-        response = self.es_m.scroll()
-        scroll_id = response['_scroll_id']
-        l = response['hits']['total']
-        while l > 0 and len(positive_samples) <= sample_size:
-
-            response = self.es_m.scroll(scroll_id=scroll_id)
-            l = len(response['hits']['hits'])
-            scroll_id = response['_scroll_id']
-
-            # Check errors in the database request
-            if (response['_shards']['total'] > 0 and response['_shards']['successful'] == 0) or response['timed_out']:
-                msg = 'Elasticsearch failed to retrieve documents: ' \
-                      '*** Shards: {0} *** Timeout: {1} *** Took: {2}'.format(response['_shards'],
-                                                                              response['timed_out'], response['took'])
-                raise esIteratorError(msg)
-
-            for hit in response['hits']['hits']:
-                try:
-                    # Take into account nested fields encoded as: 'field.sub_field'
-                    decoded_text = hit['_source']
-                    for k in self.field.split('.'):
-                        decoded_text = decoded_text[k]
-                    doc_text = self._lexicon_reduction(decoded_text)
-                    doc_id = str(hit['_id'])
-                    positive_samples.append(doc_text)
-                    positive_set.add(doc_id)
-                except KeyError as e:
-                    # If the field is missing from the document
-                    pass
-        print '---> Total positive_samples: ', len(positive_samples)
-        return positive_samples, positive_set
-
-    def _get_negative_samples(self, positive_set):
-        negative_samples = []
-        response = self.es_m.scroll_all_match()
-        scroll_id = response['_scroll_id']
-        l = response['hits']['total']
-        sample_size = len(positive_set)
-
-        while l > 0 and len(negative_samples) <= sample_size:
-
-            response = self.es_m.scroll_all_match(scroll_id=scroll_id)
-            l = len(response['hits']['hits'])
-            scroll_id = response['_scroll_id']
-
-            # Check errors in the database request
-            if (response['_shards']['total'] > 0 and response['_shards']['successful'] == 0) or response['timed_out']:
-                msg = 'Elasticsearch failed to retrieve documents: ' \
-                      '*** Shards: {0} *** Timeout: {1} *** Took: {2}'.format(response['_shards'],
-                                                                              response['timed_out'], response['took'])
-                raise esIteratorError(msg)
-
-            for hit in response['hits']['hits']:
-                try:
-                    doc_id = str(hit['_id'])
-                    if doc_id in positive_set:
-                        continue
-                    # Take into account nested fields encoded as: 'field.sub_field'
-                    decoded_text = hit['_source']
-                    for k in self.field.split('.'):
-                        decoded_text = decoded_text[k]
-                    doc_text = self._lexicon_reduction(decoded_text)
-                    negative_samples.append(doc_text)
-                except KeyError as e:
-                    # If the field is missing from the document
-                    pass
-        print '---> Total negative_samples: ', len(negative_samples)
-        return negative_samples
-
-    def get_data_samples(self, sample_size=10000):
-        positive_samples, positive_set = self._get_positive_samples(sample_size)
-        negative_samples = self._get_negative_samples(positive_set)
-        data_sample_x = np.asarray(positive_samples + negative_samples)
-        data_sample_y = np.asarray([1] * len(positive_samples) + [0] * len(negative_samples))
-        return data_sample_x, data_sample_y

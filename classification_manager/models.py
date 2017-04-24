@@ -8,6 +8,7 @@ MAX_INT_LEN = 10
 
 
 class ModelClassification(models.Model):
+
     run_description = models.CharField(max_length=MAX_STR_LEN)
     run_status = models.CharField(max_length=MAX_STR_LEN)
     run_started = models.DateTimeField()
@@ -17,3 +18,6 @@ class ModelClassification(models.Model):
     user = models.ForeignKey(User)
     clf_arch = models.TextField(null=True, blank=True)
     score = models.TextField(null=True, blank=True)
+    tag_label = models.CharField(max_length=MAX_STR_LEN)
+    train_summary = models.CharField(max_length=MAX_STR_LEN)
+    dataset_pk = models.CharField(max_length=MAX_STR_LEN)

@@ -116,7 +116,7 @@ class PipelineBuilder:
         r = self.reductor_list[self.reductor_op].name
         n = self.normalizer_list[self.normalizer_op].name
         c = self.classifier_list[self.classifier_op].name
-        rep = "{0} -> {1} -> {2} -> {3}".format(e, r, n, c)
+        rep = "{0} | {1} | {2} | {3}".format(e, r, n, c)
         return rep
 
     def build(self):
@@ -141,7 +141,8 @@ def get_pipeline_builder():
     pipe_builder = PipelineBuilder()
 
     # Feature Extraction
-    params = {'ngram_range': [(1, 1), (1, 2), (1, 3)]}
+    # params = {'ngram_range': [(1, 1), (1, 2), (1, 3)]}
+    params = {'ngram_range': [(1, 1)]}
     pipe_builder.add_extractor('CountVectorizer', CountVectorizer, 'Count Vectorizer', params)
 
     params = {}
@@ -188,20 +189,21 @@ def train_model_with_cv(model, params, X, y):
     gs_clf = GridSearchCV(model, params, n_jobs=1, cv=5)
     gs_clf = gs_clf.fit(X_train, y_train)
     model = gs_clf.best_estimator_
-    training_log = gs_clf.cv_results_
 
     # Use best model and test data for final evaluation
     y_pred = model.predict(X_test)
+
     _f1 = f1_score(y_test, y_pred, average='micro')
     _confusion = confusion_matrix(y_test, y_pred)
     __precision = precision_score(y_test, y_pred)
     _recall = recall_score(y_test, y_pred)
-    score = {'f1_score': _f1,
-             'confusion_matrix': _confusion,
-             'precision': __precision,
-             'recall': _recall
-             }
-    return model, score, training_log
+    _statistics = {'f1_score': _f1,
+                   'confusion_matrix': _confusion,
+                   'precision': __precision,
+                   'recall': _recall
+                   }
+
+    return model, _statistics
 
 
 def save_model(model, file_name):

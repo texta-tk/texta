@@ -78,11 +78,18 @@
                     </div>
                 </div>
 			  <div class="row">
+				<div class="col-sm-6">Tag:</div>
+				<div class="col-sm-6">
+				  <input name="tag_label" id="tag_label" class="form-control input-sm">
+				</div>
+			  </div>
+              <div class="row">
 				<div class="col-sm-6">Description:</div>
 				<div class="col-sm-6">
-				  <input name="description" id="description" class="form-control input-sm">	
+				  <input name="description" id="description" class="form-control input-sm">
 				</div>
-			  </div>	
+			  </div>
+
 			  <div class="row">
 				<div class="col-sm-6"></div>
 				<div class="col-sm-6">
@@ -104,12 +111,14 @@
 			  <tr>
 				<th>Model ID</th>
 				<th>Author</th>
+                <th>Tag</th>
 				<th>Description</th>
 				<th>Architecture</th>
 				<th>Task Status</th>
                 <th>f1-score</th>
 				<th>Task Started</th>
 				<th>Task Completed</th>
+                <th>Summary</th>
 				<th>Remove</th>
 			  </tr>
 			</thead>
@@ -117,12 +126,14 @@
                 <tr>
                     <td>{{run.pk}}</td>
                     <td>{{run.user}}</td>
+                    <td>{{run.tag_label}}</td>
                     <td>{{run.run_description}}</td>
                     <td><a href="javascript:alert('{{run.clf_arch}}');">view</a></td>
                     <td>{{run.run_status}}</td>
                     <td>{{run.score}}</td>
                     <td>{{run.run_started|date:"d.m.Y H:i"}}</td>
                     <td>{{run.run_completed|date:"d.m.Y H:i"}}</td>
+                    <td><a href="javascript:alert('{{run.train_summary}}');">view</a></td>
                     <td>
                         <a href="javascript:void(0)" onclick="confirm_and_remove({{run.pk}})">
                             <span class="glyphicon glyphicon-remove"></span>
