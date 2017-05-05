@@ -68,7 +68,7 @@ class AggManager:
             return {agg_name: {"date_range": {"field": path, "format": date_format, "ranges": self.ranges}}}
         else:
             # NOTE: Exclude numbers from discrete aggregation ouput
-            return {agg_name: {sort_by: {"field": path, "exclude": "[0-9]+(,|.[0-9]+)*", "size": 30}}}
+            return {agg_name: {sort_by: {"field": path, "size": 30}}}
 
 
     def aggregate(self):

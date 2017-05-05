@@ -132,18 +132,18 @@ def query(request):
         ignored_idxes = model_manager.get_negatives(request.session['model'],request.user.username,lexicon.id)
         
         try:
+
             model = model_manager.get_model(request.session['model'])
-            
-            if model.model.syn0norm is None:
+            if model.model.wv.syn0norm is None:
                 model.model.init_sims()
+
         except LookupError:
             
             logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'CREATE LEXICON','event':'term_suggestion_failed','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'model_id':request.session['model']},'reason':'No lexicon ID provided.'}))
-            
             return HttpResponse('INVALID MODEL')
 
         suggestionset_id = suggestionset.id
-
+        
         #Add unselected previous suggestions as negative examples.
         if 'negatives' in request.POST and len(request.POST['negatives']) > 2 and 'sid' in request.POST and request.POST['sid'] != -1:
             negatives = [model.vocab[negative.encode('utf8')].index for negative in json.loads(request.POST['negatives']) if negative.encode('utf8') in model.vocab]

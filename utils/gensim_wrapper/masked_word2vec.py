@@ -8,7 +8,7 @@ class MaskedWord2Vec(object):
 
     def __init__(self,word2vec_model):
         self.model = word2vec_model
-        self.vocab = word2vec_model.vocab
+        self.vocab = word2vec_model.wv.vocab
     
     def most_similar(self, positive=[], negative=[], topn=10, ignored_idxes=[], ignored_dist = -999999):
         """
@@ -38,21 +38,21 @@ class MaskedWord2Vec(object):
         for word, weight in positive + negative:
             if isinstance(word, np.ndarray):
                 mean.append(weight * word)
-            elif word in self.model.vocab:
-                mean.append(weight * self.model.syn0norm[self.model.vocab[word].index])
-                all_words.add(self.model.vocab[word].index)
+            elif word in self.model.wv.vocab:
+                mean.append(weight * self.model.wv.syn0norm[self.model.wv.vocab[word].index])
+                all_words.add(self.model.wv.vocab[word].index)
             else:
                 raise KeyError("word '%s' not in vocabulary" % word)
         if not mean:
             raise ValueError("cannot compute similarity with no input")
         mean = gensim.matutils.unitvec(np.array(mean).mean(axis=0)).astype(np.float32)
-        dists = np.dot(self.model.syn0norm, mean)
+        dists = np.dot(self.model.wv.syn0norm, mean)
         if not topn:
             return dists
         dists[ignored_idxes] = ignored_dist
         best = np.argsort(dists)[::-1][:topn + len(all_words)]
         # ignore (don't return) words from the input
-        result = [(self.model.index2word[sim], float(dists[sim])) for sim in best if sim not in all_words]
+        result = [(self.model.wv.index2word[sim], float(dists[sim])) for sim in best if sim not in all_words]
         return result[:topn]
 
     def most_similar_cosmul(self, positive=[], negative=[], topn=10, ignored_idxes=[], ignored_dist = -999999):
@@ -89,8 +89,8 @@ class MaskedWord2Vec(object):
             if isinstance(word, np.ndarray):
                 return word
             elif word in self.model.vocab:
-                all_words.add(self.model.vocab[word].index)
-                return self.model.syn0norm[self.model.vocab[word].index]
+                all_words.add(self.model.wv.vocab[word].index)
+                return self.model.wv.syn0norm[self.model.wv.vocab[word].index]
             else:
                 raise KeyError("word '%s' not in vocabulary" % word)
 
@@ -101,8 +101,8 @@ class MaskedWord2Vec(object):
 
         # equation (4) of Levy & Goldberg "Linguistic Regularities...",
         # with distances shifted to [0,1] per footnote (7)
-        pos_dists = [((1 + np.dot(self.model.syn0norm, term)) / 2) for term in positive]
-        neg_dists = [((1 + np.dot(self.model.syn0norm, term)) / 2) for term in negative]
+        pos_dists = [((1 + np.dot(self.model.wv.syn0norm, term)) / 2) for term in positive]
+        neg_dists = [((1 + np.dot(self.model.wv.syn0norm, term)) / 2) for term in negative]
         dists = np.prod(pos_dists, axis=0) / (np.prod(neg_dists, axis=0) + 0.000001)
 
         if not topn:
@@ -110,5 +110,5 @@ class MaskedWord2Vec(object):
         dists[ignored_idxes] = ignored_dist
         best = np.argsort(dists)[::-1][:topn + len(all_words)]
         # ignore (don't return) words from the input
-        result = [(self.model.index2word[sim], float(dists[sim])) for sim in best if sim not in all_words]
+        result = [(self.model.wv.index2word[sim], float(dists[sim])) for sim in best if sim not in all_words]
         return result[:topn]

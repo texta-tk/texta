@@ -148,7 +148,7 @@ def train_model(search_id,field_path,num_dimensions,num_workers,min_freq,usr,des
     r = ModelRun.objects.get(pk=new_run.pk)
     r.run_completed = datetime.now()
     r.run_status = model_status
-    r.lexicon_size = len(model.vocab)
+    r.lexicon_size = len(model.wv.vocab)
     r.save()
     print 'job is done'
 

@@ -48,11 +48,11 @@ def load_terms(request):
     except LookupError as e:
         return HttpResponseRedirect(URL_PREFIX + '/')
 
-    if model.syn0norm is None:
+    if model.wv.syn0norm is None:
         model.init_sims()
 
-    words = [word for word in Word.objects.filter(lexicon__id__in = lexicon_ids) if word.wrd.encode('utf-8') in model.vocab]
-    feature_vectors = [model.syn0norm[model.vocab[word.wrd.encode('utf-8')].index] for word in words]
+    words = [word for word in Word.objects.filter(lexicon__id__in = lexicon_ids) if word.wrd.encode('utf-8') in model.wv.vocab]
+    feature_vectors = [model.wv.syn0norm[model.wv.vocab[word.wrd.encode('utf-8')].index] for word in words]
     
     output = {'terms':[],'concepts':[]}
     
@@ -73,7 +73,7 @@ def load_terms(request):
         concepts = {}
         
         for i in range(len(words)):
-            term = {'id':words[i].id,'term':words[i].wrd,'count':model.vocab[words[i].wrd.encode('utf-8')].count,'x':transformed_feature_vectors[i][0] if len(feature_vectors) > 1 else 0,'y':transformed_feature_vectors[i][1] if len(feature_vectors) > 1 else 0}
+            term = {'id':words[i].id,'term':words[i].wrd,'count':model.wv.vocab[words[i].wrd.encode('utf-8')].count,'x':transformed_feature_vectors[i][0] if len(feature_vectors) > 1 else 0,'y':transformed_feature_vectors[i][1] if len(feature_vectors) > 1 else 0}
             
             term_concepts = TermConcept.objects.filter(term__term = words[i].wrd).filter(concept__author = request.user)
             if term_concepts:
