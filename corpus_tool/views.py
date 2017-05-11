@@ -476,7 +476,7 @@ def get_rows(es_params, request):
     buffer_ = StringIO()
     writer = csv.writer(buffer_)
     
-    writer.writerow(es_params['features'])
+    writer.writerow([feature.encode('utf8') for feature in es_params['features']])
 
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
@@ -486,7 +486,7 @@ def get_rows(es_params, request):
     q_size = es_params['num_examples'] if es_params['num_examples'] <= ES_SCROLL_BATCH else ES_SCROLL_BATCH
     es_m.set_query_parameter('size', q_size)
 
-    features = {feature: None for feature in es_params['features'] }
+    features = sorted(es_params['features'])
 
     response = es_m.scroll()
 
@@ -498,9 +498,18 @@ def get_rows(es_params, request):
         rows = []
         for hit in hits:
             row = []
-            for field,content in sorted(hit['_source'].items(),key = lambda x: x[0]):
-                if field in features:
-                    row.append(content)
+            for feature_name in features:
+                feature_path = feature_name.split('.')
+                parent_source = hit['_source']
+                for path_component in feature_path:
+                    if path_component in parent_source:
+                        parent_source = parent_source[path_component]
+                    else:
+                        parent_source = ""
+                        break
+                
+                content = parent_source
+                row.append(content)
             rows.append(row)
 
         if left > len(rows):
@@ -543,7 +552,7 @@ def get_all_rows(es_params, request):
     buffer_ = StringIO()
     writer = csv.writer(buffer_)
     
-    writer.writerow(es_params['features'])
+    writer.writerow([feature.encode('utf8') for feature in es_params['features']])
 
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
@@ -551,7 +560,7 @@ def get_all_rows(es_params, request):
 
     es_m.set_query_parameter('size', ES_SCROLL_BATCH)
 
-    features = {feature: None for feature in es_params['features']}
+    features = sorted(es_params['features'])
 
     response = es_m.scroll()
 
@@ -561,9 +570,18 @@ def get_all_rows(es_params, request):
     while hits:
         for hit in hits:
             row = []
-            for field,content in sorted(hit['_source'].items(),key = lambda x: x[0]):
-                if field in features:
-                    row.append(content)
+            for feature_name in features:
+                feature_path = feature_name.split('.')
+                parent_source = hit['_source']
+                for path_component in feature_path:
+                    if path_component in parent_source:
+                        parent_source = parent_source[path_component]
+                    else:
+                        parent_source = ""
+                        break
+                
+                content = parent_source
+                row.append(content)
             writer.writerow([element.encode('utf-8') if isinstance(element,unicode) else element for element in row])
         
         buffer_.seek(0)
