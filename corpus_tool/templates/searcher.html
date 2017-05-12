@@ -139,6 +139,17 @@
 										<option value="{{field.data}}">{{field.label}}</option>
 									{% endfor %}
 								</select>
+								<div id="agg_daterange_1" class="hidden">
+									<b>Date range:</b>
+									<div class="row">
+										<div class="col-sm-6">
+											<input type="text" placeholder="Daterange from" name="agg_daterange_from_1" id="agg_daterange_from_1" class="form-control input-sm">
+										</div>
+										<div class="col-sm-6">
+											<input type="text" placeholder="Daterange to" name="agg_daterange_to_1" id="agg_daterange_to_1" class="form-control input-sm">
+										</div>
+									</div>
+								</div>
 								<div id="sort_by_1">
 									<b>Sort by:</b>
 									<select id="sort_by_1" name="sort_by_1" class="form-control input-sm">
@@ -157,6 +168,7 @@
 									<b>Interval:</b>
 									<select id="interval_1" name="interval_1" class="form-control input-sm">
 										<option value="day">day</option>
+										<option value="week">week</option>
 										<option value="month" selected="selected">month</option>
 										<option value="quarter">quarter</option>
 										<option value="year">year</option>

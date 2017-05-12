@@ -1,3 +1,4 @@
+import datetime
 import json
 
 from django.contrib.auth.decorators import login_required
@@ -9,22 +10,13 @@ from django.template import loader
 
 from permission_admin.models import Dataset
 from utils.es_manager import ES_Manager
-
 from texta.settings import STATIC_URL, URL_PREFIX
 
-import datetime
-
-
-# new group to assign model run permissions to users
-#modelrun_group = Group.objects.get_or_create(name='change_modelrun')[0]
-#change_modelrun = Permission.objects.get(name='Can change model run')
-#modelrun_group.permissions.add(change_modelrun)
-#modelrun_group.save()
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def add_dataset(request):
-    daterange = json.dumps({'min':request.POST['daterange_from'],'max':request.POST['daterange_to']})
+    daterange = ""
     Dataset(author=request.user, index=request.POST['index'], mapping=request.POST['mapping'], daterange=daterange).save()
     return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
 
@@ -39,11 +31,27 @@ def delete_dataset(request):
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def index(request):
-    datasets = Dataset.objects.all()
-    users = get_user_fields()
     indices = ES_Manager.get_indices()
+    datasets = get_datasets(indices=indices)
+    
+    users = get_user_fields()
     template = loader.get_template('permission_admin.html')
     return HttpResponse(template.render({'users':users,'datasets':datasets,'indices':indices,'STATIC_URL':STATIC_URL,'URL_PREFIX':URL_PREFIX},request))
+
+def get_datasets(indices=None):
+    datasets = Dataset.objects.all()
+    datasets_out = []
+    for dataset in datasets:
+        ds_out = dataset.__dict__
+        if indices:
+            for index in indices:
+                if index['index'] == ds_out['index']:
+                    ds_out['status'] = index['status']
+                    ds_out['docs_count'] = index['docs_count']
+                    ds_out['store_size'] = index['store_size']
+        datasets_out.append(ds_out)
+    return datasets
+    
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -80,7 +88,6 @@ def save_permissions(request):
 @user_passes_test(lambda u: u.is_superuser)
 def get_mappings(request):
     index = request.GET['index']
-    print(ES_Manager.get_mappings(index))
     return HttpResponse(json.dumps(ES_Manager.get_mappings(index)))
 
 def get_user_fields():

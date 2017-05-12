@@ -9,6 +9,9 @@ $(document).ready(function() {
     get_searches();
 	
 	change_agg_field(1);
+	
+	$('#agg_daterange_from_1').datepicker({format: "yyyy-mm-dd", startView: 2, autoclose: true});
+	$('#agg_daterange_to_1').datepicker({format: "yyyy-mm-dd", startView: 2, autoclose: true});
  
     $(document.body).on( 'click','a.toggle-visibility', function (e) {
         e.preventDefault();
@@ -414,16 +417,23 @@ function show_string_children(data,children_container) {
 function change_agg_field(field_nr){	
 	var field_component = $("#agg_field_"+field_nr);
 	var selected_field = field_component.val();
-	var selected_type = JSON.parse(selected_field)['type'];
+	var field_data = JSON.parse(selected_field);
+	var selected_type = field_data['type'];
 	
 	if(selected_type == 'string'){
 		$("#sort_by_"+field_nr).removeClass('hidden');
 		$("#freq_norm_"+field_nr).addClass('hidden');
 		$("#interval_"+field_nr).addClass('hidden');
+		$("#agg_daterange_"+field_nr).addClass('hidden');
 	}else if (selected_type == 'date'){
+		
+		$("#agg_daterange_from_"+field_nr).val(field_data['range']['min']);
+		$("#agg_daterange_to_"+field_nr).val(field_data['range']['max']);
+		
 		$("#freq_norm_"+field_nr).removeClass('hidden');
 		$("#interval_"+field_nr).removeClass('hidden');
-		$("#sort_by_"+field_nr).addClass('hidden');		
+		$("#sort_by_"+field_nr).addClass('hidden');	
+		$("#agg_daterange_"+field_nr).removeClass('hidden');	
 	}
 	
 }

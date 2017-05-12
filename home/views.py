@@ -22,9 +22,8 @@ def autocomplete_data(request):
 
     es_index = datasets.get_index()
     mapping = datasets.get_mapping()
-    date_range = datasets.get_date_range()
 
-    es_m = ES_Manager(es_index, mapping, date_range)
+    es_m = ES_Manager(es_index, mapping)
     fields = es_m.get_mapped_fields()
 
     # TODO: move to ES Manager

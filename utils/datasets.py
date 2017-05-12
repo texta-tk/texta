@@ -16,10 +16,9 @@ class Datasets:
         datasets = {}
         for dataset in Dataset.objects.all():
             pk = dataset.pk
-            data_range = json.loads(dataset.daterange)
             index = dataset.index
             mapping = dataset.mapping
-            datasets[pk] = {'date_range': data_range, 'index': index, 'mapping': mapping}
+            datasets[pk] = {'index': index, 'mapping': mapping}
         return datasets
 
     def activate_dataset(self, session):
@@ -52,14 +51,6 @@ class Datasets:
             mapping = self.datasets[self.mapping_id]['mapping']
         return mapping
 
-    def get_date_range(self):
-        """ Returns: the active dataset date_range, None otherwise
-        """
-        date_range = None
-        if self.is_active():
-            date_range = self.datasets[self.mapping_id]['date_range']
-        return date_range
-
     def get_datasets(self):
         """ Returns: map of all dataset objects
         """
@@ -71,5 +62,4 @@ class Datasets:
         """
         index = self.get_index()
         mapping = self.get_mapping()
-        date_range = self.get_date_range()
-        return manager_class(index, mapping, date_range)
+        return manager_class(index, mapping)

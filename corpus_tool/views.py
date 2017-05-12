@@ -43,12 +43,18 @@ def get_fields(es_m):
     fields = []
     mapped_fields = es_m.get_mapped_fields()
 
-    for data in mapped_fields:
+    for data in mapped_fields:            
         path = data['path']
+        
+        if data['type'] == 'date':
+            data['range'] = get_daterange(es_m,path)
+
         path_list = path.split('.')
         label = '{0} --> {1}'.format(path_list[0], ' --> '.join(path_list[1:])) if len(path_list) > 1 else path_list[0]
         label = label.replace('-->', u'→')
+
         field = {'data': json.dumps(data), 'label': label, 'type': data['type']}
+        
         fields.append(field)
 
         # Add additional field if it has fact
@@ -64,6 +70,11 @@ def get_fields(es_m):
     return fields
 
 
+def get_daterange(es_m,field):
+    min_val,max_val = es_m.get_extreme_dates(field)
+    return {'min':min_val[:10],'max':max_val[:10]}
+
+
 @login_required
 def index(request):
 
@@ -75,7 +86,6 @@ def index(request):
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'fields': fields,
-                       'date_range': ds.get_date_range(),
                        'searches': Search.objects.filter(author=request.user),
                        'dataset': ds.get_index()}
 
@@ -92,47 +102,6 @@ def get_query(request):
     # GET ONLY MAIN QUERY
     query = es_m.combined_query['main']
     return HttpResponse(json.dumps(query))
-
-
-def date_ranges(date_range,interval):
-    frmt = "%Y-%m-%d"
-    
-    ranges = []
-    labels = []
-
-    date_min = convert_date(date_range['min'],frmt)
-    date_max = convert_date(date_range['max'],frmt)
-    
-    if interval == 'year':
-        for yr in range(date_min.year,date_max.year+1):
-            ranges.append({'from':str(yr)+'-01-01','to':str(yr+1)+'-01-01'})
-            labels.append(yr)
-    if interval == 'quarter':
-        for yr in range(date_min.year,date_max.year+1):
-            for i,quarter in enumerate([(1,3),(4,6),(7,9),(10,12)]):
-                end = calendar.monthrange(yr,quarter[1])[1]
-                ranges.append({'from':'-'.join([str(yr),str(quarter[0]),'01']),'to':'-'.join([str(yr),str(quarter[1]),str(end)])})
-                labels.append('-'.join([str(yr),str(i+1)+'Q']))
-    if interval == 'month':
-        for yr in range(date_min.year,date_max.year+1):
-            for month in range(1,13):
-                month_max = str(calendar.monthrange(yr,month)[1])
-                if month < 10:
-                    month = '0'+str(month)
-                else:
-                    month = str(month)
-                ranges.append({'from':'-'.join([str(yr),month,'01']),'to':'-'.join([str(yr),month,month_max])})
-                labels.append('-'.join([str(yr),month]))
-    if interval == 'day':
-        d1 = date_min
-        d2 = date_max+td(days=1)
-        delta = d2-d1
-        dates = [d1+td(days=i) for i in range(delta.days+1)]
-        for date_pair in ngrams(dates,2):
-            ranges.append({'from':date_pair[0].strftime(frmt),'to':date_pair[1].strftime(frmt)})
-            labels.append(date_pair[0].strftime(frmt))
-
-    return ranges,labels
 
 
 def zero_list(n):
@@ -252,7 +221,6 @@ def get_table_header(request):
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'fields': fields,
-                       'date_range': ds.get_date_range(),
                        'searches': Search.objects.filter(author=request.user),
                        'columns': [{'index':index, 'name':field_name} for index, field_name in enumerate(fields)],
                        'dataset': ds.get_index(),

@@ -77,11 +77,10 @@ class ES_Manager:
     else:
         requests = requests
 
-    def __init__(self, index, mapping, date_range, url=None):
+    def __init__(self, index, mapping, url=None):
         self.es_url = url if url else es_url
         self.index = index
         self.mapping = mapping
-        self.date_range = date_range
         self.combined_query = None
         self._facts_map = None
         self.es_cache = ES_Cache()
@@ -195,7 +194,7 @@ class ES_Manager:
     def _get_daterange_constraints(es_params):
         _constraints = {}
         for item in es_params:
-            if 'daterange' in item:
+            if item.startswith('daterange'):
                 item = item.split('_')
                 first_part = '_'.join(item[:2])
                 second_part = item[2]
@@ -595,7 +594,7 @@ class ES_Manager:
         url = '{0}/_cat/indices?format=json'.format(es_url)
         response = ES_Manager.requests.get(url).json()
         
-        return sorted([index_data['index'] for index_data in response])
+        return sorted([{'index':i['index'],'status':i['status'],'docs_count':i['docs.count'],'store_size':i['store.size']} for i in response])
     
     @staticmethod
     def get_mappings(index):
@@ -701,3 +700,12 @@ class ES_Manager:
             response = self.scroll(scroll_id=scroll_id)
             scroll_id = response['_scroll_id']
         return ids
+
+
+    def get_extreme_dates(self,field):
+        query = {"aggs":{"max_date":{"max":{"field":field}},"min_date":{"min":{"field":field}}}}
+        url = "{0}/{1}/{2}/_search".format(self.es_url, self.index, self.mapping)
+        response = requests.post(url, data=json.dumps(query)).json()
+        aggs = response["aggregations"]
+        return aggs["min_date"]["value_as_string"],aggs["max_date"]["value_as_string"]
+        

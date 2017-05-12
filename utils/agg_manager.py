@@ -4,7 +4,9 @@ from utils.log_manager import LogManager
 from corpus_tool.models import Search
 from texta.settings import date_format
 
-from datetime import datetime, timedelta as td
+from dateutil.relativedelta import relativedelta
+from datetime import datetime
+
 from collections import defaultdict
 import calendar
 import json
@@ -16,13 +18,16 @@ class AggManager:
         ds = Datasets().activate_dataset(request.session)
         self.dataset = ds.get_index()
         self.mapping = ds.get_mapping()
-        self.date_range = ds.get_date_range()
-        self.es_m = ES_Manager(self.dataset, self.mapping, self.date_range)
+        self.es_m = ES_Manager(self.dataset, self.mapping)
 
         # PREPARE AGGREGATION
         self.es_params = request.POST
-        interval = self.es_params['interval_1']
-        self.ranges,self.date_labels = self.date_ranges(self.es_m.date_range,interval)
+        interval = self.es_params["interval_1"]
+
+
+        self.daterange = self._get_daterange(self.es_params)
+        
+        self.ranges,self.date_labels = self._get_date_intervals(self.daterange,interval)
         self.agg_query = self.prepare_agg_query()
 
         # EXECUTE AGGREGATION
@@ -30,6 +35,53 @@ class AggManager:
 
         # PARSE RESPONSES INTO JSON OBJECT
         self.agg_data = self.parse_responses(agg_results)
+
+
+    @staticmethod
+    def _get_daterange(es_params):
+        daterange = {"min":es_params["agg_daterange_from_1"],"max":es_params["agg_daterange_to_1"]}
+        return daterange
+
+
+    @staticmethod
+    def _get_date_intervals(daterange,interval):
+        frmt = "%Y-%m-%d"
+        
+        start_datetime = datetime.strptime(daterange['min'],frmt)
+        end_datetime = datetime.strptime(daterange['max'],frmt)
+        
+        if interval == 'year':
+            rdelta = relativedelta(years=+1)
+        elif interval == 'quarter':
+            rdelta = relativedelta(months=+3)
+        elif interval == 'month':
+            rdelta = relativedelta(months=+1)
+        elif interval == 'week':
+            rdelta = relativedelta(weeks=+1)
+        elif interval == 'day':
+            rdelta = relativedelta(days=+1)
+
+        next_calculated_datetime = start_datetime + rdelta
+        dates = [start_datetime, next_calculated_datetime]
+        labels = [start_datetime.strftime(frmt),next_calculated_datetime.strftime(frmt)]
+
+        while next_calculated_datetime < end_datetime:
+            next_calculated_datetime += rdelta
+            dates.append(next_calculated_datetime)
+            labels.append(next_calculated_datetime.strftime(frmt))
+
+        dates.append(end_datetime)
+        labels.append(end_datetime.strftime(frmt))
+
+        print dates
+
+        dates_str = []
+        for i,date in enumerate(dates[1:]):
+            dates_str.append({'from':dates[i].strftime(frmt),'to':date.strftime(frmt)})
+
+        print dates_str
+
+        return dates_str,labels
 
 
     def prepare_agg_query(self):
@@ -187,55 +239,3 @@ class AggManager:
             data_out.append(daterange_data)
 
         return data_out
-
-
-    def date_ranges(self,date_range,interval):
-        frmt = "%Y-%m-%d"
-        
-        ranges = []
-        labels = []
-
-        date_min = self.convert_date(date_range['min'],frmt)
-        date_max = self.convert_date(date_range['max'],frmt)
-        
-        if interval == 'year':
-            for yr in range(date_min.year,date_max.year+1):
-                ranges.append({'from':str(yr)+'-01-01','to':str(yr+1)+'-01-01'})
-                labels.append(yr)
-        if interval == 'quarter':
-            for yr in range(date_min.year,date_max.year+1):
-                for i,quarter in enumerate([(1,3),(4,6),(7,9),(10,12)]):
-                    end = calendar.monthrange(yr,quarter[1])[1]
-                    ranges.append({'from':'-'.join([str(yr),str(quarter[0]),'01']),'to':'-'.join([str(yr),str(quarter[1]),str(end)])})
-                    labels.append('-'.join([str(yr),str(i+1)+'Q']))
-        if interval == 'month':
-            for yr in range(date_min.year,date_max.year+1):
-                for month in range(1,13):
-                    month_max = str(calendar.monthrange(yr,month)[1])
-                    if month < 10:
-                        month = '0'+str(month)
-                    else:
-                        month = str(month)
-                    ranges.append({'from':'-'.join([str(yr),month,'01']),'to':'-'.join([str(yr),month,month_max])})
-                    labels.append('-'.join([str(yr),month]))
-        if interval == 'day':
-            d1 = date_min
-            d2 = date_max+td(days=1)
-            delta = d2-d1
-            dates = [d1+td(days=i) for i in range(delta.days+1)]
-            for date_pair in self.ngrams(dates,2):
-                ranges.append({'from':date_pair[0].strftime(frmt),'to':date_pair[1].strftime(frmt)})
-                labels.append(date_pair[0].strftime(frmt))
-
-        return ranges,labels
-
-    def convert_date(self,date_string,frmt):
-        # Check if min/max dates defined in database
-        if date_string:
-            return datetime.strptime(date_string,frmt).date()
-        else:
-            return datetime.now().date()
-
-
-    def ngrams(self,input_list,n):
-        return zip(*[input_list[i:] for i in range(n)])
