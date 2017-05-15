@@ -1,11 +1,9 @@
 # -*- coding: utf8 -*-
+
 import json
 import logging
-import os
 from multiprocessing import Process
 from datetime import datetime
-import hashlib
-import random
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
@@ -19,44 +17,22 @@ from utils.es_manager import ES_Manager
 
 from texta.settings import STATIC_URL, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ERROR_LOGGER
 
-import time
-
 from classification_manager.models import ModelClassification
+from classification_manager.models import JobQueue
+
 from classification_manager import model_pipeline
-from classification_manager.data_manager import EsDataSample
-from classification_manager.data_manager import EsDataClassification
+from classification_manager.data_manager import get_fields
 
-
-def get_fields(es_m):
-    """ Crete field list from fields in the Elasticsearch mapping
-    """
-    fields = []
-    mapped_fields = es_m.get_mapped_fields()
-
-    for data in mapped_fields:
-        path = data['path']
-        path_list = path.split('.')
-        label = '{0} --> {1}'.format(path_list[0], ' --> '.join(path_list[1:])) if len(path_list) > 1 else path_list[0]
-        label = label.replace('-->', u'→')
-        field = {'data': json.dumps(data), 'label': label}
-        fields.append(field)
-
-    # Sort fields by label
-    fields = sorted(fields, key=lambda l: l['label'])
-
-    return fields
 
 
 @login_required
 def index(request):
 
     context = {}
-
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
 
     fields = get_fields(es_m)
-
     context['searches'] = Search.objects.filter(author=request.user,
                                                 dataset=Dataset(pk=int(request.session['dataset'])))
     context['STATIC_URL'] = STATIC_URL
@@ -106,7 +82,7 @@ def start_training_job(request):
     clf_args = (request, usr, search_id, field_path, extractor_opt, reductor_opt,
                 normalizer_opt, classifier_opt, description, tag_label)
 
-    clf_job = Process(target=train_classifier, args=clf_args)
+    clf_job = Process(target=model_pipeline.train_classifier, args=clf_args)
     clf_job.start()
 
     return HttpResponse()
@@ -114,6 +90,7 @@ def start_training_job(request):
 
 def api_list_models(request):
     data = []
+
     models = ModelClassification.objects.all()
 
     for m in models:
@@ -126,6 +103,13 @@ def api_list_models(request):
         model['task_status'] = m.run_status
         data.append(model)
 
+        model['searches'] = []
+        searches = Search.objects.all()
+        for s in searches:
+            if str(m.dataset_pk) == str(s.dataset.pk):
+                model['searches'].append({'search_id': s.pk,
+                                          'description': s.description})
+
     return HttpResponse(json.dumps(data), content_type="application/json")
 
 
@@ -136,163 +120,92 @@ def api_classify(request):
     try:
         req = request.GET
         model_id = req['model_id']
-        docs = req['docs']
+        search_id = req['search_id']
         model_key = req['key']
 
-        if docs == "all":
-            docs_list = None
-        else:
-            docs_list = json.loads(docs)
-
         model = ModelClassification.objects.get(pk=model_id)
+        dataset = Dataset.objects.get(pk=model.dataset_pk)
+        search = Search.objects.get(pk=search_id)
 
         if model.model_key != model_key:
             data['status'] = ['failed', 'invalid model key']
-
         else:
-            # Load model info
-            data['model_info'] = {}
-            data['model_info']['model_id'] = model_id
-            data['model_info']['training_score'] = model.score
-            data['model_info']['tag_label'] = model.tag_label
-            data['model_info']['task_status'] = model.run_status
-            data['model_info']['dataset_pk'] = model.dataset_pk
 
-            # Load dataset info
-            model_dataset = Dataset.objects.get(pk=model.dataset_pk)
-            data['dataset_info'] = {}
-            data['dataset_info']['index'] = model_dataset.index
-            data['dataset_info']['mapping'] = model_dataset.mapping
-            data['dataset_info']['daterange'] = model_dataset.daterange
-            data['dataset_info']['author'] = model_dataset.author.username
-
-            es_index = model_dataset.index
-            es_mapping = model_dataset.mapping
-            es_daterange = model_dataset.daterange
-            field_path = model.fields
-
-            if model.run_status == 'completed':
-                model_name = 'classifier_{0}.pkl'.format(model_id)
-                output_model_file = os.path.join(MODELS_DIR, model_name)
-                clf_model = model_pipeline.load_model(output_model_file)
-                es_classification = EsDataClassification(es_index, es_mapping, es_daterange, field_path)
-                _data = es_classification.apply_classifier(clf_model, model.tag_label, filter_ids=docs_list)
-                data.update(_data)
-                data['status'] = ['ok', 'classification completed']
-            else:
-                data['status'] = ['failed', 'model has invalid status']
+            job_key = JobQueue.get_random_key()
+            job_queue = JobQueue(job_key=job_key,
+                                 run_status='running',
+                                 run_started=datetime.now(),
+                                 model=model,
+                                 dataset=dataset,
+                                 search=search,
+                                 run_completed=None,
+                                 total_processed='--',
+                                 total_positive='--',
+                                 total_negative='--',
+                                 total_documents='--')
+            job_queue.save()
+            data['status'] = ['running', 'model added to job queue']
+            data['job_key'] = job_key
+            model_job = Process(target=model_pipeline.apply_classifier, args=(job_key,))
+            model_job.start()
 
     except Exception as e:
         print 'Error: ', e
         data['status'] = ['failed', 'exception']
-
     return HttpResponse(json.dumps(data), content_type="application/json")
 
 
-# Ref: http://stackoverflow.com/questions/26646362/numpy-array-is-not-json-serializable
-def jsonify(data):
-    json_data = dict()
-    for key, value in data.iteritems():
-        if isinstance(value, list):
-            value = [ jsonify(item) if isinstance(item, dict) else item for item in value ]
-        if isinstance(value, dict):
-            value = jsonify(value)
-        if isinstance(key, int):
-            key = str(key)
-        if type(value).__module__=='numpy':
-            value = value.tolist()
-        json_data[key] = value
-    return json_data
-
-
-def train_classifier(request, usr, search_id, field_path, extractor_opt, reductor_opt,
-                     normalizer_opt, classifier_opt, description, tag_label):
-
-    # add Run to db
-    dataset_pk = int(request.session['dataset'])
-    model_status = 'running'
-    model_score = "---"
-    clf_arch = "---"
-    train_summary = "---"
-
-    key_str = '{0}-{1}'.format(dataset_pk, random.random() * 100000)
-    model_key = hashlib.md5(key_str).hexdigest()
-
-    new_run = ModelClassification(run_description=description, tag_label=tag_label, fields=field_path,
-                                  score=model_score, search=Search.objects.get(pk=search_id).query,
-                                  run_status=model_status, run_started=datetime.now(), run_completed=None,
-                                  user=usr, clf_arch=clf_arch, train_summary=train_summary,
-                                  dataset_pk=dataset_pk, model_key=model_key)
-    new_run.save()
-
-    print 'Run added to db.'
-    query = json.loads(Search.objects.get(pk=search_id).query)
-    steps = ["preparing data", "training", "done"]
-    show_progress = ShowSteps(new_run.pk, steps)
-    show_progress.update_view()
-
+def api_job_status(request):
+    data = {}
     try:
-        show_progress.update(0)
-        pipe_builder = model_pipeline.get_pipeline_builder()
-        pipe_builder.set_pipeline_options(extractor_opt, reductor_opt, normalizer_opt, classifier_opt)
-        clf_arch = pipe_builder.pipeline_representation()
-        c_pipe, params = pipe_builder.build()
+        req = request.GET
+        job_key = req['job_key']
+        job_queue = JobQueue.objects.get(job_key=job_key)
+        model = ModelClassification.objects.get(pk=job_queue.model_id)
+        dataset = Dataset.objects.get(pk=job_queue.dataset_id)
 
-        es_data = EsDataSample(query, field_path, request)
-        data_sample_x, data_sample_y, statistics = es_data.get_data_samples()
-
-        show_progress.update(1)
-        _start_training_time = time.time()
-        model, _s_train = model_pipeline.train_model_with_cv(c_pipe, params, data_sample_x, data_sample_y)
-        _total_training_time = time.time() - _start_training_time
-        statistics.update(_s_train)
-        statistics['time'] = _total_training_time
-        statistics['params'] = params
-        model_score = "{0:.2f}".format(statistics['f1_score'])
-        train_summary = json.dumps(jsonify(statistics))
-        show_progress.update(2)
-        model_name = 'classifier_{0}.pkl'.format(new_run.pk)
-        output_model_file = os.path.join(MODELS_DIR, model_name)
-        model_pipeline.save_model(model, output_model_file)
-        model_status = 'completed'
+        # Load model info
+        data['model_info'] = {}
+        data['model_info']['model_id'] =model.pk
+        data['model_info']['training_score'] = model.score
+        data['model_info']['tag_label'] = model.tag_label
+        data['model_info']['task_status'] = model.run_status
+        data['model_info']['dataset_pk'] = model.dataset_pk
+        data['dataset_info'] = {}
+        data['dataset_info']['index'] = dataset.index
+        data['dataset_info']['mapping'] = dataset.mapping
+        data['dataset_info']['daterange'] = dataset.daterange
+        data['dataset_info']['author'] = dataset.author.username
+        data['job'] = {}
+        data['job']['status'] = job_queue.run_status
+        data['job']['started'] = str(job_queue.run_started)
+        data['job']['ended'] = str(job_queue.run_completed)
+        data['job']['total_processed'] = job_queue.total_processed
+        data['job']['total_positive'] = job_queue.total_positive
+        data['job']['total_negative'] = job_queue.total_negative
+        data['job']['total_documents'] = job_queue.total_documents
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE CLASSIFIER','event':'model_training_failed','args':{'user_name':request.user.username}}),exc_info=True)
-        print '--- Error: {0}'.format(e)
-        model_status = 'failed'
-
-    logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE CLASSIFIER',
-                                                    'event': 'model_training_completed',
-                                                    'args': {'user_name': request.user.username},
-                                                    'data': {'run_id': new_run.id}}))
-    # declare the job done
-    r = ModelClassification.objects.get(pk=new_run.pk)
-    r.run_completed = datetime.now()
-    r.run_status = model_status
-    r.score = model_score
-    r.clf_arch = clf_arch
-    r.train_summary = train_summary
-    r.save()
-
-    print 'job is done'
+        print 'Error: ', e
+        data['status'] = ['failed', 'exception']
+    return HttpResponse(json.dumps(data), content_type="application/json")
 
 
-class ShowSteps(object):
-    """ Show model training progress
-    """
-    def __init__(self, model_pk, steps):
-        self.step_messages = steps
-        self.n_total = len(steps)
-        self.n_step = 0
-        self.model_pk = model_pk
+def api_jobs(request):
+    data = {}
+    try:
+        status_count = {}
+        jobs = JobQueue.objects.all()
+        for j in jobs:
+            s = j.run_status
+            if s not in status_count:
+                status_count[s] = 0
+            status_count[s] += 1
 
-    def update(self, step):
-        self.n_step = step
-        self.update_view()
+        data['jobs'] = {}
+        for k in status_count:
+            data['jobs'][k] = status_count[k]
 
-    def update_view(self):
-        i = self.n_step
-        r = ModelClassification.objects.get(pk=self.model_pk)
-        r.run_status = '{0} [{1}/{2}]'.format(self.step_messages[i], i+1, self.n_total)
-        r.save()
-
+    except Exception as e:
+        print '- Expcetion: ', e
+    return HttpResponse(json.dumps(data), content_type="application/json")
