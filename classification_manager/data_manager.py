@@ -1,7 +1,8 @@
+# -*- coding: utf8 -*-
 
+import json
 import re
 import string
-import json
 
 import numpy as np
 
@@ -10,6 +11,27 @@ from utils.es_manager import ES_Manager
 
 
 MAX_POSITIVE_SAMPLE_SIZE = 10000
+
+
+
+def get_fields(es_m):
+    """ Crete field list from fields in the Elasticsearch mapping
+    """
+    fields = []
+    mapped_fields = es_m.get_mapped_fields()
+
+    for data in mapped_fields:
+        path = data['path']
+        path_list = path.split('.')
+        label = '{0} --> {1}'.format(path_list[0], ' --> '.join(path_list[1:])) if len(path_list) > 1 else path_list[0]
+        label = label.replace('-->', u'→')
+        field = {'data': json.dumps(data), 'label': label}
+        fields.append(field)
+
+    # Sort fields by label
+    fields = sorted(fields, key=lambda l: l['label'])
+
+    return fields
 
 
 class esIteratorError(Exception):
@@ -134,18 +156,15 @@ class EsDataSample(object):
 
 class EsDataClassification(object):
 
-    def __init__(self, es_index, es_mapping, es_daterange, field):
+    def __init__(self, es_index, es_mapping, es_daterange, field, query):
         # Dataset info
         self.es_index = es_index
         self.es_mapping = es_mapping
         self.es_daterange = es_daterange
         self.field = field
-
         # Build ES manager
-        self.combined_query = {"main": {"query": {"bool": {"should": [], "must": [], "must_not": []}}},
-                               "facts": {"include": [], 'total_include': 0, "exclude": [], 'total_exclude': 0}}
         self.es_m = ES_Manager(es_index, es_mapping, es_daterange)
-        self.es_m.load_combined_query(self.combined_query)
+        self.es_m.load_combined_query(query)
 
     def get_total_documents(self):
         return self.es_m.get_total_documents()
@@ -160,11 +179,7 @@ class EsDataClassification(object):
             pass
         return doc
 
-    def apply_classifier(self, clf_model, model_tag, filter_ids=None):
-
-        if filter_ids is not None:
-            # Set id filter to search documents
-            self.es_m.set_query_parameter("query", {"ids": {"values": filter_ids}})
+    def apply_classifier(self, clf_model, model_tag):
 
         response = self.es_m.scroll()
         scroll_id = response['_scroll_id']
@@ -191,6 +206,7 @@ class EsDataClassification(object):
                     for k in self.field.split('.'):
                         decoded_text = decoded_text[k]
                     pred = clf_model.predict([decoded_text])[0]
+
                     if pred == 1:
                         positive_docs.append(doc_id)
                 except KeyError as e:
@@ -213,14 +229,11 @@ class EsDataClassification(object):
             texta_tags = {'texta_link': {'tags': doc_tags}}
             d = json.dumps({'doc': texta_tags})
             response = self.es_m.plain_post(request_url, d)
-            print response
 
         total_positive = len(positive_docs)
         data = {}
-        data['classification_info'] = {}
-        data['classification_info']['total_input'] = 'all'
-        data['classification_info']['total_processed'] = total_processed
-        data['classification_info']['total_positive'] = total_positive
-        data['classification_info']['total_negative'] = total_processed - total_positive
-        data['classification_info']['total_documents'] = self.get_total_documents()
+        data['total_processed'] = total_processed
+        data['total_positive'] = total_positive
+        data['total_negative'] = total_processed - total_positive
+        data['total_documents'] = self.get_total_documents()
         return data
