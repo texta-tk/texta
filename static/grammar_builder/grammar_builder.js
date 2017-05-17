@@ -191,11 +191,13 @@ function grammarContextMenu(node) {
 }
 
 function test(node) {
-    var $tree = $('#new-grammar-tree').jstree(true);
-    $('.nav-pills a[href="#test-grammar-tab"]').tab('show');
-    inclusiveTestGrammarJson = JSON.stringify(jstreeToNestedGrammar($tree.get_json(node)));
-    display_table('positive',true);
-    display_table('negative',true);
+    var node_json = $('#new-grammar-tree').jstree(true).get_json(node);
+    if (isGrammarValid(node_json)) {
+        $('.nav-pills a[href="#test-grammar-tab"]').tab('show');
+        inclusiveTestGrammarJson = JSON.stringify(jstreeToNestedGrammar(node_json));
+        display_table('positive',true);
+        display_table('negative',true);
+    }
 }
 
 
@@ -374,6 +376,31 @@ function initializeTree(data) {
     });
 }
 
+function isGrammarValid(jstree) {
+
+    function isNodeValid(node) {
+        var isNodeInitialized = node.data.operation != '' // each node must have a logical operation
+        if (!isNodeInitialized) {
+            return false
+        }
+
+        if ((node.data.metatype == 'root' || node.data.metatype == 'aggregation') & node.children.length == 0) {
+            return false    // aggregation must have basic components
+        }
+
+        for (var i = 0; i < node.children.length; i++) {
+            if (!isNodeValid(node.children[i])) {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    return isNodeValid(jstree)
+
+}
+
 function jstreeToNestedGrammar(jstree) {
     
     console.log(jstree)
@@ -386,9 +413,7 @@ function jstreeToNestedGrammar(jstree) {
         }
         var new_component = {}
         
-        if (components.length > 0) {
-            new_component.components = components;
-        }
+        new_component.components = components;
         
         new_component.name = tree.text;
         new_component.operation = tree.data.operation;
@@ -431,21 +456,29 @@ $('#save-details-btn').click(function() {
     var type = currentNode.data.metatype;
     
     if (type == 'basic') {
-        currentNode.data.operation = $('#basic-type').val();
-        currentNode.data.layer = $('#basic-layer').val();
-        currentNode.data.content = $('#basic-content').val().split(/\r*\n/);
-        currentNode.data.sensitive = $('#basic-sensitivity').prop('checked');
+        if ($('#basic-type').val() && $('#basic-layer').val() && $('#basic-content').val()) {
+            currentNode.data.operation = $('#basic-type').val();
+            currentNode.data.layer = $('#basic-layer').val();
+            currentNode.data.content = $('#basic-content').val().split(/\r*\n/);
+            currentNode.data.sensitive = $('#basic-sensitivity').prop('checked');
+            $('#new-grammar-tree').jstree(true).set_type(currentNode,currentNode.data.operation); // change icon
+        }
     } else {
         if (type == 'aggregation' || type == 'root') {
             currentNode.data.operation = $('#aggregation-type').val();
             if (currentNode.data.operation == 'gap') {
-                currentNode.data.slop = $('#gap-slop').val();
-                currentNode.data.matchFirst = $('#gap-match-first').prop('checked');
+                if ($('#gap-slop').val()) {
+                    currentNode.data.operation = $('#aggregation-type').val();
+                    currentNode.data.slop = $('#gap-slop').val();
+                    currentNode.data.matchFirst = $('#gap-match-first').prop('checked');
+                    $('#new-grammar-tree').jstree(true).set_type(currentNode,currentNode.data.operation); // change icon
+                }
+            } else {
+                currentNode.data.operation = $('#aggregation-type').val();
+                $('#new-grammar-tree').jstree(true).set_type(currentNode,currentNode.data.operation); // change icon
             }
         }
     }
-    
-    $('#new-grammar-tree').jstree(true).set_type(currentNode,currentNode.data.operation); // change icon
 });
 
 $('#test-whole-tree-btn').click(function() {
