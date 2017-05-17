@@ -13,6 +13,7 @@ from utils.es_manager import ES_Manager
 from texta.settings import STATIC_URL, URL_PREFIX, es_url
 
 from permission_admin.models import Dataset
+from conceptualiser.models import Term, TermConcept, Concept
 from grammar_builder.models import GrammarComponent, GrammarPageMapping, Grammar
 import multilayer_matcher as matcher
 
@@ -70,7 +71,7 @@ def save_component(request):
         sub_component_objs = GrammarComponent.objects.filter(id__in=sub_components)
         new_grammar.sub_components.add(*sub_component_objs)
     #print(generate_metaquery_dict(new_grammar.id, component={}))
-    metaquery = generate_metaquery_dict(17, component={})
+    #metaquery = generate_metaquery_dict(17, component={})
     #print(metaquery)
     #print(ElasticGrammarQuery(metaquery))
     return HttpResponse(json.dumps({'id':new_grammar.id}))
@@ -83,10 +84,25 @@ def get_components(request):
 @login_required
 def get_component_JSON(request):
     component_id = request.GET['id']
-    metaquery_dict = generate_metaquery_dict(component_id)
+    metaquery_dict = generate_metaquery_dict(component_id, request.user)
     return HttpResponse(json.dumps(metaquery_dict))
 
-def generate_metaquery_dict(component_idx, component={}):
+def expand_concept(concept_name, user):
+    author_concepts = Concept.object.filter(author=user)
+
+    if author_concepts:
+        concept = author_concepts.filter(descriptive_term__term=concept_name)
+        if concept:
+            return [term_concept.term.term for term_concept in TermConcept.object.filter(concept=concept)]
+        else:
+            return ["@"+concept_name]
+    else:
+        return ["@"+concept_name]
+
+    concept_term = Term.objects.filter(author=user).filter(term__term=concept_name)
+    
+
+def generate_metaquery_dict(component_idx, user, component={}):
     #print(component_idx)
     """Generates a hierarchical grammar in the form of dictionary which can be fed to ElasticGrammarQuery.
     E.g {'operation':'intersection','name':'my_intersect1','components':[{'operation':'exact','layer':'lemmas','name':'dog_lemmas','terms':['dog','puppy','doggie'],'join_by':'intersect'}]}
@@ -108,7 +124,9 @@ def generate_metaquery_dict(component_idx, component={}):
             current_dict_component['layer'] = current_model_component.layer
             if current_type == 'exact':
                 current_dict_component['join_by'] = current_model_component.join_by
-                current_dict_component['terms'] = json.loads(current_model_component.content)
+                initial_terms = json.loads(current_model_component.content)
+                final_terms = [[initial_term] if not initial_term.startswith("@") else expand_concept(initial_term[1:], user) for initial_term in initial_terms]
+                current_dict_component['terms'] = [final_term for terms_collection in final_terms for final_term in final_terms]
             else:
                 current_dict_component['expression'] = current_model_component.content
         else:
@@ -156,8 +174,8 @@ def get_table(request):
         inclusive_id = int(request.GET['inclusive_grammar_id'])
         exclusive_id = int(request.GET['exclusive_grammar_id'])
         
-        inclusive_metaquery = generate_metaquery_dict(inclusive_id, component={})
-        exclusive_metaquery = generate_metaquery_dict(exclusive_id, component={})
+        inclusive_metaquery = generate_metaquery_dict(inclusive_id, request.user, component={})
+        exclusive_metaquery = generate_metaquery_dict(exclusive_id, request.user, component={})
         layers = ['id'] + sorted(extract_layers(inclusive_metaquery) | extract_layers(exclusive_metaquery))
     
     template = loader.get_template('grammar_builder_table.html')
@@ -258,8 +276,8 @@ def get_table_data(request):
         query_data['inclusive_grammar_id'] = request.GET['inclusive_grammar_id']
         query_data['exclusive_grammar_id'] = request.GET['exclusive_grammar_id']
 
-        query_data['inclusive_metaquery'] = generate_metaquery_dict(int(query_data['inclusive_grammar_id']), component={})
-        query_data['exclusive_metaquery'] = generate_metaquery_dict(int(query_data['exclusive_grammar_id']), component={})
+        query_data['inclusive_metaquery'] = generate_metaquery_dict(int(query_data['inclusive_grammar_id']), request.user, component={})
+        query_data['exclusive_metaquery'] = generate_metaquery_dict(int(query_data['exclusive_grammar_id']), request.user, component={})
         
         query_data['features'] = sorted(extract_layers(query_data['inclusive_metaquery']) | extract_layers(query_data['exclusive_metaquery']))
     
