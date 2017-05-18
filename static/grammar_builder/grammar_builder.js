@@ -192,11 +192,14 @@ function grammarContextMenu(node) {
 
 function test(node) {
     var node_json = $('#new-grammar-tree').jstree(true).get_json(node);
-    if (isGrammarValid(node_json)) {
+    var grammarValidity = isGrammarValid(node_json)
+    if (grammarValidity.valid) {
         $('.nav-pills a[href="#test-grammar-tab"]').tab('show');
         inclusiveTestGrammarJson = JSON.stringify(jstreeToNestedGrammar(node_json));
         display_table('positive',true);
         display_table('negative',true);
+    } else {
+        alert("Failed to run the specified grammar.\n\nReason: " + grammarValidity.reason + "\n\nSolution: " + grammarValidity.solution)
     }
 }
 
@@ -381,20 +384,21 @@ function isGrammarValid(jstree) {
     function isNodeValid(node) {
         var isNodeInitialized = node.data.operation != '' // each node must have a logical operation
         if (!isNodeInitialized) {
-            return false
+            return {valid: false, reason: 'Node [' + node.text + '] is not fully initialized.', solution: 'Remove the "question mark" icon by selecting the node and updating the Component Details to desired values.'}
         }
 
         if ((node.data.metatype == 'root' || node.data.metatype == 'aggregation') & node.children.length == 0) {
-            return false    // aggregation must have basic components
+            return {valid: false, reason: 'Aggregation node [' + node.text + '] has no children.', solution: 'Add (basic) constraints to the aggregation node or remove the childless node.'}    // aggregation must have basic components
         }
 
         for (var i = 0; i < node.children.length; i++) {
-            if (!isNodeValid(node.children[i])) {
-                return false
+            var childValidity = isNodeValid(node.children[i])
+            if (!childValidity.valid) {
+                return {valid: false, reason: childValidity.reason, solution: childValidity.solution}
             }
         }
 
-        return true
+        return {valid:true, reason: '', solution: ''}
     }
 
     return isNodeValid(jstree)
