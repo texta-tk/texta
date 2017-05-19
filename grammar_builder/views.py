@@ -1,7 +1,7 @@
 import json
 import pprint
 
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.template import loader, Context
 from django.contrib.auth.decorators import login_required
 import requests
@@ -21,7 +21,16 @@ from elastic_grammar_query import ElasticGrammarQuery
 
 from collections import defaultdict
 
-import sys
+import csv
+
+import sys, os
+
+try:
+    from cStringIO import StringIO
+except:
+    from StringIO import StringIO
+
+ES_SCROLL_BATCH = 100
 
 @login_required
 def index(request):
@@ -252,6 +261,93 @@ def get_table(request):
     template = loader.get_template('grammar_builder/grammar_builder_table.html')
     return HttpResponse(template.render({'feature':request.POST['feature']},request))
 """
+
+@login_required
+def export_matched_data(request):
+    search_id = request.GET['search_id']
+
+    inclusive_metaquery = json.loads(request.GET['inclusive_grammar'])
+
+    ds = Datasets().activate_dataset(request.session)
+
+    component_query = ElasticGrammarQuery(inclusive_metaquery, None).generate()
+
+    es_m = ds.build_manager(ES_Manager)
+
+    if search_id == '-1': # Full search
+        es_m.combined_query = component_query
+    else:
+        saved_query = json.loads(Search.objects.get(pk=search_id).query)
+        es_m.load_combined_query(saved_query)
+        es_m.merge_combined_query_with_query_dict(component_query)
+
+    inclusive_instructions = generate_instructions(inclusive_metaquery)
+
+    response = StreamingHttpResponse(get_all_matched_rows(es_m.combined_query['main'], request, inclusive_instructions), content_type='text/csv')
+    
+    response['Content-Disposition'] = 'attachment; filename="%s"' % ('extracted.csv')
+
+    return response
+
+def get_all_matched_rows(query, request, inclusive_instructions):
+    buffer_ = StringIO()
+    writer = csv.writer(buffer_)
+    
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
+
+    features = sorted([field['path'] for field in es_m.get_mapped_fields()])
+
+    query['size'] = ES_SCROLL_BATCH
+
+    writer.writerow(features)
+
+    ds.get_index()
+    ds.get_mapping()
+    es_url
+
+    request_url = os.path.join(es_url, ds.get_index(), ds.get_mapping(), '_search?scroll=1m') 
+    response = requests.get(request_url, data=json.dumps(query)).json()
+
+    scroll_id = response['_scroll_id']
+    hits = response['hits']['hits']
+    
+    scroll_payload = json.dumps({'scroll':'1m', 'scroll_id':scroll_id})
+
+    while hits:
+        for hit in hits:
+            feature_dict = {feature_name:hit['_source'][feature_name] for feature_name in hit['_source']}
+
+            feature_dict = {}
+
+            row = []
+            for feature_name in features:
+                feature_path = feature_name.split('.')
+                parent_source = hit['_source']
+                for path_component in feature_path:
+                    if path_component in parent_source:
+                        parent_source = parent_source[path_component]
+                    else:
+                        parent_source = ""
+                        break
+                
+                content = parent_source
+                row.append(content)
+                feature_dict[feature_name] = content    
+
+            layer_dict = matcher.LayerDict(feature_dict)
+            if inclusive_instructions.match(layer_dict):
+                writer.writerow([element.encode('utf-8') if isinstance(element,unicode) else element for element in row])
+            
+        buffer_.seek(0)
+        data = buffer_.read()
+        buffer_.seek(0)
+        buffer_.truncate()
+        yield data
+
+        response = requests.get(os.path.join(es_url,'_search','scroll'), data=scroll_payload).json()
+        hits = response['hits']['hits']
+        scroll_id = response['_scroll_id']
 
 @login_required
 def get_table_data(request):

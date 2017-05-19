@@ -454,6 +454,22 @@ function jstreeToNestedGrammar(jstree) {
     return traverse(jstree);
 }
 
+function export_data() {
+    var grammarRootNode = $('#new-grammar-tree').jstree(true).get_json()[0]
+    var node_json = $('#new-grammar-tree').jstree(true).get_json(grammarRootNode);
+    var grammarValidity = isGrammarValid(node_json)
+    console.log(grammarValidity)
+    if (grammarValidity.valid) {
+        inclusiveTestGrammarJson = JSON.stringify(jstreeToNestedGrammar(node_json));
+        var searchId = $("#search-selection").val();
+        query = PREFIX + '/export?' + 'search_id=' + searchId + '&inclusive_grammar=' + inclusiveTestGrammarJson
+        window.open(query)
+    } else {
+        alert("Failed to export with the specified grammar.\n\nReason: " + grammarValidity.reason + "\n\nSolution: " + grammarValidity.solution)
+    }
+   
+}
+
 initializeTree();
 
 $('#save-details-btn').click(function() {
@@ -513,6 +529,10 @@ $('#save-grammar-btn').click(function() {
 
 $('#delete-grammar-btn').click(function() {
     deleteGrammarTree($('#selected-grammar').val());
+})
+
+$('#export-btn').click(function() {
+    export_data();
 })
 
 loadGrammars();

@@ -14,4 +14,5 @@ urlpatterns = [
     url(r'get_grammar', get_grammar, name='get_grammar'),
     url(r'save_grammar', save_grammar, name='save_grammar'),
     url(r'delete_grammar', delete_grammar, name='delete_grammar'),
+    url(r'export', export_matched_data, name='export_matched_data')
 ]
