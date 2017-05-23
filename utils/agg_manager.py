@@ -45,43 +45,43 @@ class AggManager:
 
     @staticmethod
     def _get_date_intervals(daterange,interval):
-        frmt = "%Y-%m-%d"
+        if daterange['min'] and daterange['max']:
+            frmt = "%Y-%m-%d"
+            start_datetime = datetime.strptime(daterange['min'],frmt)
+            end_datetime = datetime.strptime(daterange['max'],frmt)
         
-        start_datetime = datetime.strptime(daterange['min'],frmt)
-        end_datetime = datetime.strptime(daterange['max'],frmt)
-        
-        if interval == 'year':
-            rdelta = relativedelta(years=+1)
-        elif interval == 'quarter':
-            rdelta = relativedelta(months=+3)
-        elif interval == 'month':
-            rdelta = relativedelta(months=+1)
-        elif interval == 'week':
-            rdelta = relativedelta(weeks=+1)
-        elif interval == 'day':
-            rdelta = relativedelta(days=+1)
+            if interval == 'year':
+                rdelta = relativedelta(years=+1)
+            elif interval == 'quarter':
+                rdelta = relativedelta(months=+3)
+            elif interval == 'month':
+                rdelta = relativedelta(months=+1)
+            elif interval == 'week':
+                rdelta = relativedelta(weeks=+1)
+            elif interval == 'day':
+                rdelta = relativedelta(days=+1)
 
-        next_calculated_datetime = start_datetime + rdelta
-        dates = [start_datetime, next_calculated_datetime]
-        labels = [start_datetime.strftime(frmt),next_calculated_datetime.strftime(frmt)]
+            next_calculated_datetime = start_datetime + rdelta
+            dates = [start_datetime, next_calculated_datetime]
+            labels = [start_datetime.strftime(frmt),next_calculated_datetime.strftime(frmt)]
 
-        while next_calculated_datetime < end_datetime:
-            next_calculated_datetime += rdelta
-            dates.append(next_calculated_datetime)
-            labels.append(next_calculated_datetime.strftime(frmt))
+            while next_calculated_datetime < end_datetime:
+                next_calculated_datetime += rdelta
+                dates.append(next_calculated_datetime)
+                labels.append(next_calculated_datetime.strftime(frmt))
 
-        dates.append(end_datetime)
-        labels.append(end_datetime.strftime(frmt))
+            dates.append(end_datetime)
+            labels.append(end_datetime.strftime(frmt))
 
-        print dates
+            dates_str = []
+            for i,date in enumerate(dates[1:]):
+                dates_str.append({'from':dates[i].strftime(frmt),'to':date.strftime(frmt)})
 
-        dates_str = []
-        for i,date in enumerate(dates[1:]):
-            dates_str.append({'from':dates[i].strftime(frmt),'to':date.strftime(frmt)})
+            return dates_str,labels
 
-        print dates_str
+        else:
 
-        return dates_str,labels
+            return [],[]
 
 
     def prepare_agg_query(self):

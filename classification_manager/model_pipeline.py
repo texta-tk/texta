@@ -348,7 +348,6 @@ def apply_classifier(job_key):
 
         es_index = dataset.index
         es_mapping = dataset.mapping
-        es_daterange = dataset.daterange
         field_path = model.fields
 
         if model.run_status == 'completed':
@@ -356,7 +355,7 @@ def apply_classifier(job_key):
             output_model_file = os.path.join(MODELS_DIR, model_name)
             clf_model = load_model(output_model_file)
             # Update status
-            es_classification = EsDataClassification(es_index, es_mapping, es_daterange, field_path, query)
+            es_classification = EsDataClassification(es_index, es_mapping, field_path, query)
             _data = es_classification.apply_classifier(clf_model, model.tag_label)
             # Update status
             job_queue.run_status = 'completed'

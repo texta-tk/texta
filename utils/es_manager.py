@@ -115,10 +115,11 @@ class ES_Manager:
             else:
                 path_list = root_path[:]
                 path_list.append(item[0])
-                if path_list[0] not in self.TEXTA_RESERVED:
-                    path = '.'.join(path_list)
-                    data = {'path': path, 'type': item[1]['type']}
-                    mapping_data.append(data)
+
+                #if path_list[0] not in self.TEXTA_RESERVED:
+                path = '.'.join(path_list)
+                data = {'path': path, 'type': item[1]['type']}
+                mapping_data.append(data)
 
         return mapping_data
 
@@ -157,6 +158,9 @@ class ES_Manager:
         if self.index:
             mapping_structure = self.requests.get(es_url+'/'+self.index).json()[self.index]['mappings'][self.mapping]['properties']
             mapping_data = self._decode_mapping_structure(mapping_structure)
+
+	print mapping_data
+
         return mapping_data
 
     def get_column_names(self):

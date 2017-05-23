@@ -2,6 +2,7 @@
 
 import json
 import logging
+import requests
 from multiprocessing import Process
 from datetime import datetime
 
@@ -36,8 +37,10 @@ def index(request):
     context['searches'] = Search.objects.filter(author=request.user,
                                                 dataset=Dataset(pk=int(request.session['dataset'])))
     context['STATIC_URL'] = STATIC_URL
-    context['runs'] = ModelClassification.objects.all().order_by('-pk')
+    context['model_runs'] = ModelClassification.objects.all().order_by('-pk')
     context['fields'] = fields
+
+    context['tagging_runs'] = JobQueue.objects.all()
 
     pipe_builder = model_pipeline.get_pipeline_builder()
     context['extractor_opt_list'] = pipe_builder.get_extractor_options()
@@ -84,6 +87,21 @@ def start_training_job(request):
 
     clf_job = Process(target=model_pipeline.train_classifier, args=clf_args)
     clf_job.start()
+
+    return HttpResponse()
+
+
+@login_required
+def apply_model(request):
+    post = request.POST
+
+    model_id = post['model_id']
+    model_key = post['model_key']
+    search_id = post['search']
+
+    url = '{0}/classification_manager/api/classify?model_id={1}&key={2}&search_id={3}'.format(URL_PREFIX,model_id,model_key,search_id)
+
+    print requests.get(url).json()
 
     return HttpResponse()
 

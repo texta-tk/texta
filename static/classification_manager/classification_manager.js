@@ -33,8 +33,36 @@ function train_classifier(){
 }
 
 
-function confirm_and_remove(model_id) {
+function confirm_and_remove(model_id){
     if (confirm('Are you sure you want to delete the model ID '+model_id+' ?')) {
         window.location = LINK_CLASSIFICATION_MANAGER + '/delete_model?model_id=' + model_id;
     }
+}
+
+
+function display_apply_modal(model_id,model_key,tag_label){
+    $("#apply_model_id").val(model_id);
+    $("#apply_model_key").val(model_key);
+    $("#selected_tag_label").html(tag_label);
+
+    $("#apply_modal").modal('show');
+
+}
+
+
+function apply_model(){
+    var model_id = $("#apply_model_id").val();
+    var model_key = $("#apply_model_key").val();
+    var apply_on_search = $("#apply_search").val();
+
+    if(apply_on_search.length > 0){
+        $.post(LINK_CLASSIFICATION_MANAGER + "/apply_model",{model_id: model_id, model_key: model_key, search: apply_on_search},
+            function(data){
+	        window.location.replace(LINK_CLASSIFICATION_MANAGER);
+            }
+        );
+    }else{
+        alert('Search not selected!');
+    }
+
 }

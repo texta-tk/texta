@@ -156,14 +156,13 @@ class EsDataSample(object):
 
 class EsDataClassification(object):
 
-    def __init__(self, es_index, es_mapping, es_daterange, field, query):
+    def __init__(self, es_index, es_mapping, field, query):
         # Dataset info
         self.es_index = es_index
         self.es_mapping = es_mapping
-        self.es_daterange = es_daterange
         self.field = field
         # Build ES manager
-        self.es_m = ES_Manager(es_index, es_mapping, es_daterange)
+        self.es_m = ES_Manager(es_index, es_mapping)
         self.es_m.load_combined_query(query)
 
     def get_total_documents(self):
