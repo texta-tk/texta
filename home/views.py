@@ -60,25 +60,24 @@ def get_facts_autocomplete(es_m):
     return inverted_facts_structure
 
 
-def sort_datasets(datasets):
+def sort_datasets(datasets,indices):
     out = []
+
+    open_indices = [index['index'] for index in indices if index['status'] == 'open']
+    
     for dataset in sorted(datasets.items(),key=lambda l:l[1]['index']):
         ds = dataset[1]
         ds['id'] = dataset[0]
-        out.append(ds)
+        if ds['index'] in open_indices:
+            out.append(ds)
     return out
 
 def index(request):
+    indices = ES_Manager.get_indices()
+    
     template = loader.get_template('home.html')
     ds = Datasets().activate_dataset(request.session)
-    datasets = sort_datasets(ds.get_datasets())
-
-    #if ds.is_active():
-    #    es_m = ds.build_manager(ES_Manager)
-    #    autocomplete_dict = dict()
-    #    autocomplete_dict['TEXT'] = autocomplete_data(request)
-    #    autocomplete_dict['FACT'] = get_facts_autocomplete(es_m)
-    #    request.session['autocomplete_data'] = autocomplete_dict
+    datasets = sort_datasets(ds.get_datasets(),indices)
 
     # TODO: We should check if the model is actually present on the disk
     sem_models = ModelRun.objects.all().filter(run_status='completed').order_by('-pk')
