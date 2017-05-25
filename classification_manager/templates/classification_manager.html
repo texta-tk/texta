@@ -109,35 +109,35 @@
 		<table class="table table-striped">
 			<thead>
 			  <tr>
-				<th>Model ID</th>
-                <th>Key</th>
+				<th>ID</th>
+                		<th>Tag</th>
+                		<th>Key</th>
 				<th>Author</th>
-                <th>Tag</th>
-				<th>Description</th>
 				<th>Architecture</th>
+                		<th>Precision</th>
+				<th>Recall</th>
 				<th>Task Status</th>
-                <th>Precision</th>
 				<th>Task Started</th>
 				<th>Task Completed</th>
-                <th>Summary</th>
-			<th>Apply</th>
+                		<th>Summary</th>
+				<th>Apply</th>
 				<th>Remove</th>
 			  </tr>
 			</thead>
             {% for run in model_runs %}
                 <tr>
-                    <td>{{run.pk}}</td>
-                    <td><a href="javascript:alert('{{run.model_key}}');">view</a></td>
+                    <td>{{run.id}}</td>
+                    <td><span title="{{run.run_description}}" class="pointer">{{run.tag_label}}</span></td>
+                    <td><a href="javascript:display_key_modal('{{run.model_key}}','{{run.tag_label}}');">view</a></td>
                     <td>{{run.user}}</td>
-                    <td>{{run.tag_label}}</td>
-                    <td>{{run.run_description}}</td>
-                    <td><a href="javascript:alert('{{run.clf_arch}}');">view</a></td>
+                    <td><a href="javascript:display_arch_modal('{{run.clf_arch}}');">view</a></td>
+                    <td>{{run.train_summary.precision|floatformat:3}}</td>
+		    <td>{{run.train_summary.recall|floatformat:3}}</td>
                     <td>{{run.run_status}}</td>
-                    <td>{{run.score}}</td>
                     <td>{{run.run_started|date:"d.m.Y H:i"}}</td>
                     <td>{{run.run_completed|date:"d.m.Y H:i"}}</td>
-                    <td><a href="javascript:alert('{{run.train_summary}}');">view</a></td>
-		    <td><a href="#" onclick="javascript:display_apply_modal('{{run.pk}}','{{run.model_key}}','{{run.tag_label}}');">Apply</td>
+                    <td><a href="javascript:display_summary_modal('{{run.train_summary_json}}','{{run.tag_label}}');">view</a></td>
+		    <td><a href="#" onclick="javascript:display_apply_modal('{{run.id}}','{{run.model_key}}','{{run.tag_label}}');">Apply</td>
                     <td>
                         <a href="javascript:void(0)" onclick="confirm_and_remove({{run.pk}})">
                             <span class="glyphicon glyphicon-remove"></span>
@@ -149,11 +149,11 @@
 	  </div>
 	</div>
 	<div class="panel">
-	    <div class="panel-heading">Tagging Jobs</div>
+	    <div class="panel-heading">Applied Classification Models</div>
 	    <div class="panel-body">
 		<table class="table table-striped">
 		    <thead>
-			<th>Model ID</th>
+			<th>ID</th>
 			<th>Tag</th>
 			<th>Status</th>
 			<th>Started</th>
@@ -193,7 +193,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h3 class="modal-title">Tagging with class: <i><span id="selected_tag_label"></span></i></h3>
+        <h4 class="modal-title">Classify existing documents with tag: <i><span id="selected_tag_label"></span></i></h4>
       </div>
       <div class="modal-body">
 	<div class="row">
@@ -211,7 +211,29 @@
 	</div>      
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" onclick="javascript:apply_model();">Apply the Tagger</button>
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+	<button type="button" class="btn btn-default" onclick="javascript:apply_model();">Apply the Tagger</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<div id="information_modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title" id="information_modal_title"></h4>
+      </div>
+      <div class="modal-body">
+	<div class="row">
+	    <div class="col-sm-12" id="information_modal_content"></div>
+	</div>      
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
       </div>
     </div>
 

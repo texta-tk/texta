@@ -114,3 +114,8 @@ body {
 .pointer {
 	cursor: pointer;
 }
+
+.modal-header {
+    background-color: #73AD21;
+    color: #FFFFFF;
+}

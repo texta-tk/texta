@@ -40,6 +40,33 @@ function confirm_and_remove(model_id){
 }
 
 
+function display_summary_modal(train_summary,tag){
+
+    $("#information_modal_content").html(JSON.stringify(JSON.parse(train_summary),null,2));
+    $("#information_modal_title").html('Training summary for tag: <i>'+tag+'</i>');
+
+    $("#information_modal").modal('show');
+}
+
+
+function display_key_modal(key,tag){
+
+    $("#information_modal_content").html(key);
+    $("#information_modal_title").html('Key for tag: <i>'+tag+'</i>');
+
+    $("#information_modal").modal('show');
+}
+
+
+function display_arch_modal(arch,tag){
+
+    $("#information_modal_content").html(arch);
+    $("#information_modal_title").html('Architecture for tag: <i>'+tag+'</i>');
+
+    $("#information_modal").modal('show');
+}
+
+
 function display_apply_modal(model_id,model_key,tag_label){
     $("#apply_model_id").val(model_id);
     $("#apply_model_key").val(model_key);

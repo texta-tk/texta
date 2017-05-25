@@ -37,7 +37,23 @@ def index(request):
     context['searches'] = Search.objects.filter(author=request.user,
                                                 dataset=Dataset(pk=int(request.session['dataset'])))
     context['STATIC_URL'] = STATIC_URL
-    context['model_runs'] = ModelClassification.objects.all().order_by('-pk')
+
+
+    model_runs = ModelClassification.objects.all().order_by('-pk')
+    model_runs_dicts = []
+
+    for model_run in model_runs:
+        model_run_dict = model_run.__dict__
+        model_run_dict['train_summary_json'] = model_run_dict['train_summary']
+        model_run_dict['train_summary'] = json.loads(model_run_dict['train_summary_json'])
+        model_run_dict['user'] = model_run.user.username
+        model_runs_dicts.append(model_run_dict)
+
+    context['model_runs'] = model_runs_dicts
+
+
+
+
     context['fields'] = fields
 
     context['tagging_runs'] = JobQueue.objects.all()
