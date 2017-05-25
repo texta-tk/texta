@@ -60,10 +60,18 @@ def get_facts_autocomplete(es_m):
     return inverted_facts_structure
 
 
+def sort_datasets(datasets):
+    out = []
+    for dataset in sorted(datasets.items(),key=lambda l:l[1]['index']):
+        ds = dataset[1]
+        ds['id'] = dataset[0]
+        out.append(ds)
+    return out
+
 def index(request):
     template = loader.get_template('home.html')
     ds = Datasets().activate_dataset(request.session)
-    datasets = ds.get_datasets()
+    datasets = sort_datasets(ds.get_datasets())
 
     #if ds.is_active():
     #    es_m = ds.build_manager(ES_Manager)

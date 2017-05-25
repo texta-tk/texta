@@ -29,11 +29,11 @@
 									<div class="col-sm-6">Dataset:</div>
 									<div class="col-sm-6">
 										<select id="dataset" name="dataset" class="form-control">
-											{% for dataset in datasets.iteritems %}
-												{% if dataset.0|stringformat:"i" == request.session.dataset %}
-													<option value="{{dataset.0}}" selected="selected">{{dataset.1.index}} - {{dataset.1.mapping}}</option>
+											{% for dataset in datasets %}
+												{% if dataset.id|stringformat:"i" == request.session.dataset %}
+													<option value="{{dataset.id}}" selected="selected">{{dataset.index}} - {{dataset.mapping}}</option>
 												{% else %}
-													<option value="{{dataset.0}}">{{dataset.1.index}} - {{dataset.1.mapping}}</option>
+													<option value="{{dataset.id}}">{{dataset.index}} - {{dataset.mapping}}</option>
 												{% endif %}
 											{% endfor %}
 										</select>
