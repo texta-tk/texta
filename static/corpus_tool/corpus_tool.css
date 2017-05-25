@@ -40,11 +40,6 @@
     max-width: 25%;
 }
 
-.modal-header {
-    background-color: #73AD21;
-    color: #FFFFFF;
-}
-
 .invisible {
     display:none;
 }
