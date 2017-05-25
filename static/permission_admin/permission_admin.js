@@ -1,8 +1,3 @@
-/**
- * Created by katrin on 19.11.15.
- */
-
- 
 $(document).ready(function() {
 	$('#daterange_from').datepicker({format: "yyyy-mm-dd",startView:2});
 	$('#daterange_to').datepicker({format: "yyyy-mm-dd",startView:2});
@@ -25,6 +20,12 @@ $('#index').trigger('change');
 
 function change_is_active(user_id,change){
     $.post(LINK_ROOT+'permission_admin/change_isactive', {user_id: user_id, change: change}, function(){
+        location.reload();
+    });	
+}
+
+function change_permissions(user_id,change){
+    $.post(LINK_ROOT+'permission_admin/change_permissions', {user_id: user_id, change: change}, function(){
         location.reload();
     });	
 }

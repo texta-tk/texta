@@ -5,7 +5,7 @@ from . import views
 
 urlpatterns = [
     url(r'^$', views.index, name='index'),
-    url(r'^save_permissions/?', views.save_permissions),
+    url(r'^change_permissions/?', views.change_permissions),
     url(r'^delete_user/?', views.delete_user),
     url(r'^change_isactive/?', views.change_isactive),
     url(r'^add_dataset/?', views.add_dataset),

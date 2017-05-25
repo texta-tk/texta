@@ -10,8 +10,8 @@
 							<th>ID</th>
 							<th>Username</th>
 							<th>E-mail</th>
-							<th>Superuser</th>
 							<th>Last Login</th>
+							<th>Superuser</th>
 							<th>Activation</th>
 							<th>Remove</th>
 						</thead>
@@ -28,14 +28,14 @@
 											{{ user.email }}
 										</td>
 										<td>
-											{% if user.superuser == 1 %}
-											<input name="superuser" type="checkbox" value={{ user.username }} checked="checked">
-											{% else %}
-												<input name="superuser" type="checkbox" value={{ user.username }}>
-											{% endif %}
+											{{ user.last_login|date:"d.m.Y H:i" }}
 										</td>
 										<td>
-											{{ user.last_login|date:"d.m.Y H:i" }}
+											{% if user.is_superuser == True %}
+												true <a href="#" onclick="change_permissions('{{user.pk}}','to_regular');"><span class="glyphicon glyphicon-download"></span></a>
+											{% else %}
+												false <a href="#" onclick="change_permissions('{{user.pk}}','to_superuser');"><span class="glyphicon glyphicon-upload"></span></a>
+											{% endif %}
 										</td>
 										<td>
 											{% if user.is_active == True %}
