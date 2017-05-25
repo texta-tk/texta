@@ -93,7 +93,11 @@
 								{{dataset.author}}
 							</td>
 							<td>
-								{{dataset.status}}
+								{% if dataset.status == 'open' %}
+									<a href="#" onclick="open_close_dataset('{{dataset.pk}}','close');" title="Click to close the index">open</a>
+								{% else %}
+									<a href="#" onclick="open_close_dataset('{{dataset.pk}}','open');" title="Click to open the index">closed</a>
+								{% endif %}
 							</td>
 							<td>
 								{{dataset.store_size}}

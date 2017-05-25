@@ -52,3 +52,9 @@ function remove_index(index){
         });
     }
 }
+
+function open_close_dataset(dataset_id,open_close){
+    $.post(LINK_ROOT+'permission_admin/open_close_dataset', {dataset_id: dataset_id, open_close: open_close}, function(){
+        location.reload();
+    });	
+}

@@ -28,6 +28,22 @@ def delete_dataset(request):
     index_to_delete.delete()
     return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
 
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def open_close_dataset(request):
+    dataset_id = request.POST['dataset_id']
+    dataset = Dataset.objects.get(pk = dataset_id)
+
+    if request.POST['open_close'] == 'open':
+        ES_Manager.open_index(dataset.index)
+    else:
+        ES_Manager.close_index(dataset.index)
+    
+    return HttpResponse()
+    
+
+
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def index(request):

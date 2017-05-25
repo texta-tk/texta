@@ -159,8 +159,6 @@ class ES_Manager:
             mapping_structure = self.requests.get(es_url+'/'+self.index).json()[self.index]['mappings'][self.mapping]['properties']
             mapping_data = self._decode_mapping_structure(mapping_structure)
 
-	print mapping_data
-
         return mapping_data
 
     def get_column_names(self):
@@ -606,6 +604,18 @@ class ES_Manager:
         response = ES_Manager.requests.get(url).json()
         
         return sorted([mapping for mapping in response[index]['mappings']])
+
+    @staticmethod
+    def open_index(index):
+        url = '{0}/{1}/_open'.format(es_url, index)
+        response = ES_Manager.requests.post(url).json()
+        return response
+
+    @staticmethod
+    def close_index(index):
+        url = '{0}/{1}/_close'.format(es_url, index)
+        response = ES_Manager.requests.post(url).json()
+        return response
     
     def merge_combined_query_with_query_dict(self, query_dict):
         """ Merge the current query with the provided query
