@@ -23,11 +23,17 @@ $('#index').on('change', function() {
 
 $('#index').trigger('change');
 
-function delete_user(username){
+function change_is_active(user_id,change){
+    $.post(LINK_ROOT+'permission_admin/change_isactive', {user_id: user_id, change: change}, function(){
+        location.reload();
+    });	
+}
+
+function delete_user(username,user_id){
     var delete_user = confirm('Delete user '.concat(username).concat('?'));
     console.log(delete_user);
     if(delete_user === true){
-        $.post(LINK_ROOT+'permission_admin/delete_user', {username: username}, function(){
+        $.post(LINK_ROOT+'permission_admin/delete_user', {user_id: user_id}, function(){
             location.reload();
         });
     }

@@ -106,6 +106,10 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+# New user are created as activated or deactivated (in which case superuser has to activate them manually)
+USER_ISACTIVE_DEFAULT = False
+
+
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # List of all host headers which are accepted to prevent host header poisoning.

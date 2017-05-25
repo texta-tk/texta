@@ -7,39 +7,51 @@
 			<div class="panel-body">
 					<table class="table table-striped">
 						<thead>
+							<th>ID</th>
 							<th>Username</th>
+							<th>E-mail</th>
 							<th>Superuser</th>
 							<th>Last Login</th>
-							<th>E-mail</th>
-							<th></th>
+							<th>Activation</th>
+							<th>Remove</th>
 						</thead>
 							<form action="{{URL_PREFIX}}/permission_admin/save_permissions" method='POST'>
-								{% for fields in users %}
+								{% for user in users %}
 									<tr>
 										<td>
-											{{ fields.username }}
+											{{ user.pk }}
 										</td>
 										<td>
-											{% if fields.superuser == 1 %}
-											<input name="superuser" type="checkbox" value={{ fields.username }} checked="checked">
+											{{ user.username }}
+										</td>
+										<td>
+											{{ user.email }}
+										</td>
+										<td>
+											{% if user.superuser == 1 %}
+											<input name="superuser" type="checkbox" value={{ user.username }} checked="checked">
 											{% else %}
-												<input name="superuser" type="checkbox" value={{ fields.username }}>
+												<input name="superuser" type="checkbox" value={{ user.username }}>
 											{% endif %}
 										</td>
 										<td>
-											{{ fields.last_login }}
+											{{ user.last_login|date:"d.m.Y H:i" }}
 										</td>
 										<td>
-											{{ fields.e_mail }}
+											{% if user.is_active == True %}
+												<a href="#" onclick="change_is_active('{{user.pk}}','deactivate');">deactivate</a>
+											{% else %}
+												<a href="#" onclick="change_is_active('{{user.pk}}','activate');">activate</a>
+											{% endif %}
 										</td>
 										<td>
-											<button class="btn btn-danger" type='button' onclick="delete_user('{{fields.username}}');">Delete</button>
+											<a href="#" onclick="delete_user('{{user.username}}','{{user.pk}}');"><span class="glyphicon glyphicon-remove"></span></a>
 										</td>
 									</tr>
 								{% endfor %}
 								<tr>
-									<td colspan="6">
-										<button class="btn btn-default" id="save-button" type="submit" id="submit_button">Save</button>
+									<td colspan="7">
+										<button class="btn btn-default btn-sm" id="save-button" type="submit" id="submit_button">Save</button>
 									</td>
 								</tr>
 							</form>
@@ -64,7 +76,7 @@
 							<select class="form-control input-sm" id="mapping"></select>
 						</div>
 						<div class="col-lg-2">
-							<button class="btn btn-default" type='button' onclick="add_dataset();">Add</button>
+							<button class="btn btn-default btn-sm" type='button' onclick="add_dataset();">Add</button>
 						</div>
 					</form>
 				</div>
@@ -103,7 +115,7 @@
 								{{dataset.store_size}}
 							</td>
 							<td>
-								<button class="btn btn-danger" type='button' onclick="remove_index('{{dataset.pk}}');">Remove</button>
+								<a href="#" onclick="remove_index('{{dataset.pk}}');"><span class="glyphicon glyphicon-remove"></span></a>
 							</td>
 							</tr>
 					{% endfor %}

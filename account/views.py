@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import HttpResponse, HttpResponseRedirect
 
-from texta.settings import USER_MODELS, URL_PREFIX, INFO_LOGGER
+from texta.settings import USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_DEFAULT
 
 
 def create(request):
@@ -21,7 +21,11 @@ def create(request):
     if len(issues):
         return HttpResponse(json.dumps({'url': '#', 'issues': issues}))
 
-    User.objects.create_user(username, email, password)
+    user = User.objects.create_user(username, email, password)
+
+    if USER_ISACTIVE_DEFAULT == False:
+        user.is_active = False
+        user.save()
 
     user_path = os.path.join(USER_MODELS, username)
     if not os.path.exists(user_path):
@@ -30,10 +34,10 @@ def create(request):
     logging.getLogger(INFO_LOGGER).info(json.dumps(
             {'process': 'CREATE USER', 'event': 'create_user', 'args': {'user_name': username, 'email': email}}))
 
-    user = authenticate(username=username, password=password)
+    #user = authenticate(username=username, password=password)
 
-    if user is not None:
-        django_login(request, user)
+    #if user is not None:
+    #    django_login(request, user)
 
     return HttpResponse(json.dumps({'url': (URL_PREFIX + '/'), 'issues': {}}))
 

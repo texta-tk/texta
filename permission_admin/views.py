@@ -51,6 +51,9 @@ def index(request):
     datasets = get_datasets(indices=indices)
     
     users = get_user_fields()
+
+    users = User.objects.all()
+    
     template = loader.get_template('permission_admin.html')
     return HttpResponse(template.render({'users':users,'datasets':datasets,'indices':indices,'STATIC_URL':STATIC_URL,'URL_PREFIX':URL_PREFIX},request))
 
@@ -67,15 +70,34 @@ def get_datasets(indices=None):
                     ds_out['store_size'] = index['store_size']
         datasets_out.append(ds_out)
     return datasets
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def change_isactive(request):
+    user_id = request.POST['user_id']
+    change = request.POST['change']
+
+    if change == 'activate':
+        is_active = True
+    else:
+        is_active = False
+
+    user = User.objects.get(pk=int(user_id))
+    user.is_active = is_active
+    user.save()
     
+    return HttpResponse()    
+
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def delete_user(request):
-    username_to_delete = request.POST['username']
-    user_to_delete = User.objects.get(username = username_to_delete)
+    user_id_to_delete = request.POST['user_id']
+    user_to_delete = User.objects.get(pk = user_id_to_delete)
     user_to_delete.delete()
     return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
+
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -123,7 +145,8 @@ def get_user_fields():
 #            user_fields['change_modelrun'] = 0
 
         user_fields['last_login'] = user.last_login
-        user_fields['e_mail'] = user.email
+        user_fields['email'] = user.email
+        user_fields['is_active'] = user.is_active
 
         users.append(user_fields)
     users = sorted(users, key=lambda u: u['last_login'] if u['last_login'] else datetime.datetime(year=1900,month=1,day=1), reverse=True)
