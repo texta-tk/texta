@@ -46,16 +46,16 @@
 							<li id="grammar_builder"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Grammar Miner</a></li>
 						</ul>
 					</li>
-					<li class="dropdown">
-						<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-lock"></span> Restricted<span class="caret"></span></a>
-						<ul class="dropdown-menu">
-							{% if request.user.is_superuser %}
+					{% if request.user.is_superuser %}
+						<li class="dropdown">
+							<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-lock"></span> Restricted<span class="caret"></span></a>
+							<ul class="dropdown-menu">
 								<li id="model_manager"><a href="#"><span class="glyphicon glyphicon-sort-by-alphabet"></span> Model Manager </a></li>
-                                <li id="classification_manager"><a href="#"><span class="glyphicon glyphicon-equalizer"></span> Classification Manager </a></li>
+								<li id="classification_manager"><a href="#"><span class="glyphicon glyphicon-equalizer"></span> Classification Manager </a></li>
 								<li id="permission_admin"><a href="#"><span class='glyphicon glyphicon-wrench'></span> Administration </a></li>
-							{% endif %}
-						</ul>
-					</li>
+							</ul>
+						</li>
+					{% endif %}
 		        {% endif %}
             </ul>
             {% if request.user.is_authenticated %}
