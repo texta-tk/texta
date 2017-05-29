@@ -699,25 +699,3 @@ def facts_agg(es_params, request):
     table_height = table_height if table_height > 500 else 500
     return {'data':[data[0]]+sorted(data[1:], key=lambda x: sum(x[1:]), reverse=True),'height':table_height,'type':'bar','distinct_values':json.dumps(distinct_values)}
 
-
-def normalise_agg(response, es_m, es_params, agg_type):
-
-    raw_counts = [bucket['doc_count'] for bucket in response['aggregations'][agg_type]['buckets']]
-    bucket_labels = []
-    if agg_type == 'strings':
-        for a in response['aggregations']['strings']['buckets']:
-            try:
-                bucket_labels.append(a['key'])
-            except KeyError:
-                bucket_labels.append(smart_str(a['key']))
-
-    if es_params['frequency_normalisation'] == 'relative_frequency':
-
-        es_m.set_query_parameter('query', {"match_all": {}})
-        response_all = es_m.search(apply_facts=False)
-
-        total_counts = [bucket['doc_count'] for bucket in response_all['aggregations'][agg_type]['buckets']]
-        relative_counts = [float(raw_counts[i])/total_counts[i] if total_counts[i] != 0 else 0 for i in range(len(total_counts))]
-        return relative_counts,bucket_labels
-    else:
-        return raw_counts,bucket_labels
