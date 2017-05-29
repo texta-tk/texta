@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-from corpus_tool.models import Search
+from searcher.models import Search
 
 MAX_STR_LEN = 200
 MAX_INT_LEN = 10

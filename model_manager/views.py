@@ -13,7 +13,7 @@ from django.template import loader
 from django.utils.encoding import smart_str
 from gensim.models import word2vec
 
-from corpus_tool.models import Search
+from searcher.models import Search
 from lm.views import model_manager as lm_model_manager
 from model_manager.models import ModelRun
 from permission_admin.models import Dataset

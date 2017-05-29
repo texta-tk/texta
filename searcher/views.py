@@ -12,12 +12,12 @@ from django.template import loader
 from django.utils.encoding import smart_str
 
 from conceptualiser.models import Term, TermConcept
-from corpus_tool.models import Search
+from searcher.models import Search
 from permission_admin.models import Dataset
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
-from utils.agg_manager import AggManager
+from searcher.agg_manager import AggManager
 
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links
 
@@ -232,7 +232,7 @@ def get_table_header(request):
 @login_required
 def get_table_content(request):
 
-    request_param = request.POST
+    request_param = request.GET
     echo = int(request_param['sEcho'])
     filter_params = json.loads(request_param['filterParams'])
     es_params = {filter_param['name']: filter_param['value'] for filter_param in filter_params}

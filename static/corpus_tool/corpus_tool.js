@@ -1,5 +1,5 @@
 var counter = 1;
-var PREFIX = LINK_CORPUS_TOOL;
+var PREFIX = LINK_SEARCHER;
 
 var examplesTable;
 
@@ -202,7 +202,7 @@ function query(){
                   'processing': true,
                   "sAjaxSource": PREFIX+"/table_content",
                   "sDom": '<"H"ipr>t<"F"lp>',
-                  "sServerMethod":"POST",
+                  "sServerMethod":"GET",
                   "fnServerParams":function(aoData){
                       aoData.push({'name':'filterParams','value':JSON.stringify($("#filters").serializeArray())});
                    },
@@ -217,7 +217,7 @@ function query(){
         }
     }
 
-    request.open("POST",PREFIX+'/table_header');
+    request.open("GET",PREFIX+'/table_header');
     request.send(new FormData(formElement));    
     
 }

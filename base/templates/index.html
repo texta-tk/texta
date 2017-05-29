@@ -33,7 +33,7 @@
             <ul class="nav navbar-nav">
                 <li id="home"><a href="#"><span class="glyphicon glyphicon-home"></span> Home</a></li>
                 {% if request.user.is_authenticated %}
-                <li id="corpus_tool"><a href="#"><span class="glyphicon glyphicon-search"></span> Searcher</a></li>
+                <li id="searcher"><a href="#"><span class="glyphicon glyphicon-search"></span> Searcher</a></li>
                 {% endif %}
                 {% if request.user.is_authenticated %}				
 					<li class="dropdown">

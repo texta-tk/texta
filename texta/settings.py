@@ -195,7 +195,7 @@ INSTALLED_APPS = (
     'mwe_miner',
     'account',
     'home',
-    'corpus_tool',
+    'searcher',
     'model_manager',
     'classification_manager',
     'ontology_viewer',

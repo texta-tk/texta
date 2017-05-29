@@ -1,10 +1,10 @@
 # -*- coding: utf8 -*-
 import json
 import re
-
 import requests
-
 import sys
+
+import time
 
 if 'django' in sys.modules: # Import django-stuff only if imported from the django application / prevent errors when importing from scripts
     from conceptualiser.models import Concept
@@ -457,14 +457,16 @@ class ES_Manager:
 
         return True
 
-    def scroll(self, scroll_id=None, time_out='1m', id_scroll=False):
+    def scroll(self, scroll_id=None, time_out='1m', id_scroll=False, size=100):
         """ Search and Scroll
         """
         if scroll_id:
             q = json.dumps({"scroll": time_out, "scroll_id": scroll_id})
             search_url = '{0}/_search/scroll'.format(es_url)
         else:
-            q = json.dumps(self.combined_query['main'])
+            q = self.combined_query['main']
+            q['size'] = size
+            q = json.dumps(q)
             if id_scroll:
                 search_url = '{0}/{1}/{2}/_search?scroll={3}&fields='.format(es_url, self.index, self.mapping, time_out)
             else:
@@ -686,22 +688,19 @@ class ES_Manager:
                 rejected = [{'ids':{'values':docs_rejected}}]
                 query["query"]["bool"]["must_not"] = rejected
 
-
         response = ES_Manager.plain_search(self.es_url, self.index, self.mapping, query)
         
         return response
 
 
     def _add_doc_ids_to_query(self,ids):
-        out = []
-        for id in ids:
-            out.append({"_index" : self.index, "_type" : self.mapping, "_id" : id})
-        return out
+        return [{"_index" : self.index, "_type" : self.mapping, "_id" : id} for id in ids]
 
 
-    def _scroll_doc_ids(self,limit=100):
+    def _scroll_doc_ids(self,limit=500):
         ids = []
-        response = self.scroll(id_scroll=True)
+        
+        response = self.scroll(id_scroll=True, size=100)
         scroll_id = response['_scroll_id']
         hits = response['hits']['hits']
 
@@ -713,6 +712,7 @@ class ES_Manager:
                     return ids
             response = self.scroll(scroll_id=scroll_id)
             scroll_id = response['_scroll_id']
+
         return ids
 
 

@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 
-from corpus_tool.models import Search
+from searcher.models import Search
 from lm.views import model_manager as lm_model_manager
 from permission_admin.models import Dataset
 from utils.datasets import Datasets

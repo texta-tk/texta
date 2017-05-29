@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from corpus_tool import views
+from searcher import views
 
 
 urlpatterns = [
