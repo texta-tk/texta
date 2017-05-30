@@ -2,7 +2,6 @@
 {% block app %}
 
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}searcher/searcher.css">
-<script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="application/javascript" src="{{STATIC_URL}}local-cache.js"></script>
 <script type="application/javascript" src="{{STATIC_URL}}searcher/searcher.js"></script>
 
@@ -17,6 +16,7 @@
 						<ul class="nav nav-tabs">
 							<li class="active"><a data-toggle="tab" href="#search_params">Basic Search</a></li>
 							<li><a data-toggle="tab" href="#mlt_params">Similarity Search</a></li>
+							<li><a data-toggle="tab" href="#cluster_params">Cluster Search</a></li>
 						</ul>
 
 						<div class="tab-content">
@@ -96,6 +96,50 @@
 									</div>
 								</div>
 							</div>
+
+							<div id="cluster_params" class="tab-pane fade">							
+								<div class="panel bg-grey">
+									<div class="row padded-row">
+										<div class="col-sm-12">
+											<b>Select field:</b>
+										</div>
+										<div class="col-sm-12">
+											<select name="cluster_field" id="cluster_field" class="form-control input-sm">
+												{% for field in fields %}
+													{% if field.type == 'string' %}
+														<option value="{{field.data}}">{{field.label}}</option>
+													{% endif %}
+												{% endfor %}							
+											</select>
+										</div>
+										<div class="col-sm-12">
+											<b>Clustering method:</b>
+										</div>
+										<div class="col-sm-12">
+											<select id="cluster_method" name="cluster_method" class="form-control input-sm">
+												<option value="hierarchical" selected="selected">hierarchical</option>
+												<option value="kmeans">K-means</option>
+											</select>
+										</div>
+
+										<div class="col-sm-12">
+											<b>Number of clusters:</b>
+										</div>
+										<div class="col-sm-12">
+											<input id="n_clusters" name="cluster_n_clusters" class="form-control" data-slider-id='n_clusters' type="text" data-slider-min="2" data-slider-max="100" data-slider-step="1" data-slider-value="10"/>
+										</div>
+										
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-sm-12">
+										<button type="button" onclick="javascript:cluster_query();" class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span> Cluster Search</button>
+									
+									</div>
+								</div>
+							</div>							
+							
+							
 						</div>
 						
 					</div>

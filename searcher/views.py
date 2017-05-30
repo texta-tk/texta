@@ -18,6 +18,7 @@ from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
 from searcher.agg_manager import AggManager
+from searcher.cluster_manager import ClusterManager
 
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links
 
@@ -291,6 +292,29 @@ def mlt_query(request):
     
     template = loader.get_template('mlt_results.html')
     return HttpResponse(template.render(template_params, request))
+
+
+def cluster_query(request):
+
+    params = request.POST
+    ds = Datasets().activate_dataset(request.session)
+        
+    es_m = ds.build_manager(ES_Manager)
+    es_m.build(params)
+
+    cluster_m = ClusterManager(es_m,params)
+
+    nodes,links = cluster_m.create_graph()
+    graph = {'nodes': nodes,
+             'links': links}
+
+    template_params = {'STATIC_URL': STATIC_URL,
+                       'URL_PREFIX': URL_PREFIX,
+                       'graph': graph,
+                       'documents':[]}
+    
+    template = loader.get_template('cluster_results.html')
+    return HttpResponse(template.render(template_params, request))    
 
 
 def get_field_content(hit,field):

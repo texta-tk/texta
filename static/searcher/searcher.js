@@ -43,6 +43,15 @@ $(document).ready(function() {
         }
         localStorage.setCacheItem(("hiddenFeatures_"+dataset+"_"+mapping), hiddenFeatures, {months: 1});
     } );
+	
+	
+	$('#n_clusters').bootstrapSlider({
+		formatter: function(value) {
+			return 'Current value: ' + value;
+		}
+	});
+	
+	
 });
 
 
@@ -220,6 +229,24 @@ function query(){
     request.open("GET",PREFIX+'/table_header');
     request.send(new FormData(formElement));    
     
+}
+
+
+function cluster_query(){
+
+    var formElement = document.getElementById("filters");
+    var request = new XMLHttpRequest();
+
+    request.onreadystatechange=function() {
+		$("#right").html('Loading...');
+        if (request.readyState==4 && request.status==200) {
+            $("#right").html(request.responseText);
+        }
+    }
+
+    request.open("POST",PREFIX+'/cluster_query');
+    request.send(new FormData(formElement));  
+	
 }
 
 

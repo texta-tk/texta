@@ -457,7 +457,7 @@ class ES_Manager:
 
         return True
 
-    def scroll(self, scroll_id=None, time_out='1m', id_scroll=False, size=100):
+    def scroll(self, scroll_id=None, time_out='1m', id_scroll=False, field_scroll=False, size=100):
         """ Search and Scroll
         """
         if scroll_id:
@@ -469,6 +469,8 @@ class ES_Manager:
             q = json.dumps(q)
             if id_scroll:
                 search_url = '{0}/{1}/{2}/_search?scroll={3}&fields='.format(es_url, self.index, self.mapping, time_out)
+            elif field_scroll:
+                search_url = '{0}/{1}/{2}/_search?scroll={3}&fields={4}'.format(es_url, self.index, self.mapping, time_out, field_scroll)
             else:
                 search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
 
