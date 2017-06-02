@@ -718,6 +718,11 @@ class ES_Manager:
         return ids
 
 
+    def perform_queries(self,queries):
+        response = ES_Manager.plain_multisearch(self.es_url, self.index, self.mapping, queries)
+        return response        
+
+
     def get_extreme_dates(self,field):
         query = {"aggs":{"max_date":{"max":{"field":field}},"min_date":{"min":{"field":field}}}}
         url = "{0}/{1}/{2}/_search".format(self.es_url, self.index, self.mapping)

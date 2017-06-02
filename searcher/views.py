@@ -303,18 +303,52 @@ def cluster_query(request):
     es_m.build(params)
 
     cluster_m = ClusterManager(es_m,params)
-
-    nodes,links = cluster_m.create_graph()
-    graph = {'nodes': nodes,
-             'links': links}
+    
+    data = plotly_data(cluster_m)
 
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
-                       'graph': graph,
+                       'data': data,
                        'documents':[]}
     
     template = loader.get_template('cluster_results.html')
     return HttpResponse(template.render(template_params, request))    
+
+
+def plotly_data(cluster_m):
+    out = []
+    
+    coords = cluster_m.get_cluster_coords()
+    clusters = cluster_m.clusters
+    cluster_lens = [len(c) for c in clusters.values()]
+    cluster_min = min(cluster_lens)
+    cluster_max = max(cluster_lens)
+
+    for i,cluster in enumerate(clusters):
+        cluster_label = 'Cluster {0} ({1})'.format(i+1,len(clusters[i]))
+        cluster_keywords = '<br>'.join(cluster_m.cluster_keywords[i])
+        marker_size = {'size': scale_marker(len(clusters[i]),cluster_min,cluster_max)}
+
+        cluster_info = {'x':[coords[i][0]],
+                        'y':[coords[i][1]],
+                        'mode':'markers',
+                        'marker': marker_size,
+                        'hoverinfo':'text',
+                        'text':cluster_keywords.encode('latin1'),
+                        'name':cluster_label}
+        
+        out.append(cluster_info)
+    return out
+
+
+def scale_marker(value, min_val, max_val):
+    new_max = 30
+    new_min = 10
+    try:
+        return (((value - min_val) * (new_max - new_min)) / (max_val - min_val)) + new_min
+    except ZeroDivisionError:
+        return new_max
+
 
 
 def get_field_content(hit,field):

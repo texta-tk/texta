@@ -1,1 +1,33 @@
-{{graph}}
+
+
+<div id="myDiv" style="width: 1000px; height: 800px;"><!-- Plotly chart will be drawn inside this DIV --></div>
+
+
+<script type="application/javascript">
+
+
+var axis_template = {
+	showgrid: false,
+	zeroline: false,
+	showticklabels: false
+
+}
+
+
+var layout = {
+  height: 800,
+  width: 1000,
+  hoverinfo: 'name',
+  xaxis: axis_template,
+  yaxis: axis_template
+};
+
+
+var fig = {
+	'data': {{data|safe}},
+	'layout': layout,
+}
+
+Plotly.newPlot('myDiv', fig);
+</script>
+
