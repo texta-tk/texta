@@ -145,7 +145,7 @@ class ES_Manager:
     
     @staticmethod
     def plain_multisearch(es_url, dataset, mapping, data):
-        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_msearch',data='\n'.join(data)).json()['responses']
+        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_msearch',data='\n'.join(data)+'\n').json()['responses']
     
     @staticmethod
     def plain_scroll(es_url, dataset, mapping, query, expiration_str='1m'):
@@ -720,7 +720,7 @@ class ES_Manager:
 
     def perform_queries(self,queries):
         response = ES_Manager.plain_multisearch(self.es_url, self.index, self.mapping, queries)
-        return response        
+        return response      
 
 
     def get_extreme_dates(self,field):
