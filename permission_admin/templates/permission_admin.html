@@ -1,128 +1,24 @@
 {% extends "index.html" %}
 {% block app %}
-<div class="row">
-	<div class="col-lg-6">
-		<div class="panel">
-			<div class="panel-heading">User Management</div>
-			<div class="panel-body">
-					<table class="table table-striped">
-						<thead>
-							<th>ID</th>
-							<th>Username</th>
-							<th>E-mail</th>
-							<th>Last Login</th>
-							<th>Superuser</th>
-							<th>Activation</th>
-							<th>Remove</th>
-						</thead>
-							<form action="{{URL_PREFIX}}/permission_admin/save_permissions" method='POST'>
-								{% for user in users %}
-									<tr>
-										<td>
-											{{ user.pk }}
-										</td>
-										<td>
-											{{ user.username }}
-										</td>
-										<td>
-											{{ user.email }}
-										</td>
-										<td>
-											{{ user.last_login|date:"d.m.Y H:i" }}
-										</td>
-										<td>
-											{% if user.is_superuser == True %}
-												true <a href="#" onclick="change_permissions('{{user.pk}}','to_regular');"><span class="glyphicon glyphicon-download"></span></a>
-											{% else %}
-												false <a href="#" onclick="change_permissions('{{user.pk}}','to_superuser');"><span class="glyphicon glyphicon-upload"></span></a>
-											{% endif %}
-										</td>
-										<td>
-											{% if user.is_active == True %}
-												<a href="#" onclick="change_is_active('{{user.pk}}','deactivate');">deactivate</a>
-											{% else %}
-												<a href="#" onclick="change_is_active('{{user.pk}}','activate');">activate</a>
-											{% endif %}
-										</td>
-										<td>
-											<a href="#" onclick="delete_user('{{user.username}}','{{user.pk}}');"><span class="glyphicon glyphicon-remove"></span></a>
-										</td>
-									</tr>
-								{% endfor %}
-								<tr>
-									<td colspan="7">
-										<button class="btn btn-default btn-sm" id="save-button" type="submit" id="submit_button">Save</button>
-									</td>
-								</tr>
-							</form>
-					</table>
-			</div>
-		</div>
-	</div>
-	<div class="col-lg-6">
-		<div class="panel">
-			<div class="panel-heading">Dataset Management</div>
-			<div class="panel-body">
-				<div class="row">
-					<form action="/permission_admin/add_index" method='POST'>
-						<div class="col-lg-5">
-							<select class="form-control input-sm" id="index">
-							{% for index in indices %}
-								<option value="{{index.index}}">{{index.index}} ({{index.status}})</option>
-							{% endfor %}
-							</select>
-						</div>
-						<div class="col-lg-5">
-							<select class="form-control input-sm" id="mapping"></select>
-						</div>
-						<div class="col-lg-2">
-							<button class="btn btn-default btn-sm" type='button' onclick="add_dataset();">Add</button>
-						</div>
-					</form>
-				</div>
-				<table class="table table-striped">
-					<thead>
-						<th>ID</th>
-						<th>Index</th>
-						<th>Mapping</th>
-						<th>Author</th>
-						<th>Status</th>
-						<th>Size</th>
-						<th>Remove</th>
-					</thead>
-					{% for dataset in datasets %}
-						<tr>
-							<td>
-								{{dataset.pk}}
-							</td>
-							<td>
-								{{dataset.index}}
-							</td>
-							<td>
-								{{dataset.mapping}}
-							</td>
-							<td>
-								{{dataset.author}}
-							</td>
-							<td>
-								{% if dataset.status == 'open' %}
-									<a href="#" onclick="open_close_dataset('{{dataset.pk}}','close');" title="Click to close the index">open</a>
-								{% else %}
-									<a href="#" onclick="open_close_dataset('{{dataset.pk}}','open');" title="Click to open the index">closed</a>
-								{% endif %}
-							</td>
-							<td>
-								{{dataset.store_size}}
-							</td>
-							<td>
-								<a href="#" onclick="remove_index('{{dataset.pk}}');"><span class="glyphicon glyphicon-remove"></span></a>
-							</td>
-							</tr>
-					{% endfor %}
-				</table>
-			</div>
-		</div>
-	</div>
+
+<ul class="nav nav-pills">
+  <li class="nav-item active">
+    <a class="nav-link" data-toggle="tab" href="#dataset-management-tab" role="tab">Dataset Management</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#user-management-tab" role="tab">User Management</a>
+  </li>
+</ul>
+
+<!-- Tab panes -->
+<div class="tab-content">
+  <div class="tab-pane active" id="dataset-management-tab" role="tabpanel">
+    {% include "tabs/dataset_management.html" %}
+  </div>
+
+  <div class="tab-pane" id="user-management-tab" role="tabpanel">
+    {% include "tabs/user_management.html" %}
+  </div>
 </div>
 <script type="application/javascript" src="{{STATIC_URL}}permission_admin/permission_admin.js"></script>
 {% endblock %}

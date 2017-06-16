@@ -1,0 +1,28 @@
+<ul class="nav nav-tabs">
+  <li class="nav-item active">
+    <a class="nav-link" data-toggle="tab" href="#index-management-tab" role="tab">Index Management</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#generic-importer-tab" role="tab">Generic Importer</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#svenni-importer-tab" role="tab">Swenni Importer</a>
+  </li>
+</ul>
+
+<!-- Tab panes -->
+<div class="tab-content">
+  <div class="tab-pane active" id="index-management-tab" role="tabpanel">
+    {% include "tabs/dataset_subtabs/index_management.html" %}
+  </div>
+
+  <div class="tab-pane" id="generic-importer-tab" role="tabpanel">
+    Geneerik
+  </div>
+
+  <div class="tab-pane" id="svenni-importer-tab" role="tabpanel">
+    {% include "tabs/dataset_subtabs/svenni_importer.html" %}
+  </div>
+</div>
+<script type="application/javascript" src="{{STATIC_URL}}permission_admin/permission_admin.js"></script>
+

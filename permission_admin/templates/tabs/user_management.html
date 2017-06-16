@@ -1,0 +1,55 @@
+    <div class="panel">
+        <div class="panel-heading">User Management</div>
+        <div class="panel-body">
+                <table class="table table-striped">
+                    <thead>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>E-mail</th>
+                        <th>Last Login</th>
+                        <th>Superuser</th>
+                        <th>Activation</th>
+                        <th>Remove</th>
+                    </thead>
+                        <form action="{{URL_PREFIX}}/permission_admin/save_permissions" method='POST'>
+                            {% for user in users %}
+                                <tr>
+                                    <td>
+                                        {{ user.pk }}
+                                    </td>
+                                    <td>
+                                        {{ user.username }}
+                                    </td>
+                                    <td>
+                                        {{ user.email }}
+                                    </td>
+                                    <td>
+                                        {{ user.last_login|date:"d.m.Y H:i" }}
+                                    </td>
+                                    <td>
+                                        {% if user.is_superuser == True %}
+                                            true <a href="#" onclick="change_permissions('{{user.pk}}','to_regular');"><span class="glyphicon glyphicon-download"></span></a>
+                                        {% else %}
+                                            false <a href="#" onclick="change_permissions('{{user.pk}}','to_superuser');"><span class="glyphicon glyphicon-upload"></span></a>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.is_active == True %}
+                                            <a href="#" onclick="change_is_active('{{user.pk}}','deactivate');">deactivate</a>
+                                        {% else %}
+                                            <a href="#" onclick="change_is_active('{{user.pk}}','activate');">activate</a>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="#" onclick="delete_user('{{user.username}}','{{user.pk}}');"><span class="glyphicon glyphicon-remove"></span></a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            <tr>
+                                <td colspan="7">
+                                    <button class="btn btn-default btn-sm" id="save-button" type="submit" id="submit_button">Save</button>
+                                </td>
+                            </tr>
+                        </form>
+                </table>
+        </div>

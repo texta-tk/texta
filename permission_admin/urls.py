@@ -12,4 +12,5 @@ urlpatterns = [
     url(r'^delete_dataset/?', views.delete_dataset),
     url(r'^open_close_dataset/?', views.open_close_dataset),
     url(r'^get_mappings/?', views.get_mappings),
+    url(r'^add_sven_project/?', views.add_svenni_project)
 ]

@@ -91,11 +91,18 @@ USER_MODELS = os.path.join(BASE_DIR,'data','usermodels')
 # 
 MODELS_DIR = os.path.join(BASE_DIR,'data','models')
 
+# Path to Sven's projects
+#
+SVEN_DIR = os.path.join(MEDIA_ROOT, 'sven')
+
 if not os.path.exists(MODELS_DIR):
     os.makedirs(MODELS_DIR)
 
 if not os.path.exists(MODELS_DIR):
     os.makedirs(MODELS_DIR)
+
+if not os.path.exists(SVEN_DIR):
+    os.makedirs(SVEN_DIR)
 
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static_general'),) # TODO remove
 
