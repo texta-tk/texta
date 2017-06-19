@@ -1,33 +1,22 @@
 
+<div class="col-lg-2">
+	<ul class="nav nav-pills nav-stacked">
+		{% for cluster in clusters %}
+			<li><a data-toggle="pill" href="#cluster_{{cluster.id}}">{{cluster.label}}</a></li>
+		{% endfor %}
+	</ul>
+</div>
 
-<div id="myDiv" style="width: 1000px; height: 800px;"><!-- Plotly chart will be drawn inside this DIV --></div>
-
-
-<script type="application/javascript">
-
-
-var axis_template = {
-	showgrid: false,
-	zeroline: false,
-	showticklabels: false
-
-}
-
-
-var layout = {
-  height: 800,
-  width: 1000,
-  hoverinfo: 'name',
-  xaxis: axis_template,
-  yaxis: axis_template
-};
-
-
-var fig = {
-	'data': {{data|safe}},
-	'layout': layout,
-}
-
-Plotly.newPlot('myDiv', fig);
-</script>
-
+<div class="col-lg-10 tab-content">
+	{% for cluster in clusters %}
+		<div id="cluster_{{cluster.id}}" class="tab-pane fade in {% if forloop.counter == 1 %}active{% endif %}">
+			<b>Cluster keywords:</b> {% for keyword in cluster.keywords %}{{keyword}} {% endfor %}<br><br>
+			
+			<b>Cluster documents:</b><br><br>
+			{% for document in cluster.documents %}
+				{{document|safe}}<br><br>
+			{% endfor %}
+		
+		</div>
+	{% endfor %}
+</div>

@@ -121,7 +121,15 @@
 												<option value="kmeans">K-means</option>
 											</select>
 										</div>
-
+										<div class="col-sm-12">
+											<b>Cluster keyword background:</b>
+										</div>
+										<div class="col-sm-12">
+											<select id="cluster_keyword_background" name="cluster_keyword_background" class="form-control input-sm">
+												<option value="all" selected="selected">all documents</option>
+												<option value="search">documents in current search</option>
+											</select>
+										</div>
 										<div class="col-sm-12">
 											<b>Number of clusters:</b>
 										</div>
@@ -426,8 +434,8 @@
 					<b>Match type:</b><br>
 					<select id="match_type_" name="match_type_" class="form-control input-sm">
 						<option value="match">match</option>
-						<option value="match_phrase" selected="selected">match phrase</option>
-						<option value="match_phrase_prefix">match phrase prefix</option>
+						<option value="match_phrase">match phrase</option>
+						<option value="match_phrase_prefix" selected="selected">match phrase prefix</option>
 					</select> 
 				</div>
 				<div class="col-sm-3">

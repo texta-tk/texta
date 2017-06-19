@@ -304,19 +304,39 @@ def cluster_query(request):
 
     cluster_m = ClusterManager(es_m,params)
     
-    data = plotly_data(cluster_m)
+    #data = plotly_data(cluster_m)
+    clustering_data = convert_clustering_data(cluster_m)
 
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
-                       'data': data,
+                       'clusters': clustering_data,
                        'documents':[]}
     
     template = loader.get_template('cluster_results.html')
     return HttpResponse(template.render(template_params, request))    
 
 
-def plotly_data(cluster_m):
+def convert_clustering_data(cluster_m):
     out = []
+    clusters = cluster_m.clusters
+
+    for cluster_id,cluster_content in clusters.items():
+        documents = [cluster_m.documents[doc_id] for doc_id in cluster_content]
+        cluster_label = 'Cluster {0} ({1})'.format(cluster_id,len(cluster_content))
+        keywords = cluster_m.cluster_keywords[cluster_id]
+        
+        cluster_data = {'documents':documents,
+                        'label':cluster_label,
+                        'id':cluster_id,
+                        'keywords':keywords}
+        out.append(cluster_data)
+
+    return out
+    
+
+
+def plotly_data(cluster_m):
+    out = [] 
     
     coords = cluster_m.get_cluster_coords()
     clusters = cluster_m.clusters
@@ -324,7 +344,7 @@ def plotly_data(cluster_m):
     cluster_min = min(cluster_lens)
     cluster_max = max(cluster_lens)
 
-    for i,cluster in enumerate(clusters):
+    for i,cluster in clusters.items():
         cluster_label = 'Cluster {0} ({1})'.format(i+1,len(clusters[i]))
         cluster_keywords = '<br>'.join(cluster_m.cluster_keywords[i])
         marker_size = {'size': scale_marker(len(clusters[i]),cluster_min,cluster_max)}
@@ -334,7 +354,7 @@ def plotly_data(cluster_m):
                         'mode':'markers',
                         'marker': marker_size,
                         'hoverinfo':'text',
-                        'text':cluster_keywords.encode('latin1'),
+                        #'text':cluster_keywords,
                         'name':cluster_label}
         
         out.append(cluster_info)

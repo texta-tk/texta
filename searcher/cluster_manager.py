@@ -37,7 +37,7 @@ class ClusterManager:
         print 'clustering',time()-start
         start = time()
 
-        self.cluster_keywords = self._get_keywords()
+        self.cluster_keywords = self._get_keywords(background=self.params['cluster_keyword_background'])
 
         print 'keyword extraction',time()-start
         start = time()
@@ -53,11 +53,11 @@ class ClusterManager:
         return params_out
 
 
-    def _scroll_documents(self,limit=100):
+    def _scroll_documents(self,limit=1000):
         documents = []
         es_ids = []
         field = json.loads(self.params['cluster_field'])['path']
-        response = self.es_m.scroll(field_scroll=field,size=50)
+        response = self.es_m.scroll(field_scroll=field,size=500)
         scroll_id = response['_scroll_id']
         hits = response['hits']['hits']
 
@@ -116,24 +116,34 @@ class ClusterManager:
         return clusters
 
 
-    def _get_keywords(self):
-        keywords = []
+    def _get_keywords(self, background=False):
+        keywords = {}
         multisearch_queries = []
+        cluster_ids = []
         for cluster_id,values in self.clusters.items():
             doc_ids = [self.document_ids[value] for value in values]
             path = json.loads(self.params['cluster_field'])['path']
 
+            if background == 'search':
+                background_filter = {"query": {"ids": {"values": self.document_ids}}}
+                significant_terms = {"field": path, "size": 10, "background_filter": background_filter}
+            else:
+                significant_terms = {"field": path, "size": 10}
+
             header = {"index": self.es_m.index}
-            body = {"query": {"ids": {"values": doc_ids}}, "aggregations": {"significant_terms": {"significant_terms": {"field": path, "size": 30}}}}
+            body = {"query": {"ids": {"values": doc_ids}}, "aggregations": {"significant_terms": {"significant_terms": significant_terms}}}
 
             multisearch_queries.append(json.dumps(header))
             multisearch_queries.append(json.dumps(body))
+            cluster_ids.append(cluster_id)
 
-        responses =  self.es_m.perform_queries(multisearch_queries)
-        for response in responses:
+        responses = self.es_m.perform_queries(multisearch_queries)
+        
+        for i,response in enumerate(responses):
             buckets = response['aggregations']['significant_terms']['buckets']
             cluster_keywords = [bucket['key'] for bucket in buckets]
-            keywords.append(cluster_keywords)
+            keywords[cluster_ids[i]] = cluster_keywords
+            
         return keywords
 
 
