@@ -93,7 +93,7 @@ MODELS_DIR = os.path.join(BASE_DIR,'data','models')
 
 # Path to Sven's projects
 #
-SVEN_DIR = os.path.join(MEDIA_ROOT, 'sven')
+SCRIPT_MANAGER_DIR = os.path.join(MEDIA_ROOT, 'script_manager')
 
 if not os.path.exists(MODELS_DIR):
     os.makedirs(MODELS_DIR)
@@ -101,8 +101,8 @@ if not os.path.exists(MODELS_DIR):
 if not os.path.exists(MODELS_DIR):
     os.makedirs(MODELS_DIR)
 
-if not os.path.exists(SVEN_DIR):
-    os.makedirs(SVEN_DIR)
+if not os.path.exists(SCRIPT_MANAGER_DIR):
+    os.makedirs(SCRIPT_MANAGER_DIR)
 
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static_general'),) # TODO remove
 
@@ -223,8 +223,8 @@ INSTALLED_APPS = (
 #
 es_url = os.getenv('TEXTA_ELASTICSEARCH_URL')
 if es_url is None:
-    es_url = 'http://localhost:9200'
-    #es_url = 'http://elasticsearch2.stacc.ee:9201'
+    #es_url = 'http://localhost:9200'
+    es_url = 'http://10.6.6.93:9200'
 
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')

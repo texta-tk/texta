@@ -10,9 +10,9 @@ from django.template import loader
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
-from permission_admin.models import Dataset, SvenniProject
+from permission_admin.models import Dataset, ScriptProject
 from utils.es_manager import ES_Manager
-from texta.settings import STATIC_URL, URL_PREFIX, SVEN_DIR
+from texta.settings import STATIC_URL, URL_PREFIX, SCRIPT_MANAGER_DIR
 
 import os
 
@@ -127,13 +127,13 @@ def get_mappings(request):
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
-def add_svenni_project(request):
+def add_script_project(request):
     name = request.POST['name']
     desc = request.POST['description']
     entrance = request.POST['entrance']
     arguments = request.POST['arguments']
 
-    project_path = os.path.join(SVEN_DIR, canonize_project_name(name))
+    project_path = os.path.join(SCRIPT_MANAGER_DIR, canonize_project_name(name))
 
     if not os.path.exists(project_path):
         os.makedirs(project_path)
@@ -141,7 +141,7 @@ def add_svenni_project(request):
     for file_ in request.FILES.getlist('files[]'):
         path = default_storage.save(os.path.join(project_path, file_.name), ContentFile(file_.read()))
 
-    sp = SvenniProject(name=name, desc=desc, entrance_point=entrance, arguments=arguments)
+    sp = ScriptProject(name=name, desc=desc, entrance_point=entrance, arguments=arguments)
     sp.save()
 
     return HttpResponse()
