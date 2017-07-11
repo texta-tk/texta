@@ -14,7 +14,11 @@ from permission_admin.models import Dataset, ScriptProject
 from utils.es_manager import ES_Manager
 from texta.settings import STATIC_URL, URL_PREFIX, SCRIPT_MANAGER_DIR
 
+from permission_admin.script_runner import ScriptRunner
+import multiprocessing
+
 import os
+import shutil
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -133,7 +137,10 @@ def add_script_project(request):
     entrance = request.POST['entrance']
     arguments = request.POST['arguments']
 
-    project_path = os.path.join(SCRIPT_MANAGER_DIR, canonize_project_name(name))
+    sp = ScriptProject(name=name, desc=desc, entrance_point=entrance, arguments=arguments)
+    sp.save()
+
+    project_path = os.path.join(SCRIPT_MANAGER_DIR, '%s_%s' % (str(sp.id), canonize_project_name(name)))
 
     if not os.path.exists(project_path):
         os.makedirs(project_path)
@@ -141,10 +148,72 @@ def add_script_project(request):
     for file_ in request.FILES.getlist('files[]'):
         path = default_storage.save(os.path.join(project_path, file_.name), ContentFile(file_.read()))
 
-    sp = ScriptProject(name=name, desc=desc, entrance_point=entrance, arguments=arguments)
-    sp.save()
+    return HttpResponse()
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def list_script_projects(request):
+    script_projects = ScriptProject.objects.all()
+
+    template = loader.get_template('tabs/dataset_subtabs/script_manager/project_list.html')
+    return HttpResponse(template.render({'projects':script_projects},request))
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def run_script_project(request):
+    project_id = request.POST['project_id']
+
+    script_project = ScriptProject.objects.get(pk=project_id)
+
+    script_runner = ScriptRunner(script_project, SCRIPT_MANAGER_DIR)
+    project_daemon = multiprocessing.Process(name='daemon', target=script_runner.run)
+
+    script_runner.run()
+
+    #project_daemon.daemon = True
+    #project_daemon.start()
 
     return HttpResponse()
 
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def delete_script_project(request):
+    project_id = request.POST['project_id']
+    script_project = ScriptProject.objects.get(pk=project_id)
+
+    project_path = os.path.join(SCRIPT_MANAGER_DIR, '%s_%s' % (str(script_project.id), canonize_project_name(script_project.name)))
+    #project_path = os.path.join(SCRIPT_MANAGER_DIR, canonize_project_name(script_project.name))
+
+    if os.path.exists(project_path):
+        shutil.rmtree(project_path)
+
+    script_project.delete()
+
+    return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
+
+
 def canonize_project_name(name):
     return name.lower().replace(' ', '_')
+
+
+def _pickle_method(method):
+    func_name = method.im_func.__name__
+    obj = method.im_self
+    cls = method.im_class
+    return _unpickle_method, (func_name, obj, cls)
+
+def _unpickle_method(func_name, obj, cls):
+    for cls in cls.mro():
+        try:
+            func = cls.__dict__[func_name]
+        except KeyError:
+            pass
+        else:
+            break
+    return func.__get__(obj, cls)
+
+import copy_reg
+import types
+copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
