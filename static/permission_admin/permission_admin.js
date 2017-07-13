@@ -4,11 +4,9 @@ $(document).ready(function() {
 }); 
  
 $('#index').on('change', function() {
-    console.log('jipii');
     var mapping_selection = $('#mapping');
     mapping_selection.html('');
     $.getJSON(LINK_ROOT+'permission_admin/get_mappings',{index:$(this).val()}, function(mappings) {
-        console.log(mappings)
         for (var i=0; i < mappings.length; i++) {
             var mapping = mappings[i];
             $('<option></option').val(mapping).text(mapping).appendTo(mapping_selection);
