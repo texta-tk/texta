@@ -5,6 +5,7 @@ import json
 import csv
 import time
 from datetime import datetime, timedelta as td
+from collections import defaultdict
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, StreamingHttpResponse
@@ -58,10 +59,21 @@ def get_fields(es_m):
         fields.append(field)
 
         # Add additional field if it has fact
-        if es_m.check_if_field_has_facts(path_list):
+        has_facts, has_fact_str_val, has_fact_num_val =  es_m.check_if_field_has_facts(path_list)
+
+        if has_facts:
             data['type'] = 'facts'
-            label += ' [facts]'
-            field = {'data': json.dumps(data), 'label': label, 'type':'facts'}
+            field = {'data': json.dumps(data), 'label': label + ' [facts]', 'type':'facts'}
+            fields.append(field)
+
+        if has_fact_str_val:
+            data['type'] = 'fact_str_val'
+            field = {'data': json.dumps(data), 'label': label + ' [facts][text]', 'type':'fact_str_val'}
+            fields.append(field)
+
+        if has_fact_num_val:
+            data['type'] = 'fact_num_val'
+            field = {'data': json.dumps(data), 'label': label + ' [facts][num]', 'type':'fact_num_val'}
             fields.append(field)
 
     # Sort fields by label
@@ -334,6 +346,7 @@ def search(es_params, request):
 
         response = es_m.search()
 
+        """
         # Get the ids of all documents to be presented in the results page
         doc_hit_ids = []
         for hit in response['hits']['hits']:
@@ -342,6 +355,7 @@ def search(es_params, request):
         # Use the doc_ids to restrict the facts search (fast!)
         facts_map = es_m.get_facts_map(doc_ids=doc_hit_ids)
         facts_highlight = facts_map['include']
+        """
 
         out['iTotalRecords'] = response['hits']['total']
         out['iTotalDisplayRecords'] = response['hits']['total']
@@ -354,6 +368,16 @@ def search(es_params, request):
             hit_id = str(hit['_id'])
             row = []
             
+            inner_hits = hit['inner_hits'] if 'inner_hits' in hit else {}
+            name_to_inner_hits = defaultdict(list)
+            for inner_hit_name, inner_hit in inner_hits.items():
+                hit_type, _, _ = inner_hit_name.rsplit('_', 2)
+                for inner_hit_hit in inner_hit['hits']['hits']:
+                    source = inner_hit_hit['_source']
+                    source['hit_type'] = hit_type
+                    name_to_inner_hits[source['doc_path']].append(source)
+
+
             # Fill the row content respecting the order of the columns
             for col in out['column_names']:
 
@@ -370,6 +394,21 @@ def search(es_params, request):
                 for p in filed_path:
                     content = content[p] if p in content else ''
 
+
+
+                """
+                for inner_hit in name_to_inner_hits[col]:
+                    if inner_hit['hit_type'] == 'fact':
+                        content += ' ' + inner_hit['fact']
+                    elif inner_hit['hit_type'] == 'fact_val':
+                        if 'num_val' in inner_hit:
+                            value = str(inner_hit['num_val'])
+                        elif 'str_val' in inner_hit:
+                            value = inner_hit['str_val']
+                        content += ' ' +  inner_hit['fact'] + '=' + value
+                """
+
+                """
                 # If has facts, highlight
                 if hit_id in facts_highlight and col in facts_highlight[hit_id]:
                     fact_spans = facts_highlight[hit_id][col]
@@ -393,15 +432,27 @@ def search(es_params, request):
                     corpus_facts += rest_sentence
                     content = corpus_facts
 
+                """
                 # If content in the highlight structure, replace it with the tagged hit['highlight']
                 if col in highlight_config['fields'] and 'highlight' in hit:
+                    old_content = content
                     content = hit['highlight'][col][0]
+                    if name_to_inner_hits[col]:
+                        alignment = _align_texts(old_content, content)
+                else:
+                    if name_to_inner_hits[col]:
+                        alignment = _align_texts(content, content)
 
+                if name_to_inner_hits[col]:
+                    content = _highlight_facts(content, alignment, name_to_inner_hits[col])
+
+                """
                 # CHECK FOR EXTERNAL RESOURCES
                 link_key = (ds.get_index(), ds.get_mapping(), col)
                 if link_key in es_links:
                     link_prefix, link_suffix = es_links[link_key]
                     content = '<a href="'+str(link_prefix)+str(content)+str(link_suffix)+'" target="_blank">'+str(content)+'</a>'
+                """
 
                 # Append the final content of this col to the row
                 row.append(content)
@@ -422,6 +473,95 @@ def search(es_params, request):
 
         out = {'column_names': [], 'aaData': [], 'iTotalRecords': 0, 'iTotalDisplayRecords': 0, 'lag': 0}
         return out
+
+
+def _align_texts(original_text, tagged_text):
+    alignment = []
+
+    tagged_text_idx = 0
+    for char in original_text:
+        while tagged_text[tagged_text_idx] == '<':
+            while tagged_text[tagged_text_idx] != '>':
+                tagged_text_idx += 1
+            tagged_text_idx += 1
+
+        if char == tagged_text[tagged_text_idx]:
+            alignment.append(tagged_text_idx)
+
+        tagged_text_idx += 1
+
+    return alignment
+
+def _highlight_facts(highlighted_text, alignment, inner_hits):
+    inner_hits = _solve_inner_hit_span_conflicts(inner_hits)
+
+    span_idx_to_inner_hit = {}
+    span_idx = 0
+
+    span_idx_data = []  # Containts [(text_idx, span_idx, tag_type="start|end")]
+    for inner_hit in inner_hits:
+        spans = json.loads(inner_hit['spans'])
+        for span in spans:
+            start, end = [alignment[element] for element in span]
+
+            span_idx_to_inner_hit[span_idx] = inner_hit
+            span_idx_data.extend([(start, span_idx, 'start'), (end, span_idx, 'end')])
+
+            span_idx += 1
+
+    span_idx_data.sort(key=lambda start_span_idx_tag_type: start_span_idx_tag_type[0])
+    text_slices, gap_to_span_idx_tag_type = _split_text_at_indices(highlighted_text, span_idx_data)
+
+    return _add_highlight_spans(text_slices, gap_to_span_idx_tag_type, span_idx_to_inner_hit)
+
+def _solve_inner_hit_span_conflicts(inner_hits):
+    spans_to_inner_hit = {}
+
+    for inner_hit in inner_hits:
+        spans = inner_hit['spans']
+        if spans in spans_to_inner_hit:
+            if spans_to_inner_hit[spans]['hit_type'] == 'fact':
+                spans_to_inner_hit[spans] = inner_hit
+        else:
+            spans_to_inner_hit[spans] = inner_hit
+
+    return spans_to_inner_hit.values()
+
+def _split_text_at_indices(text, indices_and_data):
+    slice_start_idx = 0
+    text_slices = []
+    gap_to_span_idx_tag_type = []
+
+    for index_and_datum in indices_and_data:
+        text_idx, span_idx, tag_type = index_and_datum
+        text_slices.append(text[slice_start_idx:text_idx])
+        gap_to_span_idx_tag_type.append((span_idx, tag_type))
+
+        slice_start_idx = text_idx
+
+    text_slices.append(text[slice_start_idx:])
+
+    return text_slices, gap_to_span_idx_tag_type
+
+def _add_highlight_spans(text_slices, gap_to_span_idx_tag_type, span_idx_to_inner_hit):
+    final_text = []
+    for idx in range(len(gap_to_span_idx_tag_type)):
+        final_text.append(text_slices[idx])
+
+        span_idx, tag_type = gap_to_span_idx_tag_type[idx]
+        if tag_type == 'start':
+            inner_hit = span_idx_to_inner_hit[span_idx]
+            title_value = inner_hit['fact']
+            if inner_hit['hit_type'] == 'fact_val':
+                value = inner_hit['str_val'] if 'str_val' in inner_hit else str(inner_hit['num_val'])
+                title_value += ('=' + value)
+            final_text.append('<span style="background-color:#F7ADCF" title="[fact] %s">'%title_value)
+        else:
+            final_text.append('</span>')
+
+    final_text.append(text_slices[idx+1])
+
+    return ''.join(final_text)
 
 
 @login_required

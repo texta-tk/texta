@@ -1,8 +1,9 @@
 # -*- coding: utf8 -*-
 import json
 import re
-
+import copy
 import requests
+from collections import defaultdict
 
 import sys
 
@@ -68,7 +69,7 @@ class ES_Manager:
     """
 
     TEXTA_MAPPING = 'texta'
-    TEXTA_RESERVED = ['texta_link']
+    TEXTA_RESERVED = ['texta_link','texta_facts']
     
     # Redefine requests if LDAP authentication is used
     if es_use_ldap:
@@ -85,6 +86,39 @@ class ES_Manager:
         self._facts_map = None
         self.es_cache = ES_Cache()
 
+    #def check_if_field_has_facts(self, sub_fields):
+        #""" Check if field is associate with facts in Elasticsearch
+        #"""
+        #doc_type = self.mapping.lower()
+        #field_path = [s.lower() for s in sub_fields]
+        #doc_path = '.'.join(field_path)
+
+        #request_url = '{0}/{1}/{2}/_count'.format(es_url, self.index, self.TEXTA_MAPPING)
+        #base_query = {"query": {"bool": {"filter": {'and': []}}}}
+        #base_query['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': doc_type}})
+        #base_query['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
+
+        #has_facts = self._field_has_facts(request_url, base_query)
+        #has_fact_str_val = self._field_has_fact_vals(request_url, base_query, 'facts.str_val')
+        #has_fact_num_val = self._field_has_fact_vals(request_url, base_query, 'facts.num_val')
+
+        #return has_facts, has_fact_str_val, has_fact_num_val
+
+    #def _field_has_facts(self, url, query):
+        #query = json.dumps(query)
+        #response = self.requests.post(url, data=query).json()
+
+        #return 'count' in response and response['count'] > 0
+
+    #def _field_has_fact_vals(self, url, query, value_field_name):
+        #query = copy.deepcopy(query)
+        #query['query']['bool']['filter']['and'].append({'exists': {'field': value_field_name}})
+        #query = json.dumps(query)
+
+        #response = self.requests.post(url, data=query).json()
+
+        #return 'count' in response and response['count'] > 0
+
     def check_if_field_has_facts(self, sub_fields):
         """ Check if field is associate with facts in Elasticsearch
         """
@@ -92,12 +126,35 @@ class ES_Manager:
         field_path = [s.lower() for s in sub_fields]
         doc_path = '.'.join(field_path)
 
-        request_url = '{0}/{1}/{2}/_count'.format(es_url, self.index, self.TEXTA_MAPPING)
-        q = {"query": {"bool": {"filter": {'and': []}}}}
-        q['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': doc_type}})
-        q['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
-        q = json.dumps(q)
-        response = self.requests.post(request_url, data=q).json()
+        request_url = '{0}/{1}/{2}/_count'.format(es_url, self.index, self.mapping)
+        base_query = {"query": {"bool": {"filter": {'and': []}}}}
+        base_query = {'query': {'nested': {'path': 'texta_facts', 'query': {'bool': {'filter': {'and': []}}}}}}  # {'match':{'texta_facts.fact':'superhero'}}}}}
+        #base_query['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': doc_type}})
+        #base_query['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
+        base_query['query']['nested']['query']['bool']['filter']['and'].append({'term': {'texta_facts.doc_path': doc_path}})
+
+        has_facts = self._field_has_facts(request_url, base_query)
+        has_fact_str_val = self._field_has_fact_vals(request_url, base_query, 'texta_facts.str_val')
+        has_fact_num_val = self._field_has_fact_vals(request_url, base_query, 'texta_facts.num_val')
+
+        return has_facts, has_fact_str_val, has_fact_num_val
+
+    def _field_has_facts(self, url, query):
+        query = copy.deepcopy(query)
+        query['query']['nested']['query']['bool']['filter']['and'].append({'exists': {'field': 'texta_facts.fact'}})
+
+        query = json.dumps(query)
+        response = self.requests.post(url, data=query).json()
+
+        return 'count' in response and response['count'] > 0
+
+    def _field_has_fact_vals(self, url, query, value_field_name):
+        query = copy.deepcopy(query)
+        query['query']['nested']['query']['bool']['filter']['and'].append({'exists': {'field': value_field_name}})
+        query = json.dumps(query)
+
+        response = self.requests.post(url, data=query).json()
+
         return 'count' in response and response['count'] > 0
 
     def _decode_mapping_structure(self, structure, root_path=list()):
@@ -106,6 +163,8 @@ class ES_Manager:
         mapping_data = []
 
         for item in structure.items():
+            if item[0] in self.TEXTA_RESERVED:
+                continue
             if 'properties' in item[1]:
                 sub_structure = item[1]['properties']
                 path_list = root_path[:]
@@ -208,15 +267,81 @@ class ES_Manager:
     @staticmethod
     def _get_fact_constraints(es_params):
         _constraints = {}
+        fact_val_constraint_keys = {u'type':None, u'val':None, u'op':None}
         for item in es_params:
             if 'fact' in item:
                 item = item.split('_')
                 first_part = '_'.join(item[:2])
                 second_part = item[2]
+                if len(item) > 3:
+                    fact_val_constraint_keys[second_part] = None
                 if second_part not in _constraints:
                     _constraints[second_part] = {}
                 _constraints[second_part][first_part] = es_params['_'.join(item)]
+
+        ES_Manager._remove_fact_val_fields(_constraints, fact_val_constraint_keys)
+
         return _constraints
+
+    @staticmethod
+    def _remove_fact_val_fields(constraints, fact_val_keys):
+        keys_to_remove = [key for key in fact_val_keys if key in constraints]
+        for key in keys_to_remove:
+            del constraints[key]
+
+    @staticmethod
+    def _get_fact_val_constraints(es_params):
+        constraints = defaultdict(lambda: {'constraints': defaultdict(dict)})
+        for item in es_params:
+            if 'fact_constraint' in item:
+                key_parts = item.split('_')
+                specifier, field_id = key_parts[2], key_parts[3]
+
+                if specifier == 'type':
+                    constraints[field_id]['type'] = es_params[item]
+                else:
+                    constraint_id = key_parts[4]
+                    specifier_map = {'op': 'operator', 'val': 'value'}
+                    constraints[field_id]['constraints'][constraint_id][specifier_map[specifier]] = es_params[item]
+            elif 'fact_txt' in item:
+                key_parts = item.split('_')
+
+                if len(key_parts) == 3:  # Normal fact constraint
+                    continue
+
+                field_id, constraint_id = key_parts[2], key_parts[3]
+                constraints[field_id]['constraints'][constraint_id]['name'] = es_params[item]
+            elif 'fact_operator' in item:
+                field_id = item.rsplit('_', 1)[1]
+                constraints[field_id]['operator'] = es_params[item]
+            elif 'fact_field' in item:
+                field_id = item.rsplit('_', 1)[1]
+                constraints[field_id]['field'] = es_params[item]
+
+        constraints = dict(constraints)
+        for constraint in constraints.values():
+            constraint['constraints'] = dict(constraint['constraints'])
+
+        ES_Manager._remove_non_fact_val_fields(constraints)
+        ES_Manager._convert_fact_vals(constraints)
+
+        return constraints
+
+    @staticmethod
+    def _remove_non_fact_val_fields(constraints):
+        fields_to_remove = []
+        for field_id in constraints:
+            if len(constraints[field_id]['constraints']) == 0:
+                fields_to_remove.append(field_id)
+        for field_id in fields_to_remove:
+            del constraints[field_id]
+
+    @staticmethod
+    def _convert_fact_vals(constraints):
+        for constraint in constraints.values():
+            if constraint['type'] == 'num':
+                for sub_constraint in constraint['constraints'].values():
+                    sub_constraint['value'] = float(sub_constraint['value'])
 
     @staticmethod
     def _get_list_synonyms(query_string):
@@ -248,6 +373,7 @@ class ES_Manager:
         string_constraints = self._get_match_constraints(es_params)
         date_constraints = self._get_daterange_constraints(es_params)
         fact_constraints = self._get_fact_constraints(es_params)
+        fact_val_constraints = self._get_fact_val_constraints(es_params)
 
         for string_constraint in string_constraints.values():
 
@@ -290,7 +416,10 @@ class ES_Manager:
             _combined_query["main"]['query']['bool']['must'].append(date_range_end)
 
         total_include = 0
-        for fact_constraint in fact_constraints.values():
+        for field_id, fact_constraint in fact_constraints.items():
+            _combined_query['main']['query']['bool']['must'].append({'nested': {'path': 'texta_facts', 'query':{'bool': {'must': []}}}})
+            fact_query = _combined_query['main']['query']['bool']['must'][-1]['nested']['query']['bool']['must']
+
             fact_field = fact_constraint['fact_field'] if 'fact_field' in fact_constraint else ''
             fact_txt = fact_constraint['fact_txt'] if 'fact_txt' in fact_constraint else ''
             fact_operator = fact_constraint['fact_operator'] if 'fact_operator' in fact_constraint else ''
@@ -299,26 +428,60 @@ class ES_Manager:
             sub_queries = []
             # Add facts query to search in facts mapping
             fact_queries = []
-            for query_string in query_strings:
-                fact_q = {"bool": {"must": []}}
-                fact_q['bool']['must'].append({'match_phrase': {'facts.fact': {'query': query_string, 'slop': 1}}})
-                fact_q['bool']['must'].append({'term': {'facts.doc_type': self.mapping.lower()}})
-                fact_q['bool']['must'].append({'term': {'facts.doc_path': fact_field.lower()}})
-                fact_queries.append(fact_q)
-            if fact_operator in ['must', 'should']:
-                _combined_query['facts']['include'].append({'query': {"bool": {fact_operator: fact_queries}}})
-                total_include += 1
 
-            # Fact queries are executed against the fact in texta_link
-            for query_string in query_strings:
-                fact_link = u'{0}.{1}'.format(fact_field, query_string)
-                sub_query = { "match_phrase" : { "texta_link.facts" : fact_link } }
-                sub_queries.append(sub_query)
-            _combined_query["main"]["query"]["bool"]["should"].append({"bool": {fact_operator: sub_queries}})
+            #fact_query.append({'match_phrase': {'texta_facts.fact': fact_field}})
 
-        _combined_query["main"]["query"]["bool"]["minimum_should_match"] += len(fact_constraints)
-        _combined_query['facts']['total_include'] = total_include
-        _combined_query['facts']['total_exclude'] = 0
+            if query_strings:
+
+                _combined_query['main']['query']['bool']['must'].append({'bool': {fact_operator: []}})
+                fact_query = _combined_query['main']['query']['bool']['must'][-1]['bool'][fact_operator]
+
+
+                for string_id, query_string in enumerate(query_strings):
+                    fact_query.append({'nested': {'path': 'texta_facts', 'inner_hits':{'name':'fact_'+str(field_id)+'_'+str(string_id)},
+                                                  'query':{'bool': {'must': []}}}})
+                    nested_query = fact_query[-1]['nested']['query']['bool']['must']
+
+                    nested_query.append({'match': {'texta_facts.doc_path': fact_field.lower()}})
+                    nested_query.append({'match': {'texta_facts.fact': query_string}})
+
+        for field_id, fact_val_constraint in fact_val_constraints.items():
+            fact_operator = fact_val_constraint['operator']
+            fact_field = fact_val_constraint['field']
+            val_type = fact_val_constraint['type']
+
+            _combined_query['main']['query']['bool']['must'].append({'bool': {fact_operator: []}})
+            fact_val_query = _combined_query['main']['query']['bool']['must'][-1]['bool'][fact_operator]
+
+            for constraint_id, value_constraint in fact_val_constraint['constraints'].items():
+                fact_name = value_constraint['name']
+                fact_value = value_constraint['value']
+                fact_val_operator = value_constraint['operator']
+
+                fact_val_query.append({'nested': {'path': 'texta_facts', 'inner_hits':{'name':'fact_val_'+str(field_id)+'_'+str(constraint_id)},
+                                                  'query': {'bool': {'must': []}}}})
+                nested_query = fact_val_query[-1]['nested']['query']['bool']['must']
+                nested_query.append({'match': {'texta_facts.fact': fact_name}})
+                nested_query.append({'match': {'texta_facts.doc_path': fact_field}})
+
+                if val_type == 'str':
+                    if fact_val_operator == '=':
+                        nested_query.append({'match': {'texta_facts.str_val': fact_value}})
+                    elif fact_val_operator == '!=':
+                        nested_query = fact_val_query[-1]['nested']['query']['bool']
+                        nested_query['must_not'] = [{'match': {'texta_facts.str_val': fact_value}}]
+
+                elif val_type == 'num':
+                    if fact_val_operator == '=':
+                        nested_query.append({'term': {'texta_facts.num_val': fact_value}})
+                    elif fact_val_operator == '!=':
+                        nested_query = fact_val_query[-1]['nested']['query']['bool']
+                        nested_query['must_not'] = [{'match': {'texta_facts.num_val': fact_value}}]
+                    else:
+                        operator = {'<': 'lt', '<=': 'lte', '>': 'gt', '>=': 'gte'}[fact_val_operator]
+                        nested_query.append({'range': {'texta_facts.num_val': {operator: fact_value}}})
+
+
         self.combined_query = _combined_query
 
     def get_combined_query(self):
