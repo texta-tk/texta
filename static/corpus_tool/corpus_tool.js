@@ -413,7 +413,13 @@ function displayAgg(response){
 				drawTimeline(data[i]);
 			}else if(data[i].type == 'string'){
 				drawStringAggs(data[i]);
-			}
+			} else if (data[i].type == 'fact') {
+                drawStringAggs(data[i]);
+            } else if (data[i].type == 'fact_str_val') {
+                drawStringAggs(data[i]);
+            } else if (data[i].type == 'fact_num_val') {
+                drawStringAggs(data[i]);
+            }
 		} 
 	}
 	
