@@ -39,7 +39,7 @@ def convert_date(date_string,frmt):
 
 
 def get_fields(es_m):
-    """ Crete field list from fields in the Elasticsearch mapping
+    """ Create field list from fields in the Elasticsearch mapping
     """
     fields = []
     mapped_fields = es_m.get_mapped_fields()

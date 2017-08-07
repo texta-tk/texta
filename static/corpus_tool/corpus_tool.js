@@ -372,7 +372,6 @@ function lookup(content,id,action,field_name, lookup_type){
 
 
 function aggregate(){
-
 	var container = $("#right");
 	container.empty();
 	container.append("Loading...");

@@ -105,7 +105,10 @@ class AggManager:
         # 2nd LEVEL AGGREGATION
         if es_params["agg_field_2_selected"] == 'true':
             agg_2 = self.create_agg(agg_name_2,sort_by_2,agg_field_2["path"])
-            agg[agg_name_1]["aggregations"] = agg_2
+            if 'fact' in agg_name_1:
+                agg[agg_name_1]['aggs'][agg_name_1]['aggs']['document_count']['aggs'] = agg_2
+            else:
+                agg[agg_name_1]["aggregations"] = agg_2
 
         return agg
 
@@ -114,26 +117,41 @@ class AggManager:
         if agg_name == "daterange":
             return {agg_name: {"date_range": {"field": path, "format": date_format, "ranges": self.ranges}}}
         elif agg_name == 'fact':
-            return {agg_name: {"nested": {"path": "texta_facts"}, "aggs": {
-                agg_name: {"significant_terms": {
-                    "field": "texta_facts.fact", "size": 30},
-                    "aggs": {"document_count": {"reverse_nested": {}}}
+            return {
+                agg_name: {
+                    "nested": {"path": "texta_facts"},
+                    "aggs": {
+                        agg_name: {
+                            "significant_terms": {"field": "texta_facts.fact", "size": 30},
+                            "aggs": {"document_count": {"reverse_nested": {}}}
+                        }
+                    }
                 }
-            }}}
+            }
         elif agg_name == 'fact_str_val':
-            return {agg_name: {"nested": {"path": "texta_facts"}, "aggs": {
-                agg_name: {"significant_terms": {
-                    "field": "texta_facts.str_val", "size": 30},
-                    "aggs": {"document_count": {"reverse_nested": {}}}
+            return {
+                agg_name: {
+                    "nested": {"path": "texta_facts"},
+                    "aggs": {
+                        agg_name: {
+                            "significant_terms": {"field": "texta_facts.str_val", "size": 30},
+                            "aggs": {"document_count": {"reverse_nested": {}}}
+                        }
+                    }
                 }
-            }}}
+            }
         elif agg_name == 'fact_num_val':
-            return {agg_name: {"nested": {"path": "texta_facts"}, "aggs": {
-                agg_name: {"significant_terms": {
-                    "field": "texta_facts.num_val", "size": 30},
-                    "aggs": {"document_count": {"reverse_nested": {}}}
+            return {
+                agg_name: {
+                    "nested": {"path": "texta_facts"},
+                    "aggs": {
+                        agg_name: {
+                            "significant_terms": {"field": "texta_facts.num_val", "size": 30},
+                            "aggs": {"document_count": {"reverse_nested": {}}}
+                        }
+                    }
                 }
-            }}}
+            }
         else:
             # NOTE: Exclude numbers from discrete aggregation ouput
             return {agg_name: {sort_by: {"field": path, "size": 30}}}
@@ -158,6 +176,7 @@ class AggManager:
         if "ignore_active_search" not in self.es_params:
             self.es_m.build(self.es_params)
             self.es_m.set_query_parameter("aggs", self.agg_query)
+            self.es_m.set_query_parameter("size", 0)
             response = self.es_m.search()
             responses.append({"id":"query","label":"Current Search","response":response})
 
@@ -297,6 +316,13 @@ class AggManager:
 
             new["key"] = bucket["key"]
             new["val"] = bucket["document_count"]["doc_count"]
+
+            if 'document_count' in bucket:
+                for inner_bucket in bucket['document_count']['string']['buckets']:
+                    child = {}
+                    child['key'] = inner_bucket['key']
+                    child['val'] = inner_bucket['doc_count']
+                    new['children'].append(child)
 
             results.append(new)
 
