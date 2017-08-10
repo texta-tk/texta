@@ -446,8 +446,7 @@ function drawTimeline(data){
 			show_children(children_data,row.date,timeline_children_container);
 		});
 	
-	$("#daterange_agg_container").append(timeline_children_container);
-
+    $("#right").append(timeline_children_container);
 }
 
 
@@ -455,20 +454,49 @@ function show_children(data,date,timeline_children_container) {
 	timeline_children_container.empty();
 
 	$.each(data, function(i,data_list){
-		var response_container = $("<div style='float: left; padding-left: 20px;'></div>");		
-		var tbody = $("<tbody></tbody>");
-		
+        var responseContainers = [$("<div style='float: left; padding-left: 20px;'></div>")];
+
+        var tbody = $("<tbody></tbody>");
+
+        var valTables = []
+
 		$.each(data_list.data, function(j,row){
 			var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td></tr>");
-			tbody.append(row_container);			
 
-		});
+            var valsTbody = $("<tbody></tbody>");
+            var valsTable = $("<table id='" + i + '-' + row.key + "-table' class='table table-striped table-hover fact-val-table-" + i +"' style='display: none;'></table>");
+            valsTable.append("<thead><th colspan='2'>&nbsp;</th></head>");
+
+            $.each(row.children, function (k,child_row) {
+                valsTbody.append($("<tr><td>"+child_row.val+"</td><td>"+child_row.key+"</td></tr>"));
+            });
+
+            row_container.click(function() {
+                $('.fact-val-table-' + i).hide();
+                $('#' + i + '-' + row.key + '-table').show();
+            });
+
+            valsTable.append(valsTbody);
+
+            if (row.children.length > 0) {
+                row_container.addClass("pointer")
+
+                var responseContainer = $("<div style='float: left; padding-left: 20px;'></div>");
+                responseContainer.append(valsTable);
+                responseContainers.push(responseContainer)
+            }
+
+			tbody.append(row_container);
+        });
 		
 		var table = $("<table class='table table-striped table-hover'></table>");
 		table.append("<thead><th colspan='2'>"+data_list.label+"</th></head>");
 		table.append(tbody);
-		response_container.append(table);
-		timeline_children_container.append(response_container);
+		responseContainers[0].append(table);
+
+        $.each(responseContainers, function (i, container) {
+            timeline_children_container.append(container);
+        });
 	});
 	
 }
@@ -478,13 +506,14 @@ function drawStringAggs(data){
 	var response_container = $("<div style='float: left; padding-left: 20px;'></div>");
 	var table_container = $("<div style='float: left'></div>");
 	var children_container = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
-	
+	var grandchildren_container = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
+
 	var tbody = $("<tbody></tbody>");
 	
 	$.each(data.data, function(i,row){
 		var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td></tr>");
 		if(row.children.length > 0){
-			row_container.click(function(){show_string_children(row.children,children_container)});
+			row_container.click(function(){show_string_children(row.children,children_container, grandchildren_container)});
 			row_container.addClass("pointer");
 		}
 		tbody.append(row_container);
@@ -499,23 +528,49 @@ function drawStringAggs(data){
 	response_container.append("<div class='row text-center'><h3>"+data.label+"</h3></div>");
 	response_container.append(table_container);
 	response_container.append(children_container);
+    response_container.append(grandchildren_container)
 	
 	$("#string_agg_container").append(response_container);
 }
 
 
-function show_string_children(data,children_container) {
+function show_string_children(data,children_container,grandchildren_container) {
 	children_container.empty();
+    grandchildren_container.empty();
 
 	var tbody = $("<tbody></tbody>");
 	
 	$.each(data, function(i,data_list){
 		var row_container = $("<tr><td>"+data_list.val+"</td><td>"+data_list.key+"</td></tr>");
+
+        if (data_list.hasOwnProperty('children') && data_list.children.length > 0) {
+            row_container.addClass("pointer");
+        };
+
+        row_container.click(function() {
+            grandchildren_container.empty();
+
+            if (data_list.hasOwnProperty('children') && data_list.children.length > 0) {
+                var grandchildrenTbody = $("<tbody></tbody>");
+
+                $.each(data_list.children, function(j, grandchild_data) {
+                    grandchildrenTbody.append($("<tr><td>"+grandchild_data.val+"</td><td>"+grandchild_data.key+"</td></tr>"))
+                })
+
+                var grandchildrenTable = $("<table class='table table-striped table-hover'></table>");
+                grandchildrenTable.append("<thead><th colspan='2'>&nbsp;</th></head>");
+                grandchildrenTable.append(grandchildrenTbody);
+
+                grandchildren_container.append(grandchildrenTable);
+                grandchildren_container.removeClass("hidden");
+            }
+        });
+
 		tbody.append(row_container);
 	});
 	
 	var table = $("<table class='table table-striped table-hover'></table>");
-	table.append("<thead><th colspan='2'>Field #2</th></head>").click(function(){children_container.addClass('hidden')});;
+	table.append("<thead><th colspan='2'>Field #2</th></head>");//.click(function(){children_container.addClass('hidden')});;
 
 	table.append(tbody);
 	

@@ -193,7 +193,7 @@
 								<b>Select field:</b>
 								<select id="agg_field_2" name="agg_field_2" class="form-control input-sm">
 									{% for field in fields %}
-										{% if field.type == 'string' or field.type == 'facts' or field.type == 'fact_str_val' or field.type == 'fact_num_val' %}
+										{% if field.type == 'string' or field.type == 'facts'%}
 											<option value="{{field.data}}">{{field.label}}</option>
 										{% endif %}
 									{% endfor %}

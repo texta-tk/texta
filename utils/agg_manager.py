@@ -105,10 +105,17 @@ class AggManager:
         # 2nd LEVEL AGGREGATION
         if es_params["agg_field_2_selected"] == 'true':
             agg_2 = self.create_agg(agg_name_2,sort_by_2,agg_field_2["path"])
-            if 'fact' in agg_name_1:
-                agg[agg_name_1]['aggs'][agg_name_1]['aggs']['document_count']['aggs'] = agg_2
+            if agg_name_1 == 'fact' and agg_name_2 == 'fact_str_val':
+                agg[agg_name_1]['aggs'][agg_name_1]['aggs'] = agg_2[agg_name_2]['aggs']
+                agg[agg_name_1]['aggs'][agg_name_1]['aggs']['documents'] = {"reverse_nested": {}}
+            elif 'fact' in agg_name_1 and agg_name_2 == 'string':
+                agg[agg_name_1]['aggs'][agg_name_1]['aggs']['documents']['aggs'] = agg_2
             else:
-                agg[agg_name_1]["aggregations"] = agg_2
+                if agg_name_2 == 'fact':
+                    agg[agg_name_1]["aggregations"] = agg_2
+                    agg[agg_name_1]["aggregations"][agg_name_2]['aggs'][agg_name_2]['aggs'] = self.create_agg('fact_str_val', sort_by_2, agg_field_2['path'])['fact_str_val']['aggs']
+                else:
+                    agg[agg_name_1]["aggregations"] = agg_2
 
         return agg
 
@@ -123,7 +130,7 @@ class AggManager:
                     "aggs": {
                         agg_name: {
                             "significant_terms": {"field": "texta_facts.fact", "size": 30},
-                            "aggs": {"document_count": {"reverse_nested": {}}}
+                            "aggs": {"documents": {"reverse_nested": {}}}
                         }
                     }
                 }
@@ -135,7 +142,7 @@ class AggManager:
                     "aggs": {
                         agg_name: {
                             "significant_terms": {"field": "texta_facts.str_val", "size": 30},
-                            "aggs": {"document_count": {"reverse_nested": {}}}
+                            "aggs": {"documents": {"reverse_nested": {}}}
                         }
                     }
                 }
@@ -147,7 +154,7 @@ class AggManager:
                     "aggs": {
                         agg_name: {
                             "significant_terms": {"field": "texta_facts.num_val", "size": 30},
-                            "aggs": {"document_count": {"reverse_nested": {}}}
+                            "aggs": {"documents": {"reverse_nested": {}}}
                         }
                     }
                 }
@@ -178,6 +185,7 @@ class AggManager:
             self.es_m.set_query_parameter("aggs", self.agg_query)
             self.es_m.set_query_parameter("size", 0)
             response = self.es_m.search()
+            #raise Exception(self.es_m.combined_query['main']['aggs'])
             responses.append({"id":"query","label":"Current Search","response":response})
 
         out["responses"] = responses
@@ -273,10 +281,16 @@ class AggManager:
                     new["children"].append(child)
             elif 'fact' in bucket:
                 for inner_bucket in bucket['fact']['fact']['buckets']:
-                    new['children'].append({'key': inner_bucket['key'], 'val': inner_bucket['document_count']['doc_count']})
+                    child = {'key': inner_bucket['key'], 'val': inner_bucket['doc_count']}
+                    grandchildren = []
+                    for super_inner_bucket in inner_bucket['fact_str_val']['buckets']:
+                        grandchildren.append({'key': super_inner_bucket['key'], 'val': super_inner_bucket['documents']['doc_count']})
+
+                    child['children'] = grandchildren
+                    new['children'].append(child)
             elif 'fact_str_val' in bucket:
                 for inner_bucket in bucket['fact_str_val']['fact_str_val']['buckets']:
-                    new['children'].append({'key': inner_bucket['key'], 'val': inner_bucket['document_count']['doc_count']})
+                    new['children'].append({'key': inner_bucket['key'], 'val': inner_bucket['documents']['doc_count']})
 
             results.append(new)
 
@@ -299,10 +313,16 @@ class AggManager:
                     new["children"].append(child)
             elif 'fact' in bucket:
                 for inner_bucket in bucket['fact']['fact']['buckets']:
-                    new['children'].append({'key': inner_bucket['key'], 'val': inner_bucket['document_count']['doc_count']})
+                    child = {'key': inner_bucket['key'], 'val': inner_bucket['doc_count']}
+                    grandchildren = []
+                    for super_inner_bucket in inner_bucket['fact_str_val']['buckets']:
+                        grandchildren.append({'key': super_inner_bucket['key'], 'val': super_inner_bucket['documents']['doc_count']})
+
+                    child['children'] = grandchildren
+                    new['children'].append(child)
             elif 'fact_str_val' in bucket:
                 for inner_bucket in bucket['fact_str_val']['fact_str_val']['buckets']:
-                    new['children'].append({'key': inner_bucket['key'], 'val': inner_bucket['document_count']['doc_count']})
+                    new['children'].append({'key': inner_bucket['key'], 'val': inner_bucket['documents']['doc_count']})
 
             results.append(new)
 
@@ -315,10 +335,17 @@ class AggManager:
             new = {"children": []}
 
             new["key"] = bucket["key"]
-            new["val"] = bucket["document_count"]["doc_count"]
+            new["val"] = bucket["documents"]["doc_count"]
 
-            if 'document_count' in bucket:
-                for inner_bucket in bucket['document_count']['string']['buckets']:
+            if 'fact_str_val' in bucket:
+                for inner_bucket in bucket['fact_str_val']['buckets']:
+                    child = {}
+                    child['key'] = inner_bucket['key']
+                    child['val'] = inner_bucket['documents']['doc_count']
+                    new['children'].append(child)
+
+            elif 'documents' in bucket:
+                for inner_bucket in bucket['documents']['string']['buckets']:
                     child = {}
                     child['key'] = inner_bucket['key']
                     child['val'] = inner_bucket['doc_count']
