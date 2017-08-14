@@ -434,18 +434,20 @@ def search(es_params, request):
 
                 """
                 # If content in the highlight structure, replace it with the tagged hit['highlight']
-                if col in highlight_config['fields'] and 'highlight' in hit:
-                    old_content = content
-                    content = hit['highlight'][col][0]
-                    if name_to_inner_hits[col]:
-                        alignment = _align_texts(old_content, content)
-                else:
-                    if name_to_inner_hits[col]:
-                        alignment = _align_texts(content, content)
+                try:
+                    if col in highlight_config['fields'] and 'highlight' in hit:
+                        old_content = content
+                        content = hit['highlight'][col][0]
+                        if name_to_inner_hits[col]:
+                            alignment = _align_texts(old_content, content)
+                    else:
+                        if name_to_inner_hits[col]:
+                            alignment = _align_texts(content, content)
 
-                if name_to_inner_hits[col]:
-                    content = _highlight_facts(content, alignment, name_to_inner_hits[col])
-
+                    if name_to_inner_hits[col]:
+                        content = _highlight_facts(content, alignment, name_to_inner_hits[col])
+                except:
+                    pass
                 """
                 # CHECK FOR EXTERNAL RESOURCES
                 link_key = (ds.get_index(), ds.get_mapping(), col)
@@ -498,11 +500,14 @@ def _highlight_facts(highlighted_text, alignment, inner_hits):
     span_idx_to_inner_hit = {}
     span_idx = 0
 
-    span_idx_data = []  # Containts [(text_idx, span_idx, tag_type="start|end")]
+    span_idx_data = []  # Contains [(text_idx, span_idx, tag_type="start|end")]
     for inner_hit in inner_hits:
         spans = json.loads(inner_hit['spans'])
         for span in spans:
-            start, end = [alignment[element] for element in span]
+            try:
+                start, end = [alignment[element] for element in span]
+            except:
+                raise Exception(str(len(highlighted_text)) + '\n' + str(spans))
 
             span_idx_to_inner_hit[span_idx] = inner_hit
             span_idx_data.extend([(start, span_idx, 'start'), (end, span_idx, 'end')])
