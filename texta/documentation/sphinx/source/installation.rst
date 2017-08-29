@@ -103,21 +103,22 @@ Installing Python dependencies
 
 The following code block lists all the Python libraries that TEXTA depends on along with Python's library downloading tool *pip*'s commands.
 
+3rd party Python libraries can be installed with package management systems such as *Anaconda* or *pip*. 
+
+Installing with Anaconda:
 
 .. code-block:: bash
 
-    pip install requests
-    pip install numpy
-    pip install cython #needed for fast gensim
-    pip install scipy
-    pip install sklearn
-    pip install gensim
-    pip install django
-    pip install pathlib
-    
-.. note::
+    (your_activated_conda_env) texta_root_dir$ chmod u+x conda_install.sh
+    (your_activated_conda_env) texta_root_dir$ ./conda_install.sh
 
-    If using `Anaconda <https://www.continuum.io/downloads>`_, all can be substituted with *conda install library_name*.
+With pip:
+
+.. code-block:: bash
+
+    texta_root_dir$ pip install -r requirements.txt
+
+.. note:: `sudo pip install -r requirements.txt` if not using conda or virtualenv
 
 Elasticsearch
 -------------
@@ -142,13 +143,13 @@ All that is left is to synchronize database state by running
 
 .. code-block:: bash
 
-    python migrate.py
+    texta_root_dir$ python migrate.py
     
 and create a superuser for TEXTA to assign application permissions
 
 .. code-block:: bash
 
-    python manage.py createsuperuser
+    texta_root_dir$ python manage.py createsuperuser
 
 .. note::
 
@@ -164,7 +165,7 @@ TEXTA comes with example dataset to play around with. After Elasticsearch has be
 
 .. code-block:: bash
 
-    python scripts/example/example_import.py
+    texta_root_dir$ python scripts/example/example_import.py
 
 .. _running-texta:
     
@@ -175,12 +176,12 @@ To start TEXTA on localhost:8000, it suffices to run
 
 .. code-block:: bash
 
-    python manage.py runserver
+    texta_root_dir$ python manage.py runserver
     
 If we want to run on some other network interface or port, we can specify it via IP-port pair.
 
 .. code-block:: bash
 
-    python manage.py runserver localhost:80
-    python manage.py runserver 0.0.0.0:8080
+    texta_root_dir$ python manage.py runserver localhost:80
+    texta_root_dir$ python manage.py runserver 0.0.0.0:8080
     
