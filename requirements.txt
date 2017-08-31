@@ -1,0 +1,10 @@
+requests
+numpy
+cython
+scipy
+sklearn
+gensim
+django
+pathlib
+dateutils
+sympy
