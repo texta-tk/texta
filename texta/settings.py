@@ -43,6 +43,8 @@ BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 # DEBUG - whether to display verbose variable values and stack trace when
 #         error occurs during page resolving.
 
+STATIC_ROOT = os.path.join(os.path.abspath(os.path.join(BASE_DIR, os.pardir)), 'static')
+
 SERVER_TYPE = 'development'
 
 if SERVER_TYPE == 'development':
@@ -54,7 +56,6 @@ if SERVER_TYPE == 'development':
     URL_PREFIX_RESOURCE = ''
     ROOT_URLCONF = 'texta.urls'
     STATIC_URL = URL_PREFIX_DOMAIN + '/static/'
-    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
     DEBUG = True
 
 elif SERVER_TYPE == 'production':
@@ -65,7 +66,6 @@ elif SERVER_TYPE == 'production':
     URL_PREFIX_RESOURCE = '/texta_dev'
     ROOT_URLCONF = 'texta.urls'
     STATIC_URL = '/texta/static/'
-    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
     DEBUG = False
 
 ########################### URLs and paths ###########################
@@ -232,8 +232,8 @@ INSTALLED_APPS = (
 #
 es_url = os.getenv('TEXTA_ELASTICSEARCH_URL')
 if es_url is None:
-    es_url = 'http://localhost:9200'
-    #es_url = 'http://10.6.6.93:9200'
+    #es_url = 'http://localhost:9200'
+    es_url = 'http://10.6.6.93:9200'
 
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')
