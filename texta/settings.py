@@ -232,8 +232,8 @@ INSTALLED_APPS = (
 #
 es_url = os.getenv('TEXTA_ELASTICSEARCH_URL')
 if es_url is None:
-    #es_url = 'http://localhost:9200'
-    es_url = 'http://10.6.6.93:9200'
+    es_url = 'http://localhost:9200'
+    #es_url = 'http://10.6.6.93:9200'
 
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')
