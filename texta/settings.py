@@ -46,15 +46,23 @@ BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 SERVER_TYPE = 'development'
 
 if SERVER_TYPE == 'development':
-    URL_PREFIX_DOMAIN = 'http://localhost:8000'
+    PROTOCOL = 'http://'
+    DOMAIN = 'localhost'
+    PORT = '8000'
+    
+    URL_PREFIX_DOMAIN = '{0}{1}:{2}'.format(PROTOCOL, DOMAIN, PORT)
     URL_PREFIX_RESOURCE = ''
     ROOT_URLCONF = 'texta.urls'
     STATIC_URL = URL_PREFIX_DOMAIN + '/static/'
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
     DEBUG = True
+
 elif SERVER_TYPE == 'production':
-    URL_PREFIX_DOMAIN = 'http://textadev.stacc.ee'
-    URL_PREFIX_RESOURCE = '/texta'
+    PROTOCOL = 'http://'
+    DOMAIN = 'dev.texta.ee'
+    
+    URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL,DOMAIN)
+    URL_PREFIX_RESOURCE = '/texta_dev'
     ROOT_URLCONF = 'texta.urls'
     STATIC_URL = '/texta/static/'
     DEBUG = False
@@ -122,7 +130,7 @@ USER_ISACTIVE_DEFAULT = False
 # List of all host headers which are accepted to prevent host header poisoning.
 # Should be altered if hosted on a remote machine.
 #
-ALLOWED_HOSTS = ['localhost','texta.stacc.ee','textadev.stacc.ee']
+ALLOWED_HOSTS = [DOMAIN]
 
 # Defines which database backend does the application use. TEXTA uses only default with sqlite engine.
 # Can change engine and database info as one sees fit.
@@ -223,8 +231,8 @@ INSTALLED_APPS = (
 #
 es_url = os.getenv('TEXTA_ELASTICSEARCH_URL')
 if es_url is None:
-    #es_url = 'http://localhost:9200'
-    es_url = 'http://10.6.6.93:9200'
+    es_url = 'http://localhost:9200'
+    #es_url = 'http://10.6.6.93:9200'
 
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')
