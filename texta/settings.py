@@ -65,6 +65,7 @@ elif SERVER_TYPE == 'production':
     URL_PREFIX_RESOURCE = '/texta_dev'
     ROOT_URLCONF = 'texta.urls'
     STATIC_URL = '/texta/static/'
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
     DEBUG = False
 
 ########################### URLs and paths ###########################
@@ -333,7 +334,7 @@ if os.path.split(os.getcwd())[1] == 'texta':
 
     from utils.setup import write_navigation_file, ensure_dir_existence
 
-    write_navigation_file(URL_PREFIX, STATIC_URL)
+    write_navigation_file(URL_PREFIX, STATIC_URL, STATIC_ROOT)
     ensure_dir_existence(LOG_PATH)
     ensure_dir_existence(MODELS_DIR)
     ensure_dir_existence(USER_MODELS)
