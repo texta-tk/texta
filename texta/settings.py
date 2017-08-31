@@ -328,9 +328,9 @@ LOGGING = {
 ############################ Boot scripts ###########################
 
 # Several scripts ran during the boot to set up files and directories.
-# Scripts will only be run if settings is imported from 'texta' directory, e.g. as a result of manager.py
+# Scripts will only be run if settings is imported from 'texta' directory, e.g. as a result of manager.py, or by Apache (user httpd / apache)
 
-if os.path.split(os.getcwd())[1] == 'texta':
+if os.path.split(os.getcwd())[1] in ['texta','httpd','apache']:
 
     from utils.setup import write_navigation_file, ensure_dir_existence
 
