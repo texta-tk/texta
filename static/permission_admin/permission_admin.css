@@ -34,3 +34,10 @@ tr {
 .data-row:hover {
     background-color: #ebebe0;
 }
+
+@media (min-width: 768px) {
+  .modal-xl {
+    width: 90%;
+   max-width:1200px;
+  }
+}

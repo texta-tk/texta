@@ -3,15 +3,21 @@
         <div class="panel-body">
             <div class="row">
                 <form action="/permission_admin/add_index" method='POST'>
-                    <div class="col-lg-5">
+                    <div class="col-lg-4">
                         <select class="form-control input-sm" id="index">
                         {% for index in indices %}
                             <option value="{{index.index}}">{{index.index}} ({{index.status}})</option>
                         {% endfor %}
                         </select>
                     </div>
-                    <div class="col-lg-5">
+                    <div class="col-lg-4">
                         <select class="form-control input-sm" id="mapping"></select>
+                    </div>
+                    <div class="col-lg-2">
+                        <select class="form-control input-sm" id="access">
+                            <option value="public">public</option>
+                            <option value="private">private</option>
+                        </select>
                     </div>
                     <div class="col-lg-2">
                         <button class="btn btn-default btn-sm" type='button' onclick="add_dataset();">Add</button>
@@ -26,6 +32,7 @@
                         <th>Author</th>
                         <th>Status</th>
                         <th>Size</th>
+                        <th>Access</th>
                         <th>Remove</th>
                     </thead>
                     {% for dataset in datasets %}
@@ -51,6 +58,9 @@
                             </td>
                             <td>
                                 {{dataset.store_size}}
+                            </td>
+                            <td>
+                                {{ dataset.access }}
                             </td>
                             <td>
                                 <a href="#" onclick="remove_index('{{dataset.pk}}');"><span class="glyphicon glyphicon-remove"></span></a>

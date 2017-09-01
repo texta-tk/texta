@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from texta.settings import DATASET_ACCESS_DEFAULT
 
 MAX_INT_LEN = 10
 MAX_STR_LEN = 100
@@ -10,6 +11,7 @@ class Dataset(models.Model):
     mapping = models.CharField(max_length=MAX_STR_LEN)
     author = models.ForeignKey(User)
     daterange = models.TextField()
+    access = models.CharField(default=DATASET_ACCESS_DEFAULT, max_length=7)
 
 class ScriptProject(models.Model):
     name = models.CharField(max_length=MAX_STR_LEN)

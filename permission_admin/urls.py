@@ -16,4 +16,5 @@ urlpatterns = [
     url(r'^project_list/?', views.list_script_projects),
     url(r'^delete_script_project/?', views.delete_script_project),
     url(r'^run_script_project/?', views.run_script_project),
+    url(r'^update_dataset_permissions/?', views.update_dataset_permissions),
 ]

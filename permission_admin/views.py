@@ -4,6 +4,7 @@ import json
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User, Group, Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
@@ -24,14 +25,41 @@ import shutil
 @user_passes_test(lambda u: u.is_superuser)
 def add_dataset(request):
     daterange = ""
-    Dataset(author=request.user, index=request.POST['index'], mapping=request.POST['mapping'], daterange=daterange).save()
+    dataset = Dataset(author=request.user, index=request.POST['index'],
+                      mapping=request.POST['mapping'], daterange=daterange, access=(request.POST['access']))
+    dataset.save()
+
+    create_dataset_access_permission_and_propagate(dataset, request.POST['access'])
+
     return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
+
+
+def create_dataset_access_permission_and_propagate(dataset, access):
+    content_type = ContentType.objects.get_for_model(Dataset)
+    permission = Permission.objects.create(
+        codename='can_access_dataset_' + str(dataset.id),
+        name='Can access dataset {0} -> {1}'.format(dataset.index, dataset.mapping),
+        content_type=content_type,
+    )
+    permission.save()
+
+    if access == 'public':
+        for user in User.objects.all():
+            user.user_permissions.add(permission)
+
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def delete_dataset(request):
     index_to_delete = request.POST['index']
     index_to_delete = Dataset.objects.get(pk = index_to_delete)
+
+    content_type = ContentType.objects.get_for_model(Dataset)
+    Permission.objects.get(
+        codename='can_access_dataset_' + str(index_to_delete.id),
+        content_type=content_type,
+    ).delete()
+
     index_to_delete.delete()
     return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
 
@@ -57,9 +85,41 @@ def index(request):
     indices = ES_Manager.get_indices()
     datasets = get_datasets(indices=indices)
     users = User.objects.all()
-    
+
+    users = annotate_users_with_permissions(users, datasets)
+
     template = loader.get_template('permission_admin.html')
     return HttpResponse(template.render({'users':users,'datasets':datasets,'indices':indices,'STATIC_URL':STATIC_URL,'URL_PREFIX':URL_PREFIX},request))
+
+def annotate_users_with_permissions(users, datasets):
+    new_users = []
+
+    content_type = ContentType.objects.get_for_model(Dataset)
+
+    for user in users:
+        new_user = {key: getattr(user, key) for key in
+                    ['pk', 'username', 'email', 'last_login', 'is_superuser', 'is_active']}
+
+        permissions = []
+        restrictions = []
+
+        for dataset in datasets:
+            permission = Permission.objects.get(
+                codename='can_access_dataset_' + str(dataset.pk),
+                content_type=content_type
+            )
+            # permission.name[19:] skips prefix "Can access dataset " to save room in GUI
+            if user.has_perm('permission_admin.' + permission.codename):
+                permissions.append({'codename': permission.codename, 'name': permission.name[19:]})
+            else:
+                restrictions.append({'codename': permission.codename, 'name': permission.name[19:]})
+
+        new_user['permissions'] = permissions
+        new_user['restrictions'] = restrictions
+
+        new_users.append(new_user)
+
+    return new_users
 
 def get_datasets(indices=None):
     datasets = Dataset.objects.all()
@@ -192,6 +252,33 @@ def delete_script_project(request):
     script_project.delete()
 
     return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def update_dataset_permissions(request):
+    allowed_codenames = json.loads(request.POST['allowed'])
+    disallowed_codenames = json.loads(request.POST['disallowed'])
+    user_id = request.POST['user_id']
+
+    user = User.objects.get(pk=user_id)
+    content_type = ContentType.objects.get_for_model(Dataset)
+
+    for allowed_codename in allowed_codenames:
+        permission = Permission.objects.get(
+            codename=allowed_codename,
+            content_type=content_type
+        )
+        user.user_permissions.add(permission)
+
+    for disallowed_codename in disallowed_codenames:
+        permission = Permission.objects.get(
+            codename=disallowed_codename,
+            content_type=content_type
+        )
+        user.user_permissions.remove(permission)
+
+    return HttpResponse()
+
 
 
 def canonize_project_name(name):

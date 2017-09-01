@@ -15,5 +15,6 @@ urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^permission_admin/', include('permission_admin.urls')),
     url(r'^grammar_builder/', include('grammar_builder.urls')),
+    url(r'^search_api/', include('search_api.urls')),
     url(r'static/(?P<path>.*)$',static.serve,{'document_root': 'static'})
 ]

@@ -8,6 +8,10 @@ from django.contrib.auth import authenticate, login as django_login, logout as d
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import HttpResponse, HttpResponseRedirect
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
+
+from permission_admin.models import Dataset
 
 from texta.settings import USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_DEFAULT
 
@@ -27,6 +31,9 @@ def create(request):
         user.is_active = False
         user.save()
 
+    if user:
+        initialize_permissions(user)
+
     user_path = os.path.join(USER_MODELS, username)
     if not os.path.exists(user_path):
         os.makedirs(user_path)
@@ -40,6 +47,17 @@ def create(request):
     #    django_login(request, user)
 
     return HttpResponse(json.dumps({'url': (URL_PREFIX + '/'), 'issues': {}}))
+
+
+def initialize_permissions(user):
+    content_type = ContentType.objects.get_for_model(Dataset)
+
+    for dataset in Dataset.objects.get(access='public'):
+        permission = Permission.objects.get(
+            codename='can_access_dataset_' + str(dataset.id),
+            content_type=content_type,
+        )
+        user.user_permissions.add(permission)
 
 
 def validate_form(username, password, email):

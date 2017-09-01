@@ -125,6 +125,10 @@ MANAGERS = ADMINS
 # New user are created as activated or deactivated (in which case superuser has to activate them manually)
 USER_ISACTIVE_DEFAULT = False
 
+# Defines whether added datasets are 'public' or 'private'. Public datasets are accessible by all the existing users and
+# new users alike. Access from a specific user can be revoked. Private datasets are not accessible by default, but
+# access privilege can be granted.
+DATASET_ACCESS_DEFAULT = 'private'
 
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
@@ -218,6 +222,7 @@ INSTALLED_APPS = (
     'base',
     'permission_admin',
     'grammar_builder',
+    'search_api',
 )
 
 ############################ Elasticsearch ###########################
