@@ -47,10 +47,6 @@ def process_stream(generator, encoding='utf8'):
         new_entry = {}
         for key in entry:
             new_entry[key] = entry[key]
-            # if key == 'texta_facts':
-            #     new_entry[key] = entry[key]
-            # else:
-            #     new_entry[key.encode('utf8')] = entry[key].encode(encoding)
-
-        yield json.dumps(new_entry)
+            
+        yield json.dumps(new_entry, ensure_ascii=False).encode(encoding)
         yield '\n'
