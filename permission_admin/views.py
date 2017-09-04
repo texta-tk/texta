@@ -215,7 +215,7 @@ def add_script_project(request):
 def list_script_projects(request):
     script_projects = ScriptProject.objects.all()
 
-    template = loader.get_template('tabs/dataset_subtabs/script_manager/project_list.html')
+    template = loader.get_template('script_manager/project_list.html')
     return HttpResponse(template.render({'projects':script_projects},request))
 
 

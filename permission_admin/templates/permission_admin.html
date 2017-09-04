@@ -2,24 +2,37 @@
 {% block app %}
 
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}permission_admin/permission_admin.css">
-<ul class="nav nav-pills">
-  <li class="nav-item active">
-    <a class="nav-link" data-toggle="tab" href="#dataset-management-tab" role="tab">Dataset Management</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" data-toggle="tab" href="#user-management-tab" role="tab">User Management</a>
-  </li>
-</ul>
+<div class="row">
+	<div class="col-lg-12">
+		<ul class="nav nav-pills">
+		  <li class="nav-item active">
+			<a class="nav-link" data-toggle="tab" href="#index-management-tab" role="tab">Access & Dataset Management</a>
+		  </li>
+		  <li class="nav-item">
+			<a class="nav-link" data-toggle="tab" href="#import-management-tab" role="tab">Import Script Management</a>
+		  </li>
+		</ul>
+	</div>
+</div>
+<div class="row">
 
-<!-- Tab panes -->
-<div class="tab-content">
-  <div class="tab-pane active" id="dataset-management-tab" role="tabpanel">
-    {% include "tabs/dataset_management.html" %}
-  </div>
-
-  <div class="tab-pane" id="user-management-tab" role="tabpanel">
-    {% include "tabs/user_management.html" %}
-  </div>
+	<div class="tab-content">
+		<div class="tab-pane active" id="index-management-tab" role="tabpanel">
+			<div class="col-lg-6">
+				{% include "user_management.html" %}
+			</div>
+			<div class="col-lg-6">
+				{% include "index_management.html" %}
+			</div>		
+		</div>
+		<div class="tab-pane" id="import-management-tab" role="tabpanel">
+			<div class="col-lg-12">
+			{% include "import_management.html" %}
+			</div>
+		</div>
+	</div>	
+	
 </div>
 <script type="application/javascript" src="{{STATIC_URL}}permission_admin/permission_admin.js"></script>
+
 {% endblock %}
