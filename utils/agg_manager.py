@@ -344,7 +344,7 @@ class AggManager:
                     child['val'] = inner_bucket['documents']['doc_count']
                     new['children'].append(child)
 
-            elif 'documents' in bucket:
+            elif 'documents' in bucket and 'string' in bucket['documents']:
                 for inner_bucket in bucket['documents']['string']['buckets']:
                     child = {}
                     child['key'] = inner_bucket['key']
