@@ -193,7 +193,7 @@
 								<b>Select field:</b>
 								<select id="agg_field_2" name="agg_field_2" class="form-control input-sm">
 									{% for field in fields %}
-										{% if field.type == 'string' %}
+										{% if field.type == 'string' or field.type == 'facts'%}
 											<option value="{{field.data}}">{{field.label}}</option>
 										{% endif %}
 									{% endfor %}
@@ -429,6 +429,63 @@
 					<ul name="suggestions_" id="suggestions_" class="list-group"></ul>
 				</div>
 			</div>
+		</div>
+	</div>
+
+	<div id="field_hidden_fact_val" class="panel panel-default" style="display: none;">
+		<input type="hidden" name="fact_field_" id="fact_field_">
+		<input type="hidden" name="fact_constraint_type_">
+		<div class="panel-heading">
+			<span id="selected_field_"></span>
+			<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+		</div>
+		<div class="panel-body">
+			<div class="row">
+				<div class="col-sm-4">
+					<b>Bool:</b><br>
+					<select id="fact_operator_" name="fact_operator_" class="form-control input-sm">
+						<option value="must" selected="selected">and</option>
+						<option value="should">or</option>
+						<option value="must_not">not</option>
+					</select>
+				</div>
+<!--				<div class="col-sm-8">
+					<b>Facts:</b><br>
+					<textarea id="fact_txt_" name="fact_txt_" class="form-control"></textarea>
+					<ul name="suggestions_" id="suggestions_" class="list-group"></ul>
+				</div>-->
+			</div>
+
+			<div id="fact_val_rules_">
+                <div class="row" id="fact_val_rule_">
+                    <div class="col-sm-5" style="padding-right: 0px">
+                        <input id="fact_txt_" class="form-control" type="text" placeholder="Fact name"></input>
+                        <ul name="suggestions_" id="suggestions_" class="list-group"></ul>
+                    </div>
+
+                    <div class="col-sm-2" style="padding-left: 0px; padding-right: 0px;">
+                        <select class="form-control">
+                            <option value="=">is</option>
+                            <option value="!=">not</option>
+                            <option value="&lt;">&lt;</option>
+                            <option value="&gt;">&gt;</option>
+                            <option value="&lt;=">&lt;=</option>
+                            <option value="&gt;=">&gt;=</option>
+                        </select>
+                    </div>
+
+                    <div class="col-sm-5" style="padding-left: 0px">
+                        <input name="fact_constraint_val_" class="form-control" type="text" placeholder="Value"></input>
+                    </div>
+                </div>
+			</div>
+
+			<div class="row">
+                <button type="button" class="btn btn-md center-block">
+                    <span class="glyphicon glyphicon-plus"></span>&nbsp;
+                </button>
+			</div>
+
 		</div>
 	</div>
 
