@@ -21,6 +21,8 @@ class RestProcessor(object):
         fields = django_request.GET.get('fields', "[]")
         constraints = django_request.GET.get('constraints', "[]")
         parameters = django_request.GET.get('parameters', "[]")
+        scroll = django_request.GET.get('scroll', 'false')
+        scroll_id = django_request.GET.get('scroll_id', None)
 
         return {
             'dataset': dataset_id,
@@ -28,7 +30,9 @@ class RestProcessor(object):
             'mapping': mapping,
             'fields': json.loads(fields),
             'constraints': json.loads(constraints),
-            'parameters': json.loads(parameters)
+            'parameters': json.loads(parameters),
+            'scroll': True if scroll.lower() == 'true' else False,
+            'scroll_id': scroll_id,
         }
 
     @staticmethod
@@ -45,5 +49,6 @@ class RestProcessor(object):
         processed_query['dataset'] = dataset_id
         processed_query['index'] = dataset.index
         processed_query['mapping'] = dataset.mapping
+        processed_query['scroll'] = True if processed_query['scroll'].lower() == 'true' else False
 
         return processed_query

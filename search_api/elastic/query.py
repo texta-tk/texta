@@ -72,7 +72,7 @@ class Query(object):
             # )
 
             field = constraint.get('field', '')
-            operator = constraint.get('operator', '')
+            operator = constraint.get('operator', 'must')
             query_strings = constraint.get('strings', [])
 
             if query_strings:
@@ -90,7 +90,7 @@ class Query(object):
 
     def add_fact_val_constraints(self, constraints):
         for constraint_id, constraint in enumerate(constraints):
-            fact_operator = constraint['operator']
+            fact_operator = constraint.get('operator', 'must')
             fact_field = constraint['field']
             val_type = constraint['type']
 

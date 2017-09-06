@@ -27,7 +27,9 @@ class Searcher(object):
         parameters = processed_request.get('parameters', None)  # fields, size, from
         fields = processed_request.get('fields', None)
 
-        constraints = self._differentiate_constraints(self._add_missing_constraint_class(processed_request['constraints']))
+        constraints = self._differentiate_constraints(
+            self._add_missing_constraint_class(processed_request['constraints'])
+        )
 
         query = json.dumps(self._generate_elastic_query(constraints, parameters, fields))
 
@@ -35,6 +37,27 @@ class Searcher(object):
             return self._search_with_fields(index, mapping, query)
         else:
             return self._search(index, mapping, query)
+
+    def scroll(self, processed_request):
+        index = processed_request['index']
+        mapping = processed_request['mapping']
+
+        parameters = processed_request.get('parameters', None)  # fields, size, from
+        fields = processed_request.get('fields', None)
+
+        constraints = self._differentiate_constraints(
+            self._add_missing_constraint_class(processed_request['constraints'])
+        )
+
+        scroll = processed_request.get('scroll', False)
+        scroll_id = processed_request.get('scroll_id', None)
+
+        query = json.dumps(self._generate_elastic_query(constraints, parameters, fields))
+
+        if scroll_id:
+            return self._continue_scrolling(scroll_id)
+        elif scroll:
+            return self._start_scrolling(index, mapping, query)
 
     def _add_missing_constraint_class(self, constraints):
         for constraint in constraints:
@@ -115,3 +138,37 @@ class Searcher(object):
                 continue
 
             response = {}
+
+    def _start_scrolling(self, index, mapping, query):
+        search_url = '{0}/{1}/{2}/_search?scroll=1m'.format(self._es_url, index, mapping)
+        response = self._requests.post(search_url, data=query).json()
+
+        hits = []
+        if 'hits' in response and 'hits' in response['hits'] and response['hits']['hits']:
+            for hit in response['hits']['hits']:
+                if 'fields' in hit:
+                    for field_name in hit['fields']:
+                        if field_name != 'texta_facts':
+                            hit['fields'][field_name] = hit['fields'][field_name][0]
+                    hits.append(hit['fields'])
+                elif '_source' in hit:
+                    hits.append(hit['_source'])
+
+        return {'hits': hits, 'scroll_id': response['_scroll_id'], 'total': response['hits']['total']}
+
+    def _continue_scrolling(self, scroll_id):
+        scroll_url = '{0}/_search/scroll?scroll=1m'.format(self._es_url)
+        response = self._requests.post(scroll_url, data=json.dumps({'scroll_id': scroll_id})).json()
+
+        hits = []
+        if 'hits' in response and 'hits' in response['hits'] and response['hits']['hits']:
+            for hit in response['hits']['hits']:
+                if 'fields' in hit:
+                    for field_name in hit['fields']:
+                        if field_name != 'texta_facts':
+                            hit['fields'][field_name] = hit['fields'][field_name][0]
+                    hits.append(hit['fields'])
+                elif '_source' in hit:
+                    hits.append(hit['_source'])
+
+        return {'hits': hits, 'scroll_id': scroll_id, 'total': response['hits']['total']}

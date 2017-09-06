@@ -18,6 +18,11 @@ def search(request):
 
     return StreamingHttpResponse(process_stream(results), content_type='application/json')
 
+def scroll(request):
+    processed_request = RestProcessor().process(request)
+    results = Searcher(es_url).scroll(processed_request)
+
+    return HttpResponse(json.dumps(results, ensure_ascii=False).encode('utf8'))
 
 def aggregate(request):
     processed_request = RestProcessor().process(request)
