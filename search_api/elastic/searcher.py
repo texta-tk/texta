@@ -24,14 +24,9 @@ class Searcher(object):
         index = processed_request['index']
         mapping = processed_request['mapping']
 
-        parameters = processed_request.get('parameters', None)  # fields, size, from
         fields = processed_request.get('fields', None)
 
-        constraints = self._differentiate_constraints(
-            self._add_missing_constraint_class(processed_request['constraints'])
-        )
-
-        query = json.dumps(self._generate_elastic_query(constraints, parameters, fields))
+        query = json.dumps(self.create_search_query(processed_request).generate())
 
         if fields:
             return self._search_with_fields(index, mapping, query)
@@ -42,6 +37,17 @@ class Searcher(object):
         index = processed_request['index']
         mapping = processed_request['mapping']
 
+        scroll = processed_request.get('scroll', False)
+        scroll_id = processed_request.get('scroll_id', None)
+
+        query = json.dumps(self.create_search_query(processed_request).generate())
+
+        if scroll_id:
+            return self._continue_scrolling(scroll_id)
+        elif scroll:
+            return self._start_scrolling(index, mapping, query)
+
+    def create_search_query(self, processed_request):
         parameters = processed_request.get('parameters', None)  # fields, size, from
         fields = processed_request.get('fields', None)
 
@@ -49,15 +55,9 @@ class Searcher(object):
             self._add_missing_constraint_class(processed_request['constraints'])
         )
 
-        scroll = processed_request.get('scroll', False)
-        scroll_id = processed_request.get('scroll_id', None)
+        query = self._generate_elastic_query(constraints, parameters, fields)
 
-        query = json.dumps(self._generate_elastic_query(constraints, parameters, fields))
-
-        if scroll_id:
-            return self._continue_scrolling(scroll_id)
-        elif scroll:
-            return self._start_scrolling(index, mapping, query)
+        return query
 
     def _add_missing_constraint_class(self, constraints):
         for constraint in constraints:
@@ -84,7 +84,7 @@ class Searcher(object):
         if fields:
             query.set_parameter('fields', fields)
 
-        return query.generate()
+        return query
 
     def _differentiate_constraints(self, constraints):
         differentiated_constraints = defaultdict(list)

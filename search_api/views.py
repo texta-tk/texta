@@ -9,26 +9,28 @@ from elastic.aggregator import Aggregator
 from elastic.searcher import Searcher
 from elastic.listing import ElasticListing
 
-from texta.settings import es_url
+from texta.settings import es_url, date_format
 from permission_admin.models import Dataset
 
 def search(request):
-    processed_request = RestProcessor().process(request)
+    processed_request = RestProcessor().process_searcher(request)
     results = Searcher(es_url).search(processed_request)
 
     return StreamingHttpResponse(process_stream(results), content_type='application/json')
 
+
 def scroll(request):
-    processed_request = RestProcessor().process(request)
+    processed_request = RestProcessor().process_searcher(request)
     results = Searcher(es_url).scroll(processed_request)
 
     return HttpResponse(json.dumps(results, ensure_ascii=False).encode('utf8'))
 
-def aggregate(request):
-    processed_request = RestProcessor().process(request)
-    results = Aggregator(request).aggregate(processed_request)
 
-    return StreamingHttpResponse(results)
+def aggregate(request):
+    processed_request = RestProcessor().process_aggregator(request)
+    results = Aggregator(date_format, es_url).aggregate(processed_request)
+
+    return HttpResponse(json.dumps(results, ensure_ascii=False).encode('utf8'))
 
 
 def list_datasets(request):

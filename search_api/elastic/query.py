@@ -1,9 +1,13 @@
+from copy import deepcopy
 
 
 class Query(object):
 
-    def __init__(self):
-        self._query = {'query': {'bool': {'should': [], 'must': [], 'must_not': []}}}
+    def __init__(self, query=None):
+        if not query:
+            self._query = {'query': {'bool': {'should': [], 'must': [], 'must_not': []}}}
+        else:
+            self._query = query
 
     def set_parameter(self, name, value):
         self._query[name] = value
@@ -128,3 +132,5 @@ class Query(object):
     def generate(self):
         return self._query
 
+    def copy(self):
+        return Query(self._query)
