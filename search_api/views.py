@@ -13,21 +13,33 @@ from texta.settings import es_url, date_format
 from permission_admin.models import Dataset
 
 def search(request):
-    processed_request = RestProcessor().process_searcher(request)
+    try:
+        processed_request = RestProcessor().process_searcher(request)
+    except Exception as processing_error:
+        return StreamingHttpResponse([json.dumps({'error': str(processing_error)})])
+
     results = Searcher(es_url).search(processed_request)
 
     return StreamingHttpResponse(process_stream(results), content_type='application/json')
 
 
 def scroll(request):
-    processed_request = RestProcessor().process_searcher(request)
+    try:
+        processed_request = RestProcessor().process_searcher(request)
+    except Exception as processing_error:
+        return HttpResponse(json.dumps({'error': str(processing_error)}))
+
     results = Searcher(es_url).scroll(processed_request)
 
     return HttpResponse(json.dumps(results, ensure_ascii=False).encode('utf8'))
 
 
 def aggregate(request):
-    processed_request = RestProcessor().process_aggregator(request)
+    try:
+        processed_request = RestProcessor().process_aggregator(request)
+    except Exception as processing_error:
+        return HttpResponse(json.dumps({'error': str(processing_error)}))
+
     results = Aggregator(date_format, es_url).aggregate(processed_request)
 
     return HttpResponse(json.dumps(results, ensure_ascii=False).encode('utf8'))
@@ -46,7 +58,7 @@ def list_fields(request, dataset_id):
     dataset = Dataset.objects.get(pk=dataset_id)
     properties = listing.get_dataset_properties(dataset)
 
-    return HttpResponse(json.dumps(properties))
+    return HttpResponse(json.dumps(properties), content_type='application/json')
 
 
 def process_stream(generator, encoding='utf8'):
