@@ -7,6 +7,7 @@ MAX_INT_LEN = 10
 MAX_STR_LEN = 100
 
 class Dataset(models.Model):
+    id = models.AutoField(primary_key=True)
     index = models.CharField(max_length=MAX_STR_LEN)
     mapping = models.CharField(max_length=MAX_STR_LEN)
     author = models.ForeignKey(User)
@@ -14,6 +15,7 @@ class Dataset(models.Model):
     access = models.CharField(default=DATASET_ACCESS_DEFAULT, max_length=7)
 
 class ScriptProject(models.Model):
+    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=MAX_STR_LEN)
     desc = models.TextField()
     entrance_point = models.CharField(max_length=MAX_STR_LEN)

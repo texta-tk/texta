@@ -13,6 +13,7 @@ MAX_INT_LEN = 10
 
 class ModelClassification(models.Model):
 
+    id = models.AutoField(primary_key=True)
     run_description = models.CharField(max_length=MAX_STR_LEN)
     run_status = models.CharField(max_length=MAX_STR_LEN)
     run_started = models.DateTimeField()
@@ -29,6 +30,7 @@ class ModelClassification(models.Model):
 
 class JobQueue(models.Model):
 
+    id = models.AutoField(primary_key=True)
     job_key = models.CharField(max_length=MAX_STR_LEN)
     run_status = models.CharField(max_length=MAX_STR_LEN)
     run_started = models.DateTimeField(null=True,blank=True)

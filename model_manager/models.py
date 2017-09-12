@@ -8,6 +8,7 @@ MAX_INT_LEN = 10
 
 
 class ModelRun(models.Model):
+    id = models.AutoField(primary_key=True)
     run_description   = models.CharField(max_length=MAX_STR_LEN)
     num_dimensions    = models.IntegerField()
     num_workers       = models.IntegerField()

@@ -5,6 +5,7 @@ MAX_INT_LEN = 10
 MAX_STR_LEN = 100
    
 class Term(models.Model):
+    id = models.AutoField(primary_key=True)
     is_internal = models.BooleanField()
     term = models.CharField(max_length=MAX_STR_LEN)
     author = models.ForeignKey(User,related_name='term_author_relation_set')
@@ -13,15 +14,18 @@ class Term(models.Model):
         return self.term.encode('utf8')
     
 class Concept(models.Model):
+    id = models.AutoField(primary_key=True)
     descriptive_term = models.ForeignKey(Term)
     semantic_type = models.CharField(max_length=MAX_STR_LEN)
     author = models.ForeignKey(User)
    
 class Reference(models.Model):
+    id = models.AutoField(primary_key=True)
     concept = models.ForeignKey(Concept)
     code_set = models.CharField(max_length=MAX_STR_LEN)
     code = models.CharField(max_length=MAX_STR_LEN)
     
 class TermConcept(models.Model):
+    id = models.AutoField(primary_key=True)
     term = models.ForeignKey(Term)
     concept = models.ForeignKey(Concept)
