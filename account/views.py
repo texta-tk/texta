@@ -55,7 +55,7 @@ def create(request):
 def initialize_permissions(user):
     content_type = ContentType.objects.get_for_model(Dataset)
 
-    for dataset in Dataset.objects.get(access='public'):
+    for dataset in Dataset.objects.filter(access='public'):
         permission = Permission.objects.get(
             codename='can_access_dataset_' + str(dataset.id),
             content_type=content_type,
