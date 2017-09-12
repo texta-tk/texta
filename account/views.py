@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from collections import defaultdict
+import random
 
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 from django.contrib.auth.decorators import login_required
@@ -10,7 +11,9 @@ from django.contrib.auth.models import User
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
+from django.views.decorators.http import require_POST
 
+from .models import Profile
 from permission_admin.models import Dataset
 
 from texta.settings import USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_DEFAULT
@@ -100,3 +103,74 @@ def log_out(request):
     logging.getLogger(INFO_LOGGER).info(
             json.dumps({'process': '*', 'event': 'logout', 'args': {'user_name': request.user.username}}))
     return HttpResponseRedirect(URL_PREFIX + '/')
+
+
+def _generate_random_token():
+    return '%014x' % random.randrange(16**14)
+
+
+@require_POST
+def get_auth_token(request):
+    try:
+        _validate_user_auth_input(request)
+    except Exception as input_error:
+        return HttpResponse(json.dumps({'error': str(input_error)}))
+
+    content_body = json.loads(request.body)
+    user = authenticate(username=content_body['username'], password=content_body['password'])
+
+    if user is not None:
+        try:
+            user.profile
+        except:
+            Profile.objects.create(user = user).save()
+
+        auth_token = user.profile.auth_token
+
+        if not auth_token:
+            auth_token = _generate_random_token()
+            user.profile.auth_token=auth_token
+            user.save()
+
+        return HttpResponse(json.dumps({'auth_token': auth_token}))
+    else:
+        return HttpResponse(json.dumps({'error': 'Unable to authenticate the user with the provided username and password combination.'}))
+
+
+@require_POST
+def revoke_auth_token(request):
+    try:
+        _validate_user_auth_input(request)
+    except Exception as input_error:
+        return HttpResponse(json.dumps({'error': str(input_error)}))
+
+    content_body = json.loads(request.body)
+    user = authenticate(username=content_body['username'], password=content_body['password'])
+
+    if user is not None:
+        try:
+            user.profile.auth_token=''
+            user.save()
+        except:
+            Profile.objects.create(user = user).save()
+
+        return HttpResponse(json.dumps({'success': True}))
+    else:
+        return HttpResponse(json.dumps({'error': 'Unable to authenticate the user with the provided username and password combination.'}))
+
+
+def _validate_user_auth_input(request):
+    try:
+        content_body = json.loads(request.body)
+    except:
+        raise Exception('Could not parse JSON.')
+
+    try:
+        content_body['username']
+    except:
+        raise Exception('Username missing.')
+
+    try:
+        content_body['password']
+    except:
+        raise Exception('Password missing.')

@@ -12,6 +12,7 @@ from elastic.listing import ElasticListing
 from texta.settings import es_url, date_format
 from permission_admin.models import Dataset
 
+
 def search(request):
     try:
         processed_request = RestProcessor().process_searcher(request)

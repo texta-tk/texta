@@ -1,5 +1,6 @@
 import json
 from permission_admin.models import Dataset
+from account.models import Profile
 
 
 class RestProcessor(object):
@@ -50,7 +51,17 @@ class RestProcessor(object):
         except:
             raise Exception('Malformed JSON syntax.')
 
-        Validator.validate_search_data(processed_query)
+        try:
+            auth_token = processed_query['auth_token']
+        except:
+            raise Exception('Authentication token missing.')
+
+        try:
+            profile = Profile.objects.get(auth_token = auth_token)
+        except:
+            raise Exception('Invalid authentication token.')
+
+        Validator.validate_search_data(processed_query, profile.user)
 
         dataset_id = int(processed_query['dataset'])
         dataset = Dataset.objects.get(pk=dataset_id)
@@ -76,10 +87,20 @@ class RestProcessor(object):
         except:
             raise Exception('Malformed JSON syntax.')
 
+        try:
+            auth_token = processed_query['auth_token']
+        except:
+            raise Exception('Authentication token missing.')
+
+        try:
+            profile = Profile.objects.get(auth_token = auth_token)
+        except:
+            raise Exception('Invalid authentication token.')
+
         Validator.validate_aggregation_data(processed_query)
 
         for search_idx, search in enumerate(processed_query['searches']):
-            Validator.validate_search_data(search, search_idx)
+            Validator.validate_search_data(search, profile.user, search_idx)
 
             dataset_id = int(search['dataset'])
             dataset = Dataset.objects.get(pk=dataset_id)
@@ -212,7 +233,7 @@ class Validator(object):
                     ))
 
     @staticmethod
-    def validate_search_data(data_dict, search_position=None):
+    def validate_search_data(data_dict, user, search_position=None):
         search_position_str = ' for search {0}'.format(search_position) if search_position else ''
 
         try:
@@ -229,6 +250,9 @@ class Validator(object):
             dataset = Dataset.objects.get(pk=dataset_id)
         except:
             raise Exception('No dataset ID matches the "dataset" attribute\'s value{0}.'.format(search_position_str))
+
+        if not user.has_perm('permission_admin.can_access_dataset_%s' % dataset_id):
+            raise Exception('No permission to query the dataset {0}{1}'.format(str(dataset_id), search_position_str))
 
         fields = data_dict.get('fields', [])
 

@@ -71,9 +71,6 @@ class Query(object):
 
     def add_fact_constraints(self, constraints):
         for constraint_id, constraint in enumerate(constraints):
-            # self._query['query']['bool']['must'].append(
-            #     {'nested': {'path': 'texta_facts', 'query': {'bool': {'must': []}}}}
-            # )
 
             field = constraint.get('field', '')
             operator = constraint.get('operator', 'must')

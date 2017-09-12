@@ -14,11 +14,6 @@ class Aggregator(object):
         self._es_url = es_url
 
     def aggregate(self, processed_request):
-        # {'searches':  [{}], 'aggregation': [
-        #     {'field': 'text', 'type': 'string', 'sort_by': ''},
-        #     {'field': 'published', 'type': 'date', 'start': '', 'end': '', 'frequency': 'relative_frequency', 'interval': 'month'}
-        # ]}
-
         aggregation_subquery = self._prepare_aggregation_subquery(processed_request['aggregation'])
 
         aggregation_results = []
