@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.http import HttpResponse, StreamingHttpResponse
 import json
 
-from processors.rest_processor import  RestProcessor
+from processors.rest_processor import RestProcessor, Validator
 from elastic.aggregator import Aggregator
 from elastic.searcher import Searcher
 from elastic.listing import ElasticListing
@@ -47,16 +47,39 @@ def aggregate(request):
 
 
 def list_datasets(request):
+    try:
+        user = Validator.get_validated_user(request)
+    except Exception as validation_error:
+        return HttpResponse(json.dumps({'error': str(validation_error)}))
+
     listing = ElasticListing(es_url)
     registered_datasets = Dataset.objects.all()
-    existing_datasets = listing.get_existing_datasets(registered_datasets)
+    existing_datasets = listing.get_available_datasets(registered_datasets, user)
 
     return HttpResponse('\n'.join([json.dumps(existing_dataset) for existing_dataset in existing_datasets]), content_type='application/json')
 
 
-def list_fields(request, dataset_id):
+def list_fields(request):
+    try:
+        user = Validator.get_validated_user(request)
+    except Exception as validation_error:
+        return HttpResponse(json.dumps({'error': str(validation_error)}))
+
+    request_body = json.loads(request.body)
+    if 'dataset' not in request_body:
+        return HttpResponse(json.dumps({'error': 'Dataset not defined.'}))
+
+    dataset_id = request_body['dataset']
+
+    try:
+        dataset = Dataset.objects.get(pk=dataset_id)
+    except:
+        return HttpResponse(json.dumps({'error': 'Dataset ID is not matching any datasets.'}))
+
+    if not user.has_perm('permission_admin.can_access_dataset_{0}'.format(dataset_id)):
+        return HttpResponse(json.dumps({'error': 'No permission to query dataset {0}'.format(dataset_id)}))
+
     listing = ElasticListing(es_url)
-    dataset = Dataset.objects.get(pk=dataset_id)
     properties = listing.get_dataset_properties(dataset)
 
     return HttpResponse(json.dumps(properties), content_type='application/json')

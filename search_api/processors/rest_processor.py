@@ -314,3 +314,23 @@ class Validator(object):
                     raise Exception('Attribute "{0}" value "{1}" not in {2} for constraint {3}{4}.'.format(
                         field, constraint[field], field_data['values'], constraint_idx, in_search_position_str
                     ))
+
+
+    @staticmethod
+    def get_validated_user(request):
+        try:
+            processed_query = json.loads(request.body)
+        except:
+            raise Exception('Unable to parse JSON.')
+
+        try:
+            auth_token = processed_query['auth_token']
+        except:
+            raise Exception('Authentication token missing.')
+
+        try:
+            profile = Profile.objects.get(auth_token = auth_token)
+        except:
+            raise Exception('Invalid authentication token.')
+
+        return profile.user

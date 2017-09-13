@@ -6,7 +6,7 @@ class ElasticListing(object):
     def __init__(self, es_url):
         self._es_url = es_url.strip('/')
 
-    def get_existing_datasets(self, datasets):
+    def get_available_datasets(self, datasets, user):
         try:
             requests.get(self._es_url)
         except:
@@ -15,6 +15,8 @@ class ElasticListing(object):
         existing_datasets = []
 
         for dataset in datasets:
+            if not user.has_perm('permission_admin.can_access_dataset_%s' % dataset.id):
+                continue
             try:
                 response = requests.get('{0}/{1}/_mappings/{2}'.format(self._es_url, dataset.index, dataset.mapping)).json()
                 if dataset.mapping in response[dataset.index]['mappings']:
