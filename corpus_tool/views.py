@@ -19,6 +19,7 @@ from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
 from utils.agg_manager import AggManager
+from utils.highlighter import Highlighter
 
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links
 
@@ -335,7 +336,7 @@ def search(es_params, request):
         es_m.set_query_parameter('size', es_params['num_examples'])
 
         # HIGHLIGHTING THE MATCHING FIELDS
-        pre_tag = "<span style='background-color:#FFD119'>"
+        pre_tag = '<span style="background-color:#FFD119" class="[ES]">'
         post_tag = "</span>"
         highlight_config = {"fields": {}, "pre_tags": [pre_tag], "post_tags": [post_tag]}
         for field in es_params:
@@ -394,67 +395,43 @@ def search(es_params, request):
                 for p in filed_path:
                     content = content[p] if p in content else ''
 
+                # Substitute feature value with value highlighted by Elasticsearch
+                old_content = content
+                if col in highlight_config['fields'] and 'highlight' in hit:
+                    content = hit['highlight'][col][0]
 
+                # Prettify and standardize highlights
+                if name_to_inner_hits[col]:
+                    highlight_data = []
+                    for inner_hit in name_to_inner_hits[col]:
+                        datum = {
+                            'spans': json.loads(inner_hit['spans']),
+                            'name': inner_hit['fact'],
+                            'category': '[{0}]'.format(inner_hit['hit_type']),
+                            'color': '#F7ADCF'
+                        }
 
-                """
-                for inner_hit in name_to_inner_hits[col]:
-                    if inner_hit['hit_type'] == 'fact':
-                        content += ' ' + inner_hit['fact']
-                    elif inner_hit['hit_type'] == 'fact_val':
-                        if 'num_val' in inner_hit:
-                            value = str(inner_hit['num_val'])
-                        elif 'str_val' in inner_hit:
-                            value = inner_hit['str_val']
-                        content += ' ' +  inner_hit['fact'] + '=' + value
-                """
+                        if inner_hit['hit_type'] == 'fact_val':
+                            datum['value'] = str(inner_hit['str_val'])
 
-                """
-                # If has facts, highlight
-                if hit_id in facts_highlight and col in facts_highlight[hit_id]:
-                    fact_spans = facts_highlight[hit_id][col]
-                    # Merge overlapping spans
-                    fact_spans = merge_spans(fact_spans)
-                    rest_sentence = content
-                    corpus_facts = ''
-                    last_cut = 0
-                    # Apply span tagging
-                    for span in fact_spans:
-                        start = span[0] - last_cut
-                        end = span[1] - last_cut
-                        b_sentence = rest_sentence[0:start]
-                        f_sencente = rest_sentence[start:end]
-                        rest_sentence = rest_sentence[end:]
-                        last_cut = span[1]
-                        corpus_facts += b_sentence
-                        corpus_facts += "<span style='background-color:#A3E4D7'>"
-                        corpus_facts += f_sencente
-                        corpus_facts += "</span>"
-                    corpus_facts += rest_sentence
-                    content = corpus_facts
+                        highlight_data.append(datum)
 
-                """
-                # If content in the highlight structure, replace it with the tagged hit['highlight']
-                try:
-                    if col in highlight_config['fields'] and 'highlight' in hit:
-                        old_content = content
-                        content = hit['highlight'][col][0]
-                        if name_to_inner_hits[col]:
-                            alignment = _align_texts(old_content, content)
-                    else:
-                        if name_to_inner_hits[col]:
-                            alignment = _align_texts(content, content)
+                    try:
+                        content = Highlighter(average_colors=True, derive_spans=True).highlight(
+                            old_content.encode('utf8'),
+                            highlight_data,
+                            content.encode('utf8')
+                        ).decode('utf8')
+                    except:
+                        try:
+                            content = Highlighter(average_colors=True, derive_spans=True).highlight(
+                                old_content,
+                                highlight_data,
+                                content
+                            )
+                        except:
+                            pass
 
-                    if name_to_inner_hits[col]:
-                        content = _highlight_facts(content, alignment, name_to_inner_hits[col])
-                except:
-                    pass
-                """
-                # CHECK FOR EXTERNAL RESOURCES
-                link_key = (ds.get_index(), ds.get_mapping(), col)
-                if link_key in es_links:
-                    link_prefix, link_suffix = es_links[link_key]
-                    content = '<a href="'+str(link_prefix)+str(content)+str(link_suffix)+'" target="_blank">'+str(content)+'</a>'
-                """
 
                 # Append the final content of this col to the row
                 row.append(content)
@@ -475,98 +452,6 @@ def search(es_params, request):
 
         out = {'column_names': [], 'aaData': [], 'iTotalRecords': 0, 'iTotalDisplayRecords': 0, 'lag': 0}
         return out
-
-
-def _align_texts(original_text, tagged_text):
-    alignment = []
-
-    tagged_text_idx = 0
-    for char in original_text:
-        while tagged_text[tagged_text_idx] == '<':
-            while tagged_text[tagged_text_idx] != '>':
-                tagged_text_idx += 1
-            tagged_text_idx += 1
-
-        if char == tagged_text[tagged_text_idx]:
-            alignment.append(tagged_text_idx)
-
-        tagged_text_idx += 1
-
-    return alignment
-
-def _highlight_facts(highlighted_text, alignment, inner_hits):
-    inner_hits = _solve_inner_hit_span_conflicts(inner_hits)
-
-    span_idx_to_inner_hit = {}
-    span_idx = 0
-
-    span_idx_data = []  # Contains [(text_idx, span_idx, tag_type="start|end")]
-    for inner_hit in inner_hits:
-        spans = json.loads(inner_hit['spans'])
-        for span in spans:
-            try:
-                start, end = [alignment[element] for element in span]
-            except:
-                raise Exception(str(len(highlighted_text)) + '\n' + str(spans))
-
-            span_idx_to_inner_hit[span_idx] = inner_hit
-            span_idx_data.extend([(start, span_idx, 'start'), (end, span_idx, 'end')])
-
-            span_idx += 1
-
-    span_idx_data.sort(key=lambda start_span_idx_tag_type: start_span_idx_tag_type[0])
-    text_slices, gap_to_span_idx_tag_type = _split_text_at_indices(highlighted_text, span_idx_data)
-
-    return _add_highlight_spans(text_slices, gap_to_span_idx_tag_type, span_idx_to_inner_hit)
-
-def _solve_inner_hit_span_conflicts(inner_hits):
-    spans_to_inner_hit = {}
-
-    for inner_hit in inner_hits:
-        spans = inner_hit['spans']
-        if spans in spans_to_inner_hit:
-            if spans_to_inner_hit[spans]['hit_type'] == 'fact':
-                spans_to_inner_hit[spans] = inner_hit
-        else:
-            spans_to_inner_hit[spans] = inner_hit
-
-    return spans_to_inner_hit.values()
-
-def _split_text_at_indices(text, indices_and_data):
-    slice_start_idx = 0
-    text_slices = []
-    gap_to_span_idx_tag_type = []
-
-    for index_and_datum in indices_and_data:
-        text_idx, span_idx, tag_type = index_and_datum
-        text_slices.append(text[slice_start_idx:text_idx])
-        gap_to_span_idx_tag_type.append((span_idx, tag_type))
-
-        slice_start_idx = text_idx
-
-    text_slices.append(text[slice_start_idx:])
-
-    return text_slices, gap_to_span_idx_tag_type
-
-def _add_highlight_spans(text_slices, gap_to_span_idx_tag_type, span_idx_to_inner_hit):
-    final_text = []
-    for idx in range(len(gap_to_span_idx_tag_type)):
-        final_text.append(text_slices[idx])
-
-        span_idx, tag_type = gap_to_span_idx_tag_type[idx]
-        if tag_type == 'start':
-            inner_hit = span_idx_to_inner_hit[span_idx]
-            title_value = inner_hit['fact']
-            if inner_hit['hit_type'] == 'fact_val':
-                value = inner_hit['str_val'] if 'str_val' in inner_hit else str(inner_hit['num_val'])
-                title_value += ('=' + value)
-            final_text.append('<span style="background-color:#F7ADCF" title="[fact] %s">'%title_value)
-        else:
-            final_text.append('</span>')
-
-    final_text.append(text_slices[idx+1])
-
-    return ''.join(final_text)
 
 
 @login_required

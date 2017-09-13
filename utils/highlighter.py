@@ -87,7 +87,6 @@ class Highlighter(object):
 
             start_tag_index = tagged_text.find('<span', span_end + 7)
 
-        print(highlight_data)
         return highlight_data
 
     def _extract_span_data(self, span_attributes_string, spans):
