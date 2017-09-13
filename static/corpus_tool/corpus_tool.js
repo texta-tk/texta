@@ -511,11 +511,13 @@ function drawStringAggs(data){
 	var tbody = $("<tbody></tbody>");
 	
 	$.each(data.data, function(i,row){
-		var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td></tr>");
 		if(row.children.length > 0){
+		    var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td><td><span class='glyphicon glyphicon-menu-right'></span></td></tr>");
 			row_container.click(function(){show_string_children(row.children,children_container, grandchildren_container)});
 			row_container.addClass("pointer");
-		}
+		} else {
+		    var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td><td></td></tr>");
+        }
 		tbody.append(row_container);
 	});
 	
@@ -544,7 +546,10 @@ function show_string_children(data,children_container,grandchildren_container) {
 		var row_container = $("<tr><td>"+data_list.val+"</td><td>"+data_list.key+"</td></tr>");
 
         if (data_list.hasOwnProperty('children') && data_list.children.length > 0) {
+            var row_container = $("<tr><td>"+data_list.val+"</td><td>"+data_list.key+"</td><td><span class='glyphicon glyphicon-menu-right'></span></td></tr>");
             row_container.addClass("pointer");
+        } else {
+            var row_container = $("<tr><td>"+data_list.val+"</td><td>"+data_list.key+"</td><td></td></tr>");
         };
 
         row_container.click(function() {
