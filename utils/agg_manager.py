@@ -86,7 +86,7 @@ class AggManager:
 
     def prepare_agg_query(self):
         es_params = self.es_params
-        
+
         agg_field_1 = es_params["agg_field_1"]
         agg_field_1 = json.loads(agg_field_1)
         sort_by_1 = es_params["sort_by_1"]
@@ -95,12 +95,16 @@ class AggManager:
         sort_by_2 = es_params["sort_by_2"]
 
         field_type_to_name = {'date': 'daterange', 'string': 'string', 'facts': 'fact', 'fact_str_val': 'fact_str_val', 'fact_num_val': 'fact_num_val'}
-        
+
         agg_name_1 = field_type_to_name[agg_field_1['type']]
         agg_name_2 = field_type_to_name[agg_field_2['type']]
 
         # 1st LEVEL AGGREGATION
         agg = self.create_agg(agg_name_1,sort_by_1,agg_field_1["path"])
+
+        if agg_name_1 == 'fact' and es_params["agg_field_2_selected"] == 'false':
+            agg[agg_name_1]["aggs"][agg_name_1]['aggs']['fact_str_val'] = \
+                self.create_agg('fact_str_val', sort_by_1, agg_field_1['path'])['fact_str_val']['aggs']['fact_str_val']
 
         # 2nd LEVEL AGGREGATION
         if es_params["agg_field_2_selected"] == 'true':
@@ -129,7 +133,7 @@ class AggManager:
                     "nested": {"path": "texta_facts"},
                     "aggs": {
                         agg_name: {
-                            "significant_terms": {"field": "texta_facts.fact", "size": 30},
+                            sort_by: {"field": "texta_facts.fact", "size": 30},
                             "aggs": {"documents": {"reverse_nested": {}}}
                         }
                     }
@@ -141,7 +145,7 @@ class AggManager:
                     "nested": {"path": "texta_facts"},
                     "aggs": {
                         agg_name: {
-                            "significant_terms": {"field": "texta_facts.str_val", "size": 30},
+                            sort_by: {"field": "texta_facts.str_val", "size": 30},
                             "aggs": {"documents": {"reverse_nested": {}}}
                         }
                     }
@@ -153,7 +157,7 @@ class AggManager:
                     "nested": {"path": "texta_facts"},
                     "aggs": {
                         agg_name: {
-                            "significant_terms": {"field": "texta_facts.num_val", "size": 30},
+                            sort_by: {"field": "texta_facts.num_val", "size": 30},
                             "aggs": {"documents": {"reverse_nested": {}}}
                         }
                     }
@@ -220,31 +224,6 @@ class AggManager:
             for agg_name,agg_results in aggs.items():
                 output_type = agg_name
 
-                """
-                for bucket in agg_results["buckets"]:
-                    new = {"children":[]}
-                    if agg_name == "daterange":
-                        new["key"] = bucket["from_as_string"]
-                        # Normalises frequencies
-                        if self.es_params["freq_norm_1"] == "relative_frequency":
-                            try:
-                                new["val"] = str(round(float(bucket["doc_count"])/float(total_freqs[bucket["from_as_string"]]),5))
-                            except ZeroDivisionError:
-                                new["val"] = 0
-                        else:
-                            new["val"] = bucket["doc_count"]
-                    elif agg_name == "string":
-                        new["key"] = bucket["key"]
-                        new["val"] = bucket["doc_count"]
-                    if "string" in bucket:
-                        new_children = []
-                        for bucket_2 in bucket["string"]["buckets"]:
-                            child = {}
-                            child["key"] = bucket_2["key"]
-                            child["val"] = bucket_2["doc_count"]
-                            new["children"].append(child)
-                    response_out.append(new)
-                """
                 if agg_name == 'daterange':
                     response_out.extend(self._parse_daterange_buckets(agg_results['buckets'], total_freqs, self.es_params['freq_norm_1']))
                 elif agg_name == 'string':
