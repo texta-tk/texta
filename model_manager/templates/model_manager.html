@@ -13,7 +13,7 @@
 				<div class="col-sm-6">Select a search:</div>
 				<div class="col-sm-6">
 								<select id="search" class="form-control">
-									<option></option>
+									<option value="all_docs">Empty (all documents)</option>
 									{% for search in searches %}
 										<option value="{{search.id}}">{{search.description}}</option>
 									{% endfor %}
