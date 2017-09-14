@@ -33,6 +33,7 @@ class Highlighter(object):
     def highlight(self, original_text, highlight_data, tagged_text=None):
         """highlight_data = [{'spans': [[1,7],[25,36]], 'name': 'LOC', 'value': '5', 'category': '[fact]', 'color': '#ababab'}]
         """
+        print(isinstance(original_text, str))
         if tagged_text:
             if self._derive_spans:
                 alignment = [char_idx for char_idx in range(len(original_text))]
@@ -43,6 +44,8 @@ class Highlighter(object):
         else:
             alignment = [char_idx for char_idx in range(len(original_text))]
             tagged_text = original_text
+
+        print(len(original_text), len(tagged_text))
 
         spans_to_tags = self._get_tags_for_text_index(tagged_text, alignment, highlight_data)
         split_text = self._split_text_at_indices(tagged_text, [index for span, tag in spans_to_tags for index in span])
@@ -181,12 +184,12 @@ class Highlighter(object):
             for name in category_name_value[category]:
                 if category_name_value[category][name]:
                     for value in category_name_value[category][name]:
-                        title_line_tokens.append('%s=%s'%(name, str(value)))
+                        title_line_tokens.append('%s=%s'%(name, value))
                 else:
                     title_line_tokens.append(name)
             title_lines.append(' '.join(title_line_tokens))
 
-        title = '&#13;'.join(title_lines)
+        title = ('&#13;'.join(title_lines)).encode('utf8')
         color = self._get_color([highlight_data['color'] for highlight_data in highlight_data_list if 'color' in highlight_data])
 
         return '<span title="{0}" style="background-color: {1};">'.format(title, color)

@@ -412,7 +412,7 @@ def search(es_params, request):
                         }
 
                         if inner_hit['hit_type'] == 'fact_val':
-                            datum['value'] = str(inner_hit['str_val'])
+                            datum['value'] = inner_hit['str_val']
 
                         highlight_data.append(datum)
 
@@ -430,7 +430,7 @@ def search(es_params, request):
                                 content
                             )
                         except:
-                            pass
+                            logger.exception("Highlighter couldn't handle input data.")
 
 
                 # Append the final content of this col to the row
