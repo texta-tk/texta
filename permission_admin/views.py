@@ -4,27 +4,62 @@ import json
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User, Group, Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 
-from permission_admin.models import Dataset
+from permission_admin.models import Dataset, ScriptProject
 from utils.es_manager import ES_Manager
-from texta.settings import STATIC_URL, URL_PREFIX
+from texta.settings import STATIC_URL, URL_PREFIX, SCRIPT_MANAGER_DIR
 
+from permission_admin.script_runner import ScriptRunner
+import multiprocessing
+
+import os
+import shutil
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def add_dataset(request):
     daterange = ""
-    Dataset(author=request.user, index=request.POST['index'], mapping=request.POST['mapping'], daterange=daterange).save()
+    dataset = Dataset(author=request.user, index=request.POST['index'],
+                      mapping=request.POST['mapping'], daterange=daterange, access=(request.POST['access']))
+    dataset.save()
+
+    create_dataset_access_permission_and_propagate(dataset, request.POST['access'])
+
     return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
+
+
+def create_dataset_access_permission_and_propagate(dataset, access):
+    content_type = ContentType.objects.get_for_model(Dataset)
+    permission = Permission.objects.create(
+        codename='can_access_dataset_' + str(dataset.id),
+        name='Can access dataset {0} -> {1}'.format(dataset.index, dataset.mapping),
+        content_type=content_type,
+    )
+    permission.save()
+
+    if access == 'public':
+        for user in User.objects.all():
+            user.user_permissions.add(permission)
+
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def delete_dataset(request):
     index_to_delete = request.POST['index']
     index_to_delete = Dataset.objects.get(pk = index_to_delete)
+
+    content_type = ContentType.objects.get_for_model(Dataset)
+    Permission.objects.get(
+        codename='can_access_dataset_' + str(index_to_delete.id),
+        content_type=content_type,
+    ).delete()
+
     index_to_delete.delete()
     return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
 
@@ -50,9 +85,41 @@ def index(request):
     indices = ES_Manager.get_indices()
     datasets = get_datasets(indices=indices)
     users = User.objects.all()
-    
+
+    users = annotate_users_with_permissions(users, datasets)
+
     template = loader.get_template('permission_admin.html')
     return HttpResponse(template.render({'users':users,'datasets':datasets,'indices':indices,'STATIC_URL':STATIC_URL,'URL_PREFIX':URL_PREFIX},request))
+
+def annotate_users_with_permissions(users, datasets):
+    new_users = []
+
+    content_type = ContentType.objects.get_for_model(Dataset)
+
+    for user in users:
+        new_user = {key: getattr(user, key) for key in
+                    ['pk', 'username', 'email', 'last_login', 'is_superuser', 'is_active']}
+
+        permissions = []
+        restrictions = []
+
+        for dataset in datasets:
+            permission = Permission.objects.get(
+                codename='can_access_dataset_' + str(dataset.pk),
+                content_type=content_type
+            )
+            # permission.name[19:] skips prefix "Can access dataset " to save room in GUI
+            if user.has_perm('permission_admin.' + permission.codename):
+                permissions.append({'codename': permission.codename, 'name': permission.name[19:]})
+            else:
+                restrictions.append({'codename': permission.codename, 'name': permission.name[19:]})
+
+        new_user['permissions'] = permissions
+        new_user['restrictions'] = restrictions
+
+        new_users.append(new_user)
+
+    return new_users
 
 def get_datasets(indices=None):
     datasets = Dataset.objects.all()
@@ -122,3 +189,118 @@ def get_mappings(request):
 
 
 
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def add_script_project(request):
+    name = request.POST['name']
+    desc = request.POST['description']
+    entrance = request.POST['entrance']
+    arguments = request.POST['arguments']
+
+    sp = ScriptProject(name=name, desc=desc, entrance_point=entrance, arguments=arguments)
+    sp.save()
+
+    project_path = os.path.join(SCRIPT_MANAGER_DIR, '%s_%s' % (str(sp.id), canonize_project_name(name)))
+
+    if not os.path.exists(project_path):
+        os.makedirs(project_path)
+
+    for file_ in request.FILES.getlist('files[]'):
+        path = default_storage.save(os.path.join(project_path, file_.name), ContentFile(file_.read()))
+
+    return HttpResponse()
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def list_script_projects(request):
+    script_projects = ScriptProject.objects.all()
+
+    template = loader.get_template('script_manager/project_list.html')
+    return HttpResponse(template.render({'projects':script_projects},request))
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def run_script_project(request):
+    project_id = request.POST['project_id']
+
+    script_project = ScriptProject.objects.get(pk=project_id)
+
+    script_runner = ScriptRunner(script_project, SCRIPT_MANAGER_DIR)
+    project_daemon = multiprocessing.Process(name='daemon', target=script_runner.run)
+
+    script_runner.run()
+
+    #project_daemon.daemon = True
+    #project_daemon.start()
+
+    return HttpResponse()
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def delete_script_project(request):
+    project_id = request.POST['project_id']
+    script_project = ScriptProject.objects.get(pk=project_id)
+
+    project_path = os.path.join(SCRIPT_MANAGER_DIR, '%s_%s' % (str(script_project.id), canonize_project_name(script_project.name)))
+    #project_path = os.path.join(SCRIPT_MANAGER_DIR, canonize_project_name(script_project.name))
+
+    if os.path.exists(project_path):
+        shutil.rmtree(project_path)
+
+    script_project.delete()
+
+    return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def update_dataset_permissions(request):
+    allowed_codenames = json.loads(request.POST['allowed'])
+    disallowed_codenames = json.loads(request.POST['disallowed'])
+    user_id = request.POST['user_id']
+
+    user = User.objects.get(pk=user_id)
+    content_type = ContentType.objects.get_for_model(Dataset)
+
+    for allowed_codename in allowed_codenames:
+        permission = Permission.objects.get(
+            codename=allowed_codename,
+            content_type=content_type
+        )
+        user.user_permissions.add(permission)
+
+    for disallowed_codename in disallowed_codenames:
+        permission = Permission.objects.get(
+            codename=disallowed_codename,
+            content_type=content_type
+        )
+        user.user_permissions.remove(permission)
+
+    return HttpResponse()
+
+
+
+def canonize_project_name(name):
+    return name.lower().replace(' ', '_')
+
+
+def _pickle_method(method):
+    func_name = method.im_func.__name__
+    obj = method.im_self
+    cls = method.im_class
+    return _unpickle_method, (func_name, obj, cls)
+
+def _unpickle_method(func_name, obj, cls):
+    for cls in cls.mro():
+        try:
+            func = cls.__dict__[func_name]
+        except KeyError:
+            pass
+        else:
+            break
+    return func.__get__(obj, cls)
+
+import copy_reg
+import types
+copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)

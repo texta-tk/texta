@@ -5,6 +5,7 @@ import json
 import csv
 import time
 from datetime import datetime, timedelta as td
+from collections import defaultdict
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, StreamingHttpResponse
@@ -17,8 +18,8 @@ from permission_admin.models import Dataset
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
-from searcher.agg_manager import AggManager
-from searcher.cluster_manager import ClusterManager
+from utils.agg_manager import AggManager
+from utils.highlighter import Highlighter
 
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links
 
@@ -39,7 +40,7 @@ def convert_date(date_string,frmt):
 
 
 def get_fields(es_m):
-    """ Crete field list from fields in the Elasticsearch mapping
+    """ Create field list from fields in the Elasticsearch mapping
     """
     fields = []
     mapped_fields = es_m.get_mapped_fields()
@@ -59,10 +60,21 @@ def get_fields(es_m):
         fields.append(field)
 
         # Add additional field if it has fact
-        if es_m.check_if_field_has_facts(path_list):
+        has_facts, has_fact_str_val, has_fact_num_val =  es_m.check_if_field_has_facts(path_list)
+
+        if has_facts:
             data['type'] = 'facts'
-            label += ' [facts]'
-            field = {'data': json.dumps(data), 'label': label, 'type':'facts'}
+            field = {'data': json.dumps(data), 'label': label + ' [facts]', 'type':'facts'}
+            fields.append(field)
+
+        if has_fact_str_val:
+            data['type'] = 'fact_str_val'
+            field = {'data': json.dumps(data), 'label': label + ' [facts][text]', 'type':'fact_str_val'}
+            fields.append(field)
+
+        if has_fact_num_val:
+            data['type'] = 'fact_num_val'
+            field = {'data': json.dumps(data), 'label': label + ' [facts][num]', 'type':'fact_num_val'}
             fields.append(field)
 
     # Sort fields by label
@@ -401,7 +413,7 @@ def search(es_params, request):
         es_m.set_query_parameter('size', es_params['num_examples'])
 
         # HIGHLIGHTING THE MATCHING FIELDS
-        pre_tag = "<span style='background-color:#FFD119'>"
+        pre_tag = '<span style="background-color:#FFD119" class="[ES]">'
         post_tag = "</span>"
         highlight_config = {"fields": {}, "pre_tags": [pre_tag], "post_tags": [post_tag]}
         for field in es_params:
@@ -412,6 +424,7 @@ def search(es_params, request):
 
         response = es_m.search()
 
+        """
         # Get the ids of all documents to be presented in the results page
         doc_hit_ids = []
         for hit in response['hits']['hits']:
@@ -420,6 +433,7 @@ def search(es_params, request):
         # Use the doc_ids to restrict the facts search (fast!)
         facts_map = es_m.get_facts_map(doc_ids=doc_hit_ids)
         facts_highlight = facts_map['include']
+        """
 
         out['iTotalRecords'] = response['hits']['total']
         out['iTotalDisplayRecords'] = response['hits']['total']
@@ -432,6 +446,16 @@ def search(es_params, request):
             hit_id = str(hit['_id'])
             row = []
             
+            inner_hits = hit['inner_hits'] if 'inner_hits' in hit else {}
+            name_to_inner_hits = defaultdict(list)
+            for inner_hit_name, inner_hit in inner_hits.items():
+                hit_type, _, _ = inner_hit_name.rsplit('_', 2)
+                for inner_hit_hit in inner_hit['hits']['hits']:
+                    source = inner_hit_hit['_source']
+                    source['hit_type'] = hit_type
+                    name_to_inner_hits[source['doc_path']].append(source)
+
+
             # Fill the row content respecting the order of the columns
             for col in out['column_names']:
 
@@ -448,38 +472,43 @@ def search(es_params, request):
                 for p in filed_path:
                     content = content[p] if p in content else ''
 
-                # If has facts, highlight
-                if hit_id in facts_highlight and col in facts_highlight[hit_id]:
-                    fact_spans = facts_highlight[hit_id][col]
-                    # Merge overlapping spans
-                    fact_spans = merge_spans(fact_spans)
-                    rest_sentence = content
-                    corpus_facts = ''
-                    last_cut = 0
-                    # Apply span tagging
-                    for span in fact_spans:
-                        start = span[0] - last_cut
-                        end = span[1] - last_cut
-                        b_sentence = rest_sentence[0:start]
-                        f_sencente = rest_sentence[start:end]
-                        rest_sentence = rest_sentence[end:]
-                        last_cut = span[1]
-                        corpus_facts += b_sentence
-                        corpus_facts += "<span style='background-color:#A3E4D7'>"
-                        corpus_facts += f_sencente
-                        corpus_facts += "</span>"
-                    corpus_facts += rest_sentence
-                    content = corpus_facts
-
-                # If content in the highlight structure, replace it with the tagged hit['highlight']
+                # Substitute feature value with value highlighted by Elasticsearch
+                old_content = content
                 if col in highlight_config['fields'] and 'highlight' in hit:
                     content = hit['highlight'][col][0]
 
-                # CHECK FOR EXTERNAL RESOURCES
-                link_key = (ds.get_index(), ds.get_mapping(), col)
-                if link_key in es_links:
-                    link_prefix, link_suffix = es_links[link_key]
-                    content = '<a href="'+str(link_prefix)+str(content)+str(link_suffix)+'" target="_blank">'+str(content)+'</a>'
+                # Prettify and standardize highlights
+                if name_to_inner_hits[col]:
+                    highlight_data = []
+                    for inner_hit in name_to_inner_hits[col]:
+                        datum = {
+                            'spans': json.loads(inner_hit['spans']),
+                            'name': inner_hit['fact'],
+                            'category': '[{0}]'.format(inner_hit['hit_type']),
+                            'color': '#F7ADCF'
+                        }
+
+                        if inner_hit['hit_type'] == 'fact_val':
+                            datum['value'] = str(inner_hit['str_val'])
+
+                        highlight_data.append(datum)
+
+                    try:
+                        content = Highlighter(average_colors=True, derive_spans=True).highlight(
+                            old_content.encode('utf8'),
+                            highlight_data,
+                            content.encode('utf8')
+                        ).decode('utf8')
+                    except:
+                        try:
+                            content = Highlighter(average_colors=True, derive_spans=True).highlight(
+                                old_content,
+                                highlight_data,
+                                content
+                            )
+                        except:
+                            pass
+
 
                 # Append the final content of this col to the row
                 row.append(content)

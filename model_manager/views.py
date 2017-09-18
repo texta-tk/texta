@@ -84,12 +84,20 @@ def start_training_job(request):
     mapped_field = json.loads(mapped_field)
     field_path = mapped_field['path']
     min_freq = int(request.POST['min_freq'])
-    search_id = int(request.POST['search'])
+    search_id = request.POST['search']
+        
     threading.Thread(target=train_model,args=(search_id,field_path,num_dimensions,num_workers,min_freq,request.user,description,request)).start()
     return HttpResponse()
 
 
 def train_model(search_id,field_path,num_dimensions,num_workers,min_freq,usr,description,request):
+
+    # select search
+    if search_id == 'all_docs':
+        query = {"main":{"query":{"bool":{"minimum_should_match":0,"must":[],"must_not":[],"should":[]}}}}
+    else:
+        query = json.loads(Search.objects.get(pk=int(search_id)).query)
+
     # add Run to db
     dataset_pk = int(request.session['dataset'])
 
@@ -100,7 +108,7 @@ def train_model(search_id,field_path,num_dimensions,num_workers,min_freq,usr,des
                        num_dimensions=num_dimensions,
                        num_workers=num_workers,
                        fields=field_path,
-                       search=Search.objects.get(pk=search_id).query, run_status=model_status,
+                       search=json.dumps(query), run_status=model_status,
                        run_started=datetime.now(), run_completed=None, user=usr)
     new_run.save()
 
@@ -110,7 +118,6 @@ def train_model(search_id,field_path,num_dimensions,num_workers,min_freq,usr,des
                                                              'num_workers': num_workers, 'min_freq': min_freq,
                                                              'desc': description}, 'data': {'run_id': new_run.id}}))
     print 'Run added to db.'
-    query = json.loads(Search.objects.get(pk=search_id).query)
 
     num_passes = 5
     # Number of word2vec passes + one pass to vocabulary building

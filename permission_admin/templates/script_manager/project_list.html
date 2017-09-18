@@ -1,0 +1,21 @@
+
+<div class="list-group">
+    {% for project in projects %}
+    <div class="list-group-item" data-id="{{project.id}}" title="{{project.desc}}">
+        <div class="row">
+            <div class="col-md-6">
+                <span><b>({{project.id}}) {{project.name}}</span></b>
+            </div>
+            <div class="col-md-6">
+                <button type="button" class="delete-btn pull-right btn btn-warning">
+                    <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                </button>
+
+                <button type="button" class="run-btn pull-right btn btn-success">
+                    <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>

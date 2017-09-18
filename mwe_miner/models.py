@@ -5,6 +5,7 @@ MAX_STR_LEN = 200
 MAX_INT_LEN = 10
 
 class Run(models.Model):
+    id = models.AutoField(primary_key=True)
     minimum_frequency = models.IntegerField()
     maximum_length    = models.IntegerField()
     minimum_length    = models.IntegerField()

@@ -45,7 +45,10 @@ def index(request):
     for model_run in model_runs:
         model_run_dict = model_run.__dict__
         model_run_dict['train_summary_json'] = model_run_dict['train_summary']
-        model_run_dict['train_summary'] = json.loads(model_run_dict['train_summary_json'])
+        try:
+            model_run_dict['train_summary'] = json.loads(model_run_dict['train_summary_json'])
+        except ValueError:
+            pass
         model_run_dict['user'] = model_run.user.username
         model_runs_dicts.append(model_run_dict)
 

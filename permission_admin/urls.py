@@ -12,4 +12,9 @@ urlpatterns = [
     url(r'^delete_dataset/?', views.delete_dataset),
     url(r'^open_close_dataset/?', views.open_close_dataset),
     url(r'^get_mappings/?', views.get_mappings),
+    url(r'^add_script_project/?', views.add_script_project),
+    url(r'^project_list/?', views.list_script_projects),
+    url(r'^delete_script_project/?', views.delete_script_project),
+    url(r'^run_script_project/?', views.run_script_project),
+    url(r'^update_dataset_permissions/?', views.update_dataset_permissions),
 ]

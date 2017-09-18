@@ -1,0 +1,114 @@
+    <div class="panel">
+        <div class="panel-heading">User Access Management</div>
+        <div class="panel-body">
+			<div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>E-mail</th>
+                        <th>Last Login</th>
+                        <th>Superuser</th>
+                        <th>Activation</th>
+                        <th>Remove</th>
+                    </thead>
+                        <form action="{{URL_PREFIX}}/permission_admin/save_permissions" method='POST'>
+                            {% for user in users %}
+                                <tr>
+                                    <td>
+                                        {{ user.pk }}
+                                    </td>
+                                    <td>
+                                        <a href="#" data-toggle="modal" data-target="#user-{{ user.pk }}-permission-modal">{{ user.username }}</a>
+                                    </td>
+                                    <td>
+                                        {{ user.email }}
+                                    </td>
+                                    <td>
+                                        {{ user.last_login|date:"d.m.Y H:i" }}
+                                    </td>
+                                    <td>
+                                        {% if user.is_superuser == True %}
+                                            true <a href="#" onclick="change_permissions('{{user.pk}}','to_regular');"><span class="glyphicon glyphicon-download"></span></a>
+                                        {% else %}
+                                            false <a href="#" onclick="change_permissions('{{user.pk}}','to_superuser');"><span class="glyphicon glyphicon-upload"></span></a>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.is_active == True %}
+                                            <a href="#" onclick="change_is_active('{{user.pk}}','deactivate');">deactivate</a>
+                                        {% else %}
+                                            <a href="#" onclick="change_is_active('{{user.pk}}','activate');">activate</a>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="#" onclick="delete_user('{{user.username}}','{{user.pk}}');"><span class="glyphicon glyphicon-remove"></span></a>
+                                    </td>
+                                </tr>
+
+                                <!-- Modal -->
+                                <div class="modal fade" id="user-{{ user.pk }}-permission-modal" tabindex="-1" role="dialog">
+                                  <div class="modal-dialog modal-xl" role="document">
+                                    <div class="modal-content">
+                                      <div class="modal-header">
+                                        <h5 class="modal-title">Dataset permissions</h5>
+                                      </div>
+                                      <div class="modal-body">
+                                          <div class="row">
+                                              <div class="col-lg-5">
+                                                  <div class="form-group">
+                                                      <label for="{{ user.pk }}-allowed-datasets">Allowed</label>
+                                                      <select multiple class="form-control" id="{{ user.pk }}-allowed-datasets">
+                                                          {% for permission in user.permissions %}
+                                                              <option value="{{ permission.codename }}">{{ permission.name }}</option>
+                                                          {% endfor %}
+                                                      </select>
+                                                  </div>
+                                              </div>
+
+                                              <div class="col-lg-2">
+                                                  <div class="row">
+                                                      <div class="text-center">
+                                                          <button type="button" class="btn btn-default btn-xs disallow-btn" data-userid="{{ user.pk }}">
+                                                              <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>
+                                                          </button>
+                                                      </div>
+                                                  </div>
+                                                  <div class="row">
+                                                      <div class="text-center">
+                                                          <button type="button" class="btn btn-default btn-xs allow-btn" data-userid="{{ user.pk }}">
+                                                              <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+                                                          </button>
+                                                      </div>
+                                                  </div>
+                                              </div>
+
+                                              <div class="col-lg-5">
+                                                  <div class="form-group">
+                                                      <label for="{{ user.pk }}-disallowed-datasets">Disallowed</label>
+                                                      <select multiple class="form-control" id="{{ user.pk }}-disallowed-datasets">
+                                                          {% for restriction in user.restrictions %}
+                                                              <option value="{{ restriction.codename }}">{{ restriction.name }}</option>
+                                                          {% endfor %}
+                                                      </select>
+                                                  </div>
+                                              </div>
+
+
+                                          </div>
+
+                                      </div>
+                                      <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="update_dataset_permissions('{{ user.pk }}');">Save changes</button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                            {% endfor %}
+                        </form>
+                </table>
+			</div>
+        </div>
+</div>

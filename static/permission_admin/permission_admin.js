@@ -4,11 +4,9 @@ $(document).ready(function() {
 }); 
  
 $('#index').on('change', function() {
-    console.log('jipii');
     var mapping_selection = $('#mapping');
     mapping_selection.html('');
     $.getJSON(LINK_ROOT+'permission_admin/get_mappings',{index:$(this).val()}, function(mappings) {
-        console.log(mappings)
         for (var i=0; i < mappings.length; i++) {
             var mapping = mappings[i];
             $('<option></option').val(mapping).text(mapping).appendTo(mapping_selection);
@@ -45,7 +43,9 @@ function add_dataset(){
 	var mapping = $('#mapping').val();
 	var daterange_from = $('#daterange_from').val();
 	var daterange_to = $('#daterange_to').val();
-    $.post(LINK_ROOT+'permission_admin/add_dataset', {index: index, mapping: mapping, daterange_from: daterange_from, daterange_to: daterange_to}, function(){
+	var access = $('#access').val();
+    $.post(LINK_ROOT+'permission_admin/add_dataset',
+        {index: index, mapping: mapping, daterange_from: daterange_from, daterange_to: daterange_to, access: access}, function(){
         location.reload();
     });	
 }
@@ -63,5 +63,40 @@ function remove_index(index){
 function open_close_dataset(dataset_id,open_close){
     $.post(LINK_ROOT+'permission_admin/open_close_dataset', {dataset_id: dataset_id, open_close: open_close}, function(){
         location.reload();
-    });	
+    });
+}
+
+
+function moveItems(origin, destination) {
+    $(origin).find(':selected').appendTo(destination)
+}
+
+$('.allow-btn').click(function(obj) {
+    var userid = $(this).data('userid');
+    moveItems('#' + userid + '-disallowed-datasets', '#' + userid + '-allowed-datasets')
+});
+
+$('.disallow-btn').click(function() {
+    var userid = $(this).data('userid');
+    moveItems('#' + userid + '-allowed-datasets', '#' + userid + '-disallowed-datasets')
+});
+
+function update_dataset_permissions(userId) {
+    var allowedDatasets = []
+    var disallowedDatasets = []
+
+    var allowedOptions = document.getElementById(userId + '-allowed-datasets').options;
+    for (var i = 0; i < allowedOptions.length; i++) {
+        allowedDatasets.push(allowedOptions[i].value)
+    }
+
+    var disallowedOptions = document.getElementById(userId + '-disallowed-datasets').options;
+    for (var i = 0; i < disallowedOptions.length; i++) {
+        disallowedDatasets.push(disallowedOptions[i].value)
+    }
+
+    $.post(LINK_ROOT+'permission_admin/update_dataset_permissions',
+        {allowed: JSON.stringify(allowedDatasets), disallowed: JSON.stringify(disallowedDatasets), user_id: userId},
+        function(){location.reload();
+    });
 }
