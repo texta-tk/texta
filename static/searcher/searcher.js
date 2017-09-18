@@ -1,4 +1,5 @@
 var counter = 1;
+var key_timer;
 var PREFIX = LINK_SEARCHER;
 var factValSubCounter = {}
 var examplesTable;
@@ -82,6 +83,12 @@ function get_query(){
     request.open("POST",PREFIX+'/get_query');
     request.send(new FormData(formElement),true);
 	
+}
+
+
+function search_as_you_type_query(){
+   clearTimeout(key_timer);
+   key_timer=setTimeout(function validate(){query();},500);
 }
 
 
@@ -170,7 +177,7 @@ function add_field(date_range_min,date_range_max){
         $("#field_"+counter.toString()+" #suggestions_").attr('id','suggestions_'+counter.toString()).attr('name','suggestions_'+counter.toString());
         $("#field_"+counter.toString()+" #match_txt_").attr('id','match_txt_'+counter.toString()).attr('name','match_txt_'+counter.toString());
         
-		$("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onkeyup','query();');
+		$("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onkeyup','search_as_you_type_query();');
 
 		//$("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onkeyup','lookup($(this).val(),'+counter.toString()+',"keyup","'+field_path+'", "TEXT");');
         //$("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onfocus','lookup($(this).val(),"'+counter.toString()+'","focus","'+field_path+'", "TEXT");');

@@ -19,6 +19,7 @@ from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
 from utils.agg_manager import AggManager
+from utils.cluster_manager import ClusterManager
 from utils.highlighter import Highlighter
 
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links
