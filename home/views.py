@@ -124,7 +124,7 @@ def update(request):
         ds = Datasets().activate_dataset(request.session)
         es_m = ds.build_manager(ES_Manager)
         autocomplete_dict = dict()
-        autocomplete_dict['TEXT'] = autocomplete_data(request)
+        #autocomplete_dict['TEXT'] = autocomplete_data(request)
         autocomplete_dict['FACT'] = get_facts_autocomplete(es_m)
         request.session['autocomplete_data'] = autocomplete_dict
 

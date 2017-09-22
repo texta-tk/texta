@@ -50,6 +50,12 @@ $(document).ready(function() {
 			return 'Current value: ' + value;
 		}
 	});
+
+	$('#n_samples').bootstrapSlider({
+		formatter: function(value) {
+			return 'Current value: ' + value;
+		}
+	});
 	
 	
 });

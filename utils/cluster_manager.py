@@ -3,14 +3,13 @@ from sklearn.cluster import AgglomerativeClustering,KMeans
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE, MDS
-
 from gensim.summarization import summarize
-
 from itertools import combinations
 from time import time
 import numpy as np
-
 import json
+
+from lm.models import Lexicon,Word
 
 
 class ClusterManager:
@@ -22,22 +21,10 @@ class ClusterManager:
 
         start = time()
         
-        self.documents,self.document_ids = self._scroll_documents()
-
-        print 'scroll',time()-start
-        start = time()
-        
-        self.document_vectors = self._vectorize_documents()
-
-        print 'vectorization',time()-start
-        start = time()
-
-        self.clusters = self._cluster_documents()
-
-        print 'clustering',time()-start
-        start = time()
-
-        self.cluster_keywords = self._get_keywords(background=self.params['cluster_keyword_background'])
+        self.documents,self.document_ids = self._scroll_documents(limit=int(self.params['cluster_n_samples']))
+        self.document_vectors,self.feature_names = self._vectorize_documents()
+        self.clusters,self.cluster_centers = self._cluster_documents()
+        self.cluster_keywords = self._get_keywords()
 
         print 'keyword extraction',time()-start
         start = time()
@@ -46,10 +33,13 @@ class ClusterManager:
     def _parse_params(params):
         params_out = {}
 
-        for param in params:
+        for param in params.iterkeys():
             if param.startswith('cluster'):
-                params_out[param] = params[param]
-
+                if param in ['cluster_lexicons']:
+                    params_out[param] = params.getlist(param)
+                else:
+                    params_out[param] = params[param]
+                    
         return params_out
 
 
@@ -81,17 +71,26 @@ class ClusterManager:
         return documents,es_ids
 
 
-    def _vectorize_documents(self,method='tf',max_features=100):
-       
-        if method == 'tf':
-            vectorizer = TfidfVectorizer(analyzer='word', use_idf=False, max_features=max_features)
+    def _vectorize_documents(self,method='tfidf',max_features=100):
+        stop_words = []
+
+        try:
+            for lexicon_id in self.params['cluster_lexicons']:
+                lexicon = Lexicon.objects.get(id=int(lexicon_id))
+                words = Word.objects.filter(lexicon=lexicon)
+                stop_words+=[word.wrd for word in words]
+        except:
+            KeyError
+        
+        if method == 'count':
+            vectorizer = CountVectorizer(analyzer='word', max_features=max_features, stop_words=stop_words)
         if method == 'tfidf':
-            vectorizer = TfidfVectorizer(analyzer='word', max_features=max_features)
+            vectorizer = TfidfVectorizer(analyzer='word', max_features=max_features, stop_words=stop_words)
         
         document_vectors = vectorizer.fit_transform(self.documents)
         document_vectors = document_vectors.toarray()
 
-        return document_vectors
+        return document_vectors,vectorizer.get_feature_names()
 
 
     def _cluster_documents(self):
@@ -104,7 +103,11 @@ class ClusterManager:
         else:
             clusterer = AgglomerativeClustering(n_clusters=n_clusters, linkage='complete', affinity='cosine')
 
-        cluster_labels = clusterer.fit(self.document_vectors).labels_
+        clustering = clusterer.fit(self.document_vectors)
+        cluster_labels = clustering.labels_
+
+        clustering_dict = clustering.__dict__
+        cluster_centers = clustering_dict['cluster_centers_']
 
         clusters = {}
 
@@ -113,93 +116,16 @@ class ClusterManager:
                 clusters[cluster_label] = []
             clusters[cluster_label].append(document_id)
 
-        return clusters
+        return clusters,cluster_centers
 
 
-    def _get_keywords(self, background=False):
-        keywords = {}
-        multisearch_queries = []
-        cluster_ids = []
-        for cluster_id,values in self.clusters.items():
-            doc_ids = [self.document_ids[value] for value in values]
-            path = json.loads(self.params['cluster_field'])['path']
+    def _get_keywords(self):
+        out = {}
 
-            if background == 'search':
-                background_filter = {"query": {"ids": {"values": self.document_ids}}}
-                significant_terms = {"field": path, "size": 10, "background_filter": background_filter}
-            else:
-                significant_terms = {"field": path, "size": 10}
+        for cluster_id,cluster in enumerate(self.cluster_centers):
+            keyword_ids = np.argpartition(-cluster, 20)[:20]
+            keywords = [self.feature_names[kw_id] for kw_id in keyword_ids]
 
-            header = {"index": self.es_m.index}
-            body = {"query": {"ids": {"values": doc_ids}}, "aggregations": {"significant_terms": {"significant_terms": significant_terms}}}
+            out[cluster_id] = keywords
 
-            multisearch_queries.append(json.dumps(header))
-            multisearch_queries.append(json.dumps(body))
-            cluster_ids.append(cluster_id)
-
-        responses = self.es_m.perform_queries(multisearch_queries)
-        
-        for i,response in enumerate(responses):
-            buckets = response['aggregations']['significant_terms']['buckets']
-            cluster_keywords = [bucket['key'] for bucket in buckets]
-            keywords[cluster_ids[i]] = cluster_keywords
-            
-        return keywords
-
-
-    def create_graph(self):
-        vector_len = self.document_vectors.shape[1]
-        cluster_ids = self.clusters.keys()
-        
-        nodes = [{"title":"asd","group":cluster_id} for cluster_id in cluster_ids]
-        links = []
-    
-        for combination in combinations(cluster_ids,2):
-            vectors_to_compare = []
-            for cluster in combination:
-                document_vectors_in_cluster = np.zeros((len(self.clusters[cluster]),vector_len))
-                for i,document_id in enumerate(self.clusters[cluster]):
-                    document_vectors_in_cluster[i] = self.document_vectors[document_id]
-                cluster_vector = np.sum(document_vectors_in_cluster,axis=0)
-                vectors_to_compare.append(cluster_vector.reshape(1,-1))
-                
-            similarity = cosine_similarity(vectors_to_compare[0],vectors_to_compare[1])[0][0]
-            
-            link = {"source": combination[0],
-                    "target": combination[1],
-                    "value": similarity}
-            
-            links.append(link)
-
-        return nodes,links
-
-
-    def get_cluster_coords(self):
-        cluster_vectors = []
-        for cluster in self.clusters.keys():
-            cluster_vector = self._vectorize_cluster(cluster)
-            cluster_vectors.append(cluster_vector)
-
-        #coords = PCA(n_components=2).fit_transform(cluster_vectors)
-
-        #coords = MDS(n_components=2).fit_transform(cluster_vectors)
-
-        coords = TSNE(n_components=2,metric='cosine',learning_rate=50).fit_transform(cluster_vectors)
-
-        return coords.tolist()
-    
-
-    def _vectorize_cluster(self,cluster,method='mean'):
-        vector_len = self.document_vectors.shape[1]
-        document_vectors_in_cluster = np.zeros((len(self.clusters[cluster]),vector_len))
-
-        for i,document_id in enumerate(self.clusters[cluster]):
-            document_vectors_in_cluster[i] = self.document_vectors[document_id]
-
-        if method == 'sum':
-            cluster_vector = np.sum(document_vectors_in_cluster,axis=0)
-        else:
-            cluster_vector = np.mean(document_vectors_in_cluster,axis=0)
-        #cluster_vector.reshape(1,-1)
-        return cluster_vector
-        
+        return out

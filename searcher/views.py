@@ -4,6 +4,7 @@ import threading
 import json
 import csv
 import time
+import re
 from datetime import datetime, timedelta as td
 from collections import defaultdict
 
@@ -12,6 +13,7 @@ from django.http import HttpResponse, StreamingHttpResponse
 from django.template import loader
 from django.utils.encoding import smart_str
 
+from lm.models import Lexicon
 from conceptualiser.models import Term, TermConcept
 from searcher.models import Search
 from permission_admin.models import Dataset
@@ -91,16 +93,15 @@ def get_daterange(es_m,field):
 
 @login_required
 def index(request):
-
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
-
     fields = get_fields(es_m)
 
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'fields': fields,
                        'searches': Search.objects.filter(author=request.user),
+                       'lexicons': Lexicon.objects.all().filter(author=request.user),
                        'dataset': ds.get_index()}
 
     template = loader.get_template('searcher.html')
@@ -308,7 +309,6 @@ def mlt_query(request):
 
 
 def cluster_query(request):
-
     params = request.POST
     ds = Datasets().activate_dataset(request.session)
         
@@ -316,14 +316,11 @@ def cluster_query(request):
     es_m.build(params)
 
     cluster_m = ClusterManager(es_m,params)
-    
-    #data = plotly_data(cluster_m)
     clustering_data = convert_clustering_data(cluster_m)
 
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
-                       'clusters': clustering_data,
-                       'documents':[]}
+                       'clusters': clustering_data}
     
     template = loader.get_template('cluster_results.html')
     return HttpResponse(template.render(template_params, request))    
@@ -335,54 +332,36 @@ def convert_clustering_data(cluster_m):
 
     for cluster_id,cluster_content in clusters.items():
         documents = [cluster_m.documents[doc_id] for doc_id in cluster_content]
-        cluster_label = 'Cluster {0} ({1})'.format(cluster_id,len(cluster_content))
+        cluster_label = 'Cluster {0} ({1})'.format(cluster_id+1,len(cluster_content))
         keywords = cluster_m.cluster_keywords[cluster_id]
         
-        cluster_data = {'documents':documents,
+        cluster_data = {'documents':highlight_cluster_keywords(documents,keywords),
                         'label':cluster_label,
                         'id':cluster_id,
                         'keywords':keywords}
         out.append(cluster_data)
 
     return out
-    
 
 
-def plotly_data(cluster_m):
-    out = [] 
-    
-    coords = cluster_m.get_cluster_coords()
-    clusters = cluster_m.clusters
-    cluster_lens = [len(c) for c in clusters.values()]
-    cluster_min = min(cluster_lens)
-    cluster_max = max(cluster_lens)
+def highlight_cluster_keywords(documents,keywords):
+    out = []
+    for document in documents:
+        document_tokens = document.lower().split(' ')
+        to_highlighter = []
+        for keyword in keywords:
+            if keyword.lower() in document_tokens:
+                pattern = re.compile(re.escape(keyword.lower()))
+                for match in pattern.finditer(document.lower()):
+                    span = [(match.start(),match.end())]
+                    new_match = {u'spans':span,u'color':u'#FFD119'}
+                    to_highlighter.append(new_match)
 
-    for i,cluster in clusters.items():
-        cluster_label = 'Cluster {0} ({1})'.format(i+1,len(clusters[i]))
-        cluster_keywords = '<br>'.join(cluster_m.cluster_keywords[i])
-        marker_size = {'size': scale_marker(len(clusters[i]),cluster_min,cluster_max)}
-
-        cluster_info = {'x':[coords[i][0]],
-                        'y':[coords[i][1]],
-                        'mode':'markers',
-                        'marker': marker_size,
-                        'hoverinfo':'text',
-                        #'text':cluster_keywords,
-                        'name':cluster_label}
-        
-        out.append(cluster_info)
+        hl = Highlighter(default_category='')
+        document = hl.highlight(document,to_highlighter)
+        out.append(document)
     return out
-
-
-def scale_marker(value, min_val, max_val):
-    new_max = 30
-    new_min = 10
-    try:
-        return (((value - min_val) * (new_max - new_min)) / (max_val - min_val)) + new_min
-    except ZeroDivisionError:
-        return new_max
-
-
+            
 
 def get_field_content(hit,field):
     #TODO Highlight

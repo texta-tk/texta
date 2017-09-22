@@ -103,6 +103,8 @@
 										<div class="col-sm-12">
 											<b>Select field:</b>
 										</div>
+									</div>
+									<div class="row padded-row">
 										<div class="col-sm-12">
 											<select name="cluster_field" id="cluster_field" class="form-control input-sm">
 												{% for field in fields %}
@@ -112,44 +114,66 @@
 												{% endfor %}							
 											</select>
 										</div>
+									</div>
+									<div class="row padded-row">
 										<div class="col-sm-12">
 											<b>Clustering method:</b>
 										</div>
+									</div>
+									<div class="row padded-row">
 										<div class="col-sm-12">
 											<select id="cluster_method" name="cluster_method" class="form-control input-sm">
-												<option value="hierarchical" selected="selected">hierarchical</option>
-												<option value="kmeans">K-means</option>
+												<option value="hierarchical">hierarchical</option>
+												<option value="kmeans" selected="selected">K-means</option>
 											</select>
 										</div>
-										<div class="col-sm-12">
-											<b>Cluster keyword background:</b>
-										</div>
-										<div class="col-sm-12">
-											<select id="cluster_keyword_background" name="cluster_keyword_background" class="form-control input-sm">
-												<option value="all" selected="selected">all documents</option>
-												<option value="search">documents in current search</option>
-											</select>
-										</div>
+									</div>
+									<div class="row padded-row">
 										<div class="col-sm-12">
 											<b>Number of clusters:</b>
 										</div>
+									</div>
+									<div class="row padded-row">
 										<div class="col-sm-12">
 											<input id="n_clusters" name="cluster_n_clusters" class="form-control" data-slider-id='n_clusters' type="text" data-slider-min="2" data-slider-max="100" data-slider-step="1" data-slider-value="10"/>
 										</div>
-										
+									</div>
+									<div class="row padded-row">
+										<div class="col-sm-12">
+											<b>Maximum number of documents:</b>
+										</div>
+									</div>
+									<div class="row padded-row">
+										<div class="col-sm-12">
+											<input id="n_samples" name="cluster_n_samples" class="form-control" data-slider-id='n_samples' type="text" data-slider-min="100" data-slider-max="10000" data-slider-step="100" data-slider-value="1000"/>
+										</div>
+									</div>
+									<div class="row padded-row">
+										<div class="col-sm-12">
+											<b>Stopword lexicons:</b>
+										</div>
+									</div>
+									<div class="row padded-row">
+										<div class="col-sm-12">
+											{% if lexicons|length != 0 %}
+												<select id="cluster_lexicons" name="cluster_lexicons" class="form-control" multiple="multiple">
+												{% for lexicon in lexicons %}
+														<option value="{{lexicon.id}}">{{lexicon}}</option>
+												{% endfor %}
+												</select>
+											{% else %}
+												<span class="text-danger">No lexicons!</span>
+											{% endif %}	
+										</div>
 									</div>
 								</div>
 								<div class="row">
 									<div class="col-sm-12">
 										<button type="button" onclick="javascript:cluster_query();" class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span> Cluster Search</button>
-									
 									</div>
 								</div>
-							</div>							
-							
-							
+							</div>									
 						</div>
-						
 					</div>
 				</div>
 			</div>

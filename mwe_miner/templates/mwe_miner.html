@@ -77,7 +77,7 @@
 								{% for lexicon in lexicons %}
 									<div class="row">
 										<input type="checkbox" id="lex_select_{{lexicon.id}}" onclick="javascript:select_lexicon({{lexicon.id}});">
-										<a href="javascript:void(0)" onclick="go_to(LINK_LEXMINER + '/select?id={{lexicon.id}}')" target="blank">{{lexicon}}</a> ({{lexicon.size}})
+										<a href="javascript:void(0)" onclick="go_to(LINK_LEXMINER + '/select?id={{lexicon.id}}')" target="_blank">{{lexicon}}</a> ({{lexicon.size}})
 									</div>
 								{% endfor %}
 							{% else %}
