@@ -1,10 +1,12 @@
 from collections import Counter, defaultdict
 import re
+import math
 
 
 class Highlighter(object):
 
-    def __init__(self, average_colors=False, derive_spans=False, derived_span_string='"', default_category='[match]'):
+    def __init__(self, average_colors=False, derive_spans=False, derived_span_string='"', default_category='[match]',
+                additional_style_string=''):
         """
         Parameters:
             average_colors: boolean
@@ -30,10 +32,11 @@ class Highlighter(object):
 
         self._default_category = default_category
 
+        self._additional_style_string = additional_style_string
+
     def highlight(self, original_text, highlight_data, tagged_text=None):
         """highlight_data = [{'spans': [[1,7],[25,36]], 'name': 'LOC', 'value': '5', 'category': '[fact]', 'color': '#ababab'}]
         """
-        print(isinstance(original_text, str))
         if tagged_text:
             if self._derive_spans:
                 alignment = [char_idx for char_idx in range(len(original_text))]
@@ -44,8 +47,6 @@ class Highlighter(object):
         else:
             alignment = [char_idx for char_idx in range(len(original_text))]
             tagged_text = original_text
-
-        print(len(original_text), len(tagged_text))
 
         spans_to_tags = self._get_tags_for_text_index(tagged_text, alignment, highlight_data)
         split_text = self._split_text_at_indices(tagged_text, [index for span, tag in spans_to_tags for index in span])
@@ -174,7 +175,10 @@ class Highlighter(object):
             name = highlight_data.get('name', '')
             value = highlight_data.get('value', None)
 
+            # Creating category_name_value[category][name] = [].
+            # Important for cases when value is missing.
             category_name_value[category][name]
+
             if value:
                 category_name_value[category][name].append(value)
 
@@ -192,7 +196,8 @@ class Highlighter(object):
         title = ('&#13;'.join(title_lines)).encode('utf8')
         color = self._get_color([highlight_data['color'] for highlight_data in highlight_data_list if 'color' in highlight_data])
 
-        return '<span title="{0}" style="background-color: {1};">'.format(title, color)
+        return '<span title="{0}" style="background-color: {1};{2}">'.format(
+            title, color, (self._additional_style_string if color != 'none' else ''))
 
     def _get_color(self, color_code_list):
         if not color_code_list:
@@ -213,6 +218,21 @@ class Highlighter(object):
             return "#%02x%02x%02x"%(red, green, blue)
         else:
             return Counter(color_code_list).most_common(1)[0][0]
+
+
+class ColorPicker(object):
+
+    colors = ["#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"]
+
+    @staticmethod
+    def get_color_map(keys, colors=None):
+        keys = list(keys)
+        colors = colors if colors else ColorPicker.colors
+
+        # Wrap colors if there are more keys needing colors than colors themselves.
+        colors = colors * int(math.ceil(float(len(keys)) / len(colors)))
+
+        return {key: colors[key_idx] for key_idx, key in enumerate(keys)}
 
 
 if __name__ == '__main__':
