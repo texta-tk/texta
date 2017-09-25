@@ -338,7 +338,7 @@ def convert_clustering_data(cluster_m):
         cluster_data = {'documents':highlight_cluster_keywords(documents,keywords),
                         'label':cluster_label,
                         'id':cluster_id,
-                        'keywords':keywords}
+                        'keywords':' '.join(keywords)}
         out.append(cluster_data)
 
     return out
@@ -347,15 +347,13 @@ def convert_clustering_data(cluster_m):
 def highlight_cluster_keywords(documents,keywords):
     out = []
     for document in documents:
-        document_tokens = document.lower().split(' ')
         to_highlighter = []
         for keyword in keywords:
-            if keyword.lower() in document_tokens:
-                pattern = re.compile(re.escape(keyword.lower()))
-                for match in pattern.finditer(document.lower()):
-                    span = [(match.start(),match.end())]
-                    new_match = {u'spans':span,u'color':u'#FFD119'}
-                    to_highlighter.append(new_match)
+            pattern = re.compile(re.escape(keyword.lower()))
+            for match in pattern.finditer(document.lower()):
+                span = [(match.start(),match.end())]
+                new_match = {u'spans':span,u'color':u'#FFD119'}
+                to_highlighter.append(new_match)
 
         hl = Highlighter(default_category='')
         document = hl.highlight(document,to_highlighter)

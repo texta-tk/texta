@@ -18,16 +18,12 @@ class ClusterManager:
     def __init__(self,es_m,params):
         self.es_m = es_m
         self.params = self._parse_params(params)
-
-        start = time()
-        
         self.documents,self.document_ids = self._scroll_documents(limit=int(self.params['cluster_n_samples']))
-        self.document_vectors,self.feature_names = self._vectorize_documents()
+        self.document_vectors,self.feature_names = self._vectorize_documents(method=params['cluster_vectorizer'])
         self.clusters,self.cluster_centers = self._cluster_documents()
-        self.cluster_keywords = self._get_keywords()
+        self.cluster_keywords = self._get_keywords(int(params['cluster_n_keywords']))
 
-        print 'keyword extraction',time()-start
-        start = time()
+
 
     @staticmethod
     def _parse_params(params):
@@ -119,11 +115,11 @@ class ClusterManager:
         return clusters,cluster_centers
 
 
-    def _get_keywords(self):
+    def _get_keywords(self,keywords_per_cluster=10):
         out = {}
 
         for cluster_id,cluster in enumerate(self.cluster_centers):
-            keyword_ids = np.argpartition(-cluster, 20)[:20]
+            keyword_ids = np.argpartition(-cluster,keywords_per_cluster)[:keywords_per_cluster]
             keywords = [self.feature_names[kw_id] for kw_id in keyword_ids]
 
             out[cluster_id] = keywords

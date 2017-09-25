@@ -56,7 +56,12 @@ $(document).ready(function() {
 			return 'Current value: ' + value;
 		}
 	});
-	
+
+	$('#n_keywords').bootstrapSlider({
+		formatter: function(value) {
+			return 'Current value: ' + value;
+		}
+	});	
 	
 });
 
