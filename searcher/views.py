@@ -349,7 +349,7 @@ def highlight_cluster_keywords(documents,keywords):
     for document in documents:
         to_highlighter = []
         for keyword in keywords:
-            pattern = re.compile(re.escape(keyword.lower()))
+            pattern = re.compile(u'{0}{1}{2}'.format(u'(?<![A-z0-9])',re.escape(keyword.lower()),u'(?![A-z0-9])'))
             for match in pattern.finditer(document.lower()):
                 span = [(match.start(),match.end())]
                 new_match = {u'spans':span,u'color':u'#FFD119'}
