@@ -452,8 +452,8 @@ function drawTimeline(data){
 
 function show_children(data,date,timeline_children_container) {
 	timeline_children_container.empty();
-
-	$.each(data, function(i,data_list){
+	$.each(data, func
+    tion(i,data_list){
         var responseContainers = [$("<div style='float: left; padding-left: 20px;'></div>")];
 
         var tbody = $("<tbody></tbody>");
@@ -466,6 +466,10 @@ function show_children(data,date,timeline_children_container) {
             var valsTbody = $("<tbody></tbody>");
             var valsTable = $("<table id='" + i + '-' + row.key + "-table' class='table table-striped table-hover fact-val-table-" + i +"' style='display: none;'></table>");
             valsTable.append("<thead><th colspan='2'>&nbsp;</th></head>");
+
+            if (!row.hasOwnProperty('children')) {
+                row.children = [];
+            }
 
             $.each(row.children, function (k,child_row) {
                 valsTbody.append($("<tr><td>"+child_row.val+"</td><td>"+child_row.key+"</td></tr>"));
@@ -500,7 +504,6 @@ function show_children(data,date,timeline_children_container) {
 	});
 	
 }
-
 
 function drawStringAggs(data){
 	var response_container = $("<div style='float: left; padding-left: 20px;'></div>");
