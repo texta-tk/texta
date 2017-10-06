@@ -13,7 +13,7 @@ from django.http import HttpResponse, StreamingHttpResponse
 from django.template import loader
 from django.utils.encoding import smart_str
 
-from lm.models import Lexicon
+from lm.models import Lexicon,Word
 from conceptualiser.models import Term, TermConcept
 from searcher.models import Search
 from permission_admin.models import Dataset
@@ -288,11 +288,20 @@ def mlt_query(request):
     docs_accepted = [a.strip() for a in request.POST['docs'].split('\n') if a]
     docs_rejected = [a.strip() for a in request.POST['docs_rejected'].split('\n') if a]
 
+    # stopwords
+    stopword_lexicon_ids = request.POST.getlist('mlt_stopword_lexicons')
+    stopwords = []
+
+    for lexicon_id in stopword_lexicon_ids:
+        lexicon = Lexicon.objects.get(id=int(lexicon_id))
+        words = Word.objects.filter(lexicon=lexicon)
+        stopwords+=[word.wrd for word in words]
+
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
-    response = es_m.more_like_this_search(mlt_field,docs_accepted=docs_accepted,docs_rejected=docs_rejected,handle_negatives=handle_negatives)
+    response = es_m.more_like_this_search(mlt_field,docs_accepted=docs_accepted,docs_rejected=docs_rejected,handle_negatives=handle_negatives,stopwords=stopwords)
 
     documents = []
     
@@ -306,6 +315,21 @@ def mlt_query(request):
     
     template = loader.get_template('mlt_results.html')
     return HttpResponse(template.render(template_params, request))
+
+
+def get_field_content(hit,field):
+    if 'highlight' in hit:
+        field_content = hit['highlight']
+    else:
+        field_content = hit['_source']
+        
+    for field_element in field.split('.'):
+        field_content = field_content[field_element]
+
+        if type(field_content) == list:
+            field_content = '<br><br>'.join(field_content)
+
+    return field_content
 
 
 def cluster_query(request):
@@ -355,19 +379,11 @@ def highlight_cluster_keywords(documents,keywords):
                 new_match = {u'spans':span,u'color':u'#FFD119'}
                 to_highlighter.append(new_match)
 
-        hl = Highlighter(default_category='')
-        document = hl.highlight(document,to_highlighter)
+        if to_highlighter:
+            hl = Highlighter(default_category='')
+            document = hl.highlight(document,to_highlighter)
         out.append(document)
     return out
-            
-
-def get_field_content(hit,field):
-    #TODO Highlight
-    field_content = hit['_source']
-    for field_element in field.split('.'):
-        field_content = field_content[field_element]
-
-    return field_content
 
 
 def search(es_params, request):

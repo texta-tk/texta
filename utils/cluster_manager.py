@@ -1,9 +1,6 @@
 from sklearn.feature_extraction.text import CountVectorizer,TfidfVectorizer
 from sklearn.cluster import AgglomerativeClustering,KMeans
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE, MDS
-from gensim.summarization import summarize
 from itertools import combinations
 from time import time
 import numpy as np
@@ -43,6 +40,7 @@ class ClusterManager:
         documents = []
         es_ids = []
         field = json.loads(self.params['cluster_field'])['path']
+        print field
         response = self.es_m.scroll(field_scroll=field,size=500)
         scroll_id = response['_scroll_id']
         hits = response['hits']['hits']
@@ -52,14 +50,16 @@ class ClusterManager:
         while hits:
             hits = response['hits']['hits']
             for hit in hits:
-
-                content = hit['fields'][field][0]
-                documents.append(content)
-                es_ids.append(hit['_id'])
-                
-                i+=1
-                if i == limit:
-                    return documents,es_ids
+                try:
+                    content = hit['fields'][field][0]
+                    documents.append(content)
+                    es_ids.append(hit['_id'])
+                    
+                    i+=1
+                    if i == limit:
+                        return documents,es_ids
+                except:
+                    KeyError
 
             response = self.es_m.scroll(scroll_id=scroll_id)
             scroll_id = response['_scroll_id']
