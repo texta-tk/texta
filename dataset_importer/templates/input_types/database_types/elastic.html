@@ -1,0 +1,24 @@
+<div id="elastic-parameters">
+    <div class="panel">
+        <div class="panel-body parameter-panel">
+            <input name="format" value="elastic" hidden>
+
+            <div class="form-group">
+                <label class="control-label">Existing Elasticsearch dataset URL:</label>
+                <input class="form-control" name="database_url" placeholder="http://www.example.come:9200/my_index/my_mapping">
+            </div>
+
+            <div class="form-group">
+                <label class="control-label">Username:</label>
+                <input class="form-control" name="database_username">
+            </div>
+
+            <div class="form-group">
+                <label class="control-label">Password:</label>
+                <input class="form-control" type="password" name="database_password">
+            </div>
+        </div>
+    </div>
+
+    {% include "elastic_parameters_panel.html" %}
+</div>

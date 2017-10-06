@@ -1,0 +1,17 @@
+<div class="form-group">
+    <label class="control-label">File format</label>
+    <select id="collection-file-format" class="form-control">
+        {% for file_format in enabled_input_types.collection %}
+            <option value="{{ file_format.value }}">{{ file_format.name }}</option>
+        {% endfor %}
+    </select>
+
+</div>
+
+<div id="collection-file-format-panes" class="tab-content">
+    {% for file_format in enabled_input_types.collection %}
+        <div class="collection-file-format-pane" id="{{ file_format.value }}" hidden>
+            {% include "input_types/file_contents/collection_file_formats/"|add:file_format.value|add:".html" %}
+        </div>
+    {% endfor %}
+</div>

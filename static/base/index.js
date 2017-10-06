@@ -38,6 +38,10 @@ $('#grammar_builder').click(function() {
     window.location = LINK_GRAMMAR_BUILDER;
 });
 
+$('#dataset_importer').click(function() {
+    window.location = LINK_DATASET_IMPORTER;
+});
+
 $('#notRegistered').click(function() {
     $(this).hide();
     $('#registrationForm').slideDown(1000);
