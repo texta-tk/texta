@@ -1,0 +1,19 @@
+<div id="txt-parameters">
+    <div class="panel">
+        <div class="panel-body parameter-panel">
+            <input name="format" value="txt" hidden>
+
+            <div class="form-group">
+                <label class="control-label">Upload .txt (archive) file:</label>
+                <input type="file" name="file">
+            </div>
+
+            <div class="form-group">
+                <label class="control-label">.txt (archive) file URL:</label>
+                <input class="form-control" name="url" placeholder="http://www.example.come/txt_files.zip">
+            </div>
+        </div>
+    </div>
+
+    {% include "elastic_parameters_panel.html" %}
+</div>

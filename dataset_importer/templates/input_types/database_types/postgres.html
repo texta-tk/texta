@@ -1,0 +1,34 @@
+<div id="postgres-parameters">
+    <div class="panel">
+        <div class="panel-body parameter-panel">
+            <input name="format" value="postgres" hidden>
+
+            <div class="form-group">
+                <label class="control-label">Existing PostgreSQL URL:</label>
+                <input class="form-control" name="database_url" placeholder="http://www.example.ee:5432">
+            </div>
+
+            <div class="form-group">
+                <label class="control-label">Database:</label>
+                <input class="form-control" name="database_database">
+            </div>
+
+            <div class="form-group">
+                <label class="control-label">Collection:</label>
+                <input class="form-control" name="database_table">
+            </div>
+
+            <div class="form-group">
+                <label class="control-label">User:</label>
+                <input class="form-control" name="database_username">
+            </div>
+
+            <div class="form-group">
+                <label class="control-label">Password:</label>
+                <input class="form-control" type="password" name="database_password">
+            </div>
+        </div>
+    </div>
+
+    {% include "elastic_parameters_panel.html" %}
+</div>

@@ -22,7 +22,7 @@ from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
 from utils.agg_manager import AggManager
 from utils.cluster_manager import ClusterManager
-from utils.highlighter import Highlighter
+from utils.highlighter import Highlighter, ColorPicker
 
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links
 
@@ -407,7 +407,7 @@ def search(es_params, request):
         es_m.set_query_parameter('size', es_params['num_examples'])
 
         # HIGHLIGHTING THE MATCHING FIELDS
-        pre_tag = '<span style="background-color:#FFD119" class="[ES]">'
+        pre_tag = '<span style="background-color:#FFD119;" class="[ES]">'
         post_tag = "</span>"
         highlight_config = {"fields": {}, "pre_tags": [pre_tag], "post_tags": [post_tag]}
         for field in es_params:
@@ -474,34 +474,37 @@ def search(es_params, request):
                 # Prettify and standardize highlights
                 if name_to_inner_hits[col]:
                     highlight_data = []
+                    color_map = ColorPicker.get_color_map(keys={hit['fact'] for hit in name_to_inner_hits[col]})
                     for inner_hit in name_to_inner_hits[col]:
                         datum = {
                             'spans': json.loads(inner_hit['spans']),
                             'name': inner_hit['fact'],
                             'category': '[{0}]'.format(inner_hit['hit_type']),
-                            'color': '#F7ADCF'
+                            'color': color_map[inner_hit['fact']]
                         }
 
                         if inner_hit['hit_type'] == 'fact_val':
-                            datum['value'] = str(inner_hit['str_val'])
+                            datum['value'] = inner_hit['str_val']
 
                         highlight_data.append(datum)
 
                     try:
-                        content = Highlighter(average_colors=True, derive_spans=True).highlight(
+                        content = Highlighter(average_colors=True, derive_spans=True,
+                                              additional_style_string='font-weight: bold;').highlight(
                             old_content.encode('utf8'),
                             highlight_data,
                             content.encode('utf8')
                         ).decode('utf8')
                     except:
                         try:
-                            content = Highlighter(average_colors=True, derive_spans=True).highlight(
+                            content = Highlighter(average_colors=True, derive_spans=True,
+                                                  additional_style_string='font-weight: bold;').highlight(
                                 old_content,
                                 highlight_data,
                                 content
                             )
                         except:
-                            pass
+                            logger.exception("Highlighter couldn't handle input data.")
 
 
                 # Append the final content of this col to the row
