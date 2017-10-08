@@ -452,8 +452,7 @@ function drawTimeline(data){
 
 function show_children(data,date,timeline_children_container) {
 	timeline_children_container.empty();
-	$.each(data, func
-    tion(i,data_list){
+	$.each(data, function(i,data_list){
         var responseContainers = [$("<div style='float: left; padding-left: 20px;'></div>")];
 
         var tbody = $("<tbody></tbody>");
