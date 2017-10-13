@@ -811,7 +811,7 @@ class ES_Manager:
             for constraint in query_dict['main']['query']['bool']['must_not']:
                 self.combined_query['main']['query']['bool']['must_not'].append(constraint)
 
-    def more_like_this_search(self,field,stopwords=[],docs_accepted=[],docs_rejected=[],handle_negatives='ignore'):
+    def more_like_this_search(self,fields,stopwords=[],docs_accepted=[],docs_rejected=[],handle_negatives='ignore'):
 
         # Get ids from basic search
         docs_search = self._scroll_doc_ids()
@@ -820,7 +820,7 @@ class ES_Manager:
 
         mlt = {
             "more_like_this": {
-                "fields" : [field],
+                "fields" : fields,
                 "like" : self._add_doc_ids_to_query(docs_combined),
                 "min_term_freq" : 1,
                 "max_query_terms" : 12,
@@ -829,6 +829,10 @@ class ES_Manager:
 
         if stopwords:
             mlt["more_like_this"]["stop_words"] = stopwords
+
+        highlight_fields = {}
+        for field in fields:
+            highlight_fields[field] = {}
 
         query = {
             "query":{
@@ -840,9 +844,7 @@ class ES_Manager:
             "highlight" : {
                 "pre_tags" : ["<b>"],
                 "post_tags" : ["</b>"],
-                "fields" : {
-                    field : {}
-                }
+                "fields" : highlight_fields
             }
         }
 

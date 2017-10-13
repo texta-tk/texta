@@ -282,7 +282,8 @@ def mlt_query(request):
     logger = LogManager(__name__, 'SEARCH MLT')
     
     es_params = request.POST
-    mlt_field = json.loads(es_params['mlt_field'])['path']
+
+    mlt_fields = [json.loads(field)['path'] for field in es_params.getlist('mlt_fields')]
 
     handle_negatives = request.POST['handle_negatives']
     docs_accepted = [a.strip() for a in request.POST['docs'].split('\n') if a]
@@ -301,13 +302,13 @@ def mlt_query(request):
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
-    response = es_m.more_like_this_search(mlt_field,docs_accepted=docs_accepted,docs_rejected=docs_rejected,handle_negatives=handle_negatives,stopwords=stopwords)
+    response = es_m.more_like_this_search(mlt_fields,docs_accepted=docs_accepted,docs_rejected=docs_rejected,handle_negatives=handle_negatives,stopwords=stopwords)
 
     documents = []
     
     for hit in response['hits']['hits']:
-        field_content = get_field_content(hit,mlt_field)
-        documents.append({'id':hit['_id'],'content':field_content})
+        fields_content = get_fields_content(hit,mlt_fields)
+        documents.append({'id':hit['_id'],'content':fields_content})
 
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
@@ -317,19 +318,27 @@ def mlt_query(request):
     return HttpResponse(template.render(template_params, request))
 
 
-def get_field_content(hit,field):
-    if 'highlight' in hit:
-        field_content = hit['highlight']
-    else:
-        field_content = hit['_source']
-        
-    for field_element in field.split('.'):
-        field_content = field_content[field_element]
+def get_fields_content(hit,fields):
+    row = {}
+    
+    for field in fields:
+        if 'highlight' in hit:
+            field_content = hit['highlight']
+        else:
+            field_content = hit['_source']
+
+        try:
+            for field_element in field.split('.'):
+                field_content = field_content[field_element]
+        except KeyError:
+            field_content = ''
 
         if type(field_content) == list:
             field_content = '<br><br>'.join(field_content)
 
-    return field_content
+        row[field] = field_content
+
+    return row
 
 
 def cluster_query(request):

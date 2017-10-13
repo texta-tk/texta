@@ -54,13 +54,13 @@
 								<div class="panel bg-grey">
 										<div class="row padded-row">
 											<div class="col-sm-12">
-												<b>Select field:</b>
+												<b>Select fields:</b>
 											</div>
-										</div>
+										</div>									
 										
 										<div class="row padded-row">
 											<div class="col-sm-12">
-												<select name="mlt_field" id="mlt_field" class="form-control input-sm">
+												<select name="mlt_fields" id="mlt_fields" class="form-control input-sm" multiple="multiple">
 													{% for field in fields %}
 														{% if field.type == 'string' %}
 															<option value="{{field.data}}">{{field.label}}</option>
@@ -81,11 +81,17 @@
 												<textarea class="form-control input-sm" rows="5" id="docs" name="docs"></textarea>
 											</div>
 										</div>
+
+										<div class="row padded-row">
+											<div class="col-sm-12">
+												<b>Stopword lexicons:</b>
+											</div>
+										</div>
 										
 										<div class="row padded-row">
 											<div class="col-sm-12">
 												{% if lexicons|length != 0 %}
-													<select id="mlt_stopword_lexicons" name="mlt_stopword_lexicons" class="form-control" multiple="multiple">
+													<select id="mlt_stopword_lexicons" name="mlt_stopword_lexicons" class="form-control input-sm" multiple="multiple">
 													{% for lexicon in lexicons %}
 															<option value="{{lexicon.id}}">{{lexicon}}</option>
 													{% endfor %}
@@ -202,7 +208,7 @@
 									<div class="row padded-row">
 										<div class="col-sm-12">
 											{% if lexicons|length != 0 %}
-												<select id="cluster_lexicons" name="cluster_lexicons" class="form-control" multiple="multiple">
+												<select id="cluster_lexicons" name="cluster_lexicons" class="form-control input-sm" multiple="multiple">
 												{% for lexicon in lexicons %}
 														<option value="{{lexicon.id}}">{{lexicon}}</option>
 												{% endfor %}

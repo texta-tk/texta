@@ -371,18 +371,21 @@ function cluster_query(){
 function mlt_query(){
 
     var formElement = document.getElementById("filters");
+	var mlt_field = $("select[id='mlt_fields']").val();
     var request = new XMLHttpRequest();
-
-    request.onreadystatechange=function() {
-		$("#right").html('Loading...');
-        if (request.readyState==4 && request.status==200) {
-            $("#right").html(request.responseText);
-        }
-    }
-
-    request.open("POST",PREFIX+'/mlt_query');
-    request.send(new FormData(formElement));   
 	
+	if(mlt_field!=null){
+		request.onreadystatechange=function() {
+			$("#right").html('Loading...');
+			if (request.readyState==4 && request.status==200) {
+				$("#right").html(request.responseText);
+			}
+		}
+		request.open("POST",PREFIX+'/mlt_query');
+		request.send(new FormData(formElement));	
+	}else{
+		$("#right").html('No fields selected!');
+	}
 }
 
 
