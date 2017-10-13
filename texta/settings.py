@@ -214,7 +214,6 @@ INSTALLED_APPS = (
     'conceptualiser',
     'mwe_miner',
     'account',
-    'home',
     'searcher',
     'model_manager',
     'classification_manager',
