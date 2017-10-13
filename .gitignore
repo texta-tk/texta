@@ -24,6 +24,8 @@ lm/migrations/
 !lm/migrations/__init__.py
 mwe_miner/migrations/
 !mwe_miner/migrations/__init__.py
+account/migrations/
+!account/migrations/__init__.py
 
 # Exclude documentation build files but not the html, js etc
 texta/documentation/sphinx/build/doctrees/*

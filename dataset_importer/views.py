@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import json
+import os
 
 from django.shortcuts import render
 
@@ -12,9 +13,11 @@ from multiprocessing import Process
 from utils import download, prepare_import_directory
 from archive_extractor.extractor import ArchiveExtractor
 from document_reader.reader import DocumentReader
-
+from texta.settings import BASE_DIR
 
 IMPORTER_DIRECTORY = 'test_dir'
+IMPORTER_DIRECTORY = os.path.join(os.path.abspath(os.path.join(BASE_DIR, os.pardir)), 'data',IMPORTER_DIRECTORY)
+
 import os
 if not os.path.exists(IMPORTER_DIRECTORY):
     os.makedirs(IMPORTER_DIRECTORY)
