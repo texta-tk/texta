@@ -40,7 +40,6 @@ class ClusterManager:
         documents = []
         es_ids = []
         field = json.loads(self.params['cluster_field'])['path']
-        print field
         response = self.es_m.scroll(field_scroll=field,size=500)
         scroll_id = response['_scroll_id']
         hits = response['hits']['hits']
@@ -94,6 +93,11 @@ class ClusterManager:
         method = self.params['cluster_method']
         n_clusters = int(self.params['cluster_n_clusters'])
 
+        n_samples = len(self.document_vectors)
+
+        if n_clusters > n_samples:
+            n_clusters = n_samples
+
         if method == 'kmeans':
             clusterer = KMeans(n_clusters=n_clusters, init='k-means++', max_iter=100, n_init=1)
         else:
@@ -119,9 +123,13 @@ class ClusterManager:
         out = {}
 
         for cluster_id,cluster in enumerate(self.cluster_centers):
-            keyword_ids = np.argpartition(-cluster,keywords_per_cluster)[:keywords_per_cluster]
-            keywords = [self.feature_names[kw_id] for kw_id in keyword_ids]
+            if len(cluster) > keywords_per_cluster:
+                keyword_ids = np.argpartition(-cluster,keywords_per_cluster)
+                keyword_ids = keyword_ids[:keywords_per_cluster]
+            else:
+                keyword_ids = np.argpartition(-cluster,len(cluster)-1)
 
+            keywords = [self.feature_names[kw_id] for kw_id in keyword_ids]
             out[cluster_id] = keywords
 
         return out
