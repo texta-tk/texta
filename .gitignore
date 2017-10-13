@@ -8,8 +8,8 @@ texta/log/*
 texta/lex.db
 
 # Exclude migrations files but not the migrations module.
-corpus_tool/migrations/
-!corpus_tool/migrations/__init__.py
+searcher/migrations/
+!searcher/migrations/__init__.py
 grammar_builder/migrations/
 !grammar_builder/migrations/__init__.py
 model_manager/migrations/

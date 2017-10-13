@@ -2,8 +2,8 @@ $('#lex_miner').click(function() {
     window.location = LINK_LEXMINER;
 });
 
-$('#corpus_tool').click(function() {
-    window.location = LINK_CORPUS_TOOL;
+$('#searcher').click(function() {
+    window.location = LINK_SEARCHER;
 });
 
 $('#mwe_miner').click(function() {

@@ -29,7 +29,7 @@ from sklearn.metrics import recall_score
 from sklearn.model_selection import GridSearchCV
 
 from texta.settings import STATIC_URL, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ERROR_LOGGER
-from corpus_tool.models import Search
+from searcher.models import Search
 from classification_manager.data_manager import EsDataSample
 from classification_manager.models import ModelClassification
 from classification_manager.data_manager import EsDataClassification

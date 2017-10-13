@@ -4,8 +4,8 @@ import re
 import copy
 import requests
 from collections import defaultdict
-
 import sys
+import time
 
 if 'django' in sys.modules: # Import django-stuff only if imported from the django application / prevent errors when importing from scripts
     from conceptualiser.models import Concept
@@ -204,7 +204,7 @@ class ES_Manager:
     
     @staticmethod
     def plain_multisearch(es_url, dataset, mapping, data):
-        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_msearch',data='\n'.join(data)).json()['responses']
+        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_msearch',data='\n'.join(data)+'\n').json()['responses']
     
     @staticmethod
     def plain_scroll(es_url, dataset, mapping, query, expiration_str='1m'):
@@ -620,16 +620,20 @@ class ES_Manager:
 
         return True
 
-    def scroll(self, scroll_id=None, time_out='1m', id_scroll=False):
+    def scroll(self, scroll_id=None, time_out='1m', id_scroll=False, field_scroll=False, size=100):
         """ Search and Scroll
         """
         if scroll_id:
             q = json.dumps({"scroll": time_out, "scroll_id": scroll_id})
             search_url = '{0}/_search/scroll'.format(es_url)
         else:
-            q = json.dumps(self.combined_query['main'])
+            q = self.combined_query['main']
+            q['size'] = size
+            q = json.dumps(q)
             if id_scroll:
                 search_url = '{0}/{1}/{2}/_search?scroll={3}&fields='.format(es_url, self.index, self.mapping, time_out)
+            elif field_scroll:
+                search_url = '{0}/{1}/{2}/_search?scroll={3}&fields={4}'.format(es_url, self.index, self.mapping, time_out, field_scroll)
             else:
                 search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
 
@@ -807,7 +811,7 @@ class ES_Manager:
             for constraint in query_dict['main']['query']['bool']['must_not']:
                 self.combined_query['main']['query']['bool']['must_not'].append(constraint)
 
-    def more_like_this_search(self,field,stopwords=[],docs_accepted=[],docs_rejected=[],handle_negatives='ignore'):
+    def more_like_this_search(self,fields,stopwords=[],docs_accepted=[],docs_rejected=[],handle_negatives='ignore'):
 
         # Get ids from basic search
         docs_search = self._scroll_doc_ids()
@@ -816,7 +820,7 @@ class ES_Manager:
 
         mlt = {
             "more_like_this": {
-                "fields" : [field],
+                "fields" : fields,
                 "like" : self._add_doc_ids_to_query(docs_combined),
                 "min_term_freq" : 1,
                 "max_query_terms" : 12,
@@ -825,6 +829,10 @@ class ES_Manager:
 
         if stopwords:
             mlt["more_like_this"]["stop_words"] = stopwords
+
+        highlight_fields = {}
+        for field in fields:
+            highlight_fields[field] = {}
 
         query = {
             "query":{
@@ -836,9 +844,7 @@ class ES_Manager:
             "highlight" : {
                 "pre_tags" : ["<b>"],
                 "post_tags" : ["</b>"],
-                "fields" : {
-                    field : {}
-                }
+                "fields" : highlight_fields
             }
         }
 
@@ -849,22 +855,19 @@ class ES_Manager:
                 rejected = [{'ids':{'values':docs_rejected}}]
                 query["query"]["bool"]["must_not"] = rejected
 
-
         response = ES_Manager.plain_search(self.es_url, self.index, self.mapping, query)
         
         return response
 
 
     def _add_doc_ids_to_query(self,ids):
-        out = []
-        for id in ids:
-            out.append({"_index" : self.index, "_type" : self.mapping, "_id" : id})
-        return out
+        return [{"_index" : self.index, "_type" : self.mapping, "_id" : id} for id in ids]
 
 
-    def _scroll_doc_ids(self,limit=100):
+    def _scroll_doc_ids(self,limit=500):
         ids = []
-        response = self.scroll(id_scroll=True)
+        
+        response = self.scroll(id_scroll=True, size=100)
         scroll_id = response['_scroll_id']
         hits = response['hits']['hits']
 
@@ -876,7 +879,13 @@ class ES_Manager:
                     return ids
             response = self.scroll(scroll_id=scroll_id)
             scroll_id = response['_scroll_id']
+
         return ids
+
+
+    def perform_queries(self,queries):
+        response = ES_Manager.plain_multisearch(self.es_url, self.index, self.mapping, queries)
+        return response      
 
 
     def get_extreme_dates(self,field):

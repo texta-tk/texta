@@ -14,7 +14,7 @@
 							<div class="col-sm-6">
 							    {% for lexicon in lexicons %}
 									<div class="row">
-										<input type="checkbox" value="{{lexicon.pk}}" title="{{lexicon.description}}" name="plot_cb" id="cb{{lexicon.pk}}"> <span><a href="javascript:void(0)" onclick="go_to(LINK_LEXMINER + '/select?id={{lexicon.id}}')" target="blank">{{lexicon.name}}</a> ({{lexicon.size}})</span>
+										<input type="checkbox" value="{{lexicon.pk}}" title="{{lexicon.description}}" name="plot_cb" id="cb{{lexicon.pk}}"> <span><a href="javascript:void(0)" onclick="go_to(LINK_LEXMINER + '/select?id={{lexicon.id}}')" target="_blank">{{lexicon.name}}</a> ({{lexicon.size}})</span>
 									</div>
 								{% endfor %}
 							</div>

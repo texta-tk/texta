@@ -6,7 +6,7 @@ from django.template import loader, Context
 from django.contrib.auth.decorators import login_required
 import requests
 
-from corpus_tool.views import Search
+from searcher.views import Search
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 

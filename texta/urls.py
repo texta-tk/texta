@@ -3,12 +3,11 @@ from django.contrib import admin
 from django.views import static
 
 urlpatterns = [
-    url(r'', include('home.urls')),
+    url(r'', include('account.urls')),
     url(r'lm', include('lm.urls')),
     url(r'conceptualiser', include('conceptualiser.urls')),
     url(r'mwe_miner', include('mwe_miner.urls')),
-    url(r'corpus_tool', include('corpus_tool.urls')),
-    url(r'account', include('account.urls')),
+    url(r'^searcher', include('searcher.urls')),
     url(r'model_manager', include('model_manager.urls')),
     url(r'classification_manager', include('classification_manager.urls')),
     url(r'ontology_viewer', include('ontology_viewer.urls')),

@@ -4,7 +4,7 @@ import string
 from django.db import models
 from django.contrib.auth.models import User
 
-from corpus_tool.models import Search
+from searcher.models import Search
 from permission_admin.models import Dataset
 
 MAX_STR_LEN = 200

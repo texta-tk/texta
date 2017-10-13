@@ -1,7 +1,7 @@
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
-from corpus_tool.models import Search
+from searcher.models import Search
 from texta.settings import date_format
 
 from dateutil.relativedelta import relativedelta
