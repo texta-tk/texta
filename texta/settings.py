@@ -123,7 +123,7 @@ ADMINS = (
 MANAGERS = ADMINS
 
 # New user are created as activated or deactivated (in which case superuser has to activate them manually)
-USER_ISACTIVE_DEFAULT = False
+USER_ISACTIVE_DEFAULT = True
 
 # Defines whether added datasets are 'public' or 'private'. Public datasets are accessible by all the existing users and
 # new users alike. Access from a specific user can be revoked. Private datasets are not accessible by default, but

@@ -169,10 +169,10 @@ def create(request):
     logging.getLogger(INFO_LOGGER).info(json.dumps(
             {'process': 'CREATE USER', 'event': 'create_user', 'args': {'user_name': username, 'email': email}}))
 
-    #user = authenticate(username=username, password=password)
-
-    #if user is not None:
-    #    django_login(request, user)
+    if USER_ISACTIVE_DEFAULT == True:
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            django_login(request, user)
 
     return HttpResponse(json.dumps({'url': (URL_PREFIX + '/'), 'issues': {}}))
 

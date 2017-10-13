@@ -85,36 +85,7 @@
 				</form>
             {% endif %}
 		</div>
-    </nav>	
-		{% if not request.user.is_authenticated %}
-		<div id="registration" class="pull-right pull-top">
-			<span id="notRegistered"><span class="glyphicon glyphicon-user"></span> Create user</span>
-			<form id="registrationForm" onsubmit="registerAccount(); return false;">
-				<div class="form-group">
-					<label for="registrationUsername" class="sr-only">Username</label>
-					<input type="text" class="form-control input-sm" id="registrationUsername" name="username" placeholder="Username">
-				</div>
-				<div class="form-group">
-					<label for="registrationPassword" class="sr-only">Password</label>
-					<input type="password" class="form-control input-sm" id="registrationPassword" name="password" placeholder="Password">
-				</div>
-				<div class="form-group">
-					<label for="registrationPasswordAgain" class="sr-only">Password again</label>
-					<input type="password" class="form-control input-sm" id="registrationPasswordAgain" name="password_again" placeholder="Password again">
-				</div>
-				<div class="form-group">
-					<label for="registrationEmail" class="sr-only">E-mail</label>
-					<input type="email" class="form-control input-sm" id="registrationEmail" name="email" placeholder="E-mail">
-				</div>
-				<!--
-				<div class="checkbox">
-					<label><input type="checkbox">Request permissions</label>
-				</div> -->
-				<button type="button" class="btn btn-warning btn-sm pull-right" id="cancelRegistrationBtn">No thanks</button>
-				<button type="submit" class="btn btn-success btn-sm pull-right">Register</button>
-			</form>
-		</div>
-		{% endif %}
+    </nav>
 <div class="container-fluid">{% block app %}{% endblock %}</div>
 <script src="{{STATIC_URL}}base/index.js"></script>
 </body>
