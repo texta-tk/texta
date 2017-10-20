@@ -6,7 +6,7 @@ class PDFAdapter(EntityAdapter):
 
     @staticmethod
     def get_features(**kwargs):
-        directory = kwargs['file_path']
+        directory = kwargs['directory']
 
         for file_path in PDFAdapter.get_file_list(directory, 'txt'):
             features = PDFAdapter.get_meta_features(file_path=file_path)

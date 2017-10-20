@@ -1,4 +1,4 @@
-<div id="mongodb-parameters">
+<form id="mongodb-parameters" method="post" enctype="multipart/form-data" onsubmit="return importDataset('mongodb')">
     <div class="panel">
         <div class="panel-body parameter-panel">
             <input name="format" value="mongodb" hidden>
@@ -21,4 +21,7 @@
     </div>
 
     {% include "elastic_parameters_panel.html" %}
-</div>
+
+    <button class="btn btn-success pull-right">Import data</button>
+</form>
+

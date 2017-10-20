@@ -1,4 +1,5 @@
 import extractor_instance as extractor
+import os
 
 
 extractor_map = {
@@ -13,3 +14,4 @@ class ArchiveExtractor(object):
         if archive_format in extractor_map:
             extractor = extractor_map[archive_format]
             extractor.extract(file_path)
+            os.remove(file_path)

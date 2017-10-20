@@ -1,4 +1,4 @@
-<div id="postgres-parameters">
+<form id="postgres-parameters" method="post" enctype="multipart/form-data" onsubmit="return importDataset('postgres')">
     <div class="panel">
         <div class="panel-body parameter-panel">
             <input name="format" value="postgres" hidden>
@@ -31,4 +31,7 @@
     </div>
 
     {% include "elastic_parameters_panel.html" %}
-</div>
+
+    <button class="btn btn-success pull-right">Import data</button>
+</form>
+

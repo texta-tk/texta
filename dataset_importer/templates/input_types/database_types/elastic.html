@@ -1,4 +1,4 @@
-<div id="elastic-parameters">
+<form id="elastic-parameters" method="post" enctype="multipart/form-data" onsubmit="return importDataset('elastic')">
     <div class="panel">
         <div class="panel-body parameter-panel">
             <input name="format" value="elastic" hidden>
@@ -21,4 +21,7 @@
     </div>
 
     {% include "elastic_parameters_panel.html" %}
-</div>
+
+    <button class="btn btn-success pull-right">Import data</button>
+</form>
+

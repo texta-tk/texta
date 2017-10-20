@@ -7,15 +7,15 @@ class DocumentReader(object):
         self._available_formats = available_formats
         self._directory = directory
 
-    def read_documents(self, format, **kwargs):
+    def read_documents(self, **kwargs):
         if self._available_formats and format not in self._available_formats:
             raise NotSupportedFormat()
 
         reading_parameters = kwargs
 
-        adapter = adapter_map[format]
+        adapter = adapter_map[reading_parameters['format']]
 
-        return adapter.get_features(reading_parameters)
+        return adapter.get_features(**reading_parameters)
 
 
 class NotSupportedFormat(Exception):
