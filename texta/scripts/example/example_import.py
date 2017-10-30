@@ -4,13 +4,14 @@ import csv
 import sys, os
 from zipfile import ZipFile
 
-sys.path.append(
-    os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, 'texta','utils'))) # Add texta.utils temporarily to allow es_manager import 
-sys.path.append(
-    os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))) # Add .. temporarily to allow TEXTA settings import through es_manager
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, 'utils')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir)))
+
+print sys.path
+
 
 from es_manager import ES_Manager
-from settings import es_url
+from texta.settings import es_url
 
 # Remove temporary paths to avoid future conflicts
 sys.path.pop()
