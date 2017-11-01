@@ -163,8 +163,6 @@ class ES_Manager:
         mapping_data = []
 
         for item in structure.items():
-            if item[0] in self.TEXTA_RESERVED:
-                continue
             if 'properties' in item[1]:
                 sub_structure = item[1]['properties']
                 path_list = root_path[:]
@@ -174,8 +172,6 @@ class ES_Manager:
             else:
                 path_list = root_path[:]
                 path_list.append(item[0])
-
-                #if path_list[0] not in self.TEXTA_RESERVED:
                 path = '.'.join(path_list)
                 data = {'path': path, 'type': item[1]['type']}
                 mapping_data.append(data)
