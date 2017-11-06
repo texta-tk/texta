@@ -23,6 +23,7 @@ from utils.log_manager import LogManager
 from utils.agg_manager import AggManager
 from utils.cluster_manager import ClusterManager
 from utils.highlighter import Highlighter, ColorPicker
+from utils.autocomplete import Autocomplete
 
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links
 
@@ -180,44 +181,15 @@ def delete(request):
     return HttpResponse(search_id)
 
 
+
 def autocomplete(request):
-
-    lookup_type = request.POST['lookup_type']
-    field_name = request.POST['field_name']
-    field_id = request.POST['id']
-    content = request.POST['content']
-
-    autocomplete_data = {}
-    if 'autocomplete_data' in request.session:
-        autocomplete_data = request.session['autocomplete_data']
-
-    suggestions = []
-
-    if (lookup_type in autocomplete_data) and (field_name in autocomplete_data[lookup_type].keys()):
-        for term in autocomplete_data[lookup_type][field_name]:
-            term = smart_str(term)
-            insert_function = "insert('','{0}','{1}','{2}');".format(field_id, term, lookup_type)
-            html_suggestion = '<li class="list-group-item" onclick="{0}">{1}</li>'.format(insert_function, term)
-            suggestions.append(html_suggestion)
-    else:
-
-        last_line = content.split('\n')[-1] if content else ''
-
-        if len(last_line) > 0:
-            terms = Term.objects.filter(term__startswith=last_line).filter(author=request.user)
-            seen = {}
-            suggestions = []
-            for term in terms[:10]:
-                for term_concept in TermConcept.objects.filter(term=term.pk):
-                    concept = term_concept.concept
-                    concept_term = (concept.pk,term.term)
-                    if concept_term not in seen:
-                        seen[concept_term] = True
-                        display_term = term.term.replace(last_line,'<font color="red">'+last_line+'</font>')
-                        display_text = "<b>"+smart_str(display_term)+"</b> @"+smart_str(concept.pk)+"-"+smart_str(concept.descriptive_term.term)
-                        suggestions.append("<li class=\"list-group-item\" onclick=\"insert('"+str(concept.pk)+"','"+str(field_id)+"','"+smart_str(concept.descriptive_term.term)+"');\">"+display_text+"</li>")
+    ac = Autocomplete()
+    ac.parse_request(request)
+    suggestions = ac.suggest()
+    suggestions = json.dumps(suggestions)
 
     return HttpResponse(suggestions)
+
 
 
 @login_required

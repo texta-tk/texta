@@ -69,7 +69,7 @@ class ES_Manager:
     """
 
     TEXTA_MAPPING = 'texta'
-    TEXTA_RESERVED = ['texta_link','texta_facts']
+    TEXTA_RESERVED = ['texta_facts']
     
     # Redefine requests if LDAP authentication is used
     if es_use_ldap:
@@ -163,6 +163,8 @@ class ES_Manager:
         mapping_data = []
 
         for item in structure.items():
+            if item[0] in self.TEXTA_RESERVED:
+                continue
             if 'properties' in item[1]:
                 sub_structure = item[1]['properties']
                 path_list = root_path[:]
