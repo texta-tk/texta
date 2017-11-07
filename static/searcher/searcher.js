@@ -103,7 +103,7 @@ function search_as_you_type_query(){
 }
 
 
-function lookup(content,id,action, lookup_type){
+function lookup(content,id,action, lookup_types){
     var separatorIdx = id.indexOf('_');
     if (separatorIdx > -1) {
         var fieldId = id.substring(0, separatorIdx);
@@ -111,12 +111,12 @@ function lookup(content,id,action, lookup_type){
         var fieldId = id;
     }
 
-    var lookup_data = {content: content, action: action, lookup_type: lookup_type}
+    var lookup_data = {content: content, action: action, lookup_types: lookup_types}
 	$.post(PREFIX+'/autocomplete', lookup_data, function(data) {
 		if(data.length > 0){
 			var suggestions_container = $("#suggestions_"+id);
 			suggestions_container.empty();
-			data = process_suggestions(data,suggestions_container,id,lookup_type);
+			data = process_suggestions(data,suggestions_container,id,lookup_types);
 			$("#field_"+fieldId+" #suggestions_"+id).html(data).show();
 		}else{
 			$("#field_"+fieldId+" #suggestions_"+id).html(data).hide();
@@ -125,18 +125,23 @@ function lookup(content,id,action, lookup_type){
 }
 
 
-function process_suggestions(suggestions,suggestions_container,field_id,lookup_type){
+function process_suggestions(suggestions,suggestions_container,field_id,lookup_types){
 	var suggestions = JSON.parse(suggestions)
+
+    $.each(suggestions, function(lookup_type,lookup_suggestions) {
+
+		$.each(lookup_suggestions, function(i)
+		{
+			var li = $('<li/>')
+				.addClass('list-group-item')
+				.addClass('pointer')
+				.attr('onclick',"insert('','"+field_id+"','"+lookup_suggestions[i]+"','"+lookup_type+"')")
+				.text(lookup_suggestions[i])
+				.appendTo(suggestions_container);
+		});
+		
+    })
 	
-	$.each(suggestions, function(i)
-	{
-		var li = $('<li/>')
-			.addClass('list-group-item')
-			.addClass('pointer')
-			.attr('onclick',"insert('','"+field_id+"','"+suggestions[i]+"','"+lookup_type+"')")
-			.text(suggestions[i])
-			.appendTo(suggestions_container);
-	});
 }
 
 
@@ -210,7 +215,7 @@ function add_field(date_range_min,date_range_max){
     else if(field_type == 'facts'){
         $("#field_hidden_fact").clone().attr('id',new_id).appendTo("#constraints");
         $("#field_"+counter.toString()+" #fact_operator_").attr('id','fact_operator_'+counter.toString()).attr('name','fact_operator_'+counter.toString());
-        $("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).html(field_name);
+        $("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).html(field_name+' [facts]');
         $("#field_"+counter.toString()+" #fact_field_").attr('id','fact_field_'+counter.toString()).attr('name','fact_field_'+counter.toString()).val(field_path);
         $("#field_"+counter.toString()+" #remove_link").attr('onclick',"javascript:remove_field('"+new_id+"');");
         $("#field_"+counter.toString()+" #suggestions_").attr('id','suggestions_'+counter.toString()).attr('name','suggestions_'+counter.toString());
@@ -255,9 +260,12 @@ function add_field(date_range_min,date_range_max){
         $("#field_"+counter.toString()+" #match_txt_").attr('id','match_txt_'+counter.toString()).attr('name','match_txt_'+counter.toString());
         
 		$("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onkeyup','search_as_you_type_query();');
+		
+		var suggestion_types = ["CONCEPT","LEXICON"];
+		//suggestion_types = JSON.stringify(suggestion_types);
 
-		//$("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onkeyup','lookup($(this).val(),'+counter.toString()+',"keyup","'+field_path+'", "TEXT");');
-        //$("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onfocus','lookup($(this).val(),"'+counter.toString()+'","focus","'+field_path+'", "TEXT");');
+		$("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onkeyup','lookup($(this).val(),'+counter.toString()+',"keyup", \''+suggestion_types+'\');');
+        $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onfocus','lookup($(this).val(),"'+counter.toString()+'","focus", \''+suggestion_types+'\');');
         $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onblur','hide("'+counter.toString()+'");');
     }
 

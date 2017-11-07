@@ -1,3 +1,4 @@
+from conceptualiser.models import Term, TermConcept
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 
@@ -7,21 +8,29 @@ class Autocomplete:
         self.es_m = None        
         self.lookup_type = None
         self.content = None
+        self.user = None
 
     def parse_request(self,request):
-        self.lookup_type = request.POST['lookup_type']
-        self.content = request.POST['content']
-
+        self.lookup_types = request.POST['lookup_types'].split(',')
+        self.content = request.POST['content'].split('\n')[-1].strip()
+        
         ds = Datasets().activate_dataset(request.session)
         self.dataset = ds.get_index()
         self.mapping = ds.get_mapping()
         self.es_m = ES_Manager(self.dataset, self.mapping)
 
-    def suggest(self):
-        suggestions = []
+        self.user = request.user
 
-        if self.lookup_type == 'FACT_NAME':
-            suggestions = self._get_fact_names()
+    def suggest(self):
+        suggestions = {}
+
+        for lookup_type in self.lookup_types:
+            if lookup_type == 'FACT_NAME':
+                suggestions['FACT_NAME'] = self._get_fact_names()
+            elif lookup_type == 'CONCEPT':
+                suggestions['CONCEPT'] = self._get_concepts()
+
+        print suggestions
         
         return suggestions
 
@@ -44,7 +53,28 @@ class Autocomplete:
 
         return fact_names
         
+    def _get_concepts(self):
+        concepts = []
 
+        if len(self.content) > 0:
+            terms = Term.objects.filter(term__startswith=self.content).filter(author=self.user)
+            seen = {}
+            #suggestions = []
+            for term in terms[:10]:
+                for term_concept in TermConcept.objects.filter(term=term.pk):
+                    concept = term_concept.concept
+                    concept_term = (concept.pk,term.term)
+
+                    print concept_term
+                    if concept_term not in seen:
+                        seen[concept_term] = True
+
+                        print term.term
+                        #display_term = term.term.replace(last_line,'<font color="red">'+last_line+'</font>')
+                        #display_text = "<b>"+smart_str(display_term)+"</b> @"+smart_str(concept.pk)+"-"+smart_str(concept.descriptive_term.term)
+                        #suggestions.append("<li class=\"list-group-item\" onclick=\"insert('"+str(concept.pk)+"','"+str(field_id)+"','"+smart_str(concept.descriptive_term.term)+"');\">"+display_text+"</li>")
+        
+        return concepts
 
     """
 

@@ -532,30 +532,29 @@
 					<ul name="suggestions_" id="suggestions_" class="list-group"></ul>
 				</div>
 			</div>
-
 	</div>
 
-	<div id="field_hidden_fact" class="panel panel-default" style="display: none;">
+	<div id="field_hidden_fact" class="panel bg-grey" style="display: none;">
 		<input type="hidden" name="fact_field_" id="fact_field_">
-		<div class="panel-heading">
-			<span id="selected_field_"></span>
-			<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+		<div class="row padded-row">
+			<div class="col-sm-12">
+				<b><span id="selected_field_"></span></b>
+				<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+			</div>
 		</div>
-		<div class="panel-body">
-			<div class="row">
-				<div class="col-sm-4">
-					<b>Bool:</b><br>
-					<select id="fact_operator_" name="fact_operator_" class="form-control input-sm">
-						<option value="must" selected="selected">and</option>
-						<option value="should">or</option>
-						<option value="must_not">not</option>
-					</select>
-				</div>
-				<div class="col-sm-8">
-					<b>Facts:</b><br>
-					<textarea id="fact_txt_" name="fact_txt_" class="form-control"></textarea>
-					<ul name="suggestions_" id="suggestions_" class="list-group"></ul>
-				</div>
+		<div class="row padded-row">
+			<div class="col-sm-4">
+				<b>Bool:</b><br>
+				<select id="fact_operator_" name="fact_operator_" class="form-control input-sm">
+					<option value="must" selected="selected">and</option>
+					<option value="should">or</option>
+					<option value="must_not">not</option>
+				</select>
+			</div>
+			<div class="col-sm-8">
+				<b>Facts:</b><br>
+				<textarea id="fact_txt_" name="fact_txt_" class="form-control"></textarea>
+				<ul name="suggestions_" id="suggestions_" class="list-group"></ul>
 			</div>
 		</div>
 	</div>
