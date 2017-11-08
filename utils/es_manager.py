@@ -11,6 +11,7 @@ if 'django' in sys.modules: # Import django-stuff only if imported from the djan
     from conceptualiser.models import Concept
     from conceptualiser.models import TermConcept
     from utils.log_manager import LogManager
+    from lm.models import Word,Lexicon
 
 from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password
 
@@ -343,16 +344,24 @@ class ES_Manager:
 
     @staticmethod
     def _get_list_synonyms(query_string):
-        """ check if string is a concept identifier
+        """ check if string is a concept or lexicon identifier
         """
         synonyms = []
-        concept = re.search('^@(\d)+-', query_string)
+        concept = re.search('^@C(\d)+-', query_string)
+        lexicon = re.search('^@L(\d)+-', query_string)
+        
         if concept:
-            concept_id = int(concept.group()[1:-1])
+            concept_id = int(concept.group()[2:-1])
             for term in TermConcept.objects.filter(concept=Concept.objects.get(pk=concept_id)):
                 synonyms.append(term.term.term)
+        elif lexicon:
+            lexicon_id = int(lexicon.group()[2:-1])
+            for word in Word.objects.filter(lexicon=Lexicon.objects.get(pk=lexicon_id)):
+                synonyms.append(word.wrd)
         else:
             synonyms.append(query_string)
+
+        print synonyms
         return synonyms
 
     def build(self, es_params):

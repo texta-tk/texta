@@ -103,23 +103,18 @@ function search_as_you_type_query(){
 }
 
 
-function lookup(content,id,action, lookup_types){
-    var separatorIdx = id.indexOf('_');
-    if (separatorIdx > -1) {
-        var fieldId = id.substring(0, separatorIdx);
-    } else {
-        var fieldId = id;
-    }
-
+function lookup(content, fieldId, action, lookup_types){
     var lookup_data = {content: content, action: action, lookup_types: lookup_types}
 	$.post(PREFIX+'/autocomplete', lookup_data, function(data) {
 		if(data.length > 0){
-			var suggestions_container = $("#suggestions_"+id);
+			var suggestions_container = $("#suggestions_"+fieldId);
 			suggestions_container.empty();
-			data = process_suggestions(data,suggestions_container,id,lookup_types);
-			$("#field_"+fieldId+" #suggestions_"+id).html(data).show();
+			process_suggestions(data,suggestions_container,fieldId,lookup_types);
+			if(suggestions_container.html()){
+			$("#field_"+fieldId+" #suggestions_"+fieldId).show();	
+			}
 		}else{
-			$("#field_"+fieldId+" #suggestions_"+id).html(data).hide();
+			$("#field_"+fieldId+" #suggestions_"+fieldId).hide();
 		}
 	});
 }
@@ -129,27 +124,45 @@ function process_suggestions(suggestions,suggestions_container,field_id,lookup_t
 	var suggestions = JSON.parse(suggestions)
 
     $.each(suggestions, function(lookup_type,lookup_suggestions) {
+		
+		if(lookup_suggestions.length > 0){
 
-		$.each(lookup_suggestions, function(i)
-		{
 			var li = $('<li/>')
 				.addClass('list-group-item')
-				.addClass('pointer')
-				.attr('onclick',"insert('','"+field_id+"','"+lookup_suggestions[i]+"','"+lookup_type+"')")
-				.text(lookup_suggestions[i])
+				.attr('role','separator')
+				.text(lookup_type)
 				.appendTo(suggestions_container);
-		});
+
+			$.each(lookup_suggestions, function(i)
+			{
+				var li = $('<li/>')
+					.addClass('list-group-item')
+					.addClass('pointer')
+					.attr('onclick',"insert("+lookup_suggestions[i]['resource_id']+",'"+field_id+"','"+lookup_suggestions[i]['entry_text']+"','"+lookup_type+"')")
+					.text(lookup_suggestions[i]['display_text'])
+					.appendTo(suggestions_container);
+			});
+		
+		}
 		
     })
 	
 }
 
 
-function insert(concept_id,suggestionId,descriptive_term, lookup_type){
-	if(concept_id){
+function insert(resource_id,suggestionId,descriptive_term, lookup_type){
+	if(resource_id){
+		
+		if(lookup_type == 'CONCEPT'){
+			suggestion_prefix = '@C';
+		}else{
+			suggestion_prefix = '@L';
+		}
+		
 		$('#field_'+suggestionId+" #match_txt_"+suggestionId).val(function(index, value) {return value.replace(/[^(\n)]*$/, '');});
-		$('#field_'+suggestionId+" #match_txt_"+suggestionId).val($('#field_'+suggestionId+" #match_txt_"+suggestionId).val()+"@"+concept_id+"-"+descriptive_term+"\n");
+		$('#field_'+suggestionId+" #match_txt_"+suggestionId).val($('#field_'+suggestionId+" #match_txt_"+suggestionId).val()+suggestion_prefix+resource_id+"-"+descriptive_term+"\n");
 		$('#field_'+suggestionId+" #match_txt_"+suggestionId).focus();
+		
 	}else{
 	    if(lookup_type == 'TEXT'){
 	        $('#field_'+suggestionId+" #match_txt_"+suggestionId).val(function(index, value) {return value.replace(/[^(\n)]*$/, '');});

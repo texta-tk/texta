@@ -1,4 +1,5 @@
 from conceptualiser.models import Term, TermConcept
+from lm.models import Lexicon
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 
@@ -9,6 +10,7 @@ class Autocomplete:
         self.lookup_type = None
         self.content = None
         self.user = None
+        self.limit = None
 
     def parse_request(self,request):
         self.lookup_types = request.POST['lookup_types'].split(',')
@@ -21,7 +23,9 @@ class Autocomplete:
 
         self.user = request.user
 
-    def suggest(self):
+    def suggest(self,limit=10):
+        self.limit = limit
+        
         suggestions = {}
 
         for lookup_type in self.lookup_types:
@@ -29,8 +33,8 @@ class Autocomplete:
                 suggestions['FACT_NAME'] = self._get_fact_names()
             elif lookup_type == 'CONCEPT':
                 suggestions['CONCEPT'] = self._get_concepts()
-
-        print suggestions
+            elif lookup_type == 'LEXICON':
+                suggestions['LEXICON'] = self._get_lexicons()
         
         return suggestions
 
@@ -49,7 +53,7 @@ class Autocomplete:
 
         self.es_m.build('')
         self.es_m.set_query_parameter("aggs", agg_query)
-        fact_names = [a["key"] for a in self.es_m.search()["aggregations"]["fact_names"]["fact_names"]["buckets"]]
+        fact_names = [self._format_suggestion(a["key"],a["key"]) for a in self.es_m.search()["aggregations"]["fact_names"]["fact_names"]["buckets"]]
 
         return fact_names
         
@@ -59,22 +63,40 @@ class Autocomplete:
         if len(self.content) > 0:
             terms = Term.objects.filter(term__startswith=self.content).filter(author=self.user)
             seen = {}
-            #suggestions = []
-            for term in terms[:10]:
+            for term in terms[:self.limit]:
                 for term_concept in TermConcept.objects.filter(term=term.pk):
                     concept = term_concept.concept
                     concept_term = (concept.pk,term.term)
 
-                    print concept_term
                     if concept_term not in seen:
                         seen[concept_term] = True
 
-                        print term.term
-                        #display_term = term.term.replace(last_line,'<font color="red">'+last_line+'</font>')
-                        #display_text = "<b>"+smart_str(display_term)+"</b> @"+smart_str(concept.pk)+"-"+smart_str(concept.descriptive_term.term)
-                        #suggestions.append("<li class=\"list-group-item\" onclick=\"insert('"+str(concept.pk)+"','"+str(field_id)+"','"+smart_str(concept.descriptive_term.term)+"');\">"+display_text+"</li>")
+                        display_term = term.term.replace(self.content,'<font color="red">'+self.content+'</font>')
+                        display_text = '<b>{0}</b>@C{1}-{2}'.format(display_term,concept.pk,concept.descriptive_term.term)
+
+                        suggestion = self._format_suggestion(concept.descriptive_term.term,display_text,resource_id=concept.pk)
+                        concepts.append(suggestion)
         
         return concepts
+
+    def _get_lexicons(self):
+        suggested_lexicons = []
+
+        if len(self.content) > 0:
+            lexicons = Lexicon.objects.filter(name__startswith=self.content).filter(author=self.user)
+            for lexicon in lexicons:
+                display_term = lexicon.name.replace(self.content,'<font color="red">'+self.content+'</font>')
+                display_text = '<b>{0}</b>@L{1}-{2}'.format(display_term,lexicon.pk,lexicon.name)
+
+                suggestion = self._format_suggestion(lexicon.name,display_text,resource_id=lexicon.pk)
+                suggested_lexicons.append(suggestion)
+                
+        return suggested_lexicons
+
+    @staticmethod
+    def _format_suggestion(entry_text,display_text,resource_id=''):
+        return {'entry_text':entry_text,'display_text':display_text,'resource_id':resource_id}
+        
 
     """
 
