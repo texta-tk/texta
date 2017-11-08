@@ -134,11 +134,11 @@ function process_suggestions(suggestions,suggestions_container,field_id,lookup_t
 				.appendTo(suggestions_container);
 
 			$.each(lookup_suggestions, function(i)
-			{
+			{	
 				var li = $('<li/>')
 					.addClass('list-group-item')
 					.addClass('pointer')
-					.attr('onclick',"insert("+lookup_suggestions[i]['resource_id']+",'"+field_id+"','"+lookup_suggestions[i]['entry_text']+"','"+lookup_type+"')")
+					.attr('onclick',"insert('"+lookup_suggestions[i]['resource_id']+"','"+field_id+"','"+lookup_suggestions[i]['entry_text']+"','"+lookup_type+"')")
 					.text(lookup_suggestions[i]['display_text'])
 					.appendTo(suggestions_container);
 			});
@@ -155,7 +155,7 @@ function insert(resource_id,suggestionId,descriptive_term, lookup_type){
 		
 		if(lookup_type == 'CONCEPT'){
 			suggestion_prefix = '@C';
-		}else{
+		}else if(lookup_type == 'LEXICON'){
 			suggestion_prefix = '@L';
 		}
 		
@@ -228,7 +228,7 @@ function add_field(date_range_min,date_range_max){
     else if(field_type == 'facts'){
         $("#field_hidden_fact").clone().attr('id',new_id).appendTo("#constraints");
         $("#field_"+counter.toString()+" #fact_operator_").attr('id','fact_operator_'+counter.toString()).attr('name','fact_operator_'+counter.toString());
-        $("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).html(field_name+' [facts]');
+        $("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).html(field_name+' [fact_names]');
         $("#field_"+counter.toString()+" #fact_field_").attr('id','fact_field_'+counter.toString()).attr('name','fact_field_'+counter.toString()).val(field_path);
         $("#field_"+counter.toString()+" #remove_link").attr('onclick',"javascript:remove_field('"+new_id+"');");
         $("#field_"+counter.toString()+" #suggestions_").attr('id','suggestions_'+counter.toString()).attr('name','suggestions_'+counter.toString());
@@ -290,14 +290,14 @@ function add_field(date_range_min,date_range_max){
 function addFactValueField(counterStr, subCounterStr, field_path, field_name, value_type) {
         var idCombination = counterStr + '_' + subCounterStr;
         if (value_type == 'str') {
-            var headingSuffix = '[text]'
+            var headingSuffix = ' [fact_text_values]';
         } else if (value_type == 'num') {
-            var headingSuffix = '[num]'
+            var headingSuffix = ' [fact_num_values]';
         }
 
         $("#field_hidden_fact_val").clone().attr('id','field_'+counterStr).appendTo("#constraints");
         $("#field_"+counterStr+" #fact_operator_").attr('id','fact_operator_'+counterStr).attr('name','fact_operator_'+counterStr);
-        $("#field_"+counterStr+" #selected_field_").attr('id','selected_field_'+counterStr).html(field_name + ' [facts] ' + headingSuffix);
+        $("#field_"+counterStr+" #selected_field_").attr('id','selected_field_'+counterStr).html(field_name + headingSuffix);
         $("#field_"+counterStr+" #remove_link").attr('onclick',"javascript:remove_field('field_" +counterStr+"');");
         $("#field_"+counterStr+" #fact_field_").attr('id','fact_field_'+counterStr).attr('name','fact_field_'+counterStr).val(field_path);
         $("#field_"+counterStr+" input[name='fact_constraint_type_']").attr('name', 'fact_constraint_type_'+counterStr).val(value_type)
@@ -328,7 +328,7 @@ function addFactValueFieldConstraint(counterStr, field_path) {
 
     var idCombination = counterStr + '_' + subCounterStr;
 
-    $("#field_hidden_fact_val .panel-body #fact_val_rules_ #fact_val_rule_").clone().attr('id','fact_val_rule_'+idCombination).appendTo("#fact_val_rules_"+counterStr);
+    $("#fact_val_rule_").clone().attr('id','fact_val_rule_'+idCombination).appendTo("#fact_val_rules_"+counterStr);
 
     $("#field_"+counterStr+" #fact_txt_").attr('id','fact_txt_'+idCombination).attr('name','fact_txt_'+idCombination);
     $("#field_"+counterStr+" input[name='fact_constraint_val_']").attr('name','fact_constraint_val_'+idCombination)
@@ -339,7 +339,10 @@ function addFactValueFieldConstraint(counterStr, field_path) {
     $("#field_"+counterStr+" #fact_txt_"+idCombination).attr('onfocus','lookup("","'+idCombination+'","focus","'+field_path+'", "FACT_NAME");');
     $("#field_"+counterStr+" #fact_txt_"+idCombination).attr('onblur','hide("'+idCombination+'");');
 
-    $("#fact_val_rule_"+idCombination+" select").attr('name','fact_constraint_op_'+idCombination)
+    $("#fact_val_rule_"+idCombination+" select").attr('name','fact_constraint_op_'+idCombination);
+	
+	var action_button_container = $("#field_"+counterStr+" #fact_val_rules_"+counterStr+" #fact_val_rule_"+counterStr+" [name='fact_action_button']");
+	action_button_container.html();
 
     factValSubCounter[counterStr] = factValSubCounter[counterStr] + 1;
 }

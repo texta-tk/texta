@@ -68,17 +68,17 @@ def get_fields(es_m):
 
         if has_facts:
             data['type'] = 'facts'
-            field = {'data': json.dumps(data), 'label': label + ' [facts]', 'type':'facts'}
+            field = {'data': json.dumps(data), 'label': label + ' [fact_names]', 'type':'facts'}
             fields.append(field)
 
         if has_fact_str_val:
             data['type'] = 'fact_str_val'
-            field = {'data': json.dumps(data), 'label': label + ' [facts][text]', 'type':'fact_str_val'}
+            field = {'data': json.dumps(data), 'label': label + ' [fact_text_values]', 'type':'fact_str_val'}
             fields.append(field)
 
         if has_fact_num_val:
             data['type'] = 'fact_num_val'
-            field = {'data': json.dumps(data), 'label': label + ' [facts][num]', 'type':'fact_num_val'}
+            field = {'data': json.dumps(data), 'label': label + ' [fact_num_values]', 'type':'fact_num_val'}
             fields.append(field)
 
     # Sort fields by label
