@@ -109,12 +109,13 @@ function lookup(content, fieldId, action, lookup_types){
 		if(data.length > 0){
 			var suggestions_container = $("#suggestions_"+fieldId);
 			suggestions_container.empty();
+			
 			process_suggestions(data,suggestions_container,fieldId,lookup_types);
 			if(suggestions_container.html()){
-			$("#field_"+fieldId+" #suggestions_"+fieldId).show();	
+				$("#suggestions_"+fieldId).show();	
 			}
 		}else{
-			$("#field_"+fieldId+" #suggestions_"+fieldId).hide();
+			$("#suggestions_"+fieldId).hide();
 		}
 	});
 }
@@ -275,7 +276,6 @@ function add_field(date_range_min,date_range_max){
 		$("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onkeyup','search_as_you_type_query();');
 		
 		var suggestion_types = ["CONCEPT","LEXICON"];
-		//suggestion_types = JSON.stringify(suggestion_types);
 
 		$("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onkeyup','lookup($(this).val(),'+counter.toString()+',"keyup", \''+suggestion_types+'\');');
         $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onfocus','lookup($(this).val(),"'+counter.toString()+'","focus", \''+suggestion_types+'\');');
@@ -304,17 +304,24 @@ function addFactValueField(counterStr, subCounterStr, field_path, field_name, va
 
         $("#field_"+counterStr+" #fact_txt_").attr('id','fact_txt_'+idCombination).attr('name','fact_txt_'+idCombination);
         $("#field_"+counterStr+" input[name='fact_constraint_val_']").attr('name','fact_constraint_val_'+idCombination)
-
-        $("#field_"+counterStr+" #suggestions_").attr('id','suggestions_'+idCombination).attr('name','suggestions_'+idCombination);
-        $("#field_"+counterStr+" #fact_txt_"+idCombination).attr('onkeyup','lookup("","'+idCombination+'","keyup", "FACT_NAME");');
-        $("#field_"+counterStr+" #fact_txt_"+idCombination).attr('onfocus','lookup("","'+idCombination+'","focus", "FACT_NAME");');
-        $("#field_"+counterStr+" #fact_txt_"+idCombination).attr('onblur','hide("'+idCombination+'");');
-
+		
         $("#field_"+counterStr+" #fact_val_rules_").attr('id','fact_val_rules_'+counterStr);
         $("#field_"+counterStr+" #fact_val_rules_"+counterStr+" #fact_val_rule_").attr('id','fact_val_rule_'+idCombination);
         $("#fact_val_rule_"+idCombination+" select").attr('name','fact_constraint_op_'+idCombination)
 
         $("#field_"+counterStr+" button").attr('onclick','addFactValueFieldConstraint("'+counterStr+'","'+field_path+'")');
+
+		
+		$("#field_"+counterStr+" div[name=constraint_key_container] #suggestions_").attr('id','suggestions_'+idCombination).attr('name','suggestions_'+idCombination);
+        $("#field_"+counterStr+" #fact_txt_"+idCombination).attr('onkeyup','lookup("","'+idCombination+'","keyup", "FACT_NAME");');
+        $("#field_"+counterStr+" #fact_txt_"+idCombination).attr('onfocus','lookup("","'+idCombination+'","focus", "FACT_NAME");');
+        $("#field_"+counterStr+" #fact_txt_"+idCombination).attr('onblur','hide("'+idCombination+'");');
+		
+		
+        $("#field_"+counterStr+" div[name=constraint_val_container] #suggestions_").attr('id','suggestions_'+idCombination).attr('name','suggestions_'+idCombination);
+        $("#fact_constraint_val_"+idCombination).attr('onkeyup','lookup("","'+idCombination+'","keyup", "FACT_VAL");');
+        $("#fact_constraint_val_"+idCombination).attr('onfocus','lookup("","'+idCombination+'","focus", "FACT_VAL");');
+        $("#fact_constraint_val_"+idCombination).attr('onblur','hide("'+idCombination+'");');
 }
 
 function addFactValueFieldConstraint(counterStr, field_path) {
@@ -341,11 +348,28 @@ function addFactValueFieldConstraint(counterStr, field_path) {
 
     $("#fact_val_rule_"+idCombination+" select").attr('name','fact_constraint_op_'+idCombination);
 	
-	var action_button_container = $("#field_"+counterStr+" #fact_val_rules_"+counterStr+" #fact_val_rule_"+counterStr+" [name='fact_action_button']");
-	action_button_container.html();
+	var action_button_container = $("#fact_val_rule_"+idCombination+" div[name='fact_action_button']");
+	action_button_container.empty();
+
+	var remove_button = $('<button/>')
+		.attr('type','button')
+		.attr('onclick','remove_fact_rule("'+idCombination+'")')
+		.addClass('btn btn-sm center-block');
+
+	var remove_span = $('<span/>')
+		.addClass('glyphicon glyphicon-remove')
+		.appendTo(remove_button);
+	
+	action_button_container.append(remove_button);
 
     factValSubCounter[counterStr] = factValSubCounter[counterStr] + 1;
 }
+
+
+function remove_fact_rule(rule_id){
+	$("#fact_val_rule_"+rule_id).remove();
+}
+
 
 function select_all_fields(){
 	if($('#check_all_mapping_fields').prop('checked') == true){
