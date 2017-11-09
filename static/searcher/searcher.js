@@ -184,6 +184,10 @@ function insert(resource_id,suggestionId,descriptive_term, lookup_type){
                 $('#field_'+fieldId+" #fact_txt_"+suggestionId).val($('#field_'+suggestionId+" #fact_txt_"+suggestionId).val()+descriptive_term+"\n");
             }
 	    }
+		if(lookup_type == 'FACT_VAL'){
+			var suggestionIdPrefix = suggestionId.replace('_val','');
+			$("#fact_constraint_val_"+suggestionIdPrefix).val(descriptive_term);
+		}
 	}
 }
 
@@ -303,7 +307,7 @@ function addFactValueField(counterStr, subCounterStr, field_path, field_name, va
         $("#field_"+counterStr+" input[name='fact_constraint_type_']").attr('name', 'fact_constraint_type_'+counterStr).val(value_type)
 
         $("#field_"+counterStr+" #fact_txt_").attr('id','fact_txt_'+idCombination).attr('name','fact_txt_'+idCombination);
-        $("#field_"+counterStr+" input[name='fact_constraint_val_']").attr('name','fact_constraint_val_'+idCombination)
+        $("#field_"+counterStr+" input[name='fact_constraint_val_']").attr('name','fact_constraint_val_'+idCombination).attr('id','fact_constraint_val_'+idCombination);
 		
         $("#field_"+counterStr+" #fact_val_rules_").attr('id','fact_val_rules_'+counterStr);
         $("#field_"+counterStr+" #fact_val_rules_"+counterStr+" #fact_val_rule_").attr('id','fact_val_rule_'+idCombination);
@@ -313,15 +317,16 @@ function addFactValueField(counterStr, subCounterStr, field_path, field_name, va
 
 		
 		$("#field_"+counterStr+" div[name=constraint_key_container] #suggestions_").attr('id','suggestions_'+idCombination).attr('name','suggestions_'+idCombination);
-        $("#field_"+counterStr+" #fact_txt_"+idCombination).attr('onkeyup','lookup("","'+idCombination+'","keyup", "FACT_NAME");');
-        $("#field_"+counterStr+" #fact_txt_"+idCombination).attr('onfocus','lookup("","'+idCombination+'","focus", "FACT_NAME");');
-        $("#field_"+counterStr+" #fact_txt_"+idCombination).attr('onblur','hide("'+idCombination+'");');
+        $("#fact_txt_"+idCombination).attr('onkeyup','lookup("","'+idCombination+'","keyup", "FACT_NAME");');
+        $("#fact_txt_"+idCombination).attr('onfocus','lookup("","'+idCombination+'","focus", "FACT_NAME");');
+        $("#fact_txt_"+idCombination).attr('onblur','hide("'+idCombination+'");');
 		
+		var valIdCombination = idCombination+'_val';
 		
-        $("#field_"+counterStr+" div[name=constraint_val_container] #suggestions_").attr('id','suggestions_'+idCombination).attr('name','suggestions_'+idCombination);
-        $("#fact_constraint_val_"+idCombination).attr('onkeyup','lookup("","'+idCombination+'","keyup", "FACT_VAL");');
-        $("#fact_constraint_val_"+idCombination).attr('onfocus','lookup("","'+idCombination+'","focus", "FACT_VAL");');
-        $("#fact_constraint_val_"+idCombination).attr('onblur','hide("'+idCombination+'");');
+        $("#field_"+counterStr+" div[name=constraint_val_container] #suggestions_").attr('id','suggestions_'+valIdCombination).attr('name','suggestions_'+valIdCombination);
+		$("#fact_constraint_val_"+idCombination).attr('onkeyup','lookup("","'+valIdCombination+'","keyup", "FACT_VAL");');
+        $("#fact_constraint_val_"+idCombination).attr('onfocus','lookup("","'+valIdCombination+'","focus", "FACT_VAL");');
+        $("#fact_constraint_val_"+idCombination).attr('onblur','hide("'+valIdCombination+'");');
 }
 
 function addFactValueFieldConstraint(counterStr, field_path) {
@@ -338,14 +343,21 @@ function addFactValueFieldConstraint(counterStr, field_path) {
     $("#fact_val_rule_").clone().attr('id','fact_val_rule_'+idCombination).appendTo("#fact_val_rules_"+counterStr);
 
     $("#field_"+counterStr+" #fact_txt_").attr('id','fact_txt_'+idCombination).attr('name','fact_txt_'+idCombination);
-    $("#field_"+counterStr+" input[name='fact_constraint_val_']").attr('name','fact_constraint_val_'+idCombination)
+    $("#field_"+counterStr+" input[name='fact_constraint_val_']").attr('name','fact_constraint_val_'+idCombination).attr('id','fact_constraint_val_'+idCombination);
 
 
-    $("#field_"+counterStr+" #suggestions_").attr('id','suggestions_'+idCombination).attr('name','suggestions_'+idCombination);
-    $("#field_"+counterStr+" #fact_txt_"+idCombination).attr('onkeyup','lookup("","'+idCombination+'","keyup","'+field_path+'", "FACT_NAME");');
-    $("#field_"+counterStr+" #fact_txt_"+idCombination).attr('onfocus','lookup("","'+idCombination+'","focus","'+field_path+'", "FACT_NAME");');
-    $("#field_"+counterStr+" #fact_txt_"+idCombination).attr('onblur','hide("'+idCombination+'");');
+	$("#field_"+counterStr+" div[name=constraint_key_container] #suggestions_").attr('id','suggestions_'+idCombination).attr('name','suggestions_'+idCombination);
+    $("#fact_txt_"+idCombination).attr('onkeyup','lookup("","'+idCombination+'","keyup", "FACT_NAME");');
+    $("#fact_txt_"+idCombination).attr('onfocus','lookup("","'+idCombination+'","focus", "FACT_NAME");');
+    $("#fact_txt_"+idCombination).attr('onblur','hide("'+idCombination+'");');
 
+	var valIdCombination = idCombination+'_val';
+		
+    $("#field_"+counterStr+" div[name=constraint_val_container] #suggestions_").attr('id','suggestions_'+valIdCombination).attr('name','suggestions_'+valIdCombination);
+	$("#fact_constraint_val_"+idCombination).attr('onkeyup','lookup("","'+valIdCombination+'","keyup", "FACT_VAL");');
+    $("#fact_constraint_val_"+idCombination).attr('onfocus','lookup("","'+valIdCombination+'","focus", "FACT_VAL");');
+    $("#fact_constraint_val_"+idCombination).attr('onblur','hide("'+valIdCombination+'");');
+	
     $("#fact_val_rule_"+idCombination+" select").attr('name','fact_constraint_op_'+idCombination);
 	
 	var action_button_container = $("#fact_val_rule_"+idCombination+" div[name='fact_action_button']");

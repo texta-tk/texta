@@ -28,8 +28,6 @@ class Autocomplete:
         
         suggestions = {}
 
-        print self.lookup_types
-
         for lookup_type in self.lookup_types:
             if lookup_type == 'FACT_NAME':
                 suggestions['FACT_NAME'] = self._get_facts('fact')
@@ -39,8 +37,6 @@ class Autocomplete:
                 suggestions['CONCEPT'] = self._get_concepts()
             elif lookup_type == 'LEXICON':
                 suggestions['LEXICON'] = self._get_lexicons()
-
-        print suggestions
         
         return suggestions
 
@@ -59,6 +55,11 @@ class Autocomplete:
             }
 
         self.es_m.build('')
+
+        #print self.content
+        #if agg_subfield == 'str_val':
+        #    self.es_m.set_query_parameter('query',{"match_phrase_prefix":{"texta_facts.str_val":self.content}})
+                      
         self.es_m.set_query_parameter("aggs", agg_query)
         facts = [self._format_suggestion(a["key"],a["key"]) for a in self.es_m.search()["aggregations"][agg_subfield][agg_subfield]["buckets"]]
 

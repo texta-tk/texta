@@ -361,7 +361,6 @@ class ES_Manager:
         else:
             synonyms.append(query_string)
 
-        print synonyms
         return synonyms
 
     def build(self, es_params):
