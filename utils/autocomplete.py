@@ -56,10 +56,16 @@ class Autocomplete:
 
         self.es_m.build('')
 
-        #print self.content
-        #if agg_subfield == 'str_val':
-        #    self.es_m.set_query_parameter('query',{"match_phrase_prefix":{"texta_facts.str_val":self.content}})
-                      
+        if agg_subfield == 'str_val' and self.content:
+            prefix_query = {"match_phrase_prefix":{"texta_facts.str_val":self.content}}
+            nested_query = {"nested":{"path":"texta_facts","query":{"bool":{"must":[prefix_query]}}}}
+            self.es_m.set_query_parameter("query",nested_query)
+            
+        if agg_subfield == 'fact' and self.content:
+            prefix_query = {"match_phrase_prefix":{"texta_facts.fact":self.content}}
+            nested_query = {"nested":{"path":"texta_facts","query":{"bool":{"must":[prefix_query]}}}}
+            self.es_m.set_query_parameter("query",nested_query)
+  
         self.es_m.set_query_parameter("aggs", agg_query)
         facts = [self._format_suggestion(a["key"],a["key"]) for a in self.es_m.search()["aggregations"][agg_subfield][agg_subfield]["buckets"]]
 
