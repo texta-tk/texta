@@ -529,72 +529,70 @@
 			<div class="row padded-row">
 				<div class="col-sm-12">
 					<textarea id="match_txt_" name="match_txt_" class="form-control"></textarea>
-					<ul name="suggestions_" id="suggestions_" class="list-group"></ul>
+					<ul name="suggestions_" id="suggestions_" class="list-group" style="display: none;"></ul>
 				</div>
 			</div>
-
 	</div>
 
-	<div id="field_hidden_fact" class="panel panel-default" style="display: none;">
+	<div id="field_hidden_fact" class="panel bg-grey" style="display: none;">
 		<input type="hidden" name="fact_field_" id="fact_field_">
-		<div class="panel-heading">
-			<span id="selected_field_"></span>
-			<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+		<div class="row padded-row">
+			<div class="col-sm-12">
+				<b><span id="selected_field_"></span></b>
+				<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+			</div>
 		</div>
-		<div class="panel-body">
-			<div class="row">
-				<div class="col-sm-4">
-					<b>Bool:</b><br>
-					<select id="fact_operator_" name="fact_operator_" class="form-control input-sm">
-						<option value="must" selected="selected">and</option>
-						<option value="should">or</option>
-						<option value="must_not">not</option>
-					</select>
-				</div>
-				<div class="col-sm-8">
-					<b>Facts:</b><br>
-					<textarea id="fact_txt_" name="fact_txt_" class="form-control"></textarea>
-					<ul name="suggestions_" id="suggestions_" class="list-group"></ul>
-				</div>
+		<div class="row padded-row">
+			<div class="col-sm-4">
+				<b>Bool:</b><br>
+				<select id="fact_operator_" name="fact_operator_" class="form-control input-sm">
+					<option value="must" selected="selected">and</option>
+					<option value="should">or</option>
+					<option value="must_not">not</option>
+				</select>
+			</div>
+			<div class="col-sm-8">
+				<b>Facts:</b><br>
+				<textarea id="fact_txt_" name="fact_txt_" class="form-control"></textarea>
+				<ul name="suggestions_" id="suggestions_" class="list-group" style="display: none;"></ul>
 			</div>
 		</div>
 	</div>
 
-	<div id="field_hidden_fact_val" class="panel panel-default" style="display: none;">
+	<div id="field_hidden_fact_val" class="panel bg-grey" style="display: none;">
 		<input type="hidden" name="fact_field_" id="fact_field_">
 		<input type="hidden" name="fact_constraint_type_">
-		<div class="panel-heading">
-			<span id="selected_field_"></span>
-			<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+
+		<div class="row padded-row">
+			<div class="col-sm-12">
+				<b><span id="selected_field_"></span></b>
+				<a href="#" id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
+			</div>
 		</div>
-		<div class="panel-body">
-			<div class="row">
-				<div class="col-sm-4">
-					<b>Bool:</b><br>
-					<select id="fact_operator_" name="fact_operator_" class="form-control input-sm">
-						<option value="must" selected="selected">and</option>
-						<option value="should">or</option>
-						<option value="must_not">not</option>
-					</select>
-				</div>
-<!--				<div class="col-sm-8">
-					<b>Facts:</b><br>
-					<textarea id="fact_txt_" name="fact_txt_" class="form-control"></textarea>
-					<ul name="suggestions_" id="suggestions_" class="list-group"></ul>
-				</div>-->
+		
+		<div class="row padded-row">
+			<div class="col-sm-4">
+				<b>Bool:</b><br>
+				<select id="fact_operator_" name="fact_operator_" class="form-control input-sm">
+					<option value="must" selected="selected">and</option>
+					<option value="should">or</option>
+					<option value="must_not">not</option>
+				</select>
 			</div>
 
-			<div id="fact_val_rules_">
-                <div class="row" id="fact_val_rule_">
-                    <div class="col-sm-5" style="padding-right: 0px">
-                        <input id="fact_txt_" class="form-control" type="text" placeholder="Fact name"></input>
-                        <ul name="suggestions_" id="suggestions_" class="list-group"></ul>
+			<div id="fact_val_rules_" class="col-sm-12">
+				<b>Facts:</b><br>
+                <div class="row row-padded" id="fact_val_rule_">
+                    <div class="col-sm-3" style="padding-right: 3px" name="constraint_key_container">
+                        <input id="fact_txt_" class="form-control input-sm" type="text" placeholder="Fact name"></input>
+                        <ul name="suggestions_" id="suggestions_" class="list-group" style="display: none;"></ul>
                     </div>
 
-                    <div class="col-sm-2" style="padding-left: 0px; padding-right: 0px;">
-                        <select class="form-control">
+                    <div class="col-sm-2" style="padding-left: 3px; padding-right: 3px;">
+                        <select class="form-control input-sm">
                             <option value="=">is</option>
                             <option value="!=">not</option>
+							<!-- TODO: should hide following options for text values !-->
                             <option value="&lt;">&lt;</option>
                             <option value="&gt;">&gt;</option>
                             <option value="&lt;=">&lt;=</option>
@@ -602,18 +600,19 @@
                         </select>
                     </div>
 
-                    <div class="col-sm-5" style="padding-left: 0px">
-                        <input name="fact_constraint_val_" class="form-control" type="text" placeholder="Value"></input>
+                    <div class="col-sm-5" style="padding-left: 3px" name="constraint_val_container">
+                        <input name="fact_constraint_val_" class="form-control input-sm" type="text" placeholder="Value"></input>
+						<ul name="suggestions_" id="suggestions_" class="list-group" style="display: none;"></ul>
                     </div>
+					
+					<div class="col-sm-2" name="fact_action_button">
+						<button type="button" class="btn btn-sm center-block" title="Add fact constraint">
+							<span class="glyphicon glyphicon-plus"></span>
+						</button>						
+					</div>
+					
                 </div>
 			</div>
-
-			<div class="row">
-                <button type="button" class="btn btn-md center-block">
-                    <span class="glyphicon glyphicon-plus"></span>&nbsp;
-                </button>
-			</div>
-
 		</div>
 	</div>
 

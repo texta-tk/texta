@@ -23,53 +23,6 @@ from utils.log_manager import LogManager
 
 from texta.settings import USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_DEFAULT, es_url, STATIC_URL
 
-
-### MANAGING USER SETTINGS ###
-
-def autocomplete_data(request):
-    logger = LogManager(__name__, 'AUTOCOMPLETE')
-
-    session = request.session
-    datasets = Datasets().activate_dataset(session)
-
-    es_index = datasets.get_index()
-    mapping = datasets.get_mapping()
-
-    es_m = ES_Manager(es_index, mapping)
-    fields = es_m.get_mapped_fields()
-
-    # TODO: move to ES Manager
-    # Get term aggregations for fields (for autocomplete)
-    unique_limit = 10
-    query = {"aggs":{}}
-    field_values = {}
-    for field in fields:
-        if field['type'] == 'string':
-            query["aggs"][field['path']] = {"terms": {"field": field['path'], "size": unique_limit+1}}
-
-    response = ES_Manager.plain_search(es_url, es_index, mapping, query)
-
-    try:
-        for a in response["aggregations"].items():
-            terms = [b["key"] for b in a[1]["buckets"]]
-            if len(terms) <= unique_limit:
-                field_values[a[0]] = terms
-    except KeyError:
-        logger.exception('autocomplete_data')
-
-    return field_values
-
-def get_facts_autocomplete(es_m):
-    facts_structure = es_m.get_facts_structure()
-    # invert facts_structure to have {field: [list of facts]}
-    inverted_facts_structure = {}
-    for k, v in facts_structure.items():
-        for field in v:
-            if field not in inverted_facts_structure:
-                inverted_facts_structure[field] = []
-            inverted_facts_structure[field].append(k)
-    return inverted_facts_structure
-
 def sort_datasets(datasets,indices):
     out = []
 
@@ -131,10 +84,6 @@ def update(request):
 
         ds = Datasets().activate_dataset(request.session)
         es_m = ds.build_manager(ES_Manager)
-        autocomplete_dict = dict()
-        #autocomplete_dict['TEXT'] = autocomplete_data(request)
-        autocomplete_dict['FACT'] = get_facts_autocomplete(es_m)
-        request.session['autocomplete_data'] = autocomplete_dict
 
     return HttpResponseRedirect(URL_PREFIX + '/')
 
