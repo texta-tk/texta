@@ -820,7 +820,7 @@ def extract_constraints(query):
             if 'range' in raw_constraint:
                 range_constraints.append((raw_constraint_idx, raw_constraint))
             elif 'bool' in raw_constraint:
-                if raw_constraint['bool'].values()[0]['nested']['inner_hits']['name'].startswith('fact_val'):   # fact val query
+                if raw_constraint['bool'].values()[0][0]['nested']['inner_hits']['name'].startswith('fact_val'):   # fact val query
                     constraints.append(_extract_fact_val_constraint(raw_constraint))
                 else:   # fact query
                     constraints.append(_extract_fact_constraint(raw_constraint))
@@ -931,22 +931,22 @@ def _extract_fact_val_constraint(raw_constraint):
                 fact_name = sub_entry['match']['texta_facts.fact']
             elif 'texta_facts.str_val' in sub_entry['match']:
                 fact_val = sub_entry['match']['texta_facts.str_val']
-                fact_val_operator = 'must'
+                fact_val_operator = '='
                 constraint_type = 'str_fact_val'
             elif 'texta_facts.num_val' in sub_entry['match']:
                 fact_val = sub_entry['match']['texta_facts.num_val']
-                fact_val_operator = 'must'
+                fact_val_operator = '='
                 constraint_type = 'num_fact_val'
 
         if fact_val == None:
             if 'must_not' in entry['nested']['query']['bool']:
                 if 'texta_facts.str_val' in entry['nested']['query']['bool']['must_not'][0]['match']:
                     fact_val = entry['nested']['query']['bool']['must_not'][0]['match']['texta_facts.str_val']
-                    fact_val_operator = 'must_not'
+                    fact_val_operator = '!='
                     constraint_type = 'str_fact_val'
                 else:
                     fact_val = entry['nested']['query']['bool']['must_not'][0]['match']['texta_facts.num_val']
-                    fact_val_operator = 'must_not'
+                    fact_val_operator = '!='
                     constraint_type = 'num_fact_val'
 
         sub_constraints.append({

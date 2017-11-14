@@ -110,7 +110,6 @@ function render_saved_search(search_id) {
 
         $('#constraints').empty();
         for (var i = 0; i < data.length; i++) {
-            console.log(data[i]);
             render_saved_search_field(data[i], '', '');
         }
     });
@@ -119,7 +118,6 @@ function render_saved_search(search_id) {
 
 function render_saved_search_field(field_data, min_date, max_date) {
     $('#constraint_field option').filter(function() {
-        console.log(derive_text_node_value(field_data) + ' ' + $(this).text() === derive_text_node_value(field_data));
         return $(this).text() === derive_text_node_value(field_data);
     }).prop('selected', true)
 
@@ -135,7 +133,23 @@ function render_saved_search_field(field_data, min_date, max_date) {
         $('#match_txt_' + counter.toString()).val(field_data.content.join('\n'));
     } else if (field_data.constraint_type === 'facts') {
         $('#fact_operator_' + counter.toString()).val(field_data.operator);
-        $('#fact_txt_'+counter.toString()).val(field_data.content.join('\n'));
+        $('#fact_txt_' + counter.toString()).val(field_data.content.join('\n'));
+    } else if (field_data.constraint_type === 'str_fact_val') {
+        $('#fact_operator_' + counter.toString()).val(field_data.operator);
+        for (var i = 0; i < field_data.sub_constraints.length; i++) {
+            var sub_constraint = field_data.sub_constraints[i];
+
+            $('#fact_txt_' + counter.toString() + '_' + (factValSubCounter[counter.toString()] - 1)).val(sub_constraint.fact_name);
+            $('#fact_constraint_op_' + counter.toString() + '_' + (factValSubCounter[counter.toString()] - 1)).val(sub_constraint.fact_val_operator);
+            $('#fact_constraint_val_' + counter.toString() + '_' + (factValSubCounter[counter.toString()] - 1)).val(sub_constraint.fact_val);
+
+            if (i < field_data.sub_constraints.length - 1) {
+                addFactValueFieldConstraint(counter.toString(), field_data.field)
+            }
+        }
+
+    } else if (field_data.constraint_type === 'num_fact_val') {
+
     }
 }
 
@@ -144,17 +158,16 @@ function derive_text_node_value(field_data) {
     if (field_data.constraint_type === 'string' || field_data.constraint_type === 'date') {
         return field_data.field.replace('.', ' → ');
     } else if (field_data.constraint_type === 'facts') {
-        return field_data.field.replace('.', ' → ') + ' [facts]';
+        return field_data.field.replace('.', ' → ') + ' [fact_names]';
     } else if (field_data.constraint_type === 'str_fact_val') {
-        return field_data.field.replace('.', ' → ') + ' [facts][text]';
+        return field_data.field.replace('.', ' → ') + ' [fact_text_values]';
     } else if (field_data.constraint_type === 'num_fact_val') {
-        return field_data.field.replace('.', ' → ') + ' [facts][num]';
+        return field_data.field.replace('.', ' → ') + ' [fact_num_values';
     }
 }
 
 
 function lookup(fieldFullId, fieldId, action, lookup_types){
-	
 	var content = $("#"+fieldFullId).val();
     var lookup_data = {content: content, action: action, lookup_types: lookup_types}
 	$.post(PREFIX+'/autocomplete', lookup_data, function(data) {
@@ -359,14 +372,26 @@ function addFactValueField(counterStr, subCounterStr, field_path, field_name, va
         $("#field_"+counterStr+" #selected_field_").attr('id','selected_field_'+counterStr).html(field_name + headingSuffix);
         $("#field_"+counterStr+" #remove_link").attr('onclick',"javascript:remove_field('field_" +counterStr+"');");
         $("#field_"+counterStr+" #fact_field_").attr('id','fact_field_'+counterStr).attr('name','fact_field_'+counterStr).val(field_path);
-        $("#field_"+counterStr+" input[name='fact_constraint_type_']").attr('name', 'fact_constraint_type_'+counterStr).val(value_type)
+        $("#field_"+counterStr+" input[name='fact_constraint_type_']")
+            .attr('name', 'fact_constraint_type_'+counterStr)
+            .attr('id', 'fact_constraint_type_'+counterStr)
+            .val(value_type)
 
         $("#field_"+counterStr+" #fact_txt_").attr('id','fact_txt_'+idCombination).attr('name','fact_txt_'+idCombination);
         $("#field_"+counterStr+" input[name='fact_constraint_val_']").attr('name','fact_constraint_val_'+idCombination).attr('id','fact_constraint_val_'+idCombination);
 		
         $("#field_"+counterStr+" #fact_val_rules_").attr('id','fact_val_rules_'+counterStr);
         $("#field_"+counterStr+" #fact_val_rules_"+counterStr+" #fact_val_rule_").attr('id','fact_val_rule_'+idCombination);
-        $("#fact_val_rule_"+idCombination+" select").attr('name','fact_constraint_op_'+idCombination)
+        $("#fact_val_rule_"+idCombination+" select")
+            .attr('name','fact_constraint_op_'+idCombination)
+            .attr('id','fact_constraint_op_'+idCombination);
+
+        // Remove numeric operators from textual fact value
+        if ($('#fact_constraint_type_' + counterStr).val() === 'str') {
+            $('#fact_constraint_op_' + idCombination + ' option').filter(function(index) {
+                return index in {2: null, 3: null, 4: null, 5: null};
+            }).remove();
+        }
 
         $("#field_"+counterStr+" button").attr('onclick','addFactValueFieldConstraint("'+counterStr+'","'+field_path+'")');
 
@@ -413,21 +438,30 @@ function addFactValueFieldConstraint(counterStr, field_path) {
     $("#field_"+counterStr+" #fact_txt_").attr('id','fact_txt_'+idCombination).attr('name','fact_txt_'+idCombination);
     $("#field_"+counterStr+" input[name='fact_constraint_val_']").attr('name','fact_constraint_val_'+idCombination).attr('id','fact_constraint_val_'+idCombination);
 
+    var keyFieldId = "fact_txt_"+idCombination;
 
 	$("#field_"+counterStr+" div[name=constraint_key_container] #suggestions_").attr('id','suggestions_'+idCombination).attr('name','suggestions_'+idCombination);
-    $("#fact_txt_"+idCombination).attr('onkeyup','lookup("","'+idCombination+'","keyup", "FACT_NAME");');
-    $("#fact_txt_"+idCombination).attr('onfocus','lookup("","'+idCombination+'","focus", "FACT_NAME");');
+    $("#fact_txt_"+idCombination).attr('onkeyup','lookup("'+keyFieldId+'","'+idCombination+'","keyup", "FACT_NAME");');
+    $("#fact_txt_"+idCombination).attr('onfocus','lookup("'+keyFieldId+'","'+idCombination+'","focus", "FACT_NAME");');
     $("#fact_txt_"+idCombination).attr('onblur','hide("'+idCombination+'");');
 
-	var valIdCombination = idCombination+'_val';
+    var valIdCombination = idCombination+'_val';
+	var valFieldId = "fact_constraint_val_"+idCombination;
 		
     $("#field_"+counterStr+" div[name=constraint_val_container] #suggestions_").attr('id','suggestions_'+valIdCombination).attr('name','suggestions_'+valIdCombination);
-	$("#fact_constraint_val_"+idCombination).attr('onkeyup','lookup("","'+valIdCombination+'","keyup", "FACT_VAL");');
-    $("#fact_constraint_val_"+idCombination).attr('onfocus','lookup("","'+valIdCombination+'","focus", "FACT_VAL");');
+    $("#fact_constraint_val_"+idCombination).attr('onkeyup','lookup("'+valFieldId+'","'+valIdCombination+'","keyup", "FACT_VAL");');
+    $("#fact_constraint_val_"+idCombination).attr('onfocus','lookup("'+valFieldId+'","'+valIdCombination+'","focus", "FACT_VAL");');
     $("#fact_constraint_val_"+idCombination).attr('onblur','hide("'+valIdCombination+'");');
-	
-    $("#fact_val_rule_"+idCombination+" select").attr('name','fact_constraint_op_'+idCombination);
-	
+
+    $("#fact_val_rule_"+idCombination+" select").attr('name','fact_constraint_op_'+idCombination).attr('id','fact_constraint_op_'+idCombination);
+
+    // Remove numeric operators from textual fact value
+    if ($('#fact_constraint_type_' + counterStr).val() === 'str') {
+        $('#fact_constraint_op_' + idCombination + ' option').filter(function(index) {
+            return index in {2: null, 3: null, 4: null, 5: null};
+        }).remove();
+    }
+
 	var action_button_container = $("#fact_val_rule_"+idCombination+" div[name='fact_action_button']");
 	action_button_container.empty();
 
