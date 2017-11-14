@@ -440,13 +440,13 @@ function addFactValueFieldConstraint(counterStr, field_path) {
 
     var keyFieldId = "fact_txt_"+idCombination;
 
-	$("#field_"+counterStr+" div[name=constraint_key_container] #suggestions_").attr('id','suggestions_'+idCombination).attr('name','suggestions_'+idCombination);
+    $("#field_"+counterStr+" div[name=constraint_key_container] #suggestions_").attr('id','suggestions_'+idCombination).attr('name','suggestions_'+idCombination);
     $("#fact_txt_"+idCombination).attr('onkeyup','lookup("'+keyFieldId+'","'+idCombination+'","keyup", "FACT_NAME");');
     $("#fact_txt_"+idCombination).attr('onfocus','lookup("'+keyFieldId+'","'+idCombination+'","focus", "FACT_NAME");');
     $("#fact_txt_"+idCombination).attr('onblur','hide("'+idCombination+'");');
 
     var valIdCombination = idCombination+'_val';
-	var valFieldId = "fact_constraint_val_"+idCombination;
+    var valFieldId = "fact_constraint_val_"+idCombination;
 		
     $("#field_"+counterStr+" div[name=constraint_val_container] #suggestions_").attr('id','suggestions_'+valIdCombination).attr('name','suggestions_'+valIdCombination);
     $("#fact_constraint_val_"+idCombination).attr('onkeyup','lookup("'+valFieldId+'","'+valIdCombination+'","keyup", "FACT_VAL");');
