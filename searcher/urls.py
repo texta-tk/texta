@@ -18,4 +18,5 @@ urlpatterns = [
     url(r'table_content', views.get_table_content, name='get_table_content'),
     url(r'table_header', views.get_table_header, name='get_table_header'),
     url(r'export', views.export_pages, name='export_pages'),
+    url(r'get_srch_query', views.get_search_query, name='get_search_query'),
 ]

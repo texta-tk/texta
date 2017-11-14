@@ -103,6 +103,56 @@ function search_as_you_type_query(){
 }
 
 
+function render_saved_search(search_id) {
+
+    $.get(PREFIX + '/get_srch_query', {search_id: search_id}, function(data) {
+        data = JSON.parse(data);
+
+        $('#constraints').empty();
+        for (var i = 0; i < data.length; i++) {
+            console.log(data[i]);
+            render_saved_search_field(data[i], '', '');
+        }
+    });
+}
+
+
+function render_saved_search_field(field_data, min_date, max_date) {
+    $('#constraint_field option').filter(function() {
+        console.log(derive_text_node_value(field_data) + ' ' + $(this).text() === derive_text_node_value(field_data));
+        return $(this).text() === derive_text_node_value(field_data);
+    }).prop('selected', true)
+
+    add_field(min_date, max_date);
+
+    if (field_data.constraint_type === 'date') {
+        $("#field_"+counter.toString()+" #daterange_from_"+counter.toString()).val(field_data.start_date);
+        $("#field_"+counter.toString()+" #daterange_to_"+counter.toString()).val(field_data.end_date);
+    } else if (field_data.constraint_type === 'string') {
+        $('#match_operator_' + counter.toString()).val(field_data.operator);
+        $('#match_type_' + counter.toString()).val(field_data.match_type);
+        $('#match_slop_' + counter.toString()).val(field_data.slop);
+        $('#match_txt_' + counter.toString()).val(field_data.content.join('\n'));
+    } else if (field_data.constraint_type === 'facts') {
+        $('#fact_operator_' + counter.toString()).val(field_data.operator);
+        $('#fact_txt_'+counter.toString()).val(field_data.content.join('\n'));
+    }
+}
+
+
+function derive_text_node_value(field_data) {
+    if (field_data.constraint_type === 'string' || field_data.constraint_type === 'date') {
+        return field_data.field.replace('.', ' → ');
+    } else if (field_data.constraint_type === 'facts') {
+        return field_data.field.replace('.', ' → ') + ' [facts]';
+    } else if (field_data.constraint_type === 'str_fact_val') {
+        return field_data.field.replace('.', ' → ') + ' [facts][text]';
+    } else if (field_data.constraint_type === 'num_fact_val') {
+        return field_data.field.replace('.', ' → ') + ' [facts][num]';
+    }
+}
+
+
 function add_field(date_range_min,date_range_max){
 
 	var field = $("#constraint_field").val();
@@ -766,7 +816,16 @@ function display_searches(searches) {
         search_div.appendChild(input_col);
 
 		text_col = document.createElement("td");
-		text_col.appendChild(document.createTextNode(searches[i].desc));
+		textNode = document.createTextNode(searches[i].desc);
+
+        renderAnchor = document.createElement("a");
+        renderAnchor.appendChild(textNode);
+        renderAnchor.title = 'Display search parameters';
+        renderAnchor.href = '#';
+        renderAnchor.onclick = function(id) {
+            return function() {render_saved_search(id);}}(searches[i].id);
+
+        text_col.appendChild(renderAnchor);
         search_div.appendChild(text_col);
 
 		remove_col = document.createElement("td");
