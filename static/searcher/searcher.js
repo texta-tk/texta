@@ -150,6 +150,7 @@ function derive_text_node_value(field_data) {
     } else if (field_data.constraint_type === 'num_fact_val') {
         return field_data.field.replace('.', ' → ') + ' [facts][num]';
     }
+}
 
 
 function lookup(fieldFullId, fieldId, action, lookup_types){
