@@ -418,7 +418,6 @@ def search(es_params, request):
         out['column_names'] = es_m.get_column_names()
 
         for hit in response['hits']['hits']:
-
             hit_id = str(hit['_id'])
             row = []
             
@@ -457,6 +456,7 @@ def search(es_params, request):
                 if name_to_inner_hits[col]:
                     highlight_data = []
                     color_map = ColorPicker.get_color_map(keys={hit['fact'] for hit in name_to_inner_hits[col]})
+
                     for inner_hit in name_to_inner_hits[col]:
                         datum = {
                             'spans': json.loads(inner_hit['spans']),
@@ -469,7 +469,6 @@ def search(es_params, request):
                             datum['value'] = inner_hit['str_val']
 
                         highlight_data.append(datum)
-
                     try:
                         content = Highlighter(average_colors=True, derive_spans=True,
                                               additional_style_string='font-weight: bold;').highlight(

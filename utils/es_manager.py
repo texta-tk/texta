@@ -15,6 +15,8 @@ if 'django' in sys.modules: # Import django-stuff only if imported from the djan
 
 from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password
 
+INNER_HITS_MAX_SIZE = 30
+
 
 class Singleton(type):
     _instances = {}
@@ -444,8 +446,22 @@ class ES_Manager:
 
 
                 for string_id, query_string in enumerate(query_strings):
-                    fact_query.append({'nested': {'path': 'texta_facts', 'inner_hits':{'name':'fact_'+str(field_id)+'_'+str(string_id)},
-                                                  'query':{'bool': {'must': []}}}})
+                    fact_query.append(
+                        {
+                            'nested': {
+                                'path': 'texta_facts',
+                                'inner_hits': {
+                                    'name': 'fact_' + str(field_id) + '_' + str(string_id),
+                                    'size': INNER_HITS_MAX_SIZE
+                                },
+                                'query': {
+                                    'bool': {
+                                        'must': []
+                                    }
+                                }
+                            }
+                        }
+                    )
                     nested_query = fact_query[-1]['nested']['query']['bool']['must']
 
                     nested_query.append({'match': {'texta_facts.doc_path': fact_field.lower()}})
@@ -464,8 +480,22 @@ class ES_Manager:
                 fact_value = value_constraint['value']
                 fact_val_operator = value_constraint['operator']
 
-                fact_val_query.append({'nested': {'path': 'texta_facts', 'inner_hits':{'name':'fact_val_'+str(field_id)+'_'+str(constraint_id)},
-                                                  'query': {'bool': {'must': []}}}})
+                fact_val_query.append(
+                    {
+                        'nested': {
+                            'path': 'texta_facts',
+                            'inner_hits': {
+                                'name': 'fact_val_'+str(field_id)+'_'+str(constraint_id),
+                                'size': INNER_HITS_MAX_SIZE
+                            },
+                            'query': {
+                                'bool': {
+                                    'must': []
+                                }
+                            }
+                        }
+                    }
+                )
                 nested_query = fact_val_query[-1]['nested']['query']['bool']['must']
                 nested_query.append({'match': {'texta_facts.fact': fact_name}})
                 nested_query.append({'match': {'texta_facts.doc_path': fact_field}})
@@ -800,10 +830,8 @@ class ES_Manager:
         except:
             raise Exception('Incompatible queries.')
         
-        print(query_dict)
         if 'must' in query_dict['main']['query']['bool'] and query_dict['main']['query']['bool']['must']:
             for constraint in query_dict['main']['query']['bool']['must']:
-                print(constraint)
                 self.combined_query['main']['query']['bool']['must'].append(constraint)
         if 'should' in query_dict['main']['query']['bool'] and query_dict['main']['query']['bool']['should']:
             if len(query_dict['main']['query']['bool']['should']) > 1:

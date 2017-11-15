@@ -259,7 +259,7 @@ es_ldap_password = os.getenv('TEXTA_LDAP_PASSWORD')
 # Dataset Importer global parameters
 #
 DATASET_IMPORTER = {
-    'directory': os.path.join(BASE_DIR, 'texta', 'files', 'dataset_importer'),
+    'directory': os.path.join(BASE_DIR, 'files', 'dataset_importer'),
     'import_processes': 2,
     'process_batch_size': 1000,
     'enabled_input_types': {
