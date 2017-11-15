@@ -222,7 +222,7 @@ INSTALLED_APPS = (
     'permission_admin',
     'grammar_builder',
     'search_api',
-    'dataset_importer',
+    # 'dataset_importer',
 )
 
 ############################ Elasticsearch ###########################
@@ -255,6 +255,40 @@ date_format = 'yyyy-MM-dd'
 es_use_ldap = False
 es_ldap_user = os.getenv('TEXTA_LDAP_USER')
 es_ldap_password = os.getenv('TEXTA_LDAP_PASSWORD')
+
+# Dataset Importer global parameters
+#
+DATASET_IMPORTER = {
+    'directory': os.path.join(BASE_DIR, 'texta', 'files', 'dataset_importer'),
+    'import_processes': 2,
+    'process_batch_size': 1000,
+    'enabled_input_types': {
+        'single': [
+            {'name': 'Word document', 'value': 'doc'},
+            {'name': 'HTML', 'value': 'html'},
+            {'name': 'RTF', 'value': 'rtf'},
+            {'name': 'PDF', 'value': 'pdf'},
+            {'name': 'TXT', 'value': 'txt'},
+        ],
+        'collection': [
+            {'name': 'CSV', 'value': 'csv'},
+            {'name': 'JSON', 'value': 'json'},
+            {'name': 'Excel spreadsheet', 'value': 'xls'},
+            {'name': 'XML', 'value': 'xml'},
+        ],
+        'database': [
+            {'name': 'Elasticsearch', 'value': 'elastic'},
+            {'name': 'MongoDB', 'value': 'mongodb'},
+            {'name': 'PostgreSQL', 'value': 'postgres'},
+            {'name': 'SQLite', 'value': 'sqlite'},
+        ]
+
+    }
+}
+
+if not os.path.exists(DATASET_IMPORTER['directory']):
+    os.makedirs(DATASET_IMPORTER['directory'])
+
 
 ############################### Logging ##############################
 
