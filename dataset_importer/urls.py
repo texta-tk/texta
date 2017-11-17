@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from . import views
+from dataset_importer import views
 
 
 urlpatterns = [

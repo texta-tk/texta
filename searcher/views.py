@@ -469,24 +469,13 @@ def search(es_params, request):
                             datum['value'] = inner_hit['str_val']
 
                         highlight_data.append(datum)
-                    try:
-                        content = Highlighter(average_colors=True, derive_spans=True,
-                                              additional_style_string='font-weight: bold;').highlight(
-                            old_content.encode('utf8'),
-                            highlight_data,
-                            content.encode('utf8')
-                        ).decode('utf8')
-                    except:
-                        try:
-                            content = Highlighter(average_colors=True, derive_spans=True,
-                                                  additional_style_string='font-weight: bold;').highlight(
-                                old_content,
-                                highlight_data,
-                                content
-                            )
-                        except:
-                            logger.exception("Highlighter couldn't handle input data.")
 
+                    content = Highlighter(average_colors=True, derive_spans=True,
+                                              additional_style_string='font-weight: bold;').highlight(
+                                                  old_content,
+                                                  highlight_data,
+                                                  content
+                            )
 
                 # Append the final content of this col to the row
                 row.append(content)

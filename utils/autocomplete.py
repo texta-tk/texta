@@ -46,7 +46,7 @@ class Autocomplete:
                     "nested": {"path": "texta_facts"},
                     "aggs": {
                         agg_subfield: {
-                            "terms": {"field": "texta_facts.{0}".format(agg_subfield), "size": self.limit, "include": "{0}.*".format(self.content)},
+                            "terms": {"field": "texta_facts.{0}".format(agg_subfield), "size": self.limit, "include": "{0}.*".format(self.content.encode('utf8'))},
                             "aggs": {"documents": {"reverse_nested": {}}},
                         }
                     }

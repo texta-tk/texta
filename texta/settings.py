@@ -63,7 +63,7 @@ elif SERVER_TYPE == 'production':
     DOMAIN = 'dev.texta.ee'
     
     URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL,DOMAIN)
-    URL_PREFIX_RESOURCE = '/texta_dev'
+    URL_PREFIX_RESOURCE = '/texta'
     ROOT_URLCONF = 'texta.urls'
     STATIC_URL = '/texta/static/'
     DEBUG = False
@@ -222,7 +222,7 @@ INSTALLED_APPS = (
     'permission_admin',
     'grammar_builder',
     'search_api',
-    # 'dataset_importer',
+    'dataset_importer',
 )
 
 ############################ Elasticsearch ###########################
