@@ -17,11 +17,6 @@ from document_storer.storer import DocumentStorer
 
 from texta.settings import es_url
 
-IMPORTER_DIRECTORY = 'test_dir'
-import os
-if not os.path.exists(IMPORTER_DIRECTORY):
-    os.makedirs(IMPORTER_DIRECTORY)
-
 PROCESSES = 2
 BATCH_SIZE = 1000
 
