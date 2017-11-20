@@ -47,15 +47,14 @@ class Autocomplete:
                     "aggs": {
                         agg_subfield: {
                             "terms": {"field": "texta_facts.{0}".format(agg_subfield), "size": self.limit, "include": "{0}.*".format(self.content.encode('utf8'))},
-                            "aggs": {"documents": {"reverse_nested": {}}},
                         }
                     }
-                                
                 }
             }
 
         self.es_m.build('')
         self.es_m.set_query_parameter("aggs", agg_query)
+        
         facts = [self._format_suggestion(a["key"],a["key"]) for a in self.es_m.search()["aggregations"][agg_subfield][agg_subfield]["buckets"]]
 
         return facts
