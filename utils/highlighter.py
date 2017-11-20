@@ -193,10 +193,10 @@ class Highlighter(object):
                     title_line_tokens.append(name)
             title_lines.append(' '.join(title_line_tokens))
 
-        title = ('&#13;'.join(title_lines)).encode('utf8')
+        title = ('&#13;'.join(title_lines))
         color = self._get_color([highlight_data['color'] for highlight_data in highlight_data_list if 'color' in highlight_data])
 
-        return '<span title="{0}" style="background-color: {1};{2}">'.format(
+        return u'<span title="{0}" style="background-color: {1};{2}">'.format(
             title, color, (self._additional_style_string if color != 'none' else ''))
 
     def _get_color(self, color_code_list):
