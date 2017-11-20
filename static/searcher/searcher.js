@@ -342,16 +342,16 @@ function add_field(date_range_min,date_range_max){
         $("#field_"+counter.toString()+" #remove_link").attr('onclick',"javascript:remove_field('"+new_id+"');");
         $("#field_"+counter.toString()+" #suggestions_").attr('id','suggestions_'+counter.toString()).attr('name','suggestions_'+counter.toString());
         $("#field_"+counter.toString()+" #match_txt_").attr('id','match_txt_'+counter.toString()).attr('name','match_txt_'+counter.toString());
-        
-		$("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onkeyup','search_as_you_type_query();');
 		
 		var suggestion_types = ["CONCEPT","LEXICON"];
 		
 		var fieldFullId = "match_txt_"+counter.toString();
 
-		$("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onkeyup','lookup("'+fieldFullId+'",'+counter.toString()+',"keyup", \''+suggestion_types+'\');');
+		$("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onkeyup','lookup("'+fieldFullId+'",'+counter.toString()+',"keyup", \''+suggestion_types+'\'); search_as_you_type_query();');
         $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onfocus','lookup("'+fieldFullId+'","'+counter.toString()+'","focus", \''+suggestion_types+'\');');
         $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onblur','hide("'+counter.toString()+'");');
+		
+		
     }
 
     $("#field_"+counter.toString()).show();
