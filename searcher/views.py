@@ -389,7 +389,7 @@ def search(es_params, request):
         es_m.set_query_parameter('size', es_params['num_examples'])
 
         # HIGHLIGHTING THE MATCHING FIELDS
-        pre_tag = '<span style="background-color:#FFD119;" class="[ES]">'
+        pre_tag = '<span style="background-color:#FFD119" class="[ES]">'
         post_tag = "</span>"
         highlight_config = {"fields": {}, "pre_tags": [pre_tag], "post_tags": [post_tag]}
         for field in es_params:
