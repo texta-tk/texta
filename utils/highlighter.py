@@ -222,7 +222,7 @@ class Highlighter(object):
 
 class ColorPicker(object):
 
-    colors = ["#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"]
+    colors = ["#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999"]
 
     @staticmethod
     def get_color_map(keys, colors=None):

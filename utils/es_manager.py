@@ -15,7 +15,7 @@ if 'django' in sys.modules: # Import django-stuff only if imported from the djan
 
 from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password
 
-INNER_HITS_MAX_SIZE = 30
+INNER_HITS_MAX_SIZE = 1000
 
 
 class Singleton(type):

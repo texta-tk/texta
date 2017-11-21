@@ -12,8 +12,8 @@ import glob
 import re
 import operator
 
-BACKUP_STRFTIME_FORMAT = '%Y-%m-%d %H:%M:%S'
-BACKUP_DATE_PATTERN = re.compile('pre-(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})')
+BACKUP_STRFTIME_FORMAT = '%Y-%m-%d %H-%M-%S'
+BACKUP_DATE_PATTERN = re.compile('pre-(\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2})')
 
 
 def backup_existing_database():
