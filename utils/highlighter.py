@@ -90,6 +90,7 @@ class Highlighter(object):
                 highlight_data.append(span_data)
 
             start_tag_index = tagged_text.find('<span', span_end + 7)
+            index_discount += 7
 
         return highlight_data
 
