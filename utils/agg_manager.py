@@ -145,7 +145,7 @@ class AggManager:
                     "nested": {"path": "texta_facts"},
                     "aggs": {
                         agg_name: {
-                            sort_by: {"field": "texta_facts.str_val", "size": 30},
+                            sort_by: {"field": "texta_facts.str_val", "size": 30, 'order': {'documents.doc_count': 'desc'}},
                             "aggs": {"documents": {"reverse_nested": {}}}
                         }
                     }
@@ -157,7 +157,7 @@ class AggManager:
                     "nested": {"path": "texta_facts"},
                     "aggs": {
                         agg_name: {
-                            sort_by: {"field": "texta_facts.num_val", "size": 30},
+                            sort_by: {"field": "texta_facts.num_val", "size": 30, 'order': {'documents.doc_count': 'desc'}},
                             "aggs": {"documents": {"reverse_nested": {}}}
                         }
                     }
