@@ -226,7 +226,7 @@ INSTALLED_APPS = (
     'permission_admin',
     'grammar_builder',
     'search_api',
-    #'dataset_importer',
+    'dataset_importer',
 )
 
 ############################ Elasticsearch ###########################

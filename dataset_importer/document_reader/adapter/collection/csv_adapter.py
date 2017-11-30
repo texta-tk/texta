@@ -1,10 +1,28 @@
 import csv
+from collection_adapter import CollectionAdapter
 
 
-class CSVAdapter(object):
+class CSVAdapter(CollectionAdapter):
 
     @staticmethod
-    def get_features(file_obj):
-        reader = csv.DictReader(file_obj)
-        for row in reader:
-            yield row
+    def get_features(**kwargs):
+        directory = kwargs['directory']
+
+        for file_path in CSVAdapter.get_file_list(directory, 'csv'):
+            with open(file_path) as csv_file:
+                reader = csv.DictReader(csv_file)
+                for row in reader:
+                    yield row
+
+    @staticmethod
+    def count_total_documents(**kwargs):
+        directory = kwargs['directory']
+
+        total_documents = 0
+
+        for file_path in CSVAdapter.get_file_list(directory, 'csv'):
+            with open(file_path) as csv_file:
+                reader = csv.reader(csv_file)
+                total_documents += sum(1 for row in reader)
+
+        return total_documents

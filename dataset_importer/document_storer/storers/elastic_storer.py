@@ -54,6 +54,8 @@ class ElasticStorer(object):
             self._request.put("%s/%s/%s/_bulk" % (self._es_url, self._es_index, self._es_mapping),
                               data='\n'.join(data_to_send))
 
+        return len(documents)
+
     @staticmethod
     def exists(**connection_parameters):
         return requests.head("{url}/{index}/{mapping}".format(**{

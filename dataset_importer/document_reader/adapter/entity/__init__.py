@@ -4,6 +4,11 @@ except:
     pass
 
 try:
+    import docx_adapter as docx
+except:
+    pass
+
+try:
     import html_adapter as html
 except:
     pass

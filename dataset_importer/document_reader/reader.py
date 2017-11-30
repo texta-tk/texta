@@ -8,14 +8,24 @@ class DocumentReader(object):
         self._directory = directory
 
     def read_documents(self, **kwargs):
-        if self._available_formats and format not in self._available_formats:
-            raise NotSupportedFormat()
-
         reading_parameters = kwargs
+
+        if self._available_formats and reading_parameters['format'] not in self._available_formats:
+            raise NotSupportedFormat()
 
         adapter = adapter_map[reading_parameters['format']]
 
         return adapter.get_features(**reading_parameters)
+
+    def count_total_documents(self, **kwargs):
+        reading_parameters = kwargs
+
+        if self._available_formats and reading_parameters['format'] not in self._available_formats:
+            raise NotSupportedFormat()
+
+        adapter = adapter_map[reading_parameters['format']]
+
+        return adapter.count_total_documents(**kwargs)
 
 
 class NotSupportedFormat(Exception):
@@ -66,6 +76,11 @@ except:
 
 try:
     adapter_map['doc'] = adapter.entity.doc.DocAdapter
+except:
+    pass
+
+try:
+    adapter_map['docx'] = adapter.entity.docx.DocXAdapter
 except:
     pass
 

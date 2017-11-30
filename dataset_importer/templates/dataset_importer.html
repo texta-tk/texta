@@ -3,28 +3,42 @@
 
     <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}dataset_importer/dataset_importer.css">
 
-    <div class="panel">
-        <div class="panel-heading">
-            New Dataset
-        </div>
-
-        <div class="panel-body">
-            <div class="form-group">
-                <label class="control-label">Input type</label>
-                <select id="input-type" class="form-control">
-                    <option value="file">File</option>
-                    <option value="database">Database</option>
-                </select>
+    <div class="col-md-4">
+        <div class="panel">
+            <div class="panel-heading">
+                New Dataset
             </div>
 
-            <div id="input-type-panes" class="tab-content">
-                <div class="input-type-pane" id="file" hidden>
-                    {% include "input_types/file.html" %}
+            <div class="panel-body">
+                <div class="form-group">
+                    <label class="control-label">Input type</label>
+                    <select id="input-type" class="form-control">
+                        <option value="file">File</option>
+                        <option value="database">Database</option>
+                    </select>
                 </div>
 
-                <div class="input-type-pane" id="database" hidden>
-                    {% include "input_types/database.html" %}
+                <div id="input-type-panes" class="tab-content">
+                    <div class="input-type-pane" id="file" hidden>
+                        {% include "input_types/file.html" %}
+                    </div>
+
+                    <div class="input-type-pane" id="database" hidden>
+                        {% include "input_types/database.html" %}
+                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="panel">
+            <div class="panel-heading">
+                Import Jobs
+            </div>
+
+            <div class="panel-body" id="jobs-table-div">
+                {% include "import_jobs_table.html" %}
             </div>
         </div>
     </div>

@@ -1,4 +1,4 @@
-<form id="json-parameters" method="post" enctype="multipart/form-data" onsubmit="return importDataset('json')">
+<form id="json-parameters" method="post" enctype="multipart/form-data">
     <div class="panel">
         <div class="panel-body parameter-panel">
             <input name="format" value="json" hidden>
@@ -17,6 +17,6 @@
 
     {% include "elastic_parameters_panel.html" %}
 
-    <button class="btn btn-success pull-right">Import data</button>
+    <button type="button" class="btn btn-success pull-right" onclick="importDataset('json');">Import data</button>
 </form>
 

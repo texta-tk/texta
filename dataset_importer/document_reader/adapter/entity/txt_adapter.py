@@ -14,3 +14,8 @@ class TXTAdapter(EntityAdapter):
                 features['text'] = text_file.read()
 
             yield features
+
+    @staticmethod
+    def count_total_documents(**kwargs):
+        directory = kwargs['directory']
+        return TXTAdapter.count_documents(directory_path=directory, extension='txt')
