@@ -11,7 +11,8 @@ class CSVAdapter(CollectionAdapter):
         for file_path in CSVAdapter.get_file_list(directory, 'csv'):
             with open(file_path) as csv_file:
                 reader = csv.DictReader(csv_file)
-                for row in reader:
+                for row_idx, row in enumerate(reader):
+                    row['_texta_id'] = '{0}_{1}'.format(file_path, row_idx)
                     yield row
 
     @staticmethod

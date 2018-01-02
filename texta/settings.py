@@ -266,6 +266,10 @@ DATASET_IMPORTER = {
     'directory': os.path.join(BASE_DIR, 'files', 'dataset_importer'),
     'import_processes': 2,
     'process_batch_size': 1000,
+    'sync': {
+        'interval_in_seconds': 10,
+        'index_sqlite_path': os.path.join(BASE_DIR, 'database', 'import_sync.db')
+    },
     'enabled_input_types': {
         'single': [
             {'name': 'Word document', 'value': 'doc'},

@@ -13,6 +13,8 @@ class PDFAdapter(EntityAdapter):
 
             features['text'] = textract.process(file_path)
 
+            features['_texta_id'] = file_path
+
             yield features
 
     @staticmethod

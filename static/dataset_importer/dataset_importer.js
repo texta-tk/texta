@@ -1,4 +1,6 @@
 $('select').val('');
+$('input[name="file"]').val('');
+$('#keep_synchronized').val('false');
 
 $('#input-type').change(function () {
     $(".input-type-pane").hide();
@@ -39,6 +41,9 @@ function importDataset(format) {
             formData.append('archive', archiveFormat);
         }
     }
+
+    var keepSynchronized = $('#keep_synchronized').val();
+    formData.append('keep_synchronized', keepSynchronized);
 
     $.ajax({
         url: 'import',
