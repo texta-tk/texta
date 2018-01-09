@@ -16,6 +16,11 @@ BACKUP_STRFTIME_FORMAT = '%Y-%m-%d %H-%M-%S'
 BACKUP_DATE_PATTERN = re.compile('pre-(\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2})')
 
 
+def database_exists():
+    database_path = DATABASES['default']['NAME']
+    return os.path.exists(database_path)
+
+
 def backup_existing_database():
     database_path = DATABASES['default']['NAME']
     database_dir, database_name = os.path.split(database_path)
@@ -44,10 +49,10 @@ def remove_too_old_database_versions():
         os.remove(removed_file[1])
 
 
-print('Backupping existing database...')
-backup_existing_database()
-
-sleep(2)
+if database_exists():
+    print('Backupping existing database...')
+    backup_existing_database()
+    sleep(2)
 
 print('Removing too old database versions...')
 remove_too_old_database_versions()
