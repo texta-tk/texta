@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
+elasticsearch/bin/elasticsearch &
 cd texta
-elasticsearch &
 python manage.py runserver
