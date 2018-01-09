@@ -12,13 +12,18 @@ from dataset_importer.syncer.syncer_process import Syncer
 
 from texta.settings import es_url, DATASET_IMPORTER as DATASET_IMPORTER_CONF
 
+from sys import argv
+
 ACTIVE_IMPORT_JOBS = {}
 
 DATASET_IMPORTER = DatasetImporter(es_url=es_url, configuration=DATASET_IMPORTER_CONF,
                                    data_access_object=DatasetImport, file_system_storer=FileSystemStorage)
-DATASET_SYNCER = Syncer(dataset_imports=DatasetImport, importer=DATASET_IMPORTER,
-                        interval=DATASET_IMPORTER_CONF['sync']['interval_in_seconds'])
-DATASET_SYNCER.start()
+
+if (DATASET_IMPORTER_CONF['sync']['enabled'] is True and
+        len({'createsuperuser', 'migrate', 'makemigrations'} & set(argv)) == 0):
+    DATASET_SYNCER = Syncer(dataset_imports=DatasetImport, importer=DATASET_IMPORTER,
+                            interval=DATASET_IMPORTER_CONF['sync']['interval_in_seconds'])
+    DATASET_SYNCER.start()
 
 
 def index(request):

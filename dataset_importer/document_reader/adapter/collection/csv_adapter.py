@@ -24,6 +24,6 @@ class CSVAdapter(CollectionAdapter):
         for file_path in CSVAdapter.get_file_list(directory, 'csv'):
             with open(file_path) as csv_file:
                 reader = csv.reader(csv_file)
-                total_documents += sum(1 for row in reader)
+                total_documents += max(0, sum(1 for row in reader) - 1)  # -1 for the header
 
         return total_documents

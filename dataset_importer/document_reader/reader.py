@@ -40,7 +40,7 @@ except:
     pass
 
 try:
-    adapter_map['excel'] = adapter.collection.excel.ExcelAdapter
+    adapter_map['xls'] = adapter.collection.excel.ExcelAdapter
 except:
     pass
 
