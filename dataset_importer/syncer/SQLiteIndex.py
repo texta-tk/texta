@@ -15,7 +15,7 @@ class SQLiteIndex(object):
 
     def get_new_entries(self, dataset, candidate_values):
         with sqlite3.connect(self._sqlite_file_path) as connection:
-            connection.row_factory = list_factory
+            connection.row_factory = scalar_factory
             table_name = self._get_dataset_table_name(dataset)
 
             if not self._table_exists(table_name=table_name):
@@ -42,8 +42,5 @@ class SQLiteIndex(object):
             return bool(cursor.fetchone())
 
 
-def list_factory(cursor, row):
-    list_ = []
-    for idx, col in enumerate(cursor.description):
-        list_.append(row[idx])
-    return list_
+def scalar_factory(cursor, row):
+    return row[0]

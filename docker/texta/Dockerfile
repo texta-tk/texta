@@ -1,24 +1,6 @@
-FROM openjdk:8-jre
+FROM ubuntu:latest
 
 RUN adduser --disabled-password --gecos '' texta
-
-RUN wget https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.4.6/elasticsearch-2.4.6.tar.gz
-RUN tar -xvf elasticsearch-2.4.6.tar.gz
-RUN rm elasticsearch-2.4.6.tar.gz
-
-# ES_HEAP_SIZE should be half the available RAM
-ENV ES_HEAP_SIZE 4g
-
-ADD elasticsearch.yml elasticsearch-2.4.6/config
-
-RUN mv elasticsearch-2.4.6 /home/texta/elasticsearch
-
-RUN mkdir -p /usr/share/elasticsearch/data
-
-RUN chown texta:texta /usr/share/elasticsearch/data
-RUN chown -R texta:texta /home/texta/elasticsearch
-
-VOLUME /usr/share/elasticsearch/data
 
 #RUN set -x \
 #        && apt-get update \
@@ -50,20 +32,24 @@ RUN pip install sympy
 
 RUN python migrate.py
 
+RUN echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', '1234')" | python manage.py shell
+
 WORKDIR ..
 
 RUN mv texta /home/texta
 RUN chown -R texta:texta /home/texta/texta
 
-ADD run_elastic_and_texta.sh /home/texta
-RUN chown texta:texta /home/texta/run_elastic_and_texta.sh
-RUN chmod u+x /home/texta/run_elastic_and_texta.sh
+RUN apt-get install -y curl
 
-RUN ls -l /home/texta
+EXPOSE 80
+
+RUN apt-get install -y authbind
+RUN touch /etc/authbind/byport/80
+RUN chmod 777 /etc/authbind/byport/80
 
 USER texta
-WORKDIR /home/texta
+WORKDIR /home/texta/texta
 
-EXPOSE 8000 9200
+ADD settings.py texta
 
-CMD ./run_elastic_and_texta.sh
+CMD ["authbind", "--deep", "python", "manage.py", "runserver", "0.0.0.0:80"]

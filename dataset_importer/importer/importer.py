@@ -169,6 +169,7 @@ class DatasetImporter(object):
 def _import_dataset(parameter_dict, n_processes, process_batch_size):
     # Local files are not extracted from archives due to directory permissions
     # If importing from local hard drive, extract first.
+    print(parameter_dict)
     if parameter_dict['is_local'] is False:
         if 'file_path' not in parameter_dict:
             parameter_dict['file_path'] = download(parameter_dict['url'], parameter_dict['directory'])

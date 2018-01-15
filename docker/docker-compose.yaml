@@ -1,0 +1,24 @@
+version: "3.4"
+
+services:
+  elastic:
+    container_name: texta-elastic
+    image: komasing/texta-elastic-test:latest
+    build: ./elasticsearch
+    ports:
+      - "9200"
+    networks:
+      - texta-network
+
+  texta:
+    container_name: texta-app
+    image: komasing/texta-app-test:latest
+    build: ./texta
+    ports:
+      - "80"
+    networks:
+      - texta-network
+
+networks:
+  texta-network:
+    driver: bridge
