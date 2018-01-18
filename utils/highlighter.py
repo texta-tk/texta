@@ -158,6 +158,7 @@ class Highlighter(object):
         spans_to_data_indices = []
         start_idx = 0
         previous_data_indices = text_index_to_data_index[0]
+        text_idx = None
 
         for text_idx, data_indices in enumerate(text_index_to_data_index):
             if data_indices == previous_data_indices:
@@ -166,6 +167,9 @@ class Highlighter(object):
             spans_to_data_indices.append(([start_idx, text_idx], previous_data_indices))
             previous_data_indices = data_indices
             start_idx = text_idx
+
+        if text_idx is not None:
+            spans_to_data_indices.append(([start_idx, text_idx + 1], previous_data_indices))
 
         return spans_to_data_indices
 
