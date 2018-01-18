@@ -88,6 +88,7 @@ class ES_Manager:
         self.combined_query = None
         self._facts_map = None
         self.es_cache = ES_Cache()
+        self.headers = {'Content-Type': 'application/json'}
 
     #def check_if_field_has_facts(self, sub_fields):
         #""" Check if field is associate with facts in Elasticsearch
@@ -131,10 +132,12 @@ class ES_Manager:
 
         request_url = '{0}/{1}/{2}/_count'.format(es_url, self.index, self.mapping)
         base_query = {"query": {"bool": {"filter": {'and': []}}}}
-        base_query = {'query': {'nested': {'path': 'texta_facts', 'query': {'bool': {'filter': {'and': []}}}}}}  # {'match':{'texta_facts.fact':'superhero'}}}}}
+        base_query = {'query': {'nested': {'path': 'texta_facts', 'query': {'bool': {'filter': []}}}}}  # {'match':{'texta_facts.fact':'superhero'}}}}}
         #base_query['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': doc_type}})
         #base_query['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
-        base_query['query']['nested']['query']['bool']['filter']['and'].append({'term': {'texta_facts.doc_path': doc_path}})
+        base_query['query']['nested']['query']['bool']['filter'].append({'term': {'texta_facts.doc_path': doc_path}})
+
+        print base_query
 
         has_facts = self._field_has_facts(request_url, base_query)
         has_fact_str_val = self._field_has_fact_vals(request_url, base_query, 'texta_facts.str_val')
@@ -144,10 +147,13 @@ class ES_Manager:
 
     def _field_has_facts(self, url, query):
         query = copy.deepcopy(query)
-        query['query']['nested']['query']['bool']['filter']['and'].append({'exists': {'field': 'texta_facts.fact'}})
+        query['query']['nested']['query']['bool']['filter'].append({'exists': {'field': 'texta_facts.fact'}})
+
+        print query
 
         query = json.dumps(query)
-        response = self.requests.post(url, data=query).json()
+        response = self.requests.post(url, data=query, headers=self.headers).json()
+        print response
 
         return 'count' in response and response['count'] > 0
 
@@ -156,7 +162,7 @@ class ES_Manager:
         query['query']['nested']['query']['bool']['filter']['and'].append({'exists': {'field': value_field_name}})
         query = json.dumps(query)
 
-        response = self.requests.post(url, data=query).json()
+        response = self.requests.post(url, data=query, headers=self.headers).json()
 
         return 'count' in response and response['count'] > 0
 
@@ -624,7 +630,7 @@ class ES_Manager:
         """
         q = json.dumps(self.combined_query['main'])
         search_url = '{0}/{1}/{2}/_search'.format(es_url, self.index, self.mapping)
-        response = self.requests.post(search_url, data=q).json()
+        response = self.requests.post(search_url, data=q, headers=self.headers).json()
         return response
 
     def process_bulk(self,hits):
