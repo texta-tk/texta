@@ -479,7 +479,7 @@ def search(es_params, request):
 
                 # Checks if user wants to see full text or short version
                 if 'show_short_version' in es_params.keys():
-                    content = additional_option_cut_text(content)
+                    content = additional_option_cut_text(content, es_params)
 
                 # Append the final content of this col to the row
                 row.append(content)
@@ -502,9 +502,11 @@ def search(es_params, request):
         return out
 
 
-def additional_option_cut_text(content):
+def additional_option_cut_text(content, es_params):
 
     if '<span class="[HL]"' in content:
+
+        size = int(es_params["short_version_n_char"])
 
         # List of points where to cut the text
         cutting_points = []
@@ -519,7 +521,7 @@ def additional_option_cut_text(content):
 
             title_end = content.find('</span')
 
-            title_start = title_end - 100
+            title_start = title_end - size
 
             if title_start < 0:
                 title_start = 0
@@ -536,7 +538,7 @@ def additional_option_cut_text(content):
 
             span_location = content.find('<span class="[HL]', span_location)
 
-            start = span_location - 100
+            start = span_location - size
             if start <= 0:
                 start = 0
             else:
@@ -544,7 +546,7 @@ def additional_option_cut_text(content):
                     start -= 1
 
 
-            end = content.find('/span>', span_location) + 106
+            end = content.find('/span>', span_location) + (size + 6)
             if end >= len(content):
                 end = len(content)
             else:

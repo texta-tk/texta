@@ -49,19 +49,26 @@
 											<b>Additional Options</b>
 										</div>
 										<div class="col-sm-12">
-							<!--
-							<b>Background corpus:</b>
-								<select id="custom_bg" name="custom_bg" class="form-control input-sm">
-									<option value="all_docs" selected="selected">All documents</option>
-									<option value="">Search: online</option>
-								</select>
-							-->
 											Show short version:
-											<input type="checkbox" name="show_short_version" class="pull-right">
+											<input type="checkbox" name="show_short_version" onclick="hide_show_options()" class="pull-right">
 										</div>
 									</div>
 								</div>
-								
+
+								<div class="panel bg-grey" id="short_version_options" style="display: none;">
+									<div class="row padded-row">
+										<div class="col-sm-12">
+											<b>Number of letters around keyword:</b>
+										</div>
+									</div>
+									<div class="row padded-row">
+										<div class="col-sm-12">
+											<input id="n_char" name="short_version_n_char" class="form-control" data-slider-id='n_char' type="text" data-slider-min="50" data-slider-max="500" data-slider-step="10" data-slider-value="100"/>
+										</div>
+									</div>
+								</div>
+
+
 								
 								<div class="row">
 									<div class="col-sm-12"><button type="button" onclick="javascript:query();" class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span> Search</button></div>
@@ -106,7 +113,7 @@
 												<b>Stopword lexicons:</b>
 											</div>
 										</div>
-										
+
 										<div class="row padded-row">
 											<div class="col-sm-12">
 												{% if lexicons|length != 0 %}
@@ -117,7 +124,7 @@
 													</select>
 												{% else %}
 													<span class="text-danger">No lexicons!</span>
-												{% endif %}	
+												{% endif %}
 											</div>
 										</div>
 										

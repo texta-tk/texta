@@ -43,7 +43,12 @@ $(document).ready(function() {
         }
         localStorage.setCacheItem(("hiddenFeatures_"+dataset+"_"+mapping), hiddenFeatures, {months: 1});
     } );
-	
+
+    $('#n_char').bootstrapSlider({
+		formatter: function(value) {
+			return 'Current value: ' + value;
+		}
+	});
 	
 	$('#n_clusters').bootstrapSlider({
 		formatter: function(value) {
@@ -1034,5 +1039,15 @@ function export_data(exportType) {
     var query = PREFIX+'/export?args='+JSON.stringify(query_args);
 
     window.open(query);
+}
+
+function hide_show_options() {
+    var x = document.getElementById("short_version_options");
+
+    if (x.style.display === "none") {
+        x.style.display = "block";
+    } else {
+        x.style.display = "none";
+    }
 }
 
