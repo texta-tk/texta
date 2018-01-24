@@ -5,6 +5,7 @@ import json
 import csv
 import time
 import re
+import bs4
 from datetime import datetime, timedelta as td
 from collections import defaultdict
 
@@ -503,6 +504,37 @@ def search(es_params, request):
 
 
 def additional_option_cut_text(content, es_params):
+    window_size = int(es_params["short_version_n_char"])
+    content = unicode(content)
+
+    print '###'
+    
+    soup = bs4.BeautifulSoup(content,'lxml')
+    html_spans = soup.find_all('span')
+
+    html_spans_merged = []
+    current_item = []
+    
+    # merge together ovelapping spans
+    for html_span in html_spans:
+        if html_span.get('class'):
+            current_item.append(html_span)
+        else:
+            if current_item:
+                html_spans_merged.append(current_item)
+                html_spans_merged.append(html_span)
+                current_item = []
+            else:
+                html_spans_merged.append(html_span)
+
+    ## TODO: check is gap larger or smaller than 2*window_size
+    for html_span in html_spans_merged:
+        print html_span
+            
+   
+
+
+def _additional_option_cut_text(content, es_params):
     content = unicode(content)
 
     if '<span class="[HL]"' in content:
@@ -575,7 +607,9 @@ def additional_option_cut_text(content, es_params):
 
             new_content += content_to_add
         return new_content
-    return content
+
+    else:
+        return content
 
 
 @login_required
