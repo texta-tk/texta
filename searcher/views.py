@@ -507,31 +507,43 @@ def additional_option_cut_text(content, es_params):
     window_size = int(es_params["short_version_n_char"])
     content = unicode(content)
 
+    window_size = 5
+
     print '###'
     
     soup = bs4.BeautifulSoup(content,'lxml')
     html_spans = soup.find_all('span')
 
     html_spans_merged = []
-    current_item = []
+    
+    num_spans = len(html_spans)
     
     # merge together ovelapping spans
-    for html_span in html_spans:
-        if html_span.get('class'):
-            current_item.append(html_span)
-        else:
-            if current_item:
-                html_spans_merged.append(current_item)
-                html_spans_merged.append(html_span)
-                current_item = []
-            else:
-                html_spans_merged.append(html_span)
-
-    ## TODO: check is gap larger or smaller than 2*window_size
-    for html_span in html_spans_merged:
-        print html_span
+    for i,html_span in (html_spans):
+        if not html_span.get('class'):
+            span_text = html_span.text
+            span_tokens = span_text.split(' ')
+            span_tokens_len = len(span_tokens)
             
-   
+            if i == 0:
+                if span_tokens_len > window_size:
+                    new_text = u' '.join(span_tokens[-window_size:])
+                    unicode()
+                    
+                    html_spans_merged.append(unicode(new_html_span))
+                else:
+                    html_spans_merged.append(unicode(html_span))
+            elif i == num_spans-1:
+                if span_tokens_len > window_size:
+                    html_spans_merged.append(cut_span_tag(html_span,window_size,position='end'))
+                else:
+                    html_spans_merged.append(unicode(html_span))
+            else:
+                if span_tokens_len > window_size:
+                    html_spans_merged.append(cut_span_tag(html_span))
+                else:
+                    html_spans_merged.append(unicode(html_span))               
+
 
 
 def _additional_option_cut_text(content, es_params):
