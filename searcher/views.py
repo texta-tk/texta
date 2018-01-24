@@ -503,16 +503,14 @@ def search(es_params, request):
 
 
 def additional_option_cut_text(content, es_params):
+    content = unicode(content)
 
     if '<span class="[HL]"' in content:
-
         size = int(es_params["short_version_n_char"])
 
         # List of points where to cut the text
         cutting_points = []
-
         span_location = 0
-
         title_start = 0
         title_end = 0
 
@@ -520,7 +518,6 @@ def additional_option_cut_text(content, es_params):
         if content[:5] == '<span':
 
             title_end = content.find('</span')
-
             title_start = title_end - size
 
             if title_start < 0:
@@ -532,19 +529,17 @@ def additional_option_cut_text(content, es_params):
             if '>' in content[title_start:title_end]:
                 title_start = content.find('>') + 1
 
-
         # Goes through the text and finds highlighted text and saves 100 letter before and after
         while '<span class="[HL]' in content[span_location:]:
 
             span_location = content.find('<span class="[HL]', span_location)
-
             start = span_location - size
+            
             if start <= 0:
                 start = 0
             else:
                 while content[start] != ' ' and start > 0:
                     start -= 1
-
 
             end = content.find('/span>', span_location) + (size + 6)
             if end >= len(content):
@@ -553,26 +548,20 @@ def additional_option_cut_text(content, es_params):
                 while content[end] != ' ' and end < len(content) - 1:
                     end += 1
 
-
             # Checks if cutting poits merege
             if cutting_points:
-
                 if start <= cutting_points[-1]['end']:
                     cutting_points[-1]['end'] = end
                 else:
                     cutting_points.append({'start': start, 'end': end})
-
             else:
                 cutting_points.append({'start': start, 'end': end})
-
             span_location += 1
-
 
         #Do the cuts
         new_content = ''
 
         for cut in cutting_points:
-
             if cut['start'] < title_end:
                 cut['start'] = title_start
 
@@ -585,8 +574,8 @@ def additional_option_cut_text(content, es_params):
                 content_to_add += ' ...<br><br>'
 
             new_content += content_to_add
-
         return new_content
+    return content
 
 
 @login_required
