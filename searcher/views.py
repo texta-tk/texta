@@ -223,7 +223,7 @@ def get_table_content(request):
     request_param = request.GET
     echo = int(request_param['sEcho'])
     filter_params = json.loads(request_param['filterParams'])
-    es_params = {filter_param['name']: filter_param['value'] for filter_param in filter_params}
+    es_params = {filter_param['name']: filter_param['value'] for filter_param in filter_params}       
     es_params['examples_start'] = request_param['iDisplayStart']
     es_params['num_examples'] = request_param['iDisplayLength']
     result = search(es_params, request)
@@ -350,7 +350,7 @@ def convert_clustering_data(cluster_m):
     return out
 
 
-def highlight_cluster_keywords(documents,keywords):
+def highlight_cluster_keywords(documents, keywords):
     out = []
     for document in documents:
         to_highlighter = []
@@ -389,7 +389,7 @@ def search(es_params, request):
         es_m.set_query_parameter('size', es_params['num_examples'])
 
         # HIGHLIGHTING THE MATCHING FIELDS
-        pre_tag = '<span style="background-color:#FFD119" class="[ES]">'
+        pre_tag = '<span class="[HL]" style="background-color:#FFD119">'
         post_tag = "</span>"
         highlight_config = {"fields": {}, "pre_tags": [pre_tag], "post_tags": [post_tag]}
         for field in es_params:
@@ -477,6 +477,10 @@ def search(es_params, request):
                                                   content
                             )
 
+                # Checks if user wants to see full text or short version
+                if 'show_short_version' in es_params.keys():
+                    content = additional_option_cut_text(content, es_params)
+
                 # Append the final content of this col to the row
                 row.append(content)
 
@@ -496,6 +500,82 @@ def search(es_params, request):
 
         out = {'column_names': [], 'aaData': [], 'iTotalRecords': 0, 'iTotalDisplayRecords': 0, 'lag': 0}
         return out
+
+
+def additional_option_cut_text(content, es_params):
+    content = unicode(content)
+
+    if '<span class="[HL]"' in content:
+        size = int(es_params["short_version_n_char"])
+
+        # List of points where to cut the text
+        cutting_points = []
+        span_location = 0
+        title_start = 0
+        title_end = 0
+
+        # cut start of the string separately
+        if content[:5] == '<span':
+
+            title_end = content.find('</span')
+            title_start = title_end - size
+
+            if title_start < 0:
+                title_start = 0
+            else:
+                while content[title_start] != ' ' and title_start > 0:
+                    title_start -= 1
+
+            if '>' in content[title_start:title_end]:
+                title_start = content.find('>') + 1
+
+        # Goes through the text and finds highlighted text and saves 100 letter before and after
+        while '<span class="[HL]' in content[span_location:]:
+
+            span_location = content.find('<span class="[HL]', span_location)
+            start = span_location - size
+            
+            if start <= 0:
+                start = 0
+            else:
+                while content[start] != ' ' and start > 0:
+                    start -= 1
+
+            end = content.find('/span>', span_location) + (size + 6)
+            if end >= len(content):
+                end = len(content)
+            else:
+                while content[end] != ' ' and end < len(content) - 1:
+                    end += 1
+
+            # Checks if cutting poits merege
+            if cutting_points:
+                if start <= cutting_points[-1]['end']:
+                    cutting_points[-1]['end'] = end
+                else:
+                    cutting_points.append({'start': start, 'end': end})
+            else:
+                cutting_points.append({'start': start, 'end': end})
+            span_location += 1
+
+        #Do the cuts
+        new_content = ''
+
+        for cut in cutting_points:
+            if cut['start'] < title_end:
+                cut['start'] = title_start
+
+            if cut['start'] == 0:
+                content_to_add = content[cut['start']:cut['end']].strip()
+            else:
+                content_to_add = '... ' + content[cut['start']:cut['end']].strip()
+
+            if cut['end'] != len(content):
+                content_to_add += ' ...<br><br>'
+
+            new_content += content_to_add
+        return new_content
+    return content
 
 
 @login_required
