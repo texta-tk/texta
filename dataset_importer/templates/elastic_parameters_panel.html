@@ -1,18 +1,30 @@
-<div class="panel">
-    <div class="panel-body parameter-panel">
-        <div class="form-group">
-            <label class="control-label">New index name</label>
-            <input class="form-control" name="elastic_index" placeholder="my_data_source">
-        </div>
-
-        <div class="form-group">
-            <label class="control-label">New mapping name</label>
-            <input class="form-control" name="elastic_mapping" placeholder="my_articles">
-        </div>
-
-        <div class="form-group">
-            <label class="control-label">Upload field specification file: (optional)</label>
-            <input type="file" name="elastic_schema_file">
-        </div>
+<fieldset>
+    <legend>
+        TEXTA Dataset
+        <span data-toggle="tooltip" data-placement="bottom" title="Details for the created TEXTA dataset" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+    </legend>
+    <div class="form-group">
+        <label class="control-label">
+            New dataset name:
+            <span data-toggle="tooltip" data-placement="bottom" title="Name to distinguish the dataset. Letters will be transformed to lowercase and spaces substituted by underscores" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+        </label>
+        <input class="form-control" name="elastic_name" placeholder="my_data_source">
     </div>
-</div>
+    <div class="form-group">
+        <label class="control-label">
+            List of not processed fields (optional):
+            <span data-toggle="tooltip" data-placement="bottom" title="Textual fields will be processed in order to provide more powerful searching capabilities. However, if some fields contain special characters or it's otherwise important to keep them exactly as they are, list them one under another." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+        </label>
+        <textarea class="form-control" rows="1" name="elastic_not_analyzed"></textarea>
+    </div>
+    <div class="form-group">
+        <label class="control-label">
+            Keep synchronized if possible:
+            <span data-toggle="tooltip" data-placement="bottom" title="TEXTA is capable of keeping datasets in sync. However, not all data sources can be synced - e.g. uploaded archives" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+        </label>
+        <select id="keep_synchronized" class="form-control">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+        </select>
+    </div>
+</fieldset>

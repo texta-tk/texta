@@ -1,6 +1,7 @@
 $('select').val('');
 $('input[name="file"]').val('');
 $('#keep_synchronized').val('false');
+$('.apply-preprocessor').val([]);
 
 $('#input-type').change(function () {
     $(".input-type-pane").hide();
@@ -66,4 +67,45 @@ function removeImportJob(id) {
             $('#jobs-table-div').load('reload_table');
         }
     })
+}
+
+
+
+
+
+$('.apply-preprocessor').click(function() {
+    var preprocessorIdx = $(this).data('preprocessorIdx');
+    if (this.checked) {
+        $('#preprocessor-' + preprocessorIdx + '-parameters').slideDown()
+    } else {
+        $('#preprocessor-' + preprocessorIdx + '-parameters').slideUp()
+    }
+});
+
+$('#data-formats').change(function() {
+    var parameterTags = getSelectedFormatsParameterTags(this);
+    displayFormatsParameters(parameterTags);
+});
+
+function getSelectedFormatsParameterTags(selectTag) {
+    var checkedFormats = $(selectTag).find('option:checked');
+    var parameterTags = new Set();
+
+    checkedFormats.each(function() {
+        var formatTags = $(this).data('parametersTags').split(',');
+        for (var i = 0; i < formatTags.length; i++) {
+            parameterTags.add(formatTags[i]);
+        }
+    });
+
+    return parameterTags;
+}
+
+function displayFormatsParameters(parameterTags) {
+    $('.format-parameters').removeClass('relevant-parameters');
+    console.log(parameterTags);
+
+    for (var it = parameterTags.values(), tag= null; tag=it.next().value; ) {
+        $('#' + tag + '-format-parameters').addClass('relevant-parameters');
+    }
 }

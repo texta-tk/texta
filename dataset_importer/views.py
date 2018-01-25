@@ -28,9 +28,14 @@ if (DATASET_IMPORTER_CONF['sync']['enabled'] is True and
 
 def index(request):
     jobs = DatasetImport.objects.all()
+    enabled_preprocessors = [preprocessor for preprocessor in DATASET_IMPORTER_CONF['preprocessors']
+                             if preprocessor['is_enabled']]
 
-    return render(request, 'dataset_importer.html',
-                  context={'enabled_input_types': DATASET_IMPORTER_CONF['enabled_input_types'], 'jobs': jobs})
+    return render(request, 'dataset_importer.html', context={
+        'enabled_input_types': DATASET_IMPORTER_CONF['enabled_input_types'],
+        'jobs': jobs,
+        'enabled_preprocessors': enabled_preprocessors
+    })
 
 
 def reload_table(request):

@@ -1,6 +1,12 @@
 {% extends "index.html" %}
 {% block app %}
 
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
+
     <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}dataset_importer/dataset_importer.css">
 
     <div class="col-md-4">
@@ -10,31 +16,97 @@
             </div>
 
             <div class="panel-body">
-                <div class="form-group">
-                    <label class="control-label">Input type</label>
-                    <select id="input-type" class="form-control">
-                        <option value="file">File</option>
-                        <option value="database">Database</option>
-                    </select>
-                </div>
+                <fieldset>
+                    <legend>
+                        Data formats
+                        <span data-toggle="tooltip" data-placement="bottom" title="Select all the data formats that you want to be processed within your data source" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+                    </legend>
+                    <div class="form-group">
+                        <select id="data-formats" class="selectpicker form-control" multiple data-selected-text-format="static" title="Select all applicable formats">
+                            <optgroup label="Archives">
+                                {% for input_type in  enabled_input_types.archive %}
+                                    <option value="{{ input_type.value }}" data-parameters-tags="{{ input_type.parameter_tags }}" data-input-category="archive">{{ input_type.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="Simple documents">
+                                {% for input_type in  enabled_input_types.single %}
+                                    <option value="{{ input_type.value }}" data-parameters-tags="{{ input_type.parameter_tags }}" data-input-category="file">{{ input_type.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="Document collections">
+                                {% for input_type in  enabled_input_types.collection %}
+                                    <option value="{{ input_type.value }}" data-parameters-tags="{{ input_type.parameter_tags }}" data-input-category="file">{{ input_type.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="Databases">
+                                {% for input_type in  enabled_input_types.database %}
+                                    <option value="{{ input_type.value }}" data-parameters-tags="{{ input_type.parameter_tags }}" data-input-category="database">{{ input_type.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                    </div>
+                </fieldset>
 
-                <div id="input-type-panes" class="tab-content">
-                    <div class="input-type-pane" id="file" hidden>
-                        {% include "input_types/file.html" %}
+                <fieldset class="form-group">
+                    <legend>
+                        Data source
+                        <span data-toggle="tooltip" data-placement="bottom" title="Necessary details and parameters for the selected input data formats" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+                    </legend>
+
+                    <div>
+                        <div id="file-format-parameters" class="format-parameters">
+                            <div class="radio">
+                                <label class="active">
+                                    <input type="radio" name="data-source" checked="">
+                                    <input type="file" name="file" title="Select file/archive">
+                                </label>
+                            </div>
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="data-source">
+                                    <input class="form-control" name="url" placeholder="URL to file/archive">
+                                </label>
+                            </div>
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="data-source">
+                                    <input class="form-control" name="directory" placeholder="Local directory path">
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="input-type-pane" id="database" hidden>
-                        {% include "input_types/database.html" %}
-                    </div>
-                </div>
+                </fieldset>
 
-                <div class="form-group">
-                    <label class="control-label">Keep synchronized if possible</label>
-                    <select id="keep_synchronized" class="form-control">
-                        <option value="true">Yes</option>
-                        <option value="false">No</option>
-                    </select>
-                </div>
+
+
+                {% include "elastic_parameters_panel.html" %}
+
+                <fieldset class="form-group">
+                    <legend>
+                        Preprocessors
+                        <span data-toggle="tooltip" data-placement="bottom" title="Preprocessors are applied - if possible - to each document before they are stored" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+                    </legend>
+
+                    <div class="list-group">
+                       {% for preprocessor in enabled_preprocessors %}
+                            <div class="list-group-item">
+                                <div class="list-group-item-heading">
+                                    <div class="checkbox">
+                                        <label class="preprocessor-name">
+                                            <input type="checkbox" class="apply-preprocessor" value="{{ preprocessor.code }}" data-preprocessor-idx="{{ forloop.counter }}">{{ preprocessor.name }}
+                                            <span data-toggle="tooltip" data-placement="bottom" title="{{ preprocessor.description }}" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="list-group-item-text preprocessor-parameters" id="preprocessor-{{ forloop.counter }}-parameters">
+                                    {% include preprocessor.parameters_template %}
+                                </div>
+                            </div>
+                        {%  endfor %}
+                    </div>
+
+                </fieldset>
 
             </div>
         </div>

@@ -149,6 +149,7 @@ class Highlighter(object):
                     text_index_to_data_index[alignment[text_index]].append(data_index)
 
         text_index_to_data_index = [frozenset(data_indices) for data_indices in text_index_to_data_index]
+
         spans_to_tags = [(spans, self._get_tag_from_highlight_data([data_mapping[data_index] for data_index in data_indices]))
                          for spans, data_indices in self._get_spans_to_data_indices(text_index_to_data_index)]
 
@@ -158,6 +159,7 @@ class Highlighter(object):
         spans_to_data_indices = []
         start_idx = 0
         previous_data_indices = text_index_to_data_index[0]
+        text_idx = None
 
         for text_idx, data_indices in enumerate(text_index_to_data_index):
             if data_indices == previous_data_indices:
@@ -166,6 +168,9 @@ class Highlighter(object):
             spans_to_data_indices.append(([start_idx, text_idx], previous_data_indices))
             previous_data_indices = data_indices
             start_idx = text_idx
+
+        if text_idx is not None:
+            spans_to_data_indices.append(([start_idx, text_idx+1], previous_data_indices))
 
         return spans_to_data_indices
 

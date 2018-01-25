@@ -1,3 +1,28 @@
 .parameter-panel {
     background-color: #f3f3f3;
 }
+
+.texta-tooltip {
+    cursor: pointer;
+}
+
+.preprocessor-parameters {
+    display: none;
+}
+
+.preprocessor-checkbox {
+    background-color: whitesmoke;
+    color: black;
+}
+
+.preprocessor-name {
+    font-weight: bold;
+}
+
+.format-parameters {
+    display: none;
+}
+
+.relevant-parameters {
+    display: block;
+}
