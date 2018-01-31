@@ -479,13 +479,11 @@ def search(es_params, request):
                                                   tagged_text=content)
                 else:
                     highlight_data = []
-                    content = Highlighter(average_colors=True, 
+                    content = Highlighter(average_colors=True, derive_spans=True,
                                               additional_style_string='font-weight: bold;').highlight(
-                                                  unicode(old_content),
+                                                  old_content,
                                                   highlight_data,
-                                                  tagged_text=unicode(content))
-
-                    print [content]
+                                                  tagged_text=content)
 
                 # Checks if user wants to see full text or short version
                 if 'show_short_version' in es_params.keys():
@@ -525,7 +523,6 @@ def additional_option_cut_text(content, es_params):
         
         # merge together ovelapping spans
         for i,html_span in enumerate(html_spans):
-            print html_span.get('class')
             if not html_span.get('class'):
                 span_text = html_span.text
                 span_tokens = span_text.split(' ')
