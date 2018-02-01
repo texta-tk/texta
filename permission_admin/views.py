@@ -21,6 +21,8 @@ import multiprocessing
 import os
 import shutil
 
+import pdb
+
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def add_dataset(request):
@@ -83,12 +85,14 @@ def open_close_dataset(request):
 @user_passes_test(lambda u: u.is_superuser)
 def index(request):
     indices = ES_Manager.get_indices()
+    indices = sorted(indices, key=lambda x: x['index']) #sort alphabetically
     datasets = get_datasets(indices=indices)
     users = User.objects.all()
 
     users = annotate_users_with_permissions(users, datasets)
 
     template = loader.get_template('permission_admin.html')
+
     return HttpResponse(template.render({'users':users,'datasets':datasets,'indices':indices,'STATIC_URL':STATIC_URL,'URL_PREFIX':URL_PREFIX},request))
 
 def annotate_users_with_permissions(users, datasets):
@@ -132,7 +136,10 @@ def get_datasets(indices=None):
                     ds_out['status'] = index['status']
                     ds_out['docs_count'] = index['docs_count']
                     ds_out['store_size'] = index['store_size']
+    
+
         datasets_out.append(ds_out)
+
     return datasets
 
 
