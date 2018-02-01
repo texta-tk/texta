@@ -26,6 +26,7 @@ from utils.cluster_manager import ClusterManager
 from utils.highlighter import Highlighter, ColorPicker
 from utils.autocomplete import Autocomplete
 
+
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links
 
 ES_SCROLL_BATCH = 100
@@ -229,6 +230,7 @@ def get_table_content(request):
     es_params['num_examples'] = request_param['iDisplayLength']
     result = search(es_params, request)
     result['sEcho'] = echo
+
     return HttpResponse(json.dumps(result, ensure_ascii=False))
 
 
@@ -413,7 +415,10 @@ def search(es_params, request):
         """
 
         out['iTotalRecords'] = response['hits']['total']
-        out['iTotalDisplayRecords'] = response['hits']['total']
+        out['iTotalDisplayRecords'] = response['hits']['total'] # number of docs
+
+        if int(out['iTotalDisplayRecords']) > 10000: # Allow less pages if over page limit
+            out['iTotalDisplayRecords'] = '10000'
 
         # get columns names from ES mapping
         out['column_names'] = es_m.get_column_names()
@@ -478,17 +483,19 @@ def search(es_params, request):
                                                   highlight_data,
                                                   tagged_text=content)
                 else:
-                    highlight_data = []
-                    content = Highlighter(average_colors=True, derive_spans=True,
-                                              additional_style_string='font-weight: bold;').highlight(
-                                                  old_content,
-                                                  highlight_data,
-                                                  tagged_text=content)
 
+                    # WHEN USING OLD FORMAT DOCUMENTS, SOMETIMES BREAKS AT HIGHLIGHTER, CHECK IF ITS STRING INSTEAD OF FOR EXAMPLE LIST
+                    if (isinstance(content, basestring)):
+                        highlight_data = []
+                        content = Highlighter(average_colors=True, derive_spans=True,
+                                                additional_style_string='font-weight: bold;').highlight(
+                                                    old_content,
+                                                    highlight_data,
+                                                    tagged_text=content)
+                    
                 # Checks if user wants to see full text or short version
                 if 'show_short_version' in es_params.keys():
                     content = additional_option_cut_text(content, es_params)
-
                 # Append the final content of this col to the row
                 row.append(content)
 

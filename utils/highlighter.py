@@ -73,7 +73,6 @@ class Highlighter(object):
 
     def _derive_highlight_data(self, tagged_text):
         highlight_data = []
-
         span_end = 0
         start_tag_index = tagged_text.find('<span', span_end)
         index_discount = 0
@@ -203,7 +202,7 @@ class Highlighter(object):
         title = ('&#13;'.join(title_lines))
         color = self._get_color([highlight_data['color'] for highlight_data in highlight_data_list if 'color' in highlight_data])
 
-        if '[fact]' in title or '[ES]' in title:
+        if '[fact]' in title or '[fact_val]' in title or '[ES]' in title:
             return u'<span class="[HL]" title="{0}" style="background-color: {1};{2}">'.format(
             title, color, (self._additional_style_string if color != 'none' else ''))
 
