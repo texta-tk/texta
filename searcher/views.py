@@ -5,6 +5,7 @@ import json
 import csv
 import time
 import re
+import bs4
 from datetime import datetime, timedelta as td
 from collections import defaultdict
 
@@ -453,6 +454,7 @@ def search(es_params, request):
                     content = hit['highlight'][col][0]
 
                 # Prettify and standardize highlights
+                
                 if name_to_inner_hits[col]:
                     highlight_data = []
                     color_map = ColorPicker.get_color_map(keys={hit['fact'] for hit in name_to_inner_hits[col]})
@@ -474,8 +476,14 @@ def search(es_params, request):
                                               additional_style_string='font-weight: bold;').highlight(
                                                   old_content,
                                                   highlight_data,
-                                                  content
-                            )
+                                                  tagged_text=content)
+                else:
+                    highlight_data = []
+                    content = Highlighter(average_colors=True, derive_spans=True,
+                                              additional_style_string='font-weight: bold;').highlight(
+                                                  old_content,
+                                                  highlight_data,
+                                                  tagged_text=content)
 
                 # Checks if user wants to see full text or short version
                 if 'show_short_version' in es_params.keys():
@@ -503,79 +511,47 @@ def search(es_params, request):
 
 
 def additional_option_cut_text(content, es_params):
+    window_size = int(es_params["short_version_n_char"])
     content = unicode(content)
 
-    if '<span class="[HL]"' in content:
-        size = int(es_params["short_version_n_char"])
+    if u'[HL]' in content:
+        soup = bs4.BeautifulSoup(content,'lxml')
+        html_spans = soup.find_all('span')
 
-        # List of points where to cut the text
-        cutting_points = []
-        span_location = 0
-        title_start = 0
-        title_end = 0
-
-        # cut start of the string separately
-        if content[:5] == '<span':
-
-            title_end = content.find('</span')
-            title_start = title_end - size
-
-            if title_start < 0:
-                title_start = 0
-            else:
-                while content[title_start] != ' ' and title_start > 0:
-                    title_start -= 1
-
-            if '>' in content[title_start:title_end]:
-                title_start = content.find('>') + 1
-
-        # Goes through the text and finds highlighted text and saves 100 letter before and after
-        while '<span class="[HL]' in content[span_location:]:
-
-            span_location = content.find('<span class="[HL]', span_location)
-            start = span_location - size
-            
-            if start <= 0:
-                start = 0
-            else:
-                while content[start] != ' ' and start > 0:
-                    start -= 1
-
-            end = content.find('/span>', span_location) + (size + 6)
-            if end >= len(content):
-                end = len(content)
-            else:
-                while content[end] != ' ' and end < len(content) - 1:
-                    end += 1
-
-            # Checks if cutting poits merege
-            if cutting_points:
-                if start <= cutting_points[-1]['end']:
-                    cutting_points[-1]['end'] = end
+        html_spans_merged = []
+        num_spans = len(html_spans)
+        
+        # merge together ovelapping spans
+        for i,html_span in enumerate(html_spans):
+            if not html_span.get('class'):
+                span_text = html_span.text
+                span_tokens = span_text.split(' ')
+                span_tokens_len = len(span_tokens)
+                if i == 0:
+                    if span_tokens_len > window_size:
+                        new_text = u' '.join(span_tokens[-window_size:])
+                        new_text = u'... {0}'.format(new_text)
+                        html_span.string = new_text
+                    html_spans_merged.append(unicode(html_span))
+                elif i == num_spans-1:
+                    if span_tokens_len > window_size:
+                        new_text = u' '.join(span_tokens[:-window_size])
+                        new_text = u'{0} ...'.format(new_text)
+                        html_span.string = new_text                    
+                    html_spans_merged.append(unicode(html_span))
                 else:
-                    cutting_points.append({'start': start, 'end': end})
+                    if span_tokens_len > window_size:
+                        new_text_left = u' '.join(span_tokens[:window_size])
+                        new_text_right = u' '.join(span_tokens[-window_size:])
+                        new_text = u'{0} ...\n... {1}'.format(new_text_left,new_text_right)
+                        html_span.string = new_text                    
+                    html_spans_merged.append(unicode(html_span))
             else:
-                cutting_points.append({'start': start, 'end': end})
-            span_location += 1
-
-        #Do the cuts
-        new_content = ''
-
-        for cut in cutting_points:
-            if cut['start'] < title_end:
-                cut['start'] = title_start
-
-            if cut['start'] == 0:
-                content_to_add = content[cut['start']:cut['end']].strip()
-            else:
-                content_to_add = '... ' + content[cut['start']:cut['end']].strip()
-
-            if cut['end'] != len(content):
-                content_to_add += ' ...<br><br>'
-
-            new_content += content_to_add
-        return new_content
-    return content
+                html_spans_merged.append(unicode(html_span))
+                    
+        return ''.join(html_spans_merged)
+    else:
+        return content
 
 
 @login_required
