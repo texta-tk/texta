@@ -12,8 +12,14 @@ from dataset_importer.archive_extractor.extractor import ArchiveExtractor
 from multiprocessing import Pool, Lock
 from dataset_importer.models import DatasetImport
 from dataset_importer.syncer.SQLiteIndex import SQLiteIndex
+from texta.settings import DATASET_IMPORTER
 
 DAEMON_BASED_DATABASE_FORMATS = {'postgres', 'mongodb', 'elastic'}
+ARCHIVE_FORMATS = {'zip', 'tar'}
+PREPROCESSORS = {
+    preprocessor['code']: preprocessor['class'](**preprocessor['arguments'])
+    for preprocessor in DATASET_IMPORTER['preprocessors']
+}
 
 
 class DatasetImporter(object):
@@ -72,20 +78,22 @@ class DatasetImporter(object):
             pass
 
     def _preprocess_import(self, parameters, request_user, files_dict):
+        parameters['formats'] = json.loads(parameters.get('formats', '[]'))
+        parameters['preprocessors'] = json.loads(parameters.get('preprocessors', '[]'))
         parameters['is_local'] = True if parameters.get('directory', None) else False
         parameters['keep_synchronized'] = self._determine_if_should_synchronize(parameters=parameters)
 
         if parameters['is_local'] is False:
             parameters['directory'] = self._prepare_import_directory(self._root_directory)
 
-        if parameters['format'] not in DAEMON_BASED_DATABASE_FORMATS:
+        if any(format not in DAEMON_BASED_DATABASE_FORMATS for format in parameters['formats']):
             if 'file' in files_dict and parameters.get('is_local', False) is False:
                 parameters['file_path'] = self._store_file(os.path.join(parameters['directory'], files_dict['file'].name),
                                                            files_dict['file'])
 
         parameters['import_id'] = self._create_dataset_import(parameters, request_user)
 
-        parameters['elastic_url'] = self._es_url
+        parameters['texta_elastic_url'] = self._es_url
         parameters['index_sqlite_path'] = self._index_sqlite_path
 
         return parameters
@@ -110,7 +118,7 @@ class DatasetImporter(object):
                 return True
             elif parameters.get('url', None):
                 return True
-            elif parameters.get('format', None) in DAEMON_BASED_DATABASE_FORMATS:
+            elif all(format in DAEMON_BASED_DATABASE_FORMATS for format in parameters.get('format', [])): # OR should sync syncables?
                 return True
             else:
                 return False
@@ -121,7 +129,7 @@ class DatasetImporter(object):
         dataset_import = self._dao.objects.create(
             source_type=self._get_source_type(parameters.get('format', ''), parameters.get('archive', '')),
             source_name=self._get_source_name(parameters),
-            elastic_index=parameters.get('elastic_index', ''), elastic_mapping=parameters.get('elastic_mapping', ''),
+            elastic_index=parameters.get('texta_elastic_index', ''), elastic_mapping=parameters.get('texta_elastic_mapping', ''),
             start_time=datetime.now(), end_time=None, user=request_user, status='Processing', finished=False,
             must_sync=parameters.get('keep_synchronized', False)
         )
@@ -173,11 +181,7 @@ def _import_dataset(parameter_dict, n_processes, process_batch_size):
         if 'file_path' not in parameter_dict:
             parameter_dict['file_path'] = download(parameter_dict['url'], parameter_dict['directory'])
 
-        if 'archive' in parameter_dict:
-            ArchiveExtractor.extract_archive(
-                file_path=parameter_dict['file_path'],
-                archive_format=parameter_dict['archive']
-            )
+        _unextract_archives(parameter_dict)
 
     reader = DocumentReader(directory=parameter_dict['directory'])
     _set_total_documents(parameter_dict=parameter_dict, reader=reader)
@@ -187,6 +191,16 @@ def _import_dataset(parameter_dict, n_processes, process_batch_size):
     # if parameter_dict['is_local'] is False:
     #     shutil.rmtree(parameter_dict['directory'])
 
+
+def _unextract_archives(parameter_dict):
+    # Currently supports only extracting the first archive format it encounters - TODO more robust
+    for format in parameter_dict.get('formats', []):
+        if format in ARCHIVE_FORMATS:
+            ArchiveExtractor.extract_archive(
+                file_path=parameter_dict['file_path'],
+                archive_format=parameter_dict['archive']
+            )
+            break
 
 def _init_pool(lock_):
     global lock
@@ -209,7 +223,7 @@ def _complete_import_job(parameter_dict):
 
 
 def _processing_job(documents, parameter_dict):
-    dataset_name = '{0}_{1}'.format(parameter_dict['elastic_index'], parameter_dict['elastic_mapping'])
+    dataset_name = '{0}_{1}'.format(parameter_dict['texta_elastic_index'], parameter_dict['texta_elastic_mapping'])
     original_ids = [document['_texta_id'] for document in documents]
     index = SQLiteIndex(sqlite_file_path=parameter_dict['index_sqlite_path'])
     new_ids = set(index.get_new_entries(dataset=dataset_name, candidate_values=original_ids))
@@ -217,7 +231,10 @@ def _processing_job(documents, parameter_dict):
     for document in documents:
         del document['_texta_id']
 
-    processed_documents = list(DocumentProcessor(subprocessors=[]).process(documents=documents))
+    processed_documents = list(DocumentProcessor(subprocessors=[
+        PREPROCESSORS[preprocessor] for preprocessor in parameter_dict['preprocessors']
+    ]).process(documents=documents))
+
     storer = DocumentStorer.get_storer(**parameter_dict)
     stored_documents_count = storer.store(processed_documents)
     if processed_documents:

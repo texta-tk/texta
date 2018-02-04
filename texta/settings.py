@@ -269,7 +269,7 @@ DATASET_IMPORTER = {
     'import_processes': 2,
     'process_batch_size': 1000,
     'sync': {
-        'enabled': True,
+        'enabled': False,
         'interval_in_seconds': 10,
         'index_sqlite_path': os.path.join(BASE_DIR, 'database', 'import_sync.db')
     },
@@ -308,22 +308,10 @@ DATASET_IMPORTER = {
             'parameters_template': 'preprocessor_parameters/mlp.html',
             'arguments': {
                 'mlp_url': 'http://10.6.6.92/mlp/process',
-                'enabled_features': ['text', 'lang']
+                'enabled_features': ['text', 'lang', 'texta_facts']
             },
             'is_enabled': True
         },
-        {
-            'name': 'Multilingual preprocessor',
-            'code': 'mlp',
-            'description': 'Extracts lemmas and identifies language code from multiple languages.',
-            'class': MlpProcessor,
-            'parameters_template': 'preprocessor_parameters/mlp.html',
-            'arguments': {
-                'mlp_url': 'http://10.6.6.92/mlp/process',
-                'enabled_features': ['text', 'lang']
-            },
-            'is_enabled': True
-        }
     ]
 }
 

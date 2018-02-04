@@ -10,22 +10,33 @@ class DocumentReader(object):
     def read_documents(self, **kwargs):
         reading_parameters = kwargs
 
-        if self._available_formats and reading_parameters['format'] not in self._available_formats:
-            raise NotSupportedFormat()
+        if self._available_formats:
+            for format in reading_parameters['formats']:
+                if format not in self._available_formats:
+                    raise NotSupportedFormat(format)
 
-        adapter = adapter_map[reading_parameters['format']]
-
-        return adapter.get_features(**reading_parameters)
+        for format in reading_parameters['formats']:
+            adapter = adapter_map[format]
+            for features in adapter.get_features(**reading_parameters):
+                yield features
 
     def count_total_documents(self, **kwargs):
         reading_parameters = kwargs
 
-        if self._available_formats and reading_parameters['format'] not in self._available_formats:
-            raise NotSupportedFormat()
+        if self._available_formats:
+            for format in reading_parameters['formats']:
+                if format not in self._available_formats:
+                    raise NotSupportedFormat(format)
 
-        adapter = adapter_map[reading_parameters['format']]
+        total_docs = 0
 
-        return adapter.count_total_documents(**kwargs)
+        for format in reading_parameters['formats']:
+            adapter = adapter_map[format]
+            total_docs += adapter.count_total_documents(**kwargs)
+
+        return total_docs
+
+
 
 
 class NotSupportedFormat(Exception):

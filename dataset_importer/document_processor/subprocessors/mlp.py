@@ -5,7 +5,7 @@ import json
 
 
 class MlpProcessor(object):
-    def __init__(self, mlp_url=None, enabled_features=['text', 'lang']):
+    def __init__(self, mlp_url=None, enabled_features=['text', 'lang', 'texta_facts']):
         self._mlp_url = mlp_url
         self._enabled_features = set(enabled_features)
 
@@ -14,12 +14,12 @@ class MlpProcessor(object):
             return documents
 
         if not kwargs.get('feature_map', None):
-            kwargs['feature_map'] = {'text': 'text', 'lang': 'lang'}
+            kwargs['feature_map'] = {'text': 'text', 'lang': 'lang', 'texta_facts': 'texta_facts'}
 
-        if not kwargs.get('input_feature', None):
-            kwargs['input_feature'] = 'text'
+        if not kwargs.get('mlp_preprocessor_input_feature', None):
+            kwargs['mlp_preprocessor_input_feature'] = 'text'
 
-        input_feature = kwargs['input_feature']
+        input_feature = kwargs['mlp_preprocessor_input_feature']
         feature_map = kwargs['feature_map']
 
         texts = [document[input_feature] for document in documents]
@@ -31,7 +31,6 @@ class MlpProcessor(object):
             for feature in analyzation_datum:
                 if feature in self._enabled_features:
                     documents[analyzation_idx][feature_map[feature]] = analyzation_datum[feature]
-
         return documents
 
 

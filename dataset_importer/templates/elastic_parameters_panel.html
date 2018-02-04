@@ -8,21 +8,21 @@
             New dataset name:
             <span data-toggle="tooltip" data-placement="bottom" title="Name to distinguish the dataset. Letters will be transformed to lowercase and spaces substituted by underscores" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
         </label>
-        <input class="form-control" name="elastic_name" placeholder="my_data_source">
+        <input class="form-control" id="texta-elastic-dataset-name" placeholder="my_data_source">
     </div>
     <div class="form-group">
         <label class="control-label">
             List of not processed fields (optional):
             <span data-toggle="tooltip" data-placement="bottom" title="Textual fields will be processed in order to provide more powerful searching capabilities. However, if some fields contain special characters or it's otherwise important to keep them exactly as they are, list them one under another." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
         </label>
-        <textarea class="form-control" rows="1" name="elastic_not_analyzed"></textarea>
+        <textarea class="form-control" rows="1" id="texta-elastic-not-analyzed"></textarea>
     </div>
     <div class="form-group">
         <label class="control-label">
             Keep synchronized if possible:
             <span data-toggle="tooltip" data-placement="bottom" title="TEXTA is capable of keeping datasets in sync. However, not all data sources can be synced - e.g. uploaded archives" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
         </label>
-        <select id="keep_synchronized" class="form-control">
+        <select id="keep-synchronized" class="form-control">
             <option value="true">Yes</option>
             <option value="false">No</option>
         </select>

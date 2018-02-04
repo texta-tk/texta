@@ -46,6 +46,7 @@ def reload_table(request):
 
 
 def import_dataset(request):
+    print(request.POST)
     DATASET_IMPORTER.import_dataset(request=request)
 
     return HttpResponse()

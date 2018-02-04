@@ -1,6 +1,6 @@
 $('select').val('');
 $('input[name="file"]').val('');
-$('#keep_synchronized').val('false');
+$('#keep-synchronized').val('false');
 $('.apply-preprocessor').val([]);
 
 $('#input-type').change(function () {
@@ -28,23 +28,50 @@ $('#database-type').change(function () {
     $("#" + $(this).val()).show();
 });
 
-function importDataset(format) {
+// function importDataset(format) {
+//     /**
+//      * Format: file extension
+//      */
+//
+//     var form = $('#' + format + '-parameters')[0];
+//     var formData = new FormData(form);
+//     var type = $('#input-type').val();
+//     if (type === 'file') {
+//         var archiveFormat = $('#archive-format').val();
+//         if (archiveFormat !== 'no-archive') {
+//             formData.append('archive', archiveFormat);
+//         }
+//     }
+//
+//     var keepSynchronized = $('#keep_synchronized').val();
+//     formData.append('keep_synchronized', keepSynchronized);
+//
+//     $.ajax({
+//         url: 'import',
+//         data: formData,
+//         type: 'POST',
+//         contentType: false,
+//         processData: false,
+//         success: function() {
+//             $('#jobs-table-div').load('reload_table');
+//         }
+//     });
+// }
+
+$('#import-dataset-btn').click(function() {
+    importDataset();
+});
+
+function importDataset() {
     /**
      * Format: file extension
      */
 
-    var form = $('#' + format + '-parameters')[0];
-    var formData = new FormData(form);
-    var type = $('#input-type').val();
-    if (type === 'file') {
-        var archiveFormat = $('#archive-format').val();
-        if (archiveFormat !== 'no-archive') {
-            formData.append('archive', archiveFormat);
-        }
-    }
-
-    var keepSynchronized = $('#keep_synchronized').val();
-    formData.append('keep_synchronized', keepSynchronized);
+    var formData = new FormData();
+    formData = collectFormats(formData);
+    formData = collectTextaDatasetArguments(formData);
+    formData = collectDataArguments(formData);
+    formData = collectPreprocessorArguments(formData);
 
     $.ajax({
         url: 'import',
@@ -57,6 +84,8 @@ function importDataset(format) {
         }
     });
 }
+
+
 
 function removeImportJob(id) {
     $.ajax({
@@ -72,6 +101,13 @@ function removeImportJob(id) {
 
 
 
+
+$('.file-input-method-btn').click(function() {
+    $('.file-input-method-btn').removeClass('selected');
+    $(this).addClass('selected');
+    $('.file-input-method').hide();
+    $('#' + $(this).val() + '-file-input').show();
+});
 
 $('.apply-preprocessor').click(function() {
     var preprocessorIdx = $(this).data('preprocessorIdx');
@@ -103,7 +139,6 @@ function getSelectedFormatsParameterTags(selectTag) {
 
 function displayFormatsParameters(parameterTags) {
     $('.format-parameters').removeClass('relevant-parameters');
-    console.log(parameterTags);
 
     for (var it = parameterTags.values(), tag= null; tag=it.next().value; ) {
         $('#' + tag + '-format-parameters').addClass('relevant-parameters');

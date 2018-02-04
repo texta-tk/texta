@@ -26,3 +26,12 @@
 .relevant-parameters {
     display: block;
 }
+
+.file-input-method-btn.selected {
+    background-color: #73AD21;
+    color: white;
+}
+
+.file-input-method {
+    display: none;
+}

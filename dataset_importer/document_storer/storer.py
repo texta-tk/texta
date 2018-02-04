@@ -10,3 +10,7 @@ class DocumentStorer(object):
     @staticmethod
     def exists(**connection_parameters):
         return ElasticStorer.exists(**connection_parameters)
+
+    @staticmethod
+    def remove(**connection_parameters):
+        return ElasticStorer.remove(**connection_parameters)

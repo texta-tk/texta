@@ -6,8 +6,7 @@ class DocumentProcessor(object):
         self._subprocessors = subprocessors
 
     def process(self, documents):
-        for document in documents:
-            for subprocessor in self._subprocessors:
-                document = subprocessor.transform(document)
+        for subprocessor in self._subprocessors:
+            documents = subprocessor.transform(documents)
 
-            yield document
+        return documents

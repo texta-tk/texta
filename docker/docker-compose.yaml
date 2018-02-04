@@ -3,7 +3,7 @@ version: "3.4"
 services:
   elastic:
     container_name: texta-elastic
-    image: texta/db:latest
+    image: komasing/db:latest
     build: ./elasticsearch
     ports:
       - "9200"
@@ -12,10 +12,10 @@ services:
 
   texta:
     container_name: texta-app
-    image: texta/app:latest
+    image: komasing/app:latest
     build: ./texta
     ports:
-      - "80"
+      - "8000:80"
     networks:
       - texta-network
 
