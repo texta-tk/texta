@@ -399,8 +399,8 @@ class ES_Manager:
             fact_field = fact_constraint['fact_field'] if 'fact_field' in fact_constraint else ''
             fact_txt = fact_constraint['fact_txt'] if 'fact_txt' in fact_constraint else ''
             fact_operator = fact_constraint['fact_operator'] if 'fact_operator' in fact_constraint else ''
-            query_strings = [s.replace('\r', '') for s in fact_txt.split('\n')]
-            query_strings = [s.lower() for s in query_strings if s]
+            query_strings = [s.replace('\r', '').strip() for s in fact_txt.split('\n')]
+            #query_strings = [s.lower() for s in query_strings if s]
             sub_queries = []
             # Add facts query to search in facts mapping
             fact_queries = []
@@ -432,8 +432,8 @@ class ES_Manager:
                     )
                     nested_query = fact_query[-1]['nested']['query']['bool']['must']
 
-                    nested_query.append({'match': {'texta_facts.doc_path': fact_field.lower()}})
-                    nested_query.append({'match': {'texta_facts.fact': query_string}})
+                    nested_query.append({'term': {'texta_facts.doc_path': fact_field.lower()}})
+                    nested_query.append({'term': {'texta_facts.fact': query_string}})
 
         for field_id, fact_val_constraint in fact_val_constraints.items():
             fact_operator = fact_val_constraint['operator']
