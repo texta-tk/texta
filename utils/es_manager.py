@@ -15,8 +15,10 @@ if 'django' in sys.modules: # Import django-stuff only if imported from the djan
 
 from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password
 
-INNER_HITS_MAX_SIZE = 1000
+# Need to update index.max_inner_result_window to increase
+INNER_HITS_MAX_SIZE = 100
 
+headers = {'Content-Type': 'application/json'}
 
 class Singleton(type):
     _instances = {}
@@ -88,40 +90,6 @@ class ES_Manager:
         self.combined_query = None
         self._facts_map = None
         self.es_cache = ES_Cache()
-        self.headers = {'Content-Type': 'application/json'}
-
-    #def check_if_field_has_facts(self, sub_fields):
-        #""" Check if field is associate with facts in Elasticsearch
-        #"""
-        #doc_type = self.mapping.lower()
-        #field_path = [s.lower() for s in sub_fields]
-        #doc_path = '.'.join(field_path)
-
-        #request_url = '{0}/{1}/{2}/_count'.format(es_url, self.index, self.TEXTA_MAPPING)
-        #base_query = {"query": {"bool": {"filter": {'and': []}}}}
-        #base_query['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': doc_type}})
-        #base_query['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
-
-        #has_facts = self._field_has_facts(request_url, base_query)
-        #has_fact_str_val = self._field_has_fact_vals(request_url, base_query, 'facts.str_val')
-        #has_fact_num_val = self._field_has_fact_vals(request_url, base_query, 'facts.num_val')
-
-        #return has_facts, has_fact_str_val, has_fact_num_val
-
-    #def _field_has_facts(self, url, query):
-        #query = json.dumps(query)
-        #response = self.requests.post(url, data=query).json()
-
-        #return 'count' in response and response['count'] > 0
-
-    #def _field_has_fact_vals(self, url, query, value_field_name):
-        #query = copy.deepcopy(query)
-        #query['query']['bool']['filter']['and'].append({'exists': {'field': value_field_name}})
-        #query = json.dumps(query)
-
-        #response = self.requests.post(url, data=query).json()
-
-        #return 'count' in response and response['count'] > 0
 
     def check_if_field_has_facts(self, sub_fields):
         """ Check if field is associate with facts in Elasticsearch
@@ -137,8 +105,6 @@ class ES_Manager:
         #base_query['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
         base_query['query']['nested']['query']['bool']['filter'].append({'term': {'texta_facts.doc_path': doc_path}})
 
-        print base_query
-
         has_facts = self._field_has_facts(request_url, base_query)
         has_fact_str_val = self._field_has_fact_vals(request_url, base_query, 'texta_facts.str_val')
         has_fact_num_val = self._field_has_fact_vals(request_url, base_query, 'texta_facts.num_val')
@@ -149,21 +115,17 @@ class ES_Manager:
         query = copy.deepcopy(query)
         query['query']['nested']['query']['bool']['filter'].append({'exists': {'field': 'texta_facts.fact'}})
 
-        print query
-
         query = json.dumps(query)
-        response = self.requests.post(url, data=query, headers=self.headers).json()
-        print response
+        response = self.requests.post(url, data=query, headers=headers).json()
 
         return 'count' in response and response['count'] > 0
 
     def _field_has_fact_vals(self, url, query, value_field_name):
         query = copy.deepcopy(query)
-        query['query']['nested']['query']['bool']['filter']['and'].append({'exists': {'field': value_field_name}})
+        query['query']['nested']['query']['bool']['filter'].append({'exists': {'field': value_field_name}})
         query = json.dumps(query)
 
-        response = self.requests.post(url, data=query, headers=self.headers).json()
-
+        response = self.requests.post(url, data=query, headers=headers).json()
         return 'count' in response and response['count'] > 0
 
     def _decode_mapping_structure(self, structure, root_path=list()):
@@ -190,39 +152,39 @@ class ES_Manager:
         return mapping_data
 
     @staticmethod
-    def plain_get(url):
-        return ES_Manager.requests.get(url).json()
+    def plain_get(self, url):
+        return ES_Manager.requests.get(url, headers=headers).json()
     
     @staticmethod
     def plain_post(url, data=None):
-        return ES_Manager.requests.post(url, data=data).json()
+        return ES_Manager.requests.post(url, data=data, headers=headers).json()
     
     @staticmethod
     def plain_put(url, data=None):
-        return ES_Manager.requests.put(url, data=data).json()
+        return ES_Manager.requests.put(url, data=data, headers=headers).json()
     
     @staticmethod
     def plain_delete(url, data=None):
-        return ES_Manager.requests.delete(url, data=data).json()
+        return ES_Manager.requests.delete(url, data=data, headers=headers).json()
     
     @staticmethod
     def plain_search(es_url, dataset, mapping, query):
-        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(query)).json()
+        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(query), headers=headers).json()
     
     @staticmethod
     def plain_multisearch(es_url, dataset, mapping, data):
-        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_msearch',data='\n'.join(data)+'\n').json()['responses']
+        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_msearch',data='\n'.join(data)+'\n', headers=headers).json()['responses']
     
     @staticmethod
     def plain_scroll(es_url, dataset, mapping, query, expiration_str='1m'):
-        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_search?scroll='+expiration_str, data=query).json()
+        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_search?scroll='+expiration_str, data=query, headers=headers).json()
 
     def get_mapped_fields(self):
         """ Get flat structure of fields from Elasticsearch mapping
         """
         mapping_data = []
         if self.index:
-            mapping_structure = self.requests.get(es_url+'/'+self.index).json()[self.index]['mappings'][self.mapping]['properties']
+            mapping_structure = self.requests.get(es_url+'/'+self.index, headers=headers).json()[self.index]['mappings'][self.mapping]['properties']
             mapping_data = self._decode_mapping_structure(mapping_structure)
 
         return mapping_data
@@ -562,7 +524,7 @@ class ES_Manager:
 
         scroll_url = '{0}/_search/scroll?scroll=1m'.format(es_url)
         search_url = '{0}/{1}/{2}/_search?scroll=1m&size=500'.format(es_url, self.index, self.TEXTA_MAPPING)
-        response = self.requests.post(search_url, data=q).json()
+        response = self.requests.post(search_url, data=q, headers=headers).json()
         scroll_id = json.dumps({'scroll_id':response['_scroll_id']})
         total_msg = response['hits']['total']
         count_limit = 0
@@ -579,7 +541,7 @@ class ES_Manager:
                 if doc_path not in fm[doc_id]:
                     fm[doc_id][doc_path] = []
                 fm[doc_id][doc_path].extend(spans)
-            response = self.requests.post(scroll_url, data=scroll_id).json()
+            response = self.requests.post(scroll_url, data=scroll_id, headers=headers).json()
 
         self.es_cache.set_data(q, fm)
         return fm
@@ -629,8 +591,10 @@ class ES_Manager:
         """ Search
         """
         q = json.dumps(self.combined_query['main'])
+        print q
         search_url = '{0}/{1}/{2}/_search'.format(es_url, self.index, self.mapping)
-        response = self.requests.post(search_url, data=q, headers=self.headers).json()
+        response = self.requests.post(search_url, data=q, headers=headers).json()
+        print response
         return response
 
     def process_bulk(self,hits):
@@ -645,20 +609,20 @@ class ES_Manager:
 
         q = json.dumps(self.combined_query['main'])
         search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
-        response = requests.post(search_url, data=q).json()
+        response = requests.post(search_url, data=q, headers=headers).json()
 
         scroll_id = response['_scroll_id']
         l = response['hits']['total']
     
         while l > 0:
             search_url = '{0}/_search/scroll?scroll={1}'.format(es_url,time_out)
-            response = requests.post(search_url, data=scroll_id).json()
+            response = requests.post(search_url, data=scroll_id, headers=headers).json()
             l = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
  
             data = self.process_bulk(response['hits']['hits'])
             delete_url = '{0}/{1}/{2}/_bulk'.format(es_url, self.index, self.mapping)
-            deleted = requests.post(delete_url, data=data)
+            deleted = requests.post(delete_url, data=data, headers=headers)
 
         return True
 
@@ -671,37 +635,39 @@ class ES_Manager:
         else:
             q = self.combined_query['main']
             q['size'] = size
-            q = json.dumps(q)
+            search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
+            
             if id_scroll:
-                search_url = '{0}/{1}/{2}/_search?scroll={3}&fields='.format(es_url, self.index, self.mapping, time_out)
+                q['_source'] = 'false'
             elif field_scroll:
-                search_url = '{0}/{1}/{2}/_search?scroll={3}&fields={4}'.format(es_url, self.index, self.mapping, time_out, field_scroll)
-            else:
-                search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
+                q['_source'] = field_scroll
 
-        response = self.requests.post(search_url, data=q).json()
+            q = json.dumps(q)
+
+        response = self.requests.post(search_url, data=q, headers=headers).json()
         return response
 
-    def scroll_all_match(self, scroll_id=None, time_out='1m', id_scroll=False):
-        """ Search and Scroll in a match all search
-        """
-        if scroll_id:
-            q = json.dumps({"scroll": time_out, "scroll_id": scroll_id})
-            search_url = '{0}/_search/scroll'.format(es_url)
-        else:
-            q = json.dumps({'query': {"match_all": {}}})
-            if id_scroll:
-                search_url = '{0}/{1}/{2}/_search?scroll={3}&fields='.format(es_url, self.index, self.mapping, time_out)
-            else:
-                search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
-
-        response = self.requests.post(search_url, data=q).json()
-        return response
+    # THIS SHOULD NOT BE NECESSARY
+    #def scroll_all_match(self, scroll_id=None, time_out='1m', id_scroll=False):
+    #    """ Search and Scroll in a match all search
+    #    """
+    #    if scroll_id:
+    #        q = json.dumps({"scroll": time_out, "scroll_id": scroll_id})
+    #        search_url = '{0}/_search/scroll'.format(es_url)
+    #    else:
+    #        q = json.dumps({'query': {"match_all": {}}})
+    #        if id_scroll:
+    #            search_url = '{0}/{1}/{2}/_search?scroll={3}&fields='.format(es_url, self.index, self.mapping, time_out)
+    #        else:
+    #            search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
+    #
+    #    response = self.requests.post(search_url, data=q, headers=headers).json()
+    #    return response
 
     def get_total_documents(self):
         search_url = '{0}/{1}/{2}/_count'.format(es_url, self.index, self.mapping)
         q = json.dumps(self.combined_query['main'])
-        response = self.requests.post(search_url, data=q).json()
+        response = self.requests.post(search_url, data=q, headers=headers).json()
         total = response['count']
         return long(total)
 
@@ -712,7 +678,7 @@ class ES_Manager:
         query['aggs'] = aggregations
         query = json.dumps(query)
         request_url = '{0}/{1}/{2}/_search?_source=false'.format(es_url, self.index, self.TEXTA_MAPPING)
-        response = self.requests.get(request_url, data=query).json()
+        response = self.requests.get(request_url, data=query, headers=headers).json()
         agg = response['aggregations']
         facts_agg_structure = {}
         for fact in agg['fact']['buckets']:
@@ -730,11 +696,11 @@ class ES_Manager:
         search_url = base_url.format(es_url, self.index, self.TEXTA_MAPPING)
         query = {"query": {"term": {"facts.doc_type": self.mapping.lower()}}}
         query = json.dumps(query)
-        response = self.requests.post(search_url, data=query).json()
+        response = self.requests.post(search_url, data=query, headers=headers).json()
         scroll_id = response['_scroll_id']
         total = response['hits']['total']
         while total > 0:
-            response = self.requests.post('{0}/_search/scroll?scroll=1m'.format(es_url), data=scroll_id).json()
+            response = self.requests.post('{0}/_search/scroll?scroll=1m'.format(es_url), data=scroll_id, headers=headers).json()
             total = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
             for hit in response['hits']['hits']:
@@ -779,12 +745,12 @@ class ES_Manager:
 
         search_param = 'scroll=1m&size=1000'
         search_url = '{0}/{1}/{2}/_search?{3}'.format(es_url, self.index, self.TEXTA_MAPPING, search_param)
-        response = self.requests.post(search_url, data=query).json()
+        response = self.requests.post(search_url, data=query, headers=headers).json()
         scroll_id = response['_scroll_id']
         total = response['hits']['total']
         facts = {}
         while total > 0:
-            response = self.requests.post('{0}/_search/scroll?scroll=1m'.format(es_url), data=scroll_id).json()
+            response = self.requests.post('{0}/_search/scroll?scroll=1m'.format(es_url), data=scroll_id, headers=headers).json()
             total = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
             for hit in response['hits']['hits']:
@@ -803,27 +769,27 @@ class ES_Manager:
     @staticmethod
     def get_indices():
         url = '{0}/_cat/indices?format=json'.format(es_url)
-        response = ES_Manager.requests.get(url).json()
+        response = ES_Manager.requests.get(url, headers=headers).json()
         
         return sorted([{'index':i['index'],'status':i['status'],'docs_count':i['docs.count'],'store_size':i['store.size']} for i in response])
     
     @staticmethod
     def get_mappings(index):
         url = '{0}/{1}'.format(es_url, index)
-        response = ES_Manager.requests.get(url).json()
+        response = ES_Manager.requests.get(url, headers=headers).json()
         
         return sorted([mapping for mapping in response[index]['mappings']])
 
     @staticmethod
     def open_index(index):
         url = '{0}/{1}/_open'.format(es_url, index)
-        response = ES_Manager.requests.post(url).json()
+        response = ES_Manager.requests.post(url, headers=headers).json()
         return response
 
     @staticmethod
     def close_index(index):
         url = '{0}/{1}/_close'.format(es_url, index)
-        response = ES_Manager.requests.post(url).json()
+        response = ES_Manager.requests.post(url, headers=headers).json()
         return response
     
     def merge_combined_query_with_query_dict(self, query_dict):
@@ -931,7 +897,7 @@ class ES_Manager:
     def get_extreme_dates(self,field):
         query = {"aggs":{"max_date":{"max":{"field":field}},"min_date":{"min":{"field":field}}}}
         url = "{0}/{1}/{2}/_search".format(self.es_url, self.index, self.mapping)
-        response = requests.post(url, data=json.dumps(query)).json()
+        response = requests.post(url, data=json.dumps(query), headers=headers).json()
         aggs = response["aggregations"]
         return aggs["min_date"]["value_as_string"],aggs["max_date"]["value_as_string"]
         

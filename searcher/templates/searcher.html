@@ -62,7 +62,7 @@
 											<div class="col-sm-12">
 												<select name="mlt_fields" id="mlt_fields" class="form-control input-sm" multiple="multiple">
 													{% for field in fields %}
-														{% if field.type == 'string' %}
+														{% if field.type == 'text' or field.type == 'keyword' %}
 															<option value="{{field.data}}">{{field.label}}</option>
 														{% endif %}
 													{% endfor %}							
@@ -137,7 +137,7 @@
 										<div class="col-sm-12">
 											<select name="cluster_field" id="cluster_field" class="form-control input-sm">
 												{% for field in fields %}
-													{% if field.type == 'string' %}
+													{% if field.type == 'text' or field.type == 'keyword' %}
 														<option value="{{field.data}}">{{field.label}}</option>
 													{% endif %}
 												{% endfor %}							
