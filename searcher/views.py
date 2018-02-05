@@ -542,7 +542,7 @@ def additional_option_cut_text(content, es_params):
                     html_spans_merged.append(unicode(html_span))
                 elif i == num_spans-1:
                     if span_tokens_len > window_size:
-                        new_text = u' '.join(span_tokens[:-window_size])
+                        new_text = u' '.join(span_tokens[:window_size])
                         new_text = u'{0} ...'.format(new_text)
                         html_span.string = new_text                    
                     html_spans_merged.append(unicode(html_span))
