@@ -180,7 +180,7 @@ class ES_Manager:
                 sub_structure = item[1]['properties']
                 path_list = root_path[:]
                 path_list.append(item[0])
-                sub_mapping = [{'path': item[0]}]
+                sub_mapping = [{'path': item[0], 'type': u'string'}]
                 mapping_data.extend(sub_mapping) 
 
             else:
