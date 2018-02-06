@@ -457,7 +457,6 @@ def search(es_params, request):
 
                 # Substitute feature value with value highlighted by Elasticsearch
                 old_content = content
-                #import pdb; pdb.set_trace()
                 if col in highlight_config['fields'] and 'highlight' in hit:
                     content = hit['highlight'][col][0]
                     
