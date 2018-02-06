@@ -72,7 +72,8 @@ class ES_Manager:
     """
 
     TEXTA_MAPPING = 'texta'
-    TEXTA_RESERVED = ['texta_facts']
+    TEXTA_RESERVED = []
+    #TEXTA_RESERVED = ['texta_facts']
     
     # Redefine requests if LDAP authentication is used
     if es_use_ldap:
@@ -168,12 +169,20 @@ class ES_Manager:
         for item in structure.items():
             if item[0] in self.TEXTA_RESERVED:
                 continue
-            if 'properties' in item[1]:
+            if 'properties' in item[1] and 'type' not in item[1]: #added+
                 sub_structure = item[1]['properties']
                 path_list = root_path[:]
                 path_list.append(item[0])
                 sub_mapping = self._decode_mapping_structure(sub_structure, root_path=path_list)
                 mapping_data.extend(sub_mapping)
+
+            elif 'properties' in item[1] and 'type' in item[1]: # for dealing with facts
+                sub_structure = item[1]['properties']
+                path_list = root_path[:]
+                path_list.append(item[0])
+                sub_mapping = [{'path': item[0]}]
+                mapping_data.extend(sub_mapping) 
+
             else:
                 path_list = root_path[:]
                 path_list.append(item[0])

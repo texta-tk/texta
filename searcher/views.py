@@ -85,7 +85,6 @@ def get_fields(es_m):
 
     # Sort fields by label
     fields = sorted(fields, key=lambda l: l['label'])
-
     return fields
 
 
@@ -451,15 +450,18 @@ def search(es_params, request):
                 #     make content empty (to allow dynamic mapping without breaking alignment)
                 content = hit['_source']
                 for p in filed_path:
-                    content = content[p] if p in content else ''
+                    if col == u'texta_facts': 
+                        content = str(content[p]) if p in content else ''
+                    else:
+                        content = content[p] if p in content else ''
 
                 # Substitute feature value with value highlighted by Elasticsearch
                 old_content = content
+                #import pdb; pdb.set_trace()
                 if col in highlight_config['fields'] and 'highlight' in hit:
                     content = hit['highlight'][col][0]
-
+                    
                 # Prettify and standardize highlights
-                
                 if name_to_inner_hits[col]:
                     highlight_data = []
                     color_map = ColorPicker.get_color_map(keys={hit['fact'] for hit in name_to_inner_hits[col]})
