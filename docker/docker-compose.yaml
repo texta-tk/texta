@@ -11,8 +11,8 @@ services:
       - texta-network
 
   texta:
-    container_name: texta-app
-    image: texta/app:latest
+    container_name: texta-toolkit
+    image: texta/toolkit:latest
     build: ./texta
     ports:
       - "8000:80"

@@ -9,13 +9,15 @@ RUN adduser --disabled-password --gecos '' texta
 
 RUN set -x \
     && apt-get update \
-    && apt-get install -y --no-install-recommends python python-dev git python-pip
+    && apt-get install -y --no-install-recommends python python-dev git python-pip swig gcc libpulse-dev
 
 RUN git clone https://github.com/texta-tk/texta.git
 
 WORKDIR texta
 
 RUN git checkout ekt-polishing-dev
+
+RUN pip install --upgrade pip
 
 RUN pip install setuptools
 RUN pip install wheel
@@ -29,6 +31,7 @@ RUN pip install django==1.11
 RUN pip install pathlib
 RUN pip install dateutils
 RUN pip install sympy
+RUN pip install textract
 
 RUN python migrate.py
 
