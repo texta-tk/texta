@@ -84,5 +84,8 @@ class ElasticStorer(object):
             'mapping': connection_parameters['elastic_mapping']
         })).ok
 
-    def remove_all(self):
-        pass
+    def remove(self):
+        self._request.delete("{url}/{index}".format(**{
+            'url': self._es_url,
+            'index': self._es_index
+        }))

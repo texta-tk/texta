@@ -69,11 +69,13 @@ function collectTextaDatasetArguments(formData) {
     var datasetName = $('#texta-elastic-dataset-name').val();
     var notAnalyzedFields = JSON.stringify($('#texta-elastic-not-analyzed').val().split('\n'));
     var keepSynchronized = $('#keep-synchronized').val();
+    var removeExistingDataset = $('#remove-existing-dataset').val();
 
     formData.append('texta_elastic_index', datasetName);
     formData.append('texta_elastic_mapping', datasetName);
     formData.append('texta_elastic_not_analyzed', notAnalyzedFields);
     formData.append('keep_synchronized', keepSynchronized);
+    formData.append('remove_existing_dataset', removeExistingDataset);
 
     return formData;
 }
@@ -94,9 +96,9 @@ function collectPreprocessorArguments(formData) {
 }
 
 function collectMlpArguments(formData) {
-    var featureName = $('#mlp-processor-feature-name').val();
+    var featureNames = JSON.stringify($('#mlp-processor-feature-names').val().split('\n'));
 
-    formData.append('mlp_preprocessor_input_feature', featureName);
+    formData.append('mlp_preprocessor_input_features', featureNames);
 
     return formData;
 }

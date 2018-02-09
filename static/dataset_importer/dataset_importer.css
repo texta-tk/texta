@@ -4,6 +4,8 @@
 
 .texta-tooltip {
     cursor: pointer;
+    font-size: 16px;
+    color: #73AD21;
 }
 
 .preprocessor-parameters {

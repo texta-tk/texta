@@ -82,6 +82,7 @@ class DatasetImporter(object):
         parameters['preprocessors'] = json.loads(parameters.get('preprocessors', '[]'))
         parameters['is_local'] = True if parameters.get('directory', None) else False
         parameters['keep_synchronized'] = self._determine_if_should_synchronize(parameters=parameters)
+        parameters['remove_existing_dataset'] = True if parameters.get('remove_existing_dataset', 'false') == 'true' else False
 
         if parameters['is_local'] is False:
             parameters['directory'] = self._prepare_import_directory(self._root_directory)
@@ -233,7 +234,7 @@ def _processing_job(documents, parameter_dict):
 
     processed_documents = list(DocumentProcessor(subprocessors=[
         PREPROCESSORS[preprocessor] for preprocessor in parameter_dict['preprocessors']
-    ]).process(documents=documents))
+    ]).process(documents=documents, **parameter_dict))
 
     storer = DocumentStorer.get_storer(**parameter_dict)
     stored_documents_count = storer.store(processed_documents)
@@ -246,7 +247,17 @@ def _processing_job(documents, parameter_dict):
             index.add(dataset=dataset_name, values=new_ids)
 
 
+def _remove_existing_dataset(parameter_dict):
+    storer = DocumentStorer.get_storer(**parameter_dict)
+    storer.remove()
+    dataset_name = '{0}_{1}'.format(parameter_dict['texta_elastic_index'], parameter_dict['texta_elastic_mapping'])
+    SQLiteIndex(sqlite_file_path=parameter_dict['index_sqlite_path']).remove(dataset_name)
+
+
 def _run_processing_jobs(parameter_dict, reader, n_processes, process_batch_size):
+    if parameter_dict.get('remove_existing_dataset', False):
+        _remove_existing_dataset(parameter_dict)
+
     import_job_lock = Lock()
 
     process_pool = Pool(processes=n_processes, initializer=_init_pool,
@@ -273,13 +284,14 @@ def _run_processing_jobs(parameter_dict, reader, n_processes, process_batch_size
 
 
 def download(url, target_directory, chunk_size=1024):
-    response = requests.get(url, stream=True)
+    head_response = requests.head(url)
 
-    file_name = _derive_file_name(response, url)
+    file_name = _derive_file_name(head_response, url)
     file_path = os.path.join(target_directory, file_name)
 
+    response = requests.get(url, stream=True)
     with open(file_path, 'wb') as downloaded_file:
-        for chunk in response.iter_content(chunk_size=chunk_size):
+        for chunk in response.iter_content(chunk_size):
             if chunk:
                 downloaded_file.write(chunk)
 

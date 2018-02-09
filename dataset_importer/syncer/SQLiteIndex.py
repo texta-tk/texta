@@ -29,6 +29,11 @@ class SQLiteIndex(object):
             cursor.execute('SELECT id FROM {0} EXCEPT SELECT id FROM {1};'.format(temp_table_name, table_name))
             return cursor.fetchall()
 
+    def remove(self, dataset):
+        with sqlite3.connect(self._sqlite_file_path) as connection:
+            table_name = self._get_dataset_table_name(dataset)
+            connection.execute("DROP TABLE IF EXISTS {0};".format(table_name))
+
     def _get_dataset_table_name(self, dataset):
         return 'es_{0}'.format(dataset)
 
