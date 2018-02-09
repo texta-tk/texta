@@ -101,9 +101,9 @@ class AggManager:
 
         # If aggregating over text field, use .keyword instead
         if  agg_field_1['type'] == 'text' and sort_by_1 == 'terms':
-            agg_field_1['path'] = '{0}.keyword'.format(agg_field_1['path'])
+            agg_field_1['path'] = '{0}.keyword'.format(agg_field_1['path'].encode('utf8'))
         if  agg_field_2['type'] == 'text' and sort_by_1 == 'terms':
-            agg_field_2['path'] = '{0}.keyword'.format(agg_field_2['path'])
+            agg_field_2['path'] = '{0}.keyword'.format(agg_field_2['path'].encode('utf8'))
 
         # If looking for significant terms from text field, use significant_text aggregation instead
         if agg_field_1['type'] == 'text' and sort_by_1 == 'significant_terms':
