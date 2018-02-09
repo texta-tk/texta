@@ -117,7 +117,6 @@ class ES_Manager:
 
         query = json.dumps(query)
         response = self.requests.post(url, data=query, headers=headers).json()
-
         return 'count' in response and response['count'] > 0
 
     def _field_has_fact_vals(self, url, query, value_field_name):
@@ -400,7 +399,7 @@ class ES_Manager:
             fact_txt = fact_constraint['fact_txt'] if 'fact_txt' in fact_constraint else ''
             fact_operator = fact_constraint['fact_operator'] if 'fact_operator' in fact_constraint else ''
             query_strings = [s.replace('\r', '').strip() for s in fact_txt.split('\n')]
-            #query_strings = [s.lower() for s in query_strings if s]
+            query_strings = [s for s in query_strings if s]
             sub_queries = []
             # Add facts query to search in facts mapping
             fact_queries = []
@@ -591,10 +590,8 @@ class ES_Manager:
         """ Search
         """
         q = json.dumps(self.combined_query['main'])
-        print q
         search_url = '{0}/{1}/{2}/_search'.format(es_url, self.index, self.mapping)
         response = self.requests.post(search_url, data=q, headers=headers).json()
-        print response
         return response
 
     def process_bulk(self,hits):
