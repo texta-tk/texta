@@ -1,7 +1,7 @@
 import sqlite3
 
 
-class SQLiteAdapter(object):
+class SQLiteReader(object):
 
     @staticmethod
     def get_features(file_path=None, table_name=None):

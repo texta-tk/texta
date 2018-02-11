@@ -1,15 +1,15 @@
-from entity_adapter import EntityAdapter
+from entity_reader import EntityReader
 import textract
 
 
-class RTFAdapter(EntityAdapter):
+class RTFReader(EntityReader):
 
     @staticmethod
     def get_features(**kwargs):
         directory = kwargs['directory']
 
-        for file_path in RTFAdapter.get_file_list(directory, 'rtf'):
-            features = RTFAdapter.get_meta_features(file_path=file_path)
+        for file_path in RTFReader.get_file_list(directory, 'rtf'):
+            features = RTFReader.get_meta_features(file_path=file_path)
 
             features['text'] = textract.process(file_path)
 
@@ -20,4 +20,4 @@ class RTFAdapter(EntityAdapter):
     @staticmethod
     def count_total_documents(**kwargs):
         directory = kwargs['directory']
-        return RTFAdapter.count_documents(directory_path=directory, extension='rtf')
+        return RTFReader.count_documents(directory_path=directory, extension='rtf')

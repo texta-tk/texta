@@ -1,15 +1,15 @@
-from entity_adapter import EntityAdapter
+from entity_reader import EntityReader
 import textract
 
 
-class DocAdapter(EntityAdapter):
+class DocReader(EntityReader):
 
     @staticmethod
     def get_features(**kwargs):
         directory = kwargs['directory']
 
-        for file_path in DocAdapter.get_file_list(directory, 'doc'):
-            features = DocAdapter.get_meta_features(file_path=file_path)
+        for file_path in DocReader.get_file_list(directory, 'doc'):
+            features = DocReader.get_meta_features(file_path=file_path)
 
             features['text'] = textract.process(file_path)
 
@@ -20,4 +20,4 @@ class DocAdapter(EntityAdapter):
     @staticmethod
     def count_total_documents(**kwargs):
         directory = kwargs['directory']
-        return DocAdapter.count_documents(directory_path=directory, extension='doc')
+        return DocReader.count_documents(directory_path=directory, extension='doc')

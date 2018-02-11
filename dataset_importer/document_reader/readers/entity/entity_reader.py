@@ -5,7 +5,7 @@ import json
 META_FILE_SUFFIX = '.meta.json'
 
 
-class EntityAdapter(object):
+class EntityReader(object):
 
     @staticmethod
     def get_file_list(directory_path, extension):

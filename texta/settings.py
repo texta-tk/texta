@@ -262,7 +262,7 @@ es_ldap_password = os.getenv('TEXTA_LDAP_PASSWORD')
 
 # Dataset Importer global parameters
 #
-from dataset_importer.document_processor.subprocessors.mlp import MlpProcessor
+from dataset_importer.document_preprocessor.preprocessors.mlp import MlpProcessor
 
 DATASET_IMPORTER = {
     'directory': os.path.join(BASE_DIR, 'files', 'dataset_importer'),
@@ -274,44 +274,12 @@ DATASET_IMPORTER = {
         'index_sqlite_path': os.path.join(BASE_DIR, 'database', 'import_sync.db')
     },
     'enabled_input_types': {
-        'archive': [
-            {'name': 'ZIP', 'value': 'zip', 'parameter_tags': 'file'},
-            {'name': 'TAR', 'value': 'tar', 'parameter_tags': 'file'}
-        ],
-        'single': [
-            {'name': 'Word document', 'value': 'doc', 'parameter_tags': 'file'},
-            {'name': 'HTML', 'value': 'html', 'parameter_tags': 'file,html'},
-            {'name': 'RTF', 'value': 'rtf', 'parameter_tags': 'file'},
-            {'name': 'PDF', 'value': 'pdf', 'parameter_tags': 'file'},
-            {'name': 'TXT', 'value': 'txt', 'parameter_tags': 'file'},
-        ],
-        'collection': [
-            {'name': 'CSV', 'value': 'csv', 'parameter_tags': 'file'},
-            {'name': 'JSON', 'value': 'json', 'parameter_tags': 'file'},
-            {'name': 'Excel spreadsheet', 'value': 'xls', 'parameter_tags': 'file'},
-            {'name': 'XML', 'value': 'xml', 'parameter_tags': 'file,xml'},
-        ],
-        'database': [
-            {'name': 'Elasticsearch', 'value': 'elastic', 'parameter_tags': 'elastic'},
-            {'name': 'MongoDB', 'value': 'mongodb', 'parameter_tags': 'mongodb'},
-            {'name': 'PostgreSQL', 'value': 'postgres', 'parameter_tags': 'postgres'},
-            {'name': 'SQLite', 'value': 'sqlite', 'parameter_tags': 'file,sqlite'},
-        ]
+
+
 
     },
     'preprocessors': [
-        {
-            'name': 'Multilingual preprocessor',
-            'code': 'mlp',
-            'description': 'Extracts lemmas and identifies language code from multiple languages.',
-            'class': MlpProcessor,
-            'parameters_template': 'preprocessor_parameters/mlp.html',
-            'arguments': {
-                'mlp_url': 'http://10.6.6.92/mlp/process',
-                'enabled_features': ['text', 'lang', 'texta_facts']
-            },
-            'is_enabled': True
-        },
+
     ]
 }
 

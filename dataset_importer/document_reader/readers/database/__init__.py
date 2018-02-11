@@ -1,19 +1,19 @@
 try:
-    import elastic_adapter as elastic
+    import elastic_reader as elastic
 except:
     pass
 
 try:
-    import mongodb_adapter as mongodb
+    import mongodb_reader as mongodb
 except:
     pass
 
 try:
-    import postgres_adapter as postgres
+    import postgres_reader as postgres
 except:
     pass
 
 try:
-    import sqlite_adapter as sqlite
+    import sqlite_reader as sqlite
 except:
     pass

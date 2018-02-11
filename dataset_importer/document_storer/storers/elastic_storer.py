@@ -76,13 +76,13 @@ class ElasticStorer(object):
 
         return len(documents)
 
-    @staticmethod
-    def exists(**connection_parameters):
-        return requests.head("{url}/{index}/{mapping}".format(**{
-            'url': connection_parameters['elastic_url'],
-            'index': connection_parameters['elastic_index'],
-            'mapping': connection_parameters['elastic_mapping']
-        })).ok
+    # @staticmethod
+    # def exists(**connection_parameters):
+    #     return requests.head("{url}/{index}/{mapping}".format(**{
+    #         'url': connection_parameters['elastic_url'],
+    #         'index': connection_parameters['elastic_index'],
+    #         'mapping': connection_parameters['elastic_mapping']
+    #     })).ok
 
     def remove(self):
         self._request.delete("{url}/{index}".format(**{

@@ -6,19 +6,20 @@ import shutil
 import requests
 import json
 from dataset_importer.document_storer.storer import DocumentStorer
-from dataset_importer.document_reader.reader import DocumentReader
-from dataset_importer.document_processor.processor import DocumentProcessor
-from dataset_importer.archive_extractor.extractor import ArchiveExtractor
+from dataset_importer.document_reader.reader import DocumentReader, entity_reader_map, collection_reader_map, database_reader_map
+from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
+from dataset_importer.archive_extractor.extractor import ArchiveExtractor, extractor_map
 from multiprocessing import Pool, Lock
 from dataset_importer.models import DatasetImport
 from dataset_importer.syncer.SQLiteIndex import SQLiteIndex
-from texta.settings import DATASET_IMPORTER
 
-DAEMON_BASED_DATABASE_FORMATS = {'postgres', 'mongodb', 'elastic'}
-ARCHIVE_FORMATS = {'zip', 'tar'}
+entity_reader_map2 = entity_reader_map
+
+DAEMON_BASED_DATABASE_FORMATS = set(database_reader_map) - {'sqlite'}
+ARCHIVE_FORMATS = set(extractor_map)
 PREPROCESSORS = {
-    preprocessor['code']: preprocessor['class'](**preprocessor['arguments'])
-    for preprocessor in DATASET_IMPORTER['preprocessors']
+    preprocessor_code: preprocessor['class'](**preprocessor['arguments'])
+    for preprocessor_code, preprocessor in preprocessor_map.items()
 }
 
 
@@ -30,7 +31,7 @@ class DatasetImporter(object):
         self._root_directory = configuration['directory']
         self._n_processes = configuration['import_processes']
         self._process_batch_size = configuration['process_batch_size']
-        self._enabled_input_types = self._get_verified_input_types(configuration['enabled_input_types'])
+        # self._enabled_input_types = self._get_verified_input_types(configuration['enabled_input_types'])
         self._index_sqlite_path = configuration['sync']['index_sqlite_path']
 
         self._dao = data_access_object
@@ -83,6 +84,7 @@ class DatasetImporter(object):
         parameters['is_local'] = True if parameters.get('directory', None) else False
         parameters['keep_synchronized'] = self._determine_if_should_synchronize(parameters=parameters)
         parameters['remove_existing_dataset'] = True if parameters.get('remove_existing_dataset', 'false') == 'true' else False
+        parameters['storer'] = 'elastic'
 
         if parameters['is_local'] is False:
             parameters['directory'] = self._prepare_import_directory(self._root_directory)
@@ -203,6 +205,7 @@ def _unextract_archives(parameter_dict):
             )
             break
 
+
 def _init_pool(lock_):
     global lock
     lock = lock_
@@ -232,9 +235,12 @@ def _processing_job(documents, parameter_dict):
     for document in documents:
         del document['_texta_id']
 
-    processed_documents = list(DocumentProcessor(subprocessors=[
-        PREPROCESSORS[preprocessor] for preprocessor in parameter_dict['preprocessors']
-    ]).process(documents=documents, **parameter_dict))
+    processed_documents = list(DocumentPreprocessor.process(
+        documents=documents,
+        preprocessors=[
+            PREPROCESSORS[preprocessor] for preprocessor in parameter_dict['preprocessors']
+        ], **parameter_dict)
+    )
 
     storer = DocumentStorer.get_storer(**parameter_dict)
     stored_documents_count = storer.store(processed_documents)

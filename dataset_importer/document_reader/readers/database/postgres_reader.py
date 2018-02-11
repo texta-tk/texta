@@ -1,11 +1,11 @@
 import psycopg2
 
 
-class PostgreSQLAdapter(object):
+class PostgreSQLReader(object):
 
     @staticmethod
     def get_features(host=None, database=None, port=None, user=None, password=None, table_name=None):
-        connection_string = PostgreSQLAdapter.get_connection_string(host, database, port, user, password)
+        connection_string = PostgreSQLReader.get_connection_string(host, database, port, user, password)
 
         with psycopg2.connect(connection_string) as connection:
             cursor = connection.cursor(cursor_factory=psycopg2.extras.DictCursor)

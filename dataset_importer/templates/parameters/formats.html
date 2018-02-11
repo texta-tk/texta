@@ -1,0 +1,30 @@
+<fieldset>
+    <legend>
+        Data formats
+        <span data-toggle="tooltip" data-placement="bottom" title="Select all the data formats that you want to be processed within your data source" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+    </legend>
+    <div class="form-group">
+        <select id="data-formats" class="selectpicker form-control" multiple data-selected-text-format="static" title="Select all applicable formats">
+            <optgroup label="Archives">
+                {% for input_type in  archive_formats %}
+                    <option value="{{ input_type.key }}" data-parameters-tags="{{ input_type.parameter_tags }}" data-input-category="archive">{{ input_type.name }}</option>
+                {% endfor %}
+            </optgroup>
+            <optgroup label="Simple documents">
+                {% for input_type in  single_document_formats %}
+                    <option value="{{ input_type.key }}" data-parameters-tags="{{ input_type.parameter_tags }}" data-input-category="file">{{ input_type.name }}</option>
+                {% endfor %}
+            </optgroup>
+            <optgroup label="Document collections">
+                {% for input_type in  document_collection_formats %}
+                    <option value="{{ input_type.key }}" data-parameters-tags="{{ input_type.parameter_tags }}" data-input-category="file">{{ input_type.name }}</option>
+                {% endfor %}
+            </optgroup>
+            <optgroup label="Databases">
+                {% for input_type in  database_formats %}
+                    <option value="{{ input_type.key }}" data-parameters-tags="{{ input_type.parameter_tags }}" data-input-category="database">{{ input_type.name }}</option>
+                {% endfor %}
+            </optgroup>
+        </select>
+    </div>
+</fieldset>

@@ -1,14 +1,14 @@
-from entity_adapter import EntityAdapter
+from entity_reader import EntityReader
 
 
-class TXTAdapter(EntityAdapter):
+class TXTReader(EntityReader):
 
     @staticmethod
     def get_features(**kwargs):
         directory = kwargs['directory']
 
-        for file_path in TXTAdapter.get_file_list(directory, 'txt'):
-            features = TXTAdapter.get_meta_features(file_path=file_path)
+        for file_path in TXTReader.get_file_list(directory, 'txt'):
+            features = TXTReader.get_meta_features(file_path=file_path)
 
             with open(file_path, 'rb') as text_file:
                 features['text'] = text_file.read()
@@ -20,4 +20,4 @@ class TXTAdapter(EntityAdapter):
     @staticmethod
     def count_total_documents(**kwargs):
         directory = kwargs['directory']
-        return TXTAdapter.count_documents(directory_path=directory, extension='txt')
+        return TXTReader.count_documents(directory_path=directory, extension='txt')

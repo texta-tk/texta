@@ -1,6 +1,6 @@
 
 
-class MongoDBAdapter(object):
+class MongoDBReader(object):
 
     @staticmethod
     def get_features(file_obj):
