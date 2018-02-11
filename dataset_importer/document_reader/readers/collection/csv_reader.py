@@ -1,14 +1,14 @@
 import csv
-from collection_adapter import CollectionAdapter
+from collection_reader import CollectionReader
 
 
-class CSVAdapter(CollectionAdapter):
+class CSVReader(CollectionReader):
 
     @staticmethod
     def get_features(**kwargs):
         directory = kwargs['directory']
 
-        for file_path in CSVAdapter.get_file_list(directory, 'csv'):
+        for file_path in CSVReader.get_file_list(directory, 'csv'):
             with open(file_path) as csv_file:
                 reader = csv.DictReader(csv_file)
                 for row_idx, row in enumerate(reader):
@@ -21,7 +21,7 @@ class CSVAdapter(CollectionAdapter):
 
         total_documents = 0
 
-        for file_path in CSVAdapter.get_file_list(directory, 'csv'):
+        for file_path in CSVReader.get_file_list(directory, 'csv'):
             with open(file_path) as csv_file:
                 reader = csv.reader(csv_file)
                 total_documents += max(0, sum(1 for row in reader) - 1)  # -1 for the header

@@ -1,6 +1,7 @@
+from collection_reader import CollectionReader
 
 
-class XMLAdapter(object):
+class XMLReader(CollectionReader):
 
     @staticmethod
     def get_features(file_obj):

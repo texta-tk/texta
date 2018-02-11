@@ -1,14 +1,14 @@
-from collection_adapter import CollectionAdapter
+from collection_reader import CollectionReader
 import json
 
 
-class JSONAdapter(CollectionAdapter):
+class JSONReader(CollectionReader):
 
     @staticmethod
     def get_features(**kwargs):
         directory = kwargs['directory']
 
-        for file_path in JSONAdapter.get_file_list(directory, 'json'):
+        for file_path in JSONReader.get_file_list(directory, 'json'):
             with open(file_path) as json_file:
                 for line_idx, line in enumerate(json_file):
                     features = json.loads(line.strip())
@@ -21,7 +21,7 @@ class JSONAdapter(CollectionAdapter):
 
         total_documents = 0
 
-        for file_path in JSONAdapter.get_file_list(directory, 'json'):
+        for file_path in JSONReader.get_file_list(directory, 'json'):
             with open(file_path) as json_file:
                 total_documents += sum(1 for row in json_file)
 

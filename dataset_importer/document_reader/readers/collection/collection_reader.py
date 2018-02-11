@@ -4,7 +4,7 @@ import os
 META_FILE_SUFFIX = '.meta.json'
 
 
-class CollectionAdapter(object):
+class CollectionReader(object):
 
     @staticmethod
     def get_file_list(directory_path, extension):
