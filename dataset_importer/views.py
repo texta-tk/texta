@@ -14,8 +14,6 @@ from texta.settings import es_url, DATASET_IMPORTER as DATASET_IMPORTER_CONF
 
 from sys import argv
 
-ACTIVE_IMPORT_JOBS = {}
-
 DATASET_IMPORTER = DatasetImporter(es_url=es_url, configuration=DATASET_IMPORTER_CONF,
                                    data_access_object=DatasetImport, file_system_storer=FileSystemStorage)
 
@@ -46,7 +44,6 @@ def index(request):
     database_formats = collect_map_entries(database_reader_map)
 
     preprocessors = collect_map_entries(preprocessor_map)
-    print(preprocessors)
 
     enabled_preprocessors = [preprocessor for preprocessor in preprocessors]
 

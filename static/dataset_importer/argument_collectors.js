@@ -39,6 +39,11 @@ function collectFileLikeArguments(formData) {
     return formData;
 }
 
+function collectBdocArguments(formData) {
+    formData.append('bdoc_password', $('#bdoc-password').val())
+    return formData
+}
+
 function collectHtmlArguments(formData) {
     return formData;
 }
@@ -103,6 +108,8 @@ function collectMlpArguments(formData) {
     return formData;
 }
 
+
+// Key to collector map
 
 var collectors = {
     formats: collectFormats,

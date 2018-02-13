@@ -13,8 +13,6 @@ from multiprocessing import Pool, Lock
 from dataset_importer.models import DatasetImport
 from dataset_importer.syncer.SQLiteIndex import SQLiteIndex
 
-entity_reader_map2 = entity_reader_map
-
 DAEMON_BASED_DATABASE_FORMATS = set(database_reader_map) - {'sqlite'}
 ARCHIVE_FORMATS = set(extractor_map)
 PREPROCESSORS = {
@@ -85,6 +83,9 @@ class DatasetImporter(object):
         parameters['keep_synchronized'] = self._determine_if_should_synchronize(parameters=parameters)
         parameters['remove_existing_dataset'] = True if parameters.get('remove_existing_dataset', 'false') == 'true' else False
         parameters['storer'] = 'elastic'
+        parameters['preprocessors'] = [
+            PREPROCESSORS[preprocessor] for preprocessor in parameters['preprocessors']
+        ]
 
         if parameters['is_local'] is False:
             parameters['directory'] = self._prepare_import_directory(self._root_directory)
@@ -186,7 +187,7 @@ def _import_dataset(parameter_dict, n_processes, process_batch_size):
 
         _unextract_archives(parameter_dict)
 
-    reader = DocumentReader(directory=parameter_dict['directory'])
+    reader = DocumentReader()
     _set_total_documents(parameter_dict=parameter_dict, reader=reader)
     _run_processing_jobs(parameter_dict=parameter_dict, reader=reader, n_processes=n_processes,
                          process_batch_size=process_batch_size)
@@ -228,18 +229,18 @@ def _complete_import_job(parameter_dict):
 
 def _processing_job(documents, parameter_dict):
     dataset_name = '{0}_{1}'.format(parameter_dict['texta_elastic_index'], parameter_dict['texta_elastic_mapping'])
+
+    # Find unprocessed documents
     original_ids = [document['_texta_id'] for document in documents]
     index = SQLiteIndex(sqlite_file_path=parameter_dict['index_sqlite_path'])
     new_ids = set(index.get_new_entries(dataset=dataset_name, candidate_values=original_ids))
     documents = [document for document in documents if document['_texta_id'] in new_ids]
+
     for document in documents:
         del document['_texta_id']
 
     processed_documents = list(DocumentPreprocessor.process(
-        documents=documents,
-        preprocessors=[
-            PREPROCESSORS[preprocessor] for preprocessor in parameter_dict['preprocessors']
-        ], **parameter_dict)
+        documents=documents, **parameter_dict)
     )
 
     storer = DocumentStorer.get_storer(**parameter_dict)

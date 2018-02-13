@@ -2,6 +2,8 @@ from .settings import entity_reader_map, collection_reader_map, database_reader_
 
 
 class DocumentReader(object):
+    """A static document reader adapter that dispatches the document reading request to appropriate reader implementations.
+    """
 
     @staticmethod
     def read_documents(**kwargs):
@@ -19,13 +21,21 @@ class DocumentReader(object):
         total_docs = 0
 
         for format in reading_parameters['formats']:
-            reader = reader_map[format]
+            reader = reader_map[format]['class']
             total_docs += reader.count_total_documents(**kwargs)
 
         return total_docs
 
 
 def merge_dictionaries(*args):
+    """Takes an arbitrary number of dictionaries and returns a union of them.
+
+    Does not handle key conflicts.
+
+    :param args: arbitrary number of dictionaries
+    :return: union of the provided dictionaries
+    :rtype: dict
+    """
     final_dictionary = {}
     for current_dictionary in args:
         for key, value in current_dictionary.items():

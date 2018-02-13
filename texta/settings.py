@@ -262,7 +262,7 @@ es_ldap_password = os.getenv('TEXTA_LDAP_PASSWORD')
 
 # Dataset Importer global parameters
 #
-from dataset_importer.document_preprocessor.preprocessors.mlp import MlpProcessor
+from dataset_importer.document_preprocessor.preprocessors.mlp import MlpPreprocessor
 
 DATASET_IMPORTER = {
     'directory': os.path.join(BASE_DIR, 'files', 'dataset_importer'),
@@ -272,15 +272,7 @@ DATASET_IMPORTER = {
         'enabled': False,
         'interval_in_seconds': 10,
         'index_sqlite_path': os.path.join(BASE_DIR, 'database', 'import_sync.db')
-    },
-    'enabled_input_types': {
-
-
-
-    },
-    'preprocessors': [
-
-    ]
+    }
 }
 
 if not os.path.exists(DATASET_IMPORTER['directory']):

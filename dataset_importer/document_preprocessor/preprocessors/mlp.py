@@ -4,12 +4,29 @@ import requests
 import json
 
 
-class MlpProcessor(object):
+class MlpPreprocessor(object):
+    """Preprocessor implementation for running TEXTA Multilingual Processor (MLP) on the selected documents.
+    """
+
     def __init__(self, mlp_url=None, enabled_features=['text', 'lang', 'texta_facts']):
+        """
+        :param mlp_url: full URL to the MLP instance. Must be accessible.
+        :param enabled_features: defines which MLP output features to list in the output documents. Is not used currently.
+        :type mlp_url: string
+        :type enabled_features: list of strings
+        """
         self._mlp_url = mlp_url
         self._enabled_features = set(enabled_features)
 
     def transform(self, documents, **kwargs):
+        """Takes input documents and enhances them with MLP output.
+
+        :param documents: collection of dictionaries to enhance
+        :param kwargs: request parameters which must include entries for the preprocessors to work appropriately
+        :type documents: list of dicts
+        :return: enhanced documents
+        :rtype: list of dicts
+        """
         if not self._enabled_features:
             return documents
 
@@ -38,7 +55,7 @@ class MlpProcessor(object):
 
 
 if __name__ == '__main__':
-    mlp_processor = MlpProcessor('http://10.6.6.92/mlp/process')
+    mlp_processor = MlpPreprocessor('http://10.6.6.92/mlp/process')
     docs = [{'text': u'Mina olen väga ilus.'}, {'text': u'Little cute donkey watched as little girl ate.'}]
     mlp_processor.transform(docs, **{'feature_map': {'text': 'tekst', 'lang': 'keel'}})
 

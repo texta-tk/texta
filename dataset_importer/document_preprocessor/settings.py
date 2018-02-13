@@ -11,7 +11,7 @@ try:
     preprocessor_map['mlp'] = {
         'name': 'Multilingual preprocessor',
         'description': 'Extracts lemmas and identifies language code from multiple languages.',
-        'class': preprocessors.mlp.MlpProcessor,
+        'class': preprocessors.mlp.MlpPreprocessor,
         'parameters_template': 'parameters/preprocessor_parameters/mlp.html',
         'arguments': {
             'mlp_url': 'http://10.6.6.92/mlp/process',
