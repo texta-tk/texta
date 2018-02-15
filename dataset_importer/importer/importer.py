@@ -125,6 +125,8 @@ class DatasetImporter(object):
             PREPROCESSORS[preprocessor] for preprocessor in parameters['preprocessors']
         ]
 
+        self._separate_archive_and_reader_formats(parameters)
+
         if parameters['is_local'] is False:
             parameters['directory'] = self._prepare_import_directory(self._root_directory)
 
@@ -139,6 +141,22 @@ class DatasetImporter(object):
         parameters['index_sqlite_path'] = self._index_sqlite_path
 
         return parameters
+
+    def _separate_archive_and_reader_formats(self, parameters):
+        """Splits initial formats to archives and formats to reduce the complexity for later processes.
+
+        :param parameters: dataset import's parameters.
+        :type parameters: dict
+        """
+        parameters['archives'] = []
+        reader_formats = []
+        for format in parameters['formats']:
+            if format in ARCHIVE_FORMATS:
+                parameters['archives'].append(format)
+            else:
+                reader_formats.append(format)
+
+        parameters['formats'] = reader_formats
 
     def _preprocess_reimport(self, parameters):
         """Reimport's alternative to _preprocess_import. Most of the necessary alterations have been done by _preprocess_import
@@ -287,11 +305,11 @@ def _extract_archives(parameter_dict):
     :type parameter_dict: dict
     """
     # Currently supports only extracting the first archive format it encounters - TODO more robust
-    for format in parameter_dict.get('formats', []):
+    for format in parameter_dict.get('archives', []):
         if format in ARCHIVE_FORMATS:
             ArchiveExtractor.extract_archive(
                 file_path=parameter_dict['file_path'],
-                archive_format=parameter_dict['archive']
+                archive_format=format
             )
             break
 
