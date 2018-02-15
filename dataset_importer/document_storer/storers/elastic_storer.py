@@ -33,7 +33,6 @@ class ElasticStorer(object):
         """
         index_creation_query = {"mappings": {mapping: {'properties': {'texta_facts': {'type': 'nested'}}}}}
         self._add_not_analyzed_declarations(index_creation_query['mappings'][mapping], not_analyzed_fields)
-        print(index_creation_query)
         self._request.put("{url}/{index}".format(**{
             'url': url,
             'index': index,

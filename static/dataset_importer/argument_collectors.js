@@ -30,7 +30,7 @@ function collectFileLikeArguments(formData) {
     var selectedInputMethod = $('.file-input-method-btn.selected').val();
     var fileInput = $('#' + selectedInputMethod + '-file-input input');
 
-    if (selectedInputMethod === 'file') {
+    if (selectedInputMethod === 'upload') {
         formData.append('file', fileInput[0].files[0]);
     } else {
         formData.append(selectedInputMethod, fileInput.val());
