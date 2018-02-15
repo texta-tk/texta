@@ -7,6 +7,13 @@ class DocumentReader(object):
 
     @staticmethod
     def read_documents(**kwargs):
+        """Applies document reader of appropriate type to each of the provided format. Document readers read files of
+        their respective format and extract a features dictionary from the read document.
+
+        :param kwargs: must contain a list of formats and parameters necessary for independent reader implementations.
+        :return: dicts
+        :rtype: dict generator
+        """
         reading_parameters = kwargs
 
         for format in reading_parameters['formats']:
@@ -16,6 +23,12 @@ class DocumentReader(object):
 
     @staticmethod
     def count_total_documents(**kwargs):
+        """Delegates each appropriate reader implementation to count the number of documents of the respective format.
+        Retrieves the total number of documents of which format is in formats list.
+
+        :param kwargs: must contain a list of formats.
+        :return: total number of documents within the dataset according to the appropriate format readers.
+        """
         reading_parameters = kwargs
 
         total_docs = 0

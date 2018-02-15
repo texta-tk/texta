@@ -5,6 +5,9 @@ import sys
 
 
 class Syncer(Process):
+    """Synchronizes datasets with their source by rerunning the whole importation process. Already processed documents
+    are identified by the index and left unprocessed.
+    """
 
     def __init__(self, dataset_imports, importer, interval=60):
         super(Syncer, self).__init__()
@@ -14,6 +17,8 @@ class Syncer(Process):
         self._interval = interval
 
     def run(self):
+        """An eternal loop which runs all the reimport jobs at an interval.
+        """
         while True:
             try:
                 try:
