@@ -1,3 +1,41 @@
+
+@media only screen and (max-width: 1300px) {
+
+    .file-input-method-btn { 
+       font-size: 0.9em; 
+    }
+}
+
+
+@media only screen and (max-width: 1200px) {
+
+    .file-input-method-btn { 
+       font-size: 0.8em; 
+    }
+}
+
+@media only screen and (max-width: 990px) {
+
+    .file-input-method-btn { 
+       font-size: 1em; 
+    }
+}
+
+@media only screen and (max-width: 450px) {
+
+    .file-input-method-btn { 
+       font-size: 0.8em; 
+    }
+}
+
+@media only screen and (max-width: 360px) {
+
+    .file-input-method-btn { 
+       font-size: 0.7em; 
+    }
+}
+
+
 .parameter-panel {
     background-color: #f3f3f3;
 }
@@ -36,4 +74,9 @@
 
 .file-input-method {
     display: none;
+}
+
+.file-input-method-btn { 
+    padding-left: 0px;
+    padding-right: 0px;
 }
