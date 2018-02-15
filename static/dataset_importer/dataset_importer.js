@@ -51,8 +51,15 @@ function importDataset() {
         type: 'POST',
         contentType: false,
         processData: false,
+        beforeSend: function() {
+            $("#loaderDiv").show();
+            $("#import-dataset-btn").prop('disabled', true);
+
+        },
         success: function() {
             $('#jobs-table-div').load('reload_table');
+            $("#loaderDiv").hide();
+            $("#import-dataset-btn").prop('disabled', false);
         }
     });
 }
