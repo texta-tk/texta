@@ -2,6 +2,7 @@ import requests
 import json
 
 
+
 class ElasticStorer(object):
     """Storer implementation for storing documents to Elasticsearch.
     """
@@ -11,6 +12,7 @@ class ElasticStorer(object):
         self._es_index = connection_parameters['texta_elastic_index']
         self._es_mapping = connection_parameters['texta_elastic_mapping']
 
+        self._headers = {'Content-Type': 'application/json'}
         self._request = requests.Session()
 
         if 'elastic_auth' in connection_parameters:
@@ -36,7 +38,7 @@ class ElasticStorer(object):
         self._request.put("{url}/{index}".format(**{
             'url': url,
             'index': index,
-        }), data=json.dumps(index_creation_query))
+        }), data=json.dumps(index_creation_query), headers=self._headers)
 
     def _add_not_analyzed_declarations(self, mapping_dict, not_analyzed_fields):
         """Adds not analyzed fields to index creation schema.
@@ -89,7 +91,7 @@ class ElasticStorer(object):
 
             data_to_send.append('\n')
             self._request.put("%s/%s/%s/_bulk" % (self._es_url, self._es_index, self._es_mapping),
-                              data='\n'.join(data_to_send))
+                              data='\n'.join(data_to_send), headers=self._headers)
         else:  # Let Elasticsearch generate random ID value
             for document in documents:
                 meta_data = {'index': {'_index': self._es_index, '_type': self._es_mapping}}
@@ -98,7 +100,7 @@ class ElasticStorer(object):
 
             data_to_send.append('\n')
             self._request.put("%s/%s/%s/_bulk" % (self._es_url, self._es_index, self._es_mapping),
-                              data='\n'.join(data_to_send))
+                              data='\n'.join(data_to_send), headers=self._headers)
 
         return len(documents)
 
@@ -116,4 +118,4 @@ class ElasticStorer(object):
         self._request.delete("{url}/{index}".format(**{
             'url': self._es_url,
             'index': self._es_index
-        }))
+        }), headers=self._headers)
