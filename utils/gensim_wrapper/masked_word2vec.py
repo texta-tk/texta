@@ -88,7 +88,7 @@ class MaskedWord2Vec(object):
         def word_vec(word):
             if isinstance(word, np.ndarray):
                 return word
-            elif word in self.model.vocab:
+            elif word in self.model.wv.vocab:
                 all_words.add(self.model.wv.vocab[word].index)
                 return self.model.wv.syn0norm[self.model.wv.vocab[word].index]
             else:
