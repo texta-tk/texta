@@ -149,6 +149,7 @@ class Highlighter(object):
                     text_index_to_data_index[alignment[text_index]].append(data_index)
 
         text_index_to_data_index = [frozenset(data_indices) for data_indices in text_index_to_data_index]
+
         spans_to_tags = [(spans, self._get_tag_from_highlight_data([data_mapping[data_index] for data_index in data_indices]))
                          for spans, data_indices in self._get_spans_to_data_indices(text_index_to_data_index)]
 

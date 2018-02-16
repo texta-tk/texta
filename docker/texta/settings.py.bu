@@ -45,7 +45,16 @@ BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 
 STATIC_ROOT = os.path.join(os.path.abspath(os.path.join(BASE_DIR, os.pardir)), 'static')
 
-SERVER_TYPE = 'development'
+
+def get_host_ip():
+    # Docker container's host IP is at the last line of /etc/hosts file
+    with open('/etc/hosts') as hosts:
+        for line in hosts:
+            pass
+
+        return line.split()[0]
+
+SERVER_TYPE = 'development' # 'docker'
 
 if SERVER_TYPE == 'development':
     PROTOCOL = 'http://'
@@ -63,6 +72,16 @@ elif SERVER_TYPE == 'production':
     DOMAIN = 'dev.texta.ee'
     
     URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL,DOMAIN)
+    URL_PREFIX_RESOURCE = '/texta'
+    ROOT_URLCONF = 'texta.urls'
+    STATIC_URL = '/texta/static/'
+    DEBUG = False
+
+elif SERVER_TYPE == 'docker':
+    PROTOCOL = 'http://'
+    DOMAIN = get_host_ip()
+
+    URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL, DOMAIN)
     URL_PREFIX_RESOURCE = '/texta'
     ROOT_URLCONF = 'texta.urls'
     STATIC_URL = '/texta/static/'
@@ -135,7 +154,7 @@ DATASET_ACCESS_DEFAULT = 'private'
 # List of all host headers which are accepted to prevent host header poisoning.
 # Should be altered if hosted on a remote machine.
 #
-ALLOWED_HOSTS = [DOMAIN]
+ALLOWED_HOSTS = [DOMAIN, "*"]
 
 # Defines which database backend does the application use. TEXTA uses only default with sqlite engine.
 # Can change engine and database info as one sees fit.
@@ -241,8 +260,8 @@ INSTALLED_APPS = (
 #
 es_url = os.getenv('TEXTA_ELASTICSEARCH_URL')
 if es_url is None:
-    # es_url = 'http://localhost:9200'
-    es_url = 'http://10.6.6.93:9200'
+    # es_url = 'http://:9200'
+    es_url = 'http://texta-elastic:9200'
 
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')
@@ -262,7 +281,7 @@ es_ldap_password = os.getenv('TEXTA_LDAP_PASSWORD')
 
 # Dataset Importer global parameters
 #
-from dataset_importer.document_preprocessor.preprocessors.mlp import MlpProcessor
+from dataset_importer.document_processor.subprocessors.mlp import MlpProcessor
 
 DATASET_IMPORTER = {
     'directory': os.path.join(BASE_DIR, 'files', 'dataset_importer'),
@@ -274,12 +293,44 @@ DATASET_IMPORTER = {
         'index_sqlite_path': os.path.join(BASE_DIR, 'database', 'import_sync.db')
     },
     'enabled_input_types': {
-
-
+        'archive': [
+            {'name': 'ZIP', 'value': 'zip', 'parameter_tags': 'file'},
+            {'name': 'TAR', 'value': 'tar', 'parameter_tags': 'file'}
+        ],
+        'single': [
+            {'name': 'Word document', 'value': 'doc', 'parameter_tags': 'file'},
+            {'name': 'HTML', 'value': 'html', 'parameter_tags': 'file,html'},
+            {'name': 'RTF', 'value': 'rtf', 'parameter_tags': 'file'},
+            {'name': 'PDF', 'value': 'pdf', 'parameter_tags': 'file'},
+            {'name': 'TXT', 'value': 'txt', 'parameter_tags': 'file'},
+        ],
+        'collection': [
+            {'name': 'CSV', 'value': 'csv', 'parameter_tags': 'file'},
+            {'name': 'JSON', 'value': 'json', 'parameter_tags': 'file'},
+            {'name': 'Excel spreadsheet', 'value': 'xls', 'parameter_tags': 'file'},
+            {'name': 'XML', 'value': 'xml', 'parameter_tags': 'file,xml'},
+        ],
+        'database': [
+            {'name': 'Elasticsearch', 'value': 'elastic', 'parameter_tags': 'elastic'},
+            {'name': 'MongoDB', 'value': 'mongodb', 'parameter_tags': 'mongodb'},
+            {'name': 'PostgreSQL', 'value': 'postgres', 'parameter_tags': 'postgres'},
+            {'name': 'SQLite', 'value': 'sqlite', 'parameter_tags': 'file,sqlite'},
+        ]
 
     },
     'preprocessors': [
-
+        {
+            'name': 'Multilingual preprocessor',
+            'code': 'mlp',
+            'description': 'Extracts lemmas and identifies language code from multiple languages.',
+            'class': MlpProcessor,
+            'parameters_template': 'preprocessor_parameters/mlp.html',
+            'arguments': {
+                'mlp_url': 'http://10.6.6.92/mlp/process',
+                'enabled_features': ['text', 'lang']
+            },
+            'is_enabled': True
+        },
     ]
 }
 
