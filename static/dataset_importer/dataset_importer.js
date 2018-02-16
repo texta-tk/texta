@@ -28,7 +28,21 @@ $('.apply-preprocessor').val([]);
 //     $(".database-type-pane").hide();
 //     $("#" + $(this).val()).show();
 // });
-
+function loaderDisplay(beforeSend) {
+    if(beforeSend){
+        $("#loaderDiv").show();
+        $("#loader").fadeIn("slow");
+        $("#import-dataset-btn").prop('disabled', true);
+        $("#import-dataset-btn").html('Importing');
+        
+    }
+    else {
+        $("#loader").fadeOut("slow");
+        $("#loaderDiv").hide();
+        $("#import-dataset-btn").prop('disabled', false);
+        $("#import-dataset-btn").html('Import');
+    }
+}
 
 $('#import-dataset-btn').click(function() {
     importDataset();
@@ -52,14 +66,11 @@ function importDataset() {
         contentType: false,
         processData: false,
         beforeSend: function() {
-            $("#loaderDiv").show();
-            $("#import-dataset-btn").prop('disabled', true);
-
+            loaderDisplay(true);
         },
         success: function() {
             $('#jobs-table-div').load('reload_table');
-            $("#loaderDiv").hide();
-            $("#import-dataset-btn").prop('disabled', false);
+            loaderDisplay(false);
         }
     });
 }
