@@ -172,7 +172,11 @@ class ES_Manager:
     
     @staticmethod
     def plain_multisearch(es_url, dataset, mapping, data):
-        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_msearch',data='\n'.join(data)+'\n', headers=headers).json()['responses']
+        responses = ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_msearch',data='\n'.join(data)+'\n', headers=headers).json()
+        if 'responses' in responses:
+            return responses['responses']
+        else:
+            return []
     
     @staticmethod
     def plain_scroll(es_url, dataset, mapping, query, expiration_str='1m'):
@@ -644,23 +648,6 @@ class ES_Manager:
         response = self.requests.post(search_url, data=q, headers=headers).json()
         return response
 
-    # THIS SHOULD NOT BE NECESSARY
-    #def scroll_all_match(self, scroll_id=None, time_out='1m', id_scroll=False):
-    #    """ Search and Scroll in a match all search
-    #    """
-    #    if scroll_id:
-    #        q = json.dumps({"scroll": time_out, "scroll_id": scroll_id})
-    #        search_url = '{0}/_search/scroll'.format(es_url)
-    #    else:
-    #        q = json.dumps({'query': {"match_all": {}}})
-    #        if id_scroll:
-    #            search_url = '{0}/{1}/{2}/_search?scroll={3}&fields='.format(es_url, self.index, self.mapping, time_out)
-    #        else:
-    #            search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
-    #
-    #    response = self.requests.post(search_url, data=q, headers=headers).json()
-    #    return response
-
     def get_total_documents(self):
         search_url = '{0}/{1}/{2}/_count'.format(es_url, self.index, self.mapping)
         q = json.dumps(self.combined_query['main'])
@@ -735,7 +722,7 @@ class ES_Manager:
         doc_type = self.mapping.lower()
         doc_path = field.lower()
 
-        query = {"query": {"bool": {"filter": {'and': []}}}, 'fields': ['facts.fact', 'facts.doc_id']}
+        query = {"query": {"bool": {"filter": {'and': []}}}, '_source': ['facts.fact', 'facts.doc_id']}
         query['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': doc_type}})
         query['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
         query = json.dumps(query)
@@ -752,8 +739,8 @@ class ES_Manager:
             scroll_id = response['_scroll_id']
             for hit in response['hits']['hits']:
                 try:
-                    fact = hit['fields']['facts.fact'][0]
-                    doc_id = hit['fields']['facts.doc_id'][0]
+                    fact = hit['_source']['facts.fact'][0]
+                    doc_id = hit['_source']['facts.doc_id'][0]
                     if fact not in facts:
                         facts[fact] = set()
                     facts[fact].add(doc_id)

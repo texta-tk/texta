@@ -79,10 +79,6 @@ def save_component(request):
     if sub_components:
         sub_component_objs = GrammarComponent.objects.filter(id__in=sub_components)
         new_grammar.sub_components.add(*sub_component_objs)
-    #print(generate_metaquery_dict(new_grammar.id, component={}))
-    #metaquery = generate_metaquery_dict(17, component={})
-    #print(metaquery)
-    #print(ElasticGrammarQuery(metaquery))
     return HttpResponse(json.dumps({'id':new_grammar.id}))
 
 @login_required
@@ -157,7 +153,6 @@ def generate_instructions(metaquery_dict):
     def generation_helper(component_dict):
         if 'layer' in component_dict:
             if component_dict['operation'] == 'exact':
-                print component_dict['sensitive']
                 return matcher.Exact(component_dict['terms'],component_dict['layer'],component_dict['sensitive'])
             elif component_dict['operation'] == 'regex':
                 return matcher.Regex(component_dict['expression'],component_dict['layer'],component_dict['sensitive'])
@@ -198,8 +193,6 @@ def get_grammar_listing(request):
     
     grammars = Grammar.objects.filter(author=request.user, dataset__index=dataset, dataset__mapping=mapping).order_by('-last_modified')
     grammar_json = json.dumps([{'id':grammar.id, 'name':grammar.name, 'last_modified':grammar.last_modified.strftime("%d/%m/%y %H:%M:%S")} for grammar in grammars])
-    
-    print grammar_json
     
     return HttpResponse(grammar_json)
 
@@ -360,8 +353,6 @@ def get_table_data(request):
     
     if request.GET['is_test'] == 'true':
         query_data['inclusive_metaquery'] = json.loads(request.GET['inclusive_test_grammar'])
-        print query_data['inclusive_metaquery']
-        #query_data['exclusive_metaquery'] = json.loads(request.GET['exclusive_test_grammar'])
         
         query_data['inclusive_grammar_id'] = -1
         query_data['exclusive_grammar_id'] = -1
@@ -409,7 +400,7 @@ def get_table_data(request):
     # Add paging data to the query
     #es_m.set_query_parameter('from', request.session['grammar_'+polarity+'_cursor'])
     es_m.set_query_parameter('size', request.GET['iDisplayLength'])
-    es_m.set_query_parameter('fields', query_data['features'])
+    es_m.set_query_parameter('_source', query_data['features'])
                                                     
     query_data['inclusive_instructions'] = generate_instructions(query_data['inclusive_metaquery'])
     query_data['exclusive_instructions'] = {} #generate_instructions(query_data['exclusive_metaquery'])
@@ -421,8 +412,6 @@ def get_table_data(request):
 
 
 def scroll_data(query,request, query_data):   
-    #print query
-    
     out = {'aaData':[],'iTotalRecords':0,'iTotalDisplayRecords':0}
     
     positive_polarity = query_data['polarity'] == 'positive'  
@@ -455,8 +444,6 @@ def scroll_data(query,request, query_data):
 
     out['iTotalRecords'] = page_data['total']
     out['iTotalDisplayRecords'] = page_data['total']
-    
-    #print(len(out['aaData']))
     return out
 
 def get_es_from(max_stored_page, es_from, request, query, query_data):
@@ -475,7 +462,6 @@ def get_es_from(max_stored_page, es_from, request, query, query_data):
     
     
 def get_next_page_data(query, es_from, last_page, query_data, request):
-    print 'new page data'
     start_from = None
     end = None
     rows = []
@@ -497,7 +483,7 @@ def get_next_page_data(query, es_from, last_page, query_data, request):
 
     try:
         hit = response['hits']['hits'][0]
-        feature_dict = {feature_name:hit['fields'][feature_name][0] for feature_name in hit['fields']}
+        feature_dict = {feature_name:hit['_source'][feature_name][0] for feature_name in hit['_source']}
         sorted_feature_names = sorted(feature_dict)
         feature_to_idx_map = {feature: (feature_idx+1) for feature_idx, feature in enumerate(sorted_feature_names)}
     except:
@@ -508,9 +494,19 @@ def get_next_page_data(query, es_from, last_page, query_data, request):
     while len(rows) < page_length and 'hits' in response and 'hits' in response['hits'] and response['hits']['hits'] and hit_idx+1 == page_length:
         for hit_idx, hit in enumerate(response['hits']['hits']):
             if len(rows) >= page_length:
-                break
+                break            
             
-            feature_dict = {feature_name:hit['fields'][feature_name][0] for feature_name in hit['fields']}
+            feature_dict = {}
+            
+            for field_name in hit['_source']:
+                field_value = hit['_source'][field_name]
+                if isinstance(field_value, dict):
+                    for subfield_name, subfield_value in field_value.items():
+                        combined_field_name = '{0}.{1}'.format(field_name, subfield_name)
+                        feature_dict[combined_field_name] = subfield_value
+                else:
+                    feature_dict[field_name] = field_value
+            
             sorted_feature_names = sorted(feature_dict)
             
             feature_to_idx_map = defaultdict(list)
@@ -532,8 +528,7 @@ def get_next_page_data(query, es_from, last_page, query_data, request):
                     row = highlight(row, feature_to_idx_map, inclusive_matches)
                 
                 rows.append(row)
-        
-        print(query['from'], hit_idx)
+
         query['from'] = query['from'] + hit_idx + 1
         if len(rows) >= page_length:
             break

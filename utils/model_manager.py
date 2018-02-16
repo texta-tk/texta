@@ -138,10 +138,8 @@ class ModelManager(threading.Thread):
 
                 try:
                     os.makedirs(negatives_dir)
-                except os.error:
-                    #directory existed
-                    print(traceback.format_exc())
-                    pass
+                except:
+                    OSError
 
                 with open(negatives_path,'w') as fout:
                     fout.write(pickle.dumps(self._model_negatives[model_name][username][lexicon_id].negatives))

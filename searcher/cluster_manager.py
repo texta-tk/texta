@@ -21,7 +21,6 @@ class ClusterManager:
         self.cluster_keywords = self._get_keywords(int(params['cluster_n_keywords']))
 
 
-
     @staticmethod
     def _parse_params(params):
         params_out = {}
@@ -50,7 +49,9 @@ class ClusterManager:
             hits = response['hits']['hits']
             for hit in hits:
                 try:
-                    content = hit['fields'][field][0]
+                    content = hit['_source']
+                    for subfield_name in field.split('.'):
+                        content = content[subfield_name]
                     documents.append(content)
                     es_ids.append(hit['_id'])
                     
