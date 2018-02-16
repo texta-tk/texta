@@ -12,7 +12,8 @@ from dataset_importer.document_storer.storer import DocumentStorer
 from dataset_importer.document_reader.reader import DocumentReader, entity_reader_map, collection_reader_map, database_reader_map
 from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
 from dataset_importer.archive_extractor.extractor import ArchiveExtractor, extractor_map
-from multiprocessing import Pool, Lock
+from threading import Lock
+from multiprocessing.pool import ThreadPool as Pool
 from dataset_importer.models import DatasetImport
 from dataset_importer.syncer.SQLiteIndex import SQLiteIndex
 
