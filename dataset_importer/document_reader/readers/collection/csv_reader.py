@@ -1,5 +1,7 @@
 import csv
 from collection_reader import CollectionReader
+import sys 
+csv.field_size_limit(sys.maxsize)
 
 
 class CSVReader(CollectionReader):

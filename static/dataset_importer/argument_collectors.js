@@ -30,13 +30,18 @@ function collectFileLikeArguments(formData) {
     var selectedInputMethod = $('.file-input-method-btn.selected').val();
     var fileInput = $('#' + selectedInputMethod + '-file-input input');
 
-    if (selectedInputMethod === 'file') {
+    if (selectedInputMethod === 'upload') {
         formData.append('file', fileInput[0].files[0]);
     } else {
         formData.append(selectedInputMethod, fileInput.val());
     }
 
     return formData;
+}
+
+function collectBdocArguments(formData) {
+    formData.append('bdoc_password', $('#bdoc-password').val())
+    return formData
 }
 
 function collectHtmlArguments(formData) {
@@ -103,6 +108,8 @@ function collectMlpArguments(formData) {
     return formData;
 }
 
+
+// Key to collector map
 
 var collectors = {
     formats: collectFormats,

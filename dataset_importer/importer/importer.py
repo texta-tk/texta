@@ -1,3 +1,6 @@
+"""This module contains most of the logic and workflow behind importing datasets.
+"""
+
 import time
 import os
 from datetime import datetime
@@ -13,8 +16,6 @@ from multiprocessing import Pool, Lock
 from dataset_importer.models import DatasetImport
 from dataset_importer.syncer.SQLiteIndex import SQLiteIndex
 
-entity_reader_map2 = entity_reader_map
-
 DAEMON_BASED_DATABASE_FORMATS = set(database_reader_map) - {'sqlite'}
 ARCHIVE_FORMATS = set(extractor_map)
 PREPROCESSORS = {
@@ -24,14 +25,24 @@ PREPROCESSORS = {
 
 
 class DatasetImporter(object):
+    """The class behind importing. The functions in this module that are not methods in this class is due to the Python 2.7's
+    limited capability of serializing class methods. In Python 3.x, they should end up in this class.
+    """
 
     def __init__(self, es_url, configuration, data_access_object, file_system_storer):
+        """
+        :param es_url: Elasticsearch instance's URL.
+        :param configuration: DATASET_IMPORTER dict from texta/settings.py, which includes necessary parameters for importer.
+        :param data_access_object: An attempt to separate Django's DatasetImport model object from import to reduce coupling and enhance testing.
+        :param file_system_storer: Same as above. Django's built-in FileSystemStorage for storing data from requests to disk.
+        :type es_url: string
+        :type configuration: dict
+        """
         self._es_url = es_url
 
         self._root_directory = configuration['directory']
         self._n_processes = configuration['import_processes']
         self._process_batch_size = configuration['process_batch_size']
-        # self._enabled_input_types = self._get_verified_input_types(configuration['enabled_input_types'])
         self._index_sqlite_path = configuration['sync']['index_sqlite_path']
 
         self._dao = data_access_object
@@ -40,6 +51,11 @@ class DatasetImporter(object):
         self._active_import_jobs = {}
 
     def import_dataset(self, request):
+        """Performs a dataset import session with all of the workflow - data acquisition, extraction, reading,
+        preprocessing, and storing.
+
+        :param request: Django request
+        """
         self._validate_request(request)
 
         parameters = self.django_request_to_import_parameters(request.POST)
@@ -55,11 +71,22 @@ class DatasetImporter(object):
         }
 
     def reimport(self, parameters):
+        """import_dataset's equivalent without the Django request validation and transformation to Importer's parameter dict.
+        Used mostly by Syncer or if reimport is added to GUI.
+
+        :param parameters: Dataset Importer parameters which have been validated during a previous run.
+        :type parameters: dict
+        """
         parameters = self._preprocess_reimport(parameters=parameters)
         # Process(target=_import_dataset, args=(parameters, self._n_processes, self._process_batch_size)).start()
         _import_dataset(parameters, n_processes=self._n_processes, process_batch_size=self._process_batch_size)
 
     def cancel_import_job(self, import_id):
+        """Cancels an active import job.
+
+        :param import_id: ID of the cancelled job.
+        :type import_id: int or string holding an int
+        """
         import_dict = self._active_import_jobs.get(int(import_id), None)
 
         if import_dict:
@@ -79,12 +106,26 @@ class DatasetImporter(object):
             pass
 
     def _preprocess_import(self, parameters, request_user, files_dict):
+        """Alters parameters to meet importer's needs.
+
+        :param parameters: initial request parameters.
+        :param request_user: Django user, who initiated the request.
+        :param files_dict: request files.
+        :type parameters: dict
+        :return: aletered parameters
+        :rtype: dict
+        """
         parameters['formats'] = json.loads(parameters.get('formats', '[]'))
         parameters['preprocessors'] = json.loads(parameters.get('preprocessors', '[]'))
         parameters['is_local'] = True if parameters.get('directory', None) else False
         parameters['keep_synchronized'] = self._determine_if_should_synchronize(parameters=parameters)
         parameters['remove_existing_dataset'] = True if parameters.get('remove_existing_dataset', 'false') == 'true' else False
         parameters['storer'] = 'elastic'
+        parameters['preprocessors'] = [
+            PREPROCESSORS[preprocessor] for preprocessor in parameters['preprocessors']
+        ]
+
+        self._separate_archive_and_reader_formats(parameters)
 
         if parameters['is_local'] is False:
             parameters['directory'] = self._prepare_import_directory(self._root_directory)
@@ -101,21 +142,59 @@ class DatasetImporter(object):
 
         return parameters
 
+    def _separate_archive_and_reader_formats(self, parameters):
+        """Splits initial formats to archives and formats to reduce the complexity for later processes.
+
+        :param parameters: dataset import's parameters.
+        :type parameters: dict
+        """
+        parameters['archives'] = []
+        reader_formats = []
+        for format in parameters['formats']:
+            if format in ARCHIVE_FORMATS:
+                parameters['archives'].append(format)
+            else:
+                reader_formats.append(format)
+
+        parameters['formats'] = reader_formats
+
     def _preprocess_reimport(self, parameters):
+        """Reimport's alternative to _preprocess_import. Most of the necessary alterations have been done by _preprocess_import
+        during some previous import session.
+
+        :param parameters: previously altered parameters.
+        :return: altered parameters for current session.
+        """
         if parameters['is_local'] is False:
             parameters['directory'] = self._prepare_import_directory(self._root_directory)
 
         return parameters
 
     def django_request_to_import_parameters(self, post_request_dict):
+        """Convert Django's Request to dict suitable for Dataset Importer.
+
+        :param post_request_dict: Django's request.POST
+        :return: dict corresponding to post_request_dict
+        :rtype: dict
+        """
         return {key: (value if not isinstance(value, list) else value[0]) for key, value in post_request_dict.items()}
 
     def _validate_request(self, request):
+        """Request validation procedure.
+
+        :param request: Django's Request.
+        :raises: Exception, if parameters are invalid.
+        """
         if 'file' not in request.FILES and 'url' not in request.POST or request.POST.get('is_local', False) is False:
             # raise Exception('Import failed.')
             pass
 
     def _determine_if_should_synchronize(self, parameters):
+        """Secondary synchronization validation in case some parameters are in conflict with synchronization.
+
+        :param parameters: preprocessed paramters.
+        :return: True, if synchronization is viable based on the parameters, False otherwise.
+        """
         if parameters.get('keep_synchronized', 'false') == 'true':
             if parameters.get('is_local', False) is True:
                 return True
@@ -129,6 +208,14 @@ class DatasetImporter(object):
             return False
 
     def _create_dataset_import(self, parameters, request_user):
+        """Adds a new dataset import entry to database using data access object.
+
+        :param parameters: dataset import parameters.
+        :param request_user: Django user who initiated the request.
+        :type parameters: dict
+        :return: dataset ID of the added dataset import entry
+        :rtype: int
+        """
         dataset_import = self._dao.objects.create(
             source_type=self._get_source_type(parameters.get('format', ''), parameters.get('archive', '')),
             source_name=self._get_source_name(parameters),
@@ -141,21 +228,28 @@ class DatasetImporter(object):
         return dataset_import.pk
 
     def _prepare_import_directory(self, directory_path):
+        """Creates a 'temporary' directory for storing import data. Doesn't use native temporary solution due to different issues.
+
+        :param directory_path: directory where to store subdirectories with dataset import data.
+        :type directory_path: string
+        :return: path to the import session's directory.
+        :rtype: string
+        """
         temp_folder_name = str(int(time.time() * 1000000))
         temp_folder_path = os.path.join(directory_path, temp_folder_name)
         os.makedirs(temp_folder_path)
 
         return temp_folder_path
 
-    def _get_verified_input_types(self, input_types):
-        # TODO verify that input type processor is working/installed
-        for type_category in input_types:
-            for input_type in type_category:
-                pass
-
-        return input_types
-
     def _store_file(self, file_name, file_content):
+        """Stores file to disk.
+
+        :param file_name: name of the file
+        :param file_content: binary content of the file
+        :type file_name: string
+        :type file_content: binary string
+        :return: path to the stored file
+        """
         fs = self._file_system_storer(location=self._root_directory)
         file_name = fs.save(file_name, file_content)
         return fs.path(file_name)
@@ -178,15 +272,24 @@ class DatasetImporter(object):
 
 
 def _import_dataset(parameter_dict, n_processes, process_batch_size):
+    """Starts the import process from a parallel process.
+
+    :param parameter_dict: dataset importer's parameters.
+    :param n_processes: size of the multiprocessing pool.
+    :param process_batch_size: the number of documents to process at any given time by a process.
+    :type parameter_dict: dict
+    :type n_processes: int
+    :type process_batch_size: int
+    """
     # Local files are not extracted from archives due to directory permissions
     # If importing from local hard drive, extract first.
     if parameter_dict['is_local'] is False:
         if 'file_path' not in parameter_dict:
             parameter_dict['file_path'] = download(parameter_dict['url'], parameter_dict['directory'])
 
-        _unextract_archives(parameter_dict)
+        _extract_archives(parameter_dict)
 
-    reader = DocumentReader(directory=parameter_dict['directory'])
+    reader = DocumentReader()
     _set_total_documents(parameter_dict=parameter_dict, reader=reader)
     _run_processing_jobs(parameter_dict=parameter_dict, reader=reader, n_processes=n_processes,
                          process_batch_size=process_batch_size)
@@ -195,29 +298,45 @@ def _import_dataset(parameter_dict, n_processes, process_batch_size):
     #     shutil.rmtree(parameter_dict['directory'])
 
 
-def _unextract_archives(parameter_dict):
+def _extract_archives(parameter_dict):
+    """Extracts archives based on the information from the parameters.
+
+    :param parameter_dict: dataset importer parameters.
+    :type parameter_dict: dict
+    """
     # Currently supports only extracting the first archive format it encounters - TODO more robust
-    for format in parameter_dict.get('formats', []):
+    for format in parameter_dict.get('archives', []):
         if format in ARCHIVE_FORMATS:
             ArchiveExtractor.extract_archive(
                 file_path=parameter_dict['file_path'],
-                archive_format=parameter_dict['archive']
+                archive_format=format
             )
             break
 
 
 def _init_pool(lock_):
+    """Hack to allow locks in a multiprocessing pool.
+    """
     global lock
     lock = lock_
 
 
 def _set_total_documents(parameter_dict, reader):
+    """Updates total documents count in the database entry.
+
+    :param parameter_dict: dataset import's parameters.
+    :param reader: dataset importer's document reader.
+    """
     dataset_import = DatasetImport.objects.get(pk=parameter_dict['import_id'])
     dataset_import.total_documents = reader.count_total_documents(**parameter_dict)
     dataset_import.save()
 
 
 def _complete_import_job(parameter_dict):
+    """Updates database entry to completed status.
+
+    :param parameter_dict: dataset import's parameters.
+    """
     import_id = parameter_dict['import_id']
     dataset_import = DatasetImport.objects.get(pk=import_id)
     dataset_import.end_time = datetime.now()
@@ -227,19 +346,26 @@ def _complete_import_job(parameter_dict):
 
 
 def _processing_job(documents, parameter_dict):
+    """A single processing job on a parallel node, which processes a batch of documents.
+
+    :param documents: batch of documents to process.
+    :param parameter_dict: dataset import's parameters.
+    :type documents: list of dicts
+    :type parameter_dict: dict
+    """
     dataset_name = '{0}_{1}'.format(parameter_dict['texta_elastic_index'], parameter_dict['texta_elastic_mapping'])
+
+    # Find unprocessed documents
     original_ids = [document['_texta_id'] for document in documents]
     index = SQLiteIndex(sqlite_file_path=parameter_dict['index_sqlite_path'])
     new_ids = set(index.get_new_entries(dataset=dataset_name, candidate_values=original_ids))
     documents = [document for document in documents if document['_texta_id'] in new_ids]
+
     for document in documents:
         del document['_texta_id']
 
     processed_documents = list(DocumentPreprocessor.process(
-        documents=documents,
-        preprocessors=[
-            PREPROCESSORS[preprocessor] for preprocessor in parameter_dict['preprocessors']
-        ], **parameter_dict)
+        documents=documents, **parameter_dict)
     )
 
     storer = DocumentStorer.get_storer(**parameter_dict)
@@ -254,6 +380,11 @@ def _processing_job(documents, parameter_dict):
 
 
 def _remove_existing_dataset(parameter_dict):
+    """Removes imported dataset from stored location and from Synchronizer's index.
+
+    :param parameter_dict: dataset import's parameters
+    :type parameter_dict: dict
+    """
     storer = DocumentStorer.get_storer(**parameter_dict)
     storer.remove()
     dataset_name = '{0}_{1}'.format(parameter_dict['texta_elastic_index'], parameter_dict['texta_elastic_mapping'])
@@ -261,6 +392,16 @@ def _remove_existing_dataset(parameter_dict):
 
 
 def _run_processing_jobs(parameter_dict, reader, n_processes, process_batch_size):
+    """Creates document batches and dispatches them to processing nodes.
+
+    :param parameter_dict: dataset import's parameters.
+    :param reader: dataset importer's document reader.
+    :param n_processes: size of the multiprocessing pool.
+    :param process_batch_size: the number of documents to process at any given time by a node.
+    :type parameter_dict: dict
+    :type n_processes: int
+    :type process_batch_size: int
+    """
     if parameter_dict.get('remove_existing_dataset', False):
         _remove_existing_dataset(parameter_dict)
 
@@ -290,6 +431,17 @@ def _run_processing_jobs(parameter_dict, reader, n_processes, process_batch_size
 
 
 def download(url, target_directory, chunk_size=1024):
+    """Download data source from a remote host.
+
+    :param url: URL to the data source.
+    :param target_directory: import session's directory path to download the data source.
+    :param chunk_size: data stream's chunk size
+    :type url: string
+    :type target_directory: string
+    :type chunk_size: int
+    :return: path to the downloaded file
+    :rtype: string
+    """
     head_response = requests.head(url)
 
     file_name = _derive_file_name(head_response, url)
@@ -303,20 +455,19 @@ def download(url, target_directory, chunk_size=1024):
 
     return file_path
 
-
-def prepare_import_directory(importer_directory):
-    temp_folder_name = str(int(time.time()*1000000))
-    temp_folder_path = os.path.join(importer_directory, temp_folder_name)
-    os.makedirs(temp_folder_path)
-
-    return temp_folder_path
-
-
 def tear_down_import_directory(import_directory_path):
     shutil.rmtree(import_directory_path)
 
 
 def _derive_file_name(response, url):
+    """Tries to derive file name from either response header or URL string.
+
+    :param response: requests Response
+    :param url: URL of the downloaded file
+    :type url: string
+    :return: name of the new file
+    :rtype: string
+    """
     file_name = ''
 
     if 'content-disposition' in response:

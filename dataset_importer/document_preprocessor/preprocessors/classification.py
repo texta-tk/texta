@@ -2,6 +2,9 @@ from classification_manager.model_pipeline import classify_documents
 
 
 class ClassificationProcessor(object):
+    """Preprocessor implementation for running TEXTA classification manager on the selected documents.
+    """
+
     def __init__(self, classifier_ids, feature_map={}):
         self._classifier_ids = classifier_ids
         self._feature_map = feature_map
