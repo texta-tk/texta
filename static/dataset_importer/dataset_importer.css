@@ -83,21 +83,15 @@
 
 /* LOADER */
 
-.loaderDiv {
-    display: none;    
-    width: 20px;
-    height: 20px;
-  
-}
-
 .loader {
+    display: none;    
     border: 5px solid red;
     border-radius: 50%;
     border-top: 5px solid blue;
     border-right: 5px solid #73AD21;
     border-bottom: 5px solid #FFFFFF;
-    width: 100%;
-    height: 100%;
+    width: 20px;
+    height: 20px;
     -webkit-animation: spin 2s linear infinite;
     animation: spin 2s linear infinite;
   }
@@ -112,3 +106,7 @@
     100% { transform: rotate(360deg); }
 }
 
+.errorText {
+    display: none;
+    color: red;
+}
