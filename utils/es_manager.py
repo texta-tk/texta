@@ -157,6 +157,10 @@ class ES_Manager:
     @staticmethod
     def plain_post(url, data=None):
         return ES_Manager.requests.post(url, data=data, headers=headers).json()
+
+    @staticmethod
+    def plain_post_bulk(url, data):
+        return ES_Manager.requests.post('{0}/_bulk'.format(url), data=data, headers=headers).json()
     
     @staticmethod
     def plain_put(url, data=None):
@@ -627,14 +631,17 @@ class ES_Manager:
 
         return True
 
-    def scroll(self, scroll_id=None, time_out='1m', id_scroll=False, field_scroll=False, size=100):
+    def scroll(self, scroll_id=None, time_out='1m', id_scroll=False, field_scroll=False, size=100, match_all=False):
         """ Search and Scroll
         """
         if scroll_id:
             q = json.dumps({"scroll": time_out, "scroll_id": scroll_id})
             search_url = '{0}/_search/scroll'.format(es_url)
         else:
-            q = self.combined_query['main']
+            if match_all == True:
+                q = {}
+            else:
+                q = self.combined_query['main']
             q['size'] = size
             search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
             
@@ -649,10 +656,8 @@ class ES_Manager:
         return response
 
     def get_total_documents(self):
-        search_url = '{0}/{1}/{2}/_count'.format(es_url, self.index, self.mapping)
-        q = json.dumps(self.combined_query['main'])
-        response = self.requests.post(search_url, data=q, headers=headers).json()
-        total = response['count']
+        q = self.combined_query['main']
+        total = self.plain_search(self.es_url, self.index, self.mapping, q)['hits']['total']
         return long(total)
 
     def _get_facts_structure_agg(self):

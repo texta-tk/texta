@@ -183,8 +183,11 @@ def api_classify(request):
             job_queue.save()
             data['status'] = ['running', 'model added to job queue']
             data['job_key'] = job_key
-            model_job = Process(target=model_pipeline.apply_classifier, args=(job_key,))
+
+
+            model_job = Thread(target=model_pipeline.apply_classifier, args=(job_key,))
             model_job.start()
+
 
     except Exception as e:
         print 'Error: ', e

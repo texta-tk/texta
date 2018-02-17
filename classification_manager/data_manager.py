@@ -8,6 +8,7 @@ import numpy as np
 
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
+from texta.settings import INFO_LOGGER
 
 
 MAX_POSITIVE_SAMPLE_SIZE = 10000
@@ -47,6 +48,8 @@ class Lexicon:
         self.reduction_methods = reduction_methods
 
     def lexicon_reduction(self, doc_text):
+        if not isinstance(doc_text, basestring):
+            doc_text = unicode(doc_text).encode('utf8')
         sentences = doc_text.split('\n')
         if u'remove_numbers' in self.reduction_methods:
             sentences = [re.sub('(\d)+', 'n', sentence) for sentence in sentences]
@@ -107,14 +110,14 @@ class EsDataSample(object):
 
     def _get_negative_samples(self, positive_set):
         negative_samples = []
-        response = self.es_m.scroll_all_match()
+        response = self.es_m.scroll(match_all=True)
         scroll_id = response['_scroll_id']
         l = response['hits']['total']
         sample_size = len(positive_set)
 
         while l > 0 and len(negative_samples) <= sample_size:
 
-            response = self.es_m.scroll_all_match(scroll_id=scroll_id)
+            response = self.es_m.scroll(scroll_id=scroll_id)
             l = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
 
@@ -145,8 +148,15 @@ class EsDataSample(object):
     def get_data_samples(self, sample_size=MAX_POSITIVE_SAMPLE_SIZE):
         positive_samples, positive_set = self._get_positive_samples(sample_size)
         negative_samples = self._get_negative_samples(positive_set)
+
+
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'asd1'}))
+        
+
         data_sample_x = np.asarray(positive_samples + negative_samples)
         data_sample_y = np.asarray([1] * len(positive_samples) + [0] * len(negative_samples))
+
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'asd2'}))
 
         statistics = {}
         statistics['total_positive'] = len(positive_samples)
@@ -177,75 +187,6 @@ class EsDataClassification(object):
             tags = ""
         return tags.split()
 
-        # doc = []
-        # try:
-        #     doc = response['_source']['texta_tags']   # ['texta_link']['tags']
-        # except KeyError:
-        #     pass
-        # return doc
-
-    # def apply_classifier(self, clf_model, model_tag):
-    #
-    #     response = self.es_m.scroll()
-    #     scroll_id = response['_scroll_id']
-    #     l = response['hits']['total']
-    #     total_processed = 0
-    #     positive_docs = []
-    #
-    #     # Get all positive documents
-    #     while l > 0:
-    #
-    #         # Check errors in the database request
-    #         if (response['_shards']['total'] > 0 and response['_shards']['successful'] == 0) or response['timed_out']:
-    #             msg = 'Elasticsearch failed to retrieve documents: ' \
-    #                   '*** Shards: {0} *** Timeout: {1} *** Took: {2}'.format(response['_shards'],
-    #                                                                           response['timed_out'], response['took'])
-    #             raise esIteratorError(msg)
-    #
-    #         for hit in response['hits']['hits']:
-    #             try:
-    #                 total_processed += 1
-    #                 doc_id = str(hit['_id'])
-    #                 # Take into account nested fields encoded as: 'field.sub_field'
-    #                 decoded_text = hit['_source']
-    #                 for k in self.field.split('.'):
-    #                     decoded_text = decoded_text[k]
-    #                 pred = clf_model.predict([decoded_text])[0]
-    #
-    #                 if pred == 1:
-    #                     positive_docs.append(doc_id)
-    #             except KeyError as e:
-    #                 # If the field is missing from the document
-    #                 pass
-    #
-    #         # New scroll request
-    #         response = self.es_m.scroll(scroll_id=scroll_id)
-    #         l = len(response['hits']['hits'])
-    #         scroll_id = response['_scroll_id']
-    #
-    #     # Apply update to positive documents
-    #     for doc_id in positive_docs:
-    #         doc_tags = self.get_tags_by_id(doc_id)
-    #         # Check if document has tag already
-    #         if model_tag not in doc_tags:
-    #             doc_tags.append(model_tag)
-    #         base_url = '{0}/{1}/{2}/{3}/_update'
-    #         request_url = base_url.format(self.es_m.es_url, self.es_index, self.es_mapping, doc_id)
-    #         #texta_tags = {'texta_link': {'tags': doc_tags}}
-    #         texta_tags = {'texta_tags': '\n'.join(doc_tags)}
-    #         d = json.dumps({'doc': texta_tags})
-    #         response = self.es_m.plain_post(request_url, d)
-    #
-    #
-    #
-    #     total_positive = len(positive_docs)
-    #     data = {}
-    #     data['total_processed'] = total_processed
-    #     data['total_positive'] = total_positive
-    #     data['total_negative'] = total_processed - total_positive
-    #     data['total_documents'] = self.get_total_documents()
-    #     return data
-
     def apply_classifiers(self, classifiers, classifier_tags):
         if not isinstance(classifiers, list):
             classifiers = [classifiers]
@@ -275,8 +216,7 @@ class EsDataClassification(object):
                 positive_docs_batch.append(((str(hit['_id'])), hit['_source']))
 
                 if len(positive_docs_batch) >= batch_size:
-                    positive_docs_per_classifier = self._apply_classifiers_to_documents(
-                        positive_docs_batch, classifiers, classifier_tags)
+                    positive_docs_per_classifier = self._apply_classifiers_to_documents(positive_docs_batch, classifiers, classifier_tags)
                     positive_docs_batch = []
                     total_processed += len(positive_docs_batch)
 
@@ -299,6 +239,7 @@ class EsDataClassification(object):
                 total_processed - positive_docs_count for positive_docs_count in positive_docs_per_classifier
             ]
         data['total_documents'] = self.get_total_documents()
+
         return data
 
     def _apply_classifiers_to_documents(self, documents, classifiers, classifier_tags):
@@ -334,7 +275,7 @@ class EsDataClassification(object):
 
             new_tags = False
             for classifier_idx, classifier_predictions in enumerate(classifiers_predictions):
-                if classifiers_predictions[document_idx] == 1:
+                if classifier_predictions[document_idx] == 1:
                     tag_count_before = len(tags)
                     tags.add(classifier_tags[classifier_idx])
                     new_tags = len(tags) > tag_count_before
@@ -356,7 +297,7 @@ class EsDataClassification(object):
         bulk_update_content.append('')
         bulk_update_content = '\n'.join(bulk_update_content)
 
-        self.es_m.plain_post('{0}/_bulk', data=bulk_update_content)
+        self.es_m.plain_post_bulk(self.es_m.es_url, bulk_update_content)
 
         return positive_docs
 
