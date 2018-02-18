@@ -24,12 +24,14 @@ from texta.settings import es_url, es_links
 model_manager = get_model_manager(expiration_time=300,refresh_time=30)
 punct_to_name = {'!': '___exclamation___', ' ': '______', '"': '___quot___', "'": '___apo___', ')': '___r_para___', '(': '___l_para___', '-': '___hyphen___', ',': '___comma___', '/': '___slash___', '.': '___period___', '\\': '___backslash___', ';': '___semicolon___', ':': '___colon___', ']': '___r_bracket___', '[': '___l_bracket___', '?': '___question___', '&':'___and___', '%':'___percentage___'}
 
+
 def uniq(l):
     seen = {}
     for item in l:
         if item['word'] not in seen:
             seen[item['word']]=item
     return seen.values()
+
 
 @login_required
 def index(request):
@@ -38,6 +40,7 @@ def index(request):
     template = loader.get_template('lm.html')
     lexicons = Lexicon.objects.all().filter(author=request.user)
     return HttpResponse(template.render({'lexicons':lexicons,'STATIC_URL':STATIC_URL},request))
+
 
 @login_required
 def newLexicon(request):
@@ -54,6 +57,7 @@ def newLexicon(request):
     
     return HttpResponseRedirect(URL_PREFIX + '/lm')
 
+
 @login_required
 def deleteLexicon(request):
     try:
@@ -67,6 +71,7 @@ def deleteLexicon(request):
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_deletion_failed','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}),exc_info=True)
     
     return HttpResponseRedirect(URL_PREFIX + '/lm')
+
 
 @login_required
 def saveLexicon(request):
@@ -99,6 +104,7 @@ def saveLexicon(request):
         
     return HttpResponseRedirect(URL_PREFIX + '/lm/select?id='+lexId)
 
+
 @login_required
 def selectLexicon(request):
     try:
@@ -120,6 +126,23 @@ def selectLexicon(request):
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_selection_failed','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}),exc_info=True)
         
         return HttpResponseRedirect(URL_PREFIX + '/lm')
+
+
+def get_example_texts(request, field, value):
+    ds = Datasets().activate_dataset(request.session)
+    dataset = ds.get_index()
+    mapping = ds.get_mapping()
+    
+    query = json.dumps({ "size":10, "highlight": {"fields": {field: {}}}, "query": {"match": {field: value}}})
+    response = ES_Manager.plain_scroll(es_url, dataset, mapping, query)
+    
+    matched_sentences = []
+    for hit in response['hits']['hits']:
+        for match in hit['highlight'].values():
+            matched_sentences.append(match[0].encode('utf8'))
+
+    return matched_sentences
+
 
 @login_required
 def query(request):
@@ -160,25 +183,19 @@ def query(request):
         tooltip_feature = model_run_obj.fields
         
         # Define selected mapping
-        ds = Datasets().activate_dataset(request.session)
-        dataset = ds.get_index()
-        mapping = ds.get_mapping()
+        #ds = Datasets().activate_dataset(request.session)
+        #dataset = ds.get_index()
+        #mapping = ds.get_mapping()
 
         if request.POST['method'][:12] == 'most_similar':
             for a in getattr(model,request.POST['method'])(positive=positives,topn=40,ignored_idxes = ignored_idxes):
                 encoded_a = encode_for_id(a[0])
-                
-                query = json.dumps({ "size":10, "fields":[tooltip_feature], "query": { "match": {tooltip_feature: a[0]} } })
-                response = ES_Manager.plain_scroll(es_url, dataset, mapping, query)
-                matched_sentences = []
-                for hit in response['hits']['hits']:
-                    matched_sentences.append(hit['fields'][tooltip_feature][0].encode('utf-8') if isinstance(hit['fields'][tooltip_feature][0],unicode) else hit['fields'][tooltip_feature][0])
-                
+                matched_sentences = get_example_texts(request, tooltip_feature, a[0])
                 suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded_a + '\'>&bull; <a title="' + '\n'.join(matched_sentences).replace('"','') + '" href="javascript:addWord(\''+encoded_a+'\');">'+a[0]+'</a></div>')
         elif request.POST['method'][:17] == 'simple_precluster':
             method = request.POST['method'][18:]
 
-            preclusters = PreclusterMaker(positives,[model.model.syn0norm[model.vocab[positive].index] for positive in positives])()
+            preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
             
             labels, vectors = zip(*[zip(*cluster) for cluster in preclusters])
 
@@ -191,13 +208,7 @@ def query(request):
             
             for a in getattr(model,method)(positive=new_positives,topn=40,ignored_idxes = ignored_idxes):
                 encoded_a = encode_for_id(a[0])
-                
-                query = json.dumps({ "size":10, "fields":[tooltip_feature], "query": { "match": {model_run_obj.fields: a[0]} } })
-                response = ES_Manager.plain_scroll(es_url, dataset, mapping, query)
-                matched_sentences = []
-                for hit in response['hits']['hits']:
-                    matched_sentences.append(hit['fields'][tooltip_feature][0].encode('utf-8') if isinstance(hit['fields'][tooltip_feature][0],unicode) else hit['fields'][tooltip_feature][0])
-                
+                matched_sentences = get_example_texts(request, tooltip_feature, a[0])                
                 suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded_a + '\'>&bull; <a title="' + '\n'.join(matched_sentences).replace('"','') + '" href="javascript:addWord(\''+encoded_a+'\');">'+a[0]+'</a></div>')
 
             
@@ -205,14 +216,14 @@ def query(request):
             method = request.POST['method'][11:]
 
             if len(positives) > 0:
-                preclusters = PreclusterMaker(positives,[model.model.syn0norm[model.vocab[positive].index] for positive in positives])()
+                preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
 
                 labels, vectors = zip(*[zip(*cluster) for cluster in preclusters])
                 label_idxes = [[model.vocab[label].index for label in labels[cluster_idx]] for cluster_idx in range(len(labels))]
                 suggestions_per_cluster = [zip(*getattr(model,method)(positive=labels[cluster_idx],topn=50,ignored_idxes = ignored_idxes + [label_idxes[i][j] for i in range(len(label_idxes)) for j in range(len(label_idxes[i])) if i != cluster_idx]))[0] for cluster_idx in range(len(labels))]
 
                 suggestions_list = suggestions_per_cluster
-                suggestions = RRA_suggestions(suggestions_list,model_run_obj,dataset,mapping,tooltip_feature)
+                suggestions = RRA_suggestions(suggestions_list, tooltip_feature, request)
             else:
                 suggestions = []
         else:
@@ -220,8 +231,7 @@ def query(request):
             _, local_method = request.POST['method'].split()
             local_suggestions = [[similar[0] for similar in getattr(model,local_method)(positive=[positive],topn=50,ignored_idxes=ignored_idxes) if similar[0] not in positives ] for positive in positives]
             suggestions_list = local_suggestions
-
-            suggestions = RRA_suggestions(suggestions_list,model_run_obj,dataset,mapping,tooltip_feature)
+            suggestions = RRA_suggestions(suggestions_list, tooltip_feature, request)
         
         suggestions.append('<input type=\'hidden\' id=\'sid\' value=\'' + str(suggestionset_id) + '\'/>') # hidden field to store previous suggestionset's id
         
@@ -233,19 +243,12 @@ def query(request):
         return HttpResponse()
 
 
-def RRA_suggestions(suggestions_list,modelrun,es_dataset,es_mapping,tooltip_feature):
+def RRA_suggestions(suggestions_list, tooltip_feature, request):
     ranks = aggregate_ranks(suggestions_list)
     encoded_suggestions = [(name, encode_for_id(name)) for (name, score) in ranks[:40]]
-    
     suggestions = []
     for (name,encoded) in encoded_suggestions:
-        
-        query = json.dumps({ "size":10, "fields":[tooltip_feature], "query": { "match": {modelrun.fields: name} } })
-        response = ES_Manager.plain_scroll(es_url, es_dataset, es_mapping, query)
-        matched_sentences = []
-        for hit in response['hits']['hits']:
-            matched_sentences.append(hit['fields'][tooltip_feature][0].encode('utf-8') if isinstance(hit['fields'][tooltip_feature][0],unicode) else hit['fields'][tooltip_feature][0])
-    
+        matched_sentences = get_example_texts(request, tooltip_feature, name)         
         suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded + '\'>&bull; <a title="' + '\n'.join(matched_sentences).replace('"','') + '" href="javascript:addWord(\'' + encoded + '\');">' + name + '</a></div>')
     return suggestions
 
@@ -255,6 +258,7 @@ def encode_for_id(s):
     for punct in punct_to_name:
         s = s.replace(punct,punct_to_name[punct])
     return s
+
 
 @login_required
 def reset_suggestions(request):
@@ -266,3 +270,4 @@ def reset_suggestions(request):
     except Exception as e:
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'suggestions_reset','args':{'user_name':request.user.username,'lexicon_id':lexicon_id}}),exc_info=True)
     return HttpResponseRedirect(URL_PREFIX + '/lm/select?id='+lexicon_id)
+

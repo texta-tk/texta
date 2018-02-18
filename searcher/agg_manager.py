@@ -94,10 +94,22 @@ class AggManager:
         agg_field_2 = json.loads(agg_field_2)
         sort_by_2 = es_params["sort_by_2"]
 
-        field_type_to_name = {'date': 'daterange', 'string': 'string', 'facts': 'fact', 'fact_str_val': 'fact_str_val', 'fact_num_val': 'fact_num_val'}
+        field_type_to_name = {'date': 'daterange', 'text': 'string', 'keyword': 'string', 'facts': 'fact', 'fact_str_val': 'fact_str_val', 'fact_num_val': 'fact_num_val'}
 
         agg_name_1 = field_type_to_name[agg_field_1['type']]
         agg_name_2 = field_type_to_name[agg_field_2['type']]
+
+        # If aggregating over text field, use .keyword instead
+        if  agg_field_1['type'] == 'text' and sort_by_1 == 'terms':
+            agg_field_1['path'] = '{0}.keyword'.format(agg_field_1['path'].encode('utf8'))
+        if  agg_field_2['type'] == 'text' and sort_by_1 == 'terms':
+            agg_field_2['path'] = '{0}.keyword'.format(agg_field_2['path'].encode('utf8'))
+
+        # If looking for significant terms from text field, use significant_text aggregation instead
+        if agg_field_1['type'] == 'text' and sort_by_1 == 'significant_terms':
+            sort_by_1 = 'significant_text'
+        if agg_field_2['type'] == 'text' and sort_by_2 == 'significant_terms':
+            sort_by_2 = 'significant_text'
 
         # 1st LEVEL AGGREGATION
         agg = self.create_agg(agg_name_1,sort_by_1,agg_field_1["path"])

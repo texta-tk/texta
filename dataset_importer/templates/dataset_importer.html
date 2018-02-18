@@ -7,7 +7,7 @@
 
     <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}dataset_importer/dataset_importer.css">
 
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="panel">
             <div class="panel-heading">
                 New Dataset
@@ -24,11 +24,16 @@
 
                 <button id="import-dataset-btn" class="btn btn-success pull-right">Import</button>
 
+                <div class="loaderDiv" id="loaderDiv">
+                    <div id="loader" class="loader"></div>
+                    <p class="errorText" id="errorText"> Error importing database! </p>
+                </div>
+
             </div>
         </div>
     </div>
 
-    <div class="col-md-8">
+    <div class="col-md-9">
         <div class="panel">
             <div class="panel-heading">
                 Import Jobs

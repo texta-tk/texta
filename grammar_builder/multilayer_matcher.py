@@ -97,14 +97,14 @@ class Exact(object):
         
     def match(self, layer_dict):
         results = []
-        
-        for match in re.finditer(self._pattern,layer_dict[self._feature_name][self._layer_name]['text']):
-            start_location, end_location = match.start(), match.end()
-            token_idxs = [token_idx for token_idx in 
-                          range(layer_dict.get_token_index(self._feature_name, self._layer_name, start_location),
-                                layer_dict.get_token_index(self._feature_name, self._layer_name, end_location-1)+1)] 
-            results.append(Match(token_idxs,[self._feature_name]*len(token_idxs),[layer_dict.get_token_by_index(token_idx,self._feature_name,self._layer_name)
-                                                                  for token_idx in token_idxs]))
+
+        if layer_dict:        
+            for match in re.finditer(self._pattern,layer_dict[self._feature_name][self._layer_name]['text']):
+                start_location, end_location = match.start(), match.end()
+                token_idxs = [token_idx for token_idx in 
+                              range(layer_dict.get_token_index(self._feature_name, self._layer_name, start_location),
+                                    layer_dict.get_token_index(self._feature_name, self._layer_name, end_location-1)+1)] 
+                results.append(Match(token_idxs,[self._feature_name]*len(token_idxs),[layer_dict.get_token_by_index(token_idx,self._feature_name,self._layer_name) for token_idx in token_idxs]))
         return results
     
 class Regex(object):

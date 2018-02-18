@@ -170,7 +170,7 @@ class Highlighter(object):
             start_idx = text_idx
 
         if text_idx is not None:
-            spans_to_data_indices.append(([start_idx, text_idx+1], previous_data_indices))
+            spans_to_data_indices.append(([start_idx, text_idx + 1], previous_data_indices))
 
         return spans_to_data_indices
 

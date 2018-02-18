@@ -28,7 +28,29 @@ $('.apply-preprocessor').val([]);
 //     $(".database-type-pane").hide();
 //     $("#" + $(this).val()).show();
 // });
+function loaderDisplay(status) {
+    if(status == "beforeSend"){
+        $("#loader").show();
+        $("#loader").fadeIn("slow");
+        $("#import-dataset-btn").prop('disabled', true);
+        $("#import-dataset-btn").html('Importing');
+        $("#errorText").hide();
+    }
+    else if (status == "success") {
+        $("#loader").fadeOut("slow");
+        $("#loader").hide();
+        $("#import-dataset-btn").prop('disabled', false);
+        $("#import-dataset-btn").html('Import');
+    }
+    else if (status == "error") {
+        $("#loader").fadeOut("slow");
+        $("#loader").hide();
+        $("#import-dataset-btn").prop('disabled', false);
+        $("#import-dataset-btn").html('Import');
 
+        $("#errorText").show();
+    }
+}
 
 $('#import-dataset-btn').click(function() {
     importDataset();
@@ -51,8 +73,16 @@ function importDataset() {
         type: 'POST',
         contentType: false,
         processData: false,
+        beforeSend: function() {
+            loaderDisplay("beforeSend");
+        },
         success: function() {
             $('#jobs-table-div').load('reload_table');
+            loaderDisplay("success");
+        },
+        error: function() {
+            $('#jobs-table-div').load('reload_table');
+            loaderDisplay("error")
         }
     });
 }
