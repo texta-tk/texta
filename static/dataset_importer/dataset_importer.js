@@ -93,6 +93,7 @@ $('.apply-preprocessor').click(function() {
 $('#data-formats').change(function() {
     var parameterTags = getSelectedFormatsParameterTags(this);
     displayFormatsParameters(parameterTags);
+    displaySelectedFormatsNames(this);
 });
 
 function getSelectedFormatsParameterTags(selectTag) {
@@ -107,6 +108,21 @@ function getSelectedFormatsParameterTags(selectTag) {
     });
 
     return parameterTags;
+}
+
+function displaySelectedFormatsNames(selectTag) {
+    var checkedFormats = $(selectTag).find('option:checked');
+    var parameterNames = [];
+
+    checkedFormats.each(function() {
+        console.log($(this));
+        parameterNames.push($(this).text());
+    });
+
+    console.log(parameterNames);
+    $('#selected-data-formats-list').html(parameterNames.join(', '));
+
+    return parameterNames;
 }
 
 function displayFormatsParameters(parameterTags) {

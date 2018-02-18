@@ -36,4 +36,10 @@
 
 .file-input-method {
     display: none;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+#selected-data-formats-list.help-block {
+    color: #666 !important;
 }
