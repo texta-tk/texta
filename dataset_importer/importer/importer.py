@@ -20,7 +20,7 @@ DAEMON_BASED_DATABASE_FORMATS = set(database_reader_map) - {'sqlite'}
 ARCHIVE_FORMATS = set(extractor_map)
 PREPROCESSORS = {
     preprocessor_code: preprocessor['class'](**preprocessor['arguments'])
-    for preprocessor_code, preprocessor in preprocessor_map.items()
+    for preprocessor_code, preprocessor in preprocessor_map.items() if preprocessor['is_enabled']
 }
 
 
