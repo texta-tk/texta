@@ -34,13 +34,17 @@ function loaderDisplay(status) {
         $("#loader").fadeIn("slow");
         $("#import-dataset-btn").prop('disabled', true);
         $("#import-dataset-btn").html('Importing');
-        $("#errorText").hide();
+        $("#statusText").hide();
     }
     else if (status == "success") {
         $("#loader").fadeOut("slow");
         $("#loader").hide();
         $("#import-dataset-btn").prop('disabled', false);
         $("#import-dataset-btn").html('Import');
+
+        $(".statusText").html("Successfully imported database!");
+        $(".statusText").css("color", "#73AD21")
+        $(".statusText").show();
     }
     else if (status == "error") {
         $("#loader").fadeOut("slow");
@@ -48,7 +52,9 @@ function loaderDisplay(status) {
         $("#import-dataset-btn").prop('disabled', false);
         $("#import-dataset-btn").html('Import');
 
-        $("#errorText").show();
+        $(".statusText").html("Error importing database!");
+        $(".statusText").css("color", "red")
+        $(".statusText").show();
     }
 }
 
