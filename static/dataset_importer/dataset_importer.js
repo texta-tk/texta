@@ -52,8 +52,12 @@ function loaderDisplay(status) {
     }
 }
 
-$('#import-dataset-btn').click(function() {
+// $('#import-dataset-btn').click(function() {
+//     importDataset();
+// });
+$('#import-dataset-form').submit(function(){
     importDataset();
+    return false; //prevent from refreshing page
 });
 
 function importDataset() {
@@ -105,9 +109,13 @@ function removeImportJob(id) {
 
 
 $('.file-input-method-btn').click(function() {
+
+    $('#import-dataset-btn').prop('disabled', false);
     $('.file-input-method-btn').removeClass('selected');
-    $(this).addClass('selected');
+    $(this).addClass('selected');    
     $('.file-input-method').hide();
+    $('.file-input-field').prop('required', false);
+    $('#' + $(this).val() + '-file-input-field').prop('required', true);
     $('#' + $(this).val() + '-file-input').show();
 });
 

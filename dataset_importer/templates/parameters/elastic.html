@@ -8,7 +8,8 @@
             New dataset name:
             <span data-toggle="tooltip" data-placement="bottom" title="Name to distinguish the dataset. Letters will be transformed to lowercase and spaces substituted by underscores" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
         </label>
-        <input class="form-control" id="texta-elastic-dataset-name" placeholder="my_data_source">
+        <input class="form-control" id="texta-elastic-dataset-name" placeholder="my_data_source" pattern="[a-zA-Z0-9!@#$%^*_-|]{3,50}" required autofocus title="Insert a name between 3-50 charaters containg only the following characters: a-zA-Z0-9!@#$%^*_-|">
+        <!-- <script> document.getElementById("texta-elastic-dataset-name").setCustomValidity("Insert a name between 3-50 charaters with the following characters: a-zA-Z0-9!@#$%^*_-|"); </script>  -->
     </div>
     <div class="form-group">
         <label class="control-label">
