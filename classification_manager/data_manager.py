@@ -8,7 +8,6 @@ import numpy as np
 
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
-from texta.settings import INFO_LOGGER
 
 
 MAX_POSITIVE_SAMPLE_SIZE = 10000
@@ -147,16 +146,10 @@ class EsDataSample(object):
 
     def get_data_samples(self, sample_size=MAX_POSITIVE_SAMPLE_SIZE):
         positive_samples, positive_set = self._get_positive_samples(sample_size)
-        negative_samples = self._get_negative_samples(positive_set)
-
-
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'asd1'}))
-        
+        negative_samples = self._get_negative_samples(positive_set)        
 
         data_sample_x = np.asarray(positive_samples + negative_samples)
         data_sample_y = np.asarray([1] * len(positive_samples) + [0] * len(negative_samples))
-
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'asd2'}))
 
         statistics = {}
         statistics['total_positive'] = len(positive_samples)
