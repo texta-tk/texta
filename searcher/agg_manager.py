@@ -100,16 +100,10 @@ class AggManager:
         agg_name_2 = field_type_to_name[agg_field_2['type']]
 
         # If aggregating over text field, use .keyword instead
-        if  agg_field_1['type'] == 'text' and sort_by_1 == 'terms':
+        if  agg_field_1['type'] == 'text' and sort_by_1 in ['terms', 'significant_terms']:
             agg_field_1['path'] = '{0}.keyword'.format(agg_field_1['path'].encode('utf8'))
-        if  agg_field_2['type'] == 'text' and sort_by_1 == 'terms':
+        if  agg_field_2['type'] == 'text' and sort_by_2 in ['terms', 'significant_terms']:
             agg_field_2['path'] = '{0}.keyword'.format(agg_field_2['path'].encode('utf8'))
-
-        # If looking for significant terms from text field, use significant_text aggregation instead
-        if agg_field_1['type'] == 'text' and sort_by_1 == 'significant_terms':
-            sort_by_1 = 'significant_text'
-        if agg_field_2['type'] == 'text' and sort_by_2 == 'significant_terms':
-            sort_by_2 = 'significant_text'
 
         # 1st LEVEL AGGREGATION
         agg = self.create_agg(agg_name_1,sort_by_1,agg_field_1["path"])

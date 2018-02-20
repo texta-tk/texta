@@ -824,11 +824,12 @@ function change_agg_field(field_nr){
 	var field_data = JSON.parse(selected_field);
 	var selected_type = field_data['type'];
 	
-	if(selected_type == 'string'){
+	if(selected_type == 'text' || selected_type == 'keyword'){
 		$("#sort_by_"+field_nr).removeClass('hidden');
 		$("#freq_norm_"+field_nr).addClass('hidden');
 		$("#interval_"+field_nr).addClass('hidden');
 		$("#agg_daterange_"+field_nr).addClass('hidden');
+		
 	}else if (selected_type == 'date'){
 		
 		$("#agg_daterange_from_"+field_nr).val(field_data['range']['min']);
