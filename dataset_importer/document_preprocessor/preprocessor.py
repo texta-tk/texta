@@ -1,5 +1,9 @@
 from .settings import preprocessor_map
 
+PREPROCESSOR_INSTANCES = {
+    preprocessor_code: preprocessor['class'](**preprocessor['arguments'])
+    for preprocessor_code, preprocessor in preprocessor_map.items() if preprocessor['is_enabled']
+}
 
 class DocumentPreprocessor(object):
     """A static document preprocessor adapter that dispatches the preprocessing request to appropriate preprocessor implementations.
@@ -22,7 +26,7 @@ class DocumentPreprocessor(object):
         preprocessors = kwargs['preprocessors']
 
         for preprocessor_code in preprocessors:
-            preprocessor = preprocessor_map[preprocessor_code]
+            preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
             documents = preprocessor.transform(documents, **kwargs)
 
         return documents

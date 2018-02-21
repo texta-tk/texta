@@ -11,15 +11,13 @@
             <tr>
                 <th>Import ID</th>
                 <th>User</th>
-                <th>Source type</th>
-                <th>Source name</th>
-                <th>Elastic index</th>
-                <th>Elastic mapping</th>
+                <th>Dataset Name</th>
                 <th>Job Status</th>
                 <th>Job Started</th>
                 <th>Job Completed</th>
                 <th>Docs processed</th>
                 <th>Total #docs</th>
+                <th>View details</th>
                 <th>Remove</th>
             </tr>
         </thead>
@@ -28,17 +26,19 @@
             <tr>
                 <td>{{job.pk}}</td>
                 <td>{{job.user}}</td>
-                <td>{{job.source_type}}</td>
-                <td>{{job.source_name}}</td>
                 <td>{{job.elastic_index}}</td>
-                <td>{{job.elastic_mapping}}</td>
                 <td>{{job.status}}</td>
                 <td>{{job.start_time|date:"d.m.Y H:i"}}</td>
                 <td>{{job.end_time|date:"d.m.Y H:i"}}</td>
                 <td>{{job.processed_documents}}</td>
                 <td>{{job.total_documents}}</td>
                 <td>
-                    <a href="javascript:void(0)" onclick="removeImportJob({{job.pk}});">
+                    <a href="javascript:void(0)" data-toggle="modal" data-target="#import-job-{{ job.pk }}-details">
+                        <span class="glyphicon glyphicon-eye-open"></span>
+                    </a>
+                </td>
+                <td>
+                    <a href="javascript:void(0)" onclick="removeImportJob({{ job.pk }});">
                         <span class="glyphicon glyphicon-remove"></span>
                     </a>
                 </td>

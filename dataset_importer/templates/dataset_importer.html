@@ -47,6 +47,85 @@
         </div>
     </div>
 
+
+    {% for job in jobs %}
+    <div id="import-job-{{ job.pk }}-details" class="modal fade" role="dialog">
+      <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">Import Details</h4>
+          </div>
+          <div class="modal-body">
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <td>ID:</td>
+                        <td>{{ job.pk }}</td>
+                    </tr>
+                    <tr>
+                        <td>User:</td>
+                        <td>{{ job.user }}</td>
+                    </tr>
+                    <tr>
+                        <td>Job status:</td>
+                        <td>{{ job.status }}</td>
+                    </tr>
+                    <tr>
+                        <td>Job started:</td>
+                        <td>{{ job.start_time }}</td>
+                    </tr>
+                    <tr>
+                        <td>Job completed:</td>
+                        <td>{{ job.end_time }}</td>
+                    </tr>
+                    <tr>
+                        <td>Elasticsearch index:</td>
+                        <td>{{ job.elastic_index }}</td>
+                    </tr>
+                    <tr>
+                        <td>Elasticsearch mapping:</td>
+                        <td>{{ job.elastic_mapping }}</td>
+                    </tr>
+                    <tr>
+                        <td>Processed documents:</td>
+                        <td>{{ job.processed_documents }}</td>
+                    </tr>
+                    <tr>
+                        <td>Total documents:</td>
+                        <td>{{ job.total_documents }}</td>
+                    </tr>
+                    <tr>
+                        <td>Source type:</td>
+                        <td>{{ job.source_type }}</td>
+                    </tr>
+                    <tr>
+                        <td>Source name:</td>
+                        <td>{{ job.source_name }}</td>
+                    </tr>
+                    <tr>
+                        <td>Is synchronized:</td>
+                        <td>{{ job.must_sync }}</td>
+                    </tr>
+                    <tr>
+                        <td>JSON parameters:</td>
+                        <td>{{ job.json_parameters }}</td>
+                    </tr>
+                </tbody>
+
+            </table>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    {% endfor %}
+
     <script type="application/javascript" src="{{STATIC_URL}}dataset_importer/argument_collectors.js"></script>
     <script type="application/javascript" src="{{STATIC_URL}}dataset_importer/dataset_importer.js"></script>
 {#    https://cdnjs.com/libraries/1000hz-bootstrap-validator#}

@@ -19,10 +19,6 @@ from dataset_importer.syncer.SQLiteIndex import SQLiteIndex
 
 DAEMON_BASED_DATABASE_FORMATS = set(database_reader_map) - {'sqlite'}
 ARCHIVE_FORMATS = set(extractor_map)
-PREPROCESSORS = {
-    preprocessor_code: preprocessor['class'](**preprocessor['arguments'])
-    for preprocessor_code, preprocessor in preprocessor_map.items() if preprocessor['is_enabled']
-}
 
 
 class DatasetImporter(object):
@@ -122,9 +118,6 @@ class DatasetImporter(object):
         parameters['keep_synchronized'] = self._determine_if_should_synchronize(parameters=parameters)
         parameters['remove_existing_dataset'] = True if parameters.get('remove_existing_dataset', 'false') == 'true' else False
         parameters['storer'] = 'elastic'
-        parameters['preprocessors'] = [
-            PREPROCESSORS[preprocessor] for preprocessor in parameters['preprocessors']
-        ]
 
         self._separate_archive_and_reader_formats(parameters)
 
