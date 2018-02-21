@@ -29,12 +29,13 @@ $('.apply-preprocessor').val([]);
 //     $("#" + $(this).val()).show();
 // });
 function loaderDisplay(status) {
-    if(status == "beforeSend"){
+    if(status == "beforeSend"){        
         $("#loader").show();
         $("#loader").fadeIn("slow");
         $("#import-dataset-btn").prop('disabled', true);
         $("#import-dataset-btn").html('Importing');
-        $("#statusText").hide();
+
+        $(".statusText").hide();
     }
     else if (status == "success") {
         $("#loader").fadeOut("slow");
@@ -44,7 +45,7 @@ function loaderDisplay(status) {
 
         $(".statusText").html("Successfully imported database!");
         $(".statusText").css("color", "#73AD21")
-        $(".statusText").show();
+        $(".statusText").show();    
     }
     else if (status == "error") {
         $("#loader").fadeOut("slow");
@@ -63,7 +64,6 @@ function loaderDisplay(status) {
 // });
 $('#import-dataset-form').submit(function(){
     importDataset();
-    return false; //prevent from refreshing page
 });
 
 function importDataset() {
