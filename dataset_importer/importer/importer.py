@@ -464,11 +464,13 @@ def _derive_file_name(response, url):
     """
     file_name = ''
 
-    if 'content-disposition' in response:
+    if 'content-disposition' in response.headers:
         file_names = re.findall('filename=(.*)', response['content-disposition'])
 
         if file_names:
             file_name = file_names[0].strip('\'" ')
+    elif 'location' in response.headers:
+        file_name = os.path.basename(response.headers['location'])
 
     if not file_name:
         file_name = os.path.basename(url)
