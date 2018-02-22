@@ -11,11 +11,13 @@ class PDFReader(EntityReader):
         for file_path in PDFReader.get_file_list(directory, 'pdf'):
             features = PDFReader.get_meta_features(file_path=file_path)
 
-            features['text'] = textract.process(file_path)
+            try:
+                features['text'] = textract.process(file_path)
+                features['_texta_id'] = file_path
 
-            features['_texta_id'] = file_path
-
-            yield features
+                yield features
+            except:
+                continue
 
     @staticmethod
     def count_total_documents(**kwargs):
