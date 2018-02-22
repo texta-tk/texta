@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.shortcuts import render
 
+from django.contrib.auth.decorators import login_required
 from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse
 
@@ -35,6 +36,7 @@ def collect_map_entries(map_):
     return entries
 
 
+@login_required
 def index(request):
     jobs = DatasetImport.objects.all()
 
@@ -58,6 +60,7 @@ def index(request):
     })
 
 
+@login_required
 def reload_table(request):
     jobs = DatasetImport.objects.all()
 
@@ -65,18 +68,21 @@ def reload_table(request):
                   context={'jobs': jobs})
 
 
+@login_required
 def import_dataset(request):
     DATASET_IMPORTER.import_dataset(request=request)
 
     return HttpResponse()
 
 
+@login_required
 def cancel_import_job(request):
     DATASET_IMPORTER.cancel_import_job(request.POST.get('id', ''))
 
     return HttpResponse()
 
 
+@login_required
 def remove_import_job(request):
     import_id = request.POST.get('id', None)
     if import_id:
