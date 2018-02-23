@@ -1,8 +1,10 @@
 import tarfile
 import os
 
+from base_extractor import BaseExtractor
 
-class TarExtractor(object):
+
+class TarExtractor(BaseExtractor):
     """Implementation of extracting tarballs and their compressed versions.
     """
 
@@ -19,6 +21,11 @@ class TarExtractor(object):
 
         with tarfile.open(name=file_path) as tar_file:
             tar_file.extractall(path=tar_directory)
+
+    @staticmethod
+    def detect_archives(root_directory):
+        return BaseExtractor.detect_archives(root_directory=root_directory, extensions=['tar', 'tar.gz', 'tar.bz2'])
+
 
 if __name__ == '__main__':
     TarExtractor.extract('../test_target/test.tar.gz')

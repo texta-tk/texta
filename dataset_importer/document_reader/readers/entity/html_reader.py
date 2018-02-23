@@ -10,4 +10,4 @@ class HTMLAdapter(EntityReader):
     @staticmethod
     def count_total_documents(**kwargs):
         directory = kwargs['directory']
-        return HTMLAdapter.count_documents(directory_path=directory, extension='html')
+        return HTMLAdapter.count_documents(root_directory=directory, extension='html')

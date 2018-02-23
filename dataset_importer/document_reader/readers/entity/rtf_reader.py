@@ -20,4 +20,4 @@ class RTFReader(EntityReader):
     @staticmethod
     def count_total_documents(**kwargs):
         directory = kwargs['directory']
-        return RTFReader.count_documents(directory_path=directory, extension='rtf')
+        return RTFReader.count_documents(root_directory=directory, extension='rtf')

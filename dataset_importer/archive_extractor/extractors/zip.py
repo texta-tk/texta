@@ -1,8 +1,9 @@
 import os
 import zipfile
 
+from base_extractor import BaseExtractor
 
-class ZipExtractor(object):
+class ZipExtractor(BaseExtractor):
     """Implementation of extracting zip files.
     """
 
@@ -19,6 +20,11 @@ class ZipExtractor(object):
 
         with zipfile.ZipFile(file_path) as zip_file:
             zip_file.extractall(path=zip_directory)
+
+    @staticmethod
+    def detect_archives(root_directory):
+        return BaseExtractor.detect_archives(root_directory=root_directory, extensions=['zip'])
+
 
 if __name__ == '__main__':
     ZipExtractor.extract('../test_target/test_zip_content.zip')

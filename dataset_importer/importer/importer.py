@@ -298,14 +298,35 @@ def _extract_archives(parameter_dict):
     :param parameter_dict: dataset importer parameters.
     :type parameter_dict: dict
     """
-    # Currently supports only extracting the first archive format it encounters - TODO more robust
-    for format in parameter_dict.get('archives', []):
-        if format in ARCHIVE_FORMATS:
+    archive_formats = parameter_dict.get('archives', [])
+
+    if not archive_formats:
+        return
+
+    unprocessed_archives = ArchiveExtractor.detect_archives(
+        root_directory=parameter_dict['directory'],
+        archive_formats=archive_formats
+    )
+
+    while unprocessed_archives:
+        for unprocessed_archive in unprocessed_archives:
             ArchiveExtractor.extract_archive(
-                file_path=parameter_dict['file_path'],
-                archive_format=format
+                file_path=unprocessed_archive['path'],
+                archive_format=unprocessed_archive['format']
             )
-            break
+
+        unprocessed_archives = ArchiveExtractor.detect_archives(
+            root_directory=parameter_dict['directory'],
+            archive_formats=archive_formats
+        )
+    #
+    # for format in parameter_dict.get('archives', []):
+    #     if format in ARCHIVE_FORMATS:
+    #         ArchiveExtractor.extract_archive(
+    #             file_path=parameter_dict['file_path'],
+    #             archive_format=format
+    #         )
+    #         break
 
 
 def _init_pool(lock_):

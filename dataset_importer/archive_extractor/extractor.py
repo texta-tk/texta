@@ -21,3 +21,16 @@ class ArchiveExtractor(object):
             extractor = extractor_map[archive_format]['class']
             extractor.extract(file_path)
             os.remove(file_path)
+
+    @staticmethod
+    def detect_archives(root_directory, archive_formats):
+        archives = []
+        for archive_format in archive_formats:
+            extractor = extractor_map[archive_format]['class']
+            archives.extend(
+                [
+                    {'path': archive_path, 'format': archive_format} for archive_path in extractor.detect_archives(root_directory)
+                ]
+            )
+
+        return archives

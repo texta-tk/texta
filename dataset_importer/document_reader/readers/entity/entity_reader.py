@@ -1,6 +1,6 @@
-import glob
 import os
 import json
+import fnmatch
 
 META_FILE_SUFFIX = '.meta.json'
 
@@ -8,9 +8,13 @@ META_FILE_SUFFIX = '.meta.json'
 class EntityReader(object):
 
     @staticmethod
-    def get_file_list(directory_path, extension):
-        for file_name in glob.glob(os.path.join(directory_path, '*.' + extension)):
-            yield file_name
+    def get_file_list(root_directory, extension):
+        matches = []
+        for directory, directory_names, file_names in os.walk(root_directory):
+            for filename in fnmatch.filter(file_names, '*.{0}'.format(extension)):
+                matches.append(os.path.join(directory, filename))
+
+        return matches
 
     @staticmethod
     def get_meta_features(file_path):
@@ -25,5 +29,9 @@ class EntityReader(object):
         return features
 
     @staticmethod
-    def count_documents(directory_path, extension):
-        return len(glob.glob(os.path.join(directory_path, '*.' + extension)))
+    def count_documents(root_directory, extension):
+        document_count = 0
+        for directory, directory_names, file_names in os.walk(root_directory):
+            document_count += len(fnmatch.filter(file_names, '*.{0}'.format(extension)))
+
+        return document_count

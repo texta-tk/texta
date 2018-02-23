@@ -20,4 +20,4 @@ class DocReader(EntityReader):
     @staticmethod
     def count_total_documents(**kwargs):
         directory = kwargs['directory']
-        return DocReader.count_documents(directory_path=directory, extension='doc')
+        return DocReader.count_documents(root_directory=directory, extension='doc')

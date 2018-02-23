@@ -22,4 +22,4 @@ class PDFReader(EntityReader):
     @staticmethod
     def count_total_documents(**kwargs):
         directory = kwargs['directory']
-        return PDFReader.count_documents(directory_path=directory, extension='pdf')
+        return PDFReader.count_documents(root_directory=directory, extension='pdf')
