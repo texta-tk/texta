@@ -28,36 +28,6 @@ $('.apply-preprocessor').val([]);
 //     $(".database-type-pane").hide();
 //     $("#" + $(this).val()).show();
 // });
-function loaderDisplay(status) {
-    if(status == "beforeSend"){        
-        $("#loader").show();
-        $("#loader").fadeIn("slow");
-        $("#import-dataset-btn").prop('disabled', true);
-        $("#import-dataset-btn").html('Importing');
-
-        $(".statusText").hide();
-    }
-    else if (status == "success") {
-        $("#loader").fadeOut("slow");
-        $("#loader").hide();
-        $("#import-dataset-btn").prop('disabled', false);
-        $("#import-dataset-btn").html('Import');
-
-        $(".statusText").html("Successfully imported database!");
-        $(".statusText").css("color", "#73AD21")
-        $(".statusText").show();    
-    }
-    else if (status == "error") {
-        $("#loader").fadeOut("slow");
-        $("#loader").hide();
-        $("#import-dataset-btn").prop('disabled', false);
-        $("#import-dataset-btn").html('Import');
-
-        $(".statusText").html("Error importing database!");
-        $(".statusText").css("color", "red")
-        $(".statusText").show();
-    }
-}
 
 // $('#import-dataset-btn').click(function() {
 //     importDataset();
@@ -115,14 +85,12 @@ function removeImportJob(id) {
 
 
 $('.file-input-method-btn').click(function() {
-
-    $('#import-dataset-btn').prop('disabled', false);
     $('.file-input-method-btn').removeClass('selected');
     $(this).addClass('selected');    
     $('.file-input-method').hide();
-    $('.file-input-field').prop('required', false);
-    $('#' + $(this).val() + '-file-input-field').prop('required', true);
     $('#' + $(this).val() + '-file-input').show();
+    
+    fileInputSelection();
 });
 
 $('.apply-preprocessor').click(function() {
