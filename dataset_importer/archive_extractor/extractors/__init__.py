@@ -3,5 +3,12 @@
 List here the new archive extractors.
 """
 
-import tar
-import zip
+try:
+    import tar
+except:
+    pass
+
+try:
+    import zip
+except:
+    pass

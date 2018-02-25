@@ -3,4 +3,7 @@
 List here the new document preprocessors.
 """
 
-import mlp
+try:
+    import mlp
+except:
+    pass
