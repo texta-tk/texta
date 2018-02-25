@@ -114,15 +114,17 @@ class DatasetImporter(object):
         """
         parameters['formats'] = json.loads(parameters.get('formats', '[]'))
         parameters['preprocessors'] = json.loads(parameters.get('preprocessors', '[]'))
-        parameters['is_local'] = True if parameters.get('directory', None) else False
+        parameters['is_local'] = True if parameters.get('local_directory', None) else False
         parameters['keep_synchronized'] = self._determine_if_should_synchronize(parameters=parameters)
         parameters['remove_existing_dataset'] = True if parameters.get('remove_existing_dataset', 'false') == 'true' else False
         parameters['storer'] = 'elastic'
 
         self._separate_archive_and_reader_formats(parameters)
 
-        if parameters['is_local'] is False:
-            parameters['directory'] = self._prepare_import_directory(self._root_directory)
+        parameters['directory'] = self._prepare_import_directory(
+            root_directory=self._root_directory,
+            source_directory=parameters.get('local_directory', None)
+        )
 
         if any(format not in DAEMON_BASED_DATABASE_FORMATS for format in parameters['formats']):
             if 'file' in files_dict and parameters.get('is_local', False) is False:
@@ -159,8 +161,7 @@ class DatasetImporter(object):
         :param parameters: previously altered parameters.
         :return: altered parameters for current session.
         """
-        if parameters['is_local'] is False:
-            parameters['directory'] = self._prepare_import_directory(self._root_directory)
+        parameters['directory'] = self._prepare_import_directory(self._root_directory)
 
         return parameters
 
@@ -221,17 +222,24 @@ class DatasetImporter(object):
 
         return dataset_import.pk
 
-    def _prepare_import_directory(self, directory_path):
-        """Creates a 'temporary' directory for storing import data. Doesn't use native temporary solution due to different issues.
+    def _prepare_import_directory(self, root_directory, source_directory=None):
+        """Creates a 'temporary' directory for storing import data. Doesn't use native temporary solution due to
+        permission issues. If files are imported from a local directory, they are first copied the temporary directory.
 
-        :param directory_path: directory where to store subdirectories with dataset import data.
-        :type directory_path: string
+        :param root_directory: directory where to store subdirectories with dataset import data.
+        :param source_directory: local directory from where to copy the files. Optional.
+        :type root_directory: string
+        :type source_directory: string
         :return: path to the import session's directory.
         :rtype: string
         """
         temp_folder_name = str(int(time.time() * 1000000))
-        temp_folder_path = os.path.join(directory_path, temp_folder_name)
-        os.makedirs(temp_folder_path)
+        temp_folder_path = os.path.join(root_directory, temp_folder_name)
+
+        if source_directory:
+            shutil.copytree(src=source_directory, dst=temp_folder_path)
+        else:
+            os.makedirs(temp_folder_path)
 
         return temp_folder_path
 
