@@ -36,13 +36,13 @@ class MlpPreprocessor(object):
         input_features = json.loads(kwargs['mlp_preprocessor_input_features'])
 
         for input_feature in input_features:
-            texts = [document[input_feature] for document in documents]
+            texts = [document[input_feature] for document in documents if input_feature in document]
             data = {'texts': json.dumps(texts, ensure_ascii=False)}
             analyzation_data = requests.post(self._mlp_url, data=data).json()
 
             for analyzation_idx, analyzation_datum in enumerate(analyzation_data):
                 analyzation_datum = analyzation_datum[0]
-                
+
                 documents[analyzation_idx]['mlp_' + input_feature] = analyzation_datum['text']
                 documents[analyzation_idx]['mlp_' + input_feature]['lang'] = analyzation_datum['lang']
 
