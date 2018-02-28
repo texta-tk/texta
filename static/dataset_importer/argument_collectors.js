@@ -72,7 +72,14 @@ function collectPostgresArguments(formData) {
 
 function collectTextaDatasetArguments(formData) {
     var datasetName = $('#texta-elastic-dataset-name').val();
-    var notAnalyzedFields = JSON.stringify($('#texta-elastic-not-analyzed').val().split('\n'));
+    var notAnalyzedFieldsRawValue = $('#texta-elastic-not-analyzed').val();
+
+    if (notAnalyzedFieldsRawValue === "") {
+        var notAnalyzedFields = JSON.stringify([]);
+    } else {
+        var notAnalyzedFields = notAnalyzedFieldsRawValue.split('\n');
+    }
+
     var keepSynchronized = $('#keep-synchronized').val();
     var removeExistingDataset = $('#remove-existing-dataset').val();
 
