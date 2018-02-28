@@ -4,7 +4,14 @@ import psycopg2
 class PostgreSQLReader(object):
 
     @staticmethod
-    def get_features(host=None, database=None, port=None, user=None, password=None, table_name=None):
+    def get_features(**kwargs):
+        host = kwargs.get('postgres_host', None)
+        database = kwargs.get('postgres_database', None)
+        port = kwargs.get('postgres_port', None)
+        user = kwargs.get('postgres_user', None)
+        password = kwargs.get('postgres_password', None)
+        table_name = kwargs.get('postgres_table', None)
+
         connection_string = PostgreSQLReader.get_connection_string(host, database, port, user, password)
 
         with psycopg2.connect(connection_string) as connection:
@@ -15,6 +22,10 @@ class PostgreSQLReader(object):
             while value:
                 yield value
                 value = cursor.fetchone()
+
+    @staticmethod
+    def count_total_documents(**kwargs):
+        raise NotImplementedError()
 
     @staticmethod
     def get_connection_string(host, database, port, user, password):

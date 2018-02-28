@@ -4,7 +4,7 @@ from entity_reader import EntityReader
 class HTMLAdapter(EntityReader):
 
     @staticmethod
-    def get_features(file_obj):
+    def get_features(**kwargs):
         raise NotImplementedError()
 
     @staticmethod
