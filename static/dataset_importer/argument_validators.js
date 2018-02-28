@@ -1,5 +1,5 @@
 function loaderDisplay(status) {
-    if(status == "beforeSend"){        
+    if (status == "beforeSend") {
         $("#loader").show();
         $("#loader").fadeIn("slow");
         $("#import-dataset-btn").prop('disabled', true);
@@ -15,7 +15,7 @@ function loaderDisplay(status) {
 
         $(".statusText").html("Successfully imported database!");
         $(".statusText").css("color", "#73AD21")
-        $(".statusText").show();    
+        $(".statusText").show();
     }
     else if (status == "error") {
         $("#loader").fadeOut("slow");
@@ -35,16 +35,22 @@ function fileInputSelection() {
     $('#' + $(this).val() + '-file-input-field').prop('required', true);
 }
 
-$("#apply-preprocessor").change(function() {
-    if(this.checked) {
+$("#apply-preprocessor").change(function () {
+    if (this.checked) {
         $("#mlp-processor-feature-names").prop('required', true);
-        if($('#selected-data-formats-list').text().includes('HTML' || "PDF" || "DOCX" || "RTF" || "TXT" || "DOC")) {
-            console.log('YES DOES');
+        if (['HTML', "PDF", "DOCX", "RTF", "TXT", "DOC"].some(element => $('#selected-data-formats-list').text().includes(element))) {
             $("#mlp-processor-feature-names").html('text');
         }
     } else {
-        $("#mlp-processor-feature-names").prop('required', false);    
+        $("#mlp-processor-feature-names").prop('required', false);
     }
 });
 
 
+$("#selected-data-formats-list").bind("DOMSubtreeModified", function () {
+    if (['HTML', "PDF", "DOCX", "RTF", "TXT", "DOC"].some(element => $('#selected-data-formats-list').text().includes(element))) {
+        $("#mlp-processor-feature-names").html('text');
+    } else {
+        $("#mlp-processor-feature-names").html('');
+    }
+});
