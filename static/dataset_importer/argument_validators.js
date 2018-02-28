@@ -37,9 +37,14 @@ function fileInputSelection() {
 
 $("#apply-preprocessor").change(function() {
     if(this.checked) {
-        console.log('toggled')
         $("#mlp-processor-feature-names").prop('required', true);
+        if($('#selected-data-formats-list').text().includes('HTML' || "PDF" || "DOCX" || "RTF" || "TXT" || "DOC")) {
+            console.log('YES DOES');
+            $("#mlp-processor-feature-names").html('text');
+        }
     } else {
         $("#mlp-processor-feature-names").prop('required', false);    
     }
 });
+
+
