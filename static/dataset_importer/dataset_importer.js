@@ -47,6 +47,8 @@ function importDataset() {
     formData = collectDataArguments(formData);
     formData = collectPreprocessorArguments(formData);
 
+    var isImporting = false;
+
     $.ajax({
         url: 'import',
         data: formData,
@@ -55,19 +57,30 @@ function importDataset() {
         processData: false,
         beforeSend: function() {
             loaderDisplay("beforeSend");
+            isImporting = true;
         },
         success: function() {
             $('#jobs-table-div').load('reload_table');
             loaderDisplay("success");
+            isImporting = false;
         },
         error: function() {
             $('#jobs-table-div').load('reload_table');
             loaderDisplay("error")
+            isImporting = false;
         }
     });
+
+    if (isImporting) {
+        var refreshId = setInterval(function(){
+            if (!isImporting) {
+                clearInterval(refreshId);
+            }
+            $('#jobs-table-div').load('reload_table');
+            //console.log('refreshed');
+        }, 5000);
+    }
 }
-
-
 
 function removeImportJob(id) {
     $.ajax({
@@ -86,10 +99,10 @@ function removeImportJob(id) {
 
 $('.file-input-method-btn').click(function() {
     $('.file-input-method-btn').removeClass('selected');
-    $(this).addClass('selected');    
+    $(this).addClass('selected');
     $('.file-input-method').hide();
     $('#' + $(this).val() + '-file-input').show();
-    
+
     fileInputSelection();
 });
 
