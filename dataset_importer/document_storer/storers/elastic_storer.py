@@ -9,8 +9,8 @@ class ElasticStorer(object):
 
     def __init__(self, **connection_parameters):
         self._es_url = connection_parameters['texta_elastic_url']
-        self._es_index = connection_parameters['texta_elastic_index']
-        self._es_mapping = connection_parameters['texta_elastic_mapping']
+        self._es_index = self._correct_name(connection_parameters['texta_elastic_index'])
+        self._es_mapping = self._corrent_name(connection_parameters['texta_elastic_mapping'])
 
         self._headers = {'Content-Type': 'application/json'}
         self._request = requests.Session()
@@ -20,6 +20,9 @@ class ElasticStorer(object):
 
         self._create_index_if_not_exists(self._es_url, self._es_index, self._es_mapping,
                                          json.loads(connection_parameters['texta_elastic_not_analyzed']))
+
+    def _correct_name(self, name):
+        return name.lower().replace(' ', '_')
 
     def _create_index_if_not_exists(self, url, index, mapping, not_analyzed_fields):
         """Prepares and creates an Elasticsearch index, if it is not existing yet.
