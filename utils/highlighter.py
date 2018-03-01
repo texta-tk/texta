@@ -73,7 +73,6 @@ class Highlighter(object):
 
     def _derive_highlight_data(self, tagged_text):
         highlight_data = []
-
         span_end = 0
         start_tag_index = tagged_text.find('<span', span_end)
         index_discount = 0
@@ -149,6 +148,7 @@ class Highlighter(object):
                     text_index_to_data_index[alignment[text_index]].append(data_index)
 
         text_index_to_data_index = [frozenset(data_indices) for data_indices in text_index_to_data_index]
+
         spans_to_tags = [(spans, self._get_tag_from_highlight_data([data_mapping[data_index] for data_index in data_indices]))
                          for spans, data_indices in self._get_spans_to_data_indices(text_index_to_data_index)]
 
@@ -157,15 +157,21 @@ class Highlighter(object):
     def _get_spans_to_data_indices(self, text_index_to_data_index):
         spans_to_data_indices = []
         start_idx = 0
-        previous_data_indices = text_index_to_data_index[0]
 
-        for text_idx, data_indices in enumerate(text_index_to_data_index):
-            if data_indices == previous_data_indices:
-                continue
+        if text_index_to_data_index:
+            previous_data_indices = text_index_to_data_index[0]
+            text_idx = None
 
-            spans_to_data_indices.append(([start_idx, text_idx], previous_data_indices))
-            previous_data_indices = data_indices
-            start_idx = text_idx
+            for text_idx, data_indices in enumerate(text_index_to_data_index):
+                if data_indices == previous_data_indices:
+                    continue
+
+                spans_to_data_indices.append(([start_idx, text_idx], previous_data_indices))
+                previous_data_indices = data_indices
+                start_idx = text_idx
+
+            if text_idx is not None:
+                spans_to_data_indices.append(([start_idx, text_idx + 1], previous_data_indices))
 
         return spans_to_data_indices
 
@@ -196,6 +202,10 @@ class Highlighter(object):
 
         title = ('&#13;'.join(title_lines))
         color = self._get_color([highlight_data['color'] for highlight_data in highlight_data_list if 'color' in highlight_data])
+
+        if '[fact]' in title or '[fact_val]' in title or '[ES]' in title:
+            return u'<span class="[HL]" title="{0}" style="background-color: {1};{2}">'.format(
+            title, color, (self._additional_style_string if color != 'none' else ''))
 
         return u'<span title="{0}" style="background-color: {1};{2}">'.format(
             title, color, (self._additional_style_string if color != 'none' else ''))

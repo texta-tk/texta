@@ -1,17 +1,36 @@
-import extractor_instance as extractor
+from .settings import extractor_map
 import os
 
 
-extractor_map = {
-    'zip': extractor.zip.ZipExtractor,
-    'tar': extractor.tar.TarExtractor,
-}
-
 class ArchiveExtractor(object):
+    """A static archive extractor adapter that dispatches the extraction request to appropriate archive extractor implementation.
+    """
 
     @staticmethod
     def extract_archive(file_path, archive_format):
+        """Dispatches archive extraction request to the appropriate archive extractor implementation, if available.
+
+        SIDE EFFECT: Removes the origial archive file.
+
+        :param file_path: absolute path to the archive file which we want to extract
+        :param archive_format: archive extractor implementations' key as listed in .settings.py:extractor_map
+        :type file_path: string
+        :type archive_format: string
+        """
         if archive_format in extractor_map:
-            extractor = extractor_map[archive_format]
+            extractor = extractor_map[archive_format]['class']
             extractor.extract(file_path)
             os.remove(file_path)
+
+    @staticmethod
+    def detect_archives(root_directory, archive_formats):
+        archives = []
+        for archive_format in archive_formats:
+            extractor = extractor_map[archive_format]['class']
+            archives.extend(
+                [
+                    {'path': archive_path, 'format': archive_format} for archive_path in extractor.detect_archives(root_directory)
+                ]
+            )
+
+        return archives

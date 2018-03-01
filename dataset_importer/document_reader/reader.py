@@ -1,90 +1,60 @@
-import adapter
+from .settings import entity_reader_map, collection_reader_map, database_reader_map
 
 
 class DocumentReader(object):
+    """A static document reader adapter that dispatches the document reading request to appropriate reader implementations.
+    """
 
-    def __init__(self, available_formats=None, directory=None):
-        self._available_formats = available_formats
-        self._directory = directory
+    @staticmethod
+    def read_documents(**kwargs):
+        """Applies document reader of appropriate type to each of the provided format. Document readers read files of
+        their respective format and extract a features dictionary from the read document.
 
-    def read_documents(self, **kwargs):
-        if self._available_formats and format not in self._available_formats:
-            raise NotSupportedFormat()
-
+        :param kwargs: must contain a list of formats and parameters necessary for independent reader implementations.
+        :return: dicts
+        :rtype: dict generator
+        """
         reading_parameters = kwargs
 
-        adapter = adapter_map[reading_parameters['format']]
+        for format in reading_parameters['formats']:
+            reader = reader_map[format]['class']
+            for features in reader.get_features(**reading_parameters):
+                yield features
 
-        return adapter.get_features(**reading_parameters)
+    @staticmethod
+    def count_total_documents(**kwargs):
+        """Delegates each appropriate reader implementation to count the number of documents of the respective format.
+        Retrieves the total number of documents of which format is in formats list.
+
+        :param kwargs: must contain a list of formats.
+        :return: total number of documents within the dataset according to the appropriate format readers.
+        """
+        reading_parameters = kwargs
+
+        total_docs = 0
+
+        for format in reading_parameters['formats']:
+            reader = reader_map[format]['class']
+            total_docs += reader.count_total_documents(**kwargs)
+
+        return total_docs
 
 
-class NotSupportedFormat(Exception):
-    pass
+def merge_dictionaries(*args):
+    """Takes an arbitrary number of dictionaries and returns a union of them.
+
+    Does not handle key conflicts.
+
+    :param args: arbitrary number of dictionaries
+    :return: union of the provided dictionaries
+    :rtype: dict
+    """
+    final_dictionary = {}
+    for current_dictionary in args:
+        for key, value in current_dictionary.items():
+            final_dictionary[key] = value
+
+    return final_dictionary
 
 
-adapter_map = {}
-
-try:
-    adapter_map['csv'] = adapter.collection.csv.CSVAdapter
-except:
-    pass
-
-try:
-    adapter_map['excel'] = adapter.collection.excel.ExcelAdapter
-except:
-    pass
-
-try:
-    adapter_map['json'] = adapter.collection.json.JSONAdapter
-except:
-    pass
-
-try:
-    adapter_map['xml'] = adapter.collection.xml.XMLAdapter
-except:
-    pass
-
-try:
-    adapter_map['elastic'] = adapter.database.elastic.ElasticAdapter
-except:
-    pass
-
-try:
-    adapter_map['mongodb'] = adapter.database.mongodb.MongoDBAdapter
-except:
-    pass
-
-try:
-    adapter_map['postgres'] = adapter.database.postgres.PostgreSQLAdapter
-except:
-    pass
-
-try:
-    adapter_map['sqlite'] = adapter.database.sqlite.SQLiteAdapter
-except:
-    pass
-
-try:
-    adapter_map['doc'] = adapter.entity.doc.DocAdapter
-except:
-    pass
-
-try:
-    adapter_map['html'] = adapter.entity.html.HTMLAdapter
-except:
-    pass
-
-try:
-    adapter_map['pdf'] = adapter.entity.pdf.PDFAdapter
-except:
-    pass
-
-try:
-    adapter_map['rtf'] = adapter.entity.rtf.RTFAdapter
-except:
-    pass
-
-try:
-    adapter_map['txt'] = adapter.entity.txt.TXTAdapter
-except:
-    pass
+reader_map = merge_dictionaries(entity_reader_map, collection_reader_map, database_reader_map)

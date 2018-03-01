@@ -1,0 +1,40 @@
+<fieldset>
+    <legend>
+        Input data
+        <span data-toggle="tooltip" data-placement="bottom" title="Necessary details and parameters for the selected input data formats" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+    </legend>
+
+    <div id="file-format-parameters" class="format-parameters">
+        <div class="btn-group btn-group-justified" role="group">
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-default file-input-method-btn" value="upload">File upload</button>
+          </div>
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-default file-input-method-btn" value="url">URL</button>
+          </div>
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-default file-input-method-btn" value="local_directory">Local directory</button>
+          </div>
+        </div>
+
+        <div id="url-file-input" class="file-input-method">
+            <div class="form-group">
+                <input class="form-control file-input-field" id="url-file-input-field" name="url"  placeholder="URL to file/archive" required>
+            </div>
+        </div>
+
+        <div id="upload-file-input" class="file-input-method">
+            <input type="file" id="upload-file-input-field" name="file" class="file-input-field" title="Select file/archive" required>
+        </div>
+
+        <div id="local_directory-file-input" class="file-input-method">
+            <div class="form-group">
+                <input class="form-control file-input-field" id="local_directory-file-input-field" name="local_directory" placeholder="Local directory path" required>
+            </div>
+        </div>
+
+        <br>
+
+    </div>
+
+</fieldset>

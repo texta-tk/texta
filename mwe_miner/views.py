@@ -287,7 +287,10 @@ def find_mappings(request):
                         data = []
                         phrases = []
             logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'MINE MWEs','event':'mwe_mining_progress','args':{'user_name':request.user.username,'run_id':new_run.id},'data':{'permutations_processed':i+1-min_len,'total_permutations':max_len-min_len+1}}))
-        for j,response in enumerate(ES_Manager.plain_multisearch(es_url, dataset, mapping, data)):
+        
+        m_response = ES_Manager.plain_multisearch(es_url, dataset, mapping, data)
+        
+        for j,response in enumerate(m_response):
             try:
                 if response['hits']['total'] >= min_freq:
                     sorted_phrase = ' '.join(sorted(phrases[j].split(' ')))

@@ -1,103 +1,91 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-import shutil
 
 from django.shortcuts import render
 
+from django.contrib.auth.decorators import login_required
 from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse
 
-from multiprocessing import Process, Pool
+from .models import DatasetImport
+from dataset_importer.importer import DatasetImporter, entity_reader_map, collection_reader_map, database_reader_map, extractor_map, preprocessor_map
+from dataset_importer.syncer.syncer_process import Syncer
 
-from utils import download, prepare_import_directory
-from archive_extractor.extractor import ArchiveExtractor
-from document_reader.reader import DocumentReader
-from document_processor.processor import DocumentProcessor
-from document_storer.storer import DocumentStorer
+from texta.settings import es_url, DATASET_IMPORTER as DATASET_IMPORTER_CONF
 
-from texta.settings import es_url
+from sys import argv
 
-PROCESSES = 2
-BATCH_SIZE = 1000
+DATASET_IMPORTER = DatasetImporter(es_url=es_url, configuration=DATASET_IMPORTER_CONF,
+                                   data_access_object=DatasetImport, file_system_storer=FileSystemStorage)
 
+# Start synchronizer only when it is enabled AND runserver or an alternative has been called via WSGI.
+# A.k.a user hasn't called createsuperuser, migrate or makemigrations.
+if (DATASET_IMPORTER_CONF['sync']['enabled'] is True and
+        len({'createsuperuser', 'migrate', 'makemigrations'} & set(argv)) == 0):
+    DATASET_SYNCER = Syncer(dataset_imports=DatasetImport, importer=DATASET_IMPORTER,
+                            interval=DATASET_IMPORTER_CONF['sync']['interval_in_seconds'])
+    DATASET_SYNCER.start()
+
+
+def collect_map_entries(map_):
+    entries = []
+    for key, value in map_.items():
+        value['key'] = key
+        entries.append(value)
+
+    return entries
+
+
+@login_required
 def index(request):
+    jobs = DatasetImport.objects.all()
 
-    enabled_input_types = {
-        'single': [
-            {'name': 'Word document', 'value': 'doc'},
-            {'name': 'HTML', 'value': 'html'},
-            {'name': 'RTF', 'value': 'rtf'},
-            {'name': 'PDF', 'value': 'pdf'},
-            {'name': 'TXT', 'value': 'txt'},
-        ],
-        'collection': [
-            {'name': 'CSV', 'value': 'csv'},
-            {'name': 'JSON', 'value': 'json'},
-            {'name': 'Excel spreadsheet', 'value': 'xls'},
-            {'name': 'XML', 'value': 'xml'},
-        ],
-        'database': [
-            {'name': 'Elasticsearch', 'value': 'elastic'},
-            {'name': 'MongoDB', 'value': 'mongodb'},
-            {'name': 'PostgreSQL', 'value': 'postgres'},
-            {'name': 'SQLite', 'value': 'sqlite'},
-        ]
+    archive_formats = collect_map_entries(extractor_map)
+    single_document_formats = collect_map_entries(entity_reader_map)
+    document_collection_formats = collect_map_entries(collection_reader_map)
+    database_formats = collect_map_entries(database_reader_map)
 
-    }
+    preprocessors = collect_map_entries(preprocessor_map)
 
-    return render(request, 'dataset_importer.html', context={'enabled_input_types': enabled_input_types})
+    enabled_preprocessors = [preprocessor for preprocessor in preprocessors]
 
+    return render(request, 'dataset_importer.html', context={
+        # 'enabled_input_types': DATASET_IMPORTER_CONF['enabled_input_types'],
+        'archive_formats': archive_formats,
+        'single_document_formats': single_document_formats,
+        'document_collection_formats': document_collection_formats,
+        'database_formats': database_formats,
+        'jobs': jobs,
+        'enabled_preprocessors': enabled_preprocessors
+    })
+
+
+@login_required
+def reload_table(request):
+    jobs = DatasetImport.objects.all()
+
+    return render(request, 'import_jobs_table.html',
+                  context={'jobs': jobs})
+
+
+@login_required
 def import_dataset(request):
-    parameters = {key: (value if not isinstance(value, list) else value[0]) for key, value in request.POST.items()}
-
-    parameters['directory'] = prepare_import_directory(IMPORTER_DIRECTORY)
-    parameters['elastic_url'] = es_url
-
-    if DocumentStorer.exists(**parameters):
-        return HttpResponse('Index and mapping exist', status=403)
-
-    if parameters['format'] not in {'postgres', 'mongodb', 'elastic'}:
-        if 'file' in request.FILES:
-            fs = FileSystemStorage(location=parameters['directory'])
-            file_name = fs.save(request.FILES['file'].name, request.FILES['file'])
-            parameters['file_path'] = fs.path(file_name)
-        elif 'url' not in parameters:
-            return HttpResponse('failed')
-
-    Process(target=_import_dataset, args=(parameters,)).start()
+    DATASET_IMPORTER.import_dataset(request=request)
 
     return HttpResponse()
 
 
-def _import_dataset(parameter_dict):
+@login_required
+def cancel_import_job(request):
+    DATASET_IMPORTER.cancel_import_job(request.POST.get('id', ''))
 
-    if 'file_path' not in parameter_dict:
-        parameter_dict['file_path'] = download(parameter_dict['url'], parameter_dict['directory'])
-
-    if 'archive' in parameter_dict:
-        ArchiveExtractor.extract_archive(file_path=parameter_dict['file_path'], archive_format=parameter_dict['archive'])
-
-    process_pool = Pool(processes=PROCESSES)
-
-    batch = []
-
-    for document in DocumentReader(directory=parameter_dict['directory']).read_documents(**parameter_dict):
-        batch.append(document)
-
-        if len(batch) == BATCH_SIZE:
-            process_pool.apply(_processing_job, args=(batch, parameter_dict))
-            batch = []
-
-    if batch:
-        process_pool.apply(_processing_job, args=(batch, parameter_dict))
-
-    process_pool.close()
-    process_pool.join()
-
-    shutil.rmtree(parameter_dict['directory'])
+    return HttpResponse()
 
 
-def _processing_job(documents, parameter_dict):
-    processed_documents = DocumentProcessor(subprocessors=[]).process(documents=documents)
-    storer = DocumentStorer.get_storer(**parameter_dict)
-    storer.store(processed_documents)
+@login_required
+def remove_import_job(request):
+    import_id = request.POST.get('id', None)
+    if import_id:
+        DatasetImport.objects.get(pk=import_id).delete()
+
+    return HttpResponse()

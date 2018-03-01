@@ -4,8 +4,11 @@
 # Exclude user data
 texta/data/models/*
 texta/data/usermodels/*
+texta/database/*
 texta/log/*
-texta/lex.db
+
+# Exclude files
+texta/files/*
 
 # Exclude migrations files but not the migrations module.
 searcher/migrations/
@@ -26,6 +29,8 @@ mwe_miner/migrations/
 !mwe_miner/migrations/__init__.py
 account/migrations/
 !account/migrations/__init__.py
+dataset_importer/migrations/
+!dataset_importer/migrations/__init__.py
 
 # Exclude documentation build files but not the html, js etc
 texta/documentation/sphinx/build/doctrees/*

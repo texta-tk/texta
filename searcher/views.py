@@ -5,6 +5,7 @@ import json
 import csv
 import time
 import re
+import bs4
 from datetime import datetime, timedelta as td
 from collections import defaultdict
 
@@ -20,14 +21,14 @@ from permission_admin.models import Dataset
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
-from utils.agg_manager import AggManager
-from utils.cluster_manager import ClusterManager
+from agg_manager import AggManager
+from cluster_manager import ClusterManager
 from utils.highlighter import Highlighter, ColorPicker
 from utils.autocomplete import Autocomplete
 
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links
 
-ES_SCROLL_BATCH = 100
+from searcher.view_functions.export_pages import export_pages
 
 try:
     from cStringIO import StringIO
@@ -83,7 +84,6 @@ def get_fields(es_m):
 
     # Sort fields by label
     fields = sorted(fields, key=lambda l: l['label'])
-
     return fields
 
 
@@ -223,11 +223,12 @@ def get_table_content(request):
     request_param = request.GET
     echo = int(request_param['sEcho'])
     filter_params = json.loads(request_param['filterParams'])
-    es_params = {filter_param['name']: filter_param['value'] for filter_param in filter_params}
+    es_params = {filter_param['name']: filter_param['value'] for filter_param in filter_params}       
     es_params['examples_start'] = request_param['iDisplayStart']
     es_params['num_examples'] = request_param['iDisplayLength']
     result = search(es_params, request)
     result['sEcho'] = echo
+
     return HttpResponse(json.dumps(result, ensure_ascii=False))
 
 
@@ -350,7 +351,7 @@ def convert_clustering_data(cluster_m):
     return out
 
 
-def highlight_cluster_keywords(documents,keywords):
+def highlight_cluster_keywords(documents, keywords):
     out = []
     for document in documents:
         to_highlighter = []
@@ -389,7 +390,7 @@ def search(es_params, request):
         es_m.set_query_parameter('size', es_params['num_examples'])
 
         # HIGHLIGHTING THE MATCHING FIELDS
-        pre_tag = '<span style="background-color:#FFD119" class="[ES]">'
+        pre_tag = '<span class="[HL]" style="background-color:#FFD119">'
         post_tag = "</span>"
         highlight_config = {"fields": {}, "pre_tags": [pre_tag], "post_tags": [post_tag]}
         for field in es_params:
@@ -412,7 +413,10 @@ def search(es_params, request):
         """
 
         out['iTotalRecords'] = response['hits']['total']
-        out['iTotalDisplayRecords'] = response['hits']['total']
+        out['iTotalDisplayRecords'] = response['hits']['total'] # number of docs
+
+        if int(out['iTotalDisplayRecords']) > 10000: # Allow less pages if over page limit
+            out['iTotalDisplayRecords'] = '10000'
 
         # get columns names from ES mapping
         out['column_names'] = es_m.get_column_names()
@@ -445,13 +449,16 @@ def search(es_params, request):
                 #     make content empty (to allow dynamic mapping without breaking alignment)
                 content = hit['_source']
                 for p in filed_path:
-                    content = content[p] if p in content else ''
+                    if col == u'texta_facts': 
+                        content = str(content[p]) if p in content else ''
+                    else:
+                        content = content[p] if p in content else ''
 
                 # Substitute feature value with value highlighted by Elasticsearch
                 old_content = content
                 if col in highlight_config['fields'] and 'highlight' in hit:
                     content = hit['highlight'][col][0]
-
+                    
                 # Prettify and standardize highlights
                 if name_to_inner_hits[col]:
                     highlight_data = []
@@ -474,9 +481,21 @@ def search(es_params, request):
                                               additional_style_string='font-weight: bold;').highlight(
                                                   old_content,
                                                   highlight_data,
-                                                  content
-                            )
+                                                  tagged_text=content)
+                else:
 
+                    # WHEN USING OLD FORMAT DOCUMENTS, SOMETIMES BREAKS AT HIGHLIGHTER, CHECK IF ITS STRING INSTEAD OF FOR EXAMPLE LIST
+                    if (isinstance(content, basestring)):
+                        highlight_data = []
+                        content = Highlighter(average_colors=True, derive_spans=True,
+                                                additional_style_string='font-weight: bold;').highlight(
+                                                    old_content,
+                                                    highlight_data,
+                                                    tagged_text=content)
+                    
+                # Checks if user wants to see full text or short version
+                if 'show_short_version' in es_params.keys():
+                    content = additional_option_cut_text(content, es_params)
                 # Append the final content of this col to the row
                 row.append(content)
 
@@ -498,144 +517,48 @@ def search(es_params, request):
         return out
 
 
-@login_required
-def export_pages(request):
+def additional_option_cut_text(content, es_params):
+    window_size = int(es_params["short_version_n_char"])
+    content = unicode(content)
 
-    es_params = {entry['name']: entry['value'] for entry in json.loads(request.GET['args'])}
+    if u'[HL]' in content:
+        soup = bs4.BeautifulSoup(content,'lxml')
+        html_spans = soup.find_all('span')
 
-    if es_params['num_examples'] == '*':
-        response = StreamingHttpResponse(get_all_rows(es_params, request), content_type='text/csv')
-    else:
-        response = StreamingHttpResponse(get_rows(es_params, request), content_type='text/csv')
-    
-    response['Content-Disposition'] = 'attachment; filename="%s"' % (es_params['filename'])
-
-    return response
-
-
-def get_rows(es_params, request):
-
-    buffer_ = StringIO()
-    writer = csv.writer(buffer_)
-    
-    writer.writerow([feature.encode('utf8') for feature in es_params['features']])
-
-    ds = Datasets().activate_dataset(request.session)
-    es_m = ds.build_manager(ES_Manager)
-    es_m.build(es_params)
-
-    es_m.set_query_parameter('from', es_params['examples_start'])
-    q_size = es_params['num_examples'] if es_params['num_examples'] <= ES_SCROLL_BATCH else ES_SCROLL_BATCH
-    es_m.set_query_parameter('size', q_size)
-
-    features = sorted(es_params['features'])
-
-    response = es_m.scroll()
-
-    scroll_id = response['_scroll_id']
-    left = es_params['num_examples']
-    hits = response['hits']['hits']
-    
-    while hits and left:
-        rows = []
-        for hit in hits:
-            row = []
-            for feature_name in features:
-                feature_path = feature_name.split('.')
-                parent_source = hit['_source']
-                for path_component in feature_path:
-                    if path_component in parent_source:
-                        parent_source = parent_source[path_component]
-                    else:
-                        parent_source = ""
-                        break
-                
-                content = parent_source
-                row.append(content)
-            rows.append(row)
-
-        if left > len(rows):
-            for row in rows:
-                writer.writerow([element.encode('utf-8') if isinstance(element,unicode) else element for element in row])
-            buffer_.seek(0)
-            data = buffer_.read()
-            buffer_.seek(0)
-            buffer_.truncate()
-            yield data
-            
-            left -= len(rows)
-            response = es_m.scroll(scroll_id=scroll_id)
-            hits = response['hits']['hits']
-            scroll_id = response['_scroll_id']
-
-        elif left == len(rows):
-            for row in rows:
-                writer.writerow([element.encode('utf-8') if isinstance(element,unicode) else element for element in row])
-            buffer_.seek(0)
-            data = buffer_.read()
-            buffer_.seek(0)
-            buffer_.truncate()
-            yield data
-            
-            break
-        else:
-            for row in rows[:left]:
-                writer.writerow([element.encode('utf-8') if isinstance(element,unicode) else element for element in row])
-            buffer_.seek(0)
-            data = buffer_.read()
-            buffer_.seek(0)
-            buffer_.truncate()
-            yield data
-            
-            break
-
-
-def get_all_rows(es_params, request):
-    buffer_ = StringIO()
-    writer = csv.writer(buffer_)
-    
-    writer.writerow([feature.encode('utf8') for feature in es_params['features']])
-
-    ds = Datasets().activate_dataset(request.session)
-    es_m = ds.build_manager(ES_Manager)
-    es_m.build(es_params)
-
-    es_m.set_query_parameter('size', ES_SCROLL_BATCH)
-
-    features = sorted(es_params['features'])
-
-    response = es_m.scroll()
-
-    scroll_id = response['_scroll_id']
-    hits = response['hits']['hits']
-    
-    while hits:
-        for hit in hits:
-            row = []
-            for feature_name in features:
-                feature_path = feature_name.split('.')
-                parent_source = hit['_source']
-                for path_component in feature_path:
-                    if path_component in parent_source:
-                        parent_source = parent_source[path_component]
-                    else:
-                        parent_source = ""
-                        break
-                
-                content = parent_source
-                row.append(content)
-            writer.writerow([element.encode('utf-8') if isinstance(element,unicode) else element for element in row])
+        html_spans_merged = []
+        num_spans = len(html_spans)
         
-        buffer_.seek(0)
-        data = buffer_.read()
-        buffer_.seek(0)
-        buffer_.truncate()
-        yield data
-
-        response = es_m.scroll(scroll_id=scroll_id)
-        hits = response['hits']['hits']
-        scroll_id = response['_scroll_id']
-
+        # merge together ovelapping spans
+        for i,html_span in enumerate(html_spans):
+            if not html_span.get('class'):
+                span_text = html_span.text
+                span_tokens = span_text.split(' ')
+                span_tokens_len = len(span_tokens)
+                if i == 0:
+                    if span_tokens_len > window_size:
+                        new_text = u' '.join(span_tokens[-window_size:])
+                        new_text = u'... {0}'.format(new_text)
+                        html_span.string = new_text
+                    html_spans_merged.append(unicode(html_span))
+                elif i == num_spans-1:
+                    if span_tokens_len > window_size:
+                        new_text = u' '.join(span_tokens[:window_size])
+                        new_text = u'{0} ...'.format(new_text)
+                        html_span.string = new_text                    
+                    html_spans_merged.append(unicode(html_span))
+                else:
+                    if span_tokens_len > window_size:
+                        new_text_left = u' '.join(span_tokens[:window_size])
+                        new_text_right = u' '.join(span_tokens[-window_size:])
+                        new_text = u'{0} ...\n... {1}'.format(new_text_left,new_text_right)
+                        html_span.string = new_text                    
+                    html_spans_merged.append(unicode(html_span))
+            else:
+                html_spans_merged.append(unicode(html_span))
+                    
+        return ''.join(html_spans_merged)
+    else:
+        return content
 
 def remove_by_query(request):
     es_params = request.POST
