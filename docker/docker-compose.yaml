@@ -1,0 +1,31 @@
+version: "2"
+
+services:
+  elastic:
+    container_name: texta-elastic
+    image: texta/db:latest
+    build: ./elasticsearch
+    ports:
+      - "9200"
+    networks:
+      - texta-network
+
+  texta:
+    container_name: texta-toolkit
+    image: texta/toolkit:latest
+    build: ./texta
+    ports:
+      - "8000:80"
+    networks:
+      - texta-network
+    volumes:
+      - texta-data-volume:/home/texta/texta/texta/data
+      - texta-state-volume:/home/texta/texta/texta/database
+
+networks:
+  texta-network:
+    driver: bridge
+
+volumes:
+  texta-data-volume:
+  texta-state-volume:

@@ -3,7 +3,7 @@
 import json
 import logging
 import requests
-from multiprocessing import Process
+from threading import Thread
 from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
@@ -104,7 +104,7 @@ def start_training_job(request):
     clf_args = (request, usr, search_id, field_path, extractor_opt, reductor_opt,
                 normalizer_opt, classifier_opt, description, tag_label)
 
-    clf_job = Process(target=model_pipeline.train_classifier, args=clf_args)
+    clf_job = Thread(target=model_pipeline.train_classifier, args=clf_args)
     clf_job.start()
 
     return HttpResponse()
@@ -183,8 +183,11 @@ def api_classify(request):
             job_queue.save()
             data['status'] = ['running', 'model added to job queue']
             data['job_key'] = job_key
-            model_job = Process(target=model_pipeline.apply_classifier, args=(job_key,))
+
+
+            model_job = Thread(target=model_pipeline.apply_classifier, args=(job_key,))
             model_job.start()
+
 
     except Exception as e:
         print 'Error: ', e

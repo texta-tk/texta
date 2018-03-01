@@ -21,8 +21,8 @@ from permission_admin.models import Dataset
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
-from utils.agg_manager import AggManager
-from utils.cluster_manager import ClusterManager
+from agg_manager import AggManager
+from cluster_manager import ClusterManager
 from utils.highlighter import Highlighter, ColorPicker
 from utils.autocomplete import Autocomplete
 

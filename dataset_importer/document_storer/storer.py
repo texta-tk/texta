@@ -1,12 +1,19 @@
-from storers import ElasticStorer
+from .settings import storer_map
 
 
 class DocumentStorer(object):
+    """Storer factory for retrieving storer of the appropriate type. Storers are used to store read and preprocessed documents.
+    """
 
     @staticmethod
     def get_storer(**connection_parameters):
-        return ElasticStorer(**connection_parameters)
+        """Retrieves storer instance of the desired type.
 
-    @staticmethod
-    def exists(**connection_parameters):
-        return ElasticStorer.exists(**connection_parameters)
+        :param connection_parameters: must include storer
+        :return: instance of a storer
+        """
+        return storer_map[connection_parameters['storer']]['class'](**connection_parameters)
+    #
+    # @staticmethod
+    # def exists(**connection_parameters):
+    #     return ElasticStorer.exists(**connection_parameters)

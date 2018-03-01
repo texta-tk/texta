@@ -17,3 +17,5 @@ class DatasetImport(models.Model):
     processed_documents = models.BigIntegerField(default=0)
     total_documents = models.BigIntegerField(default=0)
     finished = models.BooleanField(default=False)
+    must_sync = models.BooleanField(default=False)
+    json_parameters = models.CharField(max_length=1024, default='')

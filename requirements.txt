@@ -1,10 +1,12 @@
+setuptools
+wheel
 requests
 numpy
 cython
 scipy
 sklearn
 gensim
-django
+django=1.11
 pathlib
 dateutils
 sympy

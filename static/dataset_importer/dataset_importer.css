@@ -1,3 +1,118 @@
+
+@media only screen and (max-width: 1300px) {
+
+    .file-input-method-btn { 
+       font-size: 0.9em; 
+    }
+}
+
+
+@media only screen and (max-width: 1200px) {
+
+    .file-input-method-btn { 
+       font-size: 0.8em; 
+    }
+}
+
+@media only screen and (max-width: 990px) {
+
+    .file-input-method-btn { 
+       font-size: 1em; 
+    }
+}
+
+@media only screen and (max-width: 450px) {
+
+    .file-input-method-btn { 
+       font-size: 0.8em; 
+    }
+}
+
+@media only screen and (max-width: 360px) {
+
+    .file-input-method-btn { 
+       font-size: 0.7em; 
+    }
+}
+
+
 .parameter-panel {
     background-color: #f3f3f3;
+}
+
+.texta-tooltip {
+    cursor: pointer;
+    font-size: 16px;
+    color: #73AD21;
+}
+
+.preprocessor-parameters {
+    display: none;
+}
+
+.preprocessor-checkbox {
+    background-color: whitesmoke;
+    color: black;
+}
+
+.preprocessor-name {
+    font-weight: bold;
+}
+
+.format-parameters {
+    display: none;
+}
+
+.relevant-parameters {
+    display: block;
+}
+
+.file-input-method-btn.selected {
+    background-color: #73AD21;
+    color: white;
+}
+
+.file-input-method {
+    display: none;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+#selected-data-formats-list.help-block {
+    color: #666 !important;
+}
+
+.file-input-method-btn { 
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+/* LOADER */
+
+.loader {
+    display: none;    
+    border: 5px solid red;
+    border-radius: 50%;
+    border-top: 5px solid blue;
+    border-right: 5px solid #73AD21;
+    border-bottom: 5px solid #FFFFFF;
+    width: 20px;
+    height: 20px;
+    -webkit-animation: spin 2s linear infinite;
+    animation: spin 2s linear infinite;
+  }
+  
+  @-webkit-keyframes spin {
+    0% { -webkit-transform: rotate(0deg); }
+    100% { -webkit-transform: rotate(360deg); }
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.statusText {
+    display: none;
+    color: red;
 }

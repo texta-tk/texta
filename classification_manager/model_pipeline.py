@@ -30,10 +30,9 @@ from sklearn.model_selection import GridSearchCV
 
 from texta.settings import STATIC_URL, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ERROR_LOGGER
 from searcher.models import Search
-from classification_manager.data_manager import EsDataSample
-from classification_manager.models import ModelClassification
-from classification_manager.data_manager import EsDataClassification
-from classification_manager.models import JobQueue
+from classification_manager.data_manager import EsDataClassification, EsDataSample
+from classification_manager.models import JobQueue, ModelClassification
+import classification_manager.data_manager as data_manager
 
 
 class ModelNull(BaseEstimator):
@@ -356,7 +355,7 @@ def apply_classifier(job_key):
             clf_model = load_model(output_model_file)
             # Update status
             es_classification = EsDataClassification(es_index, es_mapping, field_path, query)
-            _data = es_classification.apply_classifier(clf_model, model.tag_label)
+            _data = es_classification.apply_classifiers([clf_model], [model.tag_label])
             # Update status
             job_queue.run_status = 'completed'
             job_queue.total_processed = _data['total_processed']
@@ -379,3 +378,14 @@ def clean_job_queue():
     jobs = JobQueue.objects.all()
     for j in jobs:
         j.delete()
+
+
+def classify_documents(classifier_ids, documents):
+    classifiers_data = ModelClassification.objects.filter(id__in=classifier_ids)
+    field_paths = [classifier_data.fields for classifier_data in classifiers_data]
+    classifier_tags = [classifier_data.tag_label for classifier_data in classifiers_data]
+
+    classifier_names = ['classifier_{0}.pkl'.format(classifier_data.pk) for classifier_data in classifiers_data]
+    classifiers = [load_model(os.path.join(MODELS_DIR, classifier_name)) for classifier_name in classifier_names]
+
+    return data_manager.classify_documents(documents, classifiers, classifier_tags, field_paths)

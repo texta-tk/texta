@@ -83,7 +83,7 @@
 											<div class="col-sm-12">
 												<select name="mlt_fields" id="mlt_fields" class="form-control input-sm" multiple="multiple">
 													{% for field in fields %}
-														{% if field.type == 'string' %}
+														{% if field.type == 'text' or field.type == 'keyword' %}
 															<option value="{{field.data}}">{{field.label}}</option>
 														{% endif %}
 													{% endfor %}							
@@ -158,7 +158,7 @@
 										<div class="col-sm-12">
 											<select name="cluster_field" id="cluster_field" class="form-control input-sm">
 												{% for field in fields %}
-													{% if field.type == 'string' %}
+													{% if field.type == 'text' or field.type == 'keyword' %}
 														<option value="{{field.data}}">{{field.label}}</option>
 													{% endif %}
 												{% endfor %}							
@@ -300,10 +300,11 @@
 									</div>
 								</div>
 								<div id="sort_by_1">
-									<b>Sort by:</b>
+									<b>Aggregation:</b>
 									<select id="sort_by_1" name="sort_by_1" class="form-control input-sm">
-										<option value="terms" selected="selected">count</option>
-										<option value="significant_terms">significance</option>
+										<option value="terms" selected="selected">frequent items</option>
+										<option value="significant_terms">significant items</option>
+										<option value="significant_text">significant words</option>
 									</select>
 								</div>
 								<div id="freq_norm_1" class="hidden">
@@ -342,17 +343,18 @@
 								<b>Select field:</b>
 								<select id="agg_field_2" name="agg_field_2" class="form-control input-sm">
 									{% for field in fields %}
-										{% if field.type == 'string' or field.type == 'facts'%}
+										{% if field.type == 'keyword' or field.type == 'text' or field.type == 'facts'%}
 											<option value="{{field.data}}">{{field.label}}</option>
 										{% endif %}
 									{% endfor %}
 								</select>			
 							
 								<div id="sort_by_2">
-									<b>Sort by:</b>
+									<b>Aggregation:</b>
 									<select id="sort_by_2" name="sort_by_2" class="form-control input-sm">
-										<option value="terms">count</option>
-										<option value="significant_terms" selected="selected">significance</option>
+										<option value="terms" selected="selected">frequent items</option>
+										<option value="significant_terms">significant items</option>
+										<option value="significant_text">significant words</option>
 									</select>
 								</div>
 								
