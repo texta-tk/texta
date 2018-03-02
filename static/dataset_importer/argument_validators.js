@@ -14,7 +14,7 @@ function loaderDisplay(status) {
         $("#import-dataset-btn").html('Import');
 
         $(".statusText").html("Successfully imported database!");
-        $(".statusText").css("color", "#73AD21")
+        $(".statusText").css("color", "#73AD21");
         $(".statusText").show();
     }
     else if (status == "error") {
@@ -24,21 +24,34 @@ function loaderDisplay(status) {
         $("#import-dataset-btn").html('Import');
 
         $(".statusText").html("Error importing database!");
-        $(".statusText").css("color", "red")
+        $(".statusText").css("color", "red");
         $(".statusText").show();
     }
 }
 
-function fileInputSelection() {
+var fileInputFormats = [['HTML', "PDF", "DOCX", "RTF", "TXT", "DOC"], ["XML", "JSON", "CSV", "XLS/XLSX"], ["SQLite"], ['Elasticsearch', 'MongoDB', 'Elasticsearch, MongoDB', 'MongoDB, Elasticsearch']];
+
+//last validation steps when pressing import
+function validateForm() {
+    //validate other formats when elastic/mongodb were selected
+    if (fileInputFormats[0].concat(fileInputFormats[1].concat(fileInputFormats[2])).some(element => $('#selected-data-formats-list').text().includes(element))) {
+        $('#' + $('.file-input-method-btn.selected').val() + '-file-input-field').prop('required', true);
+    } else {
+        $('.file-input-field').prop('required', false);
+    }
+}
+//for fileinput validation
+function fileInputSelection(active) {
     $('#import-dataset-btn').prop('disabled', false);
     $('.file-input-field').prop('required', false);
-    $('#' + $(this).val() + '-file-input-field').prop('required', true);
+    $('#' + active + '-file-input-field').prop('required', true);
 }
 
+//when preprocessor changed
 $("#apply-preprocessor").change(function () {
     if (this.checked) {
         $("#mlp-processor-feature-names").prop('required', true);
-        if (['HTML', "PDF", "DOCX", "RTF", "TXT", "DOC"].some(element => $('#selected-data-formats-list').text().includes(element))) {
+        if (fileInputFormats[0].some(element => $('#selected-data-formats-list').text().includes(element))) {
             $("#mlp-processor-feature-names").html('text');
         }
     } else {
@@ -46,11 +59,19 @@ $("#apply-preprocessor").change(function () {
     }
 });
 
-
+//when data formats text changed
 $("#selected-data-formats-list").bind("DOMSubtreeModified", function () {
-    if (['HTML', "PDF", "DOCX", "RTF", "TXT", "DOC"].some(element => $('#selected-data-formats-list').text().includes(element))) {
+    //for mlp validation
+    if (fileInputFormats[0].some(element => $('#selected-data-formats-list').text().includes(element))) {
         $("#mlp-processor-feature-names").html('text');
     } else {
         $("#mlp-processor-feature-names").html('');
+    }
+    //for elastic/mongodb validation
+    if (fileInputFormats[3].some(element => $('#selected-data-formats-list').text() == element)) {
+        $('#import-dataset-btn').prop('disabled', false);
+        $('.file-input-field').prop('required', false);
+    } else if ($('#selected-data-formats-list').text() != '' && typeof ($('.file-input-method-btn.selected').val()) === 'undefined') {
+        $('#import-dataset-btn').prop('disabled', true);
     }
 });
