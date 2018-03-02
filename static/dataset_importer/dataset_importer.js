@@ -33,6 +33,7 @@ $('.apply-preprocessor').val([]);
 //     importDataset();
 // });
 $('#import-dataset-form').submit(function(){
+    validateForm();
     importDataset();
 });
 
@@ -103,7 +104,7 @@ $('.file-input-method-btn').click(function() {
     $('.file-input-method').hide();
     $('#' + $(this).val() + '-file-input').show();
 
-    fileInputSelection();
+    fileInputSelection($(this).val());
 });
 
 $('.apply-preprocessor').click(function() {
