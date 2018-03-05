@@ -44,7 +44,7 @@ class MlpPreprocessor(object):
                 analyzation_datum = analyzation_datum[0]
 
                 documents[analyzation_idx]['mlp_' + input_feature] = analyzation_datum['text']
-                documents[analyzation_idx]['mlp_' + input_feature]['lang'] = analyzation_datum['lang']
+                documents[analyzation_idx]['mlp_' + input_feature]['lang'] = analyzation_datum['text']['lang']
 
                 if 'texta_facts' not in documents[analyzation_idx]:
                     documents[analyzation_idx]['texta_facts'] = []
