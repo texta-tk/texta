@@ -10,7 +10,7 @@ class ElasticStorer(object):
     def __init__(self, **connection_parameters):
         self._es_url = connection_parameters['texta_elastic_url']
         self._es_index = self._correct_name(connection_parameters['texta_elastic_index'])
-        self._es_mapping = self._corrent_name(connection_parameters['texta_elastic_mapping'])
+        self._es_mapping = self._correct_name(connection_parameters['texta_elastic_mapping'])
 
         self._headers = {'Content-Type': 'application/json'}
         self._request = requests.Session()
