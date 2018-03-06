@@ -36,12 +36,24 @@ class ElasticStorer(object):
         :type mapping: string
         :type not_analyzed_fields: list of strings
         """
-        index_creation_query = {"mappings": {mapping: {'properties': {'texta_facts': {'type': 'nested'}}}}}
-        self._add_not_analyzed_declarations(index_creation_query['mappings'][mapping], not_analyzed_fields)
-        self._request.put("{url}/{index}".format(**{
+        
+        facts_properties = {'type': 'nested',
+                          'properties': {
+                              'doc_path': {'type': 'keyword'},
+                              'fact': {'type': 'keyword'},
+                              'num_val': {'type': 'long'},
+                              'spans': {'type': 'keyword'},
+                              'str_val': {'type': 'keyword'}
+                          }
+                     }
+        
+        index_creation_query = {"mappings": {mapping: {"properties": {"texta_facts": facts_properties}}}}
+
+        #self._add_not_analyzed_declarations(index_creation_query['mappings'][mapping], not_analyzed_fields)
+        print self._request.put("{url}/{index}".format(**{
             'url': url,
             'index': index,
-        }), data=json.dumps(index_creation_query), headers=self._headers)
+        }), data=json.dumps(index_creation_query), headers=self._headers).text
 
     def _add_not_analyzed_declarations(self, mapping_dict, not_analyzed_fields):
         """Adds not analyzed fields to index creation schema.
@@ -64,8 +76,8 @@ class ElasticStorer(object):
                     current_dict[path_element] = {}
                 current_dict = current_dict[path_element]
 
-            current_dict['type'] = 'string'
-            current_dict['index'] = 'not_analyzed'
+            current_dict['type'] = 'keyword'
+            #current_dict['index'] = 'not_analyzed'
 
     def store(self, documents):
         """Stores the provided documents to Elasticsearch'es appropriate index.
