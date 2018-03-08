@@ -1,0 +1,291 @@
+                              KOHTUMÄÄRUS
+Tsiviilasja number                     2-13-49776
+
+Kohus                                  Tallinna Ringkonnakohus
+
+Määruse tegemise aeg ja koht           06.09.2016, Tallinn
+
+Kohtukoosseis                          Krista Kirspuu, Ele Liiv, Indrek Soots
+
+Tsiviilasi                             AS Süda Maja (pankrotis) pankrotimenetlus
+
+Vaidlustatud kohtulahend               Harju Maakohtu 26.04.2016 määrus võlausaldajatele häälte
+                                       määramiseks
+Kaebuse esitaja ja kaebuse liik        OÜ Probus määruskaebus
+Menetlusosalised, nende esindajad      Võlgnik: AS Süda Maja (pankrotis, registrikood 10927962),
+                                       pankrotihaldur Toomas Saarma
+
+                                       Võlausaldaja I: AS KH Energia-Konsult (registrikood
+                                       10303995), lepinguline esindaja vandeadvokaat Viktor
+                                       Särgava
+
+                                       Võlausaldaja II: OÜ Probus (registrikood 10655707),
+                                       lepinguline esindaja vandeadvokaat Arne Ots
+
+Menetluse liik                         Kirjalik menetlus
+
+
+ RESOLUTSIOON
+   1. Tühistada Harju Maakohtu 26.04.2016 määrus osas, millega kohus otsustas AS Süda
+      Maja (pankrotis) pankrotimenetluses OÜ-le Probus mitte rohkem kui 122 640 häält
+      anda. Rahuldada OÜ Probus määruskaebus osaliselt.
+   2. Määrata OÜ Probus häälte arvuks 124 040.
+   3. Määruse tervikresolutsioon sõnastada järgmiselt:
+      3.1.Määrata järgmiste võlausaldajate häälte arv:
+                 3.1.1. VM – 1 400 häält;
+                 3.1.2. Probus OÜ – 124 040 häält;
+                 3.1.3. T&O Varahaldus OÜ – 33 305 häält;
+                 3.1.4. KH Energia-Konsult OÜ - 233 417 häält;
+                 3.1.5. Alandia KV OÜ - 326 häält;
+                 3.1.6. Siibxid OÜ - 3 749 häält.
+        3.2.Jätta pankrotihaldur Toomas Saarma taotlus deposiidi määramiseks rahuldamata.
+ 4. Määrus ei ole edasikaevatav (PankrS § 82 lg 4 koosmõjus § 5 lg-s 2 sätestatuga), v.a
+    menetluskulude jaotuse osas. Määruskaebuse menetluskulude jaotusele saab esitada
+    vandeadvokaadi vahendusel otse Riigikohtule 15 päeva jooksul arvates käesoleva määruse
+    kättetoimetamisest.
+
+Menetluse käik
+1. AS Süda Maja (võlgnik)esitas 22.10.2013 Harju Maakohtule avalduse pankroti
+väljakuulutamiseks. 17.12.2013 määrusega kuulutati välja võlgniku pankrot ja pankrotihalduriks
+nimetati Toomas Saarma.
+
+2. 05.04.2016 toimunud võlausaldajate üldkoosolekul esitasid AS KH Energia-Konsult (võlausaldaja
+I), OÜ Probus (võlausaldaja II) ja VM vastuväited häälte määramise osas. Võlausaldaja esitas
+vastuväite endale häälte määramata jätmisele. OÜ Probus esitas vastuväite endale häälte määramata
+jätmisele 140 000 euro eest, VM-le antud häälte osas, AS-ile KH Energia-Konsult antud häälte osas
+(v.a osas, mis puudutas RAMM Ehituse OÜ-lt omandatud nõuet), Alandia KV OÜ-le määratud häälte
+osas ja Siibxid OÜ-le määratud häälte osas. VM esitas vastuväite T&O Varahalduse OÜ-le määratud
+häälte arvu osas, mis ületab summat 2,3 miljonit eurot.
+
+Maakohtu määruse põhjendused
+3. Harju Maakohtu 26.04.2015 määrusega määrati võlausaldajate hääled järgmiselt: VM-le 1400
+häält; Probus OÜ-le 122 640 häält; T&O Varahaldus OÜ-le 33 305 häält; KH Energia-Konsult OÜ-
+le 233 417 häält; Alandia KV OÜ-le 326 häält ja Siibxid OÜ-le 3749 häält. Pankrotihaldur Toomas
+Saarma taotlus deposiidi määramiseks jäeti rahuldamata.
+
+Maakohus juhindus PankrS § 82 lg 1, § 82 lg 4. Maakohus oli juba häälte arvu määranud 07.01.2016
+kohtumäärusega ja viitas, et jääb ka varasemas määruses toodud seisukoha juurde.
+
+Pankrotihaldur määras võlausaldajale I kohtu poolt määratust vähem hääli, kuna menetluse kestel
+selgusid uued asjaolud – audiitori 22.07.2013 õiend AS Süda Maja juhatusele, millest tulenevalt on
+haldur määranud hääli 1 809 603,84 euro eest. Võlausaldaja I vaidles sellele vastu, kuna tegemist ei
+ole uue asjaoluga, audiitori arvamuses märgitud kohustuse üleminek ei ole toimunud, sest
+võlausaldaja ei ole sellega nõustunud ja kohustuse üleminek toimus kolmandate isikute vahelises
+lepingus. Kohus nõustus võlausaldajaga. Kolmandate isikute vahelised tehingud ega ka kolmanda
+isiku (audiitori) arvamus ei muuda võlausaldaja nõuet. Puuduvad tõendid, et võlausaldaja oleks
+võlaõigusseaduse (VÕS) § 175 lg 2 kohaselt kohustuse ülevõtmisega nõustunud. Nõusolekut ei saa
+järeldada sellest, et kohustused on vähenenud. Kohus leidis, et võlausaldajale I tuleb anda hääli
+07.01.2016 kohtumäärusega märgitud ulatuses ning häälte arvu vähendamiseks alus puudub.
+
+Asjaolu, et võlausaldaja II ei nõustu temale kohtu poolt antud häälte arvuga, ei anna alust muuta tema
+häälte arvu. Seetõttu jäävad püsima ka VM-le antud hääled. Võlausaldaja II teised vastuväited on
+põhjendamatud: vastuhagi esitamine Alandia KV OÜ vastu ei vähenda viimase häälte arvu
+käesolevas pankrotimenetluses ega tehingute tagasivõitmise hagi Siibxid OÜ-le määratud häälte arvu.
+
+VM on vaidlustanud T&O Varahalduse OÜ häälte arvu, kuna 29.02.2016 tegi Tallinna
+Ringkonnakohus otsuse, millega tunnustas viimase nõuet summas 2 279 730,58 eurot. See otsus ei
+ole aga jõustunud. Häälte arvu on põhjust muuta nõude tunnustamist puudutava kohtulahendi
+jõustumisel. Kohus jättis pankrotihalduri taotluse deposiidi määramiseks rahuldamata, kuna PankrS
+§ 158 lg 6 mõtteks ei ole deposiidi kogumine riigilõivu tasumiseks.
+
+Määruskaebus
+4. Võlausaldaja II palub tühistada maakohtu määruse resolutsiooni punkt 1 osas, milles OÜ-le Probus
+jäeti määramata 1 400 häält ning AS-ile KH Energia-Konsult Energia-Konsult määrati hääli üle
+18 096. Kaebaja palub teha uue määruse, millega määrata 05.04.2016 ja 26.04.2016 AS Süda Maja
+
+                                                                                           2(6)
+(pankrotis) võlausaldajate üldkoosolekul AS-i KH Energia-Konsult häälteks 18 096 häält ja OÜ
+Probus häälteks 124 040 häält.
+
+Vandeaudiitor SK 22.07.2013 õiend oli selline uus asjaolu PankrS § 82 lg 7 mõttes, mis andis aluse
+võlausaldajale I varasemaga võrreldes väiksemas ulatuses häälte määramiseks. Õiendi kohaselt olid
+pankrotivõlgniku kohustused võlgniku sõlmitud nelja lepingu alusel vähenenud 22 956 061 euro
+võrra. Vastavad lepingud olid võlgniku, OÜ Siibxid ja OÜ VIP Crew vahel 26.06.2013, 13.06.2013
+ja 28.06.2013 sõlmitud lepingud. Viidatud lepingud nägid ette teatud pankrotivõlgnike kinnistute ja
+kinnistute mõtteliste osade müügi OÜ-le Siibxid ja OÜ-le VIP Crew. Kinnistute eest tasumise
+vahendina nägid eelviidatud lepingud ette teatud pankrotivõlgniku kohustuste ülevõtmise OÜ Siibxid
+ja OÜ VIP Crew poolt. Ülevõetavad kohustused olid suures osas võlgniku kohustused võlausaldaja I
+ees, mh kohustused, mis tulenesid pankrotivõlgniku ja võlausaldaja I vahel sõlmitud 17.04.2012
+laenulepingust, laenulepingutest nr 120703, 110907, 13022, 130630 ning võlakirjadest. Neid
+kohustusi ei oleks saanud põhivõlgniku bilansist välja arvata, kui kohustuste üleminekuks OÜ-le
+Siibxid ja OÜ VIP Crew ei olnud võlausaldaja I nõusolekut. Vandeaudiitori kinnitusest tuleneb, et
+võlausaldajal I ei ole enam 17.04.2012 laenulepingu, laenulepingute nr 120703, 110907, 13022,
+130630 ning võlakirjade alusel nõudeid võlgniku vastu, vaid nimetatud nõuete osas on võlgnikuks
+OÜ VIP Crew ja OÜ Siibxid.
+
+Pankrotihaldur selgitas, et vandeaudiitor on kinnitanud võlausaldaja I ees olevate võlgniku kohustuste
+ülevõtmist OÜ Siibxid ja OÜ VIP Crew poolt kokku summas 21 532 110,69 eurot. Pärast ülevõetud
+kohustuste mahaarvamist võlausaldaja I pankrotimenetluses esitatud nõudest (23 341 714,53 eurot)
+jäi arvutuste kohaselt nõudeks 1 809 603,84 eurot. Nimetatud nõudesummale vastab 18 096 häält.
+
+Võlausaldajale II oleks tulnud kaebuse kohaselt määrata kokku 124 040 häält, sest tema nõude
+suuruseks on 12 403 969,95 eurot. Määrates võlausaldajale II 1 400 häält eelnimetatust vähem,
+kohaldas maakohus ebaõigesti PankrS § 82 lõiget 1. Maakohus põhjendas häälte suurust üksnes
+väitega, et häälte muutmiseks ei anna alust võlausaldaja II häälte arvuga mittenõustumine. Maakohus
+ei käsitlenud samas väiteid ega argumente, miks võlausaldaja II ei nõustunud temale määratud häälte
+arvuga ning miks ta leidis, et talle tuleks määrata 1400 häält rohkem. Võlausaldajale II on määratud
+1400 häält vähem lähtuvalt ekslikust arusaamast, et ta vastavas ulatuses häälte määramisel saaks hääli
+sama nõude osas topelt. Niisugune arusaam oli kujunenud, kuna VM vaidlustas talle 1400 hääle
+määramata jätmise tulenevalt varasemalt võlausaldajale II kuulunud 140 000 euro suuruse nõude
+seaduse alusel VM-le üleminekust. Võlausaldajale II enne VM-le häälte määramist antud hääled olid
+juba määratud õigesti vastavalt nõudele, mis kajastas juba VM-le seaduse alusel üle läinud 140 000
+euro suuruse nõude mahaarvamist.
+
+Võlausaldaja II selgitas, et tema nõude suuruseks võlgniku pankrotimenetluses on käesoleval hetkel
+12 403 969,95 eurot. Nõue on kujunenud järgmiselt. Nõude tunnustamise hagis taotles võlausaldaja
+II 10 594 000,96 euro suuruse nõude tunnustamist. Pärast hagi esitamist on võlausaldaja II kahel
+korral nõuet vähendanud ja ühel korral nõuet suurendanud. Võlausaldaja II vähendas 05.12.2014
+nõuet seoses VM poolt (tema eest) tasutud summaga 140 000 eurot, milline nõue läks VM-le üle.
+Seda tõendab tunnustamise kohtuasjas 05.12.2014 esitatud avaldus nõude vähendamiseks. Seejärel
+vähendas võlausaldaja II nõuet 09.02.2015 seoses notari deposiitkontolt tasutud summaga 188 250
+eurot. Seejärel suurendas võlausaldaja II 03.07.2015 nõuet 2 138 219 euro suuruse intressinõude
+võrra. Võlausaldaja II esitas vastavad nõude vähendamise avaldused koos kirjalike selgitustega
+kohtule. Eelnevast tulenevalt on nõude suuruseks 12 403 969,96 eurot, mis ei hõlma VM-le üle läinud
+140 000 euro suurust nõude osa. VM-le üle läinud nõue kajastub võlausaldaja II lõplikus nõude
+arvestuses. Võlausaldaja II nõudele vastav õige häälte arv on 124 040 häält, mitte maakohtu poolt
+määratud 122 640 häält.
+
+
+
+
+                                                                                           3(6)
+07.07.2016 esitatud täiendavas avalduses märkis võlausaldaja II, et OÜ VIP Crew ja OÜ Siibxid on
+esitanud nõudeavaldused võlgniku pankrotimenetluses, mis kaebaja arvates tõendavad väidet, et
+eelnimetatud võlausaldajad on võtnud üle võlausaldaja I nõuded pankrotivõlgniku vastu.
+
+Puudutatud isikute seisukohad määruskaebusele ja menetluse edasine käik
+5. Võlausaldaja I palus jätta võlausaldaja II määruskaebuse rahuldamata ja maakohtu määruse
+muutmata. VÕS § 175 lg-s 2 sätestatud nõusolekut ei saa asendada audiitori õiendiga. Puudub
+võlausaldaja I nõusolek ja nõuded võlgniku vastu ei saa minna üle kolmandatele isikutele. Kui
+vähendada võlausaldaja II hääli, tuleks vähendada ka OÜ T&O Varahaldus hääli ning AS-i Swedbank
+häälis, sest õiendis viidatud lepingutes lepiti kokku ka eelnimetatud võlausaldajate ees olevate
+pankrotivõlgniku kohustuste üleandmises.
+
+6. Pankrotihaldur Toomas Saarma selgitas vastuseks kaebusele, et talle on esitatud üksnes koopiad
+võlausaldaja I 26.06.2013 ja 30.06.2013 väljastatud tingimuslikest nõusolekutest, nõusolekutes
+nimetatud tingimus ei ole haldurile teadaolevatel andmetel saabunud. Arvestades, et audiitor on
+kinnitanud õiendis nimetatud kohustuse bilansist väljaarvamise õigsust, saab eeldada, et ta kontrollis
+kõnealuste kohustuste üleminekuks vajalike nõusolekute olemasolu, sest haldurile hilisemalt
+pankrotimenetluses esitatud tingimuslike nõusolekute pinnalt ei saanud audiitor teha järeldust, et
+kohustused on õigest bilansist välja arvatud. Bilansist kohustuste välja arvamise ainsaks eelduseks
+saab olla, et need on üle läinud. AS Swedbank ega OÜ T&O Varahaldus ei ole andnud
+pankrotivõlgniku kohustuse üleminekuks nõusolekut. Võlausaldaja I osas on nõude tunnustamise
+vaidlus pooleli. Halduri hinnangul on põhjendatud määrata võlausaldajale I hääli vaid nõude
+1 809 603,74 eurot eest, s.o 18 096 häält kuni võlausaldaja I nõude tunnustamise vaidluses tehtava
+kohtulahendi jõustumiseni (tsiviilasi 2-14-53169).
+
+Võlausaldaja II häälte arv peaks kuni nõude tunnustamise vaidluses (tsiviilasi 2-14-21692) tehtava
+kohtulahendi jõustumiseni olema võrdeline menetlusse esitatud nõudega (12 403 969,95 eurot), s.o
+124 040 häält. Maakohus on võlausaldajale II hääled ekslikult ebaõigesti määranud juba 07.01.2016
+määrusega ja 26.04.2016 määruses korranud varasemat ekslikku seisukohta. Võlausaldaja II on
+esitanud selgitused ja tõendid selle kohta, et tema nõude koosseisus ei ole nõuet 140 000 eurot, mis
+läks seaduse alusel üle VM-le. Ekslik on kohtu arusaam, et võlausaldajale II esitatud nõude 12 403
+969,96 eurot alusel määratakse hääli sama nõude osas topelt.
+
+7. Harju Maakohus jättis määruskaebuse rahuldamata ja edastas lahendamiseks Tallinna
+Ringkonnakohtule.
+
+Ringkonnakohtu seisukoht
+8. Ringkonnakohus, tutvunud asja materjaliga, leiab, et maakohtu määrus tuleb menetlusõiguse
+olulise rikkumise tõttu osaliselt tühistada võlausaldajale II määratud häälte arvu osas (TsMS § 657 lg
+1 p 2 ja § 659). Ringkonnakohtul on võimalik esitatud dokumentide alusel otsustada nimetatud
+võlausaldaja häälte arv. Muus osas jääb maakohtu määrus muutmata.
+
+9. PankrS § 82 lg-s 7 on sätestatud, et kui võlausaldaja häälte arv on määratud sama paragrahvi
+lõigetes 3 ja 4 sätestatud korras, ei takista see uute asjaolude ilmnemisel teisel koosolekul teistsuguse
+häälte arvu määramist. Riigikohus on selgitanud, et PankrS § 82 lõigete süsteemist, loogikast ja
+koosmõjust tuleneb, et PankrS § 82 lg-tes 3 ja 4 sätestatud korras määratud häälte arvu on hilisematel
+koosolekutel küll võimalik muuta, kuid üksnes juhul, kui ilmnevad uued asjaolud, mis seda tingivad.
+Seega võimaldab PankrS § 82 lg 7 häälte arvu muuta ka hilisemas menetluses (RKTKo 3-2-1-27-15,
+p-d 12-13). Häälte arvu määramise menetluses ei saa lahendada vaidlusi, mis oma sisult kuuluvad
+nõuete kaitsmise menetlusse. Kuna seadusandja on siiski näinud ette õiguse esitada häälte arvu
+kinnitamise määruse peale määruskaebus, siis eelduslikult on määruskaebusega vaidlustatavad kohtu
+formaalsed eksimused (nt kinnitab ekslikult nõutust suurema või väiksema häälte arvu), vahepeal aset
+leidnud õigusmuudatused (nt on tühistatud nõude aluseks olnud dokument, nt haldusakt) ja kohtu
+
+                                                                                              4(6)
+diskretsioonist lähtuvad seisukohad esitatud nõude õigusliku põhistatuse kohta. Seega võib häälte
+arvu määramise menetluses eelduslikult välistada üksnes sellised nõuded, mida nende õiguslikust
+põhistatusest lähtudes ilmselgelt rahuldada ei saaks (RKTKm 3-2-1-144-11 p 14).
+
+10. Ringkonnakohtu hinnangul ei ole vaidluse lahendamisel määrava tähendusega, millal haldur
+vandeaudiitori õiendi sisust teadlikuks sai. Vaidlust ei ole selles, et võlausaldaja I selliste dokumenti
+nõudeavaldusega ei esitanud. Seetõttu ei analüüsi kohus võlausaldaja I vastavasisulisi väiteid ega
+tõendeid. Oluline on eelkõige see, kas selline õiend andis aluse haldurile muuta võlausaldajale I
+määratud häälte arvu.
+
+11. Asja materjalidest ilmneb, et võlgnik sõlmis 26.06.2013, 13.06.2013 ja 28.06.2013 lepingud, mis
+nägid ette võlgniku kohustuste vähenemise ülemineku tõttu kolmandatele isikutele (Siibxid OÜ-le ja
+OÜ-le VIP Crew). Lepingud nägid ette ka osade võlausaldaja I ees olevate võlgniku kohustuste
+ülemineku kolmandatele isikutele. Võlausaldaja I ei olnud vastavate lepingute osapooleks, mistõttu
+eeldas kokkulepe kohustuste ülemineku osas võlausaldaja I nõusolekut.
+
+12. Vandeaudiitor on 22.07.2013 õiendis kinnitanud, et võlgniku kohustused on eelviidatud tehingute
+tulemusel teatud ulatuses vähenenud. Võlausaldaja I eitab oma nõusoleku andmist võlgniku
+kohustuste ülevõtmiseks kolmandate isikute poolt lepingutes toodud ulatuses. Pankrotihalduri
+06.06.2016 seisukoha kohaselt on samas vandeaudiitori õiendis väljendatu osutunud ebaõigeks
+vähemalt Swedbank AS-i ees oleva võlgniku kohustuse ülemineku osas. Vaidlus T&O Varahaldus
+OÜ nõude tunnustamise üle pole veel jõustunud kohtulahendiga lõppenud, kuid menetluse käigus
+pole ilmnenud seni, et ka viimane oleks andnud nõusoleku kohustuste üleminekuks. Pankrotihaldur
+on märkinud, et on püüdnud saada õiendi väljastanud vandeaudiitorilt tulutult selgitusi õiendi
+väljastamise aluseks olevate dokumentide kohta, samuti ei ole audiitor nõustunud andma vastavaid
+dokumente haldurile.
+
+13. Vandeaudiitori õiendi näol on tegemist dokumendiga, mis kajastab pankrotivõlgniku bilansis
+olevate varade hindamist, mida võlausaldaja I mõjutada ei saa. Võlausaldaja I on juhtinud tähelepanu
+asjaolule, et haldur on audiitorarvamuses viidatud tehingud kohtulikult vaidlustanud ja leidnud, et
+võlausaldaja I audiitorarvamuses viidatud nõuded ei ole tehingute alusel üle läinud (IX kd, tl 15-60).
+Võlausaldaja I on pöördunud vaidlustatud nõude tunnustamiseks kohtusse. Tegemist on õigusliku
+vaidlusega, mida on raske häälte määramise staadiumis kontrollida. Seetõttu jättis maakohus õigesti
+häälte määramisel arvestamata audiitori 22.07.2013 õiendist tulenevate asjaoludega kui kaudse
+tõendiga selle kohta, et võlausaldaja I võis olla andnud nõusoleku võlgniku kohustustuste
+ülevõtmiseks kolmandate isikute poolt.
+
+14. Määruskaebuse täienduses esitatud väide, et OÜ Siibxid ja OÜ VIP Crew 11.05.2016 AS Süda
+Maja pankrotimenetluses esitatud nõudeavaldused kinnitavad, et viimased on võtnud üle
+21 532 110,69 euro ulatuses võlgniku kohustusi võlausaldaja I ees, ei anna alust häälte määramiseks
+maakohtust erineval viisil. Nagu nähtub võlausaldaja II 30.06.2016 vastuväidetest nõudele, on ka
+nendest nõudeavaldustest tulenevad nõuded pankrotimenetluses vaidluse all. Nõude ülemineku näol
+ei ole seega tegemist asjaoluga, mida kohtul oleks võimalik suuremate raskusteta tuvastada häälte
+määramisel.
+
+15. Häälte määramisel ei saa lähtuda sellest, et võlausaldajal I on seoses 233 417 häälega võimalus
+otsustada pankrotimenetluses tähtsust omavate küsimuste üle. Samuti ei oma häälte määramisel
+tähendust asjaolu, et pankrotitoimkonna liikmete valimise üle on võlausaldajate vahel vaidlus.
+
+16. Vaidlusalune õiend ega kahe võlausaldaja pankrotimenetluses tehtud avaldused ei anna alust
+võlausaldajale I varasemalt kohtu 07.01.2016 määrusega määratud häälte arvu muuta. Nõude
+põhjendatuse hindamine vajab põhjalikumat õiguslikku analüüsi, mida ei ole võimalik teostada häälte
+määramise staadiumis.
+
+                                                                                              5(6)
+17. Maakohus viitab võlausaldajale II 1400 hääle määramata jätmise osas 07.01.2016 määruses
+toodud põhjendustele. Miks on 07.01.2016 määrusega jäetud võlausaldajale II 1400 täiendavat häält
+määramata, ei ole varasema määruse põhjendustest jälgitav. Kohus on märkinud, et kohtu hinnangul
+kuuluvad need hääled VM-le, tulenedes samast nõudest mis võlausaldaja II nõue ning kahekordselt
+nõudelt hääli määrata ei saa. Samas ei ole kohus viidanud asjaoludele või tõenditele, mille alusel tal
+sellisele järeldusele jõudis.
+
+18. Võlausaldaja I on selgitanud 21.04.2016 vastuväites oma nõude kujunemist pankrotimenetluses
+ja on toonud esile, et tema pankrotihaldurile esitatud nõude koosseisus ei ole 140 000 euro suurust
+nõuet, mis läks seaduse alusel üle VM-le (IX kd, tl 72). Nõude kujunemise kohta kohtumenetluses
+on võlausaldaja II esitanud tõendid (X kd, tl 76-92). Vaidlust ei ole selles, et võlausaldaja II esitas
+enne nõuete kaitsmise koosolekut tähtaegselt nõudeavaldusega nõudeid kokku 13 536 687,28 eurot
+(05.01.2016 OÜ Probus menetlusdokument p 5.4. (VII kd, tl 102-113)). 05.12.2014 avaldusest nõude
+vähendamiseks nähtub, et võlausaldaja II on palunud kohtumenetluses nõuet vähendada VM eest
+tasutud 140 000 euro võrra. Seejärel on võlausaldaja II vähendanud 09.02.2015 nõuet 188 250 euro
+võrra seoses notari deposiitkontol temale tasutud summadega ja suurendanud 03.07.2015 nõuet
+2 138 219 euro suuruse intressinõude võrra. Nõude suuruseks on 12 403 969,96 eurot. Ka
+pankrotihaldur on leidnud, et juba 07.01.2016 eksis kohus häälte määramisel. Kuna maakohtu
+26.04.2016 määrus on selles osas põhjendamatu, tuleb see tühistada ja võlausaldajale II tuleb määrata
+124 040 häält.
+
+
+        Krista Kirspuu                   Ele Liiv                          Indrek Soots
+       /allkirjastatud                /allkirjastatud                    /allkirjastatud
+        digitaalselt/                 digitaalselt/                       digitaalselt/
+
+
+
+
+                                                                                            6(6)

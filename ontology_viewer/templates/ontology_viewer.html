@@ -1,0 +1,30 @@
+{% extends "index.html" %}
+{% block app %}
+
+<div>
+	<div class="col-sm-2">
+		<div class="panel">
+			<div class="panel-heading">Overview</div>
+			<div class="panel-body">
+				<table class="table table-striped">
+					{% for row in overview_data %}
+						<tr><td><b>{{row.0}}:</b></td><td>{{row.1}}</td></tr>
+					{% endfor %}
+				</table>
+			</div>
+		</div>
+	</div>
+	<div class="col-sm-3">
+		<div class="panel">
+			<div class="panel-heading">Concepts & terms</div>
+			<div class="panel-body">
+				<div class="col-sm-6" id="concept_list"></div>
+				<div class="col-sm-6" id="term_list"></div>
+			</div>
+		</div>
+	</div>
+	<div class="col-sm-7">
+	</div>
+</div>
+<script type="application/javascript" src="{{STATIC_URL}}ontology_viewer/ontology_viewer.js"></script>
+{% endblock %}

@@ -1,0 +1,237 @@
+                       KOHTUMÄÄRUS
+  Kohus                                Tallinna Ringkonnakohus
+
+  Kohtukoosseis                        Eesistuja Imbi Sidok-Toomsalu, liikmed Ele Liiv ja Indrek
+                                       Parrest
+
+  Määruse tegemise aeg ja koht         29.01.2016 Tallinn
+
+  Tsiviilasja number                   2-15-12701
+
+  Tsiviilasi                           Swedbank Liising        AS-i    avaldus    ML    pankroti
+                                       väljakuulutamiseks
+
+  Vaidlustatud kohtulahend             Harju Maakohtu 24.11.2015 määrus ajutise halduri
+                                       nimetamata jätmiseks ja pankrotiavalduse rahuldamata
+                                       jätmiseks
+
+  Kaebuse esitaja ja kaebuse liik      Swedbank Liising AS-i määruskaebus
+
+  Menetlusosalised ja nende            Avaldaja (määruskaebuse esitaja): Swedbank Liising AS
+  esindajad                            (registrikood 10434248), lepinguline esindaja Olavi Järve
+
+                                       Võlgnik: ML (isikukood XXXXXXXXXX), lepinguline
+                                       esindaja v/adv Helmeri Indela
+
+  Menetluse liik                       Kirjalik menetlus
+
+
+RESOLUTSIOON:
+1. Tühistada Harju Maakohtu 24.11.2015 määrus ja saata Swedbank Liising AS-i
+   avaldus ML pankroti väljakuulutamiseks tagasi maakohtule edasiseks menetlemiseks.
+2. Määruskaebus rahuldada osaliselt.
+3. Määrus ei ole edasikaevatav (PankrS § 15 lg 5, § 5 lg 2).
+
+Asjaolud ja võlausaldaja avaldus
+   1. Harju Maakohtu menetluses oli võlausaldaja Swedbank Liising AS-i 26.08.2015
+       avaldus ML pankroti väljakuulutamiseks. Võlausaldaja nõue tuleneb Harju Maakohtu
+       06.05.2014 otsusest tsiviilasjas nr 2-11-12139, milles OÜ-lt Secure Invest, ML-lt ja SS-
+       lt mõisteti solidaarselt välja võlgnevus 29 127.44 eurot Swedbank Liising AS-i kasuks.
+       SS ei tasu kompromisslepingust tulenevaid kohustusi korrektselt. Käesolevaks hetkeks
+       on võlgnike võlgnevus võlausaldaja ees 28 217.44 eurot, millest on juba maha
+       arvestatud kõik nõude katteks tehtud tasumised. Võlgnevuse arvestus ei ole ebaselge.
+                                                                                           2
+
+   2. Võlausaldaja põhjendas võlgniku maksejõuetust sellega, et võlgnik ei ole täitnud
+      kohustust 30 päeva jooksul pärast kohustuse sissenõutavaks muutumist ja võlausaldaja
+      on saatnud võlgnikule pankrotihoiatuse, mille järgselt ei ole võlgnik täitnud kohustust
+      10 päeva jooksul (PankrS § 10 lg 2 p 1). Lisaks esineb alus pankroti väljakuulutamiseks
+      PankrS § 10 lg 2 p 3 alusel, kuna mõlemad võlgniku vastusele lisatud pangakontod
+      kuuluvad võlgniku isale, kuhu laekub võlgniku vara, mis viitab asjaolule, et võlgnik
+      hoiab võlgnevuse tasumisest kõrvale, millega peidab oma vara. Võlausaldaja andis nõue
+      sundtäitmisele 17.06.2015, kuid seda ei ole suudetud täita, seega pankrot tuleb välja
+      kuulutada ka PankrS § 10 lg 2 p 2 järgi. Võlgniku esitatud tõendid laekumiste kohta ei
+      tõenda, et võlgnik ei ole maksejõuetu.
+
+Võlgniku seisukoht
+   3. ML vaidles avaldusele vastu. Võlgnik leidis, et tema suhtes maksejõuetusmenetluse
+      alustamine ei allu Harju Maakohtule, kuna võlgniku põhihuvide kese asub Rootsi
+      Kuningriigis. Lisaks on võlausaldaja nõue ebaselge. Pankrotiavalduse esitamisel ei ole
+      võlausaldaja arvestanud asjaoluga, et solidaarvõlgnik SS, kes on sõlminud
+      võlausaldajaga kompromisslepingu võlgnevuse tasumiseks, tasub igakuiselt
+      võlausaldajale 159 eurot. Eelduslikult on SS tasunud 17.10.2015 seisuga 1440 eurot,
+      mistõttu ei saa nõude suurus olla suurem kui 27 687.44 eurot.
+
+   4. Võlgnik ei ole maksejõuetu PankrS § 31 lg 1 tähenduses. Võlgnikul on piisavalt vara,
+      mille arvel kohustusi täita. Võlgnik on saanud 18.09.2015 ja 25.09.2015 Rootsis
+      tegutsevalt OÜ T filiaalilt töötasuna 30 000 SEK-i. Rootsis tegutsevast T OÜ-st on
+      laekunud võlgnikule viimastel kuudel 1 140 eurot ja OÜ-st R viimase poole aasta
+      jooksul töötasude ja laenude tagasimaksetena 27 779 eurot. OÜ-st P on laekunud
+      tagasimaksetena võlgnikule alates 2015.a algusest 24 300 eurot. Võlausaldaja ei ole
+      üritanudki kohtuotsusega tunnustatud nõuet Eestis kohtutäiturile täitmisele anda,
+      rääkimata kohtuotsuse võlgniku alalises elukohas Rootsis täitmisele andmisest.
+
+Esimese astme kohtu määrus
+   5. 24.11.2015 määrusega jättis Harju Maakohus võlausaldaja avalduse rahuldamata ja ML-
+      le ajutise halduri nimetamata. Menetluskulud jäeti Swedbank Liising AS-i kanda ja
+      võlausaldajalt mõisteti võlgniku kasuks välja menetluskulud 528 eurot.
+
+   6. Maakohus märkis, et puudub vaidlus, et Harju Maakohus 06.05.2014 kohtuotsusega
+      tsiviilasjas nr 2-11-12139 on OÜ-lt Secure Invest, ML-lt ja SS-lt solidaarselt välja
+      mõistnud Swedbank Liising AS-i kasuks võlgnevus 29 127.44 eurot (t lk 6-11). Samuti
+      puudub vaidlus, et võlausaldaja on teinud võlgnikule pankrotihoiatuse (t lk 17) ning et
+      võlgnevuse tasumiseks on võlausaldaja sõlminud kompromisslepingu solidaarvõlgnik
+      SS-iga, kes tasub võlgnevust igakuiselt (t lk 52).
+
+   7. Ainuüksi täitmata kohustuste olemasolu võlgnikul ei näita veel võlgniku maksejõuetust
+      (PankrS § 1 lg 2). Kohtule esitatud tõenditest ning võlgniku selgitustest nähtuvalt on
+      võlgnikul piisavalt vahendeid võlgnevuse tasumiseks. Võlgnik on septembris 2015.a
+      saanud OÜ T filiaalilt 30 000 SEK-i (t lk 53 ja selle pööre), võlgnikule on laekunud
+      juulist oktoobrini 2015 T OÜ-st laenu tagasimaksetena ja töötasudena 1140 eurot (t lk
+      54), perioodil veebruarist augustini 2015.a OÜ-st R laenu tagasimaksetena ja töötasuna
+      27 779 eurot (t lk 54 pöördel) ja perioodil jaanuarist oktoobrini 2015.a OÜ-st P laenu
+      tagasimaksetena 24 300 eurot (t lk 55). Asjakohatud ja tõendamata on võlausaldaja
+      väited, et lastes rahalisi vahendeid kanda oma isa VL arvele (selle asjaolu osas puudub
+                                                                                                3
+
+      vaidlus), varjab võlgnik oma vara, mistõttu tuleks pankrot välja kuulutada PankrS § 10
+      lg 2 p 3 alusel. Võlausaldaja ei ole tõendanud, et võlgniku eesmärk on selliselt vara
+      varjata. Lisaks kuulub võlgnikule kinnisvara ja osalused äriühingutes. Kohtule ei ole
+      esitatud tõendeid, et võlgnikul oleks veel võlgnevusi lisaks võlgnevusele võlausaldaja
+      ees.
+
+   8. Arvestades, et võlgnik kinnitab, et elab ja tegutseb Rootsi Kuningriigis, puudub ka alus
+      pankrotimenetluse alustamiseks ja ajutise halduri määramiseks PankrS § 10 lg 2 p 2
+      alusel. Esmalt ei ole võlausaldaja tõendanud, et võlgniku suhtes 17.06.2015
+      täitmisavalduse alusel (t lk 88-96) oleks alustatud täitemenetlust või et täitemenetlus ei
+      ole andnud tulemusi. Lisaks ei ole võlausaldaja esitanud tõendeid, et on esitanud
+      võlgnevuse aluseks oleva jõustunud otsuse täitmisele Rootsi Kuningriigis, kuigi
+      pankrotihoiatus toimetati kätte nimelt seal (t lk 15-20).
+
+   9. Arvestades sissenõutavaks muutunud võlgnevust ja võlgniku majanduslikku seisundit,
+      ning seda, et võlgnik on käesoleval ajal tegutsev ettevõtja, kes saab äritegevusest rahalisi
+      vahendeid, ei ole võlgnik maksejõuetu. Võlgnikul on olemas rahalised vahendid, mille
+      arvelt võlad tasuda. Seega tuleb ajutine pankrotihaldur jätta nimetamata. PankrS § 15
+      lg 7 kohaselt, kui kohus ajutist haldurit ei nimeta, siis pankrotiavalduse alusel edasist
+      menetlust ei toimu ja menetlus lõpeb. Kuna kohus leiab, et võlgniku maksejõuetus on
+      põhistamata, siis ei hinnanud kohus, kas asi kuulub lahendamisele Eesti Vabariigis või
+      Rootsi Kuningriigis.
+
+   10. PankrS § 15 lg 6 alusel jäeti menetluskulud pankrotiavalduse esitaja kanda. Võlgnik
+       palub võlausaldajalt välja mõista menetluskuluna lepingulise esindaja kulu 660 eurot
+       koos käibemaksuga (sh õigusabi 5 tundi tunnihinnaga 110 eurot käibemaksuta).
+       Maakohus leidis, et võlgniku lepingulise esindaja kulud ei ole põhjendatud ja vajalikud
+       menetluskulude nimekirja koostamiseks kulunud aja osas (RKTKm 3-2-1-4-15, p 13).
+       Kohus vähendas ajakulu 1 tunni võrra ja luges mõistlikuks ning põhjendatuks 4 tundi,
+       so kokku menetluskulud summas 528 eurot (sh käibemaks 88 eurot). TsMS § 177 lg 4
+       alusel kohus märkis, et hüvitamisele kuuluvatelt menetluskuludelt tuleb tasuda
+       menetluskulude suurust kindlaks tegeva lahendi jõustumisest alates kuni täitmiseni
+       viivist võlaõigusseaduse § 113 lõike 1 teises lauses ettenähtud ulatuses.
+Määruskaebus
+  11. 03.12.2015 määruskaebuses palub avaldaja maakohtu määruse tühistada ja teha uus
+      määrus, millega määrata ML-le ajutine haldur ja kuulutada välja isiku pankrot.
+
+   12. Avaldaja põhjendas, et võlgniku esitatud laekumiste pinnalt ei saa asuda seisukohale, et
+       võlgnik ei ole maksejõuetu. Võlausaldaja nõue on sissenõutavaks muutunud ja see
+       ületab võlgniku aastasissetulekut enam kui poolteist korda. Samuti on võlgnikult
+       maksehäireregistri raporti kohaselt nõudeid summas 63 911.71 eurot ja rohkem. Selleks,
+       et teha kindlaks, kui suured on võlgniku varad ja kohustused ning kas võlgnik on
+       maksejõuetu, tuleks määrata ajutine haldur. Võlausaldaja on tuginenud võlgniku
+       maksejõuetuse põhistamisel PankrS § 10 lg 1 p-le 1. Võlausaldaja lisas, et maksejõuetus
+       on põhistatud ka PankrS § 10 lg 1 p 2 alusel, sest nõude sundtäitmine täitemenetluses ei
+       ole tulemusi andnud. Käesolevas asjas ei ole oluline, et võlausaldaja ei ole alustanud
+       täitemenetlust Rootsi Kuningriigis. Samuti on maksejõuetus põhistatud
+       PankrS § 10 lg 1 p 3 alusel, sest võlgnik varjab oma vara. Ei ole eluliselt usutav, et
+       võlgnikul oleks oma sissetulekute võõrale arvelduskontole kandmiseks muu eesmärk
+       kui oma vara varjamine.
+                                                                                               4
+
+
+
+   13. Olukorras, kus on täidetud kõik formaalsed eeldused pankroti väljakuulutamiseks, on
+       äärmiselt ebaõiglane jätta menetluskulud võlausaldaja kanda.
+
+Vastustaja seisukoht
+   14. ML palus jätta pankrotiavalduse TsMS § 423 lg 1 p 13 alusel läbi vaatamata. Samuti
+       palus vastustaja jätta määruskaebus rahuldamata ja maakohtu määruse muutmata ning
+       menetluskulud võlausaldaja kanda. Vastustaja põhjendas, et maakohtu määrus on
+       lõppjäreldustes igal juhul õiguspärane, kuna pankrotiavaldus on esitatud rahvusvahelise
+       kohtualluvuse sätete järgi vale riigi kohtusse. Euroopa Nõukogu 29.05.2000 määruse
+       1346/2000 art 3 lg 1 alusel tuli avaldus esitada Rootsi Kuningriigi kohtule, sest võlgniku
+       põhihuvide kese asub Rootsi Kuningriigis.
+
+Menetluse edasine käik
+  15. Maakohus võttis määruskaebuse menetlusse, jättis rahuldamata ja saatis TsMS § 663
+      lõike 5 alusel läbivaatamiseks Tallinna Ringkonnakohtule.
+
+Ringkonnakohtu seisukoht
+   16. Ringkonnakohus, tutvunud tsiviilasja materjaliga, leiab, et Harju Maakohtu 24.11.2015
+       määrus tuleb vastavalt TsMS § 667 lg-le 2, § 657 lg 1 p-le 3 ja §-le 659 tühistada ning
+       saata Swedbank Liising AS-i avaldus ML-le pankroti väljakuulutamiseks tagasi
+       maakohtule edasiseks menetlemiseks, sh kohtualluvuse kontrollimiseks. Maakohtu
+       määrus ei ole seaduslik ega põhjendatud. Swedbank Liising AS-i määruskaebus tuleb
+       rahuldada osaliselt.
+
+   17. Ebaõige on maakohtu põhjendus, et kuna avaldus ajutise halduri nimetamiseks ja
+       pankroti väljakuulutamiseks jäetakse rahuldamata, ei tule kontrollida kohtualluvust.
+       TsMS §-st 75 saab järeldada, et kohtualluvuse kontroll peab kindlasti eelnema asja
+       sisulisele läbivaatamisele. Asjaolu, et Harju Maakohus sai pankrotiavalduse
+       kohtualluvuse alusel Pärnu Maakohtult, ei välista kolleegiumi arvates võimalust, et asi
+       ei allu rahvusvahelise kohtualluvuse sätete järgi Eesti kohtule. Kolleegium on
+       seisukohal, et TsMS § 76 lõikes 4 sätestatud alluvusvaidluste keeld ei saa piirata kohtu
+       võimalusi rahvusvahelise kohtualluvuse kontrollimisel.
+
+   18. Riigikohus on selgitanud, et TsMS § 75 lõige 1 ei välista rahvusvahelise kohtualluvuse
+       kontrollimist ka hiljem, kui selguvad asjaolud, mis viitavad võimalikule
+       rahvusvahelisele kohtualluvusele (RKTKm 3-2-1-179-14, p 10). Antud juhul oleks
+       maakohus pidanud kontrollima rahvusvahelist kohtualluvust pärast võlgniku
+       15.10.2015 seisukoha saamist, milles võlgnik viitas Rootsi Kuningriigi kohtualluvusele.
+       15.10.2015 on võlgnik ka taotlenud avalduse läbi vaatamata jätmist TsMS § 423 lõike
+       1 punkti 13 alusel (t lk 51), kuid nimetatud taotlust ei ole maakohus lahendanud. Kuna
+       maakohtu tehtud määrus oli menetlust lõpetav, oleks maakohus pidanud vastavalt
+       TsMS § 442 lõikele 5 lahendama ka kõik seni lahendamata taotlused.
+   19. Lisaks juhib kolleegium maakohtu tähelepanu sellele, et toimikust ei nähtu
+       pankrotiavalduse menetlusse võtmist, kuigi 09.10.2015 e-kirjas on kohus märkinud, et
+       pankrotiavaldus on maakohtu menetluses (t lk 46).
+
+   20. Kolleegium on seisukohal, et maakohtu määrus ei ole ka ajutise halduri nimetamata
+       jätmise osas seaduslik ega põhjendatud. PankrS § 15 lõige 3 sätestab alused ajutise
+       halduri nimetamata jätmiseks. Maakohus on ajutise halduri nimetamata jätmisel
+                                                                                             5
+
+   viidanud PankrS § 15 lõike 3 punktile 7, mille kohaselt jätab kohus võlausaldaja
+   pankrotiavalduse alusel ajutise halduri nimetamata, kui esinevad muud seaduses
+   sätestatud alused. Samas ei ole maakohus tuginenud ühelegi konkreetsest seadusest
+   tulenevale alusele, mis võimaldaks jätta ajutise halduri nimetamata PankrS § 15 lõike 3
+   punkti 7 alusel põhjendusega, et võlgnik ei ole maksejõuetu.
+
+21. Asja uuel läbivaatamisel tuleb maakohtul kontrollida, kas pankrotiavaldus on esitatud
+    kohtualluvuse alusel õigele kohtule. Kui lahendades võlgniku taotlust avalduse läbi
+    vaatamata jätmiseks peaks kohus asuma seisukohale, et avaldus allub ikkagi Harju
+    Maakohtule, tuleb maakohtul otsustada pankrotiavalduse menetlusse võtmine ja
+    kontrollida ajutise halduri nimetamise eeldusi.
+
+22. Kolleegium lisab, et PankrS § 3 lõike 3 järgi peab pankrotiasja menetlev kohus omal
+    algatusel võtma tarvitusele abinõud, et selgitada välja pankrotimenetluse jaoks olulised
+    asjaolud, ja korraldama selleks vajalike tõendite kogumise. Pankroti väljakuulutamine
+    on TsMS § 475 lõike 1 punkti 122 kohaselt hagita asi, mille läbivaatamisel peab kohus
+    TsMS § 5 lõike 3 kohaselt selgitama ise välja asjaolud ja koguma selleks vajalikke
+    tõendeid (RKTKm 3-2-1-61-13, p 16). Kolleegiumi hinnangul ei olnud maakohus
+    rakendanud uurimisprintsiipi vajalikul määral ning määrust tehes ei olnud maakohtul
+    täit ülevaadet võlgniku majanduslikust seisundist. Arvestades ka määruskaebusele
+    lisatud tõendeid, ei saa kolleegiumi arvates kindlalt väita, et võlgnik ei ole maksejõuetu.
+    Olukorras, kus võlgnikul võib lisaks avalduse esitanud võlausaldaja kohustustele olla
+    veel kohustusi ning puudub ka ülevaade võlgniku varade kohta, tuleb PankrS § 15
+    lõikes 3 sätestatud aluste puudumisel nimetada ajutine haldur, kes selgitab välja
+    võlgniku tegeliku majandusliku seisundi (PankrS § 22 lg 2).
+
+23. Maakohtu määruse tühistamise ja uueks läbivaatamiseks saatmise tõttu tuleb tühistada
+    ka menetluskulude jaotus ja menetluskulude rahaline kindlaksmääramine.
+    Menetluskulude jaotuse otsustab maakohtu asja uuel läbivaatamisel (TsMS § 173 lg 3).
+
+
+
+
+       Ele Liiv                    Indrek Parrest                   Imbi Sidok-Toomsalu
+   /allkirjastatud                 /allkirjastatud                    /allkirjastatud
+    digitaalselt/                  digitaalselt/                       digitaalselt/

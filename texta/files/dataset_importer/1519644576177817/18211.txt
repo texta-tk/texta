@@ -1,0 +1,814 @@
+                          KOHTUOTSUS
+                              EESTI VABARIIGI NIMEL
+
+
+
+Kohus                             Tallinna Ringkonnakohus
+Otsuse tegemise aeg ja koht       15. aprill 2016
+Kriminaalasja number              1-15-509
+Kohtukoosseis                     Eesistuja Sten Lind, liikmed Meelika Aava ja Ivi Kesküla
+Kohtuistungi sekretär             Kea Lemming; Elina Huobolainen
+Kohtuistungi toimumise aeg        6. oktoober 2015; 30. märts 2016
+                                  Mart Pirita süüdistuses KarS § 207 lg 1 järgi
+Kriminaalasi
+                                  üldmenetluses
+Apelleeritud kohtuotsus           Harju Maakohtu 8. aprilli 2015 otsus
+Apellant                          kaitsja
+Prokurör                          Piret Paukštys
+                                  Mart Pirita
+                                  Isikukood: 36904030235, elukoht: XXX, XXX, XXX,
+Süüdistatav                       emakeel eesti keel, töökoht XXX; kriminaalkorras karistamata
+                                  Tõkendit ei ole kohaldatud
+Kaitsja                           Raul Ainla
+
+RESOLUTSIOON
+1. Rahuldada Mart Pirita kaitsja apellatsioon.
+Tühistada Harju Maakohtu 8. aprilli 2015 otsus täies ulatuses.
+Mõista Mart Pirita KarS § 207 lg 1 järgi õigeks.
+2. Hüvitada Mart Piritale riigieelarvest apellatsioonimenetluse kulud 2500 eurot ning
+kohtueelses ja maakohtu menetluses kantud kulud 5000 eurot.
+Infotehnoloogiaekspertiisi kulu 1608 eurot jätta riigi kanda.
+3. Tagastada Politsei- ja Piirivalveameti teabehaldus- ja menetlusosakonna
+keskkriminaalpolitsei organiseeritud kuritegude büroole kõvaketas Seagate S/N: Z2F0GE18.
+Kõvakettal olev andmekoopia kõvakettast Hitachi s/n 84GEDGKE kustutada otsuse
+jõustumisel.
+
+
+
+
+                                                                                        1
+ASJAOLUD JA MENETLUSE KÄIK
+1.      Harju Maakohtu 8. aprilli 2015 otsusega mõisteti M. Pirita süüdi KarS § 207 lg 1 järgi
+ja teda karistati 270 päevamäära (13 159,80 euro) suuruse rahalise karistusega.
+M. Pirita mõisteti süüdi selles, et ta sisestas 17.08.2014 ajavahemikul 00:15 kuni 01:26 ilma
+seadusliku aluse ja volituseta Siseministeeriumi haldusala töötajate kaugligipääsu portaalides
+kasutajate TH, VR, MK, TB, MK, LO, RS, AH, IH, AS, MK, EV, TS ja HP kasutajatunnused
+ning ebaõiged paroolid, mille tulemusel nende kasutajakontod blokeerusid. Sellega oli
+Siseministeeriumi haldusala töötajate kaugligipääsu arvutisüsteemi toimimine häiritud.
+Kohus luges tõendatuks, et 17.08.2014 ajavahemikul 00:15 kuni 01:26 sisestati kaugligipääsu
+portaali Siseministeeriumi haldusala 14 töötaja valed paroolid. Selle tulemusel blokeerusid
+nende isikute kasutajakontod, mistõttu oli neil sisenemine kaugligipääsu portaali võimatu.
+Kohtuotsuse kohaselt nähtub kontode lukustumine Siseministeeriumi Infotehnoloogia ja
+Arenduskeskuse (edaspidi SMIT) kuriteoavaldusest.
+Kontode blokeerumist tõendasid kohtukotsuse kohaselt SMITile 17.12.2014.a. edastatud
+arvutisüsteemi väljavõtte DC6 logi koos nende isikute isikukoodidega, kelle kontod lukustati,
+ning asitõendi vaatlusprotokoll, millega seostati kasutajate isikukoodid konkreetsete isikutega.
+Kontode blokeerumist kinnitasid ka kohtuistungil tunnistajatena ülekuulatud SMITi töötajad
+TH, IM, MK ja AK kohtuistungil.
+See, et Siseministeeriumi haldusala 14 töötajal ei olnud võimalik töö tegemiseks kasutada
+kaugligipääsuportaali ega üldse Siseministeeriumi arvutisüsteemi, tähendas kohtu hinnangul,
+et arvutisüsteemi toimimine häiritud.
+Kohus luges tõendatuks, et kasutajatunnused ning valed paroolid sisestati Tor võrku kasutades.
+Selle tuvastamisel tugines kohus SMITi logiväljavõttele, tunnistaja TH ütlustele ning kahele
+vaatlusprotokollile.
+SMITi logi väljavõttest nähtuvalt oli Siseministeeriumi töötajate kontodele üritatud
+ajavahemikul 16.08.2014.a. kell 21:14 kuni 16.08.2014.a. kell 22:46 siseneda kolmelt erinevalt
+IP- aadressilt:
+XXX;
+XXX ja
+XXX.
+TH sõnul selgus Google päringu tulemusel, et tegemist on Tor võrgu IP-aadressidega. Seda, et
+nende kolme IP-aadressi näol oli tõepoolest tegemist Tor võrgu IP-aadressidega, kinnitab
+vaatlusprotokoll, mille kohaselt vaadeldi SMITi esitatud logiväljavõtet ning Tor Project
+organisatsiooni ametlikku kodulehte.
+Seda, mis on Tor võrk, selgitab maakohtu otsuse kohaselt 08.12.2014 koostatud
+vaatlusprotokoll, kus on vaadeldud Tori kodulehel asuvat info Tor võrgu
+funktsioneerimispõhimõtte kohta. Kohus märgib: „Sellelt nähtub, et TOR võrku kasutades, ei
+ole internetiühenduse logides näha mitte kasutaja enda IP-aadress, vaid hoopis TOR võrgu IP-
+aadress ning selle tulemusena on reaalsel internetikasutajal võimalik jääda anonüümseks.
+
+                                                                                              2
+Tunnistaja TH on kohtus samuti kinnitanud, et TOR võrk on selline internetivõrk, mille abil on
+võimalik oma tegevuse jälgi internetis peita, st tegemist on anonümeerijaga. Isik, kes töötab
+TOR võrgus, pöördub TOR võrgus oleva masina poole, edasi toimub andmete liigutamine
+mitmete masinate vahel ja päring tuleb välja ühest teisest masinast. TOR võrgus on näha ainult
+viimase masina aadress. Isiku enda arvutisse jääb maha hulk arvuteid, mis on TOR võrku
+logitud, kusjuures milline neist teeb päringu, ei ole kasutajal teada. Kasutaja IP-aadress liiklus
+näitab üksnes seda, et kasutaja arvuti on pöördunud mõne arvuti poole, mis asub TOR võrgus
+(kohtuistungi protokoll lk 6, 7).“
+Kohus luges tõendatuks, et kaugligipääsuportaali kasutajakontode valede paroolide
+sisestamiseks kasutati Mart Pirita elukohas ning tema kasutuses olnud arvutit. Ses osas tugines
+kohus järgmistele tõenditele.
+Tunnistaja TH ütluste kohaselt esitati Riigi Infosüsteemi Ameti infoturbeintsidentide
+käsitlemise osakonda (CERT) päring, missuguselt konkreetselt IP-aadressilt oli ajavahemikul
+15.08.2014.a. kuni 18.08.2014.a. alla laetud Tor võrgu kasutamiseks vajalikku tarkvara. CERT-
+i vastusest ja TH kohtuistungil antud selgitustest ilmnes, et 17.08.2014.a. kell 00:57 oli laetud
+Debian tarkvarapakett Tori kasutamiseks alla IP-aadressilt XXX. Ka Riigi Infosüsteemi Ameti
+küberturvalisuse teenistuse 27.08.2014.a. vastusest on näha, et ajavahemikul 17.08.2014.a. kell
+00:47 kuni 00:57 oli IP-aadress XXX alla laadinud Debiani paketid Tori kasutamiseks.
+IP-aadressi XXX füüsilise asukoha välja selgitamiseks, esitati päring Elion Ettevõtted AS-le.
+Viimase vastusest kohaselt oli 17.08.2014.a. kell 00:57 IP-aadressi XXX asukoht XXX ning
+seda kasutav klient OÜ E. Samast vastusest ja selle lisast ning sideettevõtjalt saadud andmete
+protokollist selgus, et seesama IP-aadress kasutas 17.08.2014.a. alates kella 00:14 kuni
+17.08.2014.a. kella 01:27 aktiivselt TOR võrku.
+Äriregistri andmetel asus aadressil XXX alates 01.11.2011.a. osaühing E ning selle ainuosanik
+on alates samast ajast Mart Pirita. M. Pirita ise kinnitas kohtule, et XXX on tema elukoht.
+28.08.2014 toimus nimetatud aadressil läbiotsimine. Läbiotsimisprotokolli kohaselt võeti muu
+hulgas kaasa M. Piritale kuuluv arvuti Mac A1176. Nimetatud arvuti kõvakettast tehti
+kriminalistikatehnika vahendeid kasutades identne koopia. Selle vaatluse protokollist selgus, et
+seisuga 28.08.2014.a., s.o. 11 päeva pärast kuriteosündmust, leidis M. Pirita arvutis virtuaalne
+operatsioonisüsteem Debian, millest omakorda leiti viiteid ka Tor tarkvarale. Lisaks leiti
+arvutist TOR- kaustast fail „cached-microdesc-consensus“, millelt on näha viited IP-
+aadressidele XXX, XXX ja XXX. Tegemist on samade Tor võrgu IP-aadressidega, mis esinesid
+ka SMITi poolt edastatud logiväljavõttes, s.t millelt tehti süüdistuses näidatud ajal katseid
+siseneda Siseministeeriumi töötajate kasutajakontodesse.
+Osutatud tõendite alusel luges kohus tõendatuks, et just sel ajal, kui kaugligipääsuportaali
+kontod lukustati, kasutati samasugust TOR võrgu tarkvara ja Debian paketti IP-aadressilt XXX.
+See IP-aadress asus füüsiliselt süüdistatava Mart Pirita elukohas XXX. Nimetatud IP-aadress
+kuulus viimase ettevõttele E. Logiväljavõttest nähtuvalt seesama IP-aadress kasutas
+17.08.2014.a.ajavahemikul kell 00:14 kuni 01:27 TOR võrku.
+Kohus leidis, et puuduvad igasugused alused arvata, et Mart Pirita arvutit võis kasutada keegi
+teine. Seda ei nähtu süüdistatava enda kaitsepositsioonist ning ega kohtule esitatud tõenditest.
+
+
+                                                                                                3
+Kohus märkis, et M. Pirita ei soovinud anda ütlusi selle kohta, mis põhjusel ja mis eesmärgil ta
+kasutas süüdistuses märgitud ajal anonüümseks jääda võimaldatavat Tor võrku. Kohus lisas:
+„Pealegi saab järeldada eelpool refereeritud tõenditest, et asjaolu, et M. Pirita elukohta on
+teenuselepingutega registreeritud IP-aadress XXX, mis kasutas 17.08.2014.a. kella 00:14 kuni
+kella 01:27 TOR võrku ja Siseministeeriumi kasutajakontod blokeerusid samal päeval
+ajavahemikul kella 00:14 kuni kell 01:26 TOR võrgust sisestatud valede paroolide tõttu ning
+TOR võrgu IP-aadressidel, kust paroolid sisestati, on tuvastatud samal kuupäeval ja kellaajal
+otsene seos M. Pirita elukohas samal ajal asunud arvuti IP-aadressiga, ei ole kohtu silmis
+juhuslike asjaolude kokkusattumus, vaid ainuvõimalik viide taolisele käitumisele Mart Pirita
+poolt. Ei ole vähetähtis ka see asjaolu, et tema elukohas leitud arvutist leiti 11 päeva hiljem
+viited just nendele samadele TOR võrgu IP-aadressidele, milledelt toimusid sisenemiskatsed
+Siseministeeriumi 14 töötaja kasutajakontodesse ja mille tulemusena kontod lukustusid.“
+Järeldust, et ründe pani toime just M. Pirita, kinnitas kohtu hinnangul veel see, et Mart Pirita
+töötas Siseministeeriumi Infotehnoloogia- ja Arenduskeskuses kuni 27.06.2014. Tunnistaja IM
+sõnul tuli initsiatiiv Mart Pirita töölepingu lõpetamiseks tööandja poolt ning selle põhjuseks oli
+usalduse kaotus. Enamik 14 töötajast, kelle kasutajakontod blokeerusid, olid endised M. Pirita
+kolleegid, kelle kontakt temaga oli enne tema töölt lahkumist negatiivne või konfliktne. Nii IM
+kui ka tunnistaja MK selgitasid, et M. Pirita, viidates arvutisüsteemi turvaakudele, on suuliselt
+väljendanud, et maksab kätte ning tal on olemas palju viise, kuidas neile halba teha.
+Tunnistaja TH selgitas kohtuistungil, et ründaja, kelle tegevuse tõttu olid kasutajakontod
+lukustunud, pidi teadma, kustkohast täpselt kaugligipääsu portaali siseneda. Samuti teadis ta,
+missuguse kontoga proovida sisselogimist, kas SMIT-i või Siseministeeriumi omaga.
+Kohus leidis eelneva alusel, et süüdistuses kirjeldatud teo toimepanemisel oli M. Pirita eesmärk
+ühelt poolt näidata SMITi juhtkonna suutmatust kõrvaldada arvutisüsteemi toimimise ebakohti,
+mida omal ajal korduvalt turvanõukogus tõstatati, turvaintsidendid aga jätkuvalt esinesid ning
+teiselt poolt anda mõista, kui tähtis asjatundja võiks ta endisele tööandjale olla juhul, kui temaga
+ei oleks lõpetatud töösuhteid.
+Maakohus asus seisukohale, et M. Piritat tuleb karistada rahalise karistusega, mis jääb
+sanktsiooni keskmise määra piiridesse. Mõistetud karistust põhjendades märkis kohus, et
+toimepandud kuritegu kuulub teise astme kuritegude hulka ning sellega ei ole ta tekitanud
+kannatanule varalist kahju. Samas ei ole tuvastatud karistust kergendavaid ega raskendavaid
+asjaolusid. Tegemist on varem kriminaalkorras karistamata isikuga, kellel on olemas kindel
+sissetulek. Seetõttu leidis kohus, et vabadust piirav karistus ei ole M. Pirita puhul otstarbekas
+ning teda on võimalik karistada rahalise karistusega. M. Pirita ei ole pärast arutatavat tegu uusi
+süütegusid toime pannud ning tema suhtes pole vajalikuks osutunud ka tõkendi kohaldamine.
+Seetõttu leidis kohus, et nii üld- kui eripreventiivses mõttes on oht, et süüdistatav võib hakata
+uusi kuritegusid toime panema, minimaalne.
+
+
+2.     Maakohtu otsuse peale esitas kaitsja apellatsiooni, milles taotleb maakohtu otsuse
+tühistamist ja M. Pirita õigeksmõistmist.
+2.1    Apellant leidis, et KarS § 207 teokirjeldus on ebaselge ja eksitav. Seetõttu on selle
+kohaldamine põhiseaduse vastane ning maakohus oleks pidanud süüdistatava õigeks mõistma.
+
+                                                                                                  4
+Ebaselgeks jääb see, mida mõeldakse arvutisüsteemi ebaseadusliku häirimise all, sest on
+arusaamatu, milline saab olla seaduslik ning milline ebaseaduslik häirimine. Küsimus on selles,
+et iga pöördumine (päring) koormab, (häirib) arvutisüsteemi.
+Samuti peaks olema selgelt välja toodud ka see, mida peetakse silmas arvutisüsteemi toimimise
+all, sest asjaolu, et keegi ei saa arvutisüsteemi kasutada ei tähenda veel iseenesest seda, et
+arvutisüsteem kui selline ise ei toimi või on häiritud.
+2.2     Kaitsja leidis, et süüdistatav tuleb õigeks mõista ka süüdistusaktis leiduvate oluliste
+puuduste tõttu. Süüdistuses esitatud teokirjeldus ei ole selge ja konkreetne. Välja ei ole toodud,
+milles seisnes andmete sisestamise ebaseaduslikkus. Märgitud ei ole ka seda, milles seisnes
+arvutisüsteemi töö oluline häirimine. Kaitsja hinnangul jäi süüdistusaktis põhjal arusaamatuks
+seegi, kas tegemist oli arvutisüsteemi töö häirimise või takistamisega. Süüdistusaktis kohaselt
+oli õigustatud isikute juurdepääs oma meilikontodele oli takistatud, mitte häiritud. Selline
+terminoloogiline segadus teokirjelduses muudab süüdistusakti arusaamatuks, sest pole võimalik
+aru saada, kummaga KarS § 207 lg 1 toodud etteheidest tegemist on.
+Kaitsja on seisukohal, et KarS § 207 teokoosseisu ei täida väikese hulga isikute juurdepääsu
+ajutine takistamine nende meilikontodele. Siinkohal tuleb märkida, et Siseministeeriumi
+haldusalas töötab ca 10 000,00 inimest, kellel on kõigil meilikontod. Seega ei saanud oma
+meilikontosid ajutiselt kasutada protsentuaalselt üliväike grupp isikuid – vaid 0,14 %
+Siseministeeriumi töötajaskonnast.
+2.3      Apellatsiooni kohaselt väljus maakohus KrMS § 268 lõikeid 1 ja 5 rikkudes süüdistuse
+piirest. Kuigi küberrünnaku olulisust ei ole süüdistusaktis kajastatud, asus kohus seisukohale,
+et arvutisüsteemi toimimist häiriti tõsiselt. Seda põhjendas kohus sellega, et sest 14 töötajal, sh
+asutuse tippjuhtidel puudus üle ühe ööpäeva ligipääs mitte üksnes kaugligipääsuportaali, vaid
+terve Siseministeeriumi arvutisüsteemi. Lisaks märkis kohus ilma ühelegi tõendile tuginamata
+paljasõnaliselt, et arvestama peab ka asjaolu, et vaadeldaval ajavahemikul toimusid
+ööpäevaringsed intensiivsed ettevalmistused USA presidendi Barack Obama visiidiks Eesti
+Vabariiki. Lisaks pole süüdistusaktis kajastatud kuriteo toimepanemise motiivi, mille
+maakohus on tuvastanud.
+2.4     Selleks, et välja selgitada seadusandja tahet KarS § 207 kohaldamise kohta, tuleb lugeda
+ka KarS-i muutmise seaduse eelnõu seletuskirja. 24.03.2008.a hakkas kehtima KarS § 207 uus
+redaktsioon. Eelnõu seletuskirja kohaselt oli eesmärgiks on muuta KarS-i selliselt, et see oleks
+kooskõlas Euroopa Nõukogu arvutikuritegevusevastases konventsioonis (Convention on
+Cybercrime) ja EL nõukogu raamotsuses 2005/222/JSK toodud nõuetega. EL direktiivi
+(32013L0040 / Euroopa Parlamendi ja nõukogu direktiiv 2013/40/EL, 12. august 2013, milles
+käsitletakse infosüsteemide vastu suunatud ründeid ja millega asendatakse nõukogu raamotsus
+2005/222/JSK) artiklis 4 on toodud liimesriikidele kohustus süsteemi arvutisüsteemi
+ebaseadusliku häirimisega seoses: Liikmesriik võtab vajalikud meetmed tagamaks, et tahtlikult
+ja õigusliku aluseta infosüsteemi töö tõsine takistamine või katkestamine arvutiandmete
+sisestamise, edastamise, kahjustamise, kustutamise, rikkumise, muutmise või sulustamise või
+ligipääsmatuks muutmise teel on vähemalt raskemate juhtumite puhul kriminaalkorras
+karistatav.
+
+
+                                                                                                 5
+Ka Karistusseadustiku kommenteeritud väljaandest ja Riigikohtu praktikast tulenev, et
+KarS § 207 teokoosseisu saab täita vaid massiivne ja ulatuslik, st oluline küberünne.
+Kriminaalasja materjalidest ei nähtu aga, et süsteemi töö oleks olnud väidetava rünnaku tõttu
+nii ülekoormatud, et see oleks saanud halvendada arvutisüsteemi tööd.
+2.5     Kohus on jätnud KrMS § 3051 lg 1 ja 2 rikkudes jätnud istungil uurimata asja
+lahendamise seisukohast kesksed dokumentaalsed tõendid: kõik süüdistaja ja kaitsja esitatud
+logid. Samuti on kohus on jätnud analüüsimata valdava osa kaitsja väidetest ja kaitsja esitatud
+tõenditest.
+Kohus jättis rahuldamata kaitsja taotluse IT ekspertiisi määramiseks, kuigi IT-alaste süütegude
+lahendamine ja tõendite hindamine nendes asjades eeldab sellealaseid eriteadmisi. Kohus on
+jätnud kõik süüstavad kui ka kõik õigustavad tõendid sisuliselt ja arusaadavalt argumenteerides
+analüüsimata, sest infotehnoloogiliste järelduste tegemine ei saanudki talle jõukohane olla. See
+on viinud selleni, et ka nende tõendite osas, mida kohus on püüdnud analüüsida, pole võimalik
+aru saada, kuidas kohus järeldusteni jõudis.
+2.6    Isegi kui asuda seisukohale, et süüdistuses toodud M. Piritale etteheidetav tegevus
+vastab KarS § 207 teokoosseisule, ei ole tõendamist leidnud, et see tegu on toime pandud, veelgi
+vähem on tõendatud, et teo pani toime M. Pirita. Apellatsioonis on seatud kahtluse alla
+maakohtus esitatud süüstavate tõendite usaldusväärsus või lubatavus ning leitakse, et neist ei
+ole võimalik teha järeldust, et M. Pirita on pannud toime süüdistuses kirjeldatud teo.
+Seoses kaitsja maakohtule esitatud tõenditega märgitakse apellatsioonis järgnevat:
+M. Pirita tööalane kirjavahetus näitab, et tööandja soovis vabaneda temast kui liigpädevast ja
+seetõttu ebamugavast töötajast. Sellest tuleneb ka tööandja esindaja motiiv alusetu
+kriminaalmenetluse alustamise avalduse esitamiseks.
+Mart Pirita arvutist leitud operatsioonisüsteemi Debian programmi ja virtuaalse Debian
+programmi logidega on tõendatud, et Mart Pirita ei saanud talle inkrimineeritud tegu toime
+panna.
+2.7    Apellatsioonis on leitud, et maakohus on rikkunud süütuse presumptsiooni. See seisneb
+maakohtu otsuse lk-l 12 väljendatud seisukohas: „M. Pirita ei ole ennast süüdi tunnistanud ega
+soovinud selgitusi anda ei kohtueelses menetluses ega kohtuliku uurimise käigus. Kuigi
+süüdistatava poolt oma süü ülestunnistamine ei ole mitte mingil määral tema kohustus, kuid
+ometi näitab isik seeläbi oma suhtumist kohustusse olla seaduskuulekas ühiskonna liige.
+Seetõttu leiab kohus, et M. Pirita süü toimepandud teos ei ole väike, vaid keskmine.“
+2.8     Maakohus on teinud tõenditest ebaõigeid järeldusi. M. Pirita süüd tõendavana on
+maakohus märkinud: „Sellist asjaolu kinnitab ka Riigi Infosüsteemi Ameti küberturvalisuse
+teenistuse 27.08.2014.a. vastus , millest on näha, et IP-aadress XXX ajavahemikul
+17.08.2014.a. kell 00:47 kuni 00:57 oli alla laadinud Debiani paketid, mida kasutatakse TOR
+juures- TORsocks ning Proxychains (tlk 18).“ Kaitsja juhib tähelepanu, et 17.08.2014.a. kell
+00:47 kuni 00:57 ei ole Mart Pirita kasutuses olnud arvutivõrgu IP-aadress RIA logide alusel
+laadinud alla Debiani programmi pakette, mida kasutatakse TOR programmi juures.
+
+
+
+                                                                                              6
+Märkides seda, et Elioni logi alusel kasutas M. Pirita ettevõttele kuuluv IP-aadress „aktiivselt“
+Tor võrku, ei ole kohus selgitanud, mida tähendav Tor võrgu aktiivne kasutamine ning kuidas
+kohus selle tuvastas. Võrgulogid näitavad vaid võimaliku Tor võrgus oleva IP-aadressi poole
+pöördumist, mitte TOR võrgu kasutamist.
+Kohus on mõistnud valesti tõika, et M. pirita arvutist arvutist leiti fail „cached-microdesc-
+consensus“, millelt on näha viited IP-aadressidele XXX, XXX ja XXX. Kaitsja märgib, et ta
+selgitas ka kaitsekõnes kohtule faili „cached-microdesc-consensus“ olemust. Samuti tegid seda
+nii süüdistaja kui ka kaitsja tunnistajad/asjatundjad. Ka prokuröri poolt esitatud Tori
+funktsioneerimispõhimõtet illustreerival leheküljel eeltoodut selgitav pilt, mille tõlge on
+vaatlusprotokolli lisas: "Tor-i klient hangib kataloogiserverist avaliku interneti
+väljapääsupunktide nimekirja." See fail kannab arvutis nime „cached-microdesc-consensus“.
+See fail on sama sisuga iga TOR kasutaja arvutis ja selles olevad IP-aadressid on kõigis samal
+hetkel TOR kasutajate arvutites. Kasutaja ei tea, millise IP aadressiga ta Tor võrguga ühendust
+võtab, ega millise IP-aadressi kaudu ta väljub Tor võrgust, st kasutajat ja Tor võrgust väljuvat
+IP-aadressi ei saa ega ole võimalik omavahel seostada.
+Kaitsja märgib, et tema esitatud tõenditest nähtuvalt ajavahemikul 00:14 – 00:57 ei töötanud
+M. Pirita arvutis Debian ega selles polnud ka Tor klienti. Ka ajavahemikul 00:57-01:26 ei olnud
+Debian -i TOR klient TOR võrguga ühenduses.
+Apellant väljendas ka seisukohta, et kriminaalasja ei ole võimalik lahendada eriteadmistele
+tuginemata ning seetõttu tuleb määrata infotehnoloogiaekspertiis.
+
+
+3.     Kuna kaitsja ei taotlenud suulist menetlust, määras ringkonnakohus, et arutab
+kriminaalasja kirjalikus menetluses, ning andis kohtumenetluse pooltele tähtaja seisukohtade
+esitamiseks. Ringkonnakohus jättis rahuldamata kaitsja taotluse määrata infotehnoloogia
+ekspertiis, leides, et kaitsja ei ole piisavalt määratlenud, millise asjaolu väljaselgitamiseks ta
+ekspertiisi määramist soovib.
+
+
+3.1    Apellatsioonile esitas kirjaliku vastuse prokurör, kes leidis, et apellatsioon tuleks jätta
+rahuldamata ja maakohtu otsus muutmata.
+Prokurör leidis, et KarS § 207 teokirjeldus on piisavalt selge ja sellest on võimalik aru saada,
+milline arvutisüsteemi häirimine või takistamine on ebaseaduslik.
+Prokurör vaidles vastu väitele, et esitatud süüdistus on puudulik. KarS § 207 koosseis ei eelda
+andmete sisestamise ebaseaduslikkust. Süüteo objektiivne koosseis on täidetud ka seadusliku
+andmete sisestamise korral, kui sellega on takistatud või häiritud arvutisüsteemi tööd. Tegemist
+ei ole blanketse normiga, kus ebaseaduslikkust tuleb sisustada viitega õigusnormile. Vastus,
+mida käsitleda seadusliku või ebaseadusliku andmete sisestamisena arvutisüsteemi, tuleneb
+Euroopa Liidu 24. veebruari 2005 raamotsusest nr 2005/222/JSK infosüsteemide vastu
+suunatud rünnete kohta, mille artikkel 1 kohaselt tähendab arvutisüsteemi ilma õigusliku
+aluseta sisenemine või sekkumine süsteemi või selle osa omaniku või selle suhtes muu õiguse
+omaja loata või siseriikliku õiguse kohaselt mitte lubatud sisenemist või sekkumist. Seega
+
+                                                                                                7
+õiguslik alus arvutisüsteemi andmete sisestamiseks saab tulla selle arvutisüsteemi omanikult
+või valdajalt ning selle puudumisel on viidatud raamotsuse kohaselt tegemist õigusliku aluseta
+andmete sisestamisega.
+Mart Pirital puudus luba ja volitus Siseministeeriumi arvutisüsteemi andmete sisestamiseks.
+Seega sisestas ta andmed ebaseaduslikult.
+Süüdistusest tuleneb sõnaselgelt, et M. Pirita tegevuse tulemusena oli arvutisüsteemi töö
+häiritud.
+KarS § 207 lg 1 süüteokoosseis ei näe ette arvutisüsteemi „olulist“ häirimist või takistamist,
+mistõttu ei pidanud ka süüdistuses seda asjaolu eraldi välja tooma ja sisustama. Süüdistuses on
+kirjas, milles seisnes arvutisüsteemi töö häirimine. Kaitsja väide selles, et seadusandja tahe oli
+kriminaliseerida vaid olulised arvutisüsteemi häirimised ja takistamised, on paljasõnaline.
+Viited Euroopa Nõukogu arvutikuritegevusevastases konventsioonile ja EL nõukogu
+raamotsusele ei saa olla aluseks KarS § 207 lg 1 koosseisu sisustamisel. Raamotsuse artikkel
+4 sätestab liikmesriikidele miinimumkohustused arvutikuritegude kriminaliseerimisel, kuid ei
+keela liikmesriike kriminaliseerida ka vähem olulisi arvutiandmete vastu suunatud tegusid.
+Kaitsja väide, mille kohaselt käesoleval juhul Siseministeeriumi kaugligipääsu arvutisüsteem
+toimus häireteta, kuivõrd arvutisüsteemi ülesanne oligi lukustada peale viit ebaõige parooli
+sisestamist kasutajakonto, ei ole õige. Harju Maakohus on tulnud õigele järeldusele, mille
+kohaselt arvutisüsteemi tööd tuleb hinnata selle järgi, milline funktsioon süsteemil oli ja kas
+süsteem suutis oma funktsiooni täita või mitte. Juhul, kui süsteem oma funktsioone ei suuda
+täita või täidab neid osaliselt, saab rääkida häiretest süsteemi töös. Siseministeeriumi
+kaugligipääsu arvutisüsteemi funktsiooniks oli võimaldada Siseministeeriumi ja selle haldusala
+töötajatele kaugligipääs Siseministeeriumi ja selle haldusala arvutisüsteemi ning võimaldada
+kasutajatel kasutada töökoha e-postkasti.
+Kõiki prokuröri ja kaitsja poolt esitatud tõendeid, mis kohus vastu võttis, kohtus ka uuriti
+menetlusosaliste kokkulepitud ulatuses. Apellatsioonis ei ole märgitud, millist konkreetset
+tõendit, millele kohus otsuse tegemisel tugines, kohtus ei uuritud. Kohus asus põhjendatult
+seisukohale, et kaitsja esitatud logid ei ole usaldusväärsed.
+Vastuseks apellatsiooni väitele, et M. Pirita süü ei ole tõendamist leidnud ning kohus on
+rikkunud põhistamiskohustust, leidis prokurör, et Harju Maakohtu otsuses on põhjalikult
+käsitletud ja analüüsitud tõendeid, millele tuginedes on kohus teinud süüdimõistva kohtuotsuse
+ning seega ei ole põhistamiskohustust rikutud. Asjaolu, et kaitsja poolt edastatud logide alusel
+ei olnud võimalik teha järeldust, mille kohaselt M. Pirita ei saanud talle süüks arvatavat tegu
+toime panna, ei tähenda seda, et kaitsja poolt edastatud logid oleksid jäänud uurimata ja
+analüüsimata.
+Seoses IT-ekspertiisi määramata jätmisega märkis prokurör, et eelistungil jäeti ekspertiis
+määramata eelkõige põhjusel, et kaitsja ei täpsustanud, mille suhtes konkreetselt ekspertiis
+tuleks läbi viia ning mis küsimustele ekspert peaks vastused andma. Kohtuistungil kaitsja
+taotlust ekspertiisi määramiseks ei korranud ja oli nõus kohtuliku uurimise lõpetamisega ilma
+ekspertiisi läbi viimata. Prokurör leidis, et seetõttu on alusetu heita apellatsioonis Harju
+Maakohtule ette ekspertiisi määramata jätmist. Arvutialaste süütegude puhul ei ole IT-
+
+                                                                                                8
+ekspertiisi tegemine kohustuslik, vaid selle määramine sõltub vastavate erialaste teadmiste
+vajadusest konkreetses kriminaalasjas.
+Prokurör ei nõustunud apellatsioonis esitatud M. Piritat süüstavate tõendite kriitikaga ning
+leidis, et apellatsiooni argumendid ei anna alust maakohtu otsuse tühistamiseks.
+
+
+3.2    Kaitsja esitas omakorda uue taotluse infotehnoloogia ekspertiisi määramiseks, milles
+märkis ära küsimused, mille esitamist eksperdile ta soovis.
+
+
+4.     Ringkonnakohus uuendas 14.09.2015 määrusega kohtuliku uurimise ja määras
+kohtuistungi.
+Ringkonnakohus leidis pärast taotluse kui kriminaalasja materjalidega tutvumist, et
+kriminaalasja objektiivse lahendamise seisukohalt on vajalik infotehnoloogiaekspertiisi
+määramine. Kohtukolleegium leidis, et ekspertiisi määramiseks on vajalik kohtumenetluse
+poolte seisukohtade ärakuulamine eksperdile esitatavate küsimuste osas, mistõttu tuleb
+korraldada kohtuistung.
+
+
+5.     Ringkonnakohus kuulas 06.10.2015 kohtuistungil ära poolte seisukohad ekspertiisi
+määramise ja võimalike eksperdile esitatavate küsimuste osas. 08.10.2015 määrusega määras
+ringkonnakohus infotehnoloogiaekspertiisi. Ekspertiisi läbiviimise tegi kohtukolleegium
+ülesandeks Eesti Kohtuekspertiisi Instituudi poolt määratavale kohtueksperdile.
+Eksperdile esitati järgmised küsimused:
+a) Kas 17.08.2014 kella 00.15 seisuga oli arvutis MAC A1176 s/n G88483 ZVYL2 TOR võrgu
+kasutamiseks vajalik tarkvara?
+b) Kas arvutiga MAC A1176 s/n G88483 ZVYL2 on 17.08.2014 ajavahemikul 00:15 kuni
+01:26 edukalt loodud ühendus TOR võrguga ja kasutatud TOR võrku?
+c) Kas IP aadressilt XXX on 17.08.2014 ajavahemikul 00:15 kuni 01:26 kasutatud TOR võrku?
+d) Kas 17.08.2014 ajavahemikul 00:15 kuni 01:26 IP aadressilt XXX toimunud internetiliikluse
+parameetrid on mahu ja iseloomu poolest sellised, et on olnud võimalik teha päringuid
+kuriteoteate lisas I kirjeldatud aegadel ja mahus?
+
+
+6.      Ringkonnakohus jätkas kohtuliku arutamisega 30.03.2016 istungil. Kaitsja jäi esitatud
+apellatsiooni juurde ning M. Pirita toetas kaitsja esitatud apellatsiooni. Prokurör vaidles
+apellatsioonile vastu ja jäi esitatud kirjalike seisukohtade juurde. Istungil avaldati ekspertiisiakt
+ning kuulati üle ekspert OO.
+
+
+
+
+RINGKONNAKOHTU SEISUKOHT
+
+                                                                                                   9
+7.     Kohtukolleegium ei nõustu apellandi väidetega, et KarS § 207 on põhiseadusega
+vastuolus ning esitatud süüdistus on nõuetekohaselt konkretiseerimata. Küll leiab
+ringkonnakohus, et maakohus on teinud vigu tõendite hindamisel. Seetõttu on maakohus
+ekslikult lugenud tõendatuks, et süüdistuses kirjeldatud teo pani toime M. Pirita.
+
+
+8.     Kohtukolleegium ei nõustu seisukohaga, et KarS § 207 ei vasta määratletusnõudele ja
+on seetõttu vastuolus põhiseadusega.
+Kaitsja hinnangul on ebaselge, mida mõeldakse arvutisüsteemi ebaseadusliku häirimise all,
+sest on arusaamatu, milline saab olla seaduslik ning milline ebaseaduslik häirimine. Kaitsja
+märkis, et iga pöördumine koormab ja seega häirib arvutisüsteemi. Kohtukolleegium leiab, et
+igasuguse koormamise samastamine häirimisega on demagoogiline. Sõna „häirimine“ kannab
+endas üldkeeleliselt negatiivset hinnangut mingile tegevusele. Seega ei tähista see pöördumisi,
+mida arvutisüsteem ongi mõeldud teenindama, vaid ainult arvutisüsteemi korrapärase
+toimimise negatiivset mõjutamist.
+Häirimise ebaseaduslikkusest räägib KarS § 207 põhjusel, et arvutisüsteemi korrapärase
+toimimise negatiivseks mõjutamiseks võib olla õiguslik alus. KarS § 207 koosseisutunnusena
+ei tähenda seda, et tegemist oleks blanketse normiga, mis nõuaks eraldi selle väljaspool
+karistusseadust oleva normi ära näitamist, mida arvutisüsteemi häirimisega rikuti. Teisisõnu ei
+eelda KarS § 207 mõne muu normi olemasolu, mis konkreetsel juhul arvutisüsteemi häirimise
+keelab, vaid tuvastada tuleb, et ei leidunud mõnda õiguslikku alust, mille tõttu see oli lubatav
+(sarnases tähenduses kasutab tunnust „ebaseaduslik“ nt KarS § 199 lg-s 1 toodud varguse
+koosseis).
+Esitatud süüdistuse kontekstis ei oleks alust rääkida ebaseaduslikust häirimisest juhul, kui
+kaugligipääsuportaali kaudu sisse logimine oleks olnud ajutiselt takistatud nt hooldustööde
+tõttu, s.t süsteemi korrapärast toimimist oleks häirinud selleks õigustatud isik ise. Teisisõnu
+tähendabki küsimus arvutisüsteemi toimimisse sekkumise ebaseaduslikkusest seda, kas
+sekkujal oli selleks mingisugune õiguslik alus.
+Kaitsja hinnangul ei ole KarS § 207 koosseis piisavalt selge ka põhjusel, et selles ei ole välja
+toodud, mida peetakse silmas arvutisüsteemi toimimise all. Kohtukolleegium ei nõustu ka selle
+seisukohaga. Hinnang sellele, kas arvutisüsteem toimib korrapäraselt, sõltub arvutisüsteemi
+funktsioonist. Arvutisüsteemi toimimine on häiritud, kui ta ei suuda oma funktsiooni
+nõuetekohaselt täita. Kaugligipääsuportaali eesmärgiks on lasta siseneda selleks õigustatud
+isikutel ja takistada sisenemist isikutel, kellel selleks õigust ei ole. Kui siseneda ei ole võimalik
+ka õigustatud isikul, tähendab see, et süsteem ei täida ses osas oma funktsiooni, s.t
+arvutisüsteemi toimimine on häiritud.
+
+
+9.     Ringkonnakohus ei nõustu kaitsja etteheidetega süüdistusele. Kuna KarS § 207 ei ole
+blanketne norm, ei pea paika kaitsja väide, et süüdistuses ei ole välja toodud, milles seisnes
+andmete sisestamise ebaseaduslikkus. Süüdistuses on märgitud: „Mart Pirita sisestas ilma
+seadusliku aluse ja volituseta…kasutajatunnused ja paroolid…“. Seega on süüdistuse väide see,
+
+
+                                                                                                  10
+et M. Pirital ei olnud nende kasutajatunnuste ja paroolide sisestamiseks mõnest õigusaktist
+tulenevat õigust ega õigustatud isiku volitust.
+Ka on süüdistuses selgelt öeldud, et M. Pirita teo puhul oli tegemist arvutisüsteemi toimimise
+häirimisega. Kuna KarS § 207 ei sisalda koosseisutunnusena häirimise olulisust, siis on
+põhjendamatu kaitsja etteheide, et süüdistuses ei ole märgitud, milles seisnes arvutisüsteemi
+töö oluline häirimine.
+
+
+10.     Kaitsja väitis apellatsioonis, et tõendeid, millele maakohus otsuse tegemisel tugines,
+kohtuistungil nõuetekohaselt ei uuritud. Kaitsja ei ole apellatsioonis täpsustanud, millised
+tõendid kohus uurimata jättis või kuidas kohus tõendite uurimise kohustust rikkus. Maakohtu
+istungi protokolli (kd I; toim.l. 63 pöördel – 64 pöördel) kohaselt on maakohus talle esitatud
+tõendeid uurinud. Protokollist ei nähtu, et kohtumenetluse pooltel oleks olnud mingeid
+ettepanekuid või etteheiteid seoses tõendite uurimise korraga. Protokollis paranduste tegemist
+taotletud ei ole. Seega tuleb lähtuda sellest, et maakohtule esitatud tõendeid on maakohtu
+istungil vahetult uuritud.
+
+
+11.    Ringkonnakohus leiab, et maakohus on selle tuvastamisel, et kaugligipääsuportaali
+kasutajakontode lukustamiseks sisestas ebaõiged paroolid just M. Pirita, teinud tõendite
+hindamisel olulisi vigu.
+Maakohus asus seisukohale, et süüdistuses kirjeldatud teo pani toime just M. Pirita, tuginedes
+järgmistele tuvastatud asjaoludele:
+Siseministeeriumi haldusala 14 töötaja kaugligipääsuportaali kasutajakontode lukustumine
+toimus 17.08.2014 ajavahemikul 00:14 kuni 01:26 selliselt, et Tor anonümeerimisvõrku ja
+Debian operatsioonisüsteemi kasutades sisestati ebaõiged paroolid, mille tõttu kontod
+blokeerusid. Samal ajal, kui Siseministeeriumi ja SMIT-i töötajate kontod blokeerusid, kasutati
+samasugust Tor võrgu tarkvara ja Debian paketti IP-aadressilt XXX. See IP-aadress kuulus M.
+Pirita ettevõttele E ja selle asukoht oli M. Pirita elukoht. M. Pirita elukoha läbiotsimisel ära
+võetud arvutist       leiti viited täpselt nendele IP-aadressidele, millelt olid sisestatud
+kasutajakontodele valed paroolid. Sellest järeldas kohus, et kaugligipääsuportaali
+kasutajakontodesse valede paroolide sisestamiseks kasutati M. Pirita elukohas ning tema
+kasutuses olnud arvutit. Maakohus leidis, et alust ei ole arvata, et M. Pirita arvutit võis kasutada
+keegi teine.
+Kohus pidas oluliseks sedagi, et M. Pirita töötas kuni 27.06.2014.a Siseministeeriumi
+Infotehnoloogia- ja Arenduskeskuses. Tunnistaja TH ütluste kohaselt näitasid logid, et ründaja
+teadis, kust kaugligipääsu portaali siseneda ja milliseid kasutajatunnuseid sisestada. Paar
+nädalat varem oli Mart Pirita üritanud oma vana kasutajatunnusega kaugligipääsu portaali sisse
+logida.
+Tunnistaja IM sõnul tuli initsiatiiv M. Pirita töölepingu lõpetamiseks tööandja poolt ning selle
+põhjuseks oli usalduse kaotus. Enamik 14 töötajast, kelle kasutajakontod blokeerusid, olid
+endised M. Pirita kolleegid, kelle kontakt temaga oli enne tema töölt lahkumist negatiivne või
+
+                                                                                                 11
+konfliktne. Nii IM kui ka MK väitsid, et M. Pirita oli lubanud kätte maksta, viidates
+arvutisüsteemi turvaakudele.
+
+
+11.1 Maakohus on lugenud tõendatuks, et kaugligipääsuportaali poole pöördunud IP-
+aadressid olid 16.08.2014 Tor võrgu väljapääsu aadressid (ExitNodes) ehk aadressid, mille
+kaudu toimus andmeside Tor võrgust avalikku internetti. Selle üle vaidlust ei ole. Seega pandi
+rünne toime Tor võrgu vahendusel.
+Selle hindamisel, kas süüdistuses kirjeldatud teo pani toime just M. Pirita, tuleb pidada silmas
+Tor võrgu toimimise põhimõtteid, mida on maakohus kirjeldanud nii asjatundjad/tunnistajad
+ning mille selgitamiseks on koostatud vaatlusprotokoll (kd II; toim.l. 14-16). Samas on Tor
+võrgu tööpõhimõtte kirjelduse puhul tegemist andmetega, mis on avalikult kättesaadavad
+torproject.org kodulehel.
+Tor on netikasutuse jälgede peitmise võrk, kus Tori kliendi andmeside toimub läbi projektiga
+ühinenute poolt selleks üles seatud serverite. Tori kliendi saadetud andmepakett liigub mööda
+suvaliselt valitud Tori võrgu serverite ahelat, millest viimane (ExitNode) teeb pöördumise
+lõplikku sihtkohta. Andmeside Tor võrgus on krüpteeritud ning selle ahela lülid, mida päring
+läbib, ei „näe“ tervet ahelat. Seetõttu ei ole Tor võrgu kaudu tehtud päringu puhul võimalik
+tuvastada päringu teekonda ja selle päringu teinud Tori kasutaja IP-aadressi.
+Eelnev ei tähenda, et kindlaks ei ole võimalik teha seda, et mingilt IP-aadressilt on kasutatud
+Tor võrku. Konkreetse IP-aadressi võrguliiklust jälgides on võimalik näha, et see suhtleb mõne
+Tor võrku kuuluva IP-aadressiga. Võimalik ei ole jälgida seda, kuhu päring Tor võrgus edasi
+liigub.
+
+
+11.2 Maakohus on lugenud tõendatuks selle, et M. Pirita kasutas süüdistuses nimetatud
+ajavahemikul Tor võrku. Nimelt nähtub Elioni logist, et M. Piritaga seotud IP-aadressilt on
+toimunud andmeside Tor võrku kuuluvate IP-aadressidega. Seda näitavad Elioni vastus
+päringule ja sideettevõtjalt saadud andmete protokoll (kd II; toim.l. 33-38).
+Ringkonnakohus nõustub maakohtu hinnanguga nendele tõenditele ja leiab, et maakohus on
+lugenud need põhjendatult usaldusväärseks.
+Apellatsioonis on kaitsja asunud seisukohale, et AS Elion Ettevõtted ei oleks tohtinud üldse
+vastuseks politsei päringule infot Tor võrgu kasutamise kohta edastada. Ringkonnakohus
+sellega ei nõustu. Vastavalt ESS § 1111 lg 3 p-le 6 võis ja AS Elion Ettevõtted esitama vastuseks
+sellekohasele päringule interneti-seansi andmed.
+Ainult see, et M. Pirita kasutas Tor võrku, ei ole aga piisav väitmaks, et just tema pani toime
+süüdistuses kirjeldatud teo. Teada ei ole see, mis oli Elioni logis kajastatud andmeside sisu ega
+see, kuhu M. Piritaga seotud IP-aadressilt tehtud päringud Tor võrgu kaudu liikusid. Seega võis
+teo panna toime ükskõik milline teine samal ajal Tori kasutanud isik.
+
+
+
+
+                                                                                              12
+11.3 Asjaoluna, mis näitab, et kasutajakontod lukustas just M. Pirita, viitab maakohus sellele,
+et M. Pirita arvutist leiti „viiteid täpselt nendele IP-aadressidele, milledelt oli Siseministeeriumi
+töötajate kasutajakontodele sisestatud valed paroolid“. Seega on maakohus teinud järelduse, et
+M. Pirita kasutas küll Tor võrku, kuid teda võimaldavad siiski selle ründega seostada tema
+arvutis (täpsemalt failis cached-microdesc-consensus) leiduvad viited IP-aadressidele, millelt
+pandi toime rünne kaugligipääsuportaali vastu. Selline järeldus on ekslik.
+Õige ei ole väita, nagu oleks leidunud M. Pirita arvutis olnud failist cached-microdesc-
+consensus viited just ja ainult nendele kolmele IP-aadressile, millelt toimus rünne
+kaugligipääsuportaalile. Tõsi küll, esmapilgul võib kohtule esitatud tõenditest selline mulje
+jääda. Asitõendite vaatlusprotokollis (kd II; toim.l. 46-49) on nimelt märgitud: „Failist nimega
+cached-microdesc-consensus leiti viiteid kriminaalmenetluse nr 14221000111 aluseks olevas
+avalduses esitatud IP aadressidele:… [järgnevad kolme IP-aadressiga seotud andmed, lisaks IP-
+aadressile nt serveri nimi, Tori tarkvara versiooni number, ribalaius – ringkonnakohtu märkus]“
+(kd II; toim.l. 48). Et need kolm IP-aadressi ei olnud ainsad, mida fail sisaldas, selgub aga
+protokolli lisamaterjalidest.
+Vaatlusprotokollis on märgitud, et fail cached-microdesc-consensus salvestati CD-le, mis on
+vaatlusprotokollile lisatud (lisa 6). See CD esitati kohtulikul uurimisel koos vaatlusprotokolliga
+maakohtule (istungiprotokoll: kd I; toim.l. 64; CD asub kd II; toim.l. 63). Põhiosa sellest CD-l
+olevast failist moodustabki IP-aadresside loetelu, kus IP-aadresside juures on andmed esitatud
+samal moel nagu vaatlusprotokollis välja toodud kolme IP-aadressi puhul. Mainitud loetelu on
+mahukas, sisaldades viiteid enam kui 5000 IP-aadressile. Seega on juba sel põhjusel
+põhjendamatu selle esiletõstmine, nagu oleks M. Pirita arvutis olnud fail viidetega just neile IP-
+aadressidele, millelt pandi toime süüdistuses kirjeldatud rünne.
+Teiseks on maakohus jätnud tähelepanuta selle, mis failiga tegemist on ja mis tähendust selles
+sisalduv IP-aadresside loetelu omab. Maakohtule esitatud tõendite ja torproject.org kodulehel
+olevate avalike materjalide kohaselt ei tähenda IP-aadressi sisaldumine selles loetelus
+tingimata seda, et Tori kasutava kliendi andmeside ka konkreetset IP-aadressi läbis. Seega see,
+et M. Pirita arvutist leitud fail cached-microdesc-consensus sisaldas muuhulgas viiteid IP-
+aadressidele, mille kaudu toimus süüdistuses kirjeldatud rünne, ei tähenda, et tema Tori kaudu
+toimunud andmeside just samade IP-aadresside kaudu toimus. Ka seetõttu on rõhutamine, et
+M. Pirita arvutist leiti „viited täpselt nendele IP-aadressidele“, põhjendamatu.
+Fail cached-microdesc-consensus sisaldab aktuaalset loetelu aktiivsetest Tor võrgu serveritest.
+See tuleneb maakohtu istungil avaldatud Tor võrgu tööpõhimõtet selgitavast vaatlusprotokollist
+(kd II; toim.l. 14-16) ja 28.11.2014 asitõendite vaatlusprotokolli lisast 4, mis sisaldab faili
+cached-microdesc-consensus Tor kasutusjuhendist pärit kirjeldust. (kd II; toim.l. 56).
+Tor võrgu tööpõhimõtet käsitlevas vaatlusprotokollis (kd II; toim.l. 14-16) on selgitatud, et Tori
+kaudu andmeside loomiseks laeb Tori klient (Tor võrgu kasutamiseks vajalik tarkvara) esmalt
+kataloogiserverist alla Tor võrgu serverite (Tor nodes) nimekirja (kd II, toim.l. 15 skeem 1).
+Edasine andmeside toimub läbi selles nimekirjas olevate serverite suvalise ahela (skeem 2).
+
+
+
+
+                                                                                                  13
+Seda kataloogiserverist alla laetud nimekirja sisaldabki fail cached-microdesc-consensus.
+Asitõendite vaatlusprotokolli lisas 4 on faili cached-microdesc-consensus sisu selgitatud lahti
+järgnevalt: „The most recent consensus network status document we’ve downloaded“.
+Nii vaatluse läbiviija kui maakohus on jätnud tähelepanuta küsimuse, mida tähendab Tor võrgus
+consensus. See tähistab iga tunni aja tagant koostatavat Tor võrgu serverite loetelu, mille
+eesmärk on tagada, et kõigil Tori klientidel on sama informatsioon Tor võrgu serverite kohta.
+Seejuures on vastav info kättesaadav torproject.org kodulehel, millest pärit infole on
+vaatlusprotokollis tuginetud (vt https://metrics.torproject.org/about.html). Kuna tegemist on
+avalikult kättesaadava infoga, saab ringkonnakohus sellele tugineda KrMS § 60 lg 3 alusel.
+
+Nagu otsuse punktis 11.1 märgitud, kuulusid IP-aadressid XXX, XXX ja XXX ajal, kui rünne
+kaugligipääsuportaali vastu toime pandi, Tor võrgu väljumispunktide (ExitNode) hulka
+(vaatlusprotokoll kd II; toim.l. 26-28). Seetõttu pididki need IP-aadressid sisalduma selle
+ajavahemiku kohta käiva Consensus-e loetelus.
+
+Eeltoodu tähendab seda, et samasugune IP-aadresside loetelu leidus kõigi Tori kasutajate
+arvutites, kes kasutasid Tori samal ajavahemikul.
+
+11.4 Faili cached-microdesc-consensus leidmine M. Pirita arvutist näitab vaid seda, et sellest
+arvutist on kasutatud Tor võrku – arvuti oli loonud edukalt ühenduse kataloogiserveriga ning
+laadinud alla Tori serverite loetelu.
+
+Nagu vaatlusprotokollis märgitud, sisaldas M. Pirita arvutist leitud fail consensust seisuga
+alates 22:00 UTC aja järgi (millele vastab 17.08.2016 kell 01:00). Seega ei saa selle faili alusel
+tuvastada seda, et M. Pirita arvutist loodi edukas ühendus Tor võrguga 17.08.2014 enne kella
+01:00, s.t ajal, kui blokeeriti valdav osa kontodest.
+
+
+11.5 Maakohtu seisukoht, et ründe pani toime M. Pirita, tugineb veel sellele, et M. Pirital olid
+ründe toimepanemiseks olemas vajalikud teadmised ja motiiv ning et M. Pirita kasutas
+samasugust tarkvara nagu kontod blokeerinud isik.
+11.5.1 Maakohus on tuginenud M. Pirita süüdimõistmisel väitele, et kontod lukustati Tor
+võrgustikku ja Debian operatsioonisüsteemi kasutades, ning samal ajal kasutati samasugust Tor
+võrgu tarkvara ja Debian paketti IP-aadressilt XXX.
+Maakohtu otsusest ei selgu, millisele tõendile tugineb väide, et kasutajakontod lukustati Debian
+operatsioonisüsteemi kasutades. Ringkonnakohtu hinnangul ühtki sellist tõendit kohtule
+esitatud ei ole.
+Prokuröri süüdistuskõne teeside kohaselt peaks selline info ilmnema kuriteoavalduse lisast:
+„SMITI poolt esitatud kuriteoavalduse lisast nähtuvalt kasutas teo toimepanija kaugligipääsu
+portaali andmete sisestamise ajal veebilehitsejat Mozilla 5.0 ning operatsioonisüsteemi Debian
+Linux. ASO võrgu monitooringu keskkonna väljavõttest nähtuvalt oli Debian Linux’ile vastava
+TOR versiooni faile 17.08.2014 kella 00:47 paiku (s.o ajal, mil rünnakud toimusid) alla
+laadinud kasutaja IP-aadressiga XXX“ (kd I; toim.l. 16).
+
+
+
+                                                                                               14
+Kuriteoavaldusel on kaks lisa, mis kannavad nimesid Lisa 1. Kontod.txt ja Lisa 2. TOR.txt (kd
+II; toim.l 3). Neist esimene on see, mis kajastab kaugligipääsu portaali vastu toimunud
+rünnakuid. Selles on aga ära toodud üksnes kaugligipääsuportaali poole pöördumise ajad,
+domeen, mille poole pöörduti, IP-aadress, kust pöördumine tuli, ning kasutajanimi (kd II,
+toim.l. 5-6). Lisa 2 (kd II; toim.l. 7) kajastab mitte andmeid kaugligipääsuportaali poole
+pöördumise kohta, vaid selle kohta, kes on ftp.ee.debian.org serverist ajavahemikul 15.-
+18.08.2014 Tor tarkvara alla laadinud (vt ka TH selgitused selle logi kohta: kd I; toim.l. 67).
+Viimases tõendis on kajastatud küll see, et IP-aadressilt XXX, mis on seostatav M. Piritaga, on
+17.08.2014 kell 00:57 laaditud alla Debian tarkvara, kuid tõendit, et kaugligipääsuportaali
+rünnati samalaadset tarkvara kasutades, ei ole.
+Tõsi küll, selline info on olemas kuriteokaebuses, mis on maakohtu istungil avaldatud (kd I;
+toim.l. 63 pöördel) ja millele on maakohus kohtuotsuses tuginenud (otsuse lk 3). Viimases on
+märgitud: „Võrgulogisid analüüsides võib järeldada, et ründaja oli sama isik või väga sarnane
+arvuti, kuna pöördumispunktid XXX ja XXX kasutavad sama User-Agenti Mozilla/5.0 (Linux;
+U; Debian Linux; en-US; rv: 1.8.1.12) Gecko/20080201 Firefox/2.0.0.12. Kasutaja agendi
+põhjal võib järeldada, et tegemist on Linuxiga (Debian)“ (kd II; toim.l. 1 ). Lisaks märgitakse
+kuriteokaebuses, et ründe võis toime panna M. Pirita, kuna on „võimalik, et kodaniku Maci
+(10.7) masinas on virtuaalne Debian Linux, millel on TOR klient“ (kd II; toim.l. 3).
+Kuriteokaebus ei ole aga käsitatav tõendina, millega saaks tõendada KrMS §-s 62 nimetatud
+tõendamiseseme asjaolusid, s.t seda, et süüdistatav on süüdi selle kuriteo toimepanemises,
+milles teda süüdistatakse.
+Tõendamiseseme asjaolusid saab tõendada KrMS § 63 lg-s 1 nimetatud tõenditega.
+Kuriteoteadet ega -kaebust selles loetelus nimetatud ei ole. Ringkonnakohtu hinnangul ei saa
+kuriteoteadet ega -kaebust pidada „muuks dokumendiks“ KrMS § 63 lg 1 tähenduses.
+Kuriteoteate või -kaebuse esitamist reguleerib kriminaalmenetluse seadustik. Seega tuleks
+eeldada, et kui need oleks menetluses tõendina kasutatavad, oleks nad ka KrMS §-s 63 eraldi
+ära nimetatud.
+Kohtukolleegiumi hinnangul on kuriteoteade ja -kaebus ka sisuliselt sellised dokumendid, mis
+ei saa tõendada süüdistatava süüd. Need on dokumendid, mis sisaldavad kannatanu väiteid selle
+kohta, et kuritegu on toime pandud. Järgnevas kriminaalmenetluses kogutakse tõendeid selle
+väite kinnituseks või ümberlükkamiseks. Kui kuriteokaebus oleks käsitatav tõendina, oleks
+kohe kuriteoteate esitamisega olemas isiku süüd tõendav tõend ja täiendavate isikut süüstavate
+tõendite kogumiseks sisuliselt puuduks vajadus.
+Kuriteoteates on märgitud, et viidatud väited tuginevad võrgulogide analüüsile. Neid
+võrgulogisid kohtule tõendina esitatud ei ole. See, kust pärinevad andmed rünnakuks kasutatud
+arvutitüübi või tarkvara kohta, ei ilmne ka tunnistajate ütlustest. Avalduse esitaja IM vastas
+küsimustele, mis puudutasid lisatud logi ja kaebuses esitatud väiteid, et tema üksnes pani
+materjalid kokku ja kirjutas alla, vajaliku info sai ta TH-lt (kd I; toim.l. 72).
+TH ütlused selle kohta, kust vastavad andmed pärinevad, on aga ebamäärased. Küsimusi selle
+kohta esitas TH ülekuulamisel süüdistatav. Küsimused ja vastused on maakohtu istungi
+protokolli kohaselt järgnevad:
+
+
+                                                                                            15
+„Süüdistatava küsimus Tuvastasite arvutitüübi user agenti järgi?
+Tunnistaja vastus Seda pole ma öelnud.
+Küsimus Kust user agenti saite?
+Vastus Eks ta logis oli.
+Küsimus Millises?
+Vastus Ei mäleta.
+Küsimus Miks seda ei esita?
+Vastus Ei tea,“ (kd I; toim.l. 69).
+Nagu eelnevast näha, tunnistab TH, et võrgulogisid, millele kuritekaebuses esitatud väited
+tuginevad, kohtule ei esitatud. Ka ei andnud ta ütlusi selle kohta, millised andmed täpselt
+logides olid.
+Seega, kui kuriteoteate esitajal oli mingeid andmeid selle kohta, mis tarkvara kasutades ja mis
+tüüpi arvutiga rünnak toime pandi, siis sellekohaseid tõendeid nad esitanud ei ole. Seetõttu on
+põhjendamatu ka maakohtu seisukoht, et samal ajal, kui kontod blokeeriti, kasutati samasugust
+Tor võrgustiku tarkvara ja Debian paketti IP-aadressilt XXX.
+Maakohus on jätnud tähelepanuta, et tõendeid ei ole isegi selle kohta, et M. Pirita kasutuses
+olevas arvutis oli viidatud tarkvara juba ajal, kui rünne kaugligipääsuportaali vastu algas. IP-
+aadressilt XXX laaditi Toriga seotud Debiani tarkvara alla alles kell 00:57, s.o ajal, kui
+esimesed sisselogimiskatsed olid juba toimunud (vt CERT päringu vastus ja Riigi Infosüsteemi
+Ameti küberturvalisuse teenistuse 27.08.2014 vastus). Tõendeid selle kohta, et vastav tarkvara
+oli ka eelnevalt arvutis, ei ole. Seda näitab hästi TH maakohtu istungil antud vastus süüdistatava
+küsimusele, kas siis, kui rünnak algas, ei olnud Tori tarkvara alla laetud. TH selgitas: „Mis ei
+tähenda, et ta ei võinud masinas olla. Näeme seda, et on laetud alla Tori tarkvara, mis tähendab,
+et inimene teab, kuidas seda kasutada ja kust seda saada. See ei näita, mis arvutis enne olemas
+oli. Kui tegemist oli virtuaalse masinaga. Toon välja võimalikke variante.“ (kd I; toim.l. 68
+pöördel). Osundatud vastus näitab selgelt, et selle kohta, kas sarnane tarkvara oli arvutis ka
+enne 00:57, saab teha ainult oletusi.
+Eelnevast tulenevalt tuleb tõdeda, et esitatud ei ole mingisuguseid tõendeid selle kohta, et
+kasutajakontode blokeerimisel oleks teo toimepanija kasutatud tarkvara jätnud maha mingi
+sellise jälje, mille alusel saaks tuvastada, et kasutajakontod blokeeris just Mart Pirita.
+Ringkonnakohus ei ole tuvastanud ka mingeid muid tunnuseid, mis võimaldaks siduda kontode
+blokeerimisega just M. Piritat. Ringkonnakohus esitas infotehnoloogia ekspertiisi määrates
+eksperdile küsimuse: „Kas 17.08.2014 ajavahemikul 00:15 kuni 01:26 IP aadressilt XXX
+toimunud internetiliikluse parameetrid on mahu ja iseloomu poolest sellised, et on olnud
+võimalik teha päringuid kuriteoteate lisas I kirjeldatud aegadel ja mahus?“ õ
+Eksperdiarvamus oli: „Elioni logist (flow.txt) ei leitud kokkulangevusi, mis oleks
+iseloomulikud SMIT-i logis välja toodud rünnakutele.“ Ringkonnakohtu istungil nentis ekspert,
+et Elioni logi kohaselt toimus IP-aadressilt XXX andmeside Tor võrguga just siis, kui
+kaugligipääsuportaali rünnakuid ei toimunud. Ekspert lisas, et ta ei oska selgitada, kuidas oleks
+
+                                                                                               16
+võimalik nii seda rünnet toime panna, milles M. Piritat süüdistatakse. Seega ekspertiisiaktis
+sisalduv arvamus ja eksperdi kohtuistungil antud ütlused räägivad pigem vastu võimalusele, et
+süüdistuses kirjeldatud ründe pani toime M. Pirita.
+
+
+11.5.2 Maakohus leidis, et just M. Piritale kui kaugligipääsuportaali ründajale viitab seegi, et
+ta ise oli varem töötanud SMIT-s ja mõni aeg enne rünnet oli tööandja initsiatiivil temaga
+töösuhe lõpetatud. Seega oli tal olemas motiiv ründe toimepanemiseks ja teadmised, kuidas ja
+mis kasutajanimedega rünnet toime panna.
+Ringkonnakohus nõustub sellega, et mitmed asjaolud viitavad kaugligipääsuportaali ründaja
+seotusele SMIT-ga.
+Esiteks pidid isikule, kes kontod lukustas, olema teada portaali aadressid, nagu ka see, millised
+olid sisselogimisel kasutajatunnused.
+Neljateistkümnest lukustatud kontost üksteist olid SMIT-i töötajate omad. Viimastest
+omakorda olid valdav enamus SMIT-i tippjuhtkonna või osakonnajuhatajate kontod. Lisaks
+SMIT-i juhtkonnale oli rünnatud paari valitud töötaja kontosid. SMITi töötajatele lisandusid
+siseministri ning Politsei- ja Piirivalveameti peadirektori ja teabeturbebüroo juhataja kontod.
+Selline kontode valik näitab ringkonnakohtu hinnangul, et ründe eesmärk oli põhjustada eeskätt
+SMIT-i juhtkonnale ebamugavusi esiteks sellega, et nende endi kontod blokeeriti, teiseks aga
+SMIT-i seadmises halba valgusesse ministri ja Politsei- ja Piirivalveameti ees.
+Ka need asjaolud ei ole aga piisavad väitmaks, et ründe pani toime just M. Pirita. On selge, et
+M. Pirita ei olnud ainus, kes kaugligipäsuportaali veebiaadresse teadis, vaid neid teadsid ka
+teised isikud, kes kaugligipääsuportaali haldasid või kasutasid.
+TH möönis maakohtus antud ütluses, et M. Pirita ei olnud ainus enne selle ründe toimumist
+SMIT-st lahkunu, kelle suhted SMIT-ga ei olnud head. Neid SMIT-st lahkunud töötajaid, kes
+jäid tema sõnul „ühel või teisel moel negatiivsusega silma“, oli tema sõnul „alla kümne“ (kd I;
+toim.l. 67 pöördel). Seega ei viita seegi argument M. Piritale kui ainsale võimalikule teo
+toimepanijale.
+Pealegi ei ole mingisuguseid tõendeid selle kohta, et ründe pidi toime panema just SMIT-i
+endine töötaja. Põhimõtteliselt tähendavad kirjeldatud asjaolud seda, et ründe võis panna toime
+mõni SMIT-i töötaja või endine töötaja. Andmeid ei ole aga selle kohta, et M. Pirita oleks olnud
+ainus SMIT-s töötanu, kes ründe ajal Tori kasutas.
+
+
+11.6 Maakohus on nimetanud otsuses M. Pirita vastu rääkiva asjaoluna sedagi, et M. Pirita
+ei soovinud anda ütlusi selle kohta, mis põhjusel ja mis eesmärgil ta kasutas süüdistuses
+märgitud ajal anonüümseks jääda võimaldatavat Tor võrku.
+Ringkonnakohus nõustub kaitsja apellatsioonis esitatud seisukohaga, et sisuliselt on maakohus
+heitnud süüdistatavale ette seda, et ta ei ole esitanud tõendeid selle kohta, et tema ei pannud
+toime süüdistuses kirjeldatud tegu. Sellega rikkus maakohus KrMS § 7 lg-t 2.
+
+
+
+                                                                                              17
+11.7 Kokkuvõtvalt nendib ringkonnakohus, et ühtegi otsest tõendit selle kohta, et kontod
+blokeeris just M. Pirita, ei ole. Kaudseid tõendeid selle kohta peab ringkonnakohus aga väga
+nõrkadeks. Võimalusele, et süüdistuses kirjeldatud teo pani toime M. Pirita, viitab kolm asjaolu:
+a) tal oli eelnevalt konflikt SMIT-i juhtkonnaga;
+b) ta teadis, kuhu kontode blokeerimiseks pöörduda ja millised andmed sisestada;
+c) ta kasutas sel ajal, kui kontod blokeeriti, Tor võrku.
+Nimetatud punktidest esimese kahe osas tuleb nentida, et tõendamist on leidnud ka see, et
+M. Pirita ei olnud ainus, kelle suhted SMIT-i juhtkonnaga ei olnud head ja kellel olid olemas
+teo toimepanemiseks vajalikud teadmised. Mis puutub Tori võrgu kasutamisse, siis ei ole teada,
+milleks M. Pirita Tor võrku kasutas, ega ka see, kes peale tema veel samaaegselt Tor võrku
+kasutasid. Veelgi enam, Elioni logist tulenevalt kasutas M. Pirita Tor võrku küll samal
+ajavahemikul, kui leidis aset rünne kaugligipääsuportaali vastu, kuid selle ajavahemiku raames
+ei kattunud tema IP-aadressilt Tor võrguga toimunud andmeside ajad kaugligipääsuportaali
+vastu toime pandud rünnete aegadega.
+Riigikohtu praktika kohaselt peavad kaudsed tõendid süüdimõistva otsuse tegemiseks
+moodustama sellise kogumi, mis võimaldab teha tõsikindlaid järeldusi kuriteo asjaolude kohta
+(Riigikohtu kriminaalkolleegiumi 05.12.2013 otsus kriminaalasjas nr 3-1-1-114-13, p 9)
+Käesoleval juhul see nii ei ole. Süüstavate tõendite alusel ei ole võimalik kõrvaldada kahtlust,
+et ründe pani mõni muu samal ajal Tor võrku kasutanud isik.
+
+
+12.     Eelnevast tulenevalt tuleb Maakohtu otsus KrMS § 337 lg 1 p 4, § 338 p 1 alusel
+tühistada ja teha uus otsus, millega mõista M. Pirita KarS § 207 lg 1 järgi õigeks.
+
+
+13.1 M. Pirita kaitsja on esitanud taotluse M. Piritale menetluskulude hüvitamiseks. Taotluse
+ja sellele lisatud dokumentide kohaselt oli M. Pirita õigusabikulu apellatsioonimenetluses 2500
+eurot. Taotluses on toodud ära kaitsja apellatsioonimenetluses tehtud toimingud ja selleks
+kulunud aeg, mis on taotluse kohaselt 34 tundi ja 53 minutit. Arvestades apellatsiooni ja teiste
+apellatsioonimenetluses esitatud dokumentide mahtu, samuti seda, et apellatsioonimenetluses
+toimus mitu kohtuistungit, peab kohtukolleegium kaitsja taotlust põhjendatuks ja rahuldab selle
+täies ulatuses.
+Samuti taotleb kaitsja M. Piritale tema maakohtus kantud õigusabikulude hüvitamist vastavalt
+maakohtule esitatud menetluskulude nimekirjale. M. Pirita õigeksmõistmise tõttu on
+põhjendatud talle mõistliku õigusabikulu hüvitamine. Esitatud dokumentide kohaselt on
+M. Pirita õigusabikulud kohtueelses menetluses ja maakohtu menetluses olnud 5000 eurot (kd
+I, toim.l. 60-62). Ka selles taotluses on ära toodud tehtud toimingud ja nendele kulunud aeg.
+Arvestades, et maakohtu menetlus oli apellatsioonimenetlusest ajamahukam, peab
+ringkonnakohus ka nimetatud osas taotlust täies ulatuses põhjendatuks.
+Seega tuleb M. Piritale hüvitada riigieelarvest 2500 euro suurused apellatsioonimenetluse kulud
+ja 5000 euro suurused kohtueelse menetluse ja maakohtumenetluse kulud.
+
+
+                                                                                              18
+13.2 Lisaks kaitsjale makstud tasule kuulub apellatsioonimenetluse kulude hulka
+infotehnoloogiaekspertiisi kulu 1608 eurot. Vastavalt KrMS § 185 lg-le 1 jääb see riigi kanda.
+
+
+
+14.    28.11.2014 toimunud asitõendite vaatluse protokolli kohaselt tehti lauaarvuti Mac
+A1176 kõvaketta Hitachi s/n 84GEDGKE sisust koopia. Selle andmekoopiaga kõvaketta
+(kõvaketas Seagate S/N: Z2F0GE18) nõudis ringkonnakohus 08.10.2015 ekspertiisimäärusega
+välja Politsei- ja Piirivalveameti teabehaldus- ja menetlusosakonna keskkriminaalpolitsei
+organiseeritud kuritegude büroolt ja esitas selle Eesti Kohtuekspertiisi Instituudile. Kõvaketas
+on tagastatud Tallinna Ringkonnakohtule.
+
+Kohtukolleegium leiab, et kõvaketas tuleb vastavalt KrMS § 126 lg 3 p-le 1 tagastada Politsei-
+ja Piirivalveameti teabehaldus- ja menetlusosakonna keskkriminaalpolitsei organiseeritud
+kuritegude büroole. Vältimaks põhjendamatut M. Pirita eraelu riivet, tuleb pärast kohtuotsuse
+jõustumist kustutada kõvaketta Hitachi s/n 84GEDGKE sisust tehtud andmekoopia.
+
+
+
+/allkirjastatud digitaalselt/
+
+
+
+Sten Lind                            Meelika Aava                                 Ivi Kesküla
+
+
+
+
+                                                                                             19

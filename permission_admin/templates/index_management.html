@@ -1,0 +1,74 @@
+<div class="panel">
+        <div class="panel-heading">Dataset Management</div>
+        <div class="panel-body">
+            <div class="row">
+                <form action="/permission_admin/add_index" method='POST'>
+                    <div class="col-lg-4">
+                        <select class="form-control input-sm" id="index">
+                        {% for index in indices %}
+                            <option value="{{index.index}}">{{index.index}} ({{index.status}})</option>
+                        {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-4">
+                        <select class="form-control input-sm" id="mapping"></select>
+                    </div>
+                    <div class="col-lg-2">
+                        <select class="form-control input-sm" id="access">
+                            <option value="public">public</option>
+                            <option value="private">private</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2">
+                        <button class="btn btn-default btn-sm" type='button' onclick="add_dataset();">Add</button>
+                    </div>
+                </form>
+            </div>
+			<div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <th>ID</th>
+                        <th>Index</th>
+                        <th>Mapping</th>
+                        <th>Author</th>
+                        <th>Status</th>
+                        <th>Size</th>
+                        <th>Access</th>
+                        <th>Remove</th>
+                    </thead>
+                    {% for dataset in datasets %}
+                        <tr>
+                            <td>
+                                {{dataset.pk}}
+                            </td>
+                            <td>
+                                {{dataset.index}}
+                            </td>
+                            <td>
+                                {{dataset.mapping}}
+                            </td>
+                            <td>
+                                {{dataset.author}}
+                            </td>
+                            <td>
+                                {% if dataset.status == 'open' %}
+                                    <a href="#" onclick="open_close_dataset('{{dataset.pk}}','close');" title="Click to close the index">open</a>
+                                {% else %}
+                                    <a href="#" onclick="open_close_dataset('{{dataset.pk}}','open');" title="Click to open the index">closed</a>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{dataset.store_size}}
+                            </td>
+                            <td>
+                                {{ dataset.access }}
+                            </td>
+                            <td>
+                                <a href="#" onclick="remove_index('{{dataset.pk}}');"><span class="glyphicon glyphicon-remove"></span></a>
+                            </td>
+                            </tr>
+                    {% endfor %}
+                </table>
+            </div>
+		</div>
+</div>

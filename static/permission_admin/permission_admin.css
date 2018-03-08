@@ -1,0 +1,36 @@
+.center-th {
+    width: 130px;
+    text-align: center;
+}
+
+.center-td {
+    text-align: center;
+}
+
+.delete-button, #save-button {
+    border-radius: 5px;
+}
+
+.delete-button:hover {
+    background-color: #ff9999;
+    border-radius: 5px;
+}
+
+#save-button:hover {
+    background-color: #9fff80;
+}
+
+tr {
+    height: 25px;
+}
+
+.data-row:hover {
+    background-color: #ebebe0;
+}
+
+@media (min-width: 768px) {
+  .modal-xl {
+    width: 90%;
+   max-width:1200px;
+  }
+}

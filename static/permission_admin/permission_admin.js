@@ -1,0 +1,102 @@
+$(document).ready(function() {
+	$('#daterange_from').datepicker({format: "yyyy-mm-dd",startView:2});
+	$('#daterange_to').datepicker({format: "yyyy-mm-dd",startView:2});
+}); 
+ 
+$('#index').on('change', function() {
+    var mapping_selection = $('#mapping');
+    mapping_selection.html('');
+    $.getJSON(LINK_ROOT+'permission_admin/get_mappings',{index:$(this).val()}, function(mappings) {
+        for (var i=0; i < mappings.length; i++) {
+            var mapping = mappings[i];
+            $('<option></option').val(mapping).text(mapping).appendTo(mapping_selection);
+        }
+    });
+});
+
+$('#index').trigger('change');
+
+function change_is_active(user_id,change){
+    $.post(LINK_ROOT+'permission_admin/change_isactive', {user_id: user_id, change: change}, function(){
+        location.reload();
+    });	
+}
+
+function change_permissions(user_id,change){
+    $.post(LINK_ROOT+'permission_admin/change_permissions', {user_id: user_id, change: change}, function(){
+        location.reload();
+    });	
+}
+
+function delete_user(username,user_id){
+    var delete_user = confirm('Delete user '.concat(username).concat('?'));
+    console.log(delete_user);
+    if(delete_user === true){
+        $.post(LINK_ROOT+'permission_admin/delete_user', {user_id: user_id}, function(){
+            location.reload();
+        });
+    }
+}
+
+function add_dataset(){
+	var index = $('#index').val();
+	var mapping = $('#mapping').val();
+	var daterange_from = $('#daterange_from').val();
+	var daterange_to = $('#daterange_to').val();
+	var access = $('#access').val();
+    $.post(LINK_ROOT+'permission_admin/add_dataset',
+        {index: index, mapping: mapping, daterange_from: daterange_from, daterange_to: daterange_to, access: access}, function(){
+        location.reload();
+    });	
+}
+
+function remove_index(index){
+    var delete_index = confirm('Remove?');
+    console.log(remove_index);
+    if(delete_index === true){
+        $.post(LINK_ROOT+'permission_admin/delete_dataset', {index: index}, function(){
+            location.reload();
+        });
+    }
+}
+
+function open_close_dataset(dataset_id,open_close){
+    $.post(LINK_ROOT+'permission_admin/open_close_dataset', {dataset_id: dataset_id, open_close: open_close}, function(){
+        location.reload();
+    });
+}
+
+
+function moveItems(origin, destination) {
+    $(origin).find(':selected').appendTo(destination)
+}
+
+$('.allow-btn').click(function(obj) {
+    var userid = $(this).data('userid');
+    moveItems('#' + userid + '-disallowed-datasets', '#' + userid + '-allowed-datasets')
+});
+
+$('.disallow-btn').click(function() {
+    var userid = $(this).data('userid');
+    moveItems('#' + userid + '-allowed-datasets', '#' + userid + '-disallowed-datasets')
+});
+
+function update_dataset_permissions(userId) {
+    var allowedDatasets = []
+    var disallowedDatasets = []
+
+    var allowedOptions = document.getElementById(userId + '-allowed-datasets').options;
+    for (var i = 0; i < allowedOptions.length; i++) {
+        allowedDatasets.push(allowedOptions[i].value)
+    }
+
+    var disallowedOptions = document.getElementById(userId + '-disallowed-datasets').options;
+    for (var i = 0; i < disallowedOptions.length; i++) {
+        disallowedDatasets.push(disallowedOptions[i].value)
+    }
+
+    $.post(LINK_ROOT+'permission_admin/update_dataset_permissions',
+        {allowed: JSON.stringify(allowedDatasets), disallowed: JSON.stringify(disallowedDatasets), user_id: userId},
+        function(){location.reload();
+    });
+}

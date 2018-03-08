@@ -1,0 +1,53 @@
+{% extends "index.html" %}
+{% block app %}
+<script src="{{STATIC_URL}}jquery-textrange.js"></script>
+<script type="application/javascript" src="{{STATIC_URL}}lm/lm.js"></script>
+	<div class="row">
+		<div class="col-lg-3">
+			<div class="panel">
+				<div class="panel-heading">Lexicons</div>
+				<div class="panel-body">
+						<table class="table table-striped">
+							<thead>
+							  <tr>
+								<th>ID</th>
+								<th>Remove</th>
+								<th>Lexicon Name</th>
+							  </tr>
+							</thead>
+							{% for lexicon in lexicons %}
+								<tr>
+									<td>{{lexicon.id}}</td>
+									<td><a href="javascript:void(0)" onclick= "go_to(LINK_LEXMINER + '/delete?id={{lexicon.id}}');"><span class="glyphicon glyphicon-remove"></span></a></a></td>
+									<td><a href="javascript:void(0)" onclick="go_to(LINK_LEXMINER + '/select?id={{lexicon.id}}')">{{lexicon}}</a></td>
+								</tr>
+							{% endfor %}
+						</table>
+					<div class="row">
+						<form id="new_lexicon_form" onsubmit="go_to(LINK_LEXMINER + '/new','new_lexicon_form')" method="post">
+							<div class="col-sm-6">
+								<input type="text" class="form-control" name="lexiconname" placeholder="Name your new lexicon...">
+							</div>
+							<div class="col-sm-6">
+								<button class="btn btn-default form-control" type="submit"><span class="glyphicon glyphicon-ok"></span> Create</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-lg-3">
+			<div class="panel">
+				<div class="panel-heading">Selected Lexicon</div>
+				<div class="panel-body">{% block lex %}{% endblock %}</div>
+			</div>
+		</div>
+		<div class="col-lg-3">
+			<div class="panel">
+				<div class="panel-heading">Term Candidates</div>
+				<div class="panel-body" id="suggestions"></div>
+			</div>
+		</div>
+	</div>
+</html>
+{% endblock %}

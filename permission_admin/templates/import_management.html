@@ -1,0 +1,84 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'permission_admin/script_manager.css' %}">
+<div class="row">
+    <div class="col col-lg-4">
+        <div class="panel">
+            <div class="panel-heading">Projects</div>
+            <div class="panel-body">
+                <div id="project-list"></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-heading">Add Project</div>
+
+            <div class="panel-body">
+                <form id="add-project-form" enctype="multipart/form-data" action="add_script_project" method="POST">
+                    <div class="form-group">
+                        Project name:
+                        <input type="text" class="form-control" id="new-project-name" name="name" placeholder="Project name..."/>
+                    </div>
+
+                    <div class="form-group">
+                        Project description:
+                        <textarea class="form-control" id="new-project-desc" name="description" placeholder="Description..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        Project files
+                        <input type="file" class="form-control-file" id="new-project-files" name="files[]" multiple/>
+                    </div>
+
+                    <div class="form-group">
+                        Entrance point:
+                        <select class="form-control" id="new-project-entrance" name="entrance"></select>
+                    </div>
+
+                    <div class="form-group">
+                        Command line arguments:
+                        <textarea class="form-control" id="new-project-arguments" name="arguments" placeholder="arg1\narg2"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary pull-right" id="new-project-btn">Submit</button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="col col-lg-8">
+        <div class="panel">
+            <div class="panel-heading">Project Details</div>
+            <div class="panel-body">
+                <ul class="nav nav-tabs">
+                    <li class="nav-item active">
+                        <a class="nav-link" data-toggle="tab" href="#script-manager-project-tab" role="tab">Project</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#script-manager-log-tab" role="tab">Logs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#script-manager-files-tab" role="tab">Files</a>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <div class="tab-pane active" id="script-manager-project-tab" role="tabpanel">
+                        Project data
+                    </div>
+
+                    <div class="tab-pane" id="script-manager-log-tab" role="tabpanel">
+                        Logs
+                    </div>
+
+                    <div class="tab-pane" id="script-manager-files-tab" role="tabpanel">
+                        Files
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+</div>
+<script type="application/javascript" src="{{STATIC_URL}}permission_admin/script_manager.js"></script>

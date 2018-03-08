@@ -1,0 +1,776 @@
+                          KOHTUOTSUS
+                               EESTI VABARIIGI NIMEL
+
+ Kohus                                Tallinna Ringkonnakohus
+ Kohtukoosseis                        Eesistuja Villem Lapimaa, liikmed Oliver Kask ja Ruth
+                                      Plaks
+ Otsuse tegemise aeg ja koht          18.08.2016, Tallinn
+ Haldusasja number                    3-14-52233
+ Haldusasi                            OÜ Smartlink kaebus Maksu- ja Tolliameti 25.08.2014
+                                      maksuotsuse nr 12.2-3/3407-46 tühistamiseks
+ Menetlusosalised                     Kaebaja – OÜ Smartlink, volitatud esindaja v.adv Vahur
+                                        Kivistik
+                                      Vastustaja – Maksu- ja Tolliamet, volitatud esindaja
+                                        Martin Aas
+ Vaidlustatud kohtulahend             Tallinna Halduskohtu 30.11.2015 otsus
+ Menetluse alus ringkonnakohtus       OÜ Smartlink apellatsioonkaebus
+ Asja läbivaatamine                   Kirjalik menetlus
+
+RESOLUTSIOON
+1.   Rahuldada OÜ Smartlink apellatsioonkaebus osaliselt.
+2. Tühistada Tallinna Halduskohtu 30.11.2015 otsus haldusasjas nr 3-14-52233 osas,
+millega jäeti rahuldamata kaebus Maksu- ja Tolliameti 25.08.2014 maksuotsuse nr 12.2-
+3/3407-46 tühistamiseks seoses OÜ-le Smartlink tasumisele määratud käibemaksuga
+summas 3609,65 eurot ning erijuhtude tulumaksuga summas 5213,59 eurot. Teha uus
+otsus, millega OÜ Smartlink kaebus selles osas rahuldada.
+3. Tühistada Maksu- ja Tolliameti 25.08.2014 maksuotsus nr 12.2-3/3407-46 osas,
+millega määrati OÜ-le Smartlink tasumisele käibemaksu summas 3609,65 eurot ning
+erijuhtude tulumaksu summas 5213,59 eurot.
+4.   Muus osas jätta OÜ Smartlink apellatsioonkaebus rahuldamata.
+5. Mõista Maksu- ja Tolliametilt OÜ Smartlink kasuks välja esimese ja teise astme
+menetluskulud 1398,09 eurot (üks tuhat kolmsada üheksakümmend kaheksa eurot ja 9
+senti). Muus osas jätta menetluskulud poolte endi kanda.
+
+
+EDASIKAEBAMISE KORD
+Otsuse peale võib Riigikohtule esitada kassatsioonkaebuse 30 päeva jooksul otsuse avalikult
+teatavakstegemisest arvates, s.o hiljemalt 19.09.2016, välja arvatud HKMS § 212 lg 1 teises
+lauses sätestatud juhul (HKMS § 212 lg 1).
+                                                                                     3-14-52233
+
+Vastuseks       esitatud  kassatsioonkaebusele      võib    teine    menetlusosaline      esitada
+vastukassatsioonkaebuse 14 päeva jooksul kassatsioonkaebuse vastukassatsioonkaebuse
+esitajale kättetoimetamisest arvates või ülejäänud kassatsioonitähtaja jooksul, kui see on pikem
+kui 14 päeva (HKMS § 215 lg 3).
+Kui kassaator soovib asja arutamist kohtuistungil, tuleb seda kassatsioonkaebuses märkida,
+vastasel korral eeldatakse, et ta on nõus asja lahendamisega kirjalikus menetluses (HKMS § 213
+lg 1 p 5). Sõltumata kohtuistungi soovi märkimisest võib Riigikohus kassatsioonkaebuse läbi
+vaadata kirjalikus menetluses, kui ta ei pea istungi korraldamist vajalikuks (HKMS § 223 lg 1).
+Kui menetlusosaline soovib kassatsioonkaebuse esitamiseks saada menetlusabi, tuleb tal
+Riigikohtule esitada vastavasisuline taotlus. Menetlusabi taotluse esitamine ei peata
+menetlustähtaja kulgemist (HKMS § 116 lg 5) ning kassatsioonitähtaja järgimiseks peab
+menetlusabi taotleja tegema tähtaja kestel ka menetlustoimingu, mille tegemiseks ta
+menetlusabi taotleb, eelkõige esitama kassatsioonkaebuse (HKMS § 116 lg 6).
+
+ASJAOLUD JA MENETLUSE KÄIK
+1. Maksu- ja Tolliameti (MTA) 25.08.2014 maksuotsusega nr 12.2-3/3407-46 määrati OÜ-
+le Smartlink järgmised maksusummad: 1) töötasudelt, litsentsitasult ja renditasult arvestatud ja
+kinnipeetud tulumaks 13 231,18 eurot; 2) töötasudelt arvestatud sotsiaalmaks 23 170,15 eurot;
+3) töötasudelt kinnipeetud kohustusliku kogumispensioni maksed 315,21 eurot; 4) töötasudelt
+kinnipeetud töötuskindlustusmaksed 1 956,86 eurot; 5) töötasudelt arvestatud
+töötuskindlustusmaksed 982,96 eurot; 6) tasumisele kuuluv käibemaks 15 725,65 eurot; 7)
+sotsiaalmaks erisoodustustelt 3 727,95 eurot ning 8) erijuhtude tulumaks 7 471,07 eurot. Sama
+maksuotsusega vähendas MTA Vennrok Group OÜ maksukohustust summas 31 922,33 eurot.
+Seoses sellega, et Vennrok Group OÜ tasus maksustamisperioodidel november 2009 kuni märts
+2010 makse kogusummas 4058,77 eurot, kohustati OÜ-d Smartlink tasuma makse kokku
+summas 62 531,27 eurot.
+Maksuotsuse kohaselt on OÜ Smartlink ja Vennrok Group OÜ (kuni 27.05.2010 ärinimega OÜ
+SmartLink Group) käsitatavad ühe majandusüksusena. Maksusummad on määratud nimetatud
+äriühingutes läbi viidud üksikjuhtumite kontrollide tulemusel. OÜ Smartlink tegevus perioodil
+oktoober 2009 kuni märts 2010 oli suunatud sellele, et vähendada majandavas äriühingus (OÜ-
+s Smartlink) maksukoormust – maksta vähem tööjõumakse ja käibemaksu – ning jätta
+potentsiaalne maksukohustus Vennrok Group OÜ-sse. Vennrok Group OÜ kasutamine on
+käsitatav tahtliku maksueelise varjamisena. Maksuhalduri seisukohta toetavad järgmised
+asjaolud: OÜ-de Smartlink ja Vennrok Group juhatuses olid vahemikus oktoober 2009 kuni
+märts 2010 samad isikud (MK, PP ja HP) ning mõlemale äriühingule osutas
+raamatupidamisteenust sama isik (MK); OÜ Smartlink juhatuse liikmed moonutasid töötajatega
+sõlmitud lepinguid ja/või nende lisasid tagantjärele ning andsid töötajatele juhiseid
+maksuhaldurile selgituste andmiseks; OÜ Smartlink oli teadlik töötajatest, kellele makstud
+töötasu jäi maksuhaldurile edastatud TSD-del deklareerimata, kuid OÜ Smartlink
+maksumenetluses esitasid MK, PP ja HP valeandmeid töötajate koosseisu ning neile tehtud
+väljamaksete kohta; OÜ Smartlink juhatuse liikmed on korduvalt kasutanud skeemi, mille
+eesmärgiks oli jätta OÜ-ga Smartlink seotud äriühingutes tekkinud maksukohustused täitmata,
+võõrandades võlgades äriühingud Läti kodanikele või kustutades äriregistrist.
+OÜ Smartlink ei ole kontrolliperioodi KMD-del kajastanud teenuse omatarvet (ametiauto
+kasutamine isiklikuks otstarbeks) 20% määraga maksustatava käibe hulgas. OÜ Smartlink
+käibeandmiku andmetel oli OÜ Smartlink 2010. aasta märtsikuu 20% määraga maksustatav
+käive suurem kui deklareeritud käive. OÜ-l Smartlink ei ole õigust arvata maha
+sisendkäibemaksu Vennrok Group OÜ rekvisiitidega arvete alusel, kuna arvetel kajastatud
+
+                                                                                           2(16)
+                                                                                    3-14-52233
+
+tehinguid tegelikkuses ei toimunud. Samuti ei ole OÜ-l Smartlink õigust arvata maha
+sisendkäibemaksu      tehingutelt    Brightway       Consulting     OÜ-ga,      kes    ei    ole
+käibemaksukohustuslasena registreeritud, ega tehingutelt Nordea Finance Estonia AS-iga,
+kuivõrd tegemist ei ole OÜ Smartlink maksustatava käibe jaoks tehtud kulutusega. OÜ-l
+Smartlink ei ole õigust maha arvata käibemaksu OÜ-de Jäneda Mõis ja Adrianto arvete alusel,
+kuna nendelt äriühingutelt saadud teenuste näol oli tegemist töötajatele tehtud erisoodustusega.
+Kuna OÜ-d Smartlink ja Vennrok Group on käsitatavad ühtse majandusüksusena, kuuluvad
+töötajatele tehtud töötasu väljamaksed deklareerimisele tegeliku tööandja OÜ Smartlink poolt
+ning topeltmaksustamise vältimiseks tuleb väljamaksed Vennrok Group OÜ
+maksudeklaratsioonidel tühistada. Lisaks tuleb OÜ-l Smartlink tasuda tulumaksu ja
+sotsiaalmaksu töötajatele tehtud erisoodustustelt (isikliku auto kasutamise kompensatsioon,
+kulutused töötajate toitlustamisele, spordile ja kultuuriüritustele).
+Tehingu kohta eGovernance Laboratory OÜ-ga puuduvad maksukohustuslase
+raamatupidamises algdokumendid, mistõttu tuleb sellele äriühingule tehtud väljamakse
+maksustada tulumaksuga. Samuti kuuluvad tulumaksuga maksustamisele Nordea Finance
+Estonia AS-ile tehtud väljamaksed, kuna need ei ole seotud OÜ Smartlink ettevõtlusega.
+2. OÜ Smartlink esitas 26.09.2014 Tallinna Halduskohtule kaebuse MTA 25.08.2014
+maksuotsuse tühistamiseks.
+1)    Maksuotsus on tehtud pärast aegumistähtaja möödumist, kuna maksusumma
+kolmeaastane aegumistähtaeg oli möödunud ja viieaastase aegumistähtaja kohaldamiseks
+puudub alus. Maksuotsuse p-s 1.1 toodud etteheited viitavad pigem võimalikule hooletusele või
+maksukorralduse seaduse (MKS) § 84 jt maksuseaduste tõlgendamisele maksuhaldurist
+erinevalt kui tahtlusele.
+2)    Kaebaja suhtes alustati üksikjuhtumi kontrolli 21.04.2010 korralduse nr 12.2-3/3407-1
+alusel põhjendamatult maksumaksja majandustegevuse asukoha vaatlusega. Kaebaja
+majandustegevuse asukohas puudub spetsiifiline vara, mille vaatlemine võiks omada tähtsust
+maksukohustuse täitmise kontrollimisel. Etteteatamata vaatlus ei olnud praegusel juhul kohane
+menetlustoiming kaebaja maksude tasumise õigsuse kontrollimise alustamiseks. Vaatluse sildi
+all toimus sisuliselt läbiotsimine eesmärgiga leida tõendeid kaebaja maksukoormuse
+suurendamiseks. MTA 23.02.2011 määruse alusel ja maakohtu loal teostati kaebaja asukohas
+04.03.2011 läbiotsimine väärteoasja nr 6-3/437 raames. Maksuhaldur kahtlustas kaebajat nn
+ümbrikupalga maksmises, kuid see asjaolu ei leidnud tuvastamist. Maksuhalduri kahtlust
+kinnitavate tõendite leidmata jätmise korral oleks tulnud maksumenetlus lõpetada, kuid selle
+asemel on maksuhaldur otsinud muid võimalusi, et kaebaja maksukoormust suurendada.
+Menetlusreeglite rikkumine on sedavõrd ulatuslik, et selle tagajärjeks saab olla vaid
+maksuotsuse tühistamine.
+3)    Maksuhaldur on kuulanud maksumenetluse ja väärteomenetluse käigus üle kõik kaebaja
+ja OÜ Vennrok Group töötajad, juhatuse liikmed ning menetlenud üksikjuhtumi kontrolli neli
+aastat. Sisuliselt viidi kaebaja suhtes läbi maksurevisjon, kuid revisjonile vastavaid õigusi
+kaebajale ei tagatud. Töötajad kuulati üle OÜ Vennrok Group juhtkonna teadmata ning
+töötajatele ei selgitatud nende õigust keelduda ütluste andmisest.
+4)    Maksuhaldur on maksuotsuse koostamisel lubamatult kasutanud väärteomenetluse käigus
+kogutud tõendeid. Kõik maksumenetluses kasutatud dokumentaalsed tõendid on saadud
+ebaseaduslikult vaatluse ja läbiotsimise käigus. Maksu- ja väärteomenetluse üheaegse
+läbiviimise tulemusena tekitas vastustaja olukorra, kus kaebajal ei olnud võimalik üheselt aru
+saada, millised tõendid on kogutud maksumenetluses ja millised väärteomenetluses ning mis
+tähendus on ühel või teisel tõendil nendes menetlustes. Näilise väärteomenetluse algatamise
+
+
+                                                                                          3(16)
+                                                                                    3-14-52233
+
+eesmärgiks oli koguda tõendeid maksumenetluses kasutamiseks.                  Maksuotsus     on
+nõuetekohaselt motiveerimata, see ei ole arusaadav ega kontrollitav.
+5)     Vastustaja on vääralt kohaldanud MKS §-i 84. MKS § 84 ei võimalda ignoreerida
+juriidilise isiku õigusvõimet ja omistada kogu tema tegevust teisele isikule, kuid vastustaja on
+just seda teinud. MKS § 84 on rakendatav vaid juhul, kui tehingul ei võinud ega saanud olla
+muud eesmärki ega muid juriidilisi tagajärgi, kui maksude tasumisest kõrvalehoidumine.
+Meelevaldne on vastustaja üldistav seisukoht, et OÜ-sid Smartlink ja Vennrok Group tuleb
+käsitada ühtse majandusüksusena, mille majandavaks äriühinguks on OÜ Smartlink.
+3. Maksu- ja Tolliamet vaidles kaebusele vastu ning palus jätta see rahuldamata.
+1) Maksusumma määramise aegumistähtaeg ei olnud maksuotsuse tegemise seisuga
+möödunud. Maksuhaldur on maksuotsuses ja kontrollaktis põhjendanud, miks ta leiab, et
+kaebaja tegutses maksude tasumise vältimise eesmärgil teadlikult. Kaebaja ei ole maksuotsuses
+tuvastatut ümber lükanud.
+2) Kaebaja ei ole vaatluse läbiviimist kui toimingut eraldiseisvalt vaidlustanud. Seega ei saa
+praeguses asjas väita, et selline maksuhalduri tegevus rikkus OÜ Smartlink õigusi. Samuti jääb
+ebaselgeks, kuidas rikkus vaatlus OÜ Smartlink õigusi ning kuidas sai vaatluse teostamine
+mõjutada asja otsustamist.
+3) Kaebaja suhtes viidi läbi üksikjuhtumi kontroll, mitte revisjon. Kontrolli tavapärasest
+pikema kestuse tingis asjaolu, et maksuhaldur kontrollis paralleelselt ka OÜ-d Vennrok Group,
+kes kaasaaitamiskohustust ei täitnud. Kaebusest ei selgu, mis alusel peaks maksumenetluse
+väidetav ebamõistlik kestus olema aluseks maksuotsuse tühistamisele.
+4) Haldusmenetluses võib kasutada kriminaalmenetluses või muus menetluses kogutud
+tõendeid, kui haldusmenetluse seadus või MKS ei välista nende tõendite lubatavust. Kaebaja ei
+ole esitanud ühtegi tõenditega toetatud väidet, mis viitaks sellele, et väärteomenetluse raames
+koguti tõendeid ebaseaduslikul teel.
+5) Arvestades, et maksuhalduri seisukohad on selgelt esitatud, kaebajal oli võimalus tutvuda
+kõikide maksumenetluses kogutud tõenditega, sh väärteomenetluses kogutuga, ning
+kontrollaktile eriarvamuse esitamiseks oli tal aega üle nelja kuu, ei ole eluliselt usutav, et
+kaebaja ei saanud maksuhalduri seisukohtadest ega neid toetavatest tõenditest aru.
+6) MKS § 84 annab maksuhaldurile õiguse tsiviilõiguslikesse tehingutesse sekkumiseks. Selle
+normi kohaldamine eeldab, et maksuhaldur on tuvastanud isiku tahtluse saada maksueelist.
+Maksueeliseks on riigieelarvesse maksuseadustes ettenähtust vähem tasutud või riigilt alusetult
+tagasi taotletud maksusumma. Arvestades, et maksuhaldur lähtus maksustamisel tehingute
+tegelikust majanduslikust sisust ja tuvastas seejuures isikute tahtluse saada maksueelist, on
+MKS §-le 84 tuginemine põhjendatud.
+4. Tallinna Halduskohus jättis 30.11.2015 otsusega OÜ Smartlink kaebuse rahuldamata.
+1)    Maksuhaldur on piisava põhjalikkusega kogunud tõendeid, neid uurinud ja õigesti
+tuvastanud vaidlusaluste maksukohustuste aluseks olevad asjaolud, kohaldanud õigesti
+maksuõigusnorme ning järginud menetlusnorme. Vaidlustatud maksuotsus on nõuetekohaselt
+põhjendatud ja kontrollitav. Kohus nõustub maksuotsuse põhjendustega ega pea vajalikuks neid
+HKMS § 165 lg 2 alusel oma otsuses korrata.
+2)    Vastustaja on õigesti kohaldanud MKS §-i 84. MKS § 84 alusel ühe isiku tehingute ja
+sellega kaasneva maksukohustuse omistamine teisele isikule, kelle kontrolli ja juhtimise all
+esimene tegutses, on lubatud (Riigikohtu otsuse nr 3-3-1-42-11, p-d 2 ja 9; Tallinna
+
+
+                                                                                          4(16)
+                                                                                     3-14-52233
+
+Ringkonnakohtu otsus nr 3-09-709) ja praegusel juhul ka põhjendatud. Maksuhaldur tuvastas,
+et OÜ Vennrok Group ei omanud iseseisvat majandustegevust, vaid oli loodud üksnes
+Smartlink OÜ-s töötavatele isikutele palkade maksmiseks, vältides samas töötasudelt
+deklareeritavate maksude tasumist. Maksuotsuse p-des 1.1-1.3 ja kontrollakti p-des 2.2.1–2.2.4
+on põhjalikult kajastatud asjaolud ja tõendid, millele tuginedes jõudis maksuhaldur eeltoodud
+järeldusele ning kaebaja ei ole maksuotsuses tuvastatut ümber lükanud. Maksueelise tekkimist
+on kirjeldatud maksuotsuse p-s 1.2 ja kontrollakti p-des 2.2.5.2 ja 3.1.4.1. Maksueelise
+tekkimine kaebaja kasutatud maksupettuse skeemi puhul on ilmselge. Kasutades oma
+majandustegevuses töötajaid, kelle kaebaja jättis enda töötajatena deklareerimata, sai kaebaja
+maksueelise seeläbi, et vabanes töötasude maksmisega kaasnevatest maksukohustustest.
+Samuti, arvestades sisendkäibemaksu Vennrok Group OÜ rekvisiitidega arvete alusel
+(kontrollakti p 2.2.5.3), millel tegelik majanduslik sisu puudus, sai kaebaja maksueelise
+sisendkäibemaksu suurendamise ja tasumisele kuuluva käibemaksu vähendamise läbi.
+3)    Kohus ei nõustu kaebaja seisukohaga, et etteteatamata vaatluse läbiviimiseks kaebaja
+tegevuskohas puudus vajadus. MTA 21.04.2010 korraldusest nr 12.2-3/3407-1 nähtub, et
+22.04.2010 vaatluse eesmärgiks oli teha kindlaks töötajate arvu vastavus kaebaja deklareeritud
+andmetele. Korralduses on selgitatud, et vaatluse läbiviimisest etteteatamine võib ohustada
+selle eesmärgi täitmist, kuna olukord maksukohustuslase tegevuskohas võib vaatluse
+läbiviimise ajaks muutuda. Etteteatamata vaatluse läbiviimine kaebaja tegevuskohas oli
+põhjendatud ning korralduses esitatud kaalutlused asjakohased. Vaatluse protokolli järgi ei
+olnud kaebaja seaduslikul esindajal vaatluse läbiviimise kohta etteheited. Puuduvad tõendid, et
+maksuhaldur oleks vaatluse raames teostanud läbiotsimist.
+4)    Kohus ei nõustu kaebajaga, et 21.04.2010 korralduse alusel läbi viidud menetlus vastab
+kontrolli iseloomu ja ulatuse poolest revisjonile. Nimetatud korralduse alusel läbi viidud
+üksikjuhtumi kontroll vastab selle kontrolliliigi põhilistele tunnustele. Asjast ei nähtu, et
+kontrolli raames oleks tehtud kaebajat oluliselt koormavaid toiminguid. Revisjoni läbiviimist
+ei saa tuletada asjaolust, et maksuhaldur viis kaebaja suhtes paralleelselt läbi nii maksu- kui ka
+väärteomenetlust. Tegemist on erinevate menetlustega. Samuti ei saa praegusel juhul pelgalt
+kontrolli kestuse alusel otsustada, et maksuhaldur pidanuks viima maksukontrolli läbi
+üksikjuhtumi kontrolli asemel revisjoni vormis.
+5)    Väärteomenetluses kogutud tõendite kasutamine maksumenetluses ei ole keelatud.
+Kohtupraktikas on asutud seisukohale, et süüteomenetluses kogutud tõendid võivad olla
+tõenditeks haldusmenetluses, kui nende lubatavust ei välista haldusmenetluse seadus või
+vastavat valdkonda reguleeriv muu menetlusseadus, nt MKS (Riigikohtu lahendid nr 3-1-1-
+120-03 (p 17), 3-3-1-2-03 (p 10), 3-3-1-9-15 (p-d 15 ja 19)). Tõendamise reeglitest tulenevalt
+on süüteomenetluses kogutud tõendite kasutamiseks maksumenetluses eelkõige oluline, et
+tõendid oleksid vastavas menetluses põhimõtteliselt lubatavad ja kogutud seaduse nõudeid
+järgides. Praegusel juhul puudub vaidlus selles, et need tingimused on täidetud (isikute ütlused
+ja dokumentaalsed tõendid on kogutud väärteomenetluse reegleid järgides). Seega ei saa pidada
+väärteomenetluses kogutud tõendite kasutamist maksuotsuse koostamisel õigusvastaseks.
+6)   Kohtupraktikas on leitud, et maksudest kõrvalehoidumise eesmärgil tehtud tehing saab
+oma olemuselt olla ainult tahtlik (Riigikohtu lahend nr 3-3-1-62-06, p 13). Maksuhaldur
+rakendas praegusel juhul õigesti viieaastast aegumistähtaega.
+MENETLUSOSALISTE SEISUKOHAD APELLATSIOONIMENETLUSES
+5. OÜ Smartlink palub apellatsioonkaebuses halduskohtu otsus tühistada ja teha asjas uus
+otsus, millega tema kaebus rahuldada.
+
+
+
+                                                                                            5(16)
+                                                                                    3-14-52233
+
+1)    Halduskohus rikkus oluliselt menetlusõiguse norme, mis viis ebaõige lahendi tegemiseni.
+Kaebaja taotles seoses esindaja vahetumisega kahel korral kohtuistungi edasilükkamist, kuid
+kohus jättis kaebaja taotlused põhjendamatult rahuldamata. Samuti jättis kohus põhjendamatult
+rahuldamata kaebaja taotlused vastustaja esitatud tõendite tagastamiseks, kolmandate isikute
+kaasamiseks ning kohtuistungi protokolli parandamiseks (v.a üks parandus). Kohus ei uurinud
+kohtuistungil tõendeid, rikkudes sellega HKMS § 157 lg-id 1–4 ja § 158 lg-t 1.
+2)    Kohus ei võtnud seisukohta mõistliku menetlusaja rikkumise osas. Maksumenetlust viidi
+läbi üle nelja aasta, kusjuures kahe aasta jooksul menetlustoiminguid sisuliselt läbi ei viidud.
+Ebamõistlik menetlusaeg on iseseisvaks maksuotsuse tühistamise aluseks. Olukorras, kus
+maksuhaldur on viivitanud maksu määramisega, ei ole hea halduse põhimõttega kooskõlas
+viieaastase aegumistähtaja kohaldamine.
+3)    Kohus leidis ebaõigesti, et maksuhaldur tugines lubatud tõenditele. Väärteomenetluses
+teostatud läbiotsimisel saadud tõendeid ei oleks maksuhaldur tohtinud maksuotsuse tegemisel
+kasutada. Maksuotsusest ei selgu, millised tõendid millises menetluses on kogutud.
+4)    Kohus tõlgendas ebaõigesti MKS §-i 72 ning leidis ekslikult, et etteteatamata vaatluse
+läbiviimine oli põhjendatud.
+5)     Kohus ei võtnud seisukohta kaebaja väite osas, et MTA rikkus uurimispõhimõtet.
+Tehingute kohta Vennrok Group OÜ-ga kaebaja juhatuse liikmetelt selgitusi võttes küsimusi ei
+esitatud. Samuti ei võetud selgitusi Vennrok Group OÜ endistelt juhatuse liikmetelt.
+6)     Kohus tõlgendas ebaõigesti majandusüksuse mõistet ning luges ekslikult kaks iseseisvat
+juriidilist isikut üheks majandusüksuseks. Maksuotsuses ei ole analüüsitud pangakontode
+väljavõtteid. Vennrok Group OÜ pangakontolt nähtub, et töötajatele on makstud töötasu ning
+maksud on MTA-le tasutud. Seega täideti maksukohustus enne maksuotsuse koostamist ning
+riigi varalisi huve ei kahjustatud. Kaebaja ja Vennrok Group OÜ vahelises lepingus on loetletud
+tööd, mis kajastuvad ka arvetel. Maksuhaldur pole väitnud, et töid ei teostatud.
+7)    Kohus on ebaõigesti tõlgendanud MKS §-i 84. MTA ei väida, et tehing oleks tühine,
+näilik või varjatud. Praegusel juhul ei ole maksude tasumisest kõrvale hoitud – OÜ Vennrok
+Group OÜ on esitanud TSD-d, deklareerinud käivet ja tasunud maksud. Maksuotsuses ei ole
+näidatud, milles seisnes väidetav kaebaja saadud maksueelis, ega heidetud kaebajale ette
+maksupettust.
+8)    Maksu määramise aegumistähtaeg on möödunud, kuna tahtlust ei ole põhistatud.
+Maksuotsuse seisukohad viitavad pigem hooletusele kui tahtlusele. Kohus on ebaõigesti
+tõlgendanud MKS § 98 lg-t 1 ning jätnud analüüsimata kaebaja vastuväited tahtluse osas.
+9)    Maksuotsuses on ebaõigesti hinnatud tõendeid. Maksuotsuses ei ole toodud nende isikute
+seletusi, kellele tegi väljamaksed Vennrok Group OÜ, kuid kelle osas maksuhaldur määras
+kaebajale tasumisele kuuluvad tööjõumaksud. Maksuhaldur ei ole põhjendanud, miks ta ei
+arvesta rendi- ja litsentsitasusid. Muu hulgas on kaebajale määratud käibemaks käibeandmiku
+andmete alusel, kuid pole selge, millest kõnealune käive tekkis.
+10) Maksuotsus on motiveerimata, mistõttu pole tõendamiskoormus läinud üle kaebajale.
+Halduskohus on ise asunud maksuotsust motiveerima.
+6. Maksu- ja Tolliamet vaidleb apellatsioonkaebusele vastu ning palub jätta see rahuldamata
+ja halduskohtu otsus muutmata. Vastustaja jääb kõigi halduskohtus esitatud vastuväidete
+juurde.
+
+
+
+                                                                                          6(16)
+                                                                                   3-14-52233
+
+1)    Halduskohus on kohtuistungi toimumise aja muutmise ja tõendite tagastamise taotluse
+rahuldamata jätmisel oma seisukohta põhjendanud. Väide, et kaebajal ei olnud maksuhalduri
+viivituse tõttu võimalik kontrollaktiga tutvuda ja oma kaebeõigust teostada, on väär. OÜ-le
+Smartlink toimetati kontrollakt kätte juba 19.03.2014. Kohus jättis põhjendatult kaasamata
+kolmandad isikud, kelle kaasamist kaebaja taotles. Maksuhaldur selgitas kohtuistungil, et
+kolmanda isiku kaasamise põhimõtted on võrreldes kaebaja viidatud varasema kohtupraktikaga
+muutunud. Apellatsioonkaebusest ei selgu, kuidas võis asja otsustamist mõjutada kohtuistungi
+protokollis kaebaja taotletud paranduste tegemata jätmine.
+2)    Halduskohus jättis kohtuistungil HKMS § 51 alusel arvestamata istungil esitatud kaebaja
+uued sisulised väited. Kaebaja ei ole apellatsioonkaebuses põhjendanud uute väidete esitamist.
+Seega tuleb apellatsioonkaebuse p-des 2.5, 3, 6, 9 ja 10 toodud seisukohad tervikuna
+tähelepanuta jätta.
+
+
+RINGKONNAKOHTU PÕHJENDUSED
+7. Ringkonnakohus käsitleb esmalt kaebaja väiteid halduskohtu menetluslike rikkumiste kohta
+(I), seejärel võtab seisukoha maksuotsuse õiguspärasust puudutavate väidete kohta (II) ning
+viimaks lahendab apellatsioonkaebuse ja jagab menetluskulud (III).
+                                              I
+8. Vastustaja arvates peaks ringkonnakohus apellatsioonkaebuse p-des 2.5 (kohtuistungil
+tõendite uurimata jätmine), 3 (mõistliku menetlusaja rikkumine), 6 (uurimispõhimõtte
+rikkumine), 9 (tahtlust ei ole põhjendatud ning maksu määramise aegumistähtaeg on
+möödunud) ja 10 (tõendite ebaõige hindamine) toodud seisukohad jätma tervikuna
+tähelepanuta, kuna need väited esitas kaebaja esmakordselt alles halduskohtu istungil ning
+halduskohus jättis need HKMS § 51 alusel arvestamata; uute seisukohtade esitamist kaebaja
+eraldi põhjendanud ei ole. Ringkonnakohus leiab, et HKMS-st ei tulene alust jätta need
+apellatsioonkaebuse väited apellatsioonkaebuse lahendamisel kõrvale. Tegemist on õiguslike
+väidetega, mitte uute asjaolude või tõenditega, mille esitamise lubatavust peab menetlusosaline
+HMS § 198 lg 3 kohaselt põhistama või mida kohus saaks HKMS § 51 alusel tähelepanuta jätta.
+Õiguslikke väiteid võib menetlusosaline täiendada ka apellatsioonimenetluses. Vastavalt
+HKMS §-le 197 on ringkonnakohus seotud apellatsioonkaebuse nõuetega, kuid mitte õiguslike
+põhjendustega.
+9. Kaebaja kordab apellatsioonkaebuses oma taotlust Vennrok Group OÜ ning OÜ-de
+Smartlink ja Vennrok Group töötajate kaasamist kolmandate isikutena käesolevasse
+menetlusse. Kaebaja arvates jättis halduskohus need taotlused ebaõigesti rahuldamata.
+Ringkonnakohus kaebajaga ei nõustu.
+HKMS § 20 lg 1 järgi kaasab halduskohus isiku, kes ei ole pool, kolmanda isikuna menetlusse,
+kui kohtulahendiga võidakse otsustada tema õiguste või kohustuste üle. Isiku õiguste ja
+kohustuste üle otsustamisena tuleks mõista olukorda, kus kohtuotsusega võidakse otsustada
+isiku subjektiivsete õiguste, vabaduste või kohustuste tekkimise, muutumise või lõppemise üle.
+Määravaks on siinkohal kohtuotsuse võimalik resolutsioon – asja arutamisel võidakse otsustada
+isiku subjektiivsete õiguste või kohustuste üle juhul, kui nende tekkimine, muutumine või
+lõppemine sõltub sellest, kas kaebus kohtuotsuse resolutsiooniga täielikult või osaliselt
+rahuldatakse või rahuldamata jäetakse (K. Merusk, I. Pilving (koost.). Halduskohtumenetluse
+seadustik. Kommenteeritud väljaanne. Tallinn: Juura 2013, lk 112).
+
+
+
+                                                                                         7(16)
+                                                                                   3-14-52233
+
+Vennrok Group OÜ on küll kaebaja kõrval vaidlustatud maksuotsuse teiseks adressaadiks, kuid
+sellest ei saa järeldada, et praeguses asjas tehtava kohtulahendiga võidakse otsustada Vennrok
+Group OÜ õiguste ja kohustuste üle. Maksuotsuse tühistamine kohtu poolt Smartlink OÜ-d
+puudutavas osas ei too vahetult kaasa muutusi Vennrok Group OÜ maksukohustustes.
+Samuti ei ole põhjendatud kaebaja taotlus OÜ-de Smartlink ja Vennrok Group töötajate
+kaasamiseks. Asjaolu, et need isikud kuulati maksumenetluses üle kolmanda isikuna (MKS §
+43 p 3), ei tähenda, et need isikud peaks ka kohtumenetlusse kolmanda isikuna kaasama.
+Praeguses asjas tehtava otsusega nende isikute õiguste ja kohustuste üle ei otsustata.
+Lisaks märgib ringkonnakohus, et alusetu on ka kaebaja etteheide maksuhaldurile, et see ei
+kaasanud kolmandaid isikuid menetlusse õigeaegselt, vaid alles pärast kontrollakti koostamist.
+OÜ Smartlink saab oma kaebuses tugineda vaid enda õiguste rikkumisele (HKMS § 44 lg 1,
+riigivastutuse seaduse § 3 lg 1 p 1). Kolmanda isiku ärakuulamisõiguse ja teiste menetluslike
+õiguste eesmärk ei ole haldusakti adressaadi, vaid üksnes kolmanda isiku enda huvide kaitse.
+Kolmas isik ei ole kohustatud enda ärakuulamisõigust kasutama selleks, et tagada adressaadi
+jaoks soodsa haldusakti andmine (Riigikohtu lahend nr 3-3-1-55-13, p 20).
+10. Toimikust nähtub, et kaebaja esitas 20.10.2015 (VI kd, tl 44-46p) ning 28.10.2015 (VI kd,
+tl 53-55) taotlused kohtuistungi edasilükkamiseks. Halduskohus jättis taotlused vastavalt
+21.10.2015 ja 29.10.2015 määrustega rahuldamata. Kohus leidis, et olukorras, kus kohtuistungi
+aeg oli kaebajale rohkem kui kolm kuud ette teada, ei ole kaebaja esindaja viibimine välismaal
+ega kaks päeva enne istungi toimumist uue esindajaga kliendilepingu sõlmimine piisavad alused
+kohtuistungi aja muutmiseks. Ringkonnakohus nõustub halduskohtuga. Kohus peab lahendama
+asja mõistliku aja jooksul (HKMS § 2 lg 2), mistõttu võib kohus kohtuistungi aega muuta vaid
+mõjuval põhjusel (HKMS § 128 lg 1). Kliendilepingu lõpetamine algse esindajaga toimus
+kaebaja soovil (T. Eipre 26.10.2015 teade, IV kd, tl 50-52). Vahetades esindajat vahetult enne
+istungit, mille toimumise aeg oli kaebajale mitu kuud ette teatatud, võttis kaebaja teadlikult
+riski, et uus esindaja ei jõua asja materjalidega enne istungit piisavalt põhjalikult tutvuda.
+Sellises olukorras ei pea kohus kohtuistungi aega muutma ning kohtuistungi edasilükkamisest
+keeldumine ei ole käsitatav kaebeõiguse piiramisena. Praeguses asjas oli menetlusosalistele
+tagatud tõhus ja võrdne võimalus esitada ja põhjendada oma seisukohti ning vaielda vastu teiste
+menetlusosaliste seisukohtadele või toetada neid (HKMS § 2 lg 6).
+11. Kaebaja arvates jättis halduskohus põhjendamatult rahuldamata tema taotluse vastustaja
+esitatud tõendite tagastamiseks. Kaebaja hinnangul ei ole selge, milliste tõenditega vastustaja
+oma väiteid seostab. HKMS § 122 lg 2 p 5 kohaselt nõuab kohus eelmenetluses vastustajalt
+välja haldusmenetluse toimiku või haldusmenetluses kogutud dokumendid. Sellise nõude esitas
+halduskohus vastustajale 13.10.2014 määruses. Vastustaja täitis kohtu nõude ning esitas kohtule
+maksumenetluses kasutatud tõendid. Halduskohus on oma 19.10.2015 määruses, millega jättis
+rahuldamata kaebaja taotluse vastustaja esitatud tõendite tagastamiseks, kohtupraktikale
+(Tallinna Ringkonnakohtu 20.05.2015 otsus haldusasjas nr 3-13-1724) viidates õigesti
+märkinud, et halduskohtul ei ole võimalik asja sisuliselt õigesti lahendada, kui ta ei tutvu
+haldusakti aluseks olevate tõenditega. Kui vastustaja esitab haldusmenetluse materjalid kohtule
+tervikuna, saab viimane ise hinnata, millised dokumendid on asja lahendamiseks olulised.
+Tõendite valikulise esitamise korral ei pruugi kohus saada objektiivset ettekujutust
+haldusmenetluses toimunust. Ringkonnakohtule ei nähtu, et vastustaja oleks kohtule esitanud
+ilmselgelt asjasse puutumatuid dokumente, vaid on selge, et tegemist on tõenditega, millel
+põhinevad kontrollakt ja maksuotsus. Seda arvestades oleks ebamõistlik nõuda, et vastustaja
+selgitaks iga tõendi (mida on kokku üle kolmesaja) kohta, mis asjaolu ta sellega tõendada
+soovib. Seejuures on tõendite nimekirjas iga dokumendi juurde märgitud maksuotsuse ja/või
+kontrollakti lehekülg, kus vastavale tõendile on tuginetud, mistõttu on põhjendamatu kaebaja
+
+                                                                                         8(16)
+                                                                                       3-14-52233
+
+väide, et maksuotsusest ja kontrollaktist pole võimalik aru saada, milliste tõenditega vastustaja
+oma seisukohti seostab. On tõsi, et vastustajal jäi koos vastusega esitamata OÜ-le Smartlink
+koostatud kontrollakt (vastustaja vastusele olid lisatud vaid OÜ Smartlink kontrollakti lisad
+ning Vennrok Group OÜ-le koostatud kontrollakt), kuid selle dokumendiga sai kaebaja juba
+maksumenetluses tutvuda. Seejuures oli kaebajal kontrollaktile eriarvamuse esitamiseks aega
+kokku umbes neli kuud. Asjaolu, et kaebaja uuele volitatud esindajale jäi enne kohtuistungit
+kontrollaktiga tutvumiseks liiga vähe aega, ei ole halduskohtu otsuse tühistamise aluseks.
+12. Vastavalt kaebaja taotlusele koostas halduskohus kohtuistungi protokolli tavakorras.
+Kaebaja heidab halduskohtule ette, et see rahuldas tema protokolli parandamise taotluse oma
+30.11.2015 määrusega vaid ühe paranduse osas ning jättis muus osas taotluse rahuldamata.
+Kaebaja arvates ei ole kohtuistungi protokollist kõik kaebaja seisukohad arusaadavad.
+Ringkonnakohus märgib, et kohtuistungi protokoll ei ole stenogramm, vaid selles märgitakse
+menetlusosaliste seisukohtade ja vastuväidete põhisisu ulatuses, milles see ei ole kajastatud
+kohtule esitatud kirjalikes avaldustes (HKMS § 85 lg 1 p 7). Halduskohtu istungi protokoll
+vastab HKMS § 85 nõuetele. Ringkonnakohtul ei ole mõistlikku põhjust arvata, et kohtuistungi
+protokollis kaebaja taotletud paranduste tegemata jätmine oleks viinud ebaõige lahendi
+tegemiseni. Kohtuistung on helisalvestatud ning ka teistel asja menetlevatel kohtutel on
+võimalik vastava helisalvestisega tutvuda.
+13. Ringkonnakohus ei nõustu kaebaja seisukohaga, et halduskohus rikkus HKMS § 157 lõikeid
+1–4 ja § 158 lg-t 1, jättes tõendid kohtuistungil uurimata.
+HKMS § 157 kohaselt saab kohus otsust tehes tugineda vaid sellistele tõenditele, mis on
+kogutud lahendatavas asjas, mida pooltel oli võimalik uurida ning mida kohus uuris
+kohtuistungil, kui asi vaadati läbi istungil, v.a sama paragrahvi lg-s 4 sätestatud erand. HKMS
+§ 157 lg-st 3 tuleneb, et kui asi vaadati läbi kohtuistungil, ei või kohus oma otsust rajada
+tõendile, mida istungil ei uuritud. HKMS § 157 lg 4 sätestab, et kui tõendit uuriti ja hinnati
+eelnevas haldusmenetluses, sealhulgas vaidemenetluses, võib kohus jätta tõendi uuesti uurimata
+ja hindamata, välja arvatud juhul, kui kaebaja vaidlustab haldusaktis või vaideotsuses tuvastatud
+asjaolu ning kohus peab tõendi uut uurimist ja hindamist vajalikuks.
+HKMS § 157 lg-st 3 ei tulene kohtule tingimusteta kohustust vaadelda kõiki toimiku materjale
+istungil ega lugeda ette toimikus olevate tõendeid – välja arvatud juhul, kui asjas omab
+tähendust etteloetava avalduse sõnastus või kui kohus peab seda muul põhjusel vajalikuks
+(TsMS § 349 lg 2 ja HKMS § 129 lg 3). Kaebajale olid kõik asjas kogutud tõendid enne istungit
+ja samuti istungisaalis kättesaadavad ning ta ei ole täpsemalt selgitanud, milliseid tõendeid ja
+miks oli tingimata vaja vahetult kohtuistungil uurida – näiteks, kas tema arvates on põhjust
+kahelda mõne tõendi usaldusväärsuses. Liiatigi ei taotlenud kaebaja ei halduskohtus ega ka
+ringkonnakohtus kohtuistungi pidamist, mööndes sellega, et kõigi asjas kogutud tõendite vahetu
+uurimine kohtuistungil ei ole asja õigeks lahendamiseks vajalik. Eelnevat arvestades ei ole
+halduskohtu poolt kohtuistungil tõendite vahetu hindamata jätmine kohtuotsuse tühistamise
+aluseks.
+                                                II
+14. Ringkonnakohus nõustub halduskohtuga, et etteteatamata vaatluse läbiviimine oli
+õiguspärane. MKS § 72 lg 3 teise lause järgi ei teatata vaatluse läbiviimisest ette kiireloomulistel
+juhtudel või kui ette teatamine võib ohustada vaatluse eesmärgi täitmist. 21.04.2010 korralduses
+nr 12.2-3/3407-1 (I kd, tl 101-101p) on põhjendatud, miks ei ole võimalik vaatluse läbiviimisest
+maksukohustuslasele ette teatada. Arvestades maksuhaldurile laekunud infot, oli praegusel
+juhul põhjendatud alus arvata, et vaatlusest etteteatamise korral võib olukord
+maksukohustuslase tegevuskohas vaatluse läbiviimise ajaks muutuda. Kaebaja väide, et
+
+                                                                                              9(16)
+                                                                                    3-14-52233
+
+vaatluse nime all teostati kaebaja tegevuskohas läbiotsimine, on alusetu. Kaebaja ei ole
+nimetanud selliseid vaatluse ajal maksuhalduri poolt teostatud toiminguid, mis viitavad
+läbiotsimisele. 22.04.2010 vaatluse protokollist (III kd, tl 41-41p) nähtub, et maksuhalduri
+ametnikud viisid läbi toiminguid, mis on loetletud MKS § 72 lg-s 5 ning kaebaja seaduslik
+esindaja vaatlusele mingeid vastuväiteid ei esitanud.
+15. Halduskohus leidis õigesti, et väärteomenetluses kogutud tõendite kasutamine
+maksumenetluses ei ole keelatud. Süüteomenetluses kogutud tõendid võivad olla tõenditeks
+haldusmenetluses, kui nende tõendite lubatavust ei välista haldusmenetluse seadus või vastavat
+valdkonda reguleeriv muu menetlusseadus, nt MKS (vt ka Riigikohtu lahend nr 3-3-1-9-15, p-
+d 15 ja 19). Selles vaidluses ei ole tegemist jälitustoiminguga saadud teabega, mille
+kasutamiseks maksumenetluses peab olema eraldiseisev seaduslik alus. Tõendamise
+üldreeglitest tulenevalt on süüteomenetluses kogutud tõendite kasutamiseks maksumenetluses
+eelkõige oluline, et tõendid oleksid vastavas menetluses põhimõtteliselt lubatavad ja kogutud
+seaduse nõudeid järgides (vt ka Tallinna Ringkonnakohtu 15.10.2015 otsus haldusasjas nr 3-
+12-1797). Need tingimused on praegusel juhul täidetud: läbiotsimine toimus kohtu loa alusel
+ning isikute ütlused ja dokumentaalsed tõendid koguti väärteomenetluse reegleid järgides.
+Kaebuses viidatud Riigikohtu lahendis nr 3-3-1-2-03 polnud selge, millise kriminaalasja
+menetluses võeti läbiotsimisel ära dokumendid, mis olid tõenditeks haldusmenetluses ning
+dokumentide äravõtmise eesmärgiks oli Riigikohtu hinnangul hoopis haldusmenetluse
+läbiviimine. Praeguses asjas sellise olukorraga tegemist ei ole. Asjaolu, et väärteomenetlus
+lõpetati hiljem aegumise tõttu, ei muuda läbiotsimist tagantjärele õigusvastaseks ega takista
+väärteomenetluses kogutud tõendite kasutamist maksumenetluses. Kuna kõik tõendid koguti
+seaduse nõudeid järgides, ei ole maksuotsuse õiguspärasuse seisukohalt oluline, milline osa
+maksuotsuses viidatud tõenditest on kogutud maksumenetluse ja milline osa väärteomenetluse
+raames.
+16. Ringkonnakohus märgib lisaks, et kaebaja väide, justkui poleks võimalik eristada, millises
+menetluses on üks või teine tõend kogutud, on ka sisuliselt põhjendamatu. Kontrollakti (VI kd,
+tl 59-101) p-s 2.1 on märgitud, mis tõendid koguti 22.04.2010 vaatlusel ning mis tõendid
+väärteomenetluse raames 04.03.2011 toimunud läbiotsimisel. Väärteoasjas koostatud vaatluse
+protokollis (IV kd, tl 113-121p) on loetelu dokumentidest (failidest), mis saadi läbiotsimise
+käigus ära võetud arvutist. Selles nimekirjas (vaatluse protokolli lk 7) on muu hulgas ka
+sõidupäevikud, mille osas kaebaja halduskohtu istungil väitis, et on ebaselge, mis menetluses
+need on kogutud. Samuti on kontrollakti põhjendavas osas tõenditele viidates järjekindlalt
+märgitud, millal ja millises menetluses vastavad tõendid koguti (vt nt kontrollakti lk 11-13, 25,
+35-36).
+17. Kaebaja arvates rikkus maksuhaldur uurimispõhimõtet sellega, et ei võtnud seletusi
+Vennrok Group OÜ juhatuse liikmetelt – näiteks võeti korduvalt selgitusi MKilt, kuid seda
+üksnes OÜ Smartlink esindajana. Ringkonnakohtu hinnangul ei ole maksuhaldur
+uurimispõhimõtet rikkunud. Kaebaja etteheide, miks ei küsitud OÜ Smartlink juhatuse
+liikmetelt 22.04.2010 suulisi selgitusi võttes midagi Vennrok Group OÜ kohta, on
+põhjendamatu. Maksuhaldur oli äsja alustanud kontrolli OÜ Smartlink suhtes, keda
+maksuhaldur kahtlustas algselt nn ümbrikupalga maksmises, ning alles pärast esmast tõendite
+kogumist ja uurimist selgus vajadus uurida ka Vennrok Group OÜ-d, kelle suhtes algatati
+üksikjuhtumi kontroll 07.12.2010 korraldusega nr 12.2-3/8218-1 (I kd, tl 102-102p).
+20.01.2011 maksukohustuslase suuliste seletuste protokollist (III kd, tl 1-6) nähtub, et MKilt
+küsiti muu hulgas ka OÜ SmartLink Group kohta, mis oli Vennrok Group OÜ varasem ärinimi.
+18. Kaebaja hinnangul kestis maksumenetlus ebamõistlikult kaua ning seetõttu peaks
+maksuotsuse tühistama. Ringkonnakohus märgib, et isegi kui selle kaebaja seisukohaga
+
+                                                                                         10(16)
+                                                                                    3-14-52233
+
+nõustuda, siis õigusvastane viivitus maksumenetluses ei tingi maksuotsuse õigusvastasust ja
+tühistamist, kui maksuotsus on tehtud aegumistähtaja jooksul ning viivitus ei saanud mõjutada
+otsuse sisu (HMS § 58). Riigikohus on leidnud, et tühistamisnõude ülesanne ei ole
+pikaleveninud haldusmenetluse kompenseerimine. See oleks vastuolus halduse seaduslikkuse
+põhimõttega. Isik ei saa nõuda halduselt seaduse rikkumist kompensatsiooniks menetluse
+venimise eest. Menetlustähtaja, mis eeldab maksukohustuslase käitumises tahtluse tuvastamist,
+jooksul maksuotsuse tegemise õiguspärasuses ja tahtluse olemasolus saab veenduda vaid
+maksuotsuse sisulise kohtuliku kontrolli tulemusena. Tahtluse hindamist kohtus ei raskenda
+maksumenetluse venimine. Kui maksuhaldur on tahtluse teinud kindlaks valesti, tuleb
+maksuotsus niikuinii tühistada (Riigikohtu lahend nr 3-3-1-78-14, p 18). Kui maksuhaldur on
+maksumenetlusega ebamõistlikult viivitanud, on maksukohustuslasel võimalik taotleda
+maksuhaldurilt ebamõistliku menetlusaja osas intressinõude kustutamist MKS § 114 lg 3 alusel
+(samas, p 21). Ringkonnakohtule ei nähtu, et menetluse venimine oleks otsuse sisu mõjutanud.
+19. MKS § 98 lg 1 järgi on maksusumma määramise aegumistähtaeg kolm aastat. Maksusumma
+tahtliku tasumata või kinni pidamata jätmise korral on maksusumma määramise aegumistähtaeg
+viis aastat. Aegumistähtaeg algab selle maksudeklaratsiooni esitamise tähtpäevast, mida ei
+esitatud või milles esitatud andmete alusel maksusumma valesti arvutati. Pärast aegumistähtaja
+möödumist ei või selles asjas maksuotsust teha ega muuta või kehtetuks tunnistada selles
+maksuasjas varem tehtud maksuotsust (MKS § 98 lg 4).
+20. Praegusel juhul on maksuotsus tehtud pärast kolmeaastase aegumistähtaja möödumist.
+Kohtupraktika kohaselt peab maksuhaldur sellisel juhul maksusumma määramisel tegema
+kindlaks maksukohustuslase tahtluse maksusumma tasumata jätmisel. Halduskohtu ülesanne ei
+ole tuvastada sellistel juhtudel tahtlust, vaid kontrollida, kas MTA on tahtluse tuvastanud
+õiguspäraselt. Pärast kolmeaastase aegumistähtaja möödumist antava maksuotsuse faktiline
+alus hõlmab ka asjaolusid, milles väljendub MKS § 98 lg-s 1 sätestatud tahtlus. Seega peab
+maksuhaldur maksuotsuses põhjendama oma hinnangut, miks ta leiab, et maksusumma
+tasumata jätmine oli tahtlik (vt nt Riigikohtu lahendeid asjades nr 3-3-1-54-11 (p-d 11-12) ja 3-
+3-1-9-12 (p 24)). Võlaõigusseaduse § 104 lg 5 kohaselt seisneb tahtlus õigusvastase tagajärje
+soovimises. Maksuhalduril tuleb maksuotsuses põhjendada oma hinnangut, miks ta leiab, et
+maksukohustuslane soovis õigusvastaste tagajärgede saabumist (Riigikohtu lahend nr 3-3-1-38-
+12, p 14). Seejuures tuleb maksukohustuslase tahtlust hinnata iga tehingu osas eraldi (samas, p
+16).
+21. Maksuotsuses on asutud seisukohale, et kaebaja jättis maksud tasumata tahtlikult, mistõttu
+kohaldas maksuhaldur viieaastast aegumistähtaega. Kaebaja arvates ei ole maksuotsuses
+tahtlust aga piisavalt põhjendatud, mistõttu oli maksusumma määramine enne maksuotsuse
+tegemist aegunud. Järgnevalt hindab ringkonnakohus, kas kaebaja tahtlus on iga maksuliigi või
+tehingu osas tuvastatud.
+22. Ringkonnakohus nõustub halduskohtuga, et MKS §-le 84 tuginedes võib ühe isiku tehingute
+ja sellega kaasneva maksukohustuse omistada teisele isikule, kelle kontrolli ja juhtimise all
+esimene tegutses. MKS § 84 sätestab, et kui tehingu või toimingu sisust ilmneb, et see on tehtud
+maksudest kõrvalehoidumise eesmärgil, kohaldatakse maksustamisel sellise tehingu või
+toimingu tingimusi, mis vastavad tehingu või toimingu tegelikule majanduslikule sisule.
+Riigikohtu praktika järgi on MKS § 84 kohaldamine õigustatud juhul, kui tegemist on
+tehingutega, millel puudub majanduslik sisu ning mille eesmärk on vältida maksude tasumist
+(Riigikohtu lahendid nr 3-3-1-23-09 (p 12); nr 3-3-1-15-11 (p 12); 3-3-1-79-11 (p 18)).
+23. Maksuotsuses (p 1.1) ja kontrollaktis (p-d 2.2.1, 2.2.2, 2.2.3) tuvastatud asjaolude põhjal
+tuleb nõustuda vastustajaga, et OÜ-sid Smartlink ja Vennrok Group saab kontrollitaval
+
+
+                                                                                         11(16)
+                                                                                      3-14-52233
+
+perioodil lugeda üheks majandusüksuseks, mida kontrollis OÜ Smartlink. Vennrok Group OÜ-
+l puudusid majandustegevus ja vahendid teenuse osutamiseks. Samuti leidis tuvastamist, et
+Vennrok Group OÜ TSD-del kajastatud töötajad olid tegelikult OÜ Smartlink töötajad. Seega
+ei saanud Vennrok Group OÜ kaebajale IT-alaseid teenuseid osutada. Kaebaja oli äriühingute
+kattuvate juhatuse liikmete kaudu sellest teadlik. Sellest järeldub, et kaebaja kajastas teadlikult
+oma käibemaksuarvestuses Vennrok Group OÜ arveid, mis ei kajastanud tegelikke
+majandustehinguid (maksuotsuse p 2.1.4.1). Asjaolu, et Vennrok Group OÜ kontolt tehti
+väljamakseid töötajatele ja MTA-le, ei kinnita Vennrok Group OÜ iseseisvat majandustegevust,
+kuna maksumenetluses tuvastati, et Vennrok Group OÜ pangakontot kasutati üksnes selleks, et
+jätta muljet, nagu oleks osade OÜ Smartlink töötajate puhul tegemist Vennrok Group OÜ
+töötajatega. Vennrok Group OÜ ainus klient oli OÜ Smartlink, kes kandis Vennrok Group OÜ-
+le raha, et see saaks töötajatele palka maksta. Vennrok Group OÜ kontolt ei nähtu tavapärasele
+majandustegevusele viitavate kulutuste tegemist. Töövõtuleping (IV kd, tl 5-8) ja Vennrok
+Group OÜ arved (IV kd, tl 9-18) on vormistatud tegelikest asjaoludest eksliku mulje loomiseks.
+24. Maksuotsuse p-s 1.2 ja kontrollakti p-s 2.2.5.2 on maksuhaldur loetlenud asjaolud, mis tema
+arvates kinnitavad OÜ Smartlink tahtlust saada maksueelist. Maksueelise saamine on praegusel
+juhul ilmne: teenuse ostmisel Vennrok Group OÜ-lt suurenes kaebajal maha arvatav
+sisendkäibemaks ning samuti vabanes kaebaja töötasude maksmisega kaasnevatest
+maksukohustustest. Sellest, et maksukohustus tekkis Vennrok Group OÜ-l, ei saa järeldada
+maksueelise puudumist. Äriregistri andmetel (seisuga 15.08.2016) on Vennrok Group OÜ-l
+maksuvõlg alates 10.05.2010, mis näitab, et Vennrok Group OÜ jättis osa maksudest tasumata.
+Kontrollakti p-st 2.2.4 selgub, et kaebaja juhatuse liikmed on korduvalt kasutanud skeemi, kus
+OÜ-ga Smartlink seotud äriühingutes jäetakse maksukohustused täitmata ning maksuvõlgadega
+äriühing müüakse Läti kodanikele või kustutatakse äriregistrist. Eeltoodut arvestades on
+põhjendatud maksuhalduri seisukoht, et kaebaja tahtlik tegevus oli suunatud sellele, et
+vähendada oma maksukoormust ning jätta potentsiaalne maksukohustus Vennrok Group OÜ
+kanda.
+25. Maksuhalduri kogutud tõenditest nähtub, et lisaks eelnevale jättis kaebaja osa töötajatele
+makstud töötasust TSD-del deklareerimata, nimetades seda rendi- või litsentsitasuks.
+Tõenäoliselt võiks ka töötajatele regulaarselt tasutud autokompensatsioonid lugeda osaliselt
+palgatuluks, kuid selles osas on maksuhaldur rakendanud maksukohustuslase suhtes soodsamat
+lähenemist, maksustades need erisoodustusena. Maksuhalduri seisukohti kinnitavad muu hulgas
+töötajate selgitused (iseäranis 22.04.2010 antud selgitused, mille andmisel polnud töötajaid
+mõjutatud), 22.04.2010 toimunud vaatluse käigus ära võetud lepingud ning asjaolu, et OÜ
+Smartlink kompenseeris kulusid ja pidas puhkusearvestust ka töötajate kohta, keda kajastas oma
+TSD-del Vennrok Group OÜ, mitte OÜ Smartlink. Maksuhaldur on piisavalt põhjendanud,
+miks ei saa rendi- ja litsentsilepinguid maksustamisel arvesse võtta (maksuotsuse p 1.4,
+kontrollakti 2.3.1). Tegemist on tagantjärele, pärast 22.04.2010 vaatluse toimumist vormistatud
+lepingutega (töölepingu lisadega). Sarnaselt maksuhaldurile ei pea ringkonnakohus asjas
+kogutud tõendeid kogumis hinnates usutavaks, et kaebaja rentis töötajatelt kasutatud arvuteid,
+makstes nende väärtust arvestades ebamõistlikult kõrget renditasu. Kaebaja nimetas osa
+makstavast palgast renditasuks, et maksta vähem tööjõumakse. Sama on põhjust arvata ka
+litsentsitasude kohta.
+26. Eelnevat kokku võttes järeldub, et töötajatele tehtud väljamakseid (sh isikliku sõiduauto
+kasutamise hüvitis ehk autokompensatsioon üle piirmäära kokku summas 113 991 krooni) ja
+Vennrok Group OÜ nimel vormistatud arveid puudutavas osas oli tegemist tahtliku
+väärarvutusega. Ka muude erisoodustuste (kulutused töötajate toitlustamisele, spordile ja
+kultuuriüritustele summas 25 647 krooni) osas nõustub ringkonnakohus maksuhalduriga, et
+need on tahtlikult deklareerimata jäetud. Maksuotsuses on vastustaja oma seisukohta piisavalt
+
+                                                                                           12(16)
+                                                                                      3-14-52233
+
+põhjendanud. Ringkonnakohus ei pea usutavaks, et süstemaatiliselt ja kokku sedavõrd suures
+summas erisoodustuste deklareerimata jätmine on tingitud hooletusest.
+27. Lisaks tehingutele Vennrok Group OÜ-ga (käibemaks summas 185 758 krooni) määras
+maksuhaldur maksustamisperioodide oktoober 2009 kuni märts 2010 osas kaebajale tasumisele
+kuuluvat käibemaksu ka seoses tehingutega Brightway Consulting OÜ-ga (2400 krooni),
+Nordea Finance Estonia AS-iga (50 078,70 krooni), Jäneda Mõis OÜ-ga (333,33 krooni) ja
+Adrianto OÜ-ga (2370 krooni). Samuti suurendas maksuhaldur 20% määraga maksustatavat
+käivet kokku 25 565 krooni (sellelt arvestatud käibemaks 5113 krooni) võrra seoses omatarbe
+suurendamisega 19 998 krooni võrra (käibemaks 4000 krooni) ning deklaratsiooni võrdlemisel
+käibeandmikuga (käibemaks 1113 krooni).
+28. Maksuhaldur ei ole hinnanud tahtlust iga eelnimetatud juhtumi osas eraldi, vaid on
+maksuotsuse lk-l 25 kokkuvõtvalt märkinud, et „maksuotsuse p 2.1 osas tõendeid kogumis
+hinnates on usutav, et OÜ Smartlink kajastas teadlikult esitatud KMD-del valeandmeid ning
+hoidus seeläbi tahtlikult kõrvale maksude tasumisest“. Maksuotsuses ei ole ka väidetud, et kõik
+selles käsitletud tehingud olid osa maksupettusest, millisel juhul saaks teha järelduse, et tahtlus
+maksudest kõrvale hoiduda hõlmab kõiki tehinguid. Ringkonnakohus märgib, et üksnes
+asjaolust, et maksumenetluses leidis tuvastamist, et kaebaja hoidus kõrvale tööjõumaksude
+tasumisest ning kajastas teadlikult oma maksuarvestuses Vennrok Group OÜ võltsarveid, ei saa
+automaatselt järeldada, et ka muude tehingute osas deklareeriti käivet ja makse tahtlikult valesti.
+29. Ringkonnakohus nõustub maksuhalduri seisukohaga, et Jäneda Mõis OÜ (II kd, tl 181) ja
+Adrianto OÜ (II kd, tl 182) arvete alusel sisendkäibemaksu maha arvamisel oli tegemist tahtliku
+tegevusega. Saunaruumide rentimine laupäevasel päeval (Jäneda Mõis OÜ) või
+sukeldumiskoolitus töötajatele (Adrianto OÜ) ei ole tüüpilised ettevõtlusega seotud kulutused.
+Kaebaja ei andnud maksumenetluses veenvaid selgitusi, mis kinnitaks vastupidist. Maksuhaldur
+on piisavalt põhjendanud, miks ta leiab, et tegemist ei ole ettevõtlusega seotud koolitus- või
+vastuvõtukuludega. Nendelt äriühingutelt ostetud teenuste puhul on ilmne kaebaja teadlikkus,
+et tegemist ei ole mitte ettevõtlusega seotud kuludega, vaid töötajatele tehtud erisoodustusega,
+mistõttu ei saa nende äriühingute väljastatud arvete alusel sisendkäibemaksu maha arvata.
+Ringkonnakohus ei pea usutavaks, et Jäneda Mõis OÜ ja Adrianto OÜ arvete alusel makstud
+summad deklareeriti ettevõtluskuludena ning jäeti erisoodustusena deklareerimata hooletusest.
+Kaebaja korduv sarnane tegevus kontrolliperioodil viitab tahtlusele vältida maksukohustust.
+30. Kontrollakti p-s 3.1.4.2, milles analüüsitakse tehingut Brightway Consulting OÜ-ga,
+viidatakse ühemõtteliselt hooletusele – Brightway Consulting OÜ ei olnud
+käibemaksukohustuslasena registreeritud ning tavapärast hoolsuskohustust täites (kontrollides,
+kas nimetatud äriühing on käibemaksukohustuslaste registris registreeritud) oleks kaebaja
+sellest teada saanud. Maksuhaldur ei ole väitnud, et kaebaja teadis mingil põhjusel ka ilma
+registrist kontrollimata, et tehingupartner ei ole käibemaksukohustuslasena registreeritud,
+mistõttu ei oleks nimetatud äriühing tohtinud arvele (II kd, tl 176) märkida käibemaksu ega
+kaebaja seda sisendkäibemaksuna maha arvata. Ka asjaolust, et arvele on märgitud vale
+käibemaksusumma (18%), ei saa järeldada kaebaja teadmist. Käibemaksumäära oli tõstetud
+20%-le alates 01.07.2009 ehk ligikaudu pool aastat enne arvele märgitud kuupäeva (teenust
+osutati vahemikus 28.09.–28.11.2009) ning seoses seadusemuudatusega kehtestati
+üleminekusätted, mis võimaldasid teatud juhtudel arvestada käibemaksu vanas määras ka peale
+01.07.2009 (riigi 2009. aasta teise lisaeelarve seadusega seonduvalt teiste seaduste muutmise
+seaduse rakendamise seadus). Seetõttu polnud tegemist ilmselge veaga, mida kaebaja kindlasti
+märkama oleks pidanud.
+
+
+
+
+                                                                                           13(16)
+                                                                                        3-14-52233
+
+31. Samuti jääb selgusetuks, miks järeldab maksuhaldur kaebaja tahtlust rikkuda maksuseadust
+asjaolust, et kaebaja käibeandmiku andmetel oli märtsi 2010 käive 5567 krooni (käibemaks
+1113 krooni) võrra suurem kui deklareeritud käive. Maksuotsusest ega kontrollaktist ei nähtu,
+et maksuhaldur oleks hinnanud, millest võis kõnealune erinevus tuleneda. Vastaval perioodil
+deklareeris kaebaja käivet kokku summas 1 318 517 krooni ja käibemaksu 263 703 krooni.
+Kogukäibega võrreldes on tegemist üsna väikese summaga ning ei saa välistada, et erinevus on
+tingitud eksimusest või hooletusest.
+32. Maksuotsuse p 2.1.1.1 kohaselt deklareeris kaebaja kontrolliperioodil tööandja vara
+kasutamist kokku 24 000 krooni, kuid jättis deklareerimata teenuse omatarbe ehk ametiauto
+kasutamise isiklikuks otstarbeks. Sellega seoses suurendas maksuhaldur omatarvet summas
+19 998 krooni ning arvestas käibemaksu 4000 krooni. Samas ei ole maksuhaldur viidanud
+asjaoludele, millest ta järeldab, et tegemist oli tahtliku tegevusega. Ka siinkohal ei saa välistada,
+et omatarbe deklareerimata jätmine on tingitud hooletusest.
+33. OÜ Smartlink kajastas ettevõtluskulude hulgas Nordea Finance Estonia AS 24.03.2010 ja
+25.03.2010 arvete alusel sõiduauto Audi Q7 eest tasutud summasid kokku 257 434,45 krooni.
+Maksuhaldur tuvastas, et nimetatud sõiduki omanikuks on registrisse kantud OÜ Duubel 3
+Grupp (alates 20.12.2013) ning kasutajateks olid märgitud kolmandad isikud (alates 15.10.2010
+kuni 20.12.2013), kes ei ole kaebajaga seotud (II kd, tl 177-179). Tasumised sõiduki eest on
+kaebaja oma raamatupidamises kajastanud kulude, mitte nõuete all. Ringkonnakohus märgib,
+et ka selle tehingu puhul ei ole maksuhaldur toonud välja asjaolusid, mis viitaksid kaebaja
+tahtlusele hoiduda kõrvale maksude tasumisest. Tuvastatud ei ole, et kaebajal puudus algusest
+peale soov kasutada kõnealust sõidukit ettevõtluse tarbeks. Üksnes sellest, et maksumenetluse
+ajaks olid sõiduki kasutajateks kolmandad isikud, ei saa teha vastupidist järeldust.
+34. Maksuotsuse kohaselt on kaebaja kajastanud oma raamatupidamises eGovernance
+Laboratory OÜ väljastatud arveid summas 7920 krooni, koos käibemaksuga 9504 krooni.
+Kaebaja on eGovernance Laboratory OÜ-le tasunud pangaülekandega 6949,25 krooni, kuid
+raamatupidamises ei ole ühtegi dokumenti nimetatud ettevõttega teostatud tehingute kohta.
+Maksuhalduri hinnangul on kaebaja TSD-del teadlikult esitanud valeandmeid ning jätnud
+tulumaksu tasumata. Ringkonnakohus selle seisukohaga ei nõustu. On ilmne, et tehingu
+algdokumentide säilitamata jätmisega rikub äriühing hoolsusnõudeid. Hoolsusnõuete eiramisest
+ei tulene aga järeldus, et maksude tasumisest hoiduti tahtlikult (Riigikohtu lahendid asjades
+nr 3-3-1-74-09 (p 12) ja 3-3-1-9-12 (p 23)). Tahtlusele viia raha ettevõttest maksuvabalt välja
+viitaks näiteks see, kui oleks tuvastatud, et eGovernance Laboratory OÜ ei müünud ega
+saanudki müüa kaebajale kaupu või teenuseid (näiteks majandustegevuse puudumise tõttu) ja
+kaebaja oli sellest teadlik. Maksuhaldur ei ole selliseid asjaolusid esile toonud.
+35. Maksuotsuse p-des 2.1.2 (0% määraga maksustatavad tehingud ja toimingud) ja 2.1.3
+(maksuvaba käive) on leitud, et kaebaja on ekslikult deklareerinud eluruumi üürileandmist 0%
+määraga maksustatava käibe all ning tegemist on hoopis maksuvaba käibega. Maksuotsuse p
+2.1.4.5 kohaselt on kaebaja kajastanud kontrolliperioodil esitatud KMD-del sisendkäibemaksu
+hulgas põhivara soetamisel tasutud käibemaksu kokku 16 470 krooni, kuid jätnud nimetatud
+summa kajastamata KMD informatiivsetes lahtrites 5.2. Nimetatud punktides tehtud järelduste
+alusel ei ole kaebaja maksukohustust suurendatud, mistõttu ringkonnakohus ei pea vajalikuks
+maksuotsust selles osas täpsemalt analüüsida.
+36. Kokkuvõttes tuleb tasumisele kuuluvat maksusummat vähendada järgmiste maksusummade
+osas, mille puhul on tuvastamata tahtlus ning mille määramine on seega aegunud.
+    A. Käibemaks kokku summas 56 478,70 krooni (maksuotsuse p 2.1, kontrollakti lisa 18
+       veerg 25), sealhulgas:
+
+                                                                                             14(16)
+                                                                                 3-14-52233
+
+           a) teenuse omatarbelt – 4000 krooni (maksuotsuse p 2.1.1.1);
+           b) seoses käibeandmiku andmete mittevastavusega deklareeritule – 1113 krooni
+              (maksuotsuse p 2.1.1.2)
+           c) tehingutelt Brightway Consulting OÜ-ga – 2400 krooni (maksuotsuse p 2.1.4.2);
+           d) tehingutelt Nordea Finance Estonia AS-iga – 50 078,70 krooni (maksuotsuse p
+              2.1.4.3).
+   B. Tulumaks kokku summas 81 575 krooni ettevõtlusega mitteseotud väljamaksetelt
+      (maksuotsuse p 2.2.4, kontrollakti lisa 26 veerg 7), sealhulgas:
+           a) eGovernance Laboratory OÜ-le – 9504 krooni, millelt määrati tulumaks 2526
+              krooni (maksuotsuse p 2.2.4.1);
+           b) Nordea Finance Estonia AS-ile – 297 375 krooni, millelt määrati tulumaks
+              79 049 krooni (maksuotsuse p 2.2.4.2).
+Seega tuleb maksuotsus tühistada osas, milles määrati kaebajale tasumisele käibemaksu
+summas 56 478,70 krooni ehk 3609,65 eurot ning erijuhtude tulumaksu summas 81 575 krooni
+ehk 5213,59 eurot. Kokku väheneb maksuotsuse osalise tühistamise tulemusel kaebaja
+maksukohustus 8823,24 euro võrra.
+
+                                             III
+37. Eeltoodu põhjal rahuldab ringkonnakohus apellatsioonkaebuse osaliselt ning tühistab
+halduskohtu otsuse osas, milles halduskohus jättis rahuldamata kaebuse maksuotsuse
+tühistamiseks seoses kaebajale tasumisele määratud käibemaksuga summas 3609,65 eurot ning
+erijuhtude tulumaksuga summas 5213,59 eurot. Selles osas kuulub kaebus rahuldamisele ja
+maksuotsus tühistamisele. Muus osas jääb apellatsioonkaebus rahuldamata.
+38. HKMS § 108 lg 1 kohaselt kannab menetluskulud pool, kelle kahjuks otsus tehti. HKMS §
+108 lg 2 järgi jagatakse kaebuse osalise rahuldamise korral menetluskulud proportsionaalselt
+kaebuse rahuldamisega. HKMS § 109 lg 1 sätestab, et menetluskulude väljamõistmiseks
+esitatakse kohtule enne kohtuvaidlusi menetluskulude nimekiri ja kuludokumendid. Kui
+kõrgema astme kohus muudab alama astme kohtu lahendit või teeb lahendi asja uueks
+arutamiseks saatmata, muudab ta kohtukulude jaotust (HKMS § 109 lg 4). Kohus mõistab välja
+üksnes vajalikud ja põhjendatud menetluskulud (HKMS § 109 lg 6).
+39. Kaebaja taotles I kohtuastmes menetluskulude hüvitamist kokku summas 9225 eurot, sh
+esindajatasu 8460 eurot ja riigilõiv 765 eurot. Menetluskulude kandmine on tõendatud
+(maksekorraldused VI kd, tl 108-111, 113-115, 117-119, 121; konto väljavõte VI kd, tl 138).
+Tegemist on keskmisest keerukama ja mahukama kohtuasjaga, mistõttu on põhjendatud
+tavapärasest suuremad õigusabikulud. Sellest aga ei järeldu, et kaebaja menetluskulud oleksid
+täies ulatuses põhjendatud. Esiteks on kaebuse ja muude kirjalike dokumentide koostamisele
+kulutatud aeg (48 tundi) ülemäärane, arvestades, et maksuotsuse seisukohtade sisuline analüüs
+kaebuses ja enne kohtuistungit esitatud kirjalikes avaldustes praktiliselt puudub. Teiseks on
+kaebaja menetluskulud suured osaliselt selle tõttu, et kaebaja vahetas enne kohtuistungit
+esindajat. Esindaja vahetusega seonduva kulu (ca 1000 eurot) vastustaja kanda jätmine poleks
+õiglane ega põhjendatud. Sellest tulenevalt loeb ringkonnakohus kaebaja esimese astme
+põhjendatud õigusabikuludeks 6000 eurot, s.o kokku on põhjendatud menetluskulud esimeses
+astmes 6765 eurot. Ringkonnakohus rahuldab kaebuse 14,1% (8823,24/62 531,27×100%)
+ulatuses, mistõttu kuulub vastustajalt väljamõistmisele 953,87 eurot (6765×0,141).
+
+
+
+                                                                                      15(16)
+                                                                                   3-14-52233
+
+40. Ringkonnakohtus taotleb kaebaja menetluskulude väljamõistmist summas 3150,48 eurot, sh
+esindajatasu 2400,48 eurot ja riigilõiv 750 eurot. Kulud on vajalikud ja põhjendatud ning
+menetluskulude kandmine on tõendatud (konto väljavõte VI kd, tl 184). Seega tuleb kaebaja
+teise astme kulude katteks vastustajalt välja mõista 444,22 eurot (3150,48×0,141).
+41. Kahe kohtuastme peale kokku tuleb vastustajalt kaebaja menetluskulude katteks välja
+mõista 1398,09 eurot (953,87+444,22).
+42. Vastustaja ei ole menetluskulude hüvitamist taotlenud, mistõttu jäävad vastustaja
+menetluskulud HKMS § 109 lg 1 alusel tema enda kanda.
+
+
+ (allkirjastatud digitaalselt)   (allkirjastatud digitaalselt)   (allkirjastatud digitaalselt)
+         Oliver Kask                   Villem Lapimaa                     Ruth Plaks
+
+
+
+
+                                                                                         16(16)

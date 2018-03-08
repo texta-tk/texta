@@ -1,0 +1,368 @@
+                             KOHTUOTSUS
+                                  EESTI VABARIIGI NIMEL
+
+Kohtu nimetus                       Harju Maakohus
+Kohtunik                            Liisi Vernik
+Otsuse avalikult                    17.08.2016.a, Tallinn, Kentmanni kohtumaja
+teatavakstegemise aeg ja koht
+Tsiviilasja number                  2-15-122493
+Tsiviilasi                          AS SEB Pank hagi OÜ XXXX vastu võlgnevuse
+                                    väljamõistmiseks
+Tsiviilasja hind                    1196,92 eurot
+Menetlusosalised ja nende           Hageja: AS SEB Pank (registrikood 10004252, aadress
+esindajad                           Tornimäe 2, 15010 Tallinn)
+                                    Lepinguline esindaja Aili Kuppart (e-post menetlus@seb.ee)
+                                    Kostja: OÜ XXXX (registrikood XXXX, aadress XXXX)
+                                    Seaduslik esindaja juhatuse liige XXXX(e-post XXXX)
+
+Menetluse liik                      lihtmenetlus
+RESOLUTSIOON
+
+   1. Hagi rahuldada.
+   2. Välja mõista OÜ-lt XXXX võlgnevus 933,08 eurot (üheksasada kolmkümmend kolm
+       eurot ja kaheksa senti) AS-i SEB Pank kasuks, s.o põhivõlgnevus summas 722,84 eurot
+       ja viivis summas 210,24 eurot.
+   3. Välja mõista OÜ-lt XXXX AS-i SEB Pank kasuks viivis 0,1 % päevas põhivõlalt (s.o
+       722,84 eurolt) alates 23.12.2015 kuni põhivõla tasumiseni.
+   4. Menetluskulud jätta OÜ XXXX kanda.
+   5. Välja mõista OÜ-lt XXXX menetluskuludena 200 eurot (kakssada) AS-i SEB Pank
+       kasuks, s.o hagiavalduselt tasutud riigilõiv summas 200 eurot.
+
+
+Edasikaebamise kord
+Kohus ei anna tsiviilkohtumenetluse seadustiku (TsMS) § 442 lg 10 järgi luba kohtuotsuse
+edasikaebamiseks. Kui on täidetud TsMS § 637 lg 21 sätestatud eeldused, võib kohtuotsuse peale
+esitada apellatsioonkaebuse Tallinna Ringkonnakohtule 30 päeva jooksul alates otsuse apellandile
+kättetoimetamisest, kuid mitte hiljem kui viie kuu möödumisel esimese astme kohtu otsuse
+avalikult teatavakstegemisest. Kui apellant soovib asja arutamist kohtuistungil, peab ta seda
+apellatsioonkaebuses märkima. Vastasel juhul loetakse, et ta on nõus asja lahendamisega kirjalikus
+menetluses.
+                                                                                              1 (8)
+ Kohus selgitab, et kui menetlusosaline taotleb apellatsioonkaebuse esitamisel menetlusabi, peab ta
+ seaduses sätestatud tähtaja järgmiseks tegema tähtaja kestel ka menetlustoimingu, mille tegemiseks
+ ta menetlusabi taotleb, eelkõige esitama kaebuse.
+ Kohus selgitab, et menetlustoimingut, mille tegemiseks on kehtestatud tähtaeg, võib teha tähtaja
+ viimasel päeval kuni kella 24.00-ni (TsMS § 62 lg 2).
+
+Hagi ja selle aluseks olevad asjaolud
+
+AS SEB (hageja) Pank esitas Pärnu Maakohtule maksekäsu kiirmenetluse avalduse OÜ XXXX
+(kostja) vastu võla väljamõistmiseks. Kohus tegi makseettepaneku, millele kostja esitas vastuväite.
+02.12.2015 määrusega lõpetas kohtunikuabi maksekäsu kiirmenetluse ja andis asja üle Harju
+Maakohtule menetluse jätkamiseks hagimenetluses.
+
+23.12.2015 esitas hageja kohtule hagiavalduse (tl-d 31-34). Hagiavalduses väljatoodud asjaolude
+kohaselt sõlmisid hageja ja kostja 17.03.2011 kaupmehelepingu nr XXXX, milles lepiti kokku
+koostöös kaupmehe müügikohas kaardimaksete võimaldamiseks lepingus kokkulepitud tingimustel.
+Hageja ja kostja allkirjastasid 04.06.2013 autorendi juhendi kaupmehele, millega täpsustati
+dokumentide täitmise ja kaardimaksete teostamise reegleid. Lepingu p 3.4 kohaselt kohustus kostja
+hüvitama hagejale lepingu või operatsioonireeglite rikkumisega tekitatud kahju. Lepingu p 8.3 alusel
+oli hagejal õigus tagasinõuete summad debiteerida kostja teistelt pangas asuvatelt kontodelt. Nõuete
+tasumata jätmisel kohustus kostja tasuma viivist 0,1% tasumata summalt päevas ehk 36,5% aastas.
+
+Kostja teostas 16.07.2014 esiteks kaardimakse tehingu eelautoriseeritud deposiitsummas 600 eurot
+ning teiseks lisatasuna käsitsi terminali sisestatud tehingu summas 1182,72 eurot
+autoriseerimiskoodiga XXXX, mille kaardi valdaja vaidlustas. Kaardi valdaja ei andnud oma
+nõusolekut lisatasu debiteerimiseks kaardilt. Kui kostja eraldi nõusolekut ei võtnud, siis rikkus ta
+sellega juhendi punkti 6 ning kaardi valdajal oli õigus vastav tehing vaidlustada. Samuti oli kostja
+poolt selle tehingu lisakulude summa debiteeritud kahes jaos. Sellega rikkus kostja lepingu punkti
+5.4, mille kohaselt ei tohi ostusummat jagada kaheks või enamaks tehinguks. Pank tagastas
+vaidlustatud tehingu summa kaardi valdajale ning nõudis kostjalt lepingu alusel tekkinud kahju
+hüvitamist. Kostja keeldus nõude tasumisest.
+
+Vastavalt kaupmehelepingu punktile 3.5 vastutab kaupmees (kostja) organisatsioonireeglite või
+juhendite täitmata jätmisest tekkinud kahju eest ning punkti 12.1 järgi vastutavad lepingu pooled täies
+ulatuses kahjude eest, mis tekitati teisele poolele lepingu mittetäitmise või mittenõuetekohase
+täitmisega.
+
+Vastavalt autorendi juhendi punktile 4.1 on eelautoriseerimisele keelatud juurde lisada omavastutuse
+summat ja võimalikke sõiduki kahjustuse või kaotsimineku kulusid. Samuti on keelatud teha
+lisaautoriseerimine samade võimalike kulude katteks. Kostja teostas vaidlustatud tehingu puhul
+eelautoriseerimist võimalike lisakulude katteks ehk rikkus autorendi juhendi punkti 4.1. Vastavalt
+autorendi juhendi punktile 6 on kahjustuste või lisatasude korral vajalik enne lisatasude kaardilt
+debiteerimist kaardiomanikku eelnevalt lisakulutustest teavitada, edastades talle ka
+kulusid/kahjustusi kajastava kalkulatsiooni. Kaardiomanik peab allkirjastama eraldi kirjaliku
+nõusoleku kahju hüvitamiseks tema kaardiga. Eraldi nõusolekuks ei loeta rendilepingu tekstis
+sisalduvat nõusolekut, mis on võetud kliendilt enne kahjustuste või lisakulude summa täpset
+selgumist.
+
+Kostja lepinguliste kohustuste rikkumise tagajärjel on hagejale tekkinud kahju. Tagasinõude
+laekumisel debiteeritakse kaupmehe panka automaatselt nõude summa ulatuses läbi
+kliiringsüsteemide. Hageja tõendab kahju tekkimist väljavõtetega bilansikontost ja tehingute
+kirjeldusega.
+
+
+                                                                                                  2 (8)
+Tuginedes eeltoodule palub hageja kostjalt välja mõista 933,08 eurot, millest põhinõue on 722,84
+eurot ja viivis 210,24 eurot arvestatuna kuni 22.12.2015. Samuti palub hageja kostjalt välja mõista
+viivise protsendina põhinõudest alates 23.12.2015 kuni põhinõude täitmiseni määras 36,5% aastas
+(0,1% päevas).
+
+Kostja vastus
+
+18.01.2016 esitas kostja kohtule vastuse (tl 61). Kostja hagiavalduses esitatud nõudeid ei tunnista.
+
+Kostjal on rendilepingu tagastusaktil kliendiga sõlmitud eraldi kokkulepe kokkulepitud summa maha
+arvamiseks, mis tähendab, et kostjal oli antud summa debiteerimiseks olemas kliendi nõusolek
+lisatasu debiteerimiseks tema kaardilt. Kostja ei ole rikkunud juhendi punkti 6 ning kostjal oli õigus
+summa maha arvata. Täissumma debiteerimiseks oli kliendiga allkirjastatud nõusolek olemas,
+mistõttu ei saa võtta kliendile raha tagasikandmise aluseks p 5.4. Kliendiga oli kokku lepitud, et
+kostjale jääb kahjude katmiseks enne rendiperioodi võetud deposiit ja puuduoleva summa
+debiteeritakse lisaks. Klient andis oma kirjaliku nõusoleku täissumma maha arvamiseks. Vormistatud
+dokumentatsioon saadeti ka hagejale.
+
+Kaardiomanik allkirjastas rendiauto tagastamisel kostjaga eraldi kirjaliku nõusoleku, milleks on
+rendilepingul olev tagastusakt. Selles on selgelt kirjas kokkulepe kõikide kahjustuste
+kompenseerimise kohta. Kohapeal ei olnud kostjale teada konkreetne remondisumma, sest oli
+nädalavahetus ja seepärast sai kliendiga kokku lepitud konkreetne hüvitamisele kuuluv summa.
+Kostja teeb seda tööd igapäevaselt, mistõttu on kostja remondikuludega kursis. Tegelik sõiduki
+remondikalkulatsioon, mis kostjale saadeti oli suurem kui kliendiga rendilepingus kokkulepitud
+summa ning kliendilt kostja seda vahet kinni ei pidanud. Kuupäev remondikalkulatsioonil ei oma
+tähtsust – remondiks kuluv summa sai autot tagastades märgitud rendilepingule ja sellest
+kokkulepitud summast lähtus kostja ka raha maha võtmisel. Kostja on varasemalt koguaeg selliselt
+käitunud, sest kohapeal eraldi kokkulepet mitte kinnitades jääks kostja kogu rahast ilma.
+
+Kliendi poolt hüvitamisele kuuluvat summat ei debiteeritud koheselt kiibi- või magnetribapõhise
+tehinguna, sest kostjal ei olnud sellel hetkel mobiilset terminali kaasas ja selle kaasas kandmiseks ei
+ole kostjal ka kohustust. Kliendiga sai autot tagastades kokku lepitud, et kahjustuste hüvitamiseks
+peetakse kinni jäetud deposiit ja ülejäänud summa sisestatakse ja arvatakse maha käsitsi.
+
+Kohtu põhjendused
+
+   1. Tulenevalt tsiviilkohtumenetluse seadustiku (TsMS) § 405 määras kohus asja lahendamise
+      lihtsustatud korras 07.06.2016 kirjaga. Kohus menetleb hagi oma õiglase äranägemise
+      kohaselt lihtsustatud korras, järgides üksnes käesolevas seadustikus sätestatud üldisi
+      menetluspõhimõtteid, kui tegemist on varalise nõudega hagiga ning hagihind ei ületa summat,
+      mis arvestatuna põhinõudelt vastab 2000 eurole ja koos kõrvalnõuetega 4000 eurole. Poolte
+      seisukohad on välja selgitatud kirjalikus vormis ja pooled ei ole taotlenud ärakuulamist.
+
+   2. Kohus lahendab antud asja lihtsustatud kirjeldava osaga juhindudes TsMS § 442 lg 7 ja § 444
+      lg 1. Lihtsustatud kirjeldava osa täiendamist ei saa nõuda, mistahes asjaoludel. TsMS § 444
+      lg 2 alusel, kui kohus menetleb hagi lihtmenetluses, võib ta kohtuotsuse põhjendavas osas
+      piirduda üksnes õigusliku põhjenduse ja tõendite, millele on rajatud kohtu järeldused,
+      märkimisega.
+
+   3. Kohus, tutvunud kohtule esitatud kirjalike materjalidega ning hinnanud tõendeid kogumis,
+      leiab, et hagiavaldus kuulub rahuldamisele.
+
+   4. TsMS § 5 lg 1 kohaselt menetletakse hagi poolte esitatud asjaolude ja taotluste alusel, lähtudes
+      nõudest. Nimetatud sätte lg 2 kohaselt on pooltel võrdne õigus ja võimalus oma nõuet
+                                                                                                  3 (8)
+   põhjendada ja vastaspoole esitatu ümber lükata või sellele vastu vaielda. Pool määrab ise, mis
+   asjaolud ta oma nõude põhjendamiseks esitab ja milliste tõenditega neid asjaolusid tõendab.
+   TsMS § 230 lg 1 kohaselt peab kumbki pool hagimenetluses tõendama neid asjaolusid, millele
+   tuginevad tema nõuded ja vastuväited. TsMS § 231 lg 2 järgi poolte faktilise asjaolu kohta
+   esitatud väide ei vaja tõendamist, kui vastaspool võtab selle omaks ning lg 4 järgi omaksvõttu
+   eeldatakse, kui vastaspool ei vaidlusta faktilise asjaolu kohta esitatud väidet selgesõnaliselt ja
+   vaidlustamise tahe ei ilmne ka poole muudest avaldustest.
+
+5. Kohus juhindub antud asja lahendamisel võlaõigusseaduse (VÕS) § 76 lg-st 1, mis sätestab,
+   et kohustus tuleb täita vastavalt lepingule või seadusele. VÕS § 100 järgi kohustuse rikkumine
+   on võlasuhtest tuleneva kohustuse täitmata jätmine või mittekohane täitmine, sealhulgas
+   täitmisega viivitamine. VÕS § 101 lg 1 p 1 ja p 6 alusel kui võlgnik on kohustust rikkunud,
+   võib võlausaldaja nõuda kohustuse täitmist ja rahalise kohustuse täitmisega viivitamise korral
+   viivist. Vastavalt VÕS § 108 lg 1 kui võlgnik rikub raha maksmise kohustust, võib
+   võlausaldaja nõuda selle täitmist.
+
+6. Käesoleval juhul on hageja ja kostja sõlminud 17.03.2011 kaupmehelepingu nr XXXX, milles
+   lepiti kokku koostöös kaupmehe müügikohas kaardimaksete võimaldamiseks (tlk 42-45).
+   Samuti on hageja ja kostja 04.06.2013 allkirjastanud Autorendi juhendi kaupmehele, millega
+   täpsustati dokumentide täitmise ja kaardimaksete teostamise reegleid (tlk 50-53).
+
+   Pooled vaidlevad selle üle, kas kostja on kaupmehelepingut ning autorendijuhendit rikkunud.
+
+7. Tsiviilasja materjalidest nähtuvalt koosneb hageja nõue kolmest eraldi tehingust, mis on
+   toimunud 15.06.2014, 22.07.2014 ning 16.07.2014. Järgnevalt kirjeldab kohus nimetatud
+   tehinguid eraldi, hinnates, kas kostja on oma kohustusi tehingute tegemisel rikkunud.
+
+7.1 Tehing 1 summas 600 eurot (Terminal: XXXX, Kaupmehe nimi: XXXX, Kaardi number:
+    XXXX******XXXX, Autoriseerimiskood XXXX) (15.06.2014 kviitung, tlk 86).
+
+   Hageja on leidnud, et kostja on tehingu tegemisel rikkunud autorendi juhendi p 4.1 ja 6.2
+   sooritades lisatasude ja võimalike kahjustuste hüvitamiseks eelautoriseeringu, mis on
+   15.06.2014 kaardi valdaja kaardilt debiteeritud.
+
+   Autorendi juhendi p 4.1 kohaselt on eelautoriseerimise summale keelatud lisada juurde
+   omavastutuse summat ja võimalikke sõiduki kahjustuse või kaotsimineku kulusid. Vastavalt
+   autorendi juhendi p 6.2. on rendifirmal võimalik kahjusumma kaardi valdajalt sisse nõuda,
+   kui rendiperioodi ajal renditud sõidukit kahjustatakse. Pärast intsidenti peab saama kaardi
+   valdajalt kirjaliku nõusoleku kahjustuste eest kaardiga tasumiseks. Kahjunõuded tuleb
+   käsitleda eraldi tehinguna (p 6).
+
+   Kohtu hinnangul näitab allkirja puudumine 15.06.2014 tehingu kviitungil seda, et lõpptehing
+   on sooritatud ilma kaardi füüsilise kohalolekuta. Allkirjastatud on vaid deposiidi võtmise
+   kviitung 07.06.2014.
+
+   Kostja on märkinud, et kaardiomanik allkirjastas rendiauto tagastamisel nendega eraldi
+   kirjaliku nõusoleku, milleks oli rendilepingul olev tagastusakt. Kohtu hinnangul ei saa
+   tagastusakti lugeda eraldiseisvaks kliendipoolseks kinnituseks. Allkiri on antud auto
+   tagastamise kohta, mitte selle kohta, et klient oleks nõustunud lisatasu debiteerimisega enda
+   kontolt.
+
+
+   Seega ei ole kostja tõendanud, et kaardi valdajat on kahjunõudest informeeritud ning et kaardi
+   valdaja oleks andud eraldi nõusoleku lisatasude debiteerimiseks tema kaardilt. Kohus on
+                                                                                               4 (8)
+   seisukohal, et eraldi kinnitus peaks olema selline dokument, millest tuleb selgelt välja, millele
+   klient oma nõusoleku annab. Käesoleval juhul sellist kinnistust kohtule esitatud ei ole. Auto
+   tagastusaktil olevat kaardi valdaja allkirja ei saa lugeda eraldi kinnituseks selle kohta, et kaardi
+   valdaja oleks andnud oma nõusoleku lisatasude debiteerimiseks.
+
+7.2 Tehing 2 summas 720 eurot (terminal: XXXX, kaupmehe nimi: XXXX, kaardi number:
+    XXXX******XXXX, autoriseerimiskood XXXX) (22.07.2014 tehing, tlk 90).
+
+   Hageja on leidnud, et nimetatud tehinguga on toimunud kaupmehelepingu p 5.4. ja autorendi
+   juhendi p 6.2. rikkumine. Kaupmehelepingu punkti 5.4 kohaselt ei tohi kaupmees jagada ühte
+   ostusummat kaheks või enamaks tehinguks.
+
+   Kohtule esitatud kviitungitest nähtuvalt (tlk 90) on kaardi valdaja kaardilt lisakulude katteks
+   21.07.2014 debiteeritud eelautoriseeritud deposiit 600 eurot. Nimetatud kviitungil puudub
+   kaardi valdaja allkiri, mis näitab, et lõpptehing on sooritatud ilma kaardi füüsilise
+   kohalolekuta. Allkirjastatud on vaid deposiidi võtmise kviitung 07.07.2014. Lisaks on kostja
+   22.07.2014 sooritanud täiendava tehingu summas 720 eurot, mille kaardi valdaja on
+   vaidlustanud, kuna kaupmees ei ole kaardi valdajat eelnevalt informeerinud. Kaardi valdaja
+   ei ole andnud eraldi nõusolekut lisatasude debiteerimiseks oma kaardilt. Lisatasude
+   debiteerimiseks oleks kostja pidanud kaardi valdajalt saama nõusoleku täissumma
+   debiteerimiseks. Kaupmehelepingu ja autorendi juhendi kohaselt oleks antud kahjusumma
+   tulnud käsitleda eraldi tehinguna ning debiteerida kaardilt ühes summas. Nimetatud tehingu
+   puhul on lisakulude summa aga kostja poolt debiteeritud kahes jaos. Seega on kostja rikkunud
+   kaupmehelepingu punkti 5.4, mille kohaselt ei tohi kaupmees jagada ühte ostusummat kaheks
+   või enamaks tehinguks.
+
+   Samuti ei saa ka selle tehingu puhul auto tagastusaktil olevat kaardi valdaja allkirja lugeda
+   eraldi kinnituseks (põhjenduste osas vt ka p 7.1). Kui kaupmees eraldi nõusolekut ei võta,
+   rikub kaupmees autorendi juhendi punkti 6 ning kaardi valdajal on õigus vastav tehing
+   vaidlustada ning sellised juhtumid lahendatakse vastavalt kaardi valdaja kasuks.
+
+7.3 Tehing 3 summas 1182,72 eurot (terminal: XXXX, kaupmehe nimi: XXXX, kaardi number:
+    XXXX******XXXX, autoriseerimiskood XXXX) (16.07.2014 kviitung, tlk 35).
+
+   Hageja on leidnud, et kostja on rikkunud kaupmehelepingu p 5.4. ja autorendi juhendi p 6.2.
+
+   Esitatud kviitungitest nähtuvalt on kaardi valdaja kaardilt lisakulude katteks 16.07.2014
+   debiteeritud eelautoriseeritud deposiit 600 eurot. Kaardi valdaja ei ole seda summat
+   vaidlustanud. Tehing on kaardi valdaja poolt PIN-koodiga kinnitanud 16.07.2014. Küll aga
+   on kaardi valdaja vaidlustanud kaupmehe poolt samal päeval kaardi numbri käsitsi terminali
+   sisestamise teel sooritatud täiendava tehingu summas 1182,72 eurot. Kaardi valdaja ei ole
+   andnud nõusolekut lisatasu debiteerimiseks oma kaardilt. Auto tagastusaktil olevat kaardi
+   valdaja allkirja ei saa lugeda eraldi kinnituseks (vt põhjenduste osas p 7.1). Kui kaupmees
+   eraldi nõusolekut ei võta, rikub kaupmees autorendi juhendi punkti 6.2. ning kaardi valdajal
+   on õigus vastav tehing vaidlustada ning sellised juhtumid lahendatakse vastavalt kaardi
+   valdaja kasuks.
+
+7.4 Kohus on seisukohal, et kostja on seega rikkunud kaupmehelepingut ja autorendi juhendit
+    eeltoodud tehingute tegemisel.
+
+   Kohus peab vajalikuks märkida, et kuigi kostjal ei ole kohustust makseterminali kaasas kanda,
+   ei vabasta see kostjat lepingu ja juhendi täitmisest. Kostja kohustus on järgida lepingut ja
+   juhendit sellise vajaliku hoolsusega, et vältida võimalikke vaidlusi nende täitmise osas (s.h
+   autorendi juhendi kohaselt eraldi nõusolekute saamine kliendilt).
+                                                                                                 5 (8)
+   Samuti juhib kohus tähelepanu asjaolule, et kui kostja oleks autode tagastamisel ja
+   tagastuslehe täitmisel sooritanud kahjunõude summade osas füüsilise tehingu, kasutades
+   kaardi kiipi või magnetriba, mille kaardi valdaja oleks saanud koheselt kinnitada vastavalt
+   PIN koodi või oma allkirjaga, ei oleks kaardi valdaja enam saanud seda nõuet vaidlustada
+   ning kahju ei oleks tekkinud. Kui kostja oleks kaardi valdajalt saanud eraldi nõusolekud
+   lisatasude debiteerimiseks konkreetselt krediitkaardilt, siis ei oleks kaardi valdaja saanud neid
+   tehinguid vaidlustada ning kahju ei oleks tekkinud.
+
+8. Kaupmehelepingu p 3.5 kohaselt on kaupmees (s.o kostja) kohustatud kaartide
+   aktsepteerimisel järgima operatsioonireegleid ja makseterminali juhiseid vältimaks võltsitud
+   kaardi või kaardi mittenõuetekohast kasutamist. Täiendavalt võib pank teha kaupmehele
+   ettekirjutusi turvalisuse abinõude kohta, mida kaupmees peab järgima. Operatsioonireeglite
+   või teiste panga poolt antud juhendite täitmata jätmisest ja/või võltsitud kaardiga tehingu
+   sooritamisest tekkinud kahju eest vastutab kaupmees. Kaupmehelepingu p 12.1 järgi
+   vastutavad lepingu pooled täies ulatuses kahjude eest, mis tekitati teisele poolele lepingu
+   mittetäitmise või mittenõuetekohase täitmisega.
+
+   Hageja väidab, et kostja lepinguliste kohustuste rikkumise tagajärjel on hagejale tekkinud
+   kahju. Kohus on eelnevalt leidnud (vt p 7), et kostja rikkus oma lepingulisi kohustusi.
+   Kohustuste rikkumise tulemusena on kaardi valdaja tehingud vaidlustanud. Tagasinõude
+   laekumisel debiteeritakse aga kaupmehe panka automaatselt nõude summa ulatuses läbi
+   kliiringsüsteemide. Seega on kostja lepinguliste kohustuste rikkumise tagajärjel tekkinud
+   hagejale kahju. Hageja kahju tekkimine on tõendatud väljavõtetega bilansikontost ja tehingute
+   kirjeldustega (tlk 98-100).
+
+9. Kohus jätab tähelepanuta kostja viited käekirjaproovi tegemise vajadusele ja tunnistajate
+   olemasolule, kuna vastavaid taotlusi (s.o ekspertiisitaotlus, tunnistajate ülekuulamise taotlus)
+   kohtule esitatud ei ole. Kohus selgitab täiendavalt, et käesoleval juhul ei ole olnud vaidluse
+   all ka asjaolu, et allkirjad tagastusaktil oleks olnud kellegi teise kirjutatud.
+
+10. VÕS § 115 lg 1 sätestab, et kui võlgnik rikub kohustust, võib võlausaldaja koos kohustuse
+    täitmisega või selle asemel nõuda võlgnikult kohustuse rikkumisega tekitatud kahju
+    hüvitamist, välja arvatud juhul, kui võlgnik kohustuse rikkumise eest ei vastuta või kui kahju
+    ei kuulu seadusest tulenevalt muul põhjusel hüvitamisele.
+
+   Hageja on palunud kostjalt välja mõista kahju summas 722,84 eurot. Kostja ei ole nimetatud
+   summa suurusele vastuväiteid esitanud. Seega on hageja nõue kahju hüvitamiseks summas
+   722,84 eurot põhjendatud ning see tuleb kostjalt välja mõista.
+
+11. Samuti on hageja palunud kostjalt välja mõista viivise seisuga 22.12.2015 summas 210,24
+    eurot ning alates 23.12.2015 kuni põhinõude täitmiseni määras 36,5 % aastas ehk 0,1%
+    päevas.
+
+   VÕS § 101 lg 1 p 6 sätestab, et kui võlgnik on kohustust rikkunud, võib võlausaldaja rahalise
+   kohustuse täitmisega viivitamise korral nõuda viivist. VÕS § 113 lg 1 kohaselt rahalise
+   kohustuse täitmisega viivitamise korral võib võlausaldaja nõuda võlgnikult viivitusintressi
+   (viivis), arvates kohustuse sissenõutavaks muutumisest kuni kohase täitmiseni. Viivise
+   määraks loetakse VÕS §-s 94 sätestatud intressimäär, millele lisandub kaheksa protsenti
+   aastas. Kui lepinguga on ette nähtud kõrgem intressimäär kui seadusjärgne viivisemäär,
+   loetakse viivise määraks lepinguga ettenähtud intressimäär.
+
+   Kaupmehelepingu p 8.3 viimase lause kohaselt kohustub Kaupmees (s.o kostja) nõude
+   tasumata jätmisel või osalisel tasumisel tasuma viivist 0,1 % tasumata summalt päevas.
+                                                                                              6 (8)
+   Hagiavalduse kohaselt on hagi esitamise ajaks sissenõutavaks muutunud viiviste summa
+   210,24 eurot. Viivise summale ega arvestusele ei ole kostja vastuväiteid esitanud.
+
+   Kohus märgib, et nõude õigeaegse tasumata jätmise korral on hagejal õigus kasutada
+   seadusest tulenevaid õiguskaitsevahendeid, muuhulgas nõuda rahalise kohustuse täitmisega
+   viivitamise korral võlgnikult alates kohustuse sissenõutavaks muutumisest kuni kohustuse
+   kohase täitmiseni kokkulepitud määras viivist. Kuna kostja ei ole oma nõuet õigeaegselt
+   tasunud, siis tuleb kostjalt välja mõista viivis seisuga 22.12.2015 summas 210,24 eurot.
+
+   TsMS § 367 järgi viivisenõude võib koos põhinõudega esitada hagis selliselt, et taotletakse
+   viivist, mis ei ole hagi esitamise ajaks veel sissenõutavaks muutunud, väljamõistmist kohtult
+   mitte kindla summana, vaid täielikult või osaliselt protsendina põhinõudest kuni põhinõude
+   täitmiseni. Eelkõige võib viivist nõuda selliselt, et kohus mõistaks selle välja kindla summana
+   kuni otsuse tegemiseni ja edasi protsendina põhinõudest. Eeltoodu alusel kuulub kostjalt
+   väljamõistmisele viivis alates 23.12.2015. a kuni põhinõude kohase täitmiseni.
+
+12. Eeltoodu alusel leiab kohus, et hageja nõue kuulub rahuldamisele. Kostjalt tuleb hageja
+    kasuks välja mõista põhivõlgnevus 722,84 eurot, viivis 210,24 eurot ning viivis 0,1 %
+    päevas põhivõlalt (s.o 722,84 eurolt) alates 23.12.2016 kuni põhivõla tasumiseni.
+
+
+Menetluskulud
+13. TsMS § 173 lg 1 kohaselt märgib asja menetlenud kohus menetluskulude jaotuse
+    menetlusosaliste vahel kohtuotsuses. Vastavalt TsMS § 162 lg 1 kannab hagimenetluse kulud
+    pool, kelle kahjuks otsus tehti.
+
+   Tulenevalt TsMS § 162 lg 1 tuleb menetluskulud jätta kostja kanda.
+
+   TsMS § 174 lg 2 sätestab, et maakohus määrab menetluskulude rahalise suuruse kindlaks
+   kohtuotsuses või menetlust lõpetavas määruses, kui menetluskulude kindlaksmääramine ei
+   takista kohtuotsuse või menetlust lõpetava määruse tegemist.
+
+   TsMS § 138 lg 1 kohaselt on menetluskulud menetlusosaliste kohtukulud ja kohtuvälised
+   kulud. Kohtukulud on TsMS § 138 lg 2 kohaselt muuhulgas riigilõiv.
+
+   Hageja menetluskulude nimekirja kohaselt palub hageja kostjalt välja mõista riigilõivu 200
+   eurot. Riigilõivu tasumine nähtub kohtutoimikust (tl 1 pöördel ja tl 39). Tegemist on
+   põhjendatud ja vajaliku kuluga ning see kuulub kostjalt väljamõistmisele.
+
+   Seega on hageja menetluskulud põhjendatud kokku 200 euro ulatuses ning kostjalt tuleb välja
+   mõista hageja kasuks menetluskulud summas 200 eurot, s.o hagiavalduselt tasutud riigilõiv
+   summas 200 eurot.
+
+
+/allkirjastatud digitaalselt/
+
+Liisi Vernik
+kohtunik
+
+
+
+
+                                                                                             7 (8)
+8 (8)

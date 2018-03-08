@@ -1,0 +1,253 @@
+                           KOHTUMÄÄRUS
+Kohus                               Harju Maakohus
+
+Kohtunik                            Viktor Brügel
+
+Kohtujurist                         Erika Õisla
+
+Määruse tegemise aeg ja koht        01. juuli 2016.a, Tallinn, Kentmanni kohtumaja
+
+Tsiviilasja number                  2-15-7870
+
+Tsiviilasi                          XXX (pankrotis) pankrotimenetlus
+Menetlustoiming                     Pankrotimenetluse lõpetamine raugemisega pärast pankroti
+                                    väljakuulutamist, võlgniku kohustustest vabastamise
+                                    menetluse algatamine
+                                    Võlgnik: XXX(pankrotis, isikukood XXX, elukoht XXX e-
+Menetlusosalised
+                                    post: XXX);
+                                    Võlgniku lepinguline esindaja: Andrei XXX (isikukood
+                                    XXX, e-post: XXX);
+                                    Pankrotihaldur: Martin Krupp (Cavere Õigusbüroo OÜ,
+                                    aadress Estonia pst 1, 10143 Tallinn, e-post:
+                                    martin@cavere.ee).
+Menetlustoimingu tegemise viis      Kirjalik menetlus
+
+RESOLUTSIOON
+   1. Lõpetada XXX(pankrotis, isikukood XXX) pankrotimenetlus raugemise tõttu pärast
+      pankroti väljakuulutamist.
+   2. XXX(pankrotis) võlausaldajatel on tunnustatud nõuete eest jäänud raha saamata
+      alljärgnevalt:
+                                       Rahuldamis-                       Saamata nõue
+                Võlausaldaja                             Jaotis (%)
+                                          järk                             (eurodes)
+        Kohtutäitur Katrin Vellet          II               6,01             272,29
+        Kohtutäitur Elin Vilippus          II               18,22            825,62
+        Osaühing Aktiva Finants            II               15,15            686,63
+        BIGBANK AS                         II               60,62           2 746,49
+   3. Võlgnik XXXvõlausaldajate pankrotimenetluses esitatud nõudele vastuväiteid ei
+      esitanud.
+   4. Vabastada Martin Krupp XXX(pankrotis) pankrotihalduri kohustustest.
+  5. Määrata XXX(pankrotis) pankrotihaldur Martin Krupp tasuks 765 eurot, millele
+     lisandub käibemaks 153 eurot, kokku 918 eurot väljamaksmisega haldurit teenindava
+     büroole Saneerimismenetluse OÜ.
+  6. Jätta XXX(pankrotis) pankrotimenetluse kulud XXX(pankrotis) kanda.
+  7. Rahuldada pankrotihaldur Martin Krupp taotlus menetlusabi saamiseks. Määrata
+     XXX(pankrotis) halduri tasu osaliseks hüvitamiseks menetlusabi summas 397 eurot,
+     millele lisandub käibemaks 79,40 eurot, kokku 476,40 eurot.
+  8. Riigi Tugiteenuste Keskusel maksta välja pankrotihalduri tasu summas 397 eurot,
+     millele lisandub käibemaks 79,40 eurot, kokku 476,40 eurot Saneerimismenetluse OÜ
+     arvelduskontole EE092200221044428799.
+  9. XXX(pankrotis) maksejõuetuse tekkimise põhjuseks on muu asjaolu PankrS § 163 lg 5
+     tähenduses.
+  10. Algatada XXX(pankrotis) kohustustest vabastamise menetlus, jätta usaldusisik
+      määramata ning kohustada võlgnikku ennast täitma usaldusisiku kohustusi vastavalt
+      PankrS §-le 172.
+  11. Kohustada XXXesitama kohtule iga-aastaselt alates käesoleva määruse kuupäevast
+      usaldusisiku aruande, millest nähtub kas ja kuidas võlgnik oma kohustusi täidab ning
+      milles kajastuvad andmed võlausaldajatele võimalike teostatud väljamaksete kohta.
+      Vastavalt jaotusettepanekus ettenähtud jaotistele tuleb võlgnikul teha väljamaksed
+      võlausaldajatele üks kord aastas.
+  12. Avaldada teade pankrotimenetluse lõpetamise ja võlgniku kohustustest vabastamise
+      menetluse algatamise kohta väljaandes Ametlikud Teadaanded.
+  13. Toimetada kohtumäärus kätte võlgnikule ja pankrotihaldurile ning saata Eesti Vabariigi
+      Rahandusministeeriumile ja peale jõustumist täitmiseks käesoleva kohtumääruse
+      resolutsiooni p 8 osas Riigi Tugiteenuste Keskusele.
+
+
+Edasikaebamise kord
+Määrusele võib esitada määruskaebuse Tallinna Ringkonnakohtule Harju Maakohtu kaudu 15 päeva
+jooksul alates määruse kättetoimetamisest PankrS § 164 lg 1 alusel võlgnik. PankrS § 164 lg 2
+kohaselt võib võlausaldaja pankrotimenetluse lõpetamise määruse peale esitada kaebuse, kui ta
+menetluse lõpetamise avalduse vastu esitas vastavalt käesoleva seaduse § 161 lõikele 2 või § 163
+lõikele 2 vastuväite.
+Määruse peale, millega kohus on algatanud võlgniku kohustustest vabastamise menetluse, võib
+määruskaebuse esitada võlausaldaja, kes on esitanud kohtule vastuväite vastavalt PankrS § 171 lg-le
+1. Määruskaebuse esitamisel tuleb tasuda riigilõiv.
+Maakohtu või ringkonnakohtu menetlusabi andmise või sellest keeldumise määruse peale ja
+kummagi määruse muutmise või tühistamise määruse peale, võib menetlusabi taotleja või saaja või
+Eesti Vabariik Rahandusministeeriumi või rahandusministri määratud Rahandusministeeriumi
+valitsemisala asutuse kaudu esitada määruskaebuse.
+
+                                            Asjaolud
+25.05.2015 esitas XXXHarju Maakohtule pankrotiavalduse ja kohustustest vabastamise avalduse.
+11.08.2015 kuulutas kohus välja XXXpankroti ja nimetas pankrotihalduriks Martin Krupp.
+10.05.2016 kohtumäärusega kinnitati jaotusettepanek.
+20.06.2016 esitas pankrotihaldur kohtule võlgniku pankrotimenetluses koostatud aruande ning
+taotluse lõpetada XXX(pankrotis) pankrotimenetlus raugemisega pärast pankroti väljakuulutamist,
+
+                                                                                           2
+kinnitada halduri tasu summas 765 eurot (lisandub käibemaks), anda võlgnikule halduri tasu osaliseks
+hüvitamiseks menetlusabi summas 397 (millele lisandub käibemaks 79,40 eurot), vabastada haldur
+võlgniku pankrotimenetluses pankrotihalduri kohustustest ja otsustada võlgniku kohustustest
+vabastamise menetluse algatamine ning usaldusisiku nimetamine.
+Pankrotihaldur Martin Krupi poolt XXX(pankrotis) pankrotimenetluses koostatud ning kohtule
+esitatud aruanne on menetlusdokumendina võetud käesoleva tsiviilasja juurde.
+
+                                   Kohtumääruse põhjendused
+Pankrotiseaduse (PankrS) § 157 p 2 kohaselt pankrotimenetlus lõpeb pankrotimenetluse raugemisega.
+PankrS § 158 lg 1 kohaselt kui pankrotivarast ei jätku massikohustuste ja pankrotimenetluse kulude
+katteks vajalike väljamaksete tegemiseks, peab haldur sellest viivitamata kohtule teatama, lõike 3
+kohaselt esitab haldur kohtule aruande, mis peab sisaldama PankrS § 162 lõigetes 2 ja 3 nimetatud
+andmeid. PankrS § 158 lg 4 sätestab, et pärast haldurilt aruande saamist lõpetab kohus halduri
+ettepanekul pankrotimenetluse raugemise tõttu, kui kohus tuvastab, et pankrotivarast ei jätku
+massikohustuste ja pankrotimenetluse kulude katteks vajalike väljamaksete tegemiseks. PankrS § 158
+lg 6 kohaselt ei lõpeta kohus menetlust käesoleva paragrahvi lõike 4 alusel, kui võlausaldaja või
+kolmas isik maksab massikohustuste ja pankrotimenetluse kulude katteks deposiidina selleks
+ettenähtud kontole kohtu poolt määratud summa.
+Kohtule esitatud aruande kohaselt XXX(pankrotis) pankrotimenetluses puuduvad vahendid, mille
+arvelt pankrotimenetlust läbi viia. Kohus on teinud 27.06.2016 ettepaneku väljaandes Ametlikud
+Teadaanded XXX(pankrotis) pankrotimenetlusest huvitatud isikutele (eelkõige võlausaldajatele)
+tasuda massikohustuste ja pankrotimenetluse kulude katteks deposiidina selleks ettenähtud kontole 1
+800 eurot tähtajaga kuni 30.06.2016 alates ettepaneku avaldamisest väljaandes Ametlikud
+Teadaanded. Tähtaja jooksul ei ole võlausaldajad ega kolmas isik avaldanud kohtule valmisolekut
+kanda võlgniku pankrotimenetluses täiendavaid kulusid. Seega esineb PankrS § 158 lg 4 sätestatud
+alus pankrotimenetluse lõpetamiseks raugemise tõttu.
+Kohus, tutvunud pankrotihalduri aruandega, võtnud arvesse asjas esitatud kirjalikke tõendeid ja
+hinnanud neid kogumis leiab, et XXX(pankrotis) pankrotimenetlus tuleb lõpetada raugemise tõttu
+pärast pankroti väljakuulutamist. Võlgniku pankrotimenetluses on tunnustatud nelja võlausaldaja II
+rahuldamisjärgu nõuet kogusummas 4 531,03 eurot. Vaidlused nõuete ja nende rahuldamisjärkude
+üle puuduvad. Võlgnikul müümata vara puudub. Võlgnikul teistelt isikutelt saada olevat vara ei ole.
+Rahaliste vahendite puudumisel võlausaldajatele väljamakseid jaotiste alusel tehtud ei ole.
+Pankrotimenetluses ei ole hagisid esitatud ning haldur ei kavatse hagisid esitada. Pankrotihalduri
+hinnangul tekkisid võlgnikul makseraskused juba 2009.a, kui võlgniku suhtes algatati esimene
+pankroti väljakuulutamiseni menetluses olnud täitemenetlus. Pankrotihalduri hinnangul on võlgniku
+maksejõuetuse põhjuseks eelkõige asjaolu, et võlgnik on võtnud laene erinevatelt kõrge intressiga
+kiirlaenu pakkujatelt, et tasuda oma eelnevaid võlgnevusi. Võlgnik on üle hinnanud oma
+maksevõimet, võttes juurde üha uusi kohustusi, kuid võlgniku sissetulekud ei kasvanud.
+Pankrotihaldur ei ole tuvastanud, et XXX(pankrotis) maksejõuetuse põhjuseks oleks kuriteo
+tunnustega tegu. Kohus nõustub pankrotihalduri seisukohaga ja leiab, et võlgniku maksejõuetuse
+põhjuseks on muu asjaolu pankrotiseaduse tähenduses.
+Võlgnik võlausaldajate nõudele vastuväidet esitanud ei ole. PankrS § 168 kohaselt, ulatuses, milles
+võlausaldajate pankrotimenetluses tunnustatud nõue on jäänud pankrotimenetluses rahuldamata, on
+käesolev kohtumäärus XXX(pankrotis) pankrotimenetluses rahuldamata jäänud nõuete osas
+täitedokumendiks.
+PankrS § 165 lg 3 kohaselt vabastab kohus pankrotimenetluse lõpetamisel halduri, kui seadusest ei
+tulene teisiti. Kohus leiab, et Martin Krupp tuleb vabastada XXX(pankrotis) pankrotihalduri
+kohustustest.
+
+
+                                                                                            3
+PankrS § 65 lg 1 kohaselt on halduril õigus saada oma ülesannete täitmise eest tasu, mille suuruse
+määrab kohus pankrotimenetluse lõpparuande kinnitamisel. PankrS § 66 lg 1 kohaselt on halduril
+lisaks tasule õigus nõuda oma kohustuste täitmiseks tehtud vajalike kulutuste hüvitamist.
+PankrS § 65 lg 11 kohaselt kui kohus on kuulutanud pankroti välja käesoleva seaduse § 171 lõike 11
+alusel ja võlgnikul ei ole pankrotimenetluse kulude katmiseks piisavalt vara, määrab kohus halduri
+tasu käesoleva seaduse § 23 lõigete 1-3 alusel. Halduri tasu ja kulutuste hüvitamiseks võib kohus
+määrata menetlusabi andmise. Menetlusabi taotluse võib esitada haldur. PankrS § 23 lg-te 1 ja 2
+kohaselt on ajutisel halduril õigus saada oma ülesannete täitmise eest tasu, mille suuruse määrab
+kohus, samuti nõuda oma ülesannete täitmiseks tehtud vajalike kulutuste hüvitamist. Tasu suuruse
+määramisel arvestab kohus ajutise halduri ülesannete mahtu ja keerukust ning ajutise halduri
+kutseoskusi. Kohus kontrollib ajutise halduri ülesannete täitmiseks tehtud kulutuste põhjendatust ja
+kinnitab vajalike ning põhjendatud kulutuste suuruse. Tasu suuruse arvestamise aluseks on ülesannete
+täitmisele kuluv aeg. Ajutine haldur esitab kohtule tööaja arvestuse andmed ja taotluse kulutuste
+hüvitamiseks koos käesoleva seaduse § 22 lõikes 5 nimetatud aruandega. Kulutuste hüvitamise
+taotluses märgib haldur kulutuse suuruse, tekkimise põhjuse või aluse ja tekkimise aja. Lõike 3
+kohaselt on ajutise halduri tunnitasu ülemmäär 96 eurot.
+Haldur on esitatud aruande kohaselt kulutanud ülesannete täitmiseks 8,5 tundi. Töötasu arvutamisel
+on haldur lähtunud tunnitasu määrast 90 eurot. Töötatud tundide ja tunnitasu määrast lähtuvalt
+kujuneb halduri tasuks 765 eurot. Haldur taotleb tasu väljamaksmist büroole, mille kaudu ta tegutseb.
+Kuivõrd Saneerimismenetluse OÜ on käibemaksukohustuslane, lisandub halduri tasule käibemaks
+summas 153 eurot, kokku 918 eurot. Haldur on võlgniku pankrotimenetluses läbi viinud kõik
+vajalikud pankrotimenetluse toimingud. Võlgnik ja võlausaldajad halduri tasu osas vastuväited
+esitanud ei ole. Kohus leiab, et halduri nõutud tasu 765 eurot, millele lisandub käibemaks 153 eurot,
+kokku 918 eurot on mõistlik, põhjendatud ning kooskõlas tehtud töö mahuga ja halduri
+kutseoskustega. Tulenevalt eelnevast määrab kohus pankrotihaldur Martin Krupp töötasuks võlgniku
+pankrotimenetluses 918 eurot (s.h käibemaks 153 eurot) väljamaksmisega büroole, mille kaudu
+haldur tegutseb. Oma kohustuste täitmiseks tehtud vajalike kulutuste hüvitamist haldur taotlenud ei
+ole.
+PankrS § 150 lg 1 p 2, 3 ja 5 kohaselt on ajutise halduri ja halduri tasu ning vajalikud kulutused oma
+ülesannete täitmiseks pankrotimenetluse kulud.
+PankrS § 150 lg 4 ja tsiviilkohtumenetluse seadustiku (TsMS) § 172 lg 2 alusel jätab kohus
+pankrotimenetluse kulud võlgniku XXX(pankrotis) kanda.
+Kuivõrd kohus lõpetab XXX(pankrotis) pankrotimenetluse raugemise tõttu, võlgniku varast ei piisa
+pankrotimenetluse kulude katmiseks ja XXX(pankrotis) pankrot on välja kuulutatud PankrS § 171
+lõike 11 alusel, siis määrab kohus võlgnikule pankrotihalduri taotlusel ning PankrS § 65 lg 11 ja
+TsMS § 183 lg 2 alusel halduri tasu hüvitamiseks menetlusabi. TsMS § 183 lg 2 kohaselt ei või
+pankrotihalduri tasu ja kulutuste katteks määratud menetlusabi, mida ei mõisteta riigi tuludesse välja,
+olla suurem kui 397 eurot, sealhulgas seaduses ettenähtud maksud, väljaarvatud käibemaks. Seega
+tuleb riigi vahenditest menetlusabi korras välja mõista pankrotihalduri tasu summas 397 eurot, millele
+lisandub käibemaks 79,40 eurot. Halduri taotlusel määrab kohus halduri tasu väljamaksmise haldurit
+teenindavale büroole Saneerimismenetluse OÜ.
+PankrS § 171 lg 1 järgi otsustab kohus võlgniku kohustustest vabastamise menetluse algatamise
+§ 158 lõikes 4 sätestatud juhul või lõpparuande kinnitamisel. Kohus kuulab ära võlgniku ja halduri
+arvamuse. Võlausaldaja võib PankrS § 171 lõikes 2 nimetatud asjaolule tuginedes esitada võlgniku
+kohustusest vabastamisele vastuväite. XXX(pankrotis) on koos pankrotiavaldusega esitanud kohtle
+taotluse füüsilisest isikust võlgniku kohustustest vabastamise menetluse algatamiseks. Võlgnik
+kinnitab, et talle ei ole teada asjaolusid, mis võiksid tema kohustustest vabastamise välistada ning et
+ta kohustub täitma pankrotiseaduse §-s 173 nimetatud kohustusi. PankrS § 170 lg 1 kohaselt võib
+
+
+                                                                                               4
+võlgniku kohustustest vabastamise avalduse võlgnik esitada mh pankrotiavalduses. Seega on
+võlgniku poolt avaldus kohustustest vabastamiseks esitatud õigeaegselt.
+Kohtule ei ole teada asjaolusid, mis vastavalt PankrS § 171 lg-le 2 võiksid välistada kohustustest
+vabastamise menetluse algatamise. Võlausaldajad ega haldur ei ole kohtule esitanud vastuväidet
+võlgniku kohustustest vabastamise menetluse algatamisele. Kohus leiab, et tuleb algatada
+XXX(pankrotis) kohustustest vabastamise menetlus.
+PankrS § 172 lg 1 kohaselt kui kohus algatab võlgniku kohustustest vabastamise menetluse, nimetab
+ta võlausaldajate üldkoosoleku ettepanekul usaldusisiku, kellele võlgnik teeb käesoleva seaduse
+§ 173 lõigetes 3 ja 6 nimetatud makseid. PankS § 172 lg 6 kohaselt võib kohus mõjuval põhjusel,
+eelkõige juhul, kui usaldusisiku määramine tooks ilmselt kaasa põhjendamatuid kulutusi ja kohus on
+veendunud, et võlgnik suudab usaldusisiku kohustusi ise täita, jätta usaldusisiku määramata ja
+kohustada võlgnikku ennast täitma usaldusisiku kohustusi. Sel juhul kontrollib kohus, kas võlgnik
+oma kohustusi täidab.
+Aruandest nähtuvalt kutsus pankrotihaldur 04.02.2016 kokku võlausaldajate üldkoosoleku, mille
+väljakuulutatud päevakorras oli muu hulgas võlausaldajate seisukoha avaldamine võlgniku
+kohustustest vabastamise menetluse algatamise ja usaldusisiku nimetamise kohta. Toimunud
+võlausaldajate üldkoosolekust ükski võlausaldaja osa ei võtnud, seega puuduvad võlausaldajate
+ettepanekud usaldusisiku nimetamise kohta, samuti ei ole ükski võlausaldaja ega kolmas isik andnud
+nõusolekut usaldusisikuks asumise kohta. Võlgnik on edastanud kohtule nõusoleku täita ise
+usaldusisiku kohustusi. Kuivõrd usaldusisiku määramine tooks kaasa põhjendamatuid kulutusi, mis
+veelgi survestaks võlgniku varalist seisu, on mõistlik kohustada võlgnikku ennast täitma usaldusisiku
+kohustusi.
+Võlgnik on kohustatud PankrS § 173 lg 1 kohaselt tegelema mõistlikult tulutoova tegevusega ja kui
+tal seda tegevust ei ole, siis seda otsima. PankrS § 173 lg 2 kohaselt peab võlgnik viivitamatult
+teatama kohtule ja usaldusisikule igast elu- ja tegevuskoha vahetusest, mitte varjama saadud tulusid
+ning vara, samuti andma kohtu ja usaldusisiku nõudel teavet oma tegevuse või selle otsimise, oma
+sissetulekute ja vara kohta. PankrS § 173 lg 3 kohaselt loetakse võlgniku töö- või teenistussuhtest või
+muust sarnasest suhtest saadud tulu või ettevõtlusest saadud tulu nõuded loovutatuks usaldusisikule.
+Usaldusisik peab sellest tasude maksmiseks kohustatud isikutele teatama. PankrS
+§ 173 lg 4 kohaselt peab usaldusisik käesoleva paragrahvi lõikes 3 nimetatud tulust võlgnikule üle
+andma 25 protsenti. Kohus võib asjaolusid arvestades määrata sellest erineva määra. PankrS § 173
+lg 5 järgi ei pea võlgnik usaldusisikule üle andma tulu, millele seadusest tulenevalt ei saa pöörata
+sissenõuet. PankrS § 172 lg 2 kohaselt peab usaldusisik võlgnikult saadud maksed hoidma oma varast
+eraldi ja need vastavalt jaotusettepanekus ettenähtud jaotistele üks kord aastas võlausaldajatele välja
+maksma. Lõike 4 järgi esitab usaldusisik kohtule võlgniku kohustustest vabastamise menetluse
+lõpuks aruande ja menetluse lõpetamisel vabastab kohus usaldusisiku.
+PankrS § 84 kohaselt teostab kohus järelevalvet pankrotimenetluse seaduslikkuse üle ja täidab muid
+seadusest tulenevaid ülesandeid. Kohtul on õigus kontrollida, kas ja kuidas võlgnik täidab oma
+kohustusi kohustustest vabastamise menetluse kestel. Eelnevast tulenevalt kohus kohustab võlgnikku
+esitama kohtule iga-aastaselt alates käesoleva määruse kuupäevast usaldusisiku aruande. Vastavalt
+jaotusettepanekus ettenähtud jaotistele tuleb võlgnikul teha väljamaksed võlausaldajatele üks kord
+aastas.
+PankrS § 175 lg 1 kohaselt pärast viie aasta möödumist võlgniku kohustustest vabastamise menetluse
+algatamisest otsustab kohus võlgniku taotlusel tema pankrotimenetluses täitmata jäänud kohustustest
+vabastamise, tehes selle kohta määruse. PankrS § 175 lg 1¹ kohaselt võib kohus oma kohustusi
+nõuetekohaselt täitnud võlgniku asjaolusid arvestades vabastada pankrotimenetluses täitmata jäänud
+kohustustest ka enne viie aasta möödumist menetluse algatamisest, kuid mitte enne kolme aasta
+möödumist menetluse algatamisest, eelkõige kui võlgnik on oma kohustusi menetluse ajal
+
+
+                                                                                               5
+nõuetekohaselt täitnud ja rahuldanud võlausaldajate nõudeid arvestatavas ulatuses.
+
+
+/Allkirjastatud digitaalselt/
+Viktor Brügel
+Kohtunik
+
+
+
+
+                                                                                     6

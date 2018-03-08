@@ -1,0 +1,55 @@
+{% extends "index.html" %}
+{% block app %}
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
+    <script src="{{STATIC_URL}}jquery.doubleScroll.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}dataset_importer/dataset_importer.css">
+
+    <div class="col-md-3">
+        <div class="panel">
+            <div class="panel-heading">
+                New Dataset
+            </div>
+
+            <div class="panel-body">
+            <form action="" id="import-dataset-form" onsubmit="return false">
+                {% include "parameters/formats.html" %}
+
+                {% include "parameters/data.html" %}
+
+                {% include "parameters/elastic.html" %}
+
+                {% include "parameters/preprocessors.html" %}
+
+                <!-- <button id="import-dataset-btn" class="btn btn-success pull-right">Import</button> -->
+                <input type="submit" value="Import" id="import-dataset-btn" class="btn btn-success pull-right" disabled></button>
+            </form>
+                <div class="loaderDiv" id="loaderDiv">
+                    <div id="loader" class="loader"></div>
+                    <p class="statusText" id="status"> Error importing database! </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-9">
+        <div class="panel">
+            <div class="panel-heading">
+                Import Jobs
+            </div>
+
+            <div class="panel-body" id="jobs-table-div">
+                {% include "import_jobs_table.html" %}
+            </div>
+        </div>
+    </div>
+
+    <script type="application/javascript" src="{{STATIC_URL}}dataset_importer/argument_collectors.js"></script>
+    <script type="application/javascript" src="{{STATIC_URL}}dataset_importer/argument_validators.js"></script>
+    <script type="application/javascript" src="{{STATIC_URL}}dataset_importer/dataset_importer.js"></script>
+{#    https://cdnjs.com/libraries/1000hz-bootstrap-validator#}
+
+{% endblock %}

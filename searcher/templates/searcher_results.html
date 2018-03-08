@@ -1,0 +1,33 @@
+<input id="dataset" type="hidden" value="{{dataset}}">
+<input id="mapping" type="hidden" value="{{mapping}}">
+
+<div>
+     | 
+    {% for column in columns %}
+        <a id="feature-{{column.index}}" class="toggle-visibility" data-column="{{column.index}}">{{column.name}}</a>
+         | 
+    {% endfor %}
+</div>
+<table id="examples" class="display">
+    <thead>
+        <tr>
+            {% for column in columns %}
+                <th>{{column.name}}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+
+    <tr><td>
+
+        <br/><br/><br/>
+
+    </td></tr>
+
+    <tfoot>
+        <tr>
+            {% for column in columns %}
+                <th>{{column.name}}</th>
+            {% endfor %}
+        </tr>
+    </tfoot>
+</table>

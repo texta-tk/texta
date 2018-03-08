@@ -1,0 +1,382 @@
+                              KOHTUOTSUS
+                                   EESTI VABARIIGI NIMEL
+
+ Kohus                               Tallinna Halduskohus
+
+ Kohtukoosseis                       Kohtunik Elle Kask
+
+ Otsuse kuulutamise aeg ja koht      31.03.2016, Tallinn
+
+ Haldusasja number                   3-14-50948
+
+ Haldusasi                           A.B. kaebus Registrite ja Infosüsteemide Keskuse 19.05.2011
+                                     käskkirja nr 59 punktide 5.1 ja 6.1 õigusvastasuse
+                                     tuvastamiseks.
+
+ Menetlusvorm                        Suuline, kirjalik.
+
+ Menetlusosalised                    Kaebuse esitaja A.B. ning vastustaja Registrite ja
+                                     Infosüsteemide Keskus, volitatud esindajad Kristine Kase,
+                                     Triin Tammkõrv ja Martti Allingu.
+ Resolutsioon                        1. Jätta A.B. kaebus rahuldamata.
+                                     2. Menetluskulud jäävad poolte endi kanda.
+
+ Edasikaebamise kord                 Kohtuotsuse peale võib 30 päeva jooksul selle avalikult
+                                     teatavaks tegemisest arvates esitada apellatsioonkaebuse
+                                     vahetult Tallinna Ringkonnakohtule (HKMS § 180 lg 1, § 181
+                                     lg 1, § 182 lg 1). Samaks kuupäevaks tuleb apellatsioonkaebus
+                                     esitada ka juhul, kui selle koostamiseks vajatakse menetlusabi.
+                                     Menetlusabi taotluse ja apellatsioonkaebuse võimalike
+                                     puuduste kõrvaldamise lahendab ringkonnakohus. Kui apellant
+                                     ei taotle apellatsioonkaebuse lahendamist kohtuistungil,
+                                     eeldatakse, et ta on nõus asja lahendamisega kirjalikus
+                                     menetluses (HKMS § 182 lg 1 p 9).
+
+ASJAOLUD JA MENETLUSE KÄIK
+
+26.05.2014 esitas A.B. Tallinna Halduskohtule kaebuse Registrite ja Infosüsteemide Keskuse (RIK)
+direktori 19.05.2011 käskkirja nr 59 tühistamiseks. Kaebuse kohaselt RIK blokeeris perioodil
+03.02.2012-27.02.2012 IP-aadress asukohaga Tallinnas, Trummi 38-G, millega välistati sisenemine
+RIK-i hallatavatesse infosüsteemidesse (www.riigiteataja.ee, www.kinnistusraamat.rik.ee, www.e-
+toimik.ee ja www.ariregister.rik.ee). Kaebaja väitel Kinnistusraamatuseaduse (KRS) § 773 kohaselt
+on avaliku teabe elektroonilise versiooni vastutavaks hoidjaks Justiitsministeerium, RIK aga tegeleb
+nende objektide haldamisega, seega ei saa RIK ilma Justiitsministeeriumi loata kelleltki võtta õigust
+avalikule teabele, s.o õigust veebilehtedele juurde pääseda. Samuti ei ole Justiitsministeeriumil
+volitusi piirata juurdepääsu avalikule teabele, selline õigus on vaid kohtul.
+Tallinna Halduskohtu 09.09.2014 määrusega tagastas kohus A.B. kaebuse Halduskohtumenetluse
+seadustiku (HKMS) § 121 lg 2 p 1 alusel.
+26.09.2014 esitas A.B. Tallinna Halduskohtu 09.09.2014 määruse peale määruskaebuse Tallinna
+Ringkonnakohtule.
+Tallinna Ringkonnakohtu 10.11.2014 määrusega rahuldati A.B. määruskaebus ja tühistati Tallinna
+Halduskohtu 09.09.2014 kohtumäärus ning asi saadeti menetluse jätkamiseks Tallinna Halduskohtule.
+20.03.2015 võttis kohus kaebuse menetlusse ning määras korraldada asjas eelistung eesmärgiga
+selgitada välja kaebaja nõuded. Eelistungi käigus selgus, et kaebaja sooviks on Registrite ja
+Infosüsteemide Keskuse direktori 19.05.2011 käskkirja nr 59 (kasutustingimused) punktide 5.1 ja 6.1
+õigusvastasuse tuvastamine, kuna A. B. leiab, et RIK-il ei olnud õigust blokeerida tema IP-aadress
+RIK-i 19.05.2011 käskkirjaga nr 59 kehtestatud kasutustingimuste punktide 5.1 ja 6.1 alusel.
+
+MENETLUSOSALISTE SEISUKOHAD
+
+Kaebuse esitaja:
+RIK on riigiasutus, mis ei ole avaliku võimu kandja. RIK-i tegevus on suunatud riigivarale ja selle
+nõuetekohase kasutamise tagamisele, mitte aga riigilt teenust saavate isikute õigustele ja kohustustele.
+Nende isikute ja RIK-i vahel ei ole võimusuhet. Sellest tuleneb, et RIK-il puuduvad volitused nendele
+isikutele käskude andmiseks ja sanktsioonide kohaldamiseks. Kaebuse esitaja arvates käesolevas asjas
+kohaldatakse RIK 19.05.2011 käskkirja nr 59 punkte 5.1 ja 6.1 sanktsioonina käskkirja rikkumise eest,
+milleks RIK-il õigust ei ole.
+Vastuse nr 6-1/2305 punkti 2.1.1 esimeses lauses viitab vastustaja justiitsministri määrusele nr 20
+„Registrite ja Infosüsteemide Keskuse põhimäärus“, kus räägitakse järelkontrollist. Selle tegelikku
+tähendust kirjeldab põhjalikult justiitsministri 30.06.10 määruse nr 24 „Kohtu kinnistusosakonna
+kodukord“ § 175. Kaebaja väitel RIK paneb sellesse mõistesse teise sisu, milleks on nimelt kontroll
+selle üle, et veebilehtede külastajad kasutaksid neid otstarbekohaselt, st kontroll kasutajate käitumise
+üle. Samas RIK teeb järelduse, et infosüsteemide otstarbekohane kasutamine on ainuke garantii
+infosüsteeme kasutavate isikute õigustamiseks. Sisuliselt õigustamine on õigusvastasuse puudumise
+tuvastamine, mis omakorda tähendab kuriteotunnuste puudumist. Järelikult võrdsustab RIK süsteemi
+ebaotstarbekohase kasutamise kuriteoga. Kuid RIK ei ole uurimisasutus ega oma selliseks tegevuseks
+õigust. Samuti on kaheldav, kuidas on võimalik kasutada ebaotstarbekohaselt seda, mis ei oska midagi
+muud peale selle, milleks see ette nähtud on. Seega justiitsministri määrus nr 20 ei anna vaidlustatud
+käskkirja punkti 5.1 kohaldamiseks õiguslikku alust.
+RIK-il tekivad avalike andmete töötlejana suhted andmetega toiminguid sooritavate isikutega,
+toimingu sooritamist taotlevate isikutega ning andmetega tutvuvate isikutega. Süsteemide kasutajad
+on seaduses jagatud samuti funktsioonide järgi ning RIK-il lasub kohustus luua arvutisüsteemid nende
+funktsioonide täitmiseks.
+Vastuse punkti 2.1.1 neljandas lauses vastustaja väidab, et KRS § 773 punkt 2 põhjendab käskkirja nr
+59 punktide 5.1 ja 6.1 sisu. Kaebaja on seisukohal, et KRS § 773 punkt 2 käib kohtunike kohta ja ei
+käi vaidluse eseme kohta, kuna käskkiri nr 59 ei puuduta kohtunikke. Samas väidetakse, et
+justiitsministri määruse nr 8 § 1 ja § 4 p 1 põhjendavad punktide 5.1 ja 6.1 sisu. Justiitsministri
+22.01.2001 määruse nr 8 „Kinnistusraamatu andmetöötluskeskus“§ 3 lg 2 kohaselt on andmete
+muutmine lubatud ainult lisaserveris, mis toimub avalduse esitamisel ja ei toimu andmetega
+tutvumisel. Põhiserveris andmete uuendamisega tegelevad ainult kohtunikud. Järelikult justiitsministri
+määruse nr 8 § 4 p 1 ei käi veebilehtede külastajate ja käskkirja nr 59 kohta. Kaebaja leiab, et RIK-i
+osalemine volituste määramise protsessis on minimaalne, vastavalt KRS § 778 lg-le 2 teevad seda SK
+arvutid RIK-i lepingu alusel.
+
+
+                                                   2
+Kaebuse esitaja arvates põhjendamata on vastustaja vastuse punktis 2.1 toodud väide, et käskkirja nr
+59 punktide 5.1 ja 6.1 sätted on õiguspärased. Käskkirja punkt 5.1 ei ole õiguspärane, kuna selle
+andmiseks ja kohaldamiseks on vaja omada volitusi, mis RIK-il kehtiva seaduse järgi puuduvad.
+Kahtlus puudub selles, et blokeerimine leidis aset ning et käskkiri nr 59 on haldusakt tulenevalt HMS
+§ 51 lg-st 2. Seega blokeerimine kui toiming on haldusorgani tegevus (HMS § 106). Juurdepääsu
+blokeerimise näol on tegemist võimaluse piiramisega realiseerida õigust elektroonilisel viisil teabe
+saamiseks (KRS § 74). HMS § 107 lg 1 kohaselt võib toiming piirata vabadusi ainult siis, kui selleks
+on seaduslik alus. RIK-i väitel rikkus kaebaja käskkirja nr 59 punkti 5.1, mis oli blokeerimise aluseks.
+HMS § 107 lg 2 kohaselt peab RIK määrama toimingu sooritamise protsessuaalse viisi. Järelikult
+peavad olema dokumendid, millest nähtuvad aeg, koht, millisel viisil ja kes toimingu sooritas ning
+asjaolude kirjeldus, millega õigusnormi kohaldamist põhjendatakse. RIK ei esitanud mingeid
+protsessuaalseid dokumente, mis tõendaksid blokeerimise põhjendatust. Järelikult ei ole teada, kes
+blokeeris IP-aadressi, mida ta teadis enne blokeerimise teostamist, kuidas ta otsustas, et punkti 5.1 on
+rikutud ja kas ta omas tegutsemiseks volitusi. Kõike ülalmärgitut teadmata ei ole võimalik
+blokeerimise õiguspärasust hinnata.
+Vastuse nr 6-1/2305 punktis 2.2 vastustaja väidab, et IP-aadressi blokeerimise põhjuseks oli kaebaja
+tegevus. Selle väite tõendamiseks viidetakse kriminaalasjale nr 1-13-2276. Kuivõrd vastustaja ei
+vaidle vastu, et blokeerimine oli õigusvastane, siis hoolimata sellest, et kriminaalkohus mõistis kaebaja
+süüdi, on vastustaja blokeerinud IP-aadressi õigusvastaselt.
+Kaebaja väidab, et blokeerimise ajal olemasolevatest faktidest ei olnud võimalik teha järeldust, et
+eesmärgid, millistel infosüsteemi kasutatakse, on õigusvastased (punkt 5.1) ning sellel alusel IP-
+aadressi blokeerida. Teisisõnu näis tegevus täiesti seaduslik, st punkti 5.1 kohaldamine ei olnud
+võimalik. Oma seisukoha tõendamiseks viitab kaebaja järgmistele dokumentidele: 1) RIK-i direktori
+09.01.12 kiri nr 1.1-4/186, millest nähtub, et probleemi algatas SK administraator. Kui mitte tema, ei
+oleks RIK päringutele tähelepanu pööranudki. Märkimisväärne on see, et päringuid töötlesid põhiliselt
+SK ja EMT arvutid, neil ei ole mingeid tehnilisi probleeme tekkinud; 2) Justiitsministri 28.02.12 kiri
+nr 2-4/2345, milles ei öelda midagi punkti 5.1 ja kaebaja tegevuse kohta; 3) RIK-i sisekontrolli juhataja
+15.03.12 kiri nr 6.3-6/1117, milles ei öelda midagi punkti 5.1 ja kaebaja tegevuse kohta, vaid
+kirjutatakse tehnilisest probleemist; 4) Klienditoe administraator H. Porožnini e-kirjad, millest nähtub,
+et ta ei ole üldse kursis, et oli sooritatud avalik haldustoiming; 5) Kriminaalasja protokolli väljavõttest
+RIK-i ülekuulamise kohta nähtub, et blokeerimise asjaolusid seal ei käsitletud. Sellest ei nähtu kes,
+millal, kus ja kuidas blokeeris IP-aadressi, samuti kuidas isik tegi otsuse blokeerimise kohta.
+Ülaltoodust tuleneb, et igasugused viited kriminaalasjale ei oma vaidluse esemega mingit puutumust.
+Õigusvastasuse tuvastamise põhjendatud huviks on kaebuse esitajal takistada vastustajat tulevikus
+kaebaja IP-aadressi blokeerida ja kahju hüvitamist nõuda.
+
+Vastustaja:
+Käesolevas haldusasjas on vaidluse all õiguslik küsimus, kas vastustajal oli õigus blokeerida kaebaja
+IP-aadress Registrite ja Infosüsteemide Keskuse 19.05.2011 käskkirjaga nr 59 kehtestatud
+kasutustingimuste punktide 5.1 ja 6.1 alusel või mitte. Kaebaja hinnangul vastustajal selleks õigust ei
+ole, mistõttu taotleb ta viidatud kasutustingimuste punktide õigusvastasuse tuvastamist.
+Õigusvastasuse tuvastamise põhjendatud huviks on preventiivne eesmärk takistada vastustajat
+tulevikus kaebaja IP-aadressi blokeerida ja kahju hüvitamist nõuda.
+Kasutustingimustes toodud vastustaja õigus piirata ligipääs vastustaja poolt hallatavatele
+veebilehtedele (infosüsteemidele) tuleneb vajadusest tagada vastustajale õigusaktidega antud
+kohustuste täitmine. Justiitsministri 18.04.2007 määrusega nr 20 vastu võetud „Registrite ja
+Infosüsteemide Keskuse põhimääruse“ kohaselt on RIK-i ülesandeks hallata Justiitsministeeriumi
+valitsemisala info- ja sidesüsteeme, tagada nimetatute töökindlus ja teostada järelkontrolli
+infosüsteemide kasutamise, andmetervikluse ja turvalisuse üle. Infosüsteemide töökindluse tagamise
+eesmärgiks on kindlustada infosüsteemide eesmärgipärane kasutamine. Infosüsteemide
+
+
+                                                    3
+eesmärgipärase kasutamise üheks alustalaks on tagada, et vaid selleks õigustatud isikud kasutaksid
+infosüsteeme. KRS § 773 punkti 2 ja justiitsministri 22.01.2001 määruse nr 8 „Kinnistusraamatu
+andmetöötluskeskus“ § 1 ja § 4 punkti 1 kohaselt on RIK-il muu hulgas kohustus kindlustada RIK-i
+poolt peetava elektroonilise kinnistusraamatu kannete tegemine, muutmine ja kustutamine ainult
+selleks pädevate isikute poolt ning välistada mittepädevate isikute juurdepääs andmetele, samuti
+tagada andmete muutmata kujul säilimine. Kasutustingimustega tehakse vastustaja veebilehtesid
+külastavatele isikutele teatavaks vastustajale õigusaktidega antud õiguste teostamise viisid, millest
+üheks on ka võimalus piirata ligipääsu vastustaja infosüsteemidele (kasutustingimuste punkt 6.1)
+juhul, kui infosüsteemide kasutamise eesmärgiks on õigusrikkumise toimepanek (kasutustingimuste
+punkt 5.1), mis käesoleval juhul on ka tuvastatud. Vastustajale on antud pädevus hallata Eesti Vabariigi
+jaoks olulisi infosüsteeme ning tagada nimetatute töökindlus ja tõrgeteta toimimine. Õigusaktides
+toodud eesmärkide täitmiseks on vastustaja loonud ühtsed kasutustingimused, mis tagaksid
+infosüsteemide eesmärgipärase kasutamise. On ilmne, et vastustajal peab olema õigus teha
+kiireloomulisi otsustusi süsteemide tõrgeteta toimimise ja töökindluse tagamiseks, näiteks
+suuremahulisi identifitseerimispäringuid esitanud IP-aadressi blokeerimine. Lähtudes eeltoodust ei ole
+vastustaja hinnangul vaidlustatud kasutustingimuste punktid õigusvastased.
+IP-aadressi blokeerimise ajendas Trummi 38-G asuvast IP-aadressilt teostatud rünne RIK-i poolt
+hallatavale kinnistuportaalile. Tartu Maakohtu 26.07.2013 kohtuotsusega kriminaalasjas nr 1-13-2276
+on tuvastatud, et A. B. sisenes 20.12.2011 oma elukohas aadressil Trummi 38-G, Tallinn,
+Sertifitseerimiskeskus AS serveris asuvale testlehele http://www.openxades.org/ddregisteruser ning
+ajavahemikul 20.12.2011-27.12.2011 suunas sinna automatiseeritud päringute programmi, kasutades
+2 344 101 päringut andmete ebaseadusliku saamise eesmärgil. Päringute eesmärk oli viia kokku
+isikukood ning isikukoodiga seotud mobiiltelefoni abonentnumber tuvastamaks sellisel viisil isikuid,
+kellel oli olemas Mobiil-ID kasutamise sertifikaat. A. B., kasutades saadud Mobiil-ID kasutajate
+andmeid ja internetiga ühendatud arvutiseadet ning automatiseeritud päringute programmi, selleks
+luba ja programmi valdaja nõusolekut omamata, suunas 09.01.2012 ja järgnevalt 12.01.2012 (ööl vastu
+13.01.2012) oma elukohas Trummi 38-G, 1833 identifitseerimispäringut RIK-i poolt hallatavale
+kinnistuportaalile. Tartu Maakohtu 26.07.2013 kohtuotsusega kriminaalasjas nr 1-13-2276 tunnistati
+A. B. eelkirjeldatud tegevuses süüdi Karistusseadustiku (KarS) § 217 lg 1-25 lg 2 ja KarS § 207 lg 2
+järgi. Kohus leidis viidatud lahendis järgnevat: „/…7Päringute hulk lühikese ajavahemiku sees viitas
+intensiivsusele ning andis alust järeldada samasuguse intensiivsusega päringute jätkumist. Päringud
+lähtusid ühest allikast. Seetõttu haldaja ja avaliku teenuse osutaja tegevus teenuse sulgemisel oli
+mõistlik, et vältida süsteemi ülekoormamist ja teiste isikute identifitseerimisprotsessi raskendamist
+ning sellega raskeid tagajärgi. Nimetatud päringute suunamisega häiris A.B. ebaseaduslikult
+arvutisüsteemi toimimist ja takistas RIK-i poolt avalike teenuste osutamist/.../“. Seega on A. B. süüdi
+mõistetud tegevuses, mis ajendas vastustajat kaebaja IP-aadressi blokeerima.
+IP-aadressi blokeerimine tegevusena ei tähendanud A. B. arvutiruumi sisenemist, tegemist oli A. B.
+arvutiruumi välise tegevusega – vastustaja serveri tulemüüris IP-aadressile blokeeringu peale
+panemisega. IP-aadress, millelt rünne toimus, on nähtav kinnistusraamat.rik.ee logifailidest ja
+nimetatud IP-aadressilt ründe teostamine on ka kriminaalasjas tuvastatud. Vastustaja märgib, et
+blokeeriti IP-aadressi kaudu sisenemine lisaks www.kinnistusraamat.rik.ee veebilehele
+(infosüsteemile) ka teistele vastustaja poolt hallatavatele infosüsteemidele, kuna tol hetkel ei olnud
+kindel, kas konkreetselt IP-aadressilt toimepandud ründe teostaja eesmärgiks oli vaid kinnistuportaali
+rünne eesmärgiga saada juurdepääs portaali kasutajakontodele nende kontode omanike isikute Mobiili-
+ID süsteemi abil identifitseerimise kaudu või oli eesmärgiks halvata kokkuvõttes üleüldiselt vastustaja
+poolt hallatavate avalike teenuste osutamine.
+Vastustaja rõhutab, et antud juhul on oluline, mida vastustaja rünnete teostamise hetkel teadis või ei
+teadnud. Rünnete teostamise ajahetkel oli vastustajale teada, mis IP-aadressilt rünne tuli ja asjaolu, et
+rünnakute teostaja võis omada kinnistusraamatu kasutajate telefoninumbreid. Vastustaja viitab antud
+asjaolu tõendamiseks M. Allingu poolt vande all antud ütlustele kriminaalasjas nr 1-13-2276 (kaebaja
+
+
+                                                   4
+03.07.2015 seisukohtade lisa nr 10) ja vastustaja poolt Kaitsepolitseiametile edastatud kirjale nr 1.1-
+4/186, milles AS Sertifitseerimiskeskus töötaja L. L. märgib, et: „/.../Kasutati enam vähem järjest
+numbreid, kellest siis enamusel ei olnud Mobiil-ID’d/.../“ (kaebaja 03.07.2015. seisukohtade lisa nr
+4). Mis eesmärk võis ründe teostajal olla ning kas konkreetne IP-aadress on seotud füüsilise isikuga
+või mitte selgus vastustajale kriminaalmenetluse käigus. Seega ründe teostamise ajahetkel ei olnud
+vastustajal teada, milline võis olla rünnanud programmtarkvara võimsus ja ründe teostaja eesmärk –
+kas sooviti kinnistuportaali või ka muude süsteemide andmetele ligipääsu ning kas programmtarkvara
+on suuteline halvama rünnete teostamisega vastustaja poolt hallatavate süsteemide töövõime ja seeläbi
+avalike teenuste osutamise jne. Vastustaja rõhutab, et rünnakukindlat süsteemi luua ei ole võimalik,
+mistõttu ei saa vastustaja ka lubada taolistel rünnakutel jätkuda ning seega peab tegema kõik endast
+oleneva selleks, et taolisi ründeid ei teostataks.
+Kriminaalasjas nr 1-13-2276 on tuvastamist leidnud asjaolu, et lisaks nimedele ja isikukoodidele olid
+A. B. valduses ka isikute telefoninumbrid. AS-i Sertifitseerimiskeskus testlehele suunatud ründe
+eesmärgiks oli viia kokku mobiiltelefoni abonentnumber ja isikukood tuvastamaks isikud, kellel oli
+olemas Mobiil-ID kasutamise sertifikaat. Saadud andmeid kasutades üritas A. B. 9.01. ja 12.01.2012
+pääseda ligi vastustaja poolt hallatava kinnistuportaali klientide kontodele. Juhul, kui vastustaja ei
+oleks blokeerinud A. B. IP-aadressi, oleks kaebajal olnud võimalik saada piiramatu ligipääs isikustatud
+kinnistuportaali andmetele - tal oleks olnud võimalik viia kokku mobiiltelefoni number, isik ja nt tema
+kinnistu andmed. Kahju, mis oleks võinud tekitada nimetatud andmete kasutamisel, ei ole võimalik
+ette kindlaks määrata ning õnneks ei saanud kaebaja ligipääsu andmetele viisil, mis võimaldaks
+vastustajal konkreetsemaid näiteid tuua.
+Vastustaja hinnangul kaalus käesoleval juhul avalik huvi vastustaja poolt hallatavate avalike teenuste
+osutamisele ja vastustaja lepinguliste klientide andmete turvalisusele üle IP-aadressi omaniku erahuvi
+pääseda ligi vastustaja poolt hallatavate avalikele teenustele just konkreetse IP-aadressi kaudu.
+Vastustaja blokeeris IP-aadressi juurdepääsu vastustaja poolt hallatavatele infosüsteemidele tervenisti,
+kuna vastustajal ei olnud rünnete teostamise ajahetkel teada, millised tehnilised vahendid olid ründe
+teostajal olemas ning kas rünne oli seotud vaid konkreetse kinnistuportaaliga või mitte. Vastustaja
+hinnangul olid ohustatud 1833 isiku eraelu puutumatus, kuna kaebajale oli teada isikute nimed ja
+telefoninumbrid. Sisenemisel kinnistuportaali vastavatele kasutajakontodele oleks olnud võimalik
+tuvastada isikutele kuuluvad kinnistute aadressid jm. Kriminaalasjas nr 1-13-2276 leidis tuvastamist
+fakt, et kaebaja valduses oli 1 417 454 isikukoodi koos nimedega, mis annab alust arvata, et
+juurdepääsu takistamatuse korral oleks võinud ohtu sattuda suurema hulga isikute Põhiseadusega
+tagatud õigused. Lisaks vajab märkimist, et kinnistusraamat koosneb kinnistusregistrist,
+kinnistuspäevikust ja kinnistustoimikust (KRS § 10). Juhul, kui A. B. oleks saanud ligipääsu kliendi
+kontole, oleks tal olnud võimalik pääseda ligi kinnistustoimiku andmetele, millele ligipääs on lubatud
+kolmandatele isikutele vaid õigustatud huvi korral (KRS § 74 lg 2). Sama kehtib ka äriregistri puhul.
+Äriregister koosneb samuti kolmest osast, mille sisse kuulub registrikaart, äritoimikud ja
+registritoimikud, kuid avalikud on vaid äriregistri registrikaart ja äritoimik (Äriseadustik § 28 lg 1).
+Õigustatud huvi esinemisel võib tutvuda registritoimikuga (Äriseadustiku § 28 lg 3). Kaalul oli ka
+üldsuse huvi tõhusate, toimivate ja turvaliste avalike teenuste osas, mida vastustaja tulenevalt talle
+õigusaktidega peale pandud ülesannetega peab tagama. Vastustaja pidas vajalikuks blokeerida IP-
+aadress, millelt olid lubamatud identifitseerimispäringud edastatud. Vastustaja blokeeris IP-aadressi
+esmalt 09.01.2012, avades nimetatu vahetult järgneval päeval, mis aga osutus veaks, kuna 12.01.2012
+toimus teine rünnak. Teise rünnaku järgselt oli vastustaja sunnitud IP-aadressi uuesti blokeerima, mis
+avati 27.02.2012.
+Kaebaja väitel seisneb kasutustingimuste punktide õigusvastasuse tuvastamiseks põhjendatud huvi
+preventiivses eesmärgis takistada vastustajat tulevikus tema IP-aadressi blokeerida ja võimaldab
+esitada kahju hüvitamise nõude tulevikus. Vastustaja hinnangul ei saavuta kaebaja kasutustingimuste
+punktide 5.1 ja 6.1 õigusvastasuse tuvastamisega mingisugust õiguslikku kasu või reaalset eelist.
+Vastustaja on korduvalt selgitanud ja põhjendanud nii kirjalikult kui ka suuliselt, miks vastustajal oli
+
+
+                                                   5
+tarvis kaebaja IP-aadress blokeerida ja miks vaidlusalused punktid on õiguspärased. Lähtudes
+eeltoodust ei blokeeri vastustaja kaebaja IP-aadressi tulevikus juhul, kui kaebaja kasutab vastustaja
+poolt hallatavaid infosüsteeme ja registreid õiguspäraselt.
+
+KOHTU PÕHJENDUSED
+
+Kohus, tutvunud kaebusega ja vastustaja kirjaliku seletusega, kuulanud menetlusosaliste suulisi
+selgitusi, sh vastustaja esindaja vande all antud ütlusi, hinnanud haldusasjas esitatud tõendeid kogumis
+ja vastastikuses seoses, leiab, et kaebus ei ole põhjendatud ning tuleb jätta rahuldamata.
+
+Menetletud haldusasjas vaidlust ei ole selles, et perioodil 03.02.-27.02.2012 blokeeris Registrite ja
+Infosüsteemide Keskuse (RIK) IP-aadressi asukohaga Tallinnas, Trummi 38-G, millega välistati
+sisenemine RIK-i hallatavatesse infosüsteemidesse (www.riigiteataja.ee, www.kinnistusraamat.rik.ee,
+www.e-toimik.ee ja www.ariregister.rik.ee).
+Pooled vaidlevad selle üle, kas Registrite ja Infosüsteemide Keskusel oli õigus blokeerida A.B. IP-
+aadress RIK-i 19.05.2011 käskkirjaga nr 59 kehtestatud kasutustingimuste punktide 5.1 ja 6.1 alusel.
+
+RIK 19.05.2011 käskkirjaga nr 59 kehtestatud kasutustingimuste punkti 5.1 kohaselt on kasutajal
+keelatud kasutada veebilehte või haldaja poolt osutatavaid teenuseid pettuse või muu õigusrikkumise
+toimepaneku eesmärgil. Kasutustingimuste punkti 6.1 kohaselt on haldajal õigus piirata
+teenusekasutaja juurdepääsu veebilehele, kui teenusekasutaja rikub käesolevaid kasutustingimusi.
+Haldajal on õigus ajutiselt katkestada juurdepääs veebilehele, kui see on vajalik veebilehe tehniliste
+muudatuste, uuenduste või hooldetööde eesmärgil.
+
+Justiitsministri 18.04.2007 määrusega nr 20 kehtestati „Registrite ja Infosüsteemide Keskuse
+põhimäärus“, mille § 8 sätestab RIK-i tegevusvaldkonnast tulenevalt RIK-ile teenindatavate asutuste
+infosüsteemide arendamise ja haldamise ning andmekogude pidamise põhiülesanded, mille punkti 12
+kohaselt teostab RIK järelkontrolli infosüsteemide kasutamise, andmetervikluse ja turvalisuse kohta
+ministeeriumis ja tema valitsemisalas.
+
+KRS § 773 p 2 kohaselt tuleb kinnistusraamatu töötlemisel kindlustada kannete tegemine, muutmine
+ja kustutamine ainult selleks pädevate isikute poolt ning välistada mittepädevate isikute juurdepääs
+andmetele.
+Justiitsministri 22.01.2001 määrusega nr 8 kehetstatud „Kinnistusraamatu andmetöötluskeskus“ §-i 1
+kohaselt on kinnistusraamatu andmetöötluskeskuse pidajaks RIK. Sama määruse § 4 p 1 kohaselt on
+RIK-i ülesanded andmetöötluskeskusena põhiserveri andmehaldus, tagades andmete muutmata kujul
+säilitamise.
+
+Eeltoodust tulenevalt on RIK-ile õigusaktidega pandud kohustus teostada järelevalvet teenindavate
+asutuste infosüsteemide ja andmekogude kasutamise üle ning tagada infosüsteemide turvalisus. Kohus
+märgib, et infosüsteemide turvalisuse tagamine seejuures on väga oluline. Vastustaja märgib, et RIK
+19.05.2011 käskkirjaga nr 59 kehtestatud kasutustingimustes on veebilehtesid külastavatele isikutele
+teatavaks tehtud RIK-ile õigusaktidega antud õiguste teostamise viisid. Kohus nõustub vastustajaga,
+et vaidluse all olevad kasutustingimuste punktid 5.1 ja 6.1 sätestavad RIK-ile õigusaktidega määratud
+õigused, mis tagavad infosüsteemide eesmärgipärase ja turvalise kasutamise.
+
+Kohus on seisukohal, et RIK-ile on antud pädevus hallata Justiitsministeeriumi valitsemisala info- ja
+sidesüsteeme ning RIK, blokeerides kasutustingimuste punktide 5.1 ja 6.1 alusel Trummi 38-G asuva
+IP-aadressi juurdepääsu infosüsteemidele (www.riigiteataja.ee, www.kinnistusraamat.rik.ee, www.e-
+toimik.ee ja www.ariregister.rik.ee), ei ole tegutsenud pädevust ületades.
+
+
+                                                   6
+Vastustaja selgituste kohaselt blokeerimise põhjuseks oli Trummi 38-G asuvast IP-aadressilt teostatud
+rünne RIK-i poolt hallatavale kinnistuportaalile. Rünnete teostamise ajahetkel oli RIK-ile teada, mis
+IP-aadressilt rünne tuli ning asjaolu, et rünnakute teostaja võis omada kinnistusraamatu kasutajate
+telefoninumbreid. Tartu Maakohtu 26.07.2013 jõustunud kohtuotsusega kriminaalasjas nr 1-13-2276
+tunnistati A. B. süüdi Karistusseadustiku (KarS) § 217 lg 1-§ 25 lg 2 ja KarS § 207 lg 2 järgi.
+Eelviidatud kohtulahendis leidis maakohus, et „/…/ haldaja ja avaliku teenuse osutaja tegevus teenuse
+sulgemisel oli mõistlik, et vältida süsteemi ülekoormamist ja teiste isikute identifitseerimisprotsessi
+raskendamist ning sellega raskeid tagajärgi. Nimetatud päringute suunamisega häiris A.B.
+ebaseaduslikult arvutisüsteemi toimimist ja takistas RIK-i poolt avalike teenuste osutamist/.../“.
+
+Kohus nõustub RIK-i väitega, et mis eesmärk võis ründe teostajal olla ning kas konkreetne IP-aadress
+on seotud füüsilise isikuga või mitte selgus vastustajale kriminaalmenetluse käigus ning ründe
+teostamise hetkel ei olnud RIK teadlik rünnanud programmtarkvara võimsusest ja ründe teostaja
+eesmärgist. Vaieldamatu fakt on see, et kriminaalasjas nr 1-13-2276 on tuvastatud, et lisaks nimedele
+ja isikukoodidele olid A. B. valduses ka isikute telefoninumbrid. AS-i Sertifitseerimiskeskus testlehele
+suunatud ründe eesmärgiks oli viia kokku mobiiltelefoni abonentnumber ja isikukood tuvastamaks
+isikud, kellel oli olemas Mobiil-ID kasutamise sertifikaat. Saadud andmeid kasutades üritas A. B.
+09.01. ja 12.01.2012 pääseda ligi vastustaja poolt hallatava kinnistuportaali klientide kontodele. Seega
+juhul, kui vastustaja ei oleks blokeerinud A. B. IP-aadressi, oleks kaebajal olnud võimalik saada
+piiramatu ligipääs isikustatud kinnistuportaali andmetele, st tal oleks olnud võimalik viia kokku
+mobiiltelefoni number, isik ja nt tema kinnistu andmed. Vastustaja hinnangul, millega nõustub ka
+kohus, kaalus antud juhul avalik huvi vastustaja poolt hallatavate avalike teenuste osutamisele ja
+vastustaja lepinguliste klientide andmete turvalisusele üle IP-aadressi omaniku erahuvi pääseda ligi
+vastustaja poolt hallatavate avalikele teenustele just konkreetse IP-aadressi kaudu. Kohtu hinnangul
+RIK tegutses õigesti, kui blokeeris IP-aadressi juurdepääsu vastustaja poolt hallatavatele
+infosüsteemidele, kuna vastustajale ei olnud rünnete teostamise ajahetkel teada, millised tehnilised
+vahendid olid ründe teostajal olemas ning kas rünne oli seotud üksnes konkreetse kinnistuportaaliga.
+Vastustajale teadaolevalt olid ohustatud 1833 isiku eraelu puutumatus, kuna kaebajale olid teada
+isikute nimed ja telefoninumbrid ning sisenemisel kinnistuportaali vastavatele kasutajakontodele oleks
+olnud võimalik tuvastada isikutele kuuluvad kinnistute aadressid jm. Kriminaalasjas nr 1-13-2276
+leidis tuvastamist asjaolu, et A.B. valduses oli 1 417 454 isikukoodi koos nimedega, mis annab alust
+arvata, et juurdepääsu takistamatuse korral oleks võinud ohtu sattuda suurema hulga isikute
+Põhiseadusega tagatud õigused. Seega juhul, kui A. B. oleks saanud ligipääsu kliendi kontole, oleks
+tal olnud võimalik pääseda ligi kinnistustoimiku andmetele, millele ligipääs on lubatud kolmandatele
+isikutele üksnes õigustatud huvi korral vastavalt KRS § 74 lg-le 2. Sama kehtib ka äriregistri puhul.
+Vaid õigustatud huvi esinemisel võib tutvuda registritoimikuga vastavalt Äriseadustiku § 28 lg-le 3.
+Vastustaja on tulnud õigele järeldusele, et kaalul oli üldsuse huvi tõhusate, toimivate ja turvaliste
+avalike teenuste osas, mida RIK temale õigusaktidega pandud ülesannete täitmisega peab tagama.
+Kohus leiab, et vastustaja käitus õigesti, pidades vajalikuks blokeerida IP-aadress, millelt olid
+edastatud lubamatud identifitseerimispäringud. Vastustaja kinnitas, et blokeeris IP-aadressi esmalt
+09.01.2012, avades nimetatu vahetult järgneval päeval, mis aga osutus veaks, kuna 12.01.2012 toimus
+teine rünnak, mille järgselt oli vastustaja sunnitud IP-aadressi uuesti blokeerima (kuni 27.02.2012).
+Kohtu hinnangul vastustaja on piisavalt selgelt ja arusaadavalt põhjendanud nii kirjalikult kui suuliselt
+kohtuistungil (sh RIK-i esindaja Martti Allingu vande all antud ütlused), mis põhjusel RIK-il oli tarvis
+kaebaja IP-aadress blokeerida. Vastustaja kinnitas kohtule, et ei blokeeri kaebaja IP-aadressi tulevikus,
+kui ta kasutab RIK-i hallatavaid infosüsteeme ja registreid õiguspäraselt.
+
+Kohus nõustub Registrite ja Infosüsteemide Keskuse põhjendustega, mida ei hakka üle kordama.
+Halduskohtumenetluse seadustiku (HKMS) § 165 lg 2 kohaselt kui kaebus jääb rahuldamata ning
+
+
+                                                   7
+kaebaja poolt kohtumenetluses esitatud väidetega mittenõustumist või tema viidatud tõendi
+arvestamata jätmist on vaidlustatud haldusaktis või kaebuse nõude kohta tehtud vaideotsuses juba
+põhjendatud ja kohus järgib seda põhjendust, ei pea kohus seda põhjendust oma otsuses kordama, vaid
+võib viidata põhjendusega nõustumisele, mida kohus on antud juhul ka teinud.
+
+Kohus leiab, et vastustajal oli õigus piirata juurdepääsu IP-aadressile asukohaga Trummi 38-G,
+Tallinn. Selline tegutsemine oli mõistlik (samale seisukohale asus ka Tartu Maakohus ülalviidatud
+jõustunud kohtuotsuses) ning RIK toimis blokeerimisel oma pädevuse piirides.
+
+Vastavalt HKMS §-le 108 lg 1 kannab menetluskulud pool, kelle kahjuks otsus tehti. Vastustaja ei ole
+menetluskulude hüvitamist taotlenud. Menetluskulud jäävad poolte endi kanda.
+
+
+
+
+/allkirjastatud digitaalselt/
+Elle Kask
+Kohtunik
+
+
+
+
+                                                 8

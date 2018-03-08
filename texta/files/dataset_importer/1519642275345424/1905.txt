@@ -1,0 +1,651 @@
+                            KOHTUOTSUS
+                                   Eesti Vabariigi nimel
+
+Kohus                             Tallinna Ringkonnakohus
+
+Kohtukoosseis                     Eesistuja Imbi Sidok-Toomsalu, liikmed Liis Arrak ja
+                                  Indrek Parrest
+
+Otsuse tegemise aeg ja koht       28.11.2016, Tallinn
+
+Tsiviilasja number                2-15-14977
+
+Tsiviilasi                        AS-i Natural hagi OÜ Hansacom vastu kahju
+                                  hüvitamiseks ja viivise väljamõistmiseks
+
+Vaidlustatud kohtulahend          Harju Maakohtu 21.04.2016 otsus
+
+Kaebuse esitaja ja kaebuse liik   AS-i Natural apellatsioonkaebus
+
+Tsiviilasja hind                  16 300.73 eurot
+apellatsioonimenetluses
+
+Menetlusosalised ja nende         Hageja/apellant AS Natural (registrikood 10303196),
+esindajad                         lepingulised esindajad v/adv abid Kadri Lember ja
+                                  Edgar-Kaj Velbri
+
+                                  Kostja/vastustaja OÜ     Hansacom     (registrikood
+                                  10571146), lepingulised esindajad v/adv-d Merilin
+                                  Valdmaa ja Epp Lumiste
+
+Kohtuistungi toimumise aeg        02.11.2016
+
+RESOLUTSIOON
+  1. Harju Maakohtu 21.04.2016 otsuse resolutsioon jätta muutmata, kuid muuta
+     osaliselt otsuse põhjendusi.
+  2. Apellatsioonkaebus jätta rahuldamata.
+  3. Menetlusosaliste taotlused 02.11.2016 kohtuistungi protokolli parandamiseks jätta
+     rahuldamata.
+  4. Apellatsioonimenetluse kulud jätta apellandi AS-i Natural kanda.
+  5. Mõista AS-lt Natural välja OÜ Hansacom kasuks apellatsioonimenetluses kantud
+     menetluskulude       hüvitamiseks    1239      eurot.     Hüvitamisele   kuuluvatelt
+     menetluskuludelt tuleb tasuda viivist alates käesoleva otsuse jõustumisest kuni selle
+     täitmiseni võlaõigusseaduse § 113 lõike 1 teises lauses ettenähtud suuruses.
+                                                                                               2
+
+   6. Otsuse peale võib kassatsiooni korras edasi kaevata, esitades kaebuse vahetult
+      Riigikohtule 30 päeva jooksul otsuse kassaatorile kättetoimetamisest, kuid mitte
+      pärast viie kuu möödumist otsuse avalikult teatavaks tegemisest.
+
+Selgitused
+Hagimenetluses Riigikohtus võib menetlusosaline menetlustoiminguid teha, sealhulgas avaldusi
+ja taotlusi esitada üksnes vandeadvokaadi vahendusel. Menetlusosaline võib ise esitada
+menetlusabi saamise taotluse, samuti esitada teise menetlusosalise kaebuse või muu taotluse
+kohta seisukohti ja vastuväiteid.
+Seaduses sätestatud alustel võib menetlusosaline taotleda riigipoolset menetlusabi
+menetluskulude kandmiseks. Menetlusabi andmise taotlus ei peata menetlustähtaja kulgemist.
+Seaduses sätestatud tähtaja järgimiseks peab menetlusabi taotleja tegema tähtaja kestel ka
+menetlustoimingu, mille tegemiseks ta menetlusabi taotleb, eelkõige esitama kaebuse. Kaebuse
+põhjendamiseks või riigilõivu tasumiseks või kaebuses esineva sellise puuduse kõrvaldamiseks,
+mis on seotud menetlusabi taotlemisega, annab kohus mõistliku tähtaja pärast menetlusabi
+taotluse lahendamist, kui nimetatud taotlus ei olnud esitatud põhjendamatult või tähtaja
+pikendamise eesmärgil. See ei välista menetlustähtaja ennistamist.
+
+Asjaolud ja hageja nõue
+   1. 07.10.2015 esitas hageja maakohtule hagi kostja vastu, milles palub kostjalt välja mõista
+       kahjuhüvitise 14 615.74 eurot, viivise hagi esitamise aja seisuga 508.42 eurot ja
+       lisanduva viivise seadusjärgses määras. Menetluskulud palub jätta kostja kanda.
+
+   2. Hagiavalduse kohaselt oli poolte vahel sõlmitud suuline töövõtuleping puidu
+      immutamiseks. Kostja kohustus immutama hageja tarnitud puitu vastavalt klassile H3
+      (UC3), mille puhul vesilahuse Celcure C4 retentsioon puidus on 10kg/m3. Hageja
+      transportis immutamisele minevat puitu kostja territooriumile kokku mahus 19 351,14
+      jm. Pärast immutamist laaditi lepingu alusel kostja immutatud puit 26.05.2014 ja
+      04.06.2014 kostja territooriumilt veoautole ning transporditi hageja lepingupartneri Imex
+      Bois asukohta Prantsusmaal.
+
+   3. 23.07.2014 edastas kostja hagejale sertifikaadi, millega kinnitas puidu vastavust klassile
+      H3 (UC3). 21.07.2014 edastas Imex Bois agendi vahendusel hagejale teate, et Imex
+      Bois-ile saadetud lauad olid valgete laikudega ja töötlus on Imex Bois hinnangul
+      üllatavalt hele. Imex Bois tõstatatud kahtluste osas selguse saamiseks palus hageja
+      lõigata laudadest näidised ning edastada need hagejale laboris analüüsimiseks.
+      30.09.2014 teavitas hageja kostjat, et sai Prantsusmaalt pretensiooni seoses immutuse
+      kvaliteediga. Imex Bois poolt saadetud puidunäidised jõudsid Soomes tegutsevasse
+      Novalab OY laborisse 30.10.2014 ning analüüsi raport valmis 10.11.2014. Raporti
+      kohaselt sisaldas kostja immutatud puit vesilahust Celcure C4 nõutava 10kg/m3 asemel
+      6,8kg/m3. Seega oli kostja immutanud puitu ebakvaliteetselt ja H3 (UC3) standardi
+      nõudeid rikkudes. 13.11.2014 edastas hageja analüüsi raporti kostjale. Kostja sisuliselt ei
+      vastanud, paludes vaid edastada puidunäidised, millest proovid olid võetud. Hageja
+      teavitas kostjat, et näidistega tutvumiseks tuleb ühendust võtta laboriga.
+
+   4. Imex Bois keeldus puudulikult immutatud puitu vastu võtmast, organiseeris hageja puidu
+      transpordi Prantsusmaalt tagasi Eestisse ning asendas puudulikult immutatud materjali
+      nõuetele vastava materjaliga. 06.03.2015 teavitas hageja kostjat, et puit on kliendi poolt
+      hagejale tagastatud ning asub hageja laos. Hageja pakkus kostjale puidust
+      kordusproovide võtmise võimalust, selgitades, et kui kostja kordusproovide võtmise
+      soovi ei väljenda, võõrandab hageja kõnealuse ebakvaliteetselt immutatud puidu. Kostja
+                                                                                         3
+
+   sai kirja kätte 09.03.2015. 18.03.2015 kirjas asus kostja seisukohale, et tal puudub
+   hageja 06.03.2015 pretensioonkiri. 31.03.2015 esitas Imex Bois juhatuse liikme XC
+   kaudu hagejale reklamatsiooni, milles kinnitas puidu mittevastavust sertifikaadile ning
+   keeldus kauba vastuvõtmisest 5938,18 jm ulatuses, millele lisandus 200tk 5,1m pikkust
+   lauda 1100 jm (kokku 6958,18 jm). Samuti kinnitas Imex Bois, et hageja on defektsed
+   kaubad asendanud. 10.07.2015 teavitas hageja kostjat, et on saanud kaks hinnapakkumist
+   tagastatud puidu ostmiseks ja pakkus võimalust leida puidule kallima hinnaga ostja või
+   omandada puit ise 20 päeva jooksul alates kirja saamisest. Tähtkiri tagastati hagejale
+   hoiutähtaja möödumisel. Hageja saatis sama pöördumise e-kirja teel, millele kostja ei
+   vastanud.
+
+5. Asjaolu, et puit immutati kostja poolt mittekohaselt, on tõendatud Novalab OY labori
+   analüüsiga. Laborisse saadetud näidised lõigati asjaomase laadungi osaks olevadelt
+   laudadelt hageja agendi juuresolekul, mistõttu võib olla kindel, et laborisse
+   analüüsimiseks saadetud näidised pärinevad kostja juures immutatud puidupartiist.
+   Kostja rikkus ebakvaliteetse immutusega võlaõigusseaduse (VÕS) § 641 lõike 2 punkte
+   1 ja 2 ning § 77 lõiget 1.
+
+6. Hageja on kostjapoolse rikkumise tõttu kannatanud järgmist otsest varalist kahju:
+   1) puidu väärtuse vähenemisega seoses kahju kokku 6860.74 eurot, so Imex Bois poolt
+   reklameeritud 6958,18jm puidu turuhind x 1.58 eurot = 10 993.92 eurot, sh 1100jm x
+   1.58=1738 eurot 200tk 5,1m laudade eest, mida ei ole hagejale seni tagastatud, kuid
+   mille eest ei tasutud ka ostuhinda. Turuhinnana käsitles hageja hinda, millega tal oleks
+   olnud võimalik müüa korrektselt immutatud puitu Imex Bois’le. Et hagejal puudus
+   igasugune otstarve kahjustatud puidule ning kostja seda ostma ei soostunud, võttis
+   hageja hinnapakkumised puidu müümiseks. Eestis õnnestus realiseerida hinnaga 150
+   eurot/m3 ehk 23,248 m3 x 150 = 3487.20 eurot. Samas ulatuses vähenes ka hagejale
+   tänaseni tagastamata 1100jm puidu hind, moodustades 4,3065 m3 x 150 = 645.98 eurot.
+   Seega vähenes puidu turuhind kostjapoolse rikkumise tõttu 10 993.92 - 3487.20 - 645.98
+   =                        6860.74                       euro                       võrra;
+   2) transpordikulud asenduspuidu transportimisel Eestist Prantsusmaale 2640 eurot ning
+   puudulikult immutatud materjali tagasi Eestisse transportimise kulud 2880 eurot, kokku
+   5520 eurot. Transpordikulud Prantsusmaalt Eestisse 2880 eurot kandis hageja eesmärgil
+   vähendada talle tekitatud kahju suurust. Kui täiendavaid transpordikulusid ei oleks
+   kantud, oleks hageja kandnud täiendavat kahju 3487.20 eurot (kahjustatud tagastatud
+   puidu        väärtus),      millele     lisandunuks       puidu      utiliseerimiskulud;
+   3)          laborikulud          puidu        analüüsimiseks         168          eurot;
+   4) kohtueelsed õigusabikulud kokku 2067 eurot, so 13,25t õigusabi hinnaga 130 eurot
+   tunnis, millele lisandub käibemaks.
+
+7. Eeltoodut arvestades on kostja põhjustanud hagejale kahju kokku 6860.74 + 5520 + 168
+   + 2067 = 14 615.74 eurot.
+
+8. Puidu väärtuse vähenemisest ning laboriarvest tekkinud kahju hüvitamise nõuded
+   muutusid sissenõutavaks 13.11.2014, mil hageja edastas kostjale OY Novalab raporti
+   ning teavitas kahju esialgsest hinnangulisest suurusest. Hagi esitamise ajaks
+   sissenõutavaks muutunud viivis, arvestades VÕS § 113 lõike 1 teises lauses sätestatud
+   viivisemäära, 508.42 eurot (arvestus t I kd lk 8). Samas määras nõuab hageja viivist
+   transpordikuludest ja kohtuvälistest õigusabikuludest alates hagi esitamisest kuni
+   kohustuse kohase täitmiseni.
+                                                                                                4
+
+   9. Vastuseks kostja vastuväidetele märkis hageja järgmist. Soome labor ei oleks väljastanud
+      ekspertiisiakti, kui järelduste tegemiseks ei oleks olnud piisavalt materjali, või oleks
+      labor märkinud, et maltspuitu on ekspertiisi teostamiseks ebapiisavalt. Labori raportil
+      vastavat märget ei ole. Kostjal oleks olnud võimalik nõuda kordusekspertiisi nii
+      samadelt näidistelt kui ka Eestisse tagasi saadetud puidult, kuid ta ei teinud seda. Kostjal
+      oli võimalus võtta ühendust laboriga, kuid ta ei teinud seda. Puudub mistahes praktika,
+      mis keelab proovide võtmist õhukese maltspuidu kihiga näidistelt. Hagejal kahju
+      tekkimist seoses kostjapoolse kohustuste mittekohase täitmisega tõendab Imex Bois
+      reklamatsiooniga, mille kohaselt tagastati lauad ebakvaliteetse immutuse tõttu. Kahju
+      tekkis vaid kostja tegevuse tulemusel, kuna kostja keeldus kandmast puidu
+      immutamisega seotud kulutusi. Sellele järgnevalt puudusid hagejal täiendavad VÕS
+      § 139 lõikest 2 tulenevad kohustused. Kohtueelsed õigusabikulud on põhjendatud, kuna
+      seonduvad kohtueelsete läbirääkimiste ning selle käigus teostatud õiguslike
+      analüüsidega.
+
+Kostja vastuväited
+   10. Kostja vaidles hagile vastu ja palus jätta selle rahuldamata. Hageja ei ole tõendanud, et
+       Prantsusmaale saadetud lauad olid kostja poolt immutatud või et kaup saadeti hagejale
+       tagasi immutuse puuduste tõttu. Immutatud lauad vastasid hageja tellitud H3
+       immutusstandardile. Hageja tõenäoliselt eksis tellimisel ja püüab kostja arvelt oma
+       kahjusid vähendada.
+
+   11. Pooled ei vaidle selle üle, et hageja tellis kostjalt laudade immutuse teenuse, mis vastas
+       H3(UC3) standardile. Ühtlasi on RR 14.11.2014 e-kirjas ühemõtteliselt kinnitanud: „me
+       ei räägi NTR-ist“. Seega ei tellinud hageja NTR-AB immutust. UC3 tähendab „kaetud“
+       (ingl k coated) H3 standardile vastavat soolade tungivust puitu. H3 standardile vastava
+       immutuse korral tungivad soolad puitu 2-3 mm ulatuses. RR poolt kostjale näidatud
+       näidistelt nähtub, et soolad olid tunginud isegi enam kui H3 immutuse korral peaks.
+       Juhul, kui proovid võetakse kasvõi vähesel määral lülipuidust (ehk puidu keskosa poolt),
+       ongi soolade kontsentratsioon madalam, sest immutuse korral ei tungi soolad lülipuitu.
+       Kui ükskõik milline labor testib näidiste vastavust immutuse standardile H3, tuleb
+       immutatud puidust võtta proovid nii, et need võimaldavad hinnata soolade
+       kontsentratsiooni 2-3 mm ulatuses, sest mida sügavamalt puidu keskelt proove võetakse,
+       seda madalam on soolade kontsentratsioon.
+
+   12. Asjatundmatu tellija võib H3 standardile vastava immutuse kergelt segamini ajada NTR-
+       AB tellimusega. NTR-AB tähendab, et soolad tungivad läbi kogu maltspuidu kihi. NTR-
+       AB immutust eristab H3 immutusest teenuse hind, olles märkimisväärselt kallim. NTR-
+       AB immutust ei ole võimalik tavapärase vaatluse korral eristada H3 immutusest, kuid
+       soolad tungivad NTR-AB immutuse korral sügavamale puitu. Kui laborid testivad
+       näidiste vastavust NTR-AB immutuse standardile, võetakse proovid kogu maltspuidu
+       ulatuses juhul, kui maltspuitu on piisavalt Kui maltspuitu ei ole piisavalt, märgitakse see
+       tulemustes ning sellisel juhul on labori analüüsi tulemus küsitav.
+
+   13. Hageja ekspertiisiakt ei tõenda, et laborisse esitatud näidised olid mittenõuetekohaselt
+       immutatud. Labor testis Celcure4 sisaldust ja märgitud on ka AB klassi nõue. Seega
+       testis labor näidiste vastavust AB klassi nõuetele. Täiendavalt nähtub aktist, et näidised
+       koosnesid peaaegu täielikult lülipuidust, millel oli laudade välimistes nurkades väga
+       õhuke säsi(malts)puidu kiht. Ekspertiisi aktile lisatud märkus: „Puidunäidised kujutasid
+       endast peaaegu täielikult lülipuitu, millel oli laudade välimistes nurkades väga õhuke
+       säsipuidu kiht“ välistab eksperdi järelduse asjakohasuse H3 standardile vastavuse
+                                                                                              5
+
+   hindamisel. Erinevalt ekspertiisiaktis väidetust nähtub hageja poolt kostjale esitatud
+   näidistest, et nendes oli maltspuidu osakaal 30-35% puidust. Ekspertiisiks kasutatud
+   väga väikese maltspuidu osakaaluga puidust on proovide võtmine raskendatud (kui mitte
+   võimatu), seda nii H3 kui ka NTR-AB klassides. See on ka põhjus, miks on
+   ekspertiisiaktis tehtud märkus maltspuidu osakaalu suhtele. Maltspuidu osakaal peaks
+   olema ca 2-3mm, et analüüside teostamine oleks võimalik. Lisaks ei ole labor
+   väljastanud ametlikku dokumenti proovide võtmisest (fotod, näidistükkide
+   numeratsioon, materjali paksus, materjali laius, südamikpuidu osakaalu protsent,
+   maltspuidu osakaalu protsent, puidu niiskus). Sellist dokumentatsiooni ei väljastata
+   praktikas tavaliselt siis, kui proovide võtmine on raskendatud ja seetõttu ei ole tulemused
+   usaldusväärsed.
+
+14. Hageja poolt laborisse saadetud puidu päritolu on ebaselge. Tõendamata on, et
+    konkreetsed näidised olid kostja poolt immutatud. Hageja on kohut eksitanud, väites, et
+    Imex Bois saadetud näidised jõudsid Soome laborisse. Hageja esindaja käis näidistega
+    kostja juures oktoobris 2014 selgitamas Imex Boisi pretensioone immutuse kohta.
+    Hageja lubas näidised saata Soome laborisse. Pärast seda, kui hageja oli näidiseid
+    väidetavalt testinud, esitas hageja pretensiooni kostjale. Tuginedes analüüsis esitatud
+    märkusele säsipuidu puudumise kohta, tekkis kostjal kahtlus, et hageja ei olnud laborisse
+    saatnud näidiseid, mida kostjale tutvustas. Seetõttu taotles kostja, et hageja seaduslik
+    esindaja kinnitaks, et näidised olid samad, mida kostjale näidati. Pärast mitmeid
+    kirjavahetusi möönis hageja seaduslik esindaja, et tegemist ei olnud samade näidistega.
+    RR märkis 19.11.2014 e-kirjas, et: „need ei ole samad tk millega ma sinu juures käisin
+    mida testiti. Vaid lõigati uued tükid kindluse mõttes“. Laborisse saadeti seega näidised,
+    mida kostja ei näinud ning mille päritolu kohta puuduvad usaldusväärsed andmed. Ei saa
+    välistada, et näidised on teadlikult võetud viisil, mis välistab soolade kontsentratsiooni
+    mõõtmise säsipuidus ehk immutuse vastavuse hindamise H3 standardile.
+
+15. Kostja ei ole kunagi aktsepteerinud, et näidised, mida talle 2014.a oktoobris näidati või
+    mis laborisse saadeti, on samad lauad, mida kostja immutas. Kostja poolt näidiste
+    võtmata jätmine ei tõenda kostja nõustumust näidiste päritoluga. Pärast seda, kui puit on
+    kostja territooriumilt välja viidud, ei ole enam võimalik tuvastada, kelle laudade või
+    kelle immutusega on tegemist. Välisel vaatlusel näevad immutatud lauad ühesugused
+    välja. Hageja tellimus viidi kostja territooriumilt ära mais ning näidiseid näidati kostjale
+    ca 5 kuud hiljem. Juhul, kui soovitakse tuvastada teenuse kvaliteeti ja olla samaaegselt
+    veendunud laudade päritolus, võetakse proovid enne, kui kaup kostja territooriumilt
+    lahkub. Võetakse kokku 10 näidist, mis saadetakse laboritesse. Üksnes sellisel viisil on
+    kostjal võimalik kinnitada, et lauad on nende poolt immutatud. Prantsusmaalt tagasi
+    saadetud laudade päritolu ei ole võimalik enam tuvastada. Laudade päritolu on
+    tuvastamatu ka seetõttu, et hageja kodulehe andmetel on hageja juhtiv höövel- ja
+    immutusveski, mille kogu tootmismaht on ca 50 000m3 puittooteid aastas. Kostjalt
+    tellitud immutatud lauad kogumahus 152 319 tihumeetrit ei ole hageja poolt ainus
+    tellitud töö ega ainsad immutatud lauad. Tegemist ei saa olla ka ainsa toodanguga, mida
+    hageja on müünud Prantsusmaale.
+
+16. Isegi, kui tegemist oleks samade laudadega, ei ole hageja tõendanud, et puit tagastati
+    mittekvaliteetse immutuse tõttu. Mh tagastati lauad ebakvaliteetse höövelduse tõttu.
+    Kuivõrd kostja ei osutanud hööveldusteenust, ei ole laudade tagastamine seotud kostja
+    teenuse kvaliteediga. Laudade tagastamise täpsed põhjused ja asjaolud on tõendamata.
+    Hageja ei ole esitanud Imex Bois´i 21.07.2014 nõudekirja originaali. Isegi, kui
+    vaidlusalused lauad oleksid kostja poolt immutatud, oli hagejal kohustus töö
+                                                                                                  6
+
+      viivitamatult üle vaadata ja mõistliku aja jooksul töövõtjat töö lepingutingimustele
+      mittevastavusest teavitada.
+
+   17. Hageja kahju hüvitamise nõue on põhjendamatu ning viiviste osas ei ole hageja
+       tõendanud nõude sissenõutavaks muutumist. Kohtueelsed õigusabikulud ei olnud
+       vajalikud ning hageja esindas ennast ise. Kahjuhüvitise osas ei ole hageja astunud
+       mõistlikke samme kahju vähendamiseks. Hagejal oli võimalus kõrvaldada kaubal
+       väidetavalt esinevad puudused 1743 euro eest. Seega tuleb kahjuhüvitist vähendada 1743
+       eurot ületavas osas.
+
+Esimese astme kohtu otsus
+   18. 21.04.2016 otsusega jättis Harju Maakohus hagi rahuldamata ja menetluskulud hageja
+       kanda ning mõistis hagejalt kostjale välja menetluskulud 3385.66 eurot ja viivise.
+
+   19. Poolte vahel ei ole vaidlust selles, et hageja ja kostja vahel oli sõlmitud suuline
+       töövõtuleping, mille alusel kostja kohustus immutama hageja poolt tarnitud puitu
+       vastavalt klassile H3 (UC3). Hageja transportis immutata puidu kostja territooriumile
+       kokku mahus 19 351,14 jm (t I kd lk 11-12). Pärast immutamist laaditi puit 26.05.2014
+       ja 04.06.2014 kostja territooriumilt veoautole ning transporditi hageja lepingupartneri
+       Imex Bois asukohta Prantsusmaal. 23.07.2014 edastas kostja hagejale sertifikaadi,
+       millega kinnitas puidu vastavust klassile H3 (UC3) (t I kd lk 13-14).
+
+   20. Hagiavalduse kohaselt on kostja immutanud puidu ebakvaliteetselt ja H3 (UC3)
+       standardi nõudeid rikkudes, mida kinnitab Novalab OY analüüs (t I kd lk 21-22).
+       Lepingu rikkumisega tekitas kostja hagejale otsest varalist kahju. Kostja kinnitas, et
+       tema poolt teostatud immutusteenus vastas H3(UC3) standardile, et hageja ekspertiisiakt
+       ei tõenda, et laborisse esitatud näidised olid mittenõuetekohaselt immutatud või et need
+       näidised olid kostja poolt immutatud. Hageja minetas õiguse tugineda töö
+       lepingutingimustele mittevastavusele, kuna ei teavitanud kostjat puudustest mõistliku aja
+       jooksul teadasaamisest (t I kd lk 137-145).
+
+   21. Kohus nõustus kostja vastuväidetega. Kohtu hinnangul ei ole hageja oma nõuet
+       tõendanud. Poolte vahel ei ole vaidlust selles, et 26.05.2014 ja 04.06.2014 transporditi
+       kostja poolt immutatud puit Prantsusmaale hageja lepingupartneri Imex Bois asukohta.
+       Immutatud puidupakke enne transporti ei avatud ning nendelt proove ei võetud (t II kd lk
+       69). Hageja esindaja käis esmakordselt näidistega (t I kd lk 154) kostja juures oktoobris
+       2014 selgitamas Imex Boisi poolt hageja agendi vahendusel 21.07.2014 esitatud
+       pretensioone (t I kd lk 15-16, 186-187). 14.11.2014 e-kirjas kinnitas hageja kostjale, et
+       laborisse saadeti samad näidised, mida näidati kostjale (t I kd lk 150). Kohtuistungil
+       hageja siiski möönis, et Novalab OY-le saadetud näidised ei ole samad, mida näidati
+       kostjale. Laborisse saadeti tükid otse Prantsusmaalt (t II kd lk 70). Asjaolu, et tegemist ei
+       olnud kostjale näidatud näidistega, on tõendatud ka RR 19.11.2014 e-kirjaga, milles
+       hageja seaduslik esindaja on märkinud: „need ei ole samad tk millega ma sinu juures
+       käisin mida testiti. Vaid lõigati uued tükid kindluse mõttes.“ (t II kd lk 158). Kohtu
+       hinnangul puuduvad tõendid selle kohta, et Prantsusmaalt Soome saadeti näidised just
+       kostja poolt immutatud puidupartiist. Kohus viitas VÕS § 7 lõigetele 1 ja 2. Kohtule on
+       esitatud tõendid selle kohta, et hageja on pikaajalise kogemusega saekaater ja
+       immutusveski, kelle majandustegevus on olnud saematerjali tootmine ning
+       väärtustamine ning küttepuude toomine (t I kd lk 112). Kohus pidas veenvaks kostja
+       selgitusi selle kohta, et hageja eiras kvaliteedi kontrollimiseks tavapäraselt läbiviidava
+       kontrolli reegleid. Tavapäraselt võetakse puiduekspertiisiks igale osapoolele kokku
+                                                                                               7
+
+   kümme näidist, mis saadetakse laborisse. Ühtlasi märgitakse ära näidiste paksus, laius,
+   südamikpuidu osakaalu protsent, maltspuidu osakaalu protsent (t I kd lk 140-141, II kd
+   lk 71). Kostja on seda hagejale e-kirja teel ka selgitanud (t I kd lk 23, 150).
+
+22. Hagiavalduse kohaselt tõendab Novalab OY analüüs, et kostja on immutanud puidu
+    ebakvaliteetselt. Analüüsiraporti kohaselt sisaldas kostja immutatud puit vesilahust
+    Celcure C4 nõutava 10kg/m3 asemel 6,8kg/m3. Kohtu hinnangul ei tõenda Novalab OY
+    analüüsiaruanne kostja poolt teostatud immutuse lepingule mittevastavust. Aruandest
+    nähtub, et puidunäidised kujutasid endast peaaegu täielikult lülipuitu (ingl k heartwood),
+    millel oli laudade välimistes nurkades väga õhuke säsipuidu (ingl k sapwood, eesti k
+    maltspuit; t II kd lk 41) kiht (t I kd lk 21, 22). Kostja selgituse kohaselt on märkus tehtud
+    aruandele seetõttu, et maltspuidu osakaal peaks olema ca 2-3 mm, et analüüside
+    teostamine oleks võimalik. Väikese maltspuidu osakaaluga puidust proovide võtmine on
+    raskendatud (kui mitte võimatu) (t I kd lk 140). Kohtule on esitatud hageja 24.07.2014 e-
+    kiri oma agendile, kus hageja annab teada, et proovitükke võiks olla 10 ja neis peaks
+    olema palju maltspuitu (t I kd lk 199). Eeltoodust tuleneb kohtu hinnangul, et hageja oli
+    teadlik puidu proovide võtmise reeglitest ning sellest, et lülipuitu analüüsides on
+    tulemused ebausaldusväärsed. Kuivõrd Novalab OY analüüsiaruanne ei tõenda kostja
+    immutuse lepingule mittevastavust, ei ole kostja hagejale kahju tekitanud. Iseenesest
+    õige on kostja märkus selle kohta, et hageja on asunud paljasõnaliselt väitma, et puit
+    tagastati ebakvaliteetse immutuse tõttu (t II kd lk 23, 24). Kostja selgituste kohaselt
+    tegutsevad nii hageja kui kostja oma tegevusalal juba pikka aega ning on üllatav, et
+    Prantsusmaa äriühing tellib H3 standardile vastavat immutust, kuivõrd termiitide tõttu
+    tellitakse Prantsusmaale tavapäraselt NTR-AB immutus (t II kd lk 71). Kohtule on
+    esitatud hageja agendi 21.07.2014 e-kiri, milles heidetakse hagejale ette laudade väga
+    kehva hööveldamiskvaliteeti (t II kd lk 186-187) ning 22.09.2014 e-kiri, mille kohaselt
+    näeb 27x145 mm tooteproov tõesti halb välja. Saadetud proovides ei ole toote mitmes
+    osas üldse näha immutuse värvi ning üks külgedest on väga kare. Samuti on toote
+    ülemise külje pind mügarlik ja konarlik (t I kd lk 197). Kohtuistungil kinnitas hageja, et
+    puidu hööveldamise teostas hageja ise, kuid see ei puuduta käesolevat vaidlust (t II kd lk
+    69). Kohus sellise väitega ei nõustunud. Laua kõverus, mügarlik pind ning konarused ei
+    ole tarbija jaoks kõrvaldatavad puudused. Kuivõrd menetluses puuduvad tõendid selle
+    kohta, et puit tagastati just ebapiisava immutuse tõttu, tuleb asuda seisukohale, et see
+    võidi tagastada ka halva hööveldamiskvaliteedi tõttu. Eeltoodust tulenevalt ei kuulu hagi
+    rahuldamisele, kuna kostja on oma lepingulised kohustused hageja ees täitnud ning ei ole
+    hagejale kahju tekitanud.
+
+23. Menetluskulud jäid hageja kanda. Kostja menetluskulude nimekirja järgi (t II kd lk 58-
+    64) moodustavad menetluskulud 2933 eurot (ei sisalda käibemaksu), millele lisandub
+    kohtuistungil osalemisega seotud kulu 452.66 eurot (t II kd lk 79). Hageja pidas kostja
+    esindaja töötundide arvu ülepaisutatuks (t II kd lk 86). Hageja menetluskulud
+    moodustavad 5330 eurot (ei sisalda käibemaksu) (t II kd lk 66), millele lisandub
+    kohtuistungil osalemisega seotud kulu 715 eurot (t II kd lk 74).
+
+24. Kohus leidis, et kostja menetluskulude kindlaksmääramise avaldus kuulub
+    rahuldamisele. Kohtu hinnangul vastab kostja esindajate tasutaotlus asja keerukusele,
+    kantud kulud on põhjendatud ja vajalikud. Kulude teiselt menetlusosaliselt
+    väljamõistmise aluseks ei ole mitte lepingulise esindaja esitatud arved, vaid kulude
+    põhjendatus ja vajalikkus. Kostjale osutasid õigusabi vandeadvokaadid Merilin Valdmaa
+    ja Epp Lumiste. Menetluskulude kindlaksmääramise avalduselt nähtub, et kostja kasutas
+    esindaja teenust kokku 14 tundi ja 13 minutit ning see kulus järgnevale: hagiavalduse
+                                                                                                8
+
+       analüüsimine ja vastuse koostamine, hageja seisukohtade analüüsimine, täiendavate
+       tõendite kogumine ning kostja seisukohtade koostamine (t II kd lk 62). Kohus ei
+       nõustunud hageja väitega, et kostja kulud õigusabile on põhjendamatult suured
+       ülepaisutatud ajakulu tõttu. Lahendis nr 3-2-1-98-13 on Riigikohus märkinud, et kohtul
+       on õigus nõuda menetluskulude kohta selgitusi või tõendavaid dokumente, kui kohtul
+       tekib menetluskulude kandmise kohta kahtlus või ei ole menetluskulude nimekiri selge.
+       Antud juhul kohtul puudub alus kahelda selles, et menetluskulude nimekirjas märgitud
+       ajakulu on tegelikkuses kantud. Kostja esindajate toimingute kestvuse luges kohus
+       põhjendatuks ning tsiviilasja keerukusega kooskõlas olevaks. Eeltoodust tulenevalt on
+       kostja põhjendatud menetluskulud 3385.66 eurot. Kostja on esitanud ka
+       tsiviilkohtumenetluse seadustiku (TsMS) § 177 lõikele 4 vastava taotluse, mistõttu
+       otsuse jõustumisest kuni täitmiseni tuleb hagejal tasuda kostjale hüvitamisele kuuluvatelt
+       menetluskuludelt viivist VÕS § 113 lõike 1 teises lauses ettenähtud ulatuses.
+
+Apellatsioonkaebus
+   25. 19.05.2016 esitatud apellatsioonkaebuses palub hageja tühistada maakohtu otsuse ja teha
+       uue otsuse, millega hagi rahuldada ja jätta menetluskulud kostja kanda.
+
+   26. Kohus tugines kostja tõendamata väidetele, millele hageja vastu vaidles. Kohus jättis
+       hagi rahuldamata mh põhjendusel, et peab usutavaks kostja selgitusi selle kohta, et
+       hageja on eiranud puidu kvaliteedi kontrollimiseks tavapäraselt läbiviidava kontrolli
+       reegleid ja et märkus ekspertiisiaruandele on tehtud põhjusel, et maltspuidu osakaal
+       peaks olema 2-3 mm, et analüüside teostamine oleks võimalik. Hageja on eelnevale
+       vastu vaielnud ning avaldanud, et ta ei võta omaks, et esineks mistahes praktika, mis
+       keelaks proovide võtmist õhukese maltspuidu kihiga näidistelt või nagu peaks proovide
+       võtmise kord vastama mingitele kindlatele reeglitele. Järelikult oli kostjal TsMS § 230
+       lõikest 1 ja § 231 lõikest 2 ning Riigikohtu lahendist nr 3-2-1-137-07 (punktist 13)
+       tulenev kohustus oma väiteid tõendada. Kostja ei ole seda teinud. Seega on tegemist
+       paljasõnaliste väidetega, millele hageja on vastu vaielnud. Kohus on viidanud kostja
+       selgituste juures kostja enda e-kirjadele ja selgitusele. Tegemist ei ole TsMS-s sätestatud
+       nõuetele vastavate tõenditega, vaid menetlusosalise seletusega. Kohtuotsuse rajamine
+       vaidlustatud ja täielikult tõendamata väidetele ei ole õiguspärane.
+
+   27. Otsuse seaduslikkuse põhimõtet, hageja ärakuulamisõigust ja üllatusliku otsuse keeldu
+       on kohus rikkunud ka sellega, et otsuse tegemisel määrava asjaoluna on kohus
+       aktsepteerinud kostja seadusliku esindaja paljasõnalisi selgitusi, mis olid esitatud pärast
+       TsMS § 329 lõikes 2 sätestatud tähtaega. Hageja vaidles kostja seadusliku esindaja poolt
+       kohtuistungil täiendavate asjaolude esitamisele vaielnud. Kohus ei väljendanud istungil,
+       et kavatseb esitatud uusi asjaolusid arvesse võtta ega määranud hagejale tähtaega
+       kostjale vastamiseks (TsMS § 351 lõige 3). Ootamatult on kostja selliseid seisukohti
+       otsuses käsitletud määravatena, mis annavad alust lugeda Soome labori analüüs
+       ebausaldusväärseks. Kui ka asuda seisukohale, et kostja väidetega tõendamiskoormis
+       muutus, pidanuks kohus hagejat sellest teavitama (Riigikohtu lahend nr 3-2-1-149-14,
+       punkt 14).
+
+   28. Kohus ei ole arvestanud, et kostjal ei olnud hea usu põhimõttest tulenevalt õigust
+       tugineda väitele, et puidust proovide võtmise või immutuse testimise korda on rikutud,
+       kuna hageja pakkus kostjale puidust kordusproovide võtmise võimalust, millest viimane
+       keeldus. Samamoodi oli kostjal võimalus ühendust võtta Soome laboriga, mida viimane
+       samuti ei kasutanud. Hageja sai kostja käitumise põhjal eeldada, et viimasel puuduvad
+       pretensioonid Soome labori analüüsi tulemuste suhtes. Kostja on teadlikult eiranud
+                                                                                          9
+
+   hageja pöördumisi ning loonud ebaõige ettekujutuse, et labori tulemusi ei vaidlustata.
+   Vastavad väited on kostja esitanud alles pärast ebakvaliteetselt immutatud puidu
+   edasivõõrandamist, et vältida kordusproovide võtmist.
+
+29. Kohus jättis täielikult arvestamata hageja järgmised tõendid: 1) Imex Bois ja Soome
+    agendi TL kirjalikud kinnitused, et hageja poolt lepingute NAT069/NAT070 ja NAT067
+    alusel töödeldud puit oli halva kvaliteediga ning samast partiist puidu näidised saadeti
+    Soome Sapinus OY laborisse testimisele; 2) Imex Bois kirjalik reklamatsioon, milles
+    Imex Bois kinnitab, et neil oli kahtlusi puidu immutamise kvaliteedi suhtes;    3) Imex
+    Bois kinnitus, et puit tagastati pärast Soome labori analüüsi tulemusi. Tõendi
+    vastuvõtmisest keeldumist ja tõendiga arvestamata jätmist peab kohus põhjendama.
+    Kohus on tõendamiskoormuse jaotamisel ja tõendite hindamisel oluliselt rikkunud
+    menetlusnorme ning see on kaasa toonud ebaõige lahendi.
+
+30. Kohus tugines asjaolule, mida pooled ei esitanud - et hageja poolt Imex Bois’le tarnitud
+    lauad olid kõverad, kusjuures laudade kõverus, mügarlik pind ja konarused ei ole
+    kõrvaldatavad puudused. Pooled käsitlesid vaid asjaolu, et osad lauad olid mügarlikud ja
+    konarlikud, kuid kumbki ei tuginenud väitele, justkui laudade mügarlikkus ja
+    konarlikkus oleks kõrvaldamatu puudus.
+
+31. Kohus leidis ebaõigesti, et kostja ei rikkunud lepingut. Novalab OY labori analüüs
+    tuvastas, et kostja poolt immutatud puit sisaldas Celcure C4 vesilahust nõutava 10 kg/m3
+    asemel 6,8 kg/m3. Puit sisaldas immutusvahendit ligi kolmandiku võrra vähem, kui see
+    sertifikaadi järgi oleks pidanud sisaldama. Kohus tegi kostja paljasõnalise väite põhjal
+    ebaõige järelduse, et õhuke maltspuidu kiht tähendab väärat analüüsi tulemust. Kohus ei
+    ole arvestanud, et kui proovid oleksid olnud ebapiisavad analüüsimiseks, oleks labor kas
+    üldse keeldunud raporti väljastamisest või kandnud sellele vastava selgesõnalise märke.
+    Asjas ei ole tõendit, millest saaks raportis märgitust teistsugusele seisukohale asuda.
+
+32. Täiesti asjakohatu on kohtu viide, et tema hinnangul on üllatav, et Prantsusmaa äriühing
+    tellib H3 standardile vastavat immutust, kuna termiitide tõttu tellitakse Prantsusmaale
+    tavapäraselt NTR-AB immutus. Hageja tugineb nõude alusena väitele, et kostja on
+    rikkunud lepingust tulenevat kohustust immutada puit vastavalt tema enda poolt
+    väljastatud sertifikaadis märgitud omadusele. Tähendust ei oma hageja ja Imex Bois
+    omavahelised suhted.
+
+33. Tõendite põhjal ei saa olla ka mõistlikku vaidlust, et Imex Bois tagastas puidu pärast
+    Soome labori raporti nägemist, st puidu tagastamise põhjuseks oli, et see ei sisaldanud
+    sertifikaadis märgitud koguses immutusvahendit. Ühestki tõendist ei saa järeldada, et
+    Imex Bois tagastas puidu mh höövelduse võimalike puuduste tõttu. Hageja agent on
+    üksnes märkinud, et lisaks immutuse probleemidele on osade laudade külg konarlik,
+    kuid ei avaldanud, et see oleks kõrvaldamatu puudus või et see oleks kauba tagastamise
+    põhjuseks. Kostja ei ole esitanud ühtegi tõendit, mis kinnitaks, et pooled oleksid kokku
+    leppinud, et majandus- ja kutsetegevuses tegutsev kostja töövõtjana ei peaks talle
+    immutamiseks saadetud puitu enne töötlemist piisavalt kontrollima (VÕS § 641 lõige 3).
+    Seega ei ole võimalik oletada, et immutuse puudused võisid mh olla tingitud
+    ebakvaliteetsest hööveldusest.
+
+34. Kohus on kohaldanud vääralt VÕS § 132 lõiget 3, kui leidis, et hinnavahe hüvitamise
+    nõude lahendamisel omavad tähendust puidu tagastamise asjaolud. Hinnavahe
+    hüvitamise nõude lahendamisel ei kuulu tõendamise esemesse hageja ja Imex Bois
+                                                                                              10
+
+       vahelise lepingulise suhte sisu. VÕS-i kommentaarides on leitud, et väärtuse
+       vähenemine kuulub hüvitamisele sõltumata sellest, kas kahjustatud isikul oli kavatsus asi
+       edasi võõrandada, mistõttu ta väärtuse vähenemist reaalse varalise kahjuna ei tajugi.
+       VÕS § 132 rakendusalas arvestatakse kahju abstraktse kahjuna. Seega ei oma hinnavahe
+       hüvitamise nõude juures tähendust, kas Imex Bois üldse tagastas puidu või mis põhjusel
+       ta seda tegi. Arvestades, et kostja immutatud puit ei vastanud tema poolt sertifikaadis
+       kinnitatud omadustele, tekkis hagejale kahju juba töö üleandmisel – sertifikaadis
+       märgitud omadustele mittevastav puit oli vähem väärt, kui sertifikaadis märgitud
+       omadustele vastav puit oleks olnud. Kvaliteetse ja ebakvaliteetse puidu hinnavahe
+       hüvitamist on hageja seega igal juhul õigustatud VÕS § 132 lõike 3 alusel kostjalt
+       nõudma.
+
+   35. Arvestades, et kohus ei analüüsinud muid asjas vaidluse all olnud küsimusi, jääb hageja
+       kõigi asjas esitatud seisukohtade juurde. Sh ei ole hageja rikkunud teavitamiskohustust,
+       kohtueelsed õigusabikulud, transpordikulude hüvitamise ja viivise nõuded on
+       põhjendatud, hageja on astunud kohaseid samme kahju vähendamiseks, kahju oli
+       ettenähtav ja rikutud kohustuse eesmärgiks oli hagis nõutava kahju ärahoidmine.
+
+Vastustaja seisukoht
+   36. Kostja vaidleb apellatsioonkaebusele vastu ja palub jätta selle rahuldamata.
+
+Tsiviilkolleegiumi seisukoht
+   37. Kolleegium, kuulanud kohtuistungil ära poolte seisukohad ja tutvunud tsiviilasja
+        materjalidega, leiab, et maakohtu otsuse resolutsiooni muutmiseks alused puuduvad,
+        kuid muuta tuleb osaliselt otsuse põhjendusi (TsMS § 657 lõike 1 punkt 21).
+        Ringkonnakohus jätab otsuse põhjendustest välja käsitluse puidu tagastamise põhjuste
+        (ebakvaliteetne immutus ja/või ebakvaliteetne hööveldamiskvaliteet) kohta ja lisab
+        põhjendustesse hinnangu kahe kirjaliku tõendi kohta. Muus osas ei tuvastanud
+        ringkonnakohus maakohtu poolt menetlusõiguse normide olulisi rikkumisi ega
+        materiaalõiguse normide ebaõiget kohaldamist. Apellatsioonkaebus jääb rahuldamata.
+        Ringkonnakohus jaotab ja määrab kindlaks apellatsioonimenetluse kulud.
+
+   38. Hageja esitas kostja vastu lepingu rikkumisest tuleneva kahju hüvitamise nõude, milleks
+       materiaalõigusliku aluse annab VÕS § 115 lõige 1. Sellise nõude eeldustena peab leidma
+       tuvastamist pooltevaheline kehtiv võlasuhe, võlgniku poolt kohustuse rikkumine ja
+       vastutamine kohustuse rikkumise eest ning võlausaldajale võlgniku rikkumise tõttu
+       kahju tekkimine, mis kuulub hüvitamisele. Kuna võlgnik on kohustatud kahju hüvitama
+       vaid kõigi eelduste tõendatuse korral, siis neist ühe puudumise tuvastamisel ei ole kohtul
+       menetlusökonoomia põhimõttest tulenevalt vajalik teiste eelduste tuvastamisega tegelda.
+       Kuna käesolevas asjas ei leidnud tõendamist lepingu rikkumine, siis puudus maakohtul
+       vajadus võtta seisukohta selle kohta, kas puidu tagastamiseks võis olla muu põhjus kui
+       kostja ebakvaliteetne immutus. Muude eelduste tuvastatuse korral võiks nimetatud
+       asjaolu omada tähtsust nt kahjuhüvitise vähendamise kaalumisel, kuid käesolevas
+       vaidluses see tähtis ei ole. Ringkonnakohus jätab vastava osa maakohtu otsuse
+       põhjendustest välja ega käsitle selle kohta esitatud apellatsioonkaebuse väiteid.
+
+   39. Maakohus tuvastas poolte vahel kehtiva võlasuhte (suulise töövõtulepingu puitmaterjali
+       immutamiseks), kuid leidis, et hageja ei suutnud piisava veenvusega tõendada
+       kostjapoolset lepingu rikkumist (sertifikaadile mittevastavat immutamist).
+       Ringkonnakohus ei tuvastanud tõendite ebaõiget hindamist maakohtu poolt, mistõttu
+       puudub alus ka tõendite ümberhindamiseks. Maakohus jagas TsMS § 230 lõike 1 alusel
+                                                                                            11
+
+   õigesti menetlusosaliste tõendamiskoormuse ja leidis, et lepingu rikkumise kostja poolt
+   pidi tõendama hageja. TsMS § 230 lõike 2 esimese lause kohaselt esitavad
+   hagimenetluses tõendeid menetlusosalised. TsMS § 232 lõike 1 kohaselt hindab kohus
+   seadusest juhindudes kõiki tõendeid igakülgselt, täielikult ja objektiivselt ning otsustab
+   oma siseveendumuse kohaselt, kas menetlusosalise esitatud väide on tõendatud või
+   mitte. Riigikohus on lahendis nr 3-2-1-137-07 (punktis 13) selgitanud, et kostja ei pea
+   esitama tõendeid seni, kuni hageja ei ole oma väiteid tõendanud (seni võib kostja esitada
+   ainult vastuväiteid). Seetõttu ei saa nõustuda ka hageja väitega, nagu oleks kostja poolt
+   puidunäidiste võtmise tõendamatusele viitamine hea usu vastane, kuna peale
+   puitmaterjali Eestisse tagasi saabumist pakkus hageja kostjale võimalust võtta
+   kordusnäidised, kuid kostja keeldus sellest. Kolleegium on seisukohal, et sellise
+   käitumisega võttis kostja küll endale riski, et kui hageja suudab oma nõude tõendada,
+   võivad kostjal puududa tõsiseltvõetavad vastuväited hagile, kuid kohtul puudub alus
+   sellist käitumist kostjale ette heita ja seadusest tuleneva tõendamiskoormise
+   ümberpööramist see kaasa ei toonud.
+
+40. Vastuseks apellatsioonkaebuse väidetele möönab kolleegium, et otsuse põhjendustest
+    võib esmapilgul tekkida arusaam, nagu oleks maakohus käsitlenud tõendina kostja
+    juhatuse liikme selgitusi kohtuistungil. Menetlusosalise (juriidilise isiku puhul tema
+    juhatuse liikme) seletus, mis ei ole antud vande all, ei ole hagimenetluses kohaseks
+    tõendiks (TsMS § 229 lõike 2 esimene lause). Samas nähtub maakohtu otsusest, et kuigi
+    kohus on kostja seletusele viidanud, ei ole sellele omistatud tõendi kaalu. Järelduseni, et
+    Soome labori analüüs ei tõenda, et vaidlusalune kostja immutatud puitmaterjal ei
+    vastanud H3 standardile, jõudis maakohus lubatud tõendite kogumit (fotod, hageja ja
+    tema vahendaja ning hageja ja kostja e-kirjad, Novalab OY analüüsi aruanne)
+    analüüsides. Lisaks võttis maakohus arvesse, et poolte vahel puudus vaidlus, et
+    26.05.2014 ja 04.06.2014 transporditi hageja tellimusel kostja immutatud puitmaterjal
+    hageja poolt Prantsusmaale hageja lepingupartneri puiduhulgimüüja Imex Bois asukohta.
+
+41. Küll aga on õige kaebuse väide selle kohta, et maakohus jättis hindamata 2 hageja
+    esitatud kirjalikku tõendit, millega rikkus TsMS § 232 lõikes 1 sätestatud kõigi tõendite
+    hindamise kohustust. Ringkonnakohus kõrvaldab nimetatud rikkumise, kuid on
+    seisukohal, et sellele vaatamata ei saa asuda maakohtust erinevale lõppjäreldusele.
+    Hageja esitas maakohtus lisaks muudele tõenditele puitmaterjali ostja Prantsusmaa
+    äriühingu Imex Bois juhatuse liikme 31.03.2015 kinnituse (t I kd lk 28, tõlge samas lk
+    29) ja hageja Soome agendi Sapinus OY 21.01.2016 kirjaliku selgituse (t I kd lk 196,
+    tõlge II kd lk 5). Imex Bois juhatuse liige teatab, et nad saatsid AS-ile Natural
+    analüüsimiseks viimaselt ostetud immutatud puidu näidised ja said kätte AS-i Natural
+    edastatud Soome labori analüüsi tulemused, mille alusel keeldusid vastu võtmast kokku
+    23,248m3 hööveldatud ja immutatud puitu (pakid nr 8420, 8421, 8527, 8528 + 3
+    numbrita pakki). Hageja Soome agent teatab, et müüja esindajana vahendas ta Imex
+    Boisi ja AS-i Natural suhtlemist seoses lepingute nr 294 ja 295 alusel tarnitud töödeldud
+    puidu kvaliteediga ning kontrollis visuaalselt ostja väiteid puidu halva kvaliteedi kohta
+    ning et tema parimate teadmiste kohaselt ei olnud tarnitud puit sihtotstarbeliseks
+    kasutamiseks sobiv UC3 nõuetekohase töötluse puudumise tõttu.
+
+42. Kolleegium on seisukohal, et ka nimetatud tõendid kogumis maakohtu poolt hinnatud
+    tõenditega ei tõenda hageja väiteid Soome laborile saadetud puidunäidiste pärinemise
+    kohta kostja poolt immutatud ja hagejale tagastatud puidupakkidest. Näidiste võtmise
+    osas need tõendid hageja väiteid kohtu jaoks veenvamaks ei tee. Imex Bois juhatuse liige
+    kinnitab mh, et saatis näidised analüüsimiseks hagejale. Poolte vahel puudub vaidlus, et
+                                                                                            12
+
+   hageja juhatuse liige tõepoolest saatis 4 näidise pildid 30.09.2014 kostja juhatuse
+   liikmele (e-kirjad t I kd lk 153, 159, 154) ja pooled suhtlesid sel teemal ka isiklikult (e-
+   kirjad t I kd lk 157, 158, 23). Samas puudub ka vaidlus, et neid 4 näidist hageja siiski
+   Soome laborisse ei saatnud, vaid nagu ta kinnitas 19.11.2014 e-kirjas „Need ei ole
+   samad tk millega sinu juures käisin mida testiti. Vaid lõigati uued tükid kindluse mõttes
+   minu agendi silme all samast partiist kust pärinesid tk mida sa oled näinud…“ (t I kd lk
+   158). Agent 21.01.2016 teates näidiste võtmisest mistahes teavet ei avalda ja fakti tema
+   silme all näidiste võtmise kohta ei kinnita. Ka puuduvad toimikus mistahes muud
+   tõendid, millised kogumis muude tõenditega annaksid kohtule vajaliku veendumuse
+   selles, et puidunäidised, mida Soome labor analüüsis, pärinesid tõepoolest kostja poolt
+   immutatud materjalist. Selliseks veendumuseks ei anna vajalikku infot ka hageja esitatud
+   fotod (t I kd lk 17-20). Viimastelt nähtub küll puidupakk ja lauatükil number 8417, kuid
+   arvestades mh, et sellise numbriga pakki hagejale tagasi ei saadetud (vähemalt ei nähtu
+   see Imex Bois juhatuse liikme kinnitusest), siis Soome labori analüüsi kostja poolt
+   teostatud immutuse kvaliteediga sidumiseks need tõendid piisavad ei ole. Näidiste
+   võtmine Prantsusmaal oli hageja lepingupartnerite (agent, ostja) kaudu hageja kontrolli
+   sfääris ja selle kohta usaldusväärsete tõendite esitamise võimatust ei saa käsitleda kostja
+   kahjuks.
+
+43. Eelpool käsitlemata apellatsioonkaebuse väited (vastuväited maakohtu seisukohtadele
+    seoses puitmaterjali väidetava hööveldamise kvaliteediga ja kostja kohustusest
+    kontrollida immutamiseks võetud materjali; hinnavahe hüvitamsie nõude rahuldamata
+    jätmisele) asja lahendamisel tähtsust ei oma, mistõttu ringkonnakohus neile
+    menetlusökonoomia põhimõttest tulenevalt ei vasta.
+
+44. Mõlemad menetlusosalised esitasid TsMS § 53 lõikes 2 sätestatud tähtaja jooksul
+    taotlused 02.11.2016 kohtuistungi protokolli parandamiseks. Kolleegium, tutvunud
+    tsiviilasja materjalidega, leiab, et taotluste rahuldamiseks puudub alus. TsMS § 50
+    sätestab menetlustoimingu protokolli kohustuslikud sisuelemendid. Mh tuleb protokollis
+    märkida poolte vastuväidete põhisisu ulatuses, milles see ei ole kajastatud kohtule
+    esitatud kirjalikes dokumentides (lõike 1 punkt 8). Apellatsioonimenetluses ei saa pooled
+    üldjuhul tuua kohtu ette uusi faktilisi asjaolusid (TsMS § 652). Käesolevas menetluses
+    taotlusi uute asjaolude esitamiseks pooled ei esitanud. Seega ei ole tähtis, kas
+    menetlusosaline tõi ühe või teise faktilise asjaolu esile apellatsioonikohtu istungil.
+    Ringkonnakohus võtab kaebuse lahendamisel aluseks need asjaolud, millised olid esile
+    toodud juba maakohtus, arvestades apellatsioonkaebuse ja sellele esitatud vastuse sisu.
+
+45. Kaebuse rahuldamata jäämisel jäävad apellatsioonimenetluse kulud TsMS § 171 lõike 1
+    alusel apellandi kanda.
+
+46. TsMS § 174 lõike 1 esimese lause alusel määrab ringkonnakohus kindlaks apellandi
+    poolt vastustajale hüvitamisele kuuluvate apellatsioonimenetlusega seotud
+    menetluskulude rahalise suuruse. Vastustaja taotluse kohaselt koosnevad kulud tasust
+    lepingulistele esindajatele (vandeadvokaatitele) järgmiselt: v/adv M.Valdmaa
+    16.06.2016 apellatsioonkaebuse analüüs ja kaebuse vastuse täiendamine 1h49min; v/adv
+    E.Lumiste 19.05.2016 kaebusega tutvumine ja selle kliendile edastamine 25min,
+    27.05.2016 kaebuse menetlusse võtmise määrusega tutvumine ja selle kliendile
+    edastamine 10min ja 08.06.2016 kaebuse vastuse koostamine (taotluses ilmselt ekslikult
+    nimetatud kaebuse koostamine) 4h27min. Lisaks kohtuistungiga seotud kulud: 1h
+    istungiks ettevalmistamine ja istungil osalemine 2h24min (arvestades istungi planeeritud
+                                                                                          13
+
+   algusaega kell 11.30). Taotluse kohaselt on mõlema esindaja tunnitasuks 140 eurot
+   (käibemaksuta).
+
+47. Kolleegium on seisukohal, et vastustaja taotlus kuulub rahuldamisele osaliselt. TsMS
+    § 175 lõike 1 kohaselt peab menetlusosaline kandma vastaspoolt esindanud lepingulise
+    esindaja kulud mõistlikus ja vajalikus ulatuses. Kolleegium on seisukohal, et arvestades
+    apellatsioonkaebuse sisu ja asjaolusid ning eelnevalt läbitud maakohtumenetluse ulatust
+    ja sisu, ei olnud vajalik ega mõistlik apellatsioonimenetluses kahe vandeadvokaadist
+    esindaja osavõtt. Seega ei pea apellant hüvitama vastustajale v/adv Valdmaa 16.06.2016
+    toimingutega seotud kulu, sest eelnevalt oli v/adv Lumiste kaebusega juba tutvunud
+    (19.05.2016) ja ka vastuse koostanud (08.06.2016) ning kulutanud selleks kokku
+    4h52min, mis arvestades vastuse sisu ja mahtu oli piisav, et koostada kohtukõlbulik
+    menetlusdokument. Samuti tuleb kohtuistungiga seotud kulu hüvitada vaid ühe
+    vandeadvokaadi osalemise eest. Ülejäänud ulatuses oli vastustaja esinduseks kulunud
+    aeg põhjendatud ja vajalik, so 25min + 10min + 4h52min + 1h + 2h24min = 8h51min.
+    Vastavalt kohtupraktikale on 140 eurot tunnis vandeadvokaadi tasuna mõistlik. Seega
+    tuleb apellandil vastustajale hüvitada apellatsioonimenetluse kulude katteks 8h51min x
+    140 = 1239 eurot (käibemaksuta). Vastavalt taotlusele märgib kohus TsMS § 177 lõike 4
+    alusel, et hüvitamisele kuuluvatelt menetluskuludelt tuleb tasuda viivist VÕS § 113 lõike
+    1 teises lauses ettenähtud ulatuses.
+
+
+     Liis Arrak                  Indrek Parrest                 Imbi Sidok-Toomsalu
+   /allkirjastatud                /allkirjastatud                  /allkirjastatud
+    digitaalselt/                 digitaalselt/                     digitaalselt/

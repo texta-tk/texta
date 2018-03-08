@@ -1,0 +1,274 @@
+                            KOHTUMÄÄRUS
+
+Kohus                              Harju Maakohus
+
+Määruse tegemise aeg ja koht       21. septembril 2016. a Tallinn, Liivalaia kohtumaja
+
+Väärteoasja nr                     4-16-6690
+
+Kohtunik                           Karin Olentšenko
+
+Asja läbivaatamine                 Kirjalik menetlus
+
+Väärteoasi                         Edi Kulderknupu kaebus Politsei- ja Piirivalveameti
+                                   teabehaldus-             ja            teabehaldusbüroo
+                                   liiklusmenetlusteenistuse tegevuse peale väärteoasjas nr
+                                   2230,16,065574
+Kohtumenetluse pooled              Kaebuse esitaja – Edi Kulderknup (isikukood
+                                   35308110456; elukoht: XXX)
+
+                                   Kohtuväline menetleja – Politsei- ja Piirivalveameti
+                                   teabehaldus- ja menetlusosakonna teabehaldusbüroo
+                                   liiklusmenetlusteenistus: Pärnu mnt 139, 15060, Tallinn
+
+RESOLUTSIOON
+VTMS § 73 lg 3 p 1 alusel:
+  1. Jätta rahuldamata Edi Kulderknupu kaebus Politsei- ja Piirivalveameti
+      teabehaldus- ja menetlusosakonna teabehaldusbüroo liiklusmenetlusteenistuse
+      vanemkomissar Ilona Kivisik poolt 02.09.2016.a tehtud määrusele kohtuvälise
+      menetleja tegevuse peale esitatud kaebuse läbivaatamise kohta.
+  2. Jätta muutmata Politsei- ja Piirivalveameti teabehaldus- ja menetlusosakonna
+      teabehaldusbüroo liiklusmenetlusteenistuse vanemkomissari 02.09.2016 määrus
+      hoiatamismenetluses (trahviteade nr 223016065574).
+  3. Käesolev määrus edastada kohtuvälisele menetlejale, s.o. Politsei- ja Piirivalveameti
+      teabehaldus- ja menetlusosakonna teabehaldusbüroo liiklusmenetlusteenistusele ja
+      kaebuse esitajale Edi Kulderknupile.
+
+Edasikaebamise kord
+
+Määrus on väärteomenetluse seadustiku (VTMS) § 191 p 12 kohaselt lõplik ning
+määruskaebe korras vaidlustamisele ei kuulu.
+                                              2
+
+Asjaolud ja menetluse käik
+05.07.2016 kell 08:03 fikseeris Politsei- ja Piirivalveameti teabehaldus- ja menetlusosakonna
+teabehaldusbüroo liiklusmenetlusteenistus, et Tallinn-Pärnu-Ikla 95.2 kilomeetril ületati
+sõidukiga Renault Megane registreerimismärgiga XXXX lubatud sõidukiirust vähemalt 3
+km/h. Selline tegevus kvalifitseeriti LS § 227 lg 1 järgi.
+
+06.07.2016 määras kohtuväline menetleja sõiduki Renault Megane reg.nr XXXX vastutavale
+kasutajale Edi Kulderknupile VTMS § 542 lg 1 ja LS § 262 p 1 alusel hoiatustrahvi 9.00 eurot
+(kirjalikus hoiatamismenetluses trahviteade nr 223016065574). Trahviteates oli märgitud, et
+seda on võimalik vaidlustada järgmistel põhjustel: sõidukit juhtis teine isik; toimus
+mootorsõiduki (registreerimismärgi) vargus, kadumine või hävimine; esines õigusvastasust
+välistav asjaolu.
+
+14.07.2016 edastas E.Kulderknup kohtuvälisele menetlejale kaebuse, milles ta palub tal
+lubada tutvuda trahviteatega seoses olevate tõendusdokumentidega. Muuhulgas oma kaebuses
+E.Kulderknup leiab, et trahviteates on väärteo väide vastuolus Eesti Vabariigi õigusaktidega.
+Kiiruse mõõtmine on sooritatud EV riiklikus järelevalves lubamatu mõõtevahendiga ja ei ole
+kooskõlas mõõteseadusega, mõõtjal (juriidiline isik) puudub mõõtmiseks tõendatud pädevus,
+mõõtesüsteem on valideerimata/taatlemata ja mõõtetulemuse edastamine läbi IT võrkude on
+EV õigusaktidega reguleerimata ja legaalmetroloogiliselt valideerimata (võimalik on algse
+mõõtetulemuse muutus). Tallinn-Pärnu mnt 95,2 km asuva mõtesüsteemi (skaneeriva
+laserkiirega kiirusmõõturi nn kiiruskaamera) mõõtetulemuse jälgitavus on metroloogiliselt
+tõendamata, kuivõrd on tehtud kompetentsust tõendamata juriidilise isiku poolt. Skaneeriva
+laserkiirega kiirusmõõtur on paigaldatud selle maaletooja poolt ja ei oma erapooletut
+valideerimist/metroloogilist kontrolli paigalduskohas.
+
+19.08.2016 määruse alusel jättis kohtuväline menetleja E.Kulderknup 14.07.2016 kaebuse
+läbi vaatamata ning tagastas kaebuse esitajale. Määruse põhjendused olid alljärgnevad:
+- automatiseeritud liiklusjärelevalve puhul rakendatakse kirjalik hoiatamismenetlus, mille
+puhul kehtivad erisused nii toimepandud teo tõendamiseks, hoiatustrahvi määramiseks kui ka
+trahviteate kättetoimetamiseks ja vaidlustamiseks.
+- kiirust mõõdab teeäärde paigaldatud mõõtevahend, mis koosneb kiirusmõõtevahendist,
+dokumenteerimisseadmest ja vajalikest lisaseadmetest. Kui sõiduki kiirus ületab vastavalt
+jälgitud sõiduki kategooriale mõõtesüsteemi sisestatud pildikäivituse piirväärtust,
+fotografeerib kiirusmõõtesüsteem lubatud sõidukiirust ületanud sõiduki ja koostab salvestise.
+- mõõtesüsteemi PoliScanSpeed FI HP seerianumbriga 698722 (edaspidi Mõõtesüsteem)
+puudutavad asjakohased dokumendid ja automaatset kiirusmõõtesüsteemi reguleerivad
+õigusaktid on menetleja poolt kontrollitud ning mõõtmine vastas nõuetele ja oli kooskõlas
+kehtivate õigusaktidega, mistõttu kaebus ei vasta VTMS § 545 lõike 4 nõuetele ja kaebus
+jäetakse läbi vaatamata ja kuulub tagastamisele.
+
+30.08.2016 esitas E.Kulderknup vastavalt VTMS §-le 76 kaebuse kohtuvälise menetleja
+juhile. Kaebaja palub tühistada liikluspolitseinik Marianne Heinmäe poolt 19.08.2016
+koostatud määrus ning trahviteade nr 223015075039 (number märgitud valesti).
+E.Kulderknup leidis, et menetleja poolt esitatud vastuväited olid sisuliselt tema poolt esitatu
+kordus, mitte tõendid õigusvastasust välistavaks asjaoluks.
+
+02.09.2016 määruse alusel jättis kohtuvälise menetleja juht kaebuse kohtuvälise menetleja
+tegevusele peale VTMS § 77 lg 2 alusel rahuldamata. Määruse põhjendused on kokkuvõtvalt
+alljärgnevad:
+                                              3
+
+1) Kiirusmõõturid on kantud MõõteS § 7 lõike 3 alusel kehtestatud metroloogilise kontrolli
+nimistusse ja mõõtevahendite kirjeldamises tööpõhimõtete järgi puudub vajadus.
+Kiirusemõõtmiseks kasutatav käsilaserkiirusmõõtur on nõuetekohaselt taadeldud ja vastab
+nõuetele, selle kinnitamiseks Tehnilise Järelevalve Amet väljastas legaalmetroloogilise
+ekspertiisi akt nr 15-6/16-0062-013. Kohtuväline menetleja ei tegele hinnangute andmisega
+TKA toimingutele;
+2) Laseril põhinev kiirusmõõturi tööpõhimõte vastab Vabariigi Valitsuse 16.06.2011
+määrusega nr 78 kehtestatud mõõtemetoodikale, Maanteeamet oma tegevuses juhindub
+ülaltoodud määrusest;
+3) Mõõtesüsteem on taadeldud kuni 16.03.2017;
+4) Kiirusmõõturid ei kuulu mõõtevahendite direktiivi 2004/22/EC alla;
+5) Mõõtesüsteem’ile on 17.03.2016 Saksamaal väljastatud taatlustunnistus nr 1-170/16, mis
+on TKA poolt tunnistatud aktiga nr 15-6/16-0062-013, taatlus kehtib üks aasta.
+
+Edi Kulderknup esitas kohtule kaebuse kohtuvälise menetleja juhi tegevusele. Kaebuses
+E.Kulderknup selgitab, et menetleja poolt määruses kasutatud mõõtevahendite mõisted ei
+vasta õigusaktis toodud mõistetele (MKM 12.12.2016 määruses nr 104 lisa 1 ja 2 p. 8.2
+laserkiirusmõõturi asemel sõna laserkiirgusmõõtur), mõõtemetoodika sisus ei ole arvestatud
+mõõteprotsessi erisusi (ei erista käsilaserkiirusmõõturi ja skaneeriva laserkiirega
+kiirusmõõturi), ei ole esitatud paigaldusprotokolli, mis tõendas kiirusmõõturi olemasolu ning
+mõõtmise justeerimist (puuduvad dokumendid erapooletult ametilt, mis võimaldavad
+vajadusel korrata mõõtmist võrreldavatel tingimustel).
+
+Väärteoasja nr 223016065774 toimikus asuvad järgmised dokumendid:
+PoliScan Speed kiirusmõõtesüsteemi PS-698722 paigaldusprotokoll, legaalmetroloogilise
+ekspertiisi akt nr 15-6/16-0062-013 ja vertification sertificate nr 1-170/16, mis tõendavad, et
+mõõtesüsteem vastab EV kehtestatud õigusaktidele ja seda, et mõõtmine on sooritatud EV
+riiklikus järelevalves lubatud mõõtevahendiga.
+31.08.2016 salvestise taotluse vastusest nähtuvad rikkumise faktilised asjaolud ning ka see, et
+taotluse esitamine foto saamiseks ei peata trahviteate tasumiseks antud 30-päevast tähtaega.
+Kohustusega seotud laekumise väljavõte kohaselt trahviteade nr 223016065574 alusel
+määratud rahatrahv 9.00 eurot oli tasutud 15.07.2016.
+
+Kohtu põhjendused
+VTMS § 79 lg 3 p 1 – 3 kohaselt võib maakohtunik kaebust lahendades: jätta kaebuse
+rahuldamata; rahuldada kaebus täielikult või osaliselt ja kui õiguste rikkumist ei saa enam
+kõrvaldada, tunnistada isiku õiguste rikkumist; tühistada vaidlustatud määrus või peatada
+vaidlustatud menetlustoiming täielikult või osaliselt, kõrvaldades õiguste rikkumise.
+Kohus, tutvunud esitatud kaebuse, väärteoasja materjalide ja kohtuvälise menetleja juhi
+seisukohtadega ning juhindudes VTMS §-st 79, asub seisukohale, et Edi Kulderknupu poolt
+esitatud kaebus tuleb jätta rahuldamata.
+
+VTMS § 78 lg 2 p 1 kohaselt menetlusosaline võib esitada kaebuse kümne päeva jooksul,
+alates vaidlustatava määruse kättesaamisest. E.Kulderknup on kohtuvälise menetleja juhi
+määruse kätte saanud 03.09.2016. Seega on kaebus esitatud tähtaegselt.
+
+VTMS § 79 lg 2 kohaselt vaadatakse kaebus läbi kirjalikus menetluses kaebuse piires ja selle
+isiku suhtes, kelle suhtes see on esitatud. Seetõttu kaebuses märgitud kaebuse esitaja arvamus
+selle kohta, et kaebuse esitaja ei soovi kohtuistungist osa võtta ja kaitsjat, jääb kohtule
+arusaamatuks. Igal juhul kaebus vaadatakse läbi kirjalikus menetluses, milletõttu kohus ei saa
+kaebuse esitaja taotlusel või omal initsiatiivil asuda kaebust läbi vaatama istungimenetluses.
+                                               4
+
+VTMS § 541 lg 1 p 2 kohaselt seaduses sätestatud juhtudel võib kohtuväline menetleja
+mootorsõidukiga toime pandud liiklusväärteo puhul määrata hoiatustrahvi mootorsõiduki
+registrijärgsele omanikule, või kui registrisse on kantud vastutav kasutaja, vastutavale
+kasutajale (edaspidi mootorsõiduki eest vastutav isik), kui teo avastanud järelevalvet teostaval
+ametnikul ei olnud võimalik kohe tuvastada mootorsõiduki juhti ning rikkumine jäädvustati
+fotol, filmil või muul teabesalvestisel, millelt on visuaalselt tuvastatav mootorsõiduki
+registreerimismärk ning rikkumise tuvastamise aeg ja koht. Sama paragrahvi lõige 2 sätestab,
+et hoiatustrahv määratakse isikule, kes oli mootorsõiduki registrijärgne omanik või vastutav
+kasutaja väärteo toimepanemise ajal.
+
+Mootorsõidukiga toime pandud liiklusväärteo puhul mootorsõiduki eest vastutavale isikule
+määratavat hoiatustrahvi ei saa samastada väärteo eest kohaldatava karistusega. Kõnealune
+hoiatustrahv on käsitatav sunnimeetmena, mille kohaldamise aluseks võib olla ka asjaolu, et
+isiku vastutusel oleva mootorsõidukiga pani liiklusväärteo objektiivse koosseisu tunnustele
+vastava teo toime teine isik, kelle kohta mootorsõiduki eest vastutav isik ei taganud
+menetlejale seaduses sätestatud korras õigeaegselt teavet (Riigikohtu otsus nr 3-1-1-43-12 p
+32). Kuivõrd tegemist ei ole karistusega, siis ei ole põhjendatud lubada ka nimetatud otsustust
+vaidlustada piiramatult ükskõik millistel põhjendustel. Seadusandja on lähtunud antud juhul
+asjaolust, et kirjalikku hoiatusmenetlust kohaldatakse nn massväärtegude puhul, kus teo
+toimepanemine tuvastatakse lihtsustatud korras ja teabe salvestamise teel ning hoiatustrahv
+määratakse isikule, kes on sõiduki registrijärgne omanik, kes saab vaidlustada hoiatustrahvi
+vaid VTMS § 545 märgitud alustel, kui mootorsõidukit juhtis teine isik (lg 3) või esitades
+ametliku kinnituse, et enne trahviteates nimetatud teo toime panemise aega on teatatud
+mootorsõiduki või selle registreerimismärgi vargusest, kadumisest või hävimisest või esitades
+tõendid õigusvastasust välistava asjaolu esinemise kohta (lg 4).
+
+Edi Kulderknup on käesoleval juhul vaidlustanud kirjalikus hoiatamismenetluses koostatud
+trahviotsuse, kuna ta leiab, et tema sõiduki kiirus ei saanud olla 78 km/h, seega vaidlustab
+süüteo toimepanemist sisuliselt. Samas kaebaja ei vaidle selle vastu, et tema juhtis
+trahviotsuses nimetatud ajal ja kohas trahviotsuses nimetatud sõidukit. Puudub ka vaidlus
+selle üle, kas mootorsõiduk Renault Megane registreerimismärgiga XXXX või selle
+registreerimismärk oli varastatud, kadunud või hävitatud. Kohtusse saadetud kaebuse kohaselt
+on trahviteates nr 223016065574 märgitud väärteotoimepanemise kohaks Tallinn-Pärnu-Ikla
+maantee 95,2 kilomeeter ning fotolt on visuaalselt tuvastatav, et mootorsõiduk
+registreerimisnumbriga XXXX sõidab 05.07.2016 kiirusega 77 km/h, ehk ületab lubatud
+sõidukiirust (70 km/h). Antud juhul rikkumist kinnitav tõend on saadud Maanteeameti poolt
+paigaldatud kiirusmõõtesüsteemist, mille üheks osaks on kiirusmõõtevahend PS-698722.
+
+MõõteS § 5 lg 1 ls 2 sätestab, et kui mõõtevahend on kantud MõõteS § 7 lõike 3 alusel
+kehtestatud metroloogilise kontrolli nimistusse ning nõuded mõõteprotseduurile ja
+mõõtetulemuste töötlemisele tulenevad eriseadusest ja selle alusel kehtestatud õigusaktist,
+piisab mõõtetulemuste jälgitavuse tõendamiseks taatluskohustuse läbinud mõõtevahendi
+kasutamisest. Kiirusmõõtevahend on kantud MõõteS § 7 lõike 3 alusel kehtestatud
+metroloogilise kontrolli nimistusse, kuna tegemist on riikliku järelevalve käigus kasutatava
+mõõtevahendiga. Antud juhul mõõtetulemuste jälgitavuse tõendamiseks mõõtevahend peab
+olema taadeldud, seega kohtule peab olema esitatud kehtiv taatlustunnistus. Nähtuvalt kohtule
+esitatud kiirusmõõtesüsteemi paigaldusprotokollist oli mõõtmisel kasutatud kiirusmõõteseadet
+PS-698722 (Landesamt für Mess- und Eichwesen Berlin-Brandenburg poolt väljastatud
+mõõtevahendi taatlustunnistuse nr 1-170/16, mis on tunnistatud MõõteS § 10 lg 4 alusel
+01.04.2016 legaalmetroloogilise ekspertiisiga nr 15-6/16-0062-013 EV kehtivaks) ja seade
+oli käivitatud 08.04.2016 11:22 ning oli väärteo toimepanemise ajal töökorras. Seega on
+                                                5
+
+taadeldud mõõtevahendi mõõtetulemus jälgitavus tõendatav. Antud juhul on täidetud MõõteS
+§ 5 lg 1 nõuded ja saadud mõõtetulemus on kasutatav tõendina. Kuna mistahes asjaolud, mis
+annaksid kohtule aluse kahelda mõõtetulemuste jälgitavuse tõendatuses MõõteS § 5 mõistes
+puuduvad, loeb kohus tõendatuks Edi Kulderknupu käitumises LS § 227 lg 1 sätestatud
+väärteo objektiivsete tunnuste esinemise.
+
+Kohus leiab, et 05.07.2016 toimepandud liiklusrikkumise puhul kohaldatud kirjaliku
+hoiatamismenetluse eeldused on täidetud. Kiiruse ületamisega seotud rikkumised on
+sagedased, mistõttu sõiduki omanikule määratava hoiatustrahvi eesmärk on mõjutada isikut
+oma sõiduki kiirust kontrolli all hoidma ning võimaluse piires sellega toimepandavaid
+rikkumisi vältima. Kuna järelevalvet teostaval ametnikul ei olnud võimalik mootorsõiduki
+juhti kohe tuvastada, fikseeriti rikkumine vastavalt nõetele (rikkumine jäädvustati fotol,
+millelt on visuaalselt tuvastatav mootorsõiduki registreerimismärk ning rikkumise tuvastamise
+aeg ja koht). Seega rikkumine õigesti tuvastatud ning Edi Kulderknupu poolt toimepandud
+väärtegu on nõuetekohaselt tõendatud.
+
+KarS § 27 kohaselt õigusvastane on tegu, mis vastab seaduses sätestatud süüteokoosseisule ja
+mille õigusvastasus ei ole välistatud käesoleva seadustiku, muu seaduse, rahvusvahelise
+konventsiooni või rahvusvahelise tavaga. Edi Kulderknupu käitumises ei esinenud kiirust
+ületades ühtegi õigusvastasust välistavat asjaolu, mille tõttu oli kiiruse ületamine lubatav.
+Õigusvastasust välistavaks asjaoluks võivad näiteks olla KarS § 28-30 kohaselt hädakaitse,
+hädaseisund ja kohustuste kollisioon. Kuna Edi Kulderknup ei ole ei kohtule ega varasemalt
+kohtuvälisele menetleja esitanud mitte ühtegi põhjendust ega seda kinnitavaid tõendeid, mis
+oleksid seotud asjaoluga, et tema sõidukit ei juhtinud või tema puhul esines õigusvastasust
+välistav asjaolu, mis lubas tal kiirust ületada, siis on kohtuväline menetleja täiesti põhjendatult
+jätnud trahviteate peale esitatud kaebuse läbi vaatamata.
+
+PS §-de 15 ja 152 sätete ja mõtte kohaselt peab iga kohus kohtuasja lahendamisel hindama
+kohaldatava õiguse põhiseadusele vastavust, kui selle kohta on tekkinud kahtlused.
+(Riigikohtu põhiseaduslikkuse järelevalve kolleegiumi määrus nr 3-4-1-22-09, p 11). VTMS §
+78 lg 1 kohaselt kui isik ei nõustu kohtuvälise menetleja juhi poolt kaebust lahendades tehtud
+määrusega ja vaidlustatakse kohtuvälise menetleja tegevust, millega on rikutud isiku õigusi ja
+vabadusi, on isikul õigus esitada kaebus maakohtule. VTMS 10. peatüki 3. jao 6. jaotises
+sätestatud kaebemenetlus on käsitatav nn uurimiskaebemenetluse (KrMS 8. peatüki 5. jagu)
+analoogina. Grammatilise tõlgenduse pinnalt erineb väärteomenetlusele omane
+uurimiskaebemenetlus kriminaalmenetluslikust vähemalt kahe järgmise tunnuse poolest.
+Esiteks saab VTMS § 76 lg 2 esimese alternatiivi kohaselt väärteomenetluses uurimiskaebe
+korras vaidlustada ka väärteomenetluse lõpetamist. Seega on seadusandja
+väärteomenetluslikku uurimiskaebemenetlusse lülitanud ka kriminaalmenetlusele omase nn
+süüdistuskohustusmenetluse (KrMS §-d 207-208) elemente. Kriminaalmenetlusele omase
+süüdistuskohustusmenetluse raames on eranditult vaid kannatanul ja tema esindajal õigus
+vaidlustada nii kriminaalmenetluse alustamata jätmist kui ka selle lõpetamist. VTMS § 76 lg 2
+otsesõnu märgitu kohaselt aga ühelt poolt ei võimaldata vaidlustada väärteomenetluse
+alustamata jätmist, kuid teiselt poolt võimaldatakse väärteomenetluse lõpetamist vaidlustada
+nii kõigil menetlusosalistel kui ka kõigil menetlusvälistel isikutel. Teine oluline erinevus
+grammatilise tõlgenduse pinnalt on selles, et kriminaalmenetluslikus uurimiskabemenetluses
+on võimalik uurimisasutuse menetlustoimingut või määrust vaidlustada vaid koos selle
+äranäitamisega, kuidas vastav määrus või toiming on kaebaja õigusi rikkunud. Erinevalt
+eelmärgitust aga võimaldatakse VTMS §-s 76 märgitu kohaselt esitada kohtuvälise menetleja
+juhile kaebus ilma enda konkreetsete õiguste rikkumisele viitamata. Samas, tulenevalt VTMS
+                                             6
+
+§ 78 lg- st 1 tuleb kohtuvälise menetleja juhi otsustust maakohtus vaidlustades näidata ära
+enda õiguste ja vabaduste rikkumine (Riigikohtu määrus nr 3-1-1-81-13 p 12).
+
+Oma kaebuses ei ole Edi Kulderknup viidanud oma õiguste ja vabaduste rikkumisele, vaid
+esitades kontrollimata väiteid püüab õigustada enda poolt toime pandud rikkumist. Edi
+Kulderknupu kaebuses märgitu on seotud eelkõige kiirusemõõtmiseks kehtestatud
+õigusaktidele hinnangu andmisega, mitte kohtuvälise menetleja poolt teostatud toimingute
+ebaseaduslikkuse tuvastamisega, millega oli rikutud tema õigusi ja vabadusi. Kaebaja poolt
+teostatud õigusnormide hindamine on oletuslik ja sisutühine, milletõttu kaebuse lahendamisel
+ei saa kohus nendes punktides väljatoodule hinnangut anda. Seega kohtuvälise menetleja
+02.09.2016 määrus on põhjalik ning õiguspärane, sellega ei ole rikutud menetlusaluse isiku
+õigusi ja vabadusi.
+
+Kohus leiab, et kaebuse esitajale hoiatusmenetluses määratud trahvi alused on õiguspärased ja
+menetleja ei ole oma tegevusega menetlusnorme rikkunud. Samuti kohus ei ole tuvastanud, et
+kohtuväline menetleja oleks väärteomenetluse seadust valesti kohaldanud ning seega puudub
+alus VTMS § 79 lg 3 p 2 või 3 nimetatud lahendi tegemiseks. Edi Kulderknupu kaebus tuleb
+jätta VTMS § 79 lg 3 p 1 alusel rahuldamata.
+
+
+
+Kohtunik

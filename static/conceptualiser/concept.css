@@ -1,0 +1,145 @@
+#top_line {
+    width: 100%;
+    overflow: auto;
+}
+
+#top_line div {
+    color: white;
+    font-size: 1em;
+    cursor: pointer;
+    float: left;
+    margin: 0px;
+    padding: 3px;
+}
+
+#top_line div:hover {
+    color: #00A9F1;
+}
+
+#bottom_line {
+    height: 1em;
+    width: 100%;
+    background-color: #006699;
+    margin-bottom: 1em;
+}
+
+.sub_menu_item {
+    margin: 0.5em;
+}
+
+#plot_settings {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    background-color: white;
+    margin: 10px;
+    padding: 10px 10px 3px 10px;
+    border: 2px solid black;
+}
+
+#legend {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    background-color: white;
+    margin: 10px;
+    padding: 10px 10px 3px 10px;
+    border: 2px solid black;
+    z-index: 20;
+}
+
+#onto_svg_and_menu {
+    position:relative;
+    height: 100%;
+}
+
+#tooltip {
+    position: absolute;
+    width: 200px;
+    height: 28px;
+    pointer-events: none;
+}
+
+table {
+    border-spacing: 10px;
+}
+
+.lexicon_item {
+    cursor: pointer;
+}
+
+rect.selection {
+    stroke          : gray;
+    stroke-dasharray: 4px;
+    stroke-opacity  : 0.5;
+    fill            : transparent;
+}
+
+circle {
+    fill: black;
+    cursor  : pointer;
+}
+
+
+circle.circle.selected {
+    fill: green;
+}
+
+circle.circle.selection {
+    fill: red;
+}
+
+circle.merged_circle {
+    fill: blue;
+}
+
+circle.merged_circle.selected {
+    fill: yellow;
+}
+
+*.unselectable {
+   -moz-user-select: -moz-none;
+   -khtml-user-select: none;
+   -webkit-user-select: none;
+
+   /*
+     Introduced in IE 10.
+     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+   */
+   -ms-user-select: none;
+   user-select: none;
+}
+
+#label_selection_box {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 2px solid black;
+    padding: 20px;
+    box-shadow: 10px 10px 5px #888888;
+    background-color: white;
+}
+
+#concept_content {
+    display:none;
+    right: 2%;
+    top: 2%;
+    border: 2px solid black;
+    padding: 10px;
+    box-shadow: 10px 10px 5px #888888;
+    background-color: white;
+    position: absolute;
+}
+
+#concept_terms {
+    height: 25em;
+    overflow: auto;
+    padding-right: 1em;
+    overflow-x: hidden;
+}
+
+.content_item {
+    cursor: pointer;
+}

@@ -1,0 +1,742 @@
+                                   KOHTUOTSUS
+                                      Eesti Vabariigi nimel
+Kohus                                 Tallinna Halduskohus
+Kohtunik                              Kristjan Siigur
+Otsuse avalikult
+teatavakstegemine                     29. aprill 2016, Tallinn
+Haldusasja number                     3-15-3119
+
+Haldusasi                             OÜ Zunt kaebus Maksu- ja Tolliameti 9. septembri
+                                      2015 maksuotsuse nr 12.2-3/026420-8 tühistamise
+                                      nõudes
+Menetlusosalised                      Kaebaja: OÜ Zunt
+                                        Esindaja: v.adv. Elvira Tulvik
+                                      Vastustaja: Maksu- ja Tolliamet
+                                        Esindajad: Sandra Salumäe ja Miiko Vainer
+
+
+RESOLUTSIOON
+    1. Rahuldada OÜ Zunt kaebus osaliselt. Tühistada Maksu- ja Tolliameti 9. septembri
+       2015 maksuotsus nr 12.2-3/026420-8 osas, millega suurendati kaebaja
+       maksukohustust kokku 2117,24 euro võrra ehk millega
+            a. suurendati sotsiaalmaksu tasumise kohustust 468,87 euro võrra,
+            b. suurendati kinnipeetud tulumaksu tasumise kohustust 292,40 euro võrra,
+            c. suurendati kinnipeetud töötuskindlustusmakse tasumise kohustust 28,42
+               euro võrra,
+            d. suurendati arvestatud töötuskindlustusmakse tasumise kohustust 14,21
+               euro võrra ning
+            e. vähendati sisendkäibemaksusummat, mis on seadusega lubatud maha
+               arvata, 1313,34 euro võrra.
+    2. Mõista OÜ Zunt kasuks Maksu- ja Tolliametilt välja menetluskulu 1014 eurot.
+
+Edasikaebamise kord: Menetlusosalistel on õigus kohtuotsuse peale esitada apellatsioonkaebus
+Tallinna Ringkonnakohtule hiljemalt 30. mail 2016 (HkMS § 180, § 181 lg 1). Vastuseks teise
+menetlusosaliste poolt esitatud apellatsioonkaebusele võib esitada vastuapellatsioonkaebuse 14 päeva
+jooksul apellatsioonkaebuse menetlusosalisele kättetoimetamisest arvates või ülejäänud
+apellatsioonitähtaja jooksul, kui see on pikem kui 14 päeva (HKMS § 184). Kui apellant soovib asja
+arutamist kohtuistungil, tuleb seda apellatsioonkaebuses märkida, vastasel korral eeldatakse, et ta on
+nõus asja lahendamisega kirjalikus menetluses (HKMS § 182 lg 1 p 9). Kui menetlusosaline soovib
+apellatsioonkaebuse esitamiseks saada menetlusabi, tuleb tal Tallinna Ringkonnakohtule esitada
+vastavasisuline taotlus. Menetlusabi taotluse esitamine ei peata menetlustähtaja kulgemist (HKMS §
+116 lg 5) ning apellatsioonitähtaja järgimiseks peab menetlusabi taotleja tegema tähtaja kestel ka
+menetlustoimingu, mille tegemiseks ta menetlusabi taotleb, eelkõige esitama apellatsioonkaebuse
+(HKMS § 116 lg 6).
+
+
+
+                                                -1-
+                      Tallinna Halduskohtu otsus haldusasjas 3-15-3119
+
+
+ASJAOLUD JA VAIDLUSTATUD MAKSUOTSUS
+
+1. OÜ Zunt osutas 2014. aasta juuni ja septembri vahelisel perioodil üheaegselt
+restoraniteenust, mis kuulus maksustamisele 20%-lise käibemaksuga, majutusteenust, mis
+kuulus maksustamisele 9%-lise käibemaksuga ning maksuvaba käibena sotsiaalteenuseid.
+Ostuarvete alusel kajastas OÜ Zunt oma käibemaksuarvestuses sisendkäibemaksu kas täies
+ulatuses, oma määratud proportsiooni alusel või üldse mitte, lähtudes arve sisust ning oma
+äranägemisest selle kohta, kas või kui palju teatud arve esemeks olevat kaupa või teenust
+maksustatava käibe tarbeks kasutati. Samuti tegi OÜ Zunt 2014. aasta juunis 1100 euro
+suuruse väljamakse M. A.le.
+
+2. Maksu- ja Tolliamet tegi 9. septembril 2015 maksuotsuse nr 12.2-3/026420-8, millega
+suurendas OÜ Zunt 2014. aasta juunikuu tööjõumaksude (sotsiaalmaks, kinni pidamisele
+kuuluv tulumaks, töötuskindlustusmaksed) tasumise kohustust kokku 803,90 euro võrra ning
+2014. aasta juuni-, juuli-, augusti- ja septembrikuu käibemaksukohustust kokku 4279,55 võrra.
+Tööjõumaksude osas on maksuotsuses asutud seisukohale, et OÜ Zunt poolt M. A.le tehtud
+1100 euro suurune väljamakse on käsitatav töötasuna, kuna selle kohta tehtud
+maksekorraldusel on selgitusena märgitud "t.tasu," ning kuna OÜ Zunt käitatava ettevõtte
+töötajate R. K. ja S. M. seletustest, samuti A. J. sõlmitud töölepingust ning Eesti Töötukassa
+kodulehel avaldatud töökuulutustest nähtuvalt täitis M. A. 2014. aasta juunis sisuliselt OÜ-s
+Zunt tööülesandeid, millest tulenevalt pole usutav OÜ Zunt väide, et väljamakse näol oli
+tegemist laenumaksega. Sisendkäibemaksu osas asuti maksuotsuses seisukohale, et kuivõrd
+2014. aasta käibedeklaratsioonide kohaselt oli OÜ Zunt maksustatav käive 2014. aastal 34
+850,06 eurot ning kogu käive 461 330,17 eurot, siis moodustas maksustatav käive kogu käibest
+8%, millisest proportsioonist oleks OÜ Zunt pidanud lähtuma sisendkäibemaksu arvestamisel
+nende kaupade ja teenuste soetamisel, mida kasutati nii maksustatava kui maksuvaba käibe
+tarbeks. Maksuotsusega korrigeeriti OÜ Zunt sisendkäibemaksuarvestust selliselt, et OÜ Zunt
+esitatud ostuarvete koondis loetletud arvetel näidatud käibemaksusummadest arvestati OÜ
+Zunt sisendkäibemaksuna 8%, välja arvatud nende arvete puhul, mille puhul OÜ Zunt juba ise
+sisendkäibemaksu üldse ei arvestanud ning mõnede üksikute arvete puhul (nt. OÜ Scoro
+Software arved, üks Pesemisteenuse OÜ arve), kus maksuotsuses aktsepteeriti OÜ Zunt poolt
+sisendkäibemaksu arvestamist täies ulatuses.
+
+KAEBAJA NÕUE JA PÕHJENDUSED
+
+3. OÜ Zunt esitas Tallinna Halduskohtule kaebuse, milles taotleb Maksu- ja Tolliameti 9.
+septembri 2015 maksuotsuse nr 12.2-3/026420-8 tühistamist.
+
+4. Kaebaja väidab, et M. A.le tehtud väljamakse näol ei olnud tegemist töötasu, vaid 1. märtsil
+2013 sõlmitud laenulepingu kohane laenusumma väljamakse. Kaebaja väitel tegi
+raamatupidaja vea, märkides maksekorralduse selgitusse "t.tasu," siinkohal viitab kaebaja ka
+sellele, et sedasama on maksuhaldurile seletusi andes kinnitanud ka M. A., nagu ka selgitanud,
+et ei tööta OÜ-s Zunt juba aastaid, ent on OÜ Zunt hoolekogu esinaine, kellele tasu ei maksta.
+Kaebaja väitel on arusaamatu, miks maksuhaldur need selgitused tähelepanuta jätnud on.
+Kaebaja toob ka välja, et maksuhaldur pole tuvastanud, et M. A.le oleks selliseid väljamakseid
+tehtud regulaarselt, mis oleks omane töösuhtele. Kaebaja selgitab, et M. A. oli varem kaebaja
+juhataja ning sellest ajast on säilinud tema nimega blanketid, ent see ei anna kaebaja
+hinnangul alust maksustamiseks. Ka on kaebaja meelest mõistetavad kaebaja pikaajaliste
+
+
+                                             -2-
+                       Tallinna Halduskohtu otsus haldusasjas 3-15-3119
+
+töötajate seletused, arvestades, et nende töölepingute sõlmimise ajal oli M. A. kaebaja töötaja
+ning hoolekogu esinaisena oli ka seletuste andmise ajal kaebajaga tihedalt seotud. Kaebaja
+rõhutab, et maksuhaldur ei ole M. A. puhul näidanud ühegi töösuhte eelduse täitmist, sh.
+kehtiva töölepingu olemasolu, alluvussuhet, reguleeritud tööaega, puhkusi, tööandja
+töövahendite kasutamist, töötasu perioodilist maksmist.
+
+5. Sisendkäibemaksu osas selgitab kaebaja, et rakendas sisendkäibemaksu maha arvamisel
+KMS § 33 lõigete 3 ja 4 kohaselt lubatud segameetodit, milleks jagas ta oma soetused selgelt
+kolmeks: esiteks nendeks, mis on tehtud maksustatava käibe genereerimiseks ning mille puhul
+arvatakse sisendkäibemaks maha täies ulatuses (hotelli ja hotellirestoraniga seotud kulud ning
+arendatava butiikhotelliga seotud kulud); teiseks nendeks, mis on tehtud maksuvaba käibe
+genereerimiseks ning mille puhul sisendkäibemaksu maha ei arvata (hooldekoduga seotud
+kulud) ning kolmandaks kulud, mis on tehtud nii maksuvaba kui ka maksustatava käibe
+genereerimiseks. Viimatinimetatute osas selgitab kaebaja, et restoran tarnib kaupa nii
+hotellile kui ka hooldekodule, ent lõplik kaubasaaja on selgelt eristatav, mistõttu kuu lõpus
+kulud summeeritakse, leitakse maksustatavale käibele suunatud protsent ja selle järgi
+arvatakse maha selle kuu sisendkäibemaks. Veel selgitab kaebaja nende kulude osas, et vee,
+kanalisatsiooni ja elektri jaoks on restoranis, hotellis ja ilusalongis paigaldatud eraldi mõõtjad,
+mis lubavad leida kasutusproportsiooni, pesu pesemise kulu on määratav pesu massi järgi ning
+prügi jaoks on hooldekodul ja restoranil ning hotellil eraldi konteinerid ja kulu jaotub pooleks.
+Veel selgitab kaebaja, et üldkulutuste puhul, mis ei ole seotud ruumide täituvusega, lähtutakse
+proportsioonist, mis põhineb sellel, kui suurt pinda kasutab kinnistul hotell (maksustatav
+käive) ja kui suurt pansionaat (maksuvaba käive). Kaebaja märgib, et esitas maksuhaldurile
+menetluse käigus proportsiooniarvestused, millest lähtudes ta sisendkäibemaksu arvestas,
+ent tema hinnangul on maksuhaldur need arvestused ilma seda põhjendamata tähelepanuta
+jätnud.
+
+6. Kaebaja selgitab, et hotellis, restoranis ja hooldekodus osutatavad teenused on oma
+olemuselt täiesti erinevad, need on suunatud erinevale klientuurile, neid müüakse erinevalt
+ning nende jaoks tehakse erinevaid kulusid, v.a üldkulud, mis on igas äris sarnased. Kaebaja
+leiab, et ta on oma kulud jaganud loogiliselt ning seetõttu pole mingit põhjust jaotada neid
+otsemeetodil, kasutades 8% proportsioonimäära, nagu tehti vaidlusaluses maksuotsuses.
+Kaebaja leiab, et maksuhalduri selgitatud proportsioonimeetod, on mõeldud olukordadeks,
+kus kulu otstarve ei ole täpselt määratletav, käesoleval juhul see aga nii ei ole.
+
+7. Seoses maksuotsuses mainitud OÜ Agroland arvega selgitab kaebaja, et arve aluseks oleva
+laenunõustamise eesmärgiks oli kinnisasja soetamine, mida hakatakse kasutama vaid
+butiikhotelli pidamiseks ehk maksustatava käibe tarbeks ning seega on tal õigus selle arve
+alusel sisendkäibemaksu arvestada täies ulatuses.
+
+8. Kaebaja peab põhjendamatuks tasumisele kuuluva käibemaksu suurendamist seoses
+teenuste ühendusesisese soetamisega Booking.com süsteemi raames, kuna vastavas osa on
+kaebaja käibedeklaratsioone parandanud, deklareerides selles osas nii sisend- kui
+müügikäibemaksu.
+
+
+
+
+                                               -3-
+                      Tallinna Halduskohtu otsus haldusasjas 3-15-3119
+
+
+VASTUSTAJA SEISUKOHT
+
+9. Maksu- ja Tolliamet vaidleb OÜ Zunt kaebusele vastu ning taotleb selle rahuldamata jätmist.
+
+10. Vastustaja on seisukohal, et M. A. tehtud väljamakse näol on tegu töötasuga ning eluliselt
+pole usutav, et maksekorraldusel sellekohase viite tegemine, samuti see, et töötajad peavad
+teda oma ülemuseks, on tingitud eksimisest. Vastustaja ei pea usutavaks ka väidet, et tegemist
+on laenumaksega, viidates sellele, et kaebaja pole peale M. A. seletuse esitanud selle kohta
+mingisuguseid tõendeid. Ka toob vastustaja välja, et kaebaja pole selgtanud, mis ülesannete
+poolest erineb nn hoolekogu esinaise positsioon eelnevalt töölepingu alusel töötamisest.
+Vastustaja leiab, et laenulepinguga kokku lepitud nn vajaduspõhine tasumine viitab sellele, et
+OÜ-l Zunt ning M. A. oli hoopis vajadus põhjuseks, et OÜ Zunt saaks ilma tööjõumakse
+tasumata kanda M. A. raha tema äranägemise järgi OÜ-le Zunt töö tegemise eest. Vastustaja
+toob välja, et tõendatud pole laenu andmine intressitulu teenimiseks ning tavapärane pole ka
+kaebaja kirjeldatud olukord, kus võetakse risk kinnistu omandamiseks mittenotariaalse
+eellepingu sõlmimisel, samas kui isegi seda ei lepita kokku, millal kinnistu omandatakse.
+Vastustaja toob välja, et laenulepingus on ka muid vastuolusid, näiteks on selle punktis 2 M.
+A. nimetatud hoopis laenuandjaks.
+
+11. Sisendkäibemaksu osas selgitab vastustaja esmalt, et kuna Booking.com arvetelt tekkis
+kaebajal pöördmaksustamise korras nii käibemaksu kui samas summa sisendkäibemaksu
+arvestamise kohustus, siis nende arvete pinnalt tegelikku maksukoormust ei lisandunud.
+Muus osas selgitab vastustaja, et tuvastas kaebaja esitatud ostuarvete koondi pinnalt, et
+nende arvete osas, milles kaebaja oli rakendanud proportsiooni, oleks tulnud lähtuda 8%
+osakaalust ning osade arvete puhul oleks kaebaja pidanud rakendama proportsiooni, kuid oli
+jätnud selle tegemata. Siinkohal viitab vastustaja näitena OÜ Lilles arvetele, mille sisuks oli
+raamatupidamisteenus, ent mille puhul pole usutav, et kaebaja kasutas seda üksnes
+maksustatava käibe tarbeks. Vastustaja rõhutab, et iga arvet eraldi analüüsides on
+maksustamisel arvesse võetud nii maksukohustust vähendavaid kui suurendavaid asjaolusid
+ning toob välja, et maksuhaldur tuvastas, et Elion Ettevõtted AS teenust soetati ka
+maksustatava käibe tarbeks ning Booking.com teenuseid ainult maksustatava käibe tarbeks.
+
+12. Vastustaja leiab, et kontrollakti lisas toodud kulutuste osas 8%-lisest proportsioonist
+lähtumine on mõistlik ja kooskõlas lisandunud väärtuse maksu põhimõttega ka seetõttu, et
+hooldekodu ja hotelli majandamiseks kasutatav kulubaas on tekkinud sarnastes
+tegevusvaldkondades. Vastustaja viitab siinkohal Riigikohtu otsusele kohtuasjas 3-3-1-74-04
+ning leiab, et olukordades, kus ei ole täiesti üheselt selge, kas kulu on maksustatava või
+maksuvaba käibe kohta, tuleb rakendada proportsiooni, lähtudes kalendriaasta kogu käibe ja
+maksustatava käibe osakaalust, mida antud juhul tehtigi. Vastustaja leiab, et KMS § 32 lg 1
+toetab samuti maksustatava käibe ja kogu käibe suhte alusel proportsiooni leidmist, mitte
+selle tuletamist maksukohustuslase poolt arvutatavast igakuisest muutuvkoefitsendist.
+Vastustaja hinnangul eeldaks kaebaja loogika seda, et kogu ostetav kaup või teenus müüakse
+samal maksustamisperioodil samas mahus ka edasi ja saab hinnata, kui palju kaupa või teenust
+konkreetse arve alusel maksustatava või maksuvaba käibe tarbeks edasi müüdi.
+
+13. Mis puudutab kaebaja koostatud arvestustabeleid, siis selgitab vastustaja, et need ei
+muuda lõppjäreldust maksustamise osas. Vastustaja toob välja, et kaebaja ei ole tegelikult
+esitanud mistahes tõendeid, mille pinnalt saaks kontrollida nende arvestuste õigsust ehk seda,
+
+
+                                             -4-
+                      Tallinna Halduskohtu otsus haldusasjas 3-15-3119
+
+kui palju mingil konkreetselt arvel kajastatud kaupadest läks tegelikult maksustatava ja kui
+palju maksuvaba käibe tarbeks.
+
+KOHTU SEISUKOHT JA PÕHJENDUSED
+
+14. Hinnanud poolte väiteid ja nende kinnituseks esitatud tõendeid kogumis ja vastastikuses
+seoses, leian, et OÜ Zunt kaebus tuleb osaliselt rahuldada ning tühistada maksuotsus täielikult
+osas, millega suurendati kaebaja tööjõumaksude tasumise kohustust ning osaliselt ka osas,
+millega piirati sisendkäibemaksu maha arvamise õigust. Tööjõumakse puudutavas osas ei saa
+maksuhalduri kahtlusi kaebaja ning M. A. vaheliste õigussuhete iseloomu osas pidada ehk küll
+ilmselgelt alusetuteks, ent menetluse käigus kogutud tõendite pinnalt ei saa siiski teha
+järeldust, et nende vahel oli selline suhe, millest tekkis kohustus arvestada ja tasuda (või kinni
+pidada) tööjõumakse. Sisendkäibemaksu puhul on maksuhaldur õigesti leidnud, et kaebaja ei
+rakendanud nii maksustatava kui maksuvaba käibe tarbeks soetatud kaupade ja teenuste
+sisendkäibemaksu arvestamisel õiget proportsiooni, ent samas on põhjendamatult jätnud
+kontrollimata kaebaja poolt maksumenetluses esitatud täiendavad selgitused (eriarvamusele
+lisatud arvestused) ning ilma seda põhjendamata välistanud täielikult sisendkäibemaksu maha
+arvamise mitmete selliste arvete alusel, mille kohta kaebaja ometi väitis, et nende esemeks
+olevaid kaupu kasutati kas täielikult maksustatava käibe tarbeks või siis nii maksutatava kui
+maksuvaba käibe tarbeks. Viimatinimetatud arvete puhul ei saa minu hinnangul ainsaks
+sisendkäibemaksu maha arvamise piiramise aluseks olla asjaolu, et kaebaja oma esialgsetes
+arvestustes polnud nende alusel sisendkäibemaksu arvestanud, kui ta kontrollimenetluses
+esitatud uues arvestuses seda siiski tegi.
+
+15. Vaidlustatud maksuotsuse punktis 2.1.3. tehtud viitest tulumaksuseaduse § 41 punktile 3
+tuleneb maksuhalduri järeldus, et M. A. tehtud 1100 suuruse väljamakse näol oli tegemist
+töövõtu-, käsundus- või muu võlaõigusliku lepingu alusel makstud töö- või teenustasuga.
+Maksuotsuses sellise järelduse tegemiseks peab maksuhaldur tuvastama vähemalt selle, mis
+oli sellise lepingu sisuks ehk milles seisnesid tasu saanud füüsilise isiku ülesanded. Väljamakse
+saab tööjõumaksudega maksustada, kui kogutud tõendid õigustavad järeldust, et füüsilisele
+isikule tehti väljamakse vastutasuna tema töise panuse eest. Sellist väljamakset ei saa
+tööjõumaksudega maksustada nii-öelda välistusmeetodil, s.t järeldada töö-või töövõtu- vms.
+suhte olemasolu sellest, et pole usaldusväärselt tuvastatav mingi muu sellise väljamakse
+tegemist õigustava suhte olemasolu. Põhimõtteliselt on füüsilisele isikule väljamaksete
+tegemine võimalik väga erinevatel alustel või ka üldse ilma igasuguse õigusliku aluseta.
+Viimasel juhul võib tegemist olla ettevõtjast väljamakse tegija jaoks ettevõtlusega mitte
+seotud väljamaksega, millega kaasneb tulumaksukohustus, ent sellest ei saa järeldada, et
+tegemist oli füüsilise isiku palgatuluga TuMS § 13 lõigete 1 või 11 tähenduses. Eelnev ei
+tähenda siiski seda, et maksuhaldur peab tuvastama kõik tegeliku töö- või töövõtusuhte
+elemendid. Olukorras, kus asjassepuutuvad isikud tegeliku suhte iseloomu varjata soovivad,
+oleks see praktiliselt võimatu. Küll aga peab maksuhaldur tuvastama piisava hulga asjaolusid,
+mis kinnitavad väljamakse saaja töist panust väljamakse tegija heaks ning lubavad järeldust,
+et väljamakse on tasu nimetatud töise panuse eest. Leian, et käesoleval juhul kogutud
+tõenditest seda piisavat hulka asjaolusid ei nähtu. Esiteks ei ole OÜ Zunt töötajatelt võetud
+seletuste pinnalt ning sellest, et M. A. nimi figureeris töökuulutustes ja ühes töölepingus,
+võimalik tuvastada, kas või milliseid ülesandeid M. A. OÜ-s Zunt tegelikult täitis. Teiseks ei ole
+maksuhaldur suutnud põhjendada oma seisukohta, et kaebaja väidetud laenusuhet OÜ Zunt
+ja M. A. vahel tegelikult ei olnud.
+
+
+                                              -5-
+                       Tallinna Halduskohtu otsus haldusasjas 3-15-3119
+
+16. Maksuhaldurile seletusi andnud R. K. ja S. M. seletused on niivõrd üldised, et nende pinnalt
+ei saa midagi järeldada selle kohta, kas või milliseid ülesandeid M. A. tegelikult OÜ-s Zunt täitis
+või kuidas need võivad olla seotud talle 2014. aasta juunis tehtud väljamaksega. Sellest, et
+need töötajad nimetasid M.A. oma tegeliku ülemusena, ei saa teha järeldust, et M.A. tegelikult
+mingisugust tööd tegi. Seletustest ei nähtu, kas M.A. jagas töötajatele reaalselt mingisuguseid
+korraldusi, kas või kui sageli viibis ta ettevõtte tegevuskohas jne. Maksuhaldur ei ole seletusi
+andnud isikutelt täpsemaid küsimusi M.A. rolli kohta küsinud. Mis puudutab R. K. väidet, et
+M.A. esitab arveid, siis esiteks ei nähtu seletustest, mille põhjal R. K. väidab, et ta seda teab.
+Liiati ei nähtu suuliste seletuste protokollist küsimusi, millele R. K. vastas. Protokollitud
+vastusest "Ma ei tea, kuidas teenuse eest makstakse. Tean, et A. esitab arved, aga kuidas
+nende eest makstakse, ma ei tea" nähtub pigem, et konkreetne küsimus keskendus sellele,
+kas isik teab, kuidas toimub OÜ Zunt teenuse eest maksmine, mitte aga sellele, kes arveid
+koostab või väljastab. Tegelikult ei saa ka sellest vastusest järeldada, et R. K. oleks ise näinud
+või teaks tõsikindlalt, et klientidele arvete koostamisega tegeles tol ajal M.A.. Lisaks sellele
+selgitas OÜ Zunt juhatuse liige I. R. maksuhaldurile, et temale teadaolevalt ei oleks M.A.
+pidanud mingeid arveid esitama.
+
+17. Mis puudutab I. R. poolt maksuhaldurile antud seletusi, siis neist saab järeldada seda, et
+juhatuse liige tegelikult OÜ Zunt igapäevase tegevusega kursis ei olnud. Enamusele ettevõtte
+tegevust ja töökorraldust puudutavatele üksikküsimustele ta vastata ei osanud, ent lubas
+vastavaid asjaolusid kas täpsustada või väitis, et neid asjaolusid teab tegevjuht A. J. A.le kui
+"ülemuse asetäitjale" on oma seletustes viidanud ka R. K. Seejuures ei ole maksuhaldur R. K.t
+uurinud, millega tegeles tema väidetav tegelik ülemus M.A. ja millega väidetav asetäitja A.
+Veelgi kummalisem on, et maksuhaldur ei ole üldse seletusi võtnud A. J.lt. Ei kontrollaktist ega
+maksuotsusest ei nähtu ka, et A. J. poole pöördumiseks ja temalt seletuste võtmiseks oleks
+esinenud mingisuguseid takistusi. Seega on maksuhaldur, olukorras, kus kaebaja juhatuse liige
+väitis, et tegevjuhtimisega tegeleb A. J., jätnud kasutamata olulise võimaluse OÜ Zunt
+tegevuse reaalse korralduse kohta teavet saada. Seejuures ei ole A. J.lt uuritud ka näiteks seda,
+kas tema töölepingus tööülesannete andjana märgitud M.A. ka tegelikult tema tööd juhtis ja
+korraldas ning milles see reaalselt kontrollitaval ajal seisnes. Selles olukorras ei saa tegelikult
+välistada võimalust, et ettevõtte tegeliku juhtimisega tegeles A. J. ning M.A.l tõepoolest
+mingeid tegelikke töise panusena käsitatavaid ülesandeid ei olnud.
+
+18. Samuti ei ole maksuhaldur sisuliselt mingit seisukohta võtnud kaebaja selgituse kohta, et
+M.A. oli OÜ-ga Zunt seotud kui vabatahtlikult ja tasuta kaebaja tegevuse üle kas järelevalvet
+teostava või juhtimist suunava hoolekogu liige. Ka M.A.lt endalt seletusi võttes ei ole
+maksuhaldur uurinud, mis oli selle hoolekogu roll või milles seisnesid M.A. ülesanded
+hoolekogu liikme rollis. Seda, et ettevõtte tegevuse tugevdamiseks on moodustatud
+mingisugune formaalselt juhtimis- või kontrolliorganiks mitte olev organ, mis koosneb
+ettevõtte hea käekäigu eest vabast tahtest hoolt kanda soovivatest isikutest, ei saa iseenesest
+välistada. Sellise organi töös võivad põhimõtteliselt kaasa lüüa inimesed, kes otseselt ei ole
+osanikud, ent on mingil põhjusel reaalselt siiski ettevõtte majanduslikust edust huvitatud (sh.
+võimalikud varjatud osanikud jne). Maksuhaldur ei ole ka väitnud, et OÜ Zunt
+majandustegevust ja juhtimismudelit arvestades oleks sellise tasuta töötava hoolekogu
+olemasolu eluliselt ebausutav.
+
+19. Asjaolust, et vaidlusaluse väljamakse selgitusest "t.tasu," ei saa teha järeldust, et tegemist
+oli palgaväljamaksega ning tuvastatud asjaoludel on see, et tegemist oli väljamakse tegija
+
+
+                                               -6-
+                      Tallinna Halduskohtu otsus haldusasjas 3-15-3119
+
+eksitusega, vähemalt samavõrd võimalik. Maksuhaldur ei ole tuvastanud, kes konkreetselt
+selle ülekande tegi, ent kui see oli kaebajale raamatupidamisteenust osutanud ettevõtte
+töötaja, võis tegemist olla olukorraga, kus ülekande tegijal tegelikult mingit aimu polnud, mis
+laadi väljamaksega tegemist on, ent kuivõrd maksekorralduse selgituse lahtrisse on vaja
+midagi märkida, eeldas ta, et ju on füüsilise isiku näol tegu töötajaga või lähtus sellest, et
+mingisugustel varasematel perioodidel on samale isikule tehtud töötasuväljamakseid. Mis
+puudutab seda, et M.A. nimi oli märgitud töökuulutustel, siis selles osas ei saa tõepoolest
+usutavaks pidada kaebaja selgitust, et tegemist oli üksnes eksitusega, kuna kuulutuse tekst
+pole nii mahukas, et selline eksitus oleks saanud tähelepanuta jääda. Samas ei saa sellest
+asjaolust järeldada töö-, töövõtu- või muu sarnase suhte olemasolu, kuivõrd see ei anna
+tegelikult mingit aimu sellest, kas või milliseid ülesandeid M.A. täitis. Maksuhaldur ei ole ka
+M.A.lt endalt uurinud, kas või milline roll tal veel 2014. aastal OÜ Zunt töötajate värbamisel
+oli      ega      saanud        muid       tõendeid,       mis      viitaks      sellele,    et
+M.A. ka tegelikult nende töötajate värbamisega tegeles.
+
+20. Lisaks eeltoodule ei saa põhjendatuks pidada kontrollaktis esitatud seisukohta, et
+vaidlusaluse 1100 euro suuruse väljamakse näol ei saa olla tegemist Supeluse 24-2
+korteriomandi eest tehtud ettemaksuga. Kaebaja ja M.A. vahelisest laenulepingust tulenevalt
+teeb OÜ Zunt M.A.le ettemaksu Pärnus Supeluse 24-2 asuva korteriomandi soetamise eest,
+mis loetakse kuni tegeliku müügitehingu toimumiseni kaebaja poolt antud laenuks. Vaidlust ei
+näi olevat selles, et selle lepingu alusel maksis kaebaja M.A.le enne Supeluse 24-2
+korteriomandi müügitehingu toimumist välja 2013. aastal 15700 eurot (laenulepingu lisa 1)
+ning 2014. aastal 18662 eurot (laenulepingu lisa 1/2). Poolte vahel sõlmitud ostu-
+müügilepingust (punkt 6.3.2) nähtuvalt on kaebaja ostjana enne lepingu sõlmimist tasunud
+müüjaks olnud M.A.le 34326 eurot, mis vastab täpselt eelnimetatud aruannetes näidatud
+laenuväljamaksete summale. Ostu-müügileping tõendab seega, et enne selle sõlmimist on OÜ
+Zunt Supeluse 24-2 korteriomandi soetamise eest M.A.le tasunud vastava summa. Asudes
+väitma, et 2014. aasta juunis tehtud 1100 euro suuruse väljamakse näol on tegemist
+töötasuga, mitte eelnimetatud laenulepingu alusel tehtud väljamaksega, on maksuhaldur
+sisuliselt asunud poolte vahelisi tsiviilõiguslikke tehinguid (st. laenulepingut) ümber hindama.
+Selline tehingu ümber hindamine on võimalik kas maksukorralduse seaduse (MKS) § 83 lg 4
+või MKS § 84 alusel, ent kummalegi neist normidest ei ole maksuotsuse tegemisel viidatud.
+Maksuhaldur peab tõepoolest maksustamisel lähtuma tehingu tegelikust majanduslikust
+sisust ning võib majandusliku tõlgendamise põhimõttest lähtuvalt poolte vahel tehtud
+tehingutele anda teistsuguse, majanduslikule sisule vastava hinnangu ning määrata
+tasumisele kuuluva maksusumma, lähtudes tehingu majanduslikest tagajärgedest, kuid sellise
+sekkumise võimalus isikute omavahelistesse tehingutesse on piiratud (vt. nt. Riigikohtu otsus
+kohtuasjas nr 3-3-1-67-09). Maksu määramiseks ei piisa lepingu ümberkvalifitseerimisest, vaid
+viidata tuleb maksu määramise õiguslikule alusele, milleks saab olla MKS § 83 lg 4 või MKS §-
+le 84, kusjuures mõlema sätte puhul on vaja tuvastada lepingupoolte tahtlus saada
+maksueelist. Vaidlustatud maksuotsus eelnimetatud nõuetele ei vasta. Kuivõrd kaebajale
+tehtud väljamakse on laenulepingu, selle täitmise aruannete ning kinnistu ostu-müügilepingu
+kaudu selgelt seostatav Supeluse 24-2 korteriomandi müügihinna tasumisega, siis pidanuks
+maksuhaldur, väitmaks, et tegemist oli töötasuga, näitama ära kas selle, et tegu ei ole osaga
+kinnistu ostu-müügilepingus näidatud ettemaksust või veenvalt põhjendama, et pooled on
+tööjõumaksude vältimiseks kinnistu müügihinna sisse peitnud ka tasu M.A. töise panuse eest.
+Üht ega teist pole maksuhaldur teinud.
+
+
+
+                                             -7-
+                      Tallinna Halduskohtu otsus haldusasjas 3-15-3119
+
+21. Eeltoodust tulenevalt tuleb maksuotsus tühistada osas, millega suurendati kaebaja
+maksukohustust     sotsiaalmaksu,     kinnipidamisele  kuuluva     tulumaksu,     ning
+töötuskindlustusmaksete võrra ehk 468,87+292,40+28,42+14,21=803,90 euro ulatuses.
+
+22. Sisendkäibemaksu osas tuleb esmalt põhjendamatuks pidada kaebaja etteheiteid, mis
+puudutavad Booking.com teenuste eest väljastatud arvete alusel sisendkäibemaksu
+arvestamist. Vaidlust pole selles, et nimetatud teenuse näol oli tegemist ühendusesisese
+soetamisega, mispuhul tekkis kaebajal kohustus pöördmaksustamise korras deklareerida
+tasumisele kuuluv käibemaks ega ka selles, et kõnealuseid teenuseid kasutas kaebaja täielikult
+oma maksustatava käibe tarbeks, mistõttu oli tal õigus samas summas ka sisendkäibemaksu
+arvestada. Seega ei tohiks nendest tehingutest tulenevalt kaebajale mingisugust täiendavat
+maksukohustust tekkida, sest maha arvamisele kuuluv sisendkäibemaks on sama suur, mis
+pöördmaksustamise korras deklareerimisele kuuluv käibemaks. Vaidlust pole ka selles, et
+Booking.com         arvetelt        tuleneva        käibemaksusumma          suurus        on
+21,60+401,91+161,05+2,25=586,61 eurot. Kõik kõnealused summad kajastuvad
+maksuotsuses viidatud kontrollakti 6. lisas olevate arvestustabelite viimases tulbas, mis
+kajastab maksuhalduri hinnangut sellele, kui palju sisendkäibemaksu maha arvata lubatud on.
+Kuna kontrollakti selle lisa viimaste tulpade summad 151,21+547,55+331,03+97,34=1127,13
+ühtivad maksuotsuse lisas 3 esitatud arvestustabeli 12. tulba (sisendkäibemaksusumma, mis
+on lubatud maha arvata) kõige alumises lahtris toodud koondsummaga, on ilmne, et
+maksuotsuses on aktsepteeritud Booking.com arvete alusel sisendkäibemaksu maha arvamist
+ning seega nende arvete alusel kaebaja maksukohustus suurenenud ei ole.
+
+23. Kuivõrd vaidlust ei ole selles, et kontrollitaval perioodil oli kaebajal nii maksustatav kui
+maksuvaba käive, taandub sisendkäibemaksu osas küsimus esiteks sellele, kas kaebaja
+rakendas sisendkäibemaksu osalise maha arvamise meetodeid korrektselt ning teiseks sellele,
+kas maksuhalduri järeldused tuginevad menetluse käigus uurimiskohustuse nõuetekohase
+täitmise tulemusena saadud tõenditele.
+
+24. Käibemaksuseaduse (KMS) § 32 lg 1 esimeses lauses on sätestatud, et kui
+maksukohustuslane kasutab kaupu ja teenuseid nii maksustatava kui maksuvaba käibe
+tarbeks, arvatakse sisendkäibemaks arvestatud käibemaksust maha osaliselt. Sama lõike teise
+lause kohaselt lähtutakse osalisel mahaarvamisel maksukohustuslase Eestis ja välisriigis
+kalendriaasta jooksul tekkinud käibe, mille sisendkäibemaks on käesoleva seaduse § 29 lõike
+1 alusel mahaarvatav, ning kogu tema Eestis ja välisriigis tekkinud käibe suhtest. KMS § 33 lg
+1 kohaselt on sisendkäibemaksu osalisel mahaarvamisel maksukohustuslasel samal
+kalendriaastal lubatud kasutada kas proportsionaalse mahaarvamise meetodit või
+otsearvestuse ja proportsionaalse mahaarvamise segameetodit. KMS § 33 lg 2 kohaselt
+rakendatakse proportsionaalse mahaarvamise puhul maksustatava käibe ja kogu käibe suhet
+kogu sisendkäibemaksu mahaarvamisel. MKS 33 lõikes 3 on sätestatud, et segameetodi puhul
+arvatakse arvestatud käibemaksust maha maksustatava käibe tarbeks soetatud kauba või
+saadud teenuse sisendkäibemaks, maksuvaba käibe tarbeks soetatud kauba või saadud
+teenuse sisendkäibemaksu arvestatud käibemaksust maha ei arvata ning nii maksustatava kui
+ka maksuvaba käibe tarbeks soetatud kauba või saadud teenuse sisendkäibemaks arvatakse
+maha vastavalt maksustatava käibe ja kogu käibe suhtele sama paragrahvi lõikes 2 sätestatud
+korras.
+
+
+
+
+                                             -8-
+                      Tallinna Halduskohtu otsus haldusasjas 3-15-3119
+
+25. Käesoleval juhul ei saa kõne alla tulla sisendkäibemaksu osaline maha arvamine KMS § 33
+lõike 4 alusel, kuna seal sätestatu kohaldamine eeldab maksuhalduril kirjaliku loa olemasolu.
+Vaidlust pole selles, et kaebajal sellist luba ei olnud. Seetõttu pole vaja ka analüüsida, kas
+muud selle sätte kohaldamise aluseks olevad asjaolud võisid esineda või mitte.
+
+26. Antud juhul rakendas kaebaja segameetodit ehk arvestas sisendkäibemaksu täies ulatuses
+neilt soetustelt, mis olid tehtud maksustatava käibe tarbeks (hotelli- ja restoraniteenuste
+osutamiseks), jättis sisendkäibemaksu arvestamata nende soetuste puhul, mis olid tehtud
+maksuvaba käibe tarbeks (hooldekoduteenuste osutamiseks) ning nende soetuste puhul,
+mida osaliselt kasutati nii ühe kui teise jaoks, arvestas sisendkäibemaksu maha osaliselt.
+Kaebaja ei ole vastu vaielnud maksuhalduri poolt tehtud arvestusele, mille kohaselt
+moodustas kaebaja maksustatav käive 8% tema kogukäibest.
+
+27. Leian, et KMS § 33 lõigete 2 ja 3 ning § 32 lõike 1 koosmõjust tuleneb üheselt, et selliste
+kaupade ja teenuste puhul, mida kaebaja kasutab nii maksuvaba kui maksuvaba käibe tarbeks,
+on sisendkäibemaksu maha arvamine võimalik üksnes kogu käibe ja maksustatava käibe
+proportsiooni alusel, kusjuures tähtsust ei oma see, millises ulatuses kaebaja konkreetset
+kaupa või teenust maksustatava ja maksuvaba käibe tarbeks kasutas. See tähendab, et kui
+kaebaja soetas toidukaupu, mida ta kasutas toitlustamiseks nii hotellis/restoranis kui
+hooldekodus ega ole pidanud nende soetatud toidukaupade kohta sellist arvestust, mis
+võimaldaks selgelt eristada, millist kaupa millisel eesmärgil kasutati (ehk rakendada
+otsemeetodit), saab ta nende ostuarvete alusel sisendkäibemaksuna maha arvata 8% neil
+arvetel kajastatud käibemaksusummast. Eelnimetatud normid ei võimalda minu hinnangul
+segameetodi rakendamisel lähtuda maksukohustuslase enda hinnangust sellele, kui suurel
+määral mingit kaupa või teenust maksustatava või maksuvaba käibe tarbeks kasutati. Seetõttu
+ei oma sisendkäibemaksu maha arvamise seisukohast mingisugust tähtsust see, milline oli
+hotelli (maksustatav käive) ja hooldekodu (maksuvaba käive) kasutuses olnud pindalade suhe,
+ega see, kui palju soetatud toidukraamist tarvitati hooldekodus. Kui kaebaja soovis eristada
+maksustatava toitlustusteenuse osutamiseks kulunud toidukraami maksuvaba
+toitlustusteenuse osutamiseks kulunust, olekski tulnud need kaubad ostuarvete alusel selgelt
+eristada ja eraldi arvestust pidada, millisel juhul oleks nende osas saanud sisendkäibemaksu
+maha arvata otsemeetodil ehk täiel määral nende kaupade puhul, mis läksid maksustatava
+käibe tarbeks ja üldse mitte nende kaupade puhul, mida kasutati hooldekodus. KMS § 33 lõikes
+3 kasutatud mõiste "maksustatava käibe ja kogu käibe suhe" on defineeritud KMS § 32 teises
+lauses. Sellest tulenevalt on proportsionaalse mahaarvamise meetodi (sh. osana
+segameetodist) raames välistatud lähtumine mingisugustest muudest suhtarvudest
+(maksustatava tegevuse tegevuskoha pindala kogu ettevõtja kasutuses olevate ruumide
+pindalasse; maksuvabast ja maksustatavast toitlustusteenusest saadava tulu suhe vms), kui
+kalendriaasta maksustatava käibe ja kogu käibe suhe. Seega sai kaebaja nende kaupade osas,
+mida kasutati nii maksustatava kui maksuvaba käibe tarbeks ning mille osas ta ei ole pidanud
+selget arvestust, mis võimaldaks otsemeetodi kohaldamist, arvata sisendkäibemaksuna maha
+8% arvetel näidatud maksusummast. Sellest tulenevalt on maksuostus põhjendatud osas, kus
+maksuhaldur on korrigeerinud kaebaja sisendkäibemaksuarvestust nende arvete põhjal, mille
+esemeks olevaid teenuseid kasutas kaebaja nii maksustatava kui maksuvaba käibe tarbeks,
+ent mille alusel kaebaja ise arvestas sisendkäibemaksu osaliselt, ent rohkem kui 8% ulatuses.
+
+28. Seevastu ei ole maksuotsus nõuetekohaselt põhjendatud nende arvete osas, mille puhul
+maksuhaldur leidis, et nende alusel on sisendkäibemaksu maha arvamine sootuks välistatud,
+
+
+                                             -9-
+                      Tallinna Halduskohtu otsus haldusasjas 3-15-3119
+
+ent mille kohta kaebaja ise maksumenetluse käigus väitis, et tegemist on kas üksnes
+maksustatava käibe tarbeks kasutatud kaupade või teenustega või nii maksustatava kui
+maksuvaba käibe tarbeks kasutatud kaupadega. Maksuotsusest nähtuvalt on maksuhaldur
+lähtunud kaebaja nii-öelda esialgsest arvestusest ega ole võtnud arvesse ega ka kontrollinud
+kaebaja poolt kontrolliakti kohta esitatud vastuväidetele lisatud arvestust. Nimetatud
+arvestuse esitas kaebaja kontrollakti lisana 10 ning arusaadavalt on tegemist samade
+tabelitega, mille kaebaja esitas kaebuse lisadena (tl. 69-76). Nimetatud tabelid erinevad
+kaebaja poolt esialgselt tehtud arvestustest ning esialgse arvestuse tulemused kajastuvad
+nende tabelite viimases tulbas "Eelnev esitatud arvestus 2014". Eriarvamusele lisatud
+arvestustabeleid ei ole maksuhaldur tegelikult sisuliselt hinnanud, väites üksnes, et need ei
+ole usaldusväärsed. Problemaatiline on maksuhalduri seisukoht aga just nende arvete puhul,
+mille osas kaebaja eelnevas arvestuses ei olnud sisendkäibemaksu üldse arvestatud, ent uues
+arvestuses oli seda tehtud kas kaebaja valitud proportsiooni ulatuses või täies ulatuses. Nende
+arvete puhul tekib paratamatult küsimus, mille põhjal on maksuhaldur leidnud, et tegemist ei
+olnud vastavalt kas ainult maksustatava käibe tarbeks kasutatud kaupade ja teenustega või
+siis selliste kaupade ja teenustega, mida kasutati nii maksustatava kui maksuvaba käibe
+tarbeks. Ainuüksi asjaolust, et kaebaja on oma arvestust menetluse käigus muutnud, et saa
+teha järeldust, et esimene arvestus oli õige ja teine vale. Uus arvestus võib olla vale, ent seda
+tulnuks maksuhalduril kontrollida, mitte see niisama kõrvale jätta.
+
+29. Arved, mille osas ei selgu maksuotsuse põhjendustest, miks on maksuhaldur pidanud
+sisendkäibemaksu maha arvamist lubatuks just sellises ulatuses, nagu ta maksuotsuses teinud
+on, on esitatud käesoleva kohtuotsuse lõpus toodud (ja otsuse osaks olevas) arvestustabelis.
+Arvestustabeli 5. ja 6. tulbas "MTA arvestus" kajastub kontrollakti 6. lisas esitatud arvestus
+ehk maksuhalduri hinnang sellele, kui suures ulatuses oleks kaebajal nimetatud arvete alusel
+olnud õigus sisendkäibemaksu maha arvata. Arvestusabeli 7. ja 8. tulbas "Kohtu arvestus"
+kajastub minu arusaam sellest, kui suures osas oleks sisendkäibemaksu maha arvamine
+tegelikult põhjendatud olnud. See arvestus lähtub järgmistest põhimõtetest. 7. tulba neil
+ridadel, kus on märgitud 8%, kajastuvad need arved, mille osas kaebaja ise kontrollaktile
+lisatud tabelites (tl. 69 jj) on arvestanud sisendkäibemaksu osaliselt ehk mille osas on kaebaja
+kontrollakti kohta esitatud eriarvamuses väitnud, et tegu oli kaupade või teenustega, mida
+kasutati nii maksustatava kui maksuvaba käibe tarbeks. Kuna kaebaja enda arvestatud
+proportsioon oli juba eelpool toodud põhjustel vale, saab nende arvete alusel minu hinnangul
+sisendkäibemaksu maha arvata 8% ulatuses. Maksuhaldur ei ole põhjendanud oma
+seisukohta, et tegemist on üksnes maksuvaba käibe tarbeks tehtud kulutustega. Nagu eelpool
+märkisin, et saa selline seisukoht tugineda pelgalt sellel, et varem esitatud arvestuses kaebaja
+nende arvete alusel sisendkäibemaksu ei arvestanud. Seda, mis kaupadega tegemist oli ning
+milleks neid kasutati või võidi kasutada, ei ole maksuhaldur sisuliselt kontrollinud ega ka
+esitanud loogilist põhjendust, mille pinnalt saaks järeldada, et nende kaupade kasutamine nii
+maksustatava kui maksuvaba käibe tarbeks oli eluliselt täiesti ebausutav.
+
+30. Arvestustabeli 7. tulba neil ridadel, kus on märgitud 100%, kajastuvad arved, mille osas
+kaebaja ise kontrollaktile lisatud tabelites (tl. 69 jj) on arvestanud sisendkäibemaksu maha
+täiel määral ehk mille osas on kaebaja kontrollakti kohta esitatud eriarvamuses väitnud, et
+tegemist oli täielikult maksustatava käibe tarbeks tehtud kulutustega. Maksuhaldur ei ole
+põhjendanud oma seisukohta, et tegemist ei või olla üksnes maksustatava käibe tarbeks
+tehtud kulutustega. Seegi seisukoht ei saaks tugineda pelgalt sellele, et varem esitatud
+
+
+
+                                             - 10 -
+                      Tallinna Halduskohtu otsus haldusasjas 3-15-3119
+
+arvestuses nende arvete alusel sisendkäibemaksu kas üldse ei arvestanud (0) või arvestas seda
+mingisuguse proportsiooni alusel (mitte 100%).
+
+31. Kohtuotsusele lisatud tabelis loetletud arvete puhul on maksuotsuses niisiis ilma seda
+selgelt ja arusaadavalt põhjendamata piiratud kaebaja sisendkäibemaksu mahaarvamise
+õigust vaatlusealuse nelja kuu jooksul kokku 275,63+429,20+354,82+254,70=1313,34 euro
+ulatuses. Maksuotsus on selles osas põhjendamata, sest sellest ei nähtu, miks ei ole
+maksuhaldur pidanud võimalikuks seal loetletud arvete alusel sisendkäibemaksu maha arvata
+kas täielikult (arvete osas, mille kohta kaebaja väitis kontrollaktile esitatud eriarvamusele
+lisatud tabelites, et tegu on 100% maksustatava käibe tarbeks soetatud kaupadega) või
+proportsionaalselt (8%) ulatuses nende arvete osas, mille kohta kaebaja eriarvamuses väitis,
+et tegemist on nii maksustatava kui maksuvaba käibe tarbeks soetatuga (hoolimata sellest, et
+kaebaja ise rakendas vale proportsiooni).
+
+32. Maksuhaldur peab kontrolli käigus välja selgitama nii maksukohustust suurendavad kui
+vähendavad asjaolud (MKS § 11 lg 1). Kui maksukohustuslane esitab maksuhaldurile enne
+maksuotsuse tegemist (sh. eriarvamuses) mingisugused andmed või arvestused, mille
+kohaselt peaks maksukohustus olema väiksem, kui maksuhaldurile varem näis, tuleb neid
+täiendavalt esitatud andmeid sisuliselt hinnata ning nõuda vajadusel maksukohustuslaselt
+täiendavate tõendite esitamist. Käesoleval juhul ei ole maksuhaldur tegelikult teinud
+kaebajale tõsiseltvõetavaid etteheiteid kaasaaitamiskohustuse rikkumise kohta.
+Kohtumenetluses esitatud väide, et kaebaja ei ole tõendanud oma täiendavalt esitatud
+arvestuse õigsust, on põhimõtteliselt õige (selle kohta, et näiteks 2014. aasta juunikuu Lifegear
+OÜ arvel kajastuv kaup või teenus on tõepoolest 100% maksustatava tulu tarbeks soetatud, ei
+ole kaebaja tõendeid esitanud), aga see väide ei ole asjakohane, kuna maksuhaldur ei ole
+tegelikult kaebajalt vastavaid tõendeid ka nõudnud ega kaebajale menetluse käigus (st. enne
+maksuotsuse tegemist) arusaadavalt mõista andnud, et kaebaja selgitused ei ole kas
+usaldusväärsed või vajavad täiendavat tõendamist. Seda, kas kaebaja mingi konkreetse kauba
+kasutas tegelikult maksustatava või maksuvaba tulu tarbeks või nii ühe kui teise tarbeks, oleks
+olnud võimalik kontrollida, võrreldes vastavatel arvetel kajastatud kaupu ning kaebaja poolt
+nende kohta esitatud täiendavaid selgitusi. Käesoleval juhul maksuhaldur täiendavaid selgitusi
+ei küsinud, vaid pidas võimalikuks lugeda, et kaebaja esialgne arvestus on õige selles osas,
+milles sisendkäibemaksu üldse arvestatud pole, ent vale muus osas.
+
+33. Loomulikult, olukorras kus maksukohustuslane esitab esmalt ühtmoodi arvestuse ja siis
+teistsuguse (ehk sisuliselt muudab oma seletusi) on põhjust tema seletuste usaldusväärsuses
+kahelda, ent see ei õigusta automaatselt järeldust, et esimesena esitatud seletus (arvestus) oli
+õige selles ulatuses, milles see maksukohustust suurendas (st. antud juhul maha arvatavat
+sisendkäibemaksu väiksemana näitas). Möönan, et nii mõnegi kaebaja arvestuses kajastuva
+soetuse osas on kaheldav, kas tegu saab ikka olla ainult maksustatava tulu saamiseks soetatud
+kauba või teenusega. Nii on see näiteks juulikuus Allika Audiitor OÜ-lt soetatud teenusega,
+mille kohta kaebaja ka kohtumenetluses selgitas (kaebuse täiendusele lisatud arvestustabel),
+et tegu on firma auditiga. Esimene loogiline järeldus sellise kulu soetuse puhul on mõistagi
+see, et teenus puudutas osaühingut tervikuna ja oli soetatud nii maksustatava kui maksuvaba
+käibe tarbeks. Samas ei saa selline esmane kontroll toimuda alles kohtumenetluses ning
+maksuhaldur tegelikult seda, millega selle soetuse näol tegemist oli ja milleks seda pruugiti,
+kontrollinud pole ning pole ka maksuotsuses põhjendanud seisukohta, miks ei võiks tegemist
+
+
+
+                                             - 11 -
+                       Tallinna Halduskohtu otsus haldusasjas 3-15-3119
+
+olla üksnes maksustatava käibe tarbeks tehtud kuluga, mis õigustab sisendkäibemaksu täiel
+määral maha arvamist.
+
+34. Eelmistes punktides nimetatud arvestustabel on esitatud käesoleva kohtuotsuse lõpus
+ning on selle osaks.
+
+35. Erinevalt teistest soetustest on kontrollaktist nähtuvalt sisuliselt kontrollitud teenuse
+soetamist OÜ-lt Agroland. Selle teenuse osas on maksuotsuses adekvaatselt põhjendatud
+seisukohta, et tegemist oli teenusega, mis soetati nii maksustatava kui maksuvaba käibe
+tarbeks ning mis õigustab seetõttu sisendkäibemaksu maha arvamist 8% ulatuses. Kaebaja ei
+ole kohtumenetluses maksuhalduri seisukohale loogilisi ega tõendatud vastuväiteid esitanud.
+Väide, et kõnealune teenus seondus üksnes maksustatava käibe saamiseks tulevikus
+butiikhotelli avamisega, ei ole tõsiselt võetav. OÜ-ga Agroland sõlmitud lepingu kohaselt oli
+tegemist teenusega, mis oli suunatud Supeluse tn 24 kinnistu soetamiseks laenu saamisele.
+Kaebaja ei ole vastu vaielnud sellele, et kõnealuse kaheks korteriomandiks jagatud kinnistu
+soetas kaebaja 28. juulil 2014 ning et seal asuvas ehitises paikneb ettevõtte, mille tegevuse
+sisu oli kaebaja maksuvaba käibe esemeks olevate hoolekandeteenuste osutamine. Selles
+olukorras ei saa väita, et selle kinnistu soetamine, samuti nagu selle soetamise ette
+valmistamiseks tehtavad kulutused oleksid tehtud üksnes maksustatava käibe tarbeks. See, et
+kaebaja kunagi kaugemas tulevikus võib hakata sellel kinnistul üksnes maksustatava käibe
+esemeks olevaid teenuseid osutama, sellist järeldust ei õigusta.
+
+36. Eeltoodust tulenevalt tuleb maksuostus tühistada osas, millega pandi kaebajale
+tööjõumaksude tasumise kohustus (803,90 eurot) ning millega suurendati
+käibemaksukohustust 1313,34 euro võrra. Kokku tuleb maksuotsus tühistada seega 2117,24
+euro ulatuses.
+
+37. HkMS § 108 lg 2 kohaselt jagatakse kaebuse osalise rahuldamise korral menetluskulud
+proportsionaalselt kaebuse rahuldatud osaga. Vaidlusaluse maksuotsusega suurendati
+kaebaja maksukohustust kokku 5083,45 euro võrra. Maksuotsuse tühistamine seejuures
+2117,24 euro ulatuses tähendab, et kaebus on rahuldatud 41,6% ulatuses. Kaebaja on
+taotlenud menetluskulude välja mõistmist ning kuludeks on kaebuse esitamisel tasutud
+riigilõiv 152,50 eurot ning õigusabikulu 2286 eurot. Õigusabikulu vastab taotlusele lisatud
+arvete kohaselt kokku umbes 15 advokaadi töötunnile (sh. kohtuistungil osalemine 1 tund).
+Õigusabikulu ei ole asja keerukust ja mahukust arvestades ebamõistlikult suur. Kaebuse
+rahuldamise osakaalu arvestades tuleb vastustajalt kaebaja kasuks välja mõista riigilõiv
+152,50x41,6%≈63 eurot ning õigusabikulust tuleb välja mõista 2286x41,6%≈951 eurot, kokku
+seega 1014 eurot.
+
+/allkirjastatud digitaalallkirjaga/
+Kristjan Siigu
+kohtunik
+
+
+
+
+                                            - 12 -
+                                                 Tallinna Halduskohtu otsus haldusasjas 3-15-3119
+
+Kohtuotsuse (3-15-3119) põhjendava osa p 29 jj. viidatud arvestustabel
+                                                                                        sisendkäibemaksu arvestus
+                                                                                   MTA arvestus      kohtu arvestus
+   periood                arve esitaja             arve summa        käibemaks     % summa         %        summa          vahe
+               Rimi Eesti Food AS                          26,15            4,36    0          0    8%              0,35      0,35
+               Maxima Eesti AS                             16,72            2,97    0          0    8%              0,24      0,24
+               Mopman OÜ                                   338,3           56,38    0          0    8%              4,51      4,51
+               Tootsi Aiand OÜ                            270,18           45,03    0          0 100%              45,03     45,03
+               Ragn-Sells AS                               46,99            7,83    0          0    8%              0,63      0,63
+               Pesemisteenuse OÜ                          651,54          108,59    0          0    8%              8,69      8,69
+               Eesti Otis AS                                  96              16    0          0    8%              1,28      1,28
+               MRF Vool OÜ                                  132               22    0          0 100%              22,00     22,00
+               Viahooldus OÜ                                156               26    0          0 100%              26,00     26,00
+    juuni
+               Kemitek OÜ                                     24               4    0          0 100%               4,00      4,00
+               Zone Media OÜ                                61,4           10,23    0          0 100%              10,23     10,23
+               AGA Eesti AS                                88,28           14,71    0          0 100%              14,71     14,71
+               Arvutiparandus OÜ                          117,74           19,62    0          0 100%              19,62     19,62
+               Ideaalpuhastus OÜ                          238,16           39,69    0          0 100%              39,69     39,69
+               Eesti Otis AS                                  96              16    0          0 100%              16,00     16,00
+               Elion Ettevõtted AS                        347,79           57,96   8%       4,64 100%              57,96     53,32
+               SAT tv                                         24               4    0          0 100%               4,00      4,00
+               ATF Arvutisalong                             400            66,67    0          0    8%              5,33      5,33
+                                                                                                        vahe kokku:         275,63
+
+
+
+
+                                                                         13
+                                     Tallinna Halduskohtu otsus haldusasjas 3-15-3119
+
+
+                                                                    MTA arvestus      kohtu arvestus
+periood               arve esitaja    arve summa      käibemaks     % summa         %        summa          vahe
+          Mopman OÜ                          234,59          39,1    0         0     8%              3,13      3,13
+          Alder OÜ                            71,66         11,94    0         0   100%             11,94     11,94
+          Ragn-Sells AS                        46,8           7,8    0         0     8%              0,62      0,62
+          Pesemisteenuse OÜ                   13,07          2,18   0%         0   100%              2,18      2,18
+          Elisa Eesti AS                         60            10    0         0   100%             10,00     10,00
+          elion Ettevõtted AS                878,77        146,46   8%     11,72   100%           146,46     134,74
+ juuli    Eesti Otis AS                          48             8    0         0     8%              0,64      0,64
+          Lifegear AS                          210             35    0         0   100%             35,00     35,00
+          AGA Eesti AS                         44,5          7,42    0         0   100%              7,42      7,42
+          Kemitek OÜ                          94,34         15,72    0         0   100%             15,72     15,72
+          Zone Media OÜ                        19,8           3,3    0         0   100%              3,30      3,30
+          Villa Wesset OÜ                        75          12,5    0         0   100%             12,50     12,50
+          Allika Audiitor OÜ                  1152           192     0         0   100%           192,00     192,00
+                                                                                         vahe kokku:         429,20
+
+
+
+
+                                                           14
+                                     Tallinna Halduskohtu otsus haldusasjas 3-15-3119
+
+
+
+                                                                    MTA arvestus      kohtu arvestus
+periood               arve esitaja    arve summa      käibemaks     % summa         %        summa          vahe
+          Mopman OÜ                          209,76         34,96    0         0     8%              2,80      2,80
+          Alder OÜ                           253,18          42,2    0         0   100%             42,20     42,20
+          AK Eventus OÜ                          54             9    0         0   100%              9,00      9,00
+          Ragn-Sells AS                       48,26          8,04    0         0   100%              8,04      8,04
+          Pesemisteenuse OÜ                  730,26        121,71    0         0   100%           121,71     121,71
+          Pesemisteenuse OÜ                    33,7          5,62    0         0   100%              5,62      5,62
+          Elisa Eesti AS                         60            10    0         0     8%              0,80      0,80
+          elion Ettevõtted AS                  560          93,33    0         0   100%             93,33     93,33
+          Eesti Otis AS                          48             8    0         0   100%              8,00      8,00
+august
+          Lifegear AS                            42             7    0         0   100%              7,00      7,00
+          Viahooldus OÜ                          78            13    0         0   100%             13,00     13,00
+          AGA Eesti AS                         44,5          7,42    0         0   100%              7,42      7,42
+          Kemitek OÜ                         115,28         19,21    0         0   100%             19,21     19,21
+          STV AS                              22,37          3,73    0         0   100%              3,73      3,73
+          Zone Media OÜ                        39,6           6,6    0         0     8%              0,53      0,53
+          Saveltron OÜ                           54             9    0         0   100%              9,00      9,00
+          Rahandusministeerium                 10,3          1,72    0         0   100%              1,72      1,72
+          Rahandusministeerium                 10,3          1,72    0         0   100%              1,72      1,72
+                                                                                         vahe kokku:         354,82
+
+
+
+
+                                                           15
+                                   Tallinna Halduskohtu otsus haldusasjas 3-15-3119
+
+
+
+                                                                  MTA arvestus      kohtu arvestus
+ periood            arve esitaja    arve summa      käibemaks     % summa         %        summa              vahe
+            Selver AS                       88,83          14,8    0         0     8%              1,18          1,18
+            Alder OÜ                       248,64         41,44    0         0     8%              3,32          3,32
+            Ragn-Sells AS                      47          7,83    0         0     8%              0,63          0,63
+            Pesemisteenuse OÜ               12,87          2,15    0         0   100%              2,15          2,15
+            VB Projektid OÜ                  76,8          12,8    0         0   100%             12,80         12,80
+            VB Projektid OÜ                  456             76    0         0   100%             76,00         76,00
+            Eesti Otis AS                      48             8    0         0     8%              0,64          0,64
+september   MRF Vool OÜ                    279,38         45,56    0         0   100%             45,56         45,56
+            Viahooldus OÜ                      78            13    0         0     8%              1,04          1,04
+            Scoro Software OÜ                  42             7    0         0   100%              7,00          7,00
+            AGA Eesti AS                    47,38           7,9    0         0   100%              7,90          7,90
+            AK Eventus OÜ                    108             18    0         0   100%             18,00         18,00
+            AGA Eesti AS                     44,5          7,42    0         0     8%              0,59          0,59
+            Eesti Otis AS                   24,48          4,08    0         0     8%              0,33          0,33
+            Ergo Kindlustus                456,36         77,56    0         0   100%             77,56         77,56
+                                                                                       vahe kokku:             254,70
+
+
+                                                                                 vahed kokku (juuni-sept.):   1314,34
+
+
+
+
+                                                         16

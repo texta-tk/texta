@@ -1,0 +1,244 @@
+{% extends "index.html" %}
+{% block app %}
+
+<script type="application/javascript" src="{{STATIC_URL}}classification_manager/classification_manager.js">
+</script>
+
+<div class="row">
+  <div class="col-sm-3">
+	<div class="panel">
+	  <div class="panel-heading">Train a New Classification Model</div>
+	  <div class="panel-body">
+		<form class="form-horizontal" role="form">
+		  <div class="form-group">
+			  <div class="col-sm-12">
+			  <div class="row">
+				<div class="col-sm-6">Select a search:</div>
+				<div class="col-sm-6">
+								<select id="search" class="form-control">
+									<option></option>
+									{% for search in searches %}
+										<option value="{{search.id}}">{{search.description}}</option>
+									{% endfor %}
+								</select>
+				</div>
+			  </div>
+
+			  <div class="row">
+				<div class="col-sm-6">Select field:</div>
+				<div class="col-sm-6">
+                    <select id="field" class="form-control">
+                        <option></option>
+                        {% for field in fields %}
+                            <option value="{{field.data}}">{{field.label}}</option>
+                        {% endfor %}
+                    </select>
+				</div>
+			  </div>
+
+
+                <div class="row">
+                    <div class="col-sm-6">Feature Extraction:</div>
+                    <div class="col-sm-6">
+                        <select id="extractor_opt" class="form-control">
+                            {%  for extractor_opt in extractor_opt_list %}
+                                <option value="{{ extractor_opt.index }}">{{ extractor_opt.label }}</option>
+                            {%  endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">Dimension Reduction:</div>
+                    <div class="col-sm-6">
+                        <select id="reductor_opt" class="form-control">
+                            {%  for reductor_opt in reductor_opt_list %}
+                                <option value="{{ reductor_opt.index }}">{{ reductor_opt.label }}</option>
+                            {%  endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">Normalization:</div>
+                    <div class="col-sm-6">
+                        <select id="normalizer_opt" class="form-control">
+                            {%  for normalizer_opt in normalizer_opt_list %}
+                                <option value="{{ normalizer_opt.index }}">{{ normalizer_opt.label }}</option>
+                            {%  endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">Classifier:</div>
+                    <div class="col-sm-6">
+                        <select id="classifier_opt" class="form-control">
+                            {%  for classifier_opt in classifier_opt_list %}
+                                <option value="{{ classifier_opt.index }}">{{ classifier_opt.label }}</option>
+                            {%  endfor %}
+                        </select>
+                    </div>
+                </div>
+			  <div class="row">
+				<div class="col-sm-6">Tag:</div>
+				<div class="col-sm-6">
+				  <input name="tag_label" id="tag_label" class="form-control input-sm">
+				</div>
+			  </div>
+              <div class="row">
+				<div class="col-sm-6">Description:</div>
+				<div class="col-sm-6">
+				  <input name="description" id="description" class="form-control input-sm">
+				</div>
+			  </div>
+
+			  <div class="row">
+				<div class="col-sm-6"></div>
+				<div class="col-sm-6">
+				  <button type="button" onclick="javascript:train_classifier();" class="btn btn-default form-control"><span class="glyphicon glyphicon-ok"></span> Train Model</button>
+				</div>
+			  </div>				  
+		  </div>
+		</form>
+		</div>
+	  </div>
+	</div>
+  </div>
+  <div class="col-lg-9">
+	<div class="panel">
+	  <div class="panel-heading">Classification Models</div>
+	  <div class="panel-body">
+		<table class="table table-striped">
+			<thead>
+			  <tr>
+				<th>ID</th>
+                		<th>Tag</th>
+                		<th>Key</th>
+				<th>Author</th>
+				<th>Architecture</th>
+                		<th>Precision</th>
+				<th>Recall</th>
+				<th>Task Status</th>
+				<th>Task Started</th>
+				<th>Task Completed</th>
+                		<th>Summary</th>
+				<th>Apply</th>
+				<th>Remove</th>
+			  </tr>
+			</thead>
+            {% for run in model_runs %}
+                <tr>
+                    <td>{{run.id}}</td>
+                    <td><span title="{{run.run_description}}" class="pointer">{{run.tag_label}}</span></td>
+                    <td><a href="javascript:display_key_modal('{{run.model_key}}','{{run.tag_label}}');">view</a></td>
+                    <td>{{run.user}}</td>
+                    <td><a href="javascript:display_arch_modal('{{run.clf_arch}}');">view</a></td>
+                    <td>{{run.train_summary.precision|floatformat:3}}</td>
+		    <td>{{run.train_summary.recall|floatformat:3}}</td>
+                    <td>{{run.run_status}}</td>
+                    <td>{{run.run_started|date:"d.m.Y H:i"}}</td>
+                    <td>{{run.run_completed|date:"d.m.Y H:i"}}</td>
+                    <td><a href="javascript:display_summary_modal('{{run.train_summary_json}}','{{run.tag_label}}');">view</a></td>
+		    <td><a href="#" onclick="javascript:display_apply_modal('{{run.id}}','{{run.model_key}}','{{run.tag_label}}');">Apply</td>
+                    <td>
+                        <a href="javascript:void(0)" onclick="confirm_and_remove({{run.id}})">
+                            <span class="glyphicon glyphicon-remove"></span>
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+	  </div>
+	</div>
+	<div class="panel">
+	    <div class="panel-heading">Applied Classification Models</div>
+	    <div class="panel-body">
+		<table class="table table-striped">
+		    <thead>
+			<th>ID</th>
+			<th>Tag</th>
+			<th>Status</th>
+			<th>Started</th>
+			<th>Completed</th>
+			<th>Total Documents</th>
+			<th>Total Processed</th>
+			<th>Total Positives</th>
+			<th>Total Negatives</th>
+			<th>Remove</th>
+		    </thead>
+		    <tbody>
+			{% for run in tagging_runs %}
+		    	    <tr>
+				<td>{{run.model.pk}}</td>
+				<td>{{run.model.tag_label}}</td>
+				<td>{{run.run_status}}</td>
+				<td>{{run.run_started|date:"d.m.Y H:i"}}</td>
+				<td>{{run.run_completed|date:"d.m.Y H:i"}}</td>
+				<td>{{run.total_documents}}</td>
+				<td>{{run.total_processed}}</td>
+				<td>{{run.total_positive}}</td>
+				<td>{{run.total_negative}}</td>
+				<td>{{run.job_key}}</td>
+			    </tr>
+			{% endfor %}
+		    </tbody>
+		</table>
+            </div>
+	</div>
+  </div>
+</div>
+
+
+
+<div id="apply_modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Classify existing documents with tag: <i><span id="selected_tag_label"></span></i></h4>
+      </div>
+      <div class="modal-body">
+	<div class="row">
+	<div class="col-sm-6">Select a search to define the dataset to be classified:</div>
+	<div class="col-sm-6">
+	<select id="apply_search" class="form-control">
+		<option></option>
+		{% for search in searches %}
+			<option value="{{search.id}}">{{search.description}}</option>
+		{% endfor %}
+	</select>
+	<input type="hidden" id="apply_model_id" name="apply_model_id">
+	<input type="hidden" id="apply_model_key" name="apply_model_key">
+	</div>
+	</div>      
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+	<button type="button" class="btn btn-default" onclick="javascript:apply_model();">Apply the Tagger</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<div id="information_modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title" id="information_modal_title"></h4>
+      </div>
+      <div class="modal-body">
+	<div class="row">
+	    <div class="col-sm-12" id="information_modal_content"></div>
+	</div>      
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+{% endblock %}

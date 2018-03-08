@@ -1,0 +1,64 @@
+#right {
+    width: 100%;
+    overflow: auto;
+}
+
+#chart_div {
+    width: 100%;
+    vertical-align: top;
+	height: 100%;
+	overflow: hidden;
+}
+
+.toggle-visibility {
+  cursor: pointer;
+  color: green;
+  font-weight: bold;
+  font-size: 10px;
+}
+
+.toggle-visibility:hover {
+  color: green;
+}
+
+.feature-invisible {
+  color: red;
+}
+
+.feature-invisible:hover {
+  color: red;
+}
+
+#example {
+    width:100%;
+}
+
+.dataTable tbody tr td {
+    vertical-align: top;
+    white-space: pre-wrap;
+    width: 10%;
+    max-width: 25%;
+}
+
+.invisible {
+    display:none;
+}
+
+.bg-grey {
+	background: #EFEFEF;
+}
+
+.padded-row {
+	padding-left: 5px;
+	padding-right: 5px;
+	
+}
+
+.nav-tabs > li.active > a,
+.nav-tabs > li.active > a:hover,
+.nav-tabs > li.active > a:focus {
+  background-color: #EFEFEF;
+}
+
+
+

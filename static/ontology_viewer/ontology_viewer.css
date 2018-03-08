@@ -1,0 +1,23 @@
+
+.concept {
+    cursor: pointer;
+}
+
+.data {
+    vertical-align: top;
+    border-spacing: 0px;
+}
+
+.vertically_aligned {vertical-align: top}
+
+td {
+    padding: 4px;
+}
+
+th {
+    text-align: left;
+}
+
+.concept {background: #FFF}
+
+.concept:hover {background: #EEE}

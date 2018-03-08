@@ -1,0 +1,128 @@
+<script>
+    $(document).ready(function () {
+        $('#tableWrapper').doubleScroll(
+            { resetOnWindowResize: true });
+    });
+</script>
+
+<div id='tableWrapper' class="table-responsive">
+    <table id='displayTable' class="table table-striped">
+        <thead>
+            <tr>
+                <th>Import ID</th>
+                <th>User</th>
+                <th>Dataset Name</th>
+                <th>Job Status</th>
+                <th>Job Started</th>
+                <th>Job Completed</th>
+                <th>Docs processed</th>
+                <th>Total #docs</th>
+                <th>View details</th>
+                <th>Remove</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in jobs %}
+            <tr>
+                <td>{{job.pk}}</td>
+                <td>{{job.user}}</td>
+                <td>{{job.elastic_index}}</td>
+                <td>{{job.status}}</td>
+                <td>{{job.start_time|date:"d.m.Y H:i"}}</td>
+                <td>{{job.end_time|date:"d.m.Y H:i"}}</td>
+                <td>{{job.processed_documents}}</td>
+                <td>{{job.total_documents}}</td>
+                <td>
+                    <a href="javascript:void(0)" data-toggle="modal" data-target="#import-job-{{ job.pk }}-details">
+                        <span class="glyphicon glyphicon-eye-open"></span>
+                    </a>
+                </td>
+                <td>
+                    <a href="javascript:void(0)" onclick="removeImportJob({{ job.pk }});">
+                        <span class="glyphicon glyphicon-remove"></span>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+</div>
+
+{% for job in jobs %}
+<div id="import-job-{{ job.pk }}-details" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Import Details</h4>
+      </div>
+      <div class="modal-body">
+        <table class="table">
+            <tbody>
+                <tr>
+                    <td>ID:</td>
+                    <td>{{ job.pk }}</td>
+                </tr>
+                <tr>
+                    <td>User:</td>
+                    <td>{{ job.user }}</td>
+                </tr>
+                <tr>
+                    <td>Job status:</td>
+                    <td>{{ job.status }}</td>
+                </tr>
+                <tr>
+                    <td>Job started:</td>
+                    <td>{{ job.start_time }}</td>
+                </tr>
+                <tr>
+                    <td>Job completed:</td>
+                    <td>{{ job.end_time }}</td>
+                </tr>
+                <tr>
+                    <td>Elasticsearch index:</td>
+                    <td>{{ job.elastic_index }}</td>
+                </tr>
+                <tr>
+                    <td>Elasticsearch mapping:</td>
+                    <td>{{ job.elastic_mapping }}</td>
+                </tr>
+                <tr>
+                    <td>Processed documents:</td>
+                    <td>{{ job.processed_documents }}</td>
+                </tr>
+                <tr>
+                    <td>Total documents:</td>
+                    <td>{{ job.total_documents }}</td>
+                </tr>
+                <tr>
+                    <td>Source type:</td>
+                    <td>{{ job.source_type }}</td>
+                </tr>
+                <tr>
+                    <td>Source name:</td>
+                    <td>{{ job.source_name }}</td>
+                </tr>
+                <tr>
+                    <td>Is synchronized:</td>
+                    <td>{{ job.must_sync }}</td>
+                </tr>
+                <tr>
+                    <td>JSON parameters:</td>
+                    <td>{{ job.json_parameters }}</td>
+                </tr>
+            </tbody>
+
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endfor %}
