@@ -479,11 +479,8 @@ def search(es_params, request):
                         if inner_hit['hit_type'] == 'fact_val':
                             datum['value'] = inner_hit['str_val']
 
+                        import pdb;pdb.set_trace()
                         highlight_data.append(datum)
-
-                        #DEBUG
-                        if(u'[HL]' in datum['category']):
-                            print(datum['spans'], 'DATUM SPANS')
 
                     content = Highlighter(average_colors=True, derive_spans=True,
                                               additional_style_string='font-weight: bold;').highlight(
@@ -504,8 +501,11 @@ def search(es_params, request):
                 if 'show_short_version' in es_params.keys():
                     content = additional_option_cut_text(content, es_params)
                 # Append the final content of this col to the row
-                row[col] = row[col] + content # NOTE with new hl transliterately system problem
+                if(row[col] == ''):
+                    row[col] = row[col] + content
                 # For displaying .text results in .transliterate and vice versa
+                # import pdb;pdb.set_trace() # PROBABLY NEED TO COMBINE HIGHLIGHT DATA SOMEHOW
+                print(highlight_data, col)
                 row = highlight_transliterately(col, row, highlight_data, content, hit)
 
             out['aaData'].append(row.values())
