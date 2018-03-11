@@ -64,7 +64,6 @@ def get_fields(es_m):
         label = label.replace('-->', u'→')
 
         field = {'data': json.dumps(data), 'label': label, 'type': data['type']}
-
         fields.append(field)
 
         # Add additional field if it has fact
@@ -257,7 +256,6 @@ def merge_spans(spans):
 
 def mlt_query(request):
     logger = LogManager(__name__, 'SEARCH MLT')
-
     es_params = request.POST
 
     mlt_fields = [json.loads(field)['path'] for field in es_params.getlist('mlt_fields')]
@@ -282,7 +280,6 @@ def mlt_query(request):
     response = es_m.more_like_this_search(mlt_fields,docs_accepted=docs_accepted,docs_rejected=docs_rejected,handle_negatives=handle_negatives,stopwords=stopwords)
 
     documents = []
-
     for hit in response['hits']['hits']:
         fields_content = get_fields_content(hit,mlt_fields)
         documents.append({'id':hit['_id'],'content':fields_content})
@@ -290,14 +287,8 @@ def mlt_query(request):
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'documents':documents}
-
-    template = loader.get_template('mlt_results.html')
     return HttpResponse(template.render(template_params, request))
-
-
-def get_fields_content(hit,fields):
     row = {}
-
     for field in fields:
         if 'highlight' in hit:
             field_content = hit['highlight']
@@ -321,7 +312,6 @@ def get_fields_content(hit,fields):
 def cluster_query(request):
     params = request.POST
     ds = Datasets().activate_dataset(request.session)
-
     es_m = ds.build_manager(ES_Manager)
     es_m.build(params)
 
@@ -344,7 +334,6 @@ def convert_clustering_data(cluster_m):
         documents = [cluster_m.documents[doc_id] for doc_id in cluster_content]
         cluster_label = 'Cluster {0} ({1})'.format(cluster_id+1,len(cluster_content))
         keywords = cluster_m.cluster_keywords[cluster_id]
-
         cluster_data = {'documents':highlight_cluster_keywords(documents,keywords),
                         'label':cluster_label,
                         'id':cluster_id,
@@ -462,7 +451,6 @@ def search(es_params, request):
                 old_content = content
                 if col in highlight_config['fields'] and 'highlight' in hit:
                     content = hit['highlight'][col][0]
-
                 # Prettify and standardize highlights
                 if name_to_inner_hits[col]:
                     highlight_data = []
@@ -496,7 +484,6 @@ def search(es_params, request):
                                                     old_content,
                                                     highlight_data,
                                                     tagged_text=content)
-
                 # Checks if user wants to see full text or short version
                 if 'show_short_version' in es_params.keys():
                     content = additional_option_cut_text(content, es_params)
@@ -505,16 +492,9 @@ def search(es_params, request):
                     row[col] = row[col] + content
                 # For displaying .text results in .transliterate and vice versa
                 # import pdb;pdb.set_trace() # PROBABLY NEED TO COMBINE HIGHLIGHT DATA SOMEHOW
-                print(highlight_data, col)
                 row = highlight_transliterately(col, row, highlight_data, content, hit)
 
             out['aaData'].append(row.values())
-
-        out['lag'] = time.time()-start_time
-        logger.set_context('query', es_m.get_combined_query())
-        logger.set_context('user_name', request.user.username)
-        logger.info('documents_queried')
-
 
         return out
 
@@ -537,7 +517,6 @@ def additional_option_cut_text(content, es_params):
 
         html_spans_merged = []
         num_spans = len(html_spans)
-
         # merge together ovelapping spans
         for i,html_span in enumerate(html_spans):
             if not html_span.get('class'):
@@ -576,7 +555,6 @@ def remove_by_query(request):
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
-
     threading.Thread(target=remove_worker,args=(es_m,'notimetothink')).start()
     return HttpResponse(True)
 

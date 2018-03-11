@@ -15,7 +15,7 @@ class MlpPreprocessor(object):
         :type mlp_url: string
         :type enabled_features: list of strings
         """
-        self._mlp_url = 'http://127.0.0.1:5000/mlp/process'
+        self._mlp_url = mlp_url
         self._enabled_features = set(enabled_features)
 
     def transform(self, documents, **kwargs):
@@ -38,7 +38,11 @@ class MlpPreprocessor(object):
         for input_feature in input_features:
             texts = [document[input_feature] for document in documents if input_feature in document]
             data = {'texts': json.dumps(texts, ensure_ascii=False), 'doc_path': 'mlp_'+input_feature}
-            analyzation_data = requests.post(self._mlp_url, data=data).json()
+            try:
+                analyzation_data = requests.post(self._mlp_url, data=data).json()
+            except:
+                print(requests.post(self._mlp_url, data=data).text)
+                raise Exception()
 
             for analyzation_idx, analyzation_datum in enumerate(analyzation_data):
                 analyzation_datum = analyzation_datum[0]
