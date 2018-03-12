@@ -414,8 +414,6 @@ def search(es_params, request):
 
         for hit in response['hits']['hits']:
             hit_id = str(hit['_id'])
-            # row = []
-            #row = {x: '' for x in out['column_names']}
             row = OrderedDict([(x, '') for x in out['column_names']]) # OrderedDict to remember column names with their content
 
             inner_hits = hit['inner_hits'] if 'inner_hits' in hit else {}
@@ -429,6 +427,7 @@ def search(es_params, request):
 
 
             # Fill the row content respecting the order of the columns
+            cols_data = {}
             for col in out['column_names']:
 
                 # If the content is nested, need to break the flat name in a path list
@@ -455,7 +454,6 @@ def search(es_params, request):
                 if name_to_inner_hits[col]:
                     highlight_data = []
                     color_map = ColorPicker.get_color_map(keys={hit['fact'] for hit in name_to_inner_hits[col]})
-
                     for inner_hit in name_to_inner_hits[col]:
                         datum = {
                             'spans': json.loads(inner_hit['spans']),
@@ -466,8 +464,6 @@ def search(es_params, request):
 
                         if inner_hit['hit_type'] == 'fact_val':
                             datum['value'] = inner_hit['str_val']
-
-                        import pdb;pdb.set_trace()
                         highlight_data.append(datum)
 
                     content = Highlighter(average_colors=True, derive_spans=True,
@@ -484,15 +480,19 @@ def search(es_params, request):
                                                     old_content,
                                                     highlight_data,
                                                     tagged_text=content)
-                # Checks if user wants to see full text or short version
-                if 'show_short_version' in es_params.keys():
-                    content = additional_option_cut_text(content, es_params)
                 # Append the final content of this col to the row
                 if(row[col] == ''):
                     row[col] = row[col] + content
-                # For displaying .text results in .transliterate and vice versa
-                # import pdb;pdb.set_trace() # PROBABLY NEED TO COMBINE HIGHLIGHT DATA SOMEHOW
-                row = highlight_transliterately(col, row, highlight_data, content, hit)
+
+                cols_data[col] = {'highlight_data': highlight_data, 'content': content, 'old_content': old_content}
+
+            # Transliterate the highlighting between different cols
+            row = highlight_transliterately(cols_data, row, es_params, short='show_short_version' in es_params.keys(), hl_cols=['text.text', 'text.translit', 'text.lemmas'])
+
+            # Checks if user wants to see full text or short version
+            for col in row:
+                if 'show_short_version' in es_params.keys():
+                    row[col] = additional_option_cut_text(row[col], es_params)
 
             out['aaData'].append(row.values())
 

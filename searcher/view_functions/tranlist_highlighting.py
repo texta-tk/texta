@@ -1,6 +1,7 @@
 from utils.highlighter import Highlighter
 import copy
 from functools import wraps
+import bs4
 
 def pass_by_value(func):
     '''deepcopy value decorator'''
@@ -15,7 +16,7 @@ def pass_by_value(func):
 
 @pass_by_value
 def transliterate_highlight_spans(highlight_data, source_text, target_text):
-    """Transliterates the spans from cyr > latin or from latin > cyr
+    """Transliterates the spans from source > target
         wrapped by pass by value to dereference the variables.
     Arguments:
         highlight_data {list of dict} -- The highlight_data passed into the highlighter
@@ -25,6 +26,7 @@ def transliterate_highlight_spans(highlight_data, source_text, target_text):
     Returns:
         list of dict -- highlight_data but with corrected spans.
     """
+
     for dict_val in highlight_data:
         # such as {'category': u'[HL]" style="background-color:#FFD119', 'color': u'#FFD119', 'spans': [[40, 42]]}
         #such as [[39, 41]]
@@ -46,7 +48,7 @@ def transliterate_highlight_spans(highlight_data, source_text, target_text):
 
     return highlight_data
 
-def highlight_transliterately(col, row, highlight_data, content, hit, hl_cols=['text.text', 'text.translit', 'text.lemmas']):
+def highlight_transliterately(cols_data, row, es_params, short=False, hl_cols=['text.text', 'text.translit', 'text.lemmas']):
     """Highlights the search result of text.text in text.translit and vice versa
 
     Arguments:
@@ -59,22 +61,29 @@ def highlight_transliterately(col, row, highlight_data, content, hit, hl_cols=['
     Returns:
         row {OrderedDict} -- The row now with transliterate highlighting on both .text and .translit
     """
+    cols_with_hl_data = {x for x in cols_data if cols_data[x]['highlight_data'] != []}
+    cols_data_joined = cols_data
 
-    # NOTE when doing multi search, like text(text) 'v' and text(translit) 'na' then results are replacing e/o.
-    if (any(col == x for x in hl_cols) and highlight_data != []):
-        hl_data = [highlight_data]
+    for col in cols_with_hl_data:
+        for target_col in [x for x in cols_with_hl_data if x != col]:
+            joined_hl_data = cols_data[target_col]['highlight_data']
+            translit_hl_data = transliterate_highlight_spans(cols_data[col]['highlight_data'], cols_data[col]['old_content'], cols_data[target_col]['old_content'])
+            for x in  translit_hl_data:
+                x['color'] = '#4286f4'
+                joined_hl_data.append(x)
+            cols_data_joined[target_col]['highlight_data'] = joined_hl_data
+
+
+    for col in cols_with_hl_data:
+        hl_data = [cols_data_joined[col]['highlight_data']]
         for i, hl_col in enumerate([x for x in hl_cols if x != col]):
-            col_name = col.split('.')[1]
-            hl_col_name = hl_col.split('.')[1]
-            #import pdb; pdb.set_trace()
-            new_highlight_data = transliterate_highlight_spans(hl_data[i], hit['_source']['text'][col_name], hit['_source']['text'][hl_col_name])
-            #import pdb; pdb.set_trace()
+            new_highlight_data = transliterate_highlight_spans(hl_data[i], cols_data_joined[col]['old_content'], cols_data_joined[hl_col]['old_content'])
             hl_data.insert(0, new_highlight_data) # Insert to index 0
             content_hl_trans = Highlighter(average_colors=True, derive_spans=True,
                                     additional_style_string='font-weight: bold;').highlight(
-                                        hit['_source']['text'][hl_col_name],
+                                        cols_data_joined[hl_col]['old_content'],
                                         new_highlight_data,
-                                        tagged_text=content)
+                                        tagged_text=cols_data_joined[col]['content'])
             row[hl_col] = content_hl_trans
 
     return row
