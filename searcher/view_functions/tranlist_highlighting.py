@@ -48,7 +48,7 @@ def transliterate_highlight_spans(highlight_data, source_text, target_text):
 
     return highlight_data
 
-def highlight_transliterately(cols_data, row, es_params, short=False, hl_cols=['text.text', 'text.translit', 'text.lemmas']):
+def highlight_transliterately(cols_data, row, hl_cols=['text.text', 'text.translit', 'text.lemmas']):
     """Highlights the search result of text.text in text.translit and vice versa
 
     Arguments:

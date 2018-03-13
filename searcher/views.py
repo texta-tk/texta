@@ -486,8 +486,11 @@ def search(es_params, request):
 
                 cols_data[col] = {'highlight_data': highlight_data, 'content': content, 'old_content': old_content}
 
+
             # Transliterate the highlighting between different cols
-            row = highlight_transliterately(cols_data, row, es_params, short='show_short_version' in es_params.keys(), hl_cols=['text.text', 'text.translit', 'text.lemmas'])
+            translit_search_cols = ['text', 'translit', 'lemmas']
+            hl_cols = [x for x in cols_data if len(x.split('.')) > 1 and x.split('.')[-1] in translit_search_cols] # To get value before '.' as well
+            row = highlight_transliterately(cols_data, row, hl_cols=hl_cols)
 
             # Checks if user wants to see full text or short version
             for col in row:
