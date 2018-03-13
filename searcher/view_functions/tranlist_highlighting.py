@@ -1,7 +1,6 @@
 from utils.highlighter import Highlighter
 import copy
 from functools import wraps
-import bs4
 
 def pass_by_value(func):
     '''deepcopy value decorator'''
@@ -52,11 +51,12 @@ def highlight_transliterately(cols_data, row, hl_cols=['text.text', 'text.transl
     """Highlights the search result of text.text in text.translit and vice versa
 
     Arguments:
-        col {string} -- The column name
+        cols_data {dict} -- Dict containing the col data, like {'text.text': {'highlight_data': highlight_data, 'content': content, 'old_content': old_content}}
+            col {string} -- The column name
+            highlight_data {list of dict} -- The highlight_data passed into the highlighter
+            content {string} -- The content containing the spans in HTML format
+            old_content {string} -- The content without the HTML data.
         row {OrderedDict} -- The row content for a column
-        highlight_data {list of dict} -- The highlight_data passed into the highlighter
-        content {string} -- The content containing the spans in HTML format
-        hit {dict} -- A dict containing the hit results
         hl_cols {list} -- A list of strings representing the col names of the cols where to display the search result
     Returns:
         row {OrderedDict} -- The row now with transliterate highlighting on both .text and .translit
