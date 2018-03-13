@@ -36,7 +36,7 @@
 .dataTable tbody tr td {
     vertical-align: top;
     white-space: pre-wrap;
-    width: 10%;
+    min-width: 10%; 
     max-width: 25%;
 }
 
@@ -60,5 +60,12 @@
   background-color: #EFEFEF;
 }
 
-
-
+th {
+  /* border-top: 1px solid #dddddd; */
+  /* border-bottom: 1px solid #dddddd; */
+  border-right: 1px solid #f1f1f1;
+}
+ 
+th:first-child {
+  border-left: 1px solid #f1f1f1;
+}
