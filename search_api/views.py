@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
 from django.http import HttpResponse, StreamingHttpResponse
 import json
 
-from processors.rest_processor import RestProcessor, Validator
-from elastic.aggregator import Aggregator
-from elastic.searcher import Searcher
-from elastic.listing import ElasticListing
+from .processors.rest_processor import RestProcessor, Validator
+from .elastic.aggregator import Aggregator
+from .elastic.searcher import Searcher
+from .elastic.listing import ElasticListing
 
 from texta.settings import es_url, date_format
 from permission_admin.models import Dataset

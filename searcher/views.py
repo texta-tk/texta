@@ -1,4 +1,6 @@
 # -*- coding: utf8 -*-
+from __future__ import print_function
+from __future__ import absolute_import
 import calendar
 import threading
 import json
@@ -22,8 +24,8 @@ from permission_admin.models import Dataset
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
-from agg_manager import AggManager
-from cluster_manager import ClusterManager
+from .agg_manager import AggManager
+from .cluster_manager import ClusterManager
 from utils.highlighter import Highlighter, ColorPicker
 from utils.autocomplete import Autocomplete
 
@@ -132,7 +134,7 @@ def display_encode(s):
     try:
         return s.encode('latin1')
     except Exception as e:
-        print e
+        print(e)
         #TODO: What is the intention here?  Why is latin1 first? What are the appropriate exceptions instead of catchall)
         return s.encode('utf8')
 
@@ -158,7 +160,7 @@ def save(request):
         logger.info('search_saved')
 
     except Exception as e:
-        print '-- Exception[{0}] {1}'.format(__name__, e)
+        print('-- Exception[{0}] {1}'.format(__name__, e))
         logger.set_context('es_params', es_params)
         logger.exception('search_saving_failed')
 
@@ -178,7 +180,7 @@ def delete(request):
         logger.info('search_deleted')
 
     except Exception as e:
-        print '-- Exception[{0}] {1}'.format(__name__, e)
+        print('-- Exception[{0}] {1}'.format(__name__, e))
         logger.exception('search_deletion_failed')
 
     return HttpResponse(search_id)
@@ -501,8 +503,8 @@ def search(es_params, request):
 
         return out
 
-    except Exception, e:
-        print '-- Exception[{0}] {1}'.format(__name__, e)
+    except Exception as e:
+        print('-- Exception[{0}] {1}'.format(__name__, e))
         logger.set_context('user_name', request.user.username)
         logger.exception('documents_queried_failed')
 
@@ -678,8 +680,8 @@ def facts_agg(es_params, request):
         logger.set_context('user_name', request.user.username)
         logger.info('facts_aggregation_queried')
 
-    except Exception, e:
-        print '-- Exception[{0}] {1}'.format(__name__, e)
+    except Exception as e:
+        print('-- Exception[{0}] {1}'.format(__name__, e))
         logger.set_context('user_name', request.user.username)
         logger.exception('facts_aggregation_query_failed')
 

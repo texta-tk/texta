@@ -1,3 +1,4 @@
+from __future__ import print_function
 import scipy.spatial.distance as scidist
 import scipy.cluster.hierarchy as hier
 import numpy as np
@@ -122,4 +123,4 @@ def _get_cluster_nodes(node):
 if __name__ == "__main__":
     words = np.arange(20)
     vectors = np.random.rand(20,8)
-    print PreclusterMaker(words,vectors)()
+    print(PreclusterMaker(words,vectors)())

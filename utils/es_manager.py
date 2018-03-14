@@ -1,4 +1,5 @@
 # -*- coding: utf8 -*-
+from __future__ import print_function
 import json
 import re
 import copy
@@ -6,6 +7,7 @@ import requests
 from collections import defaultdict
 import sys
 import time
+from functools import reduce
 
 if 'django' in sys.modules: # Import django-stuff only if imported from the django application / prevent errors when importing from scripts
     from conceptualiser.models import Concept
@@ -758,8 +760,8 @@ class ES_Manager:
                     if fact not in facts:
                         facts[fact] = set()
                     facts[fact].add(doc_id)
-                except Exception, e:
-                    print '-- Exception[{0}] {1}'.format(__name__, e)
+                except Exception as e:
+                    print('-- Exception[{0}] {1}'.format(__name__, e))
                     logger.set_context('hit', hit)
                     logger.exception('facts_error', msg='Problem with facts structure')
         return facts

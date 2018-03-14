@@ -1,4 +1,5 @@
 # -*- coding: utf8 -*-
+from __future__ import print_function
 import itertools
 import json
 import logging
@@ -32,7 +33,7 @@ def index(request):
             setattr(run,'num_mwes',num_mwes)
         #        setattr(run,'committed',len({approved_candidate.candidate for approved_candidate in approved_term_candidates} & {committed_candidate.term for committed_candidate in Term.objects.filter(author=request.user)}))
         except ValueError as e:
-            print 'Exception', e
+            print('Exception', e)
             pass
         runs.append(run)
     for lexicon in Lexicon.objects.all().filter(author=request.user):
@@ -176,7 +177,7 @@ def approve(request):
         
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'APPROVE MWE RESULT','event':'mwe_result_items_approved','args':{'user_name':request.user.username,'operator':operator,'run_id':run_id}}))
     except Exception as e:
-        print e
+        print(e)
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'APPROVE MWE RESULT','event':'mwe_result_item_approval_failed','args':{'user_name':request.user.username,'operator':operator,'run_id':run_id}}),exc_info=True)
 
     return HttpResponse()
@@ -255,7 +256,7 @@ def find_mappings(request):
         new_run.save()
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'MINE MWEs','event':'mwe_mining_started','args':{'user_name':request.user.username,'run_id':new_run.id,'slop':slop,'min_len':min_len,'max_len':max_len,'min_freq':min_freq,'match_field':match_field,'desc':description}}))
         for i in range(min_len,max_len+1):
-            print 'Permutation len:',i
+            print('Permutation len:',i)
             for permutation in itertools.permutations(lexicon,i):
                 word_indices = list(flatten([word_index[word] for word in permutation])) 
                 if len(word_indices) == len(set(word_indices)):
@@ -316,5 +317,5 @@ def find_mappings(request):
         r.save()
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'MINE MWEs','event':'mwe_mining_completed','args':{'user_name':request.user.username,'run_id':new_run.id}}))
     except Exception as e:
-        print e
+        print(e)
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'MINE MWEs','event':'mwe_mining_failed','args':{'user_name':request.user.username,'run_id':new_run.id}}),exc_info=True)

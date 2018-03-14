@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import pprint
 
@@ -15,9 +16,9 @@ from texta.settings import STATIC_URL, URL_PREFIX, es_url
 from permission_admin.models import Dataset
 from conceptualiser.models import Term, TermConcept, Concept
 from grammar_builder.models import GrammarComponent, GrammarPageMapping, Grammar
-import multilayer_matcher as matcher
+from . import multilayer_matcher as matcher
 
-from elastic_grammar_query import ElasticGrammarQuery
+from .elastic_grammar_query import ElasticGrammarQuery
 
 from collections import defaultdict
 

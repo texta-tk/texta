@@ -1,4 +1,5 @@
 # -*- coding: utf8 -*-
+from __future__ import print_function
 import json
 import logging
 import os
@@ -117,7 +118,7 @@ def train_model(search_id,field_path,num_dimensions,num_workers,min_freq,usr,des
                                                              'field': field_path, 'num_dimensions': num_dimensions,
                                                              'num_workers': num_workers, 'min_freq': min_freq,
                                                              'desc': description}, 'data': {'run_id': new_run.id}}))
-    print 'Run added to db.'
+    print('Run added to db.')
 
     num_passes = 5
     # Number of word2vec passes + one pass to vocabulary building
@@ -140,9 +141,9 @@ def train_model(search_id,field_path,num_dimensions,num_workers,min_freq,usr,des
         model.save(output_model_file)
         model_status = 'completed'
 
-    except Exception, e:
+    except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE MODEL','event':'model_training_failed','args':{'user_name':request.user.username}}),exc_info=True)
-        print '--- Error: {0}'.format(e)
+        print('--- Error: {0}'.format(e))
         model_status = 'failed'
 
     #lm_model_manager.add_model(str(new_run.pk),model)
@@ -157,7 +158,7 @@ def train_model(search_id,field_path,num_dimensions,num_workers,min_freq,usr,des
     r.run_status = model_status
     r.lexicon_size = len(model.wv.vocab)
     r.save()
-    print 'job is done'
+    print('job is done')
 
 
 class ShowProgress(object):

@@ -1,5 +1,6 @@
 # -*- coding: utf8 -*-
 
+from __future__ import print_function
 import json
 import logging
 import requests
@@ -120,7 +121,7 @@ def apply_model(request):
 
     url = '{0}/classification_manager/api/classify?model_id={1}&key={2}&search_id={3}'.format(URL_PREFIX,model_id,model_key,search_id)
 
-    print requests.get(url).json()
+    print(requests.get(url).json())
 
     return HttpResponse()
 
@@ -190,7 +191,7 @@ def api_classify(request):
 
 
     except Exception as e:
-        print 'Error: ', e
+        print('Error: ', e)
         data['status'] = ['failed', 'exception']
     return HttpResponse(json.dumps(data), content_type="application/json")
 
@@ -226,7 +227,7 @@ def api_job_status(request):
         data['job']['total_documents'] = job_queue.total_documents
 
     except Exception as e:
-        print 'Error: ', e
+        print('Error: ', e)
         data['status'] = ['failed', 'exception']
     return HttpResponse(json.dumps(data), content_type="application/json")
 
@@ -247,5 +248,5 @@ def api_jobs(request):
             data['jobs'][k] = status_count[k]
 
     except Exception as e:
-        print '- Expcetion: ', e
+        print('- Expcetion: ', e)
     return HttpResponse(json.dumps(data), content_type="application/json")

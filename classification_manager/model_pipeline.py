@@ -1,5 +1,6 @@
 # -*- coding: utf8 -*-
 
+from __future__ import print_function
 from datetime import datetime
 import hashlib
 import json
@@ -264,7 +265,7 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
                                   dataset_pk=dataset_pk, model_key=model_key)
     new_run.save()
 
-    print 'Run added to db.'
+    print('Run added to db.')
     query = json.loads(Search.objects.get(pk=search_id).query)
     steps = ["preparing data", "training", "done"]
     show_progress = ShowSteps(new_run.pk, steps)
@@ -297,7 +298,7 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
 
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE CLASSIFIER','event':'model_training_failed','args':{'user_name':request.user.username}}),exc_info=True)
-        print '--- Error: {0}'.format(e)
+        print('--- Error: {0}'.format(e))
         model_status = 'failed'
 
     logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE CLASSIFIER',
@@ -313,7 +314,7 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
     r.train_summary = train_summary
     r.save()
 
-    print 'job is done'
+    print('job is done')
 
 
 class ShowSteps(object):
@@ -367,7 +368,7 @@ def apply_classifier(job_key):
             job_queue.run_status = 'failed'
 
     except Exception as e:
-        print '- Exception: ', e
+        print('- Exception: ', e)
         job_queue.run_status = 'failed'
 
     job_queue.run_completed = datetime.now()
