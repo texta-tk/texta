@@ -770,9 +770,8 @@ class ES_Manager:
     def get_indices():
         url = '{0}/_cat/indices?format=json'.format(es_url)
         response = ES_Manager.requests.get(url, headers=headers).json()
-        
-        return sorted([{'index':i['index'],'status':i['status'],'docs_count':i['docs.count'],'store_size':i['store.size']} for i in response])
-    
+        return sorted([{'index':i['index'],'status':i['status'],'docs_count':i['docs.count'],'store_size':i['store.size']} for i in response], key=lambda k: k['index']) # NEW PY REQUIREMENT
+
     @staticmethod
     def get_mappings(index):
         url = '{0}/{1}'.format(es_url, index)

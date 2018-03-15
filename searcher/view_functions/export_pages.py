@@ -7,9 +7,9 @@ from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 
 try:
-    from cStringIO import StringIO
+    from io import BytesIO # NEW PY REQUIREMENT
 except:
-    from StringIO import StringIO
+    from io import StringIO # NEW PY REQUIREMENT
 
 
 ES_SCROLL_BATCH = 100

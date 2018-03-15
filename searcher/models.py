@@ -10,8 +10,8 @@ MAX_STR_LEN = 100
 class Search(models.Model):
     id = models.AutoField(primary_key=True)
     description = models.CharField(max_length=MAX_STR_LEN)
-    dataset = models.ForeignKey(Dataset)
-    author = models.ForeignKey(User)
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE) # NEW PY REQUIREMENT
+    author = models.ForeignKey(User, on_delete=models.CASCADE) # NEW PY REQUIREMENT
     query = models.TextField()
 
     def __str__(self):

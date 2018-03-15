@@ -8,7 +8,8 @@ from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse
 
 from .models import DatasetImport
-from dataset_importer.importer import DatasetImporter, entity_reader_map, collection_reader_map, database_reader_map, extractor_map, preprocessor_map
+
+from dataset_importer.importer.importer import DatasetImporter, entity_reader_map, collection_reader_map, database_reader_map, extractor_map, preprocessor_map
 from dataset_importer.syncer.syncer_process import Syncer
 
 from texta.settings import es_url, DATASET_IMPORTER as DATASET_IMPORTER_CONF

@@ -19,4 +19,4 @@ class ModelRun(models.Model):
     lexicon_size      = models.IntegerField(null=True,blank=True)
     search            = models.TextField(null=True,blank=True)
     fields            = models.CharField(max_length=MAX_STR_LEN)
-    user              = models.ForeignKey(User)
+    user              = models.ForeignKey(User, on_delete=models.CASCADE) # NEW PY REQUIREMENT

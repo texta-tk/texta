@@ -20,7 +20,7 @@ class ModelClassification(models.Model):
     run_completed = models.DateTimeField(null=True,blank=True)
     search = models.TextField(null=True, blank=True)
     fields = models.CharField(max_length=MAX_STR_LEN)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE) # NEW PY REQUIREMENT
     clf_arch = models.TextField(null=True, blank=True)
     score = models.TextField(null=True, blank=True)
     tag_label = models.CharField(max_length=MAX_STR_LEN)
@@ -39,9 +39,9 @@ class JobQueue(models.Model):
     total_positive = models.CharField(max_length=MAX_STR_LEN)
     total_negative = models.CharField(max_length=MAX_STR_LEN)
     total_documents = models.CharField(max_length=MAX_STR_LEN)
-    model = models.ForeignKey(ModelClassification)
-    dataset = models.ForeignKey(Dataset)
-    search = models.ForeignKey(Search)
+    model = models.ForeignKey(ModelClassification, on_delete=models.CASCADE) # NEW PY REQUIREMENT
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE) # NEW PY REQUIREMENT
+    search = models.ForeignKey(Search, on_delete=models.CASCADE) # NEW PY REQUIREMENT
 
     @staticmethod
     def get_random_key(size=10):

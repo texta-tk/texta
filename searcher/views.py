@@ -36,9 +36,9 @@ from searcher.view_functions.tranlist_highlighting import transliterate_highligh
 
 
 try:
-    from cStringIO import StringIO
+    from io import BytesIO # NEW PY REQUIREMENT
 except:
-    from StringIO import StringIO
+    from io import StringIO # NEW PY REQUIREMENT
 
 
 def ngrams(input_list, n):

@@ -1,7 +1,12 @@
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
-from query import Query
-from searcher import Searcher
+
+import os, sys
+file_dir = os.path.dirname(__file__)
+sys.path.append(file_dir)
+from .query import Query
+from .searcher import Searcher
+
 import requests
 import json
 
