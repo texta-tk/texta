@@ -111,6 +111,15 @@ class ElasticStorer(object):
             for document in documents:
                 meta_data = {'index': {'_index': self._es_index, '_type': self._es_mapping}}
                 data_to_send.append(json.dumps(meta_data))
+
+                # NEW PY REQUIREMENT, try to decode before sending bytes to json
+                #document['text'] = document['text'].decode('utf8')
+                for x in document:
+                    try:
+                        document[x] = document[x].decode('utf8')
+                    except:
+                        pass
+
                 data_to_send.append(json.dumps(document))
 
             data_to_send.append('\n')

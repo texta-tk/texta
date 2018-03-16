@@ -233,6 +233,11 @@ def get_table_content(request):
     result = search(es_params, request)
     result['sEcho'] = echo
 
+    # NEW PY REQUIREMENT
+    # Get rid of 'odict_values' otherwise can't json dumps
+    for i in range(len(result['aaData'])):
+        result['aaData'][i] = list(result['aaData'][i])
+
     return HttpResponse(json.dumps(result, ensure_ascii=False))
 
 
@@ -475,7 +480,7 @@ def search(es_params, request):
                                                   tagged_text=content)
                 else:
                     # WHEN USING OLD FORMAT DOCUMENTS, SOMETIMES BREAKS AT HIGHLIGHTER, CHECK IF ITS STRING INSTEAD OF FOR EXAMPLE LIST
-                    if (isinstance(content, basestring)):
+                    if (isinstance(content, str)) or (isinstance(content, bytes)):
                         highlight_data = []
                         content = Highlighter(average_colors=True, derive_spans=True,
                                                 additional_style_string='font-weight: bold;').highlight(

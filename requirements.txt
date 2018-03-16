@@ -6,7 +6,7 @@ cython
 scipy
 sklearn
 gensim
-django=1.11
+django=2.02
 pathlib
 dateutils
 sympy

@@ -376,3 +376,15 @@ Traceback (most recent call last):
   File "/home/eha/Desktop/texta/texta-ekt-polishing-dev/searcher/view_functions/tranlist_highlighting.py", line 88, in highlight_transliterately
     col_name = col.split('.'[1])
 IndexError: string index out of range
+
+ERROR - log_manager - error_logger - 24980 - 139631411816192 - {"module": "searcher.views", "process": "SEARCH CORPUS", "event": "documents_queried_failed", "context": {"user_name": "ranet"}} - 2018-03-16 11:36:44,295
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/searcher/views.py", line 478, in search
+    if (isinstance(content, basestring)):
+NameError: name 'basestring' is not defined
+
+ERROR - log_manager - error_logger - 25228 - 139855775610624 - {"module": "searcher.views", "process": "SEARCH CORPUS", "event": "documents_queried_failed", "context": {"user_name": "ranet"}} - 2018-03-16 11:38:33,370
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/searcher/views.py", line 479, in search
+    if (isinstance(content, basestring)):
+NameError: name 'basestring' is not defined
