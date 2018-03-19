@@ -1,0 +1,27 @@
++ = WORKS
+- = DOESN'T
++- = DIDN'T BUT NOW DOES
+? = UNCLEAR
+
+### WHAT WORKS/DOESNT:
+
+# HOME:
++ Change Password
+
+# ADMINISTRATION
++ Dataset Management
+
+# IMPORTER
++ lorem_ipsum.txt imported
++ rutest.txt imported, mlp worked, note /home/eha/Documents/texta/texta-py3/texta/dataset_importer/document_storer/storers/elastic_storer.py line 117, looping over only non mlp values
+
+# SEARCHER
++ search
++ regular highlighting, but not on the txt_5000 file as mentioned below, might be from whitespace
++ translit highlighting
++- short search
+-? aggregation
++- cluster search
++? expand search
++ save search
++- export
