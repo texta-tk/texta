@@ -294,6 +294,7 @@ def mlt_query(request):
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'documents':documents}
+    template = loader.get_template('mlt_results.html')
     return HttpResponse(template.render(template_params, request))
     row = {}
     for field in fields:
@@ -519,7 +520,7 @@ def search(es_params, request):
 
 def additional_option_cut_text(content, es_params):
     window_size = int(es_params["short_version_n_char"])
-    content = unicode(content)
+    content = str(content)
 
     if u'[HL]' in content:
         soup = bs4.BeautifulSoup(content,'lxml')
@@ -538,22 +539,22 @@ def additional_option_cut_text(content, es_params):
                         new_text = u' '.join(span_tokens[-window_size:])
                         new_text = u'... {0}'.format(new_text)
                         html_span.string = new_text
-                    html_spans_merged.append(unicode(html_span))
+                    html_spans_merged.append(str(html_span))
                 elif i == num_spans-1:
                     if span_tokens_len > window_size:
                         new_text = u' '.join(span_tokens[:window_size])
                         new_text = u'{0} ...'.format(new_text)
                         html_span.string = new_text
-                    html_spans_merged.append(unicode(html_span))
+                    html_spans_merged.append(str(html_span))
                 else:
                     if span_tokens_len > window_size:
                         new_text_left = u' '.join(span_tokens[:window_size])
                         new_text_right = u' '.join(span_tokens[-window_size:])
                         new_text = u'{0} ...\n... {1}'.format(new_text_left,new_text_right)
                         html_span.string = new_text
-                    html_spans_merged.append(unicode(html_span))
+                    html_spans_merged.append(str(html_span))
             else:
-                html_spans_merged.append(unicode(html_span))
+                html_spans_merged.append(str(html_span))
 
         return ''.join(html_spans_merged)
     else:

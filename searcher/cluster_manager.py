@@ -25,7 +25,7 @@ class ClusterManager:
     def _parse_params(params):
         params_out = {}
 
-        for param in params.iterkeys():
+        for param in params.keys(): # NEW PY REQUIREMENT
             if param.startswith('cluster'):
                 if param in ['cluster_lexicons']:
                     params_out[param] = params.getlist(param)
