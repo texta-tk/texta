@@ -1,3 +1,5 @@
+Just some notes to keep track of certain things
+
 + = WORKS
 - = DOESN'T
 +- = DIDN'T BUT NOW DOES
