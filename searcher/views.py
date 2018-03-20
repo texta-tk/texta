@@ -288,6 +288,8 @@ def mlt_query(request):
                        'URL_PREFIX': URL_PREFIX,
                        'documents':documents}
     return HttpResponse(template.render(template_params, request))
+
+def get_fields_content(hit,fields):
     row = {}
     for field in fields:
         if 'highlight' in hit:
@@ -498,6 +500,11 @@ def search(es_params, request):
                     row[col] = additional_option_cut_text(row[col], es_params)
 
             out['aaData'].append(row.values())
+
+            out['lag'] = time.time()-start_time
+            logger.set_context('query', es_m.get_combined_query())
+            logger.set_context('user_name', request.user.username)
+            logger.info('documents_queried')
 
         return out
 
