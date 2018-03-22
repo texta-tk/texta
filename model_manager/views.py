@@ -86,8 +86,9 @@ def start_training_job(request):
     field_path = mapped_field['path']
     min_freq = int(request.POST['min_freq'])
     search_id = request.POST['search']
-        
-    threading.Thread(target=train_model,args=(search_id,field_path,num_dimensions,num_workers,min_freq,request.user,description,request)).start()
+
+    train_model(search_id,field_path,num_dimensions,num_workers,min_freq,request.user,description,request)
+    #threading.Thread(target=train_model,args=(search_id,field_path,num_dimensions,num_workers,min_freq,request.user,description,request)).start()
     return HttpResponse()
 
 

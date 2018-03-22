@@ -669,7 +669,7 @@ class ES_Manager:
     def get_total_documents(self):
         q = self.combined_query['main']
         total = self.plain_search(self.es_url, self.index, self.mapping, q)['hits']['total']
-        return long(total)
+        return int(total)
 
     def _get_facts_structure_agg(self):
         query = {"query": {"term": {"facts.doc_type": self.mapping.lower()}}}

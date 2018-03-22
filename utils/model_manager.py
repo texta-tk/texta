@@ -67,7 +67,7 @@ class ModelManager(threading.Thread):
                     negatives_path = os.path.join(USER_MODELS,deleted_negative[0],deleted_negative[1],"lexicon_%d_negatives.pickle"%deleted_negative[2])
                     if os.path.exists(negatives_path):
                         # TODO! path does not seem to be defined. KOM should check this out.
-                        os.remove(path)
+                        os.remove(negatives_path)
                 elif len(deleted_negative) == 3:
                     # negatives expired
                     if deleted_negative[2] in self._model_negatives[deleted_negative[0]][deleted_negative[1]]:

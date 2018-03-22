@@ -29,7 +29,6 @@ class AggManager:
         
         self.ranges,self.date_labels = self._get_date_intervals(self.daterange,interval)
         self.agg_query = self.prepare_agg_query()
-
         # EXECUTE AGGREGATION
         agg_results = self.aggregate()
 
@@ -94,16 +93,16 @@ class AggManager:
         agg_field_2 = json.loads(agg_field_2)
         sort_by_2 = es_params["sort_by_2"]
 
-        field_type_to_name = {'date': 'daterange', 'text': 'string', 'keyword': 'string', 'facts': 'fact', 'fact_str_val': 'fact_str_val', 'fact_num_val': 'fact_num_val'}
+        field_type_to_name = {'date': 'daterange', 'string':'string', 'text': 'string', 'keyword': 'string', 'facts': 'fact', 'fact_str_val': 'fact_str_val', 'fact_num_val': 'fact_num_val'}
 
         agg_name_1 = field_type_to_name[agg_field_1['type']]
         agg_name_2 = field_type_to_name[agg_field_2['type']]
 
         # If aggregating over text field, use .keyword instead
-        if  agg_field_1['type'] == 'text' and sort_by_1 in ['terms', 'significant_terms']:
-            agg_field_1['path'] = '{0}.keyword'.format(agg_field_1['path'].encode('utf8'))
-        if  agg_field_2['type'] == 'text' and sort_by_2 in ['terms', 'significant_terms']:
-            agg_field_2['path'] = '{0}.keyword'.format(agg_field_2['path'].encode('utf8'))
+        if  agg_field_1['type'] == 'text' and sort_by_1 in ['terms', 'significant_terms']: # NEW PY REQUIREMENT
+            agg_field_1['path'] = '{0}.keyword'.format(agg_field_1['path'])
+        if  agg_field_2['type'] == 'text' and sort_by_2 in ['terms', 'significant_terms']: # NEW PY REQUIREMENT
+            agg_field_2['path'] = '{0}.keyword'.format(agg_field_2['path'])
 
         # 1st LEVEL AGGREGATION
         agg = self.create_agg(agg_name_1,sort_by_1,agg_field_1["path"])
@@ -126,7 +125,6 @@ class AggManager:
                     agg[agg_name_1]["aggregations"][agg_name_2]['aggs'][agg_name_2]['aggs'] = self.create_agg('fact_str_val', sort_by_2, agg_field_2['path'])['fact_str_val']['aggs']
                 else:
                     agg[agg_name_1]["aggregations"] = agg_2
-
         return agg
 
 
@@ -221,12 +219,12 @@ class AggManager:
         if "empty_timeline_response" in agg_results:
             for bucket in agg_results["empty_timeline_response"]["aggregations"]["daterange"]["buckets"]:
                 total_freqs[bucket["from_as_string"]] = bucket["doc_count"]
-        
+
         for i,response in enumerate(agg_results["responses"]):
             aggs = response["response"]["aggregations"]
             output_type = None
             response_out = []
-                
+
             for agg_name,agg_results in aggs.items():
                 output_type = agg_name
 

@@ -52,10 +52,11 @@ def convert_date(date_string,frmt):
 def get_fields(es_m):
     """ Create field list from fields in the Elasticsearch mapping
     """
+    reserved_fields = ['texta_facts']
     fields = []
     mapped_fields = es_m.get_mapped_fields()
 
-    for data in mapped_fields:
+    for data in [x for x in mapped_fields if x['path'] not in reserved_fields]:
         path = data['path']
 
         if data['type'] == 'date':
@@ -88,6 +89,7 @@ def get_fields(es_m):
 
     # Sort fields by label
     fields = sorted(fields, key=lambda l: l['label'])
+
     return fields
 
 
@@ -129,7 +131,7 @@ def zero_list(n):
     listofzeros = [0] * n
     return listofzeros
 
-
+# Unused?
 def display_encode(s):
     try:
         return s.encode('latin1')
@@ -296,6 +298,8 @@ def mlt_query(request):
                        'documents':documents}
     template = loader.get_template('mlt_results.html')
     return HttpResponse(template.render(template_params, request))
+
+def get_fields_content(hit,fields):
     row = {}
     for field in fields:
         if 'highlight' in hit:
@@ -324,7 +328,7 @@ def cluster_query(request):
     es_m.build(params)
 
     cluster_m = ClusterManager(es_m,params)
-    clustering_data = convert_clustering_data(cluster_m)
+    clustering_data = convert_clustering_data(cluster_m, params)
 
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
@@ -334,7 +338,7 @@ def cluster_query(request):
     return HttpResponse(template.render(template_params, request))
 
 
-def convert_clustering_data(cluster_m):
+def convert_clustering_data(cluster_m, params):
     out = []
     clusters = cluster_m.clusters
 
@@ -342,16 +346,15 @@ def convert_clustering_data(cluster_m):
         documents = [cluster_m.documents[doc_id] for doc_id in cluster_content]
         cluster_label = 'Cluster {0} ({1})'.format(cluster_id+1,len(cluster_content))
         keywords = cluster_m.cluster_keywords[cluster_id]
-        cluster_data = {'documents':highlight_cluster_keywords(documents,keywords),
+        cluster_data = {'documents':highlight_cluster_keywords(documents,keywords, params),
                         'label':cluster_label,
                         'id':cluster_id,
                         'keywords':' '.join(keywords)}
         out.append(cluster_data)
-
     return out
 
 
-def highlight_cluster_keywords(documents, keywords):
+def highlight_cluster_keywords(documents, keywords, params):
     out = []
     for document in documents:
         to_highlighter = []
@@ -365,6 +368,12 @@ def highlight_cluster_keywords(documents, keywords):
         if to_highlighter:
             hl = Highlighter(default_category='')
             document = hl.highlight(document,to_highlighter)
+        #'short_version_n_char': ['5']
+        if 'show_short_version_cluster' in params.keys():
+            document_1 = document
+            document = additional_option_cut_text(document, params['short_version_n_char_cluster'])
+            print(document == document_1)
+            # HERE
         out.append(document)
     return out
 
@@ -503,9 +512,14 @@ def search(es_params, request):
             # Checks if user wants to see full text or short version
             for col in row:
                 if 'show_short_version' in es_params.keys():
-                    row[col] = additional_option_cut_text(row[col], es_params)
+                    row[col] = additional_option_cut_text(row[col], es_params['short_version_n_char'])
 
             out['aaData'].append(row.values())
+
+            out['lag'] = time.time()-start_time
+            logger.set_context('query', es_m.get_combined_query())
+            logger.set_context('user_name', request.user.username)
+            logger.info('documents_queried')
 
         return out
 
@@ -518,8 +532,8 @@ def search(es_params, request):
         return out
 
 
-def additional_option_cut_text(content, es_params):
-    window_size = int(es_params["short_version_n_char"])
+def additional_option_cut_text(content, window_size):
+    window_size = int(window_size)
     content = str(content)
 
     if u'[HL]' in content:
@@ -740,16 +754,16 @@ def extract_constraints(query):
     return constraints
 
 def _extract_string_constraint(raw_constraint):
-    operator = raw_constraint['bool'].keys()[0]
+    operator = list(raw_constraint['bool'].keys())[0]
     field = None
     match_type = None
     constraint_content = []
     slop = None
 
     for entry in raw_constraint['bool'][operator]:
-        constraint_details = entry['bool']['should'][0]
-        match_type = constraint_details.keys()[0]
-        field = constraint_details[match_type].keys()[0]
+        constraint_details = list(entry['bool']['should'])[0]
+        match_type = list(constraint_details.keys())[0]
+        field = list(constraint_details[match_type].keys())[0]
         content = constraint_details[match_type][field]['query']
         slop = constraint_details[match_type][field]['slop']
         constraint_content.append(content)
@@ -773,7 +787,7 @@ def _extract_date_constraints(range_constraint_idx_range_constraint_pairs):
     last_field = None
 
     for range_constraint_idx, range_constraint in range_constraint_idx_range_constraint_pairs:
-        current_field = range_constraint['range'].keys()[0]
+        current_field = list(range_constraint['range'].keys())[0]
         if 'gte' in range_constraint['range'][current_field]:
             if last_field is not None:
                 date_ranges.append(new_range)
@@ -808,7 +822,7 @@ def _extract_date_constraints(range_constraint_idx_range_constraint_pairs):
 
 
 def _extract_fact_constraint(raw_constraint):
-    operator = raw_constraint['bool'].keys()[0]
+    operator = list(raw_constraint['bool'].keys())[0]
     content = []
     field = None
 
@@ -824,7 +838,7 @@ def _extract_fact_constraint(raw_constraint):
     }
 
 def _extract_fact_val_constraint(raw_constraint):
-    operator = raw_constraint['bool'].keys()[0]
+    operator = list(raw_constraint['bool'].keys())[0]
     field = None
     sub_constraints = []
 

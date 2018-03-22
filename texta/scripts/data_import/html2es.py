@@ -124,7 +124,7 @@ def main():
 
             document = {'celex': celex,
                         'language': language,
-                        'year': long(year),
+                        'year': int(year),
                         'author': author,
                         'descriptor': descriptor,
                         'conclusion': conclusion,

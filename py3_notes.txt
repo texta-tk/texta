@@ -4,10 +4,13 @@ Just some notes to keep track of certain things
 - = DOESN'T
 +- = DIDN'T BUT NOW DOES
 ? = UNCLEAR
+=== === = category within a header
+== = note or something to do
++= = now implomented succesfully/note tested
 
 ### WHAT WORKS/DOESNT:
 
-# HOME:
+# HOME +
 + Change Password
 
 # ADMINISTRATION
@@ -18,12 +21,50 @@ Just some notes to keep track of certain things
 + rutest.txt imported, mlp worked, note /home/eha/Documents/texta/texta-py3/texta/dataset_importer/document_storer/storers/elastic_storer.py line 117, looping over only non mlp values
 
 # SEARCHER
+=== current search ===
 + search
 + regular highlighting, but not on the txt_5000 file as mentioned below, might be from whitespace
 + translit highlighting
 +- short search
--? aggregation
-+- cluster search
-+? expand search
++ expand search
 + save search
++- bring up saved searches
++- concept/lexicon suggestions
+
+=== cluster search ===
+- cluster search clustering method: hierarchical
++- cluster search, kmeans, tfidf, countvectorizer, cluster sizes, stopwords lexicon
++= also make a slider for tfidf max features
+== also add the short version
+
+=== results ===
 +- export
+== also the search result amount is only on the bottom (probably not py3 related)
+
+=== Aggregations ===
++-? aggregation; somewhat works, unclear if it works or not since "errors" are also in other branches, also multi aggregation doesnt work (actually just cant aggregate to significant words)
++- now you can't aggregate to texta_facts, added to reserved (not really py3 related)
++- also now you cant see the add button when the field#1 aggregation is "significant words". (not really py3 related, javascript change)
++ hide current search in results
+
+
+#MODEL MANAGER +
++- making a model
++ all options
++ removing a model
+
+#LEXICON MINER +
++- all word suggestion types
++ save lexicon
++ reset suggestions
+
+#CONCEPTUALISER
+-? plotting
+
+#MWE MINER +
++ start task works somehow, including different options
++ remove result
++ MWE Task result reverse value list (also got index out of range somewhere, can't replicate)
++ force all true
++ forse all false
+== also test with multiple lexicons

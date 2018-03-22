@@ -223,6 +223,16 @@
 									</div>
 									<div class="row padded-row">
 										<div class="col-sm-12">
+											<b>Maximum total words:</b>
+										</div>
+									</div>
+									<div class="row padded-row">
+										<div class="col-sm-12">
+											<input id="n_features" name="cluster_n_features" class="form-control" data-slider-id='n_features' type="text" data-slider-min="100" data-slider-max="10000" data-slider-step="100" data-slider-value="1000"/>
+										</div>
+									</div>
+									<div class="row padded-row">
+										<div class="col-sm-12">
 											<b>Stopword lexicons:</b>
 										</div>
 									</div>
@@ -240,12 +250,33 @@
 										</div>
 									</div>
 								</div>
+
+								<div class="panel bg-grey">
+									<div class="row padded-row text-center">
+										<div class="col-sm-12 text-center">
+											<b>Additional Options</b>
+										</div>
+										<div class="col-sm-12">
+											Show short version:
+											<input type="checkbox" name="show_short_version_cluster" onclick="hide_show_options_cluster()" class="pull-right">
+										</div>
+									</div>
+									<div class="row padded-row" id="short_version_options_cluster" style="display: none;">
+										<div class="col-sm-12">
+											<b>Context window size (words):</b>
+										</div>
+										<div class="col-sm-12">
+											<input id="n_char_cluster" name="short_version_n_char_cluster" class="form-control" data-slider-id='n_char' type="text" data-slider-min="1" data-slider-max="20" data-slider-step="1" data-slider-value="5"/>
+										</div>
+									</div>
+								</div>
+
 								<div class="row">
 									<div class="col-sm-12">
 										<button type="button" onclick="javascript:cluster_query();" class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span> Cluster Search</button>
 									</div>
 								</div>
-							</div>									
+							</div>
 						</div>
 					</div>
 				</div>

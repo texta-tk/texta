@@ -42,7 +42,6 @@ class PreclusterMaker:
 
         dendrogram = self._linkage_matrix_to_dendrogram(linkage_matrix,self.words,self.vectors)
         clusterings = self._create_clusterings(dendrogram)
-
         return [[(node.label,node.vector) for node in _get_cluster_nodes(cluster)] for cluster in self._find_optimal_clustering(clusterings)]
 
     def _linkage_matrix_to_dendrogram(self,linkage_matrix,labels,vectors):
@@ -111,7 +110,7 @@ class PreclusterMaker:
                 max_score = score
                 max_clustering = clustering
 
-        return zip(*max_clustering)[1] if max_clustering else zip(*clusterings[0])[1]
+        return list(zip(*max_clustering))[1] if max_clustering else list(zip(*clusterings[0]))[1]
 
 def _get_cluster_nodes(node):
     

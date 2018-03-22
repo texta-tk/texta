@@ -111,7 +111,7 @@ def selectLexicon(request):
         template = loader.get_template('lexicon.html')
         lexicon = Lexicon.objects.get(id=request.GET['id'])
         words = Word.objects.filter(lexicon=lexicon)
-        words = [a.wrd.encode('utf8') for a in words]
+        words = [a.wrd for a in words]
         lexicons = Lexicon.objects.filter(author=request.user)
 
         # Define selected mapping
@@ -139,7 +139,7 @@ def get_example_texts(request, field, value):
     matched_sentences = []
     for hit in response['hits']['hits']:
         for match in hit['highlight'].values():
-            matched_sentences.append(match[0].encode('utf8'))
+            matched_sentences.append(match[0])
 
     return matched_sentences
 
@@ -169,10 +169,10 @@ def query(request):
         
         #Add unselected previous suggestions as negative examples.
         if 'negatives' in request.POST and len(request.POST['negatives']) > 2 and 'sid' in request.POST and request.POST['sid'] != -1:
-            negatives = [model.vocab[negative.encode('utf8')].index for negative in json.loads(request.POST['negatives']) if negative.encode('utf8') in model.vocab]
+            negatives = [model.vocab[negative].index for negative in json.loads(request.POST['negatives']) if negative in model.vocab]
             ignored_idxes.extend(negatives)
 
-        positives = [elem.lower().encode('utf8') for elem in request.POST['content'].split('\n') if elem != u'' and elem.lower().encode('utf8') in model.vocab] # or ...AND elem in model.vocab]
+        positives = [elem.lower() for elem in request.POST['content'].split('\n') if elem != u'' and elem.lower() in model.vocab] # or ...AND elem in model.vocab]
 
         if not positives:
             return HttpResponse('<br><b style="color:red;">No suggestions available for the lexicon. Try adding more terms.</b>')
@@ -181,7 +181,6 @@ def query(request):
 
         model_run_obj = ModelRun.objects.get(id=int(request.session['model']))
         tooltip_feature = model_run_obj.fields
-        
         # Define selected mapping
         #ds = Datasets().activate_dataset(request.session)
         #dataset = ds.get_index()
@@ -217,10 +216,9 @@ def query(request):
 
             if len(positives) > 0:
                 preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
-
                 labels, vectors = zip(*[zip(*cluster) for cluster in preclusters])
                 label_idxes = [[model.vocab[label].index for label in labels[cluster_idx]] for cluster_idx in range(len(labels))]
-                suggestions_per_cluster = [zip(*getattr(model,method)(positive=labels[cluster_idx],topn=50,ignored_idxes = ignored_idxes + [label_idxes[i][j] for i in range(len(label_idxes)) for j in range(len(label_idxes[i])) if i != cluster_idx]))[0] for cluster_idx in range(len(labels))]
+                suggestions_per_cluster = [next(zip(*getattr(model,method)(positive=labels[cluster_idx],topn=50,ignored_idxes = ignored_idxes + [label_idxes[i][j] for i in range(len(label_idxes)) for j in range(len(label_idxes[i])) if i != cluster_idx]))) for cluster_idx in range(len(labels))]
 
                 suggestions_list = suggestions_per_cluster
                 suggestions = RRA_suggestions(suggestions_list, tooltip_feature, request)

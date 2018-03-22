@@ -48,8 +48,13 @@ $(document).ready(function() {
 		formatter: function(value) {
 			return 'Current value: ' + value;
 		}
-	});
-	
+    });
+    $('#n_char_cluster').bootstrapSlider({
+		formatter: function(value) {
+			return 'Current value: ' + value;
+		}
+    });
+
 	$('#n_clusters').bootstrapSlider({
 		formatter: function(value) {
 			return 'Current value: ' + value;
@@ -66,8 +71,12 @@ $(document).ready(function() {
 		formatter: function(value) {
 			return 'Current value: ' + value;
 		}
-	});	
-	
+	});
+	$('#n_features').bootstrapSlider({
+		formatter: function(value) {
+			return 'Current value: ' + value;
+		}
+	});
 });
 
 
@@ -850,8 +859,19 @@ function change_agg_field(field_nr){
 		$("#interval_"+field_nr).removeClass('hidden');
 		$("#sort_by_"+field_nr).addClass('hidden');	
 		$("#agg_daterange_"+field_nr).removeClass('hidden');	
-	}
-	
+    }
+
+
+    selected_method = $("#sort_by_"+field_nr).children("#sort_by_"+field_nr);
+    selected_method.change(function() {
+        console.log(selected_method[0].options[selected_method[0].selectedIndex].text);
+        if (selected_method[0].options[selected_method[0].selectedIndex].text == 'significant words') {
+            $("#agg_field_2_button").addClass('hidden');
+        }
+        else {
+            $("#agg_field_2_button").removeClass('hidden');
+        }
+    });
 }
 
 function toggle_agg_field_2(action){
@@ -1050,6 +1070,16 @@ function export_data(exportType) {
 
 function hide_show_options() {
     var x = document.getElementById("short_version_options");
+
+    if (x.style.display === "none") {
+        x.style.display = "block";
+    } else {
+        x.style.display = "none";
+    }
+}
+
+function hide_show_options_cluster() {
+    var x = document.getElementById("short_version_options_cluster");
 
     if (x.style.display === "none") {
         x.style.display = "block";

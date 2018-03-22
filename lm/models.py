@@ -13,7 +13,7 @@ class Lexicon(models.Model):
     on_delete=models.CASCADE) # NEW PY REQUIREMENT
 
     def __str__(self):
-        return self.name.encode('utf8')
+        return self.name # NEW PY REQUIREMENT
 
 
 class SuggestionSet(models.Model):
