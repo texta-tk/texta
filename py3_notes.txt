@@ -37,6 +37,8 @@ Just some notes to keep track of certain things
 += also make a slider for tfidf max features
 += also add the short version
 == also make it so that you can select the certain documents in the cluster and export them/search on them or something
+== also show the words seperately instead of when hovering
+== also make a cluster wordset into a lexicon
 
 === results ===
 +- export
@@ -57,11 +59,21 @@ Just some notes to keep track of certain things
 
 #LEXICON MINER +
 +- all word suggestion types
+    - actually randomly clusterings don't work anymore
+    - also term candidates shows raha[punct] now for some reason
+    - also suggest words doesn't work sometimes unless you press reset suggestions
 + save lexicon
+    - also doesn't work for some lexicons, like kohtu
+        =create new lexicon, click on it, find some suggestions, press save, doesn't save
+        =ctrl f5 page, randomly add words there, press save, now saves SOMETIMES (maybe when restarting server works)
 + reset suggestions
 
-#CONCEPTUALISER
--? plotting
+#CONCEPTUALISER +
++- plotting
++ all methods
++ combine
++ dissolve
++ commit results
 
 #MWE MINER +
 + start task works somehow, including different options
