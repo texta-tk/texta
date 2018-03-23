@@ -149,7 +149,7 @@ class ES_Manager:
                 sub_structure = item[1]['properties']
                 path_list = root_path[:]
                 path_list.append(item[0])
-                sub_mapping = [{'path': item[0], 'type': u'string'}]
+                sub_mapping = [{'path': item[0], 'type': 'string'}]
                 mapping_data.extend(sub_mapping) 
 
             else:
@@ -254,7 +254,7 @@ class ES_Manager:
     @staticmethod
     def _get_fact_constraints(es_params):
         _constraints = {}
-        fact_val_constraint_keys = {u'type':None, u'val':None, u'op':None}
+        fact_val_constraint_keys = {'type':None, 'val':None, 'op':None}
         for item in es_params:
             if 'fact' in item:
                 item = item.split('_')
@@ -633,6 +633,7 @@ class ES_Manager:
         while l > 0:
             search_url = '{0}/_search/scroll?scroll={1}'.format(es_url,time_out)
             response = requests.post(search_url, data=scroll_id, headers=headers).json()
+            import pdb;pdb.set_trace()
             l = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
  

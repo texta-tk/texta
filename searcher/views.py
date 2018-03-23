@@ -366,14 +366,18 @@ def highlight_cluster_keywords(documents, keywords, params):
                 to_highlighter.append(new_match)
 
         if to_highlighter:
-            hl = Highlighter(default_category='')
+            hl = Highlighter(default_category='[HL]')
             document = hl.highlight(document,to_highlighter)
-        #'short_version_n_char': ['5']
+
         if 'show_short_version_cluster' in params.keys():
-            document_1 = document
             document = additional_option_cut_text(document, params['short_version_n_char_cluster'])
-            print(document == document_1)
-            # HERE
+            #print(document3 == document2)
+
+        #'short_version_n_char': ['5']
+        # if 'show_short_version_cluster' in params.keys():
+        #     #document_1 = document
+        #     document = additional_option_cut_text(document, params['short_version_n_char_cluster'])
+        #     #print(document == document_1)
         out.append(document)
     return out
 
@@ -534,9 +538,8 @@ def search(es_params, request):
 
 def additional_option_cut_text(content, window_size):
     window_size = int(window_size)
-    content = str(content)
 
-    if u'[HL]' in content:
+    if '[HL]' in content:
         soup = bs4.BeautifulSoup(content,'lxml')
         html_spans = soup.find_all('span')
 

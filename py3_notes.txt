@@ -21,7 +21,7 @@ Just some notes to keep track of certain things
 + rutest.txt imported, mlp worked, note /home/eha/Documents/texta/texta-py3/texta/dataset_importer/document_storer/storers/elastic_storer.py line 117, looping over only non mlp values
 
 # SEARCHER
-=== current search ===
+=== current search === +
 + search
 + regular highlighting, but not on the txt_5000 file as mentioned below, might be from whitespace
 + translit highlighting
@@ -31,14 +31,16 @@ Just some notes to keep track of certain things
 +- bring up saved searches
 +- concept/lexicon suggestions
 
-=== cluster search ===
-- cluster search clustering method: hierarchical
+=== cluster search === +
++- cluster search clustering method: hierarchical
 +- cluster search, kmeans, tfidf, countvectorizer, cluster sizes, stopwords lexicon
 += also make a slider for tfidf max features
-== also add the short version
++= also add the short version
+== also make it so that you can select the certain documents in the cluster and export them/search on them or something
 
 === results ===
 +- export
+- delete results   
 == also the search result amount is only on the bottom (probably not py3 related)
 
 === Aggregations ===
