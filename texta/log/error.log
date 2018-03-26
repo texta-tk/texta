@@ -1814,3 +1814,513 @@ Traceback (most recent call last):
   File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 227, in <listcomp>
     suggestions_per_cluster = [zip(*getattr(model,method)(positive=labels[cluster_idx],topn=50,ignored_idxes = ignored_idxes + [label_idxes[i][j] for i in range(len(label_idxes)) for j in range(len(label_idxes[i])) if i != cluster_idx]))[0] for cluster_idx in range(len(labels))]
 TypeError: 'zip' object is not subscriptable
+
+ERROR - views - error_logger - 21937 - 140360663688960 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "22", "suggestion_method": "precluster most_similar_cosmul"}} - 2018-03-26 15:22:54,072
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 217, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 43, in __call__
+    clusterings = self._create_clusterings(dendrogram)
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 85, in _create_clusterings
+    heapq.heappush(new_clustering,(-(self._min_dist-1),left))
+TypeError: '<' not supported between instances of 'DataPoint' and 'DataPoint'
+
+ERROR - views - error_logger - 21937 - 140360663688960 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "22", "suggestion_method": "precluster most_similar"}} - 2018-03-26 15:22:58,841
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 217, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 43, in __call__
+    clusterings = self._create_clusterings(dendrogram)
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 85, in _create_clusterings
+    heapq.heappush(new_clustering,(-(self._min_dist-1),left))
+TypeError: '<' not supported between instances of 'DataPoint' and 'DataPoint'
+
+ERROR - views - error_logger - 21937 - 140360663688960 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "22", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:23:01,266
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 43, in __call__
+    clusterings = self._create_clusterings(dendrogram)
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 85, in _create_clusterings
+    heapq.heappush(new_clustering,(-(self._min_dist-1),left))
+TypeError: '<' not supported between instances of 'DataPoint' and 'DataPoint'
+
+ERROR - views - error_logger - 21937 - 140360663688960 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "22", "suggestion_method": "simple_precluster most_similar"}} - 2018-03-26 15:23:02,841
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 43, in __call__
+    clusterings = self._create_clusterings(dendrogram)
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 85, in _create_clusterings
+    heapq.heappush(new_clustering,(-(self._min_dist-1),left))
+TypeError: '<' not supported between instances of 'DataPoint' and 'DataPoint'
+
+ERROR - views - error_logger - 21937 - 140360663688960 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "17", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:25:31,598
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 43, in __call__
+    clusterings = self._create_clusterings(dendrogram)
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 85, in _create_clusterings
+    heapq.heappush(new_clustering,(-(self._min_dist-1),left))
+TypeError: '<' not supported between instances of 'DataPoint' and 'DataPoint'
+
+ERROR - views - error_logger - 21937 - 140360663688960 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "17", "suggestion_method": "precluster most_similar"}} - 2018-03-26 15:25:37,379
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 217, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 43, in __call__
+    clusterings = self._create_clusterings(dendrogram)
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 85, in _create_clusterings
+    heapq.heappush(new_clustering,(-(self._min_dist-1),left))
+TypeError: '<' not supported between instances of 'DataPoint' and 'DataPoint'
+
+ERROR - views - error_logger - 21937 - 140360663688960 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "17", "suggestion_method": "precluster most_similar"}} - 2018-03-26 15:25:38,460
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 217, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 43, in __call__
+    clusterings = self._create_clusterings(dendrogram)
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 85, in _create_clusterings
+    heapq.heappush(new_clustering,(-(self._min_dist-1),left))
+TypeError: '<' not supported between instances of 'DataPoint' and 'DataPoint'
+
+ERROR - views - error_logger - 21937 - 140360663688960 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "17", "suggestion_method": "precluster most_similar"}} - 2018-03-26 15:30:33,204
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 217, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 43, in __call__
+    clusterings = self._create_clusterings(dendrogram)
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 85, in _create_clusterings
+    heapq.heappush(new_clustering,(-(self._min_dist-1),left))
+TypeError: '<' not supported between instances of 'DataPoint' and 'DataPoint'
+
+ERROR - views - error_logger - 21937 - 140360663688960 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "23", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:30:46,060
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 21937 - 140360751412992 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:32:23,806
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 21937 - 140360751412992 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:32:23,851
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 21937 - 140360751412992 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:32:29,366
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 23239 - 140355753199360 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:33:54,249
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 23290 - 139791392610048 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:34:19,846
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 23290 - 139791392610048 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:34:30,141
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 23373 - 139914980607744 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:35:08,374
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 197, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 23373 - 139914980607744 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:36:43,468
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 197, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 23697 - 140217225860864 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:39:25,178
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 195, in query
+    method = request.POST['method'][18:]
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 23697 - 140217225860864 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar"}} - 2018-03-26 15:39:52,680
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 195, in query
+    method = request.POST['method'][18:]
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 23697 - 140217225860864 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:39:59,176
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 195, in query
+    method = request.POST['method'][18:]
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 23697 - 140217225860864 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "precluster most_similar"}} - 2018-03-26 15:40:02,791
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 220, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 23697 - 140217225860864 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "precluster most_similar_cosmul"}} - 2018-03-26 15:40:08,164
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 220, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 24113 - 139759039960832 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:42:14,619
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 195, in query
+    method = request.POST['method'][18:]
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 41, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 24279 - 140055402690304 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:46:06,020
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 199, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 42, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 63, in _linkage_matrix_to_dendrogram
+    cluster_map[row_idx+N] = Cluster(cluster_map[int(step[0])],cluster_map[int(step[1])],step[2])
+KeyError: 4
+
+ERROR - views - error_logger - 24563 - 140297493366528 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:49:34,622
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 199, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    distance_matrix = scidist.pdist(np.array(self.vectors),self.metric)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 24602 - 140525472917248 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:50:03,277
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 199, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    distance_matrix = scidist.pdist(np.array(self.vectors),self.metric)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 24743 - 140228092266240 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar"}} - 2018-03-26 15:51:58,907
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 199, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    print((np.array(self.vectors).shape))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 25022 - 139712665974528 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:54:32,328
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 43, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 25022 - 139712665974528 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:55:16,889
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 43, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 25108 - 140619503617792 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:55:48,180
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 45, in __call__
+    dendrogram = self._linkage_matrix_to_dendrogram(linkage_matrix,self.words,self.vectors) # if reshape then breaks here
+UnboundLocalError: local variable 'linkage_matrix' referenced before assignment
+
+ERROR - views - error_logger - 25220 - 140263235843840 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:56:23,399
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 45, in __call__
+    dendrogram = self._linkage_matrix_to_dendrogram(linkage_matrix,self.words,self.vectors)
+UnboundLocalError: local variable 'linkage_matrix' referenced before assignment
+
+ERROR - views - error_logger - 25280 - 140016529426176 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:56:50,074
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 198, in query
+    labels, vectors = zip(*[zip(*cluster) for cluster in preclusters])
+ValueError: not enough values to unpack (expected 2, got 0)
+
+ERROR - views - error_logger - 25364 - 140510182754048 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:57:14,115
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 45, in __call__
+    dendrogram = self._linkage_matrix_to_dendrogram(linkage_matrix,self.words,self.vectors)
+UnboundLocalError: local variable 'linkage_matrix' referenced before assignment
+
+ERROR - views - error_logger - 25364 - 140510182754048 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:57:18,064
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 45, in __call__
+    dendrogram = self._linkage_matrix_to_dendrogram(linkage_matrix,self.words,self.vectors)
+UnboundLocalError: local variable 'linkage_matrix' referenced before assignment
+
+ERROR - views - error_logger - 25364 - 140510182754048 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:57:30,726
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 45, in __call__
+    dendrogram = self._linkage_matrix_to_dendrogram(linkage_matrix,self.words,self.vectors)
+UnboundLocalError: local variable 'linkage_matrix' referenced before assignment
+
+ERROR - views - error_logger - 25364 - 140510182754048 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:57:43,084
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 45, in __call__
+    dendrogram = self._linkage_matrix_to_dendrogram(linkage_matrix,self.words,self.vectors)
+UnboundLocalError: local variable 'linkage_matrix' referenced before assignment
+
+ERROR - views - error_logger - 25364 - 140510182754048 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:58:07,291
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 45, in __call__
+    dendrogram = self._linkage_matrix_to_dendrogram(linkage_matrix,self.words,self.vectors)
+UnboundLocalError: local variable 'linkage_matrix' referenced before assignment
+
+ERROR - views - error_logger - 25364 - 140510182754048 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 15:59:02,654
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 45, in __call__
+    dendrogram = self._linkage_matrix_to_dendrogram(linkage_matrix,self.words,self.vectors)
+UnboundLocalError: local variable 'linkage_matrix' referenced before assignment
+
+ERROR - views - error_logger - 25581 - 139947705214720 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 16:00:17,175
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 43, in __call__
+    print(linkage_matrix = hier.linkage(distance_matrix,self.linkage))
+TypeError: 'linkage_matrix' is an invalid keyword argument for this function
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 47, in __call__
+    print(linkage_matrix = hier.linkage(distance_matrix,self.linkage))
+TypeError: 'linkage_matrix' is an invalid keyword argument for this function
+
+ERROR - views - error_logger - 25581 - 139947705214720 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 16:01:27,403
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 41, in __call__
+    linkage_matrix = hier.linkage(distance_matrix,self.linkage)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 47, in __call__
+    print(linkage_matrix = hier.linkage(distance_matrix,self.linkage))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 25754 - 140514813003520 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 16:02:18,454
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 48, in __call__
+    dendrogram = self._linkage_matrix_to_dendrogram(linkage_matrix,self.words,self.vectors)
+UnboundLocalError: local variable 'linkage_matrix' referenced before assignment
+
+ERROR - views - error_logger - 25754 - 140514813003520 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 16:02:36,147
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 48, in __call__
+    dendrogram = self._linkage_matrix_to_dendrogram(linkage_matrix,self.words,self.vectors)
+UnboundLocalError: local variable 'linkage_matrix' referenced before assignment
+
+ERROR - views - error_logger - 25932 - 139892230059776 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 16:05:02,651
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 47, in __call__
+    print(np.array(self.vectors))
+UnboundLocalError: local variable 'linkage_matrix' referenced before assignment
+
+ERROR - views - error_logger - 26044 - 140439416973056 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 16:06:13,419
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 49, in __call__
+    print(np.array(self.vectors))
+UnboundLocalError: local variable 'linkage_matrix' referenced before assignment
+
+ERROR - views - error_logger - 26044 - 140439416973056 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 16:06:20,776
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 49, in __call__
+    print(np.array(self.vectors))
+UnboundLocalError: local variable 'linkage_matrix' referenced before assignment
+
+ERROR - views - error_logger - 26201 - 140122841978624 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 16:07:40,010
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 39, in __call__
+    if len(self.words == 1):
+TypeError: object of type 'bool' has no len()
+
+ERROR - views - error_logger - 26273 - 140396315981568 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 16:07:59,236
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 51, in __call__
+    print(np.array(self.vectors))
+UnboundLocalError: local variable 'linkage_matrix' referenced before assignment
+
+ERROR - views - error_logger - 26273 - 140396315981568 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 16:08:08,321
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 51, in __call__
+    print(np.array(self.vectors))
+UnboundLocalError: local variable 'linkage_matrix' referenced before assignment
+
+ERROR - views - error_logger - 26273 - 140396315981568 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "25", "suggestion_method": "simple_precluster most_similar_cosmul"}} - 2018-03-26 16:08:24,190
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 196, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 51, in __call__
+    print(np.array(self.vectors))
+UnboundLocalError: local variable 'linkage_matrix' referenced before assignment

@@ -36,10 +36,14 @@ class PreclusterMaker:
     def __call__(self):
         if len(self.words) == 0 or len(self.vectors) == 0:
             return []
+        if len(self.words) == 1:
+            self.words.append(self.words[0])
+            self.vectors.append(self.vectors[0])
+
         distance_matrix = scidist.pdist(np.array(self.vectors),self.metric)
         linkage_matrix = hier.linkage(distance_matrix,self.linkage)
 
-        dendrogram = self._linkage_matrix_to_dendrogram(linkage_matrix,self.words,self.vectors) # if reshape then breaks here
+        dendrogram = self._linkage_matrix_to_dendrogram(linkage_matrix,self.words,self.vectors)
         clusterings = self._create_clusterings(dendrogram)
         return [[(node.label,node.vector) for node in _get_cluster_nodes(cluster)] for cluster in self._find_optimal_clustering(clusterings)]
 

@@ -59,6 +59,8 @@ Just some notes to keep track of certain things
 
 #LEXICON MINER +
 +- all word suggestion types
+    += actually works, just you cant use it with only one word
+    += nevermind still doesn't work for some reason
     += was caused by python2 formats? or zip not throwing an exception
     +- actually randomly clusterings don't work anymore
     +- also term candidates shows raha[punct] now for some reason
@@ -84,4 +86,4 @@ Just some notes to keep track of certain things
 + MWE Task result reverse value list (also got index out of range somewhere, can't replicate)
 + force all true
 + forse all false
-== also test with multiple lexicons
+-== also test with multiple lexicons
