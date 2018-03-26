@@ -6,16 +6,16 @@ import heapq
 from sklearn.metrics import silhouette_score
 
 class DataPoint:
-    
+
     def __init__(self,label,vector):
         self.label = label
         self.vector = vector
 
     def is_cluster(self):
         return False
-    
+
 class Cluster:
-    
+
     def __init__(self,left,right,distance):
         self.left = left
         self.right = right
@@ -25,14 +25,14 @@ class Cluster:
         return True
 
 class PreclusterMaker:
-    
+
     def __init__(self,words, vectors, number_of_steps = 21,metric="cosine",linkage="complete"):
         self.words = words
         self.vectors = vectors
         self.number_of_steps = number_of_steps
         self.metric = metric
         self.linkage = linkage
-	
+
     def __call__(self):
         if len(self.words) == 0 or len(self.vectors) == 0:
             return []
@@ -87,12 +87,12 @@ class PreclusterMaker:
                 if right.is_cluster():
                     heapq.heappush(new_clustering,(-right.distance,right))
                 else:
-                    heapq.heappush(new_clustering,(-(self._min_dist-1),right))		
-    
+                    heapq.heappush(new_clustering,(-(self._min_dist-1),right))
+
             clusterings.append(new_clustering)
 
         return clusterings
-    
+
     def _find_optimal_clustering(self,clusterings):
 
         max_score = float('-inf')
@@ -112,12 +112,12 @@ class PreclusterMaker:
         return list(zip(*max_clustering))[1] if max_clustering else list(zip(*clusterings[0]))[1]
 
 def _get_cluster_nodes(node):
-    
+
     if not node.is_cluster():
         return [node]
     else:
         return _get_cluster_nodes(node.left) + _get_cluster_nodes(node.right)
-    
+
 if __name__ == "__main__":
     words = np.arange(20)
     vectors = np.random.rand(20,8)

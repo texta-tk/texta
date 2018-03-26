@@ -18,22 +18,22 @@ except ImportError as e:
    import pickle
 
 class NegativesEntry:
-    
+
     def __init__(self,negatives):
         self.negatives = negatives
         self.access_time = time()
-        
+
 class ModelEntry:
-    
+
     def __init__(self,model):
         self.model = model
         self.access_time = time()
 
 class ModelManager(threading.Thread):
-    
+
     def __init__(self,expiration_time,refresh_time,models=None):
         threading.Thread.__init__(self)
-        self.daemon = True	
+        self.daemon = True
         self._model_negatives = defaultdict(lambda: defaultdict(dict))
         self._models = {}
         self.expiration_time = expiration_time
@@ -44,12 +44,12 @@ class ModelManager(threading.Thread):
         self._models_lock = threading.Lock()
         self._negatives_lock = threading.Lock()
         self._stop = threading.Event()
-        
+
     def run(self):
         while not self.stopped():
             self._remove_expired_negatives()
             sleep(self.refresh_time)
-	    
+
     def _remove_expired_negatives(self):
         # TODO remove empty entries and dirs
         with self._negatives_lock and self._models_lock:
@@ -85,12 +85,12 @@ class ModelManager(threading.Thread):
                         model_path = os.path.join(MODELS_DIR,"model_%s"%deleted_model)
                         if os.path.exists(model_path):
                             os.remove(model_path)
-                            
+
                     if deleted_model in self._model_negatives:
                         negatives_path = os.path.join(USER_MODELS,model_name)
                         if os.path.exists(negatives_path):
                             shutil.rmtree(negatives_path)
-                
+
                 if deleted_model in self._models:
                     del self._models[deleted_model]
                 if deleted_model in self._model_negatives:
@@ -111,7 +111,7 @@ class ModelManager(threading.Thread):
                     self._models[model_name] = ModelEntry(MaskedWord2Vec(gensim.models.Word2Vec.load(model_path)))
                 else:
                     raise LookupError("Model %s not found."%model_name)
-            
+
             self._models[model_name].access_time = time()
             return self._models[model_name].model
 
@@ -168,12 +168,12 @@ class ModelManager(threading.Thread):
         return self._stop.isSet()
 
 
-    
+
 def get_model_manager(expiration_time=300,refresh_time=60,models=None):
     model_manager = ModelManager(expiration_time,refresh_time,models)
     model_manager.start()
     return model_manager
-		
+
 if __name__ == "__main__":
     mm = get_model_manager(expiration_time=10,refresh_time=4)
     mm.get_negatives('model1','kom',1)

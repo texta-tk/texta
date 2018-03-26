@@ -46,15 +46,15 @@ def index(request):
 def newLexicon(request):
     lexiconName = request.POST['lexiconname']
     model_pk = int(request.session['model'])
-    
+
     if lexiconName:
         try:
             Lexicon(name=lexiconName,description='na',author=request.user).save()
         except Exception as e:
             logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_creation_failed','args':{'user_name':request.user.username,'lexicon_name':lexiconName}}),exc_info=True)
-            
+
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_created','args':{'user_name':request.user.username,'lexicon_name':lexiconName}}))
-    
+
     return HttpResponseRedirect(URL_PREFIX + '/lm')
 
 
@@ -65,11 +65,11 @@ def deleteLexicon(request):
         model_manager.remove_negatives(request.session['model'],request.user.username,lexicon.id)
         Word.objects.filter(lexicon=lexicon).delete()
         lexicon.delete()
-    
+
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_deleted','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}))
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_deletion_failed','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}),exc_info=True)
-    
+
     return HttpResponseRedirect(URL_PREFIX + '/lm')
 
 
@@ -82,26 +82,26 @@ def saveLexicon(request):
             Word.objects.filter(lexicon=lexicon).delete()
 
             model_manager.save_negatives(request.session['model'],request.user.username,lexicon.id)
-            
+
             lexicon_words = uniq(json.loads(request.POST['lexicon']))
             suggestionset_map = {}
             for lexicon_word in lexicon_words:
                 if lexicon_word['sid'] >= 0:
                     suggestionset_map[lexicon_word['word']]=SuggestionSet.objects.get(id=lexicon_word['sid'])
-            
+
             step = 100
             word_objects = [Word(lexicon=lexicon,wrd=word_sid['word'],suggestionset=suggestionset_map[word_sid['word']]) if word_sid['sid'] >= 0 else Word(lexicon=lexicon,wrd=word_sid['word']) for word_sid in lexicon_words]
             i = 0
             while i < len(word_objects):
                 Word.objects.bulk_create(word_objects[i:i+step])
                 i += step
-                
+
             logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_saved','args':{'user_name':request.user.username,'lexicon_id':lexId,'lexicon_terms':len(lexicon_words)}}))
         else:
             logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'CREATE LEXICON','event':'lexicon_saving_failed','args':{'user_name':request.user.username,'lexicon_id':lexId},'reason':'No lexicon ID provided.'}))
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_saving_failed','args':{'user_name':request.user.username,'lexicon_id':lexId}}),exc_info=True)
-        
+
     return HttpResponseRedirect(URL_PREFIX + '/lm/select?id='+lexId)
 
 
@@ -118,13 +118,13 @@ def selectLexicon(request):
         ds = Datasets().activate_dataset(request.session)
         es_m = ds.build_manager(ES_Manager)
         fields = es_m.get_column_names()
-        
+
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_selected','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']},'data':{'lexicon_terms':words}}))
-        
+
         return HttpResponse(template.render({'words':words,'selected':request.GET['id'],'lexicons':lexicons,'STATIC_URL':STATIC_URL,'features':fields},request))
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_selection_failed','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}),exc_info=True)
-        
+
         return HttpResponseRedirect(URL_PREFIX + '/lm')
 
 
@@ -132,10 +132,10 @@ def get_example_texts(request, field, value):
     ds = Datasets().activate_dataset(request.session)
     dataset = ds.get_index()
     mapping = ds.get_mapping()
-    
+
     query = json.dumps({ "size":10, "highlight": {"fields": {field: {}}}, "query": {"match": {field: value}}})
     response = ES_Manager.plain_scroll(es_url, dataset, mapping, query)
-    
+
     matched_sentences = []
     for hit in response['hits']['hits']:
         for match in hit['highlight'].values():
@@ -153,7 +153,7 @@ def query(request):
         suggestionset.save()
 
         ignored_idxes = model_manager.get_negatives(request.session['model'],request.user.username,lexicon.id)
-        
+
         try:
 
             model = model_manager.get_model(request.session['model'])
@@ -165,7 +165,7 @@ def query(request):
             return HttpResponse('INVALID MODEL')
 
         suggestionset_id = suggestionset.id
-        
+
         #Add unselected previous suggestions as negative examples.
         if 'negatives' in request.POST and len(request.POST['negatives']) > 2 and 'sid' in request.POST and request.POST['sid'] != -1:
             negatives = [model.vocab[negative].index for negative in json.loads(request.POST['negatives']) if negative in model.vocab]
@@ -194,7 +194,7 @@ def query(request):
             method = request.POST['method'][18:]
 
             preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
-            
+
             labels, vectors = zip(*[zip(*cluster) for cluster in preclusters])
 
             selected_cluster = random.randint(0,len(labels)-1)
@@ -203,13 +203,13 @@ def query(request):
 
             label_idxes = [[model.vocab[label].index for label in labels[cluster_idx]] for cluster_idx in range(len(labels))]
             ignored_idxes.extend([label_idxes[cluster_idx][inner_cluster_idx] for cluster_idx in range(len(label_idxes)) if cluster_idx != selected_cluster for inner_cluster_idx in range(len(label_idxes[cluster_idx]))])
-            
+
             for a in getattr(model,method)(positive=new_positives,topn=40,ignored_idxes = ignored_idxes):
                 encoded_a = encode_for_id(a[0])
-                matched_sentences = get_example_texts(request, tooltip_feature, a[0])                
+                matched_sentences = get_example_texts(request, tooltip_feature, a[0])
                 suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded_a + '\'>&bull; <a title="' + '\n'.join(matched_sentences).replace('"','') + '" href="javascript:addWord(\''+encoded_a+'\');">'+a[0]+'</a></div>')
 
-            
+
         elif request.POST['method'][:10] == 'precluster':
             method = request.POST['method'][11:]
 
@@ -228,11 +228,11 @@ def query(request):
             local_suggestions = [[similar[0] for similar in getattr(model,local_method)(positive=[positive],topn=50,ignored_idxes=ignored_idxes) if similar[0] not in positives ] for positive in positives]
             suggestions_list = local_suggestions
             suggestions = RRA_suggestions(suggestions_list, tooltip_feature, request)
-        
+
         suggestions.append('<input type=\'hidden\' id=\'sid\' value=\'' + str(suggestionset_id) + '\'/>') # hidden field to store previous suggestionset's id
-        
+
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'terms_suggested','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'suggestion_method':request.POST['method']}}))
-        
+
         return HttpResponse(['<table><tr><td id=\'suggestion_cell_1\'>'] + suggestions[:20] + ['</td><td id=\'suggestion_cell_2\'>'] + suggestions[20:] + ['</td></tr></table>'])
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'term_suggestion_failed','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'suggestion_method':request.POST['method']}}),exc_info=True)
@@ -244,7 +244,7 @@ def RRA_suggestions(suggestions_list, tooltip_feature, request):
     encoded_suggestions = [(name, encode_for_id(name)) for (name, score) in ranks[:40]]
     suggestions = []
     for (name,encoded) in encoded_suggestions:
-        matched_sentences = get_example_texts(request, tooltip_feature, name)         
+        matched_sentences = get_example_texts(request, tooltip_feature, name)
         suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded + '\'>&bull; <a title="' + '\n'.join(matched_sentences).replace('"','') + '" href="javascript:addWord(\'' + encoded + '\');">' + name + '</a></div>')
     return suggestions
 
@@ -259,7 +259,7 @@ def encode_for_id(s):
 @login_required
 def reset_suggestions(request):
     lexicon_id = request.POST['lid']
-    
+
     try:
         model_manager.reset_negatives(request.session['model'],request.user.username,int(lexicon_id))
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'suggestions_reset','args':{'user_name':request.user.username,'lexicon_id':lexicon_id}}))
