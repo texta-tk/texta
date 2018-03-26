@@ -1718,3 +1718,99 @@ Traceback (most recent call last):
   File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 64, in _linkage_matrix_to_dendrogram
     cluster_map[row_idx+N] = Cluster(cluster_map[int(step[0])],cluster_map[int(step[1])],step[2])
 KeyError: 3
+
+ERROR - views - error_logger - 17199 - 140471535924992 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "9", "suggestion_method": "precluster most_similar"}} - 2018-03-26 14:14:06,067
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 223, in query
+    preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 40, in __call__
+    print(np.array(self.vectors),self.metric)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/cluster/hierarchy.py", line 716, in linkage
+    n = int(distance.num_obs_y(y))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/scipy/spatial/distance.py", line 2051, in num_obs_y
+    raise ValueError("The number of observations cannot be determined on "
+ValueError: The number of observations cannot be determined on an empty distance matrix.
+
+ERROR - views - error_logger - 17199 - 140471535924992 - {"process": "CREATE LEXICON", "event": "lexicon_saving_failed", "args": {"user_name": "ranet", "lexicon_id": "11"}} - 2018-03-26 14:18:22,673
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 86, in saveLexicon
+    model_manager.save_negatives(request.session['model'],request.user.username,lexicon.id)
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/model_manager.py", line 145, in save_negatives
+    fout.write(pickle.dumps(self._model_negatives[model_name][username][lexicon_id].negatives))
+TypeError: write() argument must be str, not bytes
+
+ERROR - views - error_logger - 17801 - 140050101352192 - {"process": "CREATE LEXICON", "event": "lexicon_saving_failed", "args": {"user_name": "ranet", "lexicon_id": "12"}} - 2018-03-26 14:19:17,982
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 86, in saveLexicon
+    model_manager.save_negatives(request.session['model'],request.user.username,lexicon.id)
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/model_manager.py", line 145, in save_negatives
+    fout.write(pickle.dumps(self._model_negatives[model_name][username][lexicon_id].negatives))
+TypeError: write() argument must be str, not bytes
+
+ERROR - views - error_logger - 18087 - 140283796920064 - {"process": "CREATE LEXICON", "event": "lexicon_deletion_failed", "args": {"user_name": "ranet", "lexicon_id": "13"}} - 2018-03-26 14:23:07,771
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 65, in deleteLexicon
+    lexicon = Lexicon.objects.get(id=request.GET['id'])
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/django/db/models/manager.py", line 82, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/site-packages/django/db/models/query.py", line 403, in get
+    self.model._meta.object_name
+lm.models.DoesNotExist: Lexicon matching query does not exist.
+
+ERROR - views - error_logger - 18772 - 140036575733504 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "5", "suggestion_method": "most_similar_cosmul"}} - 2018-03-26 14:32:58,789
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 159, in query
+    ignored_idxes = model_manager.get_negatives(request.session['model'],request.user.username,lexicon.id)
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/model_manager.py", line 126, in get_negatives
+    self._model_negatives[model_name][username][lexicon_id] = NegativesEntry(pickle.loads(fin.read().strip()))
+TypeError: a bytes-like object is required, not 'str'
+
+ERROR - views - error_logger - 18978 - 140262371350272 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "5", "suggestion_method": "most_similar_cosmul"}} - 2018-03-26 14:35:15,241
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 159, in query
+    ignored_idxes = model_manager.get_negatives(request.session['model'],request.user.username,lexicon.id)
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/model_manager.py", line 126, in get_negatives
+    self._model_negatives[model_name][username][lexicon_id] = NegativesEntry(pickle.loads(fin.read().strip()))
+EOFError: Ran out of input
+
+ERROR - views - error_logger - 19222 - 140561138239232 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "5", "suggestion_method": "most_similar_cosmul"}} - 2018-03-26 14:37:36,334
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 159, in query
+    ignored_idxes = model_manager.get_negatives(request.session['model'],request.user.username,lexicon.id)
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/model_manager.py", line 133, in get_negatives
+    self._model_negatives[model_name][username][lexicon_id].access_time = time()
+KeyError: 5
+
+ERROR - views - error_logger - 19283 - 139807143708416 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "15", "suggestion_method": "most_similar"}} - 2018-03-26 14:38:31,629
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 159, in query
+    ignored_idxes = model_manager.get_negatives(request.session['model'],request.user.username,lexicon.id)
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/model_manager.py", line 126, in get_negatives
+    self._model_negatives[model_name][username][lexicon_id] = NegativesEntry(pickle.loads(fin.read().strip()))
+  File "/home/eha/anaconda2/envs/texta3/lib/python3.6/codecs.py", line 321, in decode
+    (result, consumed) = self._buffer_decode(data, self.errors, final)
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0x80 in position 0: invalid start byte
+
+ERROR - views - error_logger - 20251 - 139678893197056 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "16", "suggestion_method": "most_similar"}} - 2018-03-26 14:53:11,168
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 159, in query
+    ignored_idxes = model_manager.get_negatives(request.session['model'],request.user.username,lexicon.id)
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/model_manager.py", line 127, in get_negatives
+    self._model_negatives[model_name][username][lexicon_id] = NegativesEntry(pickle.loads(fin.read().strip(), encoding='latin1'))
+EOFError: Ran out of input
+
+ERROR - views - error_logger - 20251 - 139678893197056 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "16", "suggestion_method": "most_similar"}} - 2018-03-26 14:56:12,875
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 159, in query
+    ignored_idxes = model_manager.get_negatives(request.session['model'],request.user.username,lexicon.id)
+  File "/home/eha/Documents/texta/texta-py3/texta/utils/model_manager.py", line 127, in get_negatives
+    self._model_negatives[model_name][username][lexicon_id] = NegativesEntry(pickle.loads(fin.read().strip(), encoding='latin1'))
+EOFError: Ran out of input
+
+ERROR - views - error_logger - 20490 - 140055595185920 - {"process": "CREATE LEXICON", "event": "term_suggestion_failed", "args": {"user_name": "ranet", "lexicon_id": "17", "suggestion_method": "precluster most_similar_cosmul"}} - 2018-03-26 14:58:10,202
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 227, in query
+    suggestions_per_cluster = [zip(*getattr(model,method)(positive=labels[cluster_idx],topn=50,ignored_idxes = ignored_idxes + [label_idxes[i][j] for i in range(len(label_idxes)) for j in range(len(label_idxes[i])) if i != cluster_idx]))[0] for cluster_idx in range(len(labels))]
+  File "/home/eha/Documents/texta/texta-py3/texta/lm/views.py", line 227, in <listcomp>
+    suggestions_per_cluster = [zip(*getattr(model,method)(positive=labels[cluster_idx],topn=50,ignored_idxes = ignored_idxes + [label_idxes[i][j] for i in range(len(label_idxes)) for j in range(len(label_idxes[i])) if i != cluster_idx]))[0] for cluster_idx in range(len(labels))]
+TypeError: 'zip' object is not subscriptable

@@ -59,14 +59,17 @@ Just some notes to keep track of certain things
 
 #LEXICON MINER +
 +- all word suggestion types
-    - actually randomly clusterings don't work anymore
-    - also term candidates shows raha[punct] now for some reason
-    - also suggest words doesn't work sometimes unless you press reset suggestions
+    += was caused by python2 formats? or zip not throwing an exception
+    +- actually randomly clusterings don't work anymore
+    +- also term candidates shows raha[punct] now for some reason
+    +- also suggest words doesn't work sometimes unless you press reset suggestions
 + save lexicon
-    - also doesn't work for some lexicons, like kohtu
-        =create new lexicon, click on it, find some suggestions, press save, doesn't save
-        =ctrl f5 page, randomly add words there, press save, now saves SOMETIMES (maybe when restarting server works)
+    +- also doesn't work for some lexicons, like kohtu
+        += was caused by trying to write binary to non binary file
+        +=create new lexicon, click on it, find some suggestions, press save, doesn't save
+        +=ctrl f5 page, randomly add words there, press save, now saves SOMETIMES (maybe when restarting server works)
 + reset suggestions
+== should display which lexicon is selected.
 
 #CONCEPTUALISER +
 +- plotting

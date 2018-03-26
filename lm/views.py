@@ -51,7 +51,6 @@ def newLexicon(request):
         try:
             Lexicon(name=lexiconName,description='na',author=request.user).save()
         except Exception as e:
-            print('EXCEPT1')
             logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_creation_failed','args':{'user_name':request.user.username,'lexicon_name':lexiconName}}),exc_info=True)
             
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_created','args':{'user_name':request.user.username,'lexicon_name':lexiconName}}))
@@ -69,7 +68,6 @@ def deleteLexicon(request):
     
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_deleted','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}))
     except Exception as e:
-        print('EXCEPT2')
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_deletion_failed','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}),exc_info=True)
     
     return HttpResponseRedirect(URL_PREFIX + '/lm')
@@ -102,7 +100,6 @@ def saveLexicon(request):
         else:
             logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'CREATE LEXICON','event':'lexicon_saving_failed','args':{'user_name':request.user.username,'lexicon_id':lexId},'reason':'No lexicon ID provided.'}))
     except Exception as e:
-        print('EXCEPT3')
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_saving_failed','args':{'user_name':request.user.username,'lexicon_id':lexId}}),exc_info=True)
         
     return HttpResponseRedirect(URL_PREFIX + '/lm/select?id='+lexId)
@@ -126,7 +123,6 @@ def selectLexicon(request):
         
         return HttpResponse(template.render({'words':words,'selected':request.GET['id'],'lexicons':lexicons,'STATIC_URL':STATIC_URL,'features':fields},request))
     except Exception as e:
-        print('except7', e)
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_selection_failed','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}),exc_info=True)
         
         return HttpResponseRedirect(URL_PREFIX + '/lm')
@@ -165,7 +161,6 @@ def query(request):
                 model.model.init_sims()
 
         except LookupError:
-            print('EXCEPT4')
             logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'CREATE LEXICON','event':'term_suggestion_failed','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'model_id':request.session['model']},'reason':'No lexicon ID provided.'}))
             return HttpResponse('INVALID MODEL')
 
@@ -219,17 +214,13 @@ def query(request):
             method = request.POST['method'][11:]
 
             if len(positives) > 0:
-                print('IN')
                 preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
-                print('AFTER')
                 labels, vectors = zip(*[zip(*cluster) for cluster in preclusters])
                 label_idxes = [[model.vocab[label].index for label in labels[cluster_idx]] for cluster_idx in range(len(labels))]
-                suggestions_per_cluster = [zip(*getattr(model,method)(positive=labels[cluster_idx],topn=50,ignored_idxes = ignored_idxes + [label_idxes[i][j] for i in range(len(label_idxes)) for j in range(len(label_idxes[i])) if i != cluster_idx]))[0] for cluster_idx in range(len(labels))]
+                suggestions_per_cluster = [list(zip(*getattr(model,method)(positive=labels[cluster_idx],topn=50,ignored_idxes = ignored_idxes + [label_idxes[i][j] for i in range(len(label_idxes)) for j in range(len(label_idxes[i])) if i != cluster_idx])))[0] for cluster_idx in range(len(labels))]
                 suggestions_list = suggestions_per_cluster
                 suggestions = RRA_suggestions(suggestions_list, tooltip_feature, request)
-                import pdb;pdb.set_trace()
             else:
-                print('ELSE')
                 suggestions = []
         else:
             #RobustRankAggreg
@@ -244,9 +235,6 @@ def query(request):
         
         return HttpResponse(['<table><tr><td id=\'suggestion_cell_1\'>'] + suggestions[:20] + ['</td><td id=\'suggestion_cell_2\'>'] + suggestions[20:] + ['</td></tr></table>'])
     except Exception as e:
-        print('except5', e)
-        import traceback
-        traceback.print_exc()
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'term_suggestion_failed','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'suggestion_method':request.POST['method']}}),exc_info=True)
         return HttpResponse()
 
@@ -276,7 +264,6 @@ def reset_suggestions(request):
         model_manager.reset_negatives(request.session['model'],request.user.username,int(lexicon_id))
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'suggestions_reset','args':{'user_name':request.user.username,'lexicon_id':lexicon_id}}))
     except Exception as e:
-        print('EXCEPT6')
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'suggestions_reset','args':{'user_name':request.user.username,'lexicon_id':lexicon_id}}),exc_info=True)
     return HttpResponseRedirect(URL_PREFIX + '/lm/select?id='+lexicon_id)
 

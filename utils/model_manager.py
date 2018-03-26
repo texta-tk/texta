@@ -122,7 +122,7 @@ class ModelManager(threading.Thread):
             if lexicon_id not in self._model_negatives[model_name][username]:
                 negatives_path = os.path.join(USER_MODELS,model_name,username,"lexicon_%d_negatives.pickle"%lexicon_id)
                 if os.path.exists(negatives_path):
-                    with open(negatives_path,'r') as fin:
+                    with open(negatives_path,'rb') as fin:
                         self._model_negatives[model_name][username][lexicon_id] = NegativesEntry(pickle.loads(fin.read().strip()))
                 else:
                     self._model_negatives[model_name][username][lexicon_id] = NegativesEntry([])
@@ -141,7 +141,7 @@ class ModelManager(threading.Thread):
                 except:
                     OSError
 
-                with open(negatives_path,'w') as fout:
+                with open(negatives_path,'wb') as fout:
                     fout.write(pickle.dumps(self._model_negatives[model_name][username][lexicon_id].negatives))
 
                 self._model_negatives[model_name][username][lexicon_id].access_time = time()

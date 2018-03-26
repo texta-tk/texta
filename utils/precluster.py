@@ -36,11 +36,7 @@ class PreclusterMaker:
     def __call__(self):
         if len(self.words) == 0 or len(self.vectors) == 0:
             return []
-        import pdb;pdb.set_trace()
-        print(np.array(self.vectors),self.metric)
-        #distance_matrix = scidist.pdist(np.array(self.vectors).reshape(np.array(self.vectors).shape[1], np.array(self.vectors).shape[0]),self.metric) 
-        distance_matrix = scidist.pdist(np.array(self.vectors),self.metric) # EMPTY RESULT, SOMETHING TO DO WITH SHAPE
-        print('distance', distance_matrix)
+        distance_matrix = scidist.pdist(np.array(self.vectors),self.metric)
         linkage_matrix = hier.linkage(distance_matrix,self.linkage)
 
         dendrogram = self._linkage_matrix_to_dendrogram(linkage_matrix,self.words,self.vectors) # if reshape then breaks here
