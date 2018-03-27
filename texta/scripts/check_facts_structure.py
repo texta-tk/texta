@@ -204,7 +204,7 @@ class FactsCheck:
         # All are strings, except 'doc_id'
         for k in ['doc_type', 'fact', 'doc_path', 'spans']:
             v = fact[k]
-            if not isinstance(v, basestring):
+            if not isinstance(v, str):
                 error_msg = 'Fact _id:{0}  [{1}] is not string'.format(_id, k)
                 raise CheckError(error_msg)
 

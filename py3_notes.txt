@@ -79,7 +79,7 @@ Just some notes to keep track of certain things
 + combine
 + dissolve
 + commit results
-
+== in terminlogy overview when you have no longer existing queries the old concepts still stay
 #MWE MINER +
 + start task works somehow, including different options
 + remove result

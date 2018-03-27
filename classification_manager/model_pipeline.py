@@ -256,7 +256,7 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
     train_summary = "---"
 
     key_str = '{0}-{1}'.format(dataset_pk, random.random() * 100000)
-    model_key = hashlib.md5(key_str).hexdigest()
+    model_key = hashlib.md5(key_str.encode('utf8')).hexdigest()
 
     new_run = ModelClassification(run_description=description, tag_label=tag_label, fields=field_path,
                                   score=model_score, search=Search.objects.get(pk=search_id).query,

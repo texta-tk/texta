@@ -633,6 +633,7 @@ class ES_Manager:
         while l > 0:
             search_url = '{0}/_search/scroll?scroll={1}'.format(es_url,time_out)
             response = requests.post(search_url, data=scroll_id, headers=headers).json()
+            import pdb;pdb.set_trace()
             l = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
  

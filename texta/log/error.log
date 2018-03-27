@@ -2324,3 +2324,15 @@ Traceback (most recent call last):
   File "/home/eha/Documents/texta/texta-py3/texta/utils/precluster.py", line 51, in __call__
     print(np.array(self.vectors))
 UnboundLocalError: local variable 'linkage_matrix' referenced before assignment
+
+ERROR - model_pipeline - error_logger - 6632 - 139717525128960 - {"process": "CREATE CLASSIFIER", "event": "model_training_failed", "args": {"user_name": "ranet"}} - 2018-03-27 15:04:33,797
+Traceback (most recent call last):
+  File "/home/eha/Documents/texta/texta-py3/texta/classification_manager/model_pipeline.py", line 260, in train_classifier
+    model_key = hashlib.md5(key_str.encode('utf8')).hexdigest()
+  File "/home/eha/Documents/texta/texta-py3/texta/classification_manager/data_manager.py", line 148, in get_data_samples
+    positive_samples, positive_set = self._get_positive_samples(sample_size)
+  File "/home/eha/Documents/texta/texta-py3/texta/classification_manager/data_manager.py", line 100, in _get_positive_samples
+    doc_text = self.lexicon.lexicon_reduction(decoded_text)
+  File "/home/eha/Documents/texta/texta-py3/texta/classification_manager/data_manager.py", line 50, in lexicon_reduction
+    if not isinstance(doc_text, basestring):
+NameError: name 'basestring' is not defined
