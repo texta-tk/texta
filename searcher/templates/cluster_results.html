@@ -1,9 +1,23 @@
 <div class="col-lg-2">
 	<ul class="nav nav-pills nav-stacked">
 		{% for cluster in clusters %}
-			<li class="{% if forloop.counter == 1 %}active{% endif %}"><a data-toggle="pill" href="#cluster_{{cluster.id}}" title="{{cluster.keywords}}">{{cluster.label}}</a></li>
+			<li class="cluster {% if forloop.counter == 1 %}active{% endif %}"><a data-toggle="pill" href="#cluster_{{cluster.id}}" title="{{cluster.keywords}}">{{cluster.label}}</a>
+				<ul class="dropdown keywords" id="keywords">
+					<li>{{cluster.keywords}}</li>
+				</ul>
+			</li>
+
 		{% endfor %}
 	</ul>
+	<script>
+		// gets loaded in later than the rest of the js
+		$(".keywords").css("display", "none");
+		$(".cluster.active").find(".keywords").css("display", "block");
+	    $('.cluster').click(function(){
+			$(".keywords").css("display", "none");
+			$(this).find(".keywords").css("display", "block");
+    });
+</script>
 </div>
 
 <div class="col-lg-10 tab-content">

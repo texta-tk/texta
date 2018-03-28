@@ -76,9 +76,8 @@ $(document).ready(function() {
 		formatter: function(value) {
 			return 'Current value: ' + value;
 		}
-	});
+    });
 });
-
 
 $(document).mousemove(function(e) {
     window.MOUSE_X = e.pageX;

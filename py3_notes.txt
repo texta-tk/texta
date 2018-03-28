@@ -37,12 +37,12 @@ Just some notes to keep track of certain things
 += also make a slider for tfidf max features
 += also add the short version
 == also make it so that you can select the certain documents in the cluster and export them/search on them or something
-== also show the words seperately instead of when hovering
++= also show the words seperately instead of only when hovering
 == also make a cluster wordset into a lexicon
 
 === results ===
 +- export
-- delete results   
+- delete results; probs some es problem
 == also the search result amount is only on the bottom (probably not py3 related)
 
 === Aggregations ===
