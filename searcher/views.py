@@ -368,17 +368,19 @@ def highlight_cluster_keywords(documents, keywords, params):
         if to_highlighter:
             hl = Highlighter(default_category='[HL]')
             document = hl.highlight(document,to_highlighter)
-
-        if 'show_short_version_cluster' in params.keys():
-            document = additional_option_cut_text(document, params['short_version_n_char_cluster'])
-            #print(document3 == document2)
+            if 'show_short_version_cluster' in params.keys():
+                document = additional_option_cut_text(document, params['short_version_n_char_cluster'])
+                #print(document3 == document2)
+            out.append(document)
+        elif not 'show_unhighlighted' in params.keys():
+            out.append(document)
 
         #'short_version_n_char': ['5']
         # if 'show_short_version_cluster' in params.keys():
         #     #document_1 = document
         #     document = additional_option_cut_text(document, params['short_version_n_char_cluster'])
         #     #print(document == document_1)
-        out.append(document)
+        # out.append(document)
     return out
 
 

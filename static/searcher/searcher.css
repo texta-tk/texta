@@ -51,7 +51,6 @@
 .padded-row {
 	padding-left: 5px;
 	padding-right: 5px;
-	
 }
 
 .nav-tabs > li.active > a,
@@ -65,7 +64,20 @@ th {
   /* border-bottom: 1px solid #dddddd; */
   border-right: 1px solid #f1f1f1;
 }
- 
+
 th:first-child {
   border-left: 1px solid #f1f1f1;
+}
+
+.clusterText {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    font-size: 0.9em;
+    margin-top: -0.7em;
+}
+
+.clusterLabel {
+  font-weight: bold;
 }
