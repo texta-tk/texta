@@ -6,6 +6,7 @@ import csv
 import time
 import re
 import bs4
+from collections import OrderedDict
 from datetime import datetime, timedelta as td
 from collections import defaultdict
 
@@ -29,6 +30,8 @@ from utils.autocomplete import Autocomplete
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links
 
 from searcher.view_functions.export_pages import export_pages
+from searcher.view_functions.tranlist_highlighting import transliterate_highlight_spans, highlight_transliterately
+
 
 try:
     from cStringIO import StringIO
@@ -50,9 +53,9 @@ def get_fields(es_m):
     fields = []
     mapped_fields = es_m.get_mapped_fields()
 
-    for data in mapped_fields:            
+    for data in mapped_fields:
         path = data['path']
-        
+
         if data['type'] == 'date':
             data['range'] = get_daterange(es_m,path)
 
@@ -61,7 +64,6 @@ def get_fields(es_m):
         label = label.replace('-->', u'→')
 
         field = {'data': json.dumps(data), 'label': label, 'type': data['type']}
-        
         fields.append(field)
 
         # Add additional field if it has fact
@@ -194,7 +196,7 @@ def autocomplete(request):
 
 
 @login_required
-def get_saved_searches(request):  
+def get_saved_searches(request):
     searches = Search.objects.filter(author=request.user).filter(dataset=Dataset(pk=int(request.session['dataset'])))
     return HttpResponse(json.dumps([{'id':search.pk,'desc':search.description} for search in searches],ensure_ascii=False))
 
@@ -223,7 +225,7 @@ def get_table_content(request):
     request_param = request.GET
     echo = int(request_param['sEcho'])
     filter_params = json.loads(request_param['filterParams'])
-    es_params = {filter_param['name']: filter_param['value'] for filter_param in filter_params}       
+    es_params = {filter_param['name']: filter_param['value'] for filter_param in filter_params}
     es_params['examples_start'] = request_param['iDisplayStart']
     es_params['num_examples'] = request_param['iDisplayLength']
     result = search(es_params, request)
@@ -254,7 +256,6 @@ def merge_spans(spans):
 
 def mlt_query(request):
     logger = LogManager(__name__, 'SEARCH MLT')
-    
     es_params = request.POST
 
     mlt_fields = [json.loads(field)['path'] for field in es_params.getlist('mlt_fields')]
@@ -279,7 +280,6 @@ def mlt_query(request):
     response = es_m.more_like_this_search(mlt_fields,docs_accepted=docs_accepted,docs_rejected=docs_rejected,handle_negatives=handle_negatives,stopwords=stopwords)
 
     documents = []
-    
     for hit in response['hits']['hits']:
         fields_content = get_fields_content(hit,mlt_fields)
         documents.append({'id':hit['_id'],'content':fields_content})
@@ -287,14 +287,10 @@ def mlt_query(request):
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'documents':documents}
-    
-    template = loader.get_template('mlt_results.html')
     return HttpResponse(template.render(template_params, request))
-
 
 def get_fields_content(hit,fields):
     row = {}
-    
     for field in fields:
         if 'highlight' in hit:
             field_content = hit['highlight']
@@ -318,7 +314,6 @@ def get_fields_content(hit,fields):
 def cluster_query(request):
     params = request.POST
     ds = Datasets().activate_dataset(request.session)
-        
     es_m = ds.build_manager(ES_Manager)
     es_m.build(params)
 
@@ -328,9 +323,9 @@ def cluster_query(request):
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'clusters': clustering_data}
-    
+
     template = loader.get_template('cluster_results.html')
-    return HttpResponse(template.render(template_params, request))    
+    return HttpResponse(template.render(template_params, request))
 
 
 def convert_clustering_data(cluster_m):
@@ -341,7 +336,6 @@ def convert_clustering_data(cluster_m):
         documents = [cluster_m.documents[doc_id] for doc_id in cluster_content]
         cluster_label = 'Cluster {0} ({1})'.format(cluster_id+1,len(cluster_content))
         keywords = cluster_m.cluster_keywords[cluster_id]
-        
         cluster_data = {'documents':highlight_cluster_keywords(documents,keywords),
                         'label':cluster_label,
                         'id':cluster_id,
@@ -398,7 +392,6 @@ def search(es_params, request):
                 f = es_params[field]
                 highlight_config['fields'][f] = {"number_of_fragments": 0}
         es_m.set_query_parameter('highlight', highlight_config)
-
         response = es_m.search()
 
         """
@@ -423,8 +416,8 @@ def search(es_params, request):
 
         for hit in response['hits']['hits']:
             hit_id = str(hit['_id'])
-            row = []
-            
+            row = OrderedDict([(x, '') for x in out['column_names']]) # OrderedDict to remember column names with their content
+
             inner_hits = hit['inner_hits'] if 'inner_hits' in hit else {}
             name_to_inner_hits = defaultdict(list)
             for inner_hit_name, inner_hit in inner_hits.items():
@@ -436,6 +429,7 @@ def search(es_params, request):
 
 
             # Fill the row content respecting the order of the columns
+            cols_data = {}
             for col in out['column_names']:
 
                 # If the content is nested, need to break the flat name in a path list
@@ -449,7 +443,7 @@ def search(es_params, request):
                 #     make content empty (to allow dynamic mapping without breaking alignment)
                 content = hit['_source']
                 for p in filed_path:
-                    if col == u'texta_facts': 
+                    if col == u'texta_facts':
                         content = str(content[p]) if p in content else ''
                     else:
                         content = content[p] if p in content else ''
@@ -458,12 +452,10 @@ def search(es_params, request):
                 old_content = content
                 if col in highlight_config['fields'] and 'highlight' in hit:
                     content = hit['highlight'][col][0]
-                    
                 # Prettify and standardize highlights
                 if name_to_inner_hits[col]:
                     highlight_data = []
                     color_map = ColorPicker.get_color_map(keys={hit['fact'] for hit in name_to_inner_hits[col]})
-
                     for inner_hit in name_to_inner_hits[col]:
                         datum = {
                             'spans': json.loads(inner_hit['spans']),
@@ -474,7 +466,6 @@ def search(es_params, request):
 
                         if inner_hit['hit_type'] == 'fact_val':
                             datum['value'] = inner_hit['str_val']
-
                         highlight_data.append(datum)
 
                     content = Highlighter(average_colors=True, derive_spans=True,
@@ -483,7 +474,6 @@ def search(es_params, request):
                                                   highlight_data,
                                                   tagged_text=content)
                 else:
-
                     # WHEN USING OLD FORMAT DOCUMENTS, SOMETIMES BREAKS AT HIGHLIGHTER, CHECK IF ITS STRING INSTEAD OF FOR EXAMPLE LIST
                     if (isinstance(content, basestring)):
                         highlight_data = []
@@ -492,19 +482,29 @@ def search(es_params, request):
                                                     old_content,
                                                     highlight_data,
                                                     tagged_text=content)
-                    
-                # Checks if user wants to see full text or short version
-                if 'show_short_version' in es_params.keys():
-                    content = additional_option_cut_text(content, es_params)
                 # Append the final content of this col to the row
-                row.append(content)
+                if(row[col] == ''):
+                    row[col] = row[col] + content
 
-            out['aaData'].append(row)
+                cols_data[col] = {'highlight_data': highlight_data, 'content': content, 'old_content': old_content}
 
-        out['lag'] = time.time()-start_time
-        logger.set_context('query', es_m.get_combined_query())
-        logger.set_context('user_name', request.user.username)
-        logger.info('documents_queried')
+
+            # Transliterate the highlighting between different cols
+            translit_search_cols = ['text', 'translit', 'lemmas']
+            hl_cols = [x for x in cols_data if len(x.split('.')) > 1 and x.split('.')[-1] in translit_search_cols] # To get value before '.' as well
+            row = highlight_transliterately(cols_data, row, hl_cols=hl_cols)
+
+            # Checks if user wants to see full text or short version
+            for col in row:
+                if 'show_short_version' in es_params.keys():
+                    row[col] = additional_option_cut_text(row[col], es_params)
+
+            out['aaData'].append(row.values())
+
+            out['lag'] = time.time()-start_time
+            logger.set_context('query', es_m.get_combined_query())
+            logger.set_context('user_name', request.user.username)
+            logger.info('documents_queried')
 
         return out
 
@@ -527,7 +527,6 @@ def additional_option_cut_text(content, es_params):
 
         html_spans_merged = []
         num_spans = len(html_spans)
-        
         # merge together ovelapping spans
         for i,html_span in enumerate(html_spans):
             if not html_span.get('class'):
@@ -544,18 +543,18 @@ def additional_option_cut_text(content, es_params):
                     if span_tokens_len > window_size:
                         new_text = u' '.join(span_tokens[:window_size])
                         new_text = u'{0} ...'.format(new_text)
-                        html_span.string = new_text                    
+                        html_span.string = new_text
                     html_spans_merged.append(unicode(html_span))
                 else:
                     if span_tokens_len > window_size:
                         new_text_left = u' '.join(span_tokens[:window_size])
                         new_text_right = u' '.join(span_tokens[-window_size:])
                         new_text = u'{0} ...\n... {1}'.format(new_text_left,new_text_right)
-                        html_span.string = new_text                    
+                        html_span.string = new_text
                     html_spans_merged.append(unicode(html_span))
             else:
                 html_spans_merged.append(unicode(html_span))
-                    
+
         return ''.join(html_spans_merged)
     else:
         return content
@@ -566,7 +565,6 @@ def remove_by_query(request):
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
-    
     threading.Thread(target=remove_worker,args=(es_m,'notimetothink')).start()
     return HttpResponse(True)
 

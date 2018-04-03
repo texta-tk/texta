@@ -20,7 +20,7 @@ class SQLiteIndex(object):
         with sqlite3.connect(self._sqlite_file_path) as connection:
             table_name = self._get_dataset_table_name(dataset)
             connection.execute('CREATE TABLE IF NOT EXISTS {0}(id TEXT PRIMARY KEY);'.format(table_name))
-            connection.executemany('INSERT INTO {0} VALUES (?);'.format(table_name), ((value,) for value in values))
+            connection.executemany('INSERT INTO {0} VALUES (?);'.format(table_name), ((value if isinstance(value, unicode) else value.decode('unicode-escape'),) for value in values))
 
     def get_new_entries(self, dataset, candidate_values):
         """Retrieves index values from candidate index values which are not yet in the dataset's index - in other words

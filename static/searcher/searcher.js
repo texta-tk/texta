@@ -10,7 +10,7 @@ $(document).ready(function() {
 	
 	change_agg_field(1);
 	
-	$('#agg_daterange_from_1').datepicker({format: "yyyy-mm-dd", startView: 2, autoclose: true});
+	$('#agg_daterange_from_1').datepicker({forormat: "yyyy-mm-dd", startView: 2, autoclose: true});
 	$('#agg_daterange_to_1').datepicker({format: "yyyy-mm-dd", startView: 2, autoclose: true});
  
     $(document.body).on( 'click','a.toggle-visibility', function (e) {
@@ -509,10 +509,15 @@ function hide(id){
     } else {
         var fieldId = id;
     }
-
-	setTimeout(function() {
-		$("#field_"+fieldId+" #suggestions_"+id).hide();
-	}, 500);
+    $("#field_"+fieldId+" #suggestions_"+id).mouseleave(function() {
+        setTimeout(function() {
+                if(!$("#field_"+fieldId+" #suggestions_"+id).is(":hover")) {
+                    $("#field_"+fieldId+" #suggestions_"+id).hide();
+                }
+                else{
+                }
+            }, 1000);
+        });
 }
 
 
@@ -535,6 +540,7 @@ function query(){
                   'processing': true,
                   "sAjaxSource": PREFIX+"/table_content",
                   "sDom": '<l"H"ipr>t<"F"lp>',
+                  "sDom": "Rlrtip",
                   "sServerMethod":"GET",
                   "fnServerParams":function(aoData){
                       aoData.push({'name':'filterParams','value':JSON.stringify($("#filters").serializeArray())});
