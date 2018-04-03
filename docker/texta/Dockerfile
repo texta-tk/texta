@@ -15,8 +15,6 @@ RUN git clone https://github.com/texta-tk/texta.git
 
 WORKDIR texta
 
-RUN git checkout ekt-polishing-dev
-
 RUN pip install --upgrade pip
 
 RUN pip install setuptools
