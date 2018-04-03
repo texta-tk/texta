@@ -587,6 +587,10 @@ function cluster_query(){
 	
 }
 
+function save_cluster_as_lexicon(label, keywords){
+    alert('Saved ' + label + ' as lexicon!');
+}
+
 
 function mlt_query(){
 

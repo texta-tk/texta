@@ -1,25 +1,20 @@
 <div class="col-lg-2">
 	<ul class="nav nav-pills nav-stacked">
 		{% for cluster in clusters %}
-			<li class="cluster {% if forloop.counter == 1 %}active{% endif %}"><a data-toggle="pill"href="#cluster_{{cluster.id}}" title="{{cluster.keywords}}">
-				<p class="clusterLabel">{{cluster.label}}</p><p class="clusterText">{{cluster.keywords}} </p> </a>
-				<!-- <ul class="dropdown keywords" id="keywords">
-					<li>{{cluster.keywords}}</li>
-				</ul> -->
+		<li class="cluster {% if forloop.counter == 1 %}active{% endif %}">
+			<a data-toggle="pill"href="#cluster_{{cluster.id}}" title="{{cluster.keywords}}">
+				<form onsubmit="go_to(LINK_LEXMINER + '/new','new_lexicon_form')" method="post"></form>
+			<i class="glyphicon glyphicon-plus pull-right" data-toggle="tooltip" title="Save cluster as lexicon" style="cursor: pointer" 
+			onclick="save_cluster_as_lexicon('{{cluster.label}}','{{cluster.keywords}}');"></i>
+			<!-- <i class="glyphicon glyphicon-plus pull-right" data-toggle="tooltip" title="Save cluster as lexicon" style="cursor: pointer" 
+			onclick="save_cluster_as_lexicon('{{cluster.label}}','{{cluster.keywords}}');"></i> -->
+			<p class="clusterLabel">{{cluster.label}}</p><p class="clusterText">{{cluster.keywords}} </p> 
+		</a>
 			</li>
-
 		{% endfor %}
 	</ul>
 	<script>
-		// gets loaded in later than the rest of the js
-	// dropdown for keywords
-	// 	$(".keywords").css("display", "none");
-	// 	$(".cluster.active").find(".keywords").css("display", "block");
-	//     $('.cluster').click(function(){
-	// 		$(".keywords").css("display", "none");
-	// 		$(this).find(".keywords").css("display", "block");
-    // });
-	//$(".clusterText").css("-webkit-line-clamp", "3");
+	// gets loaded in later than the rest of the js
 	$(".cluster.active").find(".clusterText").css("-webkit-line-clamp", "100");
 	$(".cluster").click(function(){
 	$(".clusterText").removeAttr("style");
