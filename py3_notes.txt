@@ -1,5 +1,6 @@
 Just some notes to keep track of certain things
 
+# header
 + = WORKS
 - = DOESN'T
 +- = DIDN'T BUT NOW DOES
@@ -42,7 +43,7 @@ Just some notes to keep track of certain things
 
 === results ===
 +- export
-- delete results; probs some es problem
++- delete results; probs some es problem; comes out also in master (not py3 related)
 == also the search result amount is only on the bottom (probably not py3 related)
 
 === Aggregations ===

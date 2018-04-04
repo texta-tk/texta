@@ -547,8 +547,8 @@ function query(){
                   "bServerSide": true,
                   'processing': true,
                   "sAjaxSource": PREFIX+"/table_content",
-                  "sDom": '<l"H"ipr>t<"F"lp>',
-                  "sDom": "Rlrtip",
+                  "sDom": '<l"H"ipr>t<"F"lip>',
+                  //"sDom": "Rlrtip",
                   "sServerMethod":"GET",
                   "fnServerParams":function(aoData){
                       aoData.push({'name':'filterParams','value':JSON.stringify($("#filters").serializeArray())});

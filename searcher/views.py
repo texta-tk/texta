@@ -590,7 +590,6 @@ def remove_by_query(request):
 
 
 def remove_worker(es_m,dummy):
-    import pdb;pdb.set_trace()
     response = es_m.delete()
     # TODO: add logging
 

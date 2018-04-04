@@ -625,18 +625,21 @@ class ES_Manager:
 
         q = json.dumps(self.combined_query['main'])
         search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
+        #import pdb;pdb.set_trace()
         response = requests.post(search_url, data=q, headers=headers).json()
 
         scroll_id = response['_scroll_id']
         l = response['hits']['total']
-    
+
+        # Delete initial response
+        data = self.process_bulk(response['hits']['hits'])
+        delete_url = '{0}/{1}/{2}/_bulk'.format(es_url, self.index, self.mapping)
+        deleted = requests.post(delete_url, data=data, headers=headers)
         while l > 0:
-            search_url = '{0}/_search/scroll?scroll={1}'.format(es_url,time_out)
-            response = requests.post(search_url, data=scroll_id, headers=headers).json()
-            import pdb;pdb.set_trace()
+            response = self.scroll(scroll_id=scroll_id, time_out=time_out)
             l = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
- 
+
             data = self.process_bulk(response['hits']['hits'])
             delete_url = '{0}/{1}/{2}/_bulk'.format(es_url, self.index, self.mapping)
             deleted = requests.post(delete_url, data=data, headers=headers)
@@ -655,8 +658,8 @@ class ES_Manager:
             else:
                 q = self.combined_query['main']
             q['size'] = size
-            search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
-            
+            search_url = '{0}/{1}/{2}/_search/scroll/{3}'.format(es_url, self.index, self.mapping, time_out)
+
             if id_scroll:
                 q['_source'] = 'false'
             elif field_scroll:
