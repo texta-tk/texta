@@ -44,7 +44,7 @@ Just some notes to keep track of certain things
 === results ===
 +- export
 +- delete results; probs some es problem; comes out also in master (not py3 related)
-== also the search result amount is only on the bottom (probably not py3 related)
++= also the search result amount is only on the bottom (probably not py3 related)
 
 === Aggregations ===
 +-? aggregation; somewhat works, unclear if it works or not since "errors" are also in other branches, also multi aggregation doesnt work (actually just cant aggregate to significant words)
@@ -72,7 +72,8 @@ Just some notes to keep track of certain things
         +=create new lexicon, click on it, find some suggestions, press save, doesn't save
         +=ctrl f5 page, randomly add words there, press save, now saves SOMETIMES (maybe when restarting server works)
 + reset suggestions
-== should display which lexicon is selected.
++= should display which lexicon is selected.
++= also autoselect newly created lexicon
 
 #CONCEPTUALISER +
 +- plotting

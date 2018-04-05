@@ -19,7 +19,7 @@
 								<tr>
 									<td>{{lexicon.id}}</td>
 									<td><a href="javascript:void(0)" onclick= "go_to(LINK_LEXMINER + '/delete?id={{lexicon.id}}');"><span class="glyphicon glyphicon-remove"></span></a></a></td>
-									<td><a href="javascript:void(0)" onclick="go_to(LINK_LEXMINER + '/select?id={{lexicon.id}}')">{{lexicon}}</a></td>
+									<td><a id="lx-{{lexicon.id}}" href="javascript:void(0)" onclick="go_to(LINK_LEXMINER + '/select?id={{lexicon.id}}')">{{lexicon}}</a></td>
 								</tr>
 							{% endfor %}
 						</table>

@@ -55,7 +55,7 @@ def newLexicon(request):
 
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_created','args':{'user_name':request.user.username,'lexicon_name':lexiconName}}))
 
-    return HttpResponseRedirect(URL_PREFIX + '/lm')
+    return HttpResponseRedirect(URL_PREFIX + '/lm/select?id='+str(Lexicon.objects.get(name=lexiconName).id))
 
 
 @login_required
@@ -121,7 +121,7 @@ def selectLexicon(request):
 
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_selected','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']},'data':{'lexicon_terms':words}}))
 
-        return HttpResponse(template.render({'words':words,'selected':request.GET['id'],'lexicons':lexicons,'STATIC_URL':STATIC_URL,'features':fields},request))
+        return HttpResponse(template.render({'words':words,'selected_id':request.GET['id'], 'selected_name':lexicon,'lexicons':lexicons,'STATIC_URL':STATIC_URL,'features':fields},request))
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_selection_failed','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}),exc_info=True)
 

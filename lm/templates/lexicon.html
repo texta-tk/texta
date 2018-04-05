@@ -1,6 +1,6 @@
 {% extends "lm.html" %}
 	{% block lex %}
-	Selected lexicon: {{selected}}<br>
+	<b>Selected lexicon</b>: <p id="{{selected_id}}" class="selectedText">{{selected_id}} - {{selected_name}}</p> <br>
 		<textarea class="form-control" rows="20" name="lexicon" id="lexicon">{% for word in words %}{{word}}
 {% endfor %}</textarea>
 		<div class="row">
