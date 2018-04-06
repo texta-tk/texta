@@ -16,6 +16,15 @@ Just some notes to keep track of certain things
 
 # ADMINISTRATION
 + Dataset Management
++ Superuser false
++ Superuser true
++ Deactivate
++ Activate
++ Delete
+=== script manager ===
++ Create new proj
++ Remove proj
+? Run script (probably works, just not sure how to test)
 
 # IMPORTER
 + lorem_ipsum.txt imported
@@ -88,4 +97,4 @@ Just some notes to keep track of certain things
 + MWE Task result reverse value list (also got index out of range somewhere, can't replicate)
 + force all true
 + forse all false
--== also test with multiple lexicons
+-= also test with multiple lexicons

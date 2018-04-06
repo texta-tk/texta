@@ -657,7 +657,7 @@ class ES_Manager:
             else:
                 q = self.combined_query['main']
             q['size'] = size
-            search_url = '{0}/{1}/{2}/_search/scroll/{3}'.format(es_url, self.index, self.mapping, time_out)
+            search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
 
             if id_scroll:
                 q['_source'] = 'false'
