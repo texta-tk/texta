@@ -587,11 +587,6 @@ function cluster_query(){
 	
 }
 
-function save_cluster_as_lexicon(label, keywords){
-    alert('Saved ' + label + ' as lexicon!');
-}
-
-
 function mlt_query(){
 
     var formElement = document.getElementById("filters");
@@ -1091,3 +1086,20 @@ function hide_show_options_cluster() {
     }
 }
 
+function cluster_to_lex(id) {
+    var cluster_form = document.getElementById("save_as_lexicon_" + id);
+    var fd = new FormData(cluster_form);
+    $.ajax({
+        url: LINK_LEXMINER + '/new',
+        data: fd,
+        type: 'POST',
+        contentType: false,
+        processData: false,
+        success: function() {
+            alert('Cluster successfully saved as a lexicon!');
+        },
+        error: function() {
+            alert('There was a problem saving the cluster!');
+        }
+    });
+}

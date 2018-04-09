@@ -6,6 +6,7 @@ import logging
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
+from django.http import QueryDict
 import requests
 
 
@@ -44,8 +45,20 @@ def index(request):
 
 @login_required
 def newLexicon(request):
-    lexiconName = request.POST['lexiconname']
+    """Creates a new lexicon, either through lm, or via creating one externally (for example a cluster form cluster search)
+
+    Arguments:
+        request {request} -- POST request containing the lexicon name and (if external) lexicon keywords
+
+    Returns:
+        HttpResponseRedirect -- If created in lm, then redirects to new lexicon, else doesn't return anything
+    """
+    lexiconName = ' '.join(request.POST['lexiconname'].split(' ')[:-1])
     model_pk = int(request.session['model'])
+    if 'lexiconkeywords' in request.POST:
+        lexiconKeywords = request.POST['lexiconkeywords']
+    else:
+        lexiconKeywords = None
 
     if lexiconName:
         try:
@@ -55,12 +68,17 @@ def newLexicon(request):
 
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_created','args':{'user_name':request.user.username,'lexicon_name':lexiconName}}))
 
-    # last to get the latest entry just in case there is a duplicate
-    return HttpResponseRedirect(URL_PREFIX + '/lm/select?id='+str(Lexicon.objects.filter(name=lexiconName).last().id))
-    # try:
-    #     return HttpResponseRedirect(URL_PREFIX + '/lm/select?id='+str(Lexicon.objects.get(name=lexiconName).id))
-    # except:
-    #     return HttpResponseRedirect(URL_PREFIX + '/lm')
+    if lexiconKeywords:
+        request.POST._mutable = True
+        request.POST = QueryDict('', mutable=True)
+        request.POST.update({'id': str(Lexicon.objects.filter(name=lexiconName).last().id), 'lexicon': [{"word": word, "sid": -1} for word in lexiconKeywords.split(' ')]})
+        request.POST._mutable = False
+        saveLexicon(request, local_request=True)
+
+        return HttpResponse()
+    else:
+        # last to get the latest entry just in case there is a duplicate
+        return HttpResponseRedirect(URL_PREFIX + '/lm/select?id='+str(Lexicon.objects.filter(name=lexiconName).last().id))
 
 
 @login_required
@@ -79,16 +97,32 @@ def deleteLexicon(request):
 
 
 @login_required
-def saveLexicon(request):
+def saveLexicon(request, local_request=True):
+    """Save a lexicon, either through lm or (if external) through the newLexicon function
+
+    Arguments:
+        request {requst} -- POST request containing the lexicon id and values, ex:
+    <QueryDict: {'id': ['60'], 'lexicon': ['[{"word":"pani","sid":-1},{"word":"panid","sid":387},{"word":"paneb","sid":387}]']}>
+
+    Keyword Arguments:
+        local_request {bool} -- True if the lexicon is created externally, then the saveLexicon call and request is created locally  (default: {True})
+
+    Returns:
+        HttpResponseRedirect -- If created through lm, redirect to the selected id, else don't redirect
+    """
+
     lexId = request.POST['id']
+
     try:
         if lexId:
             lexicon = Lexicon.objects.get(id=lexId)
             Word.objects.filter(lexicon=lexicon).delete()
-
             model_manager.save_negatives(request.session['model'],request.user.username,lexicon.id)
-
-            lexicon_words = uniq(json.loads(request.POST['lexicon']))
+            # Fix problems with '' and ""
+            if local_request:
+                lexicon_words = uniq(json.loads(json.dumps(request.POST['lexicon'])))
+            else:
+                lexicon_words = uniq(json.loads(request.POST['lexicon']))
             suggestionset_map = {}
             for lexicon_word in lexicon_words:
                 if lexicon_word['sid'] >= 0:
@@ -100,14 +134,15 @@ def saveLexicon(request):
             while i < len(word_objects):
                 Word.objects.bulk_create(word_objects[i:i+step])
                 i += step
-
             logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_saved','args':{'user_name':request.user.username,'lexicon_id':lexId,'lexicon_terms':len(lexicon_words)}}))
         else:
             logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'CREATE LEXICON','event':'lexicon_saving_failed','args':{'user_name':request.user.username,'lexicon_id':lexId},'reason':'No lexicon ID provided.'}))
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_saving_failed','args':{'user_name':request.user.username,'lexicon_id':lexId}}),exc_info=True)
 
-    return HttpResponseRedirect(URL_PREFIX + '/lm/select?id='+lexId)
+    if not local_request:
+        return HttpResponseRedirect(URL_PREFIX + '/lm/select?id='+lexId)
+
 
 
 @login_required

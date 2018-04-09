@@ -2,12 +2,13 @@
 	<ul class="nav nav-pills nav-stacked">
 		{% for cluster in clusters %}
 		<li class="cluster {% if forloop.counter == 1 %}active{% endif %}">
-			<a data-toggle="pill"href="#cluster_{{cluster.id}}" title="{{cluster.keywords}}">
-				<form onsubmit="go_to(LINK_LEXMINER + '/new','new_lexicon_form')" method="post"></form>
-			<i class="glyphicon glyphicon-plus pull-right" data-toggle="tooltip" title="Save cluster as lexicon" style="cursor: pointer" 
-			onclick="save_cluster_as_lexicon('{{cluster.label}}','{{cluster.keywords}}');"></i>
-			<!-- <i class="glyphicon glyphicon-plus pull-right" data-toggle="tooltip" title="Save cluster as lexicon" style="cursor: pointer" 
-			onclick="save_cluster_as_lexicon('{{cluster.label}}','{{cluster.keywords}}');"></i> -->
+			<a data-toggle="pill" href="#cluster_{{cluster.id}}" title="{{cluster.keywords}}">
+				<form id ="save_as_lexicon_{{cluster.id}}" onsubmit="cluster_to_lex({{cluster.id}});return false;" method="post">
+					<input type="hidden" class="form-control" name="lexiconname" value="{{cluster.label}}">
+					<input type="hidden" class="form-control" name="lexiconkeywords" value="{{cluster.keywords}}">
+				</form>
+				<i class="glyphicon glyphicon-plus pull-right" data-toggle="tooltip" title="Save cluster as lexicon" style="cursor: pointer" 
+				onclick="$('#save_as_lexicon_{{cluster.id}}').submit();"></i>
 			<p class="clusterLabel">{{cluster.label}}</p><p class="clusterText">{{cluster.keywords}} </p> 
 		</a>
 			</li>

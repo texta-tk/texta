@@ -48,7 +48,7 @@ Just some notes to keep track of certain things
 += also add the short version
 == also make it so that you can select the certain documents in the cluster and export them/search on them or something
 += also show the words seperately instead of only when hovering
-== also make a cluster wordset into a lexicon
++= also make a cluster wordset into a lexicon
 
 === results ===
 +- export
