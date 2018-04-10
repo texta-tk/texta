@@ -71,7 +71,7 @@ def delete_model(request):
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DELETE MODEL','event':'model_deleted','args':{'user_name':request.user.username,'model_id':model_id}}))
     else:
         logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'DELETE MODEL','event':'model_deletion_failed','args':{'user_name':request.user.username,'model_id':model_id},'reason':"Created by someone else."}))
-        
+
     return HttpResponseRedirect(URL_PREFIX + '/model_manager')
 
 

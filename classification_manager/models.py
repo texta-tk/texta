@@ -48,5 +48,5 @@ class JobQueue(models.Model):
         # Generates random sequence of chars
         key = ""
         for i in range(size):
-            key += random.choice(string.lowercase)
+            key += random.choice(string.ascii_lowercase)
         return key
