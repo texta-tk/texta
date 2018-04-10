@@ -296,8 +296,6 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
         model_status = 'completed'
 
     except Exception as e:
-        import traceback;print(traceback.format_exc())
-        print('except1')
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE CLASSIFIER','event':'model_training_failed','args':{'user_name':request.user.username}}),exc_info=True)
         print('--- Error: {0}'.format(e))
         model_status = 'failed'
@@ -369,8 +367,6 @@ def apply_classifier(job_key):
             job_queue.run_status = 'failed'
 
     except Exception as e:
-        print('except2')
-        import traceback;traceback.print_exc()
         print('- Exception: ', e)
         job_queue.run_status = 'failed'
 
