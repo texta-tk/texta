@@ -85,8 +85,16 @@ Just some notes to keep track of certain things
         + save grammar
         + delete grammar
         + the different grammar options
-
-
+        + exact match
+        + regex
+        + test
+        + rename
+        + unmatched documents
+        ?+ highlighter wrong boundaries with regex
+            = maybe because when you search words like "Kohtu" you also get "Kohtumäärus" etc, it might use that system to match more.
+        +? save forgets options? (nevermind just pressed wrong button)
+        - multiple basics (regex + exact) ajax datatables error, keyerror hits
+        ?= when adding new aggregation under concat or gap aggregation, type can only be union and has same slope as original
 
 
 #################### RESTRICTED ###################
@@ -95,7 +103,7 @@ Just some notes to keep track of certain things
         +- making a model
         + all options
 
-    #CLASSIFICATION MANAGER
+    #CLASSIFICATION MANAGER +
         note: TruncatedSVD removed, replaced with LinearSVC
         ?+ count vectorizer
             + CountVectorizer | TruncatedSVD | Normalizer | LinearSVC
