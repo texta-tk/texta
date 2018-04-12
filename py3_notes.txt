@@ -16,7 +16,7 @@ Just some notes to keep track of certain things
 
 
 
-###################### TERMINOLOGY MANAGEMENT #################################
+###################### TERMINOLOGY MANAGEMENT + #################################
     # SEARCHER +
         === current search === +
         + search
@@ -81,7 +81,7 @@ Just some notes to keep track of certain things
         + force all false
         += also test with multiple lexicons
 
-    #GRAMMAR MINER ?
+    #GRAMMAR MINER +
         + save grammar
         + delete grammar
         + the different grammar options
@@ -93,12 +93,11 @@ Just some notes to keep track of certain things
         ?+ highlighter wrong boundaries with regex
             = maybe because when you search words like "Kohtu" you also get "Kohtumäärus" etc, it might use that system to match more.
         +? save forgets options? (nevermind just pressed wrong button)
-        - multiple basics (regex + exact) ajax datatables error, keyerror hits
+        +- multiple basics (regex + exact) ajax datatables error, keyerror hits
         ?= when adding new aggregation under concat or gap aggregation, type can only be union and has same slope as original
 
 
 #################### RESTRICTED ###################
-
     #MODEL MANAGER +
         +- making a model
         + all options
@@ -142,8 +141,33 @@ Just some notes to keep track of certain things
         + Deactivate
         + Activate
         + Delete
+
+        types:
+            + pdf
+            + txt
+            + doc
+            + docx
+            + rtf
+            + csv
+            + pdf zip
+            ?-+ json
+                = now imports different types of json as well, but doesn't show content.
+
+            ?+ xls/xlx fixed in other machine
+            - sqlite, https://pastebin.com/faTu10ZE
+            - xml (not implomented error)
+            - html (not implomented error)
+            + forgot to choose file type
+                +- zip pdf   https://pastebin.com/ExBVcPGz
+                +- tar pdf ^
+                +- tar gz pdf ^
+
+        input methods:
+            + file upload
+            + server_dir
+            =? url
+
         === script manager ===
         + Create new proj
         + Remove proj
         ? Run script (probably works, just not sure how to test)
-    

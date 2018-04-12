@@ -307,7 +307,6 @@ def get_all_matched_rows(query, request, inclusive_instructions):
     hits = response['hits']['hits']
 
     scroll_payload = json.dumps({'scroll':'1m', 'scroll_id':scroll_id})
-
     while hits:
         for hit in hits:
             feature_dict = {feature_name:hit['_source'][feature_name] for feature_name in hit['_source']}
@@ -544,7 +543,6 @@ def get_next_page_data(query, es_from, last_page, query_data, request):
 def highlight(row, feature_to_idx_map, inclusive_matches):
     colours = defaultdict(lambda: defaultdict(list))
     titles = defaultdict(lambda: defaultdict(list))
-
     for match_idx, match in enumerate(inclusive_matches):
         for meta_token_idx, token_idx in enumerate(match.token_idxs):
             feature = match.features[meta_token_idx]
