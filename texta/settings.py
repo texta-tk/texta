@@ -143,7 +143,7 @@ ALLOWED_HOSTS = [DOMAIN]
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-    # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': os.path.join(BASE_DIR, 'database', 'lex.db'),  # Or path to database file if using sqlite3.
         'USER': '',  # Not used with sqlite3.
         'PASSWORD': '',  # Not used with sqlite3.
@@ -186,7 +186,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'utils.context_processors.get_version'
             ],
-#            'loaders': [
+#               'loaders': [
 #                'django.template.loaders.filesystem.Loader',
 #                'django.template.loaders.app_directories.Loader',
 #            ],
@@ -227,6 +227,7 @@ INSTALLED_APPS = (
     'grammar_builder',
     'search_api',
     'dataset_importer',
+    'importer'
 )
 
 ############################ Elasticsearch ###########################
@@ -249,7 +250,7 @@ if es_url is None:
 es_links = {
     ('etsa_new', 'event_dgn', 'epiId'): ('https://p12.stacc.ee/common/epicrisis/?id=', ''),
     ('etsa_new', 'event_dgn', 'patId'): ('https://p12.stacc.ee/common/aegread/index.php/aegrida/get/?id=', '')
-    }
+}
 
 # Date format used in Elasticsearch fields.
 # 

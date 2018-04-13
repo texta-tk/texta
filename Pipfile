@@ -1,0 +1,23 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+requests = "*"
+numpy = "*"
+scipy = "*"
+sklearn = "*"
+gensim = "*"
+pathlib = "*"
+dateutils = "*"
+sympy = "*"
+lxml = "*"
+textract = "*"
+"beautifulsoup4" = "*"
+Cython = "*"
+Django = "==1.11"
+
+[requires]
+python_version = "2.7"
