@@ -17,5 +17,5 @@ urlpatterns = [
     url(r'^api/', include('search_api.urls')),
     url(r'^dataset_importer/', include('dataset_importer.urls')),
     url(r'static/(?P<path>.*)$',static.serve,{'document_root': 'static'}),
-    url(r'^import', include('importer.urls')),
+    url(r'^import/', include('importer.urls')),
 ]

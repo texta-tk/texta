@@ -9,8 +9,9 @@ import elasticsearch
 
 class ElasticsearchHandler:
 
-	def __init__(self, doc_type, index):
-		self.es = elasticsearch.Elasticsearch()
+	def __init__(self, doc_type, index, hosts=[{"host":"localhost", "port": 9200}]):
+		self.es = elasticsearch.Elasticsearch(hosts=hosts)
+		self.es.cluster.health(wait_for_status='yellow', request_timeout=1000)
 		self.index = index
 		self.doc_type = doc_type
 
@@ -18,12 +19,11 @@ class ElasticsearchHandler:
 		self.es.index(index=self.index, doc_type=self.doc_type, body=document)
 
 	def insert_multiple_documents(self, list_of_documents):
-		metadata = {"_index": self.index, "_type": self.doc_type}
-		actions = [{"_source": document}.update(metadata) for document in list_of_documents]
+		actions = [{"_source": document, "_index": self.index, "_type": self.doc_type} for document in list_of_documents]
 		elastic_bulkapi(client=self.es, actions=actions)
 
 	def insert_index_into_es(self):
-		self.es.indices.create(index=self.index, ignore=400)
+		self.es.indices.create(index=self.index, doc_type=self.doc_type, ignore=400)
 
 	def insert_mapping_into_doctype(self, mapping_body):
 		self.es.indices.put_mapping(doc_type=self.doc_type, index=self.index, body=mapping_body)
@@ -63,7 +63,7 @@ class AuthTokenHandler:
 		self.authenticate_token()
 
 	def authenticate_token(self):
-		authenticated_token = Profile.objects.first(auth_token=self.auth_token_str)
+		authenticated_token = Profile.objects.filter(auth_token=self.auth_token_str).first()
 		if not authenticated_token:
 			raise Exception("Authentication failed - invalid auth token.")
 
@@ -73,6 +73,7 @@ class ImporterApiView(View):
 
 	def post(self, *args, **kwargs):
 		try:
+
 			post_payload = json.loads(self.request.body)
 			post_handler = ApiInputValidator(post_payload, ["auth_token", "index", "doc_type", "data"])
 			auth_handler = AuthTokenHandler(post_payload.get("auth_token"))
@@ -80,15 +81,17 @@ class ImporterApiView(View):
 
 			payload = post_payload["data"]
 			es_handler.create_index_if_not_exist()
-			insert_data_type = str(type(payload))
+			insert_data_type = type(payload)
 
 			if "mapping" in post_payload:
 				es_handler.insert_mapping_into_doctype(post_payload["mapping"])
 
-			if insert_data_type == "dict":
+			if insert_data_type == dict:
 				es_handler.insert_single_document(payload)
-			elif insert_data_type == "list":
+			elif insert_data_type == list:
 				es_handler.insert_multiple_documents(payload)
+
+			return JsonResponse({"message": "Item(s) sucessfully saved."})
 
 		except Exception as e:
 			return JsonResponse({"message": e.message})
