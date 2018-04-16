@@ -1,14 +1,14 @@
 var PREFIX = LINK_ONTOLOGY_VIEWER;
 
 $(document).ready(function(){
-    
+
     loadConcepts();
-    
+
     $('body').on('click','.concept',function() {
-        
+
         $(".selected").toggleClass("selected");
         $(this).toggleClass("selected");
-        
+
         var xhr = new XMLHttpRequest();
 
         xhr.onreadystatechange=function() {
@@ -21,17 +21,17 @@ $(document).ready(function(){
                 }
             }
         }
-        
+
         var form_data = new FormData();
         form_data.append("cid",$(this).attr('id').substring(3));
-         
+
         xhr.open("GET",PREFIX + "/get_concept_terms?cid=" + $(this).attr('id').substring(3),false);
         $('body').css('cursor', 'wait');
         xhr.send();
     });
 
-    
-    
+
+
 });
 
 function loadConcepts() {
@@ -46,21 +46,23 @@ function loadConcepts() {
             }
         }
     }
-    
+
     xhr.open("GET",PREFIX + "/get_concepts",false);
     $('body').css('cursor', 'wait');
-    xhr.send();    
+    xhr.send();
 
 }
 
 function remove_concept_tr(response_text) {
     var element = document.getElementById("cid"+response_text);
-    element.parentNode.deleteRow(element.sectionRowIndex);
+    //element.parentNode.deleteRow(element.sectionRowIndex);
+    element.remove();
 }
 
 function remove_term_tr(response_text) {
     var element = document.getElementById("tid"+response_text);
-    element.parentNode.deleteRow(element.sectionRowIndex);
+    //element.parentNode.deleteRow(element.sectionRowIndex);
+    element.remove();
 }
 
 function createTr(name,id,container_id,class_name,type) {
@@ -69,35 +71,60 @@ function createTr(name,id,container_id,class_name,type) {
     var tdElement2 = document.createElement("td");
     var aElement = document.createElement("a");
     var imgElement = document.createElement("img");
-    
-    if (id) { 
+
+    if (id) {
         trElement.id = id;
     }
-    
+
     if (class_name) {
         trElement.className = class_name;
     }
 
     aElement.href = "javascript:void(0)";
     aElement.onclick = function() {
-        async_get_query(PREFIX + '/delete_' + class_name + '?id=' + id.substring(3),class_name == "term" ? remove_term_tr : remove_concept_tr);
+        swal({
+            title: 'Remove entry?',
+            text: "You won't be able to revert this!",
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#73AD21',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'Cancel',
+            confirmButtonClass: 'btn btn-success',
+            cancelButtonClass: 'btn btn-danger',
+            buttonsStyling: true,
+            reverseButtons: true
+          }).then((result) => {
+            if (result.value) {
+                async_get_query(PREFIX + '/delete_' + class_name + '?id=' + id.substring(3),class_name == "term" ? remove_term_tr : remove_concept_tr);
+                swal('Deleted!','Entry removed.','success')
+            }
+            // else if (result.dismiss === swal.DismissReason.cancel) {
+            //   swal(
+            //     'Cancelled',
+            //     'Your imaginary file is safe :)',
+            //     'error'
+            //   )
+            // }
+          })
     };
-    
+
     imgElement.src = STATIC_URL + "img/delete.png";
-    
+
     aElement.appendChild(imgElement);
-    
+
     tdElement1.appendChild(document.createTextNode(name));
     tdElement2.appendChild(aElement);
     trElement.appendChild(tdElement1);
     trElement.appendChild(tdElement2);
     document.getElementById(container_id).appendChild(trElement);
-    
+
 }
 
 function empty_div(id) {
     var div = document.getElementById(id);
-    
+
     while (div.firstChild) {
         div.removeChild(div.firstChild);
     }

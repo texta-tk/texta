@@ -17,6 +17,8 @@ Just some notes to keep track of certain things
 
 
 ###################### TERMINOLOGY MANAGEMENT + #################################
+    # term overview
+        = better ux
     # SEARCHER +
         === current search === +
         + search
@@ -131,16 +133,20 @@ Just some notes to keep track of certain things
             + TfidfVectorizer | TruncatedSVD | Normalizer | RadiusNeighborsClassifier
 
     # ADMINISTRATION +?
-    # IMPORTER ?
-        + lorem_ipsum.txt imported
-        + rutest.txt imported, mlp worked, note /home/eha/Documents/texta/texta-py3/texta/dataset_importer/document_storer/storers/elastic_storer.py line 117, looping over only non mlp values
-        + removing a model
-        + Dataset Management
         + Superuser false
         + Superuser true
         + Deactivate
+        + removing a model
+        + Dataset Management
         + Activate
         + Delete
+        === script manager ===
+            + Create new proj
+            + Remove proj
+            ? Run script (probably works, just not sure how to test)
+    # IMPORTER ?
+        + lorem_ipsum.txt imported
+        + rutest.txt imported, mlp worked, note /home/eha/Documents/texta/texta-py3/texta/dataset_importer/document_storer/storers/elastic_storer.py line 117, looping over only non mlp values
 
         types:
             + pdf
@@ -150,24 +156,42 @@ Just some notes to keep track of certain things
             + rtf
             + csv
             + pdf zip
-            ?-+ json
-                = now imports different types of json as well, but doesn't show content.
+            += json
+                works fine for the right format
+                removed= now imports different types of json as well, but doesn't show content.
 
             ?+ xls/xlx fixed in other machine
             - sqlite, https://pastebin.com/faTu10ZE
-            - xml (not implomented error)
-            - html (not implomented error)
-            + forgot to choose file type
+            + compressed
                 +- zip pdf   https://pastebin.com/ExBVcPGz
                 +- tar pdf ^
                 +- tar gz pdf ^
+            =- xml (not implomented error)
+            =- html (not implomented error)
 
         input methods:
             + file upload
             + server_dir
             =? url
 
-        === script manager ===
-        + Create new proj
-        + Remove proj
-        ? Run script (probably works, just not sure how to test)
+        +mlp:
+            + 1 text doc
+#############################################3333
+lm save doesnt work anymore because didnt test after cluster search save
+
+alert:
+    searcher save, remove
+    bl miner, remove, save
+    model manager
+    mwe miner; no lexicons
+    grammar miner
+
+/home/eha/Documents/texta/texta-py3/texta/static/mwe_miner/mwe_miner.js
+/home/eha/Documents/texta/texta-py3/texta/static/conceptualiser/concept.js
+/home/eha/Documents/texta/texta-py3/texta/static/model_manager/model_manager.js
+/home/eha/Documents/texta/texta-py3/texta/static/datatables/datatables.min.js
+/home/eha/Documents/texta/texta-py3/texta/static/grammar_builder/grammar_builder.js
+/home/eha/Documents/texta/texta-py3/texta/static/classification_manager/classification_manager.js
+/home/eha/Documents/texta/texta-py3/texta/static/searcher/searcher.js
+/home/eha/Documents/texta/texta-py3/texta/static/searcher/ColReorderWithResize.js
+/home/eha/Documents/texta/texta-py3/texta/static/base/account.js

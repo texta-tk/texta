@@ -496,8 +496,8 @@ def search(es_params, request):
                                                   tagged_text=content)
                 else:
                     # WHEN USING OLD FORMAT DOCUMENTS, SOMETIMES BREAKS AT HIGHLIGHTER, CHECK IF ITS STRING INSTEAD OF FOR EXAMPLE LIST
+                    highlight_data = []
                     if (isinstance(content, str)) or (isinstance(content, bytes)):
-                        highlight_data = []
                         content = Highlighter(average_colors=True, derive_spans=True,
                                                 additional_style_string='font-weight: bold;').highlight(
                                                     old_content,
@@ -505,7 +505,7 @@ def search(es_params, request):
                                                     tagged_text=content)
                 # Append the final content of this col to the row
                 if(row[col] == ''):
-                    row[col] = row[col] + content
+                    row[col] = content
 
                 cols_data[col] = {'highlight_data': highlight_data, 'content': content, 'old_content': old_content}
 

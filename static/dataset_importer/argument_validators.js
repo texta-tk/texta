@@ -13,7 +13,7 @@ function loaderDisplay(status) {
         $("#import-dataset-btn").prop('disabled', false);
         $("#import-dataset-btn").html('Import');
 
-        $(".statusText").html("Successfully imported database!");
+        $(".statusText").html("Successfully started import job!");
         $(".statusText").css("color", "#73AD21");
         $(".statusText").show();
     }
@@ -23,7 +23,7 @@ function loaderDisplay(status) {
         $("#import-dataset-btn").prop('disabled', false);
         $("#import-dataset-btn").html('Import');
 
-        $(".statusText").html("Error importing database!");
+        $(".statusText").html("Error starting import job!");
         $(".statusText").css("color", "red");
         $(".statusText").show();
     }
