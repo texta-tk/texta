@@ -122,6 +122,10 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+# Avoid errors when sending too big files through the importer API.
+# Increased vulnerability to DDoS attacks.
+DATA_UPLOAD_MAX_MEMORY_SIZE = None
+
 # New user are created as activated or deactivated (in which case superuser has to activate them manually)
 USER_ISACTIVE_DEFAULT = True
 
@@ -228,6 +232,7 @@ INSTALLED_APPS = (
     'grammar_builder',
     'search_api',
     'dataset_importer',
+    'importer'
 )
 
 ############################ Elasticsearch ###########################

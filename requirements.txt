@@ -6,8 +6,11 @@ cython
 scipy
 sklearn
 gensim
-django=2.02
+django==2.0.2
 pathlib
 dateutils
 sympy
 lxml
+textract
+beautifulsoup4
+elasticsearch

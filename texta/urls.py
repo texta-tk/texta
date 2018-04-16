@@ -16,27 +16,24 @@ from grammar_builder.urls import urlpatterns as grammar_builder_urls
 from search_api.urls import urlpatterns as search_api_urls
 from dataset_importer.urls import urlpatterns as dataset_importer_urls
 
-
-
 # NEW PY REQUIREMENT
 urlpatterns = [
-    url(r'lm', include(lm_urls)),
-    url(r'', include(account_urls)),
-    url(r'conceptualiser', include(conceptualiser_urls)),
-    url(r'mwe_miner', include(mwe_miner_urls)),
-    url(r'^searcher', include(searcher_urls)),
-    url(r'model_manager', include(model_manager_urls)),
-    url(r'classification_manager', include(classification_manager_urls)),
-    url(r'ontology_viewer', include(ontology_viewer_urls)),
-    url(r'^admin/', admin.site.urls, name='admin.site.urls'),
-    url(r'^permission_admin/', include(permission_admin_urls)),
-    url(r'^grammar_builder/', include(grammar_builder_urls)),
-    url(r'^api/', include(search_api_urls)),
-    url(r'^dataset_importer/', include(dataset_importer_urls)),
-    url(r'static/(?P<path>.*)$',static.serve,{'document_root': 'static'}),
+	url(r'lm', include(lm_urls)),
+	url(r'', include(account_urls)),
+	url(r'conceptualiser', include(conceptualiser_urls)),
+	url(r'mwe_miner', include(mwe_miner_urls)),
+	url(r'^searcher', include(searcher_urls)),
+	url(r'model_manager', include(model_manager_urls)),
+	url(r'classification_manager', include(classification_manager_urls)),
+	url(r'ontology_viewer', include(ontology_viewer_urls)),
+	url(r'^admin/', admin.site.urls, name='admin.site.urls'),
+	url(r'^permission_admin/', include(permission_admin_urls)),
+	url(r'^grammar_builder/', include(grammar_builder_urls)),
+	url(r'^api/', include(search_api_urls)),
+	url(r'^dataset_importer/', include(dataset_importer_urls)),
+	url(r'static/(?P<path>.*)$', static.serve, {'document_root': 'static'}),
+	url(r'^import/', include('importer.urls')),
 ]
-
-
 
 # from django.conf.urls import url
 # from django.contrib import admin
