@@ -1,5 +1,4 @@
-from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from account.models import Profile
 from django.views import View
 from elasticsearch.helpers import bulk as elastic_bulkapi
@@ -9,7 +8,7 @@ import elasticsearch
 
 class ElasticsearchHandler:
 
-	def __init__(self, doc_type, index, hosts=[{"host":"localhost", "port": 9200}]):
+	def __init__(self, doc_type, index, hosts=[{"host": "localhost", "port": 9200}]):
 		self.es = elasticsearch.Elasticsearch(hosts=hosts)
 		self.es.cluster.health(wait_for_status='yellow', request_timeout=1000)
 		self.index = index
@@ -23,7 +22,7 @@ class ElasticsearchHandler:
 		elastic_bulkapi(client=self.es, actions=actions)
 
 	def insert_index_into_es(self):
-		self.es.indices.create(index=self.index, doc_type=self.doc_type, ignore=400)
+		self.es.indices.create(index=self.index, ignore=400)
 
 	def insert_mapping_into_doctype(self, mapping_body):
 		self.es.indices.put_mapping(doc_type=self.doc_type, index=self.index, body=mapping_body)
@@ -91,7 +90,7 @@ class ImporterApiView(View):
 			elif insert_data_type == list:
 				es_handler.insert_multiple_documents(payload)
 
-			return JsonResponse({"message": "Item(s) sucessfully saved."})
+			return JsonResponse({"message": "Item(s) successfully saved."})
 
 		except Exception as e:
 			return JsonResponse({"message": e.message})

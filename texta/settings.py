@@ -48,25 +48,25 @@ STATIC_ROOT = os.path.join(os.path.abspath(os.path.join(BASE_DIR, os.pardir)), '
 SERVER_TYPE = 'development'
 
 if SERVER_TYPE == 'development':
-    PROTOCOL = 'http://'
-    DOMAIN = 'localhost'
-    PORT = '8000'
-    
-    URL_PREFIX_DOMAIN = '{0}{1}:{2}'.format(PROTOCOL, DOMAIN, PORT)
-    URL_PREFIX_RESOURCE = ''
-    ROOT_URLCONF = 'texta.urls'
-    STATIC_URL = URL_PREFIX_DOMAIN + '/static/'
-    DEBUG = True
+	PROTOCOL = 'http://'
+	DOMAIN = 'localhost'
+	PORT = '8000'
+
+	URL_PREFIX_DOMAIN = '{0}{1}:{2}'.format(PROTOCOL, DOMAIN, PORT)
+	URL_PREFIX_RESOURCE = ''
+	ROOT_URLCONF = 'texta.urls'
+	STATIC_URL = URL_PREFIX_DOMAIN + '/static/'
+	DEBUG = True
 
 elif SERVER_TYPE == 'production':
-    PROTOCOL = 'http://'
-    DOMAIN = 'dev.texta.ee'
-    
-    URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL,DOMAIN)
-    URL_PREFIX_RESOURCE = '/texta'
-    ROOT_URLCONF = 'texta.urls'
-    STATIC_URL = '/texta/static/'
-    DEBUG = False
+	PROTOCOL = 'http://'
+	DOMAIN = 'dev.texta.ee'
+
+	URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL, DOMAIN)
+	URL_PREFIX_RESOURCE = '/texta'
+	ROOT_URLCONF = 'texta.urls'
+	STATIC_URL = '/texta/static/'
+	DEBUG = False
 
 ########################### URLs and paths ###########################
 
@@ -94,30 +94,29 @@ ADMIN_MEDIA_PREFIX = '/media/'
 
 # Path to users' visited words in Lex Miner.
 # 
-USER_MODELS = os.path.join(BASE_DIR,'data','usermodels')
+USER_MODELS = os.path.join(BASE_DIR, 'data', 'usermodels')
 
 # Path to users' language models.
 # 
-MODELS_DIR = os.path.join(BASE_DIR,'data','models')
+MODELS_DIR = os.path.join(BASE_DIR, 'data', 'models')
 
 # Path to Sven's projects
 #
 SCRIPT_MANAGER_DIR = os.path.join(MEDIA_ROOT, 'script_manager')
 
 if not os.path.exists(MODELS_DIR):
-    os.makedirs(MODELS_DIR)
+	os.makedirs(MODELS_DIR)
 
 if not os.path.exists(MODELS_DIR):
-    os.makedirs(MODELS_DIR)
+	os.makedirs(MODELS_DIR)
 
 if not os.path.exists(SCRIPT_MANAGER_DIR):
-    os.makedirs(SCRIPT_MANAGER_DIR)
+	os.makedirs(SCRIPT_MANAGER_DIR)
 
-STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static_general'),) # TODO remove
-
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static_general'),)  # TODO remove
 
 ADMINS = (
-    # ('Your Name', 'your_email@example.com'),
+	# ('Your Name', 'your_email@example.com'),
 )
 
 MANAGERS = ADMINS
@@ -141,20 +140,20 @@ ALLOWED_HOSTS = [DOMAIN]
 # Can change engine and database info as one sees fit.
 #
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': os.path.join(BASE_DIR, 'database', 'lex.db'),  # Or path to database file if using sqlite3.
-        'USER': '',  # Not used with sqlite3.
-        'PASSWORD': '',  # Not used with sqlite3.
-        'HOST': '',  # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',  # Set to empty string for default. Not used with sqlite3.
-        'BACKUP_COUNT': 5,
-    }
+	'default': {
+		'ENGINE':       'django.db.backends.sqlite3',
+		# Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+		'NAME':         os.path.join(BASE_DIR, 'database', 'lex.db'),  # Or path to database file if using sqlite3.
+		'USER':         '',  # Not used with sqlite3.
+		'PASSWORD':     '',  # Not used with sqlite3.
+		'HOST':         '',  # Set to empty string for localhost. Not used with sqlite3.
+		'PORT':         '',  # Set to empty string for default. Not used with sqlite3.
+		'BACKUP_COUNT': 5,
+	}
 }
 
 if not os.path.exists(os.path.dirname(DATABASES['default']['NAME'])):
-    os.makedirs(os.path.dirname(DATABASES['default']['NAME']))
+	os.makedirs(os.path.dirname(DATABASES['default']['NAME']))
 
 TIME_ZONE = 'Europe/Tallinn'
 LANGUAGE_CODE = 'et'
@@ -170,64 +169,64 @@ SECRET_KEY = '+$18(*8p_h0u6-)z&zu^@=$2h@=8qe+3uwyv+3#v9*)fy9hy&f'
 # Defines template engine and context processors to render dynamic HTML pages.
 # 
 TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.contrib.auth.context_processors.auth',
-                'django.template.context_processors.debug',
-                'django.template.context_processors.i18n',
-                'django.template.context_processors.media',
-                'django.template.context_processors.static',
-                'django.template.context_processors.tz',
-                'django.template.context_processors.request',
-                'django.contrib.messages.context_processors.messages',
-                'utils.context_processors.get_version'
-            ],
-#               'loaders': [
-#                'django.template.loaders.filesystem.Loader',
-#                'django.template.loaders.app_directories.Loader',
-#            ],
-            'debug': DEBUG,
-        },
-    },
+	{
+		'BACKEND':  'django.template.backends.django.DjangoTemplates',
+		'DIRS':     [],
+		'APP_DIRS': True,
+		'OPTIONS':  {
+			'context_processors': [
+				'django.contrib.auth.context_processors.auth',
+				'django.template.context_processors.debug',
+				'django.template.context_processors.i18n',
+				'django.template.context_processors.media',
+				'django.template.context_processors.static',
+				'django.template.context_processors.tz',
+				'django.template.context_processors.request',
+				'django.contrib.messages.context_processors.messages',
+				'utils.context_processors.get_version'
+			],
+			#               'loaders': [
+			#                'django.template.loaders.filesystem.Loader',
+			#                'django.template.loaders.app_directories.Loader',
+			#            ],
+			'debug':              DEBUG,
+		},
+	},
 ]
 
 # List of Django plugins used in TEXTA.
 # 
 MIDDLEWARE_CLASSES = (
-    'django.middleware.common.CommonMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
+	'django.middleware.common.CommonMiddleware',
+	'django.contrib.sessions.middleware.SessionMiddleware',
+	'django.contrib.auth.middleware.AuthenticationMiddleware',
+	'django.contrib.messages.middleware.MessageMiddleware',
 )
 
 # List of built-in and custom apps in use.
 # 
 INSTALLED_APPS = (
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.sites',
-    'django.contrib.messages',
-    'django.contrib.admin',
-    'django.contrib.staticfiles',
-    'lm',
-    'conceptualiser',
-    'mwe_miner',
-    'account',
-    'searcher',
-    'model_manager',
-    'classification_manager',
-    'ontology_viewer',
-    'base',
-    'permission_admin',
-    'grammar_builder',
-    'search_api',
-    'dataset_importer',
-    'importer'
+	'django.contrib.auth',
+	'django.contrib.contenttypes',
+	'django.contrib.sessions',
+	'django.contrib.sites',
+	'django.contrib.messages',
+	'django.contrib.admin',
+	'django.contrib.staticfiles',
+	'lm',
+	'conceptualiser',
+	'mwe_miner',
+	'account',
+	'searcher',
+	'model_manager',
+	'classification_manager',
+	'ontology_viewer',
+	'base',
+	'permission_admin',
+	'grammar_builder',
+	'search_api',
+	'dataset_importer',
+	'importer'
 )
 
 ############################ Elasticsearch ###########################
@@ -242,14 +241,14 @@ INSTALLED_APPS = (
 #
 es_url = os.getenv('TEXTA_ELASTICSEARCH_URL')
 if es_url is None:
-    es_url = 'http://localhost:9200'
-    #es_url = 'http://10.6.6.93:9200'
+	es_url = 'http://localhost:9200'
+# es_url = 'http://10.6.6.93:9200'
 
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')
 es_links = {
-    ('etsa_new', 'event_dgn', 'epiId'): ('https://p12.stacc.ee/common/epicrisis/?id=', ''),
-    ('etsa_new', 'event_dgn', 'patId'): ('https://p12.stacc.ee/common/aegread/index.php/aegrida/get/?id=', '')
+	('etsa_new', 'event_dgn', 'epiId'): ('https://p12.stacc.ee/common/epicrisis/?id=', ''),
+	('etsa_new', 'event_dgn', 'patId'): ('https://p12.stacc.ee/common/aegread/index.php/aegrida/get/?id=', '')
 }
 
 # Date format used in Elasticsearch fields.
@@ -266,19 +265,18 @@ es_ldap_password = os.getenv('TEXTA_LDAP_PASSWORD')
 from dataset_importer.document_preprocessor.preprocessors.mlp import MlpPreprocessor
 
 DATASET_IMPORTER = {
-    'directory': os.path.join(BASE_DIR, 'files', 'dataset_importer'),
-    'import_processes': 2,
-    'process_batch_size': 1000,
-    'sync': {
-        'enabled': False,
-        'interval_in_seconds': 10,
-        'index_sqlite_path': os.path.join(BASE_DIR, 'database', 'import_sync.db')
-    }
+	'directory':          os.path.join(BASE_DIR, 'files', 'dataset_importer'),
+	'import_processes':   2,
+	'process_batch_size': 1000,
+	'sync':               {
+		'enabled':             False,
+		'interval_in_seconds': 10,
+		'index_sqlite_path':   os.path.join(BASE_DIR, 'database', 'import_sync.db')
+	}
 }
 
 if not os.path.exists(DATASET_IMPORTER['directory']):
-    os.makedirs(DATASET_IMPORTER['directory'])
-
+	os.makedirs(DATASET_IMPORTER['directory'])
 
 ############################### Logging ##############################
 
@@ -287,7 +285,7 @@ if not os.path.exists(DATASET_IMPORTER['directory']):
 
 # Path to the log directory. Default is /log
 # 
-LOG_PATH = os.path.join(BASE_DIR,'log')
+LOG_PATH = os.path.join(BASE_DIR, 'log')
 
 # Separator used to join different logged features.
 #
@@ -298,6 +296,8 @@ logging_separator = ' - '
 info_log_file_name = os.path.join(LOG_PATH, "info.log")
 error_log_file_name = os.path.join(LOG_PATH, "error.log")
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = None
+
 # Logger IDs, used in apps. Do not change.
 #
 INFO_LOGGER = 'info_logger'
@@ -307,51 +307,51 @@ ERROR_LOGGER = 'error_logger'
 # Especially format, logging levels, logging class and filenames.
 #
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'detailed': {
-            'format': logging_separator.join(
-                    ['%(levelname)s', '%(module)s', '%(name)s', '%(process)d', '%(thread)d', '%(message)s',
-                     '%(asctime)s'])
-        },
-        'normal': {
-            'format': logging_separator.join(['%(levelname)s', '%(module)s', '%(message)s', '%(asctime)s'])
-        },
-        'detailed_error': {
-            'format': '\n' + logging_separator.join(
-                    ['%(levelname)s', '%(module)s', '%(name)s', '%(process)d', '%(thread)d', '%(message)s',
-                     '%(asctime)s'])
-        }
-    },
-    'handlers': {
-        'info_file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'formatter': 'detailed',
-            'filename': info_log_file_name,
-            'encoding': 'utf8',
-            'mode': 'a'
-        },
-        'error_file': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'formatter': 'detailed_error',
-            'filename': error_log_file_name,
-            'encoding': 'utf8',
-            'mode': 'a'
-        },
-    },
-    'loggers': {
-        INFO_LOGGER: {
-            'level': 'DEBUG',
-            'handlers': ['info_file']
-        },
-        ERROR_LOGGER: {
-            'level': 'ERROR',
-            'handlers': ['error_file']
-        }
-    }
+	'version':                  1,
+	'disable_existing_loggers': False,
+	'formatters':               {
+		'detailed':       {
+			'format': logging_separator.join(
+					['%(levelname)s', '%(module)s', '%(name)s', '%(process)d', '%(thread)d', '%(message)s',
+					 '%(asctime)s'])
+		},
+		'normal':         {
+			'format': logging_separator.join(['%(levelname)s', '%(module)s', '%(message)s', '%(asctime)s'])
+		},
+		'detailed_error': {
+			'format': '\n' + logging_separator.join(
+					['%(levelname)s', '%(module)s', '%(name)s', '%(process)d', '%(thread)d', '%(message)s',
+					 '%(asctime)s'])
+		}
+	},
+	'handlers':                 {
+		'info_file':  {
+			'level':     'DEBUG',
+			'class':     'logging.FileHandler',
+			'formatter': 'detailed',
+			'filename':  info_log_file_name,
+			'encoding':  'utf8',
+			'mode':      'a'
+		},
+		'error_file': {
+			'level':     'ERROR',
+			'class':     'logging.FileHandler',
+			'formatter': 'detailed_error',
+			'filename':  error_log_file_name,
+			'encoding':  'utf8',
+			'mode':      'a'
+		},
+	},
+	'loggers':                  {
+		INFO_LOGGER:  {
+			'level':    'DEBUG',
+			'handlers': ['info_file']
+		},
+		ERROR_LOGGER: {
+			'level':    'ERROR',
+			'handlers': ['error_file']
+		}
+	}
 }
 
 ############################ Boot scripts ###########################
@@ -359,11 +359,10 @@ LOGGING = {
 # Several scripts ran during the boot to set up files and directories.
 # Scripts will only be run if settings is imported from 'texta' directory, e.g. as a result of manager.py, or by Apache (user httpd / apache)
 
-if os.path.split(os.getcwd())[1] in ['texta','httpd','apache']:
+if os.path.split(os.getcwd())[1] in ['texta', 'httpd', 'apache']:
+	from utils.setup import write_navigation_file, ensure_dir_existence
 
-    from utils.setup import write_navigation_file, ensure_dir_existence
-
-    write_navigation_file(URL_PREFIX, STATIC_URL, STATIC_ROOT)
-    ensure_dir_existence(LOG_PATH)
-    ensure_dir_existence(MODELS_DIR)
-    ensure_dir_existence(USER_MODELS)
+	write_navigation_file(URL_PREFIX, STATIC_URL, STATIC_ROOT)
+	ensure_dir_existence(LOG_PATH)
+	ensure_dir_existence(MODELS_DIR)
+	ensure_dir_existence(USER_MODELS)
