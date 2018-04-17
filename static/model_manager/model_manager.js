@@ -28,12 +28,12 @@ function train_model(){
 				confirmButtonText: "Continue"
 				}).then((result) => {
 					$.post(PREFIX + "/start_training_job", {field:field,
-															num_dimensions:num_dimensions,
-															num_workers:num_workers,
-															min_freq:min_freq,
-															search:search,
-															description:description,
-															lexicon_reduction:selected_checkboxes}, function(data){});
+							num_dimensions:num_dimensions,
+							num_workers:num_workers,
+							min_freq:min_freq,
+							search:search,
+							description:description,
+							lexicon_reduction:selected_checkboxes}, function(data){});
 						window.location.replace(LINK_MODEL_MANAGER);
 					});
 		}else{
