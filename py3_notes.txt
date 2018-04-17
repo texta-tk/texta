@@ -202,5 +202,11 @@ Just some notes to keep track of certain things
         == /home/eha/Documents/texta/texta-py3/texta/static/datatables/datatables.min.js
         == /home/eha/Documents/texta/texta-py3/texta/static/searcher/ColReorderWithResize.js
 
-    === search_api ===:
+    === search_api ===
         pass
+
+    === remove junk files ===
+        + texta/files/dataset_importer/*
+        + texta/files/database/*
+        + migrations
+        + files marked in gitignore
