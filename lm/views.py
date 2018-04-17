@@ -53,10 +53,13 @@ def newLexicon(request):
     Returns:
         HttpResponseRedirect -- If created in lm, then redirects to new lexicon, else doesn't return anything
     """
-    lexiconName = ' '.join(request.POST['lexiconname'].split(' ')[:-1])
+    lexiconName = request.POST['lexiconname']
+
     model_pk = int(request.session['model'])
     if 'lexiconkeywords' in request.POST:
         lexiconKeywords = request.POST['lexiconkeywords']
+        # To save a cluster without document names, might need rework if more places start saving lexicons
+        lexiconName = ' '.join(request.POST['lexiconname'].split(' ')[:-1])
     else:
         lexiconKeywords = None
 
@@ -97,7 +100,7 @@ def deleteLexicon(request):
 
 
 @login_required
-def saveLexicon(request, local_request=True):
+def saveLexicon(request, local_request=False):
     """Save a lexicon, either through lm or (if external) through the newLexicon function
 
     Arguments:

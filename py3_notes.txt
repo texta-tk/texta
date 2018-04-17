@@ -99,7 +99,7 @@ Just some notes to keep track of certain things
         ?= when adding new aggregation under concat or gap aggregation, type can only be union and has same slope as original
 
 
-#################### RESTRICTED ###################
+#################### RESTRICTED+ ###################
     #MODEL MANAGER +
         +- making a model
         + all options
@@ -144,7 +144,7 @@ Just some notes to keep track of certain things
             + Create new proj
             + Remove proj
             ? Run script (probably works, just not sure how to test)
-    # IMPORTER ?
+    # IMPORTER +?
         + lorem_ipsum.txt imported
         + rutest.txt imported, mlp worked, note /home/eha/Documents/texta/texta-py3/texta/dataset_importer/document_storer/storers/elastic_storer.py line 117, looping over only non mlp values
 
@@ -172,26 +172,31 @@ Just some notes to keep track of certain things
         input methods:
             + file upload
             + server_dir
-            =? url
+            + url
 
         +mlp:
             + 1 text doc
-#############################################3333
-lm save doesnt work anymore because didnt test after cluster search save
+        +keep in sync
+        + overwrite
+        +- not processed fields
+#################### OTHER+ #########################
+    + lm save doesnt work anymore because didnt test after cluster search save
+        = local logic error
 
-alert:
-    searcher save, remove
-    bl miner, remove, save
-    model manager
-    mwe miner; no lexicons
-    grammar miner
+    + alert:
+        searcher save, remove, cluster
+        bl miner, remove, save
+        model manager
+        mwe miner; no lexicons
+        grammar miner
+        concepts saved
 
-/home/eha/Documents/texta/texta-py3/texta/static/mwe_miner/mwe_miner.js
-/home/eha/Documents/texta/texta-py3/texta/static/conceptualiser/concept.js
-/home/eha/Documents/texta/texta-py3/texta/static/model_manager/model_manager.js
-/home/eha/Documents/texta/texta-py3/texta/static/datatables/datatables.min.js
-/home/eha/Documents/texta/texta-py3/texta/static/grammar_builder/grammar_builder.js
-/home/eha/Documents/texta/texta-py3/texta/static/classification_manager/classification_manager.js
-/home/eha/Documents/texta/texta-py3/texta/static/searcher/searcher.js
-/home/eha/Documents/texta/texta-py3/texta/static/searcher/ColReorderWithResize.js
-/home/eha/Documents/texta/texta-py3/texta/static/base/account.js
+        ++ /home/eha/Documents/texta/texta-py3/texta/static/conceptualiser/concept.js
+        ++ /home/eha/Documents/texta/texta-py3/texta/static/searcher/searcher.js
+        ++ /home/eha/Documents/texta/texta-py3/texta/static/mwe_miner/mwe_miner.js
+        ++ /home/eha/Documents/texta/texta-py3/texta/static/model_manager/model_manager.js
+        ++ /home/eha/Documents/texta/texta-py3/texta/static/grammar_builder/grammar_builder.js
+        ++ /home/eha/Documents/texta/texta-py3/texta/static/classification_manager/classification_manager.js
+        ++ /home/eha/Documents/texta/texta-py3/texta/static/base/account.js
+        == /home/eha/Documents/texta/texta-py3/texta/static/datatables/datatables.min.js
+        == /home/eha/Documents/texta/texta-py3/texta/static/searcher/ColReorderWithResize.js

@@ -19,17 +19,24 @@ function train_model(){
 		var search = $('#search').val();
 		var field = $('#field').val();
 		if(search.length > 0 && field.length > 0){
-			$.post(PREFIX + "/start_training_job", {field:field,
-													num_dimensions:num_dimensions,
-													num_workers:num_workers,
-													min_freq:min_freq,
-													search:search,
-													description:description,
-													lexicon_reduction:selected_checkboxes}, function(data){
-				alert('The training job has begun. Check the models table for updates.');
-				window.location.replace(LINK_MODEL_MANAGER);
-			});
+			swal({
+				title: "The mapping job has begun.",
+				text: "Check the results table for updates.",
+				type: "success",
+				showCancelButton: false,
+				confirmButtonColor: "#73AD21",
+				confirmButtonText: "Continue"
+				}).then((result) => {
+					$.post(PREFIX + "/start_training_job", {field:field,
+															num_dimensions:num_dimensions,
+															num_workers:num_workers,
+															min_freq:min_freq,
+															search:search,
+															description:description,
+															lexicon_reduction:selected_checkboxes}, function(data){});
+						window.location.replace(LINK_MODEL_MANAGER);
+					});
 		}else{
-			alert('Parameters not set!');
+			swal('Warning!','Parameters not set!','warning');
 		}
 }

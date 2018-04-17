@@ -28,7 +28,7 @@ function train_classifier(){
 			    });
 
 		}else{
-			alert('Parameters not set!');
+			swal('Warning!','Parameters not set!','warning');
 		}
 }
 
@@ -89,7 +89,7 @@ function apply_model(){
             }
         );
     }else{
-        alert('Search not selected!');
+        swal('Warning!','Search not selected!','warning');
     }
 
 }

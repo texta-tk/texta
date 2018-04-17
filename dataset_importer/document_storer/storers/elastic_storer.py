@@ -17,9 +17,11 @@ class ElasticStorer(object):
 
         if 'elastic_auth' in connection_parameters:
             self._request.auth = connection_parameters['elastic_auth']
-
-        self._create_index_if_not_exists(self._es_url, self._es_index, self._es_mapping,
-                                         json.loads(connection_parameters['texta_elastic_not_analyzed']))
+        print(self._es_url, self._es_index, self._es_mapping,
+                                         connection_parameters['texta_elastic_not_analyzed'])
+        self._create_index_if_not_exists(self._es_url, self._es_index,
+                                        self._es_mapping,connection_parameters['texta_elastic_not_analyzed'].split('\n'))
+                                         #json.loads(connection_parameters['texta_elastic_not_analyzed']))
 
     def _correct_name(self, name):
         return name.lower().replace(' ', '_')

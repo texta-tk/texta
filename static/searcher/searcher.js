@@ -274,7 +274,7 @@ function add_field(date_range_min,date_range_max){
 	var field = $("#constraint_field").val();
 
     if( !field ){
-        alert('No field selected.');
+        swal('Warning!','No field selected!','warning');
         return;
     }
 
@@ -894,7 +894,21 @@ function remove_by_query(){
     request.onreadystatechange=function() {
         if (request.readyState==4 && request.status==200) {
             if (request.responseText.length > 0) {
-				alert('The documents are being deleted. Check the progress by searching again.');
+                swal({
+                    title: 'The documents are being deleted. Check the progress by searching again.',
+                    animation: true,
+                    customClass: 'animated fadeInDown',
+                    width: 400,
+                    padding: 10,
+                    position: 'top',
+                    type: 'success',
+                    timer: 3500,
+                    background: '#f9f9f9',
+                    backdrop: `
+                    rgba(0,0,0,0.0)
+                    no-repeat
+                    `,
+                  });
             }
         }
     }
@@ -1096,10 +1110,10 @@ function cluster_to_lex(id) {
         contentType: false,
         processData: false,
         success: function() {
-            alert('Cluster successfully saved as a lexicon!');
+            swal('Success!','Cluster saved as a lexicon!','success');
         },
         error: function() {
-            alert('There was a problem saving the cluster!');
+            swal('Error!','There was a problem saving the cluster as a lexicon!','error');
         }
     });
 }
