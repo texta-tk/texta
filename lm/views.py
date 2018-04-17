@@ -58,8 +58,6 @@ def newLexicon(request):
     model_pk = int(request.session['model'])
     if 'lexiconkeywords' in request.POST:
         lexiconKeywords = request.POST['lexiconkeywords']
-        # To save a cluster without document names, might need rework if more places start saving lexicons
-        lexiconName = ' '.join(request.POST['lexiconname'].split(' ')[:-1])
     else:
         lexiconKeywords = None
 

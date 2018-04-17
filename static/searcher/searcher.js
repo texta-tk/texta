@@ -1103,6 +1103,7 @@ function hide_show_options_cluster() {
 function cluster_to_lex(id) {
     var cluster_form = document.getElementById("save_as_lexicon_" + id);
     var fd = new FormData(cluster_form);
+    fd.set('lexiconname', fd.get('lexiconname').split(' ').slice(0, -1).join(' '));
     $.ajax({
         url: LINK_LEXMINER + '/new',
         data: fd,
