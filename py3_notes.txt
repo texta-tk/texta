@@ -201,7 +201,8 @@ Just some notes to keep track of certain things
         ++ /home/eha/Documents/texta/texta-py3/texta/static/base/account.js
         == /home/eha/Documents/texta/texta-py3/texta/static/datatables/datatables.min.js
         == /home/eha/Documents/texta/texta-py3/texta/static/searcher/ColReorderWithResize.js
-
+'{ "auth_token": "3f2aa7b6ec28d4", "searches": [{"dataset": 38}], "aggregation": [
+     {"field":"lahendi_aeg","type":"daterange","start":"2000-02-02","end":"2017-09-01","frequency":"raw_frequency","interval":"month"}, {"field": "text.text", "type": "string", "sort_by": "significant_texts"} ] }'
     === search_api ===
         + get auth token {"auth_token": "3f2aa7b6ec28d4"}
         +-(empty) curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 15 }'
@@ -213,8 +214,9 @@ Just some notes to keep track of certain things
         +-(field) curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 15 "fields": ["text", "texta_facts"], "parameters": {"limit": 100} }'
             = fields disppeared, now is _source, rework in docu
         + (string query) curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 15, "fields": ["text"], "parameters": {"limit": 15}, "constraints": [ {"field":"text","operator":"must","type":"match_phrase","slop":0,"strings":["Laura Sirelpuu"], "class":"string"} ] }'
-        ?+(date) curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 15, "fields": ["text"], "parameters": {"limit": 15}, "constraints": [ {"field":"text","operator":"must","type":"match_phrase","slop":0,"strings":["Laura Sirelpuu"], "class":"string"}, {"field":"published", "class":"date", "start":"2017-01-01", "end":"2017-12-31"} ] }'
-            has date but no way to test the date, just doesnt return a result, but doesnt break either
+            curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 38, "fields": ["text.text"], "parameters": {"limit": 15}, "constraints": [ {"field":"text.text","operator":"must","type":"match_phrase","slop":0,"strings":["Laura Sirelpuu"], "class":"string"} ] }'
+        +?(date) curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 15, "fields": ["text"], "parameters": {"limit": 15}, "constraints": [ {"field":"text","operator":"must","type":"match_phrase","slop":0,"strings":["Laura Sirelpuu"], "class":"string"}, {"field":"published", "class":"date", "start":"2017-01-01", "end":"2017-12-31"} ] }'
+            curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 38, "fields": ["text.text"], "parameters": {"limit": 15}, "constraints": [ {"field":"text.text", "class":"date", "start":"2000-01-01", "end":"2007-12-31"}, {"field":"text.text","operator":"must","type":"match_phrase","slop":0,"strings":["Laura Sirelpuu"], "class":"string"}  ] }'
         +? (scroll) curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 15, "fields": ["text"], "parameters": {"limit": 15}, "constraints": [ {"field":"text","operator":"must","type":"match_phrase","slop":0,"strings":["madis kägu"], "class":"string"} ], "scroll":true}' -o 'Documents/test.json'
             ?curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 15, "fields": ["text"], "parameters": {"limit": 15}, "constraints": [ {"field":"text","operator":"must","strings":["Laura Sirelpuu"], "class":"fact"} ] }'
             retunrs {"text": } values but not scroll id, total etc?
@@ -226,7 +228,7 @@ Just some notes to keep track of certain things
             +match
             +match_phrase
             +match_phrase_prefix
-        ?= temporal/date
+        += temporal/date
         + {"field":"content","operator":"must","strings":["president", "prime_minister"], "class":"fact"}
             + curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 34, "fields": ["mlp_text.text"], "parameters": {"limit": 15}, "constraints": [ {"field":"mlp_text.text","operator":"should","strings":["PER"], "class":"fact"} ] }'
             
