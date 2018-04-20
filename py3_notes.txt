@@ -203,7 +203,41 @@ Just some notes to keep track of certain things
         == /home/eha/Documents/texta/texta-py3/texta/static/searcher/ColReorderWithResize.js
 
     === search_api ===
-        pass
+        + get auth token {"auth_token": "3f2aa7b6ec28d4"}
+        +-(empty) curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 15 }'
+            = unicode is not defined
+            = {'error': 'Content-Type header [] is not supported', 'status': 406}
+                https://stackoverflow.com/questions/47544966/elasticsearch-content-type-header-application-x-www-form-urlencoded-is-not-s
+                curl -H "Content-Type: application/json" -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 15 }
+            + fixed by adding headers={"Content-Type": "application/json"} to request in searcher:100
+        +-(field) curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 15 "fields": ["text", "texta_facts"], "parameters": {"limit": 100} }'
+            = fields disppeared, now is _source, rework in docu
+        + (string query) curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 15, "fields": ["text"], "parameters": {"limit": 15}, "constraints": [ {"field":"text","operator":"must","type":"match_phrase","slop":0,"strings":["Laura Sirelpuu"], "class":"string"} ] }'
+        ?+(date) curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 15, "fields": ["text"], "parameters": {"limit": 15}, "constraints": [ {"field":"text","operator":"must","type":"match_phrase","slop":0,"strings":["Laura Sirelpuu"], "class":"string"}, {"field":"published", "class":"date", "start":"2017-01-01", "end":"2017-12-31"} ] }'
+            has date but no way to test the date, just doesnt return a result, but doesnt break either
+        +? (scroll) curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 15, "fields": ["text"], "parameters": {"limit": 15}, "constraints": [ {"field":"text","operator":"must","type":"match_phrase","slop":0,"strings":["madis kägu"], "class":"string"} ], "scroll":true}' -o 'Documents/test.json'
+            ?curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 15, "fields": ["text"], "parameters": {"limit": 15}, "constraints": [ {"field":"text","operator":"must","strings":["Laura Sirelpuu"], "class":"fact"} ] }'
+            retunrs {"text": } values but not scroll id, total etc?
+        +operators:
+            +must
+            +should
+            +must_not
+        +type:
+            +match
+            +match_phrase
+            +match_phrase_prefix
+        ?= temporal/date
+        + {"field":"content","operator":"must","strings":["president", "prime_minister"], "class":"fact"}
+            + curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 34, "fields": ["mlp_text.text"], "parameters": {"limit": 15}, "constraints": [ {"field":"mlp_text.text","operator":"should","strings":["PER"], "class":"fact"} ] }'
+            
+        + fact_val search
+            + curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 34, "fields": ["mlp_text.text"], "parameters": {"limit": 15}, "constraints": [ {"field":"mlp_text.text","operator":"must","type":"str","constraints":[{"name":"LOC", "operator":"=", "value": "Eesti"}], "class":"fact_val"} ] }'
+        +? aggregation also has significant_texts now, maybe need to update documentatation
+        +advanced fact_str, fact_num
+        +?list datasets search_api should be api in url in documentatation
+        +? auth_token shouldnt end with a comma in documentatation, throws error
+        + list dataset, documentation url is wrong
+        + importing
 
     === remove junk files ===
         + texta/files/dataset_importer/*

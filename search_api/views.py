@@ -21,7 +21,6 @@ def search(request):
         return StreamingHttpResponse([json.dumps({'error': str(processing_error)})])
 
     results = Searcher(es_url).search(processed_request)
-
     return StreamingHttpResponse(process_stream(results), content_type='application/json')
 
 
@@ -33,7 +32,7 @@ def scroll(request):
 
     results = Searcher(es_url).scroll(processed_request)
 
-    return HttpResponse(json.dumps(results, ensure_ascii=False).encode('utf8'))
+    return HttpResponse(json.dumps(results, ensure_ascii=False))
 
 
 def aggregate(request):
@@ -44,7 +43,7 @@ def aggregate(request):
 
     results = Aggregator(date_format, es_url).aggregate(processed_request)
 
-    return HttpResponse(json.dumps(results, ensure_ascii=False).encode('utf8'))
+    return HttpResponse(json.dumps(results, ensure_ascii=False))
 
 
 def list_datasets(request):
@@ -86,11 +85,11 @@ def list_fields(request):
     return HttpResponse(json.dumps(properties), content_type='application/json')
 
 
-def process_stream(generator, encoding='utf8'):
+def process_stream(generator):
     for entry in generator:
         new_entry = {}
         for key in entry:
             new_entry[key] = entry[key]
-            
-        yield json.dumps(new_entry, ensure_ascii=False).encode(encoding)
+
+        yield json.dumps(new_entry, ensure_ascii=False)
         yield '\n'
