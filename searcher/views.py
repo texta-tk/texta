@@ -470,7 +470,7 @@ def search(es_params, request):
                         content = content[p] if p in content else ''
 
                 # Substitute feature value with value highlighted by Elasticsearch
-                old_content = content
+                old_content = content.strip()
                 if col in highlight_config['fields'] and 'highlight' in hit:
                     content = hit['highlight'][col][0]
                 # Prettify and standardize highlights

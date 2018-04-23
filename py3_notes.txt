@@ -21,34 +21,34 @@ Just some notes to keep track of certain things
         = better ux
     # SEARCHER +
         === current search === +
-        + search
-        + regular highlighting, but not on the txt_5000 file as mentioned below, might be from whitespace
-        + translit highlighting
-        +- short search
-        + expand search
-        + save search
-        +- bring up saved searches
-        +- concept/lexicon suggestions
+            + search
+            + regular highlighting, but not on the txt_5000 file as mentioned below, might be from whitespace
+            + translit highlighting
+            +- short search
+            + expand search
+            + save search
+            +- bring up saved searches
+            +- concept/lexicon suggestions
 
         === cluster search === +
-        +- cluster search clustering method: hierarchical
-        +- cluster search, kmeans, tfidf, countvectorizer, cluster sizes, stopwords lexicon
-        += also make a slider for tfidf max features
-        += also add the short version
-        == also make it so that you can select the certain documents in the cluster and export them/search on them or something
-        += also show the words seperately instead of only when hovering
-        += also make a cluster wordset into a lexicon
+            +- cluster search clustering method: hierarchical
+            +- cluster search, kmeans, tfidf, countvectorizer, cluster sizes, stopwords lexicon
+            += also make a slider for tfidf max features
+            += also add the short version
+            == also make it so that you can select the certain documents in the cluster and export them/search on them or something
+            += also show the words seperately instead of only when hovering
+            += also make a cluster wordset into a lexicon
 
         === results === +
-        +- export
-        +- delete results; probs some es problem; comes out also in master (not py3 related)
-        += also the search result amount is only on the bottom (probably not py3 related)
+            +- export
+            +- delete results; probs some es problem; comes out also in master (not py3 related)
+            += also the search result amount is only on the bottom (probably not py3 related)
 
         === Aggregations === +?
-        +-? aggregation; somewhat works, unclear if it works or not since "errors" are also in other branches, also multi aggregation doesnt work (actually just cant aggregate to significant words)
-        +- now you can't aggregate to texta_facts, added to reserved (not really py3 related)
-        +- also now you cant see the add button when the field#1 aggregation is "significant words". (not really py3 related, javascript change)
-        + hide current search in results
+            +-? aggregation; somewhat works, unclear if it works or not since "errors" are also in other branches, also multi aggregation doesnt work (actually just cant aggregate to significant words)
+            +- now you can't aggregate to texta_facts, added to reserved (not really py3 related)
+            +- also now you cant see the add button when the field#1 aggregation is "significant words". (not really py3 related, javascript change)
+            + hide current search in results
 
 
     #LEXICON MINER +
@@ -201,9 +201,9 @@ Just some notes to keep track of certain things
         ++ /home/eha/Documents/texta/texta-py3/texta/static/base/account.js
         == /home/eha/Documents/texta/texta-py3/texta/static/datatables/datatables.min.js
         == /home/eha/Documents/texta/texta-py3/texta/static/searcher/ColReorderWithResize.js
-'{ "auth_token": "3f2aa7b6ec28d4", "searches": [{"dataset": 38}], "aggregation": [
-     {"field":"lahendi_aeg","type":"daterange","start":"2000-02-02","end":"2017-09-01","frequency":"raw_frequency","interval":"month"}, {"field": "text.text", "type": "string", "sort_by": "significant_texts"} ] }'
     === search_api ===
+        '{ "auth_token": "3f2aa7b6ec28d4", "searches": [{"dataset": 38}], "aggregation": [
+            {"field":"lahendi_aeg","type":"daterange","start":"2000-02-02","end":"2017-09-01","frequency":"raw_frequency","interval":"month"}, {"field": "text.text", "type": "string", "sort_by": "significant_texts"} ] }'
         + get auth token {"auth_token": "3f2aa7b6ec28d4"}
         +-(empty) curl -XPOST 'http://localhost:8000/api/search' -d '{ "auth_token": "3f2aa7b6ec28d4", "dataset": 15 }'
             = unicode is not defined
@@ -246,3 +246,10 @@ Just some notes to keep track of certain things
         + texta/files/database/*
         + migrations
         + files marked in gitignore
+
+        april 23:
+            + Local directory to Host directory
+            + Fixed search hl spans
+            + Fixed some alerts (prompts, confirms)
+            + Dataset importer view details css fix
+            + Json bugfix

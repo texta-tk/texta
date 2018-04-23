@@ -34,9 +34,29 @@ function train_classifier(){
 
 
 function confirm_and_remove(model_id){
-    if (confirm('Are you sure you want to delete the model ID '+model_id+' ?')) {
-        window.location = LINK_CLASSIFICATION_MANAGER + '/delete_model?model_id=' + model_id;
-    }
+    swal({
+        title: 'Are you sure?',
+        text: 'Are you sure you want to delete the model ID '+model_id+' ?',
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#73AD21',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+      }).then((result) => {
+        if (result.value) {
+            swal({
+                title:'Deleted!',
+                text:'Model '+model_id+' has been deleted.',
+                type:'success'
+            }).then((result) => {
+                if (result.value) {
+                    window.location = LINK_CLASSIFICATION_MANAGER + '/delete_model?model_id=' + model_id;
+                }
+                else {
+                    window.location = LINK_CLASSIFICATION_MANAGER + '/delete_model?model_id=' + model_id;
+                }})
+        }
+      })
 }
 
 
