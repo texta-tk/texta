@@ -12,7 +12,7 @@ class ElasticStorer(object):
         self._es_index = self._correct_name(connection_parameters['texta_elastic_index'])
         self._es_mapping = self._correct_name(connection_parameters['texta_elastic_mapping'])
 
-        self._headers = {'Content-Type': 'application/json'}
+        self._headers = {'Content-Type': 'application/json; charset=utf-8'}
         self._request = requests.Session()
 
         if 'elastic_auth' in connection_parameters:
@@ -113,18 +113,17 @@ class ElasticStorer(object):
                 data_to_send.append(json.dumps(meta_data))
 
                 # NEW PY REQUIREMENT, try to decode before sending bytes to json
-                #document['text'] = document['text'].decode('utf8')
-                for x in document:
-                    try:
-                        document[x] = document[x].decode('utf8')
-                    except:
-                        pass
+                # To encode every bytes instance to utf8, unable to read it with put request later
+                #  (if you encode data_to_send with utf8, the string will be bytes)
+                document = {(k.decode('utf8') if isinstance(k, bytes) else str(k)):
+                (v.decode('utf8') if isinstance(v, bytes) else str(v)) for k, v in document.items()}
 
-                data_to_send.append(json.dumps(document))
+                #document = {str(k): str(v) for k, v in document.items()}
+                data_to_send.append(json.dumps(document, ensure_ascii=False))
 
             data_to_send.append('\n')
             self._request.put("%s/%s/%s/_bulk" % (self._es_url, self._es_index, self._es_mapping),
-                              data='\n'.join(data_to_send), headers=self._headers)
+                              data='\n'.join(data_to_send).encode('utf8'), headers=self._headers)
 
         return len(documents)
 
