@@ -750,68 +750,135 @@ function show_children(data,date,timeline_children_container) {
             timeline_children_container.append(container);
         });
 	});
-
+    
 }
 
 function drawStringAggs(data){
-	var response_container = $("<div style='float: left; padding-left: 20px;'></div>");
+    var response_container = $("<div style='float: left; padding-left: 20px;'></div>");
 	var table_container = $("<div style='float: left'></div>");
 	var children_container = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
 	var grandchildren_container = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
-
+    
 	var tbody = $("<tbody></tbody>");
 
 	$.each(data.data, function(i,row){
-		if(row.children.length > 0){
-		    var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td><td><span class='glyphicon glyphicon-menu-right'></span></td></tr>");
-			row_container.click(function(){show_string_children(row.children,children_container, grandchildren_container)});
+        if(row.children.length > 0){
+            var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td><td><span class='glyphicon glyphicon-menu-right'></span></td></tr>");
+			row_container.click(function(){show_string_children(row.children,children_container, grandchildren_container, row.key)});
 			row_container.addClass("pointer");
 		} else {
-		    var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td><td></td></tr>");
+            var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td><td></td></tr>");
         }
 		tbody.append(row_container);
 	});
-
+    
 	var table = $("<table class='table table-striped table-hover'></table>");
 	table.append("<thead><th colspan='2'>Field #1</th></head>");
 	table.append(tbody);
-
+    
 	table_container.append(table);
-
+    
 	response_container.append("<div class='row text-center'><h3>"+data.label+"</h3></div>");
 	response_container.append(table_container);
 	response_container.append(children_container);
     response_container.append(grandchildren_container)
-
+    
 	$("#string_agg_container").append(response_container);
 }
 
+function deleteFact(dict){
+    // alert(JSON.stringify(dict));
+    
+    // var request = new XMLHttpRequest();
+    
+    // var form_data = new FormData();
+    // for (var key in dict) {
+        //     form_data.append(key, dict[key]);
+        // }
+        // request.open("POST",PREFIX+'/delete_fact');
+        // request.send(form_data, true);
+        
+        swal({
+            title: 'Are you sure you want to remove this fact from the dataset?',
+            text: 'This will remove the fact '+ JSON.stringify(dict) + ' from the dataset and add it to removed facts.',
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#73AD21',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, remove it!'
+          }).then((result) => {
+            if (result.value) {
+                swal({
+                    title:'Deleted!',
+                    text:'Fact '+JSON.stringify(dict)+' has been removed.',
+                    type:'success'
+                }).then((result) => {
+                    if (result.value) {
+                        var request = new XMLHttpRequest();
+                        var form_data = new FormData();
+                        for (var key in dict) {
+                            form_data.append(key, dict[key]);
+                        }
+                        request.open("POST",PREFIX+'/delete_fact');
+                        request.send(form_data, true);
+                    }
+                    else {
+                        var request = new XMLHttpRequest();
+                        var form_data = new FormData();
+                        for (var key in dict) {
+                            form_data.append(key, dict[key]);
+                        }
+                        request.open("POST",PREFIX+'/delete_fact');
+                        request.send(form_data, true);
+                    }});
+            }
+          });
+        // $.ajax({
+            //     url: PREFIX + '/delete_facts_via_agg',
+            //     data: JSON.stringify(dict),
+            //     type: 'POST',
+    //     contentType: false,
+    //     processData: false,
+    //     success: function() {
+    //         swal('Success!','Cluster saved as a lexicon!','success');
+    //     },
+    //     error: function() {
+    //         swal('Error!','There was a problem saving the cluster as a lexicon!','error');
+    //     }
+    // });
+}
 
-function show_string_children(data,children_container,grandchildren_container) {
-	children_container.empty();
+function show_string_children(data,children_container,grandchildren_container, row_key) {
+    children_container.empty();
     grandchildren_container.empty();
 
 	var tbody = $("<tbody></tbody>");
+	$(data).each(function(fact_key){
+		var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key+"</td></tr>");
 
-	$.each(data, function(i,data_list){
-		var row_container = $("<tr><td>"+data_list.val+"</td><td>"+data_list.key+"</td></tr>");
-
-        if (data_list.hasOwnProperty('children') && data_list.children.length > 0) {
-            var row_container = $("<tr><td>"+data_list.val+"</td><td>"+data_list.key+"</td><td><span class='glyphicon glyphicon-menu-right'></span></td></tr>");
+        if (this.hasOwnProperty('children') && this.children.length > 0) {
+            var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key+"</td><td><span class='glyphicon glyphicon-menu-right'></span></td></tr>");
             row_container.addClass("pointer");
+
         } else {
-            var row_container = $("<tr><td>"+data_list.val+"</td><td>"+data_list.key+"</td><td></td></tr>");
+            var fact_data = {};
+            fact_data[fact_key] = this.key;
+            var delete_fact_icon = '<i class="glyphicon glyphicon-trash pull-right"\
+             data-toggle="tooltip" title="Delete fact"\
+              style="cursor: pointer"\
+               onclick=\'deleteFact('+JSON.stringify(fact_data)+');\'></i>';
+            var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key+"</td><td>" + delete_fact_icon +"</td></tr>");
         };
 
         row_container.click(function() {
             grandchildren_container.empty();
 
-            if (data_list.hasOwnProperty('children') && data_list.children.length > 0) {
+            if (this.hasOwnProperty('children') && this.children.length > 0) {
                 var grandchildrenTbody = $("<tbody></tbody>");
 
-                $.each(data_list.children, function(j, grandchild_data) {
+                $.each(this.children, function(j, grandchild_data) {
                     grandchildrenTbody.append($("<tr><td>"+grandchild_data.val+"</td><td>"+grandchild_data.key+"</td></tr>"))
-                })
+                });
 
                 var grandchildrenTable = $("<table class='table table-striped table-hover'></table>");
                 grandchildrenTable.append("<thead><th colspan='2'>&nbsp;</th></head>");
@@ -823,7 +890,7 @@ function show_string_children(data,children_container,grandchildren_container) {
         });
 
 		tbody.append(row_container);
-	});
+	}, [row_key]);
 
 	var table = $("<table class='table table-striped table-hover'></table>");
 	table.append("<thead><th colspan='2'>Field #2</th></head>");//.click(function(){children_container.addClass('hidden')});;
@@ -832,7 +899,6 @@ function show_string_children(data,children_container,grandchildren_container) {
 
 	children_container.append(table);
 	children_container.removeClass("hidden");
-
 }
 
 

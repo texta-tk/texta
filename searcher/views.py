@@ -188,7 +188,7 @@ def delete(request):
     return HttpResponse(search_id)
 
 
-
+@login_required
 def autocomplete(request):
     ac = Autocomplete()
     ac.parse_request(request)
@@ -262,7 +262,7 @@ def merge_spans(spans):
             i += 1
     return merged_spans
 
-
+@login_required
 def mlt_query(request):
     logger = LogManager(__name__, 'SEARCH MLT')
     es_params = request.POST
@@ -320,7 +320,7 @@ def get_fields_content(hit,fields):
 
     return row
 
-
+@login_required
 def cluster_query(request):
     params = request.POST
     ds = Datasets().activate_dataset(request.session)
@@ -579,6 +579,7 @@ def additional_option_cut_text(content, window_size):
     else:
         return content
 
+@login_required
 def remove_by_query(request):
     es_params = request.POST
 
@@ -593,14 +594,17 @@ def remove_worker(es_m,dummy):
     response = es_m.delete()
     # TODO: add logging
 
-
+@login_required
 def aggregate(request):
-
     agg_m = AggManager(request)
     data = agg_m.output_to_searcher()
-
+    #import pdb;pdb.set_trace()
     return HttpResponse(json.dumps(data))
 
+@login_required
+def delete_fact(request):
+    print(request.POST)
+    return HttpResponse()
 
 def _get_facts_agg_count(es_m, facts):
     counts = {}
@@ -715,6 +719,7 @@ def facts_agg(es_params, request):
     return {'data':[data[0]]+sorted(data[1:], key=lambda x: sum(x[1:]), reverse=True),'height':table_height,'type':'bar','distinct_values':json.dumps(distinct_values)}
 
 
+@login_required
 def get_search_query(request):
     search_id = request.GET.get('search_id', None)
 

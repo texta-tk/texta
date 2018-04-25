@@ -36,6 +36,7 @@ class AggManager:
         self.agg_data = self.parse_responses(agg_results)
 
 
+
     @staticmethod
     def _get_daterange(es_params):
         daterange = {"min":es_params["agg_daterange_from_1"],"max":es_params["agg_daterange_to_1"]}
