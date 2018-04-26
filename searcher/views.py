@@ -89,7 +89,6 @@ def get_fields(es_m):
 
     # Sort fields by label
     fields = sorted(fields, key=lambda l: l['label'])
-
     return fields
 
 
@@ -176,7 +175,6 @@ def delete(request):
     search_id = request.GET['pk']
     logger.set_context('user_name', request.user.username)
     logger.set_context('search_id', search_id)
-
     try:
         Search.objects.get(pk=search_id).delete()
         logger.info('search_deleted')
@@ -586,7 +584,9 @@ def remove_by_query(request):
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
+
     threading.Thread(target=remove_worker,args=(es_m,'notimetothink')).start()
+
     return HttpResponse(True)
 
 
@@ -598,13 +598,23 @@ def remove_worker(es_m,dummy):
 def aggregate(request):
     agg_m = AggManager(request)
     data = agg_m.output_to_searcher()
-    #import pdb;pdb.set_trace()
     return HttpResponse(json.dumps(data))
 
 @login_required
 def delete_fact(request):
-    print(request.POST)
+    key = list(request.POST.keys())[0]
+    val = request.POST[key]
+
+    ds = Datasets().activate_dataset(request.session)
+    dataset = ds.get_index()
+    mapping = ds.get_mapping()
+    es_m = ES_Manager(dataset, mapping)
+
+    field = 'texta_facts'
+    data = es_m.remove_facts_from_document(field, key, val)
+
     return HttpResponse()
+
 
 def _get_facts_agg_count(es_m, facts):
     counts = {}
@@ -672,6 +682,7 @@ def facts_agg(es_params, request):
                 lexicon = list(set(lexicon+labels))
                 query_results.append({'name':name,'data':normalised_counts,'labels':labels})
                 distinct_values.append({'name':name,'data':response['aggregations']['distinct_values']['value']})
+
 
         es_m.build(es_params)
         # FIXME
