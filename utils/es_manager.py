@@ -902,26 +902,3 @@ class ES_Manager:
         response = requests.post(url, data=json.dumps(query), headers=HEADERS).json()
         aggs = response["aggregations"]
         return aggs["min_date"]["value_as_string"],aggs["max_date"]["value_as_string"]
-
-    def remove_facts_from_document(self, field, key, val):
-        query = {"main": {"query": {"nested": {"path": field,"query": {"bool": {"must": [{ "match": { field + ".fact": key }},{ "match": { field + ".str_val":  val }}]}}}}, "_source": [field]}}
-
-        self.load_combined_query(query)
-        response = self.scroll()
-
-        data = ''
-        for document in response['hits']['hits']:
-            removed_facts = []
-            new_field = []
-            for fact in document['_source'][field]:
-                if fact['fact'] == key and fact['str_val'] == val:
-                    removed_facts.append(fact)
-                else:
-                    new_field.append(fact)
-
-            # Update dataset
-            data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
-            document = {'doc': {field: new_field}}
-            data += json.dumps(document)+'\n'
-
-        self.plain_post_bulk(self.es_url, data)

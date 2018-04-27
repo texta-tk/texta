@@ -26,6 +26,7 @@ from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
 from .agg_manager import AggManager
 from .cluster_manager import ClusterManager
+from .fact_manager import FactManager
 from utils.highlighter import Highlighter, ColorPicker
 from utils.autocomplete import Autocomplete
 
@@ -602,16 +603,8 @@ def aggregate(request):
 
 @login_required
 def delete_fact(request):
-    key = list(request.POST.keys())[0]
-    val = request.POST[key]
-
-    ds = Datasets().activate_dataset(request.session)
-    dataset = ds.get_index()
-    mapping = ds.get_mapping()
-    es_m = ES_Manager(dataset, mapping)
-
-    field = 'texta_facts'
-    data = es_m.remove_facts_from_document(field, key, val)
+    fact_m = FactManager(request)
+    fact_m.remove_facts_from_document()
 
     return HttpResponse()
 

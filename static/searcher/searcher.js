@@ -4,6 +4,7 @@ var PREFIX = LINK_SEARCHER;
 var factValSubCounter = {}
 var examplesTable;
 var layers = ['text','lemmas','facts'];
+var removed_facts = [];
 
 $(document).ready(function() {
     get_searches();
@@ -627,7 +628,6 @@ function aggregate(){
 
     var formElement = document.getElementById("filters");
     var request = new XMLHttpRequest();
-
     request.onreadystatechange=function() {
         if (request.readyState==4 && request.status==200) {
             if (request.responseText.length > 0) {
@@ -638,9 +638,9 @@ function aggregate(){
             }
         }
     }
-
     request.open("POST",PREFIX+'/aggregate');
     request.send(new FormData(formElement),true);
+
 }
 
 
@@ -757,7 +757,7 @@ function drawStringAggs(data){
     var response_container = $("<div style='float: left; padding-left: 20px;'></div>");
 	var table_container = $("<div style='float: left'></div>");
 	var children_container = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
-	var grandchildren_container = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
+	var grandchildren_container = $("<div id='grandchildren_container' style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
     
 	var tbody = $("<tbody></tbody>");
 
@@ -786,66 +786,44 @@ function drawStringAggs(data){
 	$("#string_agg_container").append(response_container);
 }
 
-function deleteFact(dict){
-    // alert(JSON.stringify(dict));
-    
-    // var request = new XMLHttpRequest();
-    
-    // var form_data = new FormData();
-    // for (var key in dict) {
-        //     form_data.append(key, dict[key]);
-        // }
-        // request.open("POST",PREFIX+'/delete_fact');
-        // request.send(form_data, true);
-        
-        swal({
-            title: 'Are you sure you want to remove this fact from the dataset?',
-            text: 'This will remove the fact '+ JSON.stringify(dict) + ' from the dataset and add it to removed facts.',
-            type: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#73AD21',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, remove it!'
-          }).then((result) => {
-            if (result.value) {
-                swal({
-                    title:'Deleted!',
-                    text:'Fact '+JSON.stringify(dict)+' has been removed.',
-                    type:'success'
-                }).then((result) => {
-                    if (result.value) {
-                        var request = new XMLHttpRequest();
-                        var form_data = new FormData();
-                        for (var key in dict) {
-                            form_data.append(key, dict[key]);
-                        }
-                        request.open("POST",PREFIX+'/delete_fact');
-                        request.send(form_data, true);
-                    }
-                    else {
-                        var request = new XMLHttpRequest();
-                        var form_data = new FormData();
-                        for (var key in dict) {
-                            form_data.append(key, dict[key]);
-                        }
-                        request.open("POST",PREFIX+'/delete_fact');
-                        request.send(form_data, true);
-                    }});
-            }
-          });
-        // $.ajax({
-            //     url: PREFIX + '/delete_facts_via_agg',
-            //     data: JSON.stringify(dict),
-            //     type: 'POST',
-    //     contentType: false,
-    //     processData: false,
-    //     success: function() {
-    //         swal('Success!','Cluster saved as a lexicon!','success');
-    //     },
-    //     error: function() {
-    //         swal('Error!','There was a problem saving the cluster as a lexicon!','error');
-    //     }
-    // });
+function deleteFact(dict, trElement){
+    var request = new XMLHttpRequest();
+    var form_data = new FormData();
+    for (var key in dict) {
+        form_data.append(key, dict[key]);
+    }
+
+
+    swal({
+        title: 'Are you sure you want to remove this fact from the dataset?',
+        text: 'This will remove the fact '+ JSON.stringify(dict) + ' from the dataset and add it to removed facts.',
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#73AD21',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, remove it!'
+        }).then((result) => {
+            if(result){
+            $.ajax({
+                url: PREFIX + '/delete_fact',
+                data: form_data,
+                type: 'POST',
+                contentType: false,
+                processData: false,
+                success: function() {
+                    trElement.remove();
+                    removed_facts.push({key: Object.keys(dict)[0], value: dict[Object.keys(dict)[0]]});
+                    swal({
+                        title:'Deleted!',
+                        text:'Fact '+JSON.stringify(dict)+' has been removed.',
+                        type:'success'});
+                },
+                error: function() {
+                    swal('Error!','There was a problem removing the fact!','error');
+                }
+            });
+        };
+        });
 }
 
 function show_string_children(data,children_container,grandchildren_container, row_key) {
@@ -854,6 +832,17 @@ function show_string_children(data,children_container,grandchildren_container, r
 
 	var tbody = $("<tbody></tbody>");
 	$(data).each(function(fact_key){
+        var factRemoved = false;
+        for (var i = 0; i < removed_facts.length; i++) {
+            var currentValue = {key: fact_key, value: this.key};
+            if (removed_facts[i].key == currentValue.key &&
+                removed_facts[i].value == currentValue.value) {
+                    factRemoved = true;
+                }
+        }
+
+        if (!factRemoved) {
+
 		var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key+"</td></tr>");
 
         if (this.hasOwnProperty('children') && this.children.length > 0) {
@@ -866,7 +855,7 @@ function show_string_children(data,children_container,grandchildren_container, r
             var delete_fact_icon = '<i class="glyphicon glyphicon-trash pull-right"\
              data-toggle="tooltip" title="Delete fact"\
               style="cursor: pointer"\
-               onclick=\'deleteFact('+JSON.stringify(fact_data)+');\'></i>';
+               onclick=\'deleteFact('+JSON.stringify(fact_data)+',this.parentElement.parentElement);\'></i>';
             var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key+"</td><td>" + delete_fact_icon +"</td></tr>");
         };
 
@@ -889,7 +878,8 @@ function show_string_children(data,children_container,grandchildren_container, r
             }
         });
 
-		tbody.append(row_container);
+        tbody.append(row_container);
+    }
 	}, [row_key]);
 
 	var table = $("<table class='table table-striped table-hover'></table>");
