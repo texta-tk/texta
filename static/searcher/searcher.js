@@ -662,7 +662,7 @@ function displayAgg(response){
 			}else if(data[i].type == 'string'){
 				drawStringAggs(data[i]);
 			} else if (data[i].type == 'fact') {
-                drawStringAggs(data[i]);
+                drawStringAggs(data[i], type='fact');
             } else if (data[i].type == 'fact_str_val') {
                 drawStringAggs(data[i]);
             } else if (data[i].type == 'fact_num_val') {
@@ -753,7 +753,7 @@ function show_children(data,date,timeline_children_container) {
     
 }
 
-function drawStringAggs(data){
+function drawStringAggs(data, type=null){
     var response_container = $("<div style='float: left; padding-left: 20px;'></div>");
 	var table_container = $("<div style='float: left'></div>");
 	var children_container = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
@@ -764,7 +764,7 @@ function drawStringAggs(data){
 	$.each(data.data, function(i,row){
         if(row.children.length > 0){
             var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td><td><span class='glyphicon glyphicon-menu-right'></span></td></tr>");
-			row_container.click(function(){show_string_children(row.children,children_container, grandchildren_container, row.key)});
+			row_container.click(function(){show_string_children(row.children,children_container, grandchildren_container, row.key, type=type)});
 			row_container.addClass("pointer");
 		} else {
             var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td><td></td></tr>");
@@ -803,7 +803,7 @@ function deleteFact(dict, trElement){
         cancelButtonColor: '#d33',
         confirmButtonText: 'Yes, remove it!'
         }).then((result) => {
-            if(result){
+            if(result.value){
             $.ajax({
                 url: PREFIX + '/delete_fact',
                 data: form_data,
@@ -826,7 +826,7 @@ function deleteFact(dict, trElement){
         });
 }
 
-function show_string_children(data,children_container,grandchildren_container, row_key) {
+function show_string_children(data,children_container,grandchildren_container, row_key, type=null) {
     children_container.empty();
     grandchildren_container.empty();
 
@@ -850,13 +850,18 @@ function show_string_children(data,children_container,grandchildren_container, r
             row_container.addClass("pointer");
 
         } else {
-            var fact_data = {};
-            fact_data[fact_key] = this.key;
-            var delete_fact_icon = '<i class="glyphicon glyphicon-trash pull-right"\
-             data-toggle="tooltip" title="Delete fact"\
-              style="cursor: pointer"\
-               onclick=\'deleteFact('+JSON.stringify(fact_data)+',this.parentElement.parentElement);\'></i>';
-            var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key+"</td><td>" + delete_fact_icon +"</td></tr>");
+            if(type == 'fact') {
+                var fact_data = {};
+                fact_data[fact_key] = this.key;
+                var delete_fact_icon = '<i class="glyphicon glyphicon-trash pull-right"\
+                data-toggle="tooltip" title="Delete fact"\
+                style="cursor: pointer"\
+                onclick=\'deleteFact('+JSON.stringify(fact_data)+',this.parentElement.parentElement);\'></i>';
+                var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key+"</td><td>" + delete_fact_icon +"</td></tr>");
+            }
+            else {
+                var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key+"</td><td></td></tr>");
+            }
         };
 
         row_container.click(function() {
