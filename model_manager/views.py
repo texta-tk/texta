@@ -25,7 +25,7 @@ from texta.settings import STATIC_URL, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ERRO
 
 
 def get_fields(es_m):
-    """ Crete field list from fields in the Elasticsearch mapping
+    """ Create field list from fields in the Elasticsearch mapping
     """
     fields = []
     mapped_fields = es_m.get_mapped_fields()
@@ -161,6 +161,19 @@ def train_model(search_id,field_path,num_dimensions,num_workers,min_freq,usr,des
     r.save()
     print('job is done')
 
+@login_required
+@permission_required('model_manager.change_modelrun')
+def download_model(request):
+    model_id = request.GET['model_id']
+
+    file_path = os.path.join(MODELS_DIR, "model_" + str(model_id))
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as fh:
+            response = HttpResponse(fh)
+            response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(file_path)
+            return response
+
+    return HttpResponseRedirect(URL_PREFIX + '/model_manager')
 
 class ShowProgress(object):
     """ Show model training progress
