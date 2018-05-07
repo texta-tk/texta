@@ -123,8 +123,8 @@ class ElasticStorer(object):
 
             data_to_send.append('\n')
             
-            print(self._request.put("%s/%s/%s/_bulk" % (self._es_url, self._es_index, self._es_mapping),
-                              data='\n'.join(data_to_send).encode('utf8'), headers=self._headers).text)
+            self._request.put("%s/%s/%s/_bulk" % (self._es_url, self._es_index, self._es_mapping),
+                              data='\n'.join(data_to_send).encode('utf8'), headers=self._headers)
 
         return len(documents)
 
