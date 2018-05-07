@@ -26,7 +26,6 @@ urlpatterns = [
     url(r'model_manager', include('model_manager.urls')),
     url(r'classification_manager', include('classification_manager.urls')),
     url(r'ontology_viewer', include('ontology_viewer.urls')),
-    url(r'^admin/', include('admin.site.urls')),
     url(r'^permission_admin/', include('permission_admin.urls')),
     url(r'^grammar_builder/', include('grammar_builder.urls')),
     url(r'^api/', include('search_api.urls')),
