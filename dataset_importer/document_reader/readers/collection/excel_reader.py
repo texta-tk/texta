@@ -25,7 +25,7 @@ class ExcelReader(CollectionReader):
                 book = xlrd.open_workbook(file_path)
                 sheet = book.sheet_by_index(0)
 
-                feature_labels = [cell.value.encode('utf8') if isinstance(cell.value, basestring)
+                feature_labels = [cell.value.encode('utf8') if isinstance(cell.value, str)
                                   else str(cell.value) for cell in sheet.row(0)]
                 feature_converters = []
 

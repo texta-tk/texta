@@ -199,7 +199,7 @@ function test(node) {
         display_table('positive',true);
         display_table('negative',true);
     } else {
-        alert("Failed to run the specified grammar.\n\nReason: " + grammarValidity.reason + "\n\nSolution: " + grammarValidity.solution)
+        swal('Failed to run the specified grammar!',"Reason: " + grammarValidity.reason + "\n\nSolution: " + grammarValidity.solution, "error");
     }
 }
 
@@ -465,7 +465,7 @@ function export_data() {
         query = PREFIX + '/export?' + 'search_id=' + searchId + '&inclusive_grammar=' + inclusiveTestGrammarJson
         window.open(query)
     } else {
-        alert("Failed to export with the specified grammar.\n\nReason: " + grammarValidity.reason + "\n\nSolution: " + grammarValidity.solution)
+        swal('Failed to export with the specified grammar!',"Reason: " + grammarValidity.reason + "\n\nSolution: " + grammarValidity.solution, "error");
     }
    
 }

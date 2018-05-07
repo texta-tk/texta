@@ -8,24 +8,26 @@ class Term(models.Model):
     id = models.AutoField(primary_key=True)
     is_internal = models.BooleanField()
     term = models.CharField(max_length=MAX_STR_LEN)
-    author = models.ForeignKey(User,related_name='term_author_relation_set')
+    author = models.ForeignKey(User,on_delete=models.CASCADE, # NEW PY REQUIREMENT
+related_name='term_author_relation_set')
 
     def __repr__(self):
         return self.term.encode('utf8')
     
 class Concept(models.Model):
     id = models.AutoField(primary_key=True)
-    descriptive_term = models.ForeignKey(Term)
+    descriptive_term = models.ForeignKey(Term, on_delete=models.CASCADE) # NEW PY REQUIREMENT
+
     semantic_type = models.CharField(max_length=MAX_STR_LEN)
-    author = models.ForeignKey(User)
+    author = models.ForeignKey(User, on_delete=models.CASCADE) # NEW PY REQUIREMENT
    
 class Reference(models.Model):
     id = models.AutoField(primary_key=True)
-    concept = models.ForeignKey(Concept)
+    concept = models.ForeignKey(Concept, on_delete=models.CASCADE) # NEW PY REQUIREMENT
     code_set = models.CharField(max_length=MAX_STR_LEN)
     code = models.CharField(max_length=MAX_STR_LEN)
     
 class TermConcept(models.Model):
     id = models.AutoField(primary_key=True)
-    term = models.ForeignKey(Term)
-    concept = models.ForeignKey(Concept)
+    term = models.ForeignKey(Term, on_delete=models.CASCADE) # NEW PY REQUIREMENT
+    concept = models.ForeignKey(Concept, on_delete=models.CASCADE) # NEW PY REQUIREMENT

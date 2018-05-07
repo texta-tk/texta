@@ -27,7 +27,7 @@ function change_pwd(){
 		$("#change_password").attr('target','_self');
 		$("#change_password").submit();	
 	}else{
-		alert('Passwords do not match or fields empty!');
+		swal('Warning!','Passwords do not match or fields empty!','warning');
 	}
 }
 

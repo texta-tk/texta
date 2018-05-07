@@ -2,13 +2,15 @@
 
 List here the new archive extractors.
 """
-
+import os, sys
+file_dir = os.path.dirname(__file__)
+sys.path.append(file_dir)
 try:
     import tar
 except:
-    pass
+    print('failed to import tar')
 
 try:
     import zip
 except:
-    pass
+    print('failed to import zip')

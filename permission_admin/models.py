@@ -10,7 +10,7 @@ class Dataset(models.Model):
     id = models.AutoField(primary_key=True)
     index = models.CharField(max_length=MAX_STR_LEN)
     mapping = models.CharField(max_length=MAX_STR_LEN)
-    author = models.ForeignKey(User)
+    author = models.ForeignKey(User, on_delete=models.CASCADE) # NEW PY REQUIREMENT
     daterange = models.TextField()
     access = models.CharField(default=DATASET_ACCESS_DEFAULT, max_length=7)
 

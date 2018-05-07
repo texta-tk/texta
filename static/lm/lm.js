@@ -5,8 +5,9 @@ var PREFIX = LINK_LEXMINER;
 $(document).ready(function(){
 	$("#new_lexicon_button").click(function(){
 		$("#inputDiv").slideToggle("slow",function(){});
-	});
-	
+    });
+
+    $('#lx-'+ $('.selectedText').attr('id')).css({ 'font-weight': 'bold', 'color':'#333'});
 });
 
 function getParam(sParam){

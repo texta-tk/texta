@@ -116,3 +116,11 @@
     display: none;
     color: red;
 }
+
+.importDetails {
+    table-layout: fixed;
+    width: 100%;
+}
+.detailText {
+    word-wrap: break-word;
+}

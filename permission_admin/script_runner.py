@@ -10,6 +10,7 @@ class ScriptRunner(object):
 
     def run(self):
         arguments = self._script_project.arguments.split('\n')
+        print(arguments)
 
         os.chdir(os.path.join(self._script_manager_dir, "%s_%s" % (str(self._script_project.id), self._canonize_project_name(self._script_project.name))))
 

@@ -1,4 +1,6 @@
 # -*- coding: utf8 -*-
+from __future__ import print_function
+from __future__ import absolute_import
 import calendar
 import threading
 import json
@@ -22,8 +24,9 @@ from permission_admin.models import Dataset
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
-from agg_manager import AggManager
-from cluster_manager import ClusterManager
+from .agg_manager import AggManager
+from .cluster_manager import ClusterManager
+from .fact_manager import FactManager
 from utils.highlighter import Highlighter, ColorPicker
 from utils.autocomplete import Autocomplete
 
@@ -34,9 +37,9 @@ from searcher.view_functions.tranlist_highlighting import transliterate_highligh
 
 
 try:
-    from cStringIO import StringIO
+    from io import BytesIO # NEW PY REQUIREMENT
 except:
-    from StringIO import StringIO
+    from io import StringIO # NEW PY REQUIREMENT
 
 
 def ngrams(input_list, n):
@@ -50,10 +53,11 @@ def convert_date(date_string,frmt):
 def get_fields(es_m):
     """ Create field list from fields in the Elasticsearch mapping
     """
+    reserved_fields = ['texta_facts']
     fields = []
     mapped_fields = es_m.get_mapped_fields()
 
-    for data in mapped_fields:
+    for data in [x for x in mapped_fields if x['path'] not in reserved_fields]:
         path = data['path']
 
         if data['type'] == 'date':
@@ -127,12 +131,12 @@ def zero_list(n):
     listofzeros = [0] * n
     return listofzeros
 
-
+# Unused?
 def display_encode(s):
     try:
         return s.encode('latin1')
     except Exception as e:
-        print e
+        print(e)
         #TODO: What is the intention here?  Why is latin1 first? What are the appropriate exceptions instead of catchall)
         return s.encode('utf8')
 
@@ -158,7 +162,7 @@ def save(request):
         logger.info('search_saved')
 
     except Exception as e:
-        print '-- Exception[{0}] {1}'.format(__name__, e)
+        print('-- Exception[{0}] {1}'.format(__name__, e))
         logger.set_context('es_params', es_params)
         logger.exception('search_saving_failed')
 
@@ -172,19 +176,18 @@ def delete(request):
     search_id = request.GET['pk']
     logger.set_context('user_name', request.user.username)
     logger.set_context('search_id', search_id)
-
     try:
         Search.objects.get(pk=search_id).delete()
         logger.info('search_deleted')
 
     except Exception as e:
-        print '-- Exception[{0}] {1}'.format(__name__, e)
+        print('-- Exception[{0}] {1}'.format(__name__, e))
         logger.exception('search_deletion_failed')
 
     return HttpResponse(search_id)
 
 
-
+@login_required
 def autocomplete(request):
     ac = Autocomplete()
     ac.parse_request(request)
@@ -231,6 +234,11 @@ def get_table_content(request):
     result = search(es_params, request)
     result['sEcho'] = echo
 
+    # NEW PY REQUIREMENT
+    # Get rid of 'odict_values' otherwise can't json dumps
+    for i in range(len(result['aaData'])):
+        result['aaData'][i] = list(result['aaData'][i])
+
     return HttpResponse(json.dumps(result, ensure_ascii=False))
 
 
@@ -253,7 +261,7 @@ def merge_spans(spans):
             i += 1
     return merged_spans
 
-
+@login_required
 def mlt_query(request):
     logger = LogManager(__name__, 'SEARCH MLT')
     es_params = request.POST
@@ -287,7 +295,10 @@ def mlt_query(request):
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'documents':documents}
+    template = loader.get_template('mlt_results.html')
     return HttpResponse(template.render(template_params, request))
+
+def get_fields_content(hit,fields):
     row = {}
     for field in fields:
         if 'highlight' in hit:
@@ -308,7 +319,7 @@ def mlt_query(request):
 
     return row
 
-
+@login_required
 def cluster_query(request):
     params = request.POST
     ds = Datasets().activate_dataset(request.session)
@@ -316,7 +327,7 @@ def cluster_query(request):
     es_m.build(params)
 
     cluster_m = ClusterManager(es_m,params)
-    clustering_data = convert_clustering_data(cluster_m)
+    clustering_data = convert_clustering_data(cluster_m, params)
 
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
@@ -326,7 +337,7 @@ def cluster_query(request):
     return HttpResponse(template.render(template_params, request))
 
 
-def convert_clustering_data(cluster_m):
+def convert_clustering_data(cluster_m, params):
     out = []
     clusters = cluster_m.clusters
 
@@ -334,16 +345,15 @@ def convert_clustering_data(cluster_m):
         documents = [cluster_m.documents[doc_id] for doc_id in cluster_content]
         cluster_label = 'Cluster {0} ({1})'.format(cluster_id+1,len(cluster_content))
         keywords = cluster_m.cluster_keywords[cluster_id]
-        cluster_data = {'documents':highlight_cluster_keywords(documents,keywords),
+        cluster_data = {'documents':highlight_cluster_keywords(documents,keywords, params),
                         'label':cluster_label,
                         'id':cluster_id,
                         'keywords':' '.join(keywords)}
         out.append(cluster_data)
-
     return out
 
 
-def highlight_cluster_keywords(documents, keywords):
+def highlight_cluster_keywords(documents, keywords, params):
     out = []
     for document in documents:
         to_highlighter = []
@@ -355,9 +365,21 @@ def highlight_cluster_keywords(documents, keywords):
                 to_highlighter.append(new_match)
 
         if to_highlighter:
-            hl = Highlighter(default_category='')
+            hl = Highlighter(default_category='[HL]')
             document = hl.highlight(document,to_highlighter)
-        out.append(document)
+            if 'show_short_version_cluster' in params.keys():
+                document = additional_option_cut_text(document, params['short_version_n_char_cluster'])
+                #print(document3 == document2)
+            out.append(document)
+        elif not 'show_unhighlighted' in params.keys():
+            out.append(document)
+
+        #'short_version_n_char': ['5']
+        # if 'show_short_version_cluster' in params.keys():
+        #     #document_1 = document
+        #     document = additional_option_cut_text(document, params['short_version_n_char_cluster'])
+        #     #print(document == document_1)
+        # out.append(document)
     return out
 
 
@@ -447,7 +469,7 @@ def search(es_params, request):
                         content = content[p] if p in content else ''
 
                 # Substitute feature value with value highlighted by Elasticsearch
-                old_content = content
+                old_content = content.strip()
                 if col in highlight_config['fields'] and 'highlight' in hit:
                     content = hit['highlight'][col][0]
                 # Prettify and standardize highlights
@@ -473,8 +495,8 @@ def search(es_params, request):
                                                   tagged_text=content)
                 else:
                     # WHEN USING OLD FORMAT DOCUMENTS, SOMETIMES BREAKS AT HIGHLIGHTER, CHECK IF ITS STRING INSTEAD OF FOR EXAMPLE LIST
-                    if (isinstance(content, basestring)):
-                        highlight_data = []
+                    highlight_data = []
+                    if (isinstance(content, str)) or (isinstance(content, bytes)):
                         content = Highlighter(average_colors=True, derive_spans=True,
                                                 additional_style_string='font-weight: bold;').highlight(
                                                     old_content,
@@ -482,7 +504,7 @@ def search(es_params, request):
                                                     tagged_text=content)
                 # Append the final content of this col to the row
                 if(row[col] == ''):
-                    row[col] = row[col] + content
+                    row[col] = content
 
                 cols_data[col] = {'highlight_data': highlight_data, 'content': content, 'old_content': old_content}
 
@@ -495,14 +517,19 @@ def search(es_params, request):
             # Checks if user wants to see full text or short version
             for col in row:
                 if 'show_short_version' in es_params.keys():
-                    row[col] = additional_option_cut_text(row[col], es_params)
+                    row[col] = additional_option_cut_text(row[col], es_params['short_version_n_char'])
 
             out['aaData'].append(row.values())
 
+            out['lag'] = time.time()-start_time
+            logger.set_context('query', es_m.get_combined_query())
+            logger.set_context('user_name', request.user.username)
+            logger.info('documents_queried')
+
         return out
 
-    except Exception, e:
-        print '-- Exception[{0}] {1}'.format(__name__, e)
+    except Exception as e:
+        print('-- Exception[{0}] {1}'.format(__name__, e))
         logger.set_context('user_name', request.user.username)
         logger.exception('documents_queried_failed')
 
@@ -510,11 +537,10 @@ def search(es_params, request):
         return out
 
 
-def additional_option_cut_text(content, es_params):
-    window_size = int(es_params["short_version_n_char"])
-    content = unicode(content)
+def additional_option_cut_text(content, window_size):
+    window_size = int(window_size)
 
-    if u'[HL]' in content:
+    if '[HL]' in content:
         soup = bs4.BeautifulSoup(content,'lxml')
         html_spans = soup.find_all('span')
 
@@ -531,34 +557,37 @@ def additional_option_cut_text(content, es_params):
                         new_text = u' '.join(span_tokens[-window_size:])
                         new_text = u'... {0}'.format(new_text)
                         html_span.string = new_text
-                    html_spans_merged.append(unicode(html_span))
+                    html_spans_merged.append(str(html_span))
                 elif i == num_spans-1:
                     if span_tokens_len > window_size:
                         new_text = u' '.join(span_tokens[:window_size])
                         new_text = u'{0} ...'.format(new_text)
                         html_span.string = new_text
-                    html_spans_merged.append(unicode(html_span))
+                    html_spans_merged.append(str(html_span))
                 else:
                     if span_tokens_len > window_size:
                         new_text_left = u' '.join(span_tokens[:window_size])
                         new_text_right = u' '.join(span_tokens[-window_size:])
                         new_text = u'{0} ...\n... {1}'.format(new_text_left,new_text_right)
                         html_span.string = new_text
-                    html_spans_merged.append(unicode(html_span))
+                    html_spans_merged.append(str(html_span))
             else:
-                html_spans_merged.append(unicode(html_span))
+                html_spans_merged.append(str(html_span))
 
         return ''.join(html_spans_merged)
     else:
         return content
 
+@login_required
 def remove_by_query(request):
     es_params = request.POST
 
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
+
     threading.Thread(target=remove_worker,args=(es_m,'notimetothink')).start()
+
     return HttpResponse(True)
 
 
@@ -566,13 +595,18 @@ def remove_worker(es_m,dummy):
     response = es_m.delete()
     # TODO: add logging
 
-
+@login_required
 def aggregate(request):
-
     agg_m = AggManager(request)
     data = agg_m.output_to_searcher()
-
     return HttpResponse(json.dumps(data))
+
+@login_required
+def delete_fact(request):
+    fact_m = FactManager(request)
+    fact_m.remove_facts_from_document()
+
+    return HttpResponse()
 
 
 def _get_facts_agg_count(es_m, facts):
@@ -642,6 +676,7 @@ def facts_agg(es_params, request):
                 query_results.append({'name':name,'data':normalised_counts,'labels':labels})
                 distinct_values.append({'name':name,'data':response['aggregations']['distinct_values']['value']})
 
+
         es_m.build(es_params)
         # FIXME
         # this is confusing for the user
@@ -678,8 +713,8 @@ def facts_agg(es_params, request):
         logger.set_context('user_name', request.user.username)
         logger.info('facts_aggregation_queried')
 
-    except Exception, e:
-        print '-- Exception[{0}] {1}'.format(__name__, e)
+    except Exception as e:
+        print('-- Exception[{0}] {1}'.format(__name__, e))
         logger.set_context('user_name', request.user.username)
         logger.exception('facts_aggregation_query_failed')
 
@@ -688,6 +723,7 @@ def facts_agg(es_params, request):
     return {'data':[data[0]]+sorted(data[1:], key=lambda x: sum(x[1:]), reverse=True),'height':table_height,'type':'bar','distinct_values':json.dumps(distinct_values)}
 
 
+@login_required
 def get_search_query(request):
     search_id = request.GET.get('search_id', None)
 
@@ -732,16 +768,16 @@ def extract_constraints(query):
     return constraints
 
 def _extract_string_constraint(raw_constraint):
-    operator = raw_constraint['bool'].keys()[0]
+    operator = list(raw_constraint['bool'].keys())[0]
     field = None
     match_type = None
     constraint_content = []
     slop = None
 
     for entry in raw_constraint['bool'][operator]:
-        constraint_details = entry['bool']['should'][0]
-        match_type = constraint_details.keys()[0]
-        field = constraint_details[match_type].keys()[0]
+        constraint_details = list(entry['bool']['should'])[0]
+        match_type = list(constraint_details.keys())[0]
+        field = list(constraint_details[match_type].keys())[0]
         content = constraint_details[match_type][field]['query']
         slop = constraint_details[match_type][field]['slop']
         constraint_content.append(content)
@@ -765,7 +801,7 @@ def _extract_date_constraints(range_constraint_idx_range_constraint_pairs):
     last_field = None
 
     for range_constraint_idx, range_constraint in range_constraint_idx_range_constraint_pairs:
-        current_field = range_constraint['range'].keys()[0]
+        current_field = list(range_constraint['range'].keys())[0]
         if 'gte' in range_constraint['range'][current_field]:
             if last_field is not None:
                 date_ranges.append(new_range)
@@ -800,7 +836,7 @@ def _extract_date_constraints(range_constraint_idx_range_constraint_pairs):
 
 
 def _extract_fact_constraint(raw_constraint):
-    operator = raw_constraint['bool'].keys()[0]
+    operator = list(raw_constraint['bool'].keys())[0]
     content = []
     field = None
 
@@ -816,7 +852,7 @@ def _extract_fact_constraint(raw_constraint):
     }
 
 def _extract_fact_val_constraint(raw_constraint):
-    operator = raw_constraint['bool'].keys()[0]
+    operator = list(raw_constraint['bool'].keys())[0]
     field = None
     sub_constraints = []
 

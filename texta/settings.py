@@ -121,6 +121,10 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+# Avoid errors when sending too big files through the importer API.
+# Increased vulnerability to DDoS attacks.
+DATA_UPLOAD_MAX_MEMORY_SIZE = None
+
 # New user are created as activated or deactivated (in which case superuser has to activate them manually)
 USER_ISACTIVE_DEFAULT = True
 
@@ -196,11 +200,12 @@ TEMPLATES = [
 
 # List of Django plugins used in TEXTA.
 # 
-MIDDLEWARE_CLASSES = (
-	'django.middleware.common.CommonMiddleware',
-	'django.contrib.sessions.middleware.SessionMiddleware',
-	'django.contrib.auth.middleware.AuthenticationMiddleware',
-	'django.contrib.messages.middleware.MessageMiddleware',
+# NEW PY REQUIREMENT
+MIDDLEWARE = (
+    'django.middleware.common.CommonMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
 )
 
 # List of built-in and custom apps in use.

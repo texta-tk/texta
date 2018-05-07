@@ -1,7 +1,12 @@
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
-from query import Query
-from searcher import Searcher
+
+import os, sys
+file_dir = os.path.dirname(__file__)
+sys.path.append(file_dir)
+from .query import Query
+from .searcher import Searcher
+
 import requests
 import json
 
@@ -12,6 +17,7 @@ class Aggregator(object):
         self._date_format = date_format
         self._searcher = Searcher(es_url)
         self._es_url = es_url
+        self._header = {"Content-Type": "application/json"}
 
     def aggregate(self, processed_request):
         aggregation_subquery = self._prepare_aggregation_subquery(processed_request['aggregation'])
@@ -26,7 +32,7 @@ class Aggregator(object):
         return aggregation_results
 
     def _get_aggregation_results(self, index, mapping, query):
-        response = requests.post('{0}/{1}/{2}/_search'.format(self._es_url, index, mapping), data=json.dumps(query))
+        response = requests.post('{0}/{1}/{2}/_search'.format(self._es_url, index, mapping), data=json.dumps(query), headers=self._header)
         return response.json()['aggregations']
 
     def _prepare_aggregation_subquery(self, aggregation_steps):
@@ -55,7 +61,7 @@ class Aggregator(object):
             subquery, milestone = self._get_fact_subquery(type_, 'fact')
         elif type_ == 'fact_str':
             subquery, milestone = self._get_fact_subquery(type_, 'str_val')
-        elif type  == 'fact_num':
+        elif type_  == 'fact_num':
             subquery, milestone = self._get_fact_subquery(type_, 'num_val')
 
         if previous_step_type == 'fact' and type_ == 'fact_str':

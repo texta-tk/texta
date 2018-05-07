@@ -47,7 +47,7 @@ class Lexicon:
         self.reduction_methods = reduction_methods
 
     def lexicon_reduction(self, doc_text):
-        if not isinstance(doc_text, basestring):
+        if not isinstance(doc_text, str):
             doc_text = unicode(doc_text).encode('utf8')
         sentences = doc_text.split('\n')
         if u'remove_numbers' in self.reduction_methods:

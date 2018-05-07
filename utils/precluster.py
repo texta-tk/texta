@@ -1,3 +1,4 @@
+from __future__ import print_function
 import scipy.spatial.distance as scidist
 import scipy.cluster.hierarchy as hier
 import numpy as np
@@ -5,16 +6,16 @@ import heapq
 from sklearn.metrics import silhouette_score
 
 class DataPoint:
-    
+
     def __init__(self,label,vector):
         self.label = label
         self.vector = vector
 
     def is_cluster(self):
         return False
-    
+
 class Cluster:
-    
+
     def __init__(self,left,right,distance):
         self.left = left
         self.right = right
@@ -24,24 +25,26 @@ class Cluster:
         return True
 
 class PreclusterMaker:
-    
+
     def __init__(self,words, vectors, number_of_steps = 21,metric="cosine",linkage="complete"):
         self.words = words
         self.vectors = vectors
         self.number_of_steps = number_of_steps
         self.metric = metric
         self.linkage = linkage
-	
+
     def __call__(self):
         if len(self.words) == 0 or len(self.vectors) == 0:
             return []
+        if len(self.words) == 1:
+            self.words.append(self.words[0])
+            self.vectors.append(self.vectors[0])
 
         distance_matrix = scidist.pdist(np.array(self.vectors),self.metric)
         linkage_matrix = hier.linkage(distance_matrix,self.linkage)
 
         dendrogram = self._linkage_matrix_to_dendrogram(linkage_matrix,self.words,self.vectors)
         clusterings = self._create_clusterings(dendrogram)
-
         return [[(node.label,node.vector) for node in _get_cluster_nodes(cluster)] for cluster in self._find_optimal_clustering(clusterings)]
 
     def _linkage_matrix_to_dendrogram(self,linkage_matrix,labels,vectors):
@@ -88,12 +91,12 @@ class PreclusterMaker:
                 if right.is_cluster():
                     heapq.heappush(new_clustering,(-right.distance,right))
                 else:
-                    heapq.heappush(new_clustering,(-(self._min_dist-1),right))		
-    
+                    heapq.heappush(new_clustering,(-(self._min_dist-1),right))
+
             clusterings.append(new_clustering)
 
         return clusterings
-    
+
     def _find_optimal_clustering(self,clusterings):
 
         max_score = float('-inf')
@@ -110,16 +113,16 @@ class PreclusterMaker:
                 max_score = score
                 max_clustering = clustering
 
-        return zip(*max_clustering)[1] if max_clustering else zip(*clusterings[0])[1]
+        return list(zip(*max_clustering))[1] if max_clustering else list(zip(*clusterings[0]))[1]
 
 def _get_cluster_nodes(node):
-    
+
     if not node.is_cluster():
         return [node]
     else:
         return _get_cluster_nodes(node.left) + _get_cluster_nodes(node.right)
-    
+
 if __name__ == "__main__":
     words = np.arange(20)
     vectors = np.random.rand(20,8)
-    print PreclusterMaker(words,vectors)()
+    print(PreclusterMaker(words,vectors)())

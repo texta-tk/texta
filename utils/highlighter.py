@@ -1,3 +1,4 @@
+from __future__ import print_function
 from collections import Counter, defaultdict
 import re
 import math
@@ -82,7 +83,6 @@ class Highlighter(object):
             span_end = tagged_text.find('</span>', start_tag_end)
 
             index_discount += start_tag_end - start_tag_index
-
             span_data = self._extract_span_data(tagged_text[start_tag_index + 5:start_tag_end - 1].strip(),
                                                 [[start_tag_end - index_discount, span_end - index_discount]])
             if span_data:
@@ -134,7 +134,6 @@ class Highlighter(object):
             slice_start_idx = index
 
         text_slices.append(text[slice_start_idx:])
-
         return text_slices
 
     def _get_tags_for_text_index(self, text, alignment, highlight_data):

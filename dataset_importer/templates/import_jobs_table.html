@@ -24,20 +24,20 @@
         <tbody>
             {% for job in jobs %}
             <tr>
-                <td>{{job.pk}}</td>
-                <td>{{job.user}}</td>
-                <td>{{job.elastic_index}}</td>
-                <td>{{job.status}}</td>
-                <td>{{job.start_time|date:"d.m.Y H:i"}}</td>
-                <td>{{job.end_time|date:"d.m.Y H:i"}}</td>
-                <td>{{job.processed_documents}}</td>
-                <td>{{job.total_documents}}</td>
-                <td>
+                <td class="detailText">{{job.pk}}</td>
+                <td class="detailText">{{job.user}}</td>
+                <td class="detailText">{{job.elastic_index}}</td>
+                <td class="detailText">{{job.status}}</td>
+                <td class="detailText">{{job.start_time|date:"d.m.Y H:i"}}</td>
+                <td class="detailText">{{job.end_time|date:"d.m.Y H:i"}}</td>
+                <td class="detailText">{{job.processed_documents}}</td>
+                <td class="detailText">{{job.total_documents}}</td>
+                <td class="detailText">
                     <a href="javascript:void(0)" data-toggle="modal" data-target="#import-job-{{ job.pk }}-details">
                         <span class="glyphicon glyphicon-eye-open"></span>
                     </a>
                 </td>
-                <td>
+                <td class="detailText">
                     <a href="javascript:void(0)" onclick="removeImportJob({{ job.pk }});">
                         <span class="glyphicon glyphicon-remove"></span>
                     </a>
@@ -60,59 +60,59 @@
         <h4 class="modal-title">Import Details</h4>
       </div>
       <div class="modal-body">
-        <table class="table">
+        <table class="table importDetails">
             <tbody>
                 <tr>
-                    <td>ID:</td>
-                    <td>{{ job.pk }}</td>
+                    <td class="detailText">ID:</td>
+                    <td class="detailText">{{ job.pk }}</td>
                 </tr>
                 <tr>
-                    <td>User:</td>
-                    <td>{{ job.user }}</td>
+                    <td class="detailText">User:</td>
+                    <td class="detailText">{{ job.user }}</td>
                 </tr>
                 <tr>
-                    <td>Job status:</td>
-                    <td>{{ job.status }}</td>
+                    <td class="detailText">Job status:</td>
+                    <td class="detailText">{{ job.status }}</td>
                 </tr>
                 <tr>
-                    <td>Job started:</td>
-                    <td>{{ job.start_time }}</td>
+                    <td class="detailText">Job started:</td>
+                    <td class="detailText">{{ job.start_time }}</td>
                 </tr>
                 <tr>
-                    <td>Job completed:</td>
-                    <td>{{ job.end_time }}</td>
+                    <td class="detailText">Job completed:</td>
+                    <td class="detailText">{{ job.end_time }}</td>
                 </tr>
                 <tr>
-                    <td>Elasticsearch index:</td>
-                    <td>{{ job.elastic_index }}</td>
+                    <td class="detailText">Elasticsearch index:</td>
+                    <td class="detailText">{{ job.elastic_index }}</td>
                 </tr>
                 <tr>
-                    <td>Elasticsearch mapping:</td>
-                    <td>{{ job.elastic_mapping }}</td>
+                    <td class="detailText">Elasticsearch mapping:</td>
+                    <td class="detailText">{{ job.elastic_mapping }}</td>
                 </tr>
                 <tr>
-                    <td>Processed documents:</td>
-                    <td>{{ job.processed_documents }}</td>
+                    <td class="detailText">Processed documents:</td>
+                    <td class="detailText">{{ job.processed_documents }}</td>
                 </tr>
                 <tr>
-                    <td>Total documents:</td>
-                    <td>{{ job.total_documents }}</td>
+                    <td class="detailText">Total documents:</td>
+                    <td class="detailText">{{ job.total_documents }}</td>
                 </tr>
                 <tr>
-                    <td>Source type:</td>
-                    <td>{{ job.source_type }}</td>
+                    <td class="detailText">Source type:</td>
+                    <td class="detailText">{{ job.source_type }}</td>
                 </tr>
                 <tr>
-                    <td>Source name:</td>
-                    <td>{{ job.source_name }}</td>
+                    <td class="detailText">Source name:</td>
+                    <td class="detailText">{{ job.source_name }}</td>
                 </tr>
                 <tr>
-                    <td>Is synchronized:</td>
-                    <td>{{ job.must_sync }}</td>
+                    <td class="detailText">Is synchronized:</td>
+                    <td class="detailText">{{ job.must_sync }}</td>
                 </tr>
                 <tr>
-                    <td>JSON parameters:</td>
-                    <td>{{ job.json_parameters }}</td>
+                    <td class="detailText">JSON parameters:</td>
+                    <td class="detailText">{{ job.json_parameters }}</td>
                 </tr>
             </tbody>
 

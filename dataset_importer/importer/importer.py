@@ -115,7 +115,7 @@ class DatasetImporter(object):
         """
         parameters['formats'] = json.loads(parameters.get('formats', '[]'))
         parameters['preprocessors'] = json.loads(parameters.get('preprocessors', '[]'))
-        parameters['is_local'] = True if parameters.get('local_directory', None) else False
+        parameters['is_local'] = True if parameters.get('host_directory', None) else False
         parameters['keep_synchronized'] = self._determine_if_should_synchronize(parameters=parameters)
         parameters['remove_existing_dataset'] = True if parameters.get('remove_existing_dataset', 'false') == 'true' else False
         parameters['storer'] = 'elastic'
@@ -124,7 +124,7 @@ class DatasetImporter(object):
 
         parameters['directory'] = self._prepare_import_directory(
             root_directory=self._root_directory,
-            source_directory=parameters.get('local_directory', None)
+            source_directory=parameters.get('host_directory', None)
         )
 
         if any(format not in DAEMON_BASED_DATABASE_FORMATS for format in parameters['formats']):

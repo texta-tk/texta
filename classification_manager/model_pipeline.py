@@ -1,5 +1,6 @@
 # -*- coding: utf8 -*-
 
+from __future__ import print_function
 from datetime import datetime
 import hashlib
 import json
@@ -15,7 +16,7 @@ from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import Normalizer
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import RadiusNeighborsClassifier
@@ -180,7 +181,7 @@ def get_pipeline_builder():
 
     # Classification Models
     params = {}
-    pipe_builder.add_classifier('MultinomialNB', MultinomialNB, 'Multinomial Naive Bayes', params)
+    pipe_builder.add_classifier('LinearSVC', LinearSVC, 'LinearSVC', params)
 
     params = {}
     pipe_builder.add_classifier('BernoulliNB', BernoulliNB, 'Bernoulli Naive Bayes', params)
@@ -195,7 +196,6 @@ def get_pipeline_builder():
 
 
 def train_model_with_cv(model, params, X, y):
-
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20)
 
     # Use Train data to parameter selection in a Grid Search
@@ -231,7 +231,7 @@ def load_model(file_name):
 # Ref: http://stackoverflow.com/questions/26646362/numpy-array-is-not-json-serializable
 def jsonify(data):
     json_data = dict()
-    for key, value in data.iteritems():
+    for key, value in data.items():
         if isinstance(value, list):
             value = [ jsonify(item) if isinstance(item, dict) else item for item in value ]
         if isinstance(value, dict):
@@ -255,7 +255,7 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
     train_summary = "---"
 
     key_str = '{0}-{1}'.format(dataset_pk, random.random() * 100000)
-    model_key = hashlib.md5(key_str).hexdigest()
+    model_key = hashlib.md5(key_str.encode('utf8')).hexdigest()
 
     new_run = ModelClassification(run_description=description, tag_label=tag_label, fields=field_path,
                                   score=model_score, search=Search.objects.get(pk=search_id).query,
@@ -264,7 +264,7 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
                                   dataset_pk=dataset_pk, model_key=model_key)
     new_run.save()
 
-    print 'Run added to db.'
+    print('Run added to db.')
     query = json.loads(Search.objects.get(pk=search_id).query)
     steps = ["preparing data", "training", "done"]
     show_progress = ShowSteps(new_run.pk, steps)
@@ -297,7 +297,7 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
 
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE CLASSIFIER','event':'model_training_failed','args':{'user_name':request.user.username}}),exc_info=True)
-        print '--- Error: {0}'.format(e)
+        print('--- Error: {0}'.format(e))
         model_status = 'failed'
 
     logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE CLASSIFIER',
@@ -313,7 +313,7 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
     r.train_summary = train_summary
     r.save()
 
-    print 'job is done'
+    print('job is done')
 
 
 class ShowSteps(object):
@@ -367,7 +367,7 @@ def apply_classifier(job_key):
             job_queue.run_status = 'failed'
 
     except Exception as e:
-        print '- Exception: ', e
+        print('- Exception: ', e)
         job_queue.run_status = 'failed'
 
     job_queue.run_completed = datetime.now()

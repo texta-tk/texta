@@ -9,7 +9,7 @@ class Searcher(object):
     def __init__(self, es_url, es_use_ldap=False, es_ldap_user=None, es_ldap_password=None, default_batch=100):
         self._es_url = es_url
         self._use_ldap = False
-
+        self._header = {"Content-Type": "application/json"}
         if es_use_ldap:
             self._requests = requests.Session()
             self._requests.auth = (es_ldap_user, es_ldap_password)
@@ -24,7 +24,7 @@ class Searcher(object):
         index = processed_request['index']
         mapping = processed_request['mapping']
 
-        fields = processed_request.get('fields', None)
+        fields = processed_request.get('_source', None)
 
         query = json.dumps(self.create_search_query(processed_request).generate())
 
@@ -49,7 +49,7 @@ class Searcher(object):
 
     def create_search_query(self, processed_request):
         parameters = processed_request.get('parameters', None)  # fields, size, from
-        fields = processed_request.get('fields', None)
+        fields = processed_request.get('_source', None)
 
         constraints = self._differentiate_constraints(
             self._add_missing_constraint_class(processed_request['constraints'])
@@ -82,7 +82,7 @@ class Searcher(object):
                 query.set_parameter(parameter_name, parameters[parameter_name])
 
         if fields:
-            query.set_parameter('fields', fields)
+            query.set_parameter('_source', fields)
 
         return query
 
@@ -97,11 +97,8 @@ class Searcher(object):
     def _search(self, index, mapping, query):
         search_url = '{0}/{1}/{2}/_search?scroll=1m'.format(self._es_url, index, mapping)
         scroll_url = '{0}/_search/scroll?scroll=1m'.format(self._es_url)
-
-        response = self._requests.post(search_url, data=query).json()
-
+        response = self._requests.post(search_url, data=query, headers=self._header).json()
         scroll_id = json.dumps({'scroll_id':response['_scroll_id']})
-
         hits_yielded = 0
         while 'hits' in response and 'hits' in response['hits'] and response['hits']['hits']:
             for hit in response['hits']['hits']:
@@ -110,7 +107,7 @@ class Searcher(object):
                 yield hit['_source']
                 hits_yielded += 1
             else:
-                response = self._requests.post(scroll_url, data=scroll_id).json()
+                response = self._requests.post(scroll_url, data=scroll_id, headers=self._header).json()
                 continue
 
             response = {}
@@ -119,8 +116,7 @@ class Searcher(object):
         search_url = '{0}/{1}/{2}/_search?scroll=1m'.format(self._es_url, index, mapping)
         scroll_url = '{0}/_search/scroll?scroll=1m'.format(self._es_url)
 
-        response = self._requests.post(search_url, data=query).json()
-
+        response = self._requests.post(search_url, data=query, headers=self._header).json()
         scroll_id = json.dumps({'scroll_id': response['_scroll_id']})
 
         hits_yielded = 0
@@ -128,29 +124,29 @@ class Searcher(object):
             for hit in response['hits']['hits']:
                 if self._limit and hits_yielded == self._limit:
                     break
-                for field_name in hit['fields']:
+                for field_name in hit['_source']:
                     if field_name != 'texta_facts':
-                        hit['fields'][field_name] = hit['fields'][field_name][0]
-                yield hit['fields']
+                        hit['_source'][field_name] = hit['_source'][field_name][0]
+                yield hit['_source']
                 hits_yielded += 1
             else:
-                response = self._requests.post(scroll_url, data=scroll_id).json()
+                response = self._requests.post(scroll_url, data=scroll_id, header=self._header).json()
                 continue
 
             response = {}
 
     def _start_scrolling(self, index, mapping, query):
         search_url = '{0}/{1}/{2}/_search?scroll=1m'.format(self._es_url, index, mapping)
-        response = self._requests.post(search_url, data=query).json()
+        response = self._requests.post(search_url, data=query, headers=self._header).json()
 
         hits = []
         if 'hits' in response and 'hits' in response['hits'] and response['hits']['hits']:
             for hit in response['hits']['hits']:
-                if 'fields' in hit:
-                    for field_name in hit['fields']:
+                if '_source' in hit:
+                    for field_name in hit['_source']:
                         if field_name != 'texta_facts':
-                            hit['fields'][field_name] = hit['fields'][field_name][0]
-                    hits.append(hit['fields'])
+                            hit['_source'][field_name] = hit['_source'][field_name][0]
+                    hits.append(hit['_source'])
                 elif '_source' in hit:
                     hits.append(hit['_source'])
 
@@ -158,16 +154,16 @@ class Searcher(object):
 
     def _continue_scrolling(self, scroll_id):
         scroll_url = '{0}/_search/scroll?scroll=1m'.format(self._es_url)
-        response = self._requests.post(scroll_url, data=json.dumps({'scroll_id': scroll_id})).json()
+        response = self._requests.post(scroll_url, data=json.dumps({'scroll_id': scroll_id}), headers=self._header).json()
 
         hits = []
         if 'hits' in response and 'hits' in response['hits'] and response['hits']['hits']:
             for hit in response['hits']['hits']:
-                if 'fields' in hit:
-                    for field_name in hit['fields']:
+                if '_source' in hit:
+                    for field_name in hit['_source']:
                         if field_name != 'texta_facts':
-                            hit['fields'][field_name] = hit['fields'][field_name][0]
-                    hits.append(hit['fields'])
+                            hit['_source'][field_name] = hit['_source'][field_name][0]
+                    hits.append(hit['_source'])
                 elif '_source' in hit:
                     hits.append(hit['_source'])
 
