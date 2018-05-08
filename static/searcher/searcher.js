@@ -645,22 +645,22 @@ function aggregate(){
 
 
 function displayAgg(response){
-	var data = response;
+    var data = response;
 	var container = $("#right");
 	container.empty();
-
+    
 	var string_container = $("<div id='string_agg_container'></div>");
 	var chart_container = $("<div id='daterange_agg_container'></div>");
-
+    
 	container.append(chart_container);
 	container.append(string_container);
-
+    
 	for (var i in data) {
-		if(data.hasOwnProperty(i)){
-			if(data[i].type == 'daterange'){
-				drawTimeline(data[i]);
+        if(data.hasOwnProperty(i)){
+            if(data[i].type == 'daterange'){
+                drawTimeline(data[i]);
 			}else if(data[i].type == 'string'){
-				drawStringAggs(data[i]);
+                drawStringAggs(data[i]);
 			} else if (data[i].type == 'fact') {
                 drawStringAggs(data[i], type='fact');
             } else if (data[i].type == 'fact_str_val') {
@@ -670,21 +670,34 @@ function displayAgg(response){
             }
 		}
 	}
+    
+}
+
+function factGraph() {
+    var request = new XMLHttpRequest();
+    var formElement = new FormData();
+
+    request.onreadystatechange=function() {
+        if (request.readyState==4 && request.status==200) {
+            $("#right").html(request.responseText);
+        }
+    }
+    request.open("POST",PREFIX+'/fact_graph');
+    request.send(new FormData(formElement),true);
 
 }
 
-
 function drawTimeline(data){
-
-	var timeline_children_container = $("<div></div>");
-
+    
+    var timeline_children_container = $("<div></div>");
+    
 	new Morris.Line({
-		  element: 'daterange_agg_container',
-		  resize: true,
-		  data: data.data,
-		  // The name of the data record attribute that contains x-values.
-		  xkey: 'date',
-		  // A list of names of data record attributes that contain y-values.
+        element: 'daterange_agg_container',
+        resize: true,
+        data: data.data,
+        // The name of the data record attribute that contains x-values.
+        xkey: 'date',
+        // A list of names of data record attributes that contain y-values.
 		  ykeys: data.ykeys,
 		  // Labels for the ykeys -- will be displayed when you hover over the
 		  // chart.

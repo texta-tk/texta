@@ -899,3 +899,25 @@ def _extract_fact_val_constraint(raw_constraint):
         'field': field,
         'sub_constraints': sub_constraints
     }
+
+@login_required
+def fact_graph(request):
+    #import pdb;pdb.set_trace()
+    print('here')
+    #return HttpResponse(template.render(request))
+
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
+
+    # get columns names from ES mapping
+    #fields = es_m.get_column_names()
+    template_params = {'STATIC_URL': STATIC_URL,
+                       'URL_PREFIX': URL_PREFIX,
+                       'search_id': 1,
+                       'searches': Search.objects.filter(author=request.user),
+                       'dataset': ds.get_index(),
+                       'mapping': ds.get_mapping()}
+    template = loader.get_template('fact_graph_results.html')
+    #template = loader.get_template('searcher_results.html')
+    print('returning')
+    return HttpResponse(template.render(template_params, request))
