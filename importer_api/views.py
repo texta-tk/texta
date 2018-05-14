@@ -75,7 +75,10 @@ class ImporterApiView(View):
 	def post(self, *args, **kwargs):
 		try:
 
-			post_payload_dict = json.loads(request.body)
+			# In Python 3.5, json.loads() accepts only unicode, unlike in Python 3.6.
+			utf8_post_payload = self.request.body.decode("utf-8")
+			post_payload_dict = json.loads(utf8_post_payload)
+
 			ApiInputValidator(post_payload_dict, ["auth_token", "index", "doc_type", "data"])
 			AuthTokenHandler(post_payload_dict.get("auth_token"))
 			es_handler = ElasticsearchHandler(index=post_payload_dict["index"], doc_type=post_payload_dict["doc_type"])
