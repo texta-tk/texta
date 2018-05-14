@@ -77,6 +77,7 @@ class ES_Manager:
 
     TEXTA_MAPPING = 'texta'
     TEXTA_RESERVED = []
+    HEADERS = HEADERS
     #TEXTA_RESERVED = ['texta_facts']
 
     # Redefine requests if LDAP authentication is used

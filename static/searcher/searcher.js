@@ -684,7 +684,6 @@ function factGraph() {
     }
     request.open("POST",PREFIX+'/fact_graph');
     request.send(new FormData(formElement),true);
-
 }
 
 function drawTimeline(data){
@@ -836,7 +835,7 @@ function deleteFact(dict, trElement){
                 }
             });
         };
-        });
+    });
 }
 
 function show_string_children(data,children_container,grandchildren_container, row_key, type=null) {
@@ -1104,6 +1103,39 @@ function loadUserPreference(dataset,mapping) {
         }
     }
 }
+
+function tag_by_query() {
+    if ($('#tag_name')[0].checkValidity() && $('#tag_value')[0].checkValidity() && $('#tag_field')[0].checkValidity()) {
+        var tag_name = $('#tag_name').val();
+        var tag_value = $('#tag_value').val();
+        var tag_field = JSON.parse($('#tag_field').val())['path'];
+
+        formElement = new FormData(document.getElementById("filters"));
+        formElement.append('tag_name', tag_name);
+        formElement.append('tag_value', tag_value);
+        formElement.append('tag_field', tag_field);
+
+        $.ajax({
+            url: PREFIX + '/tag_documents',
+            data: formElement,
+            type: 'POST',
+            contentType: false,
+            processData: false,
+            success: function() {
+                swal({
+                    title:'Tag successful!',
+                    text:'Search has been tagged with '+ tag_name + ': ' + tag_value,
+                    type:'success'});
+            },
+            error: function() {
+                swal('Error!','There was a problem tagging the search!','error');
+            }
+        });
+    } else {
+        swal('Warning!','Parameters not set!','warning');
+    }
+}
+
 
 function export_data(exportType) {
     var formElement = document.getElementById("filters");

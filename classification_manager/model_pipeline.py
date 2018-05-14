@@ -156,7 +156,7 @@ def get_pipeline_builder():
     pipe_builder = PipelineBuilder()
 
     # Feature Extraction
-    params = {'ngram_range': [(1, 1), (1, 2), (1, 3)]}
+    params = {'ngram_range': [(1, 1), (1, 2), (1, 3)], 'min_df': [5]}
     pipe_builder.add_extractor('CountVectorizer', CountVectorizer, 'Count Vectorizer', params)
 
     params = {}

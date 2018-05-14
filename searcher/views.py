@@ -369,7 +369,6 @@ def highlight_cluster_keywords(documents, keywords, params):
             document = hl.highlight(document,to_highlighter)
             if 'show_short_version_cluster' in params.keys():
                 document = additional_option_cut_text(document, params['short_version_n_char_cluster'])
-                #print(document3 == document2)
             out.append(document)
         elif not 'show_unhighlighted' in params.keys():
             out.append(document)
@@ -608,6 +607,19 @@ def delete_fact(request):
 
     return HttpResponse()
 
+@login_required
+def tag_documents(request):
+    """Add a fact to documents with given name and value
+       via Search > Actions > Tag results
+    """
+    tag_name = request.POST['tag_name']
+    tag_value = request.POST['tag_value']
+    tag_field = request.POST['tag_field']
+    es_params = request.POST
+
+    fact_m = FactManager(request)
+    fact_m.tag_documents_with_facts(es_params, tag_name, tag_value, tag_field)
+    return HttpResponse()
 
 def _get_facts_agg_count(es_m, facts):
     counts = {}

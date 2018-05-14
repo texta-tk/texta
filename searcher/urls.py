@@ -14,6 +14,7 @@ urlpatterns = [
     url(r'save', views.save, name='save'),
     url(r'delete$', views.delete, name='delete'),
     url(r'delete_fact$', views.delete_fact, name='delete_fact'),
+    url(r'tag_documents$', views.tag_documents, name='tag_documents'),
     url(r'autocomplete', views.autocomplete, name='autocomplete'),
     url(r'listing', views.get_saved_searches, name='get_saved_searches'),
     url(r'table_content', views.get_table_content, name='get_table_content'),

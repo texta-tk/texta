@@ -146,10 +146,10 @@ class EsDataSample(object):
 
     def get_data_samples(self, sample_size=MAX_POSITIVE_SAMPLE_SIZE):
         positive_samples, positive_set = self._get_positive_samples(sample_size)
-        negative_samples = self._get_negative_samples(positive_set)        
+        negative_samples = self._get_negative_samples(positive_set)
 
-        data_sample_x = np.asarray(positive_samples + negative_samples)
-        data_sample_y = np.asarray([1] * len(positive_samples) + [0] * len(negative_samples))
+        data_sample_x = positive_samples + negative_samples
+        data_sample_y = [1] * len(positive_samples) + [0] * len(negative_samples)
 
         statistics = {}
         statistics['total_positive'] = len(positive_samples)
