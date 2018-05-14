@@ -33,11 +33,15 @@ RUN pip3 install pathlib
 RUN pip3 install dateutils
 RUN pip3 install sympy
 RUN pip3 install textract
+RUN pip3 install elasticsearch
+
 
 RUN git clone https://github.com/texta-tk/texta.git
 WORKDIR texta
 RUN git checkout dev
+RUN pip3 install -r requirements.txt
 RUN python3 migrate.py
+
 
 RUN echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', '1234')" | python3 manage.py shell
 
