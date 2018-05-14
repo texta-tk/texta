@@ -1,14 +1,16 @@
 from django.http import JsonResponse
 from account.models import Profile
 from django.views import View
-from elasticsearch.helpers import bulk as elastic_bulkapi
+from elasticsearch.helpers import streaming_bulk as elastic_streambulk
+from texta.settings import es_url
+
 import json
 import elasticsearch
 
 
 class ElasticsearchHandler:
 
-	def __init__(self, doc_type, index, hosts=[{"host": "localhost", "port": 9200}]):
+	def __init__(self, doc_type, index, hosts=[es_url]):
 		self.es = elasticsearch.Elasticsearch(hosts=hosts)
 		self.es.cluster.health(wait_for_status='yellow', request_timeout=1000)
 		self.index = index
@@ -19,7 +21,7 @@ class ElasticsearchHandler:
 
 	def insert_multiple_documents(self, list_of_documents):
 		actions = [{"_source": document, "_index": self.index, "_type": self.doc_type} for document in list_of_documents]
-		elastic_bulkapi(client=self.es, actions=actions)
+		elastic_streambulk(client=self.es, actions=actions, chunk_size=1000, max_retries=3)
 
 	def insert_index_into_es(self):
 		self.es.indices.create(index=self.index, ignore=400)
@@ -39,18 +41,18 @@ class ElasticsearchHandler:
 class ApiInputValidator:
 	def __init__(self, post_dict, expected_field_list):
 		self.post_dict = post_dict
-		self.expected_field_list = expected_field_list
+		self.mandatory_field_list = expected_field_list
 
 		self.validate_field_existence()
 		self.validate_value_existence()
 
 	def validate_field_existence(self):
-		for mandatory_field in self.expected_field_list:
+		for mandatory_field in self.mandatory_field_list:
 			if mandatory_field not in self.post_dict:
 				raise Exception("Mandatory field '{0}' is missing.".format(mandatory_field))
 
 	def validate_value_existence(self):
-		for mandatory_field in self.expected_field_list:
+		for mandatory_field in self.mandatory_field_list:
 			if not self.post_dict[mandatory_field]:
 				raise Exception("Mandatory field '{0}' can not be empty".format(mandatory_field))
 
@@ -73,24 +75,24 @@ class ImporterApiView(View):
 	def post(self, *args, **kwargs):
 		try:
 
-			post_payload = json.loads(self.request.body)
-			post_handler = ApiInputValidator(post_payload, ["auth_token", "index", "doc_type", "data"])
-			auth_handler = AuthTokenHandler(post_payload.get("auth_token"))
-			es_handler = ElasticsearchHandler(index=post_payload["index"], doc_type=post_payload["doc_type"])
+			post_payload_dict = json.loads(self.request.body)
+			ApiInputValidator(post_payload_dict, ["auth_token", "index", "doc_type", "data"])
+			AuthTokenHandler(post_payload_dict.get("auth_token"))
+			es_handler = ElasticsearchHandler(index=post_payload_dict["index"], doc_type=post_payload_dict["doc_type"])
 
-			payload = post_payload["data"]
+			api_payload = post_payload_dict["data"]
 			es_handler.create_index_if_not_exist()
-			insert_data_type = type(payload)
+			type_of_insertion_data = type(api_payload)
 
-			if "mapping" in post_payload:
-				es_handler.insert_mapping_into_doctype(post_payload["mapping"])
+			if "mapping" in post_payload_dict:
+				es_handler.insert_mapping_into_doctype(post_payload_dict["mapping"])
 
-			if insert_data_type == dict:
-				es_handler.insert_single_document(payload)
-			elif insert_data_type == list:
-				es_handler.insert_multiple_documents(payload)
+			if type_of_insertion_data == dict:
+				es_handler.insert_single_document(api_payload)
+			elif type_of_insertion_data == list:
+				es_handler.insert_multiple_documents(api_payload)
 
 			return JsonResponse({"message": "Item(s) successfully saved."})
 
 		except Exception as e:
-			return JsonResponse({"message": e.message})
+			return JsonResponse({"message": e})
