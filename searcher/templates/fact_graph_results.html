@@ -11,7 +11,7 @@ text {
 
 </style>
 <div class="graphBody"></div>
-<!-- <script src="http://d3js.org/d3.v3.min.js"></script> -->
+
 <script>
 
 Math.clip = function(number, min, max) {
@@ -31,9 +31,12 @@ var outline = false;
 var min_score = 0;
 var max_score = 1;
 
-var color = d3.scale.linear()
-  .domain([min_score, (min_score+max_score)/2, max_score])
-  .range(["cyan","yellow", "pink", "red"]);
+// var color = d3.scale.linear()
+//   .domain([min_score, (min_score+max_score)/2, max_score])
+//   .range(["cyan","yellow", "pink", "red"]);
+var color = d3.scale.ordinal()
+  .domain(d3.svg.symbolTypes)
+  .range(["#f0f20a","#f90a0a", "#1d2bec", "#22d012", "#f9a70d", "#ff9292"]);
 
 var highlight_color = "blue";
 var highlight_trans = 0.1;
@@ -122,7 +125,8 @@ var linkedByIndex = {};
         .type(function(d) { return d.type; }))
   
 	.style(tocolor, function(d) { 
-	if (isNumber(d.score) && d.score>=0) return color(d.score);
+	// if (isNumber(d.score) && d.score>=0) return color(d.score);
+	if (d3.svg.symbolTypes.indexOf(d.type) >= 0) return color(d.type);
 	else return default_node_color; })
     //.attr("r", function(d) { return size(d.size)||nominal_base_node_size; })
 	.style("stroke-width", function(d) { return d.count; })
@@ -355,5 +359,45 @@ function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }	
 
+
+/* ####################################### LEGEND ##################################### */
+
+var triangleU = d3.svg.symbol().type('triangle-up')(),
+  circle = d3.svg.symbol().type('circle')(),
+  cross = d3.svg.symbol().type('cross')(),
+  diamond = d3.svg.symbol().type('diamond')(),
+  triangleD = d3.svg.symbol().type('triangle-down')(),
+  square = d3.svg.symbol().type('square')();
+
+//example output of d3.svg.symbol().type('circle')();
+//"M0,4.51351666838205A4.51351666838205,4.51351666838205 0 1,1 0,
+//-4.51351666838205A4.51351666838205,4.51351666838205 0 1,1 0,4.51351666838205Z"
+
+var symbolScale =  d3.scale.ordinal()
+  .domain(['PER','ORG','LOC', 'EML', 'PHO'])
+  .range([circle, cross, diamond, square, triangleD, triangleU] );
+
+var svg = d3.select("svg");
+
+svg.append("g")
+  .attr("class", "legendSymbol")
+  .attr("transform", "translate(20, 20)");
+
+var legendPath = d3.legend.symbol()
+  .scale(symbolScale)
+  .orient("vertical")
+  .title("Symbol Fact")
+	.on("cellclick", function(d){alert("clicked " + d);});
+
+svg.select(".legendSymbol")
+	.call(legendPath);
+
+var colorScale = d3.scale.ordinal()
+  .domain(['PER','ORG','LOC', 'EML', 'PHO'])
+	.range(["#f0f20a","#f90a0a", "#1d2bec", "#22d012", "#f9a70d", "#ff9292"])
+
+svg.selectAll(".cell path").each(function(d) {
+  d3.select(this).style("fill", colorScale(d))
+})
 
 </script>
