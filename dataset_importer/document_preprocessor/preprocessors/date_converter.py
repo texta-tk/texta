@@ -40,16 +40,23 @@ class DatePreprocessor(object):
               print(e)
           return date_val
           
-        def convert_date(self,date_val):
-          '''
-          Converts given date field value to standard ES format 
-          yyyy-mm-dd
+        def convert_date(self,date_field_value, **kwargs):
+          '''Converts given date field value to standard ES format yyyy-mm-dd
           
-          params:
-              o date_val - raw date field value
+          :param date_field_value: date field value to convert
+          :param kwargs: request parameters which must include entries for the preprocessors to work appropriately
+          :type date_field_value: string
+          :return: date converted to standard ES format
+          :rtype: string
+          '''
+          
+          # TODO: 
+          '''
+          if not kwargs.get('mlp_preprocessor_input_features', None):
+            kwargs['mlp_preprocessor_input_features'] = '["text"]'
           '''
           try:
-              d = self._convert_month(date_val)
+              d = self._convert_month(date_field_value)
               d = dateutil.parser.parse(d)
               d = str(d)
               
