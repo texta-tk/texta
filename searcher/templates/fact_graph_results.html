@@ -31,12 +31,13 @@ var outline = false;
 var min_score = 0;
 var max_score = 1;
 
-// var color = d3.scale.linear()
-//   .domain([min_score, (min_score+max_score)/2, max_score])
-//   .range(["cyan","yellow", "pink", "red"]);
+var colors = ["#f0f20a","#f90a0a", "#1d2bec", "#22d012", "#f9a70d", "#ff9292"];
+var shapes = d3.svg.symbolTypes;
+var shapesColors = shapes.reduce((obj, k, i) => ({...obj, [k]: colors[i] }), {});
+
 var color = d3.scale.ordinal()
-  .domain(d3.svg.symbolTypes)
-  .range(["#f0f20a","#f90a0a", "#1d2bec", "#22d012", "#f9a70d", "#ff9292"]);
+  .domain(shapes)
+  .range(colors);
 
 var highlight_color = "blue";
 var highlight_trans = 0.1;
@@ -126,7 +127,7 @@ var linkedByIndex = {};
   
 	.style(tocolor, function(d) { 
 	// if (isNumber(d.score) && d.score>=0) return color(d.score);
-	if (d3.svg.symbolTypes.indexOf(d.type) >= 0) return color(d.type);
+	if (shapes.indexOf(d.type) >= 0) return color(d.type);
 	else return default_node_color; })
     //.attr("r", function(d) { return size(d.size)||nominal_base_node_size; })
 	.style("stroke-width", function(d) { return d.count; })
@@ -153,9 +154,16 @@ var linkedByIndex = {};
   	focus_node = d;
 	set_focus(d)
 	if (highlight_node === null) set_highlight(d)
-	
+
+	selectedLegend(d, linkedByIndex, graph);
 }	).on("mouseout", function(d) {
 		exit_highlight();
+		svg.select(".selectedSymbol")//.remove();
+        .attr("fill-opacity", 1)
+        .transition()
+            .duration(300)
+            .attr("fill-opacity", 0)
+            .remove(); //remove after transitions are complete
 
 }	);
 
@@ -374,7 +382,7 @@ var triangleU = d3.svg.symbol().type('triangle-up')(),
 //-4.51351666838205A4.51351666838205,4.51351666838205 0 1,1 0,4.51351666838205Z"
 
 var symbolScale =  d3.scale.ordinal()
-  .domain(['PER','ORG','LOC', 'EML', 'PHO'])
+  .domain(['PER','ORG','LOC', 'EML', 'PHO', 'Other'])
   .range([circle, cross, diamond, square, triangleD, triangleU] );
 
 var svg = d3.select("svg");
@@ -393,11 +401,60 @@ svg.select(".legendSymbol")
 	.call(legendPath);
 
 var colorScale = d3.scale.ordinal()
-  .domain(['PER','ORG','LOC', 'EML', 'PHO'])
+  .domain(['PER','ORG','LOC', 'EML', 'PHO', 'Other'])
 	.range(["#f0f20a","#f90a0a", "#1d2bec", "#22d012", "#f9a70d", "#ff9292"])
 
 svg.selectAll(".cell path").each(function(d) {
   d3.select(this).style("fill", colorScale(d))
 })
+
+
+/* ############################ SELECTION ######################### */
+
+function selectedLegend(node, linkedByIndex, graph) {
+	var linkedNodes = [];
+	for(var i = 0; i < graph.links.length; i++) {
+			if (graph.links[i]["source"]["source"] == node.source || graph.links[i]["target"]["source"] == node.source) {
+				if (!linkedNodes.includes(graph.links[i]["target"])) {
+					linkedNodes.push({"count": graph.links[i]["count"], "value": graph.links[i]["target"]})
+				}
+			}
+	}
+
+	// debugger;
+	domainList = []
+	rangeList = []
+	colorList = []
+	for(var i = 0; i < linkedNodes.length; i++) {
+		domainList.push(linkedNodes[i]["count"] + 'x ' + linkedNodes[i]["value"]["name"] + " - " + linkedNodes[i]["value"]["id"]);
+		rangeList.push(d3.svg.symbol().type(linkedNodes[i]["value"]["type"])());
+		colorList.push(shapesColors[linkedNodes[i]["value"]["type"]]);
+	}
+	var selectedSymbol =  d3.scale.ordinal()
+		.domain(domainList)
+		.range(rangeList);
+	
+	svg.append("g")
+		.attr("class", "selectedSymbol")
+		.attr("transform", "translate(20, 200)");
+	
+	var selectedPath = d3.legend.symbol()
+		.scale(selectedSymbol)
+		.orient("vertical")
+		.title(node.name + ' - ' + node.id + ' x'+node.score)
+		.on("cellclick", function(d){alert("clicked " + d);});
+	
+	svg.select(".selectedSymbol")
+		.call(selectedPath);
+
+	var colorScale = d3.scale.ordinal()
+		.domain(domainList)
+		.range(colorList)
+
+	// debugger;
+	svg.selectAll(".selectedSymbol path").each(function(d) {
+		d3.select(this).style("fill", colorScale(d))
+	})
+}
 
 </script>
