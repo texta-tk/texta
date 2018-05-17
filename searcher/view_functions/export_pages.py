@@ -41,7 +41,7 @@ def get_rows(es_params, request):
     try:
         writer.writerow(es_params['features']) # NEW PY REQUIREMENT
     except:
-        writer.writerow([feature.encode('utf8') for feature in es_params['features']])
+        writer.writerow([feature for feature in es_params['features']])
 
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
@@ -79,7 +79,7 @@ def get_rows(es_params, request):
 
         if left > len(rows):
             for row in rows:
-                writer.writerow([element.encode('utf-8') if isinstance(element,str) else element for element in row])
+                writer.writerow([element if isinstance(element,str) else element for element in row])
             buffer_.seek(0)
             data = buffer_.read()
             buffer_.seek(0)
@@ -93,7 +93,7 @@ def get_rows(es_params, request):
 
         elif left == len(rows):
             for row in rows:
-                writer.writerow([element.encode('utf-8') if isinstance(element,str) else element for element in row])
+                writer.writerow([element if isinstance(element,str) else element for element in row])
             buffer_.seek(0)
             data = buffer_.read()
             buffer_.seek(0)
@@ -103,7 +103,7 @@ def get_rows(es_params, request):
             break
         else:
             for row in rows[:left]:
-                writer.writerow([element.encode('utf-8') if isinstance(element,str) else element for element in row])
+                writer.writerow([element if isinstance(element,str) else element for element in row])
             buffer_.seek(0)
             data = buffer_.read()
             buffer_.seek(0)
@@ -116,7 +116,7 @@ def get_all_rows(es_params, request):
     buffer_ = StringIO()
     writer = csv.writer(buffer_)
 
-    writer.writerow([feature.encode('utf8') for feature in es_params['features']])
+    writer.writerow([feature for feature in es_params['features']])
 
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
@@ -146,7 +146,7 @@ def get_all_rows(es_params, request):
 
                 content = parent_source
                 row.append(content)
-            writer.writerow([element.encode('utf-8') if isinstance(element,str) else element for element in row])
+            writer.writerow([element if isinstance(element,str) else element for element in row])
 
         buffer_.seek(0)
         data = buffer_.read()
