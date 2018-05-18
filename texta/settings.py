@@ -142,6 +142,8 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 USER_ISACTIVE_DEFAULT = os.getenv('TEXTA_USER_ISACTIVE_DEFAULT')
 if USER_ISACTIVE_DEFAULT is None:
     USER_ISACTIVE_DEFAULT = True
+else:
+    USER_ISACTIVE_DEFAULT = json.loads(USER_ISACTIVE_DEFAULT.lower())
 
 # Defines whether added datasets are 'public' or 'private'. Public datasets are accessible by all the existing users and
 # new users alike. Access from a specific user can be revoked. Private datasets are not accessible by default, but
