@@ -21,7 +21,7 @@ Math.clip = function(number, min, max) {
 var w = window.innerWidth;
 var h = window.innerHeight;
 
-var keyc = true, keys = true, keyt = true, keyr = true, keyx = true, keyd = true, keyl = true, keym = true, keyh = true, key1 = true, key2 = true, key3 = true, key0 = true
+var keyc = true, keys = true, keyt = true, keyr = true, keyx = true, keyd = true, keyl = true, keym = true, keyh = true, key1 = true, key2 = true, key3 = true, key0 = true, keyn = true, keyb = true, keyv = true
 
 var focus_node = null, highlight_node = null;
 
@@ -67,6 +67,28 @@ var zoom = d3.behavior.zoom().scaleExtent([min_zoom,max_zoom])
 var g = svg.append("g");
 svg.style("cursor","move");
 
+var menu = [
+	{
+		title: 'Add to search',
+		action: function(elm, d, i) {
+			console.log('Item #1 clicked!');
+			console.log('The data for this circle is: ' + d);
+			// add_field("", "", '"{"path": "mlp_text.text", "type": "fact_str_val"}"')
+		}
+	}
+	// {
+	// 	title: 'Item #2',
+	// 	action: function(elm, d, i) {
+	// 		console.log('You have clicked the second item!');
+	// 		console.log('The data for this circle is: ' + d);
+	// 		console.log(elm);
+	// 		console.log(i);
+	// 	}
+	// }
+]
+
+
+
 d3.json("{{STATIC_URL}}searcher/graph.json", function(error, graph) {
 
 var linkedByIndex = {};
@@ -105,7 +127,8 @@ var linkedByIndex = {};
     .data(graph.nodes)
     .enter().append("g")
     .attr("class", "node")
-    .call(force.drag)
+		.call(force.drag)
+		.on('contextmenu', d3.contextMenu(menu));
 
 	node.on("dblclick.zoom", function(d) { d3.event.stopPropagation();
 	var dcx = (window.innerWidth/2-d.x*zoom.scale());
@@ -152,26 +175,26 @@ var linkedByIndex = {};
 	})
   .on("mousedown", function(d) { d3.event.stopPropagation();
   	focus_node = d;
-	set_focus(d)
+		set_focus(d);
+		set_highlight(d);
 	if (highlight_node === null) set_highlight(d)
 
 	selectedLegend(d, linkedByIndex, graph);
 }	).on("mouseout", function(d) {
 		exit_highlight();
-		svg.select(".selectedSymbol")//.remove();
+}	);
+
+		d3.select(window).on("mousedown",  
+		function() {
+		if (focus_node!==null)
+		{
+			focus_node = null;
+			svg.select(".selectedSymbol")//.remove();
         .attr("fill-opacity", 1)
         .transition()
             .duration(300)
             .attr("fill-opacity", 0)
             .remove(); //remove after transitions are complete
-
-}	);
-
-		d3.select(window).on("mouseup",  
-		function() {
-		if (focus_node!==null)
-		{
-			focus_node = null;
 			if (highlight_trans<1)
 			{
 	
@@ -183,6 +206,24 @@ var linkedByIndex = {};
 	
 	if (highlight_node === null) exit_highlight();
 		});
+
+
+	// 	d3.select(window).on("mouseup",  
+	// 	function() {
+	// 	if (focus_node!==null)
+	// 	{
+	// 		focus_node = null;
+	// 		if (highlight_trans<1)
+	// 		{
+	
+	// 	circle.style("opacity", 1);
+	//   text.style("opacity", 1);
+	//   link.style("opacity", 1);
+	// }
+	// 	}
+	
+	// if (highlight_node === null) exit_highlight();
+	// 	});
 
 function exit_highlight()
 {
@@ -299,6 +340,9 @@ function set_highlight(d)
     case "X": keyx = !keyx; break;
 	case "D": keyd = !keyd; break;
 	case "L": keyl = !keyl; break;
+	case "N": keyn = !keyn; break;
+	case "B": keyb = !keyb; break;
+	case "V": keyv = !keyv; break;
 	case "M": keym = !keym; break;
 	case "H": keyh = !keyh; break;
 	case "1": key1 = !key1; break;
@@ -345,9 +389,12 @@ function vis_by_node_score(score)
 {
 	if (isNumber(score))
 	{
-	if (score>=0.666) return keyh;
-	else if (score>=0.333) return keym;
-	else if (score>=0) return keyl;
+	if (score<=2) return keyh;
+	else if (score<=5) return keym;
+	else if (score<=10) return keyl;
+	else if (score<=20) return keyv;
+	else if (score<=30) return keyb;
+	else if (score<=50) return keyn;
 	}
 	return true;
 }
@@ -356,17 +403,16 @@ function vis_by_link_score(score)
 {
 	if (isNumber(score))
 	{
-	if (score>=0.666) return key3;
-	else if (score>=0.333) return key2;
-	else if (score>=0) return key1;
+	if (score>=2) return key3;
+	else if (score>=5) return key2;
+	else if (score>=10) return key1;
 }
 	return true;
 }
 
 function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
-}	
-
+}
 
 /* ####################################### LEGEND ##################################### */
 
@@ -382,7 +428,7 @@ var triangleU = d3.svg.symbol().type('triangle-up')(),
 //-4.51351666838205A4.51351666838205,4.51351666838205 0 1,1 0,4.51351666838205Z"
 
 var symbolScale =  d3.scale.ordinal()
-  .domain(['PER','ORG','LOC', 'EML', 'PHO', 'Other'])
+  .domain(['PER - C','ORG - X','LOC - R', 'EML - S', 'PHO - D', 'Other - T'])
   .range([circle, cross, diamond, square, triangleD, triangleU] );
 
 var svg = d3.select("svg");
@@ -394,7 +440,7 @@ svg.append("g")
 var legendPath = d3.legend.symbol()
   .scale(symbolScale)
   .orient("vertical")
-  .title("Symbol Fact")
+  .title("Keyboard shortcuts to hide fact types.")
 	.on("cellclick", function(d){alert("clicked " + d);});
 
 svg.select(".legendSymbol")
@@ -409,15 +455,40 @@ svg.selectAll(".cell path").each(function(d) {
 })
 
 
+/* ############################ KEYBINDINGS ####################### */
+var linear = d3.scale.ordinal()
+  .domain(['Count <= 2 - H', 'Count <=5 - M', 'Count <= 10 - L', 'Count <= 20 - V', 'Count <= 30 - B', 'Count <= 50 - N'])
+  .range(["#1de8b5", "#42a5f5", "#ef5350", "#ffca28", "#7986cb", "#8a2be2"]);
+
+var svg = d3.select("svg");
+
+svg.append("g")
+  .attr("class", "legendLinear")
+  .attr("transform", "translate(105,40)");
+
+var legendLinear = d3.legend.color()
+	.shapeWidth(11)
+	.shapeHeight(11)
+	.shapePadding(9)
+  .orient('vertical')
+  .scale(linear);
+
+svg.select(".legendLinear")
+  .call(legendLinear);
+
+
 /* ############################ SELECTION ######################### */
 
 function selectedLegend(node, linkedByIndex, graph) {
 	var linkedNodes = [];
 	for(var i = 0; i < graph.links.length; i++) {
-			if (graph.links[i]["source"]["source"] == node.source || graph.links[i]["target"]["source"] == node.source) {
+			if (graph.links[i]["source"]["source"] == node.source) {
 				if (!linkedNodes.includes(graph.links[i]["target"])) {
 					linkedNodes.push({"count": graph.links[i]["count"], "value": graph.links[i]["target"]})
 				}
+			}
+			else if (graph.links[i]["target"]["source"] == node.source) {
+				linkedNodes.push({"count": graph.links[i]["count"], "value": graph.links[i]["source"]})
 			}
 	}
 
@@ -436,7 +507,7 @@ function selectedLegend(node, linkedByIndex, graph) {
 	
 	svg.append("g")
 		.attr("class", "selectedSymbol")
-		.attr("transform", "translate(20, 200)");
+		.attr("transform", "translate(20, 250)");
 	
 	var selectedPath = d3.legend.symbol()
 		.scale(selectedSymbol)
@@ -456,5 +527,9 @@ function selectedLegend(node, linkedByIndex, graph) {
 		d3.select(this).style("fill", colorScale(d))
 	})
 }
+
+
+/* ######################### CONTEXT MENU ###################### */
+
 
 </script>
