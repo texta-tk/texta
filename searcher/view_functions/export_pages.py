@@ -7,9 +7,9 @@ from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 
 try:
-    from cStringIO import StringIO
+    from io import StringIO # NEW PY REQUIREMENT
 except:
-    from StringIO import StringIO
+    from io import BytesIO # NEW PY REQUIREMENT
 
 
 ES_SCROLL_BATCH = 100
@@ -24,17 +24,24 @@ def export_pages(request):
         response = StreamingHttpResponse(get_all_rows(es_params, request), content_type='text/csv')
     else:
         response = StreamingHttpResponse(get_rows(es_params, request), content_type='text/csv')
-    
+
     response['Content-Disposition'] = 'attachment; filename="%s"' % (es_params['filename'])
 
     return response
 
 def get_rows(es_params, request):
 
-    buffer_ = StringIO()
+    try:
+        buffer_ = StringIO()
+    except:
+        buffer_ = BytesIO()
+
     writer = csv.writer(buffer_)
-    
-    writer.writerow([feature.encode('utf8') for feature in es_params['features']])
+
+    try:
+        writer.writerow(es_params['features']) # NEW PY REQUIREMENT
+    except:
+        writer.writerow([feature for feature in es_params['features']])
 
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
@@ -51,7 +58,7 @@ def get_rows(es_params, request):
     scroll_id = response['_scroll_id']
     left = es_params['num_examples']
     hits = response['hits']['hits']
-    
+
     while hits and left:
         rows = []
         for hit in hits:
@@ -65,20 +72,20 @@ def get_rows(es_params, request):
                     else:
                         parent_source = ""
                         break
-                
+
                 content = parent_source
                 row.append(content)
             rows.append(row)
 
         if left > len(rows):
             for row in rows:
-                writer.writerow([element.encode('utf-8') if isinstance(element,unicode) else element for element in row])
+                writer.writerow([element if isinstance(element,str) else element for element in row])
             buffer_.seek(0)
             data = buffer_.read()
             buffer_.seek(0)
             buffer_.truncate()
             yield data
-            
+
             left -= len(rows)
             response = es_m.scroll(scroll_id=scroll_id)
             hits = response['hits']['hits']
@@ -86,30 +93,30 @@ def get_rows(es_params, request):
 
         elif left == len(rows):
             for row in rows:
-                writer.writerow([element.encode('utf-8') if isinstance(element,unicode) else element for element in row])
+                writer.writerow([element if isinstance(element,str) else element for element in row])
             buffer_.seek(0)
             data = buffer_.read()
             buffer_.seek(0)
             buffer_.truncate()
             yield data
-            
+
             break
         else:
             for row in rows[:left]:
-                writer.writerow([element.encode('utf-8') if isinstance(element,unicode) else element for element in row])
+                writer.writerow([element if isinstance(element,str) else element for element in row])
             buffer_.seek(0)
             data = buffer_.read()
             buffer_.seek(0)
             buffer_.truncate()
             yield data
-            
+
             break
 
 def get_all_rows(es_params, request):
     buffer_ = StringIO()
     writer = csv.writer(buffer_)
-    
-    writer.writerow([feature.encode('utf8') for feature in es_params['features']])
+
+    writer.writerow([feature for feature in es_params['features']])
 
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
@@ -123,7 +130,7 @@ def get_all_rows(es_params, request):
 
     scroll_id = response['_scroll_id']
     hits = response['hits']['hits']
-    
+
     while hits:
         for hit in hits:
             row = []
@@ -136,11 +143,11 @@ def get_all_rows(es_params, request):
                     else:
                         parent_source = ""
                         break
-                
+
                 content = parent_source
                 row.append(content)
-            writer.writerow([element.encode('utf-8') if isinstance(element,unicode) else element for element in row])
-        
+            writer.writerow([element if isinstance(element,str) else element for element in row])
+
         buffer_.seek(0)
         data = buffer_.read()
         buffer_.seek(0)

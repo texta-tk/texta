@@ -4,31 +4,32 @@ var PREFIX = LINK_SEARCHER;
 var factValSubCounter = {}
 var examplesTable;
 var layers = ['text','lemmas','facts'];
+var removed_facts = [];
 
 $(document).ready(function() {
     get_searches();
-	
+
 	change_agg_field(1);
-	
+
 	$('#agg_daterange_from_1').datepicker({forormat: "yyyy-mm-dd", startView: 2, autoclose: true});
 	$('#agg_daterange_to_1').datepicker({format: "yyyy-mm-dd", startView: 2, autoclose: true});
- 
+
     $(document.body).on( 'click','a.toggle-visibility', function (e) {
         e.preventDefault();
- 
+
         $(this).toggleClass('feature-invisible');
-        
+
         // Get the column API object
         var column = examplesTable.column( $(this).attr('data-column') );
- 
+
         // Toggle the visibility
         column.visible( ! column.visible() );
-        
+
         examplesTable.columns.adjust();
-        
+
         var dataset = $("#dataset").val();
         var mapping = $("#mapping").val();
-        
+
         var hiddenFeatures = localStorage.getCacheItem("hiddenFeatures_"+dataset+"_"+mapping);
         if (!hiddenFeatures) {
             hiddenFeatures = {}
@@ -48,8 +49,13 @@ $(document).ready(function() {
 		formatter: function(value) {
 			return 'Current value: ' + value;
 		}
-	});
-	
+    });
+    $('#n_char_cluster').bootstrapSlider({
+		formatter: function(value) {
+			return 'Current value: ' + value;
+		}
+    });
+
 	$('#n_clusters').bootstrapSlider({
 		formatter: function(value) {
 			return 'Current value: ' + value;
@@ -66,15 +72,18 @@ $(document).ready(function() {
 		formatter: function(value) {
 			return 'Current value: ' + value;
 		}
-	});	
-	
+	});
+	$('#n_features').bootstrapSlider({
+		formatter: function(value) {
+			return 'Current value: ' + value;
+		}
+    });
 });
-
 
 $(document).mousemove(function(e) {
     window.MOUSE_X = e.pageX;
     window.MOUSE_Y = e.pageY;
-});	
+});
 
 
 function in_array(value, array) {
@@ -83,10 +92,10 @@ function in_array(value, array) {
 
 
 function get_query(){
-    
+
     var formElement = document.getElementById("filters");
     var request = new XMLHttpRequest();
-    
+
     request.onreadystatechange=function() {
         if (request.readyState==4 && request.status==200) {
             if (request.responseText.length > 0) {
@@ -98,7 +107,7 @@ function get_query(){
 
     request.open("POST",PREFIX+'/get_query');
     request.send(new FormData(formElement),true);
-	
+
 }
 
 
@@ -179,10 +188,10 @@ function lookup(fieldFullId, fieldId, action, lookup_types){
 		if(data.length > 0){
 			var suggestions_container = $("#suggestions_"+fieldId);
 			suggestions_container.empty();
-			
+
 			process_suggestions(data,suggestions_container,fieldId,lookup_types);
 			if(suggestions_container.html()){
-				$("#suggestions_"+fieldId).show();	
+				$("#suggestions_"+fieldId).show();
 			}
 		}else{
 			$("#suggestions_"+fieldId).hide();
@@ -195,7 +204,7 @@ function process_suggestions(suggestions,suggestions_container,field_id,lookup_t
 	var suggestions = JSON.parse(suggestions)
 
     $.each(suggestions, function(lookup_type,lookup_suggestions) {
-		
+
 		if(lookup_suggestions.length > 0){
 
 			var li = $('<div/>')
@@ -204,7 +213,7 @@ function process_suggestions(suggestions,suggestions_container,field_id,lookup_t
 				.appendTo(suggestions_container);
 
 			$.each(lookup_suggestions, function(i)
-			{	
+			{
 				var li = $('<li/>')
 					.addClass('list-group-item')
 					.addClass('pointer')
@@ -212,27 +221,27 @@ function process_suggestions(suggestions,suggestions_container,field_id,lookup_t
 					.html(lookup_suggestions[i]['display_text'])
 					.appendTo(suggestions_container);
 			});
-		
+
 		}
-		
+
     })
-	
+
 }
 
 
 function insert(resource_id,suggestionId,descriptive_term, lookup_type){
 	if(resource_id){
-		
+
 		if(lookup_type == 'CONCEPT'){
 			suggestion_prefix = '@C';
 		}else if(lookup_type == 'LEXICON'){
 			suggestion_prefix = '@L';
 		}
-		
+
 		$('#field_'+suggestionId+" #match_txt_"+suggestionId).val(function(index, value) {return value.replace(/[^(\n)]*$/, '');});
 		$('#field_'+suggestionId+" #match_txt_"+suggestionId).val($('#field_'+suggestionId+" #match_txt_"+suggestionId).val()+suggestion_prefix+resource_id+"-"+descriptive_term+"\n");
 		$('#field_'+suggestionId+" #match_txt_"+suggestionId).focus();
-		
+
 	}else{
 	    if(lookup_type == 'TEXT'){
 	        $('#field_'+suggestionId+" #match_txt_"+suggestionId).val(function(index, value) {return value.replace(/[^(\n)]*$/, '');});
@@ -266,7 +275,7 @@ function add_field(date_range_min,date_range_max){
 	var field = $("#constraint_field").val();
 
     if( !field ){
-        alert('No field selected.');
+        swal('Warning!','No field selected!','warning');
         return;
     }
 
@@ -290,7 +299,7 @@ function add_field(date_range_min,date_range_max){
         $("#field_"+counter.toString()+" #daterange_field_").attr('id','daterange_field_'+counter.toString()).attr('name','daterange_field_'+counter.toString()).val(field_path);
         $("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).attr('name','selected_field_'+counter.toString()).html(field_name);
         $("#field_"+counter.toString()+" #remove_link").attr('onclick',"javascript:remove_field('"+new_id+"');");
-		
+
         $("#field_"+counter.toString()+" #daterange_from_").attr('id','daterange_from_'+counter.toString());
         $("#field_"+counter.toString()+" #daterange_from_"+counter.toString()).attr('name','daterange_from_'+counter.toString());
         $("#field_"+counter.toString()+" #daterange_from_"+counter.toString()).datepicker({format: "yyyy-mm-dd",startView:2,startDate:date_range_min,endDate:date_range_max});
@@ -301,7 +310,7 @@ function add_field(date_range_min,date_range_max){
 
     else if(field_type == 'facts'){
 		var fieldFullId = "fact_txt_"+counter.toString();
-		
+
         $("#field_hidden_fact").clone().attr('id',new_id).appendTo("#constraints");
         $("#field_"+counter.toString()+" #fact_operator_").attr('id','fact_operator_'+counter.toString()).attr('name','fact_operator_'+counter.toString());
         $("#field_"+counter.toString()+" #selected_field_").attr('id','selected_field_'+counter.toString()).html(field_name+' [fact_names]');
@@ -347,16 +356,16 @@ function add_field(date_range_min,date_range_max){
         $("#field_"+counter.toString()+" #remove_link").attr('onclick',"javascript:remove_field('"+new_id+"');");
         $("#field_"+counter.toString()+" #suggestions_").attr('id','suggestions_'+counter.toString()).attr('name','suggestions_'+counter.toString());
         $("#field_"+counter.toString()+" #match_txt_").attr('id','match_txt_'+counter.toString()).attr('name','match_txt_'+counter.toString());
-		
+
 		var suggestion_types = ["CONCEPT","LEXICON"];
-		
+
 		var fieldFullId = "match_txt_"+counter.toString();
 
 		$("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onkeyup','lookup("'+fieldFullId+'",'+counter.toString()+',"keyup", \''+suggestion_types+'\'); search_as_you_type_query();');
         $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onfocus','lookup("'+fieldFullId+'","'+counter.toString()+'","focus", \''+suggestion_types+'\');');
         $("#field_"+counter.toString()+" #match_txt_"+counter.toString()).attr('onblur','hide("'+counter.toString()+'");');
-		
-		
+
+
     }
 
     $("#field_"+counter.toString()).show();
@@ -384,7 +393,7 @@ function addFactValueField(counterStr, subCounterStr, field_path, field_name, va
 
         $("#field_"+counterStr+" #fact_txt_").attr('id','fact_txt_'+idCombination).attr('name','fact_txt_'+idCombination);
         $("#field_"+counterStr+" input[name='fact_constraint_val_']").attr('name','fact_constraint_val_'+idCombination).attr('id','fact_constraint_val_'+idCombination);
-		
+
         $("#field_"+counterStr+" #fact_val_rules_").attr('id','fact_val_rules_'+counterStr);
         $("#field_"+counterStr+" #fact_val_rules_"+counterStr+" #fact_val_rule_").attr('id','fact_val_rule_'+idCombination);
         $("#fact_val_rule_"+idCombination+" select")
@@ -400,17 +409,17 @@ function addFactValueField(counterStr, subCounterStr, field_path, field_name, va
 
         $("#field_"+counterStr+" button").attr('onclick','addFactValueFieldConstraint("'+counterStr+'","'+field_path+'")');
 
-		
+
 		var keyFieldId = "fact_txt_"+idCombination;
-		
+
 		$("#field_"+counterStr+" div[name=constraint_key_container] #suggestions_").attr('id','suggestions_'+idCombination).attr('name','suggestions_'+idCombination);
         $("#fact_txt_"+idCombination).attr('onkeyup','lookup("'+keyFieldId+'","'+idCombination+'","keyup", "FACT_NAME");');
         $("#fact_txt_"+idCombination).attr('onfocus','lookup("'+keyFieldId+'","'+idCombination+'","focus", "FACT_NAME");');
         $("#fact_txt_"+idCombination).attr('onblur','hide("'+idCombination+'");');
-		
+
 		var valIdCombination = idCombination+'_val';
 		var valFieldId = "fact_constraint_val_"+idCombination;
-		
+
         $("#field_"+counterStr+" div[name=constraint_val_container] #suggestions_").attr('id','suggestions_'+valIdCombination).attr('name','suggestions_'+valIdCombination);
 		$("#fact_constraint_val_"+idCombination).attr('onkeyup','lookup("'+valFieldId+'","'+valIdCombination+'","keyup", "FACT_VAL");');
         $("#fact_constraint_val_"+idCombination).attr('onfocus','lookup("'+valFieldId+'","'+valIdCombination+'","focus", "FACT_VAL");');
@@ -419,11 +428,11 @@ function addFactValueField(counterStr, subCounterStr, field_path, field_name, va
 
 
 function getFieldContent(fieldId){
-	
+
 	var val = $("#"+fieldId).val();
-	
+
 	return val;
-	
+
 }
 
 
@@ -452,7 +461,7 @@ function addFactValueFieldConstraint(counterStr, field_path) {
 
     var valIdCombination = idCombination+'_val';
     var valFieldId = "fact_constraint_val_"+idCombination;
-		
+
     $("#field_"+counterStr+" div[name=constraint_val_container] #suggestions_").attr('id','suggestions_'+valIdCombination).attr('name','suggestions_'+valIdCombination);
     $("#fact_constraint_val_"+idCombination).attr('onkeyup','lookup("'+valFieldId+'","'+valIdCombination+'","keyup", "FACT_VAL");');
     $("#fact_constraint_val_"+idCombination).attr('onfocus','lookup("'+valFieldId+'","'+valIdCombination+'","focus", "FACT_VAL");');
@@ -478,7 +487,7 @@ function addFactValueFieldConstraint(counterStr, field_path) {
 	var remove_span = $('<span/>')
 		.addClass('glyphicon glyphicon-remove')
 		.appendTo(remove_button);
-	
+
 	action_button_container.append(remove_button);
 
     factValSubCounter[counterStr] = factValSubCounter[counterStr] + 1;
@@ -498,7 +507,7 @@ function select_all_fields(){
 	}else{
 		$.each($("[name^='mapping_field_']"), function () {
 			$(this).prop('checked', false);
-		});		
+		});
 	}
 }
 
@@ -526,10 +535,10 @@ function remove_field(id){
 }
 
 function query(){
-    
+
     var formElement = document.getElementById("filters");
     var request = new XMLHttpRequest();
-    
+
     request.onreadystatechange=function() {
         if (request.readyState==4 && request.status==200) {
             $("#right").html(request.responseText);
@@ -539,8 +548,8 @@ function query(){
                   "bServerSide": true,
                   'processing': true,
                   "sAjaxSource": PREFIX+"/table_content",
-                  "sDom": '<l"H"ipr>t<"F"lp>',
-                  "sDom": "Rlrtip",
+                  "sDom": '<l"H"ipr>t<"F"lip>',
+                  //"sDom": "Rlrtip",
                   "sServerMethod":"GET",
                   "fnServerParams":function(aoData){
                       aoData.push({'name':'filterParams','value':JSON.stringify($("#filters").serializeArray())});
@@ -557,8 +566,8 @@ function query(){
     }
 
     request.open("GET",PREFIX+'/table_header');
-    request.send(new FormData(formElement));    
-    
+    request.send(new FormData(formElement));
+
 }
 
 
@@ -575,17 +584,16 @@ function cluster_query(){
     }
 
     request.open("POST",PREFIX+'/cluster_query');
-    request.send(new FormData(formElement));  
-	
-}
+    request.send(new FormData(formElement));
 
+}
 
 function mlt_query(){
 
     var formElement = document.getElementById("filters");
 	var mlt_field = $("select[id='mlt_fields']").val();
     var request = new XMLHttpRequest();
-	
+
 	if(mlt_field!=null){
 		request.onreadystatechange=function() {
 			$("#right").html('Loading...');
@@ -594,7 +602,7 @@ function mlt_query(){
 			}
 		}
 		request.open("POST",PREFIX+'/mlt_query');
-		request.send(new FormData(formElement));	
+		request.send(new FormData(formElement));
 	}else{
 		$("#right").html('No fields selected!');
 	}
@@ -617,10 +625,9 @@ function aggregate(){
 	var container = $("#right");
 	container.empty();
 	container.append("Loading...");
-    
+
     var formElement = document.getElementById("filters");
     var request = new XMLHttpRequest();
-    
     request.onreadystatechange=function() {
         if (request.readyState==4 && request.status==200) {
             if (request.responseText.length > 0) {
@@ -631,9 +638,9 @@ function aggregate(){
             }
         }
     }
-
     request.open("POST",PREFIX+'/aggregate');
     request.send(new FormData(formElement),true);
+
 }
 
 
@@ -641,13 +648,13 @@ function displayAgg(response){
 	var data = response;
 	var container = $("#right");
 	container.empty();
-	
+
 	var string_container = $("<div id='string_agg_container'></div>");
 	var chart_container = $("<div id='daterange_agg_container'></div>");
 
-	container.append(chart_container);	
+	container.append(chart_container);
 	container.append(string_container);
-	
+
 	for (var i in data) {
 		if(data.hasOwnProperty(i)){
 			if(data[i].type == 'daterange'){
@@ -655,15 +662,15 @@ function displayAgg(response){
 			}else if(data[i].type == 'string'){
 				drawStringAggs(data[i]);
 			} else if (data[i].type == 'fact') {
-                drawStringAggs(data[i]);
+                drawStringAggs(data[i], type='fact');
             } else if (data[i].type == 'fact_str_val') {
                 drawStringAggs(data[i]);
             } else if (data[i].type == 'fact_num_val') {
                 drawStringAggs(data[i]);
             }
-		} 
+		}
 	}
-	
+
 }
 
 
@@ -687,7 +694,7 @@ function drawTimeline(data){
 			var children_data = data.children[row.date];
 			show_children(children_data,row.date,timeline_children_container);
 		});
-	
+
     $("#right").append(timeline_children_container);
 }
 
@@ -733,7 +740,7 @@ function show_children(data,date,timeline_children_container) {
 
 			tbody.append(row_container);
         });
-		
+
 		var table = $("<table class='table table-striped table-hover'></table>");
 		table.append("<thead><th colspan='2'>"+data_list.label+"</th></head>");
 		table.append(tbody);
@@ -743,68 +750,129 @@ function show_children(data,date,timeline_children_container) {
             timeline_children_container.append(container);
         });
 	});
-	
+    
 }
 
-function drawStringAggs(data){
-	var response_container = $("<div style='float: left; padding-left: 20px;'></div>");
+function drawStringAggs(data, type=null){
+    var response_container = $("<div style='float: left; padding-left: 20px;'></div>");
 	var table_container = $("<div style='float: left'></div>");
 	var children_container = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
-	var grandchildren_container = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
-
+	var grandchildren_container = $("<div id='grandchildren_container' style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
+    
 	var tbody = $("<tbody></tbody>");
-	
+
 	$.each(data.data, function(i,row){
-		if(row.children.length > 0){
-		    var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td><td><span class='glyphicon glyphicon-menu-right'></span></td></tr>");
-			row_container.click(function(){show_string_children(row.children,children_container, grandchildren_container)});
+        if(row.children.length > 0){
+            var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td><td><span class='glyphicon glyphicon-menu-right'></span></td></tr>");
+			row_container.click(function(){show_string_children(row.children,children_container, grandchildren_container, row.key, type=type)});
 			row_container.addClass("pointer");
 		} else {
-		    var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td><td></td></tr>");
+            var row_container = $("<tr><td>"+row.val+"</td><td>"+row.key+"</td><td></td></tr>");
         }
 		tbody.append(row_container);
 	});
-	
+    
 	var table = $("<table class='table table-striped table-hover'></table>");
 	table.append("<thead><th colspan='2'>Field #1</th></head>");
 	table.append(tbody);
-	
+    
 	table_container.append(table);
-	
+    
 	response_container.append("<div class='row text-center'><h3>"+data.label+"</h3></div>");
 	response_container.append(table_container);
 	response_container.append(children_container);
     response_container.append(grandchildren_container)
-	
+    
 	$("#string_agg_container").append(response_container);
 }
 
+function deleteFact(dict, trElement){
+    var request = new XMLHttpRequest();
+    var form_data = new FormData();
+    for (var key in dict) {
+        form_data.append(key, dict[key]);
+    }
 
-function show_string_children(data,children_container,grandchildren_container) {
-	children_container.empty();
+
+    swal({
+        title: 'Are you sure you want to remove this fact from the dataset?',
+        text: 'This will remove the fact '+ JSON.stringify(dict) + ' from the dataset and add it to removed facts.',
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#73AD21',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, remove it!'
+        }).then((result) => {
+            if(result.value){
+            $.ajax({
+                url: PREFIX + '/delete_fact',
+                data: form_data,
+                type: 'POST',
+                contentType: false,
+                processData: false,
+                success: function() {
+                    trElement.remove();
+                    removed_facts.push({key: Object.keys(dict)[0], value: dict[Object.keys(dict)[0]]});
+                    swal({
+                        title:'Deleted!',
+                        text:'Fact '+JSON.stringify(dict)+' has been removed.',
+                        type:'success'});
+                },
+                error: function() {
+                    swal('Error!','There was a problem removing the fact!','error');
+                }
+            });
+        };
+        });
+}
+
+function show_string_children(data,children_container,grandchildren_container, row_key, type=null) {
+    children_container.empty();
     grandchildren_container.empty();
 
 	var tbody = $("<tbody></tbody>");
-	
-	$.each(data, function(i,data_list){
-		var row_container = $("<tr><td>"+data_list.val+"</td><td>"+data_list.key+"</td></tr>");
+	$(data).each(function(fact_key){
+        var factRemoved = false;
+        for (var i = 0; i < removed_facts.length; i++) {
+            var currentValue = {key: fact_key, value: this.key};
+            if (removed_facts[i].key == currentValue.key &&
+                removed_facts[i].value == currentValue.value) {
+                    factRemoved = true;
+                }
+        }
 
-        if (data_list.hasOwnProperty('children') && data_list.children.length > 0) {
-            var row_container = $("<tr><td>"+data_list.val+"</td><td>"+data_list.key+"</td><td><span class='glyphicon glyphicon-menu-right'></span></td></tr>");
+        if (!factRemoved) {
+
+		var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key+"</td></tr>");
+
+        if (this.hasOwnProperty('children') && this.children.length > 0) {
+            var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key+"</td><td><span class='glyphicon glyphicon-menu-right'></span></td></tr>");
             row_container.addClass("pointer");
+
         } else {
-            var row_container = $("<tr><td>"+data_list.val+"</td><td>"+data_list.key+"</td><td></td></tr>");
+            if(type == 'fact') {
+                var fact_data = {};
+                fact_data[fact_key] = this.key;
+                var delete_fact_icon = '<i class="glyphicon glyphicon-trash pull-right"\
+                data-toggle="tooltip" title="Delete fact"\
+                style="cursor: pointer"\
+                onclick=\'deleteFact('+JSON.stringify(fact_data)+',this.parentElement.parentElement);\'></i>';
+                var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key+"</td><td>" + delete_fact_icon +"</td></tr>");
+            }
+            else {
+                var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key+"</td><td></td></tr>");
+            }
         };
 
         row_container.click(function() {
             grandchildren_container.empty();
 
-            if (data_list.hasOwnProperty('children') && data_list.children.length > 0) {
+            if (this.hasOwnProperty('children') && this.children.length > 0) {
                 var grandchildrenTbody = $("<tbody></tbody>");
 
-                $.each(data_list.children, function(j, grandchild_data) {
+                $.each(this.children, function(j, grandchild_data) {
                     grandchildrenTbody.append($("<tr><td>"+grandchild_data.val+"</td><td>"+grandchild_data.key+"</td></tr>"))
-                })
+                });
 
                 var grandchildrenTable = $("<table class='table table-striped table-hover'></table>");
                 grandchildrenTable.append("<thead><th colspan='2'>&nbsp;</th></head>");
@@ -815,47 +883,58 @@ function show_string_children(data,children_container,grandchildren_container) {
             }
         });
 
-		tbody.append(row_container);
-	});
-	
+        tbody.append(row_container);
+    }
+	}, [row_key]);
+
 	var table = $("<table class='table table-striped table-hover'></table>");
 	table.append("<thead><th colspan='2'>Field #2</th></head>");//.click(function(){children_container.addClass('hidden')});;
 
 	table.append(tbody);
-	
+
 	children_container.append(table);
 	children_container.removeClass("hidden");
-	
 }
 
 
-function change_agg_field(field_nr){	
+function change_agg_field(field_nr){
 	var field_component = $("#agg_field_"+field_nr);
 	var selected_field = field_component.val();
 	var field_data = JSON.parse(selected_field);
 	var selected_type = field_data['type'];
-	
+
 	if(selected_type == 'text' || selected_type == 'keyword'){
 		$("#sort_by_"+field_nr).removeClass('hidden');
 		$("#freq_norm_"+field_nr).addClass('hidden');
 		$("#interval_"+field_nr).addClass('hidden');
 		$("#agg_daterange_"+field_nr).addClass('hidden');
-		
+
 	}else if (selected_type == 'date'){
-		
+
 		$("#agg_daterange_from_"+field_nr).val(field_data['range']['min']);
 		$("#agg_daterange_to_"+field_nr).val(field_data['range']['max']);
-		
+
 		$("#freq_norm_"+field_nr).removeClass('hidden');
 		$("#interval_"+field_nr).removeClass('hidden');
-		$("#sort_by_"+field_nr).addClass('hidden');	
-		$("#agg_daterange_"+field_nr).removeClass('hidden');	
-	}
-	
+		$("#sort_by_"+field_nr).addClass('hidden');
+		$("#agg_daterange_"+field_nr).removeClass('hidden');
+    }
+
+
+    selected_method = $("#sort_by_"+field_nr).children("#sort_by_"+field_nr);
+    selected_method.change(function() {
+        console.log(selected_method[0].options[selected_method[0].selectedIndex].text);
+        if (selected_method[0].options[selected_method[0].selectedIndex].text == 'significant words') {
+            $("#agg_field_2_button").addClass('hidden');
+        }
+        else {
+            $("#agg_field_2_button").removeClass('hidden');
+        }
+    });
 }
 
 function toggle_agg_field_2(action){
-	
+
 	if(action == 'add'){
 		$("#agg_field_2_container").removeClass('hidden');
 		$("#agg_field_2_button").addClass('hidden');
@@ -863,52 +942,78 @@ function toggle_agg_field_2(action){
 	}else{
 		$("#agg_field_2_button").removeClass('hidden');
 		$("#agg_field_2_container").addClass('hidden');
-		$("#agg_field_2_selected").val('false');		
+		$("#agg_field_2_selected").val('false');
 	}
 
-	
+
 }
 
 function remove_by_query(){
     var formElement = document.getElementById("filters");
     var request = new XMLHttpRequest();
-    
+
     request.onreadystatechange=function() {
         if (request.readyState==4 && request.status==200) {
             if (request.responseText.length > 0) {
-				alert('The documents are being deleted. Check the progress by searching again.');
+                swal({
+                    title: 'The documents are being deleted. Check the progress by searching again.',
+                    animation: true,
+                    customClass: 'animated fadeInDown',
+                    width: 400,
+                    padding: 10,
+                    position: 'top',
+                    type: 'success',
+                    timer: 3500,
+                    background: '#f9f9f9',
+                    backdrop: `
+                    rgba(0,0,0,0.0)
+                    no-repeat
+                    `,
+                  });
             }
         }
     }
 
     request.open("POST",PREFIX+'/remove_by_query');
-    request.send(new FormData(formElement),true);	
+    request.send(new FormData(formElement),true);
 }
 
 
 function save(){
-	var description = prompt("Enter description for the search.");
-	$('#search_description').val(description);
-    
-    var formElement = document.getElementById("filters");
-    var request = new XMLHttpRequest();
-    
-    request.onreadystatechange=function() {
-        if (request.readyState==4 && request.status==200) {
-            get_searches();
+    const prompt = async () => {
+        const {value: description} = await swal({
+            title: 'Enter description for the search.',
+            input: 'text',
+            inputPlaceholder: 'description',
+            showCancelButton: true,
+            inputValidator: (value) => {
+            return !value && 'Field empty!'
+            }
+        })
+        if (description) {
+            swal({type: 'success', title: 'Successfully saved search.'})
+
+            $('#search_description').val(description);
+            var formElement = document.getElementById("filters");
+            var request = new XMLHttpRequest();
+            request.onreadystatechange=function() {
+                if (request.readyState==4 && request.status==200) {
+                    get_searches();
+                }
+            }
+
+            request.open("POST",PREFIX+'/save');
+            request.send(new FormData(formElement),true);
         }
     }
-
-    request.open("POST",PREFIX+'/save');
-    request.send(new FormData(formElement),true);
-    
+    prompt();
 }
 
 function get_searches() {
     var request = new XMLHttpRequest();
 
     var formElement = document.getElementById("filters");
-    
+
     request.onreadystatechange=function() {
         if (request.readyState==4 && request.status==200) {
             if (request.responseText.length > 0) {
@@ -916,7 +1021,7 @@ function get_searches() {
             }
         }
     }
-    
+
     request.open("GET",PREFIX+'/listing');
     request.send(new FormData(formElement),true);
 }
@@ -928,30 +1033,30 @@ function remove_search_callback(response_text) {
 
 function display_searches(searches) {
     var searches_container = document.getElementById("saved_searches");
-	
+
     while (searches_container.firstChild) {
         searches_container.removeChild(searches_container.firstChild);
     }
-	
+
     for (var i = 0; i < searches.length; i++) {
 		search_div = document.createElement("tr");
 
 		inputElement = document.createElement("input");
         aElement = document.createElement("span");
-        
+
         search_div.id = "search_" + searches[i].id;
-        
+
         inputElement.type = "checkbox";
         inputElement.name = "saved_search_" + i;
         inputElement.value = searches[i].id;
-        
+
 		aElement.className = "glyphicon glyphicon-minus-sign pointer";
         aElement.onclick = function(id) {
             return function() {async_get_query(PREFIX + "/corpus_tool/delete?pk=" + id,remove_search_callback); };
-        }(searches[i].id);      
-		
+        }(searches[i].id);
+
 		input_col = document.createElement("td");
-		input_col.appendChild(inputElement);   
+		input_col.appendChild(inputElement);
         search_div.appendChild(input_col);
 
 		text_col = document.createElement("td");
@@ -968,7 +1073,7 @@ function display_searches(searches) {
         search_div.appendChild(text_col);
 
 		remove_col = document.createElement("td");
-		remove_col.appendChild(aElement);   
+		remove_col.appendChild(aElement);
         search_div.appendChild(remove_col);
 
         searches_container.appendChild(search_div);
@@ -977,7 +1082,7 @@ function display_searches(searches) {
 
 function loadUserPreference(dataset,mapping) {
     var hiddenFeatures = localStorage.getCacheItem("hiddenFeatures_"+dataset+"_"+mapping);
-    
+
     if (hiddenFeatures) {
         for (var featureIdx in hiddenFeatures) {
             if (hiddenFeatures.hasOwnProperty(featureIdx)) {
@@ -989,18 +1094,18 @@ function loadUserPreference(dataset,mapping) {
 
 function export_data(exportType) {
     var formElement = document.getElementById("filters");
-    
+
     var query_args = $("#filters").serializeArray();
-    
+
     query_args.push({name:"export_type",value:exportType})
-    
+
     if (exportType == "agg") {
         query_args.push({name:"filename",value:$("#export-file-name-agg").val() + ".csv"});
     } else {
         query_args.push({name:"filename",value:$("#export-file-name-example").val() + ".csv"});
         var extent_dec = $("input[name=export-extent]:checked").val();
         var pagingInfo = examplesTable.page.info();
-        
+
         switch(extent_dec) {
             case "page":
                 query_args.push({name:"examples_start",value:pagingInfo.start});
@@ -1011,7 +1116,7 @@ function export_data(exportType) {
                 var endPage = Number($("#export-end-page").val()) - 1;
                 query_args.push({name:"examples_start",value:startPage * pagingInfo.length});
                 query_args.push({name:"num_examples",value:(endPage - startPage + 1) * pagingInfo.length});
-                
+
                 break;
             case "all":
                 query_args.push({name:"num_examples",value:"*"})
@@ -1021,11 +1126,11 @@ function export_data(exportType) {
                 query_args.push({name:"num_examples",value:Number($("#export-rows").val())});
                 break;
         }
-        
-        
+
+
         var features_dec = $("input[name=export-features]:checked").val();
         var features = []
-        
+
         if (features_dec == "all") {
             $(".toggle-visibility").each(function() {
                 features.push($(this).text());
@@ -1038,10 +1143,10 @@ function export_data(exportType) {
                 }
             });
         }
-        
+
         query_args.push({name:"features",value:features});
     }
-    
+
 
     var query = PREFIX+'/export?args='+JSON.stringify(query_args);
 
@@ -1058,3 +1163,31 @@ function hide_show_options() {
     }
 }
 
+function hide_show_options_cluster() {
+    var x = document.getElementById("short_version_options_cluster");
+
+    if (x.style.display === "none") {
+        x.style.display = "block";
+    } else {
+        x.style.display = "none";
+    }
+}
+
+function cluster_to_lex(id) {
+    var cluster_form = document.getElementById("save_as_lexicon_" + id);
+    var fd = new FormData(cluster_form);
+    fd.set('lexiconname', fd.get('lexiconname').split(' ').slice(0, -1).join(' '));
+    $.ajax({
+        url: LINK_LEXMINER + '/new',
+        data: fd,
+        type: 'POST',
+        contentType: false,
+        processData: false,
+        success: function() {
+            swal('Success!','Cluster saved as a lexicon!','success');
+        },
+        error: function() {
+            swal('Error!','There was a problem saving the cluster as a lexicon!','error');
+        }
+    });
+}

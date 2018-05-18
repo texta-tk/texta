@@ -28,7 +28,7 @@ class Datasets:
         """
         if len(self.datasets.keys()) > 0:
             if 'dataset' not in session:
-                session['dataset'] = self.datasets.keys()[0]
+                session['dataset'] = list(self.datasets.keys())[0]
             self.mapping_id = int(session['dataset'])
         return self
 

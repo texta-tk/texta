@@ -29,13 +29,33 @@ function change_permissions(user_id,change){
 }
 
 function delete_user(username,user_id){
-    var delete_user = confirm('Delete user '.concat(username).concat('?'));
-    console.log(delete_user);
-    if(delete_user === true){
-        $.post(LINK_ROOT+'permission_admin/delete_user', {user_id: user_id}, function(){
-            location.reload();
-        });
-    }
+    swal({
+        title: 'Are you sure?',
+        text: 'Delete user '.concat(username).concat('?'),
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#73AD21',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes'
+      }).then((result) => {
+        if (result.value) {
+            swal({
+                title:'Deleted!',
+                text:'User '.concat(username).concat(' has been deleted.'),
+                type:'success'
+            }).then((result) => {
+                if (result.value) {
+                    $.post(LINK_ROOT+'permission_admin/delete_user', {user_id: user_id}, function(){
+                        location.reload();
+                    });
+                }
+                else {
+                    $.post(LINK_ROOT+'permission_admin/delete_user', {user_id: user_id}, function(){
+                        location.reload();
+                    });
+                }})
+        }
+      })
 }
 
 function add_dataset(){
@@ -51,13 +71,33 @@ function add_dataset(){
 }
 
 function remove_index(index){
-    var delete_index = confirm('Remove?');
-    console.log(remove_index);
-    if(delete_index === true){
-        $.post(LINK_ROOT+'permission_admin/delete_dataset', {index: index}, function(){
-            location.reload();
-        });
-    }
+    swal({
+        title: 'Are you sure?',
+        text: 'Remove?',
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#73AD21',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes'
+      }).then((result) => {
+        if (result.value) {
+            swal({
+                title:'Removed!',
+                text:'Dataset removed!',
+                type:'success'
+            }).then((result) => {
+                if (result.value) {
+                    $.post(LINK_ROOT+'permission_admin/delete_dataset', {index: index}, function(){
+                        location.reload();
+                    });
+                }
+                else {
+                    $.post(LINK_ROOT+'permission_admin/delete_dataset', {index: index}, function(){
+                        location.reload();
+                    });
+                }})
+        }
+      })
 }
 
 function open_close_dataset(dataset_id,open_close){

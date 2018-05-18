@@ -5,7 +5,7 @@ var PREFIX = LINK_MWE;
 
 function start_job(){
 	if(selected.length == 0){
-		alert('No lexicons selected.');
+		swal('Warning!','No lexicons selected!','warning');
 	}else{
 		var slop = $('#slop').val();
 		var max_len = $('#max_len').val();
@@ -13,9 +13,18 @@ function start_job(){
 		var min_freq = $('#min_freq').val();
 		var match_field = $('#match_field').val();
 		var description = $('#description').val();
-		$.post(PREFIX + "/start_mapping_job", {lexicons:selected,max_len:max_len,min_len:min_len,min_freq:min_freq,match_field:match_field,slop:slop,description:description}, function(data){
-			alert('The mapping job has begun. Check the results table for updates.');
-			window.location.replace(LINK_MWE);
+
+		swal({
+			title: "The mapping job has begun.",
+			text: "Check the results table for updates.",
+			type: "success",
+			showCancelButton: false,
+			confirmButtonColor: "#73AD21",
+			confirmButtonText: "Continue"
+			}).then((result) => {
+				$.post(PREFIX + "/start_mapping_job", {lexicons:selected,max_len:max_len,min_len:min_len,min_freq:min_freq,match_field:match_field,slop:slop,description:description}, function(data){
+					window.location.replace(LINK_MWE);
+				});
 		});
 	}
 }
@@ -68,7 +77,7 @@ function toggle_group(a){
 function apply_changes(){
 	var op = $('#operator').val();
 	if(op == 'reverse' && selected_2.length == 0){
-		alert('No terms selected.');
+		swal('Warning!','No terms selected!','warning');
 	}else{
 		var run_id = $('#run_id').val();
 		$.post(PREFIX + "/approve", {approved:selected_2,operator:op,run_id:run_id}, function(data){

@@ -12,14 +12,14 @@ class ElasticStorer(object):
         self._es_index = self._correct_name(connection_parameters['texta_elastic_index'])
         self._es_mapping = self._correct_name(connection_parameters['texta_elastic_mapping'])
 
-        self._headers = {'Content-Type': 'application/json'}
+        self._headers = {'Content-Type': 'application/json; charset=utf-8'}
         self._request = requests.Session()
 
         if 'elastic_auth' in connection_parameters:
             self._request.auth = connection_parameters['elastic_auth']
-
-        self._create_index_if_not_exists(self._es_url, self._es_index, self._es_mapping,
-                                         json.loads(connection_parameters['texta_elastic_not_analyzed']))
+        self._create_index_if_not_exists(self._es_url, self._es_index,
+                                        self._es_mapping,connection_parameters['texta_elastic_not_analyzed'].split('\n'))
+                                         #json.loads(connection_parameters['texta_elastic_not_analyzed']))
 
     def _correct_name(self, name):
         return name.lower().replace(' ', '_')
@@ -50,10 +50,10 @@ class ElasticStorer(object):
         index_creation_query = {"mappings": {mapping: {"properties": {"texta_facts": facts_properties}}}}
 
         #self._add_not_analyzed_declarations(index_creation_query['mappings'][mapping], not_analyzed_fields)
-        print self._request.put("{url}/{index}".format(**{
+        print(self._request.put("{url}/{index}".format(**{
             'url': url,
             'index': index,
-        }), data=json.dumps(index_creation_query), headers=self._headers).text
+        }), data=json.dumps(index_creation_query), headers=self._headers).text)
 
     def _add_not_analyzed_declarations(self, mapping_dict, not_analyzed_fields):
         """Adds not analyzed fields to index creation schema.
@@ -111,11 +111,18 @@ class ElasticStorer(object):
             for document in documents:
                 meta_data = {'index': {'_index': self._es_index, '_type': self._es_mapping}}
                 data_to_send.append(json.dumps(meta_data))
-                data_to_send.append(json.dumps(document))
+
+                # NEW PY REQUIREMENT, try to decode before sending bytes to json
+                # To encode every bytes instance to utf8, unable to read it with put request later
+                #  (if you encode data_to_send with utf8, the string will be bytes)
+                document = {(k.decode('utf8') if isinstance(k, bytes) else k):
+                (v.decode('utf8') if isinstance(v, bytes) else v) for k, v in document.items()}
+                #document = {str(k): str(v) for k, v in document.items()}
+                data_to_send.append(json.dumps(document, ensure_ascii=False))
 
             data_to_send.append('\n')
             self._request.put("%s/%s/%s/_bulk" % (self._es_url, self._es_index, self._es_mapping),
-                              data='\n'.join(data_to_send), headers=self._headers)
+                              data='\n'.join(data_to_send).encode('utf8'), headers=self._headers)
 
         return len(documents)
 

@@ -37,7 +37,6 @@ class Autocomplete:
                 suggestions['CONCEPT'] = self._get_concepts()
             elif lookup_type == 'LEXICON':
                 suggestions['LEXICON'] = self._get_lexicons()
-        
         return suggestions
 
     def _get_facts(self,agg_subfield):
@@ -46,7 +45,7 @@ class Autocomplete:
                     "nested": {"path": "texta_facts"},
                     "aggs": {
                         agg_subfield: {
-                            "terms": {"field": "texta_facts.{0}".format(agg_subfield), "size": self.limit, "include": "{0}.*".format(self.content.encode('utf8'))},
+                            "terms": {"field": "texta_facts.{0}".format(agg_subfield), "size": self.limit, "include": "{0}.*".format(self.content)},
                         }
                     }
                 }
@@ -74,7 +73,7 @@ class Autocomplete:
                         seen[concept_term] = True
 
                         display_term = term.term.replace(self.content,'<font color="red">'+self.content+'</font>')
-                        display_text = '<b>{0}</b>@C{1}-{2}'.format(display_term.encode('utf8'),concept.pk,concept.descriptive_term.term.encode('utf8'))
+                        display_text = '<b>{0}</b>@C{1}-{2}'.format(display_term,concept.pk,concept.descriptive_term.term)
 
                         suggestion = self._format_suggestion(concept.descriptive_term.term,display_text,resource_id=concept.pk)
                         concepts.append(suggestion)
@@ -88,7 +87,7 @@ class Autocomplete:
             lexicons = Lexicon.objects.filter(name__startswith=self.content).filter(author=self.user)
             for lexicon in lexicons:
                 display_term = lexicon.name.replace(self.content,'<font color="red">'+self.content+'</font>')
-                display_text = '<b>{0}</b>@L{1}-{2}'.format(display_term.encode('utf8'),lexicon.pk,lexicon.name.encode('utf8'))
+                display_text = '<b>{0}</b>@L{1}-{2}'.format(display_term,lexicon.pk,lexicon.name)
 
                 suggestion = self._format_suggestion(lexicon.name,display_text,resource_id=lexicon.pk)
                 suggested_lexicons.append(suggestion)

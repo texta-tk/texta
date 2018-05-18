@@ -1,3 +1,8 @@
+# When deploying with Docker, it is necessary to change all occurances of "localhost" to the service name of the
+# Elasticsearch container inside Django. ex "http://localhost:9200" -> "http://elastic:9200".
+
+# Environment and ulimits make sure that the system has enough memory access, as recommended by the official
+# Elasticsearch documentation for Docker.
 version: "2"
 
 services:
@@ -5,6 +10,13 @@ services:
     container_name: texta-elastic
     image: texta/db:latest
     build: ./elasticsearch
+    environment:
+     - bootstrap.memory_lock=true
+     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
     ports:
       - "9200"
     networks:

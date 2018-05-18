@@ -7,7 +7,7 @@ class ExcelReader(CollectionReader):
     empty_and_blank_codes = {0}
 
     converters = {
-        'text': lambda string: string.encode('utf8') if string else '',
+        'text': lambda string: string if string else '',
         'date': lambda date: date if date else None,
         'bool': lambda boolean_int: bool(boolean_int) if boolean_int in {0, 1} else None,
         'float': lambda float_: float_,
@@ -24,8 +24,8 @@ class ExcelReader(CollectionReader):
                 print(file_path)
                 book = xlrd.open_workbook(file_path)
                 sheet = book.sheet_by_index(0)
-
-                feature_labels = [cell.value.encode('utf8') if isinstance(cell.value, basestring)
+                
+                feature_labels = [cell.value if isinstance(cell.value, str)
                                   else str(cell.value) for cell in sheet.row(0)]
                 feature_converters = []
 

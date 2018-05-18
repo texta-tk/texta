@@ -160,22 +160,22 @@ class Validator(object):
         'string': {
             'field': {'mandatory': True, 'values': None},
             'type': {'mandatory': True, 'values': None},
-            'sort_by': {'mandatory': True, 'values': ['terms', 'significant_terms']}
+            'sort_by': {'mandatory': True, 'values': ['terms', 'significant_terms', 'significant_text']}
         },
         'fact': {
             'field': {'mandatory': True, 'values': None},
             'type': {'mandatory': True, 'values': None},
-            'sort_by': {'mandatory': True, 'values': ['terms', 'significant_terms']}
+            'sort_by': {'mandatory': True, 'values': ['terms', 'significant_terms', 'significant_text']}
         },
         'fact_str': {
             'field': {'mandatory': True, 'values': None},
             'type': {'mandatory': True, 'values': None},
-            'sort_by': {'mandatory': True, 'values': ['terms', 'significant_terms']}
+            'sort_by': {'mandatory': True, 'values': ['terms', 'significant_terms', 'significant_text']}
         },
         'fact_num': {
             'field': {'mandatory': True, 'values': None},
             'type': {'mandatory': True, 'values': None},
-            'sort_by': {'mandatory': True, 'values': ['terms', 'significant_terms']}
+            'sort_by': {'mandatory': True, 'values': ['terms', 'significant_terms', 'significant_text']}
         }
     }
 
@@ -258,7 +258,7 @@ class Validator(object):
 
         if not isinstance(fields, list):
             raise Exception('"fields" attribute must be a list of strings{0}'.format(search_position_str))
-        if not all(isinstance(field, unicode) for field in fields):
+        if not all(isinstance(field, str) for field in fields):
             raise Exception('"fields" attribute must be a list of strings{0}'.format(search_position_str))
 
         parameters = data_dict.get('parameters', {})
@@ -270,7 +270,7 @@ class Validator(object):
             raise Exception('"scroll" must be boolean{0}'.format(search_position_str))
 
         scroll_id = data_dict.get('scroll_id', u'')
-        if not isinstance(scroll_id, unicode):
+        if not isinstance(scroll_id, str):
             raise Exception('"scroll_id" must be string{0}'.format(search_position_str))
 
         Validator._validate_constraints(data_dict.get('constraints', []), search_position)

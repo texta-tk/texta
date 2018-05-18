@@ -118,8 +118,9 @@
 				<th>Task Started</th>
 				<th>Task Completed</th>
 				<th>Lexicon Size</th>
+				<th>Download</th>
 				<th>Remove</th>
-			  </tr>
+			</tr>
 			</thead>
 					{% for run in runs %}
 						<tr>
@@ -132,6 +133,7 @@
 							<td>{{run.run_started|date:"d.m.Y H:i"}}</td>
 							<td>{{run.run_completed|date:"d.m.Y H:i"}}</td>
 							<td>{{run.lexicon_size}}</td>
+							<td><a href="javascript:void(0)" onclick="go_to(LINK_MODEL_MANAGER + '/download_model?model_id={{run.pk}}')"><span class="glyphicon glyphicon-download-alt"></span></a></td>
 							<td><a href="javascript:void(0)" onclick="go_to(LINK_MODEL_MANAGER + '/delete_model?model_id={{run.pk}}')"><span class="glyphicon glyphicon-remove"></span></a></td>
 						</tr>
 					{% endfor %}
