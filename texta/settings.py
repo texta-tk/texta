@@ -75,9 +75,9 @@ elif SERVER_TYPE == 'docker':
     DOMAIN = os.getenv('TEXTA_HOST')
     
     URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL,DOMAIN)
-    URL_PREFIX_RESOURCE = ''
+    URL_PREFIX_RESOURCE = '/texta'
     ROOT_URLCONF = 'texta.urls'
-    STATIC_URL = URL_PREFIX_DOMAIN + '/static/'
+    STATIC_URL = '/texta/static/'
     DEBUG = True
 
 ########################### URLs and paths ###########################
