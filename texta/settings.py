@@ -77,7 +77,7 @@ elif SERVER_TYPE == 'docker':
     URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL,DOMAIN)
     URL_PREFIX_RESOURCE = ''
     ROOT_URLCONF = 'texta.urls'
-    STATIC_URL = URL_PREFIX_DOMAIN + '/static/'
+    STATIC_URL = '/static/'
     DEBUG = True
 
 ########################### URLs and paths ###########################
@@ -142,6 +142,8 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 USER_ISACTIVE_DEFAULT = os.getenv('TEXTA_USER_ISACTIVE_DEFAULT')
 if USER_ISACTIVE_DEFAULT is None:
     USER_ISACTIVE_DEFAULT = True
+else:
+    USER_ISACTIVE_DEFAULT = json.loads(USER_ISACTIVE_DEFAULT.lower())
 
 # Defines whether added datasets are 'public' or 'private'. Public datasets are accessible by all the existing users and
 # new users alike. Access from a specific user can be revoked. Private datasets are not accessible by default, but
@@ -153,7 +155,7 @@ DATASET_ACCESS_DEFAULT = 'private'
 # List of all host headers which are accepted to prevent host header poisoning.
 # Should be altered if hosted on a remote machine.
 #
-ALLOWED_HOSTS = [DOMAIN]
+ALLOWED_HOSTS = ['*']
 
 # Defines which database backend does the application use. TEXTA uses only default with sqlite engine.
 # Can change engine and database info as one sees fit.
@@ -377,7 +379,7 @@ LOGGING = {
 # Several scripts ran during the boot to set up files and directories.
 # Scripts will only be run if settings is imported from 'texta' directory, e.g. as a result of manager.py, or by Apache (user httpd / apache)
 
-if os.path.split(os.getcwd())[1] in ['texta', 'httpd', 'apache']:
+if os.path.split(os.getcwd())[1] in ['texta', 'httpd', 'apache','www']:
 	from utils.setup import write_navigation_file, ensure_dir_existence
 
 	write_navigation_file(URL_PREFIX, STATIC_URL, STATIC_ROOT)
