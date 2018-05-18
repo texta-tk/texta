@@ -153,7 +153,7 @@ DATASET_ACCESS_DEFAULT = 'private'
 # List of all host headers which are accepted to prevent host header poisoning.
 # Should be altered if hosted on a remote machine.
 #
-ALLOWED_HOSTS = [DOMAIN]
+ALLOWED_HOSTS = ['*']
 
 # Defines which database backend does the application use. TEXTA uses only default with sqlite engine.
 # Can change engine and database info as one sees fit.
