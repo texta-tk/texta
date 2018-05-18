@@ -135,7 +135,7 @@ MANAGERS = ADMINS
 
 # Avoid errors when sending too big files through the importer API.
 # Increased vulnerability to DDoS attacks.
-DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440
+DATA_UPLOAD_MAX_MEMORY_SIZE = 262144000
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 
 # New user are created as activated or deactivated (in which case superuser has to activate them manually)
