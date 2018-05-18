@@ -45,7 +45,9 @@ BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 
 STATIC_ROOT = os.path.join(os.path.abspath(os.path.join(BASE_DIR, os.pardir)), 'static')
 
-SERVER_TYPE = 'development'
+SERVER_TYPE = os.getenv('TEXTA_SERVER_TYPE')
+if SERVER_TYPE is None:
+    SERVER_TYPE = 'development'
 
 if SERVER_TYPE == 'development':
 	PROTOCOL = 'http://'
@@ -67,6 +69,16 @@ elif SERVER_TYPE == 'production':
 	ROOT_URLCONF = 'texta.urls'
 	STATIC_URL = '/texta/static/'
 	DEBUG = False
+
+elif SERVER_TYPE == 'docker':
+    PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL'))
+    DOMAIN = os.getenv('TEXTA_HOST')
+    
+    URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL,DOMAIN)
+    URL_PREFIX_RESOURCE = '/texta'
+    ROOT_URLCONF = 'texta.urls'
+    STATIC_URL = '/texta/static/'
+    DEBUG = True
 
 ########################### URLs and paths ###########################
 
@@ -127,7 +139,9 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 
 # New user are created as activated or deactivated (in which case superuser has to activate them manually)
-USER_ISACTIVE_DEFAULT = True
+USER_ISACTIVE_DEFAULT = os.getenv('TEXTA_USER_ISACTIVE_DEFAULT')
+if USER_ISACTIVE_DEFAULT is None:
+    USER_ISACTIVE_DEFAULT = True
 
 # Defines whether added datasets are 'public' or 'private'. Public datasets are accessible by all the existing users and
 # new users alike. Access from a specific user can be revoked. Private datasets are not accessible by default, but
