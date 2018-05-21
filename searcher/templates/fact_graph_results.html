@@ -71,9 +71,34 @@ var menu = [
 	{
 		title: 'Add to search',
 		action: function(elm, d, i) {
-			console.log('Item #1 clicked!');
-			console.log('The data for this circle is: ' + d);
-			// add_field("", "", '"{"path": "mlp_text.text", "type": "fact_str_val"}"')
+			$("#constraint_field").val('{"path": "mlp_text.text", "type": "fact_str_val"}');
+
+			// $('span[id^=selected_field_]').filter(function() { return $(this).text().includes("[fact_text_values]")})
+			var has_field = false;
+			$('span[id^=selected_field_]').each(function(index) {
+				// console.log($(this).text())
+				if ($(this).text().includes(['[fact_text_values]'])) {
+					 console.log('IS')
+					 console.log($(this).text())
+					 has_field = true;
+				 }
+				});
+			if (!has_field) {
+				add_field("","","");
+			}
+
+			var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_');
+			var suggestion_id = split_id[split_id.length - 2] + '_' + split_id[split_id.length - 1]
+			if (has_field) {
+				addFactValueFieldConstraint(split_id[split_id.length - 2], $("#fact_field_" + split_id[split_id.length - 2]).val())
+				var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_');
+				var suggestion_id = split_id[split_id.length - 2] + '_' + split_id[split_id.length - 1]
+			}
+
+			$('#field_'+split_id[split_id.length-2]+" #fact_txt_"+suggestion_id).val(elm["name"])
+			$('#fact_constraint_op_' + suggestion_id).val('is');
+			$("#fact_constraint_val_"+suggestion_id).val(elm["id"]);
+
 		}
 	}
 	// {
