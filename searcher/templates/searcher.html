@@ -46,18 +46,14 @@
 								<div class="panel bg-grey">
 									<div class="row padded-row text-center">
 										<div class="col-sm-12 text-center">
-											<b>Additional Options</b>
+											<b>Search Options</b>
 										</div>
 										<div class="col-sm-12">
 											Show short version:
 											<input type="checkbox" name="show_short_version" onclick="hide_show_options()" class="pull-right">
 										</div>
-									</div>
-									<div class="row padded-row" id="short_version_options" style="display: none;">
-										<div class="col-sm-12">
-											<b>Context window size (words):</b>
-										</div>
-										<div class="col-sm-12">
+										<div class="col-sm-12" id="short_version_options" style="display: none;">
+											Context window size (words):
 											<input id="n_char" name="short_version_n_char" class="form-control" data-slider-id='n_char' type="text" data-slider-min="1" data-slider-max="20" data-slider-step="1" data-slider-value="5"/>
 										</div>
 									</div>
