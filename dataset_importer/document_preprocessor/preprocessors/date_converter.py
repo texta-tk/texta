@@ -2,8 +2,7 @@
 
 import dateparser
 import re
-#from dateparser.search import search_dates
-
+import json
 
 class DatePreprocessor(object):
     """
@@ -35,19 +34,13 @@ class DatePreprocessor(object):
       '''Converts given date field value to standard ES format yyyy-mm-dd
       
       :param date_field_value: date field value to convert
-      :param kwargs: request parameters which must include entries for the 
-                     preprocessors to work appropriately
+      :param langs: language(s) of the data (optional)
       :type date_field_value: string
+      :type langs: list
       :return: date converted to standard ES format
       :rtype: string
       '''
-      
-      # TODO: 
-      '''
-      if not kwargs.get('mlp_preprocessor_input_features', None):
-        kwargs['mlp_preprocessor_input_features'] = '["text"]'
-      '''
-      
+     
       if langs:
           self._languages = langs
       try:
@@ -59,26 +52,71 @@ class DatePreprocessor(object):
           formatted_date = None
       return formatted_date
   
+    def convert_batch(self, date_batch,langs=[]):
+      '''Converts given date batch to standard ES format yyyy-mm-dd
+      
+      :param date_batch: date batch to convert
+      :param langs: language(s) of the data (optional)
+
+      :type date_batch: list
+      :type langs: list
+      :return: dates converted to standard ES format
+      :rtype: list
+      '''
+      converted_batch = [self.convert_date(date,langs=langs) for date in date_batch]
+      return converted_batch
+      
+      
+  
     def extract_dates(self,text,convert=False):
+        '''Extracts dates from given text
+        
+        :param text: plaintext containing date values
+        :param convert: whether to convert extracted date data to es standard or not
+        :type text: string
+        :type convert: boolean
+        :return: extracted dates
+        :rtype: list
+        '''
+        
         dates = re.findall(self._date_pattern,text)
         if convert:
             dates = [self.convert_date(d) for d in dates]
         return dates
+    
+    def transform(self, documents, **kwargs):
+        '''Takes input documents and enhances them with MLP output.
 
-      
+        :param documents: collection of dictionaries to enhance
+        :param kwargs: request parameters which must include entries for the preprocessors to work appropriately
+        :type documents: list of dicts
+        :return: enhanced documents
+        :rtype: list of dicts
+        '''
+        if not self._enabled_features:
+            return documents
 
-'''
-if __name__ == '__main__':
-    pass
-'''
+        if not kwargs.get('date_converter_preprocessor_input_features', None):
+            return documents
+            #kwargs['date_converter_preprocessor_input_features'] = '["text"]'
 
-dp = DatePreprocessor()
+        input_features = json.loads(kwargs['date_converter_preprocessor_input_features'])
 
-text = u' bla 03. juuni 2018 blablabla 02.03.2009 blabla'
+        for input_feature in input_features:
+            raw_dates = [document[input_feature] for document in documents if input_feature in document]
+            try:
+                converted_dates = self.convert_batch(raw_dates)
+            except:
+                #print(requests.post(self._mlp_url, data=data).text)
+                converted_dates = []
+                raise Exception()
 
-text_2 = '02.03.2009'
-dates = dp.extract_dates(text,convert=True)
-print dates
+            for analyzation_idx, analyzation_datum in enumerate(converted_dates):
+                documents[analyzation_idx]['converted_' + input_feature] = analyzation_datum
 
+                if 'texta_facts' not in documents[analyzation_idx]:
+                    documents[analyzation_idx]['texta_facts'] = []
 
+                documents[analyzation_idx]['texta_facts'].extend(analyzation_datum['texta_facts'])
 
+        return documents

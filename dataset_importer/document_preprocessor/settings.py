@@ -33,10 +33,7 @@ try:
         'description': 'Converts date field values to correct format',
         'class': preprocessors.date_converter.DatePreprocessor,
         'parameters_template': 'parameters/preprocessor_parameters/date_converter.html',
-        'arguments': {
-            'mlp_url': 'http://10.6.6.92/mlp/process',
-            'enabled_features': ['text', 'lang', 'texta_facts']
-        },
+        'arguments': {},
         'is_enabled': True
     }
     log_preprocessor_status(code='date_converter', status='enabled')
