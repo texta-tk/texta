@@ -914,13 +914,23 @@ def _extract_fact_val_constraint(raw_constraint):
 
 @login_required
 def fact_graph(request):
-    #import pdb;pdb.set_trace()
-    print('here')
-    #return HttpResponse(template.render(request))
-
+    print('REQUESTPOST',request.POST)
+    saved_searches = request.POST['selected_saved_searches'].split(',')
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
+    responses = []
+    for i in saved_searches:
+        s = Search.objects.get(pk=int(i))
+        name = s.description
+        saved_query = json.loads(s.query)
+        es_m.load_combined_query(saved_query)
+        response = es_m.search()
+        search_facts = []
+        for document in response['hits']['hits']:
+            search_facts.append(document['_source']['texta_facts'])
+        responses.append(search_facts)
 
+    import pdb;pdb.set_trace()
     # get columns names from ES mapping
     #fields = es_m.get_column_names()
     template_params = {'STATIC_URL': STATIC_URL,

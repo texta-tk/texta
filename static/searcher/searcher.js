@@ -676,14 +676,32 @@ function displayAgg(response){
 function factGraph() {
     var request = new XMLHttpRequest();
     var formElement = new FormData();
+    var savedSearches = []
+    $('input[name^=saved_search_]:checked').each(function(index) {
+        savedSearches.push($(this).val());
+    })
+    formElement.append('selected_saved_searches', savedSearches);
 
-    request.onreadystatechange=function() {
-        if (request.readyState==4 && request.status==200) {
-            $("#right").html(request.responseText);
-        }
-    }
-    request.open("POST",PREFIX+'/fact_graph');
-    request.send(new FormData(formElement),true);
+    // request.onreadystatechange=function() {
+    //     if (request.readyState==4 && request.status==200) {
+    //         $("#right").html(request.responseText);
+    //     }
+    // }
+    // request.open("POST",PREFIX+'/fact_graph');
+    // request.send(formElement,true);
+
+    $.ajax({
+        url: PREFIX + '/fact_graph',
+        data: formElement,
+        type: 'POST',
+        contentType: false,
+        processData: false,
+        success: function() {
+
+        },
+        error: function() {
+
+        }});
 }
 
 function drawTimeline(data){
