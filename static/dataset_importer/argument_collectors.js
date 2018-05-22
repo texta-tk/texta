@@ -115,6 +115,14 @@ function collectMlpArguments(formData) {
     return formData;
 }
 
+function collectDateConverterArguments(formData) {
+    var featureNames = JSON.stringify($('#date-converter-processor-feature-names').val().split('\n'));
+
+    formData.append('date_converter_preprocessor_input_features', featureNames);
+
+    return formData;
+}
+
 
 // Key to collector map
 
@@ -131,4 +139,5 @@ var collectors = {
     postgres: collectPostgresArguments,
 
     mlp: collectMlpArguments
+	date_converter: collectDateConverterArguments
 };
