@@ -15,6 +15,7 @@
 # 
 
 from time import strftime
+import json
 import os
 
 # Path to TEXTA's root directory. It is used in other paths as a prefix.
@@ -73,7 +74,7 @@ elif SERVER_TYPE == 'production':
 elif SERVER_TYPE == 'docker':
     PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL'))
     DOMAIN = os.getenv('TEXTA_HOST')
-    
+
     URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL,DOMAIN)
     URL_PREFIX_RESOURCE = ''
     ROOT_URLCONF = 'texta.urls'
@@ -161,20 +162,14 @@ ALLOWED_HOSTS = ['*']
 # Can change engine and database info as one sees fit.
 #
 DATABASES = {
-	'default': {
-		'ENGINE':       'django.db.backends.sqlite3',
-		# Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-		'NAME':         os.path.join(BASE_DIR, 'database', 'lex.db'),  # Or path to database file if using sqlite3.
-		'USER':         '',  # Not used with sqlite3.
-		'PASSWORD':     '',  # Not used with sqlite3.
-		'HOST':         '',  # Set to empty string for localhost. Not used with sqlite3.
-		'PORT':         '',  # Set to empty string for default. Not used with sqlite3.
-		'BACKUP_COUNT': 5,
-	}
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'HOST': 'db',  # set in docker-compose.yml
+        'PORT': 5432,  # default postgres port
+    }
 }
-
-if not os.path.exists(os.path.dirname(DATABASES['default']['NAME'])):
-	os.makedirs(os.path.dirname(DATABASES['default']['NAME']))
 
 TIME_ZONE = 'Europe/Tallinn'
 LANGUAGE_CODE = 'et'

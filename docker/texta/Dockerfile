@@ -1,60 +1,18 @@
-FROM ubuntu:latest
+# TODO Remove nano and other development requirements.
+# TODO Find out why it was neccessary to go into inside the container, delete all .pyc, .pycache, migrations and db.sqlite3 files.
 
-ENV LANG C.UTF-8
+FROM python:3.5.5
+ENV PYTHONUNBUFFERED 1
 
-RUN adduser --disabled-password --gecos '' texta
+RUN apt-get update && apt-get upgrade -y && apt-get autoremove && apt-get autoclean
+RUN apt-get install -y --no-install-recommends nano libpulse-dev swig authbind
+RUN pip install requests numpy cython  scipy sklearn gensim django==2.0.2 pathlib dateutils sympy textract elasticsearch elasticsearch_dsl psycopg2-binary psycopg2
 
-#RUN set -x \
-#        && apt-get update \
-#        && apt-get install -y --no-install-recommends \
-#         git python-dev build-essential manpages-dev libblas-dev liblapack-dev libatlas-base-dev gfortran
-
-RUN set -x \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends python3 python3-dev git python3-pip swig gcc libpulse-dev
-
-RUN apt-get install -y curl
-RUN apt-get install -y authbind
 RUN touch /etc/authbind/byport/80
 RUN chmod 777 /etc/authbind/byport/80
 
-RUN pip3 install --upgrade pip
+RUN mkdir texta
+COPY . texta/
 
-RUN pip3 install setuptools
-RUN pip3 install wheel
-RUN pip3 install requests
-RUN pip3 install numpy
-RUN pip3 install cython
-RUN pip3 install scipy
-RUN pip3 install sklearn
-RUN pip3 install gensim
-RUN pip3 install django==2.0.2
-RUN pip3 install pathlib
-RUN pip3 install dateutils
-RUN pip3 install sympy
-RUN pip3 install textract
-RUN pip3 install elasticsearch
-
-
-RUN git clone https://github.com/texta-tk/texta.git
-WORKDIR texta
-RUN git checkout dev
-RUN pip3 install -r requirements.txt
-RUN python3 migrate.py
-
-
-RUN echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', '1234')" | python3 manage.py shell
-
-WORKDIR ..
-
-RUN mv texta /home/texta
-RUN chown -R texta:texta /home/texta/texta
-
-EXPOSE 80
-
-USER texta
-WORKDIR /home/texta/texta
-
-ADD settings.py texta
-
-CMD ["authbind", "--deep", "python3", "manage.py", "runserver", "0.0.0.0:80"]
+WORKDIR texta/
+CMD bash -c "python manage.py makemigrations; python manage.py migrate;  echo \"from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', 'pass')\" | python manage.py shell; authbind --deep python manage.py runserver 0.0.0.0:80"

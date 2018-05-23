@@ -11,28 +11,13 @@ texta/log/*
 texta/files/*
 
 # Exclude migrations files but not the migrations module.
-searcher/migrations/
-!searcher/migrations/__init__.py
-grammar_builder/migrations/
-!grammar_builder/migrations/__init__.py
-model_manager/migrations/
-!model_manager/migrations/__init__.py
-classification_manager/migrations/
-!classification_manager/migrations/__init__.py
-permission_admin/migrations/
-!permission_admin/migrations/__init__.py
-conceptualiser/migrations/
-!conceptualiser/migrations/__init__.py
-lm/migrations/
-!lm/migrations/__init__.py
-mwe_miner/migrations/
-!mwe_miner/migrations/__init__.py
-account/migrations/
-!account/migrations/__init__.py
-dataset_importer/migrations/
-!dataset_importer/migrations/__init__.py
+*/migrations/*
+!*/migrations/__init__.py
 
 # Exclude documentation build files but not the html, js etc
 texta/documentation/sphinx/build/doctrees/*
 texta/documentation/sphinx/build/html/objects.inv
 texta/documentation/sphinx/source/images_bu/*
+
+db.sqlite3
+.env

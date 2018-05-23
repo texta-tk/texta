@@ -14,3 +14,4 @@ lxml
 textract
 beautifulsoup4
 elasticsearch
+psycopg2

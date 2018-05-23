@@ -79,6 +79,18 @@ class AuthTokenHandler:
 
 # Create your views here.
 class ImporterApiView(View):
+	default_mapping = {
+		"texta_facts": {
+			'type':       'nested',
+			'properties': {
+				'doc_path': {'type': 'keyword'},
+				'fact':     {'type': 'keyword'},
+				'num_val':  {'type': 'long'},
+				'spans':    {'type': 'keyword'},
+				'str_val':  {'type': 'keyword'}
+			}
+		}
+	}
 
 	def post(self, request, *args, **kwargs):
 		try:
@@ -88,7 +100,7 @@ class ImporterApiView(View):
 			utf8_post_payload = request.body.decode("utf-8")
 			post_payload_dict = json.loads(utf8_post_payload)
 
-			logger.info("Validating mandatory field and value existances in ImportAPI")
+			logger.info("Validating mandatory field and value existences in ImportAPI")
 			ApiInputValidator(post_payload_dict, ["auth_token", "index", "doc_type", "data"])
 
 			logger.info("Authenticating user for ImportAPI.")
@@ -98,8 +110,10 @@ class ImporterApiView(View):
 			es_handler = ElasticsearchHandler(index=post_payload_dict["index"], doc_type=post_payload_dict["doc_type"])
 			logger.info("Finished creating ES client.")
 
-			api_payload = post_payload_dict["data"]
 			es_handler.create_index_if_not_exist()
+			es_handler.insert_mapping_into_doctype(ImporterApiView.default_mapping)
+
+			api_payload = post_payload_dict["data"]
 			type_of_insertion_data = type(api_payload)
 
 			if "mapping" in post_payload_dict:
