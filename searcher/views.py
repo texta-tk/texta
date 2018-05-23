@@ -2,7 +2,14 @@
 from __future__ import print_function
 from __future__ import absolute_import
 import calendar
-import threading
+
+import platform
+if platform.system() == 'Windows':
+    from threading import Thread as Process
+else:
+    from multiprocessing import Process
+
+
 import json
 import csv
 import time
@@ -595,7 +602,7 @@ def remove_by_query(request):
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
-    threading.Thread(target=remove_worker,args=(es_m,'notimetothink')).start()
+    Process(target=remove_worker,args=(es_m,'notimetothink')).start()
 
     return HttpResponse(True)
 
