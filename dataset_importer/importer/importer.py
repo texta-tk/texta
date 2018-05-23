@@ -17,6 +17,7 @@ from multiprocessing.pool import ThreadPool as Pool
 from dataset_importer.models import DatasetImport
 from dataset_importer.syncer.SQLiteIndex import SQLiteIndex
 from multiprocessing import Process
+from threading import Thread as Process
 
 DAEMON_BASED_DATABASE_FORMATS = set(database_reader_map) - {'sqlite'}
 ARCHIVE_FORMATS = set(extractor_map)
