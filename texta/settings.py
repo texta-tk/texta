@@ -15,6 +15,7 @@
 # 
 
 from time import strftime
+import json
 import os
 
 # Path to TEXTA's root directory. It is used in other paths as a prefix.
@@ -45,7 +46,9 @@ BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 
 STATIC_ROOT = os.path.join(os.path.abspath(os.path.join(BASE_DIR, os.pardir)), 'static')
 
-SERVER_TYPE = 'development'
+SERVER_TYPE = os.getenv('TEXTA_SERVER_TYPE')
+if SERVER_TYPE is None:
+    SERVER_TYPE = 'development'
 
 if SERVER_TYPE == 'development':
 	PROTOCOL = 'http://'
@@ -67,6 +70,16 @@ elif SERVER_TYPE == 'production':
 	ROOT_URLCONF = 'texta.urls'
 	STATIC_URL = '/texta/static/'
 	DEBUG = False
+
+elif SERVER_TYPE == 'docker':
+    PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL'))
+    DOMAIN = os.getenv('TEXTA_HOST')
+    
+    URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL,DOMAIN)
+    URL_PREFIX_RESOURCE = ''
+    ROOT_URLCONF = 'texta.urls'
+    STATIC_URL = '/static/'
+    DEBUG = True
 
 ########################### URLs and paths ###########################
 
@@ -123,11 +136,15 @@ MANAGERS = ADMINS
 
 # Avoid errors when sending too big files through the importer API.
 # Increased vulnerability to DDoS attacks.
-DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440
+DATA_UPLOAD_MAX_MEMORY_SIZE = 262144000
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 
 # New user are created as activated or deactivated (in which case superuser has to activate them manually)
-USER_ISACTIVE_DEFAULT = True
+USER_ISACTIVE_DEFAULT = os.getenv('TEXTA_USER_ISACTIVE_DEFAULT')
+if USER_ISACTIVE_DEFAULT is None:
+    USER_ISACTIVE_DEFAULT = True
+else:
+    USER_ISACTIVE_DEFAULT = json.loads(USER_ISACTIVE_DEFAULT.lower())
 
 # Defines whether added datasets are 'public' or 'private'. Public datasets are accessible by all the existing users and
 # new users alike. Access from a specific user can be revoked. Private datasets are not accessible by default, but
@@ -139,7 +156,7 @@ DATASET_ACCESS_DEFAULT = 'private'
 # List of all host headers which are accepted to prevent host header poisoning.
 # Should be altered if hosted on a remote machine.
 #
-ALLOWED_HOSTS = [DOMAIN]
+ALLOWED_HOSTS = ['*']
 
 # Defines which database backend does the application use. TEXTA uses only default with sqlite engine.
 # Can change engine and database info as one sees fit.
@@ -194,7 +211,7 @@ TEMPLATES = [
 			#                'django.template.loaders.filesystem.Loader',
 			#                'django.template.loaders.app_directories.Loader',
 			#            ],
-			'debug':              DEBUG,
+			'debug': DEBUG,
 		},
 	},
 ]
@@ -363,7 +380,7 @@ LOGGING = {
 # Several scripts ran during the boot to set up files and directories.
 # Scripts will only be run if settings is imported from 'texta' directory, e.g. as a result of manager.py, or by Apache (user httpd / apache)
 
-if os.path.split(os.getcwd())[1] in ['texta', 'httpd', 'apache']:
+if os.path.split(os.getcwd())[1] in ['texta', 'httpd', 'apache','www']:
 	from utils.setup import write_navigation_file, ensure_dir_existence
 
 	write_navigation_file(URL_PREFIX, STATIC_URL, STATIC_ROOT)

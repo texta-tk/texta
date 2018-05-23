@@ -37,7 +37,7 @@ class MlpPreprocessor(object):
 
         for input_feature in input_features:
             texts = [document[input_feature] for document in documents if input_feature in document]
-            data = {'texts': json.dumps([x.decode('utf8') for x  in texts], ensure_ascii=False), 'doc_path': 'mlp_'+input_feature}
+            data = {'texts': json.dumps(texts, ensure_ascii=False), 'doc_path': 'mlp_'+input_feature}
             try:
                 analyzation_data = requests.post(self._mlp_url, data=data).json()
             except:

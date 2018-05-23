@@ -112,8 +112,11 @@ function get_query(){
 
 
 function search_as_you_type_query(){
-   clearTimeout(key_timer);
-   key_timer=setTimeout(function validate(){query();},500);
+   var search_as_you_type_selection = $('#search_as_you_type').prop('checked');
+   if (search_as_you_type_selection){
+       clearTimeout(key_timer);
+       key_timer=setTimeout(function validate(){query();},500);
+   }
 }
 
 

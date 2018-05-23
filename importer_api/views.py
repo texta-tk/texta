@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from account.models import Profile
 from django.views import View
-from elasticsearch.helpers import streaming_bulk as elastic_streambulk, bulk as elastic_bulk
+from elasticsearch.helpers import streaming_bulk as elastic_parallelbulk
 from texta.settings import es_url, INFO_LOGGER
 
 import json
@@ -11,8 +11,8 @@ import elasticsearch
 
 class ElasticsearchHandler:
 
-	def __init__(self, doc_type, index, hosts=[es_url]):
-		self.es = elasticsearch.Elasticsearch(hosts=hosts)
+	def __init__(self, doc_type, index, hosts=[es_url], timeout=30):
+		self.es = elasticsearch.Elasticsearch(hosts=hosts, timeout=timeout)
 		self.es.cluster.health(wait_for_status='yellow', request_timeout=1000)
 		self.index = index
 		self.doc_type = doc_type
@@ -25,7 +25,7 @@ class ElasticsearchHandler:
 
 	def insert_multiple_documents(self, list_of_documents):
 		actions = [{"_source": document, "_index": self.index, "_type": self.doc_type} for document in list_of_documents]
-		for ok, response in elastic_streambulk(client=self.es, actions=actions, chunk_size=1000, max_retries=3):
+		for ok, response in elastic_parallelbulk(client=self.es, actions=actions):
 			if not ok:
 				self.logger.error(response)
 
