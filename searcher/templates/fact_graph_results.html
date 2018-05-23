@@ -4,10 +4,10 @@
    margin:0;
 }
 
-text {
+/* text {
   font-family: sans-serif;
   pointer-events: none;
-}
+} */
 
 </style>
 <div class="graphBody"></div>
@@ -52,7 +52,6 @@ var force = d3.layout.force()
   .size([w,h]);
 
 var default_node_color = "#ccc";
-//var default_node_color = "rgb(3,190,100)";
 var default_link_color = "#efefef";
 var nominal_base_node_size = 8;
 var nominal_text_size = 10;
@@ -69,17 +68,14 @@ svg.style("cursor","move");
 
 var menu = [
 	{
-		title: 'Add to search',
+		title: 'Add node to search',
 		action: function(elm, d, i) {
 			$("#constraint_field").val('{"path": "mlp_text.text", "type": "fact_str_val"}');
 
 			// $('span[id^=selected_field_]').filter(function() { return $(this).text().includes("[fact_text_values]")})
 			var has_field = false;
 			$('span[id^=selected_field_]').each(function(index) {
-				// console.log($(this).text())
 				if ($(this).text().includes(['[fact_text_values]'])) {
-					 console.log('IS')
-					 console.log($(this).text())
 					 has_field = true;
 				 }
 				});
@@ -96,7 +92,7 @@ var menu = [
 			}
 
 			$('#field_'+split_id[split_id.length-2]+" #fact_txt_"+suggestion_id).val(elm["name"])
-			$('#fact_constraint_op_' + suggestion_id).val('is');
+			$('#fact_constraint_op_' + suggestion_id).val('=');
 			$("#fact_constraint_val_"+suggestion_id).val(elm["id"]);
 
 		}
