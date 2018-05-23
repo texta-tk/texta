@@ -551,6 +551,9 @@ def search(es_params, request):
 
 def additional_option_cut_text(content, window_size):
     window_size = int(window_size)
+    
+    if not content:
+        return ''
 
     if '[HL]' in content:
         soup = bs4.BeautifulSoup(content,'lxml')
@@ -589,6 +592,7 @@ def additional_option_cut_text(content, window_size):
         return ''.join(html_spans_merged)
     else:
         return content
+
 
 @login_required
 def remove_by_query(request):

@@ -370,7 +370,7 @@ class AggManager:
 
         daterange_data = {"type":"daterange",
                           "data":combined_daterange_data,
-                          "ykeys":range(1,i+1),
+                          "ykeys":list(range(1,i+1)),
                           "labels":labels,
                           "children":dict(children_dict)}
 
