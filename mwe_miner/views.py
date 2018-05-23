@@ -4,7 +4,12 @@ import itertools
 import json
 import logging
 from datetime import datetime
-from threading import Thread
+
+import platform
+if platform.system() == 'Windows':
+    from threading import Thread as Process
+else:
+    from multiprocessing import Process
 
 import requests
 from django.contrib.auth.decorators import login_required
@@ -195,7 +200,7 @@ def commit(request):
 
 @login_required
 def start_mapping_job(request):
-    Thread(target=find_mappings,args=(request,)).start()
+    Process(target=find_mappings,args=(request,)).start()
     return HttpResponse()
 
 def flatten(container):
