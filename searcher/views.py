@@ -914,32 +914,20 @@ def _extract_fact_val_constraint(raw_constraint):
 
 @login_required
 def fact_graph(request):
-    print('REQUESTPOST',request.POST)
+    fact_m = FactManager(request)
     saved_searches = request.POST['selected_saved_searches'].split(',')
-    ds = Datasets().activate_dataset(request.session)
-    es_m = ds.build_manager(ES_Manager)
-    responses = []
-    for i in saved_searches:
-        s = Search.objects.get(pk=int(i))
-        name = s.description
-        saved_query = json.loads(s.query)
-        es_m.load_combined_query(saved_query)
-        response = es_m.search()
-        search_facts = []
-        for document in response['hits']['hits']:
-            search_facts.append(document['_source']['texta_facts'])
-        responses.append(search_facts)
 
-    import pdb;pdb.set_trace()
-    # get columns names from ES mapping
-    #fields = es_m.get_column_names()
+    # ds = Datasets().activate_dataset(request.session)
+    # es_m = ds.build_manager(ES_Manager)
+
+    fact_m.facts_via_aggregation()
+
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'search_id': 1,
                        'searches': Search.objects.filter(author=request.user),
-                       'dataset': ds.get_index(),
-                       'mapping': ds.get_mapping()}
+                       'dataset': fact_m.ds.get_index(),
+                       'mapping': fact_m.ds.get_mapping()}
     template = loader.get_template('fact_graph_results.html')
-    #template = loader.get_template('searcher_results.html')
     print('returning')
     return HttpResponse(template.render(template_params, request))
