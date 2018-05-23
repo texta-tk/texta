@@ -23,7 +23,23 @@ try:
         'is_enabled': True
     }
     log_preprocessor_status(code='mlp', status='enabled')
+    
 except:
     log_preprocessor_status(code='mlp', status='disabled')
+
+try:
+    preprocessor_map['date_converter'] = {
+        'name': 'Date conversion preprocessor',
+        'description': 'Converts date field values to correct format',
+        'class': preprocessors.date_converter.DatePreprocessor,
+        'parameters_template': 'parameters/preprocessor_parameters/date_converter.html',
+        'arguments': {},
+        'is_enabled': True
+    }
+    log_preprocessor_status(code='date_converter', status='enabled')
+    
+except Exception as e:
+    print(e)
+    log_preprocessor_status(code='date_converter', status='disabled')
 
 print('')

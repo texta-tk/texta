@@ -5,7 +5,13 @@ import logging
 import os
 import re
 import string
-import threading
+
+import platform
+if platform.system() == 'Windows':
+    from threading import Thread as Process
+else:
+    from multiprocessing import Process
+
 from datetime import datetime
 
 from django.contrib.auth.decorators import login_required, permission_required
@@ -88,7 +94,7 @@ def start_training_job(request):
     search_id = request.POST['search']
 
     train_model(search_id,field_path,num_dimensions,num_workers,min_freq,request.user,description,request)
-    #threading.Thread(target=train_model,args=(search_id,field_path,num_dimensions,num_workers,min_freq,request.user,description,request)).start()
+    #Process(target=train_model,args=(search_id,field_path,num_dimensions,num_workers,min_freq,request.user,description,request)).start()
     return HttpResponse()
 
 
