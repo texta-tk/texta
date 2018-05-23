@@ -10,7 +10,7 @@ class DatePreprocessor(object):
     """
     
     def __init__(self):
-        self._languages = ['et','en','ru']
+        self._languages = ['et']#,'en','ru']
         self._date_pattern = self._get_date_patterns()
         
     def _get_date_patterns(self):
@@ -93,30 +93,35 @@ class DatePreprocessor(object):
         :return: enhanced documents
         :rtype: list of dicts
         '''
-        if not self._enabled_features:
-            return documents
 
         if not kwargs.get('date_converter_preprocessor_input_features', None):
             return documents
-            #kwargs['date_converter_preprocessor_input_features'] = '["text"]'
 
         input_features = json.loads(kwargs['date_converter_preprocessor_input_features'])
+
+        if kwargs.get('date_converter_preprocessor_input_langs',None):
+            input_langs = json.loads(kwargs['date_converter_preprocessor_input_langs'])
+            
+            # TODO: Check validity of language codes
+            if input_langs[0] and len(input_langs)==2:
+                self._languages = input_langs
+
 
         for input_feature in input_features:
             raw_dates = [document[input_feature] for document in documents if input_feature in document]
             try:
                 converted_dates = self.convert_batch(raw_dates)
             except:
-                #print(requests.post(self._mlp_url, data=data).text)
                 converted_dates = []
                 raise Exception()
 
             for analyzation_idx, analyzation_datum in enumerate(converted_dates):
                 documents[analyzation_idx]['converted_' + input_feature] = analyzation_datum
-
+                '''
                 if 'texta_facts' not in documents[analyzation_idx]:
                     documents[analyzation_idx]['texta_facts'] = []
 
-                documents[analyzation_idx]['texta_facts'].extend(analyzation_datum['texta_facts'])
+                documents[analyzation_idx]['texta_facts'].extend(analyzation_datum['texta_facts'])'''
 
         return documents
+

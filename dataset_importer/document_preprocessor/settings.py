@@ -38,7 +38,8 @@ try:
     }
     log_preprocessor_status(code='date_converter', status='enabled')
     
-except:
+except Exception as e:
+    print(e)
     log_preprocessor_status(code='date_converter', status='disabled')
 
 print('')

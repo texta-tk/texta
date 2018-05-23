@@ -117,8 +117,10 @@ function collectMlpArguments(formData) {
 
 function collectDateConverterArguments(formData) {
     var featureNames = JSON.stringify($('#date-converter-processor-feature-names').val().split('\n'));
+	var featureLangs = JSON.stringify($('#date-converter-processor-feature-langs').val().split('\n'));
 
     formData.append('date_converter_preprocessor_input_features', featureNames);
+	formData.append('date_converter_preprocessor_input_langs',featureLangs);
 
     return formData;
 }
@@ -138,6 +140,6 @@ var collectors = {
     sqlite: collectSqliteArguments,
     postgres: collectPostgresArguments,
 
-    mlp: collectMlpArguments
+    mlp: collectMlpArguments,
 	date_converter: collectDateConverterArguments
 };

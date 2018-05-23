@@ -74,15 +74,15 @@ except:
 collection_reader_map = {}
 
 
-# try:
-collection_reader_map['csv'] = {
-    'name': 'CSV',
-    'parameter_tags': 'file',
-    'class': readers.collection.csv.CSVReader
-}
-log_reader_status(code='.csv', status='enabled')
-# except:
-    # log_reader_status(code='.csv', status='disabled')
+try:
+    collection_reader_map['csv'] = {
+        'name': 'CSV',
+        'parameter_tags': 'file',
+        'class': readers.collection.csv.CSVReader
+    }
+    log_reader_status(code='.csv', status='enabled')
+except:
+    log_reader_status(code='.csv', status='disabled')
 
 try:
     collection_reader_map['xls'] = {
