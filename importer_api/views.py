@@ -24,7 +24,8 @@ class ElasticsearchHandler:
 		self.logger.info(response)
 
 	def insert_multiple_documents(self, list_of_documents):
-		actions = [{"_source": document, "_index": self.index, "_type": self.doc_type} for document in list_of_documents]
+		actions = [{"_source": document, "_index": self.index, "_type": self.doc_type} for document in
+		           list_of_documents]
 		for ok, response in elastic_parallelbulk(client=self.es, actions=actions):
 			if not ok:
 				self.logger.error(response)
@@ -44,6 +45,9 @@ class ElasticsearchHandler:
 		index_exists = self.check_for_index_existance()
 		if not index_exists:
 			self.insert_index_into_es()
+
+			# Add default mapping for texta_facts.
+			self.insert_mapping_into_doctype(ImporterApiView.default_mapping)
 
 
 class ApiInputValidator:
@@ -80,14 +84,16 @@ class AuthTokenHandler:
 # Create your views here.
 class ImporterApiView(View):
 	default_mapping = {
-		"texta_facts": {
-			'type':       'nested',
-			'properties': {
-				'doc_path': {'type': 'keyword'},
-				'fact':     {'type': 'keyword'},
-				'num_val':  {'type': 'long'},
-				'spans':    {'type': 'keyword'},
-				'str_val':  {'type': 'keyword'}
+		'properties': {
+			'texta_facts': {
+				'type':       'nested',
+				'properties': {
+					'doc_path': {'type': 'keyword'},
+					'fact':     {'type': 'keyword'},
+					'num_val':  {'type': 'long'},
+					'spans':    {'type': 'keyword'},
+					'str_val':  {'type': 'keyword'}
+				}
 			}
 		}
 	}
@@ -111,7 +117,6 @@ class ImporterApiView(View):
 			logger.info("Finished creating ES client.")
 
 			es_handler.create_index_if_not_exist()
-			es_handler.insert_mapping_into_doctype(ImporterApiView.default_mapping)
 
 			api_payload = post_payload_dict["data"]
 			type_of_insertion_data = type(api_payload)
