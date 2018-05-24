@@ -602,8 +602,11 @@ def aggregate(request):
 
 @login_required
 def delete_fact(request):
+    key = list(request.POST.keys())[0]
+    val = request.POST[key]
+
     fact_m = FactManager(request)
-    fact_m.remove_facts_from_document()
+    fact_m.remove_facts_from_document(key, val)
 
     return HttpResponse()
 
@@ -618,7 +621,7 @@ def tag_documents(request):
     es_params = request.POST
 
     fact_m = FactManager(request)
-    fact_m.tag_documents_with_facts(es_params, tag_name, tag_value, tag_field)
+    fact_m.tag_documents_with_fact(es_params, tag_name, tag_value, tag_field)
     return HttpResponse()
 
 def _get_facts_agg_count(es_m, facts):
@@ -915,19 +918,15 @@ def _extract_fact_val_constraint(raw_constraint):
 @login_required
 def fact_graph(request):
     fact_m = FactManager(request)
-    saved_searches = request.POST['selected_saved_searches'].split(',')
+    graph_data, fact_names = fact_m.fact_graph()
 
-    # ds = Datasets().activate_dataset(request.session)
-    # es_m = ds.build_manager(ES_Manager)
-
-    fact_m.facts_via_aggregation()
-
+    # import pdb;pdb.set_trace()
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'search_id': 1,
                        'searches': Search.objects.filter(author=request.user),
-                       'dataset': fact_m.ds.get_index(),
-                       'mapping': fact_m.ds.get_mapping()}
+                       'graph_data': graph_data,
+                       'fact_names': fact_names}
     template = loader.get_template('fact_graph_results.html')
     print('returning')
     return HttpResponse(template.render(template_params, request))

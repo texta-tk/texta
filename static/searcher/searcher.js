@@ -672,35 +672,24 @@ function displayAgg(response){
 	}
 }
 
-function validateFactGraph() {
-    var button = $('#factGraphButton');
-
-    if ($('input[name^="saved_search_"]:checked').length > 0) {
-        button.removeAttr('disabled');
-        }
-    else {
-        button.prop('disabled', true);
-    }
-}
-
 function factGraph() {
     var request = new XMLHttpRequest();
     var formElement = new FormData();
-    var savedSearches = []
-    $('input[name^=saved_search_]:checked').each(function(index) {
-        savedSearches.push($(this).val());
-    })
-    if (savedSearches.length > 0) {
-        formElement.append('selected_saved_searches', savedSearches);
+    // var savedSearches = []
+    // $('input[name^=saved_search_]:checked').each(function(index) {
+    //     savedSearches.push($(this).val());
+    // })
+    // if (savedSearches.length > 0) {
+    //     formElement.append('selected_saved_searches', savedSearches);
 
-        request.onreadystatechange=function() {
-            if (request.readyState==4 && request.status==200) {
-                $("#right").html(request.responseText);
-            }
+    request.onreadystatechange=function() {
+        if (request.readyState==4 && request.status==200) {
+            $("#right").html(request.responseText);
         }
-        request.open("POST",PREFIX+'/fact_graph');
-        request.send(formElement,true);
     }
+    request.open("POST",PREFIX+'/fact_graph');
+    request.send(formElement,true);
+    // }
 }
 
 function drawTimeline(data){
@@ -1078,7 +1067,6 @@ function display_searches(searches) {
         inputElement.type = "checkbox";
         inputElement.name = "saved_search_" + i;
         inputElement.value = searches[i].id;
-        inputElement.onclick = function() {validateFactGraph();}
 
 		aElement.className = "glyphicon glyphicon-minus-sign pointer";
         aElement.onclick = function(id) {

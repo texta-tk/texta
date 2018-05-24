@@ -1,558 +1,532 @@
 <style>
-.graphBody {
-  overflow:hidden;
-   margin:0;
-}
+	.graphBody {
+		overflow: hidden;
+		margin: 0;
+	}
 
-/* text {
+	/* text {
   font-family: sans-serif;
   pointer-events: none;
 } */
-
 </style>
 <div class="graphBody"></div>
 
 <script>
 
-Math.clip = function(number, min, max) {
-  return Math.max(min, Math.min(number, max));
-}
-
-var w = window.innerWidth;
-var h = window.innerHeight;
-
-// var keyc = true, keys = true, keyt = true, keyr = true, keyx = true, keyd = true, keyl = true, keym = true, keyh = true, key1 = true, key2 = true, key3 = true, key0 = true, keyn = true, keyb = true, keyv = true
-var keyc = true, keys = true, keyt = true, keyr = true, keyx = true, keyd = true, key1 = true, key2 = true, key3 = true, key0 = true, key4 = true, key5 = true, key6=true, keyl = true, keyn = true, keyb=true,keyv=true
-
-var focus_node = null, highlight_node = null;
-
-var text_center = false;
-var outline = false;
-
-var min_score = 0;
-var max_score = 1;
-
-var colors = ["#f0f20a","#f90a0a", "#1d2bec", "#22d012", "#f9a70d", "#ff9292"];
-var shapes = d3.svg.symbolTypes;
-var shapesColors = shapes.reduce((obj, k, i) => ({...obj, [k]: colors[i] }), {});
-
-var color = d3.scale.ordinal()
-  .domain(shapes)
-  .range(colors);
-
-var highlight_color = "blue";
-var highlight_trans = 0.1;
-  
-var size = d3.scale.pow().exponent(2)
-  .domain([1,250])
-  .range([3,50]);
-	
-var force = d3.layout.force()
-  .linkDistance(150)
-  .charge(-3000)
-  .size([w,h]);
-
-var default_node_color = "#ccc";
-var default_link_color = "#efefef";
-var nominal_base_node_size = 8;
-var nominal_text_size = 10;
-var max_text_size = 24;
-var nominal_stroke = 1.5;
-var max_stroke = 8;
-var max_base_node_size = 36;
-var min_zoom = 0.1;
-var max_zoom = 7;
-var svg = d3.select(".graphBody").append("svg");
-var zoom = d3.behavior.zoom().scaleExtent([min_zoom,max_zoom])
-var g = svg.append("g");
-svg.style("cursor","move");
-
-var menu = [
-	{
-		title: 'Add node to search',
-		action: function(elm, d, i) {
-			$("#constraint_field").val('{"path": "mlp_text.text", "type": "fact_str_val"}');
-
-			// $('span[id^=selected_field_]').filter(function() { return $(this).text().includes("[fact_text_values]")})
-			var has_field = false;
-			$('span[id^=selected_field_]').each(function(index) {
-				if ($(this).text().includes(['[fact_text_values]'])) {
-					 has_field = true;
-				 }
-				});
-			if (!has_field) {
-				add_field("","","");
-			}
-
-			var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_');
-			var suggestion_id = split_id[split_id.length - 2] + '_' + split_id[split_id.length - 1]
-			if (has_field) {
-				addFactValueFieldConstraint(split_id[split_id.length - 2], $("#fact_field_" + split_id[split_id.length - 2]).val())
-				var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_');
-				var suggestion_id = split_id[split_id.length - 2] + '_' + split_id[split_id.length - 1]
-			}
-
-			$('#field_'+split_id[split_id.length-2]+" #fact_txt_"+suggestion_id).val(elm["name"])
-			$('#fact_constraint_op_' + suggestion_id).val('=');
-			$("#fact_constraint_val_"+suggestion_id).val(elm["id"]);
-
-		}
-	}
-	// {
-	// 	title: 'Item #2',
-	// 	action: function(elm, d, i) {
-	// 		console.log('You have clicked the second item!');
-	// 		console.log('The data for this circle is: ' + d);
-	// 		console.log(elm);
-	// 		console.log(i);
-	// 	}
-	// }
-]
-
-
-
-d3.json("{{STATIC_URL}}searcher/graph.json", function(error, graph) {
-
-var linkedByIndex = {};
-    graph.links.forEach(function(d) {
-	linkedByIndex[d.source + "," + d.target] = true;
-    });
-
-	function isConnected(a, b) {
-        return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index] || a.index == b.index;
-    }
-
-	function hasConnections(a) {
-		for (var property in linkedByIndex) {
-				s = property.split(",");
-				if ((s[0] == a.index || s[1] == a.index) && linkedByIndex[property]) 					return true;
-		}
-	return false;
-	}
-	
-  force
-    .nodes(graph.nodes)
-    .links(graph.links)
-    .start();
-
-  var link = g.selectAll(".link")
-    .data(graph.links)
-    .enter().append("line")
-    .attr("class", "link")
-	.style("stroke-width",function(d) { return Math.clip(d.count, 1, max_stroke); })
-	.style("stroke", function(d) { 
-	if (isNumber(d.score) && d.score>=0) return color(d.score);
-	else return default_link_color; })
-
-
-  var node = g.selectAll(".node")
-    .data(graph.nodes)
-    .enter().append("g")
-    .attr("class", "node")
-		.call(force.drag)
-		.on('contextmenu', d3.contextMenu(menu));
-
-	node.on("dblclick.zoom", function(d) { d3.event.stopPropagation();
-	var dcx = (window.innerWidth/2-d.x*zoom.scale());
-	var dcy = (window.innerHeight/2-d.y*zoom.scale());
-	zoom.translate([dcx,dcy]);
-	 g.attr("transform", "translate("+ dcx + "," + dcy  + ")scale(" + zoom.scale() + ")");
-	});
-	var tocolor = "fill";
-	var towhite = "stroke";
-	if (outline) {
-		tocolor = "stroke"
-		towhite = "fill"
+	Math.clip = function (number, min, max) {
+		return Math.max(min, Math.min(number, max));
 	}
 
-  var circle = node.append("path")
-      .attr("d", d3.svg.symbol()
-        .size(function(d) { return Math.PI*Math.pow(size(d.size)||nominal_base_node_size,2); })
-        .type(function(d) { return d.type; }))
-  
-	.style(tocolor, function(d) { 
-	// if (isNumber(d.score) && d.score>=0) return color(d.score);
-	if (shapes.indexOf(d.type) >= 0) return color(d.type);
-	else return default_node_color; })
-    //.attr("r", function(d) { return size(d.size)||nominal_base_node_size; })
-	.style("stroke-width", function(d) { return d.count; })
-	.style(towhite, "white");
-  	
-				
-  var text = g.selectAll(".text")
-    .data(graph.nodes)
-    .enter().append("text")
-    .attr("dy", ".35em")
-	.style("font-size", nominal_text_size + "px")
+	var w = window.innerWidth;
+	var h = window.innerHeight;
 
-	if (text_center)
-	 text.text(function(d) { return d.id; })
-	.style("text-anchor", "middle");
-	else 
-	text.attr("dx", function(d) {return (size(d.size)||nominal_base_node_size);})
-    .text(function(d) { return '\u2002'+d.id; });
+	// var keyc = true, keys = true, keyt = true, keyr = true, keyx = true, keyd = true, keyl = true, keym = true, keyh = true, key1 = true, key2 = true, key3 = true, key0 = true, keyn = true, keyb = true, keyv = true
+	var keyc = true, keys = true, keyt = true, keyr = true, keyx = true, keyd = true, key1 = true, key2 = true, key3 = true, key0 = true, key4 = true, key5 = true, key6 = true, keyl = true, keyn = true, keyb = true, keyv = true
 
-	node.on("mouseover", function(d) {
-	set_highlight(d);
-	})
-  .on("mousedown", function(d) { d3.event.stopPropagation();
-  	focus_node = d;
-		set_focus(d);
-		set_highlight(d);
-	if (highlight_node === null) set_highlight(d)
+	var focus_node = null, highlight_node = null;
 
-	selectedLegend(d, linkedByIndex, graph);
-}	).on("mouseout", function(d) {
-		exit_highlight();
-}	);
+	var text_center = false;
+	var outline = false;
 
-		d3.select(window).on("mousedown",  
-		function() {
-		if (focus_node!==null)
+	var min_score = 0;
+	var max_score = 1;
+
+	var colors = ["#f0f20a", "#f90a0a", "#1d2bec", "#22d012", "#f9a70d", "#ff9292"];
+	var factNames = {{fact_names|safe}}
+	var shapes = d3.svg.symbolTypes;
+	var shapesColors = shapes.reduce((obj, k, i) => ({ ...obj, [k]: colors[i] }), {});
+
+	var color = d3.scale.ordinal()
+		.domain(shapes)
+		.range(colors);
+
+	var highlight_color = "blue";
+	var highlight_trans = 0.1;
+
+	var size = d3.scale.pow().exponent(1)
+		.domain([1, 100])
+		.range([8, 24]);
+
+	var force = d3.layout.force()
+		.linkDistance(250)
+		.charge(-3000)
+		.size([w, h]);
+
+	var default_node_color = "#ccc";
+	var default_link_color = "#efefef";
+	var nominal_base_node_size = 8;
+	var nominal_text_size = 10;
+	var max_text_size = 24;
+	var nominal_stroke = 1.5;
+	var max_stroke = 8;
+	var max_base_node_size = 36;
+	var min_zoom = 0.1;
+	var max_zoom = 7;
+	var svg = d3.select(".graphBody").append("svg");
+	var zoom = d3.behavior.zoom().scaleExtent([min_zoom, max_zoom])
+	var g = svg.append("g");
+	svg.style("cursor", "move");
+
+	var menu = [
 		{
-			focus_node = null;
-			svg.select(".selectedSymbol")//.remove();
-        .attr("fill-opacity", 1)
-        .transition()
-            .duration(300)
-            .attr("fill-opacity", 0)
-            .remove(); //remove after transitions are complete
-			if (highlight_trans<1)
-			{
-	
-		circle.style("opacity", 1);
-	  text.style("opacity", 1);
-	  link.style("opacity", 1);
-	}
-		}
-	
-	if (highlight_node === null) exit_highlight();
-		});
+			title: 'Add node to search',
+			action: function (elm, d, i) {
+				$("#constraint_field").val('{"path": "mlp_text.text", "type": "fact_str_val"}');
 
-
-	// 	d3.select(window).on("mouseup",  
-	// 	function() {
-	// 	if (focus_node!==null)
-	// 	{
-	// 		focus_node = null;
-	// 		if (highlight_trans<1)
-	// 		{
-	
-	// 	circle.style("opacity", 1);
-	//   text.style("opacity", 1);
-	//   link.style("opacity", 1);
-	// }
-	// 	}
-	
-	// if (highlight_node === null) exit_highlight();
-	// 	});
-
-function exit_highlight()
-{
-		highlight_node = null;
-	if (focus_node===null)
-	{
-		svg.style("cursor","move");
-		if (highlight_color!="white")
-	{
-  	  circle.style(towhite, "white");
-	  text.style("font-weight", "normal");
-	  link.style("stroke", function(o) {return (isNumber(o.score) && o.score>=0)?color(o.score):default_link_color});
- }
-	}
-}
-
-function set_focus(d)
-{	
-if (highlight_trans<1)  {
-    circle.style("opacity", function(o) {
-                return isConnected(d, o) ? 1 : highlight_trans;
-            });
-
-			text.style("opacity", function(o) {
-                return isConnected(d, o) ? 1 : highlight_trans;
-            });
-			
-            link.style("opacity", function(o) {
-                return o.source.index == d.index || o.target.index == d.index ? 1 : highlight_trans;
-            });		
-	}
-}
-
-
-function set_highlight(d)
-{
-	svg.style("cursor","pointer");
-	if (focus_node!==null) d = focus_node;
-	highlight_node = d;
-
-	if (highlight_color!="white")
-	{
-		  circle.style(towhite, function(o) {
-                return isConnected(d, o) ? highlight_color : "white";});
-			text.style("font-weight", function(o) {
-                return isConnected(d, o) ? "bold" : "normal";});
-            link.style("stroke", function(o) {
-		      return o.source.index == d.index || o.target.index == d.index ? highlight_color : ((isNumber(o.score) && o.score>=0)?color(o.score):default_link_color);
-
-            });
-	}
-}
-
-  zoom.on("zoom", function() {
-    //var stroke = nominal_stroke;
-    //if (nominal_stroke*zoom.scale()>max_stroke) stroke = max_stroke/zoom.scale();
-    //link.style("stroke-width",link.style("stroke-width") / stroke);
-    //circle.style("stroke-width",link.style("stroke-width") / stroke);
-
-	var base_radius = nominal_base_node_size;
-    if (nominal_base_node_size*zoom.scale()>max_base_node_size) base_radius = max_base_node_size/zoom.scale();
-        circle.attr("d", d3.svg.symbol()
-        .size(function(d) { return Math.PI*Math.pow(size(d.size)*base_radius/nominal_base_node_size||base_radius,2); })
-        .type(function(d) { return d.type; }))
-		
-	//circle.attr("r", function(d) { return (size(d.size)*base_radius/nominal_base_node_size||base_radius); })
-	if (!text_center) text.attr("dx", function(d) { return (size(d.size)*base_radius/nominal_base_node_size||base_radius); });
-	
-	var text_size = nominal_text_size;
-    if (nominal_text_size*zoom.scale()>max_text_size) text_size = max_text_size/zoom.scale();
-    text.style("font-size",text_size + "px");
-
-	g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-	});
-	 
-  svg.call(zoom);	  
-	
-  resize();
-  //window.focus();
-  d3.select(window).on("resize", resize).on("keydown", keydown);
-	  
-  force.on("tick", function() {
-  	
-    node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-    text.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-  
-    link.attr("x1", function(d) { return d.source.x; })
-      .attr("y1", function(d) { return d.source.y; })
-      .attr("x2", function(d) { return d.target.x; })
-      .attr("y2", function(d) { return d.target.y; });
-		
-    node.attr("cx", function(d) { return d.x; })
-      .attr("cy", function(d) { return d.y; });
-	});
-  
-  function resize() {
-    var width = window.innerWidth, height = window.innerHeight;
-	svg.attr("width", width).attr("height", height);
-    
-	force.size([force.size()[0]+(width-w)/zoom.scale(),force.size()[1]+(height-h)/zoom.scale()]).resume();
-    w = width;
-	h = height;
-	}
-	
-	function keydown() {
-	if (d3.event.keyCode==32) {  force.stop();}
-	else if (d3.event.keyCode>=48 && d3.event.keyCode<=90 && !d3.event.ctrlKey && !d3.event.altKey && !d3.event.metaKey)
-	{
-  switch (String.fromCharCode(d3.event.keyCode)) {
-		case "C": keyc = !keyc; break;
-		case "S": keys = !keys; break;
-		case "T": keyt = !keyt; break;
-		case "R": keyr = !keyr; break;
-		case "X": keyx = !keyx; break;
-		case "D": keyd = !keyd; break;
-
-		case "L": keyl = !keyl; break;
-		case "N": keyn = !keyn; break;
-		case "B": keyb = !keyb; break;
-		case "V": keyv = !keyv; break;
-
-		// case "0": key0 = !key0; break;
-		case "1": key1 = !key1; break;
-		case "2": key2 = !key2; break;
-		case "3": key3 = !key3; break;
-		case "4": key4 = !key4; break;
-		case "5": key5 = !key5; break;
-		case "6": key6 = !key6; break;
-  }
-  	
-  link.style("display", function(d) {
-				var flag  = vis_by_type(d.source.type)&&vis_by_type(d.target.type)&&vis_by_node_score(d.source.score)&&vis_by_node_score(d.target.score)&&vis_by_link_score(d.score);
-				linkedByIndex[d.source.index + "," + d.target.index] = flag;
-              return flag?"inline":"none";});
-  node.style("display", function(d) {
-				return (key0||hasConnections(d))&&vis_by_type(d.type)&&vis_by_node_score(d.score)?"inline":"none";});
-  text.style("display", function(d) {
-                return (key0||hasConnections(d))&&vis_by_type(d.type)&&vis_by_node_score(d.score)?"inline":"none";});
-
-				if (highlight_node !== null)
-				{
-					if ((key0||hasConnections(highlight_node))&&vis_by_type(highlight_node.type)&&vis_by_node_score(highlight_node.score)) { 
-					if (focus_node!==null) set_focus(focus_node);
-					set_highlight(highlight_node);
+				// $('span[id^=selected_field_]').filter(function() { return $(this).text().includes("[fact_text_values]")})
+				var has_field = false;
+				$('span[id^=selected_field_]').each(function (index) {
+					if ($(this).text().includes(['[fact_text_values]'])) {
+						has_field = true;
 					}
-					else {exit_highlight();}
+				});
+				if (!has_field) {
+					add_field("", "", "");
 				}
 
-}
-}
-});
+				var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_');
+				var suggestion_id = split_id[split_id.length - 2] + '_' + split_id[split_id.length - 1]
+				if (has_field) {
+					addFactValueFieldConstraint(split_id[split_id.length - 2], $("#fact_field_" + split_id[split_id.length - 2]).val())
+					var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_');
+					var suggestion_id = split_id[split_id.length - 2] + '_' + split_id[split_id.length - 1]
+				}
 
-function vis_by_type(type)
-{
-	switch (type) {
-	  case "circle": return keyc;
-	  case "square": return keys;
-	  case "triangle-up": return keyt;
-	  case "diamond": return keyr;
-	  case "cross": return keyx;
-	  case "triangle-down": return keyd;
-	  default: return true;
-}
-}
-function vis_by_node_score(score)
-{
-	if (isNumber(score))
-	{
-	if (score<=2) return key1;
-	else if (score<=5) return key2;
-	else if (score<=10) return key3;
-	else if (score<=20) return key4;
-	else if (score<=30) return key5;
-	else if (score<=50) return key6;
+				$('#field_' + split_id[split_id.length - 2] + " #fact_txt_" + suggestion_id).val(elm["name"])
+				$('#fact_constraint_op_' + suggestion_id).val('=');
+				$("#fact_constraint_val_" + suggestion_id).val(elm["id"]);
+
+			}
+		}
+		// {
+		// 	title: 'Item #2',
+		// 	action: function(elm, d, i) {
+		// 		console.log('You have clicked the second item!');
+		// 		console.log('The data for this circle is: ' + d);
+		// 		console.log(elm);
+		// 		console.log(i);
+		// 	}
+		// }
+	]
+
+	var graph = JSON.parse('{{graph_data|safe}}');
+
+	function callGraph() {
+		var linkedByIndex = {};
+		graph.links.forEach(function (d) {
+			linkedByIndex[d.source + "," + d.target] = true;
+		});
+
+		function isConnected(a, b) {
+			return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index] || a.index == b.index;
+		}
+
+		function hasConnections(a) {
+			for (var property in linkedByIndex) {
+				s = property.split(",");
+				if ((s[0] == a.index || s[1] == a.index) && linkedByIndex[property]) return true;
+			}
+			return false;
+		}
+
+		force
+			.nodes(graph.nodes)
+			.links(graph.links)
+			.start();
+
+		var link = g.selectAll(".link")
+			.data(graph.links)
+			.enter().append("line")
+			.attr("class", "link")
+			.style("stroke-width", function (d) { return Math.clip(d.count, 1, max_stroke); })
+			.style("stroke", function (d) {
+				if (isNumber(d.score) && d.score >= 0) return color(d.score);
+				else return default_link_color;
+			})
+
+
+		var node = g.selectAll(".node")
+			.data(graph.nodes)
+			.enter().append("g")
+			.attr("class", "node")
+			.call(force.drag)
+			.on('contextmenu', d3.contextMenu(menu));
+
+		node.on("dblclick.zoom", function (d) {
+			d3.event.stopPropagation();
+			var dcx = (window.innerWidth / 2 - d.x * zoom.scale());
+			var dcy = (window.innerHeight / 2 - d.y * zoom.scale());
+			zoom.translate([dcx, dcy]);
+			g.attr("transform", "translate(" + dcx + "," + dcy + ")scale(" + zoom.scale() + ")");
+		});
+		var tocolor = "fill";
+		var towhite = "stroke";
+		if (outline) {
+			tocolor = "stroke"
+			towhite = "fill"
+		}
+
+		var circle = node.append("path")
+			.attr("d", d3.svg.symbol()
+				.size(function (d) { return Math.PI * Math.pow(size(d.size) || nominal_base_node_size, 2); })
+				.type(function (d) { return d.type; }))
+
+			.style(tocolor, function (d) {
+				// if (isNumber(d.score) && d.score>=0) return color(d.score);
+				if (shapes.indexOf(d.type) >= 0) return color(d.type);
+				else return default_node_color;
+			})
+			//.attr("r", function(d) { return size(d.size)||nominal_base_node_size; })
+			.style("stroke-width", function (d) { return d.count; })
+			.style(towhite, "white");
+
+
+		var text = g.selectAll(".text")
+			.data(graph.nodes)
+			.enter().append("text")
+			.attr("dy", ".35em")
+			.style("font-size", nominal_text_size + "px")
+
+		if (text_center)
+			text.text(function (d) { return d.id; })
+				.style("text-anchor", "middle");
+		else
+			text.attr("dx", function (d) { return (size(d.size) || nominal_base_node_size); })
+				.text(function (d) { return '\u2002' + d.id; });
+
+		node.on("mouseover", function (d) {
+			set_highlight(d);
+		})
+			.on("mousedown", function (d) {
+				d3.event.stopPropagation();
+				focus_node = d;
+				set_focus(d);
+				set_highlight(d);
+				if (highlight_node === null) set_highlight(d)
+
+				selectedLegend(d, linkedByIndex, graph);
+			}).on("mouseout", function (d) {
+				exit_highlight();
+			});
+
+		d3.select(window).on("mousedown",
+			function () {
+				if (focus_node !== null) {
+					focus_node = null;
+					svg.select(".selectedSymbol")//.remove();
+						.attr("fill-opacity", 1)
+						.transition()
+						.duration(300)
+						.attr("fill-opacity", 0)
+						.remove(); //remove after transitions are complete
+					if (highlight_trans < 1) {
+
+						circle.style("opacity", 0.7);
+						text.style("opacity", 1);
+						link.style("opacity", 1);
+					}
+				}
+
+				if (highlight_node === null) exit_highlight();
+			});
+
+		function exit_highlight() {
+			highlight_node = null;
+			if (focus_node === null) {
+				svg.style("cursor", "move");
+				if (highlight_color != "white") {
+					circle.style(towhite, "white");
+					text.style("font-weight", "normal");
+					link.style("stroke", function (o) { return (isNumber(o.score) && o.score >= 0) ? color(o.score) : default_link_color });
+				}
+			}
+		}
+
+		function set_focus(d) {
+			if (highlight_trans < 1) {
+				circle.style("opacity", function (o) {
+					return isConnected(d, o) ? 1 : highlight_trans;
+				});
+
+				text.style("opacity", function (o) {
+					return isConnected(d, o) ? 1 : highlight_trans;
+				});
+
+				link.style("opacity", function (o) {
+					return o.source.index == d.index || o.target.index == d.index ? 1 : highlight_trans;
+				});
+			}
+		}
+
+
+		function set_highlight(d) {
+			svg.style("cursor", "pointer");
+			if (focus_node !== null) d = focus_node;
+			highlight_node = d;
+
+			if (highlight_color != "white") {
+				circle.style(towhite, function (o) {
+					return isConnected(d, o) ? highlight_color : "white";
+				});
+				text.style("font-weight", function (o) {
+					return isConnected(d, o) ? "bold" : "normal";
+				});
+				link.style("stroke", function (o) {
+					return o.source.index == d.index || o.target.index == d.index ? highlight_color : ((isNumber(o.score) && o.score >= 0) ? color(o.score) : default_link_color);
+
+				});
+			}
+		}
+
+		zoom.on("zoom", function () {
+
+			var base_radius = nominal_base_node_size;
+			if (nominal_base_node_size * zoom.scale() > max_base_node_size) base_radius = max_base_node_size / zoom.scale();
+			circle.attr("d", d3.svg.symbol()
+				.size(function (d) { return Math.PI * Math.pow(size(d.size) * base_radius / nominal_base_node_size || base_radius, 2); })
+				.type(function (d) { return d.type; }))
+
+			//circle.attr("r", function(d) { return (size(d.size)*base_radius/nominal_base_node_size||base_radius); })
+			if (!text_center) text.attr("dx", function (d) { return (size(d.size) * base_radius / nominal_base_node_size || base_radius); });
+
+			var text_size = nominal_text_size;
+			if (nominal_text_size * zoom.scale() > max_text_size) text_size = max_text_size / zoom.scale();
+			text.style("font-size", text_size + "px");
+
+			g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+		});
+
+		svg.call(zoom);
+
+		resize();
+		//window.focus();
+		d3.select(window).on("resize", resize).on("keydown", keydown);
+
+		force.on("tick", function () {
+
+			node.attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; });
+			text.attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+			link.attr("x1", function (d) { return d.source.x; })
+				.attr("y1", function (d) { return d.source.y; })
+				.attr("x2", function (d) { return d.target.x; })
+				.attr("y2", function (d) { return d.target.y; });
+
+			node.attr("cx", function (d) { return d.x; })
+				.attr("cy", function (d) { return d.y; });
+		});
+
+		function resize() {
+			var width = window.innerWidth, height = window.innerHeight;
+			svg.attr("width", width).attr("height", height);
+
+			force.size([force.size()[0] + (width - w) / zoom.scale(), force.size()[1] + (height - h) / zoom.scale()]).resume();
+			w = width;
+			h = height;
+		}
+
+		function keydown() {
+			if (d3.event.keyCode == 32) { force.stop(); }
+			else if (d3.event.keyCode >= 48 && d3.event.keyCode <= 90 && !d3.event.ctrlKey && !d3.event.altKey && !d3.event.metaKey) {
+				switch (String.fromCharCode(d3.event.keyCode)) {
+					case "C": keyc = !keyc; break;
+					case "S": keys = !keys; break;
+					case "T": keyt = !keyt; break;
+					case "R": keyr = !keyr; break;
+					case "X": keyx = !keyx; break;
+					case "D": keyd = !keyd; break;
+
+					case "L": keyl = !keyl; break;
+					case "N": keyn = !keyn; break;
+					case "B": keyb = !keyb; break;
+					case "V": keyv = !keyv; break;
+
+					// case "0": key0 = !key0; break;
+					case "1": key1 = !key1; break;
+					case "2": key2 = !key2; break;
+					case "3": key3 = !key3; break;
+					case "4": key4 = !key4; break;
+					case "5": key5 = !key5; break;
+					case "6": key6 = !key6; break;
+				}
+
+				link.style("display", function (d) {
+					var flag = vis_by_type(d.source.type) && vis_by_type(d.target.type) && vis_by_node_score(d.source.score) && vis_by_node_score(d.target.score) && vis_by_link_score(d.score);
+					linkedByIndex[d.source.index + "," + d.target.index] = flag;
+					return flag ? "inline" : "none";
+				});
+				node.style("display", function (d) {
+					return (key0 || hasConnections(d)) && vis_by_type(d.type) && vis_by_node_score(d.score) ? "inline" : "none";
+				});
+				text.style("display", function (d) {
+					return (key0 || hasConnections(d)) && vis_by_type(d.type) && vis_by_node_score(d.score) ? "inline" : "none";
+				});
+
+				if (highlight_node !== null) {
+					if ((key0 || hasConnections(highlight_node)) && vis_by_type(highlight_node.type) && vis_by_node_score(highlight_node.score)) {
+						if (focus_node !== null) set_focus(focus_node);
+						set_highlight(highlight_node);
+					}
+					else { exit_highlight(); }
+				}
+
+			}
+		}
+	};
+	callGraph();
+	function vis_by_type(type) {
+		switch (type) {
+			case "circle": return keyc;
+			case "square": return keys;
+			case "triangle-up": return keyt;
+			case "diamond": return keyr;
+			case "cross": return keyx;
+			case "triangle-down": return keyd;
+			default: return true;
+		}
 	}
-	return true;
-}
+	function vis_by_node_score(score) {
+		if (isNumber(score)) {
+			if (score <= 2) return key1;
+			else if (score <= 5) return key2;
+			else if (score <= 10) return key3;
+			else if (score <= 20) return key4;
+			else if (score <= 30) return key5;
+			else if (score <= 50) return key6;
+		}
+		return true;
+	}
 
-function vis_by_link_score(score)
-{
-	if (isNumber(score))
-	{
-	if (score>=2) return keyn;
-	else if (score>=5) return keyb;
-	else if (score>=10) return keyv;
-	else if (score>=20) return keyn;
-}
-	return true;
-}
+	function vis_by_link_score(score) {
+		if (isNumber(score)) {
+			if (score >= 2) return keyn;
+			else if (score >= 5) return keyb;
+			else if (score >= 10) return keyv;
+			else if (score >= 20) return keyn;
+		}
+		return true;
+	}
 
-function isNumber(n) {
-  return !isNaN(parseFloat(n)) && isFinite(n);
-}
+	function isNumber(n) {
+		return !isNaN(parseFloat(n)) && isFinite(n);
+	}
 
-/* ####################################### LEGEND ##################################### */
+	/* ####################################### LEGEND ##################################### */
 
-var triangleU = d3.svg.symbol().type('triangle-up')(),
-  circle = d3.svg.symbol().type('circle')(),
-  cross = d3.svg.symbol().type('cross')(),
-  diamond = d3.svg.symbol().type('diamond')(),
-  triangleD = d3.svg.symbol().type('triangle-down')(),
-  square = d3.svg.symbol().type('square')();
+	var triangleU = d3.svg.symbol().type('triangle-up')(),
+		circle = d3.svg.symbol().type('circle')(),
+		cross = d3.svg.symbol().type('cross')(),
+		diamond = d3.svg.symbol().type('diamond')(),
+		triangleD = d3.svg.symbol().type('triangle-down')(),
+		square = d3.svg.symbol().type('square')();
 
-//example output of d3.svg.symbol().type('circle')();
-//"M0,4.51351666838205A4.51351666838205,4.51351666838205 0 1,1 0,
-//-4.51351666838205A4.51351666838205,4.51351666838205 0 1,1 0,4.51351666838205Z"
+	//example output of d3.svg.symbol().type('circle')();
+	//"M0,4.51351666838205A4.51351666838205,4.51351666838205 0 1,1 0,
+	//-4.51351666838205A4.51351666838205,4.51351666838205 0 1,1 0,4.51351666838205Z"
 
-var symbolScale =  d3.scale.ordinal()
-  .domain(['PER - C','ORG - X','LOC - R', 'EML - S', 'PHO - D', 'Other - T'])
-  .range([circle, cross, diamond, square, triangleD, triangleU] );
+	// var keyCombinationList = []
+	// keyBindingList = ['C', 'X', 'R', 'S', 'D', 'T'];
+	// for(var i = 0; i < factNames.length; i++) {
+	// 	keyCombinationList.push(factNames[i] + ' - ' + keyBindingList[i])
+	// }
+	var symbolScale = d3.scale.ordinal()
+		.domain(factNames)
+		.range([circle, cross, diamond, square, triangleD, triangleU]);
 
-var svg = d3.select("svg");
+	var svg = d3.select("svg");
 
-svg.append("g")
-  .attr("class", "legendSymbol")
-  .attr("transform", "translate(20, 20)");
+	svg.append("g")
+		.attr("class", "legendSymbol")
+		.attr("transform", "translate(20, 20)");
 
-var legendPath = d3.legend.symbol()
-  .scale(symbolScale)
-  .orient("vertical")
-  .title("Keyboard shortcuts to filter facts by type and by count")
-	.on("cellclick", function(d){alert("clicked " + d);});
+	var legendPath = d3.legend.symbol()
+		.scale(symbolScale)
+		.orient("vertical")
+		.title("Keyboard shortcuts to filter facts by type and by count")
+		.on("cellclick", function (d) { alert("clicked " + d); });
 
-svg.select(".legendSymbol")
-	.call(legendPath);
+	svg.select(".legendSymbol")
+		.call(legendPath);
 
-var colorScale = d3.scale.ordinal()
-  .domain(['PER','ORG','LOC', 'EML', 'PHO', 'Other'])
-	.range(["#f0f20a","#f90a0a", "#1d2bec", "#22d012", "#f9a70d", "#ff9292"])
+	var colorScale = d3.scale.ordinal()
+		.domain(factNames)
+		.range(colors)
 
-svg.selectAll(".cell path").each(function(d) {
-  d3.select(this).style("fill", colorScale(d))
-})
-
-
-/* ############################ KEYBINDINGS ####################### */
-var linear = d3.scale.ordinal()
-  .domain(['<=2 - 1', '2-5: 2', '5 - 10: 3', '10 - 20: 4', '20-30: 5', '30-50: 6'])
-  .range(["#1de8b5", "#42a5f5", "#ef5350", "#ffca28", "#7986cb", "#8a2be2"]);
-
-var svg = d3.select("svg");
-
-svg.append("g")
-  .attr("class", "legendLinear")
-  .attr("transform", "translate(105,40)");
-
-var legendLinear = d3.legend.color()
-	.shapeWidth(11)
-	.shapeHeight(11)
-	.shapePadding(9)
-  .orient('vertical')
-  .scale(linear);
-
-svg.select(".legendLinear")
-  .call(legendLinear);
+	svg.selectAll(".cell path").each(function (d) {
+		d3.select(this).style("fill", colorScale(d))
+	})
 
 
-/* ############################ SELECTION ######################### */
+	/* ############################ KEYBINDINGS ####################### */
+	var linear = d3.scale.ordinal()
+		.domain(['<=2 - 1', '2 - 5: 2', '5 - 10: 3', '10 - 20: 4', '20 - 30: 5', '30 - 50: 6'])
+		.range(["#1de8b5", "#42a5f5", "#ef5350", "#ffca28", "#7986cb", "#8a2be2"]);
 
-function selectedLegend(node, linkedByIndex, graph) {
-	var linkedNodes = [];
-	for(var i = 0; i < graph.links.length; i++) {
+	var svg = d3.select("svg");
+
+	svg.append("g")
+		.attr("class", "legendLinear")
+		.attr("transform", "translate(155,40)");
+
+	var legendLinear = d3.legend.color()
+		.shapeWidth(11)
+		.shapeHeight(11)
+		.shapePadding(9)
+		.orient('vertical')
+		.scale(linear);
+
+	svg.select(".legendLinear")
+		.call(legendLinear);
+
+
+	/* ############################ SELECTION ######################### */
+
+	function selectedLegend(node, linkedByIndex, graph) {
+		var linkedNodes = [];
+		for (var i = 0; i < graph.links.length; i++) {
 			if (graph.links[i]["source"]["source"] == node.source) {
 				if (!linkedNodes.includes(graph.links[i]["target"])) {
-					linkedNodes.push({"count": graph.links[i]["count"], "value": graph.links[i]["target"]})
+					linkedNodes.push({ "count": graph.links[i]["count"], "value": graph.links[i]["target"] })
 				}
 			}
 			else if (graph.links[i]["target"]["source"] == node.source) {
-				linkedNodes.push({"count": graph.links[i]["count"], "value": graph.links[i]["source"]})
+				linkedNodes.push({ "count": graph.links[i]["count"], "value": graph.links[i]["source"] })
 			}
+		}
+
+		domainList = []
+		rangeList = []
+		colorList = []
+		for (var i = 0; i < linkedNodes.length; i++) {
+			domainList.push(linkedNodes[i]["count"] + 'x ' + linkedNodes[i]["value"]["name"] + " - " + linkedNodes[i]["value"]["id"]);
+			rangeList.push(d3.svg.symbol().type(linkedNodes[i]["value"]["type"])());
+			colorList.push(shapesColors[linkedNodes[i]["value"]["type"]]);
+		}
+		var selectedSymbol = d3.scale.ordinal()
+			.domain(domainList)
+			.range(rangeList);
+
+		svg.append("g")
+			.attr("class", "selectedSymbol")
+			.attr("transform", "translate(20, 250)");
+
+		var selectedPath = d3.legend.symbol()
+			.scale(selectedSymbol)
+			.orient("vertical")
+			.title(node.name + ' - ' + node.id + ' x' + node.score)
+			.on("cellclick", function (d) { alert("clicked " + d); });
+
+		svg.select(".selectedSymbol")
+			.call(selectedPath);
+
+		var colorScale = d3.scale.ordinal()
+			.domain(domainList)
+			.range(colorList)
+
+		svg.selectAll(".selectedSymbol path").each(function (d) {
+			d3.select(this).style("fill", colorScale(d))
+		})
 	}
-
-	// debugger;
-	domainList = []
-	rangeList = []
-	colorList = []
-	for(var i = 0; i < linkedNodes.length; i++) {
-		domainList.push(linkedNodes[i]["count"] + 'x ' + linkedNodes[i]["value"]["name"] + " - " + linkedNodes[i]["value"]["id"]);
-		rangeList.push(d3.svg.symbol().type(linkedNodes[i]["value"]["type"])());
-		colorList.push(shapesColors[linkedNodes[i]["value"]["type"]]);
-	}
-	var selectedSymbol =  d3.scale.ordinal()
-		.domain(domainList)
-		.range(rangeList);
-	
-	svg.append("g")
-		.attr("class", "selectedSymbol")
-		.attr("transform", "translate(20, 250)");
-	
-	var selectedPath = d3.legend.symbol()
-		.scale(selectedSymbol)
-		.orient("vertical")
-		.title(node.name + ' - ' + node.id + ' x'+node.score)
-		.on("cellclick", function(d){alert("clicked " + d);});
-	
-	svg.select(".selectedSymbol")
-		.call(selectedPath);
-
-	var colorScale = d3.scale.ordinal()
-		.domain(domainList)
-		.range(colorList)
-
-	// debugger;
-	svg.selectAll(".selectedSymbol path").each(function(d) {
-		d3.select(this).style("fill", colorScale(d))
-	})
-}
 
 
 /* ######################### CONTEXT MENU ###################### */
