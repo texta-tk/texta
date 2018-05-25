@@ -16,7 +16,7 @@ docker-compose.yaml
 texta/documentation
 texta/files
 texta/scripts/example
-texta/log/*
+
 
 .idea
 

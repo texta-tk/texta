@@ -45,8 +45,8 @@ BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 #         error occurs during page resolving.
 
 STATIC_ROOT = os.path.join(os.path.abspath(os.path.join(BASE_DIR, os.pardir)), 'static')
-
 SERVER_TYPE = os.getenv('TEXTA_SERVER_TYPE')
+
 if SERVER_TYPE is None:
     SERVER_TYPE = 'development'
 
@@ -163,18 +163,17 @@ ALLOWED_HOSTS = ['*']
 #
 DATABASES = {
 	'default': {
-		'ENGINE':       'django.db.backends.sqlite3',
-		# Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-		'NAME':         os.path.join(BASE_DIR, 'database', 'lex.db'),  # Or path to database file if using sqlite3.
-		'USER':         '',  # Not used with sqlite3.
-		'PASSWORD':     '',  # Not used with sqlite3.
-		'HOST':         '',  # Set to empty string for localhost. Not used with sqlite3.
-		'PORT':         '',  # Set to empty string for default. Not used with sqlite3.
+		'ENGINE':       os.getenv('DJANGO_DATABASE_ENGINE', 'django.db.backends.sqlite3'),
+		'NAME':         os.getenv('DJANGO_DATABASE_NAME', os.path.join(BASE_DIR, 'database', 'lex.db')),
+		'USER':         os.getenv('DJANGO_DATABASE_USER', ''),  # Not used with sqlite3.
+		'PASSWORD':     os.getenv('DJANGO_DATABASE_PASSWORD', ''),  # Not used with sqlite3.
+		'HOST':         os.getenv('DJANGO_DATABASE_HOST', ''),  # Set to empty string for localhost. Not used with sqlite3.
+		'PORT':         os.getenv('DJANGO_DATABASE_PORT', ''),  # Set to empty string for default. Not used with sqlite3.
 		'BACKUP_COUNT': 5,
 	}
 }
 
-if not os.path.exists(os.path.dirname(DATABASES['default']['NAME'])):
+if not os.path.exists(os.path.dirname(DATABASES['default']['NAME'])) and os.environ.get('DJANGO_DATABASE_NAME') is None:
 	os.makedirs(os.path.dirname(DATABASES['default']['NAME']))
 
 
@@ -262,12 +261,8 @@ INSTALLED_APPS = (
 
 # Elasticsearch URL with protocol specification. Can be either localhost
 # or remote address.
-#
-es_url = os.getenv('TEXTA_ELASTICSEARCH_URL')
-if es_url is None:
-	es_url = 'http://localhost:9200'
+es_url = os.getenv('TEXTA_ELASTICSEARCH_URL', 'http://localhost:9200')
 
-# es_url = 'http://10.6.6.93:9200'
 
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')
@@ -335,21 +330,19 @@ LOGGING = {
 	'formatters':               {
 		'detailed':       {
 			'format': logging_separator.join(
-					['%(levelname)s', '%(module)s', '%(name)s', '%(process)d', '%(thread)d', '%(message)s',
-					 '%(asctime)s'])
+					['%(levelname)s', '%(module)s', 'function: %(funcName)s', 'line: %(lineno)s',  '%(name)s', 'pid: %(process)d', '%(thread)d', '%(message)s', '%(asctime)s'])
 		},
 		'normal':         {
 			'format': logging_separator.join(['%(levelname)s', '%(module)s', '%(message)s', '%(asctime)s'])
 		},
 		'detailed_error': {
 			'format': '\n' + logging_separator.join(
-					['%(levelname)s', '%(module)s', '%(name)s', '%(process)d', '%(thread)d', '%(message)s',
-					 '%(asctime)s'])
+					['%(levelname)s', '%(module)s', '%(name)s', '%(process)d', '%(thread)d', '%(message)s', '%(asctime)s'])
 		}
 	},
 	'handlers':                 {
 		'info_file':  {
-			'level':     'DEBUG',
+			'level':     'INFO',
 			'class':     'logging.FileHandler',
 			'formatter': 'detailed',
 			'filename':  info_log_file_name,
@@ -367,7 +360,7 @@ LOGGING = {
 	},
 	'loggers':                  {
 		INFO_LOGGER:  {
-			'level':    'DEBUG',
+			'level':    'INFO',
 			'handlers': ['info_file']
 		},
 		ERROR_LOGGER: {

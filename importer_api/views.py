@@ -24,8 +24,7 @@ class ElasticsearchHandler:
 		self.logger.info(response)
 
 	def insert_multiple_documents(self, list_of_documents):
-		actions = [{"_source": document, "_index": self.index, "_type": self.doc_type} for document in
-		           list_of_documents]
+		actions = [{"_source": document, "_index": self.index, "_type": self.doc_type} for document in list_of_documents]
 		for ok, response in elastic_parallelbulk(client=self.es, actions=actions):
 			if not ok:
 				self.logger.error(response)
@@ -38,11 +37,8 @@ class ElasticsearchHandler:
 		response = self.es.indices.put_mapping(doc_type=self.doc_type, index=self.index, body=mapping_body)
 		self.logger.info(response)
 
-	def check_for_index_existance(self):
-		return self.es.indices.exists(index=self.index)
-
 	def create_index_if_not_exist(self):
-		index_exists = self.check_for_index_existance()
+		index_exists = self.es.indices.exists(index=self.index)
 		if not index_exists:
 			self.insert_index_into_es()
 
@@ -99,12 +95,16 @@ class ImporterApiView(View):
 	}
 
 	def post(self, request, *args, **kwargs):
+		logger = logging.getLogger(INFO_LOGGER)
+
 		try:
-			logger = logging.getLogger(INFO_LOGGER)
 
 			# In Python 3.5, json.loads() accepts only unicode, unlike in Python 3.6.
 			utf8_post_payload = request.body.decode("utf-8")
+			logger.info(str(utf8_post_payload))
+
 			post_payload_dict = json.loads(utf8_post_payload)
+			logger.info(post_payload_dict)
 
 			logger.info("Validating mandatory field and value existences in ImportAPI")
 			ApiInputValidator(post_payload_dict, ["auth_token", "index", "doc_type", "data"])
@@ -132,4 +132,5 @@ class ImporterApiView(View):
 			return JsonResponse({"message": "Item(s) successfully saved."})
 
 		except ValueError as e:
+			logger.info(str(e))
 			return JsonResponse({"message": str(e)})
