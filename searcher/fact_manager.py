@@ -130,16 +130,21 @@ class FactManager:
         # Get cooccurrences and remove values with 0
         fact_combinations = {k:v for k,v in dict(zip(fact_combinations, self.count_cooccurrences(fact_combinations))).items() if v != 0}
         shapes = ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"]
-        # types = {"PER": "circle", "LOC": "diamond", "PHO": "triangle-down", "EML": "square", "ORG": "cross", "ADDR": "triangle-up"}
         types = dict(zip(unique_fact_names,shapes))
-        nodes = []
-        links = []
-        for fact in facts:
-            max_size = lambda x: min(x, 100)
-            nodes.append({"source": facts[fact]['id'], "size":  max_size(facts[fact]['doc_count']), "score": facts[fact]['doc_count'], "name": facts[fact]['name'], "id": facts[fact]['value'], "type": types[facts[fact]['name']]})
 
+        nodes = []
+        max_node_size = 0
+        min_node_size = 0
+        for fact in facts:
+            max_node_size = max(max_node_size, facts[fact]['doc_count'])
+            min_node_size = min(max_node_size, facts[fact]['doc_count'])
+            nodes.append({"source": facts[fact]['id'], "size": facts[fact]['doc_count'], "score": facts[fact]['doc_count'], "name": facts[fact]['name'], "id": facts[fact]['value'], "type": types[facts[fact]['name']]})
+
+        links = []
+        max_link_size = 0
         for fact in fact_combinations.keys():
+            max_link_size = max(max_link_size, fact_combinations[fact])
             links.append({"source": facts[fact[0][0] + " - " + fact[0][1]]['id'], "target": facts[fact[1][0] + " - " + fact[1][1]]['id'], "count": fact_combinations[fact]})
 
         graph_data = json.dumps({"nodes": nodes, "links": links})
-        return (graph_data, unique_fact_names)
+        return (graph_data, unique_fact_names, max_node_size, max_link_size, min_node_size)

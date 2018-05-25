@@ -918,7 +918,7 @@ def _extract_fact_val_constraint(raw_constraint):
 @login_required
 def fact_graph(request):
     fact_m = FactManager(request)
-    graph_data, fact_names = fact_m.fact_graph()
+    graph_data, fact_names, max_node_size, max_link_size, min_node_size = fact_m.fact_graph()
 
     # import pdb;pdb.set_trace()
     template_params = {'STATIC_URL': STATIC_URL,
@@ -926,6 +926,9 @@ def fact_graph(request):
                        'search_id': 1,
                        'searches': Search.objects.filter(author=request.user),
                        'graph_data': graph_data,
+                       'max_node_size': max_node_size,
+                       'max_link_size': max_link_size,
+                       'min_node_size': min_node_size,
                        'fact_names': fact_names}
     template = loader.get_template('fact_graph_results.html')
     print('returning')
