@@ -32,7 +32,7 @@ services:
     ports:
       - "9200:9200"
     env_file:
-      - .env
+      - docker/texta/docker-toolkit.env
     ports:
       - "8000:80"
     build:
