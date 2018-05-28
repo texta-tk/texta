@@ -24,13 +24,18 @@ class ElasticsearchHandler:
 		self.logger.info(response)
 
 	def insert_multiple_documents(self, list_of_documents):
-		actions = [{"_source": document, "_index": self.index, "_type": self.doc_type} for document in
-		           list_of_documents]
-		for ok, response in elastic_parallelbulk(client=self.es, actions=actions):
-			if not ok:
+		actions = [{"_source": document, "_index": self.index, "_type": self.doc_type} for document in list_of_documents]
+
+		for success, response in elastic_parallelbulk(client=self.es, actions=actions):
+			if not success:
 				self.logger.error(response)
+				raise ValueError(str(response))
 
 	def insert_index_into_es(self):
+		"""
+		Low-level helper function to create an index. Without the ignore=400 parameter, it will raise an Exception
+		in case an index already exists with that name.
+		"""
 		response = self.es.indices.create(index=self.index, ignore=400)
 		self.logger.info(response)
 
@@ -38,16 +43,10 @@ class ElasticsearchHandler:
 		response = self.es.indices.put_mapping(doc_type=self.doc_type, index=self.index, body=mapping_body)
 		self.logger.info(response)
 
-	def check_for_index_existance(self):
-		return self.es.indices.exists(index=self.index)
-
 	def create_index_if_not_exist(self):
-		index_exists = self.check_for_index_existance()
+		index_exists = self.es.indices.exists(index=self.index)
 		if not index_exists:
 			self.insert_index_into_es()
-
-			# Add default mapping for texta_facts.
-			self.insert_mapping_into_doctype(ImporterApiView.default_mapping)
 
 
 class ApiInputValidator:
@@ -99,30 +98,26 @@ class ImporterApiView(View):
 	}
 
 	def post(self, request, *args, **kwargs):
-		try:
-			logger = logging.getLogger(INFO_LOGGER)
+		logger = logging.getLogger(INFO_LOGGER)
 
+		try:
 			# In Python 3.5, json.loads() accepts only unicode, unlike in Python 3.6.
 			utf8_post_payload = request.body.decode("utf-8")
-			post_payload_dict = json.loads(utf8_post_payload)
+			es_data_payload = json.loads(utf8_post_payload)
 
-			logger.info("Validating mandatory field and value existences in ImportAPI")
-			ApiInputValidator(post_payload_dict, ["auth_token", "index", "doc_type", "data"])
+			ApiInputValidator(es_data_payload, ["auth_token", "index", "doc_type", "data"])
+			AuthTokenHandler(es_data_payload.get("auth_token"))
 
-			logger.info("Authenticating user for ImportAPI.")
-			AuthTokenHandler(post_payload_dict.get("auth_token"))
-
-			logger.info("Creating ES client.")
-			es_handler = ElasticsearchHandler(index=post_payload_dict["index"], doc_type=post_payload_dict["doc_type"])
-			logger.info("Finished creating ES client.")
+			es_handler = ElasticsearchHandler(index=es_data_payload["index"], doc_type=es_data_payload["doc_type"])
 
 			es_handler.create_index_if_not_exist()
+			es_handler.insert_mapping_into_doctype(ImporterApiView.default_mapping)
 
-			api_payload = post_payload_dict["data"]
+			api_payload = es_data_payload["data"]
 			type_of_insertion_data = type(api_payload)
 
-			if "mapping" in post_payload_dict:
-				es_handler.insert_mapping_into_doctype(post_payload_dict["mapping"])
+			if "mapping" in es_data_payload:
+				es_handler.insert_mapping_into_doctype(es_data_payload["mapping"])
 
 			if type_of_insertion_data == dict:
 				es_handler.insert_single_document(api_payload)
@@ -132,4 +127,5 @@ class ImporterApiView(View):
 			return JsonResponse({"message": "Item(s) successfully saved."})
 
 		except ValueError as e:
+			logger.info(str(e))
 			return JsonResponse({"message": str(e)})
