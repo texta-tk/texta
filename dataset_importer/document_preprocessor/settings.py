@@ -2,6 +2,7 @@ import os, sys
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
 import preprocessors
+from texta.settings import DATASET_IMPORTER
 
 
 def log_preprocessor_status(code, status):
@@ -17,7 +18,7 @@ try:
         'class': preprocessors.mlp.MlpPreprocessor,
         'parameters_template': 'parameters/preprocessor_parameters/mlp.html',
         'arguments': {
-            'mlp_url': 'http://10.6.6.92/mlp/process',
+            'mlp_url': DATASET_IMPORTER['urls']['mlp'],
             'enabled_features': ['text', 'lang', 'texta_facts']
         },
         'is_enabled': True

@@ -297,8 +297,16 @@ DATASET_IMPORTER = {
 		'enabled':             False,
 		'interval_in_seconds': 10,
 		'index_sqlite_path':   os.path.join(BASE_DIR, 'database', 'import_sync.db')
+	},
+	
+	'urls': {
+	    'mlp': 'http://10.6.6.92/mlp/process'
 	}
 }
+
+
+if os.getenv('TEXTA_SERVER_TYPE') == 'docker':
+    DATASET_IMPORTER['urls']['mlp'] = 'http://texta-mlp:5000/mlp/process'
 
 if not os.path.exists(DATASET_IMPORTER['directory']):
 	os.makedirs(DATASET_IMPORTER['directory'])
