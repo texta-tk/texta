@@ -920,7 +920,6 @@ def fact_graph(request):
     fact_m = FactManager(request)
     graph_data, fact_names, max_node_size, max_link_size, min_node_size = fact_m.fact_graph()
 
-    # import pdb;pdb.set_trace()
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'search_id': 1,
@@ -931,5 +930,4 @@ def fact_graph(request):
                        'min_node_size': min_node_size,
                        'fact_names': fact_names}
     template = loader.get_template('fact_graph_results.html')
-    print('returning')
     return HttpResponse(template.render(template_params, request))

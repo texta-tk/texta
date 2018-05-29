@@ -103,7 +103,7 @@ class FactManager:
             unique_fact_names - [list of string] -- All unique fact names
         """
 
-        aggs = {"facts": {"nested": {"path": "texta_facts"}, "aggs": {"fact_names": {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val", "size": 3}}}}}}}
+        aggs = {"facts": {"nested": {"path": "texta_facts"}, "aggs": {"fact_names": {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val", "size": 15}}}}}}}
         self.es_m.build(self.es_params)
         self.es_m.set_query_parameter('aggs', aggs)
         response = self.es_m.search()
@@ -126,7 +126,6 @@ class FactManager:
 
     def fact_graph(self):
         facts, fact_combinations, unique_fact_names = self.facts_via_aggregation()
-
         # Get cooccurrences and remove values with 0
         fact_combinations = {k:v for k,v in dict(zip(fact_combinations, self.count_cooccurrences(fact_combinations))).items() if v != 0}
         shapes = ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"]
