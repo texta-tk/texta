@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from account.models import Profile
 from django.views import View
-from elasticsearch.helpers import streaming_bulk as elastic_streambulk, bulk as elastic_bulk
+from elasticsearch.helpers import streaming_bulk as elastic_parallelbulk
 from texta.settings import es_url, INFO_LOGGER
 
 import json
@@ -11,8 +11,8 @@ import elasticsearch
 
 class ElasticsearchHandler:
 
-	def __init__(self, doc_type, index, hosts=[es_url]):
-		self.es = elasticsearch.Elasticsearch(hosts=hosts)
+	def __init__(self, doc_type, index, hosts=[es_url], timeout=30):
+		self.es = elasticsearch.Elasticsearch(hosts=hosts, timeout=timeout)
 		self.es.cluster.health(wait_for_status='yellow', request_timeout=1000)
 		self.index = index
 		self.doc_type = doc_type
@@ -25,11 +25,17 @@ class ElasticsearchHandler:
 
 	def insert_multiple_documents(self, list_of_documents):
 		actions = [{"_source": document, "_index": self.index, "_type": self.doc_type} for document in list_of_documents]
-		for ok, response in elastic_streambulk(client=self.es, actions=actions, chunk_size=1000, max_retries=3):
-			if not ok:
+
+		for success, response in elastic_parallelbulk(client=self.es, actions=actions):
+			if not success:
 				self.logger.error(response)
+				raise ValueError(str(response))
 
 	def insert_index_into_es(self):
+		"""
+		Low-level helper function to create an index. Without the ignore=400 parameter, it will raise an Exception
+		in case an index already exists with that name.
+		"""
 		response = self.es.indices.create(index=self.index, ignore=400)
 		self.logger.info(response)
 
@@ -37,11 +43,8 @@ class ElasticsearchHandler:
 		response = self.es.indices.put_mapping(doc_type=self.doc_type, index=self.index, body=mapping_body)
 		self.logger.info(response)
 
-	def check_for_index_existance(self):
-		return self.es.indices.exists(index=self.index)
-
 	def create_index_if_not_exist(self):
-		index_exists = self.check_for_index_existance()
+		index_exists = self.es.indices.exists(index=self.index)
 		if not index_exists:
 			self.insert_index_into_es()
 
@@ -79,31 +82,42 @@ class AuthTokenHandler:
 
 # Create your views here.
 class ImporterApiView(View):
+	default_mapping = {
+		'properties': {
+			'texta_facts': {
+				'type':       'nested',
+				'properties': {
+					'doc_path': {'type': 'keyword'},
+					'fact':     {'type': 'keyword'},
+					'num_val':  {'type': 'long'},
+					'spans':    {'type': 'keyword'},
+					'str_val':  {'type': 'keyword'}
+				}
+			}
+		}
+	}
 
 	def post(self, request, *args, **kwargs):
-		try:
-			logger = logging.getLogger(INFO_LOGGER)
+		logger = logging.getLogger(INFO_LOGGER)
 
+		try:
 			# In Python 3.5, json.loads() accepts only unicode, unlike in Python 3.6.
 			utf8_post_payload = request.body.decode("utf-8")
-			post_payload_dict = json.loads(utf8_post_payload)
+			es_data_payload = json.loads(utf8_post_payload)
 
-			logger.info("Validating mandatory field and value existances in ImportAPI")
-			ApiInputValidator(post_payload_dict, ["auth_token", "index", "doc_type", "data"])
+			ApiInputValidator(es_data_payload, ["auth_token", "index", "doc_type", "data"])
+			AuthTokenHandler(es_data_payload.get("auth_token"))
 
-			logger.info("Authenticating user for ImportAPI.")
-			AuthTokenHandler(post_payload_dict.get("auth_token"))
+			es_handler = ElasticsearchHandler(index=es_data_payload["index"], doc_type=es_data_payload["doc_type"])
 
-			logger.info("Creating ES client.")
-			es_handler = ElasticsearchHandler(index=post_payload_dict["index"], doc_type=post_payload_dict["doc_type"])
-			logger.info("Finished creating ES client.")
-
-			api_payload = post_payload_dict["data"]
 			es_handler.create_index_if_not_exist()
+			es_handler.insert_mapping_into_doctype(ImporterApiView.default_mapping)
+
+			api_payload = es_data_payload["data"]
 			type_of_insertion_data = type(api_payload)
 
-			if "mapping" in post_payload_dict:
-				es_handler.insert_mapping_into_doctype(post_payload_dict["mapping"])
+			if "mapping" in es_data_payload:
+				es_handler.insert_mapping_into_doctype(es_data_payload["mapping"])
 
 			if type_of_insertion_data == dict:
 				es_handler.insert_single_document(api_payload)
@@ -113,4 +127,5 @@ class ImporterApiView(View):
 			return JsonResponse({"message": "Item(s) successfully saved."})
 
 		except ValueError as e:
+			logger.info(str(e))
 			return JsonResponse({"message": str(e)})

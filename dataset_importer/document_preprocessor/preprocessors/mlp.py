@@ -36,12 +36,15 @@ class MlpPreprocessor(object):
         input_features = json.loads(kwargs['mlp_preprocessor_input_features'])
 
         for input_feature in input_features:
-            texts = [document[input_feature] for document in documents if input_feature in document]
-            data = {'texts': json.dumps([x.decode('utf8') for x  in texts], ensure_ascii=False), 'doc_path': 'mlp_'+input_feature}
+            try:
+                texts = [document[input_feature].decode() for document in documents if input_feature in document]
+            except AttributeError:
+                texts = [document[input_feature] for document in documents if input_feature in document]
+                
+            data = {'texts': json.dumps(texts, ensure_ascii=False), 'doc_path': 'mlp_'+input_feature}
             try:
                 analyzation_data = requests.post(self._mlp_url, data=data).json()
             except:
-                print(requests.post(self._mlp_url, data=data).text)
                 raise Exception()
 
             for analyzation_idx, analyzation_datum in enumerate(analyzation_data):

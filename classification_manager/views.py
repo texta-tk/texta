@@ -4,7 +4,13 @@ from __future__ import print_function
 import json
 import logging
 import requests
-from threading import Thread
+
+import platform
+if platform.system() == 'Windows':
+    from threading import Thread as Process
+else:
+    from multiprocessing import Process
+
 from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
@@ -105,7 +111,7 @@ def start_training_job(request):
     clf_args = (request, usr, search_id, field_path, extractor_opt, reductor_opt,
                 normalizer_opt, classifier_opt, description, tag_label)
 
-    clf_job = Thread(target=model_pipeline.train_classifier, args=clf_args)
+    clf_job = Process(target=model_pipeline.train_classifier, args=clf_args)
     clf_job.start()
 
     return HttpResponse()
@@ -186,7 +192,7 @@ def api_classify(request):
             data['job_key'] = job_key
 
 
-            model_job = Thread(target=model_pipeline.apply_classifier, args=(job_key,))
+            model_job = Process(target=model_pipeline.apply_classifier, args=(job_key,))
             model_job.start()
 
 

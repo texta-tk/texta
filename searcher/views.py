@@ -2,7 +2,14 @@
 from __future__ import print_function
 from __future__ import absolute_import
 import calendar
-import threading
+
+import platform
+if platform.system() == 'Windows':
+    from threading import Thread as Process
+else:
+    from multiprocessing import Process
+
+
 import json
 import csv
 import time
@@ -544,6 +551,9 @@ def search(es_params, request):
 
 def additional_option_cut_text(content, window_size):
     window_size = int(window_size)
+    
+    if not content:
+        return ''
 
     if '[HL]' in content:
         soup = bs4.BeautifulSoup(content,'lxml')
@@ -583,6 +593,7 @@ def additional_option_cut_text(content, window_size):
     else:
         return content
 
+
 @login_required
 def remove_by_query(request):
     es_params = request.POST
@@ -591,7 +602,7 @@ def remove_by_query(request):
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
-    threading.Thread(target=remove_worker,args=(es_m,'notimetothink')).start()
+    Process(target=remove_worker,args=(es_m,'notimetothink')).start()
 
     return HttpResponse(True)
 

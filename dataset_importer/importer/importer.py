@@ -3,6 +3,7 @@
 
 import time
 import os
+import platform
 from datetime import datetime
 import re
 import shutil
@@ -16,7 +17,11 @@ from threading import Lock
 from multiprocessing.pool import ThreadPool as Pool
 from dataset_importer.models import DatasetImport
 from dataset_importer.syncer.SQLiteIndex import SQLiteIndex
-from multiprocessing import Process
+
+if platform.system() == 'Windows':
+    from threading import Thread as Process
+else:
+    from multiprocessing import Process
 
 DAEMON_BASED_DATABASE_FORMATS = set(database_reader_map) - {'sqlite'}
 ARCHIVE_FORMATS = set(extractor_map)

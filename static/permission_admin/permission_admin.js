@@ -100,6 +100,37 @@ function remove_index(index){
       })
 }
 
+function delete_index(index){
+    swal({
+        title: 'Are you sure?',
+        text: 'Delete index?',
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#73AD21',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes'
+      }).then((result) => {
+        if (result.value) {
+            swal({
+                title:'Deleted!',
+                text:'Index deleted!',
+                type:'success'
+            }).then((result) => {
+                if (result.value) {
+                    $.post(LINK_ROOT+'permission_admin/delete_index', {index: index}, function(){
+                        location.reload();
+                    });
+                }
+                else {
+                    $.post(LINK_ROOT+'permission_admin/delete_index', {index: index}, function(){
+                        location.reload();
+                    });
+                }})
+        }
+      })
+}
+
+
 function open_close_dataset(dataset_id,open_close){
     $.post(LINK_ROOT+'permission_admin/open_close_dataset', {dataset_id: dataset_id, open_close: open_close}, function(){
         location.reload();

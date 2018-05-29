@@ -197,6 +197,12 @@ class ES_Manager:
     def plain_scroll(es_url, dataset, mapping, query, expiration_str='1m'):
         return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_search?scroll='+expiration_str, data=query, headers=HEADERS).json()
 
+    @staticmethod
+    def delete_index(index):
+        url = '{0}/{1}'.format(es_url, index)
+        ES_Manager.requests.delete(url, headers=HEADERS)
+        return True
+
     def get_mapped_fields(self):
         """ Get flat structure of fields from Elasticsearch mapping
         """

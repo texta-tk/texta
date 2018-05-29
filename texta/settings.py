@@ -15,6 +15,7 @@
 # 
 
 from time import strftime
+import json
 import os
 
 # Path to TEXTA's root directory. It is used in other paths as a prefix.
@@ -44,8 +45,8 @@ BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 #         error occurs during page resolving.
 
 STATIC_ROOT = os.path.join(os.path.abspath(os.path.join(BASE_DIR, os.pardir)), 'static')
-
 SERVER_TYPE = os.getenv('TEXTA_SERVER_TYPE')
+
 if SERVER_TYPE is None:
     SERVER_TYPE = 'development'
 
@@ -73,11 +74,11 @@ elif SERVER_TYPE == 'production':
 elif SERVER_TYPE == 'docker':
     PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL'))
     DOMAIN = os.getenv('TEXTA_HOST')
-    
+
     URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL,DOMAIN)
-    URL_PREFIX_RESOURCE = '/texta'
+    URL_PREFIX_RESOURCE = ''
     ROOT_URLCONF = 'texta.urls'
-    STATIC_URL = '/texta/static/'
+    STATIC_URL = '/static/'
     DEBUG = True
 
 ########################### URLs and paths ###########################
@@ -135,13 +136,15 @@ MANAGERS = ADMINS
 
 # Avoid errors when sending too big files through the importer API.
 # Increased vulnerability to DDoS attacks.
-DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440
+DATA_UPLOAD_MAX_MEMORY_SIZE = 262144000
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 
 # New user are created as activated or deactivated (in which case superuser has to activate them manually)
 USER_ISACTIVE_DEFAULT = os.getenv('TEXTA_USER_ISACTIVE_DEFAULT')
 if USER_ISACTIVE_DEFAULT is None:
     USER_ISACTIVE_DEFAULT = True
+else:
+    USER_ISACTIVE_DEFAULT = json.loads(USER_ISACTIVE_DEFAULT.lower())
 
 # Defines whether added datasets are 'public' or 'private'. Public datasets are accessible by all the existing users and
 # new users alike. Access from a specific user can be revoked. Private datasets are not accessible by default, but
@@ -153,26 +156,26 @@ DATASET_ACCESS_DEFAULT = 'private'
 # List of all host headers which are accepted to prevent host header poisoning.
 # Should be altered if hosted on a remote machine.
 #
-ALLOWED_HOSTS = [DOMAIN]
+ALLOWED_HOSTS = ['*']
 
 # Defines which database backend does the application use. TEXTA uses only default with sqlite engine.
 # Can change engine and database info as one sees fit.
 #
 DATABASES = {
 	'default': {
-		'ENGINE':       'django.db.backends.sqlite3',
-		# Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-		'NAME':         os.path.join(BASE_DIR, 'database', 'lex.db'),  # Or path to database file if using sqlite3.
-		'USER':         '',  # Not used with sqlite3.
-		'PASSWORD':     '',  # Not used with sqlite3.
-		'HOST':         '',  # Set to empty string for localhost. Not used with sqlite3.
-		'PORT':         '',  # Set to empty string for default. Not used with sqlite3.
+		'ENGINE':       os.getenv('DJANGO_DATABASE_ENGINE', 'django.db.backends.sqlite3'),
+		'NAME':         os.getenv('DJANGO_DATABASE_NAME', os.path.join(BASE_DIR, 'database', 'lex.db')),
+		'USER':         os.getenv('DJANGO_DATABASE_USER', ''),  # Not used with sqlite3.
+		'PASSWORD':     os.getenv('DJANGO_DATABASE_PASSWORD', ''),  # Not used with sqlite3.
+		'HOST':         os.getenv('DJANGO_DATABASE_HOST', ''),  # Set to empty string for localhost. Not used with sqlite3.
+		'PORT':         os.getenv('DJANGO_DATABASE_PORT', ''),  # Set to empty string for default. Not used with sqlite3.
 		'BACKUP_COUNT': 5,
 	}
 }
 
-if not os.path.exists(os.path.dirname(DATABASES['default']['NAME'])):
+if not os.path.exists(os.path.dirname(DATABASES['default']['NAME'])) and os.environ.get('DJANGO_DATABASE_NAME') is None:
 	os.makedirs(os.path.dirname(DATABASES['default']['NAME']))
+
 
 TIME_ZONE = 'Europe/Tallinn'
 LANGUAGE_CODE = 'et'
@@ -208,7 +211,7 @@ TEMPLATES = [
 			#                'django.template.loaders.filesystem.Loader',
 			#                'django.template.loaders.app_directories.Loader',
 			#            ],
-			'debug':              DEBUG,
+			'debug': DEBUG,
 		},
 	},
 ]
@@ -258,11 +261,8 @@ INSTALLED_APPS = (
 
 # Elasticsearch URL with protocol specification. Can be either localhost
 # or remote address.
-#
-es_url = os.getenv('TEXTA_ELASTICSEARCH_URL')
-if es_url is None:
-	es_url = 'http://localhost:9200'
-# es_url = 'http://10.6.6.93:9200'
+es_url = os.getenv('TEXTA_ELASTICSEARCH_URL', 'http://localhost:9200')
+
 
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')
@@ -292,8 +292,16 @@ DATASET_IMPORTER = {
 		'enabled':             False,
 		'interval_in_seconds': 10,
 		'index_sqlite_path':   os.path.join(BASE_DIR, 'database', 'import_sync.db')
+	},
+	
+	'urls': {
+	    'mlp': 'http://10.6.6.92/mlp/process'
 	}
 }
+
+
+if os.getenv('TEXTA_SERVER_TYPE') == 'docker':
+    DATASET_IMPORTER['urls']['mlp'] = 'http://texta-mlp:5000/mlp/process'
 
 if not os.path.exists(DATASET_IMPORTER['directory']):
 	os.makedirs(DATASET_IMPORTER['directory'])
@@ -330,21 +338,19 @@ LOGGING = {
 	'formatters':               {
 		'detailed':       {
 			'format': logging_separator.join(
-					['%(levelname)s', '%(module)s', '%(name)s', '%(process)d', '%(thread)d', '%(message)s',
-					 '%(asctime)s'])
+					['%(levelname)s', '%(module)s', 'function: %(funcName)s', 'line: %(lineno)s',  '%(name)s', 'pid: %(process)d', '%(thread)d', '%(message)s', '%(asctime)s'])
 		},
 		'normal':         {
 			'format': logging_separator.join(['%(levelname)s', '%(module)s', '%(message)s', '%(asctime)s'])
 		},
 		'detailed_error': {
 			'format': '\n' + logging_separator.join(
-					['%(levelname)s', '%(module)s', '%(name)s', '%(process)d', '%(thread)d', '%(message)s',
-					 '%(asctime)s'])
+					['%(levelname)s', '%(module)s', '%(name)s', '%(process)d', '%(thread)d', '%(message)s', '%(asctime)s'])
 		}
 	},
 	'handlers':                 {
 		'info_file':  {
-			'level':     'DEBUG',
+			'level':     'INFO',
 			'class':     'logging.FileHandler',
 			'formatter': 'detailed',
 			'filename':  info_log_file_name,
@@ -362,7 +368,7 @@ LOGGING = {
 	},
 	'loggers':                  {
 		INFO_LOGGER:  {
-			'level':    'DEBUG',
+			'level':    'INFO',
 			'handlers': ['info_file']
 		},
 		ERROR_LOGGER: {
@@ -377,7 +383,7 @@ LOGGING = {
 # Several scripts ran during the boot to set up files and directories.
 # Scripts will only be run if settings is imported from 'texta' directory, e.g. as a result of manager.py, or by Apache (user httpd / apache)
 
-if os.path.split(os.getcwd())[1] in ['texta', 'httpd', 'apache']:
+if os.path.split(os.getcwd())[1] in ['texta', 'httpd', 'apache','www']:
 	from utils.setup import write_navigation_file, ensure_dir_existence
 
 	write_navigation_file(URL_PREFIX, STATIC_URL, STATIC_ROOT)
