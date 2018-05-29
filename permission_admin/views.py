@@ -54,6 +54,24 @@ def create_dataset_access_permission_and_propagate(dataset, access):
 @user_passes_test(lambda u: u.is_superuser)
 def delete_dataset(request):
     index_to_delete = request.POST['index']
+    remove_dataset(index_to_delete)
+
+    return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def delete_index(request):
+    index_to_delete = request.POST['index']
+    index_name = Dataset.objects.get(pk = index_to_delete).index
+    
+    remove_dataset(index_to_delete)
+    es_m = ES_Manager.delete_index(index_name)
+    
+    return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
+
+
+def remove_dataset(index_to_delete):
     index_to_delete = Dataset.objects.get(pk = index_to_delete)
 
     content_type = ContentType.objects.get_for_model(Dataset)
@@ -63,7 +81,7 @@ def delete_dataset(request):
     ).delete()
 
     index_to_delete.delete()
-    return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
+    return True
 
 
 @login_required

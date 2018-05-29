@@ -34,7 +34,8 @@
                         <th>Status</th>
                         <th>Size</th>
                         <th>Access</th>
-                        <th>Remove</th>
+                        <th>Remove link</th>
+                        <th>Delete</th>
                     </thead>
                     {% for dataset in datasets %}
                         <tr>
@@ -64,7 +65,10 @@
                                 {{ dataset.access }}
                             </td>
                             <td>
-                                <a href="#" onclick="remove_index('{{dataset.pk}}');"><span class="glyphicon glyphicon-remove"></span></a>
+                                <a href="#" onclick="remove_index('{{dataset.pk}}');" title="Click to remove index from Toolkit"><span class="glyphicon glyphicon-remove"></span></a>
+                            </td>
+                            <td>
+                                <a href="#" onclick="delete_index('{{dataset.pk}}');" title="Click to delete the index from Elasticsearch"><span class="glyphicon glyphicon-floppy-remove"></span></a>
                             </td>
                             </tr>
                     {% endfor %}
