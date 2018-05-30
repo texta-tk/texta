@@ -78,6 +78,11 @@ $(document).ready(function() {
 			return 'Current value: ' + value;
 		}
     });
+    $('#nFactGraphSize').bootstrapSlider({
+		formatter: function(value) {
+			return 'Current value: ' + value;
+		}
+    });
 });
 
 $(document).mousemove(function(e) {
@@ -675,12 +680,7 @@ function displayAgg(response){
 function factGraph() {
     var request = new XMLHttpRequest();
     var formElement = new FormData();
-    // var savedSearches = []
-    // $('input[name^=saved_search_]:checked').each(function(index) {
-    //     savedSearches.push($(this).val());
-    // })
-    // if (savedSearches.length > 0) {
-    //     formElement.append('selected_saved_searches', savedSearches);
+    formElement.append('search_size', $('#nFactGraphSize').attr('value'));
 
     request.onreadystatechange=function() {
         if (request.readyState==4 && request.status==200) {
@@ -689,7 +689,6 @@ function factGraph() {
     }
     request.open("POST",PREFIX+'/fact_graph');
     request.send(formElement,true);
-    // }
 }
 
 function drawTimeline(data){
@@ -814,7 +813,7 @@ function deleteFact(dict, trElement){
 
     swal({
         title: 'Are you sure you want to remove this fact from the dataset?',
-        text: 'This will remove the fact '+ JSON.stringify(dict) + ' from the dataset and add it to removed facts.',
+        text: 'This will remove the facts '+ JSON.stringify(dict) + ' from the dataset.',
         type: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#73AD21',
@@ -828,6 +827,12 @@ function deleteFact(dict, trElement){
                 type: 'POST',
                 contentType: false,
                 processData: false,
+                beforeSend: function() {
+                    swal({
+                        title:'Starting fact remove job!',
+                        text:'Removing facts from documents, this might take a while.',
+                        type:'success'});
+                },
                 success: function() {
                     trElement.remove();
                     removed_facts.push({key: Object.keys(dict)[0], value: dict[Object.keys(dict)[0]]});

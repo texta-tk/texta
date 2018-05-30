@@ -2,7 +2,14 @@
 from __future__ import print_function
 from __future__ import absolute_import
 import calendar
-import threading
+
+import platform
+if platform.system() == 'Windows':
+    from threading import Thread as Process
+else:
+    from multiprocessing import Process
+
+
 import json
 import csv
 import time
@@ -606,7 +613,7 @@ def delete_fact(request):
     val = request.POST[key]
 
     fact_m = FactManager(request)
-    fact_m.remove_facts_from_document(key, val)
+    Process(target=fact_m.remove_facts_from_document, args=(key, val)).start()
 
     return HttpResponse()
 
@@ -917,8 +924,10 @@ def _extract_fact_val_constraint(raw_constraint):
 
 @login_required
 def fact_graph(request):
+    search_size = int(request.POST['search_size'])
+
     fact_m = FactManager(request)
-    graph_data, fact_names, max_node_size, max_link_size, min_node_size = fact_m.fact_graph()
+    graph_data, fact_names, max_node_size, max_link_size, min_node_size = fact_m.fact_graph(search_size)
 
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,

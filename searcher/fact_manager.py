@@ -25,23 +25,31 @@ class FactManager:
             "_source": [self.field]}}
 
         self.es_m.load_combined_query(query)
-        response = self.es_m.scroll()
+        response = self.es_m.scroll(size=5000, field_scroll=self.field)
+        scroll_id = response['_scroll_id']
+        total_docs = response['hits']['total']
+        print('Starting.. Total docs - ', total_docs)
+        while total_docs > 0:
+            response = self.es_m.scroll(scroll_id=scroll_id, size=5000, field_scroll=self.field)
+            total_docs = len(response['hits']['hits'])
+            scroll_id = response['_scroll_id']
+            print(total_docs)
+            data = ''
+            for document in response['hits']['hits']:
+                removed_facts = []
+                new_field = []
+                for fact in document['_source'][self.field]:
+                    if fact['fact'] == key and fact['str_val'] == val:
+                        removed_facts.append(fact)
+                    else:
+                        new_field.append(fact)
 
-        data = ''
-        for document in response['hits']['hits']:
-            removed_facts = []
-            new_field = []
-            for fact in document['_source'][self.field]:
-                if fact['fact'] == key and fact['str_val'] == val:
-                    removed_facts.append(fact)
-                else:
-                    new_field.append(fact)
+                # Update dataset
+                data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
+                document = {'doc': {self.field: new_field}}
+                data += json.dumps(document)+'\n'
 
-            # Update dataset
-            data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
-            document = {'doc': {self.field: new_field}}
-            data += json.dumps(document)+'\n'
-        self.es_m.plain_post_bulk(self.es_m.es_url, data)
+            self.es_m.plain_post_bulk(self.es_m.es_url, data)
 
     def tag_documents_with_fact(self, es_params, tag_name, tag_value, tag_field):
         '''Used to tag all documents in the current search with a certain fact'''
@@ -94,16 +102,17 @@ class FactManager:
 
         return counts
 
-    def facts_via_aggregation(self):
+    def facts_via_aggregation(self, size=15):
         """Finds all facts from current search.
-
+        Parameters:
+            size - [int=15] -- Amount of fact values per fact name to search in query
         Returns:
             facts - [dict] -- Details for each fact, ex: {'PER - kostja': {'id': 0, 'name': 'PER', 'value': 'kostja', 'doc_count': 44}}
             fact_combinations - [list of tuples] -- All possible combinations of all facts: [(('FIRST_FACTNAME', 'FIRST_FACTVAL'), ('SECOND_FACTNAME', 'SECOND_FACTVAL'))]
             unique_fact_names - [list of string] -- All unique fact names
         """
 
-        aggs = {"facts": {"nested": {"path": "texta_facts"}, "aggs": {"fact_names": {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val", "size": 15}}}}}}}
+        aggs = {"facts": {"nested": {"path": "texta_facts"}, "aggs": {"fact_names": {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val", "size": size}}}}}}}
         self.es_m.build(self.es_params)
         self.es_m.set_query_parameter('aggs', aggs)
         response = self.es_m.search()
@@ -124,8 +133,8 @@ class FactManager:
         return (facts, fact_combinations, unique_fact_names)
 
 
-    def fact_graph(self):
-        facts, fact_combinations, unique_fact_names = self.facts_via_aggregation()
+    def fact_graph(self, search_size):
+        facts, fact_combinations, unique_fact_names = self.facts_via_aggregation(size=search_size)
         # Get cooccurrences and remove values with 0
         fact_combinations = {k:v for k,v in dict(zip(fact_combinations, self.count_cooccurrences(fact_combinations))).items() if v != 0}
         shapes = ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"]
