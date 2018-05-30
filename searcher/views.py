@@ -609,6 +609,7 @@ def aggregate(request):
 
 @login_required
 def delete_fact(request):
+    import pdb;pdb.set_trace()
     key = list(request.POST.keys())[0]
     val = request.POST[key]
 
