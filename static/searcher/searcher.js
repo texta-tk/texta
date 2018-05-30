@@ -73,11 +73,25 @@ $(document).ready(function() {
 			return 'Current value: ' + value;
 		}
 	});
+	
 	$('#n_features').bootstrapSlider({
 		formatter: function(value) {
 			return 'Current value: ' + value;
 		}
     });
+
+	$('#n_agg_size_1').bootstrapSlider({
+		formatter: function(value) {
+			return 'Current value: ' + value;
+		}
+    });
+
+	$('#n_agg_size_2').bootstrapSlider({
+		formatter: function(value) {
+			return 'Current value: ' + value;
+		}
+    });
+
 });
 
 $(document).mousemove(function(e) {
@@ -908,6 +922,7 @@ function change_agg_field(field_nr){
 
 	if(selected_type == 'text' || selected_type == 'keyword'){
 		$("#sort_by_"+field_nr).removeClass('hidden');
+		$("#agg_size_"+field_nr).removeClass('hidden');
 		$("#freq_norm_"+field_nr).addClass('hidden');
 		$("#interval_"+field_nr).addClass('hidden');
 		$("#agg_daterange_"+field_nr).addClass('hidden');
@@ -917,6 +932,7 @@ function change_agg_field(field_nr){
 		$("#agg_daterange_from_"+field_nr).val(field_data['range']['min']);
 		$("#agg_daterange_to_"+field_nr).val(field_data['range']['max']);
 
+        $("#agg_size_"+field_nr).addClass('hidden');
 		$("#freq_norm_"+field_nr).removeClass('hidden');
 		$("#interval_"+field_nr).removeClass('hidden');
 		$("#sort_by_"+field_nr).addClass('hidden');
