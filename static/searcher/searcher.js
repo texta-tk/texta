@@ -860,14 +860,16 @@ function deleteFactArray(factArray) {
                 },
                 success: function() {
                     trElement.remove();
-                    // removed_facts.push({key: Object.keys(dict)[0], value: dict[Object.keys(dict)[0]]});
+                    for (var i=0; i<factList.length; i++) {
+                        removed_facts.push({key: Object.keys(factList[i])[0], value: factList[Object.keys(factList[i])[0]]});
+                    }
                     swal({
                         title:'Deleted!',
                         text: factList.length +' facts have been removed.',
                         type:'success'});
                 },
                 error: function() {
-                    swal('Error!','There was a problem removing the fact!','error');
+                    swal('Error!','There was a problem removing the facts!','error');
                 }
             });
         };
@@ -876,51 +878,47 @@ function deleteFactArray(factArray) {
     swal('Warning!','No facts selected!','warning');
 }
 }
-// function deleteFact(dict, trElement){
-//     var request = new XMLHttpRequest();
-//     var form_data = new FormData();
-//     for (var key in dict) {
-//         form_data.append(key, dict[key]);
-//     }
+
+function addFactToSearch(fact_name, fact_val) {
+
+    $("#constraint_field option").each(function()
+    {
+        if ($(this).val() != "") {
+            if (JSON.parse($(this).val())['type'] == "fact_str_val") {
+                $("#constraint_field").val($(this).val());
+                return false; //break out of loop
+            }
+        }
+    })
+
+    $("#constraint_field").val('{"path": "text_mlp.text", "type": "fact_str_val"}');
+    var has_field = false;
+    $('span[id^=selected_field_]').each(function (index) {
+        if ($(this).text().includes(['[fact_text_values]'])) {
+            has_field = true;
+        }
+    });
+    if (!has_field) {
+        add_field("", "", "");
+    }
+
+    var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_');
+    var suggestion_id = split_id[split_id.length - 2] + '_' + split_id[split_id.length - 1]
+    if (has_field) {
+        addFactValueFieldConstraint(split_id[split_id.length - 2], $("#fact_field_" + split_id[split_id.length - 2]).val())
+        var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_');
+        var suggestion_id = split_id[split_id.length - 2] + '_' + split_id[split_id.length - 1]
+    }
+
+    $('#field_' + split_id[split_id.length - 2] + " #fact_txt_" + suggestion_id).val(fact_name)
+    $('#fact_constraint_op_' + suggestion_id).val('=');
+    $("#fact_constraint_val_" + suggestion_id).val(fact_val);
+    debugger;
 
 
-//     swal({
-//         title: 'Are you sure you want to remove this fact from the dataset?',
-//         text: 'This will remove the facts '+ JSON.stringify(dict) + ' from the dataset.',
-//         type: 'warning',
-//         showCancelButton: true,
-//         confirmButtonColor: '#73AD21',
-//         cancelButtonColor: '#d33',
-//         confirmButtonText: 'Yes, remove it!'
-//         }).then((result) => {
-//             if(result.value){
-//             $.ajax({
-//                 url: PREFIX + '/delete_fact',
-//                 data: form_data,
-//                 type: 'POST',
-//                 contentType: false,
-//                 processData: false,
-//                 beforeSend: function() {
-//                     swal({
-//                         title:'Starting fact remove job!',
-//                         text:'Removing facts from documents, this might take a while.',
-//                         type:'success'});
-//                 },
-//                 success: function() {
-//                     trElement.remove();
-//                     removed_facts.push({key: Object.keys(dict)[0], value: dict[Object.keys(dict)[0]]});
-//                     swal({
-//                         title:'Deleted!',
-//                         text:'Fact '+JSON.stringify(dict)+' has been removed.',
-//                         type:'success'});
-//                 },
-//                 error: function() {
-//                     swal('Error!','There was a problem removing the fact!','error');
-//                 }
-//             });
-//         };
-//     });
-// }
+
+}
+
 
 function show_string_children(data,children_container,grandchildren_container, row_key, type=null) {
     children_container.empty();
@@ -949,10 +947,11 @@ function show_string_children(data,children_container,grandchildren_container, r
             if(type == 'fact') {
                 var fact_data = {};
                 fact_data[fact_key] = this.key;
-                // var delete_fact_icon = '<i class="glyphicon glyphicon-trash pull-right"\
-                // data-toggle="tooltip" title="Delete fact"\
-                // style="cursor: pointer"\
-                // onclick=\'deleteFact('+JSON.stringify(fact_data)+',this.parentElement.parentElement);\'></i>';
+
+                var add_to_search_icon = '<i class="glyphicon glyphicon-search pull-right"\
+                data-toggle="tooltip" title="Add to search"\
+                style="cursor: pointer"\
+                onclick=\'addFactToSearch("'+fact_key+'","'+ this.key+'");\'></i>';
 
                 //keep track of checkboxes using their name as {NAME: VALUE}, otherwise when clicking on another fact name, they get overwritten
                 checkboxName = JSON.stringify(fact_data).replace(/"/g, "'")
@@ -965,8 +964,7 @@ function show_string_children(data,children_container,grandchildren_container, r
                     }
                 }
 
-                // var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key +"</td><td>" + checkbox + "></td><td>" + delete_fact_icon +"</td></tr>");
-                var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key +"</td><td>" + checkbox + "></td></tr>");
+                var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key +"</td><td>"+ add_to_search_icon +"</td><td>" + checkbox + "></td></tr>");
             }
             else {
                 var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key+"</td><td></td></tr>");
@@ -1003,7 +1001,7 @@ function show_string_children(data,children_container,grandchildren_container, r
     style="cursor: pointer"\
     onclick=\'deleteFactArray(selectedFactCheckboxes);\'></i>';
 
-	table.append("<thead><th colspan='2'>Field #2</th><th colspan='1'>" + delete_checked_facts + "</th></head>");//.click(function(){children_container.addClass('hidden')});;
+	table.append("<thead><th colspan='2'>Field #2</th><th colspan='1'></th><th colspan='1'>" + delete_checked_facts + "</th></head>");//.click(function(){children_container.addClass('hidden')});;
 	table.append(tbody);
 
 	children_container.append(table);

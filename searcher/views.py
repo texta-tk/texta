@@ -111,7 +111,15 @@ def index(request):
     es_m = ds.build_manager(ES_Manager)
     fields = get_fields(es_m)
 
-    template_params = {'STATIC_URL': STATIC_URL,
+    # Hide fact graph if no facts_str_val is present in fields
+    display_fact_graph = 'hidden'
+    for i in fields:
+        if json.loads(i['data'])['type'] == "fact_str_val":
+            display_fact_graph = ''
+            break
+
+    template_params = {'display_fact_graph': display_fact_graph,
+                       'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'fields': fields,
                        'searches': Search.objects.filter(author=request.user),
@@ -609,12 +617,13 @@ def aggregate(request):
 
 @login_required
 def delete_fact(request):
-    import pdb;pdb.set_trace()
-    key = list(request.POST.keys())[0]
-    val = request.POST[key]
+    # import pdb;pdb.set_trace()
+    # key = list(request.POST.keys())[0]
+    # val = request.POST[key]
 
     fact_m = FactManager(request)
-    Process(target=fact_m.remove_facts_from_document, args=(key, val)).start()
+    # fact_m.remove_facts_from_document(dict(request.POST))
+    Process(target=fact_m.remove_facts_from_document, args=(dict(request.POST),)).start()
 
     return HttpResponse()
 

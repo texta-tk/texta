@@ -91,74 +91,64 @@
 	var zoom = d3.behavior.zoom().scaleExtent([min_zoom, max_zoom])
 	var g = svg.append("g");
 	svg.style("cursor", "move");
-
+	
 	var size = d3.scale.pow().exponent(1)
-		.domain([1, {{ max_node_size }}])
-		.range([3, 70]);
-
+	.domain([1, {{ max_node_size }}])
+	.range([3, 70]);
+	
 	var link_size = d3.scale.pow().exponent(1)
-		.domain([1, {{ max_link_size }}])
-		.range([nominal_stroke, max_stroke]);
-
+	.domain([1, {{ max_link_size }}])
+	.range([nominal_stroke, max_stroke]);
+	
 	var force = d3.layout.force()
-		.linkDistance(250)
-		.charge(-3000)
-		.size([w, h]);
-
+	.linkDistance(250)
+	.charge(-3000)
+	.size([w, h]);
+	
 	var menu = [
-		{
-			title: 'Add node to search',
-			action: function (elm, d, i) {
-				$("#constraint_field").val('{"path": "mlp_text.text", "type": "fact_str_val"}');
-
-				var has_field = false;
-				$('span[id^=selected_field_]').each(function (index) {
-					if ($(this).text().includes(['[fact_text_values]'])) {
-						has_field = true;
+		// {
+			// 	title: 'Hide this node',
+			// 	action: function (elm, d, i) {
+				// 		hideBy(name=elm['name']);
+				// 	}
+				// },
+				{
+					title: 'Add node to search',
+					action: function (elm, d, i) {
+						addFactToSearch(elm["name"], elm["id"]);
 					}
+				},
+				{
+					title: 'Hide facts with this type',
+					action: function (elm, d, i) {
+						hideBy(name=elm['name']);
+					}
+				},
+				{
+					title: 'Delete this fact from the dataset',
+					action: function (elm, d, i) {
+						// hideBy(name=elm['name']);
+						hideBy(name=null,hideNode=elm);
+					}
+				}
+			]
+			var hideBy;
+			
+			var graph = JSON.parse('{{graph_data|safe}}');
+			
+			function callGraph() {
+				var hiddenNodes = []
+				var linkedByIndex = {};
+				graph.links.forEach(function (d) {
+					linkedByIndex[d.source + "," + d.target] = true;
 				});
-				if (!has_field) {
-					add_field("", "", "");
+				
+				function isConnected(a, b) {
+					return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index] || a.index == b.index;
 				}
-
-				var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_');
-				var suggestion_id = split_id[split_id.length - 2] + '_' + split_id[split_id.length - 1]
-				if (has_field) {
-					addFactValueFieldConstraint(split_id[split_id.length - 2], $("#fact_field_" + split_id[split_id.length - 2]).val())
-					var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_');
-					var suggestion_id = split_id[split_id.length - 2] + '_' + split_id[split_id.length - 1]
-				}
-
-				$('#field_' + split_id[split_id.length - 2] + " #fact_txt_" + suggestion_id).val(elm["name"])
-				$('#fact_constraint_op_' + suggestion_id).val('=');
-				$("#fact_constraint_val_" + suggestion_id).val(elm["id"]);
-
-			}
-		},
-		{
-			title: 'Hide facts with this type',
-			action: function (elm, d, i) {
-				hideBy(name=elm['name'])
-			}
-		}
-	]
-
-	var hideBy;
-
-	var graph = JSON.parse('{{graph_data|safe}}');
-
-	function callGraph() {
-		var linkedByIndex = {};
-		graph.links.forEach(function (d) {
-			linkedByIndex[d.source + "," + d.target] = true;
-		});
-
-		function isConnected(a, b) {
-			return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index] || a.index == b.index;
-		}
-
-		function hasConnections(a) {
-			for (var property in linkedByIndex) {
+				
+				function hasConnections(a) {
+					for (var property in linkedByIndex) {
 				s = property.split(",");
 				if ((s[0] == a.index || s[1] == a.index) && linkedByIndex[property]) return true;
 			}
@@ -361,21 +351,21 @@
 			h = height;
 		}
 
-		hideBy = function (name=null) {
-			if (name) {
-				factNamesShow[name] = !factNamesShow[name]
-			}
+		hideBy = function (name=null, hideNode=null) {
+			if (name) {factNamesShow[name] = !factNamesShow[name]}
+			if (hideNode) {hiddenNodes.push(hideNode);}
 
 			link.style("display", function (d) {
-				var flag = factNamesShow[d.source.name] && factNamesShow[d.target.name] && vis_by_node_score(d.source.score) && vis_by_node_score(d.target.score);
+				var flag = factNamesShow[d.source.name] && factNamesShow[d.target.name] && vis_by_node_score(d.source.score) && vis_by_node_score(d.target.score)
+				&&  (!hiddenNodes.includes(d['source'])) && (!hiddenNodes.includes(d['target']));
 				linkedByIndex[d.source.index + "," + d.target.index] = flag;
 				return flag ? "inline" : "none";
 			});
 			node.style("display", function (d) {
-				return (true || hasConnections(d)) && factNamesShow[d.name] && vis_by_node_score(d.score) ? "inline" : "none";
+				return (true || hasConnections(d)) && factNamesShow[d.name] && vis_by_node_score(d.score) && (!hiddenNodes.includes(d)) ? "inline" : "none";
 			});
 			text.style("display", function (d) {
-				return (true || hasConnections(d)) && factNamesShow[d.name] && vis_by_node_score(d.score) ? "inline" : "none";
+				return (true || hasConnections(d)) && factNamesShow[d.name] && vis_by_node_score(d.score) && (!hiddenNodes.includes(d)) ? "inline" : "none";
 			});
 
 			if (highlight_node !== null) {
@@ -385,7 +375,7 @@
 				}
 				else { exit_highlight(); }
 			}
-
+			return hiddenNodes
 		}
 	};
 	callGraph();
@@ -424,7 +414,8 @@
 
 	var legendPath = d3.legend.symbol()
 		.scale(symbolScale)
-		.orient("vertical")
+		.orient("horizontal")
+		.shapePadding(50)
 		.title("Click on the fact type to hide/reveal it:")
 		.on("cellclick", function (d) { hideBy(name=d); });
 
@@ -462,7 +453,7 @@
 			return 0;
 		}
 		//max 35 cooccurances
-		cooccDisplayCount = 34
+		cooccDisplayCount = 44
 		cooccCount = linkedNodes.length
 		linkedNodes = linkedNodes.sort(sortByCount)
 		hiddenNodes = linkedNodes.slice(cooccDisplayCount, linkedNodes.length)
@@ -498,7 +489,7 @@
 			.domain(domainList).range(rangeList);
 
 		svg.append("g")
-			.attr("class", "selectedSymbol").attr("transform", "translate(20, 250)");
+			.attr("class", "selectedSymbol").attr("transform", "translate(20, 100)");
 
 		var selectedPath = d3.legend.symbol()
 			.scale(selectedSymbol)
@@ -521,7 +512,7 @@
 		// FOR HIDDEN NODES
 		function displayHiddenCooccNodes() {
 			var selectedSymbol = d3.scale.ordinal().domain(hiddenNodes).range(hiddenRangeList);
-			svg.append("g").attr("class", "hiddenSelectedSymbol").attr("transform", "translate(250, 250)");
+			svg.append("g").attr("class", "hiddenSelectedSymbol").attr("transform", "translate(250, 100)");
 			var selectedPath = d3.legend.symbol().scale(selectedSymbol).orient("vertical")
 				.title('Hidden nodes');
 

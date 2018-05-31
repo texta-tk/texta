@@ -15,41 +15,52 @@ class FactManager:
         self.es_m = ES_Manager(self.index, self.mapping)
         self.field = 'texta_facts'
 
-    def remove_facts_from_document(self, key, val):
+    def remove_facts_from_document(self, rm_facts_dict):
         '''remove a certain fact from all documents given a [str]key and [str]val'''
+        try:
+            fact_queries = []
+            for key in rm_facts_dict:
+                for val in rm_facts_dict[key]:
+                    fact_queries.append(
+                        {"bool": {"must": [{"match": {self.field+".fact": key}},
+                        {"match": {self.field+".str_val": val}}]}}
+                        )
 
-        query = {"main": {"query": {"nested":
-            {"path": self.field,"query": {"bool": {"must":
-            [{ "match": {self.field + ".fact": key }},
-            { "match": {self.field + ".str_val":  val }}]}}}},
-            "_source": [self.field]}}
+            query = {"main": {"query": {"nested":
+                {"path": self.field,"query": {"bool": {"should":fact_queries
+                }}}},"_source": [self.field]}}
 
-        self.es_m.load_combined_query(query)
-        response = self.es_m.scroll(size=5000, field_scroll=self.field)
-        scroll_id = response['_scroll_id']
-        total_docs = response['hits']['total']
-        print('Starting.. Total docs - ', total_docs)
-        while total_docs > 0:
-            response = self.es_m.scroll(scroll_id=scroll_id, size=5000, field_scroll=self.field)
-            total_docs = len(response['hits']['hits'])
+            self.es_m.load_combined_query(query)
+            response = self.es_m.scroll(size=10000, field_scroll=self.field)
             scroll_id = response['_scroll_id']
-            print(total_docs)
-            data = ''
-            for document in response['hits']['hits']:
-                removed_facts = []
-                new_field = []
-                for fact in document['_source'][self.field]:
-                    if fact['fact'] == key and fact['str_val'] == val:
-                        removed_facts.append(fact)
-                    else:
-                        new_field.append(fact)
+            total_docs = response['hits']['total']
+            print('Starting.. Total docs - ', total_docs) # DEBUG
+            while total_docs > 0:
+                data = ''
+                for document in response['hits']['hits']:
+                    removed_facts = [] # If you want to use the removed facts for something in the future
+                    new_field = [] # The new facts field
+                    for fact in document['_source'][self.field]:
+                        # If the fact name is in rm_facts_dict keys
+                        if fact["fact"] in rm_facts_dict:
+                            # If the fact value is in the given key values
+                            if fact['str_val'] in rm_facts_dict[key]:
+                                removed_facts.append(fact)
+                        else:
+                            new_field.append(fact)
 
-                # Update dataset
-                data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
-                document = {'doc': {self.field: new_field}}
-                data += json.dumps(document)+'\n'
-
-            self.es_m.plain_post_bulk(self.es_m.es_url, data)
+                    # Update dataset
+                    data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
+                    document = {'doc': {self.field: new_field}}
+                    data += json.dumps(document)+'\n'
+                scroll_time = time.time()
+                response = self.es_m.scroll(scroll_id=scroll_id, size=10000, field_scroll=self.field)
+                total_docs = len(response['hits']['hits'])
+                scroll_id = response['_scroll_id']
+                self.es_m.plain_post_bulk(self.es_m.es_url, data)
+        except:
+            print(traceback.format_exc())
+            import pdb;pdb.set_trace()
 
     def tag_documents_with_fact(self, es_params, tag_name, tag_value, tag_field):
         '''Used to tag all documents in the current search with a certain fact'''
