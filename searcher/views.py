@@ -36,6 +36,7 @@ from .cluster_manager import ClusterManager
 from .fact_manager import FactManager
 from utils.highlighter import Highlighter, ColorPicker
 from utils.autocomplete import Autocomplete
+from dataset_importer.importer.importer import preprocessor_map
 
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links
 
@@ -55,6 +56,15 @@ def ngrams(input_list, n):
 
 def convert_date(date_string,frmt):
     return datetime.strptime(date_string,frmt).date()
+
+
+def collect_map_entries(map_):
+    entries = []
+    for key, value in map_.items():
+        value['key'] = key
+        entries.append(value)
+
+    return entries
 
 
 def get_fields(es_m):
@@ -110,13 +120,17 @@ def index(request):
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
     fields = get_fields(es_m)
+    
+    preprocessors = collect_map_entries(preprocessor_map)
+    enabled_preprocessors = [preprocessor for preprocessor in preprocessors]
 
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'fields': fields,
                        'searches': Search.objects.filter(author=request.user),
                        'lexicons': Lexicon.objects.all().filter(author=request.user),
-                       'dataset': ds.get_index()}
+                       'dataset': ds.get_index(),
+                       'enabled_preprocessors': enabled_preprocessors}
 
     template = loader.get_template('searcher.html')
 
