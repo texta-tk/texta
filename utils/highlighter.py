@@ -38,6 +38,7 @@ class Highlighter(object):
     def highlight(self, original_text, highlight_data, tagged_text=None):
         """highlight_data = [{'spans': [[1,7],[25,36]], 'name': 'LOC', 'value': '5', 'category': '[fact]', 'color': '#ababab'}]
         """
+        
         if tagged_text:
             if self._derive_spans:
                 alignment = [char_idx for char_idx in range(len(original_text))]
@@ -78,13 +79,16 @@ class Highlighter(object):
         start_tag_index = tagged_text.find('<span', span_end)
         index_discount = 0
 
-        while start_tag_index > 0:
+        while start_tag_index > -1:
             start_tag_end = tagged_text.find('>', start_tag_index + 5) + 1
             span_end = tagged_text.find('</span>', start_tag_end)
 
             index_discount += start_tag_end - start_tag_index
             span_data = self._extract_span_data(tagged_text[start_tag_index + 5:start_tag_end - 1].strip(),
                                                 [[start_tag_end - index_discount, span_end - index_discount]])
+            
+            print(span_data)
+            
             if span_data:
                 highlight_data.append(span_data)
 
@@ -95,6 +99,8 @@ class Highlighter(object):
 
     def _extract_span_data(self, span_attributes_string, spans):
         span_data = {}
+        print('#################')
+        print(span_attributes_string,spans)
 
         for match_name, match_pattern in [('category', self._class_pattern), ('color', self._color_pattern)]:
             match = match_pattern.search(span_attributes_string)
