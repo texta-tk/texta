@@ -99,10 +99,11 @@ LOGIN_URL = URL_PREFIX
 # Path to media files root directory.
 # 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'files')
+PROTECTED_MEDIA = os.path.join(MEDIA_ROOT, 'protected_media')
 
 # URL to media files root.
 # 
-MEDIA_URL = '/files/'
+MEDIA_URL = 'files/'
 ADMIN_MEDIA_PREFIX = '/media/'
 
 # Path to users' visited words in Lex Miner.
@@ -120,13 +121,11 @@ SCRIPT_MANAGER_DIR = os.path.join(MEDIA_ROOT, 'script_manager')
 if not os.path.exists(MODELS_DIR):
 	os.makedirs(MODELS_DIR)
 
-if not os.path.exists(MODELS_DIR):
-	os.makedirs(MODELS_DIR)
+if not os.path.exists(PROTECTED_MEDIA):
+	os.makedirs(PROTECTED_MEDIA)
 
 if not os.path.exists(SCRIPT_MANAGER_DIR):
 	os.makedirs(SCRIPT_MANAGER_DIR)
-
-STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static_general'),)  # TODO remove
 
 ADMINS = (
 	# ('Your Name', 'your_email@example.com'),

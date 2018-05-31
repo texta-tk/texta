@@ -1,8 +1,9 @@
+from django.contrib.auth.decorators import login_required
+from django.views.static import serve
 from django.conf.urls import include, url
 from django.contrib import admin
 from django.views import static
 
-# NEW PY REQUIREMENT
 from lm.urls import urlpatterns as lm_urls
 from account.urls import urlpatterns as account_urls
 from conceptualiser.urls import urlpatterns as conceptualiser_urls
@@ -15,8 +16,14 @@ from permission_admin.urls import urlpatterns as permission_admin_urls
 from grammar_builder.urls import urlpatterns as grammar_builder_urls
 from search_api.urls import urlpatterns as search_api_urls
 from dataset_importer.urls import urlpatterns as dataset_importer_urls
+from texta import settings
 
-# NEW PY REQUIREMENT
+
+@login_required
+def protected_serve(request, path, document_root=None, show_indexes=False):
+    return serve(request, path, document_root, show_indexes)
+
+
 urlpatterns = [
     url(r'', include('account.urls')),
     url(r'lm', include('lm.urls')),
@@ -31,26 +38,7 @@ urlpatterns = [
     url(r'^api/', include('search_api.urls')),
     url(r'^dataset_importer/', include('dataset_importer.urls')),
     url(r'static/(?P<path>.*)$',static.serve,{'document_root': 'static'}),
+    url(r'^%s(?P<path>.*)$' % settings.MEDIA_URL, protected_serve, {'document_root': settings.PROTECTED_MEDIA}),
     url(r'^import_api/', include('importer_api.urls')),
 ]
 
-# from django.conf.urls import url
-# from django.contrib import admin
-# from django.views import static
-
-# urlpatterns = [
-#     url(r'lm', lm_urls, name='lm_urls),
-#     url(r'', 'account_urls),
-#     url(r'conceptualiser', 'conceptualiser_urls),
-#     url(r'mwe_miner', 'mwe_miner_urls),
-#     url(r'^searcher', 'searcher_urls),
-#     url(r'model_manager', 'model_manager_urls),
-#     url(r'classification_manager', 'classification_manager_urls),
-#     url(r'ontology_viewer', 'ontology_viewer_urls),
-#     url(r'^admin/', admin.site.urls),
-#     url(r'^permission_admin/', 'permission_admin_urls),
-#     url(r'^grammar_builder/', 'grammar_builder_urls),
-#     url(r'^api/', 'search_api_urls),
-#     url(r'^dataset_importer/', 'dataset_importer_urls),
-#     url(r'static/(?P<path>.*)$',static.serve,{'document_root': 'static'}),
-# ]
