@@ -554,6 +554,9 @@ def additional_option_cut_text(content, window_size):
     
     if not content:
         return ''
+    
+    if not isinstance(content, str):
+        return content
 
     if '[HL]' in content:
         soup = bs4.BeautifulSoup(content,'lxml')
