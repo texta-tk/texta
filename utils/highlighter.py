@@ -79,7 +79,7 @@ class Highlighter(object):
         start_tag_index = tagged_text.find('<span', span_end)
         index_discount = 0
 
-        while start_tag_index > -1:
+        while start_tag_index > 0:
             start_tag_end = tagged_text.find('>', start_tag_index + 5) + 1
             span_end = tagged_text.find('</span>', start_tag_end)
 

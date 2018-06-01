@@ -19,7 +19,6 @@ from utils.query_builder import QueryBuilder
 from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, FACT_PROPERTIES
 
 # Need to update index.max_inner_result_window to increase
-INNER_HITS_MAX_SIZE = 100
 HEADERS = {'Content-Type': 'application/json'}
 
 class Singleton(type):

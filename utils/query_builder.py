@@ -1,6 +1,8 @@
 from collections import defaultdict
 import re
 
+INNER_HITS_MAX_SIZE = 100
+
 class QueryBuilder:
 
     def __init__(self, es_params):

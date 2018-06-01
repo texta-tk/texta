@@ -90,11 +90,16 @@ class AggManager:
         agg_field_1 = es_params["agg_field_1"]
         agg_field_1 = json.loads(agg_field_1)
         sort_by_1 = es_params["sort_by_1"]
-        agg_size_1 = int(es_params["agg_size_1"])
         agg_field_2 = es_params["agg_field_2"]
         agg_field_2 = json.loads(agg_field_2)
         sort_by_2 = es_params["sort_by_2"]
-        agg_size_2 = int(es_params["agg_size_2"])
+
+        try:
+            agg_size_1 = int(es_params["agg_size_1"])        
+            agg_size_2 = int(es_params["agg_size_2"])
+        except KeyError:
+            agg_size_1 = 10
+            agg_size_2 = 10
 
         field_type_to_name = {'date': 'daterange', 'string':'string', 'text': 'string', 'keyword': 'string', 'facts': 'fact', 'fact_str_val': 'fact_str_val', 'fact_num_val': 'fact_num_val'}
 
