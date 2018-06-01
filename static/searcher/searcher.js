@@ -661,6 +661,27 @@ function aggregate(){
 }
 
 
+function apply_preprocessor() {
+
+    var formElement = document.getElementById("filters");
+    
+    $("#preprocessor_field").appendTo(formElement);
+    $("#preprocessor_key").appendTo(formElement);
+    
+    var request = new XMLHttpRequest();
+    request.onreadystatechange=function() {
+        if (request.readyState==4 && request.status==200) {
+            if (request.responseText.length > 0) {
+            
+            }
+        }
+    }
+    request.open("POST",PREFIX+'/apply_preprocessor');
+    request.send(new FormData(formElement),true);
+
+}
+
+
 function displayAgg(response){
 	var data = response;
 	var container = $("#right");

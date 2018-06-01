@@ -116,7 +116,7 @@ class DatePreprocessor(object):
                 raise Exception()
 
             for analyzation_idx, analyzation_datum in enumerate(converted_dates):
-                documents[analyzation_idx][input_feature+'_converted'] = analyzation_datum
+                documents[analyzation_idx][input_feature+'_date_converter'] = analyzation_datum
                 '''
                 if 'texta_facts' not in documents[analyzation_idx]:
                     documents[analyzation_idx]['texta_facts'] = []

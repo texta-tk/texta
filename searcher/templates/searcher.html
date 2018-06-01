@@ -445,6 +445,7 @@
                             <li><a href="#" data-toggle="modal" data-target="#export-modal"><span class="glyphicon glyphicon-save"></span> Export results</a></li>
 							{% if request.user.is_superuser %}
 								<li><a href="#" data-toggle="modal" data-target="#delete-modal"><span class="glyphicon glyphicon-remove"></span> Delete results</a></li>
+								<li><a href="#" data-toggle="modal" data-target="#preprocessor-modal"><span class="glyphicon glyphicon-edit"></span> Apply preprocessor</a></li>
 							{% endif %}
                         </ul>
                     </div>
@@ -536,6 +537,38 @@
                     </div>
                 </div>
 
+				<div class="modal fade" id="preprocessor-modal" role="dialog">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">Apply preprocessor</h4>
+                            </div>
+                            <div class="modal-body">
+								<b>Select field:</b>
+								<select id="preprocessor_field" name="preprocessor_field" class="form-control input-sm">
+									{% for field in fields %}
+										{% if field.type == 'keyword' or field.type == 'text' %}
+											<option value="{{field.data}}">{{field.label}}</option>
+										{% endif %}
+									{% endfor %}
+								</select>
+								<br>
+								<b>Select preprocessor</b>
+								<select id="preprocessor_key" name="preprocessor_key" class="form-control input-sm">
+									{% for preprocessor in enabled_preprocessors %}
+										<option value="{{preprocessor.key}}">{{preprocessor.name}}</option>
+									{% endfor %}
+							    </select>
+                            </div>
+                            <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="javascript:apply_preprocessor();">Apply</button>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
 
 				<div class="modal fade" id="query-modal" role="dialog">
                     <div class="modal-dialog">

@@ -1,3 +1,4 @@
+from texta.settings import FACT_PROPERTIES
 import requests
 import json
 
@@ -36,18 +37,8 @@ class ElasticStorer(object):
         :type mapping: string
         :type not_analyzed_fields: list of strings
         """
-        
-        facts_properties = {'type': 'nested',
-                          'properties': {
-                              'doc_path': {'type': 'keyword'},
-                              'fact': {'type': 'keyword'},
-                              'num_val': {'type': 'long'},
-                              'spans': {'type': 'keyword'},
-                              'str_val': {'type': 'keyword'}
-                          }
-                     }
-        
-        index_creation_query = {"mappings": {mapping: {"properties": {"texta_facts": facts_properties}}}}
+
+        index_creation_query = {"mappings": {mapping: {"properties": {"texta_facts": FACT_PROPERTIES}}}}
 
         #self._add_not_analyzed_declarations(index_creation_query['mappings'][mapping], not_analyzed_fields)
         print(self._request.put("{url}/{index}".format(**{

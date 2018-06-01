@@ -377,6 +377,18 @@ LOGGING = {
 	}
 }
 
+
+# TEXTA Facts structure
+FACT_PROPERTIES = {'type': 'nested',
+                          'properties': {
+                              'doc_path': {'type': 'keyword'},
+                              'fact': {'type': 'keyword'},
+                              'num_val': {'type': 'long'},
+                              'spans': {'type': 'keyword'},
+                              'str_val': {'type': 'keyword'}
+                          }
+                     }
+
 ############################ Boot scripts ###########################
 
 # Several scripts ran during the boot to set up files and directories.

@@ -28,5 +28,4 @@ class DocumentPreprocessor(object):
         for preprocessor_code in preprocessors:
             preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
             documents = preprocessor.transform(documents, **kwargs)
-
         return documents

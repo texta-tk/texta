@@ -41,7 +41,7 @@ class MlpPreprocessor(object):
             except AttributeError:
                 texts = [document[input_feature] for document in documents if input_feature in document]
                 
-            data = {'texts': json.dumps(texts, ensure_ascii=False), 'doc_path': input_feature+'_mlpS'}
+            data = {'texts': json.dumps(texts, ensure_ascii=False), 'doc_path': input_feature+'_mlp'}
             try:
                 analyzation_data = requests.post(self._mlp_url, data=data).json()
             except:
@@ -50,8 +50,8 @@ class MlpPreprocessor(object):
             for analyzation_idx, analyzation_datum in enumerate(analyzation_data):
                 analyzation_datum = analyzation_datum[0]
 
-                documents[analyzation_idx]['mlp_' + input_feature] = analyzation_datum['text']
-                documents[analyzation_idx]['mlp_' + input_feature]['lang'] = analyzation_datum['text']['lang']
+                documents[analyzation_idx][input_feature+'_mlp'] = analyzation_datum['text']
+                documents[analyzation_idx][input_feature+'_mlp']['lang'] = analyzation_datum['text']['lang']
 
                 if 'texta_facts' not in documents[analyzation_idx]:
                     documents[analyzation_idx]['texta_facts'] = []

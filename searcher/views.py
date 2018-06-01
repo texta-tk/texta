@@ -36,7 +36,7 @@ from .cluster_manager import ClusterManager
 from .fact_manager import FactManager
 from utils.highlighter import Highlighter, ColorPicker
 from utils.autocomplete import Autocomplete
-from dataset_importer.importer.importer import preprocessor_map
+from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
 
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links
 
@@ -624,15 +624,65 @@ def remove_by_query(request):
     return HttpResponse(True)
 
 
-def remove_worker(es_m,dummy):
+def remove_worker(es_m, dummy):
     response = es_m.delete()
     # TODO: add logging
+
+
+@login_required
+def apply_preprocessor(request):
+    es_params = request.POST
+    field_to_process = es_params['preprocessor_field']
+    preprocessor_key = es_params['preprocessor_key']
+
+    ds = Datasets().activate_dataset(request.session)
+    es_m = ds.build_manager(ES_Manager)
+    es_m.build(es_params)
+    
+    preprocessor_worker(es_m, preprocessor_key, field_to_process)
+    return HttpResponse()
+
+
+def preprocessor_worker(es_m, preprocessor_key, field_to_process):
+    # TODO: add logging
+    field_to_process = json.loads(field_to_process)
+
+    # Add new field to mapping definition
+    new_field_name = '{0}_{1}'.format(field_to_process['path'], preprocessor_key)
+    if 'field_properties' in preprocessor_map[preprocessor_key]:
+        new_field_properties = preprocessor_map[preprocessor_key]['field_properties']
+        es_m.update_mapping_structure(new_field_name, new_field_properties)
+    
+    response = es_m.scroll(field_scroll=field_to_process['path'], size=1000)
+    scroll_id = response['_scroll_id']
+    l = response['hits']['total']  
+
+    while l > 0:
+        response = es_m.scroll(scroll_id=scroll_id)
+        l = len(response['hits']['hits'])
+        scroll_id = response['_scroll_id']
+
+        documents, parameter_dict, ids = prepare_preprocessor_data(field_to_process, preprocessor_key, response)
+        processed_documents = list(DocumentPreprocessor.process(documents=documents, **parameter_dict))
+    
+        es_m.update_documents(processed_documents,ids)
+    
+    return True
+
+def prepare_preprocessor_data(field_to_process, preprocessor_key, response):
+    documents = [{field_to_process['path']: hit['_source'][field_to_process['path']]} for hit in response['hits']['hits']]
+    ids = [hit['_id'] for hit in response['hits']['hits']]
+    preprocessor_input_features = '{0}_preprocessor_input_features'.format(preprocessor_key)
+    parameter_dict = {'preprocessors': [preprocessor_key], preprocessor_input_features: json.dumps([field_to_process['path']])}
+    return documents, parameter_dict, ids
+
 
 @login_required
 def aggregate(request):
     agg_m = AggManager(request)
     data = agg_m.output_to_searcher()
     return HttpResponse(json.dumps(data))
+
 
 @login_required
 def delete_fact(request):
@@ -932,3 +982,4 @@ def _extract_fact_val_constraint(raw_constraint):
         'field': field,
         'sub_constraints': sub_constraints
     }
+
