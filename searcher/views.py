@@ -617,13 +617,8 @@ def aggregate(request):
 
 @login_required
 def delete_fact(request):
-    # import pdb;pdb.set_trace()
-    # key = list(request.POST.keys())[0]
-    # val = request.POST[key]
-
     fact_m = FactManager(request)
-    fact_m.remove_facts_from_document(dict(request.POST))
-    # Process(target=fact_m.remove_facts_from_document, args=(dict(request.POST),)).start()
+    Process(target=fact_m.remove_facts_from_document, args=(dict(request.POST),)).start()
 
     return HttpResponse()
 
