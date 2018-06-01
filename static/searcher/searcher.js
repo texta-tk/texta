@@ -83,6 +83,7 @@ $(document).ready(function() {
 			return 'Current value: ' + value;
 		}
     });
+
 });
 
 $(document).mousemove(function(e) {
@@ -554,13 +555,17 @@ function query(){
                   'processing': true,
                   "sAjaxSource": PREFIX+"/table_content",
                   "sDom": '<l"H"ipr>t<"F"lip>',
-                  //"sDom": "Rlrtip",
                   "sServerMethod":"GET",
                   "fnServerParams":function(aoData){
                       aoData.push({'name':'filterParams','value':JSON.stringify($("#filters").serializeArray())});
                    },
                   "oLanguage": { "sProcessing": "Loading..."}
             });
+
+            $(function(){
+                $("#examples").colResizable({minWidth:50}); //in searcher_results.html template
+            });
+
             var dataset = $("#dataset").val();
             var mapping = $("#mapping").val();
             loadUserPreference(dataset,mapping);
@@ -653,13 +658,13 @@ function displayAgg(response){
     var data = response;
 	var container = $("#right");
 	container.empty();
-    
+
 	var string_container = $("<div id='string_agg_container'></div>");
 	var chart_container = $("<div id='daterange_agg_container'></div>");
-    
+
 	container.append(chart_container);
 	container.append(string_container);
-    
+
 	for (var i in data) {
         if(data.hasOwnProperty(i)){
             if(data[i].type == 'daterange'){
@@ -692,9 +697,9 @@ function factGraph() {
 }
 
 function drawTimeline(data){
-    
+
     var timeline_children_container = $("<div></div>");
-    
+
 	new Morris.Line({
         element: 'daterange_agg_container',
         resize: true,
@@ -767,7 +772,7 @@ function show_children(data,date,timeline_children_container) {
             timeline_children_container.append(container);
         });
 	});
-    
+
 }
 
 function drawStringAggs(data, type=null){
@@ -775,7 +780,7 @@ function drawStringAggs(data, type=null){
 	var table_container = $("<div style='float: left'></div>");
 	var children_container = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
 	var grandchildren_container = $("<div id='grandchildren_container' style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
-    
+
 	var tbody = $("<tbody></tbody>");
 
 	$.each(data.data, function(i,row){
@@ -788,18 +793,18 @@ function drawStringAggs(data, type=null){
         }
 		tbody.append(row_container);
 	});
-    
+
 	var table = $("<table class='table table-striped table-hover'></table>");
 	table.append("<thead><th colspan='2'>Field #1</th></head>");
 	table.append(tbody);
-    
+
 	table_container.append(table);
-    
+
 	response_container.append("<div class='row text-center'><h3>"+data.label+"</h3></div>");
 	response_container.append(table_container);
 	response_container.append(children_container);
     response_container.append(grandchildren_container)
-    
+
 	$("#string_agg_container").append(response_container);
 }
 
@@ -823,60 +828,73 @@ function factDeleteCheckbox(checkbox) {
     }
 }
 
-function deleteFactArray(factArray) {
-    if (factArray.length > 1) {
+function deleteFactsViaCheckboxes(checkboxes) {
+    factArray = []
+    for (var i=0; i<checkboxes.length; i++) {
+        fact = JSON.parse(checkboxes[i].name.replace(/'/g, '"'))
+        factArray.push(fact)
+    }
+    deleteFactArray(factArray, source='aggs')
+}
+
+function ajaxDeleteFacts(form_data, factArray) {
+    $.ajax({
+        url: PREFIX + '/delete_fact',
+        data: form_data,
+        type: 'POST',
+        contentType: false,
+        processData: false,
+        beforeSend: function() {
+            swal({
+                title:'Starting fact remove job!',
+                text:'Removing facts from documents, this might take a while.',
+                type:'success'});
+        },
+        success: function() {
+            for (var i=0; i<factArray.length; i++) {
+                removed_facts.push({key: Object.keys(factArray[i])[0], value: factArray[Object.keys(factArray[i])[0]]});
+            }
+            swal({
+                title:'Deleted!',
+                text: factArray.length +' facts have been removed.',
+                type:'success'});
+        },
+        error: function() {
+            swal('Error!','There was a problem removing the facts!','error');
+        }
+    });
+}
+
+function deleteFactArray(factArray, source='aggs') {
+    if (factArray.length >= 1) {
     var request = new XMLHttpRequest();
     var form_data = new FormData();
-    factList = []
     for (var i=0; i<factArray.length; i++) {
-        fact = JSON.parse(selectedFactCheckboxes[i].name.replace(/'/g, '"'))
-        factList.push(fact)
-        for (var key in fact) {
-            form_data.append(key, fact[key]);
+        for (var key in factArray[i]) {
+            form_data.append(key, factArray[i][key]);
         }
     }
 
-    swal({
-        title: 'Are you sure you want to remove this fact from the dataset?',
-        text: 'This will remove '+ factList.length + ' facts from the dataset.',
-        type: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#73AD21',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, remove them!'
-        }).then((result) => {
-            if(result.value){
-            $.ajax({
-                url: PREFIX + '/delete_fact',
-                data: form_data,
-                type: 'POST',
-                contentType: false,
-                processData: false,
-                beforeSend: function() {
-                    swal({
-                        title:'Starting fact remove job!',
-                        text:'Removing facts from documents, this might take a while.',
-                        type:'success'});
-                },
-                success: function() {
-                    trElement.remove();
-                    for (var i=0; i<factList.length; i++) {
-                        removed_facts.push({key: Object.keys(factList[i])[0], value: factList[Object.keys(factList[i])[0]]});
-                    }
-                    swal({
-                        title:'Deleted!',
-                        text: factList.length +' facts have been removed.',
-                        type:'success'});
-                },
-                error: function() {
-                    swal('Error!','There was a problem removing the facts!','error');
-                }
-            });
-        };
-    });
-} else{
+    if (source=='aggs') {
+        swal({
+            title: 'Are you sure you want to remove this fact from the dataset?',
+            text: 'This will remove '+ factArray.length + ' facts from the dataset.',
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#73AD21',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, remove them!'
+            }).then((result) => {
+                if(result.value){
+                    ajaxDeleteFacts(form_data, factArray);
+            }
+        });
+    } else if (source=="fact_manager") {
+        ajaxDeleteFacts(form_data, factArray);
+    }
+} else {
     swal('Warning!','No facts selected!','warning');
-}
+    }
 }
 
 function addFactToSearch(fact_name, fact_val) {
@@ -891,7 +909,6 @@ function addFactToSearch(fact_name, fact_val) {
         }
     })
 
-    $("#constraint_field").val('{"path": "text_mlp.text", "type": "fact_str_val"}');
     var has_field = false;
     $('span[id^=selected_field_]').each(function (index) {
         if ($(this).text().includes(['[fact_text_values]'])) {
@@ -913,10 +930,6 @@ function addFactToSearch(fact_name, fact_val) {
     $('#field_' + split_id[split_id.length - 2] + " #fact_txt_" + suggestion_id).val(fact_name)
     $('#fact_constraint_op_' + suggestion_id).val('=');
     $("#fact_constraint_val_" + suggestion_id).val(fact_val);
-    debugger;
-
-
-
 }
 
 
@@ -999,7 +1012,7 @@ function show_string_children(data,children_container,grandchildren_container, r
     var delete_checked_facts = '<i class="glyphicon glyphicon-trash pull-right"\
     data-toggle="tooltip" title="Delete checked facts"\
     style="cursor: pointer"\
-    onclick=\'deleteFactArray(selectedFactCheckboxes);\'></i>';
+    onclick=\'deleteFactsViaCheckboxes(selectedFactCheckboxes);\'></i>';
 
 	table.append("<thead><th colspan='2'>Field #2</th><th colspan='1'></th><th colspan='1'>" + delete_checked_facts + "</th></head>");//.click(function(){children_container.addClass('hidden')});;
 	table.append(tbody);
@@ -1035,7 +1048,7 @@ function change_agg_field(field_nr){
 
     selected_method = $("#sort_by_"+field_nr).children("#sort_by_"+field_nr);
     selected_method.change(function() {
-        console.log(selected_method[0].options[selected_method[0].selectedIndex].text);
+        // console.log(selected_method[0].options[selected_method[0].selectedIndex].text);
         if (selected_method[0].options[selected_method[0].selectedIndex].text == 'significant words') {
             $("#agg_field_2_button").addClass('hidden');
         }

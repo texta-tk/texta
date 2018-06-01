@@ -622,8 +622,8 @@ def delete_fact(request):
     # val = request.POST[key]
 
     fact_m = FactManager(request)
-    # fact_m.remove_facts_from_document(dict(request.POST))
-    Process(target=fact_m.remove_facts_from_document, args=(dict(request.POST),)).start()
+    fact_m.remove_facts_from_document(dict(request.POST))
+    # Process(target=fact_m.remove_facts_from_document, args=(dict(request.POST),)).start()
 
     return HttpResponse()
 

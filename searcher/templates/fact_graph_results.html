@@ -22,12 +22,14 @@
 	#countSliderId:hover {
 		opacity: 1;
 	}
-
-	}
 </style>
 <div class="graphBody">
 	<div class="countSlider">
-		<p> Hide facts with lower count than:</p>
+		<input id='visibleFactsCheckbox' type="checkbox" data-toggle="toggle" onchange="toggleVisibleCoocc(this)">
+		<label for="visibleFactsCheckbox">Show cooccurances for visible nodes only</label>
+		<p>
+			<b> Hide facts with lower count than: </b>
+		</p>
 		<input id="countSlider" data-slider-id='countSliderId' type="text" data-slider-min="{{min_node_size}}" data-slider-max="{{max_node_size}}"
 		 data-slider-step="1" data-slider-value="0" />
 
@@ -91,64 +93,83 @@
 	var zoom = d3.behavior.zoom().scaleExtent([min_zoom, max_zoom])
 	var g = svg.append("g");
 	svg.style("cursor", "move");
-	
+
 	var size = d3.scale.pow().exponent(1)
-	.domain([1, {{ max_node_size }}])
+		.domain([1, {{ max_node_size }}])
 	.range([3, 70]);
-	
+
 	var link_size = d3.scale.pow().exponent(1)
-	.domain([1, {{ max_link_size }}])
+		.domain([1, {{ max_link_size }}])
 	.range([nominal_stroke, max_stroke]);
-	
+
 	var force = d3.layout.force()
-	.linkDistance(250)
-	.charge(-3000)
-	.size([w, h]);
-	
+		.linkDistance(250)
+		.charge(-3000)
+		.size([w, h]);
+
 	var menu = [
-		// {
-			// 	title: 'Hide this node',
-			// 	action: function (elm, d, i) {
-				// 		hideBy(name=elm['name']);
-				// 	}
-				// },
-				{
-					title: 'Add node to search',
-					action: function (elm, d, i) {
-						addFactToSearch(elm["name"], elm["id"]);
+		{
+			title: 'Add node to search',
+			action: function (elm, d, i) {
+				addFactToSearch(elm["name"], elm["id"]);
+			}
+		},
+		{
+			title: 'Hide facts with this type',
+			action: function (elm, d, i) {
+				hideBy(name = elm['name']);
+			}
+		},
+		{
+			title: 'Hide this fact',
+			action: function (elm, d, i) {
+				hideBy(name = null, hideNode = elm);
+			}
+		},
+		{
+			title: 'Delete this fact from the dataset',
+			action: function (elm, d, i) {
+				name = elm["name"]
+				value = elm["id"]
+				pair = {}
+				pair[name] = value
+
+				swal({
+					title: 'Are you sure you want to remove this fact from the dataset?',
+					text: 'This will remove ' + name + " - " + value + ' from the dataset.',
+					type: 'warning',
+					showCancelButton: true,
+					confirmButtonColor: '#73AD21',
+					cancelButtonColor: '#d33',
+					confirmButtonText: 'Yes, remove them!'
+				}).then((result) => {
+					if (result.value) {
+						deleted = deleteFactArray([pair], source = 'fact_manager')
+						hideBy(name = null, hideNode = null, deleteNode = elm);
 					}
-				},
-				{
-					title: 'Hide facts with this type',
-					action: function (elm, d, i) {
-						hideBy(name=elm['name']);
-					}
-				},
-				{
-					title: 'Delete this fact from the dataset',
-					action: function (elm, d, i) {
-						// hideBy(name=elm['name']);
-						hideBy(name=null,hideNode=elm);
-					}
-				}
-			]
-			var hideBy;
-			
-			var graph = JSON.parse('{{graph_data|safe}}');
-			
-			function callGraph() {
-				var hiddenNodes = []
-				var linkedByIndex = {};
-				graph.links.forEach(function (d) {
-					linkedByIndex[d.source + "," + d.target] = true;
 				});
-				
-				function isConnected(a, b) {
-					return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index] || a.index == b.index;
-				}
-				
-				function hasConnections(a) {
-					for (var property in linkedByIndex) {
+
+			}
+		}
+	]
+	var hideBy;
+
+	var graph = JSON.parse('{{graph_data|safe}}');
+
+	function callGraph() {
+		var hiddenNodes = []
+		var deletedNodes = []
+		var linkedByIndex = {};
+		graph.links.forEach(function (d) {
+			linkedByIndex[d.source + "," + d.target] = true;
+		});
+
+		function isConnected(a, b) {
+			return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index] || a.index == b.index;
+		}
+
+		function hasConnections(a) {
+			for (var property in linkedByIndex) {
 				s = property.split(",");
 				if ((s[0] == a.index || s[1] == a.index) && linkedByIndex[property]) return true;
 			}
@@ -230,7 +251,7 @@
 				set_highlight(d);
 				if (highlight_node === null) set_highlight(d)
 
-				selectedLegend(d, linkedByIndex, graph);
+				selectedLegend(d, linkedByIndex, graph, hiddenNodes, deletedNodes);
 			}).on("mouseout", function (d) {
 				exit_highlight();
 			});
@@ -351,21 +372,33 @@
 			h = height;
 		}
 
-		hideBy = function (name=null, hideNode=null) {
-			if (name) {factNamesShow[name] = !factNamesShow[name]}
-			if (hideNode) {hiddenNodes.push(hideNode);}
+		hideBy = function (name = null, hideNode = null, deleteNode = null) {
+			if (name) { factNamesShow[name] = !factNamesShow[name] }
+			if (hideNode) {
+				hiddenNodes.push(hideNode); if (hiddenNodes.length >= 1) {
+					svg.select(".hiddenOverflowSymbol").attr("fill-opacity", 1).remove();
+					svg.select(".hiddenSymbol").attr("fill-opacity", 1).remove();
+					hiddenNodeLegend(hiddenNodes)
+				}
+			}
+			if (deleteNode) {
+				deletedNodes.push(deleteNode);
+				if (hiddenNodes.includes(deleteNode)) {
+					hiddenNodes.splice(hiddenNodes.indexOf(deleteNode), 1)
+				}
+			}
 
 			link.style("display", function (d) {
 				var flag = factNamesShow[d.source.name] && factNamesShow[d.target.name] && vis_by_node_score(d.source.score) && vis_by_node_score(d.target.score)
-				&&  (!hiddenNodes.includes(d['source'])) && (!hiddenNodes.includes(d['target']));
+					&& (!hiddenNodes.includes(d['source'])) && (!hiddenNodes.includes(d['target'])) && (!deletedNodes.includes(d['source'])) && (!deletedNodes.includes(d['target']));
 				linkedByIndex[d.source.index + "," + d.target.index] = flag;
 				return flag ? "inline" : "none";
 			});
 			node.style("display", function (d) {
-				return (true || hasConnections(d)) && factNamesShow[d.name] && vis_by_node_score(d.score) && (!hiddenNodes.includes(d)) ? "inline" : "none";
+				return (true || hasConnections(d)) && factNamesShow[d.name] && vis_by_node_score(d.score) && (!hiddenNodes.includes(d)) && (!deletedNodes.includes(d)) ? "inline" : "none";
 			});
 			text.style("display", function (d) {
-				return (true || hasConnections(d)) && factNamesShow[d.name] && vis_by_node_score(d.score) && (!hiddenNodes.includes(d)) ? "inline" : "none";
+				return (true || hasConnections(d)) && factNamesShow[d.name] && vis_by_node_score(d.score) && (!hiddenNodes.includes(d)) && (!deletedNodes.includes(d)) ? "inline" : "none";
 			});
 
 			if (highlight_node !== null) {
@@ -382,7 +415,7 @@
 
 	function vis_by_node_score(score) {
 		if (isNumber(score)) {
-			if (score >= $('#countSlider').data('slider').getValue()) {return true} else {return false}
+			if (score >= $('#countSlider').data('slider').getValue()) { return true } else { return false }
 		}
 		return true;
 	}
@@ -417,7 +450,7 @@
 		.orient("horizontal")
 		.shapePadding(50)
 		.title("Click on the fact type to hide/reveal it:")
-		.on("cellclick", function (d) { hideBy(name=d); });
+		.on("cellclick", function (d) { hideBy(name = d); });
 
 	svg.select(".legendSymbol")
 		.call(legendPath);
@@ -432,31 +465,49 @@
 
 	/* ############################ SELECTION ######################### */
 
-	function selectedLegend(node, linkedByIndex, graph) {
+	function selectedLegend(node, linkedByIndex, graph, hiddenNodes, deletedNodes) {
+		showHiddenNodes = true;
+		if ($("#visibleFactsCheckbox").is(':checked')) {
+			showHiddenNodes = false;
+		}
 		var linkedNodes = [];
 		for (var i = 0; i < graph.links.length; i++) {
 			if (graph.links[i]["source"]["source"] == node.source) {
-				if (!linkedNodes.includes(graph.links[i]["target"])) {
+				if (!showHiddenNodes) {
+					if (factNamesShow[graph.links[i]["target"]["name"]] && !hiddenNodes.includes(graph.links[i]["target"]) && !deletedNodes.includes(graph.links[i]["target"]) && graph.links[i]["target"]["score"] >= $('#countSlider').data('slider').getValue()) {
+						if (!linkedNodes.includes(graph.links[i]["target"])) {
+							linkedNodes.push({ "count": graph.links[i]["count"], "value": graph.links[i]["target"] })
+						}
+					}
+				}
+				else if (!linkedNodes.includes(graph.links[i]["target"]) && !deletedNodes.includes(graph.links[i]["target"])) {
 					linkedNodes.push({ "count": graph.links[i]["count"], "value": graph.links[i]["target"] })
 				}
-			}
-			else if (graph.links[i]["target"]["source"] == node.source) {
-				linkedNodes.push({ "count": graph.links[i]["count"], "value": graph.links[i]["source"] })
+			} else if (graph.links[i]["target"]["source"] == node.source) {
+				if (!showHiddenNodes) {
+					if (factNamesShow[graph.links[i]["source"]["name"]] && !hiddenNodes.includes(graph.links[i]["source"]) && !deletedNodes.includes(graph.links[i]["source"]) && graph.links[i]["source"]["score"] >= $('#countSlider').data('slider').getValue()) {
+						linkedNodes.push({ "count": graph.links[i]["count"], "value": graph.links[i]["source"] })
+					}
+				} else {
+					if (!deletedNodes.includes(graph.links[i]["source"])) {
+						linkedNodes.push({ "count": graph.links[i]["count"], "value": graph.links[i]["source"] })
+					}
+				}
 			}
 		}
 		//sort function
-		function sortByCount(a,b) {
+		function sortByCount(a, b) {
 			if (a["count"] > b["count"])
 				return -1;
 			if (a["count"] < b["count"])
 				return 1;
 			return 0;
 		}
-		//max 35 cooccurances
-		cooccDisplayCount = 44
+		//max n cooccurances
+		cooccDisplayCount = 22
 		cooccCount = linkedNodes.length
 		linkedNodes = linkedNodes.sort(sortByCount)
-		hiddenNodes = linkedNodes.slice(cooccDisplayCount, linkedNodes.length)
+		hiddenNodesLegend = linkedNodes.slice(cooccDisplayCount, linkedNodes.length)
 		linkedNodes = linkedNodes.slice(0, cooccDisplayCount);
 		cooccCount = cooccCount - linkedNodes.length
 
@@ -471,19 +522,21 @@
 
 		//Hidden tooltip
 		if (cooccCount > 0) {
-		hiddenRangeList = []
-		hiddenColorList = []
-		hiddenNodes = hiddenNodes.slice(0, cooccDisplayCount)
-		for (var i = 0; i < hiddenNodes.length; i++) {
-			hiddenRangeList.push(d3.svg.symbol().type(hiddenNodes[i]["value"]["type"])());
-			hiddenColorList.push(shapesColors[hiddenNodes[i]["value"]["type"]]);
-			hiddenNodes[i] = hiddenNodes[i]["count"] + 'x ' + hiddenNodes[i]["value"]["name"] + " - " + hiddenNodes[i]["value"]["id"]; }
+			hiddenRangeList = []
+			hiddenColorList = []
+			hiddenNodesLegend = hiddenNodesLegend.slice(0, cooccDisplayCount)
+			for (var i = 0; i < hiddenNodesLegend.length; i++) {
+				hiddenRangeList.push(d3.svg.symbol().type(hiddenNodesLegend[i]["value"]["type"])());
+				hiddenColorList.push(shapesColors[hiddenNodesLegend[i]["value"]["type"]]);
+				hiddenNodesLegend[i] = hiddenNodesLegend[i]["count"] + 'x ' + hiddenNodesLegend[i]["value"]["name"] + " - " + hiddenNodesLegend[i]["value"]["id"];
+			}
 
-		domainList.push(cooccCount + " hidden.."); colorList.push('#000000');
-		// if there are even more left over
-		if ((cooccCount - cooccDisplayCount) > 0)  {
-			hiddenNodes.push((cooccCount - cooccDisplayCount) + ' hidden..');  hiddenColorList.push('#000000');
-		}}
+			domainList.push(cooccCount + " hidden.."); colorList.push('#000000');
+			// if there are even more left over
+			if ((cooccCount - cooccDisplayCount) > 0) {
+				hiddenNodesLegend.push((cooccCount - cooccDisplayCount) + ' hidden..'); hiddenColorList.push('#000000');
+			}
+		}
 
 		var selectedSymbol = d3.scale.ordinal()
 			.domain(domainList).range(rangeList);
@@ -495,10 +548,16 @@
 			.scale(selectedSymbol)
 			.orient("vertical")
 			.title(node.name + ' - ' + node.id + ' x' + node.score)
-			.on("cellover", function (e) { if (cooccCount > 0) {if (e.includes('hidden..')) {displayHiddenCooccNodes()}; }})
-			.on("cellout", function (e) { if (cooccCount > 0) {if (e.includes('hidden..')) {svg.select(".hiddenSelectedSymbol")//.remove();
-						.attr("fill-opacity", 1).transition()
-						.duration(300).attr("fill-opacity", 0).remove(); }}});
+			.on("cellover", function (e) { if (cooccCount > 0) { if (e.includes('hidden..')) { displayHiddenCooccNodes() }; } })
+			.on("cellout", function (e) {
+				if (cooccCount > 0) {
+					if (e.includes('hidden..')) {
+						svg.select(".hiddenSelectedSymbol")//.remove();
+							.attr("fill-opacity", 1).transition()
+							.duration(300).attr("fill-opacity", 0).remove();
+					}
+				}
+			});
 
 		svg.select(".selectedSymbol").call(selectedPath);
 
@@ -511,22 +570,136 @@
 
 		// FOR HIDDEN NODES
 		function displayHiddenCooccNodes() {
-			var selectedSymbol = d3.scale.ordinal().domain(hiddenNodes).range(hiddenRangeList);
+			var selectedSymbol = d3.scale.ordinal().domain(hiddenNodesLegend).range(hiddenRangeList);
 			svg.append("g").attr("class", "hiddenSelectedSymbol").attr("transform", "translate(250, 100)");
 			var selectedPath = d3.legend.symbol().scale(selectedSymbol).orient("vertical")
 				.title('Hidden nodes');
 
 			svg.select(".hiddenSelectedSymbol").call(selectedPath);
-			var colorScale = d3.scale.ordinal().domain(hiddenNodes).range(hiddenColorList)
+			var colorScale = d3.scale.ordinal().domain(hiddenNodesLegend).range(hiddenColorList)
 			svg.selectAll(".hiddenSelectedSymbol path").each(function (d) {
 				d3.select(this).style("fill", colorScale(d))
 			})
 		}
 	}
 
-/* ######################### SLIDER ###################### */
-$("#countSlider").change(function() {
-    hideBy();
-});
+	/* ##################### HIDDEN NODES #################### */
+	function hiddenNodeLegend(hiddenNodes) {
+		//max n cooccurances
+		overflowDisplayCount = 18
+		overflowCount = hiddenNodes.length
+		hiddenDisplayNodes = hiddenNodes
 
+		overflowNodesLegend = hiddenDisplayNodes.slice(overflowDisplayCount, hiddenDisplayNodes.length)
+		hiddenDisplayNodes = hiddenDisplayNodes.slice(0, overflowDisplayCount);
+		overflowCount = overflowCount - hiddenDisplayNodes.length
+
+		domainList = []
+		rangeList = []
+		colorList = []
+		for (var i = 0; i < hiddenDisplayNodes.length; i++) {
+			domainList.push(hiddenDisplayNodes[i]["score"] + ' - ' + hiddenDisplayNodes[i]["name"] + " - " + hiddenDisplayNodes[i]["id"]);
+			rangeList.push(d3.svg.symbol().type(hiddenDisplayNodes[i]["type"])());
+			colorList.push(shapesColors[hiddenDisplayNodes[i]["type"]]);
+		}
+
+		//Hidden tooltip
+		if (overflowCount > 0) {
+			overflowRangeList = []
+			overflowColorList = []
+			overflowNodesLegend = overflowNodesLegend.slice(0, overflowDisplayCount)
+			for (var i = 0; i < overflowNodesLegend.length; i++) {
+				overflowRangeList.push(d3.svg.symbol().type(overflowNodesLegend[i]["type"])());
+				overflowColorList.push(shapesColors[overflowNodesLegend[i]["type"]]);
+				overflowNodesLegend[i] = overflowNodesLegend[i]["score"] + ' - ' + overflowNodesLegend[i]["name"] + " - " + overflowNodesLegend[i]["id"];
+			}
+
+			domainList.push(overflowCount + " hidden.."); colorList.push('#000000');
+			// if there are even more left over
+			if ((overflowCount - overflowDisplayCount) > 0) {
+				overflowNodesLegend.push((overflowCount - overflowDisplayCount) + ' hidden..'); overflowColorList.push('#000000');
+			}
+		}
+
+		var hiddenSymbol = d3.scale.ordinal()
+			.domain(domainList).range(rangeList);
+
+		svg.append("g")
+			.attr("class", "hiddenSymbol").attr("transform", "translate(20, 600)");
+
+		var hiddenPath = d3.legend.symbol()
+			.scale(hiddenSymbol)
+			.orient("vertical")
+			.title('Hidden nodes, click to reveal')
+			.on("cellclick", function (e) { if (!e.includes('hidden..')) { revealHiddenNode(e); } })
+			.on("cellover", function (e) { if (overflowCount > 0) { if (e.includes('hidden..')) { displayHiddenOverflowNodes() }; } })
+			.on("cellout", function (e) {
+				if (overflowCount > 0) {
+					if (e.includes('hidden..')) {
+						svg.select(".overflowHiddenSymbol")//.remove();
+							.attr("fill-opacity", 1).transition()
+							.duration(300).attr("fill-opacity", 0).remove();
+					}
+				}
+			});
+		svg.select(".hiddenSymbol").call(hiddenPath);
+
+		var colorScale = d3.scale.ordinal()
+			.domain(domainList).range(colorList)
+
+		svg.selectAll(".hiddenSymbol path").each(function (d) {
+			d3.select(this).style("fill", colorScale(d))
+		})
+
+		// FOR HIDDEN NODES
+		function displayHiddenOverflowNodes() {
+			var hiddenSymbol = d3.scale.ordinal().domain(overflowNodesLegend).range(overflowRangeList);
+			svg.append("g").attr("class", "overflowHiddenSymbol").attr("transform", "translate(250, 600)");
+			var hiddenPath = d3.legend.symbol().scale(hiddenSymbol).orient("vertical")
+			// .title('Hidden nodes, click to reveal');
+
+			svg.select(".overflowHiddenSymbol").call(hiddenPath);
+			var colorScale = d3.scale.ordinal().domain(overflowNodesLegend).range(overflowColorList)
+			svg.selectAll(".overflowHiddenSymbol path").each(function (d) {
+				d3.select(this).style("fill", colorScale(d))
+			})
+		}
+
+		function revealHiddenNode(e) {
+			nodeValues = e.split(" - ")
+			for (var i = 0; i < hiddenNodes.length; i++) {
+				if (nodeValues[0] == hiddenNodes[i]["score"] && nodeValues[1] == hiddenNodes[i]["name"] && nodeValues[2] == hiddenNodes[i]["id"]) {
+					hiddenNodes.splice(i, 1);
+					hideBy();
+
+					svg.select(".hiddenOverflowSymbol").attr("fill-opacity", 1).remove();
+					svg.select(".hiddenSymbol").attr("fill-opacity", 1).remove();
+					if (hiddenNodes.length >= 1) {
+						hiddenNodeLegend(hiddenNodes)
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	/* ######################### SLIDER ###################### */
+	$("#countSlider").change(function () {
+		hideBy();
+	});
+	/* ######################### CHECKBOX ###################### */
+	function toggleVisibleCoocc(checkBox) {
+		if (checkBox.checked) {
+			svg.select(".selectedSymbol")
+				.attr("fill-opacity", 1).transition()
+				.duration(300).attr("fill-opacity", 0).remove(); //remove after transitions are complete
+
+			svg.select(".hiddenSelectedSymbol")
+				.attr("fill-opacity", 1).transition()
+				.duration(300).attr("fill-opacity", 0).remove()
+		}
+		else {
+
+		}
+	}
 </script>

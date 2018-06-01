@@ -3,6 +3,7 @@ from utils.es_manager import ES_Manager
 import json
 import requests
 import itertools
+import traceback
 
 class FactManager:
     """ Manage Searcher facts, like deleting/storing, adding facts.
@@ -53,14 +54,12 @@ class FactManager:
                     data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
                     document = {'doc': {self.field: new_field}}
                     data += json.dumps(document)+'\n'
-                scroll_time = time.time()
                 response = self.es_m.scroll(scroll_id=scroll_id, size=10000, field_scroll=self.field)
                 total_docs = len(response['hits']['hits'])
                 scroll_id = response['_scroll_id']
                 self.es_m.plain_post_bulk(self.es_m.es_url, data)
         except:
             print(traceback.format_exc())
-            import pdb;pdb.set_trace()
 
     def tag_documents_with_fact(self, es_params, tag_name, tag_value, tag_field):
         '''Used to tag all documents in the current search with a certain fact'''

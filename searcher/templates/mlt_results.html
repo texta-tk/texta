@@ -1,4 +1,4 @@
-<table class="table table-striped">
+<table id='mlt_table' class="table table-striped">
 	<thead>
 		<tr>
 			<th>Doc ID</th>
@@ -24,3 +24,6 @@
 		{% endfor %}
 	</tbody>
 </table>
+<script>
+	$("#mlt_table").colResizable({minWidth:50});
+</script>
