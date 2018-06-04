@@ -62,6 +62,7 @@
 th {
   /* border-top: 1px solid #dddddd; */
   /* border-bottom: 1px solid #dddddd; */
+  overflow: hidden;
   border-right: 1px solid #f1f1f1;
 }
 

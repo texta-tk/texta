@@ -124,7 +124,15 @@ def index(request):
     preprocessors = collect_map_entries(preprocessor_map)
     enabled_preprocessors = [preprocessor for preprocessor in preprocessors]
 
-    template_params = {'STATIC_URL': STATIC_URL,
+    # Hide fact graph if no facts_str_val is present in fields
+    display_fact_graph = 'hidden'
+    for i in fields:
+        if json.loads(i['data'])['type'] == "fact_str_val":
+            display_fact_graph = ''
+            break
+
+    template_params = {'display_fact_graph': display_fact_graph,
+                       'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'fields': fields,
                        'searches': Search.objects.filter(author=request.user),
@@ -390,7 +398,6 @@ def highlight_cluster_keywords(documents, keywords, params):
             document = hl.highlight(document,to_highlighter)
             if 'show_short_version_cluster' in params.keys():
                 document = additional_option_cut_text(document, params['short_version_n_char_cluster'])
-                #print(document3 == document2)
             out.append(document)
         elif not 'show_unhighlighted' in params.keys():
             out.append(document)
@@ -687,10 +694,23 @@ def aggregate(request):
 @login_required
 def delete_fact(request):
     fact_m = FactManager(request)
-    fact_m.remove_facts_from_document()
+    Process(target=fact_m.remove_facts_from_document, args=(dict(request.POST),)).start()
 
     return HttpResponse()
 
+@login_required
+def tag_documents(request):
+    """Add a fact to documents with given name and value
+       via Search > Actions > Tag results
+    """
+    tag_name = request.POST['tag_name']
+    tag_value = request.POST['tag_value']
+    tag_field = request.POST['tag_field']
+    es_params = request.POST
+
+    fact_m = FactManager(request)
+    fact_m.tag_documents_with_fact(es_params, tag_name, tag_value, tag_field)
+    return HttpResponse()
 
 def _get_facts_agg_count(es_m, facts):
     counts = {}
@@ -983,3 +1003,21 @@ def _extract_fact_val_constraint(raw_constraint):
         'sub_constraints': sub_constraints
     }
 
+@login_required
+def fact_graph(request):
+    search_size = int(request.POST['search_size'])
+
+    fact_m = FactManager(request)
+    graph_data, fact_names, max_node_size, max_link_size, min_node_size = fact_m.fact_graph(search_size)
+
+    template_params = {'STATIC_URL': STATIC_URL,
+                       'URL_PREFIX': URL_PREFIX,
+                       'search_id': 1,
+                       'searches': Search.objects.filter(author=request.user),
+                       'graph_data': graph_data,
+                       'max_node_size': max_node_size,
+                       'max_link_size': max_link_size,
+                       'min_node_size': min_node_size,
+                       'fact_names': fact_names}
+    template = loader.get_template('fact_graph_results.html')
+    return HttpResponse(template.render(template_params, request))

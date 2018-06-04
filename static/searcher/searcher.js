@@ -92,6 +92,12 @@ $(document).ready(function() {
 		}
     });
 
+    $('#nFactGraphSize').bootstrapSlider({
+		formatter: function(value) {
+			return 'Current value: ' + value;
+		}
+    });
+
 });
 
 $(document).mousemove(function(e) {
@@ -566,13 +572,17 @@ function query(){
                   'processing': true,
                   "sAjaxSource": PREFIX+"/table_content",
                   "sDom": '<l"H"ipr>t<"F"lip>',
-                  //"sDom": "Rlrtip",
                   "sServerMethod":"GET",
                   "fnServerParams":function(aoData){
                       aoData.push({'name':'filterParams','value':JSON.stringify($("#filters").serializeArray())});
                    },
                   "oLanguage": { "sProcessing": "Loading..."}
             });
+
+            $(function(){
+                $("#examples").colResizable({minWidth:50}); //in searcher_results.html template
+            });
+
             var dataset = $("#dataset").val();
             var mapping = $("#mapping").val();
             loadUserPreference(dataset,mapping);
@@ -683,7 +693,7 @@ function apply_preprocessor() {
 
 
 function displayAgg(response){
-	var data = response;
+    var data = response;
 	var container = $("#right");
 	container.empty();
 
@@ -694,11 +704,11 @@ function displayAgg(response){
 	container.append(string_container);
 
 	for (var i in data) {
-		if(data.hasOwnProperty(i)){
-			if(data[i].type == 'daterange'){
-				drawTimeline(data[i]);
+        if(data.hasOwnProperty(i)){
+            if(data[i].type == 'daterange'){
+                drawTimeline(data[i]);
 			}else if(data[i].type == 'string'){
-				drawStringAggs(data[i]);
+                drawStringAggs(data[i]);
 			} else if (data[i].type == 'fact') {
                 drawStringAggs(data[i], type='fact');
             } else if (data[i].type == 'fact_str_val') {
@@ -708,21 +718,33 @@ function displayAgg(response){
             }
 		}
 	}
-
 }
 
+function factGraph() {
+    var request = new XMLHttpRequest();
+    var formElement = new FormData();
+    formElement.append('search_size', $('#nFactGraphSize').attr('value'));
+
+    request.onreadystatechange=function() {
+        if (request.readyState==4 && request.status==200) {
+            $("#right").html(request.responseText);
+        }
+    }
+    request.open("POST",PREFIX+'/fact_graph');
+    request.send(formElement,true);
+}
 
 function drawTimeline(data){
 
-	var timeline_children_container = $("<div></div>");
+    var timeline_children_container = $("<div></div>");
 
 	new Morris.Line({
-		  element: 'daterange_agg_container',
-		  resize: true,
-		  data: data.data,
-		  // The name of the data record attribute that contains x-values.
-		  xkey: 'date',
-		  // A list of names of data record attributes that contain y-values.
+        element: 'daterange_agg_container',
+        resize: true,
+        data: data.data,
+        // The name of the data record attribute that contains x-values.
+        xkey: 'date',
+        // A list of names of data record attributes that contain y-values.
 		  ykeys: data.ykeys,
 		  // Labels for the ykeys -- will be displayed when you hover over the
 		  // chart.
@@ -788,7 +810,7 @@ function show_children(data,date,timeline_children_container) {
             timeline_children_container.append(container);
         });
 	});
-    
+
 }
 
 function drawStringAggs(data, type=null){
@@ -796,7 +818,7 @@ function drawStringAggs(data, type=null){
 	var table_container = $("<div style='float: left'></div>");
 	var children_container = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
 	var grandchildren_container = $("<div id='grandchildren_container' style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
-    
+
 	var tbody = $("<tbody></tbody>");
 
 	$.each(data.data, function(i,row){
@@ -809,60 +831,145 @@ function drawStringAggs(data, type=null){
         }
 		tbody.append(row_container);
 	});
-    
+
 	var table = $("<table class='table table-striped table-hover'></table>");
 	table.append("<thead><th colspan='2'>Field #1</th></head>");
 	table.append(tbody);
-    
+
 	table_container.append(table);
-    
+
 	response_container.append("<div class='row text-center'><h3>"+data.label+"</h3></div>");
 	response_container.append(table_container);
 	response_container.append(children_container);
     response_container.append(grandchildren_container)
-    
+
 	$("#string_agg_container").append(response_container);
 }
 
-function deleteFact(dict, trElement){
+var selectedFactCheckboxes = []
+function factDeleteCheckbox(checkbox) {
+    inArray = false;
+    if (!selectedFactCheckboxes.length > 0){
+        selectedFactCheckboxes.push(checkbox)
+    } else{
+        i = 0
+        while (!inArray && i < selectedFactCheckboxes.length) {
+            if (selectedFactCheckboxes[i].name == checkbox.name) {
+                selectedFactCheckboxes.splice(i, 1);
+                inArray = true;
+            }
+            i++;
+        }
+        if (!inArray) {
+            selectedFactCheckboxes.push(checkbox)
+        }
+    }
+}
+
+function deleteFactsViaCheckboxes(checkboxes) {
+    factArray = []
+    for (var i=0; i<checkboxes.length; i++) {
+        fact = JSON.parse(checkboxes[i].name.replace(/'/g, '"'))
+        factArray.push(fact)
+    }
+    deleteFactArray(factArray, source='aggs')
+}
+
+function ajaxDeleteFacts(form_data, factArray) {
+    $.ajax({
+        url: PREFIX + '/delete_fact',
+        data: form_data,
+        type: 'POST',
+        contentType: false,
+        processData: false,
+        beforeSend: function() {
+            swal({
+                title:'Starting fact remove job!',
+                text:'Removing facts from documents, this might take a while.',
+                type:'success'});
+        },
+        success: function() {
+            for (var i=0; i<factArray.length; i++) {
+                removed_facts.push({key: Object.keys(factArray[i])[0], value: factArray[Object.keys(factArray[i])[0]]});
+            }
+            swal({
+                title:'Deleted!',
+                text: factArray.length +' facts have been removed.',
+                type:'success'});
+        },
+        error: function() {
+            swal('Error!','There was a problem removing the facts!','error');
+        }
+    });
+}
+
+function deleteFactArray(factArray, source='aggs') {
+    if (factArray.length >= 1) {
     var request = new XMLHttpRequest();
     var form_data = new FormData();
-    for (var key in dict) {
-        form_data.append(key, dict[key]);
+    for (var i=0; i<factArray.length; i++) {
+        for (var key in factArray[i]) {
+            form_data.append(key, factArray[i][key]);
+        }
     }
 
-
-    swal({
-        title: 'Are you sure you want to remove this fact from the dataset?',
-        text: 'This will remove the fact '+ JSON.stringify(dict) + ' from the dataset and add it to removed facts.',
-        type: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#73AD21',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, remove it!'
-        }).then((result) => {
-            if(result.value){
-            $.ajax({
-                url: PREFIX + '/delete_fact',
-                data: form_data,
-                type: 'POST',
-                contentType: false,
-                processData: false,
-                success: function() {
-                    trElement.remove();
-                    removed_facts.push({key: Object.keys(dict)[0], value: dict[Object.keys(dict)[0]]});
-                    swal({
-                        title:'Deleted!',
-                        text:'Fact '+JSON.stringify(dict)+' has been removed.',
-                        type:'success'});
-                },
-                error: function() {
-                    swal('Error!','There was a problem removing the fact!','error');
-                }
-            });
-        };
+    if (source=='aggs') {
+        swal({
+            title: 'Are you sure you want to remove this fact from the dataset?',
+            text: 'This will remove '+ factArray.length + ' facts from the dataset.',
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#73AD21',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, remove them!'
+            }).then((result) => {
+                if(result.value){
+                    ajaxDeleteFacts(form_data, factArray);
+            }
         });
+    } else if (source=="fact_manager") {
+        ajaxDeleteFacts(form_data, factArray);
+    }
+} else {
+    swal('Warning!','No facts selected!','warning');
+    }
 }
+
+function addFactToSearch(fact_name, fact_val) {
+
+    $("#constraint_field option").each(function()
+    {
+        if ($(this).val() != "") {
+            if (JSON.parse($(this).val())['type'] == "fact_str_val") {
+                $("#constraint_field").val($(this).val());
+                return false; //break out of loop
+            }
+        }
+    })
+
+    var has_field = false;
+    $('span[id^=selected_field_]').each(function (index) {
+        if ($(this).text().includes(['[fact_text_values]'])) {
+            has_field = true;
+        }
+    });
+    if (!has_field) {
+        add_field("", "", "");
+    }
+
+    var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_');
+    var suggestion_id = split_id[split_id.length - 2] + '_' + split_id[split_id.length - 1]
+    if (has_field) {
+        addFactValueFieldConstraint(split_id[split_id.length - 2], $("#fact_field_" + split_id[split_id.length - 2]).val())
+        var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_');
+        var suggestion_id = split_id[split_id.length - 2] + '_' + split_id[split_id.length - 1]
+    }
+
+    $('#field_' + split_id[split_id.length - 2] + " #fact_txt_" + suggestion_id).val(fact_name)
+    $('#fact_constraint_op_' + suggestion_id).val('=');
+    $("#fact_constraint_val_" + suggestion_id).val(fact_val);
+}
+
 
 function show_string_children(data,children_container,grandchildren_container, row_key, type=null) {
     children_container.empty();
@@ -891,11 +998,24 @@ function show_string_children(data,children_container,grandchildren_container, r
             if(type == 'fact') {
                 var fact_data = {};
                 fact_data[fact_key] = this.key;
-                var delete_fact_icon = '<i class="glyphicon glyphicon-trash pull-right"\
-                data-toggle="tooltip" title="Delete fact"\
+
+                var add_to_search_icon = '<i class="glyphicon glyphicon-search pull-right"\
+                data-toggle="tooltip" title="Add to search"\
                 style="cursor: pointer"\
-                onclick=\'deleteFact('+JSON.stringify(fact_data)+',this.parentElement.parentElement);\'></i>';
-                var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key+"</td><td>" + delete_fact_icon +"</td></tr>");
+                onclick=\'addFactToSearch("'+fact_key+'","'+ this.key+'");\'></i>';
+
+                //keep track of checkboxes using their name as {NAME: VALUE}, otherwise when clicking on another fact name, they get overwritten
+                checkboxName = JSON.stringify(fact_data).replace(/"/g, "'")
+                var checkbox = '<input id="checkBox_' + this.val + '_' + this.key+'"\
+                type="checkbox" name="'+ checkboxName +'" onchange="factDeleteCheckbox(this)"'
+
+                for(var i = 0; i < selectedFactCheckboxes.length; i++) {
+                    if (selectedFactCheckboxes[i].name == checkboxName) {
+                        checkbox = checkbox + ' checked'
+                    }
+                }
+
+                var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key +"</td><td>"+ add_to_search_icon +"</td><td>" + checkbox + "></td></tr>");
             }
             else {
                 var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key+"</td><td></td></tr>");
@@ -925,9 +1045,14 @@ function show_string_children(data,children_container,grandchildren_container, r
     }
 	}, [row_key]);
 
-	var table = $("<table class='table table-striped table-hover'></table>");
-	table.append("<thead><th colspan='2'>Field #2</th></head>");//.click(function(){children_container.addClass('hidden')});;
+    var table = $("<table class='table table-striped table-hover'></table>");
 
+    var delete_checked_facts = '<i class="glyphicon glyphicon-trash pull-right"\
+    data-toggle="tooltip" title="Delete checked facts"\
+    style="cursor: pointer"\
+    onclick=\'deleteFactsViaCheckboxes(selectedFactCheckboxes);\'></i>';
+
+	table.append("<thead><th colspan='2'>Field #2</th><th colspan='1'></th><th colspan='1'>" + delete_checked_facts + "</th></head>");//.click(function(){children_container.addClass('hidden')});;
 	table.append(tbody);
 
 	children_container.append(table);
@@ -963,7 +1088,7 @@ function change_agg_field(field_nr){
 
     selected_method = $("#sort_by_"+field_nr).children("#sort_by_"+field_nr);
     selected_method.change(function() {
-        console.log(selected_method[0].options[selected_method[0].selectedIndex].text);
+        // console.log(selected_method[0].options[selected_method[0].selectedIndex].text);
         if (selected_method[0].options[selected_method[0].selectedIndex].text == 'significant words') {
             $("#agg_field_2_button").addClass('hidden');
         }
@@ -1131,6 +1256,39 @@ function loadUserPreference(dataset,mapping) {
         }
     }
 }
+
+function tag_by_query() {
+    if ($('#tag_name')[0].checkValidity() && $('#tag_value')[0].checkValidity() && $('#tag_field')[0].checkValidity()) {
+        var tag_name = $('#tag_name').val();
+        var tag_value = $('#tag_value').val();
+        var tag_field = JSON.parse($('#tag_field').val())['path'];
+
+        formElement = new FormData(document.getElementById("filters"));
+        formElement.append('tag_name', tag_name);
+        formElement.append('tag_value', tag_value);
+        formElement.append('tag_field', tag_field);
+
+        $.ajax({
+            url: PREFIX + '/tag_documents',
+            data: formElement,
+            type: 'POST',
+            contentType: false,
+            processData: false,
+            success: function() {
+                swal({
+                    title:'Tag successful!',
+                    text:'Search has been tagged with '+ tag_name + ': ' + tag_value,
+                    type:'success'});
+            },
+            error: function() {
+                swal('Error!','There was a problem tagging the search!','error');
+            }
+        });
+    } else {
+        swal('Warning!','Parameters not set!','warning');
+    }
+}
+
 
 function export_data(exportType) {
     var formElement = document.getElementById("filters");

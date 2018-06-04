@@ -108,6 +108,7 @@ class ElasticStorer(object):
                 #  (if you encode data_to_send with utf8, the string will be bytes)
                 document = {(k.decode('utf8') if isinstance(k, bytes) else k):
                 (v.decode('utf8') if isinstance(v, bytes) else v) for k, v in document.items()}
+
                 #document = {str(k): str(v) for k, v in document.items()}
                 data_to_send.append(json.dumps(document, ensure_ascii=False))
 
