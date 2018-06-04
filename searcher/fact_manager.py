@@ -125,7 +125,9 @@ class FactManager:
         aggs = {"facts": {"nested": {"path": "texta_facts"}, "aggs": {"fact_names": {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val", "size": size}}}}}}}
         self.es_m.build(self.es_params)
         self.es_m.set_query_parameter('aggs', aggs)
+        
         response = self.es_m.search()
+        
         response_aggs = response['aggregations']['facts']['fact_names']['buckets']
 
         facts = {}

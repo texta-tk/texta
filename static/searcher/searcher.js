@@ -672,7 +672,6 @@ function aggregate(){
 
 
 function apply_preprocessor() {
-
     var formElement = document.getElementById("filters");
     
     $("#preprocessor_field").appendTo(formElement);
@@ -689,6 +688,22 @@ function apply_preprocessor() {
     request.open("POST",PREFIX+'/apply_preprocessor');
     request.send(new FormData(formElement),true);
 
+}
+
+
+function factGraph() {
+    var formElement = document.getElementById("filters");
+    var request = new XMLHttpRequest();
+    
+    formElement.append('fact_graph_size', $('#nFactGraphSize').attr('value'));
+
+    request.onreadystatechange=function() {
+        if (request.readyState==4 && request.status==200) {
+            $("#right").html(request.responseText);
+        }
+    }
+    request.open("POST",PREFIX+'/fact_graph');
+    request.send(new FormData(formElement),true);
 }
 
 
@@ -718,20 +733,6 @@ function displayAgg(response){
             }
 		}
 	}
-}
-
-function factGraph() {
-    var request = new XMLHttpRequest();
-    var formElement = new FormData();
-    formElement.append('search_size', $('#nFactGraphSize').attr('value'));
-
-    request.onreadystatechange=function() {
-        if (request.readyState==4 && request.status==200) {
-            $("#right").html(request.responseText);
-        }
-    }
-    request.open("POST",PREFIX+'/fact_graph');
-    request.send(formElement,true);
 }
 
 function drawTimeline(data){
