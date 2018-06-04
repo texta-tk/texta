@@ -24,22 +24,26 @@
 	}
 </style>
 <div class="graphBody">
-	<div class="countSlider">
-		<input id='visibleFactsCheckbox' type="checkbox" data-toggle="toggle" onchange="toggleVisibleCoocc(this)">
-		<label for="visibleFactsCheckbox">Show cooccurances for visible nodes only</label>
-		<p>
-			<b> Hide facts with lower count than: </b>
-		</p>
-		<input id="countSlider" data-slider-id='countSliderId' type="text" data-slider-min="{{min_node_size}}" data-slider-max="{{max_node_size}}"
-		 data-slider-step="1" data-slider-value="0" />
+    <div class="row">
+		<div class="col-md-6 col-md-offset-1">
+			<div class="countSlider">
+				<input id='visibleFactsCheckbox' type="checkbox" data-toggle="toggle" onchange="toggleVisibleCoocc(this)">
+				<label for="visibleFactsCheckbox">Show cooccurances for visible nodes only</label>
+				<p>
+					<b> Hide facts with lower count than: </b>
+				</p>
+				<input id="countSlider" data-slider-id='countSliderId' type="text" data-slider-min="{{min_node_size}}" data-slider-max="{{max_node_size}}"
+				 data-slider-step="1" data-slider-value="0" />
 
-		<script>
-			$('#countSlider').slider({
-				formatter: function (value) {
-					return 'Current value: ' + value;
-				}
-			});
-		</script>
+				<script>
+					$('#countSlider').slider({
+						formatter: function (value) {
+							return 'Current value: ' + value;
+						}
+					});
+				</script>
+			</div>
+		</div>
 	</div>
 </div>
 

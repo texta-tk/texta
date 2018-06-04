@@ -692,6 +692,10 @@ function apply_preprocessor() {
 
 
 function factGraph() {
+	var container = $("#right");
+	container.empty();
+	container.append("Loading...");
+
     var formElement = document.getElementById("filters");
     var request = new XMLHttpRequest();
     
