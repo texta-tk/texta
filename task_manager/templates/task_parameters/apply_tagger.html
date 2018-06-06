@@ -1,0 +1,31 @@
+ <div class="panel">
+                            <div class="panel-header">Apply tagger</div>
+                            <div class="modal-body">
+								Add a custom fact to the resulting documents to tag the search.
+								<div class="form-group">
+									<label for="tag_name">Fact name:</label>
+									<input type="text" class="form-control" name="tag_name" id="tag_name" required>
+								</div>
+								<div class="form-group">
+									<label for="tag_value">Fact value:</label>
+									<input type="text" class="form-control" name="tag_value" id="tag_value" required>
+								</div>
+								<div class="panel bg-grey">
+									<div class="row padded-row">
+										<div class="col-sm-12 text-center">
+											<b>Field to tag</b>
+										</div>
+										<div class="col-sm-12">
+											<b>Select field:</b>
+										</div>
+										<div class="col-sm-12">
+											<select id="tag_field" name="tag_field" class="form-control input-sm" required>
+												<option></option>
+												{% for field in fields %}
+													<option value="{{field.data}}">{{field.label}}</option>
+												{% endfor %}
+											</select>
+										</div>
+									</div>
+								</div>
+							</div>

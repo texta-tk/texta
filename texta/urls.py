@@ -40,5 +40,6 @@ urlpatterns = [
     url(r'static/(?P<path>.*)$',static.serve,{'document_root': 'static'}),
     url(r'^%s(?P<path>.*)$' % settings.MEDIA_URL, protected_serve, {'document_root': settings.PROTECTED_MEDIA}),
     url(r'^import_api/', include('importer_api.urls')),
+    url(r'^task_manager/', include('task_manager.urls')),
 ]
 

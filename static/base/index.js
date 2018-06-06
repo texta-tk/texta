@@ -26,6 +26,10 @@ $('#classification_manager').click(function() {
     window.location = LINK_CLASSIFICATION_MANAGER;
 });
 
+$('#task_manager').click(function() {
+    window.location = LINK_TASK_MANAGER;
+});
+
 $('#ontology_viewer').click(function() {
     window.location = LINK_ONTOLOGY_VIEWER;
 });

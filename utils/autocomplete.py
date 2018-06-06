@@ -50,9 +50,13 @@ class Autocomplete:
                     }
                 }
             }
+        
+        agg_query = {agg_subfield: {"nested": {"path": "texta_facts"}, "aggs": {agg_subfield: {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val"}}}}}}}
 
         self.es_m.build('')
         self.es_m.set_query_parameter("aggs", agg_query)
+        
+        print(self.es_m.search()["aggregations"])
         
         facts = [self._format_suggestion(a["key"],a["key"]) for a in self.es_m.search()["aggregations"][agg_subfield][agg_subfield]["buckets"]]
 

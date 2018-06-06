@@ -248,7 +248,8 @@ INSTALLED_APPS = (
 	'grammar_builder',
 	'search_api',
 	'dataset_importer',
-	'importer_api'
+	'importer_api',
+	'task_manager'
 )
 
 ############################ Elasticsearch ###########################

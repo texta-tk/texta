@@ -1,0 +1,67 @@
+{% extends "index.html" %}
+{% block app %}
+<script type="application/javascript" src="{{STATIC_URL}}task_manager/task_manager.js"></script>
+
+<div class="row">
+	<div class="col-md-12">
+		<ul class="nav nav-pills">
+			{% for task_param in task_params %}
+				<li class="{% if forloop.counter0 < 1 %}active{% endif %}"><a data-toggle="tab" href="#{{task_param.id}}">{{task_param.name}}</a></li>
+			{% endfor %}					
+		</ul>
+	</div>
+</div>
+
+<div class="row">
+	<form id="task_params">
+		<div class="col-lg-3">
+			<div class="tab-content">
+					{% for task_param in task_params %}
+						<div id="{{task_param.id}}" class="tab-pane fade in {% if forloop.counter0 < 1 %}active{% endif %}">
+							{% include task_param.template %}    
+						</div>
+					{% endfor %}
+			</div>
+		</div>
+	</form>
+	
+	<div class="col-lg-9">
+		<div class="panel">
+			<div class="panel-heading">Tasks</div>
+			<div class="panel-body">
+			{% for task in tasks %}
+			    {{task.status}}
+			{% endfor %}
+
+				<table class="table table-striped">
+					<thead>
+					  <tr>
+						<th>Task ID</th>
+						<th>User</th>
+						<th>Description</th>
+						<th>Parameters</th>
+						<th>Task Status</th>
+						<th>Task Started</th>
+						<th>Task Completed</th>
+					</tr>
+					</thead>
+					{% for task in tasks %}
+						<tr>
+							<td>{{task.pk}}</td>
+							<td>{{task.user}}</td>
+							<td>{{task.description}}</td>
+							<td>{{task.parameters}}</td>
+							<td>{{task.status}}</td>
+							<td>{{task.time_started|date:"d.m.Y H:i"}}</td>
+							<td>{{task.time_completed|date:"d.m.Y H:i"}}</td>
+						</tr>
+					{% endfor %}
+				</table>
+
+			</div>
+        </div>
+	</div>
+
+</div>
+
+{% endblock %}

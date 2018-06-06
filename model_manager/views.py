@@ -37,6 +37,7 @@ def get_fields(es_m):
     mapped_fields = es_m.get_mapped_fields()
 
     for data in mapped_fields:
+        print(data)
         path = data['path']
         path_list = path.split('.')
         label = '{0} --> {1}'.format(path_list[0], ' --> '.join(path_list[1:])) if len(path_list) > 1 else path_list[0]

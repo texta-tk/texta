@@ -1,0 +1,20 @@
+<div class="panel">
+                            <div class="panel-header">Apply preprocessor</div>
+                            <div class="panel-body">
+								<b>Select field:</b>
+								<select id="preprocessor_field" name="preprocessor_field" class="form-control input-sm">
+									{% for field in fields %}
+										{% if field.type == 'keyword' or field.type == 'text' %}
+											<option value="{{field.data}}">{{field.label}}</option>
+										{% endif %}
+									{% endfor %}
+								</select>
+								<br>
+								<b>Select preprocessor</b>
+								<select id="preprocessor_key" name="preprocessor_key" class="form-control input-sm">
+									{% for preprocessor in enabled_preprocessors %}
+										<option value="{{preprocessor.key}}">{{preprocessor.name}}</option>
+									{% endfor %}
+							    </select>
+                            </div>                            
+                        </div>
