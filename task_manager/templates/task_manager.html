@@ -33,6 +33,7 @@
 					<thead>
 					  <tr>
 						<th>Task ID</th>
+						<th>Task Type</th>
 						<th>User</th>
 						<th>Description</th>
 						<th>Task Status</th>
@@ -45,6 +46,7 @@
 					{% for task in tasks %}
 						<tr>
 							<td>{{task.pk}}</td>
+							<td>{{task.task_type}}</td>
 							<td>{{task.user}}</td>
 							<td>{{task.description}}</td>
 							<td>{{task.status}}</td>

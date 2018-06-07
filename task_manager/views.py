@@ -9,7 +9,8 @@ from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from texta.settings import STATIC_URL
 
-from .language_model_manager import LanguageModel
+from .language_model_manager.language_model_manager import LanguageModel
+from .tag_manager import model_pipeline
 
 from datetime import datetime
 
@@ -56,6 +57,12 @@ def index(request):
                'STATIC_URL': STATIC_URL,
                'fields': fields}
     
+    pipe_builder = model_pipeline.get_pipeline_builder()
+    context['train_tagger_extractor_opt_list'] = pipe_builder.get_extractor_options()
+    context['train_tagger_reductor_opt_list'] = pipe_builder.get_reductor_options()
+    context['train_tagger_normalizer_opt_list'] = pipe_builder.get_normalizer_options()
+    context['train_tagger_classifier_opt_list'] = pipe_builder.get_classifier_options()
+
     template = loader.get_template('task_manager.html')
     return HttpResponse(template.render(context, request))
 
@@ -75,8 +82,10 @@ def start_task(request):
 
     task_id = create_task(task_type, description, task_params, user)
     
-    lm = LanguageModel()
-    lm.train(task_params, task_id)
+    print(task_params)
+    
+    #lm = LanguageModel()
+    #lm.train(task_params, task_id)
 
     return HttpResponse()
 
