@@ -29,20 +29,17 @@
 		<div class="panel">
 			<div class="panel-heading">Tasks</div>
 			<div class="panel-body">
-			{% for task in tasks %}
-			    {{task.status}}
-			{% endfor %}
-
 				<table class="table table-striped">
 					<thead>
 					  <tr>
 						<th>Task ID</th>
 						<th>User</th>
 						<th>Description</th>
-						<th>Parameters</th>
 						<th>Task Status</th>
 						<th>Task Started</th>
 						<th>Task Completed</th>
+						<th>Parameters</th>
+						<th>Result</th>
 					</tr>
 					</thead>
 					{% for task in tasks %}
@@ -50,14 +47,14 @@
 							<td>{{task.pk}}</td>
 							<td>{{task.user}}</td>
 							<td>{{task.description}}</td>
-							<td>{{task.parameters}}</td>
 							<td>{{task.status}}</td>
 							<td>{{task.time_started|date:"d.m.Y H:i"}}</td>
-							<td>{{task.time_completed|date:"d.m.Y H:i"}}</td>
+							<td>{{task.time_completed|date:"d.m.Y H:i"}}</td>							
+							<td>{{task.parameters}}</td>
+							<td>{{task.result}}</td>
 						</tr>
 					{% endfor %}
 				</table>
-
 			</div>
         </div>
 	</div>

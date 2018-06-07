@@ -22,80 +22,49 @@ class LanguageModel:
     def __init__(self):
         pass
     
-    def train(self, task_params, user, session):
-        Process(target=self._training_process,args=(task_params, user, session)).start()
+    def train(self, task_params, task_id):
+        Process(target=self._training_process,args=(task_params, task_id)).start()
         return True        
     
     def delete(self):
         pass
-
-    @staticmethod
-    def _parse_params(task_params, session):
-        search_id = task_params['search']
-
-        # select search
-        if search_id == 'all_docs':
-            query = {"main":{"query":{"bool":{"minimum_should_match":0,"must":[],"must_not":[],"should":[]}}}}
-        else:
-            query = json.loads(Search.objects.get(pk=int(search_id)).query)
-
-        # set task parameters
-        parameters = {'num_dimensions': int(task_params['num_dimensions']),
-                      'num_workers': int(task_params['num_workers']),
-                      'min_freq': int(task_params['min_freq']),
-                      'dataset': int(session['dataset']),
-                      'field': json.loads(task_params['field'])['path'],
-                      'query': query
-                      }
-        
-        return parameters    
+ 
    
-    def _training_process(self, task_params, user, session):
-        description = task_params['description']
-        parameters = self._parse_params(task_params, session)
-
-        # add task to db
-        new_task = Task(description = description,
-                        parameters = json.dumps(parameters),
-                        status = 'running',
-                        time_started = datetime.now(),
-                        time_completed = None,
-                        user = user)
-        
-        new_task.save()
-
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_started', 'data': {'task_id': new_task.id}}))
+    def _training_process(self, task_params, task_id):
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_started', 'data': {'task_id': task_id}}))
 
         num_passes = 5
         # Number of word2vec passes + one pass to vocabulary building
         total_passes = num_passes + 1
-        show_progress = ShowProgress(new_task.pk, multiplier=total_passes)
+        show_progress = ShowProgress(task_id, multiplier=total_passes)
         show_progress.update_view(0)
         model = word2vec.Word2Vec()
 
         try:
-            sentences = esIterator(parameters, session, callback_progress=show_progress)
+            sentences = esIterator(task_params, task_id, callback_progress=show_progress)
+            model = word2vec.Word2Vec(sentences, min_count=int(task_params['min_freq']),
+                                      size=int(task_params['num_dimensions']),
+                                      workers=int(task_params['num_workers']),
+                                      iter=int(num_passes))
 
-            model = word2vec.Word2Vec(sentences, min_count=parameters['min_freq'],
-                                      size=parameters['num_dimensions'],
-                                      workers=parameters['num_workers'],
-                                      iter=num_passes)
-
-            model_name = 'model_' + str(new_task.pk)
+            model_name = 'model_' + str(task_id)
             output_model_file = os.path.join(MODELS_DIR, model_name)
             model.save(output_model_file)
             task_status = 'completed'
 
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).error(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_failed', 'args': {'user_name': user.username}}), exc_info=True)
+            logging.getLogger(ERROR_LOGGER).error(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_failed', 'data': {'task_id': task_id}}), exc_info=True)
             print('--- Error: {0}'.format(e))
             task_status = 'failed'
 
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_completed', 'data': {'task_id': new_task.id}}))
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_completed', 'data': {'task_id': task_id}}))
          # declare the job done
-        r = Task.objects.get(pk=new_task.pk)
+        r = Task.objects.get(pk=task_id)
         r.time_completed = datetime.now()
         r.status = task_status
+        
+        r.result = json.dumps({"foo":"bar"})
+        
         r.save()
         print('asd')
 
@@ -137,17 +106,30 @@ class esIterator(object):
     """  ElasticSearch Iterator
     """
 
-    def __init__(self, parameters, session, callback_progress=None):
-        self.field = parameters['field']
-        # Define selected mapping
-        ds = Datasets().activate_dataset(session)
+    def __init__(self, parameters, task_id, callback_progress=None):
+        self.field = json.loads(parameters['field'])['path']
+        self.task_id = task_id
+        ds = Datasets().activate_dataset_by_id(task_id)
         self.es_m = ds.build_manager(ES_Manager)
-        self.es_m.load_combined_query(parameters['query'])
+        query = self._parse_query(parameters)       
+        self.es_m.load_combined_query(query)
         self.callback_progress = callback_progress
 
         if self.callback_progress:
             total_elements = self.get_total_documents()
             callback_progress.set_total(total_elements)
+
+
+    @staticmethod
+    def _parse_query(parameters):
+        search = parameters['search']
+        # select search
+        if search == 'all_docs':
+            query = {"main":{"query":{"bool":{"minimum_should_match":0,"must":[],"must_not":[],"should":[]}}}}
+        else:
+            query = json.loads(Search.objects.get(pk=int(search)).query)
+        return query
+
 
     def __iter__(self):
         self.es_m.set_query_parameter('size', 500)

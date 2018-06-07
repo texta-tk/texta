@@ -7,10 +7,13 @@ MAX_STR_LEN = 100
 
 class Task(models.Model):
     id             = models.AutoField(primary_key=True)
-    description    = models.CharField(max_length=MAX_STR_LEN)
-    parameters     = models.TextField()
+    user           = models.ForeignKey(User, on_delete=models.CASCADE)
+    description    = models.CharField(max_length=MAX_STR_LEN, default=None)
+    task_type      = models.CharField(max_length=MAX_STR_LEN, default=None)
+    parameters     = models.TextField(default=None)
+    result         = models.TextField(default=None)
     status         = models.CharField(max_length=MAX_STR_LEN)
     time_started   = models.DateTimeField()
-    time_completed = models.DateTimeField(null=True,blank=True)
-    user           = models.ForeignKey(User, on_delete=models.CASCADE)
+    time_completed = models.DateTimeField(null=True, blank=True, default=None)
+    
 

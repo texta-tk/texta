@@ -32,6 +32,17 @@ class Datasets:
             self.mapping_id = int(session['dataset'])
         return self
 
+    def activate_dataset_by_id(self, _id):
+        """ Activate dataset by ID
+        """
+        if len(self.datasets.keys()) > 0:
+            if _id not in self.datasets.keys():
+                self.mapping_id = int(list(self.datasets.keys())[0])
+            else:
+                self.mapping_id = int(session['dataset'])
+        
+        return self
+
     def is_active(self):
         return self.mapping_id is not None
 

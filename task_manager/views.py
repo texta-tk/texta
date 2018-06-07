@@ -2,7 +2,6 @@ from django.shortcuts import render
 from django.template import loader
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
-
 from task_manager.models import Task
 from searcher.models import Search
 from permission_admin.models import Dataset
@@ -11,6 +10,8 @@ from utils.es_manager import ES_Manager
 from texta.settings import STATIC_URL
 
 from .language_model_manager import LanguageModel
+
+from datetime import datetime
 
 import json
 
@@ -64,12 +65,34 @@ def start_task(request):
     user = request.user
     session = request.session
     task_params = request.POST
-    task_params = filter_params(task_params, task_params['task_id'])
+
+    task_type = task_params['task_type']
+    description = task_params['description']
+    task_params = filter_params(task_params, task_type)   
+
+    if 'dataset' in request.session.keys():
+        task_params['dataset'] = int(request.session['dataset'])
+
+    task_id = create_task(task_type, description, task_params, user)
     
     lm = LanguageModel()
-    lm.train(task_params, user, session)
+    lm.train(task_params, task_id)
 
     return HttpResponse()
+
+
+def create_task(task_type, description, parameters, user):
+    # Creates a db entry for new task and returns task ID
+    new_task = Task(description = description,
+                    task_type = task_type,
+                    parameters = json.dumps(parameters),
+                    status = 'running',
+                    time_started = datetime.now(),
+                    time_completed = None,
+                    result = '',
+                    user = user)
+    new_task.save()
+    return new_task.pk
 
 
 def filter_params(params, prefix):

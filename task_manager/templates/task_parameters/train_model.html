@@ -6,7 +6,7 @@
 			  <div class="row">
 				<div class="col-sm-6">Select a search:</div>
 				<div class="col-sm-6">
-					<select name="{{task.id}}_search" class="form-control">
+					<select name="{{task_param.id}}_search" class="form-control">
 						<option value="all_docs">Empty (all documents)</option>
 						{% for search in searches %}
 							<option value="{{search.id}}">{{search.description}}</option>
@@ -17,7 +17,7 @@
 			  <div class="row">
 				<div class="col-sm-6">Select field:</div>
 				<div class="col-sm-6">
-					<select name="{{task.id}}_field" class="form-control">
+					<select name="{{task_param.id}}_field" class="form-control">
 						{% for field in fields %}
 							<option value="{{field.data}}">{{field.label}}</option>
 						{% endfor %}
@@ -27,7 +27,7 @@
 			  <div class="row">
 				<div class="col-sm-6">No of dimensions:</div>
 				<div class="col-sm-6">
-								<select name="{{task.id}}_num_dimensions" class="form-control">
+								<select name="{{task_param.id}}_num_dimensions" class="form-control">
 									<option value="50">50</option>
 									<option value="100" selected="selected">100</option>
 									<option value="150">150</option>
@@ -38,7 +38,7 @@
 			  <div class="row">
 				<div class="col-sm-6">No of workers:</div>
 				<div class="col-sm-6">
-								<select name="{{task.id}}_num_workers" class="form-control">
+								<select name="{{task_param.id}}_num_workers" class="form-control">
 									<option value="1">1</option>
 									<option value="2" selected="selected">2</option>
 									<option value="3">3</option>
@@ -55,7 +55,7 @@
 			  <div class="row">
 				<div class="col-sm-6">Frequency threshold:</div>
 				<div class="col-sm-6">
-								<select name="{{task.id}}_min_freq" class="form-control">
+								<select name="{{task_param.id}}_min_freq" class="form-control">
 									<option value="1">1</option>
 									<option value="5">5</option>
 									<option value="10" selected="selected">10</option>
@@ -69,13 +69,13 @@
 			  <div class="row">
 				<div class="col-sm-6">Description:</div>
 				<div class="col-sm-6">
-				  <input name="{{task.id}}_description" class="form-control input-sm">	
+				  <input name="{{task_param.id}}_description" class="form-control input-sm">	
 				</div>
 			  </div>	
 			  <div class="row">
 				<div class="col-sm-6"></div>
 				<div class="col-sm-6">
-				  <button type="button" onclick="javascript:start_task('{{task.id}}');" class="btn btn-default form-control"><span class="glyphicon glyphicon-ok"></span> Start task</button>
+				  <button type="button" onclick="javascript:start_task('{{task_param.id}}');" class="btn btn-default form-control"><span class="glyphicon glyphicon-ok"></span> Start task</button>
 				</div>
 			  </div>				  
 		  </div>
