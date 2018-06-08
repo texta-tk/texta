@@ -1,20 +1,35 @@
 <div class="panel">
-                            <div class="panel-header">Apply preprocessor</div>
-                            <div class="panel-body">
-								<b>Select field:</b>
-								<select id="preprocessor_field" name="preprocessor_field" class="form-control input-sm">
-									{% for field in fields %}
-										{% if field.type == 'keyword' or field.type == 'text' %}
-											<option value="{{field.data}}">{{field.label}}</option>
-										{% endif %}
-									{% endfor %}
-								</select>
-								<br>
-								<b>Select preprocessor</b>
-								<select id="preprocessor_key" name="preprocessor_key" class="form-control input-sm">
-									{% for preprocessor in enabled_preprocessors %}
-										<option value="{{preprocessor.key}}">{{preprocessor.name}}</option>
-									{% endfor %}
-							    </select>
-                            </div>                            
-                        </div>
+    <div class="panel-heading">Apply preprocessor</div>
+    <div class="panel-body">
+
+		<div class="row">
+			<div class="col-sm-6">Select field:</div>
+			<div class="col-sm-6">
+				<select id="preprocessor_field" name="preprocessor_field" class="form-control input-sm">
+					{% for field in fields %}
+						<option value="{{field.data}}">{{field.label}}</option>
+					{% endfor %}
+				</select>
+			</div>
+		</div>
+
+
+		<div class="row">
+			<div class="col-sm-6">Preprocessor:</div>		
+			<div class="col-sm-6">
+				<select id="preprocessor_key" name="preprocessor_key" class="form-control input-sm">
+					{% for preprocessor in enabled_preprocessors %}
+						<option value="{{preprocessor.key}}">{{preprocessor.name}}</option>
+					{% endfor %}
+				</select>	
+			</div>
+		</div>
+		
+		<div class="row">
+			<div class="col-sm-12">
+			    <button type="button" onclick="javascript:start_task('{{task_param.id}}');" class="btn btn-default form-control"><span class="glyphicon glyphicon-ok"></span> Start task</button>
+			</div>
+		</div>
+
+    </div>                            
+</div>

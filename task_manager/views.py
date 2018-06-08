@@ -9,6 +9,7 @@ from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from texta.settings import STATIC_URL, URL_PREFIX
 
+from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
 from .language_model_manager.language_model_manager import LanguageModel
 from .tag_manager.tag_manager import TaggingModel, get_pipeline_builder
 
@@ -18,7 +19,7 @@ import json
 
 task_params = [{"name": "Train Language Model", "id": "train_model", "template": "task_parameters/train_model.html", "model": LanguageModel()},
                {"name": "Train Text Tagger", "id": "train_tagger", "template": "task_parameters/train_tagger.html", "model": TaggingModel()},
-              #{"name": "Apply preprocessor", "id": "apply_preprocessor", "template": "task_parameters/apply_preprocessor.html"},
+              {"name": "Apply preprocessor", "id": "apply_preprocessor", "template": "task_parameters/apply_preprocessor.html"},
               #{"name": "Apply text tagger", "id": "apply_tagger", "template": "task_parameters/apply_tagger.html"},
               ]
 
@@ -44,15 +45,28 @@ def get_fields(es_m):
     return fields
 
 
+def collect_map_entries(map_):
+    entries = []
+    for key, value in map_.items():
+        value['key'] = key
+        entries.append(value)
+
+    return entries
+
+
 @login_required
 def index(request):
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
     fields = get_fields(es_m)
 
+    preprocessors = collect_map_entries(preprocessor_map)
+    enabled_preprocessors = [preprocessor for preprocessor in preprocessors]
+
     context = {'task_params': task_params,
                'tasks': Task.objects.all().order_by('-pk'),
                'searches': Search.objects.filter(author=request.user,dataset=Dataset(pk=int(request.session['dataset']))),
+               'enabled_preprocessors': enabled_preprocessors,
                'STATIC_URL': STATIC_URL,
                'fields': fields}
     
