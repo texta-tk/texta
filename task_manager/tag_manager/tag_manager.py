@@ -183,7 +183,7 @@ class TaggingModel:
             data_sample_x, data_sample_y, statistics = es_data.get_data_samples()
 
             show_progress.update(1)
-            model, train_summary = train_model_with_cv(c_pipe, params, data_sample_x, data_sample_y)
+            model, train_summary = self._train_model_with_cv(c_pipe, params, data_sample_x, data_sample_y)
 
             show_progress.update(2)
             self.model = model
@@ -213,17 +213,48 @@ class TaggingModel:
         
     def delete(self):
         pass
+
         
     def save(self):
         model_name = 'model_{0}.pkl'.format(self.id)
         self.model_name = model_name
         output_model_file = os.path.join(MODELS_DIR, model_name)
-        save_model(self.model, output_model_file)
+        joblib.dump(self.model, output_model_file)
         return True
+
+    @staticmethod
+    def load_model(file_name):
+        model = joblib.load(file_name)
+        return model
+
         
     def _training_process(self):
         pass
 
+
+    @staticmethod
+    def _train_model_with_cv(model, params, X, y):
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20)
+
+        # Use Train data to parameter selection in a Grid Search
+        gs_clf = GridSearchCV(model, params, n_jobs=1, cv=5)
+        gs_clf = gs_clf.fit(X_train, y_train)
+        model = gs_clf.best_estimator_
+
+        # Use best model and test data for final evaluation
+        y_pred = model.predict(X_test)
+
+        _f1 = f1_score(y_test, y_pred, average='micro')
+        _confusion = confusion_matrix(y_test, y_pred)
+        __precision = precision_score(y_test, y_pred)
+        _recall = recall_score(y_test, y_pred)
+        _statistics = {'f1_score': _f1,
+                       'confusion_matrix': _confusion,
+                       'precision': __precision,
+                       'recall': _recall
+                       }
+
+        return model, _statistics
 
 
 
@@ -272,130 +303,6 @@ def get_pipeline_builder():
     pipe_builder.add_classifier('RadiusNeighborsClassifier', RadiusNeighborsClassifier, 'Radius Neighbors', params)
 
     return pipe_builder
-
-
-def train_model_with_cv(model, params, X, y):
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20)
-
-    # Use Train data to parameter selection in a Grid Search
-    gs_clf = GridSearchCV(model, params, n_jobs=1, cv=5)
-    gs_clf = gs_clf.fit(X_train, y_train)
-    model = gs_clf.best_estimator_
-
-    # Use best model and test data for final evaluation
-    y_pred = model.predict(X_test)
-
-    _f1 = f1_score(y_test, y_pred, average='micro')
-    _confusion = confusion_matrix(y_test, y_pred)
-    __precision = precision_score(y_test, y_pred)
-    _recall = recall_score(y_test, y_pred)
-    _statistics = {'f1_score': _f1,
-                   'confusion_matrix': _confusion,
-                   'precision': __precision,
-                   'recall': _recall
-                   }
-
-    return model, _statistics
-
-
-def save_model(model, file_name):
-    joblib.dump(model, file_name)
-
-
-def load_model(file_name):
-    model = joblib.load(file_name)
-    return model
-
-
-# Ref: http://stackoverflow.com/questions/26646362/numpy-array-is-not-json-serializable
-def jsonify(data):
-    json_data = dict()
-    for key, value in data.items():
-        if isinstance(value, list):
-            value = [ jsonify(item) if isinstance(item, dict) else item for item in value ]
-        if isinstance(value, dict):
-            value = jsonify(value)
-        if isinstance(key, int):
-            key = str(key)
-        if type(value).__module__=='numpy':
-            value = value.tolist()
-        json_data[key] = value
-    return json_data
-
-
-def train_classifier(request, usr, search_id, field_path, extractor_opt, reductor_opt,
-                     normalizer_opt, classifier_opt, description, tag_label):
-
-    # add Run to db
-    dataset_pk = int(request.session['dataset'])
-    model_status = 'running'
-    model_score = "---"
-    clf_arch = "---"
-    train_summary = "---"
-
-    key_str = '{0}-{1}'.format(dataset_pk, random.random() * 100000)
-    model_key = hashlib.md5(key_str.encode('utf8')).hexdigest()
-
-    new_run = ModelClassification(run_description=description, tag_label=tag_label, fields=field_path,
-                                  score=model_score, search=Search.objects.get(pk=search_id).query,
-                                  run_status=model_status, run_started=datetime.now(), run_completed=None,
-                                  user=usr, clf_arch=clf_arch, train_summary=train_summary,
-                                  dataset_pk=dataset_pk, model_key=model_key)
-    new_run.save()
-
-    print('Run added to db.')
-
-
-
-    query = json.loads(Search.objects.get(pk=search_id).query)
-    steps = ["preparing data", "training", "done"]
-    show_progress = ShowSteps(new_run.pk, steps)
-    show_progress.update_view()
-
-    try:
-        show_progress.update(0)
-        pipe_builder = get_pipeline_builder()
-        pipe_builder.set_pipeline_options(extractor_opt, reductor_opt, normalizer_opt, classifier_opt)
-        clf_arch = pipe_builder.pipeline_representation()
-        c_pipe, params = pipe_builder.build()
-
-        es_data = EsDataSample(query, field_path, request)
-        data_sample_x, data_sample_y, statistics = es_data.get_data_samples()
-
-        show_progress.update(1)
-        _start_training_time = time.time()
-        model, _s_train = train_model_with_cv(c_pipe, params, data_sample_x, data_sample_y)
-        _total_training_time = time.time() - _start_training_time
-        statistics.update(_s_train)
-        statistics['time'] = _total_training_time
-        statistics['params'] = params
-        model_score = "{0:.2f}".format(statistics['precision'])
-        train_summary = json.dumps(jsonify(statistics))
-        show_progress.update(2)
-        model_name = 'classifier_{0}.pkl'.format(new_run.pk)
-        output_model_file = os.path.join(MODELS_DIR, model_name)
-        save_model(model, output_model_file)
-        model_status = 'completed'
-
-    except Exception as e:
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE CLASSIFIER','event':'model_training_failed','data':{'task_id':request.user.username}}),exc_info=True)
-        print('--- Error: {0}'.format(e))
-        model_status = 'failed'
-
-    logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE CLASSIFIER',
-                                                    'event': 'model_training_completed',
-                                                    'args': {'user_name': request.user.username},
-                                                    'data': {'run_id': new_run.id}}))
-    # declare the job done
-    r = ModelClassification.objects.get(pk=new_run.pk)
-    r.run_completed = datetime.now()
-    r.run_status = model_status
-    r.score = model_score
-    r.clf_arch = clf_arch
-    r.train_summary = train_summary
-    r.save()
-
-    print('job is done')
 
 
 class ShowSteps(object):
@@ -471,3 +378,4 @@ def classify_documents(classifier_ids, documents):
     classifiers = [load_model(os.path.join(MODELS_DIR, classifier_name)) for classifier_name in classifier_names]
 
     return data_manager.classify_documents(documents, classifiers, classifier_tags, field_paths)
+
