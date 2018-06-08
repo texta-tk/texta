@@ -41,6 +41,7 @@
 						<th>Task Completed</th>
 						<th>Parameters</th>
 						<th>Result</th>
+						<th>Actions</th>
 					</tr>
 					</thead>
 					{% for task in tasks %}
@@ -54,6 +55,7 @@
 							<td>{{task.time_completed|date:"d.m.Y H:i"}}</td>							
 							<td>{{task.parameters}}</td>
 							<td>{{task.result}}</td>
+							<td></td>
 						</tr>
 					{% endfor %}
 				</table>

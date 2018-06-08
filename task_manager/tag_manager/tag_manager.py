@@ -31,9 +31,10 @@ from sklearn.model_selection import GridSearchCV
 
 from texta.settings import STATIC_URL, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ERROR_LOGGER
 from searcher.models import Search
-from classification_manager.data_manager import EsDataClassification, EsDataSample
-from classification_manager.models import JobQueue, ModelClassification
-import classification_manager.data_manager as data_manager
+from task_manager.models import Task
+from .data_manager import EsDataClassification, EsDataSample
+#from classification_manager.models import JobQueue, ModelClassification
+from . import data_manager
 
 
 class ModelNull(BaseEstimator):
@@ -151,8 +152,86 @@ class PipelineBuilder:
         return pipe, params
 
 
-def get_pipeline_builder():
 
+
+class TaggingModel:
+    
+    def __init__(self):
+        self.id = None
+        
+    def train(self, task_id):
+        self.id = task_id
+        
+        task_params = json.loads(Task.objects.get(pk=self.id).parameters)
+        steps = ["preparing data", "training", "saving", "done"]
+        show_progress = ShowSteps(self.id, steps)
+        show_progress.update_view()
+        
+        extractor_opt = int(task_params['extractor_opt'])
+        reductor_opt = int(task_params['reductor_opt'])
+        normalizer_opt = int(task_params['normalizer_opt'])
+        classifier_opt = int(task_params['classifier_opt'])
+
+        try:
+            show_progress.update(0)
+            pipe_builder = get_pipeline_builder()
+            pipe_builder.set_pipeline_options(extractor_opt, reductor_opt, normalizer_opt, classifier_opt)
+            clf_arch = pipe_builder.pipeline_representation()
+            c_pipe, params = pipe_builder.build()
+
+            es_data = EsDataSample(task_params)
+            data_sample_x, data_sample_y, statistics = es_data.get_data_samples()
+
+            show_progress.update(1)
+            model, train_summary = train_model_with_cv(c_pipe, params, data_sample_x, data_sample_y)
+
+            show_progress.update(2)
+            self.model = model
+            self.save()
+            train_summary['model_name'] = self.model_name
+            train_summary['model_type'] = 'sklearn'
+            model_status = 'completed'
+            show_progress.update(3)
+
+        except Exception as e:
+            logging.getLogger(ERROR_LOGGER).error(json.dumps({'process': 'CREATE CLASSIFIER', 'event': 'model_training_failed', 'data': {'task_id': self.id}}),exc_info=True)
+            print('--- Error: {0}'.format(e))
+            model_status = 'failed'
+
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE CLASSIFIER',
+                                                    'event': 'model_training_completed',
+                                                    'data': {'task_id': self.id}}))
+        # declare the job done
+        r = Task.objects.get(pk=self.id)
+        r.time_completed = datetime.now()
+        r.status = 'completed'
+        r.result = train_summary
+        r.save()
+
+        print('done')
+
+        
+    def delete(self):
+        pass
+        
+    def save(self):
+        model_name = 'model_{0}.pkl'.format(self.id)
+        self.model_name = model_name
+        output_model_file = os.path.join(MODELS_DIR, model_name)
+        save_model(self.model, output_model_file)
+        return True
+        
+    def _training_process(self):
+        pass
+
+
+
+
+
+
+
+
+def get_pipeline_builder():
     pipe_builder = PipelineBuilder()
 
     # Feature Extraction
@@ -265,6 +344,9 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
     new_run.save()
 
     print('Run added to db.')
+
+
+
     query = json.loads(Search.objects.get(pk=search_id).query)
     steps = ["preparing data", "training", "done"]
     show_progress = ShowSteps(new_run.pk, steps)
@@ -296,7 +378,7 @@ def train_classifier(request, usr, search_id, field_path, extractor_opt, reducto
         model_status = 'completed'
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE CLASSIFIER','event':'model_training_failed','args':{'user_name':request.user.username}}),exc_info=True)
+        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE CLASSIFIER','event':'model_training_failed','data':{'task_id':request.user.username}}),exc_info=True)
         print('--- Error: {0}'.format(e))
         model_status = 'failed'
 
@@ -331,8 +413,8 @@ class ShowSteps(object):
 
     def update_view(self):
         i = self.n_step
-        r = ModelClassification.objects.get(pk=self.model_pk)
-        r.run_status = '{0} [{1}/{2}]'.format(self.step_messages[i], i+1, self.n_total)
+        r = Task.objects.get(pk=self.model_pk)
+        r.status = '{0} [{1}/{2}]'.format(self.step_messages[i], i+1, self.n_total)
         r.save()
 
 

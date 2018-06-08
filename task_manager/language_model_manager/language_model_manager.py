@@ -20,54 +20,66 @@ from texta.settings import MODELS_DIR, INFO_LOGGER, ERROR_LOGGER
 class LanguageModel:
 
     def __init__(self):
-        pass
-    
-    def train(self, task_params, task_id):
-        Process(target=self._training_process,args=(task_params, task_id)).start()
-        return True        
-    
-    def delete(self):
-        pass
- 
+        self.id = None
+        self.model = None
+
    
-    def _training_process(self, task_params, task_id):
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_started', 'data': {'task_id': task_id}}))
+    def train(self, task_id):
+        self.id = task_id
+        Process(target=self._training_worker).start()
+        return True
+
+
+    def _training_worker(self):
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_started', 'data': {'task_id': self.id}}))
 
         num_passes = 5
         # Number of word2vec passes + one pass to vocabulary building
         total_passes = num_passes + 1
-        show_progress = ShowProgress(task_id, multiplier=total_passes)
+        show_progress = ShowProgress(self.id, multiplier=total_passes)
         show_progress.update_view(0)
         model = word2vec.Word2Vec()
+        
+        task_params = json.loads(Task.objects.get(pk=self.id).parameters)
 
         try:
-            sentences = esIterator(task_params, task_id, callback_progress=show_progress)
+            sentences = esIterator(task_params, self.id, callback_progress=show_progress)
             model = word2vec.Word2Vec(sentences, min_count=int(task_params['min_freq']),
                                       size=int(task_params['num_dimensions']),
                                       workers=int(task_params['num_workers']),
                                       iter=int(num_passes))
-
-            model_name = 'model_' + str(task_id)
-            output_model_file = os.path.join(MODELS_DIR, model_name)
-            model.save(output_model_file)
+            
+            self.model = model
+            self.save()
             task_status = 'completed'
 
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).error(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_failed', 'data': {'task_id': task_id}}), exc_info=True)
+            logging.getLogger(ERROR_LOGGER).error(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_failed', 'data': {'task_id': self.id}}), exc_info=True)
             print('--- Error: {0}'.format(e))
             task_status = 'failed'
 
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_completed', 'data': {'task_id': task_id}}))
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_completed', 'data': {'task_id': self.id}}))
          # declare the job done
-        r = Task.objects.get(pk=task_id)
+        r = Task.objects.get(pk=self.id)
         r.time_completed = datetime.now()
         r.status = task_status
         
-        r.result = json.dumps({"foo":"bar"})
+        r.result = json.dumps({"model_name": self.model_name, "model_type": "word2vec"})
         
         r.save()
-        print('asd')
+        print('done')        
 
+    
+    def delete(self):
+        pass
+
+
+    def save(self):
+        model_name = 'model_' + str(self.id)
+        self.model_name = model_name
+        output_model_file = os.path.join(MODELS_DIR, model_name)
+        self.model.save(output_model_file)
+        return True
 
 class ShowProgress(object):
     """ Show model training progress
@@ -166,4 +178,4 @@ class esIterator(object):
                 self.callback_progress.update(l)
 
     def get_total_documents(self):
-        return self.es_m.get_total_documents()        
+        return self.es_m.get_total_documents()       
