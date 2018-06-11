@@ -158,6 +158,8 @@ class TaggingModel:
     
     def __init__(self):
         self.id = None
+        self.model = None
+        self.description = None
         
     def train(self, task_id):
         self.id = task_id
@@ -210,21 +212,30 @@ class TaggingModel:
 
         print('done')
 
+
+    def tag(self, texts):
+        return self.model.predict(texts)
+
         
     def delete(self):
         pass
 
         
     def save(self):
-        model_name = 'model_{0}.pkl'.format(self.id)
+        model_name = 'model_{0}'.format(self.id)
         self.model_name = model_name
         output_model_file = os.path.join(MODELS_DIR, model_name)
         joblib.dump(self.model, output_model_file)
         return True
 
-    @staticmethod
-    def load_model(file_name):
-        model = joblib.load(file_name)
+
+    def load(self, model_id):
+        model_name = 'model_{0}'.format(model_id)
+        model_file = os.path.join(MODELS_DIR, model_name)
+        model = joblib.load(model_file)
+        self.model = model
+        self.id = int(model_id)
+        self.description = Task.objects.get(pk=self.id).description
         return model
 
         
@@ -369,13 +380,18 @@ def clean_job_queue():
         j.delete()
 
 
-def classify_documents(classifier_ids, documents):
-    classifiers_data = ModelClassification.objects.filter(id__in=classifier_ids)
-    field_paths = [classifier_data.fields for classifier_data in classifiers_data]
-    classifier_tags = [classifier_data.tag_label for classifier_data in classifiers_data]
+def tag_texts(taggers, documents):
 
-    classifier_names = ['classifier_{0}.pkl'.format(classifier_data.pk) for classifier_data in classifiers_data]
-    classifiers = [load_model(os.path.join(MODELS_DIR, classifier_name)) for classifier_name in classifier_names]
+    print(taggers)
 
-    return data_manager.classify_documents(documents, classifiers, classifier_tags, field_paths)
+    #classifiers_data = ModelClassification.objects.filter(id__in=classifier_ids)
+    #field_paths = [classifier_data.fields for classifier_data in classifiers_data]
+    #classifier_tags = [classifier_data.tag_label for classifier_data in classifiers_data]
+
+    #classifier_names = ['classifier_{0}.pkl'.format(classifier_data.pk) for classifier_data in classifiers_data]
+    #classifiers = [load_model(os.path.join(MODELS_DIR, classifier_name)) for classifier_name in classifier_names]
+
+    #return data_manager.classify_documents(documents, classifiers, classifier_tags, field_paths)
+
+    return ['ads']
 

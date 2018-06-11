@@ -125,6 +125,16 @@ function collectDateConverterArguments(formData) {
     return formData;
 }
 
+function collectTextTaggerArguments(formData) {
+    var featureNames = JSON.stringify($('#text-tagger-processor-feature-names').val().split('\n'));
+    var taggers = JSON.stringify($('#text-tagger-processor-taggers').val());
+
+    formData.append('text_tagger_preprocessor_input_features', featureNames);
+    formData.append('text_tagger_preprocessor_taggers', taggers);
+
+    return formData;
+}
+
 
 // Key to collector map
 
@@ -141,5 +151,6 @@ var collectors = {
     postgres: collectPostgresArguments,
 
     mlp: collectMlpArguments,
-	date_converter: collectDateConverterArguments
+	date_converter: collectDateConverterArguments,
+	text_tagger: collectTextTaggerArguments
 };
