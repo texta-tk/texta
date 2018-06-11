@@ -5,18 +5,6 @@ import preprocessors
 from texta.settings import DATASET_IMPORTER
 
 
-mlp_field_properties = {'properties': {'text': {'type':'text',
-                                                            'fields': {'keyword': {'type': 'keyword', 'ignore_above': 256}}
-                                                        },
-                                               'lemmas':{'type':'text',
-                                                            'fields': {'keyword': {'type': 'keyword', 'ignore_above': 256}}
-                                                        },
-                                               'lang':{'type': 'keyword', 'ignore_above': 256}
-                                               }
-                               }
-
-
-
 def log_preprocessor_status(code, status):
     print('[Dataset Importer] {code} preprocessor {status}.'.format(**{'code': code, 'status': status}))
 
@@ -31,9 +19,8 @@ try:
         'parameters_template': 'parameters/preprocessor_parameters/mlp.html',
         'arguments': {
             'mlp_url': DATASET_IMPORTER['urls']['mlp'],
-            'enabled_features': ['text', 'lang', 'texta_facts'],
+            'enabled_features': ['text', 'lang', 'texta_facts']
         },
-        'field_properties': mlp_field_properties,
         'is_enabled': True
     }
     log_preprocessor_status(code='mlp', status='enabled')
