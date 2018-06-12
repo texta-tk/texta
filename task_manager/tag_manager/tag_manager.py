@@ -268,11 +268,6 @@ class TaggingModel:
         return model, _statistics
 
 
-
-
-
-
-
 def get_pipeline_builder():
     pipe_builder = PipelineBuilder()
 
@@ -378,20 +373,4 @@ def clean_job_queue():
     jobs = JobQueue.objects.all()
     for j in jobs:
         j.delete()
-
-
-def tag_texts(taggers, documents):
-
-    print(taggers)
-
-    #classifiers_data = ModelClassification.objects.filter(id__in=classifier_ids)
-    #field_paths = [classifier_data.fields for classifier_data in classifiers_data]
-    #classifier_tags = [classifier_data.tag_label for classifier_data in classifiers_data]
-
-    #classifier_names = ['classifier_{0}.pkl'.format(classifier_data.pk) for classifier_data in classifiers_data]
-    #classifiers = [load_model(os.path.join(MODELS_DIR, classifier_name)) for classifier_name in classifier_names]
-
-    #return data_manager.classify_documents(documents, classifiers, classifier_tags, field_paths)
-
-    return ['ads']
 

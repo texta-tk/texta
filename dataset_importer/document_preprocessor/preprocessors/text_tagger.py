@@ -1,4 +1,4 @@
-from task_manager.tag_manager.tag_manager import TaggingModel, tag_texts
+from task_manager.tag_manager.tag_manager import TaggingModel
 from task_manager.models import Task
 
 import numpy as np
