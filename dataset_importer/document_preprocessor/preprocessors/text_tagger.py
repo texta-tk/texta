@@ -27,31 +27,33 @@ class TextTaggerPreprocessor(object):
         
         for input_feature in input_features:
             try:
-                texts = [document[input_feature].decode() for document in documents if input_feature in document]
+                texts = [document[input_feature].strip().decode() for document in documents if input_feature in document]
             except AttributeError:
-                texts = [document[input_feature] for document in documents if input_feature in document]
+                texts = [document[input_feature].strip() for document in documents if input_feature in document]
             
-
             ## Dies with empty text!
             results = []
             tagger_descriptions = []
             
-            for i,tagger in enumerate(taggers_to_apply):
+            for tagger in taggers_to_apply:
                 tagger_descriptions.append(tagger.description)
-                result_vector = tagger.tag(texts)   
+                result_vector = tagger.tag(texts)
                 results.append(result_vector)
             
             results_transposed = np.array(results).transpose()
 
-            tags = []
-
-            for tagger_ids in results_transposed:
+            for i,tagger_ids in enumerate(results_transposed):
                 positive_tag_ids = np.nonzero(tagger_ids)
                 positive_tags = [tagger_descriptions[positive_tag_id] for positive_tag_id in positive_tag_ids[0]]
-               
-                out.append(positive_tags)
+                texta_facts = []
                 
-            
-        
+                if positive_tags:               
+                    if 'texta_facts' not in documents[i]:
+                        documents[i]['texta_facts'] = []               
+                    for tag in positive_tags:
+                        new_fact = {'fact': 'TEXTA_TAG', 'str_val': tag, 'doc_path': input_feature, 'spans': json.dumps([[0,len(texts[i])]])}
+                        texta_facts.append(new_fact)
+                
+                    documents[i]['texta_facts'].extend(texta_facts)        
 
-        return classify_documentz(self._tagger_ids, documents)
+        return documents
