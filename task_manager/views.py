@@ -12,6 +12,7 @@ from texta.settings import STATIC_URL, URL_PREFIX
 from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
 from .language_model_manager.language_model_manager import LanguageModel
 from .tag_manager.tag_manager import TaggingModel, get_pipeline_builder
+from .preprocessor_manager.preprocessor_manager import Preprocessor
 
 from datetime import datetime
 
@@ -87,17 +88,23 @@ def start_task(request):
     task_params = request.POST
 
     task_type = task_params['task_type']
-    task_params = filter_params(task_params, task_type)   
-    description = task_params['description']
-
+    task_params = filter_params(task_params, task_type)
+    
+    if 'description' in task_params:
+        description = task_params['description']
+    else:
+        description = ''
+    
     if 'dataset' in request.session.keys():
         task_params['dataset'] = int(request.session['dataset'])
 
     task_id = create_task(task_type, description, task_params, user)
     
-    
-    model = activate_model(task_type)
-    model.train(task_id)
+    if task_type in ['train_tagger', 'train_model']:
+        model = activate_model(task_type)
+        model.train(task_id)
+    else:
+        Preprocessor().apply(task_id)
 
     return HttpResponseRedirect('{0}/task_manager'.format(URL_PREFIX))
 
@@ -124,6 +131,11 @@ def create_task(task_type, description, parameters, user):
 
 
 def filter_params(params, prefix):
+
+    print(params)
+    
+    print(prefix)
+
     filtered_params = {}
     for param in params:
         if param.startswith(prefix):

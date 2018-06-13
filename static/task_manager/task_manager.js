@@ -16,3 +16,11 @@ function start_task(task_id) {
     request.send(new FormData(formElement),true);
 
 }
+
+
+function select_preprocessor() {
+    var preprocessor_key = $("#preprocessor_key").val();  
+    $("[id^=params-]").addClass('hidden'); 
+    $("#params-"+preprocessor_key).removeClass('hidden');
+}
+

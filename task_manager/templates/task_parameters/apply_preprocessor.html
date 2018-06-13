@@ -3,44 +3,41 @@
     <div class="panel-body">
 
 		<div class="row">
-			<div class="col-sm-6">Select field:</div>
+			<div class="col-sm-6">Search:</div>
 			<div class="col-sm-6">
-				<select id="preprocessor_field" name="preprocessor_field" class="form-control input-sm">
-					{% for field in fields %}
-						<option value="{{field.data}}">{{field.label}}</option>
+				<select name="{{task_param.id}}_search" class="form-control">
+					<option value="all_docs">Empty (all documents)</option>
+					{% for search in searches %}
+						<option value="{{search.id}}">{{search.description}}</option>
 					{% endfor %}
 				</select>
 			</div>
 		</div>
 
-
 		<div class="row">
-			<div class="col-sm-6">Preprocessor:</div>		
+			<div class="col-sm-6">Description:</div>
 			<div class="col-sm-6">
-				<select id="preprocessor_key" name="preprocessor_key" class="form-control input-sm">
+				<input name="{{task_param.id}}_description" class="form-control input-sm">	
+			</div>
+		</div>
+		
+		<div class="row">
+		    <div class="col-sm-6">Preprocessor:</div>
+			<div class="col-sm-6">
+				<select id="{{task_param.id}}_preprocessor_key" name="{{task_param.id}}_preprocessor_key" class="form-control input-sm" onchange="select_preprocessor();">
 					{% for preprocessor in enabled_preprocessors %}
 						<option value="{{preprocessor.key}}">{{preprocessor.name}}</option>
 					{% endfor %}
 				</select>
 			</div>
 		</div>
-		
+
 		<div class="row">
-		{% for preprocessor in enabled_preprocessors %}
-            <div class="list-group-item">
-                <div class="list-group-item-heading">
-                    <div class="checkbox">
-                        <label class="preprocessor-name">
-                            <input type="checkbox" id="apply-preprocessor" class="apply-preprocessor" value="{{ preprocessor.key }}" data-preprocessor-idx="{{ forloop.counter }}">{{ preprocessor.name }}
-                            <span data-toggle="tooltip" data-placement="bottom" title="{{ preprocessor.description }}" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
-                        </label>
-                    </div>
-                </div>
-                <div class="list-group-item-text preprocessor-parameters" id="preprocessor-{{ forloop.counter }}-parameters">
+			{% for preprocessor in enabled_preprocessors %}
+                <div id="params-{{preprocessor.key}}" class="{% if forloop.counter > 1 %}hidden{% endif %} bg-grey">
                     {% include preprocessor.parameters_template %}
                 </div>
-            </div>
-        {%  endfor %}
+			{%  endfor %}	
 		</div>
 		
 		<div class="row">
