@@ -47,7 +47,8 @@ try:
         'class': preprocessors.date_converter.DatePreprocessor,
         'parameters_template': 'parameters/preprocessor_parameters/date_converter.html',
         'arguments': {},
-        'is_enabled': True
+        'is_enabled': True,
+        'languages':['Estonian','English','Russian','Latvian','Lithuanian','Other']
     }
     log_preprocessor_status(code='date_converter', status='enabled')
     

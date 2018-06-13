@@ -13,14 +13,18 @@
     </div>
 	
 	    <div class="form-group">
-        <label class="control-label col-sm-3" for="date-converter-processor-feature-langs">Language:</label>
-        <div class="col-sm-7">
-            <textarea class="form-control" rows="2" id="date-converter-processor-feature-langs"></textarea>
-        </div>
-        <span data-toggle="tooltip" data-placement="bottom" title="Language code of the dataset (default=et)
 
-    Example:
+			<label class="control-label col-sm-3" for="date-converter-processor-feature-langs">Language:</label>
+			 
+			 <span data-toggle="tooltip" data-placement="bottom" title="Language of the dataset" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+		
+			<select id="date-converter-processor-feature-langs" class="selectpicker form-control">
+				
+				{% for language in  preprocessor.languages %}
+					<option {% if forloop.counter0 == 0 %}selected{% endif %} value="{{ language }}">{{language}}</option>
+				{% endfor %}
+			
+			</select>
+		</div>
 
-        en" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
-    </div>
 </div>
