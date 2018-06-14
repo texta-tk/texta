@@ -18,8 +18,8 @@ function start_task(task_id) {
 }
 
 
-function select_preprocessor() {
-    var preprocessor_key = $("#preprocessor_key").val();  
+function select_preprocessor(task_id) {
+    var preprocessor_key = $("#"+task_id+"_preprocessor_key").val();  
     $("[id^=params-]").addClass('hidden'); 
     $("#params-"+preprocessor_key).removeClass('hidden');
 }

@@ -69,6 +69,7 @@ class QueryBuilder:
 
         total_include = 0
         for field_id, fact_constraint in fact_constraints.items():
+            print(fact_constraints)
             _combined_query['main']['query']['bool']['must'].append({'nested': {'path': 'texta_facts', 'query':{'bool': {'must': []}}}})
             fact_query = _combined_query['main']['query']['bool']['must'][-1]['nested']['query']['bool']['must']
 
@@ -195,7 +196,8 @@ class QueryBuilder:
         _constraints = {}
         fact_val_constraint_keys = {u'type':None, u'val':None, u'op':None}
         for item in es_params:
-            if 'fact' in item:
+            # This is hack. Think of something else instead to ignore graph size parameter.
+            if 'fact' in item and 'graph' not in item:
                 item = item.split('_')
                 first_part = '_'.join(item[:2])
                 second_part = item[2]

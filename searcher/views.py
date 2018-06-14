@@ -441,6 +441,8 @@ def search(es_params, request):
                 highlight_config['fields'][f] = {"number_of_fragments": 0}
         es_m.set_query_parameter('highlight', highlight_config)
         response = es_m.search()
+        
+        print(response)
 
         """
         # Get the ids of all documents to be presented in the results page
@@ -636,6 +638,11 @@ def remove_worker(es_m, dummy):
     # TODO: add logging
 
 
+
+
+
+
+
 @login_required
 def apply_preprocessor(request):
     es_params = request.POST
@@ -682,6 +689,11 @@ def prepare_preprocessor_data(field_to_process, preprocessor_key, response):
     preprocessor_input_features = '{0}_preprocessor_input_features'.format(preprocessor_key)
     parameter_dict = {'preprocessors': [preprocessor_key], preprocessor_input_features: json.dumps([field_to_process['path']])}
     return documents, parameter_dict, ids
+
+
+
+
+
 
 
 @login_required

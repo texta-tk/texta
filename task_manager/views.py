@@ -85,18 +85,18 @@ def index(request):
 def start_task(request):
     user = request.user
     session = request.session
-    task_params = request.POST
-
-    task_type = task_params['task_type']
-    task_params = filter_params(task_params, task_type)
     
-    if 'description' in task_params:
-        description = task_params['description']
-    else:
-        description = ''
+    print(request.POST)
+
+    task_type = request.POST['task_type']
+    task_params = filter_params(request.POST)
+    description = task_params['description']
     
     if 'dataset' in request.session.keys():
         task_params['dataset'] = int(request.session['dataset'])
+    
+    if task_type == 'apply_preprocessor':
+        task_params = filter_preprocessor_params(request.POST, task_params)
 
     task_id = create_task(task_type, description, task_params, user)
     
@@ -130,15 +130,27 @@ def create_task(task_type, description, parameters, user):
     return new_task.pk
 
 
-def filter_params(params, prefix):
-
-    print(params)
-    
-    print(prefix)
-
+def filter_params(post):
+    prefix = post['task_type']
     filtered_params = {}
-    for param in params:
+
+    for param in post:
         if param.startswith(prefix):
-            filtered_params[param[len(prefix)+1:]] = params[param]
+            filtered_params[param[len(prefix)+1:]] = post[param]
+
+    if 'description' not in filtered_params:
+        filtered_params['description'] = ''
+
     return filtered_params
 
+
+def filter_preprocessor_params(post, filtered_params={}):
+    prefix = post['apply_preprocessor_preprocessor_key']
+    prefix = prefix.replace('_','-')
+    
+    for param in post:
+        if param.startswith(prefix):
+            key = param.replace('{0}-processor-'.format(prefix), '')
+            filtered_params[param] = post.getlist(param)
+    
+    return filtered_params
