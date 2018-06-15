@@ -110,7 +110,7 @@ function collectPreprocessorArguments(formData) {
 function collectMlpArguments(formData) {
     var featureNames = JSON.stringify($('#mlp-processor-feature-names').val().split('\n'));
 
-    formData.append('mlp_preprocessor_input_features', featureNames);
+    formData.append('mlp_preprocessor_feature_names', featureNames);
 
     return formData;
 }
@@ -119,7 +119,7 @@ function collectDateConverterArguments(formData) {
     var featureNames = JSON.stringify($('#date-converter-processor-feature-names').val().split('\n'));
 	var featureLangs = JSON.stringify($('#date-converter-processor-feature-langs').val().split('\n'));
 
-    formData.append('date_converter_preprocessor_input_features', featureNames);
+    formData.append('date_converter_preprocessor_feature_names', featureNames);
 	formData.append('date_converter_preprocessor_input_langs',featureLangs);
 
     return formData;
@@ -129,7 +129,7 @@ function collectTextTaggerArguments(formData) {
     var featureNames = JSON.stringify($('#text-tagger-processor-feature-names').val().split('\n'));
     var taggers = JSON.stringify($('#text-tagger-processor-taggers').val());
 
-    formData.append('text_tagger_preprocessor_input_features', featureNames);
+    formData.append('text_tagger_preprocessor_feature_names', featureNames);
     formData.append('text_tagger_preprocessor_taggers', taggers);
 
     return formData;

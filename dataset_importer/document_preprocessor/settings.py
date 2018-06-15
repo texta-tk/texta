@@ -64,7 +64,6 @@ try:
         'class': preprocessors.text_tagger.TextTaggerPreprocessor,
         'parameters_template': 'parameters/preprocessor_parameters/text_tagger.html',
         'arguments': {},
-        'enabled_taggers': Task.objects.filter(task_type='train_tagger').filter(status='completed'),
         'is_enabled': True
     }
     log_preprocessor_status(code='text_tagger', status='enabled')

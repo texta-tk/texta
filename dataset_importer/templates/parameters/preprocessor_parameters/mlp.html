@@ -3,13 +3,13 @@
         <label class="control-label col-sm-3" for="mlp-processor-feature-name">Fields:</label>
         <div class="col-sm-7">
 		    {% if fields %}
-		        <select class="form-control input-sm" multiple="multiple" id="mlp-processor-feature-names" name="mlp-processor-feature-names">
+		        <select class="form-control input-sm" multiple="multiple" id="mlp-processor-feature-names" name="mlp_feature_names">
 				{% for field in fields %}
-					<option value="{{field.data}}">{{field.label}}</option>
+					<option value="{{field.data}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{field.label}}</option>
 				{% endfor %}
 				</select>        
 		    {% else %}
-		    	<textarea class="form-control" rows="2" id="mlp-processor-feature-names"></textarea>
+		    	<textarea class="form-control" rows="2" id="mlp-processor-feature-names" name="mlp_feature_names"></textarea>
 		    {% endif %}
         </div>
         <span data-toggle="tooltip" data-placement="bottom" title="List of feature names one below another.

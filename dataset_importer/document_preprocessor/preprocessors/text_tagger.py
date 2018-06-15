@@ -21,9 +21,18 @@ class TextTaggerPreprocessor(object):
         self._feature_map = feature_map
 
     def transform(self, documents, **kwargs):
-        input_features = json.loads(kwargs['text_tagger_preprocessor_input_features'])
+        input_features = json.loads(kwargs['text_tagger_preprocessor_feature_names'])
         tagger_ids_to_apply = [int(_id) for _id in json.loads(kwargs['text_tagger_preprocessor_taggers'])]
-        taggers_to_apply = [enabled_taggers[_id] for _id in tagger_ids_to_apply if _id in enabled_taggers]
+        taggers_to_apply = []
+
+        if not kwargs.get('text_tagger_preprocessor_feature_names', None):
+            return documents
+
+        # Load tagger models
+        for _id in tagger_ids_to_apply:
+            tm = TaggingModel()
+            tm.load(_id)
+            taggers_to_apply.append(tm)
         
         for input_feature in input_features:
             try:
@@ -54,6 +63,6 @@ class TextTaggerPreprocessor(object):
                         new_fact = {'fact': 'TEXTA_TAG', 'str_val': tag, 'doc_path': input_feature, 'spans': json.dumps([[0,len(texts[i])]])}
                         texta_facts.append(new_fact)
                 
-                    documents[i]['texta_facts'].extend(texta_facts)        
+                    documents[i]['texta_facts'].extend(texta_facts)    
 
         return documents

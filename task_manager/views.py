@@ -13,6 +13,7 @@ from dataset_importer.document_preprocessor.preprocessor import DocumentPreproce
 from .language_model_manager.language_model_manager import LanguageModel
 from .tag_manager.tag_manager import TaggingModel, get_pipeline_builder
 from .preprocessor_manager.preprocessor_manager import Preprocessor
+from .models import Task
 
 from datetime import datetime
 
@@ -48,6 +49,8 @@ def get_fields(es_m):
 def collect_map_entries(map_):
     entries = []
     for key, value in map_.items():
+        if key == 'text_tagger':
+            value['enabled_taggers'] = Task.objects.filter(task_type='train_tagger').filter(status='completed')
         value['key'] = key
         entries.append(value)
 
@@ -97,6 +100,8 @@ def start_task(request):
     
     if task_type == 'apply_preprocessor':
         task_params = filter_preprocessor_params(request.POST, task_params)
+    
+    print(task_params)
 
     task_id = create_task(task_type, description, task_params, user)
     
@@ -146,11 +151,9 @@ def filter_params(post):
 
 def filter_preprocessor_params(post, filtered_params={}):
     prefix = post['apply_preprocessor_preprocessor_key']
-    prefix = prefix.replace('_','-')
     
     for param in post:
         if param.startswith(prefix):
-            key = param.replace('{0}-processor-'.format(prefix), '')
             filtered_params[param] = post.getlist(param)
     
     return filtered_params

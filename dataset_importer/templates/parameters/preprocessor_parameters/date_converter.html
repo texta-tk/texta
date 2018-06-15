@@ -3,13 +3,13 @@
         <label class="control-label col-sm-3" for="date-converter-processor-feature-name">Fields:</label>
         <div class="col-sm-7">
 		    {% if fields %}
-		        <select class="form-control input-sm" multiple="multiple" id="date-converter-feature-names" name="date-converter-feature-names">
+		        <select class="form-control input-sm" multiple="multiple" id="date-converter-feature-names" name="date_converter_feature_names">
 				{% for field in fields %}
-					<option value="{{field.data}}">{{field.label}}</option>
+					<option value="{{field.data}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{field.label}}</option>
 				{% endfor %}
 				</select>        
 		    {% else %}
-		    	<textarea class="form-control" rows="2" id="date-converter-feature-names"></textarea>
+		    	<textarea class="form-control" rows="2" id="date-converter-feature-names" name="date_converter_feature_names"></textarea>
 		    {% endif %}
         </div>
         <span data-toggle="tooltip" data-placement="bottom" title="List of feature names one below another.
@@ -21,9 +21,9 @@
 	    <div class="form-group">
 			<label class="control-label col-sm-3" for="date-converter-processor-feature-langs">Language:</label>
 		    <div class="col-sm-7">
-				<select id="date-converter-processor-feature-langs" name="date-converter-processor-feature-langs" class="selectpicker form-control">
-					{% for language in  preprocessor.languages %}
-						<option value="{{ language }}">{{language}}</option>
+				<select id="date-converter-processor-feature-langs" name="date_converter_feature_langs" class="form-control">
+					{% for language in preprocessor.languages %}
+						<option value="{{ language }}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{language}}</option>
 					{% endfor %}
 				</select>
 		    </div>

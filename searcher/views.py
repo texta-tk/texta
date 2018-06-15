@@ -37,6 +37,7 @@ from .fact_manager import FactManager
 from utils.highlighter import Highlighter, ColorPicker
 from utils.autocomplete import Autocomplete
 from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
+from task_manager.views import task_params
 
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links
 
@@ -138,7 +139,8 @@ def index(request):
                        'searches': Search.objects.filter(author=request.user),
                        'lexicons': Lexicon.objects.all().filter(author=request.user),
                        'dataset': ds.get_index(),
-                       'enabled_preprocessors': enabled_preprocessors}
+                       'enabled_preprocessors': enabled_preprocessors,
+                       'task_params': task_params}
 
     template = loader.get_template('searcher.html')
 
@@ -441,8 +443,6 @@ def search(es_params, request):
                 highlight_config['fields'][f] = {"number_of_fragments": 0}
         es_m.set_query_parameter('highlight', highlight_config)
         response = es_m.search()
-        
-        print(response)
 
         """
         # Get the ids of all documents to be presented in the results page
