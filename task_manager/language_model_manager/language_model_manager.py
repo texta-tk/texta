@@ -64,7 +64,7 @@ class LanguageModel:
         r.time_completed = datetime.now()
         r.status = task_status
         
-        r.result = json.dumps({"model_type": "word2vec"})
+        r.result = json.dumps({"model_type": "word2vec", "lexicon_size": len(self.model.wv.vocab)})
         
         r.save()
         print('done')        

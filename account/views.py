@@ -138,7 +138,7 @@ def change_password(request):
 	user.save()
 	django_login(request, user)
 
-	return HttpResponseRedirect('/')
+	return HttpResponse()
 
 
 def login(request):

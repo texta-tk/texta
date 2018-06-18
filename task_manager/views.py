@@ -122,8 +122,18 @@ def start_task(request):
     else:
         Preprocessor().apply(task_id)
 
-    return HttpResponseRedirect('{0}/task_manager'.format(URL_PREFIX))
+    return HttpResponse()
 
+
+@login_required
+def delete_task(request):
+    task_id = int(request.POST['task_id'])
+    task = Task.objects.get(pk=task_id)
+    
+    #TODO Delete model files too! (Lazy AF ATM)
+    
+    task.delete()
+    return HttpResponse()
 
 def activate_model(task_type):
     for task_param in task_params:

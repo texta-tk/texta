@@ -45,7 +45,7 @@
 						<th>Task Completed</th>
 						<th>Parameters</th>
 						<th>Result</th>
-						<th>Actions</th>
+						<th>Delete</th>
 					</tr>
 					</thead>
 					{% for task in tasks %}
@@ -78,7 +78,7 @@
 								</table>
 							</td>
 							<td>
-								<a href="action('delete', {{task.id}});" title="Delete task result"><span class="glyphicon glyphicon-remove"></span></a>
+								<a href="#" onclick="delete_task({{task.id}});" title="Delete task"><span class="glyphicon glyphicon-remove"></span></a>
 							</td>
 						</tr>
 					{% endfor %}
