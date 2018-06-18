@@ -34,7 +34,7 @@ class Datasets:
 
     def activate_dataset_by_id(self, _id):
         """ Activate dataset by ID
-        """
+        """      
         if len(self.datasets.keys()) > 0:
             if _id not in self.datasets.keys():
                 self.mapping_id = int(list(self.datasets.keys())[0])

@@ -20,6 +20,7 @@ from model_manager.models import ModelRun
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
+from task_manager.models import Task
 
 from texta.settings import USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_DEFAULT, es_url, STATIC_URL
 
@@ -51,15 +52,16 @@ def index(request):
 	datasets = get_allowed_datasets(datasets, request.user)
 
 	# TODO: We should check if the model is actually present on the disk
-	sem_models = ModelRun.objects.all().filter(run_status='completed').order_by('-pk')
+	language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
+	
 	try:
 		request.session['model']
 	except KeyError:
-		if len(sem_models):
-			request.session['model'] = str(sem_models[0].id)
+		if len(language_models):
+			request.session['model'] = str(language_models[0].id)
 
 	return HttpResponse(
-			template.render({'STATIC_URL': STATIC_URL, 'datasets': datasets, 'models': sem_models}, request))
+			template.render({'STATIC_URL': STATIC_URL, 'datasets': datasets, 'models': language_models}, request))
 
 
 @login_required

@@ -190,7 +190,6 @@ class TaggingModel:
             show_progress.update(2)
             self.model = model
             self.save()
-            train_summary['model_name'] = self.model_name
             train_summary['model_type'] = 'sklearn'
             model_status = 'completed'
             show_progress.update(3)
@@ -206,8 +205,8 @@ class TaggingModel:
         # declare the job done
         r = Task.objects.get(pk=self.id)
         r.time_completed = datetime.now()
-        r.status = 'completed'
-        r.result = train_summary
+        r.status = model_status
+        r.result = json.dumps(train_summary)
         r.save()
 
         print('done')
@@ -259,10 +258,10 @@ class TaggingModel:
         _confusion = confusion_matrix(y_test, y_pred)
         __precision = precision_score(y_test, y_pred)
         _recall = recall_score(y_test, y_pred)
-        _statistics = {'f1_score': _f1,
-                       'confusion_matrix': _confusion,
-                       'precision': __precision,
-                       'recall': _recall
+        _statistics = {'f1_score': round(_f1, 3),
+                       'confusion_matrix': _confusion.tolist(),
+                       'precision': round(__precision, 3),
+                       'recall': round(_recall, 3)
                        }
 
         return model, _statistics

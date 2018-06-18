@@ -41,9 +41,9 @@ class LanguageModel:
         model = word2vec.Word2Vec()
         
         task_params = json.loads(Task.objects.get(pk=self.id).parameters)
-
+        
         try:
-            sentences = esIterator(task_params, self.id, callback_progress=show_progress)
+            sentences = esIterator(task_params, callback_progress=show_progress)
             model = word2vec.Word2Vec(sentences, min_count=int(task_params['min_freq']),
                                       size=int(task_params['num_dimensions']),
                                       workers=int(task_params['num_workers']),
@@ -64,7 +64,7 @@ class LanguageModel:
         r.time_completed = datetime.now()
         r.status = task_status
         
-        r.result = json.dumps({"model_name": self.model_name, "model_type": "word2vec"})
+        r.result = json.dumps({"model_type": "word2vec"})
         
         r.save()
         print('done')        
@@ -118,10 +118,9 @@ class esIterator(object):
     """  ElasticSearch Iterator
     """
 
-    def __init__(self, parameters, task_id, callback_progress=None):
+    def __init__(self, parameters, callback_progress=None):
         self.field = json.loads(parameters['field'])['path']
-        self.task_id = task_id
-        ds = Datasets().activate_dataset_by_id(task_id)
+        ds = Datasets().activate_dataset_by_id(parameters['dataset'])
         self.es_m = ds.build_manager(ES_Manager)
         query = self._parse_query(parameters)       
         self.es_m.load_combined_query(query)

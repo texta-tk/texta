@@ -50,16 +50,36 @@
 					</thead>
 					{% for task in tasks %}
 						<tr>
-							<td>{{task.pk}}</td>
+							<td>{{task.id}}</td>
 							<td>{{task.task_type}}</td>
 							<td>{{task.user}}</td>
 							<td>{{task.description}}</td>
 							<td>{{task.status}}</td>
 							<td>{{task.time_started|date:"d.m.Y H:i"}}</td>
 							<td>{{task.time_completed|date:"d.m.Y H:i"}}</td>							
-							<td>{{task.parameters}}</td>
-							<td>{{task.result}}</td>
-							<td></td>
+							<td>
+								<table class="table table-striped table-condensed">
+									{% for k,v in task.parameters.items %}
+										<tr>
+											<td><b>{{k}}</b></td>
+											<td>{{v}}</td>
+										</tr>
+									{% endfor %}
+								</table>
+							</td>
+							<td>
+								<table class="table table-striped table-condensed">
+									{% for k,v in task.result.items %}
+										<tr>
+											<td><b>{{k}}</b></td>
+											<td>{{v}}</td>
+										</tr>
+									{% endfor %}
+								</table>
+							</td>
+							<td>
+								<a href="action('delete', {{task.id}});" title="Delete task result"><span class="glyphicon glyphicon-remove"></span></a>
+							</td>
 						</tr>
 					{% endfor %}
 				</table>

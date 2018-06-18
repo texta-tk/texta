@@ -11,7 +11,7 @@ import requests
 
 
 from lm.models import Lexicon, Word, SuggestionSet
-from model_manager.models import ModelRun
+from task_manager.models import Task
 from utils.robust_rank_aggregation import aggregate_ranks
 from utils.model_manager import get_model_manager
 from utils.precluster import PreclusterMaker
@@ -219,8 +219,8 @@ def query(request):
 
         suggestions = []
 
-        model_run_obj = ModelRun.objects.get(id=int(request.session['model']))
-        tooltip_feature = model_run_obj.fields
+        model_run_obj = Task.objects.get(id=int(request.session['model']))
+        tooltip_feature = json.loads(json.loads(model_run_obj.parameters)['field'])['path']
         # Define selected mapping
         #ds = Datasets().activate_dataset(request.session)
         #dataset = ds.get_index()
@@ -272,11 +272,11 @@ def query(request):
 
         suggestions.append('<input type=\'hidden\' id=\'sid\' value=\'' + str(suggestionset_id) + '\'/>') # hidden field to store previous suggestionset's id
 
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'terms_suggested','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'suggestion_method':request.POST['method']}}))
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'TERM SUGGESTION','event':'terms_suggested','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'suggestion_method':request.POST['method']}}))
 
         return HttpResponse(['<table><tr><td id=\'suggestion_cell_1\'>'] + suggestions[:20] + ['</td><td id=\'suggestion_cell_2\'>'] + suggestions[20:] + ['</td></tr></table>'])
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'term_suggestion_failed','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'suggestion_method':request.POST['method']}}),exc_info=True)
+        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'TERM SUGGESTION','event':'term_suggestion_failed','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'suggestion_method':request.POST['method']}}),exc_info=True)
         return HttpResponse()
 
 

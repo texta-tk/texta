@@ -65,14 +65,24 @@ def index(request):
 
     preprocessors = collect_map_entries(preprocessor_map)
     enabled_preprocessors = [preprocessor for preprocessor in preprocessors]
+    
+    tasks = []
+    for task in Task.objects.all().order_by('-pk'):
+        task_dict = task.__dict__
+        task_dict['user'] = task.user
+        task_dict['parameters'] = json.loads(task_dict['parameters'])
+        
+        if task_dict['result']:
+            task_dict['result'] = json.loads(task_dict['result'])
+
+        tasks.append(task_dict)
 
     context = {'task_params': task_params,
-               'tasks': Task.objects.all().order_by('-pk'),
+               'tasks': tasks,
                'searches': Search.objects.filter(author=request.user,dataset=Dataset(pk=int(request.session['dataset']))),
                'enabled_preprocessors': enabled_preprocessors,
                'STATIC_URL': STATIC_URL,
-               'fields': fields}
-    
+               'fields': fields}    
     
     pipe_builder = get_pipeline_builder()
     context['train_tagger_extractor_opt_list'] = pipe_builder.get_extractor_options()
@@ -88,8 +98,6 @@ def index(request):
 def start_task(request):
     user = request.user
     session = request.session
-    
-    print(request.POST)
 
     task_type = request.POST['task_type']
     task_params = filter_params(request.POST)
@@ -100,8 +108,6 @@ def start_task(request):
     
     if task_type == 'apply_preprocessor':
         task_params = filter_preprocessor_params(request.POST, task_params)
-    
-    print(task_params)
 
     task_id = create_task(task_type, description, task_params, user)
     
