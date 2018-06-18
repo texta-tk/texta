@@ -47,7 +47,7 @@ class RestProcessor(object):
     @staticmethod
     def _process_searcher_post(django_request):
         try:
-            processed_query = json.loads(django_request.body)
+            processed_query = json.loads(django_request.body.decode())
         except:
             raise Exception('Malformed JSON syntax.')
 
@@ -83,7 +83,7 @@ class RestProcessor(object):
     @staticmethod
     def _process_aggregator_post(django_request):
         try:
-            processed_query = json.loads(django_request.body)
+            processed_query = json.loads(django_request.body.decode())
         except:
             raise Exception('Malformed JSON syntax.')
 

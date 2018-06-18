@@ -240,8 +240,6 @@ INSTALLED_APPS = (
 	'mwe_miner',
 	'account',
 	'searcher',
-	'model_manager',
-	'classification_manager',
 	'ontology_viewer',
 	'base',
 	'permission_admin',

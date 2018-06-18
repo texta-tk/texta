@@ -16,7 +16,6 @@ from django.template import loader
 
 from .models import Profile
 from permission_admin.models import Dataset
-from model_manager.models import ModelRun
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
@@ -25,43 +24,23 @@ from task_manager.models import Task
 from texta.settings import USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_DEFAULT, es_url, STATIC_URL
 
 
-def sort_datasets(datasets, indices):
-	out = []
-
-	open_indices = [index['index'] for index in indices if index['status'] == 'open']
-
-	for dataset in sorted(datasets.items(), key=lambda l: l[1]['index']):
-		ds = dataset[1]
-		ds['id'] = dataset[0]
-		if ds['index'] in open_indices:
-			out.append(ds)
-	return out
-
-
-def get_allowed_datasets(datasets, user):
-	return [dataset for dataset in datasets if
-	        user.has_perm('permission_admin.can_access_dataset_' + str(dataset['id']))]
 
 
 def index(request):
-	indices = ES_Manager.get_indices()
-
 	template = loader.get_template('account.html')
 	ds = Datasets().activate_dataset(request.session)
-	datasets = sort_datasets(ds.get_datasets(), indices)
-	datasets = get_allowed_datasets(datasets, request.user)
-
-	# TODO: We should check if the model is actually present on the disk
+	
+	datasets = Datasets().get_allowed_datasets(request.user)
 	language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
 	
-	try:
-		request.session['model']
-	except KeyError:
-		if len(language_models):
-			request.session['model'] = str(language_models[0].id)
+	#try:
+	#	request.session['model']
+	#except KeyError:
+	#	if len(language_models):
+	#		request.session['model'] = str(language_models[0].id)
 
 	return HttpResponse(
-			template.render({'STATIC_URL': STATIC_URL, 'datasets': datasets, 'models': language_models}, request))
+			template.render({'STATIC_URL': STATIC_URL, 'allowed_datasets': datasets, 'language_models': language_models}, request))
 
 
 @login_required

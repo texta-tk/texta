@@ -38,6 +38,7 @@ from utils.highlighter import Highlighter, ColorPicker
 from utils.autocomplete import Autocomplete
 from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
 from task_manager.views import task_params
+from task_manager.models import Task
 
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links
 
@@ -121,6 +122,9 @@ def index(request):
     ds = Datasets().activate_dataset(request.session)
     es_m = ds.build_manager(ES_Manager)
     fields = get_fields(es_m)
+
+    datasets = Datasets().get_allowed_datasets(request.user)
+    language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
     
     preprocessors = collect_map_entries(preprocessor_map)
     enabled_preprocessors = [preprocessor for preprocessor in preprocessors]
@@ -139,6 +143,8 @@ def index(request):
                        'searches': Search.objects.filter(author=request.user),
                        'lexicons': Lexicon.objects.all().filter(author=request.user),
                        'dataset': ds.get_index(),
+                       'language_models': language_models, 
+                       'allowed_datasets': datasets,                       
                        'enabled_preprocessors': enabled_preprocessors,
                        'task_params': task_params}
 

@@ -73,8 +73,6 @@
 						<li class="dropdown">
 							<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-lock"></span> Restricted<span class="caret"></span></a>
 							<ul class="dropdown-menu">
-								<li id="model_manager"><a href="#"><span class="glyphicon glyphicon-sort-by-alphabet"></span> Model Manager </a></li>
-								<li id="classification_manager"><a href="#"><span class="glyphicon glyphicon-equalizer"></span> Classification Manager </a></li>
 								<li id="permission_admin"><a href="#"><span class='glyphicon glyphicon-wrench'></span> Administration </a></li>
                                 <li id="dataset_importer"><a href="#"><span class='glyphicon glyphicon-share'></span> Dataset Importer </a></li>
                                 <li id="task_manager"><a href="#"><span class='glyphicon glyphicon-menu-hamburger'></span> Task Manager </a></li>
@@ -83,13 +81,37 @@
 					{% endif %}
 		        {% endif %}
             </ul>
-            {% if request.user.is_authenticated %}
+            
+            {% if request.user.is_authenticated %}           
 				<form class="navbar-form navbar-right user-data" id="log_out_form" onsubmit="go_to(LINK_ACCOUNT + '/account/log_out','log_out_form')">
 					<span> Logged in as {{request.user.get_username}}. </span>
 					<div class="form-group">
 						<button type="submit" class="btn btn-danger btn-sm"><span class="glyphicon glyphicon-log-out"></span></button>
 					</div>
-				</form> 
+				</form>
+
+            	<form class="navbar-form navbar-right">
+					<select id="dataset_to_activate" name="dataset_to_activate" class="input-sm" onchange="update_resources();">
+						{% for dataset in allowed_datasets %}
+							{% if dataset.id|stringformat:"i" == request.session.dataset %}
+								<option value="{{dataset.id}}" selected="selected">Dataset {{dataset.id}}: {{dataset.index}} - {{dataset.mapping}}</option>
+							{% else %}
+								<option value="{{dataset.id}}">Dataset {{dataset.id}}: {{dataset.index}} - {{dataset.mapping}}</option>
+							{% endif %}
+						{% endfor %}
+					</select>
+
+					<select id="model_to_activate" name="model_to_activate" class="input-sm" onchange="update_resources();">
+						{% for model in language_models %}
+							{% if model.pk|slugify == request.session.model %}
+								<option value="{{model.pk}}" selected="selected">Model {{model.pk}}: {{model.description}}</option>
+							{% else %}
+								<option value="{{model.pk}}">Model {{model.pk}}: {{model.description}}</option>
+							{% endif %}
+						{% endfor %}
+					</select>
+            	</form>
+
             {% else %}
 				<form class="navbar-form form-inline navbar-right" id="login_form" onsubmit="go_to(LINK_ROOT+'account/login','login_form')" method="POST">
 					<div class="form-group">

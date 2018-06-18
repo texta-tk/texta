@@ -123,3 +123,27 @@ function clearRegistrationForm() {
         validateInput(ids[i]).val("");
     }
 }
+
+function update_resources() {
+	var dataset_id = $("#dataset_to_activate").val();
+	var model_id = $("#model_to_activate").val();
+    var data = {dataset: dataset_id, model: model_id}
+    
+            swal({
+                title:'Updated!',
+                text:'Resources updated!',
+                type:'success',
+            }).then((result) => {location.reload();});
+
+            
+      
+    
+//	$.post(LINK_ROOT+'update', data, function(data) {
+//		if(data.length > 0){
+//			alert('yes');
+//		}else{
+//			alert('no');	
+//		}
+//	});
+
+}

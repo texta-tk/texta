@@ -7,7 +7,9 @@ from django.contrib.auth.decorators import login_required
 from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse
 
+from task_manager.models import Task
 from .models import DatasetImport
+from utils.datasets import Datasets
 
 from dataset_importer.importer.importer import DatasetImporter, entity_reader_map, collection_reader_map, database_reader_map, extractor_map, preprocessor_map
 from dataset_importer.syncer.syncer_process import Syncer
@@ -47,8 +49,10 @@ def index(request):
     database_formats = collect_map_entries(database_reader_map)
 
     preprocessors = collect_map_entries(preprocessor_map)
-
     enabled_preprocessors = [preprocessor for preprocessor in preprocessors]
+
+    datasets = Datasets().get_allowed_datasets(request.user)
+    language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
 
     return render(request, 'dataset_importer.html', context={
         # 'enabled_input_types': DATASET_IMPORTER_CONF['enabled_input_types'],
@@ -56,6 +60,8 @@ def index(request):
         'single_document_formats': single_document_formats,
         'document_collection_formats': document_collection_formats,
         'database_formats': database_formats,
+        'language_models': language_models, 
+        'allowed_datasets': datasets, 
         'jobs': jobs,
         'enabled_preprocessors': enabled_preprocessors
     })

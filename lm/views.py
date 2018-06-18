@@ -36,11 +36,15 @@ def uniq(l):
 
 @login_required
 def index(request):
+
+    datasets = Datasets().get_allowed_datasets(request.user)
+    language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
+
     if 'model' not in request.session:
         return HttpResponseRedirect(URL_PREFIX + '/')
     template = loader.get_template('lm.html')
     lexicons = Lexicon.objects.all().filter(author=request.user)
-    return HttpResponse(template.render({'lexicons':lexicons,'STATIC_URL':STATIC_URL},request))
+    return HttpResponse(template.render({'lexicons':lexicons,'STATIC_URL':STATIC_URL, 'language_models': language_models, 'allowed_datasets': datasets,},request))
 
 
 @login_required

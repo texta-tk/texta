@@ -60,6 +60,9 @@ def collect_map_entries(map_):
 @login_required
 def index(request):
     ds = Datasets().activate_dataset(request.session)
+    datasets = Datasets().get_allowed_datasets(request.user)
+    language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
+    
     es_m = ds.build_manager(ES_Manager)
     fields = get_fields(es_m)
 
@@ -79,6 +82,8 @@ def index(request):
 
     context = {'task_params': task_params,
                'tasks': tasks,
+               'language_models': language_models, 
+               'allowed_datasets': datasets,
                'searches': Search.objects.filter(author=request.user,dataset=Dataset(pk=int(request.session['dataset']))),
                'enabled_preprocessors': enabled_preprocessors,
                'STATIC_URL': STATIC_URL,

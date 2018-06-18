@@ -13,6 +13,8 @@ from sklearn.metrics.pairwise import pairwise_distances
 from conceptualiser.models import Term, TermConcept, Concept
 from lm.models import Word, Lexicon
 from lm.views import model_manager
+from task_manager.models import Task
+from utils.datasets import Datasets
 
 from texta.settings import STATIC_URL, URL_PREFIX, INFO_LOGGER
 
@@ -29,8 +31,11 @@ def index(request):
         lexicons.append(lexicon)
 
     methods = ["PCA","TSNE","MDS"]
+
+    datasets = Datasets().get_allowed_datasets(request.user)
+    language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
     
-    return HttpResponse(template.render({'STATIC_URL':STATIC_URL,'lexicons':lexicons,'methods':methods},request))
+    return HttpResponse(template.render({'STATIC_URL':STATIC_URL,'lexicons':lexicons,'methods':methods, 'language_models': language_models, 'allowed_datasets': datasets},request))
 
 @login_required
 def load_ontology_by_id(request):
