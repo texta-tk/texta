@@ -240,15 +240,14 @@ INSTALLED_APPS = (
 	'mwe_miner',
 	'account',
 	'searcher',
-	'model_manager',
-	'classification_manager',
 	'ontology_viewer',
 	'base',
 	'permission_admin',
 	'grammar_builder',
 	'search_api',
 	'dataset_importer',
-	'importer_api'
+	'importer_api',
+	'task_manager'
 )
 
 ############################ Elasticsearch ###########################

@@ -11,7 +11,7 @@ import requests
 
 
 from lm.models import Lexicon, Word, SuggestionSet
-from model_manager.models import ModelRun
+from task_manager.models import Task
 from utils.robust_rank_aggregation import aggregate_ranks
 from utils.model_manager import get_model_manager
 from utils.precluster import PreclusterMaker
@@ -36,11 +36,12 @@ def uniq(l):
 
 @login_required
 def index(request):
-    if 'model' not in request.session:
-        return HttpResponseRedirect(URL_PREFIX + '/')
+    datasets = Datasets().get_allowed_datasets(request.user)
+    language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
+
     template = loader.get_template('lm.html')
     lexicons = Lexicon.objects.all().filter(author=request.user)
-    return HttpResponse(template.render({'lexicons':lexicons,'STATIC_URL':STATIC_URL},request))
+    return HttpResponse(template.render({'lexicons': lexicons, 'STATIC_URL': STATIC_URL, 'language_models': language_models, 'allowed_datasets': datasets}, request))
 
 
 @login_required
@@ -155,6 +156,9 @@ def selectLexicon(request):
         words = [a.wrd for a in words]
         lexicons = Lexicon.objects.filter(author=request.user)
 
+        datasets = Datasets().get_allowed_datasets(request.user)
+        language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
+
         # Define selected mapping
         ds = Datasets().activate_dataset(request.session)
         es_m = ds.build_manager(ES_Manager)
@@ -162,7 +166,7 @@ def selectLexicon(request):
 
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_selected','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']},'data':{'lexicon_terms':words}}))
 
-        return HttpResponse(template.render({'words':words,'selected':request.GET['id'], 'selected_name':lexicon,'lexicons':lexicons,'STATIC_URL':STATIC_URL,'features':fields},request))
+        return HttpResponse(template.render({'words':words,'selected':request.GET['id'], 'selected_name':lexicon,'lexicons':lexicons,'STATIC_URL':STATIC_URL,'features':fields, 'language_models': language_models, 'allowed_datasets': datasets}, request))
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_selection_failed','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}),exc_info=True)
 
@@ -196,10 +200,10 @@ def query(request):
         ignored_idxes = model_manager.get_negatives(request.session['model'],request.user.username,lexicon.id)
 
         try:
-
             model = model_manager.get_model(request.session['model'])
             if model.model.wv.syn0norm is None:
                 model.model.init_sims()
+            print('dsadasd')
 
         except LookupError:
             logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'CREATE LEXICON','event':'term_suggestion_failed','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'model_id':request.session['model']},'reason':'No lexicon ID provided.'}))
@@ -219,12 +223,8 @@ def query(request):
 
         suggestions = []
 
-        model_run_obj = ModelRun.objects.get(id=int(request.session['model']))
-        tooltip_feature = model_run_obj.fields
-        # Define selected mapping
-        #ds = Datasets().activate_dataset(request.session)
-        #dataset = ds.get_index()
-        #mapping = ds.get_mapping()
+        model_run_obj = Task.objects.get(id=int(request.session['model']))
+        tooltip_feature = json.loads(json.loads(model_run_obj.parameters)['field'])['path']
 
         if request.POST['method'][:12] == 'most_similar':
             for a in getattr(model,request.POST['method'])(positive=positives,topn=40,ignored_idxes = ignored_idxes):
@@ -272,11 +272,11 @@ def query(request):
 
         suggestions.append('<input type=\'hidden\' id=\'sid\' value=\'' + str(suggestionset_id) + '\'/>') # hidden field to store previous suggestionset's id
 
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'terms_suggested','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'suggestion_method':request.POST['method']}}))
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'TERM SUGGESTION','event':'terms_suggested','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'suggestion_method':request.POST['method']}}))
 
         return HttpResponse(['<table><tr><td id=\'suggestion_cell_1\'>'] + suggestions[:20] + ['</td><td id=\'suggestion_cell_2\'>'] + suggestions[20:] + ['</td></tr></table>'])
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'term_suggestion_failed','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'suggestion_method':request.POST['method']}}),exc_info=True)
+        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'TERM SUGGESTION','event':'term_suggestion_failed','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'suggestion_method':request.POST['method']}}),exc_info=True)
         return HttpResponse()
 
 

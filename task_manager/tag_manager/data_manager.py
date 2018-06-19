@@ -8,7 +8,7 @@ import numpy as np
 
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
-
+from searcher.models import Search
 
 MAX_POSITIVE_SAMPLE_SIZE = 10000
 
@@ -60,13 +60,13 @@ class Lexicon:
 
 class EsDataSample(object):
 
-    def __init__(self, query, field, request):
-        self.field = field
-        self.request = request
-        reduction_methods = self.request.POST.getlist('lexicon_reduction[]')
-        self.lexicon = Lexicon(reduction_methods)
+    def __init__(self, params):
+        self.field = json.loads(params['field'])['path']
+        query = json.loads(Search.objects.get(pk=int(params['search'])).query)
+        #reduction_methods = self.request.POST.getlist('lexicon_reduction[]')
+        #self.lexicon = Lexicon(reduction_methods)
         # Define selected mapping
-        ds = Datasets().activate_dataset(request.session)
+        ds = Datasets().activate_dataset_by_id(params['dataset'])
         self.es_m = ds.build_manager(ES_Manager)
         self.es_m.load_combined_query(query)
 
@@ -97,9 +97,9 @@ class EsDataSample(object):
                     decoded_text = hit['_source']
                     for k in self.field.split('.'):
                         decoded_text = decoded_text[k]
-                    doc_text = self.lexicon.lexicon_reduction(decoded_text)
+                    #doc_text = self.lexicon.lexicon_reduction(decoded_text)
                     doc_id = str(hit['_id'])
-                    positive_samples.append(doc_text)
+                    positive_samples.append(decoded_text)
                     positive_set.add(doc_id)
                 except KeyError as e:
                     # If the field is missing from the document
@@ -136,8 +136,8 @@ class EsDataSample(object):
                     decoded_text = hit['_source']
                     for k in self.field.split('.'):
                         decoded_text = decoded_text[k]
-                    doc_text = self.lexicon.lexicon_reduction(decoded_text)
-                    negative_samples.append(doc_text)
+                    #doc_text = self.lexicon.lexicon_reduction(decoded_text)
+                    negative_samples.append(decoded_text)
                 except KeyError as e:
                     # If the field is missing from the document
                     pass

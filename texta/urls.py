@@ -9,8 +9,6 @@ from account.urls import urlpatterns as account_urls
 from conceptualiser.urls import urlpatterns as conceptualiser_urls
 from mwe_miner.urls import urlpatterns as mwe_miner_urls
 from searcher.urls import urlpatterns as searcher_urls
-from model_manager.urls import urlpatterns as model_manager_urls
-from classification_manager.urls import urlpatterns as classification_manager_urls
 from ontology_viewer.urls import urlpatterns as ontology_viewer_urls
 from permission_admin.urls import urlpatterns as permission_admin_urls
 from grammar_builder.urls import urlpatterns as grammar_builder_urls
@@ -30,8 +28,6 @@ urlpatterns = [
     url(r'conceptualiser', include('conceptualiser.urls')),
     url(r'mwe_miner', include('mwe_miner.urls')),
     url(r'^searcher', include('searcher.urls')),
-    url(r'model_manager', include('model_manager.urls')),
-    url(r'classification_manager', include('classification_manager.urls')),
     url(r'ontology_viewer', include('ontology_viewer.urls')),
     url(r'^permission_admin/', include('permission_admin.urls')),
     url(r'^grammar_builder/', include('grammar_builder.urls')),
@@ -40,5 +36,5 @@ urlpatterns = [
     url(r'static/(?P<path>.*)$',static.serve,{'document_root': 'static'}),
     url(r'^%s(?P<path>.*)$' % settings.MEDIA_URL, protected_serve, {'document_root': settings.PROTECTED_MEDIA}),
     url(r'^import_api/', include('importer_api.urls')),
+    url(r'^task_manager/', include('task_manager.urls')),
 ]
-

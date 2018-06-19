@@ -206,7 +206,15 @@ function derive_text_node_value(field_data) {
 
 function lookup(fieldFullId, fieldId, action, lookup_types){
 	var content = $("#"+fieldFullId).val();
-    var lookup_data = {content: content, action: action, lookup_types: lookup_types}
+
+	
+	if (fieldFullId.match("^fact_constraint_val_")) {
+        var factName = $("#fact_txt_"+fieldId.slice(0, -4)).val();
+    } else {
+        var factName = "";
+    }
+	
+    var lookup_data = {content: content, action: action, lookup_types: lookup_types, key_constraints: factName}
 	$.post(PREFIX+'/autocomplete', lookup_data, function(data) {
 		if(data.length > 0){
 			var suggestions_container = $("#suggestions_"+fieldId);

@@ -44,12 +44,24 @@ function query(){
     $('body').css('cursor', 'wait');
 
     $.post(PREFIX + "/query", {content: content,lid: $('#lid').val(),method: $('#method').val(),negatives: JSON.stringify(negatives),sid: sid,tooltip_feature: $('#tooltip-feature').val()}, function(data){
-	    if (data=='INVALID MODEL') {
-            window.location = LINK_ROOT;
-            return;
+	    if (data.length == 0) {
+
+			swal({
+				    title: 'Oops. Something went wrong.',
+				    text: 'No suggestions... Do you have the language model trained?',
+				    type: 'warning',
+				    confirmButtonColor: '#73AD21',
+				    cancelButtonColor: '#d33',
+				    confirmButtonText: 'Ok'
+		
+			}).then((result) => {})	
+
+        } else {
+
+		    $('#suggestions').html(data);
+			$('body').css('cursor', 'auto');
+        
         }
-            $('#suggestions').html(data);
-	    $('body').css('cursor', 'auto');
     });
 }
 

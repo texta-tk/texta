@@ -1,30 +1,32 @@
 <div class="form-horizontal">
     <div class="form-group">
-        <label class="control-label col-sm-3" for="date-converter-processor-feature-name">Apply to:</label>
+        <label class="control-label col-sm-3" for="date-converter-processor-feature-name">Fields:</label>
         <div class="col-sm-7">
-            <textarea class="form-control" rows="2" id="date-converter-processor-feature-names"></textarea>
+		    {% if fields %}
+		        <select class="form-control input-sm" multiple="multiple" id="date-converter-feature-names" name="date_converter_feature_names">
+				{% for field in fields %}
+					<option value="{{field.data}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{field.label}}</option>
+				{% endfor %}
+				</select>        
+		    {% else %}
+		    	<textarea class="form-control" rows="2" id="date-converter-feature-names" name="date_converter_feature_names"></textarea>
+		    {% endif %}
         </div>
         <span data-toggle="tooltip" data-placement="bottom" title="List of feature names one below another.
-
     Example:
 
         my_field1
         my_field2" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
     </div>
-	
 	    <div class="form-group">
-
 			<label class="control-label col-sm-3" for="date-converter-processor-feature-langs">Language:</label>
-			 
-			 <span data-toggle="tooltip" data-placement="bottom" title="Language of the dataset" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
-		
-			<select id="date-converter-processor-feature-langs" class="selectpicker form-control">
-				
-				{% for language in  preprocessor.languages %}
-					<option {% if forloop.counter0 == 0 %}selected{% endif %} value="{{ language }}">{{language}}</option>
-				{% endfor %}
-			
-			</select>
+		    <div class="col-sm-7">
+				<select id="date-converter-processor-feature-langs" name="date_converter_feature_langs" class="form-control">
+					{% for language in preprocessor.languages %}
+						<option value="{{ language }}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{language}}</option>
+					{% endfor %}
+				</select>
+		    </div>
+			 <span data-toggle="tooltip" data-placement="bottom" title="Language of the field" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
 		</div>
-
 </div>

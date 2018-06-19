@@ -3,6 +3,7 @@ file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
 import preprocessors
 from texta.settings import DATASET_IMPORTER
+from task_manager.models import Task
 
 
 mlp_field_properties = {'properties': {'text': {'type':'text',
@@ -16,10 +17,8 @@ mlp_field_properties = {'properties': {'text': {'type':'text',
                                }
 
 
-
 def log_preprocessor_status(code, status):
     print('[Dataset Importer] {code} preprocessor {status}.'.format(**{'code': code, 'status': status}))
-
 
 preprocessor_map = {}
 
@@ -57,4 +56,19 @@ except Exception as e:
     print(e)
     log_preprocessor_status(code='date_converter', status='disabled')
 
-print('')
+
+try:
+    preprocessor_map['text_tagger'] = {
+        'name': 'Text Tagger preprocessor',
+        'description': 'Tags documents with TEXTA Text Tagger',
+        'class': preprocessors.text_tagger.TextTaggerPreprocessor,
+        'parameters_template': 'parameters/preprocessor_parameters/text_tagger.html',
+        'arguments': {},
+        'is_enabled': True
+    }
+    log_preprocessor_status(code='text_tagger', status='enabled')
+    
+except Exception as e:
+    print(e)
+    log_preprocessor_status(code='text_tagger', status='disabled')
+
