@@ -63,7 +63,7 @@
 						<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-pencil"></span> Terminology Management<span class="caret"></span></a>
 						<ul class="dropdown-menu">
 							<li id="ontology_viewer"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Terminology Overview</a></li>
-							<li id="lex_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Base Lexicon Miner</a></li>
+							<li id="lex_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Lexicon Miner</a></li>
 							<li id="conceptualizer"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Conceptualiser</a></li>
 							<li id="mwe_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> MWE Miner</a></li>
 							<li id="grammar_builder"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Grammar Miner</a></li>
@@ -91,7 +91,7 @@
 				</form>
 
             	<form class="navbar-form navbar-right">
-					<select id="dataset_to_activate" name="dataset_to_activate" class="input-sm" onchange="update_resources();">
+					<select id="dataset_to_activate" name="dataset_to_activate" class="input-sm" onclick="update_resources();">
 						{% for dataset in allowed_datasets %}
 							{% if dataset.id|stringformat:"i" == request.session.dataset %}
 								<option value="{{dataset.id}}" selected="selected">Dataset {{dataset.id}}: {{dataset.index}} - {{dataset.mapping}}</option>
@@ -101,7 +101,7 @@
 						{% endfor %}
 					</select>
 
-					<select id="model_to_activate" name="model_to_activate" class="input-sm" onchange="update_resources();">
+					<select id="model_to_activate" name="model_to_activate" class="input-sm" onclick="update_resources();">
 						{% for model in language_models %}
 							{% if model.pk|slugify == request.session.model %}
 								<option value="{{model.pk}}" selected="selected">Model {{model.pk}}: {{model.description}}</option>

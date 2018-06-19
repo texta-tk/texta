@@ -15,7 +15,7 @@ for _id in enabled_tagger_ids:
 
 class TextTaggerPreprocessor(object):
     """Preprocessor implementation for running TEXTA Text Taggers on the selected documents.
-    """
+    """ 
 
     def __init__(self, feature_map={}):
         self._feature_map = feature_map
@@ -39,6 +39,9 @@ class TextTaggerPreprocessor(object):
                 texts = [document[input_feature].strip().decode() for document in documents if input_feature in document]
             except AttributeError:
                 texts = [document[input_feature].strip() for document in documents if input_feature in document]
+            
+            if not texts:
+                return documents
             
             ## Dies with empty text!
             results = []

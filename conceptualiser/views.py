@@ -20,12 +20,9 @@ from texta.settings import STATIC_URL, URL_PREFIX, INFO_LOGGER
 
 @login_required
 def index(request):
-    if 'model' not in request.session:
-        return HttpResponseRedirect(URL_PREFIX + '/')
     template = loader.get_template('conceptualiser.html')
-    
-    lexicons = []
 
+    lexicons = []
     for lexicon in Lexicon.objects.all().filter(author=request.user):
         setattr(lexicon,'size',Word.objects.all().filter(lexicon=lexicon.id).count())
         lexicons.append(lexicon)

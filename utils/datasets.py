@@ -26,9 +26,13 @@ class Datasets:
         """ Activate dataset for a given session. If the session does not contain
             information about the dataset, initiates with the first valid dataset
             Returns: the session object containing the active dataset mapping_id
-        """
+        """        
         if len(self.datasets.keys()) > 0:
             if 'dataset' not in session:
+                # Activate first if not defined in session
+                session['dataset'] = list(self.datasets.keys())[0]
+            elif int(session['dataset']) not in self.datasets.keys():
+                # Activate first if previously activated not present
                 session['dataset'] = list(self.datasets.keys())[0]
             self.mapping_id = int(session['dataset'])
         return self

@@ -36,15 +36,12 @@ def uniq(l):
 
 @login_required
 def index(request):
-
     datasets = Datasets().get_allowed_datasets(request.user)
     language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
 
-    if 'model' not in request.session:
-        return HttpResponseRedirect(URL_PREFIX + '/')
     template = loader.get_template('lm.html')
     lexicons = Lexicon.objects.all().filter(author=request.user)
-    return HttpResponse(template.render({'lexicons':lexicons,'STATIC_URL':STATIC_URL, 'language_models': language_models, 'allowed_datasets': datasets,},request))
+    return HttpResponse(template.render({'lexicons': lexicons, 'STATIC_URL': STATIC_URL, 'language_models': language_models, 'allowed_datasets': datasets}, request))
 
 
 @login_required
@@ -159,6 +156,9 @@ def selectLexicon(request):
         words = [a.wrd for a in words]
         lexicons = Lexicon.objects.filter(author=request.user)
 
+        datasets = Datasets().get_allowed_datasets(request.user)
+        language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
+
         # Define selected mapping
         ds = Datasets().activate_dataset(request.session)
         es_m = ds.build_manager(ES_Manager)
@@ -166,7 +166,7 @@ def selectLexicon(request):
 
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_selected','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']},'data':{'lexicon_terms':words}}))
 
-        return HttpResponse(template.render({'words':words,'selected':request.GET['id'], 'selected_name':lexicon,'lexicons':lexicons,'STATIC_URL':STATIC_URL,'features':fields},request))
+        return HttpResponse(template.render({'words':words,'selected':request.GET['id'], 'selected_name':lexicon,'lexicons':lexicons,'STATIC_URL':STATIC_URL,'features':fields, 'language_models': language_models, 'allowed_datasets': datasets}, request))
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_selection_failed','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}),exc_info=True)
 
@@ -200,10 +200,10 @@ def query(request):
         ignored_idxes = model_manager.get_negatives(request.session['model'],request.user.username,lexicon.id)
 
         try:
-
             model = model_manager.get_model(request.session['model'])
             if model.model.wv.syn0norm is None:
                 model.model.init_sims()
+            print('dsadasd')
 
         except LookupError:
             logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'CREATE LEXICON','event':'term_suggestion_failed','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'model_id':request.session['model']},'reason':'No lexicon ID provided.'}))
@@ -225,10 +225,6 @@ def query(request):
 
         model_run_obj = Task.objects.get(id=int(request.session['model']))
         tooltip_feature = json.loads(json.loads(model_run_obj.parameters)['field'])['path']
-        # Define selected mapping
-        #ds = Datasets().activate_dataset(request.session)
-        #dataset = ds.get_index()
-        #mapping = ds.get_mapping()
 
         if request.POST['method'][:12] == 'most_similar':
             for a in getattr(model,request.POST['method'])(positive=positives,topn=40,ignored_idxes = ignored_idxes):

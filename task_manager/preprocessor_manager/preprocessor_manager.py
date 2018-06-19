@@ -6,6 +6,12 @@ from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from task_manager.progress_manager import ShowProgress
 
+import platform
+if platform.system() == 'Windows':
+    from threading import Thread as Process
+else:
+    from multiprocessing import Process
+
 from datetime import datetime
 import json
 
@@ -27,7 +33,8 @@ class Preprocessor:
 		self.es_m = es_m
 		self.params = params
 		
-		self._preprocessor_worker()
+		Process(target=self._preprocessor_worker()).start()
+		return True
 
 	def _preprocessor_worker(self):
 		field_paths = []
