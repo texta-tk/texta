@@ -91,7 +91,7 @@
 				</form>
 
             	<form class="navbar-form navbar-right">
-					<select id="dataset_to_activate" name="dataset_to_activate" class="input-sm" onclick="update_resources();">
+					<select id="dataset_to_activate" name="dataset_to_activate" class="input-sm" onchange="update_resources();">
 						{% for dataset in allowed_datasets %}
 							{% if dataset.id|stringformat:"i" == request.session.dataset %}
 								<option value="{{dataset.id}}" selected="selected">Dataset {{dataset.id}}: {{dataset.index}} - {{dataset.mapping}}</option>
@@ -101,7 +101,7 @@
 						{% endfor %}
 					</select>
 
-					<select id="model_to_activate" name="model_to_activate" class="input-sm" onclick="update_resources();">
+					<select id="model_to_activate" name="model_to_activate" class="input-sm" onchange="update_resources();">
 						{% for model in language_models %}
 							{% if model.pk|slugify == request.session.model %}
 								<option value="{{model.pk}}" selected="selected">Model {{model.pk}}: {{model.description}}</option>
