@@ -1079,7 +1079,7 @@ function change_agg_field(field_nr){
 	var field_data = JSON.parse(selected_field);
 	var selected_type = field_data['type'];
 
-	if(selected_type == 'text' || selected_type == 'keyword'){
+	if(selected_type == 'text' || selected_type == 'keyword' || selected_type == 'facts'){
 		$("#sort_by_"+field_nr).removeClass('hidden');
 		$("#agg_size_"+field_nr).removeClass('hidden');
 		$("#freq_norm_"+field_nr).addClass('hidden');
