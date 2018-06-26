@@ -56,7 +56,14 @@ def newLexicon(request):
     """
     lexiconName = request.POST['lexiconname']
 
-    model_pk = int(request.session['model'])
+    try:
+        model = str(request.session['model'])
+    except KeyError:
+        language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
+        model = str(language_models[0].pk)
+        request.session['model'] = model
+
+
     if 'lexiconkeywords' in request.POST:
         lexiconKeywords = request.POST['lexiconkeywords']
     else:
@@ -199,15 +206,9 @@ def query(request):
 
         ignored_idxes = model_manager.get_negatives(request.session['model'],request.user.username,lexicon.id)
 
-        try:
-            model = model_manager.get_model(request.session['model'])
-            if model.model.wv.syn0norm is None:
-                model.model.init_sims()
-            print('dsadasd')
-
-        except LookupError:
-            logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'CREATE LEXICON','event':'term_suggestion_failed','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'model_id':request.session['model']},'reason':'No lexicon ID provided.'}))
-            return HttpResponse('INVALID MODEL')
+        model = model_manager.get_model(request.session['model'])
+        if model.model.wv.syn0norm is None:
+            model.model.init_sims()
 
         suggestionset_id = suggestionset.id
 
