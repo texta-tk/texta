@@ -383,7 +383,14 @@
 		}
 
 		hideBy = function (name = null, hideNode = null, deleteNode = null) {
-			if (name) { factNamesShow[name] = !factNamesShow[name] }
+			if (name) {
+				factNamesShow[name] = !factNamesShow[name];
+				if (factNamesShow[name]) {
+					$(".cell").find(".label:contains(" + name + ")").parent().css("opacity", "1");
+				} else {
+					$(".cell").find(".label:contains(" + name + ")").parent().css("opacity", "0.3");
+				}
+			 }
 			if (hideNode) {
 				hiddenNodes.push(hideNode); if (hiddenNodes.length >= 1) {
 					svg.select(".hiddenOverflowSymbol").attr("fill-opacity", 1).remove();
@@ -459,7 +466,7 @@
 		.scale(symbolScale)
 		.orient("horizontal")
 		.shapePadding(50)
-		.title("Click on the fact type to hide/reveal it:")
+		.title("Click on the fact name to hide/reveal it:")
 		.on("cellclick", function (d) { hideBy(name = d); });
 
 	svg.select(".legendSymbol")
