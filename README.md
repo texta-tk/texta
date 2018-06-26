@@ -4,4 +4,4 @@ Terminology EXtraction and Text Analytics (TEXTA) Toolkit provides resources for
 
 [Documentation](https://texta-tk.github.io)
 
-[![Build Status](https://travis-ci.org/texta-tk/texta.svg?branch=master)](https://travis-ci.org/ekt68/texta)
+[![Build Status](https://travis-ci.org/texta-tk/texta.svg?branch=master)](https://travis-ci.org/texta-tk/texta)
