@@ -13,7 +13,7 @@ if 'django' in sys.modules: # Import django-stuff only if imported from the djan
     from conceptualiser.models import Concept
     from conceptualiser.models import TermConcept
     from utils.log_manager import LogManager
-    from lm.models import Word,Lexicon
+    from lexicon_miner.models import Word,Lexicon
 
 from utils.query_builder import QueryBuilder
 from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, FACT_PROPERTIES

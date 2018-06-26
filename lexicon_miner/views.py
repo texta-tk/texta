@@ -10,7 +10,7 @@ from django.http import QueryDict
 import requests
 
 
-from lm.models import Lexicon, Word, SuggestionSet
+from .models import Lexicon, Word, SuggestionSet
 from task_manager.models import Task
 from utils.robust_rank_aggregation import aggregate_ranks
 from utils.model_manager import get_model_manager
@@ -87,7 +87,7 @@ def newLexicon(request):
         return HttpResponse()
     else:
         # last to get the latest entry just in case there is a duplicate
-        return HttpResponseRedirect(URL_PREFIX + '/lm/select?id='+str(Lexicon.objects.filter(name=lexiconName).last().id))
+        return HttpResponseRedirect(URL_PREFIX + '/lexicon_miner/select?id='+str(Lexicon.objects.filter(name=lexiconName).last().id))
 
 
 @login_required
@@ -102,7 +102,7 @@ def deleteLexicon(request):
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_deletion_failed','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}),exc_info=True)
 
-    return HttpResponseRedirect(URL_PREFIX + '/lm')
+    return HttpResponseRedirect(URL_PREFIX + '/lexicon_miner')
 
 
 @login_required
@@ -150,7 +150,7 @@ def saveLexicon(request, local_request=False):
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_saving_failed','args':{'user_name':request.user.username,'lexicon_id':lexId}}),exc_info=True)
 
     if not local_request:
-        return HttpResponseRedirect(URL_PREFIX + '/lm/select?id='+lexId)
+        return HttpResponseRedirect(URL_PREFIX + '/lexicon_miner/select?id='+lexId)
 
 
 
@@ -177,7 +177,7 @@ def selectLexicon(request):
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_selection_failed','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}),exc_info=True)
 
-        return HttpResponseRedirect(URL_PREFIX + '/lm')
+        return HttpResponseRedirect(URL_PREFIX + '/lexicon_miner')
 
 
 def get_example_texts(request, field, value):
@@ -307,5 +307,5 @@ def reset_suggestions(request):
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'suggestions_reset','args':{'user_name':request.user.username,'lexicon_id':lexicon_id}}))
     except Exception as e:
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'suggestions_reset','args':{'user_name':request.user.username,'lexicon_id':lexicon_id}}),exc_info=True)
-    return HttpResponseRedirect(URL_PREFIX + '/lm/select?id='+lexicon_id)
+    return HttpResponseRedirect(URL_PREFIX + '/lexicon_miner/select?id='+lexicon_id)
 

@@ -1,4 +1,4 @@
-var LINK_LEXMINER = LINK_PREFIX + '/lm';
+var LINK_LEXMINER = LINK_PREFIX + '/lexicon_miner';
 var LINK_SEARCHER = LINK_PREFIX + '/searcher';
 var LINK_MWE = LINK_PREFIX + '/mwe_miner';
 var LINK_ROOT = LINK_PREFIX + '/';

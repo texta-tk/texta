@@ -24,7 +24,7 @@ from django.http import HttpResponse, StreamingHttpResponse
 from django.template import loader
 from django.utils.encoding import smart_str
 
-from lm.models import Lexicon,Word
+from lexicon_miner.models import Lexicon,Word
 from conceptualiser.models import Term, TermConcept
 from searcher.models import Search
 from permission_admin.models import Dataset

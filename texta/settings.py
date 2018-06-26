@@ -235,7 +235,7 @@ INSTALLED_APPS = (
 	'django.contrib.messages',
 	'django.contrib.admin',
 	'django.contrib.staticfiles',
-	'lm',
+	'lexicon_miner',
 	'conceptualiser',
 	'mwe_miner',
 	'account',

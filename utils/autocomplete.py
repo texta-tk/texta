@@ -1,5 +1,5 @@
 from conceptualiser.models import Term, TermConcept
-from lm.models import Lexicon
+from lexicon_miner.models import Lexicon
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 

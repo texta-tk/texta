@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.shortcuts import render
+from django.template import loader
 
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import FileSystemStorage
@@ -41,6 +42,7 @@ def collect_map_entries(map_):
 
 @login_required
 def index(request):
+    template = loader.get_template('dataset_importer.html')
     jobs = DatasetImport.objects.all()
 
     archive_formats = collect_map_entries(extractor_map)
@@ -54,7 +56,7 @@ def index(request):
     datasets = Datasets().get_allowed_datasets(request.user)
     language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
 
-    return render(request, 'dataset_importer.html', context={
+    context = {
         # 'enabled_input_types': DATASET_IMPORTER_CONF['enabled_input_types'],
         'archive_formats': archive_formats,
         'single_document_formats': single_document_formats,
@@ -64,7 +66,9 @@ def index(request):
         'allowed_datasets': datasets, 
         'jobs': jobs,
         'enabled_preprocessors': enabled_preprocessors
-    })
+    }
+
+    return HttpResponse(template.render(context, request))
 
 
 @login_required
