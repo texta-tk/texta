@@ -27,8 +27,9 @@ class ElasticsearchHandler:
 		actions = [{"_source": document, "_index": self.index, "_type": self.doc_type} for document in list_of_documents]
 
 		for success, response in elastic_parallelbulk(client=self.es, actions=actions):
+			self.logger.info("BulkAPI response: {0}".format(str(response)))
 			if not success:
-				self.logger.error(response)
+				self.logger.error(str(response))
 				raise ValueError(str(response))
 
 	def insert_index_into_es(self):
