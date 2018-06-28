@@ -5,7 +5,7 @@ FROM python:3.5.5
 ENV PYTHONUNBUFFERED 1
 
 RUN apt-get update && apt-get upgrade -y && apt-get autoremove && apt-get autoclean
-RUN apt-get install -y --no-install-recommends nano libpulse-dev swig authbind poppler-utils antiword
+RUN apt-get install -y --no-install-recommends nano libpulse-dev swig authbind poppler-utils antiword unrtf
 RUN pip install requests numpy cython  scipy sklearn gensim django==2.0.2 pathlib dateutils sympy textract elasticsearch elasticsearch_dsl psycopg2-binary psycopg2 dateparser
 
 RUN touch /etc/authbind/byport/80
