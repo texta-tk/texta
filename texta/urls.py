@@ -4,7 +4,7 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from django.views import static
 
-from lm.urls import urlpatterns as lm_urls
+from lexicon_miner.urls import urlpatterns as lm_urls
 from account.urls import urlpatterns as account_urls
 from conceptualiser.urls import urlpatterns as conceptualiser_urls
 from mwe_miner.urls import urlpatterns as mwe_miner_urls
@@ -24,7 +24,7 @@ def protected_serve(request, path, document_root=None, show_indexes=False):
 
 urlpatterns = [
     url(r'', include('account.urls')),
-    url(r'lm', include('lm.urls')),
+    url(r'lexicon_miner', include('lexicon_miner.urls')),
     url(r'conceptualiser', include('conceptualiser.urls')),
     url(r'mwe_miner', include('mwe_miner.urls')),
     url(r'^searcher', include('searcher.urls')),

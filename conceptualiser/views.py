@@ -11,8 +11,8 @@ from sklearn.manifold import TSNE, MDS
 from sklearn.metrics.pairwise import pairwise_distances
 
 from conceptualiser.models import Term, TermConcept, Concept
-from lm.models import Word, Lexicon
-from lm.views import model_manager
+from lexicon_miner.models import Word, Lexicon
+from lexicon_miner.views import model_manager
 from task_manager.models import Task
 from utils.datasets import Datasets
 

@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from django.template import loader
 
 from conceptualiser.models import Concept, Term, TermConcept
-from lm.models import Lexicon
+from lexicon_miner.models import Lexicon
 from task_manager.models import Task
 from utils.datasets import Datasets
 

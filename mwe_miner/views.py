@@ -18,7 +18,7 @@ from django.template import loader
 
 from task_manager.models import Task
 from conceptualiser.models import Term,TermConcept,Concept
-from lm.models import Lexicon,Word
+from lexicon_miner.models import Lexicon,Word
 from mwe_miner.models import Run
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager

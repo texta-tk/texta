@@ -118,6 +118,7 @@ class ModelManager(threading.Thread):
 
 
     def get_negatives(self,model_name,username,lexicon_id):
+        model_name = str(model_name)
         with self._negatives_lock:
             if lexicon_id not in self._model_negatives[model_name][username]:
                 negatives_path = os.path.join(USER_MODELS,model_name,username,"lexicon_%d_negatives.pickle"%lexicon_id)
@@ -131,6 +132,7 @@ class ModelManager(threading.Thread):
             return self._model_negatives[model_name][username][lexicon_id].negatives
 
     def save_negatives(self,model_name,username,lexicon_id):
+        model_name = str(model_name)
         with self._negatives_lock:
             if lexicon_id in self._model_negatives[model_name][username]:
                 negatives_dir = os.path.join(USER_MODELS,model_name,username)
@@ -147,6 +149,7 @@ class ModelManager(threading.Thread):
                 self._model_negatives[model_name][username][lexicon_id].access_time = time()
 
     def reset_negatives(self,model_name,username,lexicon_id):
+        model_name = str(model_name)
         with self._negatives_lock:
             if lexicon_id in self._model_negatives[model_name][username]:
                 self._model_negatives[model_name][username][lexicon_id].negatives = []
@@ -157,6 +160,7 @@ class ModelManager(threading.Thread):
                 os.remove(negatives_path)
 
     def remove_negatives(self,model_name,username,lexicon_id):
+        model_name = str(model_name)
         # when removing lexicon
         with self._negatives_lock:
             self.to_be_deleted_negatives.append((model_name,username,lexicon_id,'erase'))
