@@ -17,7 +17,7 @@ import json
 
 class Preprocessor:
 
-	def __init__(self, scroll_size=1000):
+	def __init__(self, scroll_size=100):
 		self.es_m = None
 		self.scroll_size = scroll_size
 	
@@ -53,11 +53,17 @@ class Preprocessor:
 				new_field_properties = preprocessor_map[preprocessor_key]['field_properties']
 				self.es_m.update_mapping_structure(new_field_name, new_field_properties)
 	
-		
 		response = self.es_m.scroll(field_scroll=field_paths, size=self.scroll_size)
 		scroll_id = response['_scroll_id']
-		l = response['hits']['total']	
-		show_progress.set_total(l)
+		total_docs = response['hits']['total']
+		l = total_docs - len(response['hits']['hits'])	
+		show_progress.set_total(total_docs)
+
+		documents, parameter_dict, ids = self._prepare_preprocessor_data(field_paths, response)
+		processed_documents = list(DocumentPreprocessor.process(documents=documents, **parameter_dict))
+		self.es_m.update_documents(processed_documents,ids)
+		
+		show_progress.update(l)
 
 		while l > 0:
 			response = self.es_m.scroll(scroll_id=scroll_id)
@@ -65,10 +71,10 @@ class Preprocessor:
 			scroll_id = response['_scroll_id']
 
 			documents, parameter_dict, ids = self._prepare_preprocessor_data(field_paths, response)
-			show_progress.update(l)
-			
 			processed_documents = list(DocumentPreprocessor.process(documents=documents, **parameter_dict))
 			self.es_m.update_documents(processed_documents,ids)
+			
+			show_progress.update(l)
 
 		task = Task.objects.get(pk=self.task_id)
 		task.status = 'completed'
