@@ -16,80 +16,86 @@
 	</div>
 </div>
 
-<div class="row">
 	<form id="task_params">
-		<div class="col-lg-3">
-			<div class="tab-content">
-					{% for task_param in task_params %}
-						<div id="{{task_param.id}}" class="tab-pane fade in {% if forloop.counter0 < 1 %}active{% endif %}">
-							{% include task_param.template %}    
+<div class="tab-content">
+
+	{% for task_param in task_params %}
+		<div id="{{task_param.id}}" class="tab-pane fade in {% if forloop.counter0 < 1 %}active{% endif %}">
+			
+				<div class="col-lg-3">
+					<div class="tab-content">
+							{% include task_param.template %}
+					</div>
+				</div>
+		
+			<div class="col-lg-9">
+					<div class="panel">
+						<div class="panel-heading">Tasks for: <b>{{task_param.name}}</b></div>
+						<div class="panel-body">
+							<table class="table table-striped">
+								<thead>
+								  <tr>
+									<th>ID</th>
+									<th>Type</th>
+									<th>User</th>
+									<th>Description</th>
+									<th>Task Status</th>
+									<th>Task Started</th>
+									<th>Task Completed</th>
+									<th>Parameters</th>
+									<th>Result</th>
+									<th>Actions</th>
+								</tr>
+								</thead>
+								{% for task in tasks %}
+									{% if task.task_type == task_param.id %}
+									<tr>
+										<td>{{task.id}}</td>
+										<td>{{task.task_type}}</td>
+										<td>{{task.user}}</td>
+										<td>{{task.description}}</td>
+										<td>{{task.status}}</td>
+										<td>{{task.time_started|date:"d.m.Y H:i"}}</td>
+										<td>{{task.time_completed|date:"d.m.Y H:i"}}</td>							
+										<td>
+											<table class="table table-striped table-condensed">
+												{% for k,v in task.parameters.items %}
+													<tr>
+														<td><b>{{k}}</b></td>
+														<td>{{v}}</td>
+													</tr>
+												{% endfor %}
+											</table>
+										</td>
+										<td>
+											<table class="table table-striped table-condensed">
+												{% for k,v in task.result.items %}
+													<tr>
+														<td><b>{{k}}</b></td>
+														<td>{{v}}</td>
+													</tr>
+												{% endfor %}
+											</table>
+										</td>
+										<td>
+											<a href="#" onclick="delete_task({{task.id}});" title="Delete task"><span class="glyphicon glyphicon-remove"></span></a>
+											{% if 'train' in task.task_type %}
+											<a href="javascript:void(0)" onclick="go_to(LINK_TASK_MANAGER + '/download_model?model_id={{task.id}}')"><span class="glyphicon glyphicon-download-alt"></span></a>
+											{% endif %}
+										</td>
+									</tr>
+									{% endif %}
+								{% endfor %}
+							</table>
 						</div>
-					{% endfor %}
-			</div>
+					</div>
+				</div>		
+		
 		</div>
-	</form>
+
+	{% endfor %}
 	
-	<div class="col-lg-9">
-		<div class="panel">
-			<div class="panel-heading">Tasks</div>
-			<div class="panel-body">
-				<table class="table table-striped">
-					<thead>
-					  <tr>
-						<th>Task ID</th>
-						<th>Task Type</th>
-						<th>User</th>
-						<th>Description</th>
-						<th>Task Status</th>
-						<th>Task Started</th>
-						<th>Task Completed</th>
-						<th>Parameters</th>
-						<th>Result</th>
-						<th>Actions</th>
-					</tr>
-					</thead>
-					{% for task in tasks %}
-						<tr>
-							<td>{{task.id}}</td>
-							<td>{{task.task_type}}</td>
-							<td>{{task.user}}</td>
-							<td>{{task.description}}</td>
-							<td>{{task.status}}</td>
-							<td>{{task.time_started|date:"d.m.Y H:i"}}</td>
-							<td>{{task.time_completed|date:"d.m.Y H:i"}}</td>							
-							<td>
-								<table class="table table-striped table-condensed">
-									{% for k,v in task.parameters.items %}
-										<tr>
-											<td><b>{{k}}</b></td>
-											<td>{{v}}</td>
-										</tr>
-									{% endfor %}
-								</table>
-							</td>
-							<td>
-								<table class="table table-striped table-condensed">
-									{% for k,v in task.result.items %}
-										<tr>
-											<td><b>{{k}}</b></td>
-											<td>{{v}}</td>
-										</tr>
-									{% endfor %}
-								</table>
-							</td>
-							<td>
-								<a href="#" onclick="delete_task({{task.id}});" title="Delete task"><span class="glyphicon glyphicon-remove"></span></a>
-								{% if 'train' in task.task_type %}
-								<a href="javascript:void(0)" onclick="go_to(LINK_TASK_MANAGER + '/download_model?model_id={{task.id}}')"><span class="glyphicon glyphicon-download-alt"></span></a>
-								{% endif %}
-							</td>
-						</tr>
-					{% endfor %}
-				</table>
-			</div>
-        </div>
-	</div>
 
 </div>
-
+</form>
 {% endblock %}
