@@ -17,9 +17,10 @@ import json
 
 class Preprocessor:
 
-	def __init__(self, scroll_size=100):
+	def __init__(self, scroll_size=500, time_out='10m'):
 		self.es_m = None
 		self.scroll_size = scroll_size
+		self.scroll_time_out = time_out
 	
 	def apply(self, task_id):
 		self.task_id = task_id
@@ -53,7 +54,7 @@ class Preprocessor:
 				new_field_properties = preprocessor_map[preprocessor_key]['field_properties']
 				self.es_m.update_mapping_structure(new_field_name, new_field_properties)
 	
-		response = self.es_m.scroll(field_scroll=field_paths, size=self.scroll_size)
+		response = self.es_m.scroll(field_scroll=field_paths, size=self.scroll_size, time_out=self.scroll_time_out)
 		scroll_id = response['_scroll_id']
 		total_docs = response['hits']['total']
 		l = total_docs - len(response['hits']['hits'])	
@@ -66,7 +67,7 @@ class Preprocessor:
 		show_progress.update(l)
 
 		while l > 0:
-			response = self.es_m.scroll(scroll_id=scroll_id)
+			response = self.es_m.scroll(scroll_id=scroll_id, time_out=self.scroll_time_out)
 			l = len(response['hits']['hits'])
 			scroll_id = response['_scroll_id']
 
