@@ -65,6 +65,7 @@ class Preprocessor:
 		self.es_m.update_documents(processed_documents,ids)
 		
 		show_progress.update(l)
+	
 
 		while l > 0:
 			response = self.es_m.scroll(scroll_id=scroll_id, time_out=self.scroll_time_out)

@@ -7,7 +7,7 @@ from searcher.models import Search
 from permission_admin.models import Dataset
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
-from texta.settings import STATIC_URL, URL_PREFIX
+from texta.settings import STATIC_URL, URL_PREFIX, MODELS_DIR
 
 from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
 from .language_model_manager.language_model_manager import LanguageModel
@@ -18,6 +18,7 @@ from .models import Task
 from datetime import datetime
 
 import json
+import os
 
 task_params = [{"name": "Train Language Model", "id": "train_model", "template": "task_parameters/train_model.html", "model": LanguageModel(), "allowed_actions": ["delete", "save"]},
                {"name": "Train Text Tagger", "id": "train_tagger", "template": "task_parameters/train_tagger.html", "model": TaggingModel(), "allowed_actions": ["delete", "save"]},
@@ -130,10 +131,27 @@ def delete_task(request):
     task_id = int(request.POST['task_id'])
     task = Task.objects.get(pk=task_id)
     
-    #TODO Delete model files too! (Lazy AF ATM)
-    
+    if 'train' in task.task_type:
+        file_path = os.path.join(MODELS_DIR, "model_" + str(task_id))
+        os.remove(file_path)
+     
     task.delete()
     return HttpResponse()
+
+
+@login_required
+def download_model(request):
+    model_id = request.GET['model_id']
+    file_path = os.path.join(MODELS_DIR, "model_" + str(model_id))
+
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as fh:
+            response = HttpResponse(fh)
+            response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(file_path)
+            return response
+
+    return HttpResponse()
+
 
 def activate_model(task_type):
     for task_param in task_params:

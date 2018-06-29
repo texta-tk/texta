@@ -45,7 +45,7 @@
 						<th>Task Completed</th>
 						<th>Parameters</th>
 						<th>Result</th>
-						<th>Delete</th>
+						<th>Actions</th>
 					</tr>
 					</thead>
 					{% for task in tasks %}
@@ -79,6 +79,9 @@
 							</td>
 							<td>
 								<a href="#" onclick="delete_task({{task.id}});" title="Delete task"><span class="glyphicon glyphicon-remove"></span></a>
+								{% if 'train' in task.task_type %}
+								<a href="javascript:void(0)" onclick="go_to(LINK_TASK_MANAGER + '/download_model?model_id={{task.id}}')"><span class="glyphicon glyphicon-download-alt"></span></a>
+								{% endif %}
 							</td>
 						</tr>
 					{% endfor %}
