@@ -1,3 +1,5 @@
+from lexicon_miner.models import Lexicon, Word
+
 from collections import defaultdict
 import re
 
