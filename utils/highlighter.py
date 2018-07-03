@@ -39,6 +39,8 @@ class Highlighter(object):
         """highlight_data = [{'spans': [[1,7],[25,36]], 'name': 'LOC', 'value': '5', 'category': '[fact]', 'color': '#ababab'}]
         """
         
+        original_text = str(original_text)
+        
         if tagged_text:
             if self._derive_spans:
                 alignment = [char_idx for char_idx in range(len(original_text))]
