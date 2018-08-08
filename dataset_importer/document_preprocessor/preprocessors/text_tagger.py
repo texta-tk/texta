@@ -35,10 +35,20 @@ class TextTaggerPreprocessor(object):
             taggers_to_apply.append(tm)
         
         for input_feature in input_features:
-            try:
-                texts = [document[input_feature].strip().decode() for document in documents if input_feature in document]
-            except AttributeError:
-                texts = [document[input_feature].strip() for document in documents if input_feature in document]
+            texts = []
+        
+            for document in documents:
+                # Take into account nested fields encoded as: 'field.sub_field'
+                decoded_text = document
+                for k in input_feature.split('.'):
+                    decoded_text = decoded_text[k]
+                
+                try:
+                    decoded_text.strip().decode()
+                except AttributeError:
+                    decoded_text.strip()
+                
+                texts.append(decoded_text)
             
             if not texts:
                 return documents
@@ -59,7 +69,7 @@ class TextTaggerPreprocessor(object):
                 positive_tags = [tagger_descriptions[positive_tag_id] for positive_tag_id in positive_tag_ids[0]]
                 texta_facts = []
                 
-                if positive_tags:               
+                if positive_tags:         
                     if 'texta_facts' not in documents[i]:
                         documents[i]['texta_facts'] = []               
                     for tag in positive_tags:
