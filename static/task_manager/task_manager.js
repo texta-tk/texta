@@ -6,9 +6,7 @@ function start_task(task_id) {
     
     var request = new XMLHttpRequest();
     request.onreadystatechange=function() {
-        if (request.readyState==4 && request.status==200) {
-            location.reload();
-        }
+        location.reload();
     }
     
     request.open("POST",PREFIX+'/start_task');

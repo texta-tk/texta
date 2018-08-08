@@ -57,7 +57,7 @@ class Preprocessor:
 		response = self.es_m.scroll(field_scroll=field_paths, size=self.scroll_size, time_out=self.scroll_time_out)
 		scroll_id = response['_scroll_id']
 		total_docs = response['hits']['total']
-		l = total_docs - len(response['hits']['hits'])	
+		l = len(response['hits']['hits'])	
 		show_progress.set_total(total_docs)
 
 		documents, parameter_dict, ids = self._prepare_preprocessor_data(field_paths, response)
