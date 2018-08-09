@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import requests
 import json
 
@@ -40,13 +41,15 @@ class MlpPreprocessor(object):
                 texts = [document[input_feature].decode() for document in documents if input_feature in document]
             except AttributeError:
                 texts = [document[input_feature] for document in documents if input_feature in document]
-                
+
             data = {'texts': json.dumps(texts, ensure_ascii=False), 'doc_path': input_feature+'_mlp'}
-            
+
             try:
                 analyzation_data = requests.post(self._mlp_url, data=data).json()
-            except:
-                raise Exception()
+            except Exception:
+
+                logging.error('Failed to achieve connection with mlp.', extra={'mlp_url':self._mlp_url, 'enabled_features':self._enabled_features})
+                break
 
             for analyzation_idx, analyzation_datum in enumerate(analyzation_data):
                 analyzation_datum = analyzation_datum[0]

@@ -26,7 +26,7 @@ db=MySQLdb.connect(host        = 'localhost',
                    cursorclass=MySQLdb.cursors.SSDictCursor)
 cur = db.cursor()
 cur.execute('select * from mir_events')
-print datetime.now(),'MySQL query executed.'
+print(datetime.now(), 'MySQL query executed.')
 
 i = 0
 data = ''
@@ -44,13 +44,13 @@ for row in cur:
     if i == bulk_size:
         i=0
         response = requests.put('http://127.0.0.1:9200/'+index_name+'/'+mapping_name+'/_bulk', data=data)
-        print datetime.now(),'Bulk indexed. HTTP says:',response.status_code
+        print(datetime.now(), 'Bulk indexed. HTTP says:', response.status_code)
         if response.status_code == 400:
-            print response.text
+            print(response.text)
         data = ''
 
 response = requests.put('http://127.0.0.1:9200/'+index_name+'/'+mapping_name+'/_bulk', data=data)
-print datetime.now(),'Bulk indexed. HTTP says:',response.status_code
+print(datetime.now(), 'Bulk indexed. HTTP says:', response.status_code)
 if response.status_code == 400:
-    print response.text
-print 'All indexed.',time()-algus
+    print(response.text)
+print('All indexed.', time() - algus)
