@@ -64,9 +64,9 @@ class DatasetImporter(object):
         parameters = self.django_request_to_import_parameters(request.POST)
         parameters = self._preprocess_import(parameters, request.user, request.FILES)
 
-        process = Process(target=_import_dataset, args=(parameters, self._n_processes, self._process_batch_size)).start()
-        #process = None
-        #_import_dataset(parameters, n_processes=self._n_processes, process_batch_size=self._process_batch_size)
+        #process = Process(target=_import_dataset, args=(parameters, self._n_processes, self._process_batch_size)).start()
+        process = None
+        _import_dataset(parameters, n_processes=self._n_processes, process_batch_size=self._process_batch_size)
 
         self._active_import_jobs[parameters['import_id']] = {
             'process': process,
@@ -81,8 +81,8 @@ class DatasetImporter(object):
         :type parameters: dict
         """
         parameters = self._preprocess_reimport(parameters=parameters)
-        # Process(target=_import_dataset, args=(parameters, self._n_processes, self._process_batch_size)).start()
-        _import_dataset(parameters, n_processes=self._n_processes, process_batch_size=self._process_batch_size)
+        Process(target=_import_dataset, args=(parameters, self._n_processes, self._process_batch_size)).start()
+        # _import_dataset(parameters, n_processes=self._n_processes, process_batch_size=self._process_batch_size)
 
     def cancel_import_job(self, import_id):
         """Cancels an active import job.
@@ -134,8 +134,7 @@ class DatasetImporter(object):
 
         if any(format not in DAEMON_BASED_DATABASE_FORMATS for format in parameters['formats']):
             if 'file' in files_dict and parameters.get('is_local', False) is False:
-                parameters['file_path'] = self._store_file(os.path.join(parameters['directory'], files_dict['file'].name),
-                                                           files_dict['file'])
+                parameters['file_path'] = self._store_file(os.path.join(parameters['directory'], files_dict['file'].name), files_dict['file'])
 
         parameters['import_id'] = self._create_dataset_import(parameters, request_user)
 

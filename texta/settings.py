@@ -48,7 +48,7 @@ STATIC_ROOT = os.path.join(os.path.abspath(os.path.join(BASE_DIR, os.pardir)), '
 SERVER_TYPE = os.getenv('TEXTA_SERVER_TYPE')
 
 if SERVER_TYPE is None:
-    SERVER_TYPE = 'development'
+	SERVER_TYPE = 'development'
 
 if SERVER_TYPE == 'development':
 	PROTOCOL = 'http://'
@@ -59,7 +59,7 @@ if SERVER_TYPE == 'development':
 	URL_PREFIX_RESOURCE = ''
 	ROOT_URLCONF = 'texta.urls'
 	STATIC_URL = URL_PREFIX_DOMAIN + '/static/'
-	DEBUG = True
+	DEBUG = False
 
 elif SERVER_TYPE == 'production':
 	PROTOCOL = 'http://'
@@ -72,14 +72,14 @@ elif SERVER_TYPE == 'production':
 	DEBUG = False
 
 elif SERVER_TYPE == 'docker':
-    PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL'))
-    DOMAIN = os.getenv('TEXTA_HOST')
+	PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL'))
+	DOMAIN = os.getenv('TEXTA_HOST')
 
-    URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL,DOMAIN)
-    URL_PREFIX_RESOURCE = ''
-    ROOT_URLCONF = 'texta.urls'
-    STATIC_URL = '/static/'
-    DEBUG = True
+	URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL, DOMAIN)
+	URL_PREFIX_RESOURCE = ''
+	ROOT_URLCONF = 'texta.urls'
+	STATIC_URL = '/static/'
+	DEBUG = True
 
 ########################### URLs and paths ###########################
 
@@ -141,9 +141,9 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 # New user are created as activated or deactivated (in which case superuser has to activate them manually)
 USER_ISACTIVE_DEFAULT = os.getenv('TEXTA_USER_ISACTIVE_DEFAULT')
 if USER_ISACTIVE_DEFAULT is None:
-    USER_ISACTIVE_DEFAULT = True
+	USER_ISACTIVE_DEFAULT = True
 else:
-    USER_ISACTIVE_DEFAULT = json.loads(USER_ISACTIVE_DEFAULT.lower())
+	USER_ISACTIVE_DEFAULT = json.loads(USER_ISACTIVE_DEFAULT.lower())
 
 # Defines whether added datasets are 'public' or 'private'. Public datasets are accessible by all the existing users and
 # new users alike. Access from a specific user can be revoked. Private datasets are not accessible by default, but
@@ -174,7 +174,6 @@ DATABASES = {
 
 if not os.path.exists(os.path.dirname(DATABASES['default']['NAME'])) and os.environ.get('DJANGO_DATABASE_NAME') is None:
 	os.makedirs(os.path.dirname(DATABASES['default']['NAME']))
-
 
 TIME_ZONE = 'Europe/Tallinn'
 LANGUAGE_CODE = 'et'
@@ -210,7 +209,7 @@ TEMPLATES = [
 			#                'django.template.loaders.filesystem.Loader',
 			#                'django.template.loaders.app_directories.Loader',
 			#            ],
-			'debug': DEBUG,
+			'debug':              DEBUG,
 		},
 	},
 ]
@@ -219,10 +218,10 @@ TEMPLATES = [
 # 
 # NEW PY REQUIREMENT
 MIDDLEWARE = (
-    'django.middleware.common.CommonMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
+	'django.middleware.common.CommonMiddleware',
+	'django.contrib.sessions.middleware.SessionMiddleware',
+	'django.contrib.auth.middleware.AuthenticationMiddleware',
+	'django.contrib.messages.middleware.MessageMiddleware',
 )
 
 # List of built-in and custom apps in use.
@@ -261,7 +260,6 @@ INSTALLED_APPS = (
 # or remote address.
 es_url = os.getenv('TEXTA_ELASTICSEARCH_URL', 'http://localhost:9200')
 
-
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')
 es_links = {
@@ -291,15 +289,14 @@ DATASET_IMPORTER = {
 		'interval_in_seconds': 10,
 		'index_sqlite_path':   os.path.join(BASE_DIR, 'database', 'import_sync.db')
 	},
-	
-	'urls': {
-	    'mlp': 'http://10.6.6.92:5000/mlp/process'
+
+	'urls':               {
+		'mlp': 'http://10.6.6.92:5000/mlp/process'
 	}
 }
 
-
 if os.getenv('TEXTA_SERVER_TYPE') == 'docker':
-    DATASET_IMPORTER['urls']['mlp'] = 'http://texta-mlp:5000/mlp/process'
+	DATASET_IMPORTER['urls']['mlp'] = 'http://texta-mlp:5000/mlp/process'
 
 if not os.path.exists(DATASET_IMPORTER['directory']):
 	os.makedirs(DATASET_IMPORTER['directory'])
@@ -333,21 +330,29 @@ ERROR_LOGGER = 'error_logger'
 LOGGING = {
 	'version':                  1,
 	'disable_existing_loggers': False,
+	'filters':                  {
+		'require_debug_false': {
+			'()': 'django.utils.log.RequireDebugFalse'
+		},
+		'require_debug_true':  {
+			'()': 'django.utils.log.RequireDebugTrue'
+		}
+	},
 	'formatters':               {
 		'detailed':       {
 			'format': logging_separator.join(
-					['%(levelname)s', '%(module)s', 'function: %(funcName)s', 'line: %(lineno)s',  '%(name)s', 'pid: %(process)d', '%(thread)d', '%(message)s', '%(asctime)s'])
+					['%(levelname)s', '%(module)s', 'function: %(funcName)s', 'line: %(lineno)s', '%(name)s', 'PID: %(process)d', 'TID: %(thread)d', '%(message)s', '%(asctime)-15s'])
 		},
 		'normal':         {
 			'format': logging_separator.join(['%(levelname)s', '%(module)s', '%(message)s', '%(asctime)s'])
 		},
 		'detailed_error': {
 			'format': '\n' + logging_separator.join(
-					['%(levelname)s', '%(module)s', '%(name)s', '%(process)d', '%(thread)d', '%(message)s', '%(asctime)s'])
+					['%(levelname)s', '%(module)s', '%(name)s', 'PID: %(process)d', 'TID: %(thread)d', '%(funcName)s', '%(message)s', '%(asctime)-15s'])
 		}
 	},
 	'handlers':                 {
-		'info_file':  {
+		'info_file':             {
 			'level':     'INFO',
 			'class':     'logging.FileHandler',
 			'formatter': 'detailed',
@@ -355,45 +360,78 @@ LOGGING = {
 			'encoding':  'utf8',
 			'mode':      'a'
 		},
-		'error_file': {
+		'error_file':            {
 			'level':     'ERROR',
 			'class':     'logging.FileHandler',
 			'formatter': 'detailed_error',
 			'filename':  error_log_file_name,
 			'encoding':  'utf8',
-			'mode':      'a'
+			'mode':      'a',
+			'filters':   ['require_debug_false'],
 		},
+
+		'null':                  {
+			"class": 'logging.NullHandler',
+		},
+
+		'console_with_debug':    {
+			'level':     'INFO',
+			'filters':   ['require_debug_true'],
+			'class':     'logging.StreamHandler',
+			'formatter': 'detailed',
+		},
+
+		'console_without_debug': {
+			'level':     'INFO',
+			'filters':   ['require_debug_false'],
+			'class':     'logging.StreamHandler',
+			'formatter': 'detailed',
+		},
+
 	},
-	'loggers':                  {
-		INFO_LOGGER:  {
+	'loggers': {
+		INFO_LOGGER:     {
 			'level':    'INFO',
 			'handlers': ['info_file']
 		},
-		ERROR_LOGGER: {
+		ERROR_LOGGER:    {
 			'level':    'ERROR',
 			'handlers': ['error_file']
-		}
+		},
+
+		'django':        {
+			'handlers':  ['error_file'],
+			'level':     'ERROR',
+			'propagate': False
+		},
+
+		'django.server': {
+			'handlers':  ['console_with_debug', 'console_without_debug'],
+			'level':     'INFO',
+			'propagate': False,
+		},
 	}
+
 }
 
-
 # TEXTA Facts structure
-FACT_PROPERTIES = {'type': 'nested',
-                          'properties': {
-                              'doc_path': {'type': 'keyword'},
-                              'fact': {'type': 'keyword'},
-                              'num_val': {'type': 'long'},
-                              'spans': {'type': 'keyword'},
-                              'str_val': {'type': 'keyword'}
-                          }
-                     }
+FACT_PROPERTIES = {
+	'type':       'nested',
+	'properties': {
+		'doc_path': {'type': 'keyword'},
+		'fact':     {'type': 'keyword'},
+		'num_val':  {'type': 'long'},
+		'spans':    {'type': 'keyword'},
+		'str_val':  {'type': 'keyword'}
+	}
+}
 
 ############################ Boot scripts ###########################
 
 # Several scripts ran during the boot to set up files and directories.
 # Scripts will only be run if settings is imported from 'texta' directory, e.g. as a result of manager.py, or by Apache (user httpd / apache)
 
-if os.path.split(os.getcwd())[1] in ['texta', 'httpd', 'apache','www']:
+if os.path.split(os.getcwd())[1] in ['texta', 'httpd', 'apache', 'www']:
 	from utils.setup import write_navigation_file, ensure_dir_existence
 
 	write_navigation_file(URL_PREFIX, STATIC_URL, STATIC_ROOT)

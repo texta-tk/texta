@@ -1,17 +1,14 @@
 # -*- coding: utf8 -*-
 
 import json
-import re
-import string
+import logging
 
-import numpy as np
-
+from searcher.models import Search
+from texta.settings import ERROR_LOGGER
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
-from searcher.models import Search
 
 MAX_POSITIVE_SAMPLE_SIZE = 10000
-
 
 
 def get_fields(es_m):
@@ -34,28 +31,10 @@ def get_fields(es_m):
     return fields
 
 
-class esIteratorError(Exception):
-    """ esIterator Exception
+class EsIteratorError(Exception):
+    """ EsIterator Exception
     """
     pass
-
-
-class Lexicon:
-
-    def __init__(self, reduction_methods):
-        self.punct_re = re.compile('[%s]' % re.escape(string.punctuation))
-        self.reduction_methods = reduction_methods
-
-    def lexicon_reduction(self, doc_text):
-        if not isinstance(doc_text, str):
-            doc_text = unicode(doc_text).encode('utf8')
-        sentences = doc_text.split('\n')
-        if u'remove_numbers' in self.reduction_methods:
-            sentences = [re.sub('(\d)+', 'n', sentence) for sentence in sentences]
-        if u'remove_punctuation' in self.reduction_methods:
-            sentences = [self.punct_re.sub('[punct]', sentence) for sentence in sentences]
-        doc_text = ' '.join(sentences)
-        return doc_text
 
 
 class EsDataSample(object):
@@ -63,8 +42,7 @@ class EsDataSample(object):
     def __init__(self, params):
         self.field = json.loads(params['field'])['path']
         query = json.loads(Search.objects.get(pk=int(params['search'])).query)
-        #reduction_methods = self.request.POST.getlist('lexicon_reduction[]')
-        #self.lexicon = Lexicon(reduction_methods)
+
         # Define selected mapping
         ds = Datasets().activate_dataset_by_id(params['dataset'])
         self.es_m = ds.build_manager(ES_Manager)
@@ -89,7 +67,7 @@ class EsDataSample(object):
                 msg = 'Elasticsearch failed to retrieve documents: ' \
                       '*** Shards: {0} *** Timeout: {1} *** Took: {2}'.format(response['_shards'],
                                                                               response['timed_out'], response['took'])
-                raise esIteratorError(msg)
+                raise EsIteratorError(msg)
 
             for hit in response['hits']['hits']:
                 try:
@@ -97,12 +75,14 @@ class EsDataSample(object):
                     decoded_text = hit['_source']
                     for k in self.field.split('.'):
                         decoded_text = decoded_text[k]
-                    #doc_text = self.lexicon.lexicon_reduction(decoded_text)
+
                     doc_id = str(hit['_id'])
                     positive_samples.append(decoded_text)
                     positive_set.add(doc_id)
+
                 except KeyError as e:
                     # If the field is missing from the document
+                    logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
                     pass
 
         return positive_samples, positive_set
@@ -111,13 +91,13 @@ class EsDataSample(object):
         negative_samples = []
         response = self.es_m.scroll(match_all=True)
         scroll_id = response['_scroll_id']
-        l = response['hits']['total']
+        hit_length = response['hits']['total']
         sample_size = len(positive_set)
 
-        while l > 0 and len(negative_samples) <= sample_size:
+        while hit_length > 0 and len(negative_samples) <= sample_size:
 
             response = self.es_m.scroll(scroll_id=scroll_id)
-            l = len(response['hits']['hits'])
+            hit_length = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
 
             # Check errors in the database request
@@ -125,7 +105,7 @@ class EsDataSample(object):
                 msg = 'Elasticsearch failed to retrieve documents: ' \
                       '*** Shards: {0} *** Timeout: {1} *** Took: {2}'.format(response['_shards'],
                                                                               response['timed_out'], response['took'])
-                raise esIteratorError(msg)
+                raise EsIteratorError(msg)
 
             for hit in response['hits']['hits']:
                 try:
@@ -136,10 +116,11 @@ class EsDataSample(object):
                     decoded_text = hit['_source']
                     for k in self.field.split('.'):
                         decoded_text = decoded_text[k]
-                    #doc_text = self.lexicon.lexicon_reduction(decoded_text)
+
                     negative_samples.append(decoded_text)
                 except KeyError as e:
                     # If the field is missing from the document
+                    logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
                     pass
 
         return negative_samples
@@ -203,7 +184,7 @@ class EsDataClassification(object):
                 msg = 'Elasticsearch failed to retrieve documents: ' \
                       '*** Shards: {0} *** Timeout: {1} *** Took: {2}'.format(response['_shards'],
                                                                               response['timed_out'], response['took'])
-                raise esIteratorError(msg)
+                raise EsIteratorError(msg)
 
             for hit in response['hits']['hits']:
                 positive_docs_batch.append(((str(hit['_id'])), hit['_source']))
@@ -218,8 +199,7 @@ class EsDataClassification(object):
             total_hits = len(response['hits']['hits'])
 
         if positive_docs_batch:
-            positive_docs_per_classifier = self._apply_classifiers_to_documents(
-                positive_docs_batch, classifiers, classifier_tags)
+            positive_docs_per_classifier = self._apply_classifiers_to_documents(positive_docs_batch, classifiers, classifier_tags)
             total_processed += len(positive_docs_batch)
 
         data = {}
@@ -276,9 +256,9 @@ class EsDataClassification(object):
             if new_tags:
                 bulk_update_content.append(json.dumps({
                     'update': {
-                        '_id': document_id,
+                        '_id':    document_id,
                         '_index': self.es_index,
-                        '_type': self.es_mapping
+                        '_type':  self.es_mapping
                     }
                 }))
                 bulk_update_content.append(json.dumps({

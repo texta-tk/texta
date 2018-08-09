@@ -1,5 +1,6 @@
 from task_manager.models import Task
 
+
 class ShowProgress(object):
     """ Show model training progress
     """
