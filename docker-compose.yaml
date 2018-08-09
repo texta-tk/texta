@@ -2,14 +2,15 @@ version: "3"
 
 services:
 
-  db:
-    image: postgres:10.1
-    restart: always
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
+#  db:
+#    image: postgres:10.1
+#    restart: always
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data/
 
 
   elastic:
+    restart: always
     container_name: texta-elastic
     image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.4
     ports:
@@ -26,11 +27,24 @@ services:
       - ./docker/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
       - texta-data-volume:/usr/share/elasticsearch/data
 
+  logstash:
+    restart: always
+    build:
+      context: ./docker/logstash/
+    volumes:
+      - ./docker/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./docker/logstash/pipeline:/usr/share/logstash/pipeline:ro
+    ports:
+      - "5000:5000"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    depends_on:
+      - elastic
+
 
   texta:
+    restart: always
     container_name: texta-toolkit
-    ports:
-      - "9200:9200"
     env_file:
       - docker/texta/docker-toolkit.env
     ports:
@@ -39,7 +53,7 @@ services:
       context: .
       dockerfile: docker/texta/Dockerfile
     depends_on:
-      - db
+#     - db
       - elastic
     volumes:
       - .:/texta/
