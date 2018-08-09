@@ -222,7 +222,7 @@ class TaggingModel:
 			r = Task.objects.get(pk=self.task_id)
 			r.time_completed = datetime.now()
 			r.status = 'Failed'
-			r.result = str(repr(e))
+			r.result = json.dumps({'error': repr(e)})
 			r.save()
 
 	def tag(self, texts):

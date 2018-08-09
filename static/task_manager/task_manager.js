@@ -10,7 +10,7 @@ $(function () {
     });
 
     // go to the latest tab, if it exists:
-    var lastTab = localStorage.getItem('lastTab');
+    let lastTab = localStorage.getItem('lastTab');
     if (lastTab) {
         $('[href="' + lastTab + '"]').tab('show');
     }
@@ -23,22 +23,22 @@ function start_task(task_id) {
 
     let request = new XMLHttpRequest();
     request.onreadystatechange = function () {
-        if (request.readyState === 4 && request.status === 200) {
-            location.reload();
-        }
+        location.reload();
+
     };
 
     request.open("POST", PREFIX + '/start_task');
     request.send(new FormData(formElement));
 
-
 }
+
 
 function select_preprocessor(task_id) {
     let preprocessor_key = $("#" + task_id + "_preprocessor_key").val();
     $("[id^=params-]").addClass('hidden');
     $("#params-" + preprocessor_key).removeClass('hidden');
 }
+
 
 function delete_task(task_id) {
     let data = {task_id: task_id};

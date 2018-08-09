@@ -64,9 +64,9 @@ class DatasetImporter(object):
         parameters = self.django_request_to_import_parameters(request.POST)
         parameters = self._preprocess_import(parameters, request.user, request.FILES)
 
-        #process = Process(target=_import_dataset, args=(parameters, self._n_processes, self._process_batch_size)).start()
-        process = None
-        _import_dataset(parameters, n_processes=self._n_processes, process_batch_size=self._process_batch_size)
+        process = Process(target=_import_dataset, args=(parameters, self._n_processes, self._process_batch_size)).start()
+        # process = None
+        # _import_dataset(parameters, n_processes=self._n_processes, process_batch_size=self._process_batch_size)
 
         self._active_import_jobs[parameters['import_id']] = {
             'process': process,
