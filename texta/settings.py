@@ -166,8 +166,10 @@ DATABASES = {
 		'NAME':         os.getenv('DJANGO_DATABASE_NAME', os.path.join(BASE_DIR, 'database', 'lex.db')),
 		'USER':         os.getenv('DJANGO_DATABASE_USER', ''),  # Not used with sqlite3.
 		'PASSWORD':     os.getenv('DJANGO_DATABASE_PASSWORD', ''),  # Not used with sqlite3.
-		'HOST':         os.getenv('DJANGO_DATABASE_HOST', ''),  # Set to empty string for localhost. Not used with sqlite3.
-		'PORT':         os.getenv('DJANGO_DATABASE_PORT', ''),  # Set to empty string for default. Not used with sqlite3.
+		'HOST':         os.getenv('DJANGO_DATABASE_HOST', ''),
+		# Set to empty string for localhost. Not used with sqlite3.
+		'PORT':         os.getenv('DJANGO_DATABASE_PORT', ''),
+		# Set to empty string for default. Not used with sqlite3.
 		'BACKUP_COUNT': 5,
 	}
 }
@@ -301,56 +303,67 @@ if os.getenv('TEXTA_SERVER_TYPE') == 'docker':
 if not os.path.exists(DATASET_IMPORTER['directory']):
 	os.makedirs(DATASET_IMPORTER['directory'])
 
+
 ############################### Logging ##############################
 
 # TEXTA stores errors and query info in two different log files.
-#
+USING_LOGSTASH = os.getenv('USING_LOGSTASH', False)
+LOGSTASH_HOST = os.getenv('LOGSTASH_HOST', 'localhost')
+LOGSTASH_PORT = int(os.getenv('LOGSTASH_PORT', 5000))
 
 # Path to the log directory. Default is /log
-# 
 LOG_PATH = os.path.join(BASE_DIR, 'log')
 
 # Separator used to join different logged features.
-#
 logging_separator = ' - '
 
 # Paths to info and error log files.
-# 
 info_log_file_name = os.path.join(LOG_PATH, "info.log")
 error_log_file_name = os.path.join(LOG_PATH, "error.log")
 
 # Logger IDs, used in apps. Do not change.
-#
 INFO_LOGGER = 'info_logger'
 ERROR_LOGGER = 'error_logger'
 
 # Most of the following logging settings can be changed.
 # Especially format, logging levels, logging class and filenames.
-#
 LOGGING = {
 	'version':                  1,
 	'disable_existing_loggers': False,
 	'filters':                  {
-		'require_debug_false': {
+		'require_debug_false':      {
 			'()': 'django.utils.log.RequireDebugFalse'
 		},
-		'require_debug_true':  {
+		'require_debug_true':       {
 			'()': 'django.utils.log.RequireDebugTrue'
-		}
+		},
+
+		'require_logstash_instance': {
+			'()': 'texta.logger_handler.RequireLogstashInstance'
+		},
+
 	},
+
 	'formatters':               {
 		'detailed':       {
-			'format': logging_separator.join(
-					['%(levelname)s', '%(module)s', 'function: %(funcName)s', 'line: %(lineno)s', '%(name)s', 'PID: %(process)d', 'TID: %(thread)d', '%(message)s', '%(asctime)-15s'])
+			'format': logging_separator.join(['%(levelname)s', '%(module)s', 'function: %(funcName)s', 'line: %(lineno)s', '%(name)s', 'PID: %(process)d', 'TID: %(thread)d', '%(message)s', '%(asctime)-15s'])
 		},
 		'normal':         {
 			'format': logging_separator.join(['%(levelname)s', '%(module)s', '%(message)s', '%(asctime)s'])
 		},
 		'detailed_error': {
-			'format': '\n' + logging_separator.join(
-					['%(levelname)s', '%(module)s', '%(name)s', 'PID: %(process)d', 'TID: %(thread)d', '%(funcName)s', '%(message)s', '%(asctime)-15s'])
-		}
+			'format': '\n' + logging_separator.join( ['%(levelname)s', '%(module)s', '%(name)s', 'PID: %(process)d', 'TID: %(thread)d', '%(funcName)s', '%(message)s', '%(asctime)-15s'])
+		},
+		'logstash':       {
+			'()':           'logstash_async.formatter.DjangoLogstashFormatter',
+			'message_type': 'python-logstash',
+			'fqdn':         False,
+			'extra_prefix': '',
+			'ensure_ascii': False
+
+		},
 	},
+
 	'handlers':                 {
 		'info_file':             {
 			'level':     'INFO',
@@ -388,30 +401,41 @@ LOGGING = {
 			'formatter': 'detailed',
 		},
 
+		'logstash':              {
+			'level':         'INFO',
+			'class':         'logstash_async.handler.AsynchronousLogstashHandler',
+			'formatter':     'logstash',
+			'transport':     'logstash_async.transport.TcpTransport',
+			'host':          LOGSTASH_HOST,
+			'port':          LOGSTASH_PORT,
+			'database_path': None,
+			'filters': ['require_logstash_instance']
+		},
+
 	},
-	'loggers': {
+	'loggers':                  {
 		INFO_LOGGER:     {
 			'level':    'INFO',
-			'handlers': ['info_file']
+			'handlers': ['info_file', 'logstash']
 		},
 		ERROR_LOGGER:    {
 			'level':    'ERROR',
-			'handlers': ['error_file']
+			'handlers': ['error_file', 'logstash']
 		},
 
 		'django':        {
-			'handlers':  ['error_file'],
+			'handlers':  ['error_file', 'logstash'],
 			'level':     'ERROR',
 			'propagate': False
 		},
 
 		'django.server': {
-			'handlers':  ['console_with_debug', 'console_without_debug'],
+			'handlers':  ['console_with_debug', 'console_without_debug', 'logstash'],
 			'level':     'INFO',
 			'propagate': False,
 		},
-	}
 
+	}
 }
 
 # TEXTA Facts structure

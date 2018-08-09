@@ -16,3 +16,4 @@ beautifulsoup4
 elasticsearch
 psycopg2-binary
 dateparser
+python-logstash-async
