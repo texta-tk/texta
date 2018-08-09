@@ -128,7 +128,9 @@ def translate_parameters(params):
     
     datasets = Datasets().datasets
     
-    print(datasets)
+    preprocessors = collect_map_entries(preprocessor_map)
+    enabled_taggers = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True and preprocessor['key'] is 'text_tagger'][0]['enabled_taggers']
+    enabled_taggers = {enabled_tagger.pk:enabled_tagger.description for enabled_tagger in enabled_taggers}
     
     extractor_options = {a['index']:a['label'] for a in pipe_builder.get_extractor_options()}
     reductor_options = {a['index']:a['label'] for a in pipe_builder.get_reductor_options()}
@@ -140,7 +142,8 @@ def translate_parameters(params):
                     'reductor_opt': {'type': 'dict', 'pattern': reductor_options},
                     'normalizer_opt': {'type': 'dict', 'pattern': normalizer_options},
                     'classifier_opt': {'type': 'dict', 'pattern': classifier_options},
-                    'dataset': {'type': 'dict', 'pattern': datasets}
+                    'dataset': {'type': 'dict', 'pattern': datasets},
+                    'text_tagger_taggers' : {'type': 'list', 'pattern': enabled_taggers}
     }
 
     params = json.loads(params)
@@ -160,6 +163,10 @@ def translate_param(translation, value):
             return translation['pattern'][int(value)]
         except KeyError:
             return '{0}: Dataset missing'.format(value)
+    elif translation['type'] == 'list':
+        print(value)
+        print(translation['pattern'])
+        return [translation['pattern'][int(list_item)] for list_item in value if int(list_item) in translation['pattern']]
 
 
 @login_required
