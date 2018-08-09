@@ -124,15 +124,42 @@ def index(request):
 
 
 def translate_parameters(params):
-    translations = {'search': '<a href="'+URL_PREFIX+'/searcher?search={0}" target="_blank">{0}</a>'}
+    pipe_builder = get_pipeline_builder()
+    
+    datasets = Datasets().datasets
+    
+    print(datasets)
+    
+    extractor_options = {a['index']:a['label'] for a in pipe_builder.get_extractor_options()}
+    reductor_options = {a['index']:a['label'] for a in pipe_builder.get_reductor_options()}
+    normalizer_options = {a['index']:a['label'] for a in pipe_builder.get_normalizer_options()}
+    classifier_options = {a['index']:a['label'] for a in pipe_builder.get_classifier_options()}
+
+    translations = {'search': {'type': 'url', 'pattern': '<a href="'+URL_PREFIX+'/searcher?search={0}" target="_blank">{0}</a>'},
+                    'extractor_opt': {'type': 'dict', 'pattern': extractor_options},
+                    'reductor_opt': {'type': 'dict', 'pattern': reductor_options},
+                    'normalizer_opt': {'type': 'dict', 'pattern': normalizer_options},
+                    'classifier_opt': {'type': 'dict', 'pattern': classifier_options},
+                    'dataset': {'type': 'dict', 'pattern': datasets}
+    }
 
     params = json.loads(params)
     
     for k,v in params.items():
         if k in translations:
-            params[k] = translations[k].format(v)
+            params[k] = translate_param(translations[k], v)
     
     return params
+
+
+def translate_param(translation, value):
+    if translation['type'] == 'url':
+        return translation['pattern'].format(value)
+    elif translation['type'] == 'dict':
+        try:
+            return translation['pattern'][int(value)]
+        except KeyError:
+            return '{0}: Dataset missing'.format(value)
 
 
 @login_required
