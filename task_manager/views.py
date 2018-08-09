@@ -164,8 +164,6 @@ def translate_param(translation, value):
         except KeyError:
             return '{0}: Dataset missing'.format(value)
     elif translation['type'] == 'list':
-        print(value)
-        print(translation['pattern'])
         return [translation['pattern'][int(list_item)] for list_item in value if int(list_item) in translation['pattern']]
 
 
