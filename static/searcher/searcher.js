@@ -9,6 +9,12 @@ var removed_facts = [];
 $(document).ready(function() {
     get_searches();
 
+    var search_id = getUrlParameter('search');
+    if (search_id != undefined){
+        render_saved_search(search_id);
+        query();
+    }
+
 	change_agg_field(1);
 
 	$('#agg_daterange_from_1').datepicker({forormat: "yyyy-mm-dd", startView: 2, autoclose: true});
@@ -109,6 +115,22 @@ $(document).mousemove(function(e) {
 function in_array(value, array) {
   return array.indexOf(value) > -1;
 }
+
+
+var getUrlParameter = function getUrlParameter(sParam) {
+    var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+        sURLVariables = sPageURL.split('&'),
+        sParameterName,
+        i;
+
+    for (i = 0; i < sURLVariables.length; i++) {
+        sParameterName = sURLVariables[i].split('=');
+
+        if (sParameterName[0] === sParam) {
+            return sParameterName[1] === undefined ? true : sParameterName[1];
+        }
+    }
+};
 
 
 function get_query(){

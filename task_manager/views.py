@@ -95,7 +95,7 @@ def index(request):
 	for task in Task.objects.all().order_by('-pk'):
 		task_dict = task.__dict__
 		task_dict['user'] = task.user
-		task_dict['parameters'] = json.loads(task_dict['parameters'])
+		task_dict['parameters'] = translate_parameters(task_dict['parameters'])
 
 		if task_dict['result']:
 			task_dict['result'] = json.loads(task_dict['result'])
@@ -121,6 +121,18 @@ def index(request):
 
 	template = loader.get_template('task_manager.html')
 	return HttpResponse(template.render(context, request))
+
+
+def translate_parameters(params):
+    translations = {'search': '<a href="'+URL_PREFIX+'/searcher?search={0}" target="_blank">{0}</a>'}
+
+    params = json.loads(params)
+    
+    for k,v in params.items():
+        if k in translations:
+            params[k] = translations[k].format(v)
+    
+    return params
 
 
 @login_required
