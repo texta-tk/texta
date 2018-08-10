@@ -85,7 +85,7 @@ class Preprocessor:
 			show_progress.update(l)
 
 		task = Task.objects.get(pk=self.task_id)
-		task.status = 'completed'
+		task.status = 'Completed'
 		task.time_completed = datetime.now()
 		task.result = json.dumps({'documents_processed': show_progress.n_total, 'preprocessor_key': self.params['preprocessor_key']})
 		task.save()

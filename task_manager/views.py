@@ -72,7 +72,7 @@ def collect_map_entries(map_):
 	entries = []
 	for key, value in map_.items():
 		if key == 'text_tagger':
-			value['enabled_taggers'] = Task.objects.filter(task_type='train_tagger').filter(status='completed')
+			value['enabled_taggers'] = Task.objects.filter(task_type='train_tagger').filter(status='Completed')
 		value['key'] = key
 		entries.append(value)
 
@@ -83,7 +83,7 @@ def collect_map_entries(map_):
 def index(request):
 	ds = Datasets().activate_dataset(request.session)
 	datasets = Datasets().get_allowed_datasets(request.user)
-	language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
+	language_models = Task.objects.filter(task_type='train_model').filter(status='Completed').order_by('-pk')
 
 	es_m = ds.build_manager(ES_Manager)
 	fields = get_fields(es_m)
@@ -259,7 +259,7 @@ def create_task(task_type: str, description: str, parameters: dict, user: User) 
 	new_task = Task(description=description,
 					task_type=task_type,
 					parameters=json.dumps(parameters),
-					status='running',
+					status='Running',
 					time_started=datetime.now(),
 					time_completed=None,
 					result='',

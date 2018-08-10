@@ -380,26 +380,18 @@ LOGGING = {
 			'filename':  error_log_file_name,
 			'encoding':  'utf8',
 			'mode':      'a',
-			'filters':   ['require_debug_false'],
 		},
 
 		'null':                  {
 			"class": 'logging.NullHandler',
 		},
 
-		'console_with_debug':    {
+		'console':    {
 			'level':     'INFO',
-			'filters':   ['require_debug_true'],
 			'class':     'logging.StreamHandler',
 			'formatter': 'detailed',
 		},
 
-		'console_without_debug': {
-			'level':     'INFO',
-			'filters':   ['require_debug_false'],
-			'class':     'logging.StreamHandler',
-			'formatter': 'detailed',
-		},
 
 		'logstash':              {
 			'level':         'INFO',
@@ -420,20 +412,33 @@ LOGGING = {
 		},
 		ERROR_LOGGER:    {
 			'level':    'ERROR',
-			'handlers': ['error_file', 'logstash']
+			'handlers': ['console', 'error_file', 'logstash']
 		},
 
+		# Big parent of all the Django loggers, MOST (not all) of this will get overwritten.
+		# https://docs.djangoproject.com/en/2.1/topics/logging/#topic-logging-parts-loggers
 		'django':        {
-			'handlers':  ['error_file', 'logstash'],
+			'handlers':  ['console', 'error_file', 'logstash'],
 			'level':     'ERROR',
 			'propagate': False
 		},
 
-		'django.server': {
-			'handlers':  ['console_with_debug', 'console_without_debug', 'logstash'],
-			'level':     'INFO',
+		# Log messages related to the handling of requests.
+		# 5XX responses are raised as ERROR messages; 4XX responses are raised as WARNING messages
+		'django.request': {
+			'handlers':  ['error_file', 'error_file', 'logstash'],
+			'level':     'ERROR',
 			'propagate': False,
 		},
+
+		# Log messages related to the handling of requests received by the server invoked by the runserver command.
+		# HTTP 5XX responses are logged as ERROR messages, 4XX responses are logged as WARNING messages,
+		# everything else is logged as INFO.
+		'django.server': {
+			'handlers':  ['console', 'logstash'],
+			'level':     'INFO',
+			'propagate': False,
+		}
 
 	}
 }

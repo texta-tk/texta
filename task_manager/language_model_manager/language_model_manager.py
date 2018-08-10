@@ -28,6 +28,7 @@ class LanguageModel:
 	def train(self, task_id):
 		self.id = task_id
 		Process(target=self._training_worker).start()
+		# self._training_worker()
 		return True
 
 	def _training_worker(self):
@@ -59,7 +60,7 @@ class LanguageModel:
 			logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_completed', 'data': {'task_id': self.id}}))
 			r = Task.objects.get(pk=self.id)
 			r.time_completed = datetime.now()
-			r.status = 'completed'
+			r.status = 'Completed'
 			r.result = json.dumps({"model_type": "word2vec", "lexicon_size": len(self.model.wv.vocab)})
 			r.save()
 
@@ -116,7 +117,7 @@ class ShowProgress(object):
 
 	def update_view(self, percentage):
 		r = Task.objects.get(pk=self.task_pk)
-		r.status = 'running [{0:3.0f} %]'.format(percentage)
+		r.status = 'Running [{0:3.0f} %]'.format(percentage)
 		r.save()
 
 

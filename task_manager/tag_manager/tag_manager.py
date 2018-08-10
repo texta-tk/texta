@@ -196,7 +196,7 @@ class TaggingModel:
 			self.save()
 
 			train_summary['model_type'] = 'sklearn'
-			model_status = 'completed'
+			model_status = 'Completed'
 			show_progress.update(3)
 
 			# Declare the job as done
@@ -381,7 +381,7 @@ class ShowSteps(object):
 #         es_mapping = dataset.mapping
 #         field_path = model.fields
 #
-#         if model.run_status == 'completed':
+#         if model.run_status == 'Completed':
 #             model_name = 'classifier_{0}.pkl'.format(model.pk)
 #             output_model_file = os.path.join(MODELS_DIR, model_name)
 #             clf_model = load_model(output_model_file)
@@ -389,7 +389,7 @@ class ShowSteps(object):
 #             es_classification = EsDataClassification(es_index, es_mapping, field_path, query)
 #             _data = es_classification.apply_classifiers([clf_model], [model.tag_label])
 #             # Update status
-#             job_queue.run_status = 'completed'
+#             job_queue.run_status = 'Completed'
 #             job_queue.total_processed = _data['total_processed']
 #             job_queue.total_positive = _data['total_positive']
 #             job_queue.total_negative = _data['total_negative']

@@ -24,6 +24,6 @@ class ShowProgress(object):
 
     def update_view(self, percentage):
         r = Task.objects.get(pk=self.task_pk)
-        r.status = 'running [{0:3.0f} %]'.format(percentage)
+        r.status = 'Running [{0:3.0f} %]'.format(percentage)
         r.save()
 

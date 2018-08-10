@@ -2,13 +2,6 @@ version: "3"
 
 services:
 
-#  db:
-#    image: postgres:10.1
-#    restart: always
-#    volumes:
-#      - postgres_data:/var/lib/postgresql/data/
-
-
   elastic:
     restart: always
     container_name: texta-elastic
@@ -53,7 +46,6 @@ services:
       context: .
       dockerfile: docker/texta/Dockerfile
     depends_on:
-#     - db
       - elastic
     volumes:
       - .:/texta/
