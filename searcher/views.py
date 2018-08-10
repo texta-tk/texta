@@ -2,6 +2,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 import calendar
+import logging
 
 import platform
 if platform.system() == 'Windows':
@@ -40,7 +41,7 @@ from dataset_importer.document_preprocessor.preprocessor import DocumentPreproce
 from task_manager.views import task_params
 from task_manager.models import Task
 
-from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links
+from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER
 
 from searcher.view_functions.export_pages import export_pages
 from searcher.view_functions.tranlist_highlighting import transliterate_highlight_spans, highlight_transliterately
@@ -410,12 +411,6 @@ def highlight_cluster_keywords(documents, keywords, params):
         elif not 'show_unhighlighted' in params.keys():
             out.append(document)
 
-        #'short_version_n_char': ['5']
-        # if 'show_short_version_cluster' in params.keys():
-        #     #document_1 = document
-        #     document = additional_option_cut_text(document, params['short_version_n_char_cluster'])
-        #     #print(document == document_1)
-        # out.append(document)
     return out
 
 
@@ -449,17 +444,6 @@ def search(es_params, request):
                 highlight_config['fields'][f] = {"number_of_fragments": 0}
         es_m.set_query_parameter('highlight', highlight_config)
         response = es_m.search()
-
-        """
-        # Get the ids of all documents to be presented in the results page
-        doc_hit_ids = []
-        for hit in response['hits']['hits']:
-            hit_id = str(hit['_id'])
-            doc_hit_ids.append(hit_id)
-        # Use the doc_ids to restrict the facts search (fast!)
-        facts_map = es_m.get_facts_map(doc_ids=doc_hit_ids)
-        facts_highlight = facts_map['include']
-        """
 
         out['iTotalRecords'] = response['hits']['total']
         out['iTotalDisplayRecords'] = response['hits']['total'] # number of docs
@@ -504,11 +488,7 @@ def search(es_params, request):
                     else:
                         content = content[p] if p in content else ''
 
-                # To strip fields with whitespace in front
-                try:
-                    old_content = content.strip()
-                except:
-                    old_content = content
+                old_content = content
 
                 # Substitute feature value with value highlighted by Elasticsearch
                 if col in highlight_config['fields'] and 'highlight' in hit:
@@ -570,9 +550,12 @@ def search(es_params, request):
         return out
 
     except Exception as e:
+        #logging.getLogger(ERROR_LOGGER).error(json.dumps({'process': 'SEARCH DOCUMENTS', 'event': 'documents_queried_failed'}), exc_info=True)
+
+        #logger.e
         print('-- Exception[{0}] {1}'.format(__name__, e))
-        logger.set_context('user_name', request.user.username)
-        logger.exception('documents_queried_failed')
+        #logger.set_context('user_name', request.user.username)
+        #logger.error('documents_queried_failed')
 
         out = {'column_names': [], 'aaData': [], 'iTotalRecords': 0, 'iTotalDisplayRecords': 0, 'lag': 0}
         return out
@@ -642,64 +625,6 @@ def remove_by_query(request):
 def remove_worker(es_m, dummy):
     response = es_m.delete()
     # TODO: add logging
-
-
-
-
-
-
-
-@login_required
-def apply_preprocessor(request):
-    es_params = request.POST
-    field_to_process = es_params['preprocessor_field']
-    preprocessor_key = es_params['preprocessor_key']
-
-    ds = Datasets().activate_dataset(request.session)
-    es_m = ds.build_manager(ES_Manager)
-    es_m.build(es_params)
-    
-    preprocessor_worker(es_m, preprocessor_key, field_to_process)
-    return HttpResponse()
-
-
-def preprocessor_worker(es_m, preprocessor_key, field_to_process):
-    # TODO: add logging
-    field_to_process = json.loads(field_to_process)
-
-    # Add new field to mapping definition
-    new_field_name = '{0}_{1}'.format(field_to_process['path'], preprocessor_key)
-    if 'field_properties' in preprocessor_map[preprocessor_key]:
-        new_field_properties = preprocessor_map[preprocessor_key]['field_properties']
-        es_m.update_mapping_structure(new_field_name, new_field_properties)
-    
-    response = es_m.scroll(field_scroll=field_to_process['path'], size=1000)
-    scroll_id = response['_scroll_id']
-    l = response['hits']['total']  
-
-    while l > 0:
-        response = es_m.scroll(scroll_id=scroll_id)
-        l = len(response['hits']['hits'])
-        scroll_id = response['_scroll_id']
-
-        documents, parameter_dict, ids = prepare_preprocessor_data(field_to_process, preprocessor_key, response)
-        processed_documents = list(DocumentPreprocessor.process(documents=documents, **parameter_dict))
-    
-        es_m.update_documents(processed_documents,ids)
-    
-    return True
-
-def prepare_preprocessor_data(field_to_process, preprocessor_key, response):
-    documents = [{field_to_process['path']: hit['_source'][field_to_process['path']]} for hit in response['hits']['hits']]
-    ids = [hit['_id'] for hit in response['hits']['hits']]
-    preprocessor_input_features = '{0}_preprocessor_input_features'.format(preprocessor_key)
-    parameter_dict = {'preprocessors': [preprocessor_key], preprocessor_input_features: json.dumps([field_to_process['path']])}
-    return documents, parameter_dict, ids
-
-
-
-
-
 
 
 @login_required
