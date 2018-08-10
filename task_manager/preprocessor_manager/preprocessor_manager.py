@@ -11,6 +11,8 @@ from task_manager.progress_manager import ShowProgress
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 
+from texta.settings import FACT_PROPERTIES
+
 if platform.system() == 'Windows':
 	from threading import Thread as Process
 else:
@@ -67,6 +69,11 @@ class Preprocessor:
 		show_progress.set_total(total_docs)
 
 		documents, parameter_dict, ids = self._prepare_preprocessor_data(field_paths, response)
+
+        # Add facts field if necessary
+		if documents:
+			if 'texta_facts' not in documents[0]:
+				self.es_m.update_mapping_structure('texta_facts', FACT_PROPERTIES)
 
 		processed_documents = list(DocumentPreprocessor.process(documents=documents, **parameter_dict))
 		self.es_m.update_documents(processed_documents, ids)
