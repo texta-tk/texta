@@ -1,4 +1,5 @@
 from lexicon_miner.models import Lexicon, Word
+from conceptualiser.models import Term, Concept, TermConcept
 
 from collections import defaultdict
 import re
