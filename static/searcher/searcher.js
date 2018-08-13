@@ -728,8 +728,6 @@ function factGraph() {
 
     var formElement = document.getElementById("filters");
     var request = new XMLHttpRequest();
-    
-    formElement.append('fact_graph_size', $('#nFactGraphSize').attr('value'));
 
     request.onreadystatechange=function() {
         if (request.readyState==4 && request.status==200) {
