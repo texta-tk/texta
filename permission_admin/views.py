@@ -114,7 +114,7 @@ def index(request):
     template = loader.get_template('permission_admin.html')
 
     allowed_datasets = Datasets().get_allowed_datasets(request.user)
-    language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
+    language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
 
     return HttpResponse(template.render({'users':users,'datasets':datasets,'indices':indices,'STATIC_URL':STATIC_URL,'URL_PREFIX':URL_PREFIX, 'allowed_datasets': allowed_datasets, 'language_models': language_models},request))
 

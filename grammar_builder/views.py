@@ -49,7 +49,7 @@ def index(request):
                 Search.objects.filter(author=request.user, dataset__index=dataset, dataset__mapping=mapping)]
 
     datasets = Datasets().get_allowed_datasets(request.user)
-    language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
+    language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
 
     template = loader.get_template('grammar_builder.html')
     return HttpResponse(template.render({'STATIC_URL':STATIC_URL,
