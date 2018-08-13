@@ -133,9 +133,10 @@ class ClusterManager:
         docs_for_cluster = {}
         # self.clusters = 10 clusters,containing the index of the document_vectors document in that cluster, ex len(self.clusters[6]) == 508
         for cluster in self.clusters:
-            docs_for_cluster[cluster] = np.array([self.document_vectors[i] for i in self.clusters[cluster]])
             # To flatten/combine all documents into one
-            out[cluster] = np.array(self.feature_names)[np.argsort(docs_for_cluster[cluster])[::-1]]
+            docs_for_cluster[cluster] = np.array([self.document_vectors[i] for i in self.clusters[cluster]])
+            # Cluster vectors to feature words
+            out[cluster] = np.array(self.feature_names)[np.flip(np.argsort(docs_for_cluster[cluster]), -1)]
             cluster_shape = out[cluster].shape
             out[cluster] = out[cluster].reshape(cluster_shape[0] * cluster_shape[1])[:keywords_per_cluster].tolist()
             # To append seperate document values
