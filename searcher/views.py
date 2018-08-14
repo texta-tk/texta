@@ -2,6 +2,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 import calendar
+from collections import Counter
 
 import platform
 if platform.system() == 'Windows':
@@ -162,7 +163,8 @@ def save(request):
     try:
         q = combined_query
         desc = request.POST['search_description']
-        search = Search(author=request.user,description=desc,dataset=Dataset.objects.get(pk=int(request.session['dataset'])),query=json.dumps(q))
+        s_content = ' '.join([request.POST[x] for x in request.POST.keys() if 'match_txt' in x])
+        search = Search(author=request.user,search_content=s_content,description=desc,dataset=Dataset.objects.get(pk=int(request.session['dataset'])),query=json.dumps(q))
         search.save()
         logger.set_context('user_name', request.user.username)
         logger.set_context('search_id', search.id)
@@ -470,10 +472,27 @@ def search(es_params, request):
                 #     make content empty (to allow dynamic mapping without breaking alignment)
                 content = hit['_source']
                 for p in filed_path:
+                    #if col == u'texta_facts':
+                    #    content = '\n'.join([f"{x['fact']} - {x['str_val']}" for x in sorted(content[p], key=lambda k: k['fact'])])
+                    #else:
+                    #    content = content[p] if p in content else ''
+
                     if col == u'texta_facts':
-                        content = str(content[p]) if p in content else ''
+                        new_content = []
+                        facts = ['{ "'+x["fact"]+'": "'+x["str_val"]+'"}' for x in sorted(content[p], key=lambda k: k['fact'])]
+                        fact_counts = Counter(facts)
+
+                        facts = list(set(facts))
+                        facts_dict = [json.loads(x) for x in facts]
+                        for i, d in enumerate(facts_dict):
+                            for k in d:
+                                if k not in new_content:
+                                    new_content.append(k)
+                                new_content.append(f'    {d[k]}: {fact_counts[facts[i]]}')
+                        content = '\n'.join(new_content)
                     else:
                         content = content[p] if p in content else ''
+
 
                 # To strip fields with whitespace in front
                 try:
@@ -753,6 +772,10 @@ def get_search_query(request):
 
     query = json.loads(search.query)
     query_constraints = extract_constraints(query)
+	# For original search content such as unpacked lexicons/concepts
+    search_content = search.search_content.split(' ')
+    for i in range(len([x for x in query_constraints if x['constraint_type'] == 'string'])):
+        query_constraints[i]['content'] = [search_content[i]]
 
     return HttpResponse(json.dumps(query_constraints))
 
@@ -774,7 +797,7 @@ def extract_constraints(query):
             if 'range' in raw_constraint:
                 range_constraints.append((raw_constraint_idx, raw_constraint))
             elif 'bool' in raw_constraint:
-                if raw_constraint['bool'].values()[0][0]['nested']['inner_hits']['name'].startswith('fact_val'):   # fact val query
+                if list(raw_constraint['bool'].values())[0][0]['nested']['inner_hits']['name'].startswith('fact_val'):   # fact val query
                     constraints.append(_extract_fact_val_constraint(raw_constraint))
                 else:   # fact query
                     constraints.append(_extract_fact_constraint(raw_constraint))
@@ -857,8 +880,8 @@ def _extract_fact_constraint(raw_constraint):
     field = None
 
     for entry in raw_constraint['bool'][operator]:
-        field = entry['nested']['query']['bool']['must'][0]['match'].values()[0]
-        content.append(entry['nested']['query']['bool']['must'][1]['match'].values()[0])
+        field = list(entry['nested']['query']['bool']['must'][0]['term'].values())[0]
+        content.append(list(entry['nested']['query']['bool']['must'][1]['term'].values())[0])
 
     return {
         'constraint_type': 'facts',

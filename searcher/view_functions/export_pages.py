@@ -1,8 +1,8 @@
 import json
 import csv
+from collections import Counter
 from django.http import HttpResponse, StreamingHttpResponse
 from django.contrib.auth.decorators import login_required
-
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 
@@ -73,7 +73,22 @@ def get_rows(es_params, request):
                         parent_source = ""
                         break
 
-                content = parent_source
+                if feature_name == u'texta_facts':
+                    content = []
+                    facts = ['{ "'+x["fact"]+'": "'+x["str_val"]+'"}' for x in sorted(parent_source, key=lambda k: k['fact'])]
+                    fact_counts = Counter(facts)
+
+                    facts = list(set(facts))
+                    facts_dict = [json.loads(x) for x in facts]
+                    for i, d in enumerate(facts_dict):
+                        for k in d:
+                            if k not in content:
+                                content.append(k)
+                            content.append(f'    {d[k]}: {fact_counts[facts[i]]}')
+                    content = '\n'.join(content)
+                else:
+                    content = parent_source
+
                 row.append(content)
             rows.append(row)
 
@@ -144,7 +159,22 @@ def get_all_rows(es_params, request):
                         parent_source = ""
                         break
 
-                content = parent_source
+                if feature_name == u'texta_facts':
+                    content = []
+                    facts = ['{ "'+x["fact"]+'": "'+x["str_val"]+'"}' for x in sorted(parent_source, key=lambda k: k['fact'])]
+                    fact_counts = Counter(facts)
+
+                    facts = list(set(facts))
+                    facts_dict = [json.loads(x) for x in facts]
+                    for i, d in enumerate(facts_dict):
+                        for k in d:
+                            if k not in content:
+                                content.append(k)
+                            content.append(f'    {d[k]}: {fact_counts[facts[i]]}')
+                    content = '\n'.join(content)
+                else:
+                    content = parent_source
+
                 row.append(content)
             writer.writerow([element if isinstance(element,str) else element for element in row])
 
