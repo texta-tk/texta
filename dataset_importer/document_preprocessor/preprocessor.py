@@ -5,6 +5,7 @@ PREPROCESSOR_INSTANCES = {
     for preprocessor_code, preprocessor in preprocessor_map.items() if preprocessor['is_enabled']
 }
 
+
 class DocumentPreprocessor(object):
     """A static document preprocessor adapter that dispatches the preprocessing request to appropriate preprocessor implementations.
     """

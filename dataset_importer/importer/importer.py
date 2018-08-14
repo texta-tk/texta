@@ -8,7 +8,10 @@ from datetime import datetime
 import re
 import shutil
 import requests
+import pathlib
 import json
+import logging
+from django.conf import settings
 from dataset_importer.document_storer.storer import DocumentStorer
 from dataset_importer.document_reader.reader import DocumentReader, entity_reader_map, collection_reader_map, database_reader_map
 from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
@@ -65,8 +68,6 @@ class DatasetImporter(object):
         parameters = self._preprocess_import(parameters, request.user, request.FILES)
 
         process = Process(target=_import_dataset, args=(parameters, self._n_processes, self._process_batch_size)).start()
-        #process = None
-        #_import_dataset(parameters, n_processes=self._n_processes, process_batch_size=self._process_batch_size)
 
         self._active_import_jobs[parameters['import_id']] = {
             'process': process,
@@ -81,8 +82,8 @@ class DatasetImporter(object):
         :type parameters: dict
         """
         parameters = self._preprocess_reimport(parameters=parameters)
-        # Process(target=_import_dataset, args=(parameters, self._n_processes, self._process_batch_size)).start()
-        _import_dataset(parameters, n_processes=self._n_processes, process_batch_size=self._process_batch_size)
+        Process(target=_import_dataset, args=(parameters, self._n_processes, self._process_batch_size)).start()
+        # _import_dataset(parameters, n_processes=self._n_processes, process_batch_size=self._process_batch_size)
 
     def cancel_import_job(self, import_id):
         """Cancels an active import job.
@@ -105,7 +106,8 @@ class DatasetImporter(object):
             dataset_import.finished = True
             dataset_import.status = 'Cancelled'
             dataset_import.save()
-        except:
+        except Exception:
+            logging.getLogger(settings.ERROR_LOGGER).exception("Could not save to Django DB.")
             pass
 
     def _preprocess_import(self, parameters, request_user, files_dict):
@@ -125,7 +127,7 @@ class DatasetImporter(object):
         parameters['remove_existing_dataset'] = True if parameters.get('remove_existing_dataset', 'false') == 'true' else False
         parameters['storer'] = 'elastic'
 
-        self._separate_archive_and_reader_formats(parameters)
+        parameters['archives'], parameters['formats'] = self._separate_archive_and_reader_formats(parameters)
 
         parameters['directory'] = self._prepare_import_directory(
             root_directory=self._root_directory,
@@ -150,15 +152,16 @@ class DatasetImporter(object):
         :param parameters: dataset import's parameters.
         :type parameters: dict
         """
-        parameters['archives'] = []
+        archives = []
         reader_formats = []
-        for format in parameters['formats']:
-            if format in ARCHIVE_FORMATS:
-                parameters['archives'].append(format)
-            else:
-                reader_formats.append(format)
 
-        parameters['formats'] = reader_formats
+        for file_type in parameters['formats']:
+            if file_type in ARCHIVE_FORMATS:
+                archives.append(file_type)
+            else:
+                reader_formats.append(file_type)
+
+        return archives, reader_formats
 
     def _preprocess_reimport(self, parameters):
         """Reimport's alternative to _preprocess_import. Most of the necessary alterations have been done by _preprocess_import
@@ -299,11 +302,7 @@ def _import_dataset(parameter_dict, n_processes, process_batch_size):
 
     reader = DocumentReader()
     _set_total_documents(parameter_dict=parameter_dict, reader=reader)
-    _run_processing_jobs(parameter_dict=parameter_dict, reader=reader, n_processes=n_processes,
-                         process_batch_size=process_batch_size)
-
-    # if parameter_dict['is_local'] is False:
-    #     shutil.rmtree(parameter_dict['directory'])
+    _run_processing_jobs(parameter_dict=parameter_dict, reader=reader, n_processes=n_processes, process_batch_size=process_batch_size)
 
 
 def _extract_archives(parameter_dict):
@@ -333,14 +332,6 @@ def _extract_archives(parameter_dict):
             root_directory=parameter_dict['directory'],
             archive_formats=archive_formats
         )
-    #
-    # for format in parameter_dict.get('archives', []):
-    #     if format in ARCHIVE_FORMATS:
-    #         ArchiveExtractor.extract_archive(
-    #             file_path=parameter_dict['file_path'],
-    #             archive_format=format
-    #         )
-    #         break
 
 
 def _init_pool(lock_):
@@ -393,19 +384,28 @@ def _processing_job(documents, parameter_dict):
     for document in documents:
         del document['_texta_id']
 
-    processed_documents = list(DocumentPreprocessor.process(
-        documents=documents, **parameter_dict)
-    )
+        try:
+            processed_documents = list(DocumentPreprocessor.process(documents=documents, **parameter_dict))
 
-    storer = DocumentStorer.get_storer(**parameter_dict)
-    stored_documents_count = storer.store(processed_documents)
-    if processed_documents:
-        with lock:
-            dataset_import = DatasetImport.objects.get(pk=parameter_dict['import_id'])
-            dataset_import.processed_documents += stored_documents_count
-            dataset_import.save()
+            storer = DocumentStorer.get_storer(**parameter_dict)
+            stored_documents_count = storer.store(processed_documents)
+            if processed_documents:
+                with lock:
+                    dataset_import = DatasetImport.objects.get(pk=parameter_dict['import_id'])
+                    dataset_import.processed_documents += stored_documents_count
+                    dataset_import.save()
 
-            index.add(dataset=dataset_name, values=new_ids)
+                    index.add(dataset=dataset_name, values=new_ids)
+
+        except Exception as e:
+            file_path = pathlib.Path(parameter_dict.get('file_path', ''))
+            error_message = "{0} Error:\n{1}".format(file_path.name, str(repr(e)))
+            current_import = DatasetImport.objects.get(id=parameter_dict.get('import_id'))
+
+            # Save the string when it's empty, append to the previous when it has something.
+            current_import.error += error_message
+            current_import.save()
+            pass
 
 
 def _remove_existing_dataset(parameter_dict):
@@ -436,22 +436,20 @@ def _run_processing_jobs(parameter_dict, reader, n_processes, process_batch_size
 
     import_job_lock = Lock()
 
-    process_pool = Pool(processes=n_processes, initializer=_init_pool,
-                        initargs=(import_job_lock,))
-
+    process_pool = Pool(processes=n_processes, initializer=_init_pool, initargs=(import_job_lock,))
     batch = []
 
     for document in reader.read_documents(**parameter_dict):
         batch.append(document)
 
+        # Send documents when they reach their batch size and empty it.
         if len(batch) == process_batch_size:
             process_pool.apply(_processing_job, args=(batch, parameter_dict))
-            # _processing_job(batch, parameter_dict)
             batch = []
 
+    # Send the final documents that did not reach the batch size.
     if batch:
         process_pool.apply(_processing_job, args=(batch, parameter_dict))
-        # _processing_job(batch, parameter_dict)
 
     process_pool.close()
     process_pool.join()

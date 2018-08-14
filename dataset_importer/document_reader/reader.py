@@ -1,4 +1,6 @@
 from .settings import entity_reader_map, collection_reader_map, database_reader_map
+from dataset_importer.models import DatasetImport
+import pathlib
 
 
 class DocumentReader(object):
@@ -14,12 +16,24 @@ class DocumentReader(object):
         :return: dicts
         :rtype: dict generator
         """
+
         reading_parameters = kwargs
 
         for format in reading_parameters['formats']:
             reader = reader_map[format]['class']
-            for features in reader.get_features(**reading_parameters):
-                yield features
+            try:
+                for features in reader.get_features(**reading_parameters):
+                    yield features
+            except Exception as e:
+                file_path = pathlib.Path(kwargs.get('file_path', ''))
+                error_message = "{0} Error:\n{1}".format(file_path.name, str(repr(e)))
+
+                current_import = DatasetImport.objects.get(id=kwargs.get('import_id'))
+
+                # Save the string when it's empty, append to the previous when it has something.
+                current_import.error += error_message
+                current_import.save()
+                pass
 
     @staticmethod
     def count_total_documents(**kwargs):

@@ -70,6 +70,12 @@
                     <td class="detailText">User:</td>
                     <td class="detailText">{{ job.user }}</td>
                 </tr>
+                {% if job.error %}
+                  <tr>
+                    <td class="detailText">Error:</td>
+                    <td class="detailText">{{ job.error|linebreaks}}</td>
+                </tr>
+                {% endif %}
                 <tr>
                     <td class="detailText">Job status:</td>
                     <td class="detailText">{{ job.status }}</td>
