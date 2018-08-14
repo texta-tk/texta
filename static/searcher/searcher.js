@@ -11,7 +11,7 @@ $(document).ready(function() {
 
 	change_agg_field(1);
 
-	$('#agg_daterange_from_1').datepicker({forormat: "yyyy-mm-dd", startView: 2, autoclose: true});
+	$('#agg_daterange_from_1').datepicker({format: "yyyy-mm-dd", startView: 2, autoclose: true});
 	$('#agg_daterange_to_1').datepicker({format: "yyyy-mm-dd", startView: 2, autoclose: true});
 
     $(document.body).on( 'click','a.toggle-visibility', function (e) {
