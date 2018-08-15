@@ -82,3 +82,35 @@ th:first-child {
 .clusterLabel {
   font-weight: bold;
 }
+
+/* Datatables buttons plugin hide columns buttons */
+.dt-button.buttons-columnVisibility {
+  background-color: Transparent;
+  background-repeat:no-repeat;
+  cursor:pointer;
+  overflow: hidden;
+  outline:none;
+  border: none;
+  border-left: solid;
+  border-left-width: 1px;
+  border-color: #333333;
+
+
+  color: red;
+  font-size: 0.76em;
+  font-weight: bold;
+}
+
+.dt-button.buttons-columnVisibility.active {
+  color: #008000;
+}
+
+.dt-button.buttons-columnVisibility.toggleAllButton {
+  border: none;
+  padding-left: 0;
+  color: #300000;
+}
+
+.dt-button.buttons-columnVisibility.toggleAllButton.active {
+  color: #003000;
+}

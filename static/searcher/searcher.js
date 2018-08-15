@@ -601,11 +601,18 @@ function query(){
                   "bServerSide": true,
                   'processing': true,
                   "sAjaxSource": PREFIX+"/table_content",
-                  "sDom": '<l"H"ipr>t<"F"lip>',
+                  "sDom": '<Bl"H"ipr>t<"F"lip>',
                   "sServerMethod":"GET",
                   "fnServerParams":function(aoData){
                       aoData.push({'name':'filterParams','value':JSON.stringify($("#filters").serializeArray())});
                    },
+                   buttons: [
+                       { extend: 'columnVisibility', text: 'SHOW ALL', visibility: true,
+                       attr: {class:'dt-button buttons-columnVisibility toggleAllButton'}},
+                       { extend: 'columnVisibility', text: 'HIDE ALL', visibility: false,
+                       attr: {class:'dt-button buttons-columnVisibility toggleAllButton'}},
+                       'columnsToggle'
+                    ],
                   "oLanguage": { "sProcessing": "Loading..."}
             });
 
