@@ -1257,7 +1257,21 @@ function display_searches(searches) {
 
 		aElement.className = "glyphicon glyphicon-minus-sign pointer";
         aElement.onclick = function(id) {
-            return function() {async_get_query(PREFIX + "/corpus_tool/delete?pk=" + id,remove_search_callback); };
+            return function() {
+                swal({
+                    title: 'Are you sure you want to delete this search?',
+                    text: 'The saved search will be deleted.',
+                    type: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#73AD21',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes'
+                    }).then((result) => {
+                        if(result.value) {
+                            async_get_query(PREFIX + "/corpus_tool/delete?pk=" + id,remove_search_callback);
+                        }
+                    });
+                 };
         }(searches[i].id);
 
 		input_col = document.createElement("td");
