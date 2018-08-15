@@ -84,7 +84,7 @@ def get_rows(es_params, request):
                         for k in d:
                             if k not in content:
                                 content.append(k)
-                            content.append(f'    {d[k]}: {fact_counts[facts[i]]}')
+                            content.append('    {}: {}'.format(d[k], fact_counts[facts[i]]))
                     content = '\n'.join(content)
                 else:
                     content = parent_source
@@ -170,7 +170,7 @@ def get_all_rows(es_params, request):
                         for k in d:
                             if k not in content:
                                 content.append(k)
-                            content.append(f'    {d[k]}: {fact_counts[facts[i]]}')
+                            content.append('    {}: {}'.format(d[k], fact_counts[facts[i]]))
                     content = '\n'.join(content)
                 else:
                     content = parent_source

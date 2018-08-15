@@ -488,7 +488,7 @@ def search(es_params, request):
                             for k in d:
                                 if k not in new_content:
                                     new_content.append(k)
-                                new_content.append(f'    {d[k]}: {fact_counts[facts[i]]}')
+                                new_content.append('    {}: {}'.format(d[k], fact_counts[facts[i]]))
                         content = '\n'.join(new_content)
                     else:
                         content = content[p] if p in content else ''
