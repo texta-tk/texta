@@ -154,12 +154,13 @@ class FactManager:
         types = dict(zip(unique_fact_names,shapes))
 
         nodes = []
-        max_node_size = 0
-        min_node_size = 0
+        counts = []
         for fact in facts:
-            max_node_size = max(max_node_size, facts[fact]['doc_count'])
-            min_node_size = min(max_node_size, facts[fact]['doc_count'])
+            counts.append(facts[fact]['doc_count'])
             nodes.append({"source": facts[fact]['id'], "size": facts[fact]['doc_count'], "score": facts[fact]['doc_count'], "name": facts[fact]['name'], "id": facts[fact]['value'], "type": types[facts[fact]['name']]})
+        max_node_size = max(counts)
+        min_node_size = min(counts)
+        counts = None # Not needed anymore, release memory
 
         links = []
         max_link_size = 0
