@@ -12,6 +12,10 @@ import glob
 import re
 import operator
 
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "texta.settings")
+django.setup()
+from django.contrib.auth.models import User
+
 BACKUP_STRFTIME_FORMAT = '%Y-%m-%d %H-%M-%S'
 BACKUP_DATE_PATTERN = re.compile('pre-(\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2})')
 
@@ -49,6 +53,20 @@ def remove_too_old_database_versions():
         os.remove(removed_file[1])
 
 
+def create_admin():
+    u = User(username='admin')
+    u.set_password('1234')
+    u.is_superuser = True
+    u.is_staff = True
+    
+    try:
+        u.save()
+        return True
+    except:
+        return False
+
+
+
 if database_exists():
     print('Backupping existing database...')
     backup_existing_database()
@@ -75,7 +93,7 @@ if len(sys.argv) > 1:
 print('Detecting database changes...')
 print('')
 sleep(2)
-make_migrations_output = subprocess.check_output(['python3', 'manage.py', 'makemigrations'] + custom_apps)
+make_migrations_output = subprocess.check_output(['python', 'manage.py', 'makemigrations'] + custom_apps)
 print(make_migrations_output)
 print('')
 
@@ -84,5 +102,11 @@ sleep(3)
 print('Making database changes...')
 print('')
 sleep(2)
-migrate_output = subprocess.check_output(['python3', 'manage.py', 'migrate'])
+migrate_output = subprocess.check_output(['python', 'manage.py', 'migrate'])
 print(migrate_output)
+print('')
+
+print('Creating Admin user...')
+print ('')
+sleep(2)
+print(create_admin())
