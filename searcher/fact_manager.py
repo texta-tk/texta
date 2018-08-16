@@ -35,11 +35,11 @@ class FactManager:
             response = self.es_m.scroll(size=bs, field_scroll=self.field)
             scroll_id = response['_scroll_id']
             total_docs = response['hits']['total']
-            docs_left = total_docs # For printing
+            docs_left = total_docs # DEBUG
             print('Starting.. Total docs - ', total_docs) # DEBUG
             batch = 0
             while total_docs > 0:
-                print('Docs left:', docs_left)
+                print('Docs left:', docs_left) # DEBUG
                 data = ''
                 for document in response['hits']['hits']:
                     new_field = [] # The new facts field
@@ -57,9 +57,10 @@ class FactManager:
                     data += json.dumps(document)+'\n'
                 response = self.es_m.scroll(scroll_id=scroll_id, size=bs, field_scroll=self.field)
                 total_docs = len(response['hits']['hits'])
-                docs_left -= bs
+                docs_left -= bs # DEBUG
                 scroll_id = response['_scroll_id']
                 self.es_m.plain_post_bulk(self.es_m.es_url, data)
+            print('DONE') # DEBUG
         except:
             print(traceback.format_exc())
 
