@@ -16,7 +16,7 @@ class FactManager:
         self.es_m = ES_Manager(self.index, self.mapping)
         self.field = 'texta_facts'
 
-    def remove_facts_from_document(self, rm_facts_dict):
+    def remove_facts_from_document(self, rm_facts_dict, bs=7500):
         '''remove a certain fact from all documents given a [str]key and [str]val'''
         try:
             fact_queries = []
@@ -32,31 +32,32 @@ class FactManager:
                 }}}},"_source": [self.field]}}
 
             self.es_m.load_combined_query(query)
-            response = self.es_m.scroll(size=2500, field_scroll=self.field)
+            response = self.es_m.scroll(size=bs, field_scroll=self.field)
             scroll_id = response['_scroll_id']
             total_docs = response['hits']['total']
+            docs_left = total_docs # For printing
             print('Starting.. Total docs - ', total_docs) # DEBUG
+            batch = 0
             while total_docs > 0:
-                print('Docs left:', total_docs)
+                print('Docs left:', docs_left)
                 data = ''
                 for document in response['hits']['hits']:
-                    removed_facts = [] # If you want to use the removed facts for something in the future
                     new_field = [] # The new facts field
                     for fact in document['_source'][self.field]:
                         # If the fact name is in rm_facts_dict keys
                         if fact["fact"] in rm_facts_dict:
                             # If the fact value is in the given key values
-                            if fact['str_val'] in rm_facts_dict[key]:
-                                removed_facts.append(fact)
+                            if fact['str_val'] not in rm_facts_dict[key]:
+                                new_field.append(fact)
                         else:
                             new_field.append(fact)
-
                     # Update dataset
                     data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
                     document = {'doc': {self.field: new_field}}
                     data += json.dumps(document)+'\n'
-                response = self.es_m.scroll(scroll_id=scroll_id, size=2500, field_scroll=self.field)
+                response = self.es_m.scroll(scroll_id=scroll_id, size=bs, field_scroll=self.field)
                 total_docs = len(response['hits']['hits'])
+                docs_left -= bs
                 scroll_id = response['_scroll_id']
                 self.es_m.plain_post_bulk(self.es_m.es_url, data)
         except:
