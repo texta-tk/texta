@@ -17,8 +17,7 @@ class ElasticStorer(object):
 
         if 'elastic_auth' in connection_parameters:
             self._request.auth = connection_parameters['elastic_auth']
-        self._create_index_if_not_exists(self._es_url, self._es_index,
-                                        self._es_mapping,connection_parameters['texta_elastic_not_analyzed'].split('\n'))
+        self._create_index_if_not_exists(self._es_url, self._es_index, self._es_mapping,connection_parameters['texta_elastic_not_analyzed'].split('\n'))
                                          #json.loads(connection_parameters['texta_elastic_not_analyzed']))
 
     def _correct_name(self, name):
@@ -121,18 +120,9 @@ class ElasticStorer(object):
                 data_to_send.append(json.dumps(document, ensure_ascii=False))
 
             data_to_send.append('\n')
-            self._request.put("%s/%s/%s/_bulk" % (self._es_url, self._es_index, self._es_mapping),
-                              data='\n'.join(data_to_send).encode('utf8'), headers=self._headers)
+            self._request.put("%s/%s/%s/_bulk" % (self._es_url, self._es_index, self._es_mapping), data='\n'.join(data_to_send).encode('utf8'), headers=self._headers)
 
         return len(documents)
-
-    # @staticmethod
-    # def exists(**connection_parameters):
-    #     return requests.head("{url}/{index}/{mapping}".format(**{
-    #         'url': connection_parameters['elastic_url'],
-    #         'index': connection_parameters['elastic_index'],
-    #         'mapping': connection_parameters['elastic_mapping']
-    #     })).ok
 
     def remove(self):
         """Removes the Elasticsearch index.

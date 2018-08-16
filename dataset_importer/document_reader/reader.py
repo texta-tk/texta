@@ -1,74 +1,67 @@
 from .settings import entity_reader_map, collection_reader_map, database_reader_map
 from dataset_importer.models import DatasetImport
 import pathlib
+import json
 
 
 class DocumentReader(object):
-    """A static document reader adapter that dispatches the document reading request to appropriate reader implementations.
-    """
+	"""A static document reader adapter that dispatches the document reading request to appropriate reader implementations.
+	"""
 
-    @staticmethod
-    def read_documents(**kwargs):
-        """Applies document reader of appropriate type to each of the provided format. Document readers read files of
-        their respective format and extract a features dictionary from the read document.
+	@staticmethod
+	def read_documents(**kwargs):
+		"""Applies document reader of appropriate type to each of the provided file_type. Document readers read files of
+		their respective file_type and extract a features dictionary from the read document.
 
-        :param kwargs: must contain a list of formats and parameters necessary for independent reader implementations.
-        :return: dicts
-        :rtype: dict generator
-        """
+		:param kwargs: must contain a list of formats and parameters necessary for independent reader implementations.
+		:return: dicts
+		:rtype: dict generator
+		"""
 
-        reading_parameters = kwargs
+		reading_parameters = kwargs
 
-        for format in reading_parameters['formats']:
-            reader = reader_map[format]['class']
-            try:
-                for features in reader.get_features(**reading_parameters):
-                    yield features
-            except Exception as e:
-                file_path = pathlib.Path(kwargs.get('file_path', ''))
-                error_message = "{0} Error:\n{1}".format(file_path.name, str(repr(e)))
+		for file_type in reading_parameters['formats']:
+			reader = reader_map[file_type]['class']
 
-                current_import = DatasetImport.objects.get(id=kwargs.get('import_id'))
+			for features in reader.get_features(**reading_parameters):
+				yield features
 
-                # Save the string when it's empty, append to the previous when it has something.
-                current_import.error += error_message
-                current_import.save()
-                pass
 
-    @staticmethod
-    def count_total_documents(**kwargs):
-        """Delegates each appropriate reader implementation to count the number of documents of the respective format.
-        Retrieves the total number of documents of which format is in formats list.
 
-        :param kwargs: must contain a list of formats.
-        :return: total number of documents within the dataset according to the appropriate format readers.
-        """
-        reading_parameters = kwargs
+	@staticmethod
+	def count_total_documents(**kwargs):
+		"""Delegates each appropriate reader implementation to count the number of documents of the respective format.
+		Retrieves the total number of documents of which format is in formats list.
 
-        total_docs = 0
+		:param kwargs: must contain a list of formats.
+		:return: total number of documents within the dataset according to the appropriate format readers.
+		"""
+		reading_parameters = kwargs
 
-        for format in reading_parameters['formats']:
-            reader = reader_map[format]['class']
-            total_docs += reader.count_total_documents(**kwargs)
+		total_docs = 0
 
-        return total_docs
+		for file_type in reading_parameters['formats']:
+			reader = reader_map[file_type]['class']
+			total_docs += reader.count_total_documents(**kwargs)
+
+		return total_docs
 
 
 def merge_dictionaries(*args):
-    """Takes an arbitrary number of dictionaries and returns a union of them.
+	"""Takes an arbitrary number of dictionaries and returns a union of them.
 
-    Does not handle key conflicts.
+	Does not handle key conflicts.
 
-    :param args: arbitrary number of dictionaries
-    :return: union of the provided dictionaries
-    :rtype: dict
-    """
-    final_dictionary = {}
-    for current_dictionary in args:
-        for key, value in current_dictionary.items():
-            final_dictionary[key] = value
+	:param args: arbitrary number of dictionaries
+	:return: union of the provided dictionaries
+	:rtype: dict
+	"""
+	final_dictionary = {}
+	for current_dictionary in args:
+		for key, value in current_dictionary.items():
+			final_dictionary[key] = value
 
-    return final_dictionary
+	return final_dictionary
 
 
 reader_map = merge_dictionaries(entity_reader_map, collection_reader_map, database_reader_map)

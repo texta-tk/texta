@@ -1,28 +1,34 @@
 from collection_reader import CollectionReader
 import json
 
+from dataset_importer.utils import HandleDatasetImportException
+
 
 class JSONReader(CollectionReader):
 
-    @staticmethod
-    def get_features(**kwargs):
-        directory = kwargs['directory']
+	@staticmethod
+	def get_features(**kwargs):
 
-        for file_path in JSONReader.get_file_list(directory, 'json'):
-            with open(file_path, encoding='utf8') as json_file:
-                for line_idx, line in enumerate(json_file):
-                    features = json.loads(line.strip())
-                    features['_texta_id'] = '{0}_{1}'.format(file_path, line_idx)
-                    yield features
+		directory = kwargs['directory']
 
-    @staticmethod
-    def count_total_documents(**kwargs):
-        directory = kwargs['directory']
+		for file_path in CollectionReader.get_file_list(directory, 'json'):
+			with open(file_path, 'r', encoding='utf8') as json_file:
+				for line in json_file:
+					try:
+						features = json.loads(line.strip())
+						yield features
 
-        total_documents = 0
+					except Exception as e:
+						HandleDatasetImportException(kwargs, e, file_path=file_path)
 
-        for file_path in JSONReader.get_file_list(directory, 'json'):
-            with open(file_path, encoding='utf8') as json_file:
-                total_documents += sum(1 for row in json_file)
+	@staticmethod
+	def count_total_documents(**kwargs):
+		directory = kwargs['directory']
 
-        return total_documents
+		total_documents = 0
+
+		for file_path in JSONReader.get_file_list(directory, 'json'):
+			with open(file_path, encoding='utf8') as json_file:
+				total_documents += sum(1 for row in json_file)
+
+		return total_documents

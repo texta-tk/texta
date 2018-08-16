@@ -13,7 +13,3 @@ class DocumentStorer(object):
         :return: instance of a storer
         """
         return storer_map[connection_parameters['storer']]['class'](**connection_parameters)
-    #
-    # @staticmethod
-    # def exists(**connection_parameters):
-    #     return ElasticStorer.exists(**connection_parameters)
