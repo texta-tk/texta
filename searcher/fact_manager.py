@@ -4,6 +4,7 @@ import json
 import requests
 import itertools
 import traceback
+from utils.log_manager import LogManager
 
 class FactManager:
     """ Manage Searcher facts, like deleting/storing, adding facts.
@@ -18,6 +19,8 @@ class FactManager:
 
     def remove_facts_from_document(self, rm_facts_dict, bs=7500):
         '''remove a certain fact from all documents given a [str]key and [str]val'''
+        logger = LogManager(__name__, 'FACT MANAGER REMOVE FACTS')
+
         try:
             fact_queries = []
             for key in rm_facts_dict:
@@ -61,8 +64,14 @@ class FactManager:
                 scroll_id = response['_scroll_id']
                 self.es_m.plain_post_bulk(self.es_m.es_url, data)
             print('DONE') # DEBUG
+
+            logger.set_context('docs_left', total_docs)
+            logger.set_context('batch', batch)
+            logger.info('remove_facts_from_document')
         except:
             print(traceback.format_exc())
+            logger.set_context('es_params', self.es_params)
+            logger.exception('remove_facts_from_document_failed')
 
     def tag_documents_with_fact(self, es_params, tag_name, tag_value, tag_field):
         '''Used to tag all documents in the current search with a certain fact'''

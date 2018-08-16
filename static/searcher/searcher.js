@@ -917,7 +917,7 @@ function deleteFactsViaCheckboxes(checkboxes) {
 
 function ajaxDeleteFacts(form_data, factArray) {
     $.ajax({
-        url: PREFIX + '/delete_fact',
+        url: PREFIX + '/delete_facts',
         data: form_data,
         type: 'POST',
         contentType: false,

@@ -635,7 +635,7 @@ def aggregate(request):
 
 
 @login_required
-def delete_fact(request):
+def delete_facts(request):
     fact_m = FactManager(request)
     Process(target=fact_m.remove_facts_from_document, args=(dict(request.POST),)).start()
 
