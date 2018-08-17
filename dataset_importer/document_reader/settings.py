@@ -96,7 +96,7 @@ except:
 
 try:
     collection_reader_map['json'] = {
-        'name': 'JSON',
+        'name': 'JSON-Lines',
         'parameter_tags': 'file',
         'class': readers.collection.json.JSONReader
     }

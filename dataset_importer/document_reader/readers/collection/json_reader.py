@@ -10,8 +10,8 @@ class JSONReader(CollectionReader):
 	def get_features(**kwargs):
 
 		directory = kwargs['directory']
-
-		for file_path in CollectionReader.get_file_list(directory, 'json'):
+		file_list = CollectionReader.get_file_list(directory, 'jsonl') + CollectionReader.get_file_list(directory, 'jl')
+		for file_path in file_list:
 			with open(file_path, 'r', encoding='utf8') as json_file:
 				for line in json_file:
 					try:
