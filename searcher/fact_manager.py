@@ -162,7 +162,7 @@ class FactManager:
         # Get cooccurrences and remove values with 0
         fact_combinations = {k:v for k,v in dict(zip(fact_combinations, self.count_cooccurrences(fact_combinations))).items() if v != 0}
         shapes = ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"]
-        types = dict(zip(unique_fact_names,shapes))
+        types = dict(zip(unique_fact_names, itertools.cycle(shapes)))
 
         nodes = []
         counts = []
