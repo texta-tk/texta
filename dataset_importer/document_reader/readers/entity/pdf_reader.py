@@ -1,6 +1,6 @@
 import textract
 from entity_reader import EntityReader
-
+from dataset_importer.utils import HandleDatasetImportException
 
 class PDFReader(EntityReader):
 
@@ -16,8 +16,8 @@ class PDFReader(EntityReader):
                 features['_texta_id'] = file_path
 
                 yield features
-            except:
-                continue
+            except Exception as e:
+                HandleDatasetImportException(kwargs, e, file_path)
 
     @staticmethod
     def count_total_documents(**kwargs):

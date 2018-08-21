@@ -472,11 +472,6 @@ def search(es_params, request):
                 #     make content empty (to allow dynamic mapping without breaking alignment)
                 content = hit['_source']
                 for p in filed_path:
-                    #if col == u'texta_facts':
-                    #    content = '\n'.join([f"{x['fact']} - {x['str_val']}" for x in sorted(content[p], key=lambda k: k['fact'])])
-                    #else:
-                    #    content = content[p] if p in content else ''
-
                     if col == u'texta_facts' and p in content:
                         new_content = []
                         facts = ['{ "'+x["fact"]+'": "'+x["str_val"]+'"}' for x in sorted(content[p], key=lambda k: k['fact'])]

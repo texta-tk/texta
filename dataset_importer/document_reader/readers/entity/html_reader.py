@@ -1,11 +1,17 @@
 from entity_reader import EntityReader
 
+from dataset_importer.utils import HandleDatasetImportException
+
 
 class HTMLAdapter(EntityReader):
 
     @staticmethod
     def get_features(**kwargs):
-        raise NotImplementedError()
+        try:
+            raise NotImplementedError()
+        except Exception as e:
+            HandleDatasetImportException(kwargs, e, file_path='')
+
 
     @staticmethod
     def count_total_documents(**kwargs):

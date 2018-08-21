@@ -17,10 +17,12 @@ class SQLiteIndex(object):
         :type dataset: string
         :type value: list of strings
         """
+        values = (value if isinstance(value, str) else value.decode('unicode-escape') for value in values)
+
         with sqlite3.connect(self._sqlite_file_path) as connection:
             table_name = self._get_dataset_table_name(dataset)
             connection.execute('CREATE TABLE IF NOT EXISTS {0}(id TEXT PRIMARY KEY);'.format(table_name))
-            connection.executemany('INSERT INTO {0} VALUES (?);'.format(table_name), ((value if isinstance(value, str) else value.decode('unicode-escape'),) for value in values))
+            connection.executemany('INSERT INTO {0} VALUES (?);'.format(table_name), values)
 
     def get_new_entries(self, dataset, candidate_values):
         """Retrieves index values from candidate index values which are not yet in the dataset's index - in other words
@@ -43,8 +45,7 @@ class SQLiteIndex(object):
             temp_table_name = self._get_temporary_table_name(dataset)
             cursor = connection.cursor()
             cursor.execute('CREATE TEMPORARY TABLE IF NOT EXISTS {0}(id TEXT PRIMARY KEY);'.format(temp_table_name))
-            cursor.executemany('INSERT INTO {0} VALUES (?);'.format(temp_table_name),
-                               ((value,) for value in candidate_values))
+            cursor.executemany('INSERT INTO {0} VALUES (?);'.format(temp_table_name), ((value,) for value in candidate_values))
             cursor.execute('SELECT id FROM {0} EXCEPT SELECT id FROM {1};'.format(temp_table_name, table_name))
             return cursor.fetchall()
 
@@ -57,6 +58,15 @@ class SQLiteIndex(object):
         with sqlite3.connect(self._sqlite_file_path) as connection:
             table_name = self._get_dataset_table_name(dataset)
             connection.execute("DROP TABLE IF EXISTS {0};".format(table_name))
+
+    def remove_temp(self, dataset):
+        """Removes dataset's index.
+
+        :param dataset: name of the dataset of which index is to be removed.
+        :type dataset: string
+        """
+        with sqlite3.connect(self._sqlite_file_path) as connection:
+            connection.execute("DROP TABLE IF EXISTS {0};".format(self._get_temporary_table_name()))
 
     def _get_dataset_table_name(self, dataset):
         return 'es_{0}'.format(dataset)

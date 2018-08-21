@@ -1,37 +1,39 @@
+{% load apptags %}
+
 <script>
     $(document).ready(function () {
         $('#tableWrapper').doubleScroll(
-            { resetOnWindowResize: true });
+            {resetOnWindowResize: true});
     });
 </script>
 
 <div id='tableWrapper' class="table-responsive">
     <table id='displayTable' class="table table-striped">
         <thead>
-            <tr>
-                <th>Import ID</th>
-                <th>User</th>
-                <th>Dataset Name</th>
-                <th>Job Status</th>
-                <th>Job Started</th>
-                <th>Job Completed</th>
-                <th>Docs processed</th>
-                <th>Total #docs</th>
-                <th>View details</th>
-                <th>Remove</th>
-            </tr>
+        <tr>
+            <th>Import ID</th>
+            <th>User</th>
+            <th>Dataset Name</th>
+            <th>Job Status</th>
+            <th>Job Started</th>
+            <th>Job Completed</th>
+            <th>Docs processed</th>
+            <th>Total #docs</th>
+            <th>View details</th>
+            <th>Remove</th>
+        </tr>
         </thead>
         <tbody>
-            {% for job in jobs %}
+        {% for job in jobs %}
             <tr>
-                <td class="detailText">{{job.pk}}</td>
-                <td class="detailText">{{job.user}}</td>
-                <td class="detailText">{{job.elastic_index}}</td>
-                <td class="detailText">{{job.status}}</td>
-                <td class="detailText">{{job.start_time|date:"d.m.Y H:i"}}</td>
-                <td class="detailText">{{job.end_time|date:"d.m.Y H:i"}}</td>
-                <td class="detailText">{{job.processed_documents}}</td>
-                <td class="detailText">{{job.total_documents}}</td>
+                <td class="detailText">{{ job.pk }}</td>
+                <td class="detailText">{{ job.user }}</td>
+                <td class="detailText">{{ job.elastic_index }}</td>
+                <td class="detailText">{{ job.status }}</td>
+                <td class="detailText">{{ job.start_time|date:"d.m.Y H:i" }}</td>
+                <td class="detailText">{{ job.end_time|date:"d.m.Y H:i" }}</td>
+                <td class="detailText">{{ job.processed_documents }}</td>
+                <td class="detailText">{{ job.total_documents }}</td>
                 <td class="detailText">
                     <a href="javascript:void(0)" data-toggle="modal" data-target="#import-job-{{ job.pk }}-details">
                         <span class="glyphicon glyphicon-eye-open"></span>
@@ -43,92 +45,99 @@
                     </a>
                 </td>
             </tr>
-            {% endfor %}
+        {% endfor %}
         </tbody>
 
     </table>
 </div>
 
 {% for job in jobs %}
-<div id="import-job-{{ job.pk }}-details" class="modal fade" role="dialog">
-  <div class="modal-dialog">
+    <div id="import-job-{{ job.pk }}-details" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-xl">
 
-    <!-- Modal content-->
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4 class="modal-title">Import Details</h4>
-      </div>
-      <div class="modal-body">
-        <table class="table importDetails">
-            <tbody>
-                <tr>
-                    <td class="detailText">ID:</td>
-                    <td class="detailText">{{ job.pk }}</td>
-                </tr>
-                <tr>
-                    <td class="detailText">User:</td>
-                    <td class="detailText">{{ job.user }}</td>
-                </tr>
-                {% if job.error %}
-                  <tr>
-                    <td class="detailText">Error:</td>
-                    <td class="detailText">{{ job.error|linebreaks}}</td>
-                </tr>
-                {% endif %}
-                <tr>
-                    <td class="detailText">Job status:</td>
-                    <td class="detailText">{{ job.status }}</td>
-                </tr>
-                <tr>
-                    <td class="detailText">Job started:</td>
-                    <td class="detailText">{{ job.start_time }}</td>
-                </tr>
-                <tr>
-                    <td class="detailText">Job completed:</td>
-                    <td class="detailText">{{ job.end_time }}</td>
-                </tr>
-                <tr>
-                    <td class="detailText">Elasticsearch index:</td>
-                    <td class="detailText">{{ job.elastic_index }}</td>
-                </tr>
-                <tr>
-                    <td class="detailText">Elasticsearch mapping:</td>
-                    <td class="detailText">{{ job.elastic_mapping }}</td>
-                </tr>
-                <tr>
-                    <td class="detailText">Processed documents:</td>
-                    <td class="detailText">{{ job.processed_documents }}</td>
-                </tr>
-                <tr>
-                    <td class="detailText">Total documents:</td>
-                    <td class="detailText">{{ job.total_documents }}</td>
-                </tr>
-                <tr>
-                    <td class="detailText">Source type:</td>
-                    <td class="detailText">{{ job.source_type }}</td>
-                </tr>
-                <tr>
-                    <td class="detailText">Source name:</td>
-                    <td class="detailText">{{ job.source_name }}</td>
-                </tr>
-                <tr>
-                    <td class="detailText">Is synchronized:</td>
-                    <td class="detailText">{{ job.must_sync }}</td>
-                </tr>
-                <tr>
-                    <td class="detailText">JSON parameters:</td>
-                    <td class="detailText">{{ job.json_parameters }}</td>
-                </tr>
-            </tbody>
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Import Details</h4>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-striped table-bordered importDetails">
 
-        </table>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-      </div>
+                        <tbody>
+                        <h2>Metadata</h2>
+                        <tr>
+                            <td class="detailText">ID:</td>
+                            <td class="detailText">{{ job.pk }}</td>
+                        </tr>
+                        <tr>
+                            <td class="detailText">User:</td>
+                            <td class="detailText">{{ job.user }}</td>
+                        </tr>
+                        <tr>
+                            <td class="detailText">Job status:</td>
+                            <td class="detailText">{{ job.status }}</td>
+                        </tr>
+                        <tr>
+                            <td class="detailText">Job started:</td>
+                            <td class="detailText">{{ job.start_time }}</td>
+                        </tr>
+                        <tr>
+                            <td class="detailText">Job completed:</td>
+                            <td class="detailText">{{ job.end_time }}</td>
+                        </tr>
+                        <tr>
+                            <td class="detailText">Elasticsearch index:</td>
+                            <td class="detailText">{{ job.elastic_index }}</td>
+                        </tr>
+                        <tr>
+                            <td class="detailText">Elasticsearch mapping:</td>
+                            <td class="detailText">{{ job.elastic_mapping }}</td>
+                        </tr>
+                        <tr>
+                            <td class="detailText">Processed documents:</td>
+                            <td class="detailText">{{ job.processed_documents }}</td>
+                        </tr>
+                        <tr>
+                            <td class="detailText">Total documents:</td>
+                            <td class="detailText">{{ job.total_documents }}</td>
+                        </tr>
+                        <tr>
+                            <td class="detailText">Source type:</td>
+                            <td class="detailText">{{ job.source_type }}</td>
+                        </tr>
+                        <tr>
+                            <td class="detailText">Source name:</td>
+                            <td class="detailText">{{ job.source_name }}</td>
+                        </tr>
+                        <tr>
+                            <td class="detailText">Is synchronized:</td>
+                            <td class="detailText">{{ job.must_sync }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+
+                    {% if job.json_parameters %}
+                        <h2>Parameters</h2>
+                        {{ job.json_parameters| json2html | safe }}
+
+                    {% endif %}
+
+
+                    {% if job.errors %}
+                        <h2>Errors</h2>
+                        {{ job.errors| json2html| safe | linebreaks }}
+                    {% endif %}
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+
+        </div>
     </div>
-
-  </div>
-</div>
 {% endfor %}
+
+

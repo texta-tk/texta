@@ -1,27 +1,34 @@
 import psycopg2
 
+from dataset_importer.utils import HandleDatasetImportException
+
 
 class PostgreSQLReader(object):
 
     @staticmethod
     def get_features(**kwargs):
-        host = kwargs.get('postgres_host', None)
-        database = kwargs.get('postgres_database', None)
-        port = kwargs.get('postgres_port', None)
-        user = kwargs.get('postgres_user', None)
-        password = kwargs.get('postgres_password', None)
-        table_name = kwargs.get('postgres_table', None)
 
-        connection_string = PostgreSQLReader.get_connection_string(host, database, port, user, password)
+        try:
+            host = kwargs.get('postgres_host', None)
+            database = kwargs.get('postgres_database', None)
+            port = kwargs.get('postgres_port', None)
+            user = kwargs.get('postgres_user', None)
+            password = kwargs.get('postgres_password', None)
+            table_name = kwargs.get('postgres_table', None)
 
-        with psycopg2.connect(connection_string) as connection:
-            cursor = connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-            cursor.execute("SELECT * FROM %s;" % table_name)
+            connection_string = PostgreSQLReader.get_connection_string(host, database, port, user, password)
 
-            value = cursor.fetchone()
-            while value:
-                yield value
+            with psycopg2.connect(connection_string) as connection:
+                cursor = connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+                cursor.execute("SELECT * FROM %s;" % table_name)
+
                 value = cursor.fetchone()
+                while value:
+                    yield value
+                    value = cursor.fetchone()
+
+        except Exception as e:
+            HandleDatasetImportException(kwargs, e, file_path='')
 
     @staticmethod
     def count_total_documents(**kwargs):
