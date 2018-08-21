@@ -22,6 +22,8 @@ class FactManager:
         logger = LogManager(__name__, 'FACT MANAGER REMOVE FACTS')
 
         try:
+            # Clears readonly block just in case the index has been set to read only
+            self.es_m.clear_readonly_block()
             fact_queries = []
             for key in rm_facts_dict:
                 for val in rm_facts_dict[key]:

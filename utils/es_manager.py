@@ -535,3 +535,10 @@ class ES_Manager:
         aggs = response["aggregations"]
         return aggs["min_date"]["value_as_string"],aggs["max_date"]["value_as_string"]
 
+    def clear_readonly_block(self):
+        '''changes read_only_allow_delete to False'''
+        data = {"index":{"blocks":{"read_only_allow_delete":"false"}}}
+        url = "{0}/{1}/_settings".format(self.es_url, self.index)
+        response = self.plain_put(url, json.dumps(data))
+        return response
+
