@@ -477,7 +477,7 @@ def search(es_params, request):
                     #else:
                     #    content = content[p] if p in content else ''
 
-                    if col == u'texta_facts':
+                    if col == u'texta_facts' and p in content:
                         new_content = []
                         facts = ['{ "'+x["fact"]+'": "'+x["str_val"]+'"}' for x in sorted(content[p], key=lambda k: k['fact'])]
                         fact_counts = Counter(facts)
