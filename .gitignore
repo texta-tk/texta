@@ -10,9 +10,7 @@ texta/log/*
 # Exclude files
 texta/files/*
 
-# Exclude migrations files but not the migrations module.
-*/migrations/*
-!*/migrations/__init__.py
+migrations
 
 # Exclude documentation build files but not the html, js etc
 texta/documentation/sphinx/build/doctrees/*
