@@ -164,7 +164,7 @@ def selectLexicon(request):
         lexicons = Lexicon.objects.filter(author=request.user)
 
         datasets = Datasets().get_allowed_datasets(request.user)
-        language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
+        language_models = Task.objects.filter(task_type='train_model').filter(status='Completed').order_by('-pk')
 
         # Define selected mapping
         ds = Datasets().activate_dataset(request.session)
@@ -172,7 +172,6 @@ def selectLexicon(request):
         fields = es_m.get_column_names()
 
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_selected','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']},'data':{'lexicon_terms':words}}))
-
         return HttpResponse(template.render({'words':words,'selected':request.GET['id'], 'selected_name':lexicon,'lexicons':lexicons,'STATIC_URL':STATIC_URL,'features':fields, 'language_models': language_models, 'allowed_datasets': datasets}, request))
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_selection_failed','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}),exc_info=True)
