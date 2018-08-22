@@ -477,7 +477,7 @@ def search(es_params, request):
                         facts = ['{ "'+x["fact"]+'": "'+x["str_val"]+'"}' for x in sorted(content[p], key=lambda k: k['fact'])]
                         fact_counts = Counter(facts)
 
-                        facts = list(set(facts))
+                        facts = sorted(list(set(facts)))
                         facts_dict = [json.loads(x) for x in facts]
                         for i, d in enumerate(facts_dict):
                             for k in d:
