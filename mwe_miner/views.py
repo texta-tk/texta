@@ -201,7 +201,7 @@ def commit(request):
 @login_required
 def start_mapping_job(request):
     # Process(target=find_mappings,args=(request,)).start()
-    find_mappings(request)
+    find_mappings(request) # Apache wsgi problem when multiprocessing
     return HttpResponse()
 
 def flatten(container):
