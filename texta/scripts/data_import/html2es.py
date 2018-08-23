@@ -26,8 +26,8 @@ def add_to_elasticsearch(data_str):
     base_url = r'http://127.0.0.1:9200/_bulk'
     response = requests.put(base_url, data=data_str)
     if response.status_code == 400:
-        print '-- Not good... '
-        print response.text
+        print('-- Not good... ')
+        print(response.text)
 
 
 def bulk_data(data, bulk_size = 100):
@@ -79,9 +79,9 @@ def main():
     _index = sys.argv[2]
     _type = sys.argv[3]
 
-    print '- Add documents from: {0}'.format(base_dir)
-    print '- ES Index: {0}'.format(_index)
-    print '- ES Mapping: {0}'.format(_type)
+    print('- Add documents from: {0}'.format(base_dir))
+    print('- ES Index: {0}'.format(_index))
+    print('- ES Mapping: {0}'.format(_type))
 
     # Map html input files
     cases_html_map = {}
@@ -93,7 +93,7 @@ def main():
             if '.html' in f:
                 cases_html_map[celex] = os.path.join(root, f)
 
-    print '- Total of documents: {0}'.format(len(cases_html_map.keys()))
+    print('- Total of documents: {0}'.format(len(cases_html_map.keys())))
 
     n_total = len(cases_html_map.keys())
     n_count = 0
@@ -102,7 +102,7 @@ def main():
         for celex in bulk:
             n_count += 1
             if n_count % (n_total / 10) == 0:
-                print 'Total: {0} %'.format(int((100.0 * n_count) / n_total))
+                print('Total: {0} %'.format(int((100.0 * n_count) / n_total)))
             sector = celex[0]
             year = celex[1:5]
             author_index = celex[5]
@@ -147,7 +147,8 @@ def main():
         data_str += '\n'
         add_to_elasticsearch(data_str)
 
-    print 'Done ...'
+    print('Done ...')
+
 
 if __name__ == '__main__':
     main()

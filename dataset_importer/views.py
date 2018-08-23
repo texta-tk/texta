@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from sys import argv
+from django.shortcuts import render
+from django.template import loader
 
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse
 from django.shortcuts import render
 
-from dataset_importer.importer.importer import DatasetImporter, collection_reader_map, database_reader_map, entity_reader_map, extractor_map, preprocessor_map
+from task_manager.models import Task
+from .models import DatasetImport
+from utils.datasets import Datasets
+
+from dataset_importer.importer.importer import DatasetImporter, entity_reader_map, collection_reader_map, database_reader_map, extractor_map, preprocessor_map
 from dataset_importer.syncer.syncer_process import Syncer
 from texta.settings import DATASET_IMPORTER as DATASET_IMPORTER_CONF, es_url
 from .models import DatasetImport
@@ -33,26 +38,33 @@ def collect_map_entries(map_):
 
 @login_required
 def index(request):
-	jobs = DatasetImport.objects.all()
+    template = loader.get_template('dataset_importer.html')
+    jobs = DatasetImport.objects.all()
 
 	archive_formats = collect_map_entries(extractor_map)
 	single_document_formats = collect_map_entries(entity_reader_map)
 	document_collection_formats = collect_map_entries(collection_reader_map)
 	database_formats = collect_map_entries(database_reader_map)
 
-	preprocessors = collect_map_entries(preprocessor_map)
+    preprocessors = collect_map_entries(preprocessor_map)
+    enabled_preprocessors = [preprocessor for preprocessor in preprocessors]
 
-	enabled_preprocessors = [preprocessor for preprocessor in preprocessors]
+    datasets = Datasets().get_allowed_datasets(request.user)
+    language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
 
-	return render(request, 'dataset_importer.html', context={
-		# 'enabled_input_types': DATASET_IMPORTER_CONF['enabled_input_types'],
-		'archive_formats':             archive_formats,
-		'single_document_formats':     single_document_formats,
-		'document_collection_formats': document_collection_formats,
-		'database_formats':            database_formats,
-		'jobs':                        jobs,
-		'enabled_preprocessors':       enabled_preprocessors
-	})
+    context = {
+        # 'enabled_input_types': DATASET_IMPORTER_CONF['enabled_input_types'],
+        'archive_formats': archive_formats,
+        'single_document_formats': single_document_formats,
+        'document_collection_formats': document_collection_formats,
+        'database_formats': database_formats,
+        'language_models': language_models, 
+        'allowed_datasets': datasets, 
+        'jobs': jobs,
+        'enabled_preprocessors': enabled_preprocessors
+    }
+
+    return HttpResponse(template.render(context, request))
 
 
 @login_required

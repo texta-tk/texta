@@ -11,6 +11,8 @@ from django.template import loader
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
+from utils.datasets import Datasets
+from task_manager.models import Task
 from permission_admin.models import Dataset, ScriptProject
 from utils.es_manager import ES_Manager
 from texta.settings import STATIC_URL, URL_PREFIX, SCRIPT_MANAGER_DIR
@@ -111,10 +113,10 @@ def index(request):
 
     template = loader.get_template('permission_admin.html')
 
-    return HttpResponse(template.render(
-        {'users': users, 'datasets': datasets, 'indices': indices, 'STATIC_URL': STATIC_URL, 'URL_PREFIX': URL_PREFIX},
-        request))
+    allowed_datasets = Datasets().get_allowed_datasets(request.user)
+    language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
 
+    return HttpResponse(template.render({'users':users,'datasets':datasets,'indices':indices,'STATIC_URL':STATIC_URL,'URL_PREFIX':URL_PREFIX, 'allowed_datasets': allowed_datasets, 'language_models': language_models},request))
 
 def annotate_users_with_permissions(users, datasets):
     new_users = []

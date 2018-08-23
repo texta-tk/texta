@@ -6,7 +6,7 @@ from time import time
 import numpy as np
 import json
 
-from lm.models import Lexicon,Word
+from lexicon_miner.models import Lexicon,Word
 
 
 class ClusterManager:

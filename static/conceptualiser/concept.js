@@ -646,6 +646,8 @@ function plot_lexicons() {
 
             if (xmlhttp.responseText) {
                 draw_plot(JSON.parse(xmlhttp.responseText));
+            }else{
+
             }
             CURRENT_LEXICONS = chosen_lexicons;
         }

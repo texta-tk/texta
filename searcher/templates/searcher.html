@@ -346,6 +346,10 @@
 										<option value="significant_text">significant words</option>
 									</select>
 								</div>
+								<div id="agg_size_1">
+									<b>Aggregation size:</b><br>
+									<input id="n_agg_size_1" name="agg_size_1" class="form-control" data-slider-id='agg_size_1' type="text" data-slider-min="10" data-slider-max="300" data-slider-step="10" data-slider-value="30"/>
+								</div>
 								<div id="freq_norm_1" class="hidden">
 									<b>Frequency:</b>
 									<select id="freq_norm_1" name="freq_norm_1" class="form-control input-sm">
@@ -396,7 +400,10 @@
 										<option value="significant_text">significant words</option>
 									</select>
 								</div>
-								
+								<div id="agg_size_2">
+									<b>Aggregation size:</b><br>
+									<input id="n_agg_size_2" name="agg_size_2" class="form-control" data-slider-id='agg_size_2' type="text" data-slider-min="10" data-slider-max="300" data-slider-step="10" data-slider-value="30"/>
+								</div>
 							</div>
 						</div>
 					</div>					
@@ -422,6 +429,24 @@
 					
 					<button	type="button" onclick="javascript:aggregate();" class="btn btn-default form-control"><span class="glyphicon glyphicon-filter"></span> Aggregate</button>
 					
+				</div>
+			</div>
+
+			<div class="panel {{display_fact_graph}}">
+				<div class="panel-heading">Fact Graph</div>
+				<div class="panel-body" id="factGraphDiv">
+					<div class="panel bg-grey">
+						<div class="row padded-row">
+							<div class="col-sm-12">
+								<b>Number of fact values per fact name:</b>
+							</div>
+							<div id="factGraphSliderDiv" class="col-sm-12">
+								<input id="nFactGraphSize" name="fact_graph_size" class="form-control" data-slider-id='nFactGraphSizeId' type="text" data-slider-min="3" data-slider-max="30" data-slider-step="1" data-slider-value="15"/>
+							</div>
+						</div>
+					</div>
+					
+					<button	type="button" id='factGraphButton' onclick="javascript:factGraph();" class="btn btn-default form-control"><span class="glyphicon glyphicon-eye-open"></span> Visualize </button>
 				</div>
 			</div>
 			
@@ -524,11 +549,127 @@
                                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                                     <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="javascript:remove_by_query();">Delete</button>
                             </div>
+
+                        </div>
+                    </div>
+				</div>
+
+				<div class="modal fade" id="tag-modal" role="dialog">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">Tag search</h4>
+                            </div>
+                            <div class="modal-body">
+								Add a custom fact to the resulting documents to tag the search.
+								<div class="form-group">
+									<label for="tag_name">Fact name:</label>
+									<input type="text" class="form-control" name="tag_name" id="tag_name" required>
+								</div>
+								<div class="form-group">
+									<label for="tag_value">Fact value:</label>
+									<input type="text" class="form-control" name="tag_value" id="tag_value" required>
+								</div>
+								<div class="panel bg-grey">
+									<div class="row padded-row">
+										<div class="col-sm-12 text-center">
+											<b>Field to tag</b>
+										</div>
+										<div class="col-sm-12">
+											<b>Select field:</b>
+										</div>
+										<div class="col-sm-12">
+											<select id="tag_field" name="tag_field" class="form-control input-sm" required>
+												<option></option>
+												{% for field in fields %}
+													<option value="{{field.data}}">{{field.label}}</option>
+												{% endfor %}
+											</select>
+										</div>
+									</div>
+								</div>
+							</div>
+
+
+								<div class="modal-footer">
+									<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-default" onclick="tag_by_query()">Tag</button>
+								</div>
+
+                        </div>
+                    </div>
+                </div>
+
+				<div class="modal fade" id="new-task-modal" role="dialog">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">Start new task using selected documents</h4>
+                            </div>
+                            <div class="modal-body">
+
+						<ul class="nav nav-tabs">
+							{% for task_param in task_params %}
+								<li {% if forloop.counter < 2 %}class="active"{% endif %}><a data-toggle="tab" href="#task_{{task_param.id}}">{{task_param.name}}</a></li>
+							{% endfor %}
+						</ul>
+
+						<div class="tab-content">
+							{% for task_param in task_params %}
+								<div id="task_{{task_param.id}}" class="tab-pane fade in {% if forloop.counter < 2 %}active{% endif %}">
+									{% include task_param.template %}   
+								</div>
+							{% endfor %}
+						</div>						
+
+
+								
+
+                            </div>
+                            <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="javascript:apply_preprocessor();">Apply</button>
+                            </div>
                             
                         </div>
                     </div>
                 </div>
 
+
+				<div class="modal fade" id="preprocessor-modal" role="dialog">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">Apply preprocessor</h4>
+                            </div>
+                            <div class="modal-body">
+								<b>Select field:</b>
+								<select id="preprocessor_field" name="preprocessor_field" class="form-control input-sm">
+									{% for field in fields %}
+										{% if field.type == 'keyword' or field.type == 'text' %}
+											<option value="{{field.data}}">{{field.label}}</option>
+										{% endif %}
+									{% endfor %}
+								</select>
+								<br>
+								<b>Select preprocessor</b>
+								<select id="preprocessor_key" name="preprocessor_key" class="form-control input-sm">
+									{% for preprocessor in enabled_preprocessors %}
+										<option value="{{preprocessor.key}}">{{preprocessor.name}}</option>
+									{% endfor %}
+							    </select>
+                            </div>
+                            <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="javascript:apply_preprocessor();">Apply</button>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
 
 				<div class="modal fade" id="query-modal" role="dialog">
                     <div class="modal-dialog">
@@ -662,7 +803,7 @@
                     </div>
 
                     <div class="col-sm-5" style="padding-left: 3px" name="constraint_val_container">
-                        <input name="fact_constraint_val_" class="form-control input-sm" type="text" placeholder="Value (case sensitive)"></input>
+                        <input id="fact_constraint_val_" name="fact_constraint_val_" class="form-control input-sm" type="text" placeholder="Value (case sensitive)"></input>
 						<ul name="suggestions_" id="suggestions_" class="list-group" style="display: none;"></ul>
                     </div>
 					

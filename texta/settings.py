@@ -59,7 +59,7 @@ if SERVER_TYPE == 'development':
 	URL_PREFIX_RESOURCE = ''
 	ROOT_URLCONF = 'texta.urls'
 	STATIC_URL = URL_PREFIX_DOMAIN + '/static/'
-	DEBUG = True
+	DEBUG = False
 
 elif SERVER_TYPE == 'production':
 	PROTOCOL = 'http://'
@@ -75,7 +75,7 @@ elif SERVER_TYPE == 'docker':
 	PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL'))
 	DOMAIN = os.getenv('TEXTA_HOST')
 
-	URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL,DOMAIN)
+	URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL, DOMAIN)
 	URL_PREFIX_RESOURCE = ''
 	ROOT_URLCONF = 'texta.urls'
 	STATIC_URL = '/static/'
@@ -99,10 +99,11 @@ LOGIN_URL = URL_PREFIX
 # Path to media files root directory.
 # 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'files')
+PROTECTED_MEDIA = os.path.join(MEDIA_ROOT, 'protected_media')
 
 # URL to media files root.
 # 
-MEDIA_URL = '/files/'
+MEDIA_URL = 'files/'
 ADMIN_MEDIA_PREFIX = '/media/'
 
 # Path to users' visited words in Lex Miner.
@@ -120,13 +121,11 @@ SCRIPT_MANAGER_DIR = os.path.join(MEDIA_ROOT, 'script_manager')
 if not os.path.exists(MODELS_DIR):
 	os.makedirs(MODELS_DIR)
 
-if not os.path.exists(MODELS_DIR):
-	os.makedirs(MODELS_DIR)
+if not os.path.exists(PROTECTED_MEDIA):
+	os.makedirs(PROTECTED_MEDIA)
 
 if not os.path.exists(SCRIPT_MANAGER_DIR):
 	os.makedirs(SCRIPT_MANAGER_DIR)
-
-STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static_general'),)  # TODO remove
 
 ADMINS = (
 	# ('Your Name', 'your_email@example.com'),
@@ -167,15 +166,16 @@ DATABASES = {
 		'NAME':         os.getenv('DJANGO_DATABASE_NAME', os.path.join(BASE_DIR, 'database', 'lex.db')),
 		'USER':         os.getenv('DJANGO_DATABASE_USER', ''),  # Not used with sqlite3.
 		'PASSWORD':     os.getenv('DJANGO_DATABASE_PASSWORD', ''),  # Not used with sqlite3.
-		'HOST':         os.getenv('DJANGO_DATABASE_HOST', ''),  # Set to empty string for localhost. Not used with sqlite3.
-		'PORT':         os.getenv('DJANGO_DATABASE_PORT', ''),  # Set to empty string for default. Not used with sqlite3.
+		'HOST':         os.getenv('DJANGO_DATABASE_HOST', ''),
+		# Set to empty string for localhost. Not used with sqlite3.
+		'PORT':         os.getenv('DJANGO_DATABASE_PORT', ''),
+		# Set to empty string for default. Not used with sqlite3.
 		'BACKUP_COUNT': 5,
 	}
 }
 
 if not os.path.exists(os.path.dirname(DATABASES['default']['NAME'])) and os.environ.get('DJANGO_DATABASE_NAME') is None:
 	os.makedirs(os.path.dirname(DATABASES['default']['NAME']))
-
 
 TIME_ZONE = 'Europe/Tallinn'
 LANGUAGE_CODE = 'et'
@@ -211,7 +211,7 @@ TEMPLATES = [
 			#                'django.template.loaders.filesystem.Loader',
 			#                'django.template.loaders.app_directories.Loader',
 			#            ],
-			'debug': DEBUG,
+			'debug':              DEBUG,
 		},
 	},
 ]
@@ -236,20 +236,19 @@ INSTALLED_APPS = (
 	'django.contrib.messages',
 	'django.contrib.admin',
 	'django.contrib.staticfiles',
-	'lm',
+	'lexicon_miner',
 	'conceptualiser',
 	'mwe_miner',
 	'account',
 	'searcher',
-	'model_manager',
-	'classification_manager',
 	'ontology_viewer',
 	'base',
 	'permission_admin',
 	'grammar_builder',
 	'search_api',
 	'dataset_importer',
-	'importer_api'
+	'importer_api',
+	'task_manager'
 )
 
 ############################ Elasticsearch ###########################
@@ -262,7 +261,6 @@ INSTALLED_APPS = (
 # Elasticsearch URL with protocol specification. Can be either localhost
 # or remote address.
 es_url = os.getenv('TEXTA_ELASTICSEARCH_URL', 'http://localhost:9200')
-
 
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')
@@ -295,62 +293,81 @@ DATASET_IMPORTER = {
 		'interval_in_seconds': 10,
 		'index_sqlite_path':   os.path.join(BASE_DIR, 'database', 'import_sync.db')
 	},
-	
-	'urls': {
-		'mlp': 'http://127.0.0.1:5000/mlp/process'
-	}
 
+	'urls':               {
+		'mlp': 'http://10.6.6.92:5000/mlp/process'
+	}
 }
+
 if os.getenv('TEXTA_SERVER_TYPE') == 'docker':
-	DATASET_IMPORTER['urls']['mlp'] = 'http://127.0.0.1:5000/mlp/process'
+	DATASET_IMPORTER['urls']['mlp'] = 'http://texta-mlp:5000/mlp/process'
 
 if not os.path.exists(DATASET_IMPORTER['directory']):
 	os.makedirs(DATASET_IMPORTER['directory'])
 
+
 ############################### Logging ##############################
 
 # TEXTA stores errors and query info in two different log files.
-#
+USING_LOGSTASH = os.getenv('USING_LOGSTASH', False)
+LOGSTASH_HOST = os.getenv('LOGSTASH_HOST', 'localhost')
+LOGSTASH_PORT = int(os.getenv('LOGSTASH_PORT', 5000))
 
 # Path to the log directory. Default is /log
-# 
 LOG_PATH = os.path.join(BASE_DIR, 'log')
 
 # Separator used to join different logged features.
-#
 logging_separator = ' - '
 
 # Paths to info and error log files.
-# 
 info_log_file_name = os.path.join(LOG_PATH, "info.log")
 error_log_file_name = os.path.join(LOG_PATH, "error.log")
 
 # Logger IDs, used in apps. Do not change.
-#
 INFO_LOGGER = 'info_logger'
 ERROR_LOGGER = 'error_logger'
 
 # Most of the following logging settings can be changed.
 # Especially format, logging levels, logging class and filenames.
-#
 LOGGING = {
 	'version':                  1,
 	'disable_existing_loggers': False,
+	'filters':                  {
+		'require_debug_false':      {
+			'()': 'django.utils.log.RequireDebugFalse'
+		},
+		'require_debug_true':       {
+			'()': 'django.utils.log.RequireDebugTrue'
+		},
+
+		'require_logstash_instance': {
+			'()': 'texta.logger_handler.RequireLogstashInstance'
+		},
+
+	},
+
 	'formatters':               {
 		'detailed':       {
-			'format': logging_separator.join(
-					['%(levelname)s', '%(module)s', 'function: %(funcName)s', 'line: %(lineno)s',  '%(name)s', 'pid: %(process)d', '%(thread)d', '%(message)s', '%(asctime)s'])
+			'format': logging_separator.join(['%(levelname)s', '%(module)s', 'function: %(funcName)s', 'line: %(lineno)s', '%(name)s', 'PID: %(process)d', 'TID: %(thread)d', '%(message)s', '%(asctime)-15s'])
 		},
 		'normal':         {
 			'format': logging_separator.join(['%(levelname)s', '%(module)s', '%(message)s', '%(asctime)s'])
 		},
 		'detailed_error': {
-			'format': '\n' + logging_separator.join(
-					['%(levelname)s', '%(module)s', '%(name)s', '%(process)d', '%(thread)d', '%(message)s', '%(asctime)s'])
-		}
+			'format': '\n' + logging_separator.join( ['%(levelname)s', '%(module)s', '%(name)s', 'PID: %(process)d', 'TID: %(thread)d', '%(funcName)s', '%(message)s', '%(asctime)-15s'])
+		},
+		'logstash':       {
+			'()':           'logstash_async.formatter.DjangoLogstashFormatter',
+			'message_type': 'python-logstash',
+			'fqdn':         False,
+			'extra_prefix': '',
+			'ensure_ascii': False
+
+		},
 	},
+
 	'handlers':                 {
-		'info_file':  {
+		'info_file':             {
 			'level':     'INFO',
 			'class':     'logging.FileHandler',
 			'formatter': 'detailed',
@@ -358,24 +375,85 @@ LOGGING = {
 			'encoding':  'utf8',
 			'mode':      'a'
 		},
-		'error_file': {
+		'error_file':            {
 			'level':     'ERROR',
 			'class':     'logging.FileHandler',
 			'formatter': 'detailed_error',
 			'filename':  error_log_file_name,
 			'encoding':  'utf8',
-			'mode':      'a'
+			'mode':      'a',
 		},
+
+		'null':                  {
+			"class": 'logging.NullHandler',
+		},
+
+		'console':    {
+			'level':     'INFO',
+			'class':     'logging.StreamHandler',
+			'formatter': 'detailed',
+		},
+
+
+		'logstash':              {
+			'level':         'INFO',
+			'class':         'logstash_async.handler.AsynchronousLogstashHandler',
+			'formatter':     'logstash',
+			'transport':     'logstash_async.transport.TcpTransport',
+			'host':          LOGSTASH_HOST,
+			'port':          LOGSTASH_PORT,
+			'database_path': None,
+			'filters': ['require_logstash_instance']
+		},
+
 	},
 	'loggers':                  {
-		INFO_LOGGER:  {
+		INFO_LOGGER:     {
 			'level':    'INFO',
-			'handlers': ['info_file']
+			'handlers': ['info_file', 'logstash']
 		},
-		ERROR_LOGGER: {
+		ERROR_LOGGER:    {
 			'level':    'ERROR',
-			'handlers': ['error_file']
+			'handlers': ['console', 'error_file', 'logstash']
+		},
+
+		# Big parent of all the Django loggers, MOST (not all) of this will get overwritten.
+		# https://docs.djangoproject.com/en/2.1/topics/logging/#topic-logging-parts-loggers
+		'django':        {
+			'handlers':  ['console', 'error_file', 'logstash'],
+			'level':     'ERROR',
+			'propagate': False
+		},
+
+		# Log messages related to the handling of requests.
+		# 5XX responses are raised as ERROR messages; 4XX responses are raised as WARNING messages
+		'django.request': {
+			'handlers':  ['error_file', 'error_file', 'logstash'],
+			'level':     'ERROR',
+			'propagate': False,
+		},
+
+		# Log messages related to the handling of requests received by the server invoked by the runserver command.
+		# HTTP 5XX responses are logged as ERROR messages, 4XX responses are logged as WARNING messages,
+		# everything else is logged as INFO.
+		'django.server': {
+			'handlers':  ['console', 'logstash'],
+			'level':     'INFO',
+			'propagate': False,
 		}
+
+	}
+}
+
+# TEXTA Facts structure
+FACT_PROPERTIES = {
+	'type':       'nested',
+	'properties': {
+		'doc_path': {'type': 'keyword'},
+		'fact':     {'type': 'keyword'},
+		'num_val':  {'type': 'long'},
+		'spans':    {'type': 'keyword'},
+		'str_val':  {'type': 'keyword'}
 	}
 }
 
@@ -384,7 +462,7 @@ LOGGING = {
 # Several scripts ran during the boot to set up files and directories.
 # Scripts will only be run if settings is imported from 'texta' directory, e.g. as a result of manager.py, or by Apache (user httpd / apache)
 
-if os.path.split(os.getcwd())[1] in ['texta', 'httpd', 'apache','www']:
+if os.path.split(os.getcwd())[1] in ['texta', 'httpd', 'apache', 'www']:
 	from utils.setup import write_navigation_file, ensure_dir_existence
 
 	write_navigation_file(URL_PREFIX, STATIC_URL, STATIC_ROOT)

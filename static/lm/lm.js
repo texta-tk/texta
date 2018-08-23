@@ -44,25 +44,40 @@ function query(){
     $('body').css('cursor', 'wait');
 
     $.post(PREFIX + "/query", {content: content,lid: $('#lid').val(),method: $('#method').val(),negatives: JSON.stringify(negatives),sid: sid,tooltip_feature: $('#tooltip-feature').val()}, function(data){
-	    if (data=='INVALID MODEL') {
-            window.location = LINK_ROOT;
-            return;
+	    if (data.length == 0) {
+
+			swal({
+				    title: 'Oops. Something went wrong.',
+				    text: 'No suggestions... Do you have a language model trained?',
+				    type: 'warning',
+				    confirmButtonColor: '#73AD21',
+				    cancelButtonColor: '#d33',
+				    confirmButtonText: 'Ok'
+		
+			}).then((result) => {})	
+
+        } else {
+
+		    $('#suggestions').html(data);
+			$('body').css('cursor', 'auto');
+        
         }
-            $('#suggestions').html(data);
-	    $('body').css('cursor', 'auto');
     });
 }
 
 function save() {
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange=function() {
-	if (xmlhttp.readyState==4 && xmlhttp.status==200) {
-	    $('body').css('cursor', 'auto');
+		if (xmlhttp.readyState==4 && xmlhttp.status==200) {
+			$('body').css('cursor', 'auto');
+			swal('Success!', 'Sucessfully saved lexicon', 'success');
+		}
+		else {
+			swal('Error!','There was a problem saving the lexicon!','error');
+		}
 	}
-    }
 
     var form_data = new FormData();
-    //form_data.append("lexicon",$("#lexicon").val());
     form_data.append("id",$("#lid").val());
     var lexicon = [];
     var lexicon_words = $("#lexicon").val().split("\n");
@@ -77,7 +92,6 @@ function save() {
     xmlhttp.open("POST",PREFIX + "/save",false);
     $('body').css('cursor', 'wait');
     xmlhttp.send(form_data);
-    
 }
 
 function reset_suggestions() {

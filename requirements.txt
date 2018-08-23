@@ -17,3 +17,4 @@ elasticsearch
 psycopg2-binary
 dateparser
 json2table
+python-logstash-async

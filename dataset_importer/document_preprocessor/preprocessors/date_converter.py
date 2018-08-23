@@ -10,8 +10,15 @@ class DatePreprocessor(object):
     """
     
     def __init__(self):
-        self._languages = ['et']#,'en','ru']
+        self._languages = ['et']
         self._date_pattern = self._get_date_patterns()
+
+        self._lang_map = {'Estonian'  : ['et'],
+                          'English'   : ['en'],
+                          'Latvian'   : ['lv'],
+                          'Lithuanian': ['lt'],
+                          'Russian'   : ['ru'],
+                          'Other'     : []}
         
     def _get_date_patterns(self):
         
@@ -44,7 +51,10 @@ class DatePreprocessor(object):
       if langs:
           self._languages = langs
       try:
-          datetime_object = dateparser.parse(date_field_value,languages=self._languages)
+          if self._languages:
+              datetime_object = dateparser.parse(date_field_value,languages=self._languages)
+          else:
+              datetime_object = dateparser.parse(date_field_value)
           formatted_date = datetime_object.strftime('%Y-%m-%d')
 
       except Exception as e:
@@ -94,17 +104,15 @@ class DatePreprocessor(object):
         :rtype: list of dicts
         '''
 
-        if not kwargs.get('date_converter_preprocessor_input_features', None):
+        if not kwargs.get('date_converter_preprocessor_feature_names', None):
             return documents
 
-        input_features = json.loads(kwargs['date_converter_preprocessor_input_features'])
+        input_features = json.loads(kwargs['date_converter_preprocessor_feature_names'])
 
         if kwargs.get('date_converter_preprocessor_input_langs',None):
             input_langs = json.loads(kwargs['date_converter_preprocessor_input_langs'])
-            
-            # TODO: Check validity of language codes
-            if input_langs[0] and len(input_langs)==2:
-                self._languages = input_langs
+            if input_langs:
+                self._languages = self._lang_map[input_langs[0]]
 
 
         for input_feature in input_features:
@@ -116,7 +124,7 @@ class DatePreprocessor(object):
                 raise Exception()
 
             for analyzation_idx, analyzation_datum in enumerate(converted_dates):
-                documents[analyzation_idx]['converted_' + input_feature] = analyzation_datum
+                documents[analyzation_idx][input_feature+'_date_converter'] = analyzation_datum
                 '''
                 if 'texta_facts' not in documents[analyzation_idx]:
                     documents[analyzation_idx]['texta_facts'] = []

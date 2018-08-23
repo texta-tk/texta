@@ -1,0 +1,85 @@
+<div class="panel">
+	  <div class="panel-heading">Train a New Classification Model</div>
+	  <div class="panel-body">
+		<form class="form-horizontal" role="form">
+		  <div class="form-group">
+			  <div class="col-sm-12">
+			  <div class="row">
+				<div class="col-sm-6">Select a search:</div>
+				<div class="col-sm-6">
+					<select name="{{task_param.id}}_search" class="form-control">
+						{% for search in searches %}
+							<option value="{{search.id}}">{{search.description}}</option>
+						{% endfor %}
+					</select>
+				</div>
+			  </div>
+
+			  <div class="row">
+				<div class="col-sm-6">Select field:</div>
+				<div class="col-sm-6">
+                    <select name="{{task_param.id}}_field" class="form-control">
+                        {% for field in fields %}
+                            <option value="{{field.data}}">{{field.label}}</option>
+                        {% endfor %}
+                    </select>
+				</div>
+			  </div>
+
+                <div class="row">
+                    <div class="col-sm-6">Feature Extraction:</div>
+                    <div class="col-sm-6">
+                        <select name="{{task_param.id}}_extractor_opt" class="form-control">
+                            {%  for extractor_opt in train_tagger_extractor_opt_list %}
+                                <option value="{{ extractor_opt.index }}">{{ extractor_opt.label }}</option>
+                            {%  endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">Dimension Reduction:</div>
+                    <div class="col-sm-6">
+                        <select name="{{task_param.id}}_reductor_opt" class="form-control">
+                            {%  for reductor_opt in train_tagger_reductor_opt_list %}
+                                <option value="{{ reductor_opt.index }}">{{ reductor_opt.label }}</option>
+                            {%  endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">Normalization:</div>
+                    <div class="col-sm-6">
+                        <select name="{{task_param.id}}_normalizer_opt" class="form-control">
+                            {%  for normalizer_opt in train_tagger_normalizer_opt_list %}
+                                <option value="{{ normalizer_opt.index }}">{{ normalizer_opt.label }}</option>
+                            {%  endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">Classifier:</div>
+                    <div class="col-sm-6">
+                        <select name="{{task_param.id}}_classifier_opt" class="form-control">
+                            {%  for classifier_opt in train_tagger_classifier_opt_list %}
+                                <option value="{{ classifier_opt.index }}">{{ classifier_opt.label }}</option>
+                            {%  endfor %}
+                        </select>
+                    </div>
+                </div>
+              <div class="row">
+				<div class="col-sm-6">Description:</div>
+				<div class="col-sm-6">
+				  <input name="{{task_param.id}}_description" class="form-control input-sm">
+				</div>
+			  </div>
+
+			  <div class="row">
+				<div class="col-sm-12">
+				  <button type="button" onclick="javascript:start_task('{{task_param.id}}');" class="btn btn-default form-control"><span class="glyphicon glyphicon-ok"></span> Start task</button>
+				</div>
+			  </div>				  
+		  </div>
+		</form>
+		</div>
+	  </div>
+	</div>

@@ -38,6 +38,9 @@ class Highlighter(object):
     def highlight(self, original_text, highlight_data, tagged_text=None):
         """highlight_data = [{'spans': [[1,7],[25,36]], 'name': 'LOC', 'value': '5', 'category': '[fact]', 'color': '#ababab'}]
         """
+        
+        original_text = str(original_text)
+        
         if tagged_text:
             if self._derive_spans:
                 alignment = [char_idx for char_idx in range(len(original_text))]
@@ -85,6 +88,7 @@ class Highlighter(object):
             index_discount += start_tag_end - start_tag_index
             span_data = self._extract_span_data(tagged_text[start_tag_index + 5:start_tag_end - 1].strip(),
                                                 [[start_tag_end - index_discount, span_end - index_discount]])
+            
             if span_data:
                 highlight_data.append(span_data)
 

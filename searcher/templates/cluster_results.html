@@ -27,7 +27,7 @@
 <div class="col-lg-10 tab-content">
 	{% for cluster in clusters %}
 		<div id="cluster_{{cluster.id}}" class="tab-pane fade in {% if forloop.counter == 1 %}active{% endif %}">
-			<table class="table table-striped">
+			<table id="cluster_table" class="table table-striped">
 				<thead>
 					<tr>
 						<th>Nr</th>
@@ -46,3 +46,7 @@
 		</div>
 	{% endfor %}
 </div>
+
+<script>
+	$("#cluster_table").colResizable({minWidth:50});
+</script>

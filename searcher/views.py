@@ -3,6 +3,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 import calendar
 from collections import Counter
+import logging
 
 import platform
 if platform.system() == 'Windows':
@@ -25,7 +26,7 @@ from django.http import HttpResponse, StreamingHttpResponse
 from django.template import loader
 from django.utils.encoding import smart_str
 
-from lm.models import Lexicon,Word
+from lexicon_miner.models import Lexicon,Word
 from conceptualiser.models import Term, TermConcept
 from searcher.models import Search
 from permission_admin.models import Dataset
@@ -37,8 +38,11 @@ from .cluster_manager import ClusterManager
 from .fact_manager import FactManager
 from utils.highlighter import Highlighter, ColorPicker
 from utils.autocomplete import Autocomplete
+from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
+from task_manager.views import task_params
+from task_manager.models import Task
 
-from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links
+from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER
 
 from searcher.view_functions.export_pages import export_pages
 from searcher.view_functions.tranlist_highlighting import transliterate_highlight_spans, highlight_transliterately
@@ -56,6 +60,15 @@ def ngrams(input_list, n):
 
 def convert_date(date_string,frmt):
     return datetime.strptime(date_string,frmt).date()
+
+
+def collect_map_entries(map_):
+    entries = []
+    for key, value in map_.items():
+        value['key'] = key
+        entries.append(value)
+
+    return entries
 
 
 def get_fields(es_m):
@@ -112,12 +125,30 @@ def index(request):
     es_m = ds.build_manager(ES_Manager)
     fields = get_fields(es_m)
 
-    template_params = {'STATIC_URL': STATIC_URL,
+    datasets = Datasets().get_allowed_datasets(request.user)
+    language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
+    
+    preprocessors = collect_map_entries(preprocessor_map)
+    enabled_preprocessors = [preprocessor for preprocessor in preprocessors]
+
+    # Hide fact graph if no facts_str_val is present in fields
+    display_fact_graph = 'hidden'
+    for i in fields:
+        if json.loads(i['data'])['type'] == "fact_str_val":
+            display_fact_graph = ''
+            break
+
+    template_params = {'display_fact_graph': display_fact_graph,
+                       'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'fields': fields,
                        'searches': Search.objects.filter(author=request.user),
                        'lexicons': Lexicon.objects.all().filter(author=request.user),
-                       'dataset': ds.get_index()}
+                       'dataset': ds.get_index(),
+                       'language_models': language_models, 
+                       'allowed_datasets': datasets,                       
+                       'enabled_preprocessors': enabled_preprocessors,
+                       'task_params': task_params}
 
     template = loader.get_template('searcher.html')
 
@@ -378,17 +409,10 @@ def highlight_cluster_keywords(documents, keywords, params):
             document = hl.highlight(document,to_highlighter)
             if 'show_short_version_cluster' in params.keys():
                 document = additional_option_cut_text(document, params['short_version_n_char_cluster'])
-                #print(document3 == document2)
             out.append(document)
         elif not 'show_unhighlighted' in params.keys():
             out.append(document)
 
-        #'short_version_n_char': ['5']
-        # if 'show_short_version_cluster' in params.keys():
-        #     #document_1 = document
-        #     document = additional_option_cut_text(document, params['short_version_n_char_cluster'])
-        #     #print(document == document_1)
-        # out.append(document)
     return out
 
 
@@ -422,17 +446,6 @@ def search(es_params, request):
                 highlight_config['fields'][f] = {"number_of_fragments": 0}
         es_m.set_query_parameter('highlight', highlight_config)
         response = es_m.search()
-
-        """
-        # Get the ids of all documents to be presented in the results page
-        doc_hit_ids = []
-        for hit in response['hits']['hits']:
-            hit_id = str(hit['_id'])
-            doc_hit_ids.append(hit_id)
-        # Use the doc_ids to restrict the facts search (fast!)
-        facts_map = es_m.get_facts_map(doc_ids=doc_hit_ids)
-        facts_highlight = facts_map['include']
-        """
 
         out['iTotalRecords'] = response['hits']['total']
         out['iTotalDisplayRecords'] = response['hits']['total'] # number of docs
@@ -556,9 +569,12 @@ def search(es_params, request):
         return out
 
     except Exception as e:
+        #logging.getLogger(ERROR_LOGGER).error(json.dumps({'process': 'SEARCH DOCUMENTS', 'event': 'documents_queried_failed'}), exc_info=True)
+
+        #logger.e
         print('-- Exception[{0}] {1}'.format(__name__, e))
-        logger.set_context('user_name', request.user.username)
-        logger.exception('documents_queried_failed')
+        #logger.set_context('user_name', request.user.username)
+        #logger.error('documents_queried_failed')
 
         out = {'column_names': [], 'aaData': [], 'iTotalRecords': 0, 'iTotalDisplayRecords': 0, 'lag': 0}
         return out
@@ -569,6 +585,9 @@ def additional_option_cut_text(content, window_size):
     
     if not content:
         return ''
+    
+    if not isinstance(content, str):
+        return content
 
     if '[HL]' in content:
         soup = bs4.BeautifulSoup(content,'lxml')
@@ -622,9 +641,10 @@ def remove_by_query(request):
     return HttpResponse(True)
 
 
-def remove_worker(es_m,dummy):
+def remove_worker(es_m, dummy):
     response = es_m.delete()
     # TODO: add logging
+
 
 @login_required
 def aggregate(request):
@@ -632,13 +652,27 @@ def aggregate(request):
     data = agg_m.output_to_searcher()
     return HttpResponse(json.dumps(data))
 
+
 @login_required
-def delete_fact(request):
+def delete_facts(request):
     fact_m = FactManager(request)
-    fact_m.remove_facts_from_document()
+    Process(target=fact_m.remove_facts_from_document, args=(dict(request.POST),)).start()
 
     return HttpResponse()
 
+@login_required
+def tag_documents(request):
+    """Add a fact to documents with given name and value
+       via Search > Actions > Tag results
+    """
+    tag_name = request.POST['tag_name']
+    tag_value = request.POST['tag_value']
+    tag_field = request.POST['tag_field']
+    es_params = request.POST
+
+    fact_m = FactManager(request)
+    fact_m.tag_documents_with_fact(es_params, tag_name, tag_value, tag_field)
+    return HttpResponse()
 
 def _get_facts_agg_count(es_m, facts):
     counts = {}
@@ -934,3 +968,24 @@ def _extract_fact_val_constraint(raw_constraint):
         'field': field,
         'sub_constraints': sub_constraints
     }
+
+@login_required
+def fact_graph(request):
+
+    search_size = int(request.POST['fact_graph_size'])
+
+    fact_m = FactManager(request)
+    graph_data, fact_names, max_node_size, max_link_size, min_node_size = fact_m.fact_graph(search_size)
+
+    template_params = {'STATIC_URL': STATIC_URL,
+                       'URL_PREFIX': URL_PREFIX,
+                       'search_id': 1,
+                       'searches': Search.objects.filter(author=request.user),
+                       'graph_data': graph_data,
+                       'max_node_size': max_node_size,
+                       'max_link_size': max_link_size,
+                       'min_node_size': min_node_size,
+                       'fact_names': fact_names}
+    template = loader.get_template('fact_graph_results.html')
+    return HttpResponse(template.render(template_params, request))
+

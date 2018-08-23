@@ -45,5 +45,4 @@ class DocumentPreprocessor(object):
 
             documents = list(map(DocumentPreprocessor.convert_to_utf8, documents))
             documents = preprocessor.transform(documents, **kwargs)
-
         return documents

@@ -13,11 +13,13 @@ urlpatterns = [
     url(r'aggregate', views.aggregate, name='aggregate'),
     url(r'save', views.save, name='save'),
     url(r'delete$', views.delete, name='delete'),
-    url(r'delete_fact$', views.delete_fact, name='delete_fact'),
+    url(r'delete_facts$', views.delete_facts, name='delete_facts'),
+    url(r'tag_documents$', views.tag_documents, name='tag_documents'),
     url(r'autocomplete', views.autocomplete, name='autocomplete'),
     url(r'listing', views.get_saved_searches, name='get_saved_searches'),
     url(r'table_content', views.get_table_content, name='get_table_content'),
     url(r'table_header', views.get_table_header, name='get_table_header'),
     url(r'export', views.export_pages, name='export_pages'),
     url(r'get_srch_query', views.get_search_query, name='get_search_query'),
+    url(r'fact_graph$', views.fact_graph, name='fact_graph')
 ]

@@ -32,257 +32,254 @@ ARCHIVE_FORMATS = set(extractor_map)
 
 
 class DatasetImporter(object):
-	"""The class behind importing. The functions in this module that are not methods in this class is due to the Python 2.7's
-	limited capability of serializing class methods. In Python 3.x, they should end up in this class.
-	"""
+    """The class behind importing. The functions in this module that are not methods in this class is due to the Python 2.7's
+    limited capability of serializing class methods. In Python 3.x, they should end up in this class.
+    """
 
-	def __init__(self, es_url, configuration, data_access_object, file_system_storer):
-		"""
-		:param es_url: Elasticsearch instance's URL.
-		:param configuration: DATASET_IMPORTER dict from texta/settings.py, which includes necessary parameters for importer.
-		:param data_access_object: An attempt to separate Django's DatasetImport model object from import to reduce coupling and enhance testing.
-		:param file_system_storer: Same as above. Django's built-in FileSystemStorage for storing data from requests to disk.
-		:type es_url: string
-		:type configuration: dict
-		"""
-		self._es_url = es_url
+    def __init__(self, es_url, configuration, data_access_object, file_system_storer):
+        """
+        :param es_url: Elasticsearch instance's URL.
+        :param configuration: DATASET_IMPORTER dict from texta/settings.py, which includes necessary parameters for importer.
+        :param data_access_object: An attempt to separate Django's DatasetImport model object from import to reduce coupling and enhance testing.
+        :param file_system_storer: Same as above. Django's built-in FileSystemStorage for storing data from requests to disk.
+        :type es_url: string
+        :type configuration: dict
+        """
+        self._es_url = es_url
 
-		self._root_directory = configuration['directory']
-		self._n_processes = configuration['import_processes']
-		self._process_batch_size = configuration['process_batch_size']
-		self._index_sqlite_path = configuration['sync']['index_sqlite_path']
+        self._root_directory = configuration['directory']
+        self._n_processes = configuration['import_processes']
+        self._process_batch_size = configuration['process_batch_size']
+        self._index_sqlite_path = configuration['sync']['index_sqlite_path']
 
-		self._dao = data_access_object
-		self._file_system_storer = file_system_storer
+        self._dao = data_access_object
+        self._file_system_storer = file_system_storer
 
-		self._active_import_jobs = {}
+        self._active_import_jobs = {}
 
-	def import_dataset(self, request):
-		"""Performs a dataset import session with all of the workflow - data acquisition, extraction, reading,
-		preprocessing, and storing.
+    def import_dataset(self, request):
+        """Performs a dataset import session with all of the workflow - data acquisition, extraction, reading,
+        preprocessing, and storing.
 
-		:param request: Django request
-		"""
-		self._validate_request(request)
+        :param request: Django request
+        """
+        self._validate_request(request)
 
-		parameters = self.django_request_to_import_parameters(request.POST)
-		parameters = self._preprocess_import(parameters, request.user, request.FILES)
+        parameters = self.django_request_to_import_parameters(request.POST)
+        parameters = self._preprocess_import(parameters, request.user, request.FILES)
 
-		process = Process(target=_import_dataset, args=(parameters, self._n_processes, self._process_batch_size)).start()
+        process = Process(target=_import_dataset, args=(parameters, self._n_processes, self._process_batch_size)).start()
+        # process = None
+        # _import_dataset(parameters, n_processes=self._n_processes, process_batch_size=self._process_batch_size)
 
-		self._active_import_jobs[parameters['import_id']] = {
-			'process':    process,
-			'parameters': parameters
-		}
+        self._active_import_jobs[parameters['import_id']] = {
+            'process': process,
+            'parameters': parameters
+        }
 
-	def reimport(self, parameters):
-		"""import_dataset's equivalent without the Django request validation and transformation to Importer's parameter dict.
-		Used mostly by Syncer or if reimport is added to GUI.
+    def reimport(self, parameters):
+        """import_dataset's equivalent without the Django request validation and transformation to Importer's parameter dict.
+        Used mostly by Syncer or if reimport is added to GUI.
 
-		:param parameters: Dataset Importer parameters which have been validated during a previous run.
-		:type parameters: dict
-		"""
-		parameters = self._preprocess_reimport(parameters=parameters)
-		Process(target=_import_dataset, args=(parameters, self._n_processes, self._process_batch_size)).start()
+        :param parameters: Dataset Importer parameters which have been validated during a previous run.
+        :type parameters: dict
+        """
+        parameters = self._preprocess_reimport(parameters=parameters)
+        Process(target=_import_dataset, args=(parameters, self._n_processes, self._process_batch_size)).start()
+        # _import_dataset(parameters, n_processes=self._n_processes, process_batch_size=self._process_batch_size)
 
-	# _import_dataset(parameters, n_processes=self._n_processes, process_batch_size=self._process_batch_size)
+    def cancel_import_job(self, import_id):
+        """Cancels an active import job.
 
-	def cancel_import_job(self, import_id):
-		"""Cancels an active import job.
+        :param import_id: ID of the cancelled job.
+        :type import_id: int or string holding an int
+        """
+        import_dict = self._active_import_jobs.get(int(import_id), None)
 
-		:param import_id: ID of the cancelled job.
-		:type import_id: int or string holding an int
-		"""
-		import_dict = self._active_import_jobs.get(int(import_id), None)
+        if import_dict:
+            import_process = import_dict.get('process', None)
+            if import_process:
+                import_process.terminate()
 
-		if import_dict:
-			import_process = import_dict.get('process', None)
-			if import_process:
-				import_process.terminate()
+            if import_dict['is_local'] is False:
+                shutil.rmtree(import_dict['directory'])
 
-			if import_dict['is_local'] is False:
-				shutil.rmtree(import_dict['directory'])
+        try:
+            dataset_import = self._dao.objects.get(pk=import_id)
+            dataset_import.finished = True
+            dataset_import.status = 'Cancelled'
+            dataset_import.save()
+        except:
+            pass
 
-		try:
-			dataset_import = self._dao.objects.get(pk=import_id)
-			dataset_import.finished = True
-			dataset_import.status = 'Cancelled'
-			dataset_import.save()
-		except Exception:
-			logging.getLogger(settings.ERROR_LOGGER).exception("Could not save to Django DB.")
+    def _preprocess_import(self, parameters, request_user, files_dict):
+        """Alters parameters to meet importer's needs.
 
-	def _preprocess_import(self, parameters, request_user, files_dict):
-		"""Alters parameters to meet importer's needs.
+        :param parameters: initial request parameters.
+        :param request_user: Django user, who initiated the request.
+        :param files_dict: request files.
+        :type parameters: dict
+        :return: aletered parameters
+        :rtype: dict
+        """
+        parameters['formats'] = json.loads(parameters.get('formats', '[]'))
+        parameters['preprocessors'] = json.loads(parameters.get('preprocessors', '[]'))
+        parameters['is_local'] = True if parameters.get('host_directory', None) else False
+        parameters['keep_synchronized'] = self._determine_if_should_synchronize(parameters=parameters)
+        parameters['remove_existing_dataset'] = True if parameters.get('remove_existing_dataset', 'false') == 'true' else False
+        parameters['storer'] = 'elastic'
 
-		:param parameters: initial request parameters.
-		:param request_user: Django user, who initiated the request.
-		:param files_dict: request files.
-		:type parameters: dict
-		:return: aletered parameters
-		:rtype: dict
-		"""
-		parameters['formats'] = json.loads(parameters.get('formats', '[]'))
-		parameters['preprocessors'] = json.loads(parameters.get('preprocessors', '[]'))
-		parameters['is_local'] = True if parameters.get('host_directory', None) else False
-		parameters['keep_synchronized'] = self._determine_if_should_synchronize(parameters=parameters)
-		parameters['remove_existing_dataset'] = True if parameters.get('remove_existing_dataset', 'false') == 'true' else False
-		parameters['storer'] = 'elastic'
+        self._separate_archive_and_reader_formats(parameters)
 
-		parameters['archives'], parameters['formats'] = self._separate_archive_and_reader_formats(parameters)
+        parameters['directory'] = self._prepare_import_directory(
+            root_directory=self._root_directory,
+            source_directory=parameters.get('host_directory', None)
+        )
 
-		parameters['directory'] = self._prepare_import_directory(
-			root_directory=self._root_directory,
-			source_directory=parameters.get('host_directory', None)
-		)
+        if any(format not in DAEMON_BASED_DATABASE_FORMATS for format in parameters['formats']):
+            if 'file' in files_dict and parameters.get('is_local', False) is False:
+                parameters['file_path'] = self._store_file(os.path.join(parameters['directory'], files_dict['file'].name), files_dict['file'])
 
-		if any(format not in DAEMON_BASED_DATABASE_FORMATS for format in parameters['formats']):
-			if 'file' in files_dict and parameters.get('is_local', False) is False:
-				parameters['file_path'] = self._store_file(
-					os.path.join(parameters['directory'], files_dict['file'].name),
-					files_dict['file'])
+        parameters['import_id'] = self._create_dataset_import(parameters, request_user)
 
-		parameters['import_id'] = self._create_dataset_import(parameters, request_user)
+        parameters['texta_elastic_url'] = self._es_url
+        parameters['index_sqlite_path'] = self._index_sqlite_path
 
-		parameters['texta_elastic_url'] = self._es_url
-		parameters['index_sqlite_path'] = self._index_sqlite_path
+        return parameters
 
-		return parameters
+    def _separate_archive_and_reader_formats(self, parameters):
+        """Splits initial formats to archives and formats to reduce the complexity for later processes.
 
-	def _separate_archive_and_reader_formats(self, parameters):
-		"""Splits initial formats to archives and formats to reduce the complexity for later processes.
+        :param parameters: dataset import's parameters.
+        :type parameters: dict
+        """
+        parameters['archives'] = []
+        reader_formats = []
+        for format in parameters['formats']:
+            if format in ARCHIVE_FORMATS:
+                parameters['archives'].append(format)
+            else:
+                reader_formats.append(format)
 
-		:param parameters: dataset import's parameters.
-		:type parameters: dict
-		"""
-		archives = []
-		reader_formats = []
+        parameters['formats'] = reader_formats
 
-		for file_type in parameters['formats']:
-			if file_type in ARCHIVE_FORMATS:
-				archives.append(file_type)
-			else:
-				reader_formats.append(file_type)
+    def _preprocess_reimport(self, parameters):
+        """Reimport's alternative to _preprocess_import. Most of the necessary alterations have been done by _preprocess_import
+        during some previous import session.
 
-		return archives, reader_formats
+        :param parameters: previously altered parameters.
+        :return: altered parameters for current session.
+        """
+        parameters['directory'] = self._prepare_import_directory(self._root_directory)
 
-	def _preprocess_reimport(self, parameters):
-		"""Reimport's alternative to _preprocess_import. Most of the necessary alterations have been done by _preprocess_import
-		during some previous import session.
+        return parameters
 
-		:param parameters: previously altered parameters.
-		:return: altered parameters for current session.
-		"""
-		parameters['directory'] = self._prepare_import_directory(self._root_directory)
+    def django_request_to_import_parameters(self, post_request_dict):
+        """Convert Django's Request to dict suitable for Dataset Importer.
 
-		return parameters
+        :param post_request_dict: Django's request.POST
+        :return: dict corresponding to post_request_dict
+        :rtype: dict
+        """
+        return {key: (value if not isinstance(value, list) else value[0]) for key, value in post_request_dict.items()}
 
-	def django_request_to_import_parameters(self, post_request_dict):
-		"""Convert Django's Request to dict suitable for Dataset Importer.
+    def _validate_request(self, request):
+        """Request validation procedure.
 
-		:param post_request_dict: Django's request.POST
-		:return: dict corresponding to post_request_dict
-		:rtype: dict
-		"""
-		return {key: (value if not isinstance(value, list) else value[0]) for key, value in post_request_dict.items()}
+        :param request: Django's Request.
+        :raises: Exception, if parameters are invalid.
+        """
+        if 'file' not in request.FILES and 'url' not in request.POST or request.POST.get('is_local', False) is False:
+            # raise Exception('Import failed.')
+            pass
 
-	def _validate_request(self, request):
-		"""Request validation procedure.
+    def _determine_if_should_synchronize(self, parameters):
+        """Secondary synchronization validation in case some parameters are in conflict with synchronization.
 
-		:param request: Django's Request.
-		:raises: Exception, if parameters are invalid.
-		"""
-		if 'file' not in request.FILES and 'url' not in request.POST or request.POST.get('is_local', False) is False:
-			# raise Exception('Import failed.')
-			pass
+        :param parameters: preprocessed paramters.
+        :return: True, if synchronization is viable based on the parameters, False otherwise.
+        """
+        if parameters.get('keep_synchronized', 'false') == 'true':
+            if parameters.get('is_local', False) is True:
+                return True
+            elif parameters.get('url', None):
+                return True
+            elif all(format in DAEMON_BASED_DATABASE_FORMATS for format in parameters.get('format', [])): # OR should sync syncables?
+                return True
+            else:
+                return False
+        else:
+            return False
 
-	def _determine_if_should_synchronize(self, parameters):
-		"""Secondary synchronization validation in case some parameters are in conflict with synchronization.
+    def _create_dataset_import(self, parameters, request_user):
+        """Adds a new dataset import entry to database using data access object.
 
-		:param parameters: preprocessed paramters.
-		:return: True, if synchronization is viable based on the parameters, False otherwise.
-		"""
-		if parameters.get('keep_synchronized', 'false') == 'true':
-			if parameters.get('is_local', False) is True:
-				return True
-			elif parameters.get('url', None):
-				return True
-			elif all(format in DAEMON_BASED_DATABASE_FORMATS for format in parameters.get('format', [])):  # OR should sync syncables?
-				return True
-			else:
-				return False
-		else:
-			return False
+        :param parameters: dataset import parameters.
+        :param request_user: Django user who initiated the request.
+        :type parameters: dict
+        :return: dataset ID of the added dataset import entry
+        :rtype: int
+        """
+        dataset_import = self._dao.objects.create(
+            source_type=self._get_source_type(parameters.get('format', ''), parameters.get('archive', '')),
+            source_name=self._get_source_name(parameters),
+            elastic_index=parameters.get('texta_elastic_index', ''), elastic_mapping=parameters.get('texta_elastic_mapping', ''),
+            start_time=datetime.now(), end_time=None, user=request_user, status='Processing', finished=False,
+            must_sync=parameters.get('keep_synchronized', False)
+        )
+        dataset_import.save()
 
-	def _create_dataset_import(self, parameters, request_user):
-		"""Adds a new dataset import entry to database using data access object.
+        return dataset_import.pk
 
-		:param parameters: dataset import parameters.
-		:param request_user: Django user who initiated the request.
-		:type parameters: dict
-		:return: dataset ID of the added dataset import entry
-		:rtype: int
-		"""
-		dataset_import = self._dao.objects.create(
-			source_type=self._get_source_type(parameters.get('format', ''), parameters.get('archive', '')),
-			source_name=self._get_source_name(parameters),
-			elastic_index=parameters.get('texta_elastic_index', ''),
-			elastic_mapping=parameters.get('texta_elastic_mapping', ''),
-			start_time=datetime.now(), end_time=None, user=request_user, status='Processing', finished=False,
-			must_sync=parameters.get('keep_synchronized', False)
-		)
-		dataset_import.save()
+    def _prepare_import_directory(self, root_directory, source_directory=None):
+        """Creates a 'temporary' directory for storing import data. Doesn't use native temporary solution due to
+        permission issues. If files are imported from a local directory, they are first copied the temporary directory.
 
-		return dataset_import.pk
+        :param root_directory: directory where to store subdirectories with dataset import data.
+        :param source_directory: local directory from where to copy the files. Optional.
+        :type root_directory: string
+        :type source_directory: string
+        :return: path to the import session's directory.
+        :rtype: string
+        """
+        temp_folder_name = str(int(time.time() * 1000000))
+        temp_folder_path = os.path.join(root_directory, temp_folder_name)
 
-	def _prepare_import_directory(self, root_directory, source_directory=None):
-		"""Creates a 'temporary' directory for storing import data. Doesn't use native temporary solution due to
-		permission issues. If files are imported from a local directory, they are first copied the temporary directory.
+        if source_directory:
+            shutil.copytree(src=source_directory, dst=temp_folder_path)
+        else:
+            os.makedirs(temp_folder_path)
 
-		:param root_directory: directory where to store subdirectories with dataset import data.
-		:param source_directory: local directory from where to copy the files. Optional.
-		:type root_directory: string
-		:type source_directory: string
-		:return: path to the import session's directory.
-		:rtype: string
-		"""
-		temp_folder_name = str(int(time.time() * 1000000))
-		temp_folder_path = os.path.join(root_directory, temp_folder_name)
+        return temp_folder_path
 
-		if source_directory:
-			shutil.copytree(src=source_directory, dst=temp_folder_path)
-		else:
-			os.makedirs(temp_folder_path)
+    def _store_file(self, file_name, file_content):
+        """Stores file to disk.
 
-		return temp_folder_path
+        :param file_name: name of the file
+        :param file_content: binary content of the file
+        :type file_name: string
+        :type file_content: binary string
+        :return: path to the stored file
+        """
+        fs = self._file_system_storer(location=self._root_directory)
+        file_name = fs.save(file_name, file_content)
+        return fs.path(file_name)
 
-	def _store_file(self, file_name, file_content):
-		"""Stores file to disk.
+    def _get_source_type(self, format, archive):
+        source_type_parts = [format]
+        if archive:
+            source_type_parts.append('|')
+            source_type_parts.append(archive)
 
-		:param file_name: name of the file
-		:param file_content: binary content of the file
-		:type file_name: string
-		:type file_content: binary string
-		:return: path to the stored file
-		"""
-		fs = self._file_system_storer(location=self._root_directory)
-		file_name = fs.save(file_name, file_content)
-		return fs.path(file_name)
+        return ''.join(source_type_parts)
 
-	def _get_source_type(self, format, archive):
-		source_type_parts = [format]
-		if archive:
-			source_type_parts.append('|')
-			source_type_parts.append(archive)
-
-		return ''.join(source_type_parts)
-
-	def _get_source_name(self, parameters):
-		if 'file_path' in parameters:
-			return os.path.basename(parameters['file_path'])
-		elif 'url' in parameters:
-			return parameters['url']
-		else:
-			return ''
+    def _get_source_name(self, parameters):
+        if 'file_path' in parameters:
+            return os.path.basename(parameters['file_path'])
+        elif 'url' in parameters:
+            return parameters['url']
+        else:
+            return ''
 
 
 def _import_dataset(parameter_dict, n_processes, process_batch_size):

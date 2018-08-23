@@ -78,7 +78,6 @@ function importDataset() {
                 clearInterval(refreshId);
             }
             $('#jobs-table-div').load('reload_table');
-            //console.log('refreshed');
         }, 5000);
     }
 }
@@ -141,11 +140,9 @@ function displaySelectedFormatsNames(selectTag) {
     var parameterNames = [];
 
     checkedFormats.each(function() {
-        console.log($(this));
         parameterNames.push($(this).text());
     });
 
-    console.log(parameterNames);
     $('#selected-data-formats-list').html(parameterNames.join(', '));
 
     return parameterNames;
