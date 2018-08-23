@@ -200,8 +200,7 @@ def commit(request):
 
 @login_required
 def start_mapping_job(request):
-    # Process(target=find_mappings,args=(request,)).start()
-    find_mappings(request)
+    Process(target=find_mappings,args=(request,)).start()
     return HttpResponse()
 
 def flatten(container):
