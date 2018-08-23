@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import requests
+import logging
 import json
+
+from django.conf import settings
 
 
 class MlpPreprocessor(object):
@@ -36,15 +39,19 @@ class MlpPreprocessor(object):
         input_features = json.loads(kwargs['mlp_preprocessor_input_features'])
 
         for input_feature in input_features:
+
+            texts = [document[input_feature] for document in documents if input_feature in document]
+            data = {'texts': json.dumps(texts, ensure_ascii=False), 'doc_path': 'mlp_' + input_feature}
+
             try:
-                texts = [document[input_feature].decode() for document in documents if input_feature in document]
-            except AttributeError:
-                texts = [document[input_feature] for document in documents if input_feature in document]
-                
-            data = {'texts': json.dumps(texts, ensure_ascii=False), 'doc_path': 'mlp_'+input_feature}
-            try:
-                analyzation_data = requests.post(self._mlp_url, data=data).json()
-            except:
+                data = requests.post(self._mlp_url, data=data)
+                analyzation_data = data.json()
+
+            except Exception:
+                logging.getLogger(settings.ERROR_LOGGER).exception('Failed to parse MLP response', extra={
+                    'mlp_response': data.text
+                })
+
                 raise Exception()
 
             for analyzation_idx, analyzation_datum in enumerate(analyzation_data):
@@ -62,7 +69,7 @@ class MlpPreprocessor(object):
 
 
 if __name__ == '__main__':
-    mlp_processor = MlpPreprocessor('http://10.6.6.92/mlp/process')
+    mlp_processor = MlpPreprocessor(settings.DATASET_IMPORTER['urls'])
     docs = [{'text': u'Mina olen väga ilus.'}, {'text': u'Little cute donkey watched as little girl ate.'}]
     mlp_processor.transform(docs, **{'feature_map': {'text': 'tekst', 'lang': 'keel'}})
 

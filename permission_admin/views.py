@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from django.urls import reverse # NEW PY REQUIREMENT
+from django.urls import reverse  # NEW PY REQUIREMENT
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.core.files.storage import default_storage
@@ -22,6 +22,7 @@ import os
 import shutil
 
 import pdb
+
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -63,16 +64,16 @@ def delete_dataset(request):
 @user_passes_test(lambda u: u.is_superuser)
 def delete_index(request):
     index_to_delete = request.POST['index']
-    index_name = Dataset.objects.get(pk = index_to_delete).index
-    
+    index_name = Dataset.objects.get(pk=index_to_delete).index
+
     remove_dataset(index_to_delete)
     es_m = ES_Manager.delete_index(index_name)
-    
+
     return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
 
 
 def remove_dataset(index_to_delete):
-    index_to_delete = Dataset.objects.get(pk = index_to_delete)
+    index_to_delete = Dataset.objects.get(pk=index_to_delete)
 
     content_type = ContentType.objects.get_for_model(Dataset)
     Permission.objects.get(
@@ -88,22 +89,21 @@ def remove_dataset(index_to_delete):
 @user_passes_test(lambda u: u.is_superuser)
 def open_close_dataset(request):
     dataset_id = request.POST['dataset_id']
-    dataset = Dataset.objects.get(pk = dataset_id)
+    dataset = Dataset.objects.get(pk=dataset_id)
 
     if request.POST['open_close'] == 'open':
         ES_Manager.open_index(dataset.index)
     else:
         ES_Manager.close_index(dataset.index)
-    
+
     return HttpResponse()
-    
 
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def index(request):
     indices = ES_Manager.get_indices()
-    indices = sorted(indices, key=lambda x: x['index']) #sort alphabetically
+    indices = sorted(indices, key=lambda x: x['index'])  # sort alphabetically
     datasets = get_datasets(indices=indices)
     users = User.objects.all()
 
@@ -111,7 +111,10 @@ def index(request):
 
     template = loader.get_template('permission_admin.html')
 
-    return HttpResponse(template.render({'users':users,'datasets':datasets,'indices':indices,'STATIC_URL':STATIC_URL,'URL_PREFIX':URL_PREFIX},request))
+    return HttpResponse(template.render(
+        {'users': users, 'datasets': datasets, 'indices': indices, 'STATIC_URL': STATIC_URL, 'URL_PREFIX': URL_PREFIX},
+        request))
+
 
 def annotate_users_with_permissions(users, datasets):
     new_users = []
@@ -119,8 +122,7 @@ def annotate_users_with_permissions(users, datasets):
     content_type = ContentType.objects.get_for_model(Dataset)
 
     for user in users:
-        new_user = {key: getattr(user, key) for key in
-                    ['pk', 'username', 'email', 'last_login', 'is_superuser', 'is_active']}
+        new_user = {key: getattr(user, key) for key in ['pk', 'username', 'email', 'last_login', 'is_superuser', 'is_active']}
 
         permissions = []
         restrictions = []
@@ -130,6 +132,7 @@ def annotate_users_with_permissions(users, datasets):
                 codename='can_access_dataset_' + str(dataset.pk),
                 content_type=content_type
             )
+
             # permission.name[19:] skips prefix "Can access dataset " to save room in GUI
             if user.has_perm('permission_admin.' + permission.codename):
                 permissions.append({'codename': permission.codename, 'name': permission.name[19:]})
@@ -143,6 +146,7 @@ def annotate_users_with_permissions(users, datasets):
 
     return new_users
 
+
 def get_datasets(indices=None):
     datasets = Dataset.objects.all()
     datasets_out = []
@@ -154,7 +158,6 @@ def get_datasets(indices=None):
                     ds_out['status'] = index['status']
                     ds_out['docs_count'] = index['docs_count']
                     ds_out['store_size'] = index['store_size']
-    
 
         datasets_out.append(ds_out)
 
@@ -175,15 +178,15 @@ def change_isactive(request):
     user = User.objects.get(pk=int(user_id))
     user.is_active = is_active
     user.save()
-    
-    return HttpResponse()    
+
+    return HttpResponse()
 
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def delete_user(request):
     user_id_to_delete = request.POST['user_id']
-    user_to_delete = User.objects.get(pk = user_id_to_delete)
+    user_to_delete = User.objects.get(pk=user_id_to_delete)
     user_to_delete.delete()
     return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
 
@@ -201,17 +204,16 @@ def change_permissions(request):
 
     user = User.objects.get(pk=int(user_id))
     user.is_superuser = is_superuser
-    user.save()    
-        
-    return HttpResponse() 
+    user.save()
+
+    return HttpResponse()
+
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def get_mappings(request):
     index = request.GET['index']
     return HttpResponse(json.dumps(ES_Manager.get_mappings(index)))
-
-
 
 
 @login_required
@@ -235,13 +237,14 @@ def add_script_project(request):
 
     return HttpResponse()
 
+
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def list_script_projects(request):
     script_projects = ScriptProject.objects.all()
 
     template = loader.get_template('script_manager/project_list.html')
-    return HttpResponse(template.render({'projects':script_projects},request))
+    return HttpResponse(template.render({'projects': script_projects}, request))
 
 
 @login_required
@@ -256,8 +259,8 @@ def run_script_project(request):
 
     script_runner.run()
 
-    #project_daemon.daemon = True
-    #project_daemon.start()
+    # project_daemon.daemon = True
+    # project_daemon.start()
 
     return HttpResponse()
 
@@ -268,8 +271,9 @@ def delete_script_project(request):
     project_id = request.POST['project_id']
     script_project = ScriptProject.objects.get(pk=project_id)
 
-    project_path = os.path.join(SCRIPT_MANAGER_DIR, '%s_%s' % (str(script_project.id), canonize_project_name(script_project.name)))
-    #project_path = os.path.join(SCRIPT_MANAGER_DIR, canonize_project_name(script_project.name))
+    project_path = os.path.join(SCRIPT_MANAGER_DIR,
+                                '%s_%s' % (str(script_project.id), canonize_project_name(script_project.name)))
+    # project_path = os.path.join(SCRIPT_MANAGER_DIR, canonize_project_name(script_project.name))
 
     if os.path.exists(project_path):
         shutil.rmtree(project_path)
@@ -305,7 +309,6 @@ def update_dataset_permissions(request):
     return HttpResponse()
 
 
-
 def canonize_project_name(name):
     return name.lower().replace(' ', '_')
 
@@ -315,6 +318,7 @@ def _pickle_method(method):
     obj = method.__self__
     cls = method.__self__.__class__
     return _unpickle_method, (func_name, obj, cls)
+
 
 def _unpickle_method(func_name, obj, cls):
     for cls in cls.mro():
@@ -326,6 +330,8 @@ def _unpickle_method(func_name, obj, cls):
             break
     return func.__get__(obj, cls)
 
-import copyreg # NEW PY REQUIREMENT
+
+import copyreg  # NEW PY REQUIREMENT
 import types
-copyreg.pickle(types.MethodType, _pickle_method, _unpickle_method) # NEW PY REQUIREMENT
+
+copyreg.pickle(types.MethodType, _pickle_method, _unpickle_method)  # NEW PY REQUIREMENT
