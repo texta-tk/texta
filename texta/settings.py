@@ -284,6 +284,8 @@ es_ldap_password = os.getenv('TEXTA_LDAP_PASSWORD')
 #
 from dataset_importer.document_preprocessor.preprocessors.mlp import MlpPreprocessor
 
+
+
 DATASET_IMPORTER = {
 	'directory':          os.path.join(BASE_DIR, 'files', 'dataset_importer'),
 	'import_processes':   2,
@@ -295,13 +297,12 @@ DATASET_IMPORTER = {
 	},
 	
 	'urls': {
-		'mlp': 'http://10.6.6.92/mlp/process'
+		'mlp': 'http://127.0.0.1:5000/mlp/process'
 	}
+
 }
-
-
 if os.getenv('TEXTA_SERVER_TYPE') == 'docker':
-	DATASET_IMPORTER['urls']['mlp'] = 'http://texta-mlp:5000/mlp/process'
+	DATASET_IMPORTER['urls']['mlp'] = 'http://127.0.0.1:5000/mlp/process'
 
 if not os.path.exists(DATASET_IMPORTER['directory']):
 	os.makedirs(DATASET_IMPORTER['directory'])

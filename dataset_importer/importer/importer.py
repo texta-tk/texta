@@ -20,6 +20,7 @@ from multiprocessing.pool import ThreadPool as Pool
 from dataset_importer.models import DatasetImport
 from dataset_importer.syncer.SQLiteIndex import SQLiteIndex
 from dataset_importer.utils import HandleDatasetImportException
+from pprint import pprint
 
 if platform.system() == 'Windows':
 	from threading import Thread as Process
@@ -382,6 +383,7 @@ def _processing_job(documents, parameter_dict):
 
 		storer = DocumentStorer.get_storer(**parameter_dict)
 		stored_documents_count = storer.store(processed_documents)
+
 		if processed_documents:
 			with lock:
 				dataset_import = DatasetImport.objects.get(pk=parameter_dict['import_id'])

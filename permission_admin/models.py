@@ -6,13 +6,18 @@ from texta.settings import DATASET_ACCESS_DEFAULT
 MAX_INT_LEN = 10
 MAX_STR_LEN = 100
 
+
 class Dataset(models.Model):
     id = models.AutoField(primary_key=True)
     index = models.CharField(max_length=MAX_STR_LEN)
     mapping = models.CharField(max_length=MAX_STR_LEN)
-    author = models.ForeignKey(User, on_delete=models.CASCADE) # NEW PY REQUIREMENT
+    author = models.ForeignKey(User, on_delete=models.CASCADE)  # NEW PY REQUIREMENT
     daterange = models.TextField()
     access = models.CharField(default=DATASET_ACCESS_DEFAULT, max_length=7)
+
+    def __str__(self):
+        return 'Index: {0} by user {1}'.format(self.index, self.author.username)
+
 
 class ScriptProject(models.Model):
     id = models.AutoField(primary_key=True)
