@@ -1,6 +1,5 @@
 """This module contains most of the logic and workflow behind importing datasets.
 """
-
 import time
 import os
 import platform
@@ -18,9 +17,7 @@ from dataset_importer.archive_extractor.extractor import ArchiveExtractor, extra
 from threading import Lock
 from multiprocessing.pool import ThreadPool as Pool
 from dataset_importer.models import DatasetImport
-from dataset_importer.syncer.SQLiteIndex import SQLiteIndex
 from dataset_importer.utils import HandleDatasetImportException
-from pprint import pprint
 
 if platform.system() == 'Windows':
 	from threading import Thread as Process
