@@ -163,7 +163,7 @@ def save(request):
     try:
         q = combined_query
         desc = request.POST['search_description']
-        s_content = ' '.join([request.POST[x] for x in request.POST.keys() if 'match_txt' in x])
+        s_content = json.dumps([request.POST[x] for x in request.POST.keys() if 'match_txt' in x])
         search = Search(author=request.user,search_content=s_content,description=desc,dataset=Dataset.objects.get(pk=int(request.session['dataset'])),query=json.dumps(q))
         search.save()
         logger.set_context('user_name', request.user.username)
@@ -769,7 +769,8 @@ def get_search_query(request):
     query = json.loads(search.query)
     query_constraints = extract_constraints(query)
 	# For original search content such as unpacked lexicons/concepts
-    search_content = search.search_content.split(' ')
+    import pdb;pdb.set_trace()
+    search_content = json.loads(search.search_content)
     for i in range(len([x for x in query_constraints if x['constraint_type'] == 'string'])):
         query_constraints[i]['content'] = [search_content[i]]
 
