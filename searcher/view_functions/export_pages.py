@@ -60,37 +60,7 @@ def get_rows(es_params, request):
     hits = response['hits']['hits']
 
     while hits and left:
-        rows = []
-        for hit in hits:
-            row = []
-            for feature_name in features:
-                feature_path = feature_name.split('.')
-                parent_source = hit['_source']
-                for path_component in feature_path:
-                    if path_component in parent_source:
-                        parent_source = parent_source[path_component]
-                    else:
-                        parent_source = ""
-                        break
-
-                if feature_name == u'texta_facts':
-                    content = []
-                    facts = ['{ "'+x["fact"]+'": "'+x["str_val"]+'"}' for x in sorted(parent_source, key=lambda k: k['fact'])]
-                    fact_counts = Counter(facts)
-
-                    facts = list(set(facts))
-                    facts_dict = [json.loads(x) for x in facts]
-                    for i, d in enumerate(facts_dict):
-                        for k in d:
-                            if k not in content:
-                                content.append(k)
-                            content.append('    {}: {}'.format(d[k], fact_counts[facts[i]]))
-                    content = '\n'.join(content)
-                else:
-                    content = parent_source
-
-                row.append(content)
-            rows.append(row)
+        rows = process_hits(hits, features, write=False)
 
         if left > len(rows):
             for row in rows:
@@ -147,36 +117,7 @@ def get_all_rows(es_params, request):
     hits = response['hits']['hits']
 
     while hits:
-        for hit in hits:
-            row = []
-            for feature_name in features:
-                feature_path = feature_name.split('.')
-                parent_source = hit['_source']
-                for path_component in feature_path:
-                    if path_component in parent_source:
-                        parent_source = parent_source[path_component]
-                    else:
-                        parent_source = ""
-                        break
-
-                if feature_name == u'texta_facts':
-                    content = []
-                    facts = ['{ "'+x["fact"]+'": "'+x["str_val"]+'"}' for x in sorted(parent_source, key=lambda k: k['fact'])]
-                    fact_counts = Counter(facts)
-
-                    facts = list(set(facts))
-                    facts_dict = [json.loads(x) for x in facts]
-                    for i, d in enumerate(facts_dict):
-                        for k in d:
-                            if k not in content:
-                                content.append(k)
-                            content.append('    {}: {}'.format(d[k], fact_counts[facts[i]]))
-                    content = '\n'.join(content)
-                else:
-                    content = parent_source
-
-                row.append(content)
-            writer.writerow([element if isinstance(element,str) else element for element in row])
+        process_hits(hits, features, write=True, writer=writer)
 
         buffer_.seek(0)
         data = buffer_.read()
@@ -187,3 +128,49 @@ def get_all_rows(es_params, request):
         response = es_m.scroll(scroll_id=scroll_id)
         hits = response['hits']['hits']
         scroll_id = response['_scroll_id']
+
+
+def process_hits(hits, features, write=True, writer=None):
+    '''Loops over hits and process them.
+    In the end either write with a csvwriter or append to an array.
+    write - bool: True to write with csvwriter, False, to append to an array'''
+    if not write:
+        rows = []
+    for hit in hits:
+        row = []
+        for feature_name in features:
+            feature_path = feature_name.split('.')
+            parent_source = hit['_source']
+            for path_component in feature_path:
+                if path_component in parent_source:
+                    parent_source = parent_source[path_component]
+                else:
+                    parent_source = ""
+                    break
+
+            if feature_name == u'texta_facts':
+                content = []
+                facts = ['{ "'+x["fact"]+'": "'+x["str_val"]+'"}' for x in sorted(parent_source, key=lambda k: k['fact'])]
+                fact_counts = Counter(facts)
+
+                facts = list(set(facts))
+                facts_dict = [json.loads(x) for x in facts]
+                for i, d in enumerate(facts_dict):
+                    for k in d:
+                        if k not in content:
+                            content.append(k)
+                        content.append('    {}: {}'.format(d[k], fact_counts[facts[i]]))
+                content = '\n'.join(content)
+                content = '{}\n{}'.format(content, parent_source) # Append JSON format
+            else:
+                content = parent_source
+
+            row.append(content)
+        if not write:
+            rows.append(row)
+        elif write:
+            writer.writerow([element if isinstance(element,str) else element for element in row])
+
+    # If write, no need to return the writer
+    if not write:
+        return rows

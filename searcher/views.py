@@ -481,8 +481,9 @@ def search(es_params, request):
                         facts_dict = [json.loads(x) for x in facts]
                         for i, d in enumerate(facts_dict):
                             for k in d:
-                                if k not in new_content:
-                                    new_content.append(k)
+                                # Make factnames bold for searcher
+                                if '<b>'+k+'</b>' not in new_content:
+                                    new_content.append('<b>'+k+'</b>')
                                 new_content.append('    {}: {}'.format(d[k], fact_counts[facts[i]]))
                         content = '\n'.join(new_content)
                     else:
