@@ -33,7 +33,10 @@ class FactManager:
             for document in response['hits']['hits']:
                 new_field = []
                 for fact in document['_source'][self.field]:
-                    if fact['fact'] != self.key and fact['str_val'] != self.val:
+                    if fact['fact'] == self.key:
+                        if fact['str_val'] != self.val:
+                            new_field.append(fact)
+                    else:
                         new_field.append(fact)
 
                 # Update dataset
