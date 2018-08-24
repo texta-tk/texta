@@ -297,12 +297,12 @@ DATASET_IMPORTER = {
 	},
 	
 	'urls': {
-		'mlp': 'http://127.0.0.1:5000/mlp/process'
+		'mlp': 'http://10.6.6.92/mlp/process'
 	}
 
 }
 if os.getenv('TEXTA_SERVER_TYPE') == 'docker':
-	DATASET_IMPORTER['urls']['mlp'] = 'http://127.0.0.1:5000/mlp/process'
+	DATASET_IMPORTER['urls']['mlp'] = 'http://texta-mlp:5000/mlp/process'
 
 if not os.path.exists(DATASET_IMPORTER['directory']):
 	os.makedirs(DATASET_IMPORTER['directory'])

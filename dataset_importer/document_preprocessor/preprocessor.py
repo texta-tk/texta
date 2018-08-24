@@ -39,11 +39,10 @@ class DocumentPreprocessor(object):
         :rtype: list of dicts
         """
         preprocessors = kwargs['preprocessors']
+        documents = list(map(DocumentPreprocessor.convert_to_utf8, documents))
 
         for preprocessor_code in preprocessors:
             preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
-
-            documents = list(map(DocumentPreprocessor.convert_to_utf8, documents))
             documents = preprocessor.transform(documents, **kwargs)
 
         return documents
