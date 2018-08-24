@@ -27,7 +27,9 @@ class LanguageModel:
 
 	def train(self, task_id):
 		self.id = task_id
-		Process(target=self._training_worker).start()
+
+		# Process(target=self._training_worker).start()
+		self._training_worker() # Apache wsgi multiprocessing problem
 		# self._training_worker()
 		return True
 

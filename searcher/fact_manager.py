@@ -51,7 +51,7 @@ class FactManager:
                     for fact in document['_source'][self.field]:
                         # If the fact name is in rm_facts_dict keys
                         if fact["fact"] in rm_facts_dict:
-                            # If the fact value is in the given key values
+                            # If the fact value is not in the delete key values
                             if fact['str_val'] not in rm_facts_dict[key]:
                                 new_field.append(fact)
                         else:

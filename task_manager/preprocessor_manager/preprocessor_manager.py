@@ -40,7 +40,8 @@ class Preprocessor:
 		self.es_m = es_m
 		self.params = params
 
-		Process(target=self._preprocessor_worker()).start()
+		# Process(target=self._preprocessor_worker()).start()
+		self._preprocessor_worker() # Apache wsgi problem with multiprocessing
 		# self._preprocessor_worker()
 		return True
 
