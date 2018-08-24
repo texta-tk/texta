@@ -27,7 +27,7 @@ class FactManager:
         response = self.es_m.scroll(size=bs, field_scroll=self.field)
         scroll_id = response['_scroll_id']
         total_docs = response['hits']['total']
-        import pdb;pdb.set_trace()
+
         while total_docs > 0:
             data = ''
             for document in response['hits']['hits']:
