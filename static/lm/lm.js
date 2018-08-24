@@ -72,7 +72,7 @@ function save() {
 			$('body').css('cursor', 'auto');
 			swal('Success!', 'Sucessfully saved lexicon', 'success');
 		}
-		else {
+		else if (xmlhttp.status==500) {
 			swal('Error!','There was a problem saving the lexicon!','error');
 		}
 	}
