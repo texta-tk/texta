@@ -5,7 +5,7 @@
 		    {% if fields %}
 		        <select class="form-control input-sm" multiple="multiple" id="mlp-processor-feature-names" name="mlp_feature_names">
 				{% for field in fields %}
-					<option value="{{field.data}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{field.label}}</option>
+					<option title="{{field.label}}" value="{{field.data}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{field.label}}</option>
 				{% endfor %}
 				</select>        
 		    {% else %}

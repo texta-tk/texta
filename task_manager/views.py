@@ -102,16 +102,19 @@ def index(request):
 
 		tasks.append(task_dict)
 
-	context = {
-		'task_params':           task_params,
-		'tasks':                 tasks,
-		'language_models':       language_models,
-		'allowed_datasets':      datasets,
-		'searches':              Search.objects.filter(dataset=Dataset(pk=int(request.session['dataset']))),  # Search.objects.filter(author=request.user, dataset=Dataset(pk=int(request.session['dataset']))),
-		'enabled_preprocessors': enabled_preprocessors,
-		'STATIC_URL':            STATIC_URL,
-		'fields':                fields
-	}
+	if 'dataset' in request.session.keys():
+		context = {
+			'task_params':           task_params,
+			'tasks':                 tasks,
+			'language_models':       language_models,
+			'allowed_datasets':      datasets,
+			'searches':              Search.objects.filter(dataset=Dataset(pk=int(request.session['dataset']))),  # Search.objects.filter(author=request.user, dataset=Dataset(pk=int(request.session['dataset']))),
+			'enabled_preprocessors': enabled_preprocessors,
+			'STATIC_URL':            STATIC_URL,
+			'fields':                fields
+		}
+	else:
+		return HttpResponseRedirect('/')
 
 	pipe_builder = get_pipeline_builder()
 	context['train_tagger_extractor_opt_list'] = pipe_builder.get_extractor_options()
