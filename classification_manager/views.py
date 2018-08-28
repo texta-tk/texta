@@ -111,8 +111,10 @@ def start_training_job(request):
     clf_args = (request, usr, search_id, field_path, extractor_opt, reductor_opt,
                 normalizer_opt, classifier_opt, description, tag_label)
 
-    clf_job = Process(target=model_pipeline.train_classifier, args=clf_args)
-    clf_job.start()
+    #clf_job = Process(target=model_pipeline.train_classifier, args=clf_args)
+    #clf_job.start()
+    clf_job = model_pipeline.train_classifier(clf_args)
+    
 
     return HttpResponse()
 
@@ -194,6 +196,7 @@ def api_classify(request):
 
             model_job = Process(target=model_pipeline.apply_classifier, args=(job_key,))
             model_job.start()
+            model_job = model_pipeline.apply_classifier(job_key)
 
 
     except Exception as e:

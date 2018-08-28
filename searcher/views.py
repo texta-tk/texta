@@ -617,7 +617,8 @@ def remove_by_query(request):
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
-    Process(target=remove_worker,args=(es_m,'notimetothink')).start()
+    #Process(target=remove_worker,args=(es_m,'notimetothink')).start()
+    remove_worker(es_m)
 
     return HttpResponse(True)
 
