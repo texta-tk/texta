@@ -572,14 +572,17 @@ function hide(id){
         var fieldId = id;
     }
     $("#field_"+fieldId+" #suggestions_"+id).mouseleave(function() {
-        setTimeout(function() {
-                if(!$("#field_"+fieldId+" #suggestions_"+id).is(":hover")) {
-                    $("#field_"+fieldId+" #suggestions_"+id).hide();
-                }
-                else{
-                }
-            }, 1000);
-        });
+        if(!$("#field_"+fieldId+" #suggestions_"+id).is(":hover")) {
+            $("#field_"+fieldId+" #suggestions_"+id).hide();
+        }});
+        // setTimeout(function() {
+        //         if(!$("#field_"+fieldId+" #suggestions_"+id).is(":hover")) {
+        //             $("#field_"+fieldId+" #suggestions_"+id).hide();
+        //         }
+        //         else{
+        //         }
+        //     }, 1000);
+        // });
 }
 
 
