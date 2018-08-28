@@ -41,7 +41,12 @@ class TextTaggerPreprocessor(object):
                 # Take into account nested fields encoded as: 'field.sub_field'
                 decoded_text = document
                 for k in input_feature.split('.'):
-                    decoded_text = decoded_text[k]
+                    # Field might be empty and not included in document
+                    if k in decoded_text:
+                        decoded_text = decoded_text[k]
+                    else:
+                        decoded_text = ''
+                        break
                 
                 try:
                     decoded_text.strip().decode()
@@ -77,5 +82,7 @@ class TextTaggerPreprocessor(object):
                         texta_facts.append(new_fact)
                 
                     documents[i]['texta_facts'].extend(texta_facts)    
+            # Get total tagged documents, get np array of results
+            total_positives = np.count_nonzero(results)
 
-        return documents
+        return {"documents":documents, "meta": {'total_positives': total_positives}}

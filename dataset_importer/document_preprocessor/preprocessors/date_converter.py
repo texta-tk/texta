@@ -131,5 +131,5 @@ class DatePreprocessor(object):
 
                 documents[analyzation_idx]['texta_facts'].extend(analyzation_datum['texta_facts'])'''
 
-        return documents
+        return {'documents': documents, 'meta': {}}
 

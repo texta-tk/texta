@@ -9,7 +9,7 @@
 				<div class="col-sm-6">
 					<select name="{{task_param.id}}_search" class="form-control">
 						{% for search in searches %}
-							<option value="{{search.id}}">{{search.description}}</option>
+							<option title="{{search.description}}" value="{{search.id}}">{{search.description}}</option>
 						{% endfor %}
 					</select>
 				</div>
@@ -20,7 +20,7 @@
 				<div class="col-sm-6">
                     <select name="{{task_param.id}}_field" class="form-control">
                         {% for field in fields %}
-                            <option value="{{field.data}}">{{field.label}}</option>
+                            <option title="{{field.data}}" value="{{field.data}}">{{field.label}}</option>
                         {% endfor %}
                     </select>
 				</div>
@@ -31,7 +31,7 @@
                     <div class="col-sm-6">
                         <select name="{{task_param.id}}_extractor_opt" class="form-control">
                             {%  for extractor_opt in train_tagger_extractor_opt_list %}
-                                <option value="{{ extractor_opt.index }}">{{ extractor_opt.label }}</option>
+                                <option title="{{extractor_opt.label}}" value="{{ extractor_opt.index }}">{{ extractor_opt.label }}</option>
                             {%  endfor %}
                         </select>
                     </div>
@@ -41,7 +41,7 @@
                     <div class="col-sm-6">
                         <select name="{{task_param.id}}_reductor_opt" class="form-control">
                             {%  for reductor_opt in train_tagger_reductor_opt_list %}
-                                <option value="{{ reductor_opt.index }}">{{ reductor_opt.label }}</option>
+                                <option title="{{reductor_opt.label}}" value="{{ reductor_opt.index }}">{{ reductor_opt.label }}</option>
                             {%  endfor %}
                         </select>
                     </div>
@@ -51,7 +51,7 @@
                     <div class="col-sm-6">
                         <select name="{{task_param.id}}_normalizer_opt" class="form-control">
                             {%  for normalizer_opt in train_tagger_normalizer_opt_list %}
-                                <option value="{{ normalizer_opt.index }}">{{ normalizer_opt.label }}</option>
+                                <option title="{{normalizer_opt.label}}" value="{{ normalizer_opt.index }}">{{ normalizer_opt.label }}</option>
                             {%  endfor %}
                         </select>
                     </div>
@@ -61,7 +61,7 @@
                     <div class="col-sm-6">
                         <select name="{{task_param.id}}_classifier_opt" class="form-control">
                             {%  for classifier_opt in train_tagger_classifier_opt_list %}
-                                <option value="{{ classifier_opt.index }}">{{ classifier_opt.label }}</option>
+                                <option title="{{classifier_opt.label}}" value="{{ classifier_opt.index }}">{{ classifier_opt.label }}</option>
                             {%  endfor %}
                         </select>
                     </div>

@@ -76,7 +76,8 @@ class Preprocessor:
 			if 'texta_facts' not in documents[0]:
 				self.es_m.update_mapping_structure('texta_facts', FACT_PROPERTIES)
 
-		processed_documents = list(DocumentPreprocessor.process(documents=documents, **parameter_dict))
+		processed_documents_dict = DocumentPreprocessor.process(documents=documents, **parameter_dict)
+		processed_documents = list(processed_documents_dict['documents'])
 		self.es_m.update_documents(processed_documents, ids)
 
 		show_progress.update(l)
@@ -95,7 +96,11 @@ class Preprocessor:
 		task = Task.objects.get(pk=self.task_id)
 		task.status = 'Completed'
 		task.time_completed = datetime.now()
-		task.result = json.dumps({'documents_processed': show_progress.n_total, 'preprocessor_key': self.params['preprocessor_key']})
+
+		if self.params['preprocessor_key'] == 'text_tagger':
+			task.result = json.dumps({'documents_processed': show_progress.n_total, 'documents_tagged': processed_documents_dict['meta']['total_positives'], 'preprocessor_key': self.params['preprocessor_key']})
+		else:
+			task.result = json.dumps({'documents_processed': show_progress.n_total, 'preprocessor_key': self.params['preprocessor_key']})
 		task.save()
 
 	def _prepare_preprocessor_data(self, field_paths, response: dict):

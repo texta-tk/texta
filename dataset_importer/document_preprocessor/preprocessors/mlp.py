@@ -69,7 +69,7 @@ class MlpPreprocessor(object):
 
                 documents[analyzation_idx]['texta_facts'].extend(analyzation_datum['texta_facts'])
 
-        return documents
+        return {'documents': documents, 'meta': {}}
 
 
 if __name__ == '__main__':
