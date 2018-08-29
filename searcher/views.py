@@ -568,12 +568,11 @@ def search(es_params, request):
         return out
 
     except Exception as e:
-        #logging.getLogger(ERROR_LOGGER).error(json.dumps({'process': 'SEARCH DOCUMENTS', 'event': 'documents_queried_failed'}), exc_info=True)
+        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process': 'SEARCH DOCUMENTS', 'event': 'documents_queried_failed'}), exc_info=True)
 
-        #logger.e
         print('-- Exception[{0}] {1}'.format(__name__, e))
-        #logger.set_context('user_name', request.user.username)
-        #logger.error('documents_queried_failed')
+        logger.set_context('user_name', request.user.username)
+        logger.error('documents_queried_failed')
 
         out = {'column_names': [], 'aaData': [], 'iTotalRecords': 0, 'iTotalDisplayRecords': 0, 'lag': 0}
         return out
