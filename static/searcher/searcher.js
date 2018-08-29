@@ -605,6 +605,7 @@ function query(){
                   'processing': true,
                   "sAjaxSource": PREFIX+"/table_content",
                   "sDom": '<Bl"H"ipr>t<"F"lip>',
+                  "stateSave": true,
                   "sServerMethod":"POST",
                   "fnServerParams":function(aoData){
                       aoData.push({'name':'filterParams','value':JSON.stringify($("#filters").serializeArray())});
