@@ -234,7 +234,7 @@ def get_table_header(request):
 @login_required
 def get_table_content(request):
 
-    request_param = request.GET
+    request_param = request.POST
     echo = int(request_param['sEcho'])
     filter_params = json.loads(request_param['filterParams'])
     es_params = {filter_param['name']: filter_param['value'] for filter_param in filter_params}

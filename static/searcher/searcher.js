@@ -553,7 +553,7 @@ function query(){
                   "sAjaxSource": PREFIX+"/table_content",
                   "sDom": '<l"H"ipr>t<"F"lip>',
                   //"sDom": "Rlrtip",
-                  "sServerMethod":"GET",
+                  "sServerMethod":"POST",
                   "fnServerParams":function(aoData){
                       aoData.push({'name':'filterParams','value':JSON.stringify($("#filters").serializeArray())});
                    },
@@ -568,7 +568,7 @@ function query(){
         }
     }
 
-    request.open("GET",PREFIX+'/table_header');
+    request.open("POST",PREFIX+'/table_header');
     request.send(new FormData(formElement));
 
 }
