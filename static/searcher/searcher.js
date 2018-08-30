@@ -1251,6 +1251,7 @@ function display_searches(searches) {
 		search_div = document.createElement("tr");
 
 		inputElement = document.createElement("input");
+        urlElement = document.createElement("span");
         aElement = document.createElement("span");
 
         search_div.id = "search_" + searches[i].id;
@@ -1259,7 +1260,31 @@ function display_searches(searches) {
         inputElement.name = "saved_search_" + i;
         inputElement.value = searches[i].id;
 
-		aElement.className = "glyphicon glyphicon-minus-sign pointer";
+		urlElement.className = "glyphicon glyphicon-copy pointer";
+        aElement.className = "glyphicon glyphicon-minus-sign pointer";
+
+        urlElement.onclick = function(id) {
+            return function() {
+                var loc = window.location.href;
+                search_url = loc + '?search=' + id
+                var dummy = $('<input>').val(search_url).appendTo('body').select()
+                document.execCommand('copy')
+
+                const notification = swal.mixin({
+                    toast: true,
+                    position: 'bottom-start',
+                    showConfirmButton: false,
+                    timer: 3000
+                  });
+                  
+                  notification({
+                    type: 'success',
+                    title: 'Copied search link to clipboard',
+                    text: search_url
+                  })
+                 };
+        }(searches[i].id);
+
         aElement.onclick = function(id) {
             return function() {
                 swal({
@@ -1295,6 +1320,11 @@ function display_searches(searches) {
         text_col.appendChild(renderAnchor);
         search_div.appendChild(text_col);
 
+        
+        url_col = document.createElement("td");
+        url_col.appendChild(urlElement);
+        search_div.appendChild(url_col);
+        
 		remove_col = document.createElement("td");
 		remove_col.appendChild(aElement);
         search_div.appendChild(remove_col);
