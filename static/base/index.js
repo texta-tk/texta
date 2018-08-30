@@ -131,11 +131,18 @@ function update_resources() {
 
 	$.post(LINK_ROOT+'/update', data, function(data) {
 		if(data.length > 0){
-            swal({
-                title:'Updated!',
-                text:'Resources updated!',
-                type:'success',
+            const notification = swal.mixin({
+                toast: true,
+                position: 'top',
+                showConfirmButton: false,
+                timer: 1000
+            });
+            
+            notification({
+                type: 'success',
+                title: 'Resources updated!',
             }).then((result) => {location.reload();});
+            
 		}else{
             swal({
                 title:'Failed!',

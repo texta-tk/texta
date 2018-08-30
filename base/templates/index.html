@@ -96,9 +96,9 @@
 					<select id="dataset_to_activate" name="dataset_to_activate" class="input-sm" onchange="update_resources();">
 						{% for dataset in allowed_datasets %}
 							{% if dataset.id|stringformat:"i" == request.session.dataset %}
-								<option value="{{dataset.id}}" selected="selected">Dataset {{dataset.id}}: {{dataset.index}} - {{dataset.mapping}}</option>
+								<option class="datasetOption" value="{{dataset.id}}" selected="selected">Dataset {{dataset.id}}: {{dataset.index}} - {{dataset.mapping}}</option>
 							{% else %}
-								<option value="{{dataset.id}}">Dataset {{dataset.id}}: {{dataset.index}} - {{dataset.mapping}}</option>
+								<option class="datasetOption" value="{{dataset.id}}">Dataset {{dataset.id}}: {{dataset.index}} - {{dataset.mapping}}</option>
 							{% endif %}
 						{% endfor %}
 					</select>
@@ -106,9 +106,9 @@
 					<select id="model_to_activate" name="model_to_activate" class="input-sm" onchange="update_resources();">
 						{% for model in language_models %}
 							{% if model.pk|slugify == request.session.model %}
-								<option value="{{model.pk}}" selected="selected">Model {{model.pk}}: {{model.description}}</option>
+								<option class="datasetOption" value="{{model.pk}}" selected="selected">Model {{model.pk}}: {{model.description}}</option>
 							{% else %}
-								<option value="{{model.pk}}">Model {{model.pk}}: {{model.description}}</option>
+								<option class="datasetOption" value="{{model.pk}}">Model {{model.pk}}: {{model.description}}</option>
 							{% endif %}
 						{% endfor %}
 					</select>

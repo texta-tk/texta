@@ -70,7 +70,17 @@ function save() {
     xmlhttp.onreadystatechange=function() {
 		if (xmlhttp.readyState==4 && xmlhttp.status==200) {
 			$('body').css('cursor', 'auto');
-			swal('Success!', 'Sucessfully saved lexicon', 'success');
+			const notification = swal.mixin({
+                toast: true,
+                position: 'bottom-start',
+                showConfirmButton: false,
+                timer: 3000
+            });
+            
+            notification({
+                type: 'success',
+                title: 'Sucessfully saved lexicon!',
+            })
 		}
 		else if (xmlhttp.status==500) {
 			swal('Error!','There was a problem saving the lexicon!','error');

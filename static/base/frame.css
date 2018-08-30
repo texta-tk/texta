@@ -127,3 +127,7 @@ body {
 .table-condensed{
   font-size: 11px;
 }
+
+.datasetOption:checked {
+    background-color: #dddddd;
+}
