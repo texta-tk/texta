@@ -281,10 +281,6 @@ es_ldap_user = os.getenv('TEXTA_LDAP_USER')
 es_ldap_password = os.getenv('TEXTA_LDAP_PASSWORD')
 
 # Dataset Importer global parameters
-#
-from dataset_importer.document_preprocessor.preprocessors.mlp import MlpPreprocessor
-
-
 
 DATASET_IMPORTER = {
 	'directory':          os.path.join(BASE_DIR, 'files', 'dataset_importer'),
