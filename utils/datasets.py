@@ -5,12 +5,23 @@ from utils.es_manager import ES_Manager
 from permission_admin.models import Dataset
 
 
+class ActiveDataset:
+	""" Dataset class
+	"""
+	
+	def __init__(self, id, dataset):
+		self.id = id
+		self.index = dataset['index']
+		self.mapping = dataset['mapping']
+
+
 class Datasets:
 	""" Datasets class
 	"""
 	def __init__(self):
 		self.datasets = self._build_datasets_map()
 		self.mapping_id = None
+		self.active_datasets = []
 
 	@staticmethod
 	def _build_datasets_map():
@@ -22,20 +33,21 @@ class Datasets:
 			datasets[pk] = {'index': index, 'mapping': mapping}
 		return datasets
 
-	def activate_dataset(self, session):
-		""" Activate dataset for a given session. If the session does not contain
+	def activate_datasets(self, session):
+		""" Activate datasets for a given session. If the session does not contain
 			information about the dataset, initiates with the first valid dataset
 			Returns: the session object containing the active dataset mapping_id
 		"""
 		if len(self.datasets.keys()) > 0:
 			if 'dataset' not in session:
 				# Activate first if not defined in session
-				session['dataset'] = list(self.datasets.keys())[0]
-			elif int(session['dataset']) not in self.datasets.keys():
-				# Activate first if previously activated not present
-				session['dataset'] = list(self.datasets.keys())[0]
-			self.mapping_id = int(session['dataset'])
+				session['dataset'] = [list(int(self.datasets.keys())[0])]
+			
+			# Check if dataset in map and activate
+			self.active_datasets = [ActiveDataset(int(ds), self.datasets[int(ds)]) for ds in session['dataset'] if int(ds) in self.datasets]
+			
 		return self
+
 
 	def activate_dataset_by_id(self, _id):
 		""" Activate dataset by ID
@@ -48,24 +60,9 @@ class Datasets:
 
 		return self
 
-	def is_active(self):
-		return self.mapping_id is not None
 
-	def get_index(self):
-		""" Returns: the active dataset index, None otherwise
-		"""
-		index = None
-		if self.is_active():
-			index = self.datasets[self.mapping_id]['index']
-		return index
 
-	def get_mapping(self):
-		""" Returns: the active dataset mapping, None otherwise
-		"""
-		mapping = None
-		if self.is_active():
-			mapping = self.datasets[self.mapping_id]['mapping']
-		return mapping
+
 
 	def get_datasets(self):
 		""" Returns: map of all dataset objects
@@ -76,9 +73,8 @@ class Datasets:
 		""" Builds manager_class as:
 			ManagerClass(index, mapping, date_range)
 		"""
-		index = self.get_index()
-		mapping = self.get_mapping()
-		return manager_class(index, mapping)
+		datasets = self.active_datasets
+		return manager_class(datasets)
 
 	def sort_datasets(self, indices):
 		out = []

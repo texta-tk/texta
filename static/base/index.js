@@ -62,6 +62,14 @@ $('#registrationForm > .form-group > .form-control').focus(function() {
     validateInput($(this).attr('id'));
 });
 
+$(document).ready(function() {
+    $('#dataset_to_activate').multiselect({
+    	includeSelectAllOption: true,
+    	numberDisplayed: 1
+    });
+    
+});
+
 function registerAccount() {
 
     var usernameInput = $("#registrationUsername");
@@ -141,17 +149,16 @@ function update_resources() {
             notification({
                 type: 'success',
                 title: 'Resources updated!',
-            }).then((result) => {location.reload();});
+            }).then((result) => {});
             
 		}else{
             swal({
                 title:'Failed!',
                 text:'Resource update failed!',
                 type:'warning',
-            }).then((result) => {location.reload();});
+            }).then((result) => {});
 		}
 	});
 
 }
-
 

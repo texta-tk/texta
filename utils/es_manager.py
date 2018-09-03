@@ -85,10 +85,9 @@ class ES_Manager:
     else:
         requests = requests
 
-    def __init__(self, index, mapping, url=None):
+    def __init__(self, active_datasets, url=None):
         self.es_url = url if url else es_url
-        self.index = index
-        self.mapping = mapping
+        self.indices = active_datasets
         self.combined_query = None
         self._facts_map = None
         self.es_cache = ES_Cache()
@@ -133,9 +132,7 @@ class ES_Manager:
 
         request_url = '{0}/{1}/{2}/_count'.format(es_url, self.index, self.mapping)
         base_query = {"query": {"bool": {"filter": {'and': []}}}}
-        base_query = {'query': {'nested': {'path': 'texta_facts', 'query': {'bool': {'filter': []}}}}}  # {'match':{'texta_facts.fact':'superhero'}}}}}
-        #base_query['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': doc_type}})
-        #base_query['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
+        base_query = {'query': {'nested': {'path': 'texta_facts', 'query': {'bool': {'filter': []}}}}}
         base_query['query']['nested']['query']['bool']['filter'].append({'term': {'texta_facts.doc_path': doc_path}})
 
         has_facts = self._field_has_facts(request_url, base_query)
@@ -521,6 +518,7 @@ class ES_Manager:
             scroll_id = response['_scroll_id']
 
         return ids
+        
 
 
     def perform_queries(self,queries):

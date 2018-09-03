@@ -77,6 +77,8 @@ def get_fields(es_m):
     reserved_fields = ['texta_facts']
     fields = []
     mapped_fields = es_m.get_mapped_fields()
+    
+    print(es_m)
 
     for data in [x for x in mapped_fields if x['path'] not in reserved_fields]:
         path = data['path']
@@ -121,7 +123,7 @@ def get_daterange(es_m,field):
 
 @login_required
 def index(request):
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     fields = get_fields(es_m)
 
@@ -240,8 +242,16 @@ def autocomplete(request):
 
 @login_required
 def get_saved_searches(request):
-    searches = Search.objects.filter(author=request.user).filter(dataset=Dataset(pk=int(request.session['dataset'])))
-    return HttpResponse(json.dumps([{'id':search.pk,'desc':search.description} for search in searches],ensure_ascii=False))
+    ### TODO REDO THIS
+    return HttpResponse()
+    #active_dataset_ids = [int(ds) for ds in request.session['dataset']]
+    #datasets = Dataset.objects.filter(pk__in=[request.session['dataset']])
+    
+    #print(list(datasets))
+
+    #searches = Search.objects.filter(author=request.user).filter(dataset__in=[])
+    
+    #return HttpResponse(json.dumps([{'id':search.pk,'desc':search.description} for search in searches],ensure_ascii=False))
 
 
 @login_required

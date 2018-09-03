@@ -28,12 +28,15 @@ from texta.settings import USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_D
 
 def index(request):
 	template = loader.get_template('account.html')
-	ds = Datasets().activate_dataset(request.session)
+	ds = Datasets().activate_datasets(request.session)
+	
+	print(ds.active_datasets)
 	
 	datasets = Datasets().get_allowed_datasets(request.user)
+	
+	print(datasets)
+	
 	language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
-
-	print(language_models)
 
 	return HttpResponse(
 			template.render({'STATIC_URL': STATIC_URL, 'allowed_datasets': datasets, 'language_models': language_models}, request))
@@ -51,22 +54,23 @@ def update(request):
 		logger.clean_context()
 		logger.set_context('user_name', request.user.username)
 		logger.set_context('new_model', model)
-		logger.info('dataset_updated')
+		logger.info('model_updated')
 
-	if 'dataset' in parameters:
+	if 'dataset[]' in parameters:
 		# TODO: check if is a valid mapping_id before change session[dataset]
-		new_dataset = parameters['dataset']
+		new_datasets = parameters.getlist('dataset[]')
+		
+		new_datasets = [new_dataset for new_dataset in new_datasets if request.user.has_perm('permission_admin.can_access_dataset_' + str(new_dataset))]
 
-		if request.user.has_perm('permission_admin.can_access_dataset_' + str(new_dataset)):
-			request.session['dataset'] = new_dataset
+		request.session['dataset'] = new_datasets
 
-			logger.clean_context()
-			logger.set_context('user_name', request.user.username)
-			logger.set_context('new_dataset', new_dataset)
-			logger.info('dataset_updated')
+		logger.clean_context()
+		logger.set_context('user_name', request.user.username)
+		logger.set_context('new_datasets', new_datasets)
+		logger.info('datasets_updated')
 
-		ds = Datasets().activate_dataset(request.session)
-		es_m = ds.build_manager(ES_Manager)
+		ds = Datasets().activate_datasets(request.session)
+		#es_m = ds.build_manager(ES_Manager)
 
 	return HttpResponseRedirect(URL_PREFIX + '/')
 
