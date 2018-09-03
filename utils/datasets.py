@@ -41,7 +41,7 @@ class Datasets:
 		if len(self.datasets.keys()) > 0:
 			if 'dataset' not in session:
 				# Activate first if not defined in session
-				session['dataset'] = [list(int(self.datasets.keys())[0])]
+				session['dataset'] = [int(list(self.datasets.keys())[0])]
 			
 			# Check if dataset in map and activate
 			self.active_datasets = [ActiveDataset(int(ds), self.datasets[int(ds)]) for ds in session['dataset'] if int(ds) in self.datasets]

@@ -28,14 +28,7 @@ from texta.settings import USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_D
 
 def index(request):
 	template = loader.get_template('account.html')
-	ds = Datasets().activate_datasets(request.session)
-	
-	print(ds.active_datasets)
-	
 	datasets = Datasets().get_allowed_datasets(request.user)
-	
-	print(datasets)
-	
 	language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
 
 	return HttpResponse(

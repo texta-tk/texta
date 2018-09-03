@@ -1,3 +1,11 @@
+$(document).ready(function() {
+    $('#dataset_to_activate').multiselect({
+    	includeSelectAllOption: true,
+    	numberDisplayed: 1
+    });
+    
+});
+
 $('#lex_miner').click(function() {
     window.location = LINK_LEXMINER;
 });
@@ -60,14 +68,6 @@ $('#cancelRegistrationBtn').click(function() {
 
 $('#registrationForm > .form-group > .form-control').focus(function() {
     validateInput($(this).attr('id'));
-});
-
-$(document).ready(function() {
-    $('#dataset_to_activate').multiselect({
-    	includeSelectAllOption: true,
-    	numberDisplayed: 1
-    });
-    
 });
 
 function registerAccount() {

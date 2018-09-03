@@ -87,10 +87,15 @@ class ES_Manager:
 
     def __init__(self, active_datasets, url=None):
         self.es_url = url if url else es_url
-        self.indices = active_datasets
+        self.active_datasets = active_datasets
         self.combined_query = None
         self._facts_map = None
         self.es_cache = ES_Cache()
+    
+    def _stringify_datasets(self):
+        indices = [dataset.index for dataset in self.active_datasets]
+        index_string = ','.join(indices)
+        return index_string
 
     def update_documents(self, documents, ids):
         data = ''
@@ -146,7 +151,7 @@ class ES_Manager:
         query['query']['nested']['query']['bool']['filter'].append({'exists': {'field': 'texta_facts.fact'}})
 
         query = json.dumps(query)
-        response = self.requests.post(url, data=query, headers=HEADERS).json()
+        response = self.plain_post(url, query)
         return 'count' in response and response['count'] > 0
 
     def _field_has_fact_vals(self, url, query, value_field_name):
@@ -231,12 +236,18 @@ class ES_Manager:
         return True
 
     def get_mapped_fields(self):
-        """ Get flat structure of fields from Elasticsearch mapping
+        """ Get flat structure of fields from Elasticsearch mappings
         """
         mapping_data = []
-        if self.index:
-            mapping_structure = self.requests.get(es_url+'/'+self.index, headers=HEADERS).json()[self.index]['mappings'][self.mapping]['properties']
-            mapping_data = self._decode_mapping_structure(mapping_structure)
+        
+        if self.active_datasets:
+            index_string = self._stringify_datasets()          
+            url = '{0}/{1}'.format(es_url,index_string)
+            
+            for index_properties in self.plain_get(url).values():
+                for mapping in index_properties['mappings']:
+                    mapping_structure = index_properties['mappings'][mapping]['properties']
+                    mapping_data+=self._decode_mapping_structure(mapping_structure)
 
         return mapping_data
 
@@ -333,8 +344,8 @@ class ES_Manager:
         """ Search
         """
         q = json.dumps(self.combined_query['main'])
-        search_url = '{0}/{1}/{2}/_search'.format(es_url, self.index, self.mapping)
-        response = self.requests.post(search_url, data=q, headers=HEADERS).json()
+        search_url = '{0}/{1}/_search'.format(es_url, self._stringify_datasets())
+        response = self.plain_post(search_url, q)
         return response
 
     def process_bulk(self,hits):
