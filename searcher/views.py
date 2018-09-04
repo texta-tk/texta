@@ -634,7 +634,8 @@ def remove_by_query(request):
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
-    Process(target=remove_worker,args=(es_m,'notimetothink')).start()
+    #Process(target=remove_worker,args=(es_m,'notimetothink')).start()
+    remove_worker(es_m)
 
     return HttpResponse(True)
 
@@ -654,7 +655,8 @@ def aggregate(request):
 @login_required
 def delete_facts(request):
     fact_m = FactManager(request)
-    Process(target=fact_m.remove_facts_from_document, args=(dict(request.POST),)).start()
+    #Process(target=fact_m.remove_facts_from_document, args=(dict(request.POST),)).start()
+    fact_m.remove_facts_from_document(request.POST)
 
     return HttpResponse()
 
