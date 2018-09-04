@@ -445,7 +445,7 @@ def search(es_params, request):
                 highlight_config['fields'][f] = {"number_of_fragments": 0}
         es_m.set_query_parameter('highlight', highlight_config)
         response = es_m.search()
-        
+
         out['iTotalRecords'] = response['hits']['total']
         out['iTotalDisplayRecords'] = response['hits']['total'] # number of docs
 
@@ -512,8 +512,8 @@ def search(es_params, request):
                 if col in highlight_config['fields'] and 'highlight' in hit:
                     content = hit['highlight'][col][0] if col in hit['highlight'] else ''
                 # Prettify and standardize highlights
+                highlight_data = []
                 if name_to_inner_hits[col]:
-                    highlight_data = []
                     color_map = ColorPicker.get_color_map(keys={hit['fact'] for hit in name_to_inner_hits[col]})
                     for inner_hit in name_to_inner_hits[col]:
                         datum = {
@@ -532,20 +532,22 @@ def search(es_params, request):
                                                   old_content,
                                                   highlight_data,
                                                   tagged_text=content)
-                else:
-                    # WHEN USING OLD FORMAT DOCUMENTS, SOMETIMES BREAKS AT HIGHLIGHTER, CHECK IF ITS STRING INSTEAD OF FOR EXAMPLE LIST
-                    highlight_data = []
-                    if (isinstance(content, str)) or (isinstance(content, bytes)):
-                        content = Highlighter(average_colors=True, derive_spans=True,
-                                                additional_style_string='font-weight: bold;').highlight(
-                                                    old_content,
-                                                    highlight_data,
-                                                    tagged_text=content)
+                # else:
+                #     # WHEN USING OLD FORMAT DOCUMENTS, SOMETIMES BREAKS AT HIGHLIGHTER, CHECK IF ITS STRING INSTEAD OF FOR EXAMPLE LIST
+                #     highlight_data = []
+                #     if (isinstance(content, str)) or (isinstance(content, bytes)):
+                #         content = Highlighter(average_colors=True, derive_spans=True,
+                #                                 additional_style_string='font-weight: bold;').highlight(
+                #                                     old_content,
+                #                                     highlight_data,
+                #                                     tagged_text=content)
+
                 # Append the final content of this col to the row
                 if(row[col] == ''):
                     row[col] = content
 
                 cols_data[col] = {'highlight_data': highlight_data, 'content': content, 'old_content': old_content}
+
 
 
             # Transliterate the highlighting between different cols

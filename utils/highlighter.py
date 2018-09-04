@@ -40,11 +40,11 @@ class Highlighter(object):
         """
         logger = LogManager(__name__, 'HIGHLIGHT')
 
-        original_text = str(original_text)
-        if original_text == '':
-            logger.set_context('highlight_data', highlight_data)
-            logger.info('original_text was empty - "", with HL data')
-            return ''
+        # original_text = str(original_text)
+        # if original_text == '':
+            # logger.set_context('highlight_data', highlight_data)
+            # logger.info('original_text was empty - "", with HL data')
+            # return ''
         
         if tagged_text:
             if self._derive_spans:
@@ -160,13 +160,11 @@ class Highlighter(object):
                     try:
                         text_index_to_data_index[alignment[text_index]].append(data_index)
                     except Exception as e:
-                        pass # TODO something about this exception
                         # Throws exception when index out of range
                         # For example Gets index out of range if in _derive_highlight_data while uses >= instead of >
-
-                        # print('-- Exception[{0}] {1}'.format(__name__, e))
-                        # logger.set_context('text', text)
-                        # logger.exception('_get_tags_for_text_index try catch execption')
+                        print('-- Exception[{0}] {1}'.format(__name__, e))
+                        logger.set_context('text', text)
+                        logger.exception('_get_tags_for_text_index try catch execption')
 
                         
 
