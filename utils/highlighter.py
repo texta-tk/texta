@@ -38,8 +38,10 @@ class Highlighter(object):
     def highlight(self, original_text, highlight_data, tagged_text=None):
         """highlight_data = [{'spans': [[1,7],[25,36]], 'name': 'LOC', 'value': '5', 'category': '[fact]', 'color': '#ababab'}]
         """
-        
+
         original_text = str(original_text)
+        if original_text == '':
+            return ''
         
         if tagged_text:
             if self._derive_spans:
@@ -148,7 +150,15 @@ class Highlighter(object):
         for data_index, spans in enumerate(data_index_to_spans):
             for span in spans:
                 for text_index in range(*span):
-                    text_index_to_data_index[alignment[text_index]].append(data_index)
+                    try:
+                        text_index_to_data_index[alignment[text_index]].append(data_index)
+                    except:
+                        pass
+                        # Gets index out of range if in _derive_highlight_data while uses >= instead of >
+                        # except avoids it
+                        print('THIS EXCEPT')
+
+                        
 
         text_index_to_data_index = [frozenset(data_indices) for data_indices in text_index_to_data_index]
 
@@ -216,11 +226,19 @@ class Highlighter(object):
     def _get_color(self, color_code_list):
         if not color_code_list:
             return 'none'
+
         if self._average_colors:
             red, green, blue = 0, 0, 0
 
             for color_code in color_code_list:
-                r, g, b = int(color_code[1:3], 16), int(color_code[3:5], 16), int(color_code[5:], 16)
+                # none encountered in color_code, if in _derive_highlight_data while has >= instead of >,
+                # runs into this problem here, need to check if color code contains "none"
+                if color_code.startswith('none'):
+                    print('color except')
+                    return 'none'
+                else:
+                    r, g, b = int(color_code[1:3], 16), int(color_code[3:5], 16), int(color_code[5:], 16)
+
                 red += r
                 green += g
                 blue += b
