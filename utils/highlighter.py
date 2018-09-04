@@ -2,7 +2,7 @@ from __future__ import print_function
 from collections import Counter, defaultdict
 import re
 import math
-
+from utils.log_manager import LogManager
 
 class Highlighter(object):
 
@@ -38,9 +38,12 @@ class Highlighter(object):
     def highlight(self, original_text, highlight_data, tagged_text=None):
         """highlight_data = [{'spans': [[1,7],[25,36]], 'name': 'LOC', 'value': '5', 'category': '[fact]', 'color': '#ababab'}]
         """
+        logger = LogManager(__name__, 'HIGHLIGHT')
 
         original_text = str(original_text)
         if original_text == '':
+            logger.set_context('highlight_data', highlight_data)
+            logger.info('original_text was empty - "", with HL data')
             return ''
         
         if tagged_text:
@@ -83,6 +86,9 @@ class Highlighter(object):
         start_tag_index = tagged_text.find('<span', span_end)
         index_discount = 0
 
+        # > 0 avoids highlighting first match, therefore the entire document
+        # When its >= it fixes that, but starts catching exceptions (doesn't break)
+        # And some matches sometimes don't get highlighted
         while start_tag_index > 0:
             start_tag_end = tagged_text.find('>', start_tag_index + 5) + 1
             span_end = tagged_text.find('</span>', start_tag_end)
@@ -153,10 +159,10 @@ class Highlighter(object):
                     try:
                         text_index_to_data_index[alignment[text_index]].append(data_index)
                     except:
-                        pass
                         # Gets index out of range if in _derive_highlight_data while uses >= instead of >
-                        # except avoids it
-                        print('THIS EXCEPT')
+                        print('-- Exception[{0}] {1}'.format(__name__, e))
+                        logger.set_context('text', text)
+                        logger.exception('_get_tags_for_text_index try catch execption')
 
                         
 
@@ -234,7 +240,9 @@ class Highlighter(object):
                 # none encountered in color_code, if in _derive_highlight_data while has >= instead of >,
                 # runs into this problem here, need to check if color code contains "none"
                 if color_code.startswith('none'):
-                    print('color except')
+                    logger = LogManager(__name__, '_GET_COLOR')
+                    logger.set_context('color_code_list', color_code_list)
+                    logger.info('Highlighter color_code_list contained "none", returning "none"')
                     return 'none'
                 else:
                     r, g, b = int(color_code[1:3], 16), int(color_code[3:5], 16), int(color_code[5:], 16)
