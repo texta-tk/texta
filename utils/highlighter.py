@@ -149,6 +149,7 @@ class Highlighter(object):
         return text_slices
 
     def _get_tags_for_text_index(self, text, alignment, highlight_data):
+        logger = LogManager(__name__, '_GET_TAGS_FOR_TEXT_INDEX')
         data_mapping = {index: datum for index, datum in enumerate(highlight_data)}
         data_index_to_spans = [datum['spans'] for datum in highlight_data]
 
@@ -158,11 +159,14 @@ class Highlighter(object):
                 for text_index in range(*span):
                     try:
                         text_index_to_data_index[alignment[text_index]].append(data_index)
-                    except:
-                        # Gets index out of range if in _derive_highlight_data while uses >= instead of >
-                        print('-- Exception[{0}] {1}'.format(__name__, e))
-                        logger.set_context('text', text)
-                        logger.exception('_get_tags_for_text_index try catch execption')
+                    except Exception as e:
+                        pass # TODO something about this exception
+                        # Throws exception when index out of range
+                        # For example Gets index out of range if in _derive_highlight_data while uses >= instead of >
+
+                        # print('-- Exception[{0}] {1}'.format(__name__, e))
+                        # logger.set_context('text', text)
+                        # logger.exception('_get_tags_for_text_index try catch execption')
 
                         
 

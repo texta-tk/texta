@@ -42,7 +42,6 @@ class Preprocessor:
 
 		# Process(target=self._preprocessor_worker()).start()
 		self._preprocessor_worker() # Apache wsgi problem with multiprocessing
-		# self._preprocessor_worker()
 		return True
 
 	def _preprocessor_worker(self):
@@ -88,7 +87,9 @@ class Preprocessor:
 			scroll_id = response['_scroll_id']
 
 			documents, parameter_dict, ids = self._prepare_preprocessor_data(field_paths, response)
-			processed_documents = list(DocumentPreprocessor.process(documents=documents, **parameter_dict))
+			processed_documents_dict = DocumentPreprocessor.process(documents=documents, **parameter_dict)
+			processed_documents = list(processed_documents_dict['documents'])
+			
 			self.es_m.update_documents(processed_documents, ids)
 
 			show_progress.update(l)

@@ -445,7 +445,7 @@ def search(es_params, request):
                 highlight_config['fields'][f] = {"number_of_fragments": 0}
         es_m.set_query_parameter('highlight', highlight_config)
         response = es_m.search()
-
+        
         out['iTotalRecords'] = response['hits']['total']
         out['iTotalDisplayRecords'] = response['hits']['total'] # number of docs
 
@@ -510,7 +510,7 @@ def search(es_params, request):
 
                 # Substitute feature value with value highlighted by Elasticsearch
                 if col in highlight_config['fields'] and 'highlight' in hit:
-                    content = hit['highlight'][col][0]
+                    content = hit['highlight'][col][0] if col in hit['highlight'] else ''
                 # Prettify and standardize highlights
                 if name_to_inner_hits[col]:
                     highlight_data = []
