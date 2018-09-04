@@ -217,9 +217,17 @@ class ES_Manager:
     def plain_search(es_url, dataset, mapping, query):
         return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(query), headers=HEADERS).json()
 
+#    @staticmethod
+#    def plain_multisearch(es_url, dataset, mapping, data):
+#        responses = ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_msearch',data='\n'.join(data)+'\n', headers=HEADERS).json()
+#        if 'responses' in responses:
+#            return responses['responses']
+#        else:
+#            return []
+    
     @staticmethod
-    def plain_multisearch(es_url, dataset, mapping, data):
-        responses = ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_msearch',data='\n'.join(data)+'\n', headers=HEADERS).json()
+    def plain_multisearch(es_url, data):
+        responses = ES_Manager.requests.post(es_url+'/_msearch',data='\n'.join(data)+'\n', headers=HEADERS).json()
         if 'responses' in responses:
             return responses['responses']
         else:
@@ -235,19 +243,93 @@ class ES_Manager:
         ES_Manager.requests.delete(url, headers=HEADERS)
         return True
 
+    def get_fields_with_facts(self):
+        queries = []
+        
+        for active_dataset in self.active_datasets:
+            query_header = {'index': active_dataset.index, 'mapping': active_dataset.mapping}
+                
+            aggs = {
+                'fact': {
+                    "nested": {"path": "texta_facts"},
+                    "aggs": {
+                        'fact': {
+                            'terms': {"field": "texta_facts.doc_path", "size": 1, 'order': {'documents.doc_count': 'desc'}},
+                            "aggs": {"documents": {"reverse_nested": {}}}
+                        }
+                    }
+                },
+                'fact_str': {
+                    "nested": {"path": "texta_facts"},
+                    "aggs": {
+                        'fact_str': {
+                            'terms': {"field": "texta_facts.str_val", "size": 1, 'order': {'documents.doc_count': 'desc'}},
+                            "aggs": {"documents": {"reverse_nested": {}}}
+                        }
+                    }
+                },
+                'fact_num': {
+                    "nested": {"path": "texta_facts"},
+                    "aggs": {
+                        'fact_num': {
+                            'terms': {"field": "texta_facts.num_val", "size": 1, 'order': {'documents.doc_count': 'desc'}},
+                            "aggs": {"documents": {"reverse_nested": {}}}
+                        }
+                    }
+                }
+            }
+                
+            query_body = {'aggs': aggs}
+            queries.append(json.dumps(query_header))
+            queries.append(json.dumps(query_body))
+        
+        responses = self.plain_multisearch(es_url, queries)
+        
+        fields_with_facts = {'fact': [], 'fact_str': [], 'fact_num': []}
+        
+        for response in responses:  
+            for key in ['fact', 'fact_str', 'fact_num']:
+                
+                buckets = self._parse_buckets(response, key)
+                
+                if key == 'fact_str':
+                    print(response['aggregations'])
+                
+                fields_with_facts[key] += buckets
+        
+        return fields_with_facts
+
+
+    @staticmethod
+    def _parse_buckets(response, key):
+        fact_count = response['aggregations'][key]
+        if key in fact_count:
+            return [bucket['key'] for bucket in fact_count[key]['buckets']]
+        return []
+    
+
     def get_mapped_fields(self):
         """ Get flat structure of fields from Elasticsearch mappings
         """
-        mapping_data = []
+        mapping_data = {}
         
         if self.active_datasets:
             index_string = self._stringify_datasets()          
             url = '{0}/{1}'.format(es_url,index_string)
             
-            for index_properties in self.plain_get(url).values():
+            for index_name,index_properties in self.plain_get(url).items():
                 for mapping in index_properties['mappings']:
                     mapping_structure = index_properties['mappings'][mapping]['properties']
-                    mapping_data+=self._decode_mapping_structure(mapping_structure)
+                    decoded_mapping_structure = self._decode_mapping_structure(mapping_structure)
+                    
+                    for field_mapping in decoded_mapping_structure:
+                        field_mapping_json = json.dumps(field_mapping)
+                        if field_mapping_json not in mapping_data:
+                            mapping_data[field_mapping_json] = []
+                        
+                        dataset_info = {'index': index_name,'mapping': mapping}
+                        if dataset_info not in mapping_data[field_mapping_json]:
+                            mapping_data[field_mapping_json].append({'index': index_name,'mapping': mapping})             
 
         return mapping_data
 
@@ -256,6 +338,7 @@ class ES_Manager:
             Returns: sorted list of names
         """
         mapped_fields = self.get_mapped_fields()
+        mapped_fields = [json.loads(field_data) for field_data in list(mapped_fields.keys())]
         column_names = [c['path'] for c in mapped_fields if not self._is_reserved_field(c['path'])]
         column_names.sort()
         return column_names
