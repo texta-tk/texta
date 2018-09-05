@@ -15,10 +15,8 @@ class AggManager:
     """ Manage Searcher aggregations and plotting preparations
     """
     def __init__(self,request):
-        ds = Datasets().activate_dataset(request.session)
-        self.dataset = ds.get_index()
-        self.mapping = ds.get_mapping()
-        self.es_m = ES_Manager(self.dataset, self.mapping)
+        ds = Datasets().activate_datasets(request.session)
+        self.es_m = ds.build_manager(ES_Manager)
 
         # PREPARE AGGREGATION
         self.es_params = request.POST

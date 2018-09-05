@@ -8,6 +8,7 @@ from collections import defaultdict
 import sys
 import time
 from functools import reduce
+import datetime
 
 if 'django' in sys.modules: # Import django-stuff only if imported from the django application / prevent errors when importing from scripts
     from conceptualiser.models import Concept
@@ -16,7 +17,7 @@ if 'django' in sys.modules: # Import django-stuff only if imported from the djan
     from lexicon_miner.models import Word,Lexicon
 
 from utils.query_builder import QueryBuilder
-from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, FACT_PROPERTIES
+from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, FACT_PROPERTIES, date_format
 
 # Need to update index.max_inner_result_window to increase
 HEADERS = {'Content-Type': 'application/json'}
@@ -566,12 +567,12 @@ class ES_Manager:
         return response
 
 
-    def get_extreme_dates(self,field):
-        query = {"aggs":{"max_date":{"max":{"field":field}},"min_date":{"min":{"field":field}}}}
-        url = "{0}/{1}/{2}/_search".format(self.es_url, self.index, self.mapping)
+    def get_extreme_dates(self, field):
+        query = {"aggs":{"max_date":{"max":{"field":field}},"min_date":{"min":{"field":field, 'format': 'yyyy-MM-dd'}}}}
+        url = "{0}/{1}/_search".format(self.es_url, self._stringify_datasets())
         response = requests.post(url, data=json.dumps(query), headers=HEADERS).json()
         aggs = response["aggregations"]
-        return aggs["min_date"]["value_as_string"],aggs["max_date"]["value_as_string"]
+        return aggs["min_date"]["value_as_string"], aggs["max_date"]["value_as_string"]
 
     def clear_readonly_block(self):
         '''changes read_only_allow_delete to False'''
