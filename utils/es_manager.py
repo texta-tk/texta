@@ -234,11 +234,14 @@ class ES_Manager:
         fields_with_facts = {'fact': [], 'fact_str': [], 'fact_num': []}
         
         for response in responses:
-            aggregations = response['aggregations']
-            for fact_type in list(fields_with_facts.keys()):
-                if fact_type in aggregations:
-                    buckets = aggregations[fact_type][fact_type]['buckets']
-                    fields_with_facts[fact_type] += [a['key'] for a in buckets]
+            if 'aggregations' in response:
+                aggregations = response['aggregations']
+                for fact_type in list(fields_with_facts.keys()):
+                    if fact_type in aggregations:
+                        second_agg = aggregations[fact_type]
+                        if fact_type in second_agg:
+                            buckets = second_agg[fact_type]['buckets']
+                            fields_with_facts[fact_type] += [a['key'] for a in buckets]
         
         return fields_with_facts
 
