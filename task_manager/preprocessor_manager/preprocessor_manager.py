@@ -88,12 +88,14 @@ class Preprocessor:
 
             show_progress.update(l)
 
-        self.es_m.update_documents(list(processed_documents_dict['documents']), ids)
         task = Task.objects.get(pk=self.task_id)
-        task.status = 'Completed'
-        task.time_completed = datetime.now()
-
+        task.status = 'Updating'        
         task.result = json.dumps({'documents_processed': show_progress.n_total, **processed_documents_dict['meta'], 'preprocessor_key': self.params['preprocessor_key']})
+        task.save()
+        self.es_m.update_documents(list(processed_documents_dict['documents']), ids)
+
+        task.status = 'Completed'
+        task.time_completed = datetime.now()        
         task.save()
 
     def _prepare_preprocessor_data(self, field_paths, response: dict):

@@ -626,7 +626,7 @@ function query(){
                         $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft());
                     });  
                   },
-                  "scrollX": true
+                  "scrollX": true,
             });
 
             $(function(){
