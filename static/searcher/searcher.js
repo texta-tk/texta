@@ -617,7 +617,16 @@ function query(){
                        attr: {class:'dt-button buttons-columnVisibility toggleAllButton'}},
                        'columnsToggle'
                     ],
-                  "oLanguage": { "sProcessing": "Loading..."}
+                  "oLanguage": { "sProcessing": "Loading..."},
+                  "fnInitComplete": function() {
+                    $('.dataTables_scrollHead').css('overflow', 'auto');
+
+                    // Sync THEAD scrolling with TBODY
+                    $('.dataTables_scrollHead').on('scroll', function () {
+                        $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft());
+                    });  
+                  },
+                  "scrollX": true
             });
 
             $(function(){
