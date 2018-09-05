@@ -128,39 +128,6 @@ class ES_Manager:
         response = self.plain_post('{0}/{1}/_update_by_query?refresh&conflicts=proceed'.format(self.es_url, self.index))
         return response
 
-    def check_if_field_has_facts(self, sub_fields):
-        """ Check if field is associate with facts in Elasticsearch
-        """
-        doc_type = self.mapping.lower()
-        field_path = [s.lower() for s in sub_fields]
-        doc_path = '.'.join(field_path)
-
-        request_url = '{0}/{1}/{2}/_count'.format(es_url, self.index, self.mapping)
-        base_query = {"query": {"bool": {"filter": {'and': []}}}}
-        base_query = {'query': {'nested': {'path': 'texta_facts', 'query': {'bool': {'filter': []}}}}}
-        base_query['query']['nested']['query']['bool']['filter'].append({'term': {'texta_facts.doc_path': doc_path}})
-
-        has_facts = self._field_has_facts(request_url, base_query)
-        has_fact_str_val = self._field_has_fact_vals(request_url, base_query, 'texta_facts.str_val')
-        has_fact_num_val = self._field_has_fact_vals(request_url, base_query, 'texta_facts.num_val')
-
-        return has_facts, has_fact_str_val, has_fact_num_val
-
-    def _field_has_facts(self, url, query):
-        query = copy.deepcopy(query)
-        query['query']['nested']['query']['bool']['filter'].append({'exists': {'field': 'texta_facts.fact'}})
-
-        query = json.dumps(query)
-        response = self.plain_post(url, query)
-        return 'count' in response and response['count'] > 0
-
-    def _field_has_fact_vals(self, url, query, value_field_name):
-        query = copy.deepcopy(query)
-        query['query']['nested']['query']['bool']['filter'].append({'exists': {'field': value_field_name}})
-        query = json.dumps(query)
-
-        response = self.requests.post(url, data=query, headers=HEADERS).json()
-        return 'count' in response and response['count'] > 0
 
     def _decode_mapping_structure(self, structure, root_path=list()):
         """ Decode mapping structure (nested dictionary) to a flat structure
@@ -216,14 +183,6 @@ class ES_Manager:
     @staticmethod
     def plain_search(es_url, dataset, mapping, query):
         return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(query), headers=HEADERS).json()
-
-#    @staticmethod
-#    def plain_multisearch(es_url, dataset, mapping, data):
-#        responses = ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_msearch',data='\n'.join(data)+'\n', headers=HEADERS).json()
-#        if 'responses' in responses:
-#            return responses['responses']
-#        else:
-#            return []
     
     @staticmethod
     def plain_multisearch(es_url, data):
@@ -246,56 +205,40 @@ class ES_Manager:
     def get_fields_with_facts(self):
         queries = []
         
-        for active_dataset in self.active_datasets:
-            query_header = {'index': active_dataset.index, 'mapping': active_dataset.mapping}
-                
-            aggs = {
-                'fact': {
+        fact_types_with_queries = {'fact': {'match_all': {}}, 
+                                   'fact_str': {'nested': {'path': 'texta_facts', 'query': {'exists': {'field': 'texta_facts.str_val'}}, 'inner_hits': {}}},
+                                   'fact_num': {'nested': {'path': 'texta_facts', 'query': {'exists': {'field': 'texta_facts.num_val'}}, 'inner_hits': {}}}}
+        
+        for fact_type,query in fact_types_with_queries.items():
+            for active_dataset in self.active_datasets:
+            
+                aggs = {fact_type: {
                     "nested": {"path": "texta_facts"},
                     "aggs": {
-                        'fact': {
+                        fact_type: {
                             'terms': {"field": "texta_facts.doc_path", "size": 1, 'order': {'documents.doc_count': 'desc'}},
-                            "aggs": {"documents": {"reverse_nested": {}}}
-                        }
-                    }
-                },
-                'fact_str': {
-                    "nested": {"path": "texta_facts"},
-                    "aggs": {
-                        'fact_str': {
-                            'terms': {"field": "texta_facts.str_val", "size": 1, 'order': {'documents.doc_count': 'desc'}},
-                            "aggs": {"documents": {"reverse_nested": {}}}
-                        }
-                    }
-                },
-                'fact_num': {
-                    "nested": {"path": "texta_facts"},
-                    "aggs": {
-                        'fact_num': {
-                            'terms': {"field": "texta_facts.num_val", "size": 1, 'order': {'documents.doc_count': 'desc'}},
-                            "aggs": {"documents": {"reverse_nested": {}}}
+                            "aggs": {"documents": {"reverse_nested": {}}
+                                }
+                            }
                         }
                     }
                 }
-            }
-                
-            query_body = {'aggs': aggs}
-            queries.append(json.dumps(query_header))
-            queries.append(json.dumps(query_body))
+            
+                query_header = {'index': active_dataset.index, 'mapping': active_dataset.mapping}
+                query_body = {'query': query, 'aggs': aggs}
+                queries.append(json.dumps(query_header))
+                queries.append(json.dumps(query_body))
         
         responses = self.plain_multisearch(es_url, queries)
         
         fields_with_facts = {'fact': [], 'fact_str': [], 'fact_num': []}
         
-        for response in responses:  
-            for key in ['fact', 'fact_str', 'fact_num']:
-                
-                buckets = self._parse_buckets(response, key)
-                
-                if key == 'fact_str':
-                    print(response['aggregations'])
-                
-                fields_with_facts[key] += buckets
+        for response in responses:
+            aggregations = response['aggregations']
+            for fact_type in list(fields_with_facts.keys()):
+                if fact_type in aggregations:
+                    buckets = aggregations[fact_type][fact_type]['buckets']
+                    fields_with_facts[fact_type] += [a['key'] for a in buckets]
         
         return fields_with_facts
 
