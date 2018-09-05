@@ -76,32 +76,27 @@ class Preprocessor:
 				self.es_m.update_mapping_structure('texta_facts', FACT_PROPERTIES)
 
 		processed_documents_dict = DocumentPreprocessor.process(documents=documents, **parameter_dict)
-		processed_documents = list(processed_documents_dict['documents'])
-		self.es_m.update_documents(processed_documents, ids)
 
 		show_progress.update(l)
-
 		while l > 0:
 			response = self.es_m.scroll(scroll_id=scroll_id, time_out=self.scroll_time_out)
 			l = len(response['hits']['hits'])
 			scroll_id = response['_scroll_id']
 
 			documents, parameter_dict, ids = self._prepare_preprocessor_data(field_paths, response)
-			processed_documents_dict = DocumentPreprocessor.process(documents=documents, **parameter_dict)
-			processed_documents = list(processed_documents_dict['documents'])
-			
-			self.es_m.update_documents(processed_documents, ids)
+			processed_documents_dict.update(DocumentPreprocessor.process(documents=documents, **parameter_dict))
 
 			show_progress.update(l)
 
+		print('starting')
+		resp = self.es_m.update_documents(list(processed_documents_dict['documents']), ids)
+		print(resp)
+		print('done')
 		task = Task.objects.get(pk=self.task_id)
 		task.status = 'Completed'
 		task.time_completed = datetime.now()
 
-		if self.params['preprocessor_key'] == 'text_tagger':
-			task.result = json.dumps({'documents_processed': show_progress.n_total, 'documents_tagged': processed_documents_dict['meta']['total_positives'], 'preprocessor_key': self.params['preprocessor_key']})
-		else:
-			task.result = json.dumps({'documents_processed': show_progress.n_total, 'preprocessor_key': self.params['preprocessor_key']})
+		task.result = json.dumps({'documents_processed': show_progress.n_total, **processed_documents_dict['meta'], 'preprocessor_key': self.params['preprocessor_key']})
 		task.save()
 
 	def _prepare_preprocessor_data(self, field_paths, response: dict):
@@ -145,3 +140,4 @@ class Preprocessor:
 		else:
 			query = json.loads(Search.objects.get(pk=int(search)).query)
 		return query
+

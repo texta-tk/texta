@@ -85,4 +85,4 @@ class TextTaggerPreprocessor(object):
             # Get total tagged documents, get np array of results
             total_positives = np.count_nonzero(results)
 
-        return {"documents":documents, "meta": {'total_positives': total_positives}}
+        return {"documents":documents, "meta": {'documents_tagged': total_positives}}
