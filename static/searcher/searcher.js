@@ -333,6 +333,8 @@ function add_field(date_range_min,date_range_max){
     }
 
     counter++;
+    
+    console.log(field);
 
     var data = JSON.parse(field);
     var field_path = data.path;

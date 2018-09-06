@@ -94,7 +94,7 @@ class ES_Manager:
         self._facts_map = None
         self.es_cache = ES_Cache()
     
-    def _stringify_datasets(self):
+    def stringify_datasets(self):
         indices = [dataset.index for dataset in self.active_datasets]
         index_string = ','.join(indices)
         return index_string
@@ -262,7 +262,7 @@ class ES_Manager:
         mapping_data = {}
         
         if self.active_datasets:
-            index_string = self._stringify_datasets()          
+            index_string = self.stringify_datasets()          
             url = '{0}/{1}'.format(es_url,index_string)
             
             for index_name,index_properties in self.plain_get(url).items():
@@ -375,7 +375,7 @@ class ES_Manager:
         """ Search
         """
         q = json.dumps(self.combined_query['main'])
-        search_url = '{0}/{1}/_search'.format(es_url, self._stringify_datasets())
+        search_url = '{0}/{1}/_search'.format(es_url, self.stringify_datasets())
         response = self.plain_post(search_url, q)
         return response
 
@@ -563,14 +563,14 @@ class ES_Manager:
         
 
 
-    def perform_queries(self,queries):
-        response = ES_Manager.plain_multisearch(self.es_url, self.index, self.mapping, queries)
+    def perform_queries(self, queries):
+        response = ES_Manager.plain_multisearch(self.es_url, queries)
         return response
 
 
     def get_extreme_dates(self, field):
         query = {"aggs":{"max_date":{"max":{"field":field}},"min_date":{"min":{"field":field, 'format': 'yyyy-MM-dd'}}}}
-        url = "{0}/{1}/_search".format(self.es_url, self._stringify_datasets())
+        url = "{0}/{1}/_search".format(self.es_url, self.stringify_datasets())
         response = requests.post(url, data=json.dumps(query), headers=HEADERS).json()
         aggs = response["aggregations"]
         

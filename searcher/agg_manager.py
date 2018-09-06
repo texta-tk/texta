@@ -99,7 +99,7 @@ class AggManager:
             agg_size_1 = 10
             agg_size_2 = 10
 
-        field_type_to_name = {'date': 'daterange', 'string':'string', 'text': 'string', 'keyword': 'string', 'facts': 'fact', 'fact_str_val': 'fact_str_val', 'fact_num_val': 'fact_num_val'}
+        field_type_to_name = {'date': 'daterange', 'float': 'string', 'string':'string', 'text': 'string', 'keyword': 'string', 'facts': 'fact', 'fact_str_val': 'fact_str_val', 'fact_num_val': 'fact_num_val'}
 
         agg_name_1 = field_type_to_name[agg_field_1['type']]
         agg_name_2 = field_type_to_name[agg_field_2['type']]

@@ -28,15 +28,21 @@
 											<b>Add Filter</b>
 										</div>
 										<div class="col-sm-12">
-											<b>Select field:</b>
+											<b>Select field(s):</b>
 										</div>
 										<div class="col-sm-12">
-											<select id="constraint_field" name="constraint_field" onchange="javascript:add_field('{{date_range.min}}','{{date_range.max}}');" class="form-control input-sm">
-												<option></option>
-												{% for field in fields %}
-													<option value="{{field.data}}">{{field.label}}</option>
-												{% endfor %}
-											</select>
+										    <div class="form-inline">
+												<div class="form-group">
+													<select id="constraint_field" name="constraint_field" multiple="multiple" class="form-control input-sm">
+														{% for field in fields %}
+															<option value="{{field.data}}">{{field.label}}</option>
+														{% endfor %}
+													</select>
+												</div>
+												<div class="form-group">
+													<button type="button" class="btn btn-default input-sm" onclick="javascript:add_field('{{date_range.min}}','{{date_range.max}}');">Add</button>
+												</div>
+											</div>
 										</div>
 									</div>
 								</div>

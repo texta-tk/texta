@@ -3,6 +3,10 @@ $(document).ready(function() {
     	includeSelectAllOption: true,
     	numberDisplayed: 1
     });
+
+    $('#constraint_field').multiselect({
+    	numberDisplayed: 3
+    });
     
 });
 
