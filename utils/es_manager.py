@@ -93,7 +93,8 @@ class ES_Manager:
         self._facts_map = None
         self.es_cache = ES_Cache()
 
-    def update_documents(self, documents, ids):
+    def bulk_post_update_documents(self, documents, ids):
+        '''Do both plain_post_bulk and _update_by_query'''
         data = ''
         
         for i,_id in enumerate(ids):
@@ -101,6 +102,22 @@ class ES_Manager:
             data += json.dumps({"doc": documents[i]})+'\n'
         
         response = self.plain_post_bulk(self.es_url, data)
+        response = self._update_by_query()
+        return response
+
+    def bulk_post_documents(self, documents, ids):
+        '''Do just plain_post_bulk'''
+        data = ''
+        
+        for i,_id in enumerate(ids):
+            data += json.dumps({"update": {"_id": _id, "_type": self.mapping, "_index": self.index}})+'\n'
+            data += json.dumps({"doc": documents[i]})+'\n'
+        
+        response = self.plain_post_bulk(self.es_url, data)
+        return response
+
+    def update_documents(self):
+        '''Do just _update_by_query'''
         response = self._update_by_query()
         return response
 

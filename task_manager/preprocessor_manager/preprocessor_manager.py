@@ -75,24 +75,28 @@ class Preprocessor:
             if 'texta_facts' not in documents[0]:
                 self.es_m.update_mapping_structure('texta_facts', FACT_PROPERTIES)
 
-        processed_documents_dict = DocumentPreprocessor.process(documents=documents, **parameter_dict)
-
+        processed_documents = DocumentPreprocessor.process(documents=documents, **parameter_dict)
         show_progress.update(l)
+
+        response = self.es_m.scroll(scroll_id=scroll_id, time_out=self.scroll_time_out)
+        l = len(response['hits']['hits'])
+        scroll_id = response['_scroll_id']
         while l > 0:
+            documents, parameter_dict, ids = self._prepare_preprocessor_data(field_paths, response)
+            batch_processed_documents = DocumentPreprocessor.process(documents=documents, **parameter_dict)
+
+            self.es_m.bulk_post_documents(list(batch_processed_documents['documents']), ids)
+            add_dicts(processed_documents, batch_processed_documents)
+
             response = self.es_m.scroll(scroll_id=scroll_id, time_out=self.scroll_time_out)
             l = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
 
-            documents, parameter_dict, ids = self._prepare_preprocessor_data(field_paths, response)
-            add_dicts(processed_documents_dict, DocumentPreprocessor.process(documents=documents, **parameter_dict)) 
-
-            show_progress.update(l)
-
         task = Task.objects.get(pk=self.task_id)
         task.status = 'Updating'        
-        task.result = json.dumps({'documents_processed': show_progress.n_total, **processed_documents_dict['meta'], 'preprocessor_key': self.params['preprocessor_key']})
+        task.result = json.dumps({'documents_processed': show_progress.n_total, **processed_documents['meta'], 'preprocessor_key': self.params['preprocessor_key']})
         task.save()
-        self.es_m.update_documents(list(processed_documents_dict['documents']), ids)
+        self.es_m.update_documents()
 
         task.status = 'Completed'
         task.time_completed = datetime.now()        
