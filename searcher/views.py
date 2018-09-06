@@ -114,7 +114,7 @@ def get_fields(es_m):
 
 def get_daterange(es_m, field):
     min_val,max_val = es_m.get_extreme_dates(field)
-    return {'min':min_val[:10],'max':max_val[:10]}
+    return {'min':min_val,'max':max_val}
 
 
 @login_required

@@ -10,6 +10,7 @@ import time
 from functools import reduce
 import datetime
 
+
 if 'django' in sys.modules: # Import django-stuff only if imported from the django application / prevent errors when importing from scripts
     from conceptualiser.models import Concept
     from conceptualiser.models import TermConcept
@@ -572,7 +573,18 @@ class ES_Manager:
         url = "{0}/{1}/_search".format(self.es_url, self._stringify_datasets())
         response = requests.post(url, data=json.dumps(query), headers=HEADERS).json()
         aggs = response["aggregations"]
-        return aggs["min_date"]["value_as_string"], aggs["max_date"]["value_as_string"]
+        
+        _min = self._timestamp_to_str(aggs["min_date"]["value"])
+        _max = self._timestamp_to_str(aggs["max_date"]["value"])
+        
+        return _min, _max
+
+
+    @staticmethod
+    def _timestamp_to_str(timestamp):
+        date_object = datetime.date.fromtimestamp(timestamp/1000)
+        return datetime.date.strftime(date_object, date_format)
+
 
     def clear_readonly_block(self):
         '''changes read_only_allow_delete to False'''
