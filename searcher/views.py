@@ -72,6 +72,7 @@ def collect_map_entries(map_):
 
 
 def get_fields(es_m):
+    texta_reserved = ['texta_facts']
     mapped_fields = es_m.get_mapped_fields()
     fields_with_facts = es_m.get_fields_with_facts()
     
@@ -81,30 +82,33 @@ def get_fields(es_m):
         data = json.loads(mapped_field)
 
         path = data['path']
-        path_list = path.split('.')
-        label = '{0} --> {1}'.format(path_list[0], ' --> '.join(path_list[1:])) if len(path_list) > 1 else path_list[0]
-        label = label.replace('-->', u'→')
-
-        if data['type'] == 'date':
-            data['range'] = get_daterange(es_m, path)
-
-        field = {'data': json.dumps(data), 'label': label, 'type': data['type']}
-        fields.append(field)
         
-        if path in fields_with_facts['fact']:
-            data['type'] = 'facts'
-            field = {'data': json.dumps(data), 'label': label + ' [fact_names]', 'type':'facts'}
-            fields.append(field)
+        if path not in texta_reserved:
+        
+            path_list = path.split('.')
+            label = '{0} --> {1}'.format(path_list[0], ' --> '.join(path_list[1:])) if len(path_list) > 1 else path_list[0]
+            label = label.replace('-->', u'→')
 
-        if path in fields_with_facts['fact_str']:
-            data['type'] = 'fact_str_val'
-            field = {'data': json.dumps(data), 'label': label + ' [fact_text_values]', 'type':'facts'}
-            fields.append(field)
+            if data['type'] == 'date':
+                data['range'] = get_daterange(es_m, path)
 
-        if path in fields_with_facts['fact_num']:
-            data['type'] = 'fact_num_val'
-            field = {'data': json.dumps(data), 'label': label + ' [fact_num_values]', 'type':'facts'}
+            field = {'data': json.dumps(data), 'label': label, 'type': data['type']}
             fields.append(field)
+        
+            if path in fields_with_facts['fact']:
+                data['type'] = 'facts'
+                field = {'data': json.dumps(data), 'label': label + ' [fact_names]', 'type':'facts'}
+                fields.append(field)
+
+            if path in fields_with_facts['fact_str']:
+                data['type'] = 'fact_str_val'
+                field = {'data': json.dumps(data), 'label': label + ' [fact_text_values]', 'type':'facts'}
+                fields.append(field)
+
+            if path in fields_with_facts['fact_num']:
+                data['type'] = 'fact_num_val'
+                field = {'data': json.dumps(data), 'label': label + ' [fact_num_values]', 'type':'facts'}
+                fields.append(field)
     
     # Sort fields by label
     fields = sorted(fields, key=lambda l: l['label'])
