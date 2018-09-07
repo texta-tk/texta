@@ -605,30 +605,33 @@ function query(){
                   'processing': true,
                   "sAjaxSource": PREFIX+"/table_content",
                   "sDom": '<Bl"H"ipr>t<"F"lip>',
-                  "stateSave": true,
                   "sServerMethod":"POST",
                   "fnServerParams":function(aoData){
                       aoData.push({'name':'filterParams','value':JSON.stringify($("#filters").serializeArray())});
-                   },
-                   buttons: [
-                       { extend: 'columnVisibility', text: 'SHOW ALL', visibility: true,
-                       attr: {class:'dt-button buttons-columnVisibility toggleAllButton'}},
-                       { extend: 'columnVisibility', text: 'HIDE ALL', visibility: false,
-                       attr: {class:'dt-button buttons-columnVisibility toggleAllButton'}},
-                       'columnsToggle'
+                    },
+                    buttons: [
+                        { extend: 'columnVisibility', text: 'SHOW ALL', visibility: true,
+                        attr: {class:'dt-button buttons-columnVisibility toggleAllButton'}},
+                        { extend: 'columnVisibility', text: 'HIDE ALL', visibility: false,
+                        attr: {class:'dt-button buttons-columnVisibility toggleAllButton'}},
+                        'columnsToggle'
                     ],
-                  "oLanguage": { "sProcessing": "Loading..."},
-                  "fnInitComplete": function() {
-                    $('.dataTables_scrollHead').css('overflow-x', 'auto');
-                    // With scroll head for some reason there are v-a: middle on many classes 
-                    $('td').css('vertical-align', 'top');
-
-                    // Sync THEAD scrolling with TBODY
-                    $('.dataTables_scrollHead').on('scroll', function () {
-                        $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft());
-                    });  
-                  },
-                  "scrollX": true,
+                    "oLanguage": { "sProcessing": "Loading..."},
+                    "fnInitComplete": function() {
+                        $('.dataTables_scrollHead').css('overflow-x', 'auto');
+                        // With scroll head for some reason there are v-a: middle on many classes 
+                        $('td').css('vertical-align', 'top');
+                        
+                        // Sync THEAD scrolling with TBODY
+                        $('.dataTables_scrollHead').on('scroll', function () {
+                            $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft());
+                        });  
+                    },
+                "stateSave": true,
+                "stateSaveParams": function (settings, data) {
+                    data.start = 0;
+                },
+                "scrollX": true
             });
 
             $(function(){
