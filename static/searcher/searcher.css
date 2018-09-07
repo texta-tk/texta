@@ -125,3 +125,8 @@ textarea {
   display: inline-block;
   padding: 5px;
 }
+
+/* With scroll head for some reason there are v-a: middle on td  */
+.dataTable td {
+  vertical-align: top !important;
+}
