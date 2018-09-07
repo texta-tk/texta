@@ -619,8 +619,6 @@ function query(){
                     "oLanguage": { "sProcessing": "Loading..."},
                     "fnInitComplete": function() {
                         $('.dataTables_scrollHead').css('overflow-x', 'auto');
-                        // With scroll head for some reason there are v-a: middle on many classes 
-                        $('td').css('vertical-align', 'top');
                         
                         // Sync THEAD scrolling with TBODY
                         $('.dataTables_scrollHead').on('scroll', function () {
