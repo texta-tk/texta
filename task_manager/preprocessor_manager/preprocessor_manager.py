@@ -76,6 +76,7 @@ class Preprocessor:
                 self.es_m.update_mapping_structure('texta_facts', FACT_PROPERTIES)
 
         processed_documents = DocumentPreprocessor.process(documents=documents, **parameter_dict)
+        self.es_m.bulk_post_documents(list(processed_documents['documents']), ids)
         show_progress.update(l)
 
         response = self.es_m.scroll(scroll_id=scroll_id, time_out=self.scroll_time_out)
