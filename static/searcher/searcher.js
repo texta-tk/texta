@@ -619,13 +619,13 @@ function query(){
                     "oLanguage": { "sProcessing": "Loading..."},
                     "fnInitComplete": function() {
                         $('.dataTables_scrollHead').css('overflow-x', 'auto');
-                        // With scroll head for some reason there are v-a: middle on many classes 
-                        $('td').css('vertical-align', 'top');
                         
                         // Sync THEAD scrolling with TBODY
                         $('.dataTables_scrollHead').on('scroll', function () {
                             $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft());
                         });  
+                        // add hover and onclick to spans
+                        add_props_to_spans();
                     },
                 "stateSave": true,
                 "stateSaveParams": function (settings, data) {
@@ -1490,4 +1490,23 @@ function cluster_to_lex(id) {
             swal('Error!','There was a problem saving the cluster as a lexicon!','error');
         }
     });
+}
+
+
+function add_props_to_spans() {
+    $(".\\[HL\\]").hover(function(e) { 
+        $(this).css("filter",e.type === "mouseenter"?"brightness(110%)":"brightness(100%)") 
+        $(this).css("cursor","pointer")
+    })
+
+    // $(".\\[HL\\]").hover(function() {
+    //     $(this).css("filter","brightness(110%)")
+    //     $(this).css("cursor","pointer")
+    // });
+
+    $('.\\[HL\\]').click(
+        function() {
+            alert('test');
+        }
+    );
 }
