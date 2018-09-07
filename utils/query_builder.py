@@ -10,6 +10,7 @@ class QueryBuilder:
 
     def __init__(self, es_params):
         self.query = self._build(es_params)
+        print(self.query)
 
     def _build(self, es_params):
         """ Build internal representation for queries using es_params
@@ -36,6 +37,8 @@ class QueryBuilder:
             match_type = string_constraint['match_type'] if 'match_type' in string_constraint else ''
             match_slop = string_constraint["match_slop"] if 'match_slop' in string_constraint else ''
             match_operator = string_constraint['match_operator'] if 'match_operator' in string_constraint else ''
+            
+            match_field = match_field.split(',')
 
             query_strings = [s.replace('\r','') for s in string_constraint['match_txt'].split('\n')]
             query_strings = [s for s in query_strings if s]
@@ -46,19 +49,21 @@ class QueryBuilder:
                 # construct synonym queries
                 synonym_queries = []
                 for synonym in synonyms:
-                    synonym_query = {}
+                    synonym_query = {'multi_match': {}}
+                    
                     if match_type == 'match':
                         # match query
-                        sub_query = {'query': synonym, 'operator': 'and'}
-                        synonym_query['match'] = {match_field: sub_query}
+                        synonym_query['multi_match'] = {'query': synonym, 'fields': match_field, 'operator': 'and'}
                     if match_type == 'match_phrase':
                         # match phrase query
-                        sub_query = {'query': synonym, 'slop': match_slop}
-                        synonym_query['match_phrase'] = {match_field: sub_query}
+                        synonym_query['multi_match'] = {'query': synonym, 'type': 'phrase', 'fields': match_field, 'slop': match_slop}
                     if match_type == 'match_phrase_prefix':
                         # match phrase prefix query
-                        sub_query = {'query': synonym, 'slop': match_slop}
-                        synonym_query['match_phrase_prefix'] = {match_field: sub_query}
+                        synonym_query['multi_match'] = {'query': synonym, 'type': 'phrase_prefix', 'fields': match_field, 'slop': match_slop}
+                        
+                        
+                        
+                        
                     synonym_queries.append(synonym_query)
                 sub_queries.append({'bool': {'minimum_should_match': 1,'should': synonym_queries}})
             _combined_query["main"]["query"]["bool"]["should"].append({"bool": {match_operator: sub_queries}})

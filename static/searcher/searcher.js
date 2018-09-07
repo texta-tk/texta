@@ -334,18 +334,16 @@ function add_field(date_range_min,date_range_max){
 
     counter++;
     
-    console.log(field);
+    var field_path = Array();
 
-    var data = JSON.parse(field);
-    var field_path = data.path;
-    var field_type = data.type;
-    var path_list = data.path.split('.');
+    field.forEach(function(data) {
+        var data = JSON.parse(data);
+        field_path.push(data.path);
+    });
 
-	var field_name = path_list[0];
-	if(path_list.length > 1){
-	    var sub_field = path_list[path_list.length-1];
-	    field_name += ' ('+sub_field+')';
-    }
+
+    var field_type = JSON.parse(field[0]).type;
+    var field_name = field_path.join(', ');
 
     new_id = 'field_'+counter.toString();
 
@@ -424,7 +422,7 @@ function add_field(date_range_min,date_range_max){
     }
 
     $("#field_"+counter.toString()).show();
-    $("#constraint_field").val('');
+    $("#constraint_field").multiselect('deselectAll', false).multiselect('refresh');
 
 }
 
