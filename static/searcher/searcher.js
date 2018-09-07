@@ -1494,19 +1494,28 @@ function cluster_to_lex(id) {
 
 
 function add_props_to_spans() {
-    $(".\\[HL\\]").hover(function(e) { 
+    var span = $(".\\[HL\\]");            
+    span.hover(function(e) { 
         $(this).css("filter",e.type === "mouseenter"?"brightness(110%)":"brightness(100%)") 
         $(this).css("cursor","pointer")
     })
 
-    // $(".\\[HL\\]").hover(function() {
-    //     $(this).css("filter","brightness(110%)")
-    //     $(this).css("cursor","pointer")
-    // });
+    span.attr("data-toggle", "popover");
 
-    $('.\\[HL\\]').click(
-        function() {
-            alert('test');
-        }
-    );
+    $("[data-toggle=popover]").popover({
+        html: true, 
+        content: function() {
+              return $('#popover-content').html();
+            }
+    });
 }
+
+$('body').on('click', function (e) {
+    $('[data-toggle="popover"]').each(function () {
+        //the 'is' for buttons that trigger popups
+        //the 'has' for icons within a button that triggers a popup
+        if (!$(this).is(e.target) && $(this).has(e.target).length === 0 && $('.popover').has(e.target).length === 0) {
+            $(this).popover('hide');
+        }
+    });
+});

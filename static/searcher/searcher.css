@@ -125,3 +125,7 @@ textarea {
   display: inline-block;
   padding: 5px;
 }
+
+.dataTable td {
+  vertical-align: top !important;
+}
