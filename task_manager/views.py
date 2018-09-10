@@ -16,34 +16,13 @@ from .tag_manager.tag_manager import TaggingModel, get_pipeline_builder
 from .preprocessor_manager.preprocessor_manager import Preprocessor
 from .models import Task
 
+from task_manager.tasks import task_params
+
 from datetime import datetime
 
 import json
 import os
 import logging
-
-task_params = [
-	{
-		"name":            "Train Language Model",
-		"id":              "train_model",
-		"template":        "task_parameters/train_model.html",
-		"model":           LanguageModel(),
-		"allowed_actions": ["delete", "save"]
-	},
-	{
-		"name":            "Train Text Tagger",
-		"id":              "train_tagger",
-		"template":        "task_parameters/train_tagger.html",
-		"model":           TaggingModel(),
-		"allowed_actions": ["delete", "save"]
-	},
-	{
-		"name":            "Apply preprocessor",
-		"id":              "apply_preprocessor",
-		"template":        "task_parameters/apply_preprocessor.html",
-		"allowed_actions": []
-	}
-]
 
 
 def get_fields(es_m):
@@ -128,13 +107,13 @@ def index(request):
 
 def translate_parameters(params):
     pipe_builder = get_pipeline_builder()
-    
+
     datasets = Datasets().datasets
-    
+
     preprocessors = collect_map_entries(preprocessor_map)
     enabled_taggers = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True and preprocessor['key'] is 'text_tagger'][0]['enabled_taggers']
     enabled_taggers = {enabled_tagger.pk:enabled_tagger.description for enabled_tagger in enabled_taggers}
-    
+
     extractor_options = {a['index']:a['label'] for a in pipe_builder.get_extractor_options()}
     reductor_options = {a['index']:a['label'] for a in pipe_builder.get_reductor_options()}
     normalizer_options = {a['index']:a['label'] for a in pipe_builder.get_normalizer_options()}
@@ -150,11 +129,11 @@ def translate_parameters(params):
     }
 
     params = json.loads(params)
-    
+
     for k,v in params.items():
         if k in translations:
             params[k] = translate_param(translations[k], v)
-    
+
     return params
 
 
@@ -185,13 +164,11 @@ def start_task(request):
 	if task_type == 'apply_preprocessor':
 		task_params = filter_preprocessor_params(request.POST, task_params)
 
+	# Create execution task
 	task_id = create_task(task_type, description, task_params, user)
-
-	if task_type in ['train_tagger', 'train_model']:
-		model = activate_model(task_type)
-		model.train(task_id)
-	else:
-		Preprocessor().apply(task_id)
+	# Add task to queue
+	task = Task.get_by_id(task_id)
+	task.update_status(Task.STATUS_QUEUED)
 
 	return HttpResponse()
 
@@ -262,8 +239,9 @@ def create_task(task_type: str, description: str, parameters: dict, user: User) 
 	new_task = Task(description=description,
 					task_type=task_type,
 					parameters=json.dumps(parameters),
-					status='Running',
+					status=Task.STATUS_CREATED,
 					time_started=datetime.now(),
+					last_update=datetime.now(),
 					time_completed=None,
 					result='',
 					user=user)
