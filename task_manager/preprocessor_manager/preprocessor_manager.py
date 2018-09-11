@@ -10,6 +10,7 @@ from task_manager.models import Task
 from task_manager.progress_manager import ShowProgress
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
+from utils.helper_functions import add_dicts
 
 from texta.settings import FACT_PROPERTIES
 
@@ -144,19 +145,3 @@ class Preprocessor:
         else:
             query = json.loads(Search.objects.get(pk=int(search)).query)
         return query
-
-def add_dicts(dict1, dict2):
-    '''
-    Helper function to += values of keys from two dicts
-    '''
-    # check if dicts are dict
-    if set([type(dict1), type(dict2)]).issubset([dict]):
-        for key, val in dict2.items():
-            if key not in dict1:
-                dict1[key] = val
-            else:
-                if type(val) == dict:
-                    for k, v in val.items():
-                        dict1[key][k] += v
-                else:
-                    dict1[key] += val
