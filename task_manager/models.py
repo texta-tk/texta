@@ -49,6 +49,12 @@ class Task(models.Model):
             self.time_completed = datetime.now()
         self.save()
 
+    def update_progress(self, progress, progress_message):
+        self.progress = progress
+        self.progress_message = progress_message
+        self.last_update = datetime.now()
+        self.save()
+
     def to_json(self):
         data = {
             'task_id': self.id,
