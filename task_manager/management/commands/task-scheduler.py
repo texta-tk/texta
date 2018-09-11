@@ -46,7 +46,12 @@ class Command(BaseCommand):
         print("-> Total of queued tasks: ", len(queued_tasks))
         print("-> Current capacity: ", capacity)
         print("------------------------------------------------------")
+
         # Execute one task from queue
+        if len(queued_tasks) == 0:
+            # Nothing to do
+            return
+
         task = queued_tasks[0]
         task_type = task.task_type
         task_id = task.id
