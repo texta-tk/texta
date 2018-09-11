@@ -36,7 +36,7 @@ class EsIteratorError(Exception):
     pass
 
 
-class EsIterator(object):
+class EsIterator:
     """  ElasticSearch Iterator
     """
 
@@ -44,7 +44,8 @@ class EsIterator(object):
         ds = Datasets().activate_dataset_by_id(parameters['dataset'])
         query = self._parse_query(parameters)
 
-        self.field = json.loads(parameters['field'])['path']
+        # self.field = json.loads(parameters['field'])['path']
+        self.field = parameters['field']
         self.es_m = ds.build_manager(ES_Manager)
         self.es_m.load_combined_query(query)
         self.callback_progress = callback_progress
@@ -105,7 +106,8 @@ class EsIterator(object):
 class EsDataSample(object):
 
     def __init__(self, params):
-        self.field = json.loads(params['field'])['path']
+        # self.field = json.loads(params['field'])['path']
+        self.field = params['field']
         query = json.loads(Search.objects.get(pk=int(params['search'])).query)
 
         # Define selected mapping

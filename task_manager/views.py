@@ -1,6 +1,5 @@
 
 import os
-import base64
 import json
 import logging
 from datetime import datetime
@@ -9,7 +8,6 @@ from datetime import datetime
 from django.template import loader
 from django.http import HttpResponse, HttpResponseRedirect, QueryDict
 from django.contrib.auth.models import User
-from django.contrib.auth.hashers import check_password
 from django.contrib.auth.decorators import login_required
 from task_manager.models import Task
 from searcher.models import Search
@@ -20,6 +18,7 @@ from texta.settings import STATIC_URL
 from texta.settings import URL_PREFIX
 from texta.settings import MODELS_DIR
 from texta.settings import ERROR_LOGGER
+from account.models import Profile
 
 from dataset_importer.document_preprocessor import preprocessor_map
 # from .language_model_manager.language_model_manager import LanguageModel
@@ -44,12 +43,11 @@ def get_fields(es_m):
             path_list = path.split('.')
             label = '{0} --> {1}'.format(path_list[0], ' --> '.join(path_list[1:])) if len(path_list) > 1 else path_list[0]
             label = label.replace('-->', u'→')
-            field = {'data': json.dumps(data), 'label': label}
+            field = {'data': json.dumps(data), 'label': label, 'path': path}
             fields.append(field)
 
     # Sort fields by label
     fields = sorted(fields, key=lambda l: l['label'])
-
     return fields
 
 
@@ -167,6 +165,7 @@ def start_task(request):
     if 'dataset' in request.session.keys():
         task_params['dataset'] = int(request.session['dataset'])
 
+    # TODO: eliminate the need of this special treatment ?
     if task_type == 'apply_preprocessor':
         task_params = filter_preprocessor_params(request.POST, task_params)
 
@@ -224,6 +223,17 @@ def download_model(request):
     return HttpResponse()
 
 
+def _api_token_auth(auth_token):
+    try:
+        profile = Profile.objects.get(auth_token=auth_token)
+        user = profile.user
+        valid_token = True
+    except Profile.DoesNotExist:
+        user = None
+        valid_token = False
+    return user, valid_token
+
+
 def api_info(request):
     """
     """
@@ -237,55 +247,70 @@ def api_info(request):
 def api_get_task_list(request):
     """
     """
-    tasks = Task.objects.all()
-    data = []
-    # Build task list
-    for task in tasks:
-        t = {
-            'task_id': task.id,
-            'task_type': task.task_type,
-            'status': task.status,
-            'user': task.user.username
-        }
-        data.append(t)
+    request_data = request.body.decode("utf-8")
+    params = json.loads(request_data)
+    auth_token = params.get('auth_token', None)
+    user, valid_token = _api_token_auth(auth_token)
 
-    data_json = json.dumps(data)
-    return HttpResponse(data_json, content_type='application/json')
-
-    return HttpResponse()
+    if valid_token:
+        tasks = Task.objects.all()
+        data = []
+        # Build task list
+        for task in tasks:
+            t = {
+                'task_id': task.id,
+                'task_type': task.task_type,
+                'status': task.status,
+                'user': task.user.username
+            }
+            data.append(t)
+        data_json = json.dumps(data)
+        return HttpResponse(data_json, content_type='application/json')
+    else:
+        error = {'error': 'not authorized'}
+        data_json = json.dumps(error)
+        return HttpResponse(data_json, status=403, content_type='application/json')
 
 
 def api_get_task_status(request):
     """
     """
-    task_id = request.GET.get('task_id', None)
-    try:
+    request_data = request.body.decode("utf-8")
+    params = json.loads(request_data)
+    auth_token = params.get('auth_token', None)
+    user, valid_token = _api_token_auth(auth_token)
 
-        task = Task.get_by_id(task_id)
-        data = task.to_json()
-        data_json = json.dumps(data)
-        return HttpResponse(data_json, status=200, content_type='application/json')
+    if valid_token:
 
-    except Task.DoesNotExist as e:
-        error = {'error': 'task id is not valid'}
+        task_id = params.get('task_id', None)
+        try:
+            task = Task.get_by_id(task_id)
+            data = task.to_json()
+            data_json = json.dumps(data)
+            return HttpResponse(data_json, status=200, content_type='application/json')
+        except Task.DoesNotExist as e:
+            error = {'error': 'task id is not valid'}
+            data_json = json.dumps(error)
+            return HttpResponse(data_json, status=400, content_type='application/json')
+    else:
+        error = {'error': 'not authorized'}
         data_json = json.dumps(error)
-        return HttpResponse(data_json, status=400, content_type='application/json')
+        return HttpResponse(data_json, status=403, content_type='application/json')
 
 
 def api_train_model(request):
     """
     """
     try:
-        # Authenticate user
-        auth = request.META['HTTP_AUTHORIZATION'].split(' ', 1)
-        username, user_pwd = base64.b64decode(auth[1]).decode('utf-8').split(':', 1)
-        user = User.objects.get(username=username)
-        pwd_valid = check_password(user_pwd, user.password)
+        task_type = "train_model"
+        request_data = request.body.decode("utf-8")
+        params = json.loads(request_data)
+        auth_token = params.get('auth_token', None)
+        user, valid_token = _api_token_auth(auth_token)
 
-        if pwd_valid:
+        if valid_token:
             request_data = request.body.decode("utf-8")
             params = json.loads(request_data)
-            task_type = "train_model"
             description = params['description']
             # Create execution task
             task_id = create_task(task_type, description, params, user)
@@ -318,16 +343,15 @@ def api_train_tagger(request):
     """
     """
     try:
-        # Authenticate user
-        auth = request.META['HTTP_AUTHORIZATION'].split(' ', 1)
-        username, user_pwd = base64.b64decode(auth[1]).decode('utf-8').split(':', 1)
-        user = User.objects.get(username=username)
-        pwd_valid = check_password(user_pwd, user.password)
+        task_type = "train_tagger"
+        request_data = request.body.decode("utf-8")
+        params = json.loads(request_data)
+        auth_token = params.get('auth_token', None)
+        user, valid_token = _api_token_auth(auth_token)
 
-        if pwd_valid:
+        if valid_token:
             request_data = request.body.decode("utf-8")
             params = json.loads(request_data)
-            task_type = "train_tagger"
             description = params['description']
             # Create execution task
             task_id = create_task(task_type, description, params, user)
@@ -359,7 +383,40 @@ def api_train_tagger(request):
 def api_apply(request):
     """
     """
-    return HttpResponse()
+    try:
+        task_type = "apply_preprocessor"
+        request_data = request.body.decode("utf-8")
+        params = json.loads(request_data)
+        auth_token = params.get('auth_token', None)
+        user, valid_token = _api_token_auth(auth_token)
+
+        if valid_token:
+            description = params['description']
+            # Create execution task
+            task_id = create_task(task_type, description, params, user)
+            # Add task to queue
+            task = Task.get_by_id(task_id)
+            task.update_status(Task.STATUS_QUEUED)
+            # Return reference to task
+            data = {
+                'task_id': task_id,
+                'task_type': task_type,
+                'status': task.status,
+                'user': task.user.username
+            }
+            data_json = json.dumps(data)
+            return HttpResponse(data_json, status=200, content_type='application/json')
+
+        else:
+            error = {'error': 'not authorized'}
+            data_json = json.dumps(error)
+            return HttpResponse(data_json, status=403, content_type='application/json')
+
+    except Exception as e:
+        print(e)
+        error = {'error': 'invalid request'}
+        data_json = json.dumps(error)
+        return HttpResponse(data_json, status=400, content_type='application/json')
 
 
 def create_task(task_type: str, description: str, parameters: dict, user: User) -> int:
@@ -409,7 +466,7 @@ def filter_params(post: QueryDict):
     return filtered_params
 
 
-def filter_preprocessor_params(post: QueryDict, filtered_params={}):
+def filter_preprocessor_params(post, filtered_params):
     prefix = post['apply_preprocessor_preprocessor_key']
 
     for param in post:

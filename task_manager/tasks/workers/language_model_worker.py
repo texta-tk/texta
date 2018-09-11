@@ -1,12 +1,8 @@
-# Setup django from this new process
-# (necessary for windows compatibility with Process)
-import django
-django.setup()
 
 import json
 import logging
 import os
-from datetime import datetime
+# from datetime import datetime
 
 from gensim.models import word2vec
 
@@ -53,6 +49,7 @@ class LanguageModelWorker(BaseWorker):
 			self.save()
 
 			# declare the job done
+			show_progress.update_view(100.0)
 			logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_completed', 'data': {'task_id': self.id}}))
 			r = Task.objects.get(pk=self.id)
 			r.result = json.dumps({"model_type": "word2vec", "lexicon_size": len(self.model.wv.vocab)})

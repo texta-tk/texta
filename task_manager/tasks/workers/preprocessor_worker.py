@@ -1,7 +1,3 @@
-# Setup django from this new process
-# (necessary for windows compatibility with Process)
-import django
-django.setup()
 
 # from datetime import datetime
 import json
@@ -35,6 +31,7 @@ class PreprocessorWorker(BaseWorker):
         self.task_id = task_id
         task = Task.objects.get(pk=self.task_id)
         params = json.loads(task.parameters)
+        task.update_status(Task.STATUS_RUNNING)
 
         ds = Datasets().activate_dataset_by_id(params['dataset'])
         es_m = ds.build_manager(ES_Manager)
@@ -45,17 +42,17 @@ class PreprocessorWorker(BaseWorker):
         self._preprocessor_worker()
 
     def _preprocessor_worker(self):
-        field_paths = []
 
+        field_paths = []
         show_progress = ShowProgress(self.task_id)
         show_progress.update(0)
 
+        # TODO: remove "preprocessor_key" need from here? this should be worked out in the view (controller interface)
         # Add new field to mapping definition if necessary
         if 'field_properties' in preprocessor_map[self.params['preprocessor_key']]:
             preprocessor_key = self.params['preprocessor_key']
             fields = self.params['{0}_feature_names'.format(preprocessor_key)]
             for field in fields:
-                field = json.loads(field)['path']
                 field_paths.append(field)
                 new_field_name = '{0}_{1}'.format(field, preprocessor_key)
                 new_field_properties = preprocessor_map[preprocessor_key]['field_properties']
@@ -71,7 +68,7 @@ class PreprocessorWorker(BaseWorker):
 
         while total_hits > 0:
 
-            documents, parameter_dict, ids = self._prepare_preprocessor_data(field_paths, response)
+            documents, parameter_dict, ids = self._prepare_preprocessor_data(response)
             # Add facts field if necessary
             if documents:
                 if 'texta_facts' not in documents[0]:
@@ -79,6 +76,7 @@ class PreprocessorWorker(BaseWorker):
 
             documents = list(map(convert_to_utf8, documents))
 
+            # Apply all preprocessors
             for preprocessor_code in parameter_dict['preprocessors']:
                 preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
                 result_map = preprocessor.transform(documents, **parameter_dict)
@@ -97,12 +95,11 @@ class PreprocessorWorker(BaseWorker):
         task.result = json.dumps({'documents_processed': show_progress.n_total, 'documents_tagged': total_positive, 'preprocessor_key': self.params['preprocessor_key']})
         task.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
-    def _prepare_preprocessor_data(self, field_paths, response: dict):
+    def _prepare_preprocessor_data(self, response: dict):
         """
         Seperates document dicts and id strings from the pure ES response and changes
         the suffixes of the necessary parameters for routing purposes.
 
-        :param field_paths:
         :param response:
         :return:
         """
@@ -115,8 +112,7 @@ class PreprocessorWorker(BaseWorker):
             if key.startswith(self.params['preprocessor_key']):
                 new_key_suffix = key[len(self.params['preprocessor_key']) + 1:]
                 new_key = '{0}_preprocessor_{1}'.format(self.params['preprocessor_key'], new_key_suffix)
-                if new_key_suffix == 'feature_names':
-                    value = [json.loads(a)['path'] for a in value]
+                # TODO: check why this json.dumps is necessary? probably isn't
                 parameter_dict[new_key] = json.dumps(value)
 
         return documents, parameter_dict, ids

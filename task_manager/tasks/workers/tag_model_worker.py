@@ -1,7 +1,3 @@
-# Setup django from this new process
-# (necessary for windows compatibility with Process)
-import django
-django.setup()
 
 import os
 import json
