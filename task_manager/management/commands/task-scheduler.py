@@ -43,7 +43,7 @@ class Command(BaseCommand):
             # if now passed timeout time
             if now > timeout_time:
                 print("-> Task timeout: ", task.id)
-                task.update_status(Task.STATUS_FAILED)
+                task.update_status(Task.STATUS_FAILED, set_time_completed=True)
                 task.update_progress(0, "timeout")
                 log_data = json.dumps({'process': 'Task Scheduler', 'event': 'time_out_task'})
                 logging.getLogger(ERROR_LOGGER).error(log_data, extra={'task_id': task.id})

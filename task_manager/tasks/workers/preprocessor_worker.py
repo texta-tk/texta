@@ -86,6 +86,7 @@ class PreprocessorWorker(BaseWorker):
                 total_positive += result_map['meta'].get('total_positives', 0)
 
             self.es_m.update_documents(documents, ids)
+            # Update progress is important to check task is alive
             show_progress.update(total_hits)
             # Get next page if any
             response = self.es_m.scroll(scroll_id=scroll_id, time_out=self.scroll_time_out)

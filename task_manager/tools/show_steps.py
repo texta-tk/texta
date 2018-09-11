@@ -19,8 +19,7 @@ class ShowSteps(object):
 	def update_view(self):
 		i = self.n_step
 		percentage = (100.0 * i) / self.n_total
-		r = Task.objects.get(pk=self.model_pk)
+		r = Task.get_by_id(self.model_pk)
 		r.status = Task.STATUS_RUNNING
-		r.progress = percentage
-		r.progress_message = '{0} [{1}/{2}]'.format(self.step_messages[i], i + 1, self.n_total)
-		r.save()
+		progress_message = '{0} [{1}/{2}]'.format(self.step_messages[i], i + 1, self.n_total)
+		r.update_progress(percentage, progress_message)

@@ -1,11 +1,5 @@
-import json
-import logging
 
-from searcher.models import Search
 from task_manager.models import Task
-from utils.datasets import Datasets
-from utils.es_manager import ES_Manager
-from texta.settings import ERROR_LOGGER
 
 
 class ShowProgress(object):
@@ -33,6 +27,5 @@ class ShowProgress(object):
     def update_view(self, percentage):
         r = Task.get_by_id(self.task_pk)
         r.status = Task.STATUS_RUNNING
-        r.progress = percentage
-        r.progress_message = '{0:3.0f} %'.format(percentage)
-        r.save()
+        progress_message = '{0:3.0f} %'.format(percentage)
+        r.update_progress(percentage, progress_message)
