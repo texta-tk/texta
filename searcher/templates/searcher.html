@@ -166,7 +166,7 @@
 									</div>
 									<div class="row padded-row">
 										<div class="col-sm-12">
-											<select name="cluster_field" id="cluster_field" class="form-control input-sm">
+											<select name="cluster_field" id="cluster_field" multiple="multiple" class="form-control input-sm">
 												{% for field in fields %}
 													{% if field.type == 'text' or field.type == 'keyword' %}
 														<option value="{{field.data}}">{{field.label}}</option>

@@ -5,7 +5,15 @@ $(document).ready(function() {
     });
 
     $('#constraint_field').multiselect({
-    	numberDisplayed: 3
+    	numberDisplayed: 1
+    });
+
+    $('#mlt_fields').multiselect({
+    	numberDisplayed: 1
+    });
+
+    $('#cluster_field').multiselect({
+    	numberDisplayed: 1
     });
     
 });

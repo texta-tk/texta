@@ -183,8 +183,8 @@ class ES_Manager:
         return ES_Manager.requests.delete(url, data=data, headers=HEADERS).json()
 
     @staticmethod
-    def plain_search(es_url, dataset, mapping, query):
-        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(query), headers=HEADERS).json()
+    def plain_search(es_url, datasets, query):
+        return ES_Manager.requests.post(es_url+'/'+datasets+'/_search',data=json.dumps(query), headers=HEADERS).json()
     
     @staticmethod
     def plain_multisearch(es_url, data):
@@ -423,7 +423,7 @@ class ES_Manager:
             else:
                 q = self.combined_query['main']
             q['size'] = size
-            search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
+            search_url = '{0}/{1}/_search?scroll={2}'.format(es_url, self.stringify_datasets(), time_out)
 
             if id_scroll:
                 q['_source'] = 'false'
@@ -437,7 +437,7 @@ class ES_Manager:
 
     def get_total_documents(self):
         q = self.combined_query['main']
-        total = self.plain_search(self.es_url, self.index, self.mapping, q)['hits']['total']
+        total = self.plain_search(self.es_url, self.stringify_datasets(), q)['hits']['total']
         return int(total)
 
     @staticmethod
@@ -495,12 +495,18 @@ class ES_Manager:
         # Get ids from basic search
         docs_search = self._scroll_doc_ids()
         # Combine ids from basic search and mlt search
-        docs_combined = list(set().union(docs_search,docs_accepted))
+        
+        docs_search = [json.dumps(d) for d in docs_search]
+        docs_accepted = [json.dumps(d) for d in docs_accepted]
+        
+        docs_combined = list(set().union(docs_search, docs_accepted))
+        
+        docs_combined = [json.loads(d) for d in docs_search]
 
         mlt = {
             "more_like_this": {
                 "fields" : fields,
-                "like" : self._add_doc_ids_to_query(docs_combined),
+                "like" : docs_combined,
                 "min_term_freq" : 1,
                 "max_query_terms" : 12,
             }
@@ -534,7 +540,7 @@ class ES_Manager:
                 rejected = [{'ids':{'values':docs_rejected}}]
                 query["query"]["bool"]["must_not"] = rejected
 
-        response = ES_Manager.plain_search(self.es_url, self.index, self.mapping, query)
+        response = ES_Manager.plain_search(self.es_url, self.stringify_datasets(), query)
 
         return response
 
@@ -553,7 +559,7 @@ class ES_Manager:
         while hits:
             hits = response['hits']['hits']
             for hit in hits:
-                ids.append(hit['_id'])
+                ids.append({'_index': hit['_index'], '_type': hit['_type'], '_id': hit['_id']})
                 if len(ids) == limit:
                     return ids
             response = self.scroll(scroll_id=scroll_id)
@@ -561,7 +567,6 @@ class ES_Manager:
 
         return ids
         
-
 
     def perform_queries(self, queries):
         response = ES_Manager.plain_multisearch(self.es_url, queries)
