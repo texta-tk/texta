@@ -6,24 +6,19 @@ Command called by cron job to list and process (multiprocess) tasks in the backg
 Execution in cron:
 
 ```
-# Task Scheduler every 10 minutes
-*/10 * * * * python manage.py task-scheduler
+# Task Scheduler every 1 minute
+*/1 * * * * python manage.py task-scheduler
 ```
 """
+
 import json
 import logging
-import platform
-
-if platform.system() == 'Windows':
-	from threading import Thread as Process
-else:
-	from multiprocessing import Process
 
 from django.core.management.base import BaseCommand
 
-from texta.settings import ERROR_LOGGER, INFO_LOGGER, MODELS_DIR
+from texta.settings import ERROR_LOGGER, INFO_LOGGER
 from task_manager.models import Task
-from task_manager.tasks import task_params
+from task_manager.tasks.task_params import activate_task_worker
 
 # Define max number of background running processes
 MAX_RUNNING = 2
@@ -46,15 +41,30 @@ class Command(BaseCommand):
             return
 
         # Allocate queued tasks to running tasks
-        queued_tasks = Task.objects.filter(status=Task.STATUS_QUEUED)
-        queued_tasks = queued_tasks[:capacity]
+        queued_tasks = Task.objects.filter(status=Task.STATUS_QUEUED).order_by('last_update')
+        print("------------------------------------------------------")
+        print("-> Total of queued tasks: ", len(queued_tasks))
+        print("-> Current capacity: ", capacity)
+        print("------------------------------------------------------")
+        # Execute one task from queue
+        task = queued_tasks[0]
+        task_type = task.task_type
+        task_id = task.id
+        worker = activate_task_worker(task_type)
 
-        for task in queued_tasks:
+        if worker is None:
+            # Invalid task
+            task.update_status(Task.STATUS_FAILED)
+            log_data = json.dumps({'process': 'Task Scheduler', 'event': 'invalid_task'})
+            logging.getLogger(ERROR_LOGGER).info(log_data)
+            return
 
-            task_type = task.task_type
-            # TODO: preprocessor should be a task type!
-            if task_type in ['train_tagger', 'train_model']:
-            	model = activate_model(task_type)
-            	model.train(task_id)
-            else:
-            	Preprocessor().apply(task_id)
+        try:
+            # Run worker
+            worker.run(task_id)
+        except Exception as e:
+            # Capture generic task error
+            print(e)
+            task.update_status(Task.STATUS_FAILED)
+            log_data = json.dumps({'process': 'Task Scheduler', 'event': 'task_execution_error'})
+            logging.getLogger(ERROR_LOGGER).info(log_data)

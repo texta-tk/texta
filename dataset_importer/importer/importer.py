@@ -11,9 +11,12 @@ import requests
 import json
 import logging
 from django.conf import settings
+
 from dataset_importer.document_storer.storer import DocumentStorer
 from dataset_importer.document_reader.reader import DocumentReader, entity_reader_map, collection_reader_map, database_reader_map
-from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
+from dataset_importer.document_preprocessor import PREPROCESSOR_INSTANCES
+from dataset_importer.document_preprocessor import convert_to_utf8
+
 from dataset_importer.archive_extractor.extractor import ArchiveExtractor, extractor_map
 from threading import Lock
 from multiprocessing.pool import ThreadPool as Pool
@@ -23,9 +26,9 @@ from dataset_importer.utils import HandleDatasetImportException
 from pprint import pprint
 
 if platform.system() == 'Windows':
-	from threading import Thread as Process
+    from threading import Thread as Process
 else:
-	from multiprocessing import Process
+    from multiprocessing import Process
 
 DAEMON_BASED_DATABASE_FORMATS = set(database_reader_map) - {'sqlite'}
 ARCHIVE_FORMATS = set(extractor_map)
@@ -283,211 +286,216 @@ class DatasetImporter(object):
 
 
 def _import_dataset(parameter_dict, n_processes, process_batch_size):
-	"""Starts the import process from a parallel process.
+    """Starts the import process from a parallel process.
 
-	:param parameter_dict: dataset importer's parameters.
-	:param n_processes: size of the multiprocessing pool.
-	:param process_batch_size: the number of documents to process at any given time by a process.
-	:type parameter_dict: dict
-	:type n_processes: int
-	:type process_batch_size: int
-	"""
-	# Local files are not extracted from archives due to directory permissions
-	# If importing from local hard drive, extract first.
-	if parameter_dict['is_local'] is False:
-		if 'file_path' not in parameter_dict:
-			parameter_dict['file_path'] = download(parameter_dict['url'], parameter_dict['directory'])
+    :param parameter_dict: dataset importer's parameters.
+    :param n_processes: size of the multiprocessing pool.
+    :param process_batch_size: the number of documents to process at any given time by a process.
+    :type parameter_dict: dict
+    :type n_processes: int
+    :type process_batch_size: int
+    """
+    # Local files are not extracted from archives due to directory permissions
+    # If importing from local hard drive, extract first.
+    if parameter_dict['is_local'] is False:
+        if 'file_path' not in parameter_dict:
+            parameter_dict['file_path'] = download(parameter_dict['url'], parameter_dict['directory'])
 
-		_extract_archives(parameter_dict)
+        _extract_archives(parameter_dict)
 
-	reader = DocumentReader()
-	_set_total_documents(parameter_dict=parameter_dict, reader=reader)
-	_run_processing_jobs(parameter_dict=parameter_dict, reader=reader, n_processes=n_processes, process_batch_size=process_batch_size)
+    reader = DocumentReader()
+    _set_total_documents(parameter_dict=parameter_dict, reader=reader)
+    _run_processing_jobs(parameter_dict=parameter_dict, reader=reader, n_processes=n_processes, process_batch_size=process_batch_size)
 
 
 def _extract_archives(parameter_dict):
-	"""Extracts archives based on the information from the parameters.
+    """Extracts archives based on the information from the parameters.
 
-	:param parameter_dict: dataset importer parameters.
-	:type parameter_dict: dict
-	"""
-	archive_formats = parameter_dict.get('archives', [])
+    :param parameter_dict: dataset importer parameters.
+    :type parameter_dict: dict
+    """
+    archive_formats = parameter_dict.get('archives', [])
 
-	if not archive_formats:
-		return
+    if not archive_formats:
+        return
 
-	unprocessed_archives = ArchiveExtractor.detect_archives(
-		root_directory=parameter_dict['directory'],
-		archive_formats=archive_formats
-	)
+    unprocessed_archives = ArchiveExtractor.detect_archives(
+        root_directory=parameter_dict['directory'],
+        archive_formats=archive_formats
+    )
 
-	while unprocessed_archives:
-		for unprocessed_archive in unprocessed_archives:
-			ArchiveExtractor.extract_archive(
-				file_path=unprocessed_archive['path'],
-				archive_format=unprocessed_archive['format']
-			)
+    while unprocessed_archives:
+        for unprocessed_archive in unprocessed_archives:
+            ArchiveExtractor.extract_archive(
+                file_path=unprocessed_archive['path'],
+                archive_format=unprocessed_archive['format']
+            )
 
-		unprocessed_archives = ArchiveExtractor.detect_archives(
-			root_directory=parameter_dict['directory'],
-			archive_formats=archive_formats
-		)
+        unprocessed_archives = ArchiveExtractor.detect_archives(
+            root_directory=parameter_dict['directory'],
+            archive_formats=archive_formats
+        )
 
 
 def _init_pool(lock_):
-	"""Hack to allow locks in a multiprocessing pool.
-	"""
-	global lock
-	lock = lock_
+    """Hack to allow locks in a multiprocessing pool.
+    """
+    global lock
+    lock = lock_
 
 
 def _set_total_documents(parameter_dict, reader):
-	"""Updates total documents count in the database entry.
+    """Updates total documents count in the database entry.
 
-	:param parameter_dict: dataset import's parameters.
-	:param reader: dataset importer's document reader.
-	"""
-	dataset_import = DatasetImport.objects.get(pk=parameter_dict['import_id'])
-	dataset_import.total_documents = reader.count_total_documents(**parameter_dict)
-	dataset_import.save()
+    :param parameter_dict: dataset import's parameters.
+    :param reader: dataset importer's document reader.
+    """
+    dataset_import = DatasetImport.objects.get(pk=parameter_dict['import_id'])
+    dataset_import.total_documents = reader.count_total_documents(**parameter_dict)
+    dataset_import.save()
 
 
 def _complete_import_job(parameter_dict):
-	"""Updates database entry to completed status.
+    """Updates database entry to completed status.
 
-	:param parameter_dict: dataset import's parameters.
-	"""
-	import_id = parameter_dict['import_id']
-	dataset_import = DatasetImport.objects.get(pk=import_id)
-	dataset_import.end_time = datetime.now()
-	dataset_import.status = 'Completed'
-	dataset_import.json_parameters = json.dumps(parameter_dict)
-	dataset_import.save()
+    :param parameter_dict: dataset import's parameters.
+    """
+    import_id = parameter_dict['import_id']
+    dataset_import = DatasetImport.objects.get(pk=import_id)
+    dataset_import.end_time = datetime.now()
+    dataset_import.status = 'Completed'
+    dataset_import.json_parameters = json.dumps(parameter_dict)
+    dataset_import.save()
 
 
 def _processing_job(documents, parameter_dict):
-	"""A single processing job on a parallel node, which processes a batch of documents.
+    """A single processing job on a parallel node, which processes a batch of documents.
 
-	:param documents: batch of documents to process.
-	:param parameter_dict: dataset import's parameters.
-	:type documents: list of dicts
-	:type parameter_dict: dict
-	"""
-	dataset_name = '{0}_{1}'.format(parameter_dict['texta_elastic_index'], parameter_dict['texta_elastic_mapping'])
+    :param documents: batch of documents to process.
+    :param parameter_dict: dataset import's parameters.
+    :type documents: list of dicts
+    :type parameter_dict: dict
+    """
+    # dataset_name = '{0}_{1}'.format(parameter_dict['texta_elastic_index'], parameter_dict['texta_elastic_mapping'])
+    try:
 
-	try:
-		processed_documents = list(DocumentPreprocessor.process(documents=documents, **parameter_dict))
+        documents = list(map(convert_to_utf8, documents))
 
-		storer = DocumentStorer.get_storer(**parameter_dict)
-		stored_documents_count = storer.store(processed_documents)
+        for preprocessor_code in parameter_dict['preprocessors']:
+            preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
+            result_map = preprocessor.transform(documents, **parameter_dict)
+            documents = result_map['documents']
 
-		if processed_documents:
-			with lock:
-				dataset_import = DatasetImport.objects.get(pk=parameter_dict['import_id'])
-				dataset_import.processed_documents += stored_documents_count
-				dataset_import.save()
+        storer = DocumentStorer.get_storer(**parameter_dict)
+        stored_documents_count = storer.store(documents)
 
-	except Exception as e:
-		HandleDatasetImportException(parameter_dict, e)
+        if documents:
+            with lock:
+                dataset_import = DatasetImport.objects.get(pk=parameter_dict['import_id'])
+                dataset_import.processed_documents += stored_documents_count
+                dataset_import.save()
+
+    except Exception as e:
+        HandleDatasetImportException(parameter_dict, e)
 
 
 def _remove_existing_dataset(parameter_dict):
-	"""Removes imported dataset from stored location and from Synchronizer's index.
+    """Removes imported dataset from stored location and from Synchronizer's index.
 
-	:param parameter_dict: dataset import's parameters
-	:type parameter_dict: dict
-	"""
-	storer = DocumentStorer.get_storer(**parameter_dict)
-	storer.remove()
+    :param parameter_dict: dataset import's parameters
+    :type parameter_dict: dict
+    """
+    storer = DocumentStorer.get_storer(**parameter_dict)
+    storer.remove()
 
 
 def _run_processing_jobs(parameter_dict, reader, n_processes, process_batch_size):
-	"""Creates document batches and dispatches them to processing nodes.
+    """Creates document batches and dispatches them to processing nodes.
 
-	:param parameter_dict: dataset import's parameters.
-	:param reader: dataset importer's document reader.
-	:param n_processes: size of the multiprocessing pool.
-	:param process_batch_size: the number of documents to process at any given time by a node.
-	:type parameter_dict: dict
-	:type n_processes: int
-	:type process_batch_size: int
-	"""
-	if parameter_dict.get('remove_existing_dataset', False):
-		_remove_existing_dataset(parameter_dict)
+    :param parameter_dict: dataset import's parameters.
+    :param reader: dataset importer's document reader.
+    :param n_processes: size of the multiprocessing pool.
+    :param process_batch_size: the number of documents to process at any given time by a node.
+    :type parameter_dict: dict
+    :type n_processes: int
+    :type process_batch_size: int
+    """
+    if parameter_dict.get('remove_existing_dataset', False):
+        _remove_existing_dataset(parameter_dict)
 
-	import_job_lock = Lock()
+    import_job_lock = Lock()
 
-	process_pool = Pool(processes=n_processes, initializer=_init_pool, initargs=(import_job_lock,))
-	batch = []
+    process_pool = Pool(processes=n_processes, initializer=_init_pool, initargs=(import_job_lock,))
+    batch = []
 
-	for document in reader.read_documents(**parameter_dict):
-		batch.append(document)
+    for document in reader.read_documents(**parameter_dict):
+        batch.append(document)
 
-		# Send documents when they reach their batch size and empty it.
-		if len(batch) == process_batch_size:
-			process_pool.apply(_processing_job, args=(batch, parameter_dict))
-			batch = []
+        # Send documents when they reach their batch size and empty it.
+        if len(batch) == process_batch_size:
+            process_pool.apply(_processing_job, args=(batch, parameter_dict))
+            batch = []
 
-	# Send the final documents that did not reach the batch size.
-	if batch:
-		process_pool.apply(_processing_job, args=(batch, parameter_dict))
+    # Send the final documents that did not reach the batch size.
+    if batch:
+        process_pool.apply(_processing_job, args=(batch, parameter_dict))
 
-	process_pool.close()
-	process_pool.join()
+    process_pool.close()
+    process_pool.join()
 
-	_complete_import_job(parameter_dict)
+    _complete_import_job(parameter_dict)
 
 
 def download(url, target_directory, chunk_size=1024):
-	"""Download data source from a remote host.
+    """Download data source from a remote host.
 
-	:param url: URL to the data source.
-	:param target_directory: import session's directory path to download the data source.
-	:param chunk_size: data stream's chunk size
-	:type url: string
-	:type target_directory: string
-	:type chunk_size: int
-	:return: path to the downloaded file
-	:rtype: string
-	"""
-	head_response = requests.head(url)
+    :param url: URL to the data source.
+    :param target_directory: import session's directory path to download the data source.
+    :param chunk_size: data stream's chunk size
+    :type url: string
+    :type target_directory: string
+    :type chunk_size: int
+    :return: path to the downloaded file
+    :rtype: string
+    """
+    head_response = requests.head(url)
 
-	file_name = _derive_file_name(head_response, url)
-	file_path = os.path.join(target_directory, file_name)
+    file_name = _derive_file_name(head_response, url)
+    file_path = os.path.join(target_directory, file_name)
 
-	response = requests.get(url, stream=True)
-	with open(file_path, 'wb') as downloaded_file:
-		for chunk in response.iter_content(chunk_size):
-			if chunk:
-				downloaded_file.write(chunk)
+    response = requests.get(url, stream=True)
+    with open(file_path, 'wb') as downloaded_file:
+        for chunk in response.iter_content(chunk_size):
+            if chunk:
+                downloaded_file.write(chunk)
 
-	return file_path
+    return file_path
 
 
 def tear_down_import_directory(import_directory_path):
-	shutil.rmtree(import_directory_path)
+    shutil.rmtree(import_directory_path)
 
 
 def _derive_file_name(response, url):
-	"""Tries to derive file name from either response header or URL string.
+    """Tries to derive file name from either response header or URL string.
 
-	:param response: requests Response
-	:param url: URL of the downloaded file
-	:type url: string
-	:return: name of the new file
-	:rtype: string
-	"""
-	file_name = ''
+    :param response: requests Response
+    :param url: URL of the downloaded file
+    :type url: string
+    :return: name of the new file
+    :rtype: string
+    """
+    file_name = ''
 
-	if 'content-disposition' in response.headers:
-		file_names = re.findall('filename=(.*)', response['content-disposition'])
+    if 'content-disposition' in response.headers:
+        file_names = re.findall('filename=(.*)', response['content-disposition'])
 
-		if file_names:
-			file_name = file_names[0].strip('\'" ')
-	elif 'location' in response.headers:
-		file_name = os.path.basename(response.headers['location'])
+        if file_names:
+            file_name = file_names[0].strip('\'" ')
+    elif 'location' in response.headers:
+        file_name = os.path.basename(response.headers['location'])
 
-	if not file_name:
-		file_name = os.path.basename(url)
+    if not file_name:
+        file_name = os.path.basename(url)
 
-	return file_name
+    return file_name

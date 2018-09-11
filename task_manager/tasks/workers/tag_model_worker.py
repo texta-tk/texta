@@ -1,6 +1,57 @@
+# Setup django from this new process
+# (necessary for windows compatibility with Process)
+import django
+django.setup()
+
+import os
+import json
+import logging
+# from datetime import datetime
+
+# from searcher.models import Search
+from task_manager.models import Task
+from task_manager.tools import EsDataSample
+
+from texta.settings import ERROR_LOGGER
+from texta.settings import INFO_LOGGER
+from texta.settings import MODELS_DIR
+
+# Uses scikit-learn 0.18.1
+# from sklearn.base import BaseEstimator
+# from sklearn.feature_extraction.text import CountVectorizer
+# from sklearn.feature_extraction.text import HashingVectorizer
+# from sklearn.feature_extraction.text import TfidfVectorizer
+# from sklearn.decomposition import TruncatedSVD
+# from sklearn.preprocessing import Normalizer
+# from sklearn.svm import LinearSVC
+# from sklearn.naive_bayes import BernoulliNB
+# from sklearn.neighbors import KNeighborsClassifier
+# from sklearn.neighbors import RadiusNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import f1_score
+# from sklearn.pipeline import Pipeline
+from sklearn.externals import joblib
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+from sklearn.model_selection import GridSearchCV
+
+# from texta.settings import STATIC_URL, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ERROR_LOGGER
+# from searcher.models import Search
+# from task_manager.models import Task
+# from .data_manager import EsDataClassification, EsDataSample
+# # from classification_manager.models import JobQueue, ModelClassification
+# from . import data_manager
+# from task_manager.models import Task
+# from texta.settings import ERROR_LOGGER
+
+from task_manager.tools import ShowSteps
+from task_manager.tools import get_pipeline_builder
+
+from .base_worker import BaseWorker
 
 
-class TaggingModel:
+class TagModelWorker(BaseWorker):
 
 	def __init__(self):
 		self.task_id = None
@@ -11,7 +62,7 @@ class TaggingModel:
 		self.task_id = None
 		self.task_model_obj = None
 
-	def train(self, task_id):
+	def run(self, task_id):
 		self.task_id = task_id
 		self.task_model_obj = Task.objects.get(pk=self.task_id)
 
@@ -29,7 +80,7 @@ class TaggingModel:
 			show_progress.update(0)
 			pipe_builder = get_pipeline_builder()
 			pipe_builder.set_pipeline_options(extractor_opt, reductor_opt, normalizer_opt, classifier_opt)
-			clf_arch = pipe_builder.pipeline_representation()
+			# clf_arch = pipe_builder.pipeline_representation()
 			c_pipe, params = pipe_builder.build()
 
 			es_data = EsDataSample(task_params)
@@ -44,15 +95,12 @@ class TaggingModel:
 			self.save()
 
 			train_summary['model_type'] = 'sklearn'
-			model_status = 'Completed'
 			show_progress.update(3)
 
 			# Declare the job as done
 			r = Task.objects.get(pk=self.task_id)
-			r.time_completed = datetime.now()
-			r.status = model_status
 			r.result = json.dumps(train_summary)
-			r.save()
+			r.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
 			logging.getLogger(INFO_LOGGER).info(json.dumps({
 				'process': 'CREATE CLASSIFIER',
@@ -65,13 +113,10 @@ class TaggingModel:
 		except Exception as e:
 			logging.getLogger(ERROR_LOGGER).error(json.dumps(
 				{'process': 'CREATE CLASSIFIER', 'event': 'model_training_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
-
 			# declare the job as failed.
 			r = Task.objects.get(pk=self.task_id)
-			r.time_completed = datetime.now()
-			r.status = 'Failed'
 			r.result = json.dumps({'error': repr(e)})
-			r.save()
+			r.update_status(Task.STATUS_FAILED, set_time_completed=True)
 
 	def tag(self, texts):
 		return self.model.predict(texts)
@@ -84,39 +129,35 @@ class TaggingModel:
 		Saves trained model as a pickle to the filesystem.
 		:rtype: bool
 		"""
+		model_name = 'model_{0}'.format(self.task_id)
+		self.model_name = model_name
+		output_model_file = os.path.join(MODELS_DIR, model_name)
 		try:
-			model_name = 'model_{0}'.format(self.task_id)
-			self.model_name = model_name
-			output_model_file = os.path.join(MODELS_DIR, model_name)
 			joblib.dump(self.model, output_model_file)
 			return True
 
 		except Exception as e:
-			model_name = 'model_{0}'.format(self.task_id)
-			file_path = os.path.join(MODELS_DIR, model_name)
 			logging.getLogger(ERROR_LOGGER).error('Failed to save model to filesystem.', exc_info=True, extra={
 				'model_name': model_name,
-				'file_path':  file_path
+				'file_path':  output_model_file
 			})
 
-	def load(self, model_id):
+	def load(self, task_id):
 		"""
 		Imports model pickle from filesystem.
-		:param model_id: id of task it was saved from.
+		:param task_id: id of task it was saved from.
 		:return: serialized model pickle.
 		"""
+		model_name = 'model_{0}'.format(task_id)
+		file_path = os.path.join(MODELS_DIR, model_name)
 		try:
-			model_name = 'model_{0}'.format(model_id)
-			model_file = os.path.join(MODELS_DIR, model_name)
-			model = joblib.load(model_file)
+			model = joblib.load(file_path)
 			self.model = model
-			self.task_id = int(model_id)
+			self.task_id = int(task_id)
 			self.description = Task.objects.get(pk=self.task_id).description
 			return model
 
 		except Exception as e:
-			model_name = 'model_{0}'.format(model_id)
-			file_path = os.path.join(MODELS_DIR, model_name)
 			logging.getLogger(ERROR_LOGGER).error('Failed to save model to filesystem.', exc_info=True, extra={
 				'model_name': model_name,
 				'file_path':  file_path

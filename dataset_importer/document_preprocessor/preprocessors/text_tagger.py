@@ -1,21 +1,22 @@
-from task_manager.tag_manager.tag_manager import TaggingModel
+from task_manager.tasks.workers.tag_model_worker import TagModelWorker
 from task_manager.models import Task
 
 import numpy as np
 import json
 
-enabled_tagger_ids = [tagger.pk for tagger in Task.objects.filter(task_type='train_tagger').filter(status='completed')]
+enabled_tagger_ids = [tagger.pk for tagger in Task.objects.filter(task_type='train_tagger').filter(status=Task.STATUS_COMPLETED)]
 enabled_taggers = {}
 
 # Load Tagger models
 for _id in enabled_tagger_ids:
-    tm = TaggingModel()
+    tm = TagModelWorker()
     tm.load(_id)
     enabled_taggers[_id] = tm
 
+
 class TextTaggerPreprocessor(object):
     """Preprocessor implementation for running TEXTA Text Taggers on the selected documents.
-    """ 
+    """
 
     def __init__(self, feature_map={}):
         self._feature_map = feature_map
@@ -30,13 +31,13 @@ class TextTaggerPreprocessor(object):
 
         # Load tagger models
         for _id in tagger_ids_to_apply:
-            tm = TaggingModel()
+            tm = TagModelWorker()
             tm.load(_id)
             taggers_to_apply.append(tm)
-        
+
         for input_feature in input_features:
             texts = []
-        
+
             for document in documents:
                 # Take into account nested fields encoded as: 'field.sub_field'
                 decoded_text = document
@@ -47,42 +48,44 @@ class TextTaggerPreprocessor(object):
                     else:
                         decoded_text = ''
                         break
-                
+
                 try:
                     decoded_text.strip().decode()
                 except AttributeError:
                     decoded_text.strip()
-                
+
                 texts.append(decoded_text)
-            
+
             if not texts:
                 return documents
-            
+
+            # TODO: this comment looks important
             ## Dies with empty text!
             results = []
             tagger_descriptions = []
-            
+
             for tagger in taggers_to_apply:
                 tagger_descriptions.append(tagger.description)
                 result_vector = tagger.tag(texts)
                 results.append(result_vector)
-            
+
             results_transposed = np.array(results).transpose()
 
-            for i,tagger_ids in enumerate(results_transposed):
+            for i, tagger_ids in enumerate(results_transposed):
                 positive_tag_ids = np.nonzero(tagger_ids)
                 positive_tags = [tagger_descriptions[positive_tag_id] for positive_tag_id in positive_tag_ids[0]]
                 texta_facts = []
-                
-                if positive_tags:         
+
+                if positive_tags:
                     if 'texta_facts' not in documents[i]:
-                        documents[i]['texta_facts'] = []               
+                        documents[i]['texta_facts'] = []
                     for tag in positive_tags:
-                        new_fact = {'fact': 'TEXTA_TAG', 'str_val': tag, 'doc_path': input_feature, 'spans': json.dumps([[0,len(texts[i])]])}
+                        new_fact = {'fact': 'TEXTA_TAG', 'str_val': tag, 'doc_path': input_feature, 'spans': json.dumps([[0, len(texts[i])]])}
                         texta_facts.append(new_fact)
-                
-                    documents[i]['texta_facts'].extend(texta_facts)    
+
+                    documents[i]['texta_facts'].extend(texta_facts)
+
             # Get total tagged documents, get np array of results
             total_positives = np.count_nonzero(results)
 
-        return {"documents":documents, "meta": {'total_positives': total_positives}}
+        return {"documents": documents, "meta": {'total_positives': total_positives}}

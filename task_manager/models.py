@@ -25,23 +25,26 @@ class Task(models.Model):
         (STATUS_FAILED, 'Failed'),
     )
 
-    id             = models.AutoField(primary_key=True)
-    user           = models.ForeignKey(User, on_delete=models.CASCADE)
-    description    = models.CharField(max_length=MAX_STR_LEN, default=None)
-    task_type      = models.CharField(max_length=MAX_STR_LEN, default=None)
-    parameters     = models.TextField(default=None)
-    result         = models.TextField(default=None)
-    status         = models.CharField(choices=STATUS_CHOICES, max_length=MAX_STR_LEN)
-    progress       = models.FloatField(default=0.0)
-    time_started   = models.DateTimeField()
-    last_update    = models.DateTimeField(null=True, blank=True, default=None)
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    description = models.CharField(max_length=MAX_STR_LEN, default=None)
+    task_type = models.CharField(max_length=MAX_STR_LEN, default=None)
+    parameters = models.TextField(default=None)
+    result = models.TextField(default=None)
+    status = models.CharField(choices=STATUS_CHOICES, max_length=MAX_STR_LEN)
+    progress = models.FloatField(default=0.0)
+    progress_message = models.CharField(max_length=MAX_STR_LEN, default='')
+    time_started = models.DateTimeField()
+    last_update = models.DateTimeField(null=True, blank=True, default=None)
     time_completed = models.DateTimeField(null=True, blank=True, default=None)
 
     @staticmethod
     def get_by_id(task_id):
         return Task.objects.get(pk=task_id)
 
-    def update_status(self, status):
+    def update_status(self, status, set_time_completed=False):
         self.status = status
         self.last_update = datetime.now()
+        if set_time_completed:
+            self.time_completed = datetime.now()
         self.save()
