@@ -1,5 +1,6 @@
 
 import os
+import base64
 import json
 import logging
 from datetime import datetime
@@ -8,6 +9,7 @@ from datetime import datetime
 from django.template import loader
 from django.http import HttpResponse, HttpResponseRedirect, QueryDict
 from django.contrib.auth.models import User
+from django.contrib.auth.hashers import check_password
 from django.contrib.auth.decorators import login_required
 from task_manager.models import Task
 from searcher.models import Search
@@ -158,8 +160,6 @@ def translate_param(translation, value):
 @login_required
 def start_task(request):
     user = request.user
-    # session = request.session
-
     task_type = request.POST['task_type']
     task_params = filter_params(request.POST)
     description = task_params['description']
@@ -224,28 +224,141 @@ def download_model(request):
     return HttpResponse()
 
 
+def api_info(request):
+    """
+    """
+    data = {'name': 'TEXTA Task Manager API',
+            'version': '1.0'}
+
+    data_json = json.dumps(data)
+    return HttpResponse(data_json, content_type='application/json')
+
+
 def api_get_task_list(request):
+    """
+    """
+    tasks = Task.objects.all()
+    data = []
+    # Build task list
+    for task in tasks:
+        t = {
+            'task_id': task.id,
+            'task_type': task.task_type,
+            'status': task.status,
+            'user': task.user.username
+        }
+        data.append(t)
+
+    data_json = json.dumps(data)
+    return HttpResponse(data_json, content_type='application/json')
 
     return HttpResponse()
 
 
 def api_get_task_status(request):
+    """
+    """
+    task_id = request.GET.get('task_id', None)
+    try:
 
-    return HttpResponse()
+        task = Task.get_by_id(task_id)
+        data = task.to_json()
+        data_json = json.dumps(data)
+        return HttpResponse(data_json, status=200, content_type='application/json')
+
+    except Task.DoesNotExist as e:
+        error = {'error': 'task id is not valid'}
+        data_json = json.dumps(error)
+        return HttpResponse(data_json, status=400, content_type='application/json')
 
 
 def api_train_model(request):
+    """
+    """
+    try:
+        # Authenticate user
+        auth = request.META['HTTP_AUTHORIZATION'].split(' ', 1)
+        username, user_pwd = base64.b64decode(auth[1]).decode('utf-8').split(':', 1)
+        user = User.objects.get(username=username)
+        pwd_valid = check_password(user_pwd, user.password)
 
-    return HttpResponse()
+        if pwd_valid:
+            request_data = request.body.decode("utf-8")
+            params = json.loads(request_data)
+            task_type = "train_model"
+            description = params['description']
+            # Create execution task
+            task_id = create_task(task_type, description, params, user)
+            # Add task to queue
+            task = Task.get_by_id(task_id)
+            task.update_status(Task.STATUS_QUEUED)
+            # Return reference to task
+            data = {
+                'task_id': task_id,
+                'task_type': task_type,
+                'status': task.status,
+                'user': task.user.username
+            }
+            data_json = json.dumps(data)
+            return HttpResponse(data_json, status=200, content_type='application/json')
+
+        else:
+            error = {'error': 'not authorized'}
+            data_json = json.dumps(error)
+            return HttpResponse(data_json, status=403, content_type='application/json')
+
+    except Exception as e:
+        print(e)
+        error = {'error': 'invalid request'}
+        data_json = json.dumps(error)
+        return HttpResponse(data_json, status=400, content_type='application/json')
 
 
 def api_train_tagger(request):
+    """
+    """
+    try:
+        # Authenticate user
+        auth = request.META['HTTP_AUTHORIZATION'].split(' ', 1)
+        username, user_pwd = base64.b64decode(auth[1]).decode('utf-8').split(':', 1)
+        user = User.objects.get(username=username)
+        pwd_valid = check_password(user_pwd, user.password)
 
-    return HttpResponse()
+        if pwd_valid:
+            request_data = request.body.decode("utf-8")
+            params = json.loads(request_data)
+            task_type = "train_tagger"
+            description = params['description']
+            # Create execution task
+            task_id = create_task(task_type, description, params, user)
+            # Add task to queue
+            task = Task.get_by_id(task_id)
+            task.update_status(Task.STATUS_QUEUED)
+            # Return reference to task
+            data = {
+                'task_id': task_id,
+                'task_type': task_type,
+                'status': task.status,
+                'user': task.user.username
+            }
+            data_json = json.dumps(data)
+            return HttpResponse(data_json, status=200, content_type='application/json')
+
+        else:
+            error = {'error': 'not authorized'}
+            data_json = json.dumps(error)
+            return HttpResponse(data_json, status=403, content_type='application/json')
+
+    except Exception as e:
+        print(e)
+        error = {'error': 'invalid request'}
+        data_json = json.dumps(error)
+        return HttpResponse(data_json, status=400, content_type='application/json')
 
 
 def api_apply(request):
-
+    """
+    """
     return HttpResponse()
 
 

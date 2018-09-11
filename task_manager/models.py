@@ -48,3 +48,20 @@ class Task(models.Model):
         if set_time_completed:
             self.time_completed = datetime.now()
         self.save()
+
+    def to_json(self):
+        data = {
+            'task_id': self.id,
+            'user': self.user.username,
+            'description': self.description,
+            'task_type': self.task_type,
+            'parameters': self.parameters,
+            'result': self.result,
+            'status': self.status,
+            'progress': self.progress,
+            'progress_message': self.progress_message,
+            'time_started': str(self.time_started),
+            'last_update': str(self.last_update),
+            'time_completed': str(self.time_completed)
+        }
+        return data
