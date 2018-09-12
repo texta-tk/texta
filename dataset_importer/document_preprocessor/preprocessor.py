@@ -40,6 +40,7 @@ class DocumentPreprocessor(object):
         :rtype: list of dicts
         """
         preprocessors = kwargs['preprocessors']
+        # Add metadata from all preprocessors
         processed_documents = {}
         for preprocessor_code in preprocessors:
             preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
