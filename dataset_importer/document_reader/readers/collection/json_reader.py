@@ -27,7 +27,7 @@ class JSONReader(CollectionReader):
 
 		total_documents = 0
 
-		for file_path in JSONReader.get_file_list(directory, 'json'):
+		for file_path in JSONReader.get_file_list(directory, 'jsonl') + JSONReader.get_file_list(directory, 'jl'):
 			with open(file_path, encoding='utf8') as json_file:
 				total_documents += sum(1 for row in json_file)
 
