@@ -16,17 +16,22 @@ cron example:
 ## API sample
 
 ### Check API running
+```
 GET http://localhost:8000/task_manager/api/v1
+```
 
 ### Task List
+```
 POST http://localhost:8000/task_manager/api/v1/task_list
 Content-Type: application/json
 
 {
     "auth_token": "60aa4ecb8aa5fc"
 }
+```
 
 ### Task Status
+```
 POST http://localhost:8000/task_manager/api/v1/task_status
 Content-Type: application/json
 
@@ -34,8 +39,10 @@ Content-Type: application/json
     "auth_token": "60aa4ecb8aa5fc",
     "task_id": 55
 }
+```
 
 ### Train Model
+```
 POST http://localhost:8000/task_manager/api/v1/train_model
 Content-Type: application/json
 
@@ -49,8 +56,10 @@ Content-Type: application/json
     "num_dimensions": 100,
     "num_workers": 2
 }
+```
 
 ### Train Tagger
+```
 POST http://localhost:8000/task_manager/api/v1/train_tagger
 Content-Type: application/json
 
@@ -65,8 +74,10 @@ Content-Type: application/json
     "search": "1",
     "extractor_opt": "0"
 }
+```
 
 ### Apply Preprocessor
+```
 POST http://localhost:8000/task_manager/api/v1/apply
 Content-Type: application/json
 
@@ -79,3 +90,4 @@ Content-Type: application/json
     "dataset": 1,
     "description": "API-T"
 }
+```
