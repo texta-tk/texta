@@ -26,7 +26,7 @@ class FactManager:
             self.es_m.clear_readonly_block()
             fact_queries = []
             for key in rm_facts_dict:
-                for val in rm_facts_dict[key]:
+                for val in rm_facts_dict.getlist(key):
                     fact_queries.append(
                         {"bool": {"must": [{"match": {self.field+".fact": key}},
                         {"match": {self.field+".str_val": val}}]}}
@@ -52,7 +52,7 @@ class FactManager:
                         # If the fact name is in rm_facts_dict keys
                         if fact["fact"] in rm_facts_dict:
                             # If the fact value is not in the delete key values
-                            if fact['str_val'] not in rm_facts_dict[key]:
+                            if fact['str_val'] not in rm_facts_dict.getlist(key):
                                 new_field.append(fact)
                         else:
                             new_field.append(fact)
