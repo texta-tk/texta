@@ -42,12 +42,15 @@ class DocumentPreprocessor(object):
         preprocessors = kwargs['preprocessors']
         # Add metadata from all preprocessors
         processed_documents = {}
-        for preprocessor_code in preprocessors:
-            preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
+        if preprocessors:
+            for preprocessor_code in preprocessors:
+                preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
 
-            batch_documents = list(map(DocumentPreprocessor.convert_to_utf8, documents))
-            batch_documents = preprocessor.transform(batch_documents, **kwargs)
-            add_dicts(processed_documents, batch_documents)
-            documents = batch_documents['documents']
+                batch_documents = list(map(DocumentPreprocessor.convert_to_utf8, documents))
+                batch_documents = preprocessor.transform(batch_documents, **kwargs)
+                add_dicts(processed_documents, batch_documents)
+                documents = batch_documents['documents']
 
+        else:
+            processed_documents['documents'] = documents
         return processed_documents
