@@ -1,17 +1,7 @@
 from task_manager.tasks.workers.tag_model_worker import TagModelWorker
-from task_manager.models import Task
 
 import numpy as np
 import json
-
-enabled_tagger_ids = [tagger.pk for tagger in Task.objects.filter(task_type='train_tagger').filter(status=Task.STATUS_COMPLETED)]
-enabled_taggers = {}
-
-# Load Tagger models
-for _id in enabled_tagger_ids:
-    tm = TagModelWorker()
-    tm.load(_id)
-    enabled_taggers[_id] = tm
 
 
 class TextTaggerPreprocessor(object):
