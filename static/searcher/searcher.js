@@ -1512,23 +1512,3 @@ function add_props_to_spans() {
         }
         );
 }
-// function add_props_to_spans() {
-//     var span = $(".\\[HL\\]");            
-//     span.hover(function(e) { 
-//         $(this).css("filter",e.type === "mouseenter"?"brightness(110%)":"brightness(100%)") 
-//         $(this).css("cursor","pointer")
-//     })
-
-//     span.attr("data-toggle", "popover");
-
-//     $("[data-toggle=popover]").popover({
-//         html: true, 
-//         content: function() {
-//               return $('#popover-content').html();
-//             }
-//     });
-
-//     $("[data-toggle=popover]").click(function (e) {
-//         e.stopPropagation();
-//     });
-// }
