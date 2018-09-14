@@ -38,29 +38,34 @@ class DatePreprocessor(object):
         self._languages = langs
               
     def convert_date(self,date_field_value,langs=[]):#, **kwargs):
-      '''Converts given date field value to standard ES format yyyy-mm-dd
+        '''Converts given date field value to standard ES format yyyy-mm-dd
       
-      :param date_field_value: date field value to convert
-      :param langs: language(s) of the data (optional)
-      :type date_field_value: string
-      :type langs: list
-      :return: date converted to standard ES format
-      :rtype: string
-      '''
+        :param date_field_value: date field value to convert
+        :param langs: language(s) of the data (optional)
+        :type date_field_value: string
+        :type langs: list
+        :return: date converted to standard ES format
+        :rtype: string
+        '''
      
-      if langs:
-          self._languages = langs
-      try:
-          if self._languages:
-              datetime_object = dateparser.parse(date_field_value,languages=self._languages)
-          else:
-              datetime_object = dateparser.parse(date_field_value)
-          formatted_date = datetime_object.strftime('%Y-%m-%d')
+        if langs:
+            self._languages = langs
+        try:
+            if self._languages:
+                datetime_object = dateparser.parse(date_field_value,languages=self._languages)
+                # If fails to parse with given language (returns None)
+                if not datetime_object:
+                    datetime_object = dateparser.parse(date_field_value)
+            else:
+                datetime_object = dateparser.parse(date_field_value)
+        
+            if datetime_object:
+                formatted_date = datetime_object.strftime('%Y-%m-%d')
 
-      except Exception as e:
-          print(e)
-          formatted_date = None
-      return formatted_date
+        except Exception as e:
+            print(e)
+            formatted_date = None
+        return formatted_date
   
     def convert_batch(self, date_batch,langs=[]):
       '''Converts given date batch to standard ES format yyyy-mm-dd
