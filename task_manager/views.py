@@ -4,6 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect, QueryDict
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from task_manager.models import Task
+from lexicon_miner.models import Lexicon, Word
 from searcher.models import Search
 from permission_admin.models import Dataset
 from utils.datasets import Datasets
@@ -73,6 +74,8 @@ def collect_map_entries(map_):
 	for key, value in map_.items():
 		if key == 'text_tagger':
 			value['enabled_taggers'] = Task.objects.filter(task_type='train_tagger').filter(status__iexact='completed')
+		if key == 'lexicon_classifier':
+			value['enabled_lexicons'] = Lexicon.objects.all()
 		value['key'] = key
 		entries.append(value)
 
@@ -128,13 +131,13 @@ def index(request):
 
 def translate_parameters(params):
     pipe_builder = get_pipeline_builder()
-    
+
     datasets = Datasets().datasets
-    
+
     preprocessors = collect_map_entries(preprocessor_map)
     enabled_taggers = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True and preprocessor['key'] is 'text_tagger'][0]['enabled_taggers']
     enabled_taggers = {enabled_tagger.pk:enabled_tagger.description for enabled_tagger in enabled_taggers}
-    
+
     extractor_options = {a['index']:a['label'] for a in pipe_builder.get_extractor_options()}
     reductor_options = {a['index']:a['label'] for a in pipe_builder.get_reductor_options()}
     normalizer_options = {a['index']:a['label'] for a in pipe_builder.get_normalizer_options()}
@@ -150,11 +153,11 @@ def translate_parameters(params):
     }
 
     params = json.loads(params)
-    
+
     for k,v in params.items():
         if k in translations:
             params[k] = translate_param(translations[k], v)
-    
+
     return params
 
 

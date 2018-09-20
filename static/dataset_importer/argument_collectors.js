@@ -117,10 +117,10 @@ function collectMlpArguments(formData) {
 
 function collectDateConverterArguments(formData) {
     var featureNames = JSON.stringify($('#date-converter-processor-feature-names').val().split('\n'));
-	var featureLangs = JSON.stringify($('#date-converter-processor-feature-langs').val().split('\n'));
+	  var featureLangs = JSON.stringify($('#date-converter-processor-feature-langs').val().split('\n'));
 
     formData.append('date_converter_preprocessor_feature_names', featureNames);
-	formData.append('date_converter_preprocessor_input_langs',featureLangs);
+	  formData.append('date_converter_preprocessor_input_langs',featureLangs);
 
     return formData;
 }
@@ -135,6 +135,23 @@ function collectTextTaggerArguments(formData) {
     return formData;
 }
 
+function collectLexiconTaggerArguments(formData) {
+    var featureNames = JSON.stringify($('#lexicon-classifier-processor-feature-names').val().split('\n'));
+	  var lexicons = JSON.stringify($('#lexicon-classifier-processor-lexicons').val().split('\n'));
+    var match_type = JSON.stringify($('#lexicon-classifier-processor-match-types').val());//.split('\n'));
+	  var operation = JSON.stringify($('#lexicon-classifier-processor-operations').val());//.split('\n'));
+    var slop = JSON.stringify($('#lexicon-classifier-processor-slops').val());//.split('\n'));
+	  var requiredWords = JSON.stringify($('#lexicon-classifier-processor-words-required').val());//.split('\n'));
+
+    formData.append('lexicon_classifier_preprocessor_feature_names', featureName);
+	  formData.append('lexicon_classifier_preprocessor_lexicons', lexicons);
+    formData.append('lexicon_classifier_preprocessor_match_types', match_type);
+    formData.append('lexicon_classifier_preprocessor_operations', operation);
+    formData.append('lexicon_classifier_preprocessor_slops', slop);
+    formData.append('lexicon_classifier_preprocessor_words_required', requiredWords);
+
+    return formData;
+}
 
 // Key to collector map
 
@@ -151,6 +168,7 @@ var collectors = {
     postgres: collectPostgresArguments,
 
     mlp: collectMlpArguments,
-	date_converter: collectDateConverterArguments,
-	text_tagger: collectTextTaggerArguments
+	  date_converter: collectDateConverterArguments,
+	  text_tagger: collectTextTaggerArguments,
+    lexicon_coverter: collectLexiconTaggerArguments
 };

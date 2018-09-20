@@ -10,5 +10,6 @@ try:
     import mlp
     import date_converter
     import text_tagger
+    import lexicon_classifier
 except Exception as e:
-    print(e)    
+    print(e)

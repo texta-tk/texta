@@ -127,7 +127,7 @@ def index(request):
 
     datasets = Datasets().get_allowed_datasets(request.user)
     language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
-    
+
     preprocessors = collect_map_entries(preprocessor_map)
     enabled_preprocessors = [preprocessor for preprocessor in preprocessors]
 
@@ -145,8 +145,8 @@ def index(request):
                        'searches': Search.objects.filter(author=request.user),
                        'lexicons': Lexicon.objects.all().filter(author=request.user),
                        'dataset': ds.get_index(),
-                       'language_models': language_models, 
-                       'allowed_datasets': datasets,                       
+                       'language_models': language_models,
+                       'allowed_datasets': datasets,
                        'enabled_preprocessors': enabled_preprocessors,
                        'task_params': task_params}
 
@@ -582,10 +582,10 @@ def search(es_params, request):
 
 def additional_option_cut_text(content, window_size):
     window_size = int(window_size)
-    
+
     if not content:
         return ''
-    
+
     if not isinstance(content, str):
         return content
 
@@ -990,4 +990,3 @@ def fact_graph(request):
                        'fact_names': fact_names}
     template = loader.get_template('fact_graph_results.html')
     return HttpResponse(template.render(template_params, request))
-

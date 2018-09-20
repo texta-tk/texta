@@ -36,7 +36,7 @@ try:
         'is_enabled': True
     }
     log_preprocessor_status(code='mlp', status='enabled')
-    
+
 except:
     log_preprocessor_status(code='mlp', status='disabled')
 
@@ -51,7 +51,7 @@ try:
         'languages':['Estonian','English','Russian','Latvian','Lithuanian','Other']
     }
     log_preprocessor_status(code='date_converter', status='enabled')
-    
+
 except Exception as e:
     print(e)
     log_preprocessor_status(code='date_converter', status='disabled')
@@ -67,8 +67,26 @@ try:
         'is_enabled': True
     }
     log_preprocessor_status(code='text_tagger', status='enabled')
-    
+
 except Exception as e:
     print(e)
     log_preprocessor_status(code='text_tagger', status='disabled')
 
+try:
+    preprocessor_map['lexicon_classifier'] = {
+        'name': 'Lexicon Tagger Preprocessor',
+        'description': 'Applies lexicon-based tagging',
+        'class': preprocessors.lexicon_classifier.LexTagger,
+        'parameters_template': 'parameters/preprocessor_parameters/lexicon_classifier.html',
+        'arguments': {},
+        'is_enabled': True,
+        'match_types':['prefix','exact','fuzzy'],
+        'operations':['or','and'],
+        'slops':['0','1','2','3','4','5'],
+        'words_required':['10%','20%','30%','40%','50%','60%','70%','80%','90%','100%']
+    }
+    log_preprocessor_status(code='lexicon_classifier', status='enabled')
+
+except Exception as e:
+    print(e)
+    log_preprocessor_status(code='lexicon_classifier', status='disabled')
