@@ -78,6 +78,7 @@ class LexClassifier:
             for w in lex_with_slops:
                 full_pattern = prefix + w + suffix
                 patterns.append(full_pattern)
+        print(patterns)
         return patterns
 
     def _has_lex_matches(self,text):
@@ -170,7 +171,7 @@ class LexTagger(object):
         lex_ids = [int(_id) for _id in kwargs['lex_ids']]
         match_type = kwargs['match_type']
         operation = kwargs['operation']
-        slop = [int(s) for s in kwargs['slop']]
+        slop = int(kwargs['slop'])
         words_required = self._convert_to_ratio(kwargs['words_required'])
 
         parsed_args = {'input_features':input_features,'lex_ids':lex_ids,'match_type':match_type,\
