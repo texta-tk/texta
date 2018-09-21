@@ -10,5 +10,6 @@ try:
     import mlp
     import date_converter
     import text_tagger
+    import comment_preprocessor
 except Exception as e:
     print(e)    

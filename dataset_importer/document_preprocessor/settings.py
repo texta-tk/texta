@@ -72,3 +72,18 @@ except Exception as e:
     print(e)
     log_preprocessor_status(code='text_tagger', status='disabled')
 
+
+try:
+    preprocessor_map['comment_preprocessor'] = {
+        'name': 'Comment preprocessor',
+        'description': 'Converts comments',
+        'class': preprocessors.comment_preprocessor.CommentPreprocessor,
+        'parameters_template': 'parameters/preprocessor_parameters/comment_preprocessor.html',
+        'arguments': {},
+        'is_enabled': True
+    }
+    log_preprocessor_status(code='comment_preprocessor', status='enabled')
+    
+except Exception as e:
+    print(e)
+    log_preprocessor_status(code='date_converter', status='disabled')
