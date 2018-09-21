@@ -59,7 +59,7 @@ if SERVER_TYPE == 'development':
 	URL_PREFIX_RESOURCE = ''
 	ROOT_URLCONF = 'texta.urls'
 	STATIC_URL = URL_PREFIX_DOMAIN + '/static/'
-	DEBUG = False
+	DEBUG = True
 
 elif SERVER_TYPE == 'production':
 	PROTOCOL = 'http://'
@@ -260,7 +260,7 @@ INSTALLED_APPS = (
 
 # Elasticsearch URL with protocol specification. Can be either localhost
 # or remote address.
-es_url = os.getenv('TEXTA_ELASTICSEARCH_URL', 'http://localhost:9200')
+es_url = os.getenv('TEXTA_ELASTICSEARCH_URL', 'http://elastic-dev.texta.ee:9200')
 
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')
