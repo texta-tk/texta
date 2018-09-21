@@ -78,6 +78,8 @@ def get_fields(es_m):
     
     fields = []
     
+    print(mapped_fields)
+    
     for mapped_field,dataset_info in mapped_fields.items():
         data = json.loads(mapped_field)
 

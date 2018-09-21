@@ -76,9 +76,8 @@ class ES_Manager:
     """ Manage Elasticsearch operations and interface
     """
 
-    TEXTA_RESERVED = []
     HEADERS = HEADERS
-    #TEXTA_RESERVED = ['texta_facts']
+    TEXTA_RESERVED = ['texta_facts']
 
     # Redefine requests if LDAP authentication is used
     if es_use_ldap:
@@ -135,29 +134,28 @@ class ES_Manager:
         """ Decode mapping structure (nested dictionary) to a flat structure
         """
         mapping_data = []
-
-        for item in structure.items():
-            if item[0] in self.TEXTA_RESERVED:
-                continue
-            if 'properties' in item[1] and 'type' not in item[1]: #added+
-                sub_structure = item[1]['properties']
+        
+        for k,v in structure.items():
+            
+            # deal with fact field
+            if 'properties' in v and k in self.TEXTA_RESERVED:
+                sub_structure = v['properties']
                 path_list = root_path[:]
-                path_list.append(item[0])
+                path_list.append(k)
+                sub_mapping = [{'path': k, 'type': 'text'}]
+                mapping_data.extend(sub_mapping)
+            # deal with nested structures
+            elif 'properties' in v and k not in self.TEXTA_RESERVED:
+                sub_structure = v['properties']
+                path_list = root_path[:]
+                path_list.append(k)
                 sub_mapping = self._decode_mapping_structure(sub_structure, root_path=path_list)
                 mapping_data.extend(sub_mapping)
-
-            elif 'properties' in item[1] and 'type' in item[1]: # for dealing with facts
-                sub_structure = item[1]['properties']
-                path_list = root_path[:]
-                path_list.append(item[0])
-                sub_mapping = [{'path': item[0], 'type': u'string'}]
-                mapping_data.extend(sub_mapping)
-
             else:
                 path_list = root_path[:]
-                path_list.append(item[0])
+                path_list.append(k)
                 path = '.'.join(path_list)
-                data = {'path': path, 'type': item[1]['type']}
+                data = {'path': path, 'type': v['type']}
                 mapping_data.append(data)
 
         return mapping_data
