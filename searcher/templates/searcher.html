@@ -709,31 +709,35 @@
 			</div>
 			<div class="row padded-row">
 				<div class="col-sm-4">
-					<b>Bool:</b><br>
 					<select id="match_operator_" name="match_operator_" class="form-control input-sm">
-						<option value="must" selected="selected">and</option>
-						<option value="should">or</option>
-						<option value="must_not">not</option>
+						<option value="must" selected="selected">Bool: and</option>
+						<option value="should">Bool: or</option>
+						<option value="must_not">Bool: not</option>
 					</select>
 				</div>
 				<div class="col-sm-5">
-					<b>Match type:</b><br>
 					<select id="match_type_" name="match_type_" class="form-control input-sm">
-						<option value="match">match</option>
-						<option value="match_phrase">match phrase</option>
-						<option value="match_phrase_prefix" selected="selected">match phrase prefix</option>
+						<option value="match">Match: word</option>
+						<option value="match_phrase">Match: phrase</option>
+						<option value="match_phrase_prefix" selected="selected">Match: phrase prefix</option>
 					</select> 
 				</div>
 				<div class="col-sm-3">
-					<b>Slop:</b><br>
 					<select id="match_slop_" name="match_slop_" class="form-control input-sm">
-						<option value="0">0</option>
-						<option value="1">1</option>
-						<option value="2">2</option>
-						<option value="3">3</option>
-						<option value="4">4</option>
-						<option value="2">5</option>
+						<option value="0">Slop: 0</option>
+						<option value="1">Slop: 1</option>
+						<option value="2">Slop: 2</option>
+						<option value="3">Slop: 3</option>
+						<option value="4">Slop: 4</option>
+						<option value="2">Slop: 5</option>
 					</select> 
+				</div>
+			</div>
+			<div class="row padded-row">
+				<div class="col-sm-12">
+					<select id="match_layer_" name="match_layer_" class="form-control input-sm">
+						<option value="document">Match layer: document</option>
+					</select>
 				</div>
 			</div>
 			<div class="row padded-row">

@@ -78,8 +78,6 @@ def get_fields(es_m):
     
     fields = []
     
-    print(mapped_fields)
-    
     for mapped_field,dataset_info in mapped_fields.items():
         data = json.loads(mapped_field)
 
@@ -88,11 +86,14 @@ def get_fields(es_m):
         if path not in texta_reserved:
         
             path_list = path.split('.')
-            label = '{0} --> {1}'.format(path_list[0], ' --> '.join(path_list[1:])) if len(path_list) > 1 else path_list[0]
+
+            label = '{0} --> {1}'.format(path_list[0], path_list[-1]) if len(path_list) > 1 else path_list[0]
             label = label.replace('-->', u'→')
 
             if data['type'] == 'date':
                 data['range'] = get_daterange(es_m, path)
+
+            data['label'] = label
 
             field = {'data': json.dumps(data), 'label': label, 'type': data['type']}
             fields.append(field)
@@ -148,7 +149,6 @@ def index(request):
                        'fields': fields,
                        'searches': Search.objects.filter(author=request.user),
                        'lexicons': Lexicon.objects.all().filter(author=request.user),
-                       #'dataset': ds.get_index(),
                        'language_models': language_models, 
                        'allowed_datasets': datasets,                       
                        'enabled_preprocessors': enabled_preprocessors,

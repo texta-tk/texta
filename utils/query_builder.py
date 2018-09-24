@@ -2,6 +2,7 @@ from lexicon_miner.models import Lexicon, Word
 from conceptualiser.models import Term, Concept, TermConcept
 
 from collections import defaultdict
+import json
 import re
 
 INNER_HITS_MAX_SIZE = 100
@@ -13,6 +14,7 @@ class QueryBuilder:
         print(self.query)
 
     def _build(self, es_params):
+
         """ Build internal representation for queries using es_params
 
             A combined query is a dictionary D containing:
@@ -33,11 +35,18 @@ class QueryBuilder:
 
         for string_constraint in string_constraints.values():
 
-            match_field = string_constraint['match_field'] if 'match_field' in string_constraint else ''
+            print(string_constraint)
+
+            field_data = json.loads(string_constraint['match_field']) if 'match_field' in string_constraint else {}
+
+            print(field_data)
+
+            match_field = field_data['path'] if 'path' in field_data else ''
             match_type = string_constraint['match_type'] if 'match_type' in string_constraint else ''
             match_slop = string_constraint["match_slop"] if 'match_slop' in string_constraint else ''
             match_operator = string_constraint['match_operator'] if 'match_operator' in string_constraint else ''
-            
+            match_layer = string_constraint['match_layer'] if 'match_layer' in string_constraint else ''
+
             match_field = match_field.split(',')
 
             query_strings = [s.replace('\r','') for s in string_constraint['match_txt'].split('\n')]

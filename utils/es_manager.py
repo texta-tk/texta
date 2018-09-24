@@ -130,13 +130,12 @@ class ES_Manager:
         return response
 
 
-    def _decode_mapping_structure(self, structure, root_path=list()):
+    def _decode_mapping_structure(self, structure, root_path=list(), nested_layers=list()):
         """ Decode mapping structure (nested dictionary) to a flat structure
         """
         mapping_data = []
         
         for k,v in structure.items():
-            
             # deal with fact field
             if 'properties' in v and k in self.TEXTA_RESERVED:
                 sub_structure = v['properties']
@@ -144,18 +143,27 @@ class ES_Manager:
                 path_list.append(k)
                 sub_mapping = [{'path': k, 'type': 'text'}]
                 mapping_data.extend(sub_mapping)
-            # deal with nested structures
+
+            # deal with object & nested structures 
             elif 'properties' in v and k not in self.TEXTA_RESERVED:
                 sub_structure = v['properties']
+
+                # add layer path
+                nested_layers_updated = nested_layers[:]
+                if 'type' in v:
+                    if v['type'] == 'nested':
+                        nested_layers_updated.append(k)
+
                 path_list = root_path[:]
                 path_list.append(k)
-                sub_mapping = self._decode_mapping_structure(sub_structure, root_path=path_list)
+                sub_mapping = self._decode_mapping_structure(sub_structure, root_path=path_list, nested_layers=nested_layers_updated)
                 mapping_data.extend(sub_mapping)
+            
             else:
                 path_list = root_path[:]
                 path_list.append(k)
                 path = '.'.join(path_list)
-                data = {'path': path, 'type': v['type']}
+                data = {'path': path, 'type': v['type'], 'nested_layers': nested_layers}
                 mapping_data.append(data)
 
         return mapping_data
