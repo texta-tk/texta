@@ -11,7 +11,7 @@ class QueryBuilder:
 
     def __init__(self, es_params):
         self.query = self._build(es_params)
-        print(self.query)
+        #print(self.query['main'])
 
     def _build(self, es_params):
 
@@ -35,17 +35,15 @@ class QueryBuilder:
 
         for string_constraint in string_constraints.values():
 
-            print(string_constraint)
-
             field_data = json.loads(string_constraint['match_field']) if 'match_field' in string_constraint else {}
 
-            print(field_data)
 
             match_field = field_data['path'] if 'path' in field_data else ''
             match_type = string_constraint['match_type'] if 'match_type' in string_constraint else ''
             match_slop = string_constraint["match_slop"] if 'match_slop' in string_constraint else ''
             match_operator = string_constraint['match_operator'] if 'match_operator' in string_constraint else ''
             match_layer = string_constraint['match_layer'] if 'match_layer' in string_constraint else ''
+
 
             match_field = match_field.split(',')
 
@@ -69,8 +67,9 @@ class QueryBuilder:
                     if match_type == 'match_phrase_prefix':
                         # match phrase prefix query
                         synonym_query['multi_match'] = {'query': synonym, 'type': 'phrase_prefix', 'fields': match_field, 'slop': match_slop}
-                        
-                        
+                    
+                    synonym_query = self._transform_to_layered_query(synonym_query, field_data, match_layer)
+                     
                         
                         
                     synonym_queries.append(synonym_query)
@@ -86,7 +85,6 @@ class QueryBuilder:
 
         total_include = 0
         for field_id, fact_constraint in fact_constraints.items():
-            print(fact_constraints)
             _combined_query['main']['query']['bool']['must'].append({'nested': {'path': 'texta_facts', 'query':{'bool': {'must': []}}}})
             fact_query = _combined_query['main']['query']['bool']['must'][-1]['nested']['query']['bool']['must']
 
@@ -181,6 +179,44 @@ class QueryBuilder:
 
 
         return _combined_query
+
+
+    def _transform_to_layered_query(self, query, field_data, match_layer):       
+        field_path = field_data['path'].split('.')
+        nested_layers = field_data['nested_layers']
+        num_layers = len(nested_layers)
+        
+        # if nested ducument
+        if num_layers > 0:
+            current_query = query
+            current_path = field_path
+        
+            if match_layer in nested_layers:
+                layer_to_match_index = nested_layers.index(match_layer)
+            else:
+                layer_to_match_index = 0            
+            
+            # match last layer
+            if layer_to_match_index == num_layers-1: 
+                for nested_layer in reversed(nested_layers):
+                    current_path.pop()
+                    current_query = {"nested": {"path": ".".join(current_path), "query": current_query}}
+
+                
+                
+                
+                
+            # match whole document
+            elif layer_to_match_index == 0:
+                pass
+            # match some layer in the middle
+            else:
+                pass
+            
+            query = current_query
+                
+        return query
+
 
     @staticmethod
     def _get_match_constraints(es_params):

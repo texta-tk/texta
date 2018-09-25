@@ -324,7 +324,15 @@ function insert(resource_id,suggestionId,descriptive_term, lookup_type){
 
 
 function add_field(date_range_min,date_range_max){
-    $("constraint_field").val();
+    var field = Array();
+    
+    $("#constraint_field option").each(function(){
+        var val = $(this).val();
+        field.push(val);
+    });
+    
+    var field =  $("#constraint_field").val();
+    
 
     if( !field ){
         swal('Warning!','No field selected!','warning');
@@ -340,10 +348,6 @@ function add_field(date_range_min,date_range_max){
         var data = JSON.parse(data);
         field_path.push(data.path);
     });
-
-    alert(JSON.parse(field))
-
-    alert(field);
 
     var field_data = JSON.parse(field[0])
 
