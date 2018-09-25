@@ -1,9 +1,3 @@
-# import json
-# import logging
-
-# from searcher.models import Search
-# from task_manager.models import Task
-# from texta.settings import ERROR_LOGGER
 
 # Uses scikit-learn 0.18.1
 from sklearn.base import BaseEstimator
@@ -16,21 +10,7 @@ from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import RadiusNeighborsClassifier
-# from sklearn.model_selection import train_test_split
-# from sklearn.metrics import f1_score
 from sklearn.pipeline import Pipeline
-# from sklearn.externals import joblib
-# from sklearn.metrics import confusion_matrix
-# from sklearn.metrics import precision_score
-# from sklearn.metrics import recall_score
-# from sklearn.model_selection import GridSearchCV
-
-# from texta.settings import STATIC_URL, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ERROR_LOGGER
-# from searcher.models import Search
-# from task_manager.models import Task
-# from .data_manager import EsDataClassification, EsDataSample
-# # from classification_manager.models import JobQueue, ModelClassification
-# from . import data_manager
 
 
 class ModelNull(BaseEstimator):

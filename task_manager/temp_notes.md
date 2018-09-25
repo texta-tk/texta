@@ -91,3 +91,36 @@ Content-Type: application/json
     "description": "API-T"
 }
 ```
+
+
+### List Valid Datasets
+```
+POST http://localhost:8000/task_manager/api/v1/dataset_list
+Content-Type: application/json
+
+{
+    "auth_token": "60aa4ecb8aa5fc"
+}
+```
+
+### List Unique Tags
+```
+POST http://localhost:8000/task_manager/api/v1/tag_list
+Content-Type: application/json
+
+{
+    "auth_token": "60aa4ecb8aa5fc",
+    "dataset": 1
+}
+```
+
+### Mass Trainer
+```
+POST http://localhost:8000/task_manager/api/v1/mass_train_tagger
+Content-Type: application/json
+
+{
+    "auth_token": "60aa4ecb8aa5fc",
+    "dataset": 1
+}
+```

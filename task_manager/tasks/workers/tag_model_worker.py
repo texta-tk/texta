@@ -2,45 +2,24 @@
 import os
 import json
 import logging
-# from datetime import datetime
 
-# from searcher.models import Search
 from task_manager.models import Task
 from task_manager.tools import EsDataSample
+from searcher.models import Search
+from utils.es_manager import ES_Manager
+from utils.datasets import Datasets
 
 from texta.settings import ERROR_LOGGER
 from texta.settings import INFO_LOGGER
 from texta.settings import MODELS_DIR
 
-# Uses scikit-learn 0.18.1
-# from sklearn.base import BaseEstimator
-# from sklearn.feature_extraction.text import CountVectorizer
-# from sklearn.feature_extraction.text import HashingVectorizer
-# from sklearn.feature_extraction.text import TfidfVectorizer
-# from sklearn.decomposition import TruncatedSVD
-# from sklearn.preprocessing import Normalizer
-# from sklearn.svm import LinearSVC
-# from sklearn.naive_bayes import BernoulliNB
-# from sklearn.neighbors import KNeighborsClassifier
-# from sklearn.neighbors import RadiusNeighborsClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
-# from sklearn.pipeline import Pipeline
 from sklearn.externals import joblib
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.model_selection import GridSearchCV
-
-# from texta.settings import STATIC_URL, URL_PREFIX, MODELS_DIR, INFO_LOGGER, ERROR_LOGGER
-# from searcher.models import Search
-# from task_manager.models import Task
-# from .data_manager import EsDataClassification, EsDataSample
-# # from classification_manager.models import JobQueue, ModelClassification
-# from . import data_manager
-# from task_manager.models import Task
-# from texta.settings import ERROR_LOGGER
-
 from task_manager.tools import ShowSteps
 from task_manager.tools import get_pipeline_builder
 
@@ -77,14 +56,26 @@ class TagModelWorker(BaseWorker):
 			pipe_builder = get_pipeline_builder()
 			pipe_builder.set_pipeline_options(extractor_opt, reductor_opt, normalizer_opt, classifier_opt)
 			# clf_arch = pipe_builder.pipeline_representation()
-			c_pipe, params = pipe_builder.build()
+			c_pipe, c_params = pipe_builder.build()
 
-			es_data = EsDataSample(task_params)
+			param_field = task_params['field']
+			# Check if query was explicitly set
+			if 'search_tag' in task_params:
+				# Use set query
+				param_query = task_params['search_tag']
+			else:
+				# Otherwise, load query from saved search
+				param_query = json.loads(Search.objects.get(pk=int(task_params['search'])).query)
+
+			# Build Data sampler
+			ds = Datasets().activate_dataset_by_id(task_params['dataset'])
+			es_m = ds.build_manager(ES_Manager)
+			es_data = EsDataSample(field=param_field, query=param_query, es_m=es_m)
 			data_sample_x, data_sample_y, statistics = es_data.get_data_samples()
 
 			# Training the model.
 			show_progress.update(1)
-			self.model, train_summary = self._train_model_with_cv(c_pipe, params, data_sample_x, data_sample_y, self.task_id)
+			self.model, train_summary = self._train_model_with_cv(c_pipe, c_params, data_sample_x, data_sample_y, self.task_id)
 
 			# Saving the model.
 			show_progress.update(2)

@@ -1,6 +1,7 @@
 from django.conf.urls import url
 
-from task_manager import views
+from . import views
+from . import api_v1
 
 
 urlpatterns = [
@@ -10,10 +11,14 @@ urlpatterns = [
     url(r'download_model$', views.download_model, name='download_model'),
 
     # API
-    url(r'^api/v1$', views.api_info, name='api_info'),
-    url(r'^api/v1/task_list$', views.api_get_task_list, name='api_get_task_list'),
-    url(r'^api/v1/task_status$', views.api_get_task_status, name='api_get_task_status'),
-    url(r'^api/v1/train_model$', views.api_train_model, name='api_train_model'),
-    url(r'^api/v1/train_tagger$', views.api_train_tagger, name='api_train_tagger'),
-    url(r'^api/v1/apply$', views.api_apply, name='api_apply'),
+    url(r'^api/v1$', api_v1.api_info, name='api_info'),
+    url(r'^api/v1/task_list$', api_v1.api_get_task_list, name='api_get_task_list'),
+    url(r'^api/v1/task_status$', api_v1.api_get_task_status, name='api_get_task_status'),
+    url(r'^api/v1/train_model$', api_v1.api_train_model, name='api_train_model'),
+    url(r'^api/v1/train_tagger$', api_v1.api_train_tagger, name='api_train_tagger'),
+    url(r'^api/v1/apply$', api_v1.api_apply, name='api_apply'),
+
+    url(r'^api/v1/dataset_list$', api_v1.api_dataset_list, name='api_dataset_list'),
+    url(r'^api/v1/tag_list$', api_v1.api_tag_list, name='api_tag_list'),
+    url(r'^api/v1/mass_train_tagger$', api_v1.api_mass_train_tagger, name='api_mass_train_tagger'),
 ]

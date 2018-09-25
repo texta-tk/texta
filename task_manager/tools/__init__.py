@@ -3,10 +3,12 @@ from .show_progress import ShowProgress
 from .data_manager import EsDataSample
 from .data_manager import EsIterator
 from .pipeline_builder import get_pipeline_builder
+from .mass_helper import MassHelper
 
 
 __all__ = ["ShowSteps",
            "ShowProgress",
            "EsDataSample",
            "EsIterator",
-           "get_pipeline_builder"]
+           "get_pipeline_builder",
+           "MassHelper"]

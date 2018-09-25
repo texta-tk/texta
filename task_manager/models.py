@@ -49,6 +49,18 @@ class Task(models.Model):
             self.time_completed = datetime.now()
         self.save()
 
+    def is_running(self):
+        return self.status == Task.STATUS_RUNNING
+
+    def requeue_task(self):
+        self.status = Task.STATUS_QUEUED
+        self.progress = 0.0
+        self.result = ''
+        self.progress_message = ''
+        self.time_completed = None
+        self.last_update = datetime.now()
+        self.save()
+
     def update_progress(self, progress, progress_message):
         self.progress = progress
         self.progress_message = progress_message
