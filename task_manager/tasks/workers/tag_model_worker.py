@@ -76,6 +76,7 @@ class TagModelWorker(BaseWorker):
 			# Training the model.
 			show_progress.update(1)
 			self.model, train_summary = self._train_model_with_cv(c_pipe, c_params, data_sample_x, data_sample_y, self.task_id)
+			train_summary['samples'] = statistics
 
 			# Saving the model.
 			show_progress.update(2)

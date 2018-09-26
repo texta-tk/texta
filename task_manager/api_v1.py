@@ -5,9 +5,12 @@ from account.api_auth import api_auth
 from task_manager.tools import MassHelper
 
 from utils.datasets import Datasets
+from permission_admin.models import Dataset
+from searcher.models import Search
 from utils.es_manager import ES_Manager
 
 from .task_manager import create_task
+from .task_manager import get_fields
 
 
 MIN_DOCS_TAGGED = 100
@@ -145,17 +148,77 @@ def api_dataset_list(request, user, params):
 
 
 @api_auth
+def api_search_list(request, user, params):
+    """ Get list of available searches for API user (via auth_token)
+    """
+
+    # Read all params
+    dataset_id = int(params['dataset'])
+
+    ds = Datasets()
+    ds.activate_dataset_by_id(dataset_id, use_default=False)
+    # Check if dataset_id is valid
+    if not ds.is_active():
+            error = {'error': 'invalid dataset parameter'}
+            data_json = json.dumps(error)
+            return HttpResponse(data_json, status=400, content_type='application/json')
+
+    # Build response structure
+    data = []
+    dataset = Dataset(pk=dataset_id)
+    search_list = list(Search.objects.filter(dataset=dataset))
+    for search in search_list:
+        row = {
+            'dataset': dataset_id,
+            'search': search.id,
+            'description': search.description
+        }
+        data.append(row)
+
+    data_json = json.dumps(data)
+    return HttpResponse(data_json, status=200, content_type='application/json')
+
+
+@api_auth
 def api_tag_list(request, user, params):
     """ Get list of available tags for API user (via auth_token)
     """
     dataset_id = params['dataset']
-    ds = Datasets()
-    ds.activate_dataset_by_id(dataset_id)
-    es_m = ds.build_manager(ES_Manager)
 
+    ds = Datasets()
+    ds.activate_dataset_by_id(dataset_id, use_default=False)
+
+    # Check if dataset_id is valid
+    if not ds.is_active():
+            error = {'error': 'invalid dataset parameter'}
+            data_json = json.dumps(error)
+            return HttpResponse(data_json, status=400, content_type='application/json')
+
+    es_m = ds.build_manager(ES_Manager)
     mass_helper = MassHelper(es_m)
     tag_set = mass_helper.get_unique_tags()
     data = list(sorted(tag_set))
+    data_json = json.dumps(data)
+    return HttpResponse(data_json, status=200, content_type='application/json')
+
+
+@api_auth
+def api_field_list(request, user, params):
+    """ Get list of available fields for API user (via auth_token)
+    """
+    dataset_id = params['dataset']
+    ds = Datasets()
+    ds.activate_dataset_by_id(dataset_id, use_default=False)
+
+    # Check if dataset_id is valid
+    if not ds.is_active():
+            error = {'error': 'invalid dataset parameter'}
+            data_json = json.dumps(error)
+            return HttpResponse(data_json, status=400, content_type='application/json')
+
+    es_m = ds.build_manager(ES_Manager)
+    fields = get_fields(es_m)
+    data = sorted([x['path'] for x in fields])
     data_json = json.dumps(data)
     return HttpResponse(data_json, status=200, content_type='application/json')
 
@@ -167,7 +230,13 @@ def api_mass_train_tagger(request, user, params):
     dataset_id = params['dataset']
 
     ds = Datasets()
-    ds.activate_dataset_by_id(dataset_id)
+    ds.activate_dataset_by_id(dataset_id, use_default=False)
+    # Check if dataset_id is valid
+    if not ds.is_active():
+            error = {'error': 'invalid dataset parameter'}
+            data_json = json.dumps(error)
+            return HttpResponse(data_json, status=400, content_type='application/json')
+
     es_m = ds.build_manager(ES_Manager)
     mass_helper = MassHelper(es_m)
     tag_set = mass_helper.get_unique_tags()

@@ -103,9 +103,31 @@ Content-Type: application/json
 }
 ```
 
+### List Valid Searches
+```
+POST http://localhost:8000/task_manager/api/v1/search_list
+Content-Type: application/json
+
+{
+    "auth_token": "60aa4ecb8aa5fc",
+    "dataset": 1
+}
+```
+
 ### List Unique Tags
 ```
 POST http://localhost:8000/task_manager/api/v1/tag_list
+Content-Type: application/json
+
+{
+    "auth_token": "60aa4ecb8aa5fc",
+    "dataset": 1
+}
+```
+
+### List Unique Fields
+```
+POST http://localhost:8000/task_manager/api/v1/field_list
 Content-Type: application/json
 
 {

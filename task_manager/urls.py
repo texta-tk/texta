@@ -5,6 +5,7 @@ from . import api_v1
 
 
 urlpatterns = [
+    # UI
     url(r'^$', views.index, name='index'),
     url(r'^start_task$', views.start_task, name='start_task'),
     url(r'^delete_task$', views.delete_task, name='delete_task'),
@@ -17,8 +18,9 @@ urlpatterns = [
     url(r'^api/v1/train_model$', api_v1.api_train_model, name='api_train_model'),
     url(r'^api/v1/train_tagger$', api_v1.api_train_tagger, name='api_train_tagger'),
     url(r'^api/v1/apply$', api_v1.api_apply, name='api_apply'),
-
     url(r'^api/v1/dataset_list$', api_v1.api_dataset_list, name='api_dataset_list'),
+    url(r'^api/v1/search_list$', api_v1.api_search_list, name='api_search_list'),
     url(r'^api/v1/tag_list$', api_v1.api_tag_list, name='api_tag_list'),
+    url(r'^api/v1/field_list$', api_v1.api_field_list, name='api_field_list'),
     url(r'^api/v1/mass_train_tagger$', api_v1.api_mass_train_tagger, name='api_mass_train_tagger'),
 ]
