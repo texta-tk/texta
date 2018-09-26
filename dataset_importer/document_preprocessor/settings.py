@@ -86,4 +86,4 @@ try:
     
 except Exception as e:
     print(e)
-    log_preprocessor_status(code='date_converter', status='disabled')
+    log_preprocessor_status(code='comment_preprocessor', status='disabled')

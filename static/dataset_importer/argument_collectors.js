@@ -125,6 +125,12 @@ function collectDateConverterArguments(formData) {
     return formData;
 }
 
+function collectCommentPreprocessorArguments(formData) {
+    var featureNames = JSON.stringify($('#comment-preprocessor-feature-names').val().split('\n'));
+    formData.append('comment_preprocessor_feature_names', featureNames);
+    return formData;
+}
+
 function collectTextTaggerArguments(formData) {
     var featureNames = JSON.stringify($('#text-tagger-processor-feature-names').val().split('\n'));
     var taggers = JSON.stringify($('#text-tagger-processor-taggers').val());
@@ -152,5 +158,6 @@ var collectors = {
 
     mlp: collectMlpArguments,
 	date_converter: collectDateConverterArguments,
-	text_tagger: collectTextTaggerArguments
+	text_tagger: collectTextTaggerArguments,
+    comment_preprocessor: collectCommentPreprocessorArguments
 };
