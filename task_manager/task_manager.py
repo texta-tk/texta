@@ -129,13 +129,14 @@ def get_fields(es_m):
     fields = []
     mapped_fields = es_m.get_mapped_fields()
 
-    for data in mapped_fields:
-        path = data['path']
+    for field_data, index_data in mapped_fields.items():
+        field_data = json.loads(field_data)
+        path = field_data['path']
         if path not in illegal_paths:
             path_list = path.split('.')
             label = '{0} --> {1}'.format(path_list[0], ' --> '.join(path_list[1:])) if len(path_list) > 1 else path_list[0]
             label = label.replace('-->', u'→')
-            field = {'data': json.dumps(data), 'label': label, 'path': path}
+            field = {'data': json.dumps(field_data), 'label': label, 'path': path}
             fields.append(field)
 
     # Sort fields by label
