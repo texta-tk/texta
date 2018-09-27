@@ -9,5 +9,6 @@ sys.path.append(file_dir)
 try:
     import mlp
     import date_converter
+    import text_tagger
 except Exception as e:
     print(e)    

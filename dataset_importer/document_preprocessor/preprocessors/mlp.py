@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import requests
 import logging
 import json
@@ -33,10 +34,10 @@ class MlpPreprocessor(object):
         if not self._enabled_features:
             return documents
 
-        if not kwargs.get('mlp_preprocessor_input_features', None):
-            kwargs['mlp_preprocessor_input_features'] = '["text"]'
+        if not kwargs.get('mlp_preprocessor_feature_names', None):
+            kwargs['mlp_preprocessor_feature_names'] = '["text"]'
 
-        input_features = json.loads(kwargs['mlp_preprocessor_input_features'])
+        input_features = json.loads(kwargs['mlp_preprocessor_feature_names'])
 
         for input_feature in input_features:
 
@@ -44,28 +45,31 @@ class MlpPreprocessor(object):
             data = {'texts': json.dumps(texts, ensure_ascii=False), 'doc_path': 'mlp_' + input_feature}
 
             try:
-                data = requests.post(self._mlp_url, data=data)
-                analyzation_data = data.json()
+                texts = [document[input_feature].decode() for document in documents if input_feature in document]
+            except AttributeError:
+                texts = [document[input_feature] for document in documents if input_feature in document]
 
+            data = {'texts': json.dumps(texts, ensure_ascii=False), 'doc_path': input_feature+'_mlp'}
+
+            try:
+                analyzation_data = requests.post(self._mlp_url, data=data).json()
             except Exception:
-                logging.getLogger(settings.ERROR_LOGGER).exception('Failed to parse MLP response', extra={
-                    'mlp_response': data.text
-                })
 
-                raise Exception()
+                logging.error('Failed to achieve connection with mlp.', extra={'mlp_url':self._mlp_url, 'enabled_features':self._enabled_features})
+                break
 
             for analyzation_idx, analyzation_datum in enumerate(analyzation_data):
                 analyzation_datum = analyzation_datum[0]
 
-                documents[analyzation_idx]['mlp_' + input_feature] = analyzation_datum['text']
-                documents[analyzation_idx]['mlp_' + input_feature]['lang'] = analyzation_datum['text']['lang']
+                documents[analyzation_idx][input_feature+'_mlp'] = analyzation_datum['text']
+                documents[analyzation_idx][input_feature+'_mlp']['lang'] = analyzation_datum['text']['lang']
 
                 if 'texta_facts' not in documents[analyzation_idx]:
                     documents[analyzation_idx]['texta_facts'] = []
 
                 documents[analyzation_idx]['texta_facts'].extend(analyzation_datum['texta_facts'])
 
-        return documents
+        return {'documents': documents, 'meta': {}}
 
 
 if __name__ == '__main__':

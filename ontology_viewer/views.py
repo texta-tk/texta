@@ -6,7 +6,9 @@ from django.http import HttpResponse
 from django.template import loader
 
 from conceptualiser.models import Concept, Term, TermConcept
-from lm.models import Lexicon
+from lexicon_miner.models import Lexicon
+from task_manager.models import Task
+from utils.datasets import Datasets
 
 from texta.settings import STATIC_URL
 
@@ -15,7 +17,12 @@ def index(request):
     template = loader.get_template('ontology_viewer.html')
     overview_data = [('Base lexicons created',str(len(Lexicon.objects.filter(author=request.user)))),
                      ('Concepts commited',str(len(Concept.objects.filter(author=request.user))))]
-    return HttpResponse(template.render({'STATIC_URL':STATIC_URL,'overview_data':overview_data},request))
+
+    datasets = Datasets().get_allowed_datasets(request.user)
+    language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
+
+    return HttpResponse(template.render({'STATIC_URL':STATIC_URL,'overview_data':overview_data,'language_models': language_models, 
+                                         'allowed_datasets': datasets},request))
 
 @login_required
 def get_concepts(request):

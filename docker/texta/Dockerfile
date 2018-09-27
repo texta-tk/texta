@@ -1,4 +1,4 @@
-FROM python:3.5.5
+    FROM python:3.5.5
 ENV PYTHONUNBUFFERED 1
 
 RUN apt-get update && apt-get upgrade -y && apt-get autoremove && apt-get autoclean
@@ -12,6 +12,7 @@ RUN mkdir texta
 COPY . texta/
 
 WORKDIR texta/
+RUN pip install -r requirements.txt
 
 RUN pip install -r requirements.txt
 

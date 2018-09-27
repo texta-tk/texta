@@ -7,49 +7,8 @@
 	<div class="col-lg-3">
 		{% if request.user.is_authenticated %}
 			<div class="panel">
-					<div class="panel-heading">Global Settings</div>
-					<div class="panel-body">
-						<form method="post" id="settings" name="settings">
-								<div class="row padded-row">
-									<div class="col-sm-12"><b>Language model</b></div>
-									<div class="col-sm-12">
-										<select id="model" name="model" class="form-control input-sm">
-											{% for model in models %}
-												{% if model.pk|slugify == request.session.model %}
-													<option value="{{model.pk}}" selected="selected">{{model.pk}} - {{model.run_description}}</option>
-												{% else %}
-													<option value="{{model.pk}}">{{model.pk}} - {{model.run_description}}</option>
-												{% endif %}
-											{% endfor %}
-										</select>
-									</div>
-								</div>								
-								<div class="row padded-row">
-									<div class="col-sm-12"><b>Dataset</b></div>
-									<div class="col-sm-12">
-										<select id="dataset" name="dataset" class="form-control input-sm">
-											{% for dataset in datasets %}
-												{% if dataset.id|stringformat:"i" == request.session.dataset %}
-													<option value="{{dataset.id}}" selected="selected">{{dataset.index}} - {{dataset.mapping}}</option>
-												{% else %}
-													<option value="{{dataset.id}}">{{dataset.index}} - {{dataset.mapping}}</option>
-												{% endif %}
-											{% endfor %}
-										</select>
-									</div>
-								</div>
-								<div class="row padded-row">
-									<div class="col-sm-12">
-										<button type="submit" onclick="javascript:update();" class="btn btn-default form-control input-sm"><span class="glyphicon glyphicon-ok"></span> Update settings</button>
-									</div>
-								</div>
-						</form>
-					</div>
-			</div>
-			<div class="panel">
 				<div class="panel-heading">Change Password</div>
 				<div class="panel-body">
-					<form method="post" id="change_password" name="change_password">
 						<div class="row padded-row">
 							<div class="col-sm-12">
 								<input type="password" class="form-control input-sm" id="new_password" name="new_password" placeholder="New password">
@@ -65,7 +24,6 @@
 								<button type="submit" onclick="javascript:change_pwd();" class="btn btn-default form-control input-sm"><span class="glyphicon glyphicon-ok"></span> Change Password</button>
 							</div>
 						</div>						
-					</form>
 				</div>
 			</div>
 		{% else %}

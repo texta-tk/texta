@@ -1,5 +1,5 @@
 from conceptualiser.models import Term, TermConcept
-from lm.models import Lexicon
+from lexicon_miner.models import Lexicon
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 
@@ -8,12 +8,15 @@ class Autocomplete:
     def __init__(self):
         self.es_m = None        
         self.lookup_type = None
+        self.key_constraints = None
         self.content = None
         self.user = None
         self.limit = None
 
     def parse_request(self,request):
+    
         self.lookup_types = request.POST['lookup_types'].split(',')
+        self.key_constraints = request.POST['key_constraints'].split(',')
         self.content = request.POST['content'].split('\n')[-1].strip()
         
         ds = Datasets().activate_dataset(request.session)
@@ -28,18 +31,18 @@ class Autocomplete:
         
         suggestions = {}
 
-        for lookup_type in self.lookup_types:
+        for i,lookup_type in enumerate(self.lookup_types):
             if lookup_type == 'FACT_NAME':
-                suggestions['FACT_NAME'] = self._get_facts('fact')
+                suggestions['FACT_NAME'] = self._get_facts('fact', lookup_type)
             elif lookup_type == 'FACT_VAL':
-                suggestions['FACT_VAL'] = self._get_facts('str_val')
+                suggestions['FACT_VAL'] = self._get_facts('str_val', lookup_type, key_constraint=self.key_constraints[i])
             elif lookup_type == 'CONCEPT':
                 suggestions['CONCEPT'] = self._get_concepts()
             elif lookup_type == 'LEXICON':
                 suggestions['LEXICON'] = self._get_lexicons()
         return suggestions
 
-    def _get_facts(self,agg_subfield):
+    def _get_facts(self, agg_subfield, lookup_type, key_constraint=None):
         agg_query = {
                 agg_subfield: {
                     "nested": {"path": "texta_facts"},
@@ -50,11 +53,24 @@ class Autocomplete:
                     }
                 }
             }
+        
+        agg_query = {agg_subfield: {"nested": {"path": "texta_facts"}, "aggs": {agg_subfield: {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val"}}}}}}}
 
         self.es_m.build('')
         self.es_m.set_query_parameter("aggs", agg_query)
         
-        facts = [self._format_suggestion(a["key"],a["key"]) for a in self.es_m.search()["aggregations"][agg_subfield][agg_subfield]["buckets"]]
+        if lookup_type == 'FACT_VAL' and key_constraint:
+            facts = []            
+            for bucket in self.es_m.search()["aggregations"][agg_subfield][agg_subfield]["buckets"]:
+                if bucket["key"] == key_constraint:
+                    facts += [self._format_suggestion(sub_bucket["key"], sub_bucket["key"]) for sub_bucket in bucket["fact_values"]["buckets"]]
+            
+        elif lookup_type == 'FACT_VAL' and not key_constraint:
+            facts = []          
+            for bucket in self.es_m.search()["aggregations"][agg_subfield][agg_subfield]["buckets"]:
+                facts += [self._format_suggestion(sub_bucket["key"], sub_bucket["key"]) for sub_bucket in bucket["fact_values"]["buckets"]]
+        else:
+            facts = [self._format_suggestion(a["key"],a["key"]) for a in self.es_m.search()["aggregations"][agg_subfield][agg_subfield]["buckets"]]
 
         return facts
 

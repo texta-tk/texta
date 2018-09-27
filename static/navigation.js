@@ -1,7 +1,7 @@
 var LINK_PREFIX = 'http://localhost:8000';
 var STATIC_URL = 'http://localhost:8000/static/'
 
-var LINK_LEXMINER = LINK_PREFIX + '/lm';
+var LINK_LEXMINER = LINK_PREFIX + '/lexicon_miner';
 var LINK_SEARCHER = LINK_PREFIX + '/searcher';
 var LINK_MWE = LINK_PREFIX + '/mwe_miner';
 var LINK_ROOT = LINK_PREFIX + '/';
@@ -14,6 +14,7 @@ var LINK_PERMISSION_ADMIN = LINK_PREFIX + '/permission_admin';
 var LINK_GRAMMAR_BUILDER = LINK_PREFIX + '/grammar_builder';
 var LINK_DOCUMENT_MINER = LINK_PREFIX + '/document_miner';
 var LINK_DATASET_IMPORTER = LINK_PREFIX + '/dataset_importer';
+var LINK_TASK_MANAGER = LINK_PREFIX + '/task_manager';
 
 
 function go_to(link,form_id) {

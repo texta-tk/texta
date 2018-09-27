@@ -2,7 +2,7 @@ from __future__ import print_function
 from collections import Counter, defaultdict
 import re
 import math
-
+from utils.log_manager import LogManager
 
 class Highlighter(object):
 
@@ -38,6 +38,14 @@ class Highlighter(object):
     def highlight(self, original_text, highlight_data, tagged_text=None):
         """highlight_data = [{'spans': [[1,7],[25,36]], 'name': 'LOC', 'value': '5', 'category': '[fact]', 'color': '#ababab'}]
         """
+        logger = LogManager(__name__, 'HIGHLIGHT')
+
+        # original_text = str(original_text)
+        # if original_text == '':
+            # logger.set_context('highlight_data', highlight_data)
+            # logger.info('original_text was empty - "", with HL data')
+            # return ''
+        
         if tagged_text:
             if self._derive_spans:
                 alignment = [char_idx for char_idx in range(len(original_text))]
@@ -78,6 +86,9 @@ class Highlighter(object):
         start_tag_index = tagged_text.find('<span', span_end)
         index_discount = 0
 
+        # > 0 avoids highlighting first match, therefore the entire document
+        # When its >= it fixes that, but starts catching exceptions (doesn't break)
+        # And some matches sometimes don't get highlighted
         while start_tag_index > 0:
             start_tag_end = tagged_text.find('>', start_tag_index + 5) + 1
             span_end = tagged_text.find('</span>', start_tag_end)
@@ -85,6 +96,7 @@ class Highlighter(object):
             index_discount += start_tag_end - start_tag_index
             span_data = self._extract_span_data(tagged_text[start_tag_index + 5:start_tag_end - 1].strip(),
                                                 [[start_tag_end - index_discount, span_end - index_discount]])
+            
             if span_data:
                 highlight_data.append(span_data)
 
@@ -137,6 +149,7 @@ class Highlighter(object):
         return text_slices
 
     def _get_tags_for_text_index(self, text, alignment, highlight_data):
+        logger = LogManager(__name__, '_GET_TAGS_FOR_TEXT_INDEX')
         data_mapping = {index: datum for index, datum in enumerate(highlight_data)}
         data_index_to_spans = [datum['spans'] for datum in highlight_data]
 
@@ -144,7 +157,16 @@ class Highlighter(object):
         for data_index, spans in enumerate(data_index_to_spans):
             for span in spans:
                 for text_index in range(*span):
-                    text_index_to_data_index[alignment[text_index]].append(data_index)
+                    try:
+                        text_index_to_data_index[alignment[text_index]].append(data_index)
+                    except Exception as e:
+                        # Throws exception when index out of range
+                        # For example Gets index out of range if in _derive_highlight_data while uses >= instead of >
+                        print('-- Exception[{0}] {1}'.format(__name__, e))
+                        logger.set_context('text', text)
+                        logger.exception('_get_tags_for_text_index try catch execption')
+
+                        
 
         text_index_to_data_index = [frozenset(data_indices) for data_indices in text_index_to_data_index]
 
@@ -212,11 +234,21 @@ class Highlighter(object):
     def _get_color(self, color_code_list):
         if not color_code_list:
             return 'none'
+
         if self._average_colors:
             red, green, blue = 0, 0, 0
 
             for color_code in color_code_list:
-                r, g, b = int(color_code[1:3], 16), int(color_code[3:5], 16), int(color_code[5:], 16)
+                # none encountered in color_code, if in _derive_highlight_data while has >= instead of >,
+                # runs into this problem here, need to check if color code contains "none"
+                if color_code.startswith('none'):
+                    logger = LogManager(__name__, '_GET_COLOR')
+                    logger.set_context('color_code_list', color_code_list)
+                    logger.info('Highlighter color_code_list contained "none", returning "none"')
+                    return 'none'
+                else:
+                    r, g, b = int(color_code[1:3], 16), int(color_code[3:5], 16), int(color_code[5:], 16)
+
                 red += r
                 green += g
                 blue += b

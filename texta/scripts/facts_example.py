@@ -12,8 +12,8 @@ def add_to_elasticsearch(data_str):
     base_url = r'http://127.0.0.1:9200/_bulk'
     response = requests.put(base_url, data=data_str)
     if response.status_code == 400:
-        print '-- Not good... '
-        print response.text
+        print('-- Not good... ')
+        print(response.text)
 
 
 def get_simple_spans(corpus, fact_term):
@@ -36,7 +36,7 @@ def main():
     _index = sys.argv[1]
     _type = sys.argv[2]
 
-    print '- Creating facts for: {0}/{1}'.format(_index, _type)
+    print('- Creating facts for: {0}/{1}'.format(_index, _type))
 
     # Process FACTS
     field_path = ['document', 'text']
@@ -83,12 +83,12 @@ def main():
             document = json.dumps(document)
             data.extend([index, document])
 
-    print 'Total of bulked facts: {0}'.format(len(data)/2)
+    print('Total of bulked facts: {0}'.format(len(data) / 2))
     # Add all to elasticsearch
     data_str = '\n'.join(data)
     data_str += '\n'
     add_to_elasticsearch(data_str)
-    print 'Done...'
+    print('Done...')
 
 
 if __name__ == '__main__':

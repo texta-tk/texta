@@ -119,3 +119,15 @@ body {
     background-color: #73AD21;
     color: #FFFFFF;
 }
+
+.bg-grey {
+	background: #EFEFEF;
+}
+
+.table-condensed{
+  font-size: 11px;
+}
+
+.datasetOption:checked {
+    background-color: #dddddd;
+}

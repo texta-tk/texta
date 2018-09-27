@@ -11,26 +11,28 @@ from sklearn.manifold import TSNE, MDS
 from sklearn.metrics.pairwise import pairwise_distances
 
 from conceptualiser.models import Term, TermConcept, Concept
-from lm.models import Word, Lexicon
-from lm.views import model_manager
+from lexicon_miner.models import Word, Lexicon
+from lexicon_miner.views import model_manager
+from task_manager.models import Task
+from utils.datasets import Datasets
 
 from texta.settings import STATIC_URL, URL_PREFIX, INFO_LOGGER
 
 @login_required
 def index(request):
-    if 'model' not in request.session:
-        return HttpResponseRedirect(URL_PREFIX + '/')
     template = loader.get_template('conceptualiser.html')
-    
-    lexicons = []
 
+    lexicons = []
     for lexicon in Lexicon.objects.all().filter(author=request.user):
         setattr(lexicon,'size',Word.objects.all().filter(lexicon=lexicon.id).count())
         lexicons.append(lexicon)
 
     methods = ["PCA","TSNE","MDS"]
+
+    datasets = Datasets().get_allowed_datasets(request.user)
+    language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
     
-    return HttpResponse(template.render({'STATIC_URL':STATIC_URL,'lexicons':lexicons,'methods':methods},request))
+    return HttpResponse(template.render({'STATIC_URL':STATIC_URL,'lexicons':lexicons,'methods':methods, 'language_models': language_models, 'allowed_datasets': datasets},request))
 
 @login_required
 def load_ontology_by_id(request):

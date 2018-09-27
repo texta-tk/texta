@@ -102,29 +102,18 @@ function createTr(name,id,container_id,class_name,type) {
           }).then((result) => {
             if (result.value) {
                 async_get_query(PREFIX + '/delete_' + class_name + '?id=' + id.substring(3),class_name == "term" ? remove_term_tr : remove_concept_tr);
-                //swal('Deleted!','Entry removed.','success')
-                swal({
-                    title: 'Entry removed',
-                    animation: false,
-                    customClass: 'animated fadeInLeft',
-                    width: 400,
-                    padding: 10,
+                  const notification = swal.mixin({
+                    toast: true,
                     position: 'bottom-start',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+                
+                notification({
                     type: 'success',
-                    timer: 1500,
-                    backdrop: `
-                    rgba(0,0,0,0.0)
-                    no-repeat
-                    `,
-                  })
+                    title: 'Entry removed!',
+                })
             }
-            // else if (result.dismiss === swal.DismissReason.cancel) {
-            //   swal(
-            //     'Cancelled',
-            //     'Your imaginary file is safe :)',
-            //     'error'
-            //   )
-            // }
           });
     };
 

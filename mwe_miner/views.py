@@ -16,8 +16,9 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 
+from task_manager.models import Task
 from conceptualiser.models import Term,TermConcept,Concept
-from lm.models import Lexicon,Word
+from lexicon_miner.models import Lexicon,Word
 from mwe_miner.models import Run
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
@@ -50,7 +51,10 @@ def index(request):
     es_m = ds.build_manager(ES_Manager)
     fields = es_m.get_column_names()
 
-    return HttpResponse(template.render({'lexicons':lexicons,'STATIC_URL':STATIC_URL,'runs':runs,'fields':fields},request))
+    datasets = Datasets().get_allowed_datasets(request.user)
+    language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
+
+    return HttpResponse(template.render({'lexicons':lexicons,'STATIC_URL':STATIC_URL,'runs':runs,'fields':fields, 'language_models': language_models, 'allowed_datasets': datasets},request))
 
 @login_required
 def results(request):

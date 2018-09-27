@@ -94,6 +94,13 @@ class AggManager:
         agg_field_2 = json.loads(agg_field_2)
         sort_by_2 = es_params["sort_by_2"]
 
+        try:
+            agg_size_1 = int(es_params["agg_size_1"])        
+            agg_size_2 = int(es_params["agg_size_2"])
+        except KeyError:
+            agg_size_1 = 10
+            agg_size_2 = 10
+
         field_type_to_name = {'date': 'daterange', 'string':'string', 'text': 'string', 'keyword': 'string', 'facts': 'fact', 'fact_str_val': 'fact_str_val', 'fact_num_val': 'fact_num_val'}
 
         agg_name_1 = field_type_to_name[agg_field_1['type']]
@@ -106,15 +113,15 @@ class AggManager:
             agg_field_2['path'] = '{0}.keyword'.format(agg_field_2['path'])
 
         # 1st LEVEL AGGREGATION
-        agg = self.create_agg(agg_name_1,sort_by_1,agg_field_1["path"])
+        agg = self.create_agg(agg_name_1,sort_by_1,agg_field_1["path"],agg_size_1)
 
         if agg_name_1 == 'fact' and es_params["agg_field_2_selected"] == 'false':
             agg[agg_name_1]["aggs"][agg_name_1]['aggs']['fact_str_val'] = \
-                self.create_agg('fact_str_val', sort_by_1, agg_field_1['path'])['fact_str_val']['aggs']['fact_str_val']
+                self.create_agg('fact_str_val', sort_by_1, agg_field_1['path'], agg_size_1)['fact_str_val']['aggs']['fact_str_val']
 
         # 2nd LEVEL AGGREGATION
         if es_params["agg_field_2_selected"] == 'true':
-            agg_2 = self.create_agg(agg_name_2,sort_by_2,agg_field_2["path"])
+            agg_2 = self.create_agg(agg_name_2,sort_by_2,agg_field_2["path"],agg_size_2)
             if agg_name_1 == 'fact' and agg_name_2 == 'fact_str_val':
                 agg[agg_name_1]['aggs'][agg_name_1]['aggs'] = agg_2[agg_name_2]['aggs']
                 agg[agg_name_1]['aggs'][agg_name_1]['aggs']['documents'] = {"reverse_nested": {}}
@@ -123,13 +130,14 @@ class AggManager:
             else:
                 if agg_name_2 == 'fact':
                     agg[agg_name_1]["aggregations"] = agg_2
-                    agg[agg_name_1]["aggregations"][agg_name_2]['aggs'][agg_name_2]['aggs'] = self.create_agg('fact_str_val', sort_by_2, agg_field_2['path'])['fact_str_val']['aggs']
+                    agg[agg_name_1]["aggregations"][agg_name_2]['aggs'][agg_name_2]['aggs'] = self.create_agg('fact_str_val', sort_by_2, agg_field_2['path'], agg_size_2)['fact_str_val']['aggs']
                 else:
                     agg[agg_name_1]["aggregations"] = agg_2
+        
         return agg
 
 
-    def create_agg(self,agg_name,sort_by,path):
+    def create_agg(self, agg_name, sort_by, path, size):
         if agg_name == "daterange":
             return {agg_name: {"date_range": {"field": path, "format": date_format, "ranges": self.ranges}}}
         elif agg_name == 'fact':
@@ -138,7 +146,7 @@ class AggManager:
                     "nested": {"path": "texta_facts"},
                     "aggs": {
                         agg_name: {
-                            sort_by: {"field": "texta_facts.fact", "size": 30},
+                            sort_by: {"field": "texta_facts.fact", "size": size},
                             "aggs": {"documents": {"reverse_nested": {}}}
                         }
                     }
@@ -150,7 +158,7 @@ class AggManager:
                     "nested": {"path": "texta_facts"},
                     "aggs": {
                         agg_name: {
-                            sort_by: {"field": "texta_facts.str_val", "size": 30, 'order': {'documents.doc_count': 'desc'}},
+                            sort_by: {"field": "texta_facts.str_val", "size": size, 'order': {'documents.doc_count': 'desc'}},
                             "aggs": {"documents": {"reverse_nested": {}}}
                         }
                     }
@@ -162,15 +170,14 @@ class AggManager:
                     "nested": {"path": "texta_facts"},
                     "aggs": {
                         agg_name: {
-                            sort_by: {"field": "texta_facts.num_val", "size": 30, 'order': {'documents.doc_count': 'desc'}},
+                            sort_by: {"field": "texta_facts.num_val", "size": size, 'order': {'documents.doc_count': 'desc'}},
                             "aggs": {"documents": {"reverse_nested": {}}}
                         }
                     }
                 }
             }
         else:
-            # NOTE: Exclude numbers from discrete aggregation ouput
-            return {agg_name: {sort_by: {"field": path, "size": 30}}}
+            return {agg_name: {sort_by: {"field": path, "size": size}}}
 
 
     def aggregate(self):

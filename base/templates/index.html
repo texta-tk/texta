@@ -7,6 +7,8 @@
 
 <script type="application/javascript" src="{{STATIC_URL}}jquery-1.11.2.min.js"></script>
 <script type="application/javascript" src="{{STATIC_URL}}datatables/datatables.min.js"></script>
+<script type="application/javascript" src="{{STATIC_URL}}datatables_button/dataTables.buttons.js"></script>
+<script type="application/javascript" src="{{STATIC_URL}}datatables_button/buttons.colVis.js"></script>
 <script type="application/javascript" src="{{STATIC_URL}}jquery-textrange.js"></script>
 <script type="application/javascript" src="{{STATIC_URL}}navigation.js"></script>
 <script type="application/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap.min.js"></script>
@@ -17,14 +19,28 @@
 <script type="application/javascript" src="{{STATIC_URL}}morris.min.js"></script>
 <script type="application/javascript" src="{{STATIC_URL}}raphael-min.js"></script>
 
+<!-- https://github.com/n457/LightRange.js
+<script type="application/javascript" src="{{STATIC_URL}}/LightRange.min.js"></script> -->
+<!-- https://developer.snapappointments.com/bootstrap-select/ -->
+<script type="application/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-select.min.js"></script>
+<link rel="stylesheet" href="{{STATIC_URL}}bootstrap/css/bootstrap-select.min.css">
+<!-- http://www.bacubacu.com/colresizable/ -->
+<script type="application/javascript" src="{{STATIC_URL}}colResizable-1.6.js"></script>
 <script type="application/javascript" src="{{STATIC_URL}}d3.min.js"></script>
+<!-- http://d3-legend.susielu.com/ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/1.13.0/d3-legend.min.js"></script>
+<!-- https://github.com/patorjk/d3-context-menu -->
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}d3-context-menu.css">
+<script type="application/javascript" src="{{STATIC_URL}}d3-context-menu.js"></script>
+<!-- https://github.com/MasterMaps/d3-slider -->
+<script type="application/javascript" src="{{STATIC_URL}}d3-slider.js"></script>
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}d3-slider.css">
 <!-- https://sweetalert2.github.io/ -->
-<script type="application/javascript" src="{{STATIC_URL}}sweetalert2.js"></script>
+<script type="application/javascript" src="{{STATIC_URL}}sweetalert2.all.min.js"></script>
 <!-- https://daneden.github.io/animate.css/ -->
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}/animate.css">
 
 <script type="application/javascript" src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
 <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}bootstrap/css/bootstrap.min.css">
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}bootstrap/css/bootstrap-slider.css">
@@ -50,7 +66,7 @@
 						<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-pencil"></span> Terminology Management<span class="caret"></span></a>
 						<ul class="dropdown-menu">
 							<li id="ontology_viewer"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Terminology Overview</a></li>
-							<li id="lex_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Base Lexicon Miner</a></li>
+							<li id="lex_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Lexicon Miner</a></li>
 							<li id="conceptualizer"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Conceptualiser</a></li>
 							<li id="mwe_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> MWE Miner</a></li>
 							<li id="grammar_builder"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Grammar Miner</a></li>
@@ -60,22 +76,45 @@
 						<li class="dropdown">
 							<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-lock"></span> Restricted<span class="caret"></span></a>
 							<ul class="dropdown-menu">
-								<li id="model_manager"><a href="#"><span class="glyphicon glyphicon-sort-by-alphabet"></span> Model Manager </a></li>
-								<li id="classification_manager"><a href="#"><span class="glyphicon glyphicon-equalizer"></span> Classification Manager </a></li>
 								<li id="permission_admin"><a href="#"><span class='glyphicon glyphicon-wrench'></span> Administration </a></li>
                                 <li id="dataset_importer"><a href="#"><span class='glyphicon glyphicon-share'></span> Dataset Importer </a></li>
+                                <li id="task_manager"><a href="#"><span class='glyphicon glyphicon-menu-hamburger'></span> Task Manager </a></li>
 							</ul>
 						</li>
 					{% endif %}
 		        {% endif %}
             </ul>
-            {% if request.user.is_authenticated %}
+            
+            {% if request.user.is_authenticated %}           
 				<form class="navbar-form navbar-right user-data" id="log_out_form" onsubmit="go_to(LINK_ACCOUNT + '/account/log_out','log_out_form')">
 					<span> Logged in as {{request.user.get_username}}. </span>
 					<div class="form-group">
 						<button type="submit" class="btn btn-danger btn-sm"><span class="glyphicon glyphicon-log-out"></span></button>
 					</div>
-				</form> 
+				</form>
+
+            	<form class="navbar-form navbar-right">
+					<select id="dataset_to_activate" name="dataset_to_activate" class="input-sm" onchange="update_resources();">
+						{% for dataset in allowed_datasets %}
+							{% if dataset.id|stringformat:"i" == request.session.dataset %}
+								<option class="datasetOption" value="{{dataset.id}}" selected="selected">Dataset {{dataset.id}}: {{dataset.index}} - {{dataset.mapping}}</option>
+							{% else %}
+								<option class="datasetOption" value="{{dataset.id}}">Dataset {{dataset.id}}: {{dataset.index}} - {{dataset.mapping}}</option>
+							{% endif %}
+						{% endfor %}
+					</select>
+
+					<select id="model_to_activate" name="model_to_activate" class="input-sm" onchange="update_resources();">
+						{% for model in language_models %}
+							{% if model.pk|slugify == request.session.model %}
+								<option class="datasetOption" value="{{model.pk}}" selected="selected">Model {{model.pk}}: {{model.description}}</option>
+							{% else %}
+								<option class="datasetOption" value="{{model.pk}}">Model {{model.pk}}: {{model.description}}</option>
+							{% endif %}
+						{% endfor %}
+					</select>
+            	</form>
+
             {% else %}
 				<form class="navbar-form form-inline navbar-right" id="login_form" onsubmit="go_to(LINK_ROOT+'account/login','login_form')" method="POST">
 					<div class="form-group">

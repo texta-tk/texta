@@ -15,7 +15,7 @@ restart:
 
 
 shell-web:
-	docker exec -it texta bash
+	docker exec -it texta-toolkit bash
 
 shell-db:
 	docker exec -it db bash
@@ -24,7 +24,7 @@ shell-elastic:
 	docker exec -u 0 -it texta-elastic bash
 
 log-web:
-	docker-compose logs -f texta
+	docker-compose logs -f texta-toolkit
 
 log-db:
 	docker-compose logs -f db
