@@ -22,14 +22,52 @@
     <div class="form-group">
         <label class="control-label col-sm-3" for="lexicon-classifier-processor-lexicons">Lexicons:</label>
         <div class="col-sm-7">
-			<select id="lexicon-classifier-processor-lexicons" name="lexicon_classifier_lexicons" class="form-control input-sm" multiple="multiple">
-				{% for lex in preprocessor.enabled_lexicons %}
-					<option value="{{lex.id}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{lex.name}}</option>
-				{% endfor %}
-			</select>
+			       <select id="lexicon-classifier-processor-lexicons" name="lexicon_classifier_lexicons" class="form-control input-sm" multiple="multiple">
+				           {% for lex in preprocessor.enabled_lexicons %}
+					            <option value="{{lex.id}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{lex.name}}</option>
+				           {% endfor %}
+			       </select>
         </div>
         <span data-toggle="tooltip" data-placement="bottom" title="Select one or more lexicons to apply." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
     </div>
+
+    <div class="form-group">
+        <label class="control-label col-sm-3" for="lexicon-classifier-processor-add-cl">Add_CLex:</label>
+
+        <div class="col-sm-7">
+          <select id="lexicon-classifier-processor-add-cl" name="lexicon_classifier_add_cl" class="form-control input-sm">
+                {% for cl_option in preprocessor.cl_options %}
+                   <option value="{{cl_option}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{cl_option}}</option>
+                {% endfor %}
+          </select>
+        </div>
+        <span data-toggle="tooltip" data-placement="bottom" title="Add counter lexicon?" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-sm-3" for="lexicon-classifier-processor-counterlexicons">CLexicon:</label>
+        <div class="col-sm-7">
+             <select id="lexicon-classifier-processor-counterlexicons" name="lexicon_classifier_counterlexicons" class="form-control input-sm">
+                   {% for lex in preprocessor.enabled_lexicons %}
+                      <option value="{{lex.id}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{lex.name}}</option>
+                   {% endfor %}
+             </select>
+        </div>
+        <span data-toggle="tooltip" data-placement="bottom" title="Select one or more lexicons to apply." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-sm-3" for="lexicon-classifier-processor-cl-slops">CL_Slop:</label>
+        <div class="col-sm-7">
+        <select id="lexicon-classifier-processor-cl-slops" name="lexicon_classifier_cl_slops" class="form-control">
+        {% for slop in preprocessor.slops %}
+          <option value="{{slop}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{slop}}</option>
+        {% endfor %}
+      </select>
+        </div>
+        <span data-toggle="tooltip" data-placement="bottom" title="Select how many words is allowed between phrase entities." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+    </div>
+
     <div class="form-group">
         <label class="control-label col-sm-3" for="lexicon-classifier-processor-match-types">Match:</label>
         <div class="col-sm-7">

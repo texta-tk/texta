@@ -83,7 +83,8 @@ try:
         'match_types':['prefix','exact','fuzzy'],
         'operations':['or','and'],
         'slops':['0','1','2','3','4','5'],
-        'words_required':['10%','20%','30%','40%','50%','60%','70%','80%','90%','100%']
+        'words_required':['10%','20%','30%','40%','50%','60%','70%','80%','90%','100%'],
+        'cl_options':['no','yes']
     }
     log_preprocessor_status(code='lexicon_classifier', status='enabled')
 

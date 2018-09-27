@@ -142,6 +142,9 @@ function collectLexiconTaggerArguments(formData) {
 	  var operation = JSON.stringify($('#lexicon-classifier-processor-operations').val());//.split('\n'));
     var slop = JSON.stringify($('#lexicon-classifier-processor-slops').val());//.split('\n'));
 	  var requiredWords = JSON.stringify($('#lexicon-classifier-processor-words-required').val());//.split('\n'));
+    var addCounterLexicon = JSON.stringify($('#lexicon-classifier-processor-add-cl').val());//.split('\n'));
+    var counterLexicons = JSON.stringify($('#lexicon-classifier-processor-counterlexicons').val());//.split('\n'));
+    var clSlop = JSON.stringify($('#lexicon-classifier-processor-cl-slops').val());//.split('\n'));
 
     formData.append('lexicon_classifier_preprocessor_feature_names', featureName);
 	  formData.append('lexicon_classifier_preprocessor_lexicons', lexicons);
@@ -149,6 +152,10 @@ function collectLexiconTaggerArguments(formData) {
     formData.append('lexicon_classifier_preprocessor_operations', operation);
     formData.append('lexicon_classifier_preprocessor_slops', slop);
     formData.append('lexicon_classifier_preprocessor_words_required', requiredWords);
+    formData.append('lexicon_classifier_preprocessor_counterlecixons', counterLexicons);
+    formData.append('lexicon_classifier_preprocessor_cl_slops', clSlop);
+    formData.append('lexicon_classifier_preprocessor_add_cl', addCounterLexicon);
+
 
     return formData;
 }
