@@ -1,27 +1,10 @@
 # -*- coding: utf8 -*-
 from __future__ import print_function
 import json
-# import re
 import copy
 import requests
-# from collections import defaultdict
-# import sys
-# import time
 from functools import reduce
 import datetime
-
-# # Import django-stuff only if imported from the django application / prevent errors when importing from scripts
-# if 'django' in sys.modules:
-#     from conceptualiser.models import Concept
-#     from conceptualiser.models import TermConcept
-#     from utils.log_manager import LogManager
-#     from lexicon_miner.models import Word,Lexicon
-
-if 'django' in sys.modules: # Import django-stuff only if imported from the django application / prevent errors when importing from scripts
-    from conceptualiser.models import Concept
-    from conceptualiser.models import TermConcept
-    from utils.log_manager import LogManager
-    from lexicon_miner.models import Word,Lexicon
 
 from utils.query_builder import QueryBuilder
 from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, FACT_PROPERTIES, date_format

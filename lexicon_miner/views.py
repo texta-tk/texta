@@ -167,7 +167,7 @@ def selectLexicon(request):
         language_models = Task.objects.filter(task_type='train_model').filter(status=Task.STATUS_COMPLETED).order_by('-pk')
 
         # Define selected mapping
-        ds = Datasets().activate_dataset(request.session)
+        ds = Datasets().activate_datasets(request.session)
         es_m = ds.build_manager(ES_Manager)
         fields = es_m.get_column_names()
 
