@@ -72,56 +72,61 @@ def collect_map_entries(map_):
 
 
 def get_fields(es_m):
-    """ Create field list from fields in the Elasticsearch mapping
-    """
-    reserved_fields = ['texta_facts']
-    fields = []
+    texta_reserved = ['texta_facts']
     mapped_fields = es_m.get_mapped_fields()
+    fields_with_facts = es_m.get_fields_with_facts()
+    
+    fields = []
+    
+    for mapped_field,dataset_info in mapped_fields.items():
+        data = json.loads(mapped_field)
 
-    for data in [x for x in mapped_fields if x['path'] not in reserved_fields]:
         path = data['path']
+        
+        if path not in texta_reserved:
+        
+            path_list = path.split('.')
 
-        if data['type'] == 'date':
-            data['range'] = get_daterange(es_m,path)
+            label = '{0} --> {1}'.format(path_list[0], path_list[-1]) if len(path_list) > 1 else path_list[0]
+            label = label.replace('-->', u'→')
 
-        path_list = path.split('.')
-        label = '{0} --> {1}'.format(path_list[0], ' --> '.join(path_list[1:])) if len(path_list) > 1 else path_list[0]
-        label = label.replace('-->', u'→')
+            if data['type'] == 'date':
+                data['range'] = get_daterange(es_m, path)
 
-        field = {'data': json.dumps(data), 'label': label, 'type': data['type']}
-        fields.append(field)
+            data['label'] = label
 
-        # Add additional field if it has fact
-        has_facts, has_fact_str_val, has_fact_num_val =  es_m.check_if_field_has_facts(path_list)
-
-        if has_facts:
-            data['type'] = 'facts'
-            field = {'data': json.dumps(data), 'label': label + ' [fact_names]', 'type':'facts'}
+            field = {'data': json.dumps(data), 'label': label, 'type': data['type']}
             fields.append(field)
+        
+            if path in fields_with_facts['fact']:
+                data['type'] = 'facts'
+                field = {'data': json.dumps(data), 'label': label + ' [fact_names]', 'type':'facts'}
+                fields.append(field)
 
-        if has_fact_str_val:
-            data['type'] = 'fact_str_val'
-            field = {'data': json.dumps(data), 'label': label + ' [fact_text_values]', 'type':'fact_str_val'}
-            fields.append(field)
+            if path in fields_with_facts['fact_str']:
+                data['type'] = 'fact_str_val'
+                field = {'data': json.dumps(data), 'label': label + ' [fact_text_values]', 'type':'facts'}
+                fields.append(field)
 
-        if has_fact_num_val:
-            data['type'] = 'fact_num_val'
-            field = {'data': json.dumps(data), 'label': label + ' [fact_num_values]', 'type':'fact_num_val'}
-            fields.append(field)
-
+            if path in fields_with_facts['fact_num']:
+                data['type'] = 'fact_num_val'
+                field = {'data': json.dumps(data), 'label': label + ' [fact_num_values]', 'type':'facts'}
+                fields.append(field)
+    
     # Sort fields by label
     fields = sorted(fields, key=lambda l: l['label'])
+    
     return fields
 
 
-def get_daterange(es_m,field):
+def get_daterange(es_m, field):
     min_val,max_val = es_m.get_extreme_dates(field)
-    return {'min':min_val[:10],'max':max_val[:10]}
+    return {'min':min_val,'max':max_val}
 
 
 @login_required
 def index(request):
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     fields = get_fields(es_m)
 
@@ -144,7 +149,6 @@ def index(request):
                        'fields': fields,
                        'searches': Search.objects.filter(author=request.user),
                        'lexicons': Lexicon.objects.all().filter(author=request.user),
-                       'dataset': ds.get_index(),
                        'language_models': language_models, 
                        'allowed_datasets': datasets,                       
                        'enabled_preprocessors': enabled_preprocessors,
@@ -158,7 +162,7 @@ def index(request):
 @login_required
 def get_query(request):
     es_params = request.POST
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
     # GET ONLY MAIN QUERY
@@ -184,7 +188,7 @@ def display_encode(s):
 def save(request):
     logger = LogManager(__name__, 'SAVE SEARCH')
 
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
 
     es_params = request.POST
@@ -240,13 +244,21 @@ def autocomplete(request):
 
 @login_required
 def get_saved_searches(request):
-    searches = Search.objects.filter(author=request.user).filter(dataset=Dataset(pk=int(request.session['dataset'])))
-    return HttpResponse(json.dumps([{'id':search.pk,'desc':search.description} for search in searches],ensure_ascii=False))
+    ### TODO REDO THIS
+    return HttpResponse()
+    #active_dataset_ids = [int(ds) for ds in request.session['dataset']]
+    #datasets = Dataset.objects.filter(pk__in=[request.session['dataset']])
+    
+    #print(list(datasets))
+
+    #searches = Search.objects.filter(author=request.user).filter(dataset__in=[])
+    
+    #return HttpResponse(json.dumps([{'id':search.pk,'desc':search.description} for search in searches],ensure_ascii=False))
 
 
 @login_required
 def get_table_header(request):
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
 
     # get columns names from ES mapping
@@ -256,8 +268,9 @@ def get_table_header(request):
                        'fields': fields,
                        'searches': Search.objects.filter(author=request.user),
                        'columns': [{'index':index, 'name':field_name} for index, field_name in enumerate(fields)],
-                       'dataset': ds.get_index(),
-                       'mapping': ds.get_mapping()}
+                       #'dataset': ds.get_index(),
+                       #'mapping': ds.get_mapping()
+                       }
     template = loader.get_template('searcher_results.html')
     return HttpResponse(template.render(template_params, request))
 
@@ -320,7 +333,7 @@ def mlt_query(request):
         words = Word.objects.filter(lexicon=lexicon)
         stopwords+=[word.wrd for word in words]
 
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
@@ -361,7 +374,7 @@ def get_fields_content(hit,fields):
 @login_required
 def cluster_query(request):
     params = request.POST
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(params)
 
@@ -427,7 +440,7 @@ def search(es_params, request):
                'iTotalDisplayRecords': 0,
                'lag': 0}
 
-        ds = Datasets().activate_dataset(request.session)
+        ds = Datasets().activate_datasets(request.session)
         es_m = ds.build_manager(ES_Manager)
         es_m.build(es_params)
 
@@ -632,7 +645,7 @@ def additional_option_cut_text(content, window_size):
 def remove_by_query(request):
     es_params = request.POST
 
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
@@ -711,7 +724,7 @@ def facts_agg(es_params, request):
                         "distinct_values": {"cardinality": {"field": aggregation_field}}}
 
         # Define selected mapping
-        ds = Datasets().activate_dataset(request.session)
+        ds = Datasets().activate_datasets(request.session)
         dataset = ds.get_index()
         mapping = ds.get_mapping()
         date_range = ds.get_date_range()

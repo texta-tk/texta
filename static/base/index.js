@@ -1,3 +1,23 @@
+$(document).ready(function() {
+    $('#dataset_to_activate').multiselect({
+    	includeSelectAllOption: true,
+    	numberDisplayed: 1
+    });
+
+    $('#constraint_field').multiselect({
+    	numberDisplayed: 1
+    });
+
+    $('#mlt_fields').multiselect({
+    	numberDisplayed: 1
+    });
+
+    $('#cluster_field').multiselect({
+    	numberDisplayed: 1
+    });
+    
+});
+
 $('#lex_miner').click(function() {
     window.location = LINK_LEXMINER;
 });
@@ -141,17 +161,16 @@ function update_resources() {
             notification({
                 type: 'success',
                 title: 'Resources updated!',
-            }).then((result) => {location.reload();});
+            }).then((result) => {});
             
 		}else{
             swal({
                 title:'Failed!',
                 text:'Resource update failed!',
                 type:'warning',
-            }).then((result) => {location.reload();});
+            }).then((result) => {});
 		}
 	});
 
 }
-
 

@@ -11,10 +11,8 @@ class FactManager:
     """
     def __init__(self,request):
         self.es_params = request.POST
-        self.ds = Datasets().activate_dataset(request.session)
-        self.index = self.ds.get_index()
-        self.mapping = self.ds.get_mapping()
-        self.es_m = ES_Manager(self.index, self.mapping)
+        self.ds = Datasets().activate_datasets(request.session)
+        self.es_m = self.ds.build_manager(ES_Manager)
         self.field = 'texta_facts'
 
     def remove_facts_from_document(self, rm_facts_dict, bs=7500):
@@ -107,6 +105,8 @@ class FactManager:
         Returns:
             [int list] -- Occurances of the given facts
         """
+        dataset_str = self.es_m.stringify_datasets()
+        
         queries = []
         for fact_pair in fact_pairs:
             fact_constraints = []
@@ -116,13 +116,13 @@ class FactManager:
                 fact_constraints.append(constraint)
 
             query = {"query": {"bool": {"must": fact_constraints}}, "size": 0}
+            header = {"index": dataset_str}
+            
+            queries.append(json.dumps(header))
             queries.append(json.dumps(query))
-
-        header = json.dumps({"index": self.index})
-        data = "\n".join(["{0}\n{1}".format(header, q) for q in queries])+"\n"
-
-        responses = requests.post("{0}/{1}/_msearch".format(self.es_m.es_url, self.index), data=data, headers={"Content-Type":"application/json"})
-        counts = [response["hits"]["total"] for response in responses.json()['responses']]
+        
+        responses = self.es_m.perform_queries(queries)
+        counts = [response["hits"]["total"] for response in responses]
 
         return counts
 

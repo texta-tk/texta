@@ -19,10 +19,8 @@ class Autocomplete:
         self.key_constraints = request.POST['key_constraints'].split(',')
         self.content = request.POST['content'].split('\n')[-1].strip()
         
-        ds = Datasets().activate_dataset(request.session)
-        self.dataset = ds.get_index()
-        self.mapping = ds.get_mapping()
-        self.es_m = ES_Manager(self.dataset, self.mapping)
+        ds = Datasets().activate_datasets(request.session)
+        self.es_m = ds.build_manager(ES_Manager)
 
         self.user = request.user
 
@@ -43,18 +41,7 @@ class Autocomplete:
         return suggestions
 
     def _get_facts(self, agg_subfield, lookup_type, key_constraint=None):
-        agg_query = {
-                agg_subfield: {
-                    "nested": {"path": "texta_facts"},
-                    "aggs": {
-                        agg_subfield: {
-                            "terms": {"field": "texta_facts.{0}".format(agg_subfield), "size": self.limit, "include": "{0}.*".format(self.content)},
-                        }
-                    }
-                }
-            }
-        
-        agg_query = {agg_subfield: {"nested": {"path": "texta_facts"}, "aggs": {agg_subfield: {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val"}}}}}}}
+        agg_query = {agg_subfield: {"nested": {"path": "texta_facts"}, "aggs": {agg_subfield: {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val", "size": self.limit, "include": "{0}.*".format(self.content)}}}}}}}
 
         self.es_m.build('')
         self.es_m.set_query_parameter("aggs", agg_query)
@@ -62,6 +49,7 @@ class Autocomplete:
         if lookup_type == 'FACT_VAL' and key_constraint:
             facts = []            
             for bucket in self.es_m.search()["aggregations"][agg_subfield][agg_subfield]["buckets"]:
+                print(bucket)
                 if bucket["key"] == key_constraint:
                     facts += [self._format_suggestion(sub_bucket["key"], sub_bucket["key"]) for sub_bucket in bucket["fact_values"]["buckets"]]
             
