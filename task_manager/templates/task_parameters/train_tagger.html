@@ -20,7 +20,7 @@
 				<div class="col-sm-6">
                     <select name="{{task_param.id}}_field" class="form-control">
                         {% for field in fields %}
-                            <option title="{{field.data}}" value="{{field.data}}">{{field.label}}</option>
+                            <option title="{{field.path}}" value="{{field.path}}">{{field.label}}</option>
                         {% endfor %}
                     </select>
 				</div>
@@ -77,7 +77,7 @@
 				<div class="col-sm-12">
 				  <button type="button" onclick="javascript:start_task('{{task_param.id}}');" class="btn btn-default form-control"><span class="glyphicon glyphicon-ok"></span> Start task</button>
 				</div>
-			  </div>				  
+			  </div>
 		  </div>
 		</form>
 		</div>

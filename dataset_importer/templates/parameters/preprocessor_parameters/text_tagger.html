@@ -5,23 +5,23 @@
         {% if fields %}
             <select class="form-control input-sm" multiple="multiple" id="text-tagger-processor-feature-names" name="text_tagger_feature_names">
 			{% for field in fields %}
-				<option value="{{field.data}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{field.label}}</option>
+				<option value="{{field.path}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{field.label}}</option>
 			{% endfor %}
-			</select>    
+			</select>
         {% else %}
-        	<textarea class="form-control" rows="2" id="text-tagger-processor-feature-names" name="text_tagger_feature_names"></textarea> 	
+        	<textarea class="form-control" rows="2" id="text-tagger-processor-feature-names" name="text_tagger_feature_names"></textarea>
         {% endif %}
         </div>
-		
+
 		{% if fields %}
-			<span data-toggle="tooltip" data-placement="bottom" title="Select one or more fields to process." class="glyphicon glyphicon-question-sign texta-tooltip"></span>  		
+			<span data-toggle="tooltip" data-placement="bottom" title="Select one or more fields to process." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
 		{% else %}
 		    <span data-toggle="tooltip" data-placement="bottom" title="List of feature names one below another.
 
 		Example:
 
 		    my_field1
-		    my_field2" class="glyphicon glyphicon-question-sign texta-tooltip"></span>       
+		    my_field2" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
 		{% endif %}
     </div>
     <div class="form-group">

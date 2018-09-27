@@ -38,7 +38,8 @@ from .cluster_manager import ClusterManager
 from .fact_manager import FactManager
 from utils.highlighter import Highlighter, ColorPicker
 from utils.autocomplete import Autocomplete
-from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
+from dataset_importer.document_preprocessor import preprocessor_map
+
 from task_manager.views import task_params
 from task_manager.models import Task
 
@@ -132,7 +133,7 @@ def index(request):
 
     datasets = Datasets().get_allowed_datasets(request.user)
     language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
-    
+
     preprocessors = collect_map_entries(preprocessor_map)
     enabled_preprocessors = [preprocessor for preprocessor in preprocessors]
 
@@ -595,10 +596,10 @@ def search(es_params, request):
 
 def additional_option_cut_text(content, window_size):
     window_size = int(window_size)
-    
+
     if not content:
         return ''
-    
+
     if not isinstance(content, str):
         return content
 

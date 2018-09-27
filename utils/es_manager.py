@@ -1,15 +1,21 @@
 # -*- coding: utf8 -*-
 from __future__ import print_function
 import json
-import re
+# import re
 import copy
 import requests
-from collections import defaultdict
-import sys
-import time
+# from collections import defaultdict
+# import sys
+# import time
 from functools import reduce
 import datetime
 
+# # Import django-stuff only if imported from the django application / prevent errors when importing from scripts
+# if 'django' in sys.modules:
+#     from conceptualiser.models import Concept
+#     from conceptualiser.models import TermConcept
+#     from utils.log_manager import LogManager
+#     from lexicon_miner.models import Word,Lexicon
 
 if 'django' in sys.modules: # Import django-stuff only if imported from the django application / prevent errors when importing from scripts
     from conceptualiser.models import Concept
@@ -23,8 +29,11 @@ from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, 
 # Need to update index.max_inner_result_window to increase
 HEADERS = {'Content-Type': 'application/json'}
 
+
 class Singleton(type):
+
     _instances = {}
+
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
@@ -101,11 +110,11 @@ class ES_Manager:
     def bulk_post_update_documents(self, documents, ids):
         '''Do both plain_post_bulk and _update_by_query'''
         data = ''
-        
-        for i,_id in enumerate(ids):
-            data += json.dumps({"update": {"_id": _id, "_type": self.mapping, "_index": self.index}})+'\n'
-            data += json.dumps({"doc": documents[i]})+'\n'
-        
+
+        for i, _id in enumerate(ids):
+            data += json.dumps({"update": {"_id": _id, "_type": self.mapping, "_index": self.index}}) + '\n'
+            data += json.dumps({"doc": documents[i]}) + '\n'
+
         response = self.plain_post_bulk(self.es_url, data)
         response = self._update_by_query()
         return response
@@ -127,18 +136,18 @@ class ES_Manager:
         return response
 
     def update_mapping_structure(self, new_field, new_field_properties):
-        url = '{0}/{1}/_mappings/{2}'.format(self.es_url, self.index ,self.mapping)
+        url = '{0}/{1}/_mappings/{2}'.format(self.es_url, self.index, self.mapping)
         response = self.plain_get(url)
         properties = response[self.index]['mappings'][self.mapping]['properties']
-        
+
         if new_field not in properties:
             properties[new_field] = new_field_properties
-        
+
         if 'texta_facts' not in properties:
             properties['texta_facts'] = FACT_PROPERTIES
-        
+
         properties = {'properties': properties}
-        
+
         response = self.plain_put(url, json.dumps(properties))
         return response
 
@@ -219,7 +228,8 @@ class ES_Manager:
 
     @staticmethod
     def plain_scroll(es_url, dataset, mapping, query, expiration_str='1m'):
-        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_search?scroll='+expiration_str, data=query, headers=HEADERS).json()
+        url = es_url + '/' + dataset + '/' + mapping + '/_search?scroll=' + expiration_str
+        return ES_Manager.requests.post(url, data=query, headers=HEADERS).json()
 
     @staticmethod
     def delete_index(index):
@@ -402,7 +412,7 @@ class ES_Manager:
         response = self.plain_post(search_url, q)
         return response
 
-    def process_bulk(self,hits):
+    def process_bulk(self, hits):
         data = ''
         for hit in hits:
             data += json.dumps({"delete":{"_index":self.index,"_type":self.mapping,"_id":hit['_id']}})+'\n'
@@ -417,17 +427,17 @@ class ES_Manager:
         response = requests.post(search_url, data=q, headers=HEADERS).json()
 
         scroll_id = response['_scroll_id']
-        l = response['hits']['total']
+        total_hits = response['hits']['total']
 
         # Delete initial response
         data = self.process_bulk(response['hits']['hits'])
         delete_url = '{0}/{1}/{2}/_bulk'.format(es_url, self.index, self.mapping)
         deleted = requests.post(delete_url, data=data, headers=HEADERS)
-        while l > 0:
-            response = self.scroll(scroll_id=scroll_id, time_out=time_out)
-            l = len(response['hits']['hits'])
-            scroll_id = response['_scroll_id']
 
+        while total_hits > 0:
+            response = self.scroll(scroll_id=scroll_id, time_out=time_out)
+            total_hits = len(response['hits']['hits'])
+            scroll_id = response['_scroll_id']
             data = self.process_bulk(response['hits']['hits'])
             delete_url = '{0}/{1}/{2}/_bulk'.format(es_url, self.index, self.mapping)
             deleted = requests.post(delete_url, data=data, headers=HEADERS)
@@ -441,7 +451,7 @@ class ES_Manager:
             q = json.dumps({"scroll": time_out, "scroll_id": scroll_id})
             search_url = '{0}/_search/scroll'.format(es_url)
         else:
-            if match_all == True:
+            if match_all is True:
                 q = {}
             else:
                 q = self.combined_query['main']
@@ -513,7 +523,7 @@ class ES_Manager:
             for constraint in query_dict['main']['query']['bool']['must_not']:
                 self.combined_query['main']['query']['bool']['must_not'].append(constraint)
 
-    def more_like_this_search(self,fields,stopwords=[],docs_accepted=[],docs_rejected=[],handle_negatives='ignore'):
+    def more_like_this_search(self, fields, stopwords=[], docs_accepted=[], docs_rejected=[], handle_negatives='ignore'):
 
         # Get ids from basic search
         docs_search = self._scroll_doc_ids()
@@ -543,16 +553,16 @@ class ES_Manager:
             highlight_fields[field] = {}
 
         query = {
-            "query":{
-                "bool":{
-                    "must":[mlt]
+            "query": {
+                "bool": {
+                    "must": [mlt]
                 }
             },
-            "size":10,
-            "highlight" : {
-                "pre_tags" : ["<b>"],
-                "post_tags" : ["</b>"],
-                "fields" : highlight_fields
+            "size": 10,
+            "highlight": {
+                "pre_tags": ["<b>"],
+                "post_tags": ["</b>"],
+                "fields": highlight_fields
             }
         }
 
@@ -560,19 +570,17 @@ class ES_Manager:
             if handle_negatives == 'unlike':
                 mlt["more_like_this"]["unlike"] = self._add_doc_ids_to_query(docs_rejected)
             elif handle_negatives == 'ignore':
-                rejected = [{'ids':{'values':docs_rejected}}]
+                rejected = [{'ids': {'values': docs_rejected}}]
                 query["query"]["bool"]["must_not"] = rejected
 
         response = ES_Manager.plain_search(self.es_url, self.stringify_datasets(), query)
 
         return response
 
+    def _add_doc_ids_to_query(self, ids):
+        return [{"_index": self.index, "_type": self.mapping, "_id": id} for id in ids]
 
-    def _add_doc_ids_to_query(self,ids):
-        return [{"_index" : self.index, "_type" : self.mapping, "_id" : id} for id in ids]
-
-
-    def _scroll_doc_ids(self,limit=500):
+    def _scroll_doc_ids(self, limit=500):
         ids = []
 
         response = self.scroll(id_scroll=True, size=100)
@@ -620,4 +628,3 @@ class ES_Manager:
         url = "{0}/{1}/_settings".format(self.es_url, self.index)
         response = self.plain_put(url, json.dumps(data))
         return response
-

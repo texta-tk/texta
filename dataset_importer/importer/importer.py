@@ -10,9 +10,12 @@ import requests
 import json
 import logging
 from django.conf import settings
+
 from dataset_importer.document_storer.storer import DocumentStorer
 from dataset_importer.document_reader.reader import DocumentReader, entity_reader_map, collection_reader_map, database_reader_map
-from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
+from dataset_importer.document_preprocessor import PREPROCESSOR_INSTANCES
+from dataset_importer.document_preprocessor import convert_to_utf8
+
 from dataset_importer.archive_extractor.extractor import ArchiveExtractor, extractor_map
 from threading import Lock
 from multiprocessing.pool import ThreadPool as Pool
@@ -384,6 +387,9 @@ def _processing_job(documents, parameter_dict):
                 dataset_import = DatasetImport.objects.get(pk=parameter_dict['import_id'])
                 dataset_import.processed_documents += stored_documents_count
                 dataset_import.save()
+
+    except Exception as e:
+        HandleDatasetImportException(parameter_dict, e)
 
     except Exception as e:
         HandleDatasetImportException(parameter_dict, e)
