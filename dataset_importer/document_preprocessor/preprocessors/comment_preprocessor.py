@@ -21,11 +21,17 @@ class CommentPreprocessor(object):
 
     @classmethod
     def _get_hour(cls, string):
-        return str(parser.parse(string).hour)
+        try:
+            return str(parser.parse(string).hour)
+        except ValueError:
+            return ''
 
     @classmethod
     def _get_month(cls, string):
-        return str(parser.parse(string).month)
+        try:
+            return str(parser.parse(string).month)
+        except ValueError:
+            return ''
 
     @classmethod
     def _clean_string(cls, string):
@@ -57,7 +63,8 @@ class CommentPreprocessor(object):
 
                 feature_text = document[input_feature]
                 if is_date is None:
-                    is_date = self._is_date(feature_text)
+                    if not feature_text.isdigit():
+                        is_date = self._is_date(feature_text)
 
                 if is_date:
                     document.update({
