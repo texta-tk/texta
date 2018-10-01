@@ -197,7 +197,17 @@ def api_tag_list(request, user, params):
     es_m = ds.build_manager(ES_Manager)
     mass_helper = MassHelper(es_m)
     tag_set = mass_helper.get_unique_tags()
-    data = list(sorted(tag_set))
+    tag_frequency = mass_helper.get_tag_frequency(tag_set)
+    tag_models = set([tagger.description for tagger in Task.objects.filter(task_type='train_tagger').filter(status=Task.STATUS_COMPLETED)])
+
+    data = []
+    for tag in sorted(tag_frequency.keys()):
+        count = tag_frequency[tag]
+        has_model = tag in tag_models
+        doc = {'description': tag,
+               'count': count,
+               'has_model': has_model}
+        data.append(doc)
     data_json = json.dumps(data)
     return HttpResponse(data_json, status=200, content_type='application/json')
 
