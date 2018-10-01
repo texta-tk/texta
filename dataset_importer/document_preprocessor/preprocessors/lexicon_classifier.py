@@ -8,8 +8,23 @@ import os
 
 class LexClassifier:
     def __init__(self,lexicon,operation='or',match_type='prefix',required_words=1,phrase_slop=0,counter_slop=0,counter_lexicon=[]):
+        """
+        :param lexicon: lexicon containing words/phrases/regexes to match
+        :param operation: logic operation used between the lexicon entries ('or','and')
+        :param match_type: how to match lexicon entries ('prefix','fuzzy','exact')
+        :param required_words: the proportion of words required to be in the text to obtain the tag (only for operation='and')
+        :param phrase_slop: how many words are allowed between lexicon phrase entities
+        :param counter_slop: how many words are allowed between nullifying lex entries and main lex entries
+        :param counter_lexicon: lexicon containing words/phrases/regexes which nullify main lex words
+        :type lexicon: list or string (containing lex file name)
+        :type operation: string
+        :type match_type: string
+        :type required_words: float (in range [0,1])
+        :type phrase_slop: int
+        :type counter_slop: int
+        :type counter_lexicon: list or string (containing lex file name)
+        """
         self._match_type = match_type
-        # match = prefix | exact | fuzzy
         self._operation = operation
         self._phrase_slop = phrase_slop
         self._required_words = required_words
@@ -37,8 +52,7 @@ class LexClassifier:
 
     def _get_prefix(self,match_type):
         if match_type=='fuzzy':
-            #prefix = '('
-            prefix = '(\S*'
+            prefix = '(\w*'
         else:
             prefix = '(\s|^)('
         return prefix
@@ -47,7 +61,6 @@ class LexClassifier:
         if match_type=='exact':
             suffix = ')(?=((\W*)\s|$))'
         else:
-            #suffix = ')'
             suffix = '\w*)(?=\W*)'
         return suffix
 
@@ -176,7 +189,7 @@ class LexTagger(object):
     def _parse_arguments(self,kwargs):
         input_features = kwargs['input_features']
         lex_ids = [int(_id) for _id in kwargs['lex_ids']]
-        cl_id   = [int(_id) for _id in kwargs['counter_lex_id']]
+        cl_id   = [int(kwargs['counter_lex_id'])]
         match_type = kwargs['match_type']
         operation = kwargs['operation']
         slop = int(kwargs['slop'])
@@ -271,7 +284,8 @@ class LexTagger(object):
 
 
         lexicons_to_apply = self._unpack_lexicons(lex_ids)
-        counter_lexicon = ['ei','pole']#self._unpack_lexicons(counter_lex_ids).items()[0][1]
+
+        counter_lexicon = list(self._unpack_lexicons(counter_lex_ids).items())[0][1]
         classifiers = self._get_classifiers(lexicons_to_apply,counter_lexicon,args)
 
         for input_feature in input_features:
