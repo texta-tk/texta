@@ -2,15 +2,16 @@ import json
 from task_manager.models import Task
 from django.http import HttpResponse
 from account.api_auth import api_auth
-from task_manager.tools import MassHelper
 
 from utils.datasets import Datasets
 from permission_admin.models import Dataset
 from searcher.models import Search
 from utils.es_manager import ES_Manager
 
-from .task_manager import create_task
-from .task_manager import get_fields
+from task_manager.task_manager import create_task
+from task_manager.task_manager import get_fields
+from task_manager.tools import MassHelper
+from task_manager.tools import get_pipeline_builder
 
 
 MIN_DOCS_TAGGED = 100
@@ -180,6 +181,66 @@ def api_search_list(request, user, params):
 
 
 @api_auth
+def api_normalizer_list(request, user, params):
+    """ Get list of available normalizers for API user (via auth_token)
+    """
+    pipe_builder = get_pipeline_builder()
+
+    data = []
+    for opt in pipe_builder.get_normalizer_options():
+        doc = {'normalizer_opt': opt['index'], 'label': opt['label']}
+        data.append(doc)
+
+    data_json = json.dumps(data)
+    return HttpResponse(data_json, status=200, content_type='application/json')
+
+
+@api_auth
+def api_classifier_list(request, user, params):
+    """ Get list of available classifiers for API user (via auth_token)
+    """
+    pipe_builder = get_pipeline_builder()
+
+    data = []
+    for opt in pipe_builder.get_classifier_options():
+        doc = {'classifier_opt': opt['index'], 'label': opt['label']}
+        data.append(doc)
+
+    data_json = json.dumps(data)
+    return HttpResponse(data_json, status=200, content_type='application/json')
+
+
+@api_auth
+def api_reductor_list(request, user, params):
+    """ Get list of available reductors for API user (via auth_token)
+    """
+    pipe_builder = get_pipeline_builder()
+
+    data = []
+    for opt in pipe_builder.get_reductor_options():
+        doc = {'reductor_opt': opt['index'], 'label': opt['label']}
+        data.append(doc)
+
+    data_json = json.dumps(data)
+    return HttpResponse(data_json, status=200, content_type='application/json')
+
+
+@api_auth
+def api_extractor_list(request, user, params):
+    """ Get list of available extractor for API user (via auth_token)
+    """
+    pipe_builder = get_pipeline_builder()
+
+    data = []
+    for opt in pipe_builder.get_extractor_options():
+        doc = {'extractor_opt': opt['index'], 'label': opt['label']}
+        data.append(doc)
+
+    data_json = json.dumps(data)
+    return HttpResponse(data_json, status=200, content_type='application/json')
+
+
+@api_auth
 def api_tag_list(request, user, params):
     """ Get list of available tags for API user (via auth_token)
     """
@@ -237,7 +298,13 @@ def api_field_list(request, user, params):
 def api_mass_train_tagger(request, user, params):
 
     # Read all params
-    dataset_id = params['dataset']
+    dataset_id = params.get('dataset', None)
+    selected_tags = set(params.get('tags', []))
+    field = params.get("field", None)
+    normalizer_opt = params.get("normalizer_opt", "0")
+    classifier_opt = params.get("classifier_opt", "0")
+    reductor_opt = params.get("reductor_opt", "0")
+    extractor_opt = params.get("extractor_opt", "0")
 
     ds = Datasets()
     ds.activate_dataset_by_id(dataset_id, use_default=False)
@@ -250,12 +317,23 @@ def api_mass_train_tagger(request, user, params):
     es_m = ds.build_manager(ES_Manager)
     mass_helper = MassHelper(es_m)
     tag_set = mass_helper.get_unique_tags()
-    tag_frequency = mass_helper.get_tag_frequency(tag_set)
 
+    if len(selected_tags) == 0:
+        selected_tags = tag_set
+    else:
+        # Check if all selected tag are in tag_set
+        for tag in selected_tags:
+            if tag not in tag_set:
+                error = {'error': 'invalid tag parameter'}
+                data_json = json.dumps(error)
+                return HttpResponse(data_json, status=400, content_type='application/json')
+
+    tag_frequency = mass_helper.get_tag_frequency(selected_tags)
     retrain_tasks = []
-
     # Get list of available models
     task_tagger_list = [tagger for tagger in Task.objects.filter(task_type='train_tagger').filter(status=Task.STATUS_COMPLETED)]
+    task_tagger_tag_set = set([tagger.description for tagger in task_tagger_list])
+
     for task_tagger in task_tagger_list:
 
         # Get tag label
@@ -276,15 +354,52 @@ def api_mass_train_tagger(request, user, params):
 
         # Update query parameter from task
         tag_parameters = json.loads(task_tagger.parameters)
-        tag_parameters['search_tag'] = {}
-        tag_parameters['search_tag']['main'] = {}
-        tag_parameters['search_tag']['main']['query'] = {}
-        tag_parameters['search_tag']['main']['query']['nested'] = {}
-        tag_parameters['search_tag']['main']['query']['nested']['path'] = "texta_facts"
-        tag_parameters['search_tag']['main']['query']['nested']['query'] = {'term': {"texta_facts.str_val": tag_label}}
+        _add_search_tag_query(tag_parameters, tag_label)
         task_tagger.parameters = json.dumps(tag_parameters)
         task_tagger.requeue_task()
 
-    # TODO: Create models train task to new tags without model
-    data_json = json.dumps(retrain_tasks)
+    new_model_tasks = []
+    for tag_label in selected_tags:
+        # Check if it is a new model
+        if tag_label in task_tagger_tag_set:
+            continue
+        # Filter models with less than MIN_DOCS_TAGGED docs
+        if tag_frequency.get(tag_label, 0) < MIN_DOCS_TAGGED:
+            continue
+        # Check if field params is valid
+        if field is None:
+            error = {'error': 'invalid field parameter for new model'}
+            data_json = json.dumps(error)
+            return HttpResponse(data_json, status=400, content_type='application/json')
+        # Build task parameters
+        task_param = {}
+        task_param["description"] = tag_label
+        task_param["normalizer_opt"] = normalizer_opt
+        task_param["classifier_opt"] = classifier_opt
+        task_param["reductor_opt"] = reductor_opt
+        task_param["extractor_opt"] = extractor_opt
+        task_param["field"] = field
+        task_param["dataset"] = dataset_id
+        _add_search_tag_query(task_param, tag_label)
+        # Create execution task
+        task_type = "train_tagger"
+        task_id = create_task(task_type, tag_label, task_param, user)
+        # Add task to queue
+        task = Task.get_by_id(task_id)
+        task.update_status(Task.STATUS_QUEUED)
+        # Add task id to response
+        new_model_task = {'task_id': task_id, 'tag': tag_label}
+        new_model_tasks.append(new_model_task)
+
+    data = {'retrain_models': retrain_tasks, 'new_models': new_model_tasks}
+    data_json = json.dumps(data)
     return HttpResponse(data_json, status=200, content_type='application/json')
+
+
+def _add_search_tag_query(param_dict, tag_label):
+    param_dict['search_tag'] = {}
+    param_dict['search_tag']['main'] = {}
+    param_dict['search_tag']['main']['query'] = {}
+    param_dict['search_tag']['main']['query']['nested'] = {}
+    param_dict['search_tag']['main']['query']['nested']['path'] = "texta_facts"
+    param_dict['search_tag']['main']['query']['nested']['query'] = {'term': {"texta_facts.str_val": tag_label}}

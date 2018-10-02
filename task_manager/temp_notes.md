@@ -114,6 +114,46 @@ Content-Type: application/json
 }
 ```
 
+### List Valid Normalizers
+```
+POST http://localhost:8000/task_manager/api/v1/normalizer_list
+Content-Type: application/json
+
+{
+    "auth_token": "60aa4ecb8aa5fc"
+}
+```
+
+### List Valid Classifiers
+```
+POST http://localhost:8000/task_manager/api/v1/classifier_list
+Content-Type: application/json
+
+{
+    "auth_token": "60aa4ecb8aa5fc"
+}
+```
+
+### List Valid Reductor
+```
+POST http://localhost:8000/task_manager/api/v1/reductor_list
+Content-Type: application/json
+
+{
+    "auth_token": "60aa4ecb8aa5fc"
+}
+```
+
+### List Valid Extractor
+```
+POST http://localhost:8000/task_manager/api/v1/extractor_list
+Content-Type: application/json
+
+{
+    "auth_token": "60aa4ecb8aa5fc"
+}
+```
+
 ### List Unique Tags
 ```
 POST http://localhost:8000/task_manager/api/v1/tag_list
@@ -143,6 +183,13 @@ Content-Type: application/json
 
 {
     "auth_token": "60aa4ecb8aa5fc",
-    "dataset": 1
+    "dataset": 1,
+
+    "tags": ["A"],              // Optional
+    "field": "field_value_en",  // Optional
+    "normalizer_opt": "0",      // Optional
+    "classifier_opt": "0",      // Optional
+    "reductor_opt": "0",        // Optional
+    "extractor_opt": "0"        // Optional
 }
 ```
