@@ -31,7 +31,7 @@
 		<div class="col-sm-5">
 		<div class="panel bg-grey">
 			<div class="countSlider">
-				<input id='visibleFactsCheckbox' type="checkbox" data-toggle="toggle" onchange="toggleVisibleCoocc(this)">
+				<input id='visibleFactsCheckbox' type="checkbox" data-toggle="toggle" checked onchange="toggleVisibleCoocc(this)">
 				<label for="visibleFactsCheckbox">Show cooccurances for visible nodes only</label>
 				<p>
 					<b> Hide facts with lower count than: </b>
@@ -78,13 +78,6 @@
 
 	var colors = ["#f0f20a", "#f90a0a", "#1d2bec", "#22d012", "#f9a70d", "#ff9292", "#00FFFF", "#FF00FF", "#800080", "#008000", "#008080", "#000080", "#F39C12", "#7D3C98", "#17202A", "#DAF7A6"];
 	var shapes = d3.svg.symbolTypes;
-	// Get color by shape (doesn't account for extra colors)
-	// var shapesColors = shapes.reduce((obj, k, i) => ({ ...obj, [k]: colors[i] }), {});
-
-	// Seems it was used to pass a score instead of a shape, always returned default
-	// var color = d3.scale.ordinal()
-	// 	.domain(shapes)
-	// 	.range(colors);
 
 	// Get color by fact name
 	var namesColors = d3.scale.ordinal()
@@ -201,13 +194,8 @@
 			.data(graph.links)
 			.enter().append("line")
 			.attr("class", "link")
-
 			.style("stroke-width", function (d) { return Math.pow(link_size(d.count) || nominal_stroke, 1); })
-
-			.style("stroke", function (d) {
-				/*if (isNumber(d.score) && d.score >= 0) return color(d.score);
-				else*/ return default_link_color;
-			})
+			.style("stroke", default_link_color);
 
 
 		var node = g.selectAll(".node")
@@ -301,7 +289,7 @@
 				if (highlight_color != "white") {
 					circle.style(towhite, "white");
 					text.style("font-weight", "normal");
-					link.style("stroke", function (o) { return /*(isNumber(o.score) && o.score >= 0) ? color(o.score) :*/ default_link_color });
+					link.style("stroke", default_link_color);
 				}
 			}
 		}
@@ -362,8 +350,7 @@
 		svg.call(zoom);
 
 		resize();
-		//window.focus();
-		d3.select(window).on("resize", resize)//.on("keydown", keydown);
+		d3.select(window).on("resize", resize)
 
 		force.on("tick", function () {
 
@@ -463,7 +450,6 @@
 
 	var svg = d3.select("svg");
 
-	// var clickedName = ''
 	svg.append("g")
 		.attr("class", "legendSymbol")
 		.attr("transform", "translate(20, 20)");
@@ -659,7 +645,7 @@
 			.on("cellout", function (e) {
 				if (overflowCount > 0) {
 					if (e.includes('hidden..')) {
-						svg.select(".overflowHiddenSymbol")//.remove();
+						svg.select(".overflowHiddenSymbol")
 							.attr("fill-opacity", 1).transition()
 							.duration(300).attr("fill-opacity", 0).remove();
 					}
