@@ -38,7 +38,7 @@ class CommentPreprocessor(object):
         return string.strip().lower()
 
     def transform(self, documents, **kwargs):
-        """Takes input documents and enhances them with MLP output.
+        """Takes input documents and creates new fields for further commentary analysis.
 
         :param documents: collection of dictionaries to enhance
         :param kwargs: request parameters which must include entries for the preprocessors to work appropriately
