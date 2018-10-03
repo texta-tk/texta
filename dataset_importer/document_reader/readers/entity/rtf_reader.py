@@ -14,7 +14,7 @@ class RTFReader(EntityReader):
 		for file_path in RTFReader.get_file_list(directory, 'rtf'):
 			try:
 				features = RTFReader.get_meta_features(file_path=file_path)
-				features['text'] = textract.process(file_path)
+				features['text'] = textract.process(file_path).decode('utf8')
 				features['_texta_id'] = file_path
 
 				yield features
