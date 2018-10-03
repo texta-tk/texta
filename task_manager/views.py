@@ -23,6 +23,7 @@ from dataset_importer.document_preprocessor import preprocessor_map
 
 from task_manager.tasks.task_params import task_params
 from task_manager.tools import get_pipeline_builder
+from task_manager.tools import MassHelper
 
 from .task_manager import create_task
 from .task_manager import filter_params
@@ -41,6 +42,9 @@ def index(request):
     es_m = ds.build_manager(ES_Manager)
     fields = get_fields(es_m)
 
+    mass_helper = MassHelper(es_m)
+    tag_set = mass_helper.get_unique_tags()
+
     preprocessors = collect_map_entries(preprocessor_map)
     enabled_preprocessors = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True]
 
@@ -56,6 +60,8 @@ def index(request):
 
         tasks.append(task_dict)
 
+    text_tags = [str(x) for x in range(100)]
+
     if 'dataset' in request.session.keys():
         context = {
             'task_params':           task_params,
@@ -65,7 +71,8 @@ def index(request):
             'searches':              Search.objects.filter(dataset=Dataset(pk=int(request.session['dataset']))),  # Search.objects.filter(author=request.user, dataset=Dataset(pk=int(request.session['dataset']))),
             'enabled_preprocessors': enabled_preprocessors,
             'STATIC_URL':            STATIC_URL,
-            'fields':                fields
+            'fields':                fields,
+            'text_tags':             sorted(tag_set)
         }
     else:
         return HttpResponseRedirect('/')
@@ -100,6 +107,27 @@ def start_task(request):
     task = Task.get_by_id(task_id)
     task.update_status(Task.STATUS_QUEUED)
 
+    return HttpResponse()
+
+
+@login_required
+def start_mass_task(request):
+    
+    user = request.user
+    data_post = request.POST
+
+    selected_tags = set(data_post.getlist('mass_tagger_selection'))
+    field = data_post.get('mass_field')
+    extractor_opt = data_post.get('mass_extractor_opt')
+    reductor_opt = data_post.get('mass_reductor_opt')
+    normalizer_opt = data_post.get('mass_normalizer_opt')
+    classifier_opt = data_post.get('mass_classifier_opt')
+
+    ds = Datasets().activate_dataset(request.session)
+    dataset_id = ds.mapping_id
+    es_m = ds.build_manager(ES_Manager)
+    mass_helper = MassHelper(es_m)
+    data = mass_helper.schedule_tasks(selected_tags, normalizer_opt, classifier_opt, reductor_opt, extractor_opt, field, dataset_id, user)
     return HttpResponse()
 
 

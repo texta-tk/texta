@@ -8,6 +8,7 @@ urlpatterns = [
     # UI
     url(r'^$', views.index, name='index'),
     url(r'^start_task$', views.start_task, name='start_task'),
+    url(r'^start_mass_task$', views.start_mass_task, name='start_mass_task'),
     url(r'^delete_task$', views.delete_task, name='delete_task'),
     url(r'download_model$', views.download_model, name='download_model'),
 
@@ -27,4 +28,5 @@ urlpatterns = [
     url(r'^api/v1/tag_list$', api_v1.api_tag_list, name='api_tag_list'),
     url(r'^api/v1/field_list$', api_v1.api_field_list, name='api_field_list'),
     url(r'^api/v1/mass_train_tagger$', api_v1.api_mass_train_tagger, name='api_mass_train_tagger'),
+    url(r'^api/v1/tag_text$', api_v1.api_tag_text, name='api_tag_text'),
 ]
