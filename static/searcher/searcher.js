@@ -1494,21 +1494,28 @@ function cluster_to_lex(id) {
 
 
 function add_props_to_spans() {
-    var span = $(".\\[HL\\]");            
-
-    span.hover(function(e) { 
+    var spans = $(".\\[HL\\]");
+    spans.hover(function(e) {
         $(this).css("filter",e.type === "mouseenter"?"brightness(110%)":"brightness(100%)") 
         $(this).css("cursor","pointer")
     })
 
-    span.attr("data-tippy");
-    span.attr("data-original-title", "tippy test");
-
-    tippy(".\\[HL\\]", 
+    spans.addClass("tippyFactSpan");
+    spans = document.querySelectorAll('.tippyFactSpan')
+    var temp = $('#factPopover')
+    tippy(spans,
         {
-            html: '#popover-content',
+            content: temp.prop('outerHTML'),
             interactive: true,
-            trigger: 'click', // 'click',
-        }
-        );
+            trigger: 'click',
+        });
+
+    Array.prototype.forEach.call(spans, function(span, i) {
+        title = span.title.split(' ')
+        name = title[title.length-1]
+        val = span.innerText
+        temp.find('.factName').html(name)
+        temp.find('.factValue').html(val)
+        span._tippy.setContent(temp.prop('outerHTML'))
+    });
 }
