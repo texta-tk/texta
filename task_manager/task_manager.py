@@ -71,7 +71,7 @@ def translate_param(translation, value):
         return translation['pattern'].format(value)
     elif translation['type'] == 'dict':
         try:
-            return translation['pattern'][int(value)]
+            return translation['pattern'][json.dumps(value)]
         except KeyError:
             return '{0}: Dataset missing'.format(value)
     elif translation['type'] == 'list':

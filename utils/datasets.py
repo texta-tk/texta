@@ -49,17 +49,12 @@ class Datasets:
 		return self
 
 
-	def activate_dataset_by_id(self, _id):
+	def activate_datasets_by_id(self, _ids):
 		""" Activate dataset by ID
+			Expects list of datasets id-s
 		"""
 		if len(self.datasets.keys()) > 0:
-			if _id not in self.datasets.keys():
-				if use_default:
-					self.mapping_id = int(list(self.datasets.keys())[0])
-				else:
-					self.mapping_id = None
-			else:
-				self.mapping_id = int(_id)
+			self.active_datasets = [ActiveDataset(int(_id), self.datasets[int(_id)]) for _id in _ids if int(_id) in self.datasets]
 
 		return self
 

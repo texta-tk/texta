@@ -200,8 +200,18 @@ def save(request):
         q = combined_query
         desc = request.POST['search_description']
         s_content = json.dumps([request.POST[x] for x in request.POST.keys() if 'match_txt' in x])
-        search = Search(author=request.user,search_content=s_content,description=desc,dataset=Dataset.objects.get(pk=int(request.session['dataset'])),query=json.dumps(q))
+
+
+
+        search = Search(author=request.user, search_content=s_content, description=desc, query=json.dumps(q))
         search.save()
+
+        for dataset_id in request.session['dataset']:
+            dataset = Dataset.objects.get(pk=int(dataset_id))
+            search.datasets.add(dataset)
+
+        search.save()
+
         logger.set_context('user_name', request.user.username)
         logger.set_context('search_id', search.id)
         logger.info('search_saved')
@@ -245,16 +255,10 @@ def autocomplete(request):
 
 @login_required
 def get_saved_searches(request):
-    ### TODO REDO THIS
-    return HttpResponse()
-    #active_dataset_ids = [int(ds) for ds in request.session['dataset']]
-    #datasets = Dataset.objects.filter(pk__in=[request.session['dataset']])
-    
-    #print(list(datasets))
-
-    #searches = Search.objects.filter(author=request.user).filter(dataset__in=[])
-    
-    #return HttpResponse(json.dumps([{'id':search.pk,'desc':search.description} for search in searches],ensure_ascii=False))
+    active_dataset_ids = [int(ds) for ds in request.session['dataset']]
+    active_datasets = Dataset.objects.filter(pk__in=active_dataset_ids)
+    searches = Search.objects.filter(author=request.user).filter(datasets__in=active_datasets).distinct()
+    return HttpResponse(json.dumps([{'id':search.pk,'desc':search.description} for search in searches],ensure_ascii=False))
 
 
 @login_required
@@ -269,8 +273,6 @@ def get_table_header(request):
                        'fields': fields,
                        'searches': Search.objects.filter(author=request.user),
                        'columns': [{'index':index, 'name':field_name} for index, field_name in enumerate(fields)],
-                       #'dataset': ds.get_index(),
-                       #'mapping': ds.get_mapping()
                        }
     template = loader.get_template('searcher_results.html')
     return HttpResponse(template.render(template_params, request))

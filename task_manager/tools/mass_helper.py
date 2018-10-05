@@ -19,7 +19,7 @@ class MassHelper:
     def __init__(self, es_manager):
         self.es_m = es_manager
         self.es_url = es_manager.es_url
-        self.index = es_manager.index
+        self.index = es_manager.stringify_datasets()
 
     def _iterate_docs(self, q):
         """ Iterage over all docs for a given query q

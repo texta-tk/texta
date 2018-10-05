@@ -566,6 +566,7 @@ class ES_Manager:
     def _scroll_doc_ids(self, limit=500):
         ids = []
 
+
         response = self.scroll(id_scroll=True, size=100)
         scroll_id = response['_scroll_id']
         hits = response['hits']['hits']
@@ -585,6 +586,11 @@ class ES_Manager:
     def perform_queries(self, queries):
         response = ES_Manager.plain_multisearch(self.es_url, queries)
         return response
+
+
+    def perform_query(self, query):
+       response = ES_Manager.plain_search(self.es_url, self.stringify_datasets(), query)
+       return response
 
 
     def get_extreme_dates(self, field):
