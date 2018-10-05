@@ -239,6 +239,20 @@ def api_extractor_list(request, user, params):
 
 
 @api_auth
+def api_tagger_list(request, user, params):
+    """ Get list of available tagger for API user (via auth_token)
+    """
+    all_taggers = Task.objects.filter(task_type="train_tagger", status=Task.STATUS_COMPLETED)
+    data = []
+    for tagger in all_taggers:
+        doc = {'tagger': tagger.id, 'description': tagger.description}
+        data.append(doc)
+
+    data_json = json.dumps(data)
+    return HttpResponse(data_json, status=200, content_type='application/json')
+
+
+@api_auth
 def api_tag_list(request, user, params):
     """ Get list of available tags for API user (via auth_token)
     """
@@ -322,11 +336,47 @@ def api_mass_train_tagger(request, user, params):
 
 
 @api_auth
+def api_mass_tagger(request, user, params):
+
+    # Fix Default Params
+    if 'search' not in params:
+        params['search'] = 'all_docs'
+    if 'description' not in params:
+        params['description'] = "via API call"
+    
+    task_type = "apply_preprocessor"
+    params["preprocessor_key"] = "text_tagger"
+    params["text_tagger_feature_names"] = params['field']
+    
+    taggers = params.get('taggers', None)
+    if taggers is None:
+        taggers = [tagger.id for tagger in Task.objects.filter(task_type='train_tagger').filter(status=Task.STATUS_COMPLETED)]
+    params['text_tagger_taggers'] = taggers
+
+    description = params['description']
+    # Create execution task
+    task_id = create_task(task_type, description, params, user)
+    # Add task to queue
+    task = Task.get_by_id(task_id)
+    task.update_status(Task.STATUS_QUEUED)
+    # Return reference to task
+    data = {
+        'task_id': task_id,
+        'task_type': task_type,
+        'status': task.status,
+        'user': task.user.username
+    }
+    data_json = json.dumps(data)
+    return HttpResponse(data_json, status=200, content_type='application/json')
+
+
+@api_auth
 def api_tag_text(request, user, params):
     """ Apply tag to text (via auth_token)
     """
     text = params.get('text', "").strip()
     explain = params.get('explain', False)
+    taggers = params.get('taggers', None)
 
     if len(text) == 0:
         error = {'error': 'text parameter cannot be empty'}
@@ -338,12 +388,15 @@ def api_tag_text(request, user, params):
     data = {'tags': [], 'explain': []}
 
     for tagger_id in tagger_ids_list:
+        is_tagger_selected = taggers is None or tagger_id in taggers
         tagger = TagModelWorker()
         tagger.load(tagger_id)
         p = int(tagger.model.predict([text])[0])
         if explain:
-            data['explain'].append({'tag': tagger.description, 'selected': p})
-        if p == 1:
+            data['explain'].append({'tag': tagger.description, 
+                                    'prediction': p,
+                                    'selected': is_tagger_selected })
+        if p == 1 and is_tagger_selected:
             data['tags'].append(tagger.description)
 
     data_json = json.dumps(data)

@@ -60,8 +60,6 @@ def index(request):
 
         tasks.append(task_dict)
 
-    text_tags = [str(x) for x in range(100)]
-
     if 'dataset' in request.session.keys():
         context = {
             'task_params':           task_params,

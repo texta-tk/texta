@@ -92,7 +92,8 @@ class PreprocessorWorker(BaseWorker):
             scroll_id = response['_scroll_id']
 
         task = Task.objects.get(pk=self.task_id)
-        task.result = json.dumps({'documents_processed': show_progress.n_total, 'documents_tagged': total_positive, 'preprocessor_key': self.params['preprocessor_key']})
+        task.result = json.dumps({'documents_processed': show_progress.n_total, 'positive_tags': total_positive, 'preprocessor_key': self.params['preprocessor_key']})
+        show_progress.update(100)
         task.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
     def _prepare_preprocessor_data(self, response: dict):
