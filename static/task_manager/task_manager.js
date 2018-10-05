@@ -30,6 +30,18 @@ function start_task(task_id) {
     request.send(new FormData(formElement),true);
 }
 
+function start_mass_task(task_id) {
+    let formElement = document.getElementById("task_params");
+    $("<input>").attr("type", "hidden").attr("name", "task_type").val(task_id).appendTo(formElement);
+
+    var request = new XMLHttpRequest();
+    request.onreadystatechange=function() {
+        location.reload();
+    }
+    
+    request.open("POST",PREFIX+'/start_mass_task');
+    request.send(new FormData(formElement),true);
+}
 
 function select_preprocessor(task_id) {
     let preprocessor_key = $("#" + task_id + "_preprocessor_key").val();

@@ -49,7 +49,7 @@ def filter_params(post: QueryDict):
     for param in post:
         if param.startswith(prefix):
             filtered_params[param[len(prefix) + 1:]] = post[param]
-
+            
     if 'description' not in filtered_params:
         filtered_params['description'] = ''
 
