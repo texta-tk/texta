@@ -961,7 +961,7 @@ function ajaxDeleteFacts(form_data, factArray) {
     });
 }
 
-function deleteFactArray(factArray, source='aggs') {
+function deleteFactArray(factArray, alert=true) {
     if (factArray.length >= 1) {
     var request = new XMLHttpRequest();
     var form_data = new FormData();
@@ -971,7 +971,7 @@ function deleteFactArray(factArray, source='aggs') {
         }
     }
 
-    if (source=='aggs') {
+    if (alert) {
         swal({
             title: 'Are you sure you want to remove this fact from the dataset?',
             text: 'This will remove '+ factArray.length + ' facts from the dataset.',
@@ -985,7 +985,7 @@ function deleteFactArray(factArray, source='aggs') {
                     ajaxDeleteFacts(form_data, factArray);
             }
         });
-    } else if (source=="fact_manager") {
+    } else {
         ajaxDeleteFacts(form_data, factArray);
     }
 } else {
@@ -1492,14 +1492,15 @@ function cluster_to_lex(id) {
     });
 }
 
-
+// Add details like spans and buttons to searcher HL fact onclick/hover
 function add_props_to_spans() {
     var spans = $(".\\[HL\\]");
+    // Add hover effect
     spans.hover(function(e) {
-        $(this).css("filter",e.type === "mouseenter"?"brightness(110%)":"brightness(100%)") 
+        $(this).css("filter",e.type === "mouseenter"?"brightness(110%)":"brightness(100%)")
         $(this).css("cursor","pointer")
     })
-
+    // Add tippy instance to spans
     spans.addClass("tippyFactSpan");
     spans = document.querySelectorAll('.tippyFactSpan')
     var temp = $('#factPopover')
@@ -1511,11 +1512,17 @@ function add_props_to_spans() {
         });
 
     Array.prototype.forEach.call(spans, function(span, i) {
+        // Display fact name and val
         title = span.title.split(' ')
         name = title[title.length-1]
         val = span.innerText
         temp.find('.factName').html(name)
         temp.find('.factValue').html(val)
+        // Fact delete button
+        btn =  temp.find('#factPopoverDeleteBtn');
+        // Attr because click events don't seem to work
+        btn.attr('onclick', 'deleteFactArray([{name: val}], alert=true)');
+        // Update span tippy content
         span._tippy.setContent(temp.prop('outerHTML'))
     });
 }
