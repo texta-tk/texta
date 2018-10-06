@@ -13,6 +13,7 @@ from task_manager.task_manager import get_fields
 from task_manager.tasks.workers.tag_model_worker import TagModelWorker
 from task_manager.tools import MassHelper
 from task_manager.tools import get_pipeline_builder
+from task_manager.models import TagFeedback
 
 
 def api_info(request):
@@ -398,6 +399,121 @@ def api_tag_text(request, user, params):
                                     'selected': is_tagger_selected })
         if p == 1 and is_tagger_selected:
             data['tags'].append(tagger.description)
+
+    data_json = json.dumps(data)
+    return HttpResponse(data_json, status=200, content_type='application/json')
+
+
+@api_auth
+def api_tag_feedback(request, user, params):
+    """ Apply tag feedback (via auth_token)
+    """
+    dataset_id = params.get('dataset', None)
+    document_ids = params.get('document_ids', None)
+    tag = params.get('tag', None)
+    field = params.get('field', None)
+    value = int(params.get('value', 1))
+
+    ds = Datasets()
+    ds.activate_dataset_by_id(dataset_id, use_default=False)
+    # Check if dataset_id is valid
+    if not ds.is_active():
+        error = {'error': 'invalid dataset parameter'}
+        data_json = json.dumps(error)
+        return HttpResponse(data_json, status=400, content_type='application/json')
+
+    es_m = ds.build_manager(ES_Manager)
+    mass_helper = MassHelper(es_m)
+    resp = mass_helper.get_document_by_ids(document_ids)
+
+    docs_to_update = []
+
+    for hit in resp['hits']['hits']:
+        doc = hit['_source']
+        if value == 1:
+            doc = _add_tag_to_document(doc, field, tag)
+        else:
+            doc = _remove_tag_from_document(doc, field, tag)
+        docs_to_update.append(doc)
+    
+    es_m.update_documents(docs_to_update, document_ids)
+    data = []
+    for doc_id in document_ids:
+        tag_feedback = TagFeedback.log(user, dataset_id, doc_id, field, tag, value)
+        data.append(tag_feedback.to_json())
+    data_json = json.dumps(data)
+    return HttpResponse(data_json, status=200, content_type='application/json')
+
+
+def _add_tag_to_document(doc, field, tag):
+    decoded_text = doc
+    for k in field.split('.'):
+        # Field might be empty and not included in document
+        if k in decoded_text:
+            decoded_text = decoded_text[k]
+        else:
+            decoded_text = ''
+            break
+    if 'texta_facts' not in doc:
+        doc['texta_facts'] = []
+
+    new_fact = {
+        'fact': 'TEXTA_TAG',
+        'str_val': tag,
+        'doc_path': field,
+        'spans': json.dumps([[0, len(decoded_text)]])
+    }
+    doc['texta_facts'].append(new_fact)
+    return doc
+
+
+def _remove_tag_from_document(doc, field, tag):
+    
+    if 'texta_facts' not in doc:
+        # Nothing to remove
+        return doc
+
+    filtered_facts = []
+    for fact in doc['texta_facts']:
+        cond_1 = fact['fact'] == 'TEXTA_TAG'
+        cond_2 = fact['str_val'] == tag
+        cond_3 = fact['doc_path'] == field
+        if cond_1 and cond_2 and cond_3:
+            # Conditions to remove fact was met
+            continue
+        filtered_facts.append(fact)
+    # Replace facts 
+    doc['texta_facts'] = filtered_facts
+    return doc
+
+
+@api_auth
+def api_document_tags_list(request, user, params):
+    """ Get document tags (via auth_token)
+    """
+    dataset_id = params.get('dataset', None)
+    document_ids = params.get('document_ids', None)
+
+    ds = Datasets()
+    ds.activate_dataset_by_id(dataset_id, use_default=False)
+    # Check if dataset_id is valid
+    if not ds.is_active():
+        error = {'error': 'invalid dataset parameter'}
+        data_json = json.dumps(error)
+        return HttpResponse(data_json, status=400, content_type='application/json')
+
+    es_m = ds.build_manager(ES_Manager)
+    mass_helper = MassHelper(es_m)
+    resp = mass_helper.get_document_by_ids(document_ids)
+
+    data = []
+    for doc in resp['hits']['hits']:
+        for f in doc['_source'].get('texta_facts', []):
+            if f['fact'] == 'TEXTA_TAG':
+                doc_id = doc['_id']
+                doc_path = f['doc_path']
+                doc_tag = f['str_val']
+                data.append({ 'document_id': doc_id, 'field': doc_path, 'tag': doc_tag})
 
     data_json = json.dumps(data)
     return HttpResponse(data_json, status=200, content_type='application/json')

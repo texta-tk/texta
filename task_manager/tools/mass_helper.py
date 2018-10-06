@@ -20,6 +20,13 @@ class MassHelper:
         self.es_m = es_manager
         self.es_url = es_manager.es_url
         self.index = es_manager.index
+        self.mapping = es_manager.mapping
+
+    def get_document_by_ids(self, doc_ids):
+        q = {"query": {"terms": {"_id": doc_ids}}}
+        resp = self.es_m.requests.get('{}/{}/_search'.format(self.es_url, self.index), json=q)
+        data = resp.json()
+        return data
 
     def _iterate_docs(self, q):
         """ Iterage over all docs for a given query q
@@ -56,11 +63,11 @@ class MassHelper:
         q['query']['nested']['query'] = {'term': {"texta_facts.str_val": tag}}
         return q
 
-    def get_unique_tags(self):
+    def get_unique_tags(self, query=None):
         """ Get Unique Tags
         """
         q = {}
-        q['query'] = {}
+        q['query'] = query if query else {}
         q['query']['nested'] = {}
         q['query']['nested']['path'] = "texta_facts"
         q['query']['nested']['query'] = {'term': {"texta_facts.fact": "TEXTA_TAG"}}
