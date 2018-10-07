@@ -30,6 +30,7 @@ urlpatterns = [
     url(r'^api/v1/field_list$', api_v1.api_field_list, name='api_field_list'),
     url(r'^api/v1/mass_train_tagger$', api_v1.api_mass_train_tagger, name='api_mass_train_tagger'),
     url(r'^api/v1/mass_tagger$', api_v1.api_mass_tagger, name='api_mass_tagger'),
+    url(r'^api/v1/hybrid_tagger$', api_v1.api_hybrid_tagger, name='api_hybrid_tagger'),
     url(r'^api/v1/tag_text$', api_v1.api_tag_text, name='api_tag_text'),
     url(r'^api/v1/tag_feedback$', api_v1.api_tag_feedback, name='api_tag_feedback'),
     url(r'^api/v1/document_tags_list$', api_v1.api_document_tags_list, name='api_document_tags_list'),
