@@ -193,3 +193,71 @@ Content-Type: application/json
     "extractor_opt": "0"        // Optional
 }
 ```
+
+### Mass Tagger
+```
+POST http://localhost:8000/task_manager/api/v1/mass_tagger
+Content-Type: application/json
+
+{
+    "auth_token": "60aa4ecb8aa5fc",
+    "dataset": 1,
+    "search": 1,                // Optional
+    "field": "field_value_en",
+    "taggers": ["14"]
+}
+```
+
+### Hybrid Tagger
+```
+POST http://localhost:8000/task_manager/api/v1/hybrid_tagger
+Content-Type: application/json
+
+{
+    "auth_token": "60aa4ecb8aa5fc",
+    "dataset": 1,
+    "search": 1,
+    "max_taggers": 10,              // Optional
+    "min_count_threshold": 50,      // Optional
+    "field": "field_value_en"
+}
+```
+
+### Apply Tagger Text
+```
+POST http://localhost:8000/task_manager/api/v1/tag_text
+Content-Type: application/json
+
+{
+    "auth_token": "60aa4ecb8aa5fc",
+    "text": "Maybe I can reply to them by e-mail.",
+    "taggers": [4, 7]              // Optional
+}
+```
+
+### Get Document Tags
+```
+POST http://localhost:8000/task_manager/api/v1/document_tags_list
+Content-Type: application/json
+
+{
+    "auth_token": "60aa4ecb8aa5fc",
+    "dataset": 1,
+    "document_ids": ["GYtrE2QB28-0KXnd6zcj"]
+}
+```
+
+### Feedback
+```
+POST http://localhost:8000/task_manager/api/v1/tag_feedback
+Content-Type: application/json
+
+{
+    "auth_token": "60aa4ecb8aa5fc",
+    "dataset": 1,
+    "field": "field_value_en",
+    "document_ids": ["GYtrE2QB28-0KXnd6zcj"], 
+    "tag": "A",
+    "value": 1
+}
+```

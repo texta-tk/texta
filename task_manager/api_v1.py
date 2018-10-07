@@ -485,7 +485,6 @@ def api_tag_text(request, user, params):
     """
      # Get parameters with default values
     text = params.get('text', "").strip()
-    explain = params.get('explain', False)
     taggers = params.get('taggers', None)
     # Check if text input is valid
     if len(text) == 0:
@@ -498,14 +497,18 @@ def api_tag_text(request, user, params):
     # Apply
     for tagger_id in tagger_ids_list:
         is_tagger_selected = taggers is None or tagger_id in taggers
-        tagger = TagModelWorker()
-        tagger.load(tagger_id)
-        p = int(tagger.model.predict([text])[0])
-        if explain:
-            data['explain'].append({'tag': tagger.description, 
-                                    'prediction': p,
-                                    'selected': is_tagger_selected })
-        if p == 1 and is_tagger_selected:
+        if is_tagger_selected:
+            tagger = TagModelWorker()
+            tagger.load(tagger_id)
+            p = int(tagger.model.predict([text])[0])
+        else:
+            p = None
+        # Add explanation
+        data['explain'].append({'tag': tagger.description, 
+                                'prediction': p,
+                                'selected': is_tagger_selected })
+        # Add prediction as tag
+        if p == 1:
             data['tags'].append(tagger.description)
     # Prepare response
     data_json = json.dumps(data)
