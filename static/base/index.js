@@ -83,7 +83,8 @@ function registerAccount() {
                 invalidateInput("registrationUsername","has-error","Username exists or is too short.");
             }
         } else {
-            go_to(data.url);
+            $('#confirm-email-modal').modal();
+            //go_to(data.url);
         }
     }, "json");
     

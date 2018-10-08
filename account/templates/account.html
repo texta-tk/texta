@@ -1,36 +1,36 @@
-{% extends "index.html" %}
-{% block app %}
+{% extends "index.html" %} {% block app %}
+{% include 'email-modal.html' %}
 <script type="application/javascript" src="{{STATIC_URL}}base/account.js"></script>
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}base/account.css">
-
 <div class="row">
 	<div class="col-lg-3">
 		{% if request.user.is_authenticated %}
-			<div class="panel">
-				<div class="panel-heading">Change Password</div>
-				<div class="panel-body">
-						<div class="row padded-row">
-							<div class="col-sm-12">
-								<input type="password" class="form-control input-sm" id="new_password" name="new_password" placeholder="New password">
-							</div>
-						</div>
-						<div class="row padded-row">
-							<div class="col-sm-12">
-								<input type="password" class="form-control input-sm" id="confirm_new_password" name="confirm_new_password" placeholder="Confirm new password">
-							</div>
-						</div>
-						<div class="row padded-row">
-							<div class="col-sm-12">
-								<button type="submit" onclick="javascript:change_pwd();" class="btn btn-default form-control input-sm"><span class="glyphicon glyphicon-ok"></span> Change Password</button>
-							</div>
-						</div>						
+		<div class="panel">
+			<div class="panel-heading">Change Password</div>
+			<div class="panel-body">
+				<div class="row padded-row">
+					<div class="col-sm-12">
+						<input type="password" class="form-control input-sm" id="new_password" name="new_password" placeholder="New password">
+					</div>
+				</div>
+				<div class="row padded-row">
+					<div class="col-sm-12">
+						<input type="password" class="form-control input-sm" id="confirm_new_password" name="confirm_new_password" placeholder="Confirm new password">
+					</div>
+				</div>
+				<div class="row padded-row">
+					<div class="col-sm-12">
+						<button type="submit" onclick="javascript:change_pwd();" class="btn btn-default form-control input-sm"><span class="glyphicon glyphicon-ok"></span>
+							Change Password</button>
+					</div>
 				</div>
 			</div>
+		</div>
 		{% else %}
-			<div class="panel">
-				<div class="panel-heading">Registration</div>
-				<div class="panel-body">
-					<div class="col-sm-12">					
+		<div class="panel">
+			<div class="panel-heading">Registration</div>
+			<div class="panel-body">
+				<div class="col-sm-12">
 					<form onsubmit="registerAccount(); return false;">
 						<div class="form-group">
 							<label for="registrationUsername" class="sr-only">Username</label>
@@ -54,19 +54,19 @@
 						</div> -->
 						<input type="submit" class="btn btn-default btn-sm pull-right" value="Register">
 					</form>
-					</div>
 				</div>
-			</div>			
+			</div>
+		</div>
 		{% endif %}
 	</div>
-	
+
 	<div class="col-lg-9">
 		<div class="panel">
 			<div class="panel-heading">Information</div>
 			<div class="panel-body">
-				
+
 				<h3>Documentation for TEXTA Toolkit is available <a href="https://texta-tk.github.io" target="_blank">HERE</a>!</h3>
-				
+
 				<br><br>
 				<div class="row">
 					<div class="col-lg-5">
@@ -82,7 +82,7 @@
 					<div class="col-lg-3">
 						<div class="holder">
 							<img style="width:50%" src="{{STATIC_URL}}/img/ekt_logo.png">
-						</div>	
+						</div>
 					</div>
 				</div>
 				<br><br>
