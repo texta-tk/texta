@@ -24,18 +24,8 @@ class FactManager:
         try:
             # Clears readonly block just in case the index has been set to read only
             self.es_m.clear_readonly_block()
-            fact_queries = []
-            for key in rm_facts_dict:
-                for val in rm_facts_dict.getlist(key):
-                    fact_queries.append(
-                        {"bool": {"must": [{"match": {self.field+".fact": key}},
-                        {"match": {self.field+".str_val": val}}]}}
-                        )
 
-            query = {"main": {"query": {"nested":
-                {"path": self.field,"query": {"bool": {"should":fact_queries
-                }}}},"_source": [self.field]}}
-
+            query = self._fact_deletion_query(rm_facts_dict)
             self.es_m.load_combined_query(query)
             response = self.es_m.scroll(size=bs, field_scroll=self.field)
             scroll_id = response['_scroll_id']
@@ -52,7 +42,7 @@ class FactManager:
                         # If the fact name is in rm_facts_dict keys
                         if fact["fact"] in rm_facts_dict:
                             # If the fact value is not in the delete key values
-                            if fact['str_val'] not in rm_facts_dict.getlist(key):
+                            if fact['str_val'] not in rm_facts_dict.getlist(fact["fact"]):
                                 new_field.append(fact)
                         else:
                             new_field.append(fact)
@@ -185,3 +175,18 @@ class FactManager:
 
         graph_data = json.dumps({"nodes": nodes, "links": links})
         return (graph_data, unique_fact_names, max_node_size, max_link_size, min_node_size)
+
+    def _fact_deletion_query(self, rm_facts_dict):
+        '''Creates the query for fact deletion based on dict of facts {name: val}'''
+        fact_queries = []
+        for key in rm_facts_dict:
+            for val in rm_facts_dict.getlist(key):
+                fact_queries.append(
+                    {"bool": {"must": [{"match": {self.field+".fact": key}},
+                    {"match": {self.field+".str_val": val}}]}})
+
+        query = {"main": {"query": {"nested":
+            {"path": self.field,"query": {"bool": {"should":fact_queries
+            }}}},"_source": [self.field]}}
+
+        return query
