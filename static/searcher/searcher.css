@@ -130,3 +130,28 @@ textarea {
 .dataTable td {
   vertical-align: top !important;
 }
+
+#saved-searches-panel{
+  overflow-y: scroll;
+  max-height: 250px ;
+  display: block;
+}
+/* width */
+#saved-searches-panel::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+#saved-searches-panel::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+}
+
+/* Handle */
+#saved-searches-panel::-webkit-scrollbar-thumb {
+  background: #888; 
+}
+
+/* Handle on hover */
+#saved-searches-panel::-webkit-scrollbar-thumb:hover {
+  background: #555; 
+}
