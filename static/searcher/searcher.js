@@ -601,10 +601,10 @@ function query(){
             examplesTable = $('#examples').DataTable({
                   "bAutoWidth": false,
                   "deferRender": true,
-                  "bServerSide": true,
+                  "bServerSide": true,       
                   'processing': true,
                   "sAjaxSource": PREFIX+"/table_content",
-                  "sDom": '<Bl"H"ipr>t<"F"lip>',
+                  "sDom": '<Bl"H"ipr>t',
                   "sServerMethod":"POST",
                   "fnServerParams":function(aoData){
                       aoData.push({'name':'filterParams','value':JSON.stringify($("#filters").serializeArray())});
@@ -1196,6 +1196,7 @@ function save(){
         const {value: description} = await swal({
             title: 'Enter description for the search.',
             input: 'text',
+            backdrop: false,
             inputPlaceholder: 'description',
             showCancelButton: true,
             inputValidator: (value) => {
@@ -1203,7 +1204,7 @@ function save(){
             }
         })
         if (description) {
-            swal({type: 'success', title: 'Successfully saved search.'})
+            swal({type: 'success', backdrop: false,title: 'Successfully saved search.'})
 
             $('#search_description').val(description);
             var formElement = document.getElementById("filters");

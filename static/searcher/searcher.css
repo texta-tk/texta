@@ -155,3 +155,49 @@ textarea {
 #saved-searches-panel::-webkit-scrollbar-thumb:hover {
   background: #555; 
 }
+
+.row{
+  margin:0;
+}
+.col-lg-3{
+  overflow-y: scroll;
+  padding: 0;
+}
+.col-lg-3::-webkit-scrollbar{
+  display: none;
+}
+.col-lg-3>form{
+  height: 100%;
+  background: white;
+  padding: 0;
+}
+.col-lg-9{
+  padding: 0;
+}
+.col-lg-9>.panel{
+  height: 100%;
+  background: #f5f5f5;
+  padding: 0;
+}
+body>.container-fluid{
+  padding: 0;
+}
+.navbar{
+  margin-bottom:0;
+}
+.panel{
+  border: 0 ; 
+  border-radius: 0;
+}
+body>.container-fluid{
+  height: 100%;
+}
+/*
+body>.container-fluid, .row, .col-lg-9, .col-lg-3 {
+  height: 100%;
+}*/
+
+html, 
+body {
+    height: 100%;
+}
