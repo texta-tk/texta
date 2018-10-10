@@ -7,16 +7,17 @@ from django.template import loader
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse
-from django.shortcuts import render
+# from django.shortcuts import render
 
 from task_manager.models import Task
 from .models import DatasetImport
 from utils.datasets import Datasets
 
-from dataset_importer.importer.importer import DatasetImporter, entity_reader_map, collection_reader_map, database_reader_map, extractor_map, preprocessor_map
+from dataset_importer.document_preprocessor import preprocessor_map
+from dataset_importer.importer.importer import DatasetImporter, entity_reader_map, collection_reader_map, database_reader_map, extractor_map
 from dataset_importer.syncer.syncer_process import Syncer
 from texta.settings import DATASET_IMPORTER as DATASET_IMPORTER_CONF, es_url
-from .models import DatasetImport
+# from .models import DatasetImport
 
 DATASET_IMPORTER = DatasetImporter(es_url=es_url, configuration=DATASET_IMPORTER_CONF, data_access_object=DatasetImport, file_system_storer=FileSystemStorage)
 
@@ -58,8 +59,8 @@ def index(request):
         'single_document_formats': single_document_formats,
         'document_collection_formats': document_collection_formats,
         'database_formats': database_formats,
-        'language_models': language_models, 
-        'allowed_datasets': datasets, 
+        'language_models': language_models,
+        'allowed_datasets': datasets,
         'jobs': jobs,
         'enabled_preprocessors': enabled_preprocessors
     }

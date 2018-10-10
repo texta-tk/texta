@@ -164,7 +164,7 @@ def selectLexicon(request):
         lexicons = Lexicon.objects.filter(author=request.user)
 
         datasets = Datasets().get_allowed_datasets(request.user)
-        language_models = Task.objects.filter(task_type='train_model').filter(status='Completed').order_by('-pk')
+        language_models = Task.objects.filter(task_type='train_model').filter(status=Task.STATUS_COMPLETED).order_by('-pk')
 
         # Define selected mapping
         ds = Datasets().activate_dataset(request.session)
