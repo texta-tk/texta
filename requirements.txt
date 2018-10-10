@@ -17,4 +17,5 @@ elasticsearch
 psycopg2-binary
 dateparser
 json2table
+mysqlclient
 python-logstash-async

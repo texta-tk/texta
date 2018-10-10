@@ -25,6 +25,9 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, StreamingHttpResponse
 from django.template import loader
 from django.utils.encoding import smart_str
+# For string templates
+from django.template import Context
+from django.template import Template
 
 from lexicon_miner.models import Lexicon,Word
 from conceptualiser.models import Term, TermConcept
@@ -977,17 +980,23 @@ def fact_graph(request):
     search_size = int(request.POST['fact_graph_size'])
 
     fact_m = FactManager(request)
-    graph_data, fact_names, max_node_size, max_link_size, min_node_size = fact_m.fact_graph(search_size)
+    try:
+        graph_data, fact_names, max_node_size, max_link_size, min_node_size = fact_m.fact_graph(search_size)
 
-    template_params = {'STATIC_URL': STATIC_URL,
-                       'URL_PREFIX': URL_PREFIX,
-                       'search_id': 1,
-                       'searches': Search.objects.filter(author=request.user),
-                       'graph_data': graph_data,
-                       'max_node_size': max_node_size,
-                       'max_link_size': max_link_size,
-                       'min_node_size': min_node_size,
-                       'fact_names': fact_names}
-    template = loader.get_template('fact_graph_results.html')
+        template_params = {'STATIC_URL': STATIC_URL,
+                        'URL_PREFIX': URL_PREFIX,
+                        'search_id': 1,
+                        'searches': Search.objects.filter(author=request.user),
+                        'graph_data': graph_data,
+                        'max_node_size': max_node_size,
+                        'max_link_size': max_link_size,
+                        'min_node_size': min_node_size,
+                        'fact_names': fact_names}
+        template = loader.get_template('fact_graph_results.html')
+    except Exception as e:
+        template = Template('An error has occurred in <i>{{func}}</i>: <i>{{error}}</i>')
+        template_params = Context({'func':'fact graph', 'error': str(e)})
+        return HttpResponse(template.render(template_params))
+
     return HttpResponse(template.render(template_params, request))
 

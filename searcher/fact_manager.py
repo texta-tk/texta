@@ -24,18 +24,8 @@ class FactManager:
         try:
             # Clears readonly block just in case the index has been set to read only
             self.es_m.clear_readonly_block()
-            fact_queries = []
-            for key in rm_facts_dict:
-                for val in rm_facts_dict.getlist(key):
-                    fact_queries.append(
-                        {"bool": {"must": [{"match": {self.field+".fact": key}},
-                        {"match": {self.field+".str_val": val}}]}}
-                        )
 
-            query = {"main": {"query": {"nested":
-                {"path": self.field,"query": {"bool": {"should":fact_queries
-                }}}},"_source": [self.field]}}
-
+            query = self._fact_deletion_query(rm_facts_dict)
             self.es_m.load_combined_query(query)
             response = self.es_m.scroll(size=bs, field_scroll=self.field)
             scroll_id = response['_scroll_id']
@@ -52,7 +42,7 @@ class FactManager:
                         # If the fact name is in rm_facts_dict keys
                         if fact["fact"] in rm_facts_dict:
                             # If the fact value is not in the delete key values
-                            if fact['str_val'] not in rm_facts_dict.getlist(key):
+                            if fact['str_val'] not in rm_facts_dict.getlist(fact["fact"]):
                                 new_field.append(fact)
                         else:
                             new_field.append(fact)
@@ -139,9 +129,9 @@ class FactManager:
         aggs = {"facts": {"nested": {"path": "texta_facts"}, "aggs": {"fact_names": {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val", "size": size}}}}}}}
         self.es_m.build(self.es_params)
         self.es_m.set_query_parameter('aggs', aggs)
-        
+
         response = self.es_m.search()
-        
+
         response_aggs = response['aggregations']['facts']['fact_names']['buckets']
 
         facts = {}
@@ -167,13 +157,15 @@ class FactManager:
         types = dict(zip(unique_fact_names, itertools.cycle(shapes)))
 
         nodes = []
-        counts = []
-        for fact in facts:
-            counts.append(facts[fact]['doc_count'])
+        for i, fact in enumerate(facts):
             nodes.append({"source": facts[fact]['id'], "size": facts[fact]['doc_count'], "score": facts[fact]['doc_count'], "name": facts[fact]['name'], "id": facts[fact]['value'], "type": types[facts[fact]['name']]})
-        max_node_size = max(counts)
-        min_node_size = min(counts)
-        counts = None # Not needed anymore, release memory
+            # Track max/min count
+            count = facts[fact]['doc_count']
+            if i == 0:
+                max_node_size = count
+                min_node_size = count
+            max_node_size = max(max_node_size, count)
+            min_node_size = min(min_node_size, count)
 
         links = []
         max_link_size = 0
@@ -183,3 +175,18 @@ class FactManager:
 
         graph_data = json.dumps({"nodes": nodes, "links": links})
         return (graph_data, unique_fact_names, max_node_size, max_link_size, min_node_size)
+
+    def _fact_deletion_query(self, rm_facts_dict):
+        '''Creates the query for fact deletion based on dict of facts {name: val}'''
+        fact_queries = []
+        for key in rm_facts_dict:
+            for val in rm_facts_dict.getlist(key):
+                fact_queries.append(
+                    {"bool": {"must": [{"match": {self.field+".fact": key}},
+                    {"match": {self.field+".str_val": val}}]}})
+
+        query = {"main": {"query": {"nested":
+            {"path": self.field,"query": {"bool": {"should":fact_queries
+            }}}},"_source": [self.field]}}
+
+        return query

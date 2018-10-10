@@ -14,7 +14,7 @@ class DocReader(EntityReader):
 			try:
 				features = DocReader.get_meta_features(file_path=file_path)
 
-				features['text'] = textract.process(file_path)
+				features['text'] = textract.process(file_path).decode('utf8')
 
 				features['_texta_id'] = file_path
 
