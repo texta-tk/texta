@@ -1425,18 +1425,16 @@ function export_data(exportType) {
         var features_dec = $("input[name=export-features]:checked").val();
         var features = []
 
-        if (features_dec == "all") {
-            $(".toggle-visibility").each(function() {
-                features.push($(this).text());
-            });
-        } else {
-            $(".toggle-visibility").each(function() {
-                var current_feature = $(this);
-                if (!current_feature.hasClass("feature-invisible")) {
-                    features.push(current_feature.text());
+            $(".buttons-columnVisibility").each(function() {
+                if(!$(this).hasClass("toggleAllButton")) {
+                    if(features_dec == "all") {
+	                features.push($(this).text());
+                    } else if($(this).hasClass("active")) {
+                        features.push($(this).text());
+                    }
                 }
+                
             });
-        }
 
         query_args.push({name:"features",value:features});
     }
