@@ -602,7 +602,6 @@ function query(){
                   "bAutoWidth": false,
                   "deferRender": true,
                   "bServerSide": true,  
-                  "scrollY": "70vh",  
                   'processing': true,
                   "sAjaxSource": PREFIX+"/table_content",
                   "sDom": '<Bl"H"ipr>t',

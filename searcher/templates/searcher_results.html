@@ -1,15 +1,14 @@
 <input id="dataset" type="hidden" value="{{dataset}}">
 <input id="mapping" type="hidden" value="{{mapping}}">
 
-    <table id="examples" class="display">
-        <thead>
-            <tr>
-                {% for column in columns %}
-                <th>{{column.name}}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-
+<table id="examples" class="display">
+    <thead>
+        <tr>
+            {% for column in columns %}
+            <th>{{column.name}}</th>
+            {% endfor %}
+        </tr>
+    </thead>
         <tr>
             <td>
 
@@ -17,5 +16,4 @@
 
             </td>
         </tr>
-
-    </table>
+</table>
