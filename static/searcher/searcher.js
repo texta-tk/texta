@@ -599,7 +599,7 @@ function query(){
         if (request.readyState==4 && request.status==200) {
             $("#right").html(request.responseText);
             examplesTable = $('#examples').DataTable({
-                  "bAutoWidth": false,
+                  "bAutoWidth": true,
                   "deferRender": true,
                   "bServerSide": true,  
                   'processing': true,
@@ -617,19 +617,12 @@ function query(){
                         'columnsToggle'
                     ],
                     "oLanguage": { "sProcessing": "Loading..."},
-                    "fnInitComplete": function() {
-                        $('.dataTables_scrollHead').css('overflow-x', 'auto');
-                        
-                        // Sync THEAD scrolling with TBODY
-                        $('.dataTables_scrollHead').on('scroll', function () {
-                            $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft());
-                        });  
-                    },
                 "stateSave": true,
                 "stateSaveParams": function (settings, data) {
                     data.start = 0;
                 },
                 "scrollX": true
+
             });
 
             $(function(){
