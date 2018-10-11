@@ -20,15 +20,6 @@ class MlpPreprocessor(object):
         :type enabled_features: list of strings
         """
         self._mlp_url = mlp_url
-        print(mlp_url)
-        print(mlp_url)
-        print(mlp_url)
-        print(mlp_url)
-        print(mlp_url)
-        print(mlp_url)
-        print(mlp_url)
-        print(mlp_url)
-        print(mlp_url)
         self._enabled_features = set(enabled_features)
 
     def transform(self, documents, **kwargs):
