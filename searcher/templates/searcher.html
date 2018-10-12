@@ -5,7 +5,7 @@
 <script type="application/javascript" src="{{STATIC_URL}}searcher/searcher.js"></script>
 
 <div class="row">
-	<div class="col-lg-3 ">
+	<div class="col-lg-2 side-content ">
 		<div class="panels-wrapper-div">
 			<form id="filters">
 				<div class="panel">
@@ -16,8 +16,8 @@
 					<div class="panel-body">
 						<div class="form-group">
 
-							<ul class="nav nav-tabs">
-								<li class="active"><a data-toggle="tab" href="#search_params" title="For building basic searches">Build Search</a></li>
+							<ul class="nav nav-tabs search-nav-tabs">
+								<li  class="active"><a data-toggle="tab" href="#search_params" title="For building basic searches">Build Search</a></li>
 								<li><a data-toggle="tab" href="#mlt_params" title="For expanding basic searches via similarity queries">Expand Search</a></li>
 								<li><a data-toggle="tab" href="#cluster_params" title="For analyzing search content via clustering">Cluster Search</a></li>
 							</ul>
@@ -466,7 +466,7 @@
 			</form>
 		</div>
 	</div>
-	<div class="col-lg-9">
+	<div class="col-lg-10 main-content">
 		<div class="panel">
 			<div class="panel-heading">
 				Results

@@ -1,99 +1,79 @@
-
-html, 
-body {
-    height: 100%;
-    overflow: hidden;
+html, body {
+  height: 100%;
+  overflow: hidden;
 }
-
 #right {
-    width: 100%;
-    overflow: auto;
+  width: 100%;
+  overflow: auto;
 }
-
 #chart_div {
-    width: 100%;
-    vertical-align: top;
-	height: 100%;
-	overflow: hidden;
+  width: 100%;
+  vertical-align: top;
+  height: 100%;
+  overflow: hidden;
 }
-
 .toggle-visibility {
   cursor: pointer;
   color: green;
   font-weight: bold;
   font-size: 10px;
 }
-
 .toggle-visibility:hover {
   color: green;
 }
-
 .feature-invisible {
   color: red;
 }
-
 .feature-invisible:hover {
   color: red;
 }
-
 #example {
-    width:100%;
+  width:100%;
 }
-
 .dataTable tbody tr td {
-    vertical-align: top;
-    white-space: pre-wrap;
-    min-width: 10%; 
-    max-width: 25%;
+  vertical-align: top;
+  white-space: pre-wrap;
+  min-width: 10%;
+  max-width: 25%;
 }
-
 .invisible {
-    display:none;
+  display:none;
 }
-
 .bg-grey {
-	background: #EFEFEF;
+  background: #EFEFEF;
 }
-
 .padded-row {
-	padding-left: 5px;
-	padding-right: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
-
-.nav-tabs > li.active > a,
-.nav-tabs > li.active > a:hover,
-.nav-tabs > li.active > a:focus {
+.nav-tabs > li.active > a, .nav-tabs > li.active > a:hover, .nav-tabs > li.active > a:focus {
   background-color: #EFEFEF;
 }
-
 th {
-  /* border-top: 1px solid #dddddd; */
-  /* border-bottom: 1px solid #dddddd; */
+ /* border-top: 1px solid #dddddd;
+  */
+ /* border-bottom: 1px solid #dddddd;
+  */
   overflow: hidden;
   border-right: 1px solid #f1f1f1;
 }
-
 th:first-child {
   border-left: 1px solid #f1f1f1;
 }
-
 .clusterText {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    font-size: 0.9em;
-    margin-top: -0.7em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  font-size: 0.9em;
+  margin-top: -0.7em;
 }
-
 .clusterLabel {
   font-weight: bold;
 }
-
-
 textarea {
-    max-width: 100%;
-    max-height: 100%;
+  max-width: 100%;
+  max-height: 100%;
 }
 /* Datatables buttons plugin hide columns buttons */
 .dt-button.buttons-columnVisibility {
@@ -106,79 +86,73 @@ textarea {
   border-left: solid;
   border-left-width: 1px;
   border-color: #333333;
-
-
   color: red;
   font-size: 0.76em;
   font-weight: bold;
 }
-
 .dt-button.buttons-columnVisibility.active {
   color: #008000;
 }
-
 .dt-button.buttons-columnVisibility.toggleAllButton {
   border: none;
   padding-left: 0;
   color: #300000;
 }
-
 .dt-button.buttons-columnVisibility.toggleAllButton.active {
   color: #003000;
 }
-
 .list-group-item {
   min-width: 120%;
   display: inline-block;
   padding: 5px;
 }
-
-/* With scroll head for some reason there are v-a: middle on td  */
+/* With scroll head for some reason there are v-a: middle on td */
 .dataTable td {
   vertical-align: top !important;
 }
-
 #saved-searches-panel{
   overflow-y: scroll;
   max-height: 250px ;
   display: block;
 }
-/* width */
 #saved-searches-panel::-webkit-scrollbar {
   width: 10px;
+  height: 10px;
 }
-
-/* Track */
 #saved-searches-panel::-webkit-scrollbar-track {
-  background: #f1f1f1; 
+  background: #f1f1f1;
 }
-
-/* Handle */
 #saved-searches-panel::-webkit-scrollbar-thumb {
-  background: #888; 
+  background: #888;
 }
-
-/* Handle on hover */
 #saved-searches-panel::-webkit-scrollbar-thumb:hover {
-  background: #555; 
+  background: #555;
 }
-
-.row{
-  margin:0;
-}
-.col-lg-3{
+.side-content{
   background: white;
   padding: 0;
   display: flex;
 }
-
+.search-nav-tabs{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.search-nav-tabs>li>a{
+  padding: 8px;
+  height: 100%;
+  text-align: center;
+}
+.search-nav-tabs>li{
+  width: 100%;
+}
 .dataTables_scrollBody{
   height: 100%;
   overflow: auto;
 }
 .dataTables_scroll{
   height: 100%;
-  padding-bottom: 170px;
+  padding-bottom: 20px;
   flex-direction: column;
 }
 #examples_wrapper{
@@ -190,7 +164,6 @@ textarea {
   width: 100%;
   overflow-y: scroll;
   padding: 0;
-  margin-bottom: 20px;
 }
 .panels-wrapper-div::-webkit-scrollbar{
   display: none;
@@ -198,28 +171,25 @@ textarea {
 .panels-wrapper-div>form{
   padding: 0;
 }
-
-.col-lg-9{
+.main-content{
   padding: 0;
 }
-.col-lg-9>.panel>.panel-heading{
+.main-content>.panel>.panel-heading{
   grid-area: header;
 }
-.col-lg-9>.panel>.panel-body{
+.main-content>.panel>.panel-body{
   grid-area: main;
-  
-  overflow: hidden !important;
-  width: inherit !important; 
+  overflow-y:scroll !important;
+  width: inherit !important;
 }
 #actions-btn{
-  margin-right: 20px;
+  margin-right:7px 
 }
-.col-lg-9>.panel{
+.main-content>.panel{
   display: grid;
   grid-template-rows: 41px 1fr;
   min-height: 100%;
-  grid-template-areas: "header"
-                       "main";
+  grid-template-areas: "header" "main";
   background: rgb(245, 245, 245);
   padding: 0;
 }
@@ -230,10 +200,25 @@ body>.container-fluid{
   margin-bottom:0;
 }
 .panel{
-  border: 0 ; 
+  border: 0 ;
   border-radius: 0;
 }
-body>.container-fluid, .row, .col-lg-9, .col-lg-3, .col-lg-9>.panel {
-  height: 100%;
+@media only screen and (min-width: 1200px){
+  body>.container-fluid, .row, .main-content, .side-content, .main-content>.panel {
+      height: 100%;
+ }
+  .container-fluid> .row{
+      margin:0;
+      /*navbar pushing content down by this much*/
+      border-bottom: 50px solid;
+     
+ }
 }
-
+@media only screen and (max-width: 1200px) {
+  html, body {
+      overflow: visible;
+ }
+  #right{
+      height: 95vh;
+ }
+}
