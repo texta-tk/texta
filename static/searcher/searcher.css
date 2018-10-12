@@ -128,7 +128,6 @@ textarea {
 .row *::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
-
 .side-content{
   background: white;
   padding: 0;
@@ -188,7 +187,7 @@ textarea {
 }
 .main-content>.panel{
   display: grid;
-  grid-template-rows: 41px 1fr;
+  grid-template-rows: 40px 1fr;
   min-height: 100%;
   grid-template-areas: "header" "main";
   background: rgb(245, 245, 245);
@@ -210,24 +209,25 @@ body>.container-fluid{
 .container-fluid *{
   border-radius: 0;
 }
-
-
 @media only screen and (min-width: 1200px){
   body>.container-fluid, .row, .main-content, .side-content, .main-content>.panel {
       height: 100%;
  }
   .container-fluid> .row{
       margin:0;
-      /*navbar pushing content down by this much*/
+     /*navbar pushing content down by this much*/
       border-bottom: 50px solid;
-     
  }
 }
 @media only screen and (max-width: 1200px) {
   html, body {
       overflow: visible;
  }
-  #right{
-      height: 95vh;
+  .dataTables_scroll{
+      height: 90vh;
+      padding-bottom: 20px !important;
+ }
+  .main-content>.panel>.panel-body{
+      overflow: visible;
  }
 }
