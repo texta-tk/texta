@@ -1,31 +1,34 @@
-<div class="col-lg-2">
-	<ul class="nav nav-pills nav-stacked">
-		{% for cluster in clusters %}
-		<li class="cluster {% if forloop.counter == 1 %}active{% endif %}">
-			<a data-toggle="pill" href="#cluster_{{cluster.id}}" title="{{cluster.keywords}}">
-				<form id ="save_as_lexicon_{{cluster.id}}" onsubmit="cluster_to_lex({{cluster.id}});return false;" method="post">
-					<input type="hidden" class="form-control" name="lexiconname" value="{{cluster.label}}">
-					<input type="hidden" class="form-control" name="lexiconkeywords" value="{{cluster.keywords}}">
-				</form>
-				<i class="glyphicon glyphicon-plus pull-right" data-toggle="tooltip" title="Save cluster as lexicon" style="cursor: pointer" 
-				onclick="$('#save_as_lexicon_{{cluster.id}}').submit();"></i>
-			<p class="clusterLabel">{{cluster.label}}</p><p class="clusterText">{{cluster.keywords}} </p> 
-		</a>
-			</li>
-		{% endfor %}
-	</ul>
-	<script>
-	// gets loaded in later than the rest of the js
-	$(".cluster.active").find(".clusterText").css("-webkit-line-clamp", "100");
-	$(".cluster").click(function(){
-	$(".clusterText").removeAttr("style");
-		$(this).find(".clusterText").css("-webkit-line-clamp", "100");
-    });
-</script>
-</div>
+<div class="default-table-wrapper">
+	<div class="col-lg-2">
 
-<div class="col-lg-10 tab-content">
-	{% for cluster in clusters %}
+		<ul class="nav nav-pills nav-stacked">
+			{% for cluster in clusters %}
+			<li class="cluster {% if forloop.counter == 1 %}active{% endif %}">
+				<a data-toggle="pill" href="#cluster_{{cluster.id}}" title="{{cluster.keywords}}">
+					<form id="save_as_lexicon_{{cluster.id}}" onsubmit="cluster_to_lex({{cluster.id}});return false;" method="post">
+						<input type="hidden" class="form-control" name="lexiconname" value="{{cluster.label}}">
+						<input type="hidden" class="form-control" name="lexiconkeywords" value="{{cluster.keywords}}">
+					</form>
+					<i class="glyphicon glyphicon-plus pull-right" data-toggle="tooltip" title="Save cluster as lexicon" style="cursor: pointer"
+					 onclick="$('#save_as_lexicon_{{cluster.id}}').submit();"></i>
+					<p class="clusterLabel">{{cluster.label}}</p>
+					<p class="clusterText">{{cluster.keywords}} </p>
+				</a>
+			</li>
+			{% endfor %}
+		</ul>
+		<script>
+			// gets loaded in later than the rest of the js
+			$(".cluster.active").find(".clusterText").css("-webkit-line-clamp", "100");
+			$(".cluster").click(function () {
+				$(".clusterText").removeAttr("style");
+				$(this).find(".clusterText").css("-webkit-line-clamp", "100");
+			});
+		</script>
+	</div>
+
+	<div class="col-lg-10 tab-content">
+		{% for cluster in clusters %}
 		<div id="cluster_{{cluster.id}}" class="tab-pane fade in {% if forloop.counter == 1 %}active{% endif %}">
 			<table id="cluster_table" class="table table-striped">
 				<thead>
@@ -36,17 +39,17 @@
 				</thead>
 				<tbody>
 					{% for document in cluster.documents %}
-						<tr>
-							<td>{{forloop.counter}}</td>
-							<td>{{document|safe}}</td>
-						</tr>
+					<tr>
+						<td>{{forloop.counter}}</td>
+						<td>{{document|safe}}</td>
+					</tr>
 					{% endfor %}
 				</tbody>
 			</table>
 		</div>
-	{% endfor %}
+		{% endfor %}
+	</div>
 </div>
-
 <script>
-	$("#cluster_table").colResizable({minWidth:50});
+	$("#cluster_table").colResizable({ minWidth: 50 });
 </script>

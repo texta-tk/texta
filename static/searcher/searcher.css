@@ -194,6 +194,10 @@ textarea {
   background: rgb(245, 245, 245);
   padding: 0;
 }
+.default-table-wrapper{
+  overflow: scroll;
+  height: 100%;
+}
 body>.container-fluid{
   padding: 0;
 }
