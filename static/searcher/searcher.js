@@ -635,6 +635,10 @@ function query(){
             $("#actions-btn").removeClass("invisible");
             $("#export-examples-modal").removeClass("invisible");
             $("#export-aggregation-modal").addClass("invisible");
+
+            /*make padding to counter generated content pushing table down*/ 
+            var element  = $("#examples_wrapper").find('div:first').outerHeight(); 
+            $(".dataTables_scroll").css("padding-bottom",element+60);
         }
     }
 

@@ -4,7 +4,7 @@ html, body {
 }
 #right {
   width: 100%;
-  overflow: auto;
+  overflow: hidden;
 }
 #chart_div {
   width: 100%;
@@ -180,7 +180,7 @@ textarea {
 }
 .main-content>.panel>.panel-body{
   grid-area: main;
-  overflow-y:scroll !important;
+  overflow: hidden;
   width: inherit !important;
 }
 #actions-btn{
