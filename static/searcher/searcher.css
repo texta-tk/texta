@@ -115,19 +115,20 @@ textarea {
   max-height: 250px ;
   display: block;
 }
-#saved-searches-panel::-webkit-scrollbar {
+.row *::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
-#saved-searches-panel::-webkit-scrollbar-track {
-  background: #f1f1f1;
+.row *::-webkit-scrollbar-track {
+  background: #DDD;
 }
-#saved-searches-panel::-webkit-scrollbar-thumb {
+.row *::-webkit-scrollbar-thumb {
   background: #888;
 }
-#saved-searches-panel::-webkit-scrollbar-thumb:hover {
+.row *::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
 .side-content{
   background: white;
   padding: 0;
@@ -200,9 +201,13 @@ body>.container-fluid{
   margin-bottom:0;
 }
 .panel{
-  border: 0 ;
+  border: 0;
+}
+.container-fluid *{
   border-radius: 0;
 }
+
+
 @media only screen and (min-width: 1200px){
   body>.container-fluid, .row, .main-content, .side-content, .main-content>.panel {
       height: 100%;
