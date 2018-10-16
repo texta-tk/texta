@@ -262,6 +262,8 @@ INSTALLED_APPS = (
 # or remote address.
 es_url = os.getenv('TEXTA_ELASTICSEARCH_URL', 'http://localhost:9200')
 
+es_prefix = os.getenv('TEXTA_ELASTICSEARCH_PREFIX', 'test')
+
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')
 es_links = {

@@ -7,7 +7,7 @@ from functools import reduce
 import datetime
 
 from utils.query_builder import QueryBuilder
-from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, FACT_PROPERTIES, date_format
+from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, FACT_PROPERTIES, date_format, es_prefix
 
 # Need to update index.max_inner_result_window to increase
 HEADERS = {'Content-Type': 'application/json'}
@@ -460,7 +460,12 @@ class ES_Manager:
     def get_indices():
         url = '{0}/_cat/indices?format=json'.format(es_url)
         response = ES_Manager.requests.get(url, headers=HEADERS).json()
-        return sorted([{'index':i['index'],'status':i['status'],'docs_count':i['docs.count'],'store_size':i['store.size']} for i in response], key=lambda k: k['index']) # NEW PY REQUIREMENT
+        indices = sorted([{'index':i['index'],'status':i['status'],'docs_count':i['docs.count'],'store_size':i['store.size']} for i in response], key=lambda k: k['index'])
+        
+        # Filter according to prefix
+        if es_prefix:
+            indices = [i for i in indices if i['index'].startswith(es_prefix)]
+        return indices
 
     @staticmethod
     def get_mappings(index):
