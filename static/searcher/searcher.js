@@ -729,6 +729,7 @@ function aggregate(){
     request.onreadystatechange=function() {
         if (request.readyState==4 && request.status==200) {
             if (request.responseText.length > 0) {
+                debugger;
 				displayAgg(JSON.parse(request.responseText));
                 $("#actions-btn").removeClass("invisible");
                 $("#export-examples-modal").addClass("invisible");
@@ -800,6 +801,7 @@ function displayAgg(response){
 			} else if (data[i].type == 'fact') {
                 drawStringAggs(data[i], type='fact');
             } else if (data[i].type == 'fact_str_val') {
+                debugger;
                 drawStringAggs(data[i]);
             } else if (data[i].type == 'fact_num_val') {
                 drawStringAggs(data[i]);
@@ -888,6 +890,7 @@ function show_children(data,date,timeline_children_container) {
 }
 
 function drawStringAggs(data, type=null){
+    debugger;
     var response_container = $("<div style='float: left; padding-left: 20px;'></div>");
 	var table_container = $("<div style='float: left'></div>");
 	var children_container = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>");
@@ -1051,17 +1054,6 @@ function show_string_children(data,children_container,grandchildren_container, r
 
 	var tbody = $("<tbody></tbody>");
 	$(data).each(function(fact_key){
-        var factRemoved = false;
-        for (var i = 0; i < removed_facts.length; i++) {
-            var currentValue = {key: fact_key, value: this.key};
-            if (removed_facts[i].key == currentValue.key &&
-                removed_facts[i].value == currentValue.value) {
-                    factRemoved = true;
-                }
-        }
-
-        if (!factRemoved) {
-
 		var row_container = $("<tr><td>"+this.val+"</td><td>"+this.key+"</td></tr>");
 
         if (this.hasOwnProperty('children') && this.children.length > 0) {
@@ -1116,7 +1108,6 @@ function show_string_children(data,children_container,grandchildren_container, r
         });
 
         tbody.append(row_container);
-    }
 	}, [row_key]);
 
     var table = $("<table class='table table-striped table-hover'></table>");
@@ -1297,8 +1288,13 @@ function display_searches(searches) {
             return function() {
                 var loc = window.location.href;
                 search_url = loc + '?search=' + id
-                var dummy = $('<input>').val(search_url).appendTo('body').select()
-                document.execCommand('copy')
+
+                const el = document.createElement('textarea');
+                el.value = search_url;
+                document.body.appendChild(el);
+                el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
 
                 const notification = swal.mixin({
                     toast: true,
@@ -1306,7 +1302,7 @@ function display_searches(searches) {
                     showConfirmButton: false,
                     timer: 3000
                   });
-                  
+
                   notification({
                     type: 'success',
                     title: 'Copied search link to clipboard',
@@ -1447,18 +1443,16 @@ function export_data(exportType) {
         var features_dec = $("input[name=export-features]:checked").val();
         var features = []
 
-        if (features_dec == "all") {
-            $(".toggle-visibility").each(function() {
-                features.push($(this).text());
-            });
-        } else {
-            $(".toggle-visibility").each(function() {
-                var current_feature = $(this);
-                if (!current_feature.hasClass("feature-invisible")) {
-                    features.push(current_feature.text());
+            $(".buttons-columnVisibility").each(function() {
+                if(!$(this).hasClass("toggleAllButton")) {
+                    if(features_dec == "all") {
+	                features.push($(this).text());
+                    } else if($(this).hasClass("active")) {
+                        features.push($(this).text());
+                    }
                 }
+                
             });
-        }
 
         query_args.push({name:"features",value:features});
     }

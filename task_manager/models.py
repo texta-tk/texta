@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -12,6 +11,7 @@ class Task(models.Model):
     STATUS_CREATED = 'created'
     STATUS_QUEUED = 'queued'
     STATUS_RUNNING = 'running'
+    STATUS_UPDATING = 'updating'
     STATUS_COMPLETED = 'completed'
     STATUS_CANCELED = 'canceled'
     STATUS_FAILED = 'failed'
@@ -20,6 +20,7 @@ class Task(models.Model):
         (STATUS_CREATED, 'Created'),
         (STATUS_QUEUED, 'Queued'),
         (STATUS_RUNNING, 'Running'),
+        (STATUS_UPDATING, 'Updating'),
         (STATUS_COMPLETED, 'Completed'),
         (STATUS_CANCELED, 'Canceled'),
         (STATUS_FAILED, 'Failed'),
@@ -81,5 +82,42 @@ class Task(models.Model):
             'time_started': str(self.time_started),
             'last_update': str(self.last_update),
             'time_completed': str(self.time_completed)
+        }
+        return data
+
+
+class TagFeedback(models.Model):
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    dataset_id = models.IntegerField(default=None)
+    document_id = models.TextField(default=None)
+    field = models.CharField(max_length=MAX_STR_LEN, default=None)
+    tag = models.CharField(max_length=MAX_STR_LEN, default=None)
+    value = models.IntegerField(default=None)
+    time_updated = models.DateTimeField(null=True, blank=True, default=None)
+
+    @staticmethod
+    def log(user, dataset_id, document_id, field, tag, value):
+        feedback_log = TagFeedback()
+        feedback_log.user = user
+        feedback_log.dataset_id = dataset_id
+        feedback_log.document_id = document_id
+        feedback_log.field = field
+        feedback_log.tag = tag
+        feedback_log.value = value
+        feedback_log.time_updated = datetime.now()
+        feedback_log.save()
+        return feedback_log
+    
+    def to_json(self):
+        data = {
+            'feedback_id': self.id,
+            'user': self.user.username,
+            'dataset_id': self.dataset_id,
+            'document_id': self.document_id,
+            'field': self.field,
+            'tag': self.tag,
+            'value': self.value,
+            'last_update': str(self.time_updated)
         }
         return data

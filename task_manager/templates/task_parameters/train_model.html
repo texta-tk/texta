@@ -32,7 +32,9 @@
 									<option value="100" selected="selected">100</option>
 									<option value="150">150</option>
 									<option value="200">200</option>
-								</select>
+									<option value="250">250</option>
+									<option value="300">300</option>
+								</select>		
 				</div>
 			  </div>
 			  <div class="row">
@@ -59,6 +61,8 @@
 									<option value="1">1</option>
 									<option value="5">5</option>
 									<option value="10" selected="selected">10</option>
+									<option value="25">25</option>
+									<option value="50">50</option>
 									<option value="100">100</option>
 									<option value="250">250</option>
 									<option value="500">500</option>
@@ -66,6 +70,19 @@
 								</select>
 				</div>
 			  </div>
+			  <div class="row">
+				<div class="col-sm-6">Max vocab size:</div>
+				<div class="col-sm-6">
+								<select name="{{task_param.id}}_max_vocab" class="form-control">
+									<option value="" selected="selected">No limit</option>
+									<option value="50000">50 000</option>
+									<option value="100000">100 000</option>
+									<option value="250000">250 000</option>
+									<option value="500000">500 000</option>
+									<option value="1000000">1 000 000</option>
+								</select>
+				</div>
+			  </div>		  
 			  <div class="row">
 				<div class="col-sm-6">Description:</div>
 				<div class="col-sm-6">

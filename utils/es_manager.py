@@ -506,7 +506,7 @@ class ES_Manager:
             for constraint in query_dict['main']['query']['bool']['must_not']:
                 self.combined_query['main']['query']['bool']['must_not'].append(constraint)
 
-    def more_like_this_search(self, fields, stopwords=[], docs_accepted=[], docs_rejected=[], handle_negatives='ignore'):
+    def more_like_this_search(self, fields, stopwords=[], docs_accepted=[], docs_rejected=[], handle_negatives='ignore', search_size=10):
 
         # Get ids from basic search
         docs_search = self._scroll_doc_ids()
@@ -541,7 +541,7 @@ class ES_Manager:
                     "must": [mlt]
                 }
             },
-            "size": 10,
+            "size": search_size,
             "highlight": {
                 "pre_tags": ["<b>"],
                 "post_tags": ["</b>"],

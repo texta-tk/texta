@@ -36,6 +36,8 @@ class PreprocessorWorker(BaseWorker):
         ds = Datasets().activate_dataset_by_id(params['dataset'])
         es_m = ds.build_manager(ES_Manager)
         es_m.load_combined_query(self._parse_query(params))
+        # In case dataset is readonly, remove the block
+        es_m.clear_readonly_block()
 
         self.es_m = es_m
         self.params = params
@@ -66,34 +68,43 @@ class PreprocessorWorker(BaseWorker):
         show_progress.set_total(total_docs)
         total_positive = 0
 
-        while total_hits > 0:
+        try:
+            while total_hits > 0:
+                documents, parameter_dict, ids = self._prepare_preprocessor_data(response)
+                # Add facts field if necessary
+                if documents:
+                    if 'texta_facts' not in documents[0]:
+                        self.es_m.update_mapping_structure('texta_facts', FACT_PROPERTIES)
 
-            documents, parameter_dict, ids = self._prepare_preprocessor_data(response)
-            # Add facts field if necessary
-            if documents:
-                if 'texta_facts' not in documents[0]:
-                    self.es_m.update_mapping_structure('texta_facts', FACT_PROPERTIES)
+                documents = list(map(convert_to_utf8, documents))
 
-            documents = list(map(convert_to_utf8, documents))
+                # Apply all preprocessors
+                for preprocessor_code in parameter_dict['preprocessors']:
+                    preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
+                    result_map = preprocessor.transform(documents, **parameter_dict)
+                    documents = result_map['documents']
+                    total_positive += result_map['meta'].get('documents_tagged', 0)
+                self.es_m.bulk_post_documents(documents, ids)
+                # Update progress is important to check task is alive
+                show_progress.update(total_hits)
+                # Get next page if any
+                response = self.es_m.scroll(scroll_id=scroll_id, time_out=self.scroll_time_out)
+                total_hits = len(response['hits']['hits'])
+                scroll_id = response['_scroll_id']
 
-            # Apply all preprocessors
-            for preprocessor_code in parameter_dict['preprocessors']:
-                preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
-                result_map = preprocessor.transform(documents, **parameter_dict)
-                documents = result_map['documents']
-                total_positive += result_map['meta'].get('total_positives', 0)
-
-            self.es_m.update_documents(documents, ids)
-            # Update progress is important to check task is alive
-            show_progress.update(total_hits)
-            # Get next page if any
-            response = self.es_m.scroll(scroll_id=scroll_id, time_out=self.scroll_time_out)
-            total_hits = len(response['hits']['hits'])
-            scroll_id = response['_scroll_id']
-
-        task = Task.objects.get(pk=self.task_id)
-        task.result = json.dumps({'documents_processed': show_progress.n_total, 'documents_tagged': total_positive, 'preprocessor_key': self.params['preprocessor_key']})
-        task.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+            task = Task.objects.get(pk=self.task_id)
+            show_progress.update(100)
+            task.result = json.dumps({'documents_processed': show_progress.n_total, 'documents_tagged': total_positive, 'preprocessor_key': self.params['preprocessor_key']})
+            task.update_status(Task.STATUS_UPDATING)
+            self.es_m.update_documents()
+            task.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+        # If runs into an exception, give feedback
+        except Exception as e:
+            task = Task.objects.get(pk=self.task_id)
+            task.status = 'Failed'
+            task.result = json.dumps({'documents_processed': show_progress.n_count, 'preprocessor_key': self.params['preprocessor_key'], 'error': str(e)})
+            task.time_completed = datetime.now()
+            task.save()
 
     def _prepare_preprocessor_data(self, response: dict):
         """

@@ -373,11 +373,15 @@ def _processing_job(documents, parameter_dict):
     :type documents: list of dicts
     :type parameter_dict: dict
     """
-    dataset_name = '{0}_{1}'.format(parameter_dict['texta_elastic_index'], parameter_dict['texta_elastic_mapping'])
-
+    # dataset_name = '{0}_{1}'.format(parameter_dict['texta_elastic_index'], parameter_dict['texta_elastic_mapping'])
     try:
-        result_map = DocumentPreprocessor.process(documents=documents, **parameter_dict)
-        documents = result_map['documents']
+
+        documents = list(map(convert_to_utf8, documents))
+
+        for preprocessor_code in parameter_dict['preprocessors']:
+            preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
+            result_map = preprocessor.transform(documents, **parameter_dict)
+            documents = result_map['documents']
 
         storer = DocumentStorer.get_storer(**parameter_dict)
         stored_documents_count = storer.store(documents)
@@ -387,9 +391,6 @@ def _processing_job(documents, parameter_dict):
                 dataset_import = DatasetImport.objects.get(pk=parameter_dict['import_id'])
                 dataset_import.processed_documents += stored_documents_count
                 dataset_import.save()
-
-    except Exception as e:
-        HandleDatasetImportException(parameter_dict, e)
 
     except Exception as e:
         HandleDatasetImportException(parameter_dict, e)

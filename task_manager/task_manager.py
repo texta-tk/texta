@@ -83,11 +83,8 @@ def translate_parameters(params):
 
     datasets = Datasets().datasets
 
-    # preprocessors = collect_map_entries(preprocessor_map)
-    # enabled_taggers = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True and preprocessor['key'] is 'text_tagger'][0]['enabled_taggers']
-    # enabled_taggers = {enabled_tagger.pk: enabled_tagger.description for enabled_tagger in enabled_taggers}
-    # TODO: remove this
-    enabled_taggers = {}
+    all_taggers = Task.objects.filter(task_type="train_tagger", status=Task.STATUS_COMPLETED)
+    enabled_taggers = {tagger.pk: tagger.description for tagger in all_taggers}
 
     extractor_options = {a['index']: a['label'] for a in pipe_builder.get_extractor_options()}
     reductor_options = {a['index']: a['label'] for a in pipe_builder.get_reductor_options()}
@@ -115,10 +112,9 @@ def collect_map_entries(map_):
     entries = []
     for key, value in map_.items():
         if key == 'text_tagger':
-            value['enabled_taggers'] = Task.objects.filter(task_type='train_tagger').filter(status__iexact='completed')
+            value['enabled_taggers'] = Task.objects.filter(task_type="train_tagger", status=Task.STATUS_COMPLETED)
         value['key'] = key
         entries.append(value)
-
     return entries
 
 

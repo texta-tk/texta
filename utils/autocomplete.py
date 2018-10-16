@@ -6,7 +6,7 @@ from utils.es_manager import ES_Manager
 class Autocomplete:
 
     def __init__(self):
-        self.es_m = None        
+        self.es_m = None
         self.lookup_type = None
         self.key_constraints = None
         self.content = None
@@ -14,7 +14,7 @@ class Autocomplete:
         self.limit = None
 
     def parse_request(self,request):
-    
+
         self.lookup_types = request.POST['lookup_types'].split(',')
         self.key_constraints = request.POST['key_constraints'].split(',')
         self.content = request.POST['content'].split('\n')[-1].strip()
@@ -26,7 +26,7 @@ class Autocomplete:
 
     def suggest(self,limit=10):
         self.limit = limit
-        
+
         suggestions = {}
 
         for i,lookup_type in enumerate(self.lookup_types):
@@ -45,16 +45,16 @@ class Autocomplete:
 
         self.es_m.build('')
         self.es_m.set_query_parameter("aggs", agg_query)
-        
+
         if lookup_type == 'FACT_VAL' and key_constraint:
-            facts = []            
+            facts = []
             for bucket in self.es_m.search()["aggregations"][agg_subfield][agg_subfield]["buckets"]:
                 print(bucket)
                 if bucket["key"] == key_constraint:
                     facts += [self._format_suggestion(sub_bucket["key"], sub_bucket["key"]) for sub_bucket in bucket["fact_values"]["buckets"]]
-            
+
         elif lookup_type == 'FACT_VAL' and not key_constraint:
-            facts = []          
+            facts = []
             for bucket in self.es_m.search()["aggregations"][agg_subfield][agg_subfield]["buckets"]:
                 facts += [self._format_suggestion(sub_bucket["key"], sub_bucket["key"]) for sub_bucket in bucket["fact_values"]["buckets"]]
         else:
@@ -81,7 +81,7 @@ class Autocomplete:
 
                         suggestion = self._format_suggestion(concept.descriptive_term.term,display_text,resource_id=concept.pk)
                         concepts.append(suggestion)
-        
+
         return concepts
 
     def _get_lexicons(self):
@@ -95,7 +95,7 @@ class Autocomplete:
 
                 suggestion = self._format_suggestion(lexicon.name,display_text,resource_id=lexicon.pk)
                 suggested_lexicons.append(suggestion)
-                
+
         return suggested_lexicons
 
     @staticmethod

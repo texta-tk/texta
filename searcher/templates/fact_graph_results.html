@@ -27,12 +27,11 @@
 	}
 </style>
 <div class="graphBody">
-    
     <div class="row">
 		<div class="col-sm-5">
 		<div class="panel bg-grey">
 			<div class="countSlider">
-				<input id='visibleFactsCheckbox' type="checkbox" data-toggle="toggle" onchange="toggleVisibleCoocc(this)">
+				<input id='visibleFactsCheckbox' type="checkbox" data-toggle="toggle" checked onchange="toggleVisibleCoocc(this)">
 				<label for="visibleFactsCheckbox">Show cooccurances for visible nodes only</label>
 				<p>
 					<b> Hide facts with lower count than: </b>
@@ -77,13 +76,13 @@
 	var min_score = 0;
 	var max_score = 1;
 
-	var colors = ["#f0f20a", "#f90a0a", "#1d2bec", "#22d012", "#f9a70d", "#ff9292"];
+	var colors = ["#f0f20a", "#f90a0a", "#1d2bec", "#22d012", "#f9a70d", "#ff9292", "#00FFFF", "#FF00FF", "#800080", "#008000", "#008080", "#000080", "#F39C12", "#7D3C98", "#17202A", "#DAF7A6"];
 	var shapes = d3.svg.symbolTypes;
-	var shapesColors = shapes.reduce((obj, k, i) => ({ ...obj, [k]: colors[i] }), {});
 
-	var color = d3.scale.ordinal()
-		.domain(shapes)
-		.range(colors);
+	// Get color by fact name
+	var namesColors = d3.scale.ordinal()
+		.domain(factNames)
+		.range(colors)
 
 	var highlight_color = "blue";
 	var highlight_trans = 0.1;
@@ -195,13 +194,8 @@
 			.data(graph.links)
 			.enter().append("line")
 			.attr("class", "link")
-
 			.style("stroke-width", function (d) { return Math.pow(link_size(d.count) || nominal_stroke, 1); })
-
-			.style("stroke", function (d) {
-				if (isNumber(d.score) && d.score >= 0) return color(d.score);
-				else return default_link_color;
-			})
+			.style("stroke", default_link_color);
 
 
 		var node = g.selectAll(".node")
@@ -231,7 +225,7 @@
 				.type(function (d) { return d.type; }))
 
 			.style(tocolor, function (d) {
-				if (shapes.indexOf(d.type) >= 0) return color(d.type);
+				if (shapes.indexOf(d.type) >= 0) return namesColors(d.name);
 				else return default_node_color;
 			})
 			.style("stroke-width", function (d) { return d.count; })
@@ -295,7 +289,7 @@
 				if (highlight_color != "white") {
 					circle.style(towhite, "white");
 					text.style("font-weight", "normal");
-					link.style("stroke", function (o) { return (isNumber(o.score) && o.score >= 0) ? color(o.score) : default_link_color });
+					link.style("stroke", default_link_color);
 				}
 			}
 		}
@@ -330,7 +324,7 @@
 					return isConnected(d, o) ? "bold" : "normal";
 				});
 				link.style("stroke", function (o) {
-					return o.source.index == d.index || o.target.index == d.index ? highlight_color : ((isNumber(o.score) && o.score >= 0) ? color(o.score) : default_link_color);
+					return o.source.index == d.index || o.target.index == d.index ? highlight_color : (/*(isNumber(o.score) && o.score >= 0) ? color(o.score) : */default_link_color);
 
 				});
 			}
@@ -356,8 +350,7 @@
 		svg.call(zoom);
 
 		resize();
-		//window.focus();
-		d3.select(window).on("resize", resize)//.on("keydown", keydown);
+		d3.select(window).on("resize", resize)
 
 		force.on("tick", function () {
 
@@ -457,7 +450,6 @@
 
 	var svg = d3.select("svg");
 
-	// var clickedName = ''
 	svg.append("g")
 		.attr("class", "legendSymbol")
 		.attr("transform", "translate(20, 20)");
@@ -534,7 +526,7 @@
 		for (var i = 0; i < linkedNodes.length; i++) {
 			domainList.push(linkedNodes[i]["count"] + 'x ' + linkedNodes[i]["value"]["name"] + " - " + linkedNodes[i]["value"]["id"]);
 			rangeList.push(d3.svg.symbol().type(linkedNodes[i]["value"]["type"])());
-			colorList.push(shapesColors[linkedNodes[i]["value"]["type"]]);
+			colorList.push(namesColors(linkedNodes[i]["value"]["name"]));
 		}
 
 		//Hidden tooltip
@@ -544,7 +536,7 @@
 			hiddenNodesLegend = hiddenNodesLegend.slice(0, cooccDisplayCount)
 			for (var i = 0; i < hiddenNodesLegend.length; i++) {
 				hiddenRangeList.push(d3.svg.symbol().type(hiddenNodesLegend[i]["value"]["type"])());
-				hiddenColorList.push(shapesColors[hiddenNodesLegend[i]["value"]["type"]]);
+				hiddenColorList.push(namesColors(hiddenNodesLegend[i]["value"]["name"]));
 				hiddenNodesLegend[i] = hiddenNodesLegend[i]["count"] + 'x ' + hiddenNodesLegend[i]["value"]["name"] + " - " + hiddenNodesLegend[i]["value"]["id"];
 			}
 
@@ -617,7 +609,7 @@
 		for (var i = 0; i < hiddenDisplayNodes.length; i++) {
 			domainList.push(hiddenDisplayNodes[i]["score"] + ' - ' + hiddenDisplayNodes[i]["name"] + " - " + hiddenDisplayNodes[i]["id"]);
 			rangeList.push(d3.svg.symbol().type(hiddenDisplayNodes[i]["type"])());
-			colorList.push(shapesColors[hiddenDisplayNodes[i]["type"]]);
+			colorList.push(namesColors(hiddenDisplayNodes[i]["name"]));
 		}
 
 		//Hidden tooltip
@@ -627,7 +619,7 @@
 			overflowNodesLegend = overflowNodesLegend.slice(0, overflowDisplayCount)
 			for (var i = 0; i < overflowNodesLegend.length; i++) {
 				overflowRangeList.push(d3.svg.symbol().type(overflowNodesLegend[i]["type"])());
-				overflowColorList.push(shapesColors[overflowNodesLegend[i]["type"]]);
+				overflowColorList.push(namesColors(overflowNodesLegend[i]["name"]));
 				overflowNodesLegend[i] = overflowNodesLegend[i]["score"] + ' - ' + overflowNodesLegend[i]["name"] + " - " + overflowNodesLegend[i]["id"];
 			}
 
@@ -653,7 +645,7 @@
 			.on("cellout", function (e) {
 				if (overflowCount > 0) {
 					if (e.includes('hidden..')) {
-						svg.select(".overflowHiddenSymbol")//.remove();
+						svg.select(".overflowHiddenSymbol")
 							.attr("fill-opacity", 1).transition()
 							.duration(300).attr("fill-opacity", 0).remove();
 					}
@@ -714,9 +706,6 @@
 			svg.select(".hiddenSelectedSymbol")
 				.attr("fill-opacity", 1).transition()
 				.duration(300).attr("fill-opacity", 0).remove()
-		}
-		else {
-
 		}
 	}
 </script>
