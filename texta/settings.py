@@ -262,7 +262,7 @@ INSTALLED_APPS = (
 # or remote address.
 es_url = os.getenv('TEXTA_ELASTICSEARCH_URL', 'http://localhost:9200')
 
-es_prefix = os.getenv('TEXTA_ELASTICSEARCH_PREFIX', 'test')
+es_prefix = os.getenv('TEXTA_ELASTICSEARCH_PREFIX', '')
 
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')
@@ -273,7 +273,11 @@ es_links = {
 
 # Date format used in Elasticsearch fields.
 #
-date_format = 'yyyy-MM-dd'
+es_date_format = 'yyyy-MM-dd'
+
+# Python date format
+#
+date_format = '%Y-%m-%d'
 
 # Set to True if Elasticsearch needs authentication. Tested with basic auth.
 es_use_ldap = False

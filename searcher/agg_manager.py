@@ -2,7 +2,7 @@ from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
 from searcher.models import Search
-from texta.settings import date_format
+from texta.settings import es_date_format
 
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
@@ -137,7 +137,7 @@ class AggManager:
 
     def create_agg(self, agg_name, sort_by, path, size):
         if agg_name == "daterange":
-            return {agg_name: {"date_range": {"field": path, "format": date_format, "ranges": self.ranges}}}
+            return {agg_name: {"date_range": {"field": path, "format": es_date_format, "ranges": self.ranges}}}
         elif agg_name == 'fact':
             return {
                 agg_name: {

@@ -603,9 +603,11 @@ class ES_Manager:
         url = "{0}/{1}/_search".format(self.es_url, self.stringify_datasets())
         response = requests.post(url, data=json.dumps(query), headers=HEADERS).json()
         aggs = response["aggregations"]
-        
+
         _min = self._timestamp_to_str(aggs["min_date"]["value"])
         _max = self._timestamp_to_str(aggs["max_date"]["value"])
+        
+        print(_min,_max)
         
         return _min, _max
 
@@ -613,6 +615,9 @@ class ES_Manager:
     @staticmethod
     def _timestamp_to_str(timestamp):
         date_object = datetime.date.fromtimestamp(timestamp/1000)
+        
+        print(date_object,datetime.date.strftime(date_object, date_format))
+        
         return datetime.date.strftime(date_object, date_format)
 
 
