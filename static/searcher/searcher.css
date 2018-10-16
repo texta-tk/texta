@@ -209,6 +209,20 @@ body>.container-fluid{
 .container-fluid *{
   border-radius: 0;
 }
+.dropdown-row div{
+  padding: 0;
+}
+.dropdown-row{
+  margin:0;
+  display: flex;
+}
+.dropdown-row>.col-sm-4{
+  min-width: 70px;
+}
+.dropdown-row>.col-sm-3{
+  min-width: 56px;
+}
+
 @media only screen and (min-width: 1200px){
   body>.container-fluid, .row, .main-content, .side-content, .main-content>.panel {
       height: 100%;
@@ -230,4 +244,13 @@ body>.container-fluid{
   .main-content>.panel>.panel-body{
       overflow: visible;
  }
+}
+@media only screen and (max-width: 1460px) {
+  .dropdown-row{
+    display: flex;
+    flex-direction: column !important;
+  }
+  .dropdown-row div{
+    width: 100% !important; 
+  }
 }
