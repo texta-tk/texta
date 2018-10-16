@@ -176,9 +176,6 @@ function render_saved_search(search_id) {
 
 
 function render_saved_search_field(field_data, min_date, max_date) {
-    $('#constraint_field option').filter(function() {
-        return $(this).text() === derive_text_node_value(field_data);
-    }).prop('selected', true)
 
     add_field(min_date, max_date);
 
@@ -214,6 +211,7 @@ function render_saved_search_field(field_data, min_date, max_date) {
 
 
 function derive_text_node_value(field_data) {
+    console.log(field_data)
     if (field_data.constraint_type === 'string' || field_data.constraint_type === 'date') {
         return field_data.field.replace('.', ' → ');
     } else if (field_data.constraint_type === 'facts') {
@@ -326,12 +324,12 @@ function insert(resource_id,suggestionId,descriptive_term, lookup_type){
 function add_field(date_range_min,date_range_max){
     var field = Array();
     
-    $("#constraint_field option").each(function(){
+    $("#constraint_field option").filter(function(){
         var val = $(this).val();
         field.push(val);
-    });
-    
-    var field =  $("#constraint_field").val();
+        console.log(val);
+    }).prop('selected','true');
+   
     
 
     if( !field ){

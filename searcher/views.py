@@ -867,9 +867,9 @@ def _extract_string_constraint(raw_constraint):
     for entry in raw_constraint['bool'][operator]:
         constraint_details = list(entry['bool']['should'])[0]
         match_type = list(constraint_details.keys())[0]
-        field = list(constraint_details[match_type].keys())[0]
-        content = constraint_details[match_type][field]['query']
-        slop = constraint_details[match_type][field]['slop']
+        field = constraint_details[match_type]['fields']
+        content = constraint_details[match_type]['query']
+        slop = constraint_details[match_type]['slop']
         constraint_content.append(content)
 
     return {

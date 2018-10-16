@@ -614,10 +614,7 @@ class ES_Manager:
 
     @staticmethod
     def _timestamp_to_str(timestamp):
-        date_object = datetime.date.fromtimestamp(timestamp/1000)
-        
-        print(date_object,datetime.date.strftime(date_object, date_format))
-        
+        date_object = datetime.date.fromtimestamp(timestamp/1000) 
         return datetime.date.strftime(date_object, date_format)
 
 
