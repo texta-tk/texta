@@ -21,8 +21,10 @@ from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
 from task_manager.models import Task
 
-from texta.settings import USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_DEFAULT, es_url, STATIC_URL
+from texta.settings import REQUIRE_EMAIL_CONFIRMATION, USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_DEFAULT, es_url, STATIC_URL
 
+
+from django.core.mail import EmailMessage
 
 
 
@@ -73,6 +75,13 @@ def update(request):
 
 ### MANAGING ACCOUNTS ###
 
+def send_confirmation_email(emailAddress):
+	if(REQUIRE_EMAIL_CONFIRMATION):
+		email = EmailMessage('Email Confirmation', 'Thank you for registering, please confirm your email to activate your account!', to=[emailAddress])
+		email.send()
+	
+
+
 def create(request):
 	username = request.POST['username']
 	password = request.POST['password']
@@ -87,19 +96,21 @@ def create(request):
 	if USER_ISACTIVE_DEFAULT == False:
 		user.is_active = False
 		user.save()
-
+		
+		
 	if user:
 		initialize_permissions(user)
 
 	user_path = os.path.join(USER_MODELS, username)
 	if not os.path.exists(user_path):
 		os.makedirs(user_path)
-
+		
 	logging.getLogger(INFO_LOGGER).info(json.dumps(
 			{'process': 'CREATE USER', 'event': 'create_user', 'args': {'user_name': username, 'email': email}}))
 
 	if USER_ISACTIVE_DEFAULT == True:
 		user = authenticate(username=username, password=password)
+		send_confirmation_email(email)
 		if user is not None:
 			django_login(request, user)
 
