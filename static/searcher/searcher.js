@@ -1500,6 +1500,7 @@ function add_props_to_spans() {
         $(this).css("filter",e.type === "mouseenter"?"brightness(110%)":"brightness(100%)")
         $(this).css("cursor","pointer")
     })
+
     // Add tippy instance to spans
     spans.addClass("tippyFactSpan");
     spans = document.querySelectorAll('.tippyFactSpan')
@@ -1525,4 +1526,29 @@ function add_props_to_spans() {
         // Update span tippy content
         span._tippy.setContent(temp.prop('outerHTML'))
     });
+
+    // Add mouseup hook to datatables content text
+    $("#examples").find('tbody').find('td').mouseup(function() {
+        // Get selection content and span
+        var selection = window.getSelection();
+        var range = selection.getRangeAt(0)
+        var spans = [range['startOffset'], range['endOffset']]
+        var content = selection.toString();
+        
+        // Tippy for selection
+        var textSpan = document.createElement('span');
+        textSpan.className = 'selectedText';
+        textSpan.appendChild(range.extractContents());
+        range.insertNode(textSpan)
+        // debugger;
+        tippy(textSpan,
+            {
+                content: temp.prop('outerHTML'),
+                interactive: true,
+                trigger: 'click',
+                onHide() {
+                    $(textSpan).contents().unwrap();
+                }
+            });
+      });
 }

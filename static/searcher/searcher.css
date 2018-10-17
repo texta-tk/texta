@@ -129,3 +129,8 @@ textarea {
 .dataTable td {
   vertical-align: top !important;
 }
+
+/* For selected tippy text */
+.selectedText {
+  background-color: yellow;
+}
