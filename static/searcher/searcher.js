@@ -1532,6 +1532,8 @@ function add_props_to_spans() {
         // Get selection content and span
         var selection = window.getSelection();
         var range = selection.getRangeAt(0)
+        // Set range to end in the parent element/field
+        // range.setEnd(range['endCntainer'], 20);
         var spans = [range['startOffset'], range['endOffset']]
         var content = selection.toString();
         
@@ -1546,6 +1548,10 @@ function add_props_to_spans() {
                 content: temp.prop('outerHTML'),
                 interactive: true,
                 trigger: 'click',
+                showOnInit: 'true',
+                // onShow(tip) {
+                //     tip.set({ trigger: 'click' });
+                // },
                 onHide() {
                     $(textSpan).contents().unwrap();
                 }
