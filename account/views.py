@@ -79,6 +79,7 @@ def _send_confirmation_email(user,email):
 	if(REQUIRE_EMAIL_CONFIRMATION):
 		token=_generate_random_token()
 		email = EmailMessage('Email Confirmation', URL_PREFIX+'/confirm/'+token, to=[email])
+	
 		try:
 			user.profile
 		except:
@@ -99,6 +100,7 @@ def create(request):
 		return HttpResponse(json.dumps({'url': '#', 'issues': issues}))
 
 	user = User.objects.create_user(username, email, password)
+	_send_confirmation_email(user,email)
 
 	if USER_ISACTIVE_DEFAULT == False:
 		user.is_active = False
@@ -116,8 +118,7 @@ def create(request):
 			{'process': 'CREATE USER', 'event': 'create_user', 'args': {'user_name': username, 'email': email}}))
 
 	if USER_ISACTIVE_DEFAULT == True:
-		user = authenticate(username=username, password=password)
-		_send_confirmation_email(user,email)
+		user = authenticate(username=username, password=password)	
 		if user is not None:
 			django_login(request, user)
 
@@ -254,14 +255,23 @@ def _validate_user_auth_input(request):
 		raise KeyError('Password missing.')
 
 def confirm_email(request, email_auth_token):
-	print(email_auth_token)
+	template = loader.get_template('email-confirmation.html')
+	
 	profile = Profile.objects.get(email_confirmation_token=email_auth_token)
-	profile.confirm_email=True
-	print('Username:'+profile.user.username)
-	print('Password:'+profile.user.password)
-	print('Email:'+profile.user.email)
-	print('Auth_Token:'+profile.auth_token)
-	print('Email_Confirmation_Token:'+profile.email_confirmation_token)
-	print('Is_Email_Confirmed:'+ str(profile.confirm_email))
+	if(profile.email_confirmed == False):	
+		profile.email_confirmed=True
+		profile.save()
 
-	return HttpResponseRedirect(URL_PREFIX + '/')
+
+		template_params={
+			profile.user.username,
+			profile.user.password,
+			profile.user.email,
+			profile.auth_token,
+			profile.email_confirmation_token,
+			str(profile.email_confirmed),
+		}
+		return HttpResponse(
+				template.render( {'user_data': template_params}, request))
+	else:
+		return HttpResponseRedirect(URL_PREFIX + '/')
