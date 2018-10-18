@@ -75,11 +75,18 @@ def update(request):
 
 ### MANAGING ACCOUNTS ###
 
-def send_confirmation_email(emailAddress):
+def _send_confirmation_email(user,email):
 	if(REQUIRE_EMAIL_CONFIRMATION):
-		email = EmailMessage('Email Confirmation', 'Thank you for registering, please confirm your email to activate your account!', to=[emailAddress])
+		token=_generate_random_token()
+		email = EmailMessage('Email Confirmation', URL_PREFIX+'/confirm/'+token, to=[email])
+		try:
+			user.profile
+		except:
+			Profile.objects.create(user=user).save()
+
+		user.profile.email_confirmation_token = token
+		user.save()
 		email.send()
-	
 
 
 def create(request):
@@ -97,7 +104,7 @@ def create(request):
 		user.is_active = False
 		user.save()
 		
-		
+
 	if user:
 		initialize_permissions(user)
 
@@ -110,7 +117,7 @@ def create(request):
 
 	if USER_ISACTIVE_DEFAULT == True:
 		user = authenticate(username=username, password=password)
-		send_confirmation_email(email)
+		_send_confirmation_email(user,email)
 		if user is not None:
 			django_login(request, user)
 
@@ -245,3 +252,16 @@ def _validate_user_auth_input(request):
 		content_body['password']
 	except:
 		raise KeyError('Password missing.')
+
+def confirm_email(request, email_auth_token):
+	print(email_auth_token)
+	profile = Profile.objects.get(email_confirmation_token=email_auth_token)
+	profile.confirm_email=True
+	print('Username:'+profile.user.username)
+	print('Password:'+profile.user.password)
+	print('Email:'+profile.user.email)
+	print('Auth_Token:'+profile.auth_token)
+	print('Email_Confirmation_Token:'+profile.email_confirmation_token)
+	print('Is_Email_Confirmed:'+ str(profile.confirm_email))
+
+	return HttpResponseRedirect(URL_PREFIX + '/')
