@@ -625,7 +625,7 @@ function query(){
                             $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft());
                         });  
                         // add hover and onclick to spans
-                        add_props_to_spans();
+                        createSelectionProps();
                     },
                 "stateSave": true,
                 "stateSaveParams": function (settings, data) {
@@ -1493,25 +1493,21 @@ function cluster_to_lex(id) {
 }
 
 // Add details like spans and buttons to searcher HL fact onclick/hover
-function add_props_to_spans() {
-    var spans = $(".\\[HL\\]");
-    // Add hover effect
-    spans.hover(function (e) {
-        $(this).css("filter", e.type === "mouseenter" ? "brightness(110%)" : "brightness(100%)")
-        $(this).css("cursor", "pointer")
-    })
+// TODO split up functions to smaller functions inside
 
-    // Add tippy instance to spans
+function tippyForFacts(spans) {
     spans.addClass("tippyFactSpan");
     spans = document.querySelectorAll('.tippyFactSpan')
+    // Select fact popover template
     var temp = $('#factPopover')
+    // Create tippy instance
     tippy(spans,
         {
             content: temp.prop('outerHTML'),
             interactive: true,
             trigger: 'click',
         });
-
+    // Create specific content for each span
     Array.prototype.forEach.call(spans, function (span, i) {
         // Display fact name and val
         title = span.title.split(' ')
@@ -1526,8 +1522,21 @@ function add_props_to_spans() {
         // Update span tippy content
         span._tippy.setContent(temp.prop('outerHTML'))
     });
-
-    // Add mouseup hook to datatables content text
+}
+function createSelectionProps() {
+    // Select HL spans
+    var spans = $(".\\[HL\\]");
+    // Add hover effect
+    spans.hover(function (e) {
+        $(this).css("filter", e.type === "mouseenter" ? "brightness(110%)" : "brightness(100%)")
+        $(this).css("cursor", "pointer")
+    })
+    // Add popover system to HL spans
+    tippyForFacts(spans);
+    // Add popover system to selection spans
+    tippyForSelect();
+}
+function tippyForSelect() {
     $("#examples").find('tbody').find('td').mouseup(function () {
         // Get selection content and span
         var selection = window.getSelection();
@@ -1535,33 +1544,43 @@ function add_props_to_spans() {
         if (!selection.isCollapsed) {
             // Limit selection to the selection start element
             if (selection.baseNode != selection.focusNode) {
-                selection.setBaseAndExtent(selection.baseNode,selection.baseOffset,selection.baseNode,selection.baseNode.length)
+                selection.setBaseAndExtent(selection.baseNode, selection.baseOffset, selection.baseNode, selection.baseNode.length);
             }
-            var range = selection.getRangeAt(0)
+            var range = selection.getRangeAt(0);
             // Tippy for selection
             var textSpan = document.createElement('span');
             textSpan.className = 'selectedText';
             textSpan.appendChild(range.extractContents());
-            range.insertNode(textSpan)
+            range.insertNode(textSpan);
             // debugger;
             // If selection is not of len 0
-            if (!selection.isCollapsed) {
-                var textTippy = tippy(textSpan,
-                    {
-                        content: temp.prop('outerHTML'),
-                        interactive: true,
-                        trigger: 'click',
-                        showOnInit: 'true',
-                        // onShow(tip) {
-                            //     tip.set({ trigger: 'click' });
-                            // },
-                        onHide() {
-                            $(textSpan).contents().unwrap();
-                        }
-                        });
-                    }
-                }
-                var spans = [range['startOffset'], range['endOffset']]
-                var content = selection.toString();
-            });
+            textTippy = tippy.one(textSpan,
+                {
+                    content: 'testing',
+                    interactive: true,
+                    trigger: 'click',
+                    showOnInit: 'true',
+                });
+            var spans = [range['startOffset'], range['endOffset']];
+            var content = selection.toString();
+        };
+    });
+    // Mousedown for
+    $("#examples").find('tbody').find('td').mousedown(function () {
+        var selection = window.getSelection();
+        if (!selection.isCollapsed) {
+            removeTextSelections(this, textTippy);
+        }
+    });
+}
+// Remove selection and tippy instance of selected text
+function removeTextSelections(dom, tip) {
+    $(".selectedText").contents().unwrap();
+    // If content is unwrapped, but empty element remains
+    $(".selectedText").remove();
+    // Unwrapping contents breaks strings up into separate strings
+    // When its broken up, it breaks selections
+    // Refreshing the innertText concats them back together
+    dom.innerHTML = dom.innerHTML;
+    tip.destroy();
 }
