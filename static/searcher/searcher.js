@@ -1496,9 +1496,9 @@ function cluster_to_lex(id) {
 function add_props_to_spans() {
     var spans = $(".\\[HL\\]");
     // Add hover effect
-    spans.hover(function(e) {
-        $(this).css("filter",e.type === "mouseenter"?"brightness(110%)":"brightness(100%)")
-        $(this).css("cursor","pointer")
+    spans.hover(function (e) {
+        $(this).css("filter", e.type === "mouseenter" ? "brightness(110%)" : "brightness(100%)")
+        $(this).css("cursor", "pointer")
     })
 
     // Add tippy instance to spans
@@ -1512,15 +1512,15 @@ function add_props_to_spans() {
             trigger: 'click',
         });
 
-    Array.prototype.forEach.call(spans, function(span, i) {
+    Array.prototype.forEach.call(spans, function (span, i) {
         // Display fact name and val
         title = span.title.split(' ')
-        name = title[title.length-1]
+        name = title[title.length - 1]
         val = span.innerText
         temp.find('.factName').html(name)
         temp.find('.factValue').html(val)
         // Fact delete button
-        btn =  temp.find('#factPopoverDeleteBtn');
+        btn = temp.find('#factPopoverDeleteBtn');
         // Attr because click events don't seem to work
         btn.attr('onclick', 'deleteFactArray([{name: val}], alert=true)');
         // Update span tippy content
@@ -1528,33 +1528,40 @@ function add_props_to_spans() {
     });
 
     // Add mouseup hook to datatables content text
-    $("#examples").find('tbody').find('td').mouseup(function() {
+    $("#examples").find('tbody').find('td').mouseup(function () {
         // Get selection content and span
         var selection = window.getSelection();
-        var range = selection.getRangeAt(0)
-        // Set range to end in the parent element/field
-        // range.setEnd(range['endCntainer'], 20);
-        var spans = [range['startOffset'], range['endOffset']]
-        var content = selection.toString();
-        
-        // Tippy for selection
-        var textSpan = document.createElement('span');
-        textSpan.className = 'selectedText';
-        textSpan.appendChild(range.extractContents());
-        range.insertNode(textSpan)
-        // debugger;
-        tippy(textSpan,
-            {
-                content: temp.prop('outerHTML'),
-                interactive: true,
-                trigger: 'click',
-                showOnInit: 'true',
-                // onShow(tip) {
-                //     tip.set({ trigger: 'click' });
-                // },
-                onHide() {
-                    $(textSpan).contents().unwrap();
+        // Check if selection is bigger than 0
+        if (!selection.isCollapsed) {
+            // Limit selection to the selection start element
+            if (selection.baseNode != selection.focusNode) {
+                selection.setBaseAndExtent(selection.baseNode,selection.baseOffset,selection.baseNode,selection.baseNode.length)
+            }
+            var range = selection.getRangeAt(0)
+            // Tippy for selection
+            var textSpan = document.createElement('span');
+            textSpan.className = 'selectedText';
+            textSpan.appendChild(range.extractContents());
+            range.insertNode(textSpan)
+            // debugger;
+            // If selection is not of len 0
+            if (!selection.isCollapsed) {
+                var textTippy = tippy(textSpan,
+                    {
+                        content: temp.prop('outerHTML'),
+                        interactive: true,
+                        trigger: 'click',
+                        showOnInit: 'true',
+                        // onShow(tip) {
+                            //     tip.set({ trigger: 'click' });
+                            // },
+                        onHide() {
+                            $(textSpan).contents().unwrap();
+                        }
+                        });
+                    }
                 }
+                var spans = [range['startOffset'], range['endOffset']]
+                var content = selection.toString();
             });
-      });
 }
