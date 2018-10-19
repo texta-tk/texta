@@ -1,5 +1,6 @@
 {% extends "index.html" %} {% block app %}
 {% include 'email-modal.html' %}
+{% include 'password-reset-modal.html' %}
 <script type="application/javascript" src="{{STATIC_URL}}base/account.js"></script>
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}base/account.css">
 <div class="row">
@@ -52,6 +53,7 @@
 						<div class="checkbox">
 							<label><input type="checkbox">Request permissions</label>
 						</div> -->
+						<button type="button" class="btn btn-default btn-sm pull-left" onclick="javascript:$('#password-reset-modal').modal();" value="Reset password">Forgot Password</button>
 						<input type="submit" class="btn btn-default btn-sm pull-right" value="Register">
 					</form>
 				</div>

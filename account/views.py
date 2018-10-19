@@ -13,6 +13,11 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.views.decorators.http import require_POST
 from django.template import loader
+from django.core.mail import EmailMessage
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+
 
 from .models import Profile
 from permission_admin.models import Dataset
@@ -37,6 +42,44 @@ def index(request):
 
 	return HttpResponse(
 			template.render({'STATIC_URL': STATIC_URL, 'allowed_datasets': datasets, 'language_models': language_models}, request))
+
+def password_reset_confirm(request, *args, **kwargs):
+	template = loader.get_template('reset-password.html')
+	
+	return HttpResponse(
+			template.render({'STATIC_URL': STATIC_URL}))
+	
+def send_password_reset_email(request):
+	
+	print(request.POST)
+	try:
+		emailInput = request.POST['email']
+		user=User.objects.get(email=emailInput)
+
+		if(user):
+			
+			c = {
+				'email': user.email,
+				'domain': request.META['HTTP_HOST'],
+				'site_name': 'texta.ee',
+				'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
+				'user': user,
+				'token': default_token_generator.make_token(user),
+				'protocol': 'http',
+				}
+			for key,value in c.items():
+				print(key+':'+str(value))
+				
+			email_template_name='password-reset-email.html'
+			emailBody = loader.render_to_string(email_template_name,c)
+			dddd = EmailMessage('Reset password', emailBody, to=[user.email])
+			dddd.send()  
+			
+		
+	except KeyError:
+		emailInput = 'unknown'
+
+	return HttpResponseRedirect(URL_PREFIX + '/')
 
 
 @login_required
