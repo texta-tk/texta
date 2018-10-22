@@ -68,7 +68,7 @@ class TagModelWorker(BaseWorker):
                 param_query = json.loads(Search.objects.get(pk=int(task_params['search'])).query)
 
             # Build Data sampler
-            ds = Datasets().activate_dataset_by_id(task_params['dataset'])
+            ds = Datasets().activate_datasets_by_id(task_params['dataset'])
             es_m = ds.build_manager(ES_Manager)
             es_data = EsDataSample(field=param_field, query=param_query, es_m=es_m)
             data_sample_x, data_sample_y, statistics = es_data.get_data_samples()
