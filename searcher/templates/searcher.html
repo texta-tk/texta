@@ -2,18 +2,13 @@
 {% block app %}
 
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}searcher/searcher.css">
+<!-- For fact and text selections, tippy popover -->
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}searcher/selection.css">
 <script type="application/javascript" src="{{STATIC_URL}}local-cache.js"></script>
 <script type="application/javascript" src="{{STATIC_URL}}searcher/searcher.js"></script>
 
 <!-- Tippy content for span popovers -->
-<div id="factPopover">
-	<h4><span class="factName">key</span>: <span class="factValue">val</span></h4>
-	<button id="factPopoverDeleteBtn" style="background-color:cornsilk;color: black">
-		DELETE FACT
-	</button>
-</div>
-
-
+{% include "popover_templates.html" %}   
 	<div class="row">
 		<div class="col-lg-3">
 			<form id="filters">

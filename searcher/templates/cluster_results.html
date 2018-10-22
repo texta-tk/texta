@@ -3,7 +3,7 @@
 		{% for cluster in clusters %}
 		<li class="cluster {% if forloop.counter == 1 %}active{% endif %}">
 			<a data-toggle="pill" href="#cluster_{{cluster.id}}" title="{{cluster.keywords}}">
-				<form id ="save_as_lexicon_{{cluster.id}}" onsubmit="cluster_to_lex({{cluster.id}});return false;" method="post">
+				<form id ="save_as_lexicon_{{cluster.id}}" onsubmit="clusterToLex({{cluster.id}});return false;" method="post">
 					<input type="hidden" class="form-control" name="lexiconname" value="{{cluster.label}}">
 					<input type="hidden" class="form-control" name="lexiconkeywords" value="{{cluster.keywords}}">
 				</form>

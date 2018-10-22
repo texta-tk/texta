@@ -1,0 +1,19 @@
+/* For selected tippy text */
+.selectedText {
+    background-color: yellow;
+}
+.selectName {
+    color: black;
+    max-width: 30%;
+    border-radius: 4px;
+    border-style: solid;
+    border-color: transparent;
+}
+
+.popBtnWrap button {
+    border-color: #73ad21;
+    border-style: solid;
+    border-radius: 4px;
+    color: white;
+    background-color: transparent;
+}

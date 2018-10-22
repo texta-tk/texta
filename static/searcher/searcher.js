@@ -1473,7 +1473,7 @@ function hide_show_options_cluster() {
     }
 }
 
-function cluster_to_lex(id) {
+function clusterToLex(id) {
     var cluster_form = document.getElementById("save_as_lexicon_" + id);
     var fd = new FormData(cluster_form);
     fd.set('lexiconname', fd.get('lexiconname').split(' ').slice(0, -1).join(' '));
@@ -1499,7 +1499,7 @@ function tippyForFacts(spans) {
     spans.addClass("tippyFactSpan");
     spans = document.querySelectorAll('.tippyFactSpan')
     // Select fact popover template
-    var temp = $('#factPopover')
+    var temp = $('#factPopover').clone().removeAttr("style")
     // Create tippy instance
     tippy(spans,
         {
@@ -1554,15 +1554,29 @@ function tippyForSelect() {
             range.insertNode(textSpan);
             // debugger;
             // If selection is not of len 0
-            textTippy = tippy.one(textSpan,
+            temp = $('#textPopover').clone().removeAttr("style")
+            textTippy = tippy(textSpan,
                 {
-                    content: 'testing',
+                    content: temp.prop("outerHTML"),
                     interactive: true,
                     trigger: 'click',
                     showOnInit: 'true',
                 });
+
+
             var spans = [range['startOffset'], range['endOffset']];
             var content = selection.toString();
+                // Set template value to selected text
+                temp.find('.selectValue').html(content)
+                // Fact delete button
+                // btn = temp.find('#selectPopoverSaveBtn');
+                // // Attr because click events don't seem to work
+                // btn.attr('onclick', 'deleteFactArray([{name: val}], alert=true)');
+                // btn = temp.find('#selectPopoverSearchBtn');
+                // // Attr because click events don't seem to work
+                // btn.attr('onclick', 'deleteFactArray([{name: val}], alert=true)');
+                // Update span tippy content
+                textSpan._tippy.setContent(temp.prop('outerHTML'))
         };
     });
     // Mousedown for
@@ -1580,7 +1594,7 @@ function removeTextSelections(dom, tip) {
     $(".selectedText").remove();
     // Unwrapping contents breaks strings up into separate strings
     // When its broken up, it breaks selections
-    // Refreshing the innertText concats them back together
-    dom.innerHTML = dom.innerHTML;
-    tip.destroy();
+    // Normalizing concats them back together
+    dom.normalize()
+    tip.destroyAll();
 }
