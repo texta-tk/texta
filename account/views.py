@@ -43,45 +43,6 @@ def index(request):
 	return HttpResponse(
 			template.render({'STATIC_URL': STATIC_URL, 'allowed_datasets': datasets, 'language_models': language_models}, request))
 
-def password_reset_confirm(request, *args, **kwargs):
-	template = loader.get_template('reset-password.html')
-	
-	return HttpResponse(
-			template.render({'STATIC_URL': STATIC_URL}))
-	
-def send_password_reset_email(request):
-	
-	print(request.POST)
-	try:
-		emailInput = request.POST['email']
-		user=User.objects.get(email=emailInput)
-
-		if(user):
-			
-			c = {
-				'email': user.email,
-				'domain': request.META['HTTP_HOST'],
-				'site_name': 'texta.ee',
-				'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
-				'user': user,
-				'token': default_token_generator.make_token(user),
-				'protocol': 'http',
-				}
-			for key,value in c.items():
-				print(key+':'+str(value))
-				
-			email_template_name='password-reset-email.html'
-			emailBody = loader.render_to_string(email_template_name,c)
-			dddd = EmailMessage('Reset password', emailBody, to=[user.email])
-			dddd.send()  
-			
-		
-	except KeyError:
-		emailInput = 'unknown'
-
-	return HttpResponseRedirect(URL_PREFIX + '/')
-
-
 @login_required
 def update(request):
 	logger = LogManager(__name__, 'CHANGE_SETTINGS')
@@ -112,7 +73,6 @@ def update(request):
 		es_m = ds.build_manager(ES_Manager)
 
 	return HttpResponseRedirect(URL_PREFIX + '/')
-
 
 ### MANAGING ACCOUNTS ###
 

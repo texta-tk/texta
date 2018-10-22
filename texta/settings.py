@@ -27,7 +27,7 @@ BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'kalafrelk1@gmail.com'
+EMAIL_HOST_USER = 'emailaddress@gmail.com'
 EMAIL_HOST_PASSWORD = 'hunter2'
 EMAIL_PORT = 587
 ############################ Server Type ###########################
