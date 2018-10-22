@@ -324,13 +324,10 @@ function insert(resource_id,suggestionId,descriptive_term, lookup_type){
 function add_field(date_range_min,date_range_max){
     var field = Array();
     
-    $("#constraint_field option").filter(function(){
-        var val = $(this).val();
-        field.push(val);
-        console.log(val);
-    }).prop('selected','true');
-   
-    
+    $("#constraint_field option").filter(":selected").each(function(){
+    	var val = $(this).val();
+    	field.push(val);
+    });  
 
     if( !field ){
         swal('Warning!','No field selected!','warning');
@@ -341,16 +338,19 @@ function add_field(date_range_min,date_range_max){
     
     var field_path = Array();
     var field_data = Array();
+    var field_name = Array();
 
     field.forEach(function(data) {
         var data = JSON.parse(data);
+        field_name.push(data.label);
         field_path.push(data.path);
     });
 
-    var field_data = JSON.parse(field[0])
 
+	var field_name = field_name.join("; ");
+	
+    var field_data = JSON.parse(field[0])
     var field_type = field_data.type;
-    var field_name = field_data.label;
     var nested_layers = field_data.nested_layers;
 
     new_id = 'field_'+counter.toString();
