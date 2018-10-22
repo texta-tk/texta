@@ -186,8 +186,6 @@ def get_example_texts(request, field, value):
 
     response = es_m.perform_query(query)
 
-    print(response)
-
     matched_sentences = []
     for hit in response['hits']['hits']:
         for match in hit['highlight'].values():

@@ -47,7 +47,7 @@ def index(request):
         lexicons.append(lexicon)
 
     # Define selected mapping
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     fields = es_m.get_column_names()
 
@@ -239,9 +239,9 @@ def find_mappings(request):
         batch_size = 50
 
         # Define selected mapping
-        ds = Datasets().activate_dataset(request.session)
-        dataset = ds.get_index()
-        mapping = ds.get_mapping()
+        ds = Datasets().activate_datasets(request.session)
+        es_m = ds.build_manager(ES_Manager)
+        dataset = es_m.stringify_datasets()
 
         lexicon = []
         word_index = {}
@@ -275,10 +275,14 @@ def find_mappings(request):
                         query = {"query": {"match_phrase": {match_field: {"query": permutation,"slop": slop}}}}
                     else:
                         query = {"query": {"match_phrase": {match_field: {"query": permutation}}}}
-                    data.append(json.dumps({"index":dataset,"mapping":mapping})+'\n'+json.dumps(query))
+                        
+                    data.append(json.dumps({"index":dataset}))
+                    data.append(json.dumps(query))
                     phrases.append(permutation)
+                    
+                    
                     if len(data) == batch_size:
-                        for j,response in enumerate(ES_Manager.plain_multisearch(es_url, dataset, mapping, data)):
+                        for j,response in enumerate(es_m.perform_queries(data)):
                             try:
                                 if response['hits']['total'] >= min_freq:
                                     sorted_phrase = ' '.join(sorted(phrases[j].split(' ')))
@@ -299,7 +303,7 @@ def find_mappings(request):
                         phrases = []
             logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'MINE MWEs','event':'mwe_mining_progress','args':{'user_name':request.user.username,'run_id':new_run.id},'data':{'permutations_processed':i+1-min_len,'total_permutations':max_len-min_len+1}}))
         
-        m_response = ES_Manager.plain_multisearch(es_url, dataset, mapping, data)
+        m_response = es_m.perform_queries(data)
         
         for j,response in enumerate(m_response):
             try:
