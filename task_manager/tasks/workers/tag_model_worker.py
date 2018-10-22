@@ -21,6 +21,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.model_selection import GridSearchCV
 from task_manager.tools import ShowSteps
+from task_manager.tools import TaskCanceledException
 from task_manager.tools import get_pipeline_builder
 
 from .base_worker import BaseWorker
@@ -96,15 +97,23 @@ class TagModelWorker(BaseWorker):
                 'data':    {'task_id': self.task_id}
             }))
 
-            print('done')
+        except TaskCanceledException as e:
+            # If here, task was canceled while training
+            # Delete task
+            task = Task.objects.get(pk=self.id)
+            task.delete()
+            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE CLASSIFIER', 'event': 'model_training_canceled', 'data': {'task_id': self.id}}), exc_info=True)
+            print("--- Task canceled")
 
         except Exception as e:
             logging.getLogger(ERROR_LOGGER).error(json.dumps(
                 {'process': 'CREATE CLASSIFIER', 'event': 'model_training_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
             # declare the job as failed.
-            r = Task.objects.get(pk=self.task_id)
-            r.result = json.dumps({'error': repr(e)})
-            r.update_status(Task.STATUS_FAILED, set_time_completed=True)
+            task = Task.objects.get(pk=self.task_id)
+            task.result = json.dumps({'error': repr(e)})
+            task.update_status(Task.STATUS_FAILED, set_time_completed=True)
+        
+        print('done')
 
     def tag(self, texts):
         return self.model.predict(texts)

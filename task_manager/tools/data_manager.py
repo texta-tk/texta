@@ -30,6 +30,12 @@ def get_fields(es_m):
     return fields
 
 
+class TaskCanceledException(Exception):
+    """ Task Canceled Exception
+    """
+    pass
+
+
 class EsIteratorError(Exception):
     """ EsIterator Exception
     """

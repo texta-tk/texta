@@ -141,15 +141,21 @@ def delete_task(request):
     task_id = int(request.POST['task_id'])
     task = Task.objects.get(pk=task_id)
 
-    if 'train' in task.task_type:
-        try:
-            file_path = os.path.join(MODELS_DIR, "model_" + str(task_id))
-            os.remove(file_path)
-        except Exception:
-            file_path = os.path.join(MODELS_DIR, "model_" + str(task_id))
-            logging.getLogger(ERROR_LOGGER).error('Could not delete model.', extra={'file_path': file_path})
+    if task.status == Task.STATUS_RUNNING:
+        # If task is running, mark it to cancel
+        task.status = Task.STATUS_CANCELED
+        task.save()
+    else:
+        if 'train' in task.task_type:
+            try:
+                file_path = os.path.join(MODELS_DIR, "model_" + str(task_id))
+                os.remove(file_path)
+            except Exception:
+                file_path = os.path.join(MODELS_DIR, "model_" + str(task_id))
+                logging.getLogger(ERROR_LOGGER).error('Could not delete model.', extra={'file_path': file_path})
+        # Remove task
+        task.delete()
 
-    task.delete()
     return HttpResponse()
 
 
