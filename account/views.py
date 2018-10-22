@@ -78,7 +78,7 @@ def update(request):
 def _send_confirmation_email(user,email):
 	if(REQUIRE_EMAIL_CONFIRMATION):
 		token=_generate_random_token()
-		email = EmailMessage('Email Confirmation', URL_PREFIX+'/confirm/'+token, to=[email])
+		email = EmailMessage('Email Confirmation', 'Please confirm your email by clicking this link:'+URL_PREFIX+'/confirm/'+token, to=[email])
 	
 		try:
 			user.profile
