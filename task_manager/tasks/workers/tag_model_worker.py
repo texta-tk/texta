@@ -2,6 +2,7 @@
 import os
 import json
 import logging
+import numpy as np
 
 from task_manager.models import Task
 from task_manager.tools import EsDataSample
@@ -21,6 +22,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.model_selection import GridSearchCV
 from task_manager.tools import ShowSteps
+from task_manager.tools import TaskCanceledException
 from task_manager.tools import get_pipeline_builder
 
 from .base_worker import BaseWorker
@@ -38,6 +40,7 @@ class TagModelWorker(BaseWorker):
         self.task_model_obj = None
 
     def run(self, task_id):
+
         self.task_id = task_id
         self.task_model_obj = Task.objects.get(pk=self.task_id)
 
@@ -52,13 +55,17 @@ class TagModelWorker(BaseWorker):
         classifier_opt = int(task_params['classifier_opt'])
 
         try:
+            if 'fields' in task_params:
+                fields = task_params['fields']
+            else:
+                fields = [task_params['field']]
+
             show_progress.update(0)
             pipe_builder = get_pipeline_builder()
             pipe_builder.set_pipeline_options(extractor_opt, reductor_opt, normalizer_opt, classifier_opt)
             # clf_arch = pipe_builder.pipeline_representation()
-            c_pipe, c_params = pipe_builder.build()
-
-            param_field = task_params['field']
+            c_pipe, c_params = pipe_builder.build(fields=fields)
+            
             # Check if query was explicitly set
             if 'search_tag' in task_params:
                 # Use set query
@@ -70,12 +77,12 @@ class TagModelWorker(BaseWorker):
             # Build Data sampler
             ds = Datasets().activate_dataset_by_id(task_params['dataset'])
             es_m = ds.build_manager(ES_Manager)
-            es_data = EsDataSample(field=param_field, query=param_query, es_m=es_m)
-            data_sample_x, data_sample_y, statistics = es_data.get_data_samples()
+            es_data = EsDataSample(fields=fields, query=param_query, es_m=es_m)
+            data_sample_x_map, data_sample_y, statistics = es_data.get_data_samples()
 
             # Training the model.
             show_progress.update(1)
-            self.model, train_summary = self._train_model_with_cv(c_pipe, c_params, data_sample_x, data_sample_y, self.task_id)
+            self.model, train_summary = self._train_model_with_cv(c_pipe, c_params, data_sample_x_map, data_sample_y, self.task_id)
             train_summary['samples'] = statistics
 
             # Saving the model.
@@ -96,17 +103,26 @@ class TagModelWorker(BaseWorker):
                 'data':    {'task_id': self.task_id}
             }))
 
-            print('done')
+        except TaskCanceledException as e:
+            # If here, task was canceled while training
+            # Delete task
+            task = Task.objects.get(pk=self.task_id)
+            task.delete()
+            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE CLASSIFIER', 'event': 'model_training_canceled', 'data': {'task_id': self.task_id}}), exc_info=True)
+            print("--- Task canceled")
 
         except Exception as e:
             logging.getLogger(ERROR_LOGGER).error(json.dumps(
                 {'process': 'CREATE CLASSIFIER', 'event': 'model_training_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
             # declare the job as failed.
-            r = Task.objects.get(pk=self.task_id)
-            r.result = json.dumps({'error': repr(e)})
-            r.update_status(Task.STATUS_FAILED, set_time_completed=True)
+            task = Task.objects.get(pk=self.task_id)
+            task.result = json.dumps({'error': repr(e)})
+            task.update_status(Task.STATUS_FAILED, set_time_completed=True)
+        
+        print('done')
 
     def tag(self, texts):
+        # TODO: transform text to text_maps (per field)
         return self.model.predict(texts)
 
     def delete(self):
@@ -155,14 +171,26 @@ class TagModelWorker(BaseWorker):
         pass
 
     @staticmethod
-    def _train_model_with_cv(model, params, X, y, task_id):
+    def _train_model_with_cv(model, params, X_map, y, task_id):
+        
+        fields = list(X_map.keys())        
+        total_samples = len(X_map[fields[0]])
+        I_samples = range(total_samples)
+        I_train, I_test, y_train, y_test = train_test_split(I_samples, y, test_size=0.20)
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20)
+        X_train = {}
+        X_test = {}
+        
+        for field in fields:
+            X_train[field] = list(np.array(X_map[field])[I_train])
+            X_test[field] = list(np.array(X_map[field])[I_test])
 
         # Use Train data to parameter selection in a Grid Search
-        gs_clf = GridSearchCV(model, params, n_jobs=1, cv=5)
-        gs_clf = gs_clf.fit(X_train, y_train)
-        model = gs_clf.best_estimator_
+        # TODO: fix grid
+        # gs_clf = GridSearchCV(model, params, n_jobs=1, cv=5)
+        # gs_clf = gs_clf.fit(X_train, y_train)
+        # model = gs_clf.best_estimator_
+        model.fit(X_train, y_train)
 
         # Use best model and test data for final evaluation
         y_pred = model.predict(X_test)
