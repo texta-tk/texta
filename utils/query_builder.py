@@ -35,15 +35,12 @@ class QueryBuilder:
 
         for string_constraint in string_constraints.values():
 
-            field_data = json.loads(string_constraint['match_field']) if 'match_field' in string_constraint else {}
+            match_field = string_constraint['match_field'] if 'match_field' in string_constraint else ''
 
-
-            match_field = field_data['path'] if 'path' in field_data else ''
             match_type = string_constraint['match_type'] if 'match_type' in string_constraint else ''
             match_slop = string_constraint["match_slop"] if 'match_slop' in string_constraint else ''
             match_operator = string_constraint['match_operator'] if 'match_operator' in string_constraint else ''
             match_layer = string_constraint['match_layer'] if 'match_layer' in string_constraint else ''
-
 
             match_field = match_field.split(',')
 
@@ -68,10 +65,9 @@ class QueryBuilder:
                         # match phrase prefix query
                         synonym_query['multi_match'] = {'query': synonym, 'type': 'phrase_prefix', 'fields': match_field, 'slop': match_slop}
                     
-                    synonym_query = self._transform_to_layered_query(synonym_query, field_data, match_layer)
-                     
-                        
-                        
+                    # requires field data to work. disabled at the moment
+                    #synonym_query = self._transform_to_layered_query(synonym_query, field_data, match_layer)
+                                            
                     synonym_queries.append(synonym_query)
                 sub_queries.append({'bool': {'minimum_should_match': 1,'should': synonym_queries}})
             _combined_query["main"]["query"]["bool"]["should"].append({"bool": {match_operator: sub_queries}})
