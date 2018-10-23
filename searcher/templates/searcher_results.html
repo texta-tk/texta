@@ -5,15 +5,22 @@
     <thead>
         <tr>
             {% for column in columns %}
-            <th>{{column.name}}</th>
+                <th>{{column.name}}</th>
             {% endfor %}
         </tr>
     </thead>
+
+    <tr><td>
+
+        <br/><br/><br/>
+
+    </td></tr>
+
+    <tfoot>
         <tr>
-            <td>
-
-                <br/><br/><br/>
-
-            </td>
+            {% for column in columns %}
+                <th>{{column.name}}</th>
+            {% endfor %}
         </tr>
+    </tfoot>
 </table>

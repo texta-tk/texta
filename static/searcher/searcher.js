@@ -599,12 +599,12 @@ function query(){
         if (request.readyState==4 && request.status==200) {
             $("#right").html(request.responseText);
             examplesTable = $('#examples').DataTable({
-                  "bAutoWidth": true,
+                  "bAutoWidth": false,
                   "deferRender": true,
-                  "bServerSide": true,  
+                  "bServerSide": true,
                   'processing': true,
                   "sAjaxSource": PREFIX+"/table_content",
-                  "sDom": '<Bl"H"ipr>t',
+                  "sDom": '<Bl"H"ipr>t<"F"lip>',
                   "sServerMethod":"POST",
                   "fnServerParams":function(aoData){
                       aoData.push({'name':'filterParams','value':JSON.stringify($("#filters").serializeArray())});
@@ -617,12 +617,19 @@ function query(){
                         'columnsToggle'
                     ],
                     "oLanguage": { "sProcessing": "Loading..."},
+                    "fnInitComplete": function() {
+                        $('.dataTables_scrollHead').css('overflow-x', 'auto');
+                        
+                        // Sync THEAD scrolling with TBODY
+                        $('.dataTables_scrollHead').on('scroll', function () {
+                            $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft());
+                        });  
+                    },
                 "stateSave": true,
                 "stateSaveParams": function (settings, data) {
                     data.start = 0;
                 },
                 "scrollX": true
-
             });
 
             $(function(){
@@ -635,10 +642,6 @@ function query(){
             $("#actions-btn").removeClass("invisible");
             $("#export-examples-modal").removeClass("invisible");
             $("#export-aggregation-modal").addClass("invisible");
-
-            /*make padding to counter generated content pushing table down*/ 
-            var element  = $("#examples_wrapper").find('div:first').outerHeight(); 
-            $(".dataTables_scroll").css("padding-bottom",element+60);
         }
     }
 
@@ -1193,7 +1196,6 @@ function save(){
         const {value: description} = await swal({
             title: 'Enter description for the search.',
             input: 'text',
-            backdrop: false,
             inputPlaceholder: 'description',
             showCancelButton: true,
             inputValidator: (value) => {
@@ -1201,7 +1203,7 @@ function save(){
             }
         })
         if (description) {
-            swal({type: 'success', backdrop: false,title: 'Successfully saved search.'})
+            swal({type: 'success', title: 'Successfully saved search.'})
 
             $('#search_description').val(description);
             var formElement = document.getElementById("filters");

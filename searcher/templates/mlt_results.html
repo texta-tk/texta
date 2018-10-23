@@ -1,31 +1,29 @@
-<div class="default-table-wrapper">
-	<table id='mlt_table' class="table table-striped">
-		<thead>
-			<tr>
-				<th>Doc ID</th>
-				<th>Accept</th>
-				<th>Reject</th>
-
-				{% for field_name in documents.0.content.keys %}
+<table id='mlt_table' class="table table-striped">
+	<thead>
+		<tr>
+			<th>Doc ID</th>
+			<th>Accept</th>
+			<th>Reject</th>
+			
+			{% for field_name in documents.0.content.keys %}
 				<th>{{field_name|safe}}</th>
-				{% endfor %}
-			</tr>
-		</thead>
-		<tbody>
-			{% for doc in documents %}
+			{% endfor %}
+		</tr>
+	</thead>
+	<tbody>
+		{% for doc in documents %}
 			<tr id="row_{{doc.id}}">
 				<td>{{doc.id}}</td>
 				<td><a href="javascript:accept_document('{{doc.id}}')"><span class="glyphicon glyphicon-plus"></span></a></td>
 				<td><a href="javascript:reject_document('{{doc.id}}')"><span class="glyphicon glyphicon-remove"></span></a></a></td>
-
+				
 				{% for field_content in doc.content.values %}
-				<td>{{field_content|safe}}</td>
+					<td>{{field_content|safe}}</td>
 				{% endfor %}
 			</tr>
-			{% endfor %}
-		</tbody>
-	</table>
-</div>
+		{% endfor %}
+	</tbody>
+</table>
 <script>
-	$("#mlt_table").colResizable({ minWidth: 50 });
+	$("#mlt_table").colResizable({minWidth:50});
 </script>
