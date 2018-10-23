@@ -159,11 +159,11 @@ def process_hits(hits, features, write=True, writer=None):
                     for k in d:
                         if k not in content:
                             content.append(k)
-                        content.append('    {}: {}'.format(d[k], fact_counts[facts[i]]))
-                content = '\n'.join(content)
-                content = '{}\n{}'.format(content, parent_source) # Append JSON format
+                        content.append('{}: {}'.format(d[k], fact_counts[facts[i]]))
+                content = ' - '.join(content)
+                content = '{}; {}'.format(content, parent_source) # Append JSON format
             else:
-                content = parent_source
+                content = parent_source.replace('\n', '\\n').replace('"', '\"')
 
             row.append(content)
         if not write:

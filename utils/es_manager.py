@@ -96,6 +96,8 @@ class ES_Manager:
         self.combined_query = None
         self._facts_map = None
         self.es_cache = ES_Cache()
+        # Clears readonly block just in case the index has been set to read only
+        self.clear_readonly_block()
 
     def bulk_post_update_documents(self, documents, ids):
         '''Do both plain_post_bulk and _update_by_query'''
@@ -381,7 +383,7 @@ class ES_Manager:
         q = json.dumps(self.combined_query['main'])
         search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
         response = requests.post(search_url, data=q, headers=HEADERS).json()
-
+        print(response, '1111')
         scroll_id = response['_scroll_id']
         total_hits = response['hits']['total']
 
@@ -397,7 +399,6 @@ class ES_Manager:
             data = self.process_bulk(response['hits']['hits'])
             delete_url = '{0}/{1}/{2}/_bulk'.format(es_url, self.index, self.mapping)
             deleted = requests.post(delete_url, data=data, headers=HEADERS)
-
         return True
 
     def scroll(self, scroll_id=None, time_out='1m', id_scroll=False, field_scroll=False, size=100, match_all=False):
@@ -560,7 +561,7 @@ class ES_Manager:
         return aggs["min_date"]["value_as_string"], aggs["max_date"]["value_as_string"]
 
     def clear_readonly_block(self):
-        '''changes read_only_allow_delete to False'''
+        '''changes the property read_only_allow_delete of an index to False'''
         data = {"index":{"blocks":{"read_only_allow_delete":"false"}}}
         url = "{0}/{1}/_settings".format(self.es_url, self.index)
         response = self.plain_put(url, json.dumps(data))

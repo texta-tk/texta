@@ -3,8 +3,10 @@ from sklearn.cluster import AgglomerativeClustering,KMeans
 from sklearn.metrics.pairwise import cosine_similarity
 from itertools import combinations
 from time import time
+from utils.highlighter import Highlighter
 import numpy as np
 import json
+import re
 
 from lexicon_miner.models import Lexicon,Word
 
@@ -142,6 +144,44 @@ class ClusterManager:
             out[cluster] = out[cluster].reshape(cluster_shape[0] * cluster_shape[1])[:keywords_per_cluster].tolist()
             # To append seperate document values
             #out[cluster] = np.array(self.feature_names)[np.argsort(docs_for_cluster[cluster])[::-1]][:,:keywords_per_cluster]
+        return out
+
+
+    def highlight_cluster_keywords(self, documents, keywords):
+        out = []
+        for document in documents:
+            to_highlighter = []
+            for keyword in keywords:
+                pattern = re.compile(u'{0}{1}{2}'.format(u'(?<![A-z0-9])',re.escape(keyword.lower()),u'(?![A-z0-9])'))
+                for match in pattern.finditer(document.lower()):
+                    span = [(match.start(),match.end())]
+                    new_match = {u'spans':span,u'color':u'#FFD119'}
+                    to_highlighter.append(new_match)
+
+            if to_highlighter:
+                hl = Highlighter(default_category='[HL]')
+                document = hl.highlight(document,to_highlighter)
+                if 'show_short_version_cluster' in self.params.keys():
+                    document = additional_option_cut_text(document, self.params['short_version_n_char_cluster'])
+                out.append(document)
+            elif not 'show_unhighlighted' in self.params.keys():
+                out.append(document)
+        return out
+
+
+    def convert_clustering_data(self):
+        out = []
+        clusters = self.clusters
+
+        for cluster_id,cluster_content in clusters.items():
+            documents = [self.documents[doc_id] for doc_id in cluster_content]
+            cluster_label = 'Cluster {0} ({1})'.format(cluster_id+1,len(cluster_content))
+            keywords = self.cluster_keywords[cluster_id]
+            cluster_data = {'documents':self.highlight_cluster_keywords(documents,keywords),
+                            'label':cluster_label,
+                            'id':cluster_id,
+                            'keywords':' '.join(keywords)}
+            out.append(cluster_data)
         return out
 
     # REPLACED BY _get_cluster_top_keywords()
