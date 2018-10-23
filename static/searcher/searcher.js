@@ -994,7 +994,6 @@ function deleteFactArray(factArray, alert=true) {
 }
 
 function addFactToSearch(fact_name, fact_val) {
-
     $("#constraint_field option").each(function()
     {
         if ($(this).val() != "") {
@@ -1492,10 +1491,61 @@ function clusterToLex(id) {
     });
 }
 
+function addFactToSearch(fact_name, fact_val) {
+    $("#constraint_field option").each(function()
+    {
+        if ($(this).val() != "") {
+            if (JSON.parse($(this).val())['type'] == "fact_str_val") {
+                $("#constraint_field").val($(this).val());
+                return false; //break out of loop
+            }
+        }
+    })
+
+    var has_field = false;
+    $('span[id^=selected_field_]').each(function (index) {
+        if ($(this).text().includes(['[fact_text_values]'])) {
+            has_field = true;
+        }
+    });
+    if (!has_field) {
+        add_field("", "", "");
+    }
+
+    var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_');
+    var suggestion_id = split_id[split_id.length - 2] + '_' + split_id[split_id.length - 1]
+    if (has_field) {
+        addFactValueFieldConstraint(split_id[split_id.length - 2], $("#fact_field_" + split_id[split_id.length - 2]).val())
+        var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_');
+        var suggestion_id = split_id[split_id.length - 2] + '_' + split_id[split_id.length - 1]
+    }
+
+    $('#field_' + split_id[split_id.length - 2] + " #fact_txt_" + suggestion_id).val(fact_name)
+    $('#fact_constraint_op_' + suggestion_id).val('=');
+    $("#fact_constraint_val_" + suggestion_id).val(fact_val);
+}
+
+
 // Add details like spans and buttons to searcher HL fact onclick/hover
 // TODO split up functions to smaller functions inside
+function createSelectionProps() {
+    var spans = $(".\\[HL\\]").add($("span[title='\\[HL\\]']"));
+    // Add hover effect
+    spans.hover(function (e) {
+        $(this).css("filter", e.type === "mouseenter" ? "brightness(110%)" : "brightness(100%)")
+        $(this).css("cursor", "pointer")
+    })
+    // Add popover system to FACT spans
+    tippyForFacts();
+    // Add popover system to text search spans
+    tippyForText();
+    // Add popover system to selection spans
+    tippyForSelect();
+}
 
 function tippyForFacts(spans) {
+    // Select FACT spans
+    var spans = $(".\\[HL\\]");
     spans.addClass("tippyFactSpan");
     spans = document.querySelectorAll('.tippyFactSpan')
     // Select fact popover template
@@ -1516,25 +1566,15 @@ function tippyForFacts(spans) {
         temp.find('.factName').html(name)
         temp.find('.factValue').html(val)
         // Fact delete button
-        btn = temp.find('#factPopoverDeleteBtn');
+        btn_delete = temp.find('#factPopoverDeleteBtn');
         // Attr because click events don't seem to work
-        btn.attr('onclick', 'deleteFactArray([{name: val}], alert=true)');
+        btn_delete.attr('onclick', 'deleteFactArray([{"'+name+'":"'+val+'"}], alert=true)');
+
+        btn_search = temp.find('#factPopoverSearchBtn');
+        btn_search.attr('onclick', 'addFactToSearch("'+name+'","'+val+'")');
         // Update span tippy content
         span._tippy.setContent(temp.prop('outerHTML'))
     });
-}
-function createSelectionProps() {
-    // Select HL spans
-    var spans = $(".\\[HL\\]");
-    // Add hover effect
-    spans.hover(function (e) {
-        $(this).css("filter", e.type === "mouseenter" ? "brightness(110%)" : "brightness(100%)")
-        $(this).css("cursor", "pointer")
-    })
-    // Add popover system to HL spans
-    tippyForFacts(spans);
-    // Add popover system to selection spans
-    tippyForSelect();
 }
 function tippyForSelect() {
     $("#examples").find('tbody').find('td').mouseup(function () {
@@ -1567,14 +1607,12 @@ function tippyForSelect() {
             var spans = [range['startOffset'], range['endOffset']];
             var content = selection.toString();
                 // Set template value to selected text
-                temp.find('.selectValue').html(content)
-                // Fact delete button
-                // btn = temp.find('#selectPopoverSaveBtn');
-                // // Attr because click events don't seem to work
-                // btn.attr('onclick', 'deleteFactArray([{name: val}], alert=true)');
-                // btn = temp.find('#selectPopoverSearchBtn');
-                // // Attr because click events don't seem to work
-                // btn.attr('onclick', 'deleteFactArray([{name: val}], alert=true)');
+                temp.find('.textValue').html(content)
+                // Save as fact button
+                btn = temp.find('#textPopoverSaveBtn');
+                // Attr because click events don't seem to work
+                btn.attr('onclick', 'deleteFactArray([{name: val}], alert=true)');
+                
                 // Update span tippy content
                 textSpan._tippy.setContent(temp.prop('outerHTML'))
         };
@@ -1598,3 +1636,43 @@ function removeTextSelections(dom, tip) {
     dom.normalize()
     tip.destroyAll();
 }
+
+function tippyForText() {
+    // Select spans without [FACT] class
+    // spans = $(".\\[HL\\][title!='\\[fact\\]'])").add($('span[title="\\[HL\\]"]'))
+    var spans = $("span[title='\\[HL\\]']")
+    spans.addClass("tippyTextSpan");
+    spans = document.querySelectorAll('.tippyTextSpan')
+    // Select text popover template
+    var temp = $('#textPopover').clone().removeAttr("style")
+    // Create tippy instance
+    tippy(spans,
+        {
+            content: temp.prop('outerHTML'),
+            interactive: true,
+            trigger: 'click',
+        });
+    // Create specific content for each span
+    Array.prototype.forEach.call(spans, function (span, i) {
+        // Add val to temp
+        val = span.innerText
+        temp.find('.textValue').html(val)
+        // // Fact delete button
+        save_btn = temp.find('#textPopoverSaveBtn');
+        // Attr because click events don't seem to work
+        save_btn.attr('onclick', 'addToSearch([{name: val}], alert=true)');
+        // Update span tippy content
+        span._tippy.setContent(temp.prop('outerHTML'))
+    });
+}
+
+
+function saveAsFact() {
+
+}
+//TODO fix the fact key having [HL] in it thing
+// its from the backend [FACT] thing, need to remove that
+// But even then, it comes when a text search overlaps with a fact
+//TODO ADD BUTTON FUNCTIONALITY
+//TODO fix the text hover thing
+//TODO put into other file
