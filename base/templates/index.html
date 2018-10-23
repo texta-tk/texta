@@ -98,7 +98,7 @@
 
             	<form class="navbar-form navbar-right">
             	
-					<select id="dataset_to_activate" name="dataset_to_activate" multiple="multiple" class="input-sm" onchange="update_resources();">
+					<select id="dataset_to_activate" name="dataset_to_activate" multiple class="input-sm" onchange="update_resources();">
 						{% for dataset in allowed_datasets %}
 							{% if dataset.id|stringformat:"i" in request.session.dataset %}
 								<option class="datasetOption" value="{{dataset.id}}" selected="selected">Dataset {{dataset.id}}: {{dataset.index}} - {{dataset.mapping}}</option>
