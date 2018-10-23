@@ -177,7 +177,7 @@ function render_saved_search(search_id) {
 
 function render_saved_search_field(field_data, min_date, max_date) {
 
-    add_field(min_date, max_date);
+    add_field(min_date, max_date, field_data);
 
     if (field_data.constraint_type === 'date') {
         $("#field_"+counter.toString()+" #daterange_from_"+counter.toString()).val(field_data.start_date);
@@ -321,7 +321,7 @@ function insert(resource_id,suggestionId,descriptive_term, lookup_type){
 }
 
 
-function add_field(date_range_min,date_range_max){
+function add_field(date_range_min, date_range_max, submitted_field_data){
     var field = Array();
     
     $("#constraint_field option").filter(":selected").each(function(){
@@ -348,10 +348,20 @@ function add_field(date_range_min,date_range_max){
 
 
 	var field_name = field_name.join("; ");
-	
-    var field_data = JSON.parse(field[0])
-    var field_type = field_data.type;
-    var nested_layers = field_data.nested_layers;
+    
+    
+    if(!submitted_field_data) {
+
+        var field_data = JSON.parse(field[0])
+        var field_type = field_data.type;
+        var nested_layers = field_data.nested_layers;
+
+    } else {
+
+        var field_type = submitted_field_data.constraint_type;
+        var nested_layers = Array();
+
+    }
 
     new_id = 'field_'+counter.toString();
 
