@@ -3,6 +3,7 @@ import os
 import json
 import logging
 import numpy as np
+import pandas as pd
 
 from task_manager.models import Task
 from task_manager.tools import EsDataSample
@@ -65,7 +66,7 @@ class TagModelWorker(BaseWorker):
             pipe_builder.set_pipeline_options(extractor_opt, reductor_opt, normalizer_opt, classifier_opt)
             # clf_arch = pipe_builder.pipeline_representation()
             c_pipe, c_params = pipe_builder.build(fields=fields)
-            
+
             # Check if query was explicitly set
             if 'search_tag' in task_params:
                 # Use set query
@@ -121,9 +122,19 @@ class TagModelWorker(BaseWorker):
         
         print('done')
 
-    def tag(self, texts):
-        # TODO: transform text to text_maps (per field)
-        return self.model.predict(texts)
+    def tag(self, text_map, check_map_consistency=True):
+        # Recover features from model to check map
+        union_features = [x[0] for x in self.model.named_steps['union'].transformer_list if x[0].startswith('pipe_')]
+        field_features = [x[5:] for x in union_features]
+        df_text = pd.DataFrame(text_map)
+        for field in field_features:
+            if field not in text_map:
+                if check_map_consistency:
+                    raise RuntimeError("Mapped field not present: {}".format(field))
+                else:
+                    df_text[field] = ""
+        # Predict        
+        return self.model.predict(df_text)
 
     def delete(self):
         pass
@@ -185,16 +196,18 @@ class TagModelWorker(BaseWorker):
             X_train[field] = list(np.array(X_map[field])[I_train])
             X_test[field] = list(np.array(X_map[field])[I_test])
 
+        df_train = pd.DataFrame(X_train)
+        df_test = pd.DataFrame(X_test)
+
         # Use Train data to parameter selection in a Grid Search
-        # TODO: fix grid
-        # gs_clf = GridSearchCV(model, params, n_jobs=1, cv=5)
-        # gs_clf = gs_clf.fit(X_train, y_train)
-        # model = gs_clf.best_estimator_
-        model.fit(X_train, y_train)
+        gs_clf = GridSearchCV(model, params, n_jobs=1, cv=5)
+        gs_clf = gs_clf.fit(df_train, y_train)
+        model = gs_clf.best_estimator_
 
         # Use best model and test data for final evaluation
-        y_pred = model.predict(X_test)
+        y_pred = model.predict(df_test)
 
+        # Report
         _f1 = f1_score(y_test, y_pred, average='micro')
         _confusion = confusion_matrix(y_test, y_pred)
         __precision = precision_score(y_test, y_pred)

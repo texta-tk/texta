@@ -155,28 +155,41 @@ class PipelineBuilder:
         return rep
 
     def build(self, fields):
-        # Build model Pipeline
-        
-        # Field transform pipeline per field
+        """ Build model Pipeline and Grid Search params
+        """
+        params = {}
+        # Field transform pipeline per field + params
         transformer_list = []
+
         for field in fields:
+            pipe_key = 'pipe_{}'.format(field)
             steps = []    
             steps.append(tuple(['selector', ItemSelector(key=field)]))
             steps.append(self.extractor_list[self.extractor_op].get_step())
             steps.append(self.reductor_list[self.reductor_op].get_step())
             steps.append(self.normalizer_list[self.normalizer_op].get_step())
-            transformer_list.append(tuple(['pipe_{}'.format(field), Pipeline(steps)]))
+            transformer_list.append(tuple([pipe_key, Pipeline(steps)]))
+            # Nest params inside the union field - Extractor
+            p_dict = self.extractor_list[self.extractor_op].get_param()
+            for k in p_dict:
+                new_k = '{}__{}__{}'.format('union', pipe_key, k)
+                params[new_k] = p_dict[k]
+            # Nest params inside the union field - Reductor
+            p_dict = self.reductor_list[self.reductor_op].get_param()
+            for k in p_dict:
+                new_k = '{}__{}__{}'.format('union', pipe_key, k)
+                params[new_k] = p_dict[k]
+            # Nest params inside the union field - Normalizer
+            p_dict = self.normalizer_list[self.normalizer_op].get_param()
+            for k in p_dict:
+                new_k = '{}__{}__{}'.format('union', pipe_key, k)
+                params[new_k] = p_dict[k]
 
-        # Classifier pipeline
+        # Classifier pipeline + params
         steps = []
         steps.append(tuple(['union', FeatureUnion(transformer_list=transformer_list)]))
         steps.append(self.classifier_list[self.classifier_op].get_step())
         pipe = Pipeline(steps)
-        # Build model params for Grid Search
-        params = {}
-        params.update(self.extractor_list[self.extractor_op].get_param())
-        params.update(self.reductor_list[self.reductor_op].get_param())
-        params.update(self.normalizer_list[self.normalizer_op].get_param())
         params.update(self.classifier_list[self.classifier_op].get_param())
         return pipe, params
 
