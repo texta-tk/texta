@@ -65,9 +65,7 @@ class TagModelWorker(BaseWorker):
             pipe_builder.set_pipeline_options(extractor_opt, reductor_opt, normalizer_opt, classifier_opt)
             # clf_arch = pipe_builder.pipeline_representation()
             c_pipe, c_params = pipe_builder.build(fields=fields)
-
-            print(">>>>> param_field: ", fields)
-
+            
             # Check if query was explicitly set
             if 'search_tag' in task_params:
                 # Use set query
@@ -175,10 +173,7 @@ class TagModelWorker(BaseWorker):
     @staticmethod
     def _train_model_with_cv(model, params, X_map, y, task_id):
         
-        fields = list(X_map.keys())
-        print(">>>>> Fields again: ", fields)
-        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        
+        fields = list(X_map.keys())        
         total_samples = len(X_map[fields[0]])
         I_samples = range(total_samples)
         I_train, I_test, y_train, y_test = train_test_split(I_samples, y, test_size=0.20)
@@ -189,7 +184,6 @@ class TagModelWorker(BaseWorker):
         for field in fields:
             X_train[field] = list(np.array(X_map[field])[I_train])
             X_test[field] = list(np.array(X_map[field])[I_test])
-            print(">>> {}  - {} and {}".format(field, len(X_train[field]), len(X_test[field])))
 
         # Use Train data to parameter selection in a Grid Search
         # TODO: fix grid
