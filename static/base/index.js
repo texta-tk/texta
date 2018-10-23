@@ -65,7 +65,12 @@ $('#grammar_builder').click(function() {
 $('#dataset_importer').click(function() {
     window.location = LINK_DATASET_IMPORTER;
 });
+$(".model-dropdown-menu li").click(function(){
 
+    $("#model-dropdown").text($(this).text());
+    $("#model-dropdown").val($(this).text());
+
+ });
 $('#notRegistered').click(function() {
     $(this).hide();
     $('#registrationForm').slideDown(1000);
