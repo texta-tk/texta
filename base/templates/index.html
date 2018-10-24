@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<meta charset="UTF-8">
@@ -101,10 +102,9 @@
 							{% endif %}
 							{% endif %}
 						</ul>
-						{% if request.user.is_authenticated %}
 
 						<div class="navbar-right">
-
+							{% if request.user.is_authenticated %}
 							<form class="navbar-form">
 								<select id="dataset_to_activate" name="dataset_to_activate" class="input-sm" onchange="update_resources();">
 									{% for dataset in allowed_datasets %}
@@ -130,6 +130,13 @@
 								</select>
 							</form>
 
+							<div class="user-data navbar-form">
+								<span> Logged in as {{request.user.get_username}}. </span>
+								<button type="button" class="btn btn-danger btn-sm" onclick="go_to(LINK_ACCOUNT + '/account/log_out')">
+									<span class="glyphicon glyphicon-log-out"></span>
+								</button>
+							</div>
+							
 							{% else %}
 							<form class="navbar-form form-inline" id="login_form" onsubmit="go_to(LINK_ROOT+'account/login','login_form')"
 							 method="POST">
@@ -144,13 +151,6 @@
 								<button type="submit" class="btn btn-success btn-sm"><span class="glyphicon glyphicon-log-in"></button>
 							</form>
 							{% endif %}
-
-							<div class="user-data navbar-form">
-								<span> Logged in as {{request.user.get_username}}. </span>
-								<button type="button" class="btn btn-danger btn-sm" onclick="go_to(LINK_ACCOUNT + '/account/log_out')">
-									<span class="glyphicon glyphicon-log-out"></span>
-								</button>
-							</div>
 						</div>
 					</div><!-- /.navbar-collapse -->
 				</div><!-- /.container-fluid -->
