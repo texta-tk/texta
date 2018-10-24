@@ -1,5 +1,3 @@
-
-{% include 'wildcard-dataset-modal.html' %}
 <div class="panel">
     <div class="panel-heading">Dataset Management</div>
     <div class="panel-body">
@@ -7,14 +5,16 @@
         <form action="/permission_admin/add_index" method='POST'>
             <div class="grid-wrapper-dm">
                 <div class="grid-i-dataset">
-                    <select class="form-control input-sm" id="index">
+                    <select class="form-control input-sm index-input index" id="index">
                         {% for index in indices %}
                         <option value="{{index.index}}">{{index.index}} ({{index.status}})</option>
                         {% endfor %}
                     </select>
+                    <input type="text" class="form-control input-sm wildcard-index-input hidden" placeholder="Index">
                 </div>
                 <div class="grid-i-mapping">
-                    <select class="form-control input-sm" id="mapping"></select>
+                    <select class="form-control input-sm mapping-input mapping" id="mapping"></select>
+                    <input type="text" class="form-control input-sm wildcard-mapping-input hidden" placeholder="Mapping">
                 </div>
                 <div class="grid-i-access">
                     <select class="form-control input-sm" id="access">
@@ -26,7 +26,7 @@
                     <button class="btn btn-default btn-sm" type='button' onclick="add_dataset();">Add</button>
                 </div>
                 <div class="grid-i-wild-btn">
-                    <button class="btn btn-default btn-sm" type='button' data-toggle="modal" data-target=".wildcard-modal">Wildcard dataset</button>
+                    <button class="btn btn-default btn-sm" type='button' onclick="toggle_wildcard_dataset();">Toggle Wildcard</button>
                 </div>
             </div>
         </form>
