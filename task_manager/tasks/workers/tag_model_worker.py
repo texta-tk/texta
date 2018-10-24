@@ -113,7 +113,7 @@ class TagModelWorker(BaseWorker):
             print("--- Task canceled")
 
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).error(json.dumps(
+            logging.getLogger(ERROR_LOGGER).exception(json.dumps(
                 {'process': 'CREATE CLASSIFIER', 'event': 'model_training_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
             # declare the job as failed.
             task = Task.objects.get(pk=self.task_id)
