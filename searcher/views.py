@@ -664,16 +664,16 @@ def delete_facts(request):
 
 @login_required
 def tag_documents(request):
-    """Add a fact to documents with given name and value
-       via Search > Actions > Tag results
-    """
+    """Add a fact to documents with given name and value"""
     tag_name = request.POST['tag_name']
     tag_value = request.POST['tag_value']
     tag_field = request.POST['tag_field']
+    tag_spans = request.POST['tag_spans'] if 'tag_span' in request.POST else None
+
     es_params = request.POST
 
     fact_m = FactManager(request)
-    fact_m.tag_documents_with_fact(es_params, tag_name, tag_value, tag_field)
+    fact_m.tag_documents_with_fact(es_params, tag_name, tag_value, tag_field, tag_span=tag_spans)
     return HttpResponse()
 
 def _get_facts_agg_count(es_m, facts):

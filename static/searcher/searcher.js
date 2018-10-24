@@ -1588,6 +1588,7 @@ function tippyForSelect() {
             }
             var range = selection.getRangeAt(0);
             // Tippy for selection
+            var loc_spans = [range['startOffset'], range['endOffset']];
             var textSpan = document.createElement('span');
             textSpan.className = 'selectedText';
             textSpan.appendChild(range.extractContents());
@@ -1604,15 +1605,13 @@ function tippyForSelect() {
                 });
 
 
-            var spans = [range['startOffset'], range['endOffset']];
             var content = selection.toString();
                 // Set template value to selected text
                 temp.find('.textValue').html(content)
                 // Save as fact button
                 btn = temp.find('#textPopoverSaveBtn');
                 // Attr because click events don't seem to work
-                btn.attr('onclick', 'deleteFactArray([{name: val}], alert=true)');
-                
+                btn.attr('onclick', 'saveAsFact(['+loc_spans+'],"'+content+'")');
                 // Update span tippy content
                 textSpan._tippy.setContent(temp.prop('outerHTML'))
         };
@@ -1639,7 +1638,6 @@ function removeTextSelections(dom, tip) {
 
 function tippyForText() {
     // Select spans without [FACT] class
-    // spans = $(".\\[HL\\][title!='\\[fact\\]'])").add($('span[title="\\[HL\\]"]'))
     var spans = $("span[title='\\[HL\\]']")
     spans.addClass("tippyTextSpan");
     spans = document.querySelectorAll('.tippyTextSpan')
@@ -1660,19 +1658,44 @@ function tippyForText() {
         // // Fact delete button
         save_btn = temp.find('#textPopoverSaveBtn');
         // Attr because click events don't seem to work
-        save_btn.attr('onclick', 'addToSearch([{name: val}], alert=true)');
+        // save_btn.attr('onclick', 'saveAsFact('+spans+','+content+')');
         // Update span tippy content
         span._tippy.setContent(temp.prop('outerHTML'))
     });
 }
 
 
-function saveAsFact() {
+function saveAsFact(tag_name, tag_value, tag_spans) {
+    console.log(tag_name)
+    console.log(tag_value)
+    console.log(spans)
 
+    // GET tag_field
+
+    formElement = new FormData(document.getElementById("filters"));
+    formElement.append('tag_name', tag_name);
+    formElement.append('tag_value', tag_value);
+    formElement.append('tag_field', tag_field);
+    formElement.append('tag_spans', tag_spans);
+
+    $.ajax({
+        url: PREFIX + '/tag_documents',
+        data: formElement,
+        type: 'POST',
+        contentType: false,
+        processData: false,
+        success: function() {
+            swal({
+                title:'Adding fact successful!',
+                text:'Fact '+ tag_name + ': ' + tag_value + ' has been added.',
+                type:'success'});
+        },
+        error: function() {
+            swal('Error!','There was a problem tagging the search!','error');
+        }
+    });
 }
 //TODO fix the fact key having [HL] in it thing
 // its from the backend [FACT] thing, need to remove that
 // But even then, it comes when a text search overlaps with a fact
-//TODO ADD BUTTON FUNCTIONALITY
-//TODO fix the text hover thing
 //TODO put into other file
