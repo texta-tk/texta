@@ -11,6 +11,8 @@ class Profile(models.Model):
         on_delete=models.CASCADE,
     )
     auth_token = models.CharField(max_length=14, blank=True, default='')
+    email_confirmation_token = models.CharField(max_length=14, blank=True, default='')
+    email_confirmed = models.BooleanField(default=False)
 
 
 @receiver(post_save, sender=User)
