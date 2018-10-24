@@ -3,6 +3,7 @@ from task_manager.models import Task
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from account.api_auth import api_auth
+import pandas as pd
 
 from utils.datasets import Datasets
 from permission_admin.models import Dataset
@@ -270,6 +271,32 @@ def api_tagger_list(request, user, params):
 
 @csrf_exempt
 @api_auth
+def api_tagger_info(request, user, params):
+    """ Get tagger info for API user (via auth_token)
+    """
+    tagger_id = params['tagger']
+    tagger = list(Task.objects.filter(task_type="train_tagger", id=tagger_id))[0]
+
+    model_worker = TagModelWorker()
+    model = model_worker.load(tagger_id)
+    # Get model fields
+    if 'union' in model.named_steps:
+        union_features = [x[0] for x in model.named_steps['union'].transformer_list if x[0].startswith('pipe_')]
+        field_features = [x[5:] for x in union_features]
+        data = {'tagger': tagger.id, 
+                'fields': field_features,
+                'tag': tagger.description,
+                'model_description': str(model)
+                }
+    else:
+        data = {"error": "model does not contain union features"}
+
+    data_json = json.dumps(data)
+    return HttpResponse(data_json, status=200, content_type='application/json')
+
+
+@csrf_exempt
+@api_auth
 def api_tag_list(request, user, params):
     """ Get list of available tags for API user (via auth_token)
     """
@@ -484,32 +511,40 @@ def api_tag_text(request, user, params):
     """ Apply tag to text (via auth_token)
     """
      # Get parameters with default values
-    text = params.get('text', "").strip()
+    text_dict = params.get('text', "{}")
     taggers = params.get('taggers', None)
+
     # Check if text input is valid
-    if len(text) == 0:
+    if not text_dict:
         error = {'error': 'text parameter cannot be empty'}
         data_json = json.dumps(error)
         return HttpResponse(data_json, status=400, content_type='application/json')
+    
     # Select taggers
     tagger_ids_list = [tagger.id for tagger in Task.objects.filter(task_type='train_tagger').filter(status=Task.STATUS_COMPLETED)]
     data = {'tags': [], 'explain': []}
+    
     # Apply
     for tagger_id in tagger_ids_list:
         is_tagger_selected = taggers is None or tagger_id in taggers
         if is_tagger_selected:
             tagger = TagModelWorker()
             tagger.load(tagger_id)
-            p = int(tagger.model.predict([text])[0])
+            for key in text_dict:
+                text_dict[key] = [text_dict[key]]
+
+            df_text = pd.DataFrame(text_dict)
+            p = int(tagger.model.predict(df_text)[0])
+            # Add explanation
+            data['explain'].append({'tag': tagger.description, 
+                                    'prediction': p,
+                                    'selected': is_tagger_selected })
         else:
             p = None
-        # Add explanation
-        data['explain'].append({'tag': tagger.description, 
-                                'prediction': p,
-                                'selected': is_tagger_selected })
         # Add prediction as tag
         if p == 1:
             data['tags'].append(tagger.description)
+    
     # Prepare response
     data_json = json.dumps(data)
     return HttpResponse(data_json, status=200, content_type='application/json')

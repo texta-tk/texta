@@ -19,3 +19,4 @@ dateparser
 json2table
 mysqlclient
 python-logstash-async
+pandas
