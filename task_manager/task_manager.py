@@ -71,9 +71,9 @@ def translate_param(translation, value):
         return translation['pattern'].format(value)
     elif translation['type'] == 'dict':
         try:
-            return translation['pattern'][json.dumps(value)]
+            return translation['pattern'][int(value)]
         except KeyError:
-            return '{0}: Dataset missing'.format(value)
+            return '{0}: Error parsing task parameters.'.format(value)
     elif translation['type'] == 'list':
         return [translation['pattern'][int(list_item)] for list_item in value if int(list_item) in translation['pattern']]
 
@@ -96,7 +96,7 @@ def translate_parameters(params):
                     'reductor_opt': {'type': 'dict', 'pattern': reductor_options},
                     'normalizer_opt': {'type': 'dict', 'pattern': normalizer_options},
                     'classifier_opt': {'type': 'dict', 'pattern': classifier_options},
-                    'dataset': {'type': 'dict', 'pattern': datasets},
+                    'dataset': {'type': 'list', 'pattern': datasets},
                     'text_tagger_taggers': {'type': 'list', 'pattern': enabled_taggers}}
 
     params = json.loads(params)
