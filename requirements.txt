@@ -14,6 +14,7 @@ lxml
 textract==1.5.0
 beautifulsoup4
 elasticsearch
+elasticsearch_dsl
 psycopg2-binary
 dateparser
 json2table
