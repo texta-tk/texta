@@ -621,6 +621,6 @@ class ES_Manager:
     def clear_readonly_block(self):
         '''changes the property read_only_allow_delete of an index to False'''
         data = {"index":{"blocks":{"read_only_allow_delete":"false"}}}
-        url = "{0}/{1}/_settings".format(self.es_url, self.index)
+        url = "{0}/{1}/_settings".format(self.es_url, self.stringify_datasets())
         response = self.plain_put(url, json.dumps(data))
         return response

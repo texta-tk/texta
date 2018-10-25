@@ -14,7 +14,6 @@ else:
 import json
 import csv
 import re
-import bs4
 from datetime import datetime, timedelta as td
 try:
     from io import BytesIO # NEW PY REQUIREMENT
@@ -269,7 +268,7 @@ def cluster_query(request):
 def search(es_params, request):
     logger = LogManager(__name__, 'SEARCH CORPUS')
 
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
     try:
