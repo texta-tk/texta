@@ -34,7 +34,7 @@ class Preprocessor:
         task = Task.objects.get(pk=self.task_id)
         params = json.loads(task.parameters)
 
-        ds = Datasets().activate_dataset_by_id(params['dataset'])
+        ds = Datasets().activate_datasets_by_id(params['dataset'])
         es_m = ds.build_manager(ES_Manager)
         es_m.load_combined_query(self._parse_query(params))
 

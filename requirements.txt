@@ -11,7 +11,7 @@ pathlib
 dateutils
 sympy
 lxml
-textract
+textract==1.5.0
 beautifulsoup4
 elasticsearch
 psycopg2-binary

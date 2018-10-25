@@ -36,11 +36,11 @@ class PreprocessorWorker(BaseWorker):
         params = json.loads(task.parameters)
         task.update_status(Task.STATUS_RUNNING)
 
-        try:
-        
-            ds = Datasets().activate_dataset_by_id(params['dataset'])
-            es_m = ds.build_manager(ES_Manager)
-            es_m.load_combined_query(self._parse_query(params))
+        ds = Datasets().activate_datasets_by_id(params['dataset'])
+        es_m = ds.build_manager(ES_Manager)
+        es_m.load_combined_query(self._parse_query(params))
+        # In case dataset is readonly, remove the block
+        es_m.clear_readonly_block()
 
             self.es_m = es_m
             self.params = params

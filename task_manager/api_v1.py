@@ -167,7 +167,7 @@ def api_search_list(request, user, params):
     dataset_id = int(params['dataset'])
 
     ds = Datasets()
-    ds.activate_dataset_by_id(dataset_id, use_default=False)
+    ds.activate_datasets_by_id(dataset_id, use_default=False)
     # Check if dataset_id is valid
     if not ds.is_active():
             error = {'error': 'invalid dataset parameter'}
@@ -302,7 +302,7 @@ def api_tag_list(request, user, params):
     """
     dataset_id = params['dataset']
     ds = Datasets()
-    ds.activate_dataset_by_id(dataset_id, use_default=False)
+    ds.activate_datasets_by_id(dataset_id, use_default=False)
     # Check if dataset_id is valid
     if not ds.is_active():
             error = {'error': 'invalid dataset parameter'}
@@ -334,7 +334,7 @@ def api_field_list(request, user, params):
     """
     dataset_id = params['dataset']
     ds = Datasets()
-    ds.activate_dataset_by_id(dataset_id, use_default=False)
+    ds.activate_datasets_by_id(dataset_id, use_default=False)
     # Check if dataset_id is valid
     if not ds.is_active():
             error = {'error': 'invalid dataset parameter'}
@@ -364,7 +364,7 @@ def api_mass_train_tagger(request, user, params):
     retrain_only = params.get("retrain_only", False)
 
     ds = Datasets()
-    ds.activate_dataset_by_id(dataset_id, use_default=False)
+    ds.activate_datasets_by_id(dataset_id, use_default=False)
     # Check if dataset_id is valid
     if not ds.is_active():
             error = {'error': 'invalid dataset parameter'}
@@ -438,7 +438,7 @@ def api_hybrid_tagger(request, user, params):
     params["text_tagger_feature_names"] = params['field']
 
     ds = Datasets()
-    ds.activate_dataset_by_id(dataset_id, use_default=False)
+    ds.activate_datasets_by_id(dataset_id, use_default=False)
     # Check if dataset_id is valid
     if not ds.is_active():
         error = {'error': 'invalid dataset parameter'}
@@ -562,7 +562,7 @@ def api_tag_feedback(request, user, params):
     value = int(params.get('value', 1))
 
     ds = Datasets()
-    ds.activate_dataset_by_id(dataset_id, use_default=False)
+    ds.activate_datasets_by_id(dataset_id, use_default=False)
     # Check if dataset_id is valid
     if not ds.is_active():
         error = {'error': 'invalid dataset parameter'}
@@ -673,7 +673,7 @@ def api_document_tags_list(request, user, params):
     document_ids = params.get('document_ids', None)
 
     ds = Datasets()
-    ds.activate_dataset_by_id(dataset_id, use_default=False)
+    ds.activate_datasets_by_id(dataset_id, use_default=False)
     # Check if dataset_id is valid
     if not ds.is_active():
         error = {'error': 'invalid dataset parameter'}

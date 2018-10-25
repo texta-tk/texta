@@ -134,7 +134,7 @@ class EsIterator(object):
 	"""
 
 	def __init__(self, parameters, callback_progress=None):
-		ds = Datasets().activate_dataset_by_id(parameters['dataset'])
+		ds = Datasets().activate_datasets_by_id(parameters['dataset'])
 		query = self._parse_query(parameters)
 
 		self.field = json.loads(parameters['field'])['path']
