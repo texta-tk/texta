@@ -7,7 +7,7 @@ from typing import List, Any
 from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
 from searcher.models import Search
 from task_manager.models import Task
-from task_manager.progress_manager import ShowProgress
+from task_manager.tools.show_progress import ShowProgress
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.helper_functions import add_dicts
