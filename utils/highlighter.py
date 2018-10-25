@@ -224,12 +224,11 @@ class Highlighter(object):
         title = ('&#13;'.join(title_lines))
         color = self._get_color([highlight_data['color'] for highlight_data in highlight_data_list if 'color' in highlight_data])
 
+        span_str = '<span class="{}" title="{}" style="background-color: {};{}">'
         if '[fact]' in title or '[fact_val]' in title or '[ES]' in title:
-            return u'<span class="[HL]" title="{0}" style="background-color: {1};{2}">'.format(
-            title, color, (self._additional_style_string if color != 'none' else ''))
+            return span_str.format('[HL]', title, color, (self._additional_style_string if color != 'none' else ''))
 
-        return u'<span title="{0}" style="background-color: {1};{2}">'.format(
-            title, color, (self._additional_style_string if color != 'none' else ''))
+        return span_str.format('', title, color, (self._additional_style_string if color != 'none' else ''))
 
     def _get_color(self, color_code_list):
         if not color_code_list:

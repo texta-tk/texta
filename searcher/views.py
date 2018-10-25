@@ -668,12 +668,12 @@ def tag_documents(request):
     tag_name = request.POST['tag_name']
     tag_value = request.POST['tag_value']
     tag_field = request.POST['tag_field']
-    tag_spans = request.POST['tag_spans'] if 'tag_span' in request.POST else None
-
+    #TODO why is my js array becoming a string when passed here? Is there a better way than string split?
+    tag_span = request.POST['tag_span'].split(',') if 'tag_span' in request.POST else None
     es_params = request.POST
 
     fact_m = FactManager(request)
-    fact_m.tag_documents_with_fact(es_params, tag_name, tag_value, tag_field, tag_span=tag_spans)
+    fact_m.tag_documents_with_fact(es_params, tag_name, tag_value, tag_field, tag_span=tag_span)
     return HttpResponse()
 
 def _get_facts_agg_count(es_m, facts):

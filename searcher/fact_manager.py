@@ -75,7 +75,7 @@ class FactManager:
             logger.set_context('es_params', self.es_params)
             logger.exception('remove_facts_from_document_failed')
 
-    def tag_documents_with_fact(self, es_params, tag_name, tag_value, tag_field, tag_spans=None):
+    def tag_documents_with_fact(self, es_params, tag_name, tag_value, tag_field, tag_span=None):
         '''Used to tag all documents in the current search with a certain fact'''
 
         self.es_m.build(es_params)
@@ -85,16 +85,14 @@ class FactManager:
 
         data = ''
         for document in response['hits']['hits']:
-            # If custom span is passed in, else make it the entire document
-            if tag_span:
-                pass
-            else:
+            # If no custom span is passed in, make it the entire document
+            if not tag_span:
                 if 'mlp' in tag_field:
                     split_field = tag_field.split('.')
-                    span = [0, len(document['_source'][split_field[0]][split_field[1]])]
+                    tag_span = [0, len(document['_source'][split_field[0]][split_field[1]])]
                 else:
-                    span = [0, len(document['_source'][tag_field].strip())]
-            document['_source'][self.field].append({"str_val": tag_value, "spans": str([span]), "fact": tag_name, "doc_path":tag_field})
+                    tag_span = [0, len(document['_source'][tag_field].strip())]
+            document['_source'][self.field].append({"str_val": tag_value, "spans": str([tag_span]), "fact": tag_name, "doc_path":tag_field})
 
             data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
             document = {'doc': {self.field: document['_source'][self.field]}}

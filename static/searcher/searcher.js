@@ -598,6 +598,15 @@ function query(){
     request.onreadystatechange=function() {
         if (request.readyState==4 && request.status==200) {
             $("#right").html(request.responseText);
+
+            // Get header column names
+            // Used for setting title to all elements in corresponding column
+            // Which can be used as column selectors/for retriving column name
+            var columns = []
+            $("#columnsRow").find("th").each(function(index) {
+                columns.push({"className": $(this).text(), "targets": index});
+            });
+            console.log(columns);
             examplesTable = $('#examples').DataTable({
                   "bAutoWidth": false,
                   "deferRender": true,
@@ -631,7 +640,9 @@ function query(){
                 "stateSaveParams": function (settings, data) {
                     data.start = 0;
                 },
-                "scrollX": true
+                "scrollX": true,
+                // Add title with the corresponding column name to each element in column
+                "columnDefs": columns
             });
 
             $(function(){
@@ -1011,7 +1022,7 @@ function addFactToSearch(fact_name, fact_val) {
         }
     });
     if (!has_field) {
-        add_field("", "", "");
+        add_field("", "");
     }
 
     var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_');
@@ -1509,7 +1520,7 @@ function addFactToSearch(fact_name, fact_val) {
         }
     });
     if (!has_field) {
-        add_field("", "", "");
+        add_field("", "");
     }
 
     var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_');
@@ -1593,7 +1604,6 @@ function tippyForSelect() {
             textSpan.className = 'selectedText';
             textSpan.appendChild(range.extractContents());
             range.insertNode(textSpan);
-            // debugger;
             // If selection is not of len 0
             temp = $('#textPopover').clone().removeAttr("style")
             textTippy = tippy(textSpan,
@@ -1605,15 +1615,15 @@ function tippyForSelect() {
                 });
 
 
-            var content = selection.toString();
-                // Set template value to selected text
-                temp.find('.textValue').html(content)
-                // Save as fact button
-                btn = temp.find('#textPopoverSaveBtn');
-                // Attr because click events don't seem to work
-                btn.attr('onclick', 'saveAsFact(['+loc_spans+'],"'+content+'")');
-                // Update span tippy content
-                textSpan._tippy.setContent(temp.prop('outerHTML'))
+            var fact_val = selection.toString();
+            // Set template value to selected text
+            temp.find('.textValue').html(fact_val)
+            // Save as fact button
+            btn = temp.find('#textPopoverSaveBtn');
+            // Attr because click events don't seem to work
+            btn.attr('onclick', 'saveFactFromSelect("'+fact_val+'", "'+this.className.trim()+'", ['+loc_spans+'])');
+            // Update span tippy content
+            textSpan._tippy.setContent(temp.prop('outerHTML'))
         };
     });
     // Mousedown for
@@ -1650,6 +1660,9 @@ function tippyForText() {
             interactive: true,
             trigger: 'click',
         });
+    // TODO get selection spans
+    // TODO get selection name, value
+    // TODO oh no are the multiples of these going to conflict
     // Create specific content for each span
     Array.prototype.forEach.call(spans, function (span, i) {
         // Add val to temp
@@ -1664,38 +1677,62 @@ function tippyForText() {
     });
 }
 
+// Grab fresh input value when called, then save as fact
+function saveFactFromSelect(fact_value, fact_field, fact_span) {
+    // last() to avoid the dummy template selector
+    fact_name = $('.textName').last().val();
+    saveAsFact(fact_name.toUpperCase(), fact_value, fact_field, fact_span);
+}
 
-function saveAsFact(tag_name, tag_value, tag_spans) {
+
+function saveAsFact(tag_name, tag_value, tag_field, tag_span) {
     console.log(tag_name)
     console.log(tag_value)
-    console.log(spans)
-
-    // GET tag_field
-
-    formElement = new FormData(document.getElementById("filters"));
-    formElement.append('tag_name', tag_name);
-    formElement.append('tag_value', tag_value);
-    formElement.append('tag_field', tag_field);
-    formElement.append('tag_spans', tag_spans);
-
-    $.ajax({
-        url: PREFIX + '/tag_documents',
-        data: formElement,
-        type: 'POST',
-        contentType: false,
-        processData: false,
-        success: function() {
-            swal({
-                title:'Adding fact successful!',
-                text:'Fact '+ tag_name + ': ' + tag_value + ' has been added.',
-                type:'success'});
-        },
-        error: function() {
-            swal('Error!','There was a problem tagging the search!','error');
-        }
-    });
+    console.log(tag_field)
+    console.log(tag_span)
+    if (tag_name.length > 10 || tag_name == '') {
+        swal('Warning!','Fact name longer than 10 characters, or empty!','warning');
+    } else {
+        swal({
+            title: 'Are you sure you want to save this as a fact?',
+            html: 'The fact <b>'+tag_name+': '+tag_value+'</b> will be added as a fact to field <b>'+tag_field+'</b>',
+            type: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#73AD21',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes'
+            }).then((result) => {
+                if(result.value) {
+                    formElement = new FormData(document.getElementById("filters"));
+                    formElement.append('tag_name', tag_name);
+                    formElement.append('tag_value', tag_value);
+                    formElement.append('tag_field', tag_field);
+                    debugger;
+                    formElement.append('tag_span', tag_span);
+                
+                    $.ajax({
+                        url: PREFIX + '/tag_documents',
+                        data: formElement,
+                        type: 'POST',
+                        contentType: false,
+                        processData: false,
+                        success: function() {
+                            swal({
+                                title:'Adding fact successful!',
+                                text:'Fact '+ tag_name + ': ' + tag_value + ' has been added.',
+                                type:'success'});
+                        },
+                        error: function() {
+                            swal('Error!','There was a problem saving as fact!','error');
+                        }
+                    });
+                }
+            });
+    }
 }
 //TODO fix the fact key having [HL] in it thing
 // its from the backend [FACT] thing, need to remove that
 // But even then, it comes when a text search overlaps with a fact
+//TODO validate that fact name isn't empty
+//TODO check why backend fact is unsearchable
 //TODO put into other file
