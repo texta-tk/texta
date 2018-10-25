@@ -20,9 +20,6 @@ class FactManager:
         logger = LogManager(__name__, 'FACT MANAGER REMOVE FACTS')
 
         try:
-            # Clears readonly block just in case the index has been set to read only
-            self.es_m.clear_readonly_block()
-
             query = self._fact_deletion_query(rm_facts_dict)
             self.es_m.load_combined_query(query)
             response = self.es_m.scroll(size=bs, field_scroll=self.field)

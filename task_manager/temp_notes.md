@@ -154,6 +154,27 @@ Content-Type: application/json
 }
 ```
 
+### List Valid Taggers
+```
+POST http://localhost:8000/task_manager/api/v1/tagger_list
+Content-Type: application/json
+
+{
+    "auth_token": "60aa4ecb8aa5fc"
+}
+```
+
+### List Tagger Info
+```
+POST http://localhost:8000/task_manager/api/v1/tagger_info
+Content-Type: application/json
+
+{
+    "auth_token": "60aa4ecb8aa5fc",
+    "tagger": "66"
+}
+```
+
 ### List Unique Tags
 ```
 POST http://localhost:8000/task_manager/api/v1/tag_list
@@ -231,6 +252,7 @@ Content-Type: application/json
 {
     "auth_token": "60aa4ecb8aa5fc",
     "text": "Maybe I can reply to them by e-mail.",
+    "text": {"field_value_en": "Maybe I can reply to them by e-mail."},
     "taggers": [4, 7]              // Optional
 }
 ```

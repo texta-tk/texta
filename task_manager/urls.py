@@ -26,6 +26,7 @@ urlpatterns = [
     url(r'^api/v1/reductor_list$', api_v1.api_reductor_list, name='api_reductor_list'),
     url(r'^api/v1/extractor_list$', api_v1.api_extractor_list, name='api_extractor_list'),
     url(r'^api/v1/tagger_list$', api_v1.api_tagger_list, name='api_tagger_list'),
+    url(r'^api/v1/tagger_info$', api_v1.api_tagger_info, name='api_tagger_info'),
     url(r'^api/v1/tag_list$', api_v1.api_tag_list, name='api_tag_list'),
     url(r'^api/v1/field_list$', api_v1.api_field_list, name='api_field_list'),
     url(r'^api/v1/mass_train_tagger$', api_v1.api_mass_train_tagger, name='api_mass_train_tagger'),

@@ -1,17 +1,20 @@
 
-# from datetime import datetime
 import json
+import logging
 
 from dataset_importer.document_preprocessor import preprocessor_map
 from dataset_importer.document_preprocessor import PREPROCESSOR_INSTANCES
 from dataset_importer.document_preprocessor import convert_to_utf8
 
+from texta.settings import ERROR_LOGGER
+from texta.settings import INFO_LOGGER
 from searcher.models import Search
 from task_manager.models import Task
 from task_manager.tools import ShowProgress
+from task_manager.tools import TaskCanceledException
+
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
-
 from texta.settings import FACT_PROPERTIES
 
 from .base_worker import BaseWorker
@@ -33,15 +36,31 @@ class PreprocessorWorker(BaseWorker):
         params = json.loads(task.parameters)
         task.update_status(Task.STATUS_RUNNING)
 
-        ds = Datasets().activate_dataset_by_id(params['dataset'])
-        es_m = ds.build_manager(ES_Manager)
-        es_m.load_combined_query(self._parse_query(params))
-        # In case dataset is readonly, remove the block
-        es_m.clear_readonly_block()
+        try:
+        
+            ds = Datasets().activate_dataset_by_id(params['dataset'])
+            es_m = ds.build_manager(ES_Manager)
+            es_m.load_combined_query(self._parse_query(params))
 
-        self.es_m = es_m
-        self.params = params
-        self._preprocessor_worker()
+            self.es_m = es_m
+            self.params = params
+            self._preprocessor_worker()
+        
+        except TaskCanceledException as e:
+            # If here, task was canceled while processing
+            # Delete task
+            task = Task.objects.get(pk=self.task_id)
+            task.delete()
+            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'PROCESSOR WORK', 'event': 'processor_worker_canceled', 'data': {'task_id': self.task_id}}), exc_info=True)
+            print("--- Task canceled")
+        
+        except Exception as e:
+            logging.getLogger(ERROR_LOGGER).exception(json.dumps(
+                {'process': 'PROCESSOR WORK', 'event': 'processor_worker_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
+            # declare the job as failed.
+            task = Task.objects.get(pk=self.task_id)
+            task.result = json.dumps({'error': repr(e)})
+            task.update_status(Task.STATUS_FAILED, set_time_completed=True)
 
     def _preprocessor_worker(self):
 
