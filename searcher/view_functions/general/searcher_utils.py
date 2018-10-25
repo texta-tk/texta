@@ -91,7 +91,7 @@ def get_fields(es_m):
     
     fields = []
     
-    for mapped_field,dataset_info in mapped_fields.items():
+    for mapped_field in mapped_fields.keys():
         data = json.loads(mapped_field)
 
         path = data['path']
