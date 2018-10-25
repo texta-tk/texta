@@ -43,6 +43,7 @@ class ES_Manager:
         self.active_datasets = active_datasets
         self.combined_query = None
         self._facts_map = None
+        self.clear_readonly_block()
 
     def stringify_datasets(self):
         indices = [dataset.index for dataset in self.active_datasets]
