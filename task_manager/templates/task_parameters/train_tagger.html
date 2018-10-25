@@ -19,7 +19,7 @@
 			  <div class="row">
 				<div class="col-sm-6">Select field:</div>
 				<div class="col-sm-6">
-                    <select name="{{task_param.id}}_field" class="form-control">
+                    <select name="{{task_param.id}}_fields" class="form-control" multiple="multiple">
                         {% for field in fields %}
                             <option title="{{field.path}}" value="{{field.path}}">{{field.label}}</option>
                         {% endfor %}

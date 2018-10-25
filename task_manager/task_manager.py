@@ -48,7 +48,12 @@ def filter_params(post: QueryDict):
 
     for param in post:
         if param.startswith(prefix):
-            filtered_params[param[len(prefix) + 1:]] = post[param]
+            param_name = param[len(prefix) + 1:]
+            if param_name == 'fields':
+                param_val = post.getlist(param)
+            else:
+                param_val = post[param]
+            filtered_params[param_name] = param_val
             
     if 'description' not in filtered_params:
         filtered_params['description'] = ''
