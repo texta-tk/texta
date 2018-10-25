@@ -353,6 +353,7 @@ def get_search_query(request):
     query_constraints = extract_constraints(query)
 	# For original search content such as unpacked lexicons/concepts
     search_content = json.loads(search.search_content)
+
     for i in range(len([x for x in query_constraints if x['constraint_type'] == 'string'])):
         query_constraints[i]['content'] = [search_content[i]]
 
@@ -400,6 +401,9 @@ def _extract_string_constraint(raw_constraint):
         content = constraint_details[match_type]['query']
         slop = constraint_details[match_type]['slop']
         constraint_content.append(content)
+
+        # replace multimatch with actual type
+        match_type = constraint_details['multi_match']['type']
 
     return {
         'constraint_type': 'string',
