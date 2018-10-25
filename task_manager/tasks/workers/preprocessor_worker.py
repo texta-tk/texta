@@ -91,7 +91,7 @@ class PreprocessorWorker(BaseWorker):
 
         try:
             while total_hits > 0:
-                documents, parameter_dict, ids = self._prepare_preprocessor_data(response)
+                documents, parameter_dict, ids, document_locations = self._prepare_preprocessor_data(response)
                 # Add facts field if necessary
                 if documents:
                     if 'texta_facts' not in documents[0]:
@@ -105,7 +105,7 @@ class PreprocessorWorker(BaseWorker):
                     result_map = preprocessor.transform(documents, **parameter_dict)
                     documents = result_map['documents']
                     total_positive += result_map['meta'].get('documents_tagged', 0)
-                self.es_m.bulk_post_documents(documents, ids)
+                self.es_m.bulk_post_documents(documents, ids, document_locations)
                 # Update progress is important to check task is alive
                 show_progress.update(total_hits)
                 # Get next page if any
@@ -138,6 +138,7 @@ class PreprocessorWorker(BaseWorker):
 
         documents = [hit['_source'] for hit in response['hits']['hits']]
         ids = [hit['_id'] for hit in response['hits']['hits']]
+        document_locations = [{'_index': hit['_index'], '_type': hit['_type']} for hit in response['hits']['hits']]
         parameter_dict = {'preprocessors': [self.params['preprocessor_key']]}
 
         for key, value in self.params.items():
@@ -147,7 +148,7 @@ class PreprocessorWorker(BaseWorker):
                 # TODO: check why this json.dumps is necessary? probably isn't
                 parameter_dict[new_key] = json.dumps(value)
 
-        return documents, parameter_dict, ids
+        return documents, parameter_dict, ids, document_locations
 
     @staticmethod
     def _parse_query(parameters):

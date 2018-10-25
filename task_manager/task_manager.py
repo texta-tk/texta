@@ -125,7 +125,7 @@ def get_fields(es_m):
     fields = []
     mapped_fields = es_m.get_mapped_fields()
 
-    for field_data, index_data in mapped_fields.items():
+    for field_data in mapped_fields.keys():
         field_data = json.loads(field_data)
         path = field_data['path']
         if path not in illegal_paths:

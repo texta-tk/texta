@@ -62,15 +62,16 @@ class ES_Manager:
         response = self._update_by_query()
         return response
 
-    def bulk_post_documents(self, documents, ids):
+    def bulk_post_documents(self, documents, ids, document_locations):
         """Do just plain_post_bulk"""
         data = ''
 
         for i,_id in enumerate(ids):
-            data += json.dumps({"update": {"_id": _id, "_index": self.stringify_datasets()}})+'\n'
+            data += json.dumps({"update": {"_id": _id, "_index": document_locations[i]['_index'], "_type": document_locations[i]['_type']}})+'\n'
             data += json.dumps({"doc": documents[i]})+'\n'
 
         response = self.plain_post_bulk(self.es_url, data)
+
         return response
 
     def update_documents(self):
@@ -349,7 +350,7 @@ class ES_Manager:
         q = json.dumps(self.combined_query['main'])
         search_url = '{0}/{1}/_search?scroll={2}'.format(es_url, self.stringify_datasets(), time_out)
         response = requests.post(search_url, data=q, headers=HEADERS).json()
-        print(response, '1111')
+
         scroll_id = response['_scroll_id']
         total_hits = response['hits']['total']
 
