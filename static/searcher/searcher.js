@@ -188,9 +188,6 @@ function render_saved_search(search_id) {
     });
 }
 
-function add_field(date_range_min, date_range_max, submitted_field_data, saved_search) {
-   // var field = Array();
-}
 
 function render_saved_search_field(field_data, min_date, max_date) {
 
@@ -201,7 +198,7 @@ function render_saved_search_field(field_data, min_date, max_date) {
         $("#field_" + counter.toString() + " #daterange_to_" + counter.toString()).val(field_data.end_date);
     } else if (field_data.constraint_type === 'string') {
         $('#match_operator_' + counter.toString()).val(field_data.operator);
-       // $('#match_type_' + counter.toString()).val(field_data.match_type);
+        $('#match_type_' + counter.toString()).val(field_data.match_type);
         $('#match_slop_' + counter.toString()).val(field_data.slop);
         $('#match_txt_' + counter.toString()).val(field_data.content.join('\n'));
     } else if (field_data.constraint_type === 'facts') {
