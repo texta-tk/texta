@@ -188,6 +188,9 @@ function render_saved_search(search_id) {
     });
 }
 
+function add_field(date_range_min, date_range_max, submitted_field_data, saved_search) {
+   // var field = Array();
+}
 
 function render_saved_search_field(field_data, min_date, max_date) {
 

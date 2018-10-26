@@ -364,7 +364,8 @@ def extract_constraints(query):
     """Extracts GUI search field values from Elasticsearch query.
     """
     constraints = []
-
+    import pdb
+    pdb.set_trace()
     if 'should' in query['main']['query']['bool'] and query['main']['query']['bool']['should']:
         for raw_constraint in query['main']['query']['bool']['should']:
             constraints.append(_extract_string_constraint(raw_constraint))
@@ -399,7 +400,10 @@ def _extract_string_constraint(raw_constraint):
         match_type = list(constraint_details.keys())[0]
         field = constraint_details[match_type]['fields']
         content = constraint_details[match_type]['query']
-        slop = constraint_details[match_type]['slop']
+        # match_type 'match' does not need a slop
+        import pdb
+        pdb.set_trace()
+        slop = constraint_details[match_type]['slop'] if match_type != 'match' else 0
         constraint_content.append(content)
 
         # replace multimatch with actual type
