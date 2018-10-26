@@ -364,8 +364,7 @@ def extract_constraints(query):
     """Extracts GUI search field values from Elasticsearch query.
     """
     constraints = []
-    import pdb
-    pdb.set_trace()
+
     if 'should' in query['main']['query']['bool'] and query['main']['query']['bool']['should']:
         for raw_constraint in query['main']['query']['bool']['should']:
             constraints.append(_extract_string_constraint(raw_constraint))
