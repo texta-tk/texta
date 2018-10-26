@@ -188,20 +188,67 @@ function render_saved_search(search_id) {
     });
 }
 
+function make_date_field(date_range_min, date_range_max, field_data) {
+    counter++;
+    new_id = 'field_' + counter.toString();
+    $("#field_hidden_date").clone().attr('id', new_id).appendTo("#constraints");
+    $("#field_" + counter.toString() + " #daterange_field_").attr('id', 'daterange_field_' + counter.toString()).attr('name', 'daterange_field_' + counter.toString()).val(field_data.field);
+    $("#field_" + counter.toString() + " #selected_field_").attr('id', 'selected_field_' + counter.toString()).attr('name', 'selected_field_' + counter.toString()).html(field_data.field);
+    $("#field_" + counter.toString() + " #remove_link").attr('onclick', "javascript:remove_field('" + new_id + "');");
+
+    $("#field_" + counter.toString() + " #daterange_from_").attr('id', 'daterange_from_' + counter.toString());
+    $("#field_" + counter.toString() + " #daterange_from_" + counter.toString()).attr('name', 'daterange_from_' + counter.toString());
+    $("#field_" + counter.toString() + " #daterange_from_" + counter.toString()).datepicker({
+        format: "yyyy-mm-dd",
+        startView: 2,
+        startDate: date_range_min,
+        endDate: date_range_max
+    });
+    $("#field_" + counter.toString() + " #daterange_to_").attr('id', 'daterange_to_' + counter.toString());
+    $("#field_" + counter.toString() + " #daterange_to_" + counter.toString()).attr('name', 'daterange_to_' + counter.toString());
+    $("#field_" + counter.toString() + " #daterange_to_" + counter.toString()).datepicker({
+        format: "yyyy-mm-dd",
+        startView: 2,
+        startDate: date_range_min,
+        endDate: date_range_max
+    });
+    $("#field_" + counter.toString()).show();
+}
+
+function make_fact_field(field_data) {
+    counter++;
+    new_id = 'field_' + counter.toString();
+    var fieldFullId = "fact_txt_" + counter.toString();
+
+    $("#field_hidden_fact").clone().attr('id', new_id).appendTo("#constraints");
+    $("#field_" + counter.toString() + " #fact_operator_").attr('id', 'fact_operator_' + counter.toString()).attr('name', 'fact_operator_' + counter.toString());
+    $("#field_" + counter.toString() + " #selected_field_").attr('id', 'selected_field_' + counter.toString()).html(field_data.field + ' [fact_names]');
+    $("#field_" + counter.toString() + " #fact_field_").attr('id', 'fact_field_' + counter.toString()).attr('name', 'fact_field_' + counter.toString()).val(field_data.field);
+    $("#field_" + counter.toString() + " #remove_link").attr('onclick', "javascript:remove_field('" + new_id + "');");
+    $("#field_" + counter.toString() + " #suggestions_").attr('id', 'suggestions_' + counter.toString()).attr('name', 'suggestions_' + counter.toString());
+    $("#field_" + counter.toString() + " #fact_txt_").attr('id', 'fact_txt_' + counter.toString()).attr('name', 'fact_txt_' + counter.toString());
+    $("#field_" + counter.toString() + " #fact_txt_" + counter.toString()).attr('onkeyup', 'lookup("' + fieldFullId + '",' + counter.toString() + ',"keyup", "FACT_NAME");');
+    $("#field_" + counter.toString() + " #fact_txt_" + counter.toString()).attr('onfocus', 'lookup("' + fieldFullId + '","' + counter.toString() + '","focus", "FACT_NAME");');
+    $("#field_" + counter.toString() + " #fact_txt_" + counter.toString()).attr('onblur', 'hide("' + counter.toString() + '");');
+    $("#field_" + counter.toString()).show();
+}
+
 
 function render_saved_search_field(field_data, min_date, max_date) {
 
-    add_field(min_date, max_date, field_data,true);
 
     if (field_data.constraint_type === 'date') {
+        make_date_field(min_date, max_date, field_data);
         $("#field_" + counter.toString() + " #daterange_from_" + counter.toString()).val(field_data.start_date);
         $("#field_" + counter.toString() + " #daterange_to_" + counter.toString()).val(field_data.end_date);
     } else if (field_data.constraint_type === 'string') {
+        add_field(min_date, max_date, field_data, true);
         $('#match_operator_' + counter.toString()).val(field_data.operator);
         $('#match_type_' + counter.toString()).val(field_data.match_type);
         $('#match_slop_' + counter.toString()).val(field_data.slop);
         $('#match_txt_' + counter.toString()).val(field_data.content.join('\n'));
     } else if (field_data.constraint_type === 'facts') {
+        make_fact_field(field_data)
         $('#fact_operator_' + counter.toString()).val(field_data.operator);
         $('#fact_txt_' + counter.toString()).val(field_data.content.join('\n'));
     } else if (field_data.constraint_type === 'str_fact_val') {
@@ -348,7 +395,7 @@ function insert(resource_id, suggestionId, descriptive_term, lookup_type) {
 function add_field(date_range_min, date_range_max, submitted_field_data, saved_search) {
     var field = Array();
 
-    if (!saved_search)  {
+    if (!saved_search) {
         $("#constraint_field option").filter(":selected").each(function () {
             var val = $(this).val();
             field.push(val);
@@ -360,7 +407,7 @@ function add_field(date_range_min, date_range_max, submitted_field_data, saved_s
     }
 
 
-   
+
 
     counter++;
 
@@ -368,17 +415,17 @@ function add_field(date_range_min, date_range_max, submitted_field_data, saved_s
     var field_data = Array();
     var field_name = Array();
 
-    if(saved_search){
-        field_name=submitted_field_data.field;
-        field_path=submitted_field_data.field;
-    }else{
+    if (saved_search) {
+        field_name = submitted_field_data.field;
+        field_path = submitted_field_data.field;
+    } else {
         field.forEach(function (data) {
             var data = JSON.parse(data);
             field_name.push(data.label);
             field_path.push(data.path);
         });
     }
-    
+
 
 
     var field_name = field_name.join("; ");
@@ -1111,7 +1158,7 @@ function addFactToSearch(fact_name, fact_val) {
         }
     });
     if (!has_field) {
-        add_field("", "", "",false);
+        add_field("", "", "", false);
     }
 
     var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_');
