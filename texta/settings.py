@@ -24,6 +24,18 @@ import os
 # 
 BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 
+# When this is true, email confirmation is enabled
+#
+REQUIRE_EMAIL_CONFIRMATION = False
+
+# Email settings
+#
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'emailaddress@gmail.com'
+EMAIL_HOST_PASSWORD = 'hunter2'
+EMAIL_PORT = 587
+
 ############################ Server Type ###########################
 
 # Server type allows to predetermine a wide range of options.
