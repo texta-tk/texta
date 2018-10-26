@@ -71,7 +71,7 @@ if SERVER_TYPE == 'development':
 	URL_PREFIX_RESOURCE = ''
 	ROOT_URLCONF = 'texta.urls'
 	STATIC_URL = URL_PREFIX_DOMAIN + '/static/'
-	DEBUG = False
+	DEBUG = True
 
 elif SERVER_TYPE == 'production':
 	PROTOCOL = 'http://'
