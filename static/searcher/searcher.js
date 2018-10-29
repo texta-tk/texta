@@ -191,46 +191,73 @@ function render_saved_search(search_id) {
 function make_date_field(date_range_min, date_range_max, field_data) {
     counter++;
     new_id = 'field_' + counter.toString();
+    field_with_id = '#field_' + counter.toString();
+    
     $("#field_hidden_date").clone().attr('id', new_id).appendTo("#constraints");
-    $("#field_" + counter.toString() + " #daterange_field_").attr('id', 'daterange_field_' + counter.toString()).attr('name', 'daterange_field_' + counter.toString()).val(field_data.field);
-    $("#field_" + counter.toString() + " #selected_field_").attr('id', 'selected_field_' + counter.toString()).attr('name', 'selected_field_' + counter.toString()).html(field_data.field);
-    $("#field_" + counter.toString() + " #remove_link").attr('onclick', "javascript:remove_field('" + new_id + "');");
+    $(field_with_id + " #daterange_field_").attr('id', 'daterange_field_' + counter.toString()).attr('name', 'daterange_field_' + counter.toString()).val(field_data.field);
+    $(field_with_id + " #selected_field_").attr('id', 'selected_field_' + counter.toString()).attr('name', 'selected_field_' + counter.toString()).html(field_data.field);
+    $(field_with_id + " #remove_link").attr('onclick', "javascript:remove_field('" + new_id + "');");
 
-    $("#field_" + counter.toString() + " #daterange_from_").attr('id', 'daterange_from_' + counter.toString());
-    $("#field_" + counter.toString() + " #daterange_from_" + counter.toString()).attr('name', 'daterange_from_' + counter.toString());
-    $("#field_" + counter.toString() + " #daterange_from_" + counter.toString()).datepicker({
+    $(field_with_id + " #daterange_from_").attr('id', 'daterange_from_' + counter.toString());
+    $(field_with_id + " #daterange_from_" + counter.toString()).attr('name', 'daterange_from_' + counter.toString());
+    $(field_with_id + " #daterange_from_" + counter.toString()).datepicker({
         format: "yyyy-mm-dd",
         startView: 2,
         startDate: date_range_min,
         endDate: date_range_max
     });
-    $("#field_" + counter.toString() + " #daterange_to_").attr('id', 'daterange_to_' + counter.toString());
-    $("#field_" + counter.toString() + " #daterange_to_" + counter.toString()).attr('name', 'daterange_to_' + counter.toString());
-    $("#field_" + counter.toString() + " #daterange_to_" + counter.toString()).datepicker({
+    $(field_with_id + " #daterange_to_").attr('id', 'daterange_to_' + counter.toString());
+    $(field_with_id + " #daterange_to_" + counter.toString()).attr('name', 'daterange_to_' + counter.toString());
+    $(field_with_id + " #daterange_to_" + counter.toString()).datepicker({
         format: "yyyy-mm-dd",
         startView: 2,
         startDate: date_range_min,
         endDate: date_range_max
     });
-    $("#field_" + counter.toString()).show();
+    $(field_with_id).show();
 }
 
 function make_fact_field(field_data) {
     counter++;
     new_id = 'field_' + counter.toString();
     var fieldFullId = "fact_txt_" + counter.toString();
-
+    field_with_id = '#field_' + counter.toString();
     $("#field_hidden_fact").clone().attr('id', new_id).appendTo("#constraints");
-    $("#field_" + counter.toString() + " #fact_operator_").attr('id', 'fact_operator_' + counter.toString()).attr('name', 'fact_operator_' + counter.toString());
-    $("#field_" + counter.toString() + " #selected_field_").attr('id', 'selected_field_' + counter.toString()).html(field_data.field + ' [fact_names]');
-    $("#field_" + counter.toString() + " #fact_field_").attr('id', 'fact_field_' + counter.toString()).attr('name', 'fact_field_' + counter.toString()).val(field_data.field);
-    $("#field_" + counter.toString() + " #remove_link").attr('onclick', "javascript:remove_field('" + new_id + "');");
-    $("#field_" + counter.toString() + " #suggestions_").attr('id', 'suggestions_' + counter.toString()).attr('name', 'suggestions_' + counter.toString());
-    $("#field_" + counter.toString() + " #fact_txt_").attr('id', 'fact_txt_' + counter.toString()).attr('name', 'fact_txt_' + counter.toString());
-    $("#field_" + counter.toString() + " #fact_txt_" + counter.toString()).attr('onkeyup', 'lookup("' + fieldFullId + '",' + counter.toString() + ',"keyup", "FACT_NAME");');
-    $("#field_" + counter.toString() + " #fact_txt_" + counter.toString()).attr('onfocus', 'lookup("' + fieldFullId + '","' + counter.toString() + '","focus", "FACT_NAME");');
-    $("#field_" + counter.toString() + " #fact_txt_" + counter.toString()).attr('onblur', 'hide("' + counter.toString() + '");');
-    $("#field_" + counter.toString()).show();
+    $(field_with_id + " #fact_operator_").attr('id', 'fact_operator_' + counter.toString()).attr('name', 'fact_operator_' + counter.toString());
+    $(field_with_id + " #selected_field_").attr('id', 'selected_field_' + counter.toString()).html(field_data.field + ' [fact_names]');
+    $(field_with_id + " #fact_field_").attr('id', 'fact_field_' + counter.toString()).attr('name', 'fact_field_' + counter.toString()).val(field_data.field);
+    $(field_with_id + " #remove_link").attr('onclick', "javascript:remove_field('" + new_id + "');");
+    $(field_with_id + " #suggestions_").attr('id', 'suggestions_' + counter.toString()).attr('name', 'suggestions_' + counter.toString());
+    $(field_with_id + " #fact_txt_").attr('id', 'fact_txt_' + counter.toString()).attr('name', 'fact_txt_' + counter.toString());
+    $(field_with_id + " #fact_txt_" + counter.toString()).attr('onkeyup', 'lookup("' + fieldFullId + '",' + counter.toString() + ',"keyup", "FACT_NAME");');
+    $(field_with_id + " #fact_txt_" + counter.toString()).attr('onfocus', 'lookup("' + fieldFullId + '","' + counter.toString() + '","focus", "FACT_NAME");');
+    $(field_with_id + " #fact_txt_" + counter.toString()).attr('onblur', 'hide("' + counter.toString() + '");');
+    $(field_with_id).show();
+}
+
+function make_text_field(field_data) {
+    counter++;
+    new_id = 'field_' + counter.toString();
+    var fieldFullId = "fact_txt_" + counter.toString();
+    field_with_id = '#field_' + counter.toString();
+    $("#field_hidden").clone().attr('id', new_id).appendTo("#constraints");
+    $(field_with_id + " #match_operator_").attr('id', 'match_operator_' + counter.toString()).attr('name', 'match_operator_' + counter.toString());
+    $(field_with_id + " #selected_field_").attr('id', 'selected_field_' + counter.toString()).html(field_data.field);
+    $(field_with_id + " #match_field_").attr('id', 'match_field_' + counter.toString()).attr('name', 'match_field_' + counter.toString()).val(field_data.field);
+    $(field_with_id + " #match_type_").attr('id', 'match_type_' + counter.toString()).attr('name', 'match_type_' + counter.toString());
+    $(field_with_id + " #match_slop_").attr('id', 'match_slop_' + counter.toString()).attr('name', 'match_slop_' + counter.toString());
+    $(field_with_id + " #remove_link").attr('onclick', "javascript:remove_field('" + new_id + "');");
+    $(field_with_id + " #suggestions_").attr('id', 'suggestions_' + counter.toString()).attr('name', 'suggestions_' + counter.toString());
+    $(field_with_id + " #match_txt_").attr('id', 'match_txt_' + counter.toString()).attr('name', 'match_txt_' + counter.toString());
+    $(field_with_id + " #match_layer_").attr('id', 'match_layer_' + counter.toString()).attr('name', 'match_layer_' + counter.toString());
+
+    var suggestion_types = ["CONCEPT", "LEXICON"];
+    var fieldFullId = "match_txt_" + counter.toString();
+
+    $(field_with_id + " #match_txt_" + counter.toString()).attr('onkeyup', 'lookup("' + fieldFullId + '",' + counter.toString() + ',"keyup", \'' + suggestion_types + '\'); search_as_you_type_query();');
+    $(field_with_id + " #match_txt_" + counter.toString()).attr('onfocus', 'lookup("' + fieldFullId + '","' + counter.toString() + '","focus", \'' + suggestion_types + '\');');
+    $(field_with_id + " #match_txt_" + counter.toString()).attr('onblur', 'hide("' + counter.toString() + '");');
+    $(field_with_id).show();
 }
 
 
@@ -242,7 +269,7 @@ function render_saved_search_field(field_data, min_date, max_date) {
         $("#field_" + counter.toString() + " #daterange_from_" + counter.toString()).val(field_data.start_date);
         $("#field_" + counter.toString() + " #daterange_to_" + counter.toString()).val(field_data.end_date);
     } else if (field_data.constraint_type === 'string') {
-        add_field(min_date, max_date, field_data, true);
+        make_text_field(field_data, true);
         $('#match_operator_' + counter.toString()).val(field_data.operator);
         $('#match_type_' + counter.toString()).val(field_data.match_type);
         $('#match_slop_' + counter.toString()).val(field_data.slop);
