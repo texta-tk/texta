@@ -72,6 +72,14 @@
     </div>
 
     <div class="form-group">
+        <label class="control-label col-sm-3" for="lexicon-classifier-processor-slops">Slop:</label><br>
+        <div class="col-sm-7">
+            <input id="lexicon-classifier-slops" name="lexicon_classifier_slops" class="form-control" data-slider-id="lexicon-classifier-slops" type="text" data-slider-min="0" data-slider-max="10" data-slider-step="1" data-slider-value="0"/>
+        </div>
+        <span data-toggle="tooltip" data-placement="bottom" title="Choose how many words are allowed between phrase entities." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+    </div>
+
+    <div class="form-group">
         <label class="control-label col-sm-3" for="lexicon-classifier-processor-operations">Operation:</label>
         <div class="col-sm-7">
             {% for operation in preprocessor.operations %}
@@ -80,17 +88,7 @@
         </div>
         <span data-toggle="tooltip" data-placement="bottom" title="Choose logic operation connecting lexicon entries." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
     </div>
-
-
-    <div class="form-group">
-        <label class="control-label col-sm-3" for="lexicon-classifier-processor-slops">Slop:</label><br>
-        <div class="col-sm-7">
-            <input id="lexicon-classifier-slops" name="lexicon_classifier_slops" class="form-control" data-slider-id="lexicon-classifier-slops" type="text" data-slider-min="0" data-slider-max="10" data-slider-step="1" data-slider-value="0"/>
-        </div>
-        <span data-toggle="tooltip" data-placement="bottom" title="Choose how many words are allowed between phrase entities." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
-    </div>
-
-
+    
     <div class="form-group">
         <label class="control-label col-sm-3" for="lexicon-classifier-processor-words-required">Required %:</label><br>
         <div class="col-sm-7">
