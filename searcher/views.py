@@ -40,6 +40,8 @@ from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
 from utils.highlighter import Highlighter, ColorPicker
 from utils.autocomplete import Autocomplete
+from dataset_importer.document_preprocessor import preprocessor_map
+
 from task_manager.views import task_params
 from task_manager.models import Task
 
@@ -61,7 +63,7 @@ def index(request):
 
     datasets = Datasets().get_allowed_datasets(request.user)
     language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
-    
+
     preprocessors = collect_map_entries(preprocessor_map)
     enabled_preprocessors = [preprocessor for preprocessor in preprocessors]
 
@@ -79,8 +81,8 @@ def index(request):
                        'searches': Search.objects.filter(author=request.user),
                        'lexicons': Lexicon.objects.all().filter(author=request.user),
                        'dataset': ds.get_index(),
-                       'language_models': language_models, 
-                       'allowed_datasets': datasets,                       
+                       'language_models': language_models,
+                       'allowed_datasets': datasets,
                        'enabled_preprocessors': enabled_preprocessors,
                        'task_params': task_params}
 
@@ -274,6 +276,54 @@ def search(es_params, request):
     logger.set_context('user_name', request.user.username)
     logger.info('documents_queried')
     return out
+
+
+def additional_option_cut_text(content, window_size):
+    window_size = int(window_size)
+
+    if not content:
+        return ''
+
+    if not isinstance(content, str):
+        return content
+
+    if '[HL]' in content:
+        soup = bs4.BeautifulSoup(content,'lxml')
+        html_spans = soup.find_all('span')
+
+        html_spans_merged = []
+        num_spans = len(html_spans)
+        # merge together ovelapping spans
+        for i,html_span in enumerate(html_spans):
+            if not html_span.get('class'):
+                span_text = html_span.text
+                span_tokens = span_text.split(' ')
+                span_tokens_len = len(span_tokens)
+                if i == 0:
+                    if span_tokens_len > window_size:
+                        new_text = u' '.join(span_tokens[-window_size:])
+                        new_text = u'... {0}'.format(new_text)
+                        html_span.string = new_text
+                    html_spans_merged.append(str(html_span))
+                elif i == num_spans-1:
+                    if span_tokens_len > window_size:
+                        new_text = u' '.join(span_tokens[:window_size])
+                        new_text = u'{0} ...'.format(new_text)
+                        html_span.string = new_text
+                    html_spans_merged.append(str(html_span))
+                else:
+                    if span_tokens_len > window_size:
+                        new_text_left = u' '.join(span_tokens[:window_size])
+                        new_text_right = u' '.join(span_tokens[-window_size:])
+                        new_text = u'{0} ...\n... {1}'.format(new_text_left,new_text_right)
+                        html_span.string = new_text
+                    html_spans_merged.append(str(html_span))
+            else:
+                html_spans_merged.append(str(html_span))
+
+        return ''.join(html_spans_merged)
+    else:
+        return content
 
 
 @login_required

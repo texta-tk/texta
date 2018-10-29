@@ -1,19 +1,20 @@
 # -*- coding: utf8 -*-
 from __future__ import print_function
 import json
-import re
+# import re
 import copy
 import requests
-from collections import defaultdict
-import sys
-import time
+# from collections import defaultdict
+# import sys
+# import time
 from functools import reduce
 
-if 'django' in sys.modules: # Import django-stuff only if imported from the django application / prevent errors when importing from scripts
-    from conceptualiser.models import Concept
-    from conceptualiser.models import TermConcept
-    from utils.log_manager import LogManager
-    from lexicon_miner.models import Word,Lexicon
+# # Import django-stuff only if imported from the django application / prevent errors when importing from scripts
+# if 'django' in sys.modules:
+#     from conceptualiser.models import Concept
+#     from conceptualiser.models import TermConcept
+#     from utils.log_manager import LogManager
+#     from lexicon_miner.models import Word,Lexicon
 
 from utils.query_builder import QueryBuilder
 from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, FACT_PROPERTIES
@@ -21,8 +22,11 @@ from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, 
 # Need to update index.max_inner_result_window to increase
 HEADERS = {'Content-Type': 'application/json'}
 
+
 class Singleton(type):
+
     _instances = {}
+
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
@@ -76,7 +80,7 @@ class ES_Manager:
 
     TEXTA_RESERVED = []
     HEADERS = HEADERS
-    #TEXTA_RESERVED = ['texta_facts']
+    # TEXTA_RESERVED = ['texta_facts']
 
     # Redefine requests if LDAP authentication is used
     if es_use_ldap:
@@ -98,11 +102,11 @@ class ES_Manager:
     def bulk_post_update_documents(self, documents, ids):
         '''Do both plain_post_bulk and _update_by_query'''
         data = ''
-        
-        for i,_id in enumerate(ids):
-            data += json.dumps({"update": {"_id": _id, "_type": self.mapping, "_index": self.index}})+'\n'
-            data += json.dumps({"doc": documents[i]})+'\n'
-        
+
+        for i, _id in enumerate(ids):
+            data += json.dumps({"update": {"_id": _id, "_type": self.mapping, "_index": self.index}}) + '\n'
+            data += json.dumps({"doc": documents[i]}) + '\n'
+
         response = self.plain_post_bulk(self.es_url, data)
         response = self._update_by_query()
         return response
@@ -124,18 +128,18 @@ class ES_Manager:
         return response
 
     def update_mapping_structure(self, new_field, new_field_properties):
-        url = '{0}/{1}/_mappings/{2}'.format(self.es_url, self.index ,self.mapping)
+        url = '{0}/{1}/_mappings/{2}'.format(self.es_url, self.index, self.mapping)
         response = self.plain_get(url)
         properties = response[self.index]['mappings'][self.mapping]['properties']
-        
+
         if new_field not in properties:
             properties[new_field] = new_field_properties
-        
+
         if 'texta_facts' not in properties:
             properties['texta_facts'] = FACT_PROPERTIES
-        
+
         properties = {'properties': properties}
-        
+
         response = self.plain_put(url, json.dumps(properties))
         return response
 
@@ -146,15 +150,15 @@ class ES_Manager:
     def check_if_field_has_facts(self, sub_fields):
         """ Check if field is associate with facts in Elasticsearch
         """
-        doc_type = self.mapping.lower()
+        # doc_type = self.mapping.lower()
         field_path = [s.lower() for s in sub_fields]
         doc_path = '.'.join(field_path)
 
         request_url = '{0}/{1}/{2}/_count'.format(es_url, self.index, self.mapping)
         base_query = {"query": {"bool": {"filter": {'and': []}}}}
         base_query = {'query': {'nested': {'path': 'texta_facts', 'query': {'bool': {'filter': []}}}}}  # {'match':{'texta_facts.fact':'superhero'}}}}}
-        #base_query['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': doc_type}})
-        #base_query['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
+        # base_query['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': doc_type}})
+        # base_query['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
         base_query['query']['nested']['query']['bool']['filter'].append({'term': {'texta_facts.doc_path': doc_path}})
 
         has_facts = self._field_has_facts(request_url, base_query)
@@ -183,18 +187,21 @@ class ES_Manager:
         """ Decode mapping structure (nested dictionary) to a flat structure
         """
         mapping_data = []
-
         for item in structure.items():
+
             if item[0] in self.TEXTA_RESERVED:
                 continue
-            if 'properties' in item[1] and 'type' not in item[1]: #added+
+
+            # added +
+            if 'properties' in item[1] and 'type' not in item[1]:
                 sub_structure = item[1]['properties']
                 path_list = root_path[:]
                 path_list.append(item[0])
                 sub_mapping = self._decode_mapping_structure(sub_structure, root_path=path_list)
                 mapping_data.extend(sub_mapping)
 
-            elif 'properties' in item[1] and 'type' in item[1]: # for dealing with facts
+            # for dealing with facts
+            elif 'properties' in item[1] and 'type' in item[1]:
                 sub_structure = item[1]['properties']
                 path_list = root_path[:]
                 path_list.append(item[0])
@@ -232,11 +239,13 @@ class ES_Manager:
 
     @staticmethod
     def plain_search(es_url, dataset, mapping, query):
-        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_search',data=json.dumps(query), headers=HEADERS).json()
+        url = es_url + '/' + dataset + '/' + mapping + '/_search'
+        return ES_Manager.requests.post(url, data=json.dumps(query), headers=HEADERS).json()
 
     @staticmethod
     def plain_multisearch(es_url, dataset, mapping, data):
-        responses = ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_msearch',data='\n'.join(data)+'\n', headers=HEADERS).json()
+        url = es_url + '/' + dataset + '/' + mapping + '/_msearch'
+        responses = ES_Manager.requests.post(url, data='\n'.join(data) + '\n', headers=HEADERS).json()
         if 'responses' in responses:
             return responses['responses']
         else:
@@ -244,7 +253,8 @@ class ES_Manager:
 
     @staticmethod
     def plain_scroll(es_url, dataset, mapping, query, expiration_str='1m'):
-        return ES_Manager.requests.post(es_url+'/'+dataset+'/'+mapping+'/_search?scroll='+expiration_str, data=query, headers=HEADERS).json()
+        url = es_url + '/' + dataset + '/' + mapping + '/_search?scroll=' + expiration_str
+        return ES_Manager.requests.post(url, data=query, headers=HEADERS).json()
 
     @staticmethod
     def delete_index(index):
@@ -257,7 +267,8 @@ class ES_Manager:
         """
         mapping_data = []
         if self.index:
-            mapping_structure = self.requests.get(es_url+'/'+self.index, headers=HEADERS).json()[self.index]['mappings'][self.mapping]['properties']
+            url = es_url + '/' + self.index
+            mapping_structure = self.requests.get(url, headers=HEADERS).json()[self.index]['mappings'][self.mapping]['properties']
             mapping_data = self._decode_mapping_structure(mapping_structure)
 
         return mapping_data
@@ -359,7 +370,7 @@ class ES_Manager:
         response = self.requests.post(search_url, data=q, headers=HEADERS).json()
         return response
 
-    def process_bulk(self,hits):
+    def process_bulk(self, hits):
         data = ''
         for hit in hits:
             data += json.dumps({"delete":{"_index":self.index,"_type":self.mapping,"_id":hit['_id']}})+'\n'
@@ -374,17 +385,17 @@ class ES_Manager:
         response = requests.post(search_url, data=q, headers=HEADERS).json()
         print(response, '1111')
         scroll_id = response['_scroll_id']
-        l = response['hits']['total']
+        total_hits = response['hits']['total']
 
         # Delete initial response
         data = self.process_bulk(response['hits']['hits'])
         delete_url = '{0}/{1}/{2}/_bulk'.format(es_url, self.index, self.mapping)
         deleted = requests.post(delete_url, data=data, headers=HEADERS)
-        while l > 0:
-            response = self.scroll(scroll_id=scroll_id, time_out=time_out)
-            l = len(response['hits']['hits'])
-            scroll_id = response['_scroll_id']
 
+        while total_hits > 0:
+            response = self.scroll(scroll_id=scroll_id, time_out=time_out)
+            total_hits = len(response['hits']['hits'])
+            scroll_id = response['_scroll_id']
             data = self.process_bulk(response['hits']['hits'])
             delete_url = '{0}/{1}/{2}/_bulk'.format(es_url, self.index, self.mapping)
             deleted = requests.post(delete_url, data=data, headers=HEADERS)
@@ -397,7 +408,7 @@ class ES_Manager:
             q = json.dumps({"scroll": time_out, "scroll_id": scroll_id})
             search_url = '{0}/_search/scroll'.format(es_url)
         else:
-            if match_all == True:
+            if match_all is True:
                 q = {}
             else:
                 q = self.combined_query['main']
@@ -469,19 +480,19 @@ class ES_Manager:
             for constraint in query_dict['main']['query']['bool']['must_not']:
                 self.combined_query['main']['query']['bool']['must_not'].append(constraint)
 
-    def more_like_this_search(self,fields,stopwords=[],docs_accepted=[],docs_rejected=[],handle_negatives='ignore'):
+    def more_like_this_search(self, fields, stopwords=[], docs_accepted=[], docs_rejected=[], handle_negatives='ignore', search_size=10):
 
         # Get ids from basic search
         docs_search = self._scroll_doc_ids()
         # Combine ids from basic search and mlt search
-        docs_combined = list(set().union(docs_search,docs_accepted))
+        docs_combined = list(set().union(docs_search, docs_accepted))
 
         mlt = {
             "more_like_this": {
-                "fields" : fields,
-                "like" : self._add_doc_ids_to_query(docs_combined),
-                "min_term_freq" : 1,
-                "max_query_terms" : 12,
+                "fields": fields,
+                "like": self._add_doc_ids_to_query(docs_combined),
+                "min_term_freq": 1,
+                "max_query_terms": 12,
             }
         }
 
@@ -493,16 +504,16 @@ class ES_Manager:
             highlight_fields[field] = {}
 
         query = {
-            "query":{
-                "bool":{
-                    "must":[mlt]
+            "query": {
+                "bool": {
+                    "must": [mlt]
                 }
             },
-            "size":10,
-            "highlight" : {
-                "pre_tags" : ["<b>"],
-                "post_tags" : ["</b>"],
-                "fields" : highlight_fields
+            "size": search_size,
+            "highlight": {
+                "pre_tags": ["<b>"],
+                "post_tags": ["</b>"],
+                "fields": highlight_fields
             }
         }
 
@@ -510,19 +521,17 @@ class ES_Manager:
             if handle_negatives == 'unlike':
                 mlt["more_like_this"]["unlike"] = self._add_doc_ids_to_query(docs_rejected)
             elif handle_negatives == 'ignore':
-                rejected = [{'ids':{'values':docs_rejected}}]
+                rejected = [{'ids': {'values': docs_rejected}}]
                 query["query"]["bool"]["must_not"] = rejected
 
         response = ES_Manager.plain_search(self.es_url, self.index, self.mapping, query)
 
         return response
 
+    def _add_doc_ids_to_query(self, ids):
+        return [{"_index": self.index, "_type": self.mapping, "_id": id} for id in ids]
 
-    def _add_doc_ids_to_query(self,ids):
-        return [{"_index" : self.index, "_type" : self.mapping, "_id" : id} for id in ids]
-
-
-    def _scroll_doc_ids(self,limit=500):
+    def _scroll_doc_ids(self, limit=500):
         ids = []
 
         response = self.scroll(id_scroll=True, size=100)
@@ -540,18 +549,16 @@ class ES_Manager:
 
         return ids
 
-
-    def perform_queries(self,queries):
+    def perform_queries(self, queries):
         response = ES_Manager.plain_multisearch(self.es_url, self.index, self.mapping, queries)
         return response
 
-
-    def get_extreme_dates(self,field):
+    def get_extreme_dates(self, field):
         query = {"aggs":{"max_date":{"max":{"field":field}},"min_date":{"min":{"field":field}}}}
         url = "{0}/{1}/{2}/_search".format(self.es_url, self.index, self.mapping)
         response = requests.post(url, data=json.dumps(query), headers=HEADERS).json()
         aggs = response["aggregations"]
-        return aggs["min_date"]["value_as_string"],aggs["max_date"]["value_as_string"]
+        return aggs["min_date"]["value_as_string"], aggs["max_date"]["value_as_string"]
 
     def clear_readonly_block(self):
         '''changes the property read_only_allow_delete of an index to False'''
@@ -559,4 +566,3 @@ class ES_Manager:
         url = "{0}/{1}/_settings".format(self.es_url, self.index)
         response = self.plain_put(url, json.dumps(data))
         return response
-

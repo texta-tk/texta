@@ -5,14 +5,14 @@
 # into different applications' source code and may be altered to fine-tune
 # the output or calculation results. For all hardcoded configurations,
 # consult #TODO.
-# 
+#
 # Default configuration suffices for running a development version. For
 # production, one needs to define server specific paths.
-# 
+#
 # General options define file and URL paths, #TODO
-# 
+#
 # Installation is covered in documentation at #TODO
-# 
+#
 
 from time import strftime
 import json
@@ -21,7 +21,7 @@ import os
 # Path to TEXTA's root directory. It is used in other paths as a prefix.
 # BASE_DIR = os.path.realpath(os.path.dirname(__file__)) tries to determine
 # the path programmatically but may occasionally fail.
-# 
+#
 BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 
 # When this is true, email confirmation is enabled
@@ -41,12 +41,12 @@ EMAIL_PORT = 587
 # Server type allows to predetermine a wide range of options.
 # It is used to switch between 'development' and 'production' instances,
 # so that after setting up the variables, one only has to alter the
-# SERVER_TYPE string to have a fully configured and functional instance. 
+# SERVER_TYPE string to have a fully configured and functional instance.
 #
 # The default development version is tuned for hosting TEXTA locally and
 # needs no further configuration. However, if your development version is
 # on a remote machine, consult 'production' settings.
-# 
+#
 # URL_PREFIX_DOMAIN - domain address of the hosting server.
 # URL_PREFIX_RESOURCE - resource which is responsible for hosting TEXTA
 #                       application server.
@@ -109,21 +109,21 @@ URL_PREFIX = URL_PREFIX_DOMAIN + URL_PREFIX_RESOURCE
 LOGIN_URL = URL_PREFIX
 
 # Path to media files root directory.
-# 
+#
 MEDIA_ROOT = os.path.join(BASE_DIR, 'files')
 PROTECTED_MEDIA = os.path.join(MEDIA_ROOT, 'protected_media')
 
 # URL to media files root.
-# 
+#
 MEDIA_URL = 'files/'
 ADMIN_MEDIA_PREFIX = '/media/'
 
 # Path to users' visited words in Lex Miner.
-# 
+#
 USER_MODELS = os.path.join(BASE_DIR, 'data', 'usermodels')
 
 # Path to users' language models.
-# 
+#
 MODELS_DIR = os.path.join(BASE_DIR, 'data', 'models')
 
 # Path to Sven's projects
@@ -201,7 +201,7 @@ USE_L10N = True
 SECRET_KEY = '+$18(*8p_h0u6-)z&zu^@=$2h@=8qe+3uwyv+3#v9*)fy9hy&f'
 
 # Defines template engine and context processors to render dynamic HTML pages.
-# 
+#
 TEMPLATES = [
 	{
 		'BACKEND':  'django.template.backends.django.DjangoTemplates',
@@ -229,7 +229,7 @@ TEMPLATES = [
 ]
 
 # List of Django plugins used in TEXTA.
-# 
+#
 # NEW PY REQUIREMENT
 MIDDLEWARE = (
 	'django.middleware.common.CommonMiddleware',
@@ -239,7 +239,7 @@ MIDDLEWARE = (
 )
 
 # List of built-in and custom apps in use.
-# 
+#
 INSTALLED_APPS = (
 	'django.contrib.auth',
 	'django.contrib.contenttypes',
@@ -267,7 +267,7 @@ INSTALLED_APPS = (
 
 # Elasticsearch connection settings. Elasticsearch is used throughout
 # TEXTA to store the analyzed documents.
-# 
+#
 
 
 # Elasticsearch URL with protocol specification. Can be either localhost
@@ -282,7 +282,7 @@ es_links = {
 }
 
 # Date format used in Elasticsearch fields.
-# 
+#
 date_format = 'yyyy-MM-dd'
 
 # Set to True if Elasticsearch needs authentication. Tested with basic auth.
