@@ -233,6 +233,7 @@ function make_fact_field(field_data) {
     $(field_with_id + " #fact_txt_" + counter.toString()).attr('onfocus', 'lookup("' + fieldFullId + '","' + counter.toString() + '","focus", "FACT_NAME");');
     $(field_with_id + " #fact_txt_" + counter.toString()).attr('onblur', 'hide("' + counter.toString() + '");');
     $(field_with_id).show();
+    $("#constraint_field").multiselect('deselectAll', false).multiselect('refresh');
 }
 
 function make_text_field(field_data) {
@@ -258,8 +259,30 @@ function make_text_field(field_data) {
     $(field_with_id + " #match_txt_" + counter.toString()).attr('onfocus', 'lookup("' + fieldFullId + '","' + counter.toString() + '","focus", \'' + suggestion_types + '\');');
     $(field_with_id + " #match_txt_" + counter.toString()).attr('onblur', 'hide("' + counter.toString() + '");');
     $(field_with_id).show();
+    $("#constraint_field").multiselect('deselectAll', false).multiselect('refresh');
 }
 
+function make_str_fact_field(field_data){
+    var counterStr = counter.toString();
+
+    if (factValSubCounter[counterStr] === undefined) {
+        var subCounter = 1;
+    } else {
+        var subCounter = factValSubCounter[counterStr];
+    }
+
+    var subCounterStr = subCounter.toString();
+    var idCombination = counterStr + '_' + subCounterStr;
+
+    if (field_data.constraint_type == 'str_fact_val') {
+        addFactValueField(counterStr, subCounterStr, field_data.field, field_data.field, 'str');
+    } else if (field_data.constraint_type == 'fact_num_val') {
+        addFactValueField(counterStr, subCounterStr, field_data.field, field_data.field, 'num')
+    }
+    factValSubCounter[counterStr] = subCounter + 1
+    $("#field_" + counter.toString()).show();
+    $("#constraint_field").multiselect('deselectAll', false).multiselect('refresh');
+}
 
 function render_saved_search_field(field_data, min_date, max_date) {
 
@@ -275,10 +298,11 @@ function render_saved_search_field(field_data, min_date, max_date) {
         $('#match_slop_' + counter.toString()).val(field_data.slop);
         $('#match_txt_' + counter.toString()).val(field_data.content.join('\n'));
     } else if (field_data.constraint_type === 'facts') {
-        make_fact_field(field_data)
+        make_fact_field(field_data);
         $('#fact_operator_' + counter.toString()).val(field_data.operator);
         $('#fact_txt_' + counter.toString()).val(field_data.content.join('\n'));
     } else if (field_data.constraint_type === 'str_fact_val') {
+        make_str_fact_field(field_data);
         $('#fact_operator_' + counter.toString()).val(field_data.operator);
         for (var i = 0; i < field_data.sub_constraints.length; i++) {
             var sub_constraint = field_data.sub_constraints[i];
