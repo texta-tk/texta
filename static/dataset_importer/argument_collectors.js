@@ -138,13 +138,13 @@ function collectTextTaggerArguments(formData) {
 function collectLexiconTaggerArguments(formData) {
     var featureNames = JSON.stringify($('#lexicon-classifier-processor-feature-names').val().split('\n'));
 	  var lexicons = JSON.stringify($('#lexicon-classifier-processor-lexicons').val().split('\n'));
-    var match_type = JSON.stringify($('#lexicon-classifier-processor-match-types').val());//.split('\n'));
-	  var operation = JSON.stringify($('#lexicon-classifier-processor-operations').val());//.split('\n'));
-    var slop = JSON.stringify($('#lexicon-classifier-processor-slops').val());//.split('\n'));
-	  var requiredWords = JSON.stringify($('#lexicon-classifier-processor-words-required').val());//.split('\n'));
-    var addCounterLexicon = JSON.stringify($('#lexicon-classifier-processor-add-cl').val());//.split('\n'));
-    var counterLexicons = JSON.stringify($('#lexicon-classifier-processor-counterlexicons').val());//.split('\n'));
-    var clSlop = JSON.stringify($('#lexicon-classifier-processor-cl-slops').val());//.split('\n'));
+    var match_type = JSON.stringify($('#lexicon-classifier-processor-match-types').val());
+	  var operation = JSON.stringify($('#lexicon-classifier-processor-operations').val());
+    var slop = JSON.stringify($('#lexicon-classifier-processor-slops').val());
+	  var requiredWords = JSON.stringify($('#lexicon-classifier-processor-words-required').val());
+    var addCounterLexicon = JSON.stringify($('#lexicon-classifier-processor-add-cl').val());
+    var counterLexicons = JSON.stringify($('#lexicon-classifier-processor-counterlexicons').val());
+    var clSlop = JSON.stringify($('#lexicon-classifier-processor-cl-slops').val());
 
     formData.append('lexicon_classifier_preprocessor_feature_names', featureName);
 	  formData.append('lexicon_classifier_preprocessor_lexicons', lexicons);
@@ -155,8 +155,7 @@ function collectLexiconTaggerArguments(formData) {
     formData.append('lexicon_classifier_preprocessor_counterlecixons', counterLexicons);
     formData.append('lexicon_classifier_preprocessor_cl_slops', clSlop);
     formData.append('lexicon_classifier_preprocessor_add_cl', addCounterLexicon);
-
-
+    
     return formData;
 }
 

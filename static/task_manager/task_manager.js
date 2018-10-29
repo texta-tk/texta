@@ -2,6 +2,25 @@ var PREFIX = LINK_TASK_MANAGER;
 
 $(function () {
     // for bootstrap 3 use 'shown.bs.tab', for bootstrap 2 use 'shown' in the next line
+
+    $('#lexicon-classifier-cl-slops').bootstrapSlider({
+      formatter: function(value) {
+        return 'Current value: ' + value;
+      }
+    });
+
+    $('#lexicon-classifier-slops').bootstrapSlider({
+        formatter: function(value) {
+          return 'Current value: ' + value;
+        }
+    });
+
+    $('#lexicon-classifier-words-required').bootstrapSlider({
+        formatter: function(value) {
+          return 'Current value: ' + value;
+        }
+    });
+
     $('a[data-toggle="tab"]').each(function () {
         $(this).on('shown.bs.tab', function (e) {
             // save the latest tab; use cookies if you like 'em better:
@@ -25,7 +44,7 @@ function start_task(task_id) {
     request.onreadystatechange=function() {
         location.reload();
     }
-    
+
     request.open("POST",PREFIX+'/start_task');
     request.send(new FormData(formElement),true);
 }

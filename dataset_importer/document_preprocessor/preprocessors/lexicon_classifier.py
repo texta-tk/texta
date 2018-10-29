@@ -172,17 +172,12 @@ class LexTagger(object):
 
 
     def _convert_to_ratio(self,percentage_str):
-        percentage_int = int(re.sub('%','',percentage_str).strip())
+        percentage_int = int(percentage_str.strip())
         ratio = percentage_int/float(100)
         return ratio
 
     def _all_args_exist(self,**kwargs):
-        if not kwargs.get('lexicon_classifier_preprocessor_feature_names', None) or \
-           not kwargs.get('lexicon_classifier_preprocessor_lexicons', None) or \
-           not kwargs.get('lexicon_classifier_preprocessor_match_types', None) or \
-           not kwargs.get('lexicon_classifier_preprocessor_operations', None) or \
-           not kwargs.get('lexicon_classifier_preprocessor_slops', None) or \
-           not kwargs.get('lexicon_classifier_preprocessor_words_required', None):
+        if not kwargs.get('lexicon_classifier_preprocessor_feature_names', None):
             return False
         return True
 
@@ -190,36 +185,41 @@ class LexTagger(object):
         input_features = kwargs['input_features']
         lex_ids = [int(_id) for _id in kwargs['lex_ids']]
         cl_id   = [int(kwargs['counter_lex_id'])]
-        match_type = kwargs['match_type']
-        operation = kwargs['operation']
+        match_type = kwargs['match_type'].lower()
+        operation = kwargs['operation'].lower()
         slop = int(kwargs['slop'])
         cl_slop = int(kwargs['cl_slop'])
         words_required = self._convert_to_ratio(kwargs['words_required'])
-        add_counter_lex = True if kwargs['add_counter_lex']=='yes' else False
 
         parsed_args = {'input_features':input_features,'lex_ids':lex_ids,'match_type':match_type,\
                        'operation':operation,'slop':slop,'words_required':words_required,'cl_slop':cl_slop,\
-                       'counter_lex_id':cl_id,'add_counter_lex':add_counter_lex}
+                       'counter_lex_id':cl_id}
         return parsed_args
 
-
-    def _load_arguments(self,**kwargs):
+    def _load_arguments(self,kwargs):
         input_features  = json.loads(kwargs['lexicon_classifier_preprocessor_feature_names'])
         lex_ids         = json.loads(kwargs['lexicon_classifier_preprocessor_lexicons'])
         match_type      = json.loads(kwargs['lexicon_classifier_preprocessor_match_types'])[0]
         operation       = json.loads(kwargs['lexicon_classifier_preprocessor_operations'])[0]
         slop            = json.loads(kwargs['lexicon_classifier_preprocessor_slops'])[0]
         words_required  = json.loads(kwargs['lexicon_classifier_preprocessor_words_required'])[0]
-        add_counter_lex = json.loads(kwargs['lexicon_classifier_preprocessor_add_cl'])[0]
         counter_lex_id  = json.loads(kwargs['lexicon_classifier_preprocessor_counterlexicons'])[0]
         cl_slop         = json.loads(kwargs['lexicon_classifier_preprocessor_cl_slops'])[0]
 
-        loaded_args = {'input_features':input_features,'lex_ids':lex_ids,'match_type':match_type,\
-                       'operation':operation,'slop':slop,'words_required':words_required,'cl_slop':cl_slop,\
-                       'counter_lex_id':counter_lex_id,'add_counter_lex':add_counter_lex}
+        add_counter_lex = False
 
-        parsed_args = self._parse_arguments(loaded_args)
-        return parsed_args
+        if 'lexicon_classifier_preprocessor_add_cl' in kwargs:
+            add_counter_lex = True
+
+        args_to_parse = {'input_features':input_features,'lex_ids':lex_ids,'match_type':match_type,\
+                         'operation':operation,'slop':slop,'words_required':words_required,'cl_slop':cl_slop,\
+                         'counter_lex_id':counter_lex_id}
+
+        loaded_args = {'add_counter_lex':add_counter_lex}
+        parsed_args = self._parse_arguments(args_to_parse)
+        loaded_args.update(parsed_args)
+
+        return loaded_args
 
     def _unpack_lexicons(self, lex_ids):
         # {'lex_name_1':[lex_w1,lexw2],'lex_name2':[lex_w2]} etc
@@ -241,9 +241,7 @@ class LexTagger(object):
         slop = args['slop']
         wr = args['words_required']
         cs = args['cl_slop']
-
         add_cl = args['add_counter_lex']
-
 
         for lex_name, lex in lexicons.items():
             if add_cl:
@@ -276,12 +274,11 @@ class LexTagger(object):
         if not self._all_args_exist(**kwargs):
             return documents
 
-        args = self._load_arguments(**kwargs)
+        args = self._load_arguments(kwargs)
 
         lex_ids = args['lex_ids']
         counter_lex_ids = args['counter_lex_id']
         input_features = args['input_features']
-
 
         lexicons_to_apply = self._unpack_lexicons(lex_ids)
 
@@ -305,6 +302,5 @@ class LexTagger(object):
                             new_fact = {'fact': self._decode_text(lex_name), 'str_val': self._decode_text(str_val), 'doc_path': input_feature, 'spans': json.dumps([spans])}
                             texta_facts.append(new_fact)
                         documents[i]['texta_facts'].extend(texta_facts)
-
 
         return {"documents":documents, "meta": {}}

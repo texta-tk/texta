@@ -80,11 +80,8 @@ try:
         'parameters_template': 'parameters/preprocessor_parameters/lexicon_classifier.html',
         'arguments': {},
         'is_enabled': True,
-        'match_types':['prefix','exact','fuzzy'],
-        'operations':['or','and'],
-        'slops':['0','1','2','3','4','5'],
-        'words_required':['10%','20%','30%','40%','50%','60%','70%','80%','90%','100%'],
-        'cl_options':['no','yes']
+        'match_types':['Prefix','Exact','Fuzzy'],
+        'operations':['OR','AND']
     }
     log_preprocessor_status(code='lexicon_classifier', status='enabled')
 
