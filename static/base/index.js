@@ -1,3 +1,23 @@
+$(document).ready(function() {
+    $('#dataset_to_activate').multiselect({
+    	includeSelectAllOption: true,
+    	numberDisplayed: 1
+    });
+
+    $('#constraint_field').multiselect({
+    	numberDisplayed: 1
+    });
+
+    $('#mlt_fields').multiselect({
+    	numberDisplayed: 1
+    });
+
+    $('#cluster_field').multiselect({
+    	numberDisplayed: 1
+    });
+    
+});
+
 $('#lex_miner').click(function() {
     window.location = LINK_LEXMINER;
 });
@@ -45,7 +65,12 @@ $('#grammar_builder').click(function() {
 $('#dataset_importer').click(function() {
     window.location = LINK_DATASET_IMPORTER;
 });
+$(".model-dropdown-menu li").click(function(){
 
+    $("#model-dropdown").text($(this).text());
+    $("#model-dropdown").val($(this).text());
+
+ });
 $('#notRegistered').click(function() {
     $(this).hide();
     $('#registrationForm').slideDown(1000);
@@ -83,7 +108,8 @@ function registerAccount() {
                 invalidateInput("registrationUsername","has-error","Username exists or is too short.");
             }
         } else {
-            go_to(data.url);
+            $('#confirm-email-modal').modal();
+            //go_to(data.url);
         }
     }, "json");
     
@@ -141,17 +167,16 @@ function update_resources() {
             notification({
                 type: 'success',
                 title: 'Resources updated!',
-            }).then((result) => {location.reload();});
+            }).then((result) => {});
             
 		}else{
             swal({
                 title:'Failed!',
                 text:'Resource update failed!',
                 type:'warning',
-            }).then((result) => {location.reload();});
+            }).then((result) => {});
 		}
 	});
 
 }
-
 

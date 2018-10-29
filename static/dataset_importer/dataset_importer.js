@@ -1,4 +1,3 @@
-$('select').val('');
 $('input[name="file"]').val('');
 $('#keep-synchronized').val('false');
 $('#remove-existing-dataset').val('false');

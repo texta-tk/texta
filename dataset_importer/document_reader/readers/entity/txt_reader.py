@@ -14,7 +14,7 @@ class TXTReader(EntityReader):
 			try:
 				features = TXTReader.get_meta_features(file_path=file_path)
 
-				with open(file_path, 'rb') as text_file:
+				with open(file_path, 'r') as text_file:
 					features['text'] = text_file.read()
 
 				features['_texta_id'] = file_path

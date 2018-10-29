@@ -7,9 +7,10 @@ from typing import List, Any
 from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
 from searcher.models import Search
 from task_manager.models import Task
-from task_manager.progress_manager import ShowProgress
+from task_manager.tools.show_progress import ShowProgress
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
+from utils.helper_functions import add_dicts
 
 from texta.settings import FACT_PROPERTIES
 
@@ -33,7 +34,7 @@ class Preprocessor:
         task = Task.objects.get(pk=self.task_id)
         params = json.loads(task.parameters)
 
-        ds = Datasets().activate_dataset_by_id(params['dataset'])
+        ds = Datasets().activate_datasets_by_id(params['dataset'])
         es_m = ds.build_manager(ES_Manager)
         es_m.load_combined_query(self._parse_query(params))
 
@@ -75,32 +76,40 @@ class Preprocessor:
             if 'texta_facts' not in documents[0]:
                 self.es_m.update_mapping_structure('texta_facts', FACT_PROPERTIES)
 
-        processed_documents = DocumentPreprocessor.process(documents=documents, **parameter_dict)
-        self.es_m.bulk_post_documents(list(processed_documents['documents']), ids)
-        show_progress.update(l)
-
-        response = self.es_m.scroll(scroll_id=scroll_id, time_out=self.scroll_time_out)
-        l = len(response['hits']['hits'])
-        scroll_id = response['_scroll_id']
-        while l > 0:
-            documents, parameter_dict, ids = self._prepare_preprocessor_data(field_paths, response)
-            batch_processed_documents = DocumentPreprocessor.process(documents=documents, **parameter_dict)
-
-            self.es_m.bulk_post_documents(list(batch_processed_documents['documents']), ids)
-            add_dicts(processed_documents, batch_processed_documents)
+        try:
+            processed_documents = DocumentPreprocessor.process(documents=documents, **parameter_dict)
+            self.es_m.bulk_post_documents(list(processed_documents['documents']), ids)
+            show_progress.update(l)
 
             response = self.es_m.scroll(scroll_id=scroll_id, time_out=self.scroll_time_out)
             l = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
+            while l > 0:
+                documents, parameter_dict, ids = self._prepare_preprocessor_data(field_paths, response)
+                batch_processed_documents = DocumentPreprocessor.process(documents=documents, **parameter_dict)
+
+                self.es_m.bulk_post_documents(list(batch_processed_documents['documents']), ids)
+                add_dicts(processed_documents, batch_processed_documents)
+
+                response = self.es_m.scroll(scroll_id=scroll_id, time_out=self.scroll_time_out)
+                l = len(response['hits']['hits'])
+                scroll_id = response['_scroll_id']
+        except Exception as e:
+            task = Task.objects.get(pk=self.task_id)
+            task.status = 'Failed'
+            task.result = json.dumps({'documents_processed': show_progress.n_count, 'preprocessor_key': self.params['preprocessor_key'], 'error': str(e)})
+            task.time_completed = datetime.now()
+            task.save()
+            return False # break out of function
 
         task = Task.objects.get(pk=self.task_id)
-        task.status = 'Updating'        
+        task.status = 'Updating'
         task.result = json.dumps({'documents_processed': show_progress.n_total, **processed_documents['meta'], 'preprocessor_key': self.params['preprocessor_key']})
         task.save()
         self.es_m.update_documents()
 
         task.status = 'Completed'
-        task.time_completed = datetime.now()        
+        task.time_completed = datetime.now()
         task.save()
 
     def _prepare_preprocessor_data(self, field_paths, response: dict):
@@ -144,19 +153,3 @@ class Preprocessor:
         else:
             query = json.loads(Search.objects.get(pk=int(search)).query)
         return query
-
-def add_dicts(dict1, dict2):
-    '''
-    Helper function to += values of keys from two dicts
-    '''
-    # check if dicts are dict
-    if set([type(dict1), type(dict2)]).issubset([dict]):
-        for key, val in dict2.items():
-            if key not in dict1:
-                dict1[key] = val
-            else:
-                if type(val) == dict:
-                    for k, v in val.items():
-                        dict1[key][k] += v
-                else:
-                    dict1[key] += val

@@ -14,7 +14,7 @@ class DocXReader(EntityReader):
         for file_path in DocXReader.get_file_list(directory, 'docx'):
             try:
                 features = DocXReader.get_meta_features(file_path=file_path)
-                features['text'] = textract.process(file_path)
+                features['text'] = textract.process(file_path).decode('utf8')
                 features['_texta_id'] = file_path
 
                 yield features

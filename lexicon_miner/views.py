@@ -164,10 +164,10 @@ def selectLexicon(request):
         lexicons = Lexicon.objects.filter(author=request.user)
 
         datasets = Datasets().get_allowed_datasets(request.user)
-        language_models = Task.objects.filter(task_type='train_model').filter(status='Completed').order_by('-pk')
+        language_models = Task.objects.filter(task_type='train_model').filter(status=Task.STATUS_COMPLETED).order_by('-pk')
 
         # Define selected mapping
-        ds = Datasets().activate_dataset(request.session)
+        ds = Datasets().activate_datasets(request.session)
         es_m = ds.build_manager(ES_Manager)
         fields = es_m.get_column_names()
 
@@ -180,12 +180,11 @@ def selectLexicon(request):
 
 
 def get_example_texts(request, field, value):
-    ds = Datasets().activate_dataset(request.session)
-    dataset = ds.get_index()
-    mapping = ds.get_mapping()
+    ds = Datasets().activate_datasets(request.session)
+    es_m = ds.build_manager(ES_Manager)
+    query = { "size":10, "highlight": {"fields": {field: {}}}, "query": {"match": {field: value}}}
 
-    query = json.dumps({ "size":10, "highlight": {"fields": {field: {}}}, "query": {"match": {field: value}}})
-    response = ES_Manager.plain_scroll(es_url, dataset, mapping, query)
+    response = es_m.perform_query(query)
 
     matched_sentences = []
     for hit in response['hits']['hits']:
@@ -224,7 +223,8 @@ def query(request):
         suggestions = []
 
         model_run_obj = Task.objects.get(id=int(request.session['model']))
-        tooltip_feature = json.loads(json.loads(model_run_obj.parameters)['field'])['path']
+        print(model_run_obj)
+        tooltip_feature = json.loads(model_run_obj.parameters)['field']
 
         if request.POST['method'][:12] == 'most_similar':
             for a in getattr(model,request.POST['method'])(positive=positives,topn=40,ignored_idxes = ignored_idxes):

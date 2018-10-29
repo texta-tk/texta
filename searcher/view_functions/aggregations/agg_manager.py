@@ -2,7 +2,7 @@ from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
 from searcher.models import Search
-from texta.settings import date_format
+from texta.settings import es_date_format
 
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
@@ -15,10 +15,8 @@ class AggManager:
     """ Manage Searcher aggregations and plotting preparations
     """
     def __init__(self,request):
-        ds = Datasets().activate_dataset(request.session)
-        self.dataset = ds.get_index()
-        self.mapping = ds.get_mapping()
-        self.es_m = ES_Manager(self.dataset, self.mapping)
+        ds = Datasets().activate_datasets(request.session)
+        self.es_m = ds.build_manager(ES_Manager)
 
         # PREPARE AGGREGATION
         self.es_params = request.POST
@@ -101,7 +99,7 @@ class AggManager:
             agg_size_1 = 10
             agg_size_2 = 10
 
-        field_type_to_name = {'date': 'daterange', 'string':'string', 'text': 'string', 'keyword': 'string', 'facts': 'fact', 'fact_str_val': 'fact_str_val', 'fact_num_val': 'fact_num_val'}
+        field_type_to_name = {'date': 'daterange', 'float': 'string', 'string':'string', 'text': 'string', 'keyword': 'string', 'facts': 'fact', 'fact_str_val': 'fact_str_val', 'fact_num_val': 'fact_num_val'}
 
         agg_name_1 = field_type_to_name[agg_field_1['type']]
         agg_name_2 = field_type_to_name[agg_field_2['type']]
@@ -139,7 +137,7 @@ class AggManager:
 
     def create_agg(self, agg_name, sort_by, path, size):
         if agg_name == "daterange":
-            return {agg_name: {"date_range": {"field": path, "format": date_format, "ranges": self.ranges}}}
+            return {agg_name: {"date_range": {"field": path, "format": es_date_format, "ranges": self.ranges}}}
         elif agg_name == 'fact':
             return {
                 agg_name: {

@@ -44,7 +44,6 @@ class LanguageModel:
 		model = word2vec.Word2Vec()
 
 		task_params = json.loads(Task.objects.get(pk=self.id).parameters)
-
 		try:
 			sentences = EsIterator(task_params, callback_progress=show_progress)
 			model = word2vec.Word2Vec(
@@ -52,7 +51,8 @@ class LanguageModel:
 					min_count=int(task_params['min_freq']),
 					size=int(task_params['num_dimensions']),
 					workers=int(task_params['num_workers']),
-					iter=int(num_passes)
+					iter=int(num_passes),
+					max_vocab_size=int(task_params['max_vocab']) if task_params['max_vocab'] else None
 			)
 
 			self.model = model
@@ -134,7 +134,7 @@ class EsIterator(object):
 	"""
 
 	def __init__(self, parameters, callback_progress=None):
-		ds = Datasets().activate_dataset_by_id(parameters['dataset'])
+		ds = Datasets().activate_datasets_by_id(parameters['dataset'])
 		query = self._parse_query(parameters)
 
 		self.field = json.loads(parameters['field'])['path']

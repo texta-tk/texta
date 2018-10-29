@@ -4,11 +4,12 @@ import dateparser
 import re
 import json
 
+
 class DatePreprocessor(object):
     """
     Converts date fields to suitable format for ElasticSearch.
     """
-    
+
     def __init__(self):
         self._languages = ['et']
         self._date_pattern = self._get_date_patterns()
@@ -19,9 +20,9 @@ class DatePreprocessor(object):
                           'Lithuanian': ['lt'],
                           'Russian'   : ['ru'],
                           'Other'     : []}
-        
+
     def _get_date_patterns(self):
-        
+
         '''
         Compiles common date patterns for date extraction
         '''
@@ -30,41 +31,46 @@ class DatePreprocessor(object):
         dps = dp_1 + '|' + dp_2
         pattern = re.compile(dps)
         return pattern
-    
+
     def set_languages(self,langs):
         '''
         Set default languages for parsing dates
         '''
         self._languages = langs
-              
-    def convert_date(self,date_field_value,langs=[]):#, **kwargs):
-      '''Converts given date field value to standard ES format yyyy-mm-dd
-      
-      :param date_field_value: date field value to convert
-      :param langs: language(s) of the data (optional)
-      :type date_field_value: string
-      :type langs: list
-      :return: date converted to standard ES format
-      :rtype: string
-      '''
-     
-      if langs:
-          self._languages = langs
-      try:
-          if self._languages:
-              datetime_object = dateparser.parse(date_field_value,languages=self._languages)
-          else:
-              datetime_object = dateparser.parse(date_field_value)
-          formatted_date = datetime_object.strftime('%Y-%m-%d')
 
-      except Exception as e:
-          print(e)
-          formatted_date = None
-      return formatted_date
+    def convert_date(self,date_field_value,langs=[]):#, **kwargs):
+        '''Converts given date field value to standard ES format yyyy-mm-dd
+      
+        :param date_field_value: date field value to convert
+        :param langs: language(s) of the data (optional)
+        :type date_field_value: string
+        :type langs: list
+        :return: date converted to standard ES format
+        :rtype: string
+        '''
+     
+        if langs:
+            self._languages = langs
+        try:
+            if self._languages:
+                datetime_object = dateparser.parse(date_field_value,languages=self._languages)
+                # If fails to parse with given language (returns None)
+                if not datetime_object:
+                    datetime_object = dateparser.parse(date_field_value)
+            else:
+                datetime_object = dateparser.parse(date_field_value)
+        
+            if datetime_object:
+                formatted_date = datetime_object.strftime('%Y-%m-%d')
+
+        except Exception as e:
+            print(e)
+            formatted_date = None
+        return formatted_date
   
     def convert_batch(self, date_batch,langs=[]):
       '''Converts given date batch to standard ES format yyyy-mm-dd
-      
+
       :param date_batch: date batch to convert
       :param langs: language(s) of the data (optional)
 
@@ -75,12 +81,12 @@ class DatePreprocessor(object):
       '''
       converted_batch = [self.convert_date(date,langs=langs) for date in date_batch]
       return converted_batch
-      
-      
-  
+
+
+
     def extract_dates(self,text,convert=False):
         '''Extracts dates from given text
-        
+
         :param text: plaintext containing date values
         :param convert: whether to convert extracted date data to es standard or not
         :type text: string
@@ -88,12 +94,12 @@ class DatePreprocessor(object):
         :return: extracted dates
         :rtype: list
         '''
-        
+
         dates = re.findall(self._date_pattern,text)
         if convert:
             dates = [self.convert_date(d) for d in dates]
         return dates
-    
+
     def transform(self, documents, **kwargs):
         '''Takes input documents and enhances them with MLP output.
 
