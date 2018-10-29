@@ -3,9 +3,9 @@ var name_to_punct = {'___r_para___': ')', '___exclamation___': '!', '___slash___
 var PREFIX = LINK_LEXMINER;
 
 $(document).ready(function(){
-	$("#new_lexicon_button").click(function(){
+	$("#new_lexicon_button").on('click',(function(){
 		$("#inputDiv").slideToggle("slow",function(){});
-    });
+    }));
 
     $('#lx-'+ $('.selectedText').attr('id')).css({ 'font-weight': 'bold', 'color':'#333'});
 });

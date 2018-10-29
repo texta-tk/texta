@@ -29,9 +29,9 @@ $(document).ready(function(){
     $("#plot_settings").toggle(0);
     $("#legend").toggle(0);
 
-    $("#plot_btn").click(function() {
+    $("#plot_btn").on('click',(function() {
         $("#plot_settings").toggle(0);
-    });
+    }));
 
     $("#legend_btn").click(function() {
         $("#legend").toggle(0);

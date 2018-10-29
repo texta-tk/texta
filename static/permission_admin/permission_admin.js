@@ -190,15 +190,15 @@ function moveItems(origin, destination) {
     $(origin).find(':selected').appendTo(destination)
 }
 
-$('.allow-btn').click(function (obj) {
+$('.allow-btn').on('click',(function (obj) {
     var userid = $(this).data('userid');
     moveItems('#' + userid + '-disallowed-datasets', '#' + userid + '-allowed-datasets')
-});
+}));
 
-$('.disallow-btn').click(function () {
+$('.disallow-btn').on('click',(function () {
     var userid = $(this).data('userid');
     moveItems('#' + userid + '-allowed-datasets', '#' + userid + '-disallowed-datasets')
-});
+}));
 
 function update_dataset_permissions(userId) {
     var allowedDatasets = []

@@ -18,74 +18,74 @@ $(document).ready(function() {
     
 });
 
-$('#lex_miner').click(function() {
+$('#lex_miner').on('click',(function() {
     window.location = LINK_LEXMINER;
-});
+}));
 
-$('#searcher').click(function() {
+$('#searcher').on('click',(function() {
     window.location = LINK_SEARCHER;
-});
+}));
 
-$('#mwe_miner').click(function() {
+$('#mwe_miner').on('click',(function() {
     window.location = LINK_MWE;
-});
+}));
 
-$('#home').click(function() {
+$('#home').on('click',(function() {
     window.location = LINK_ROOT;
-});
+}));
 
-$('#conceptualizer').click(function() {
+$('#conceptualizer').on('click',(function() {
     window.location = LINK_CONCEPTUALISER;
-});
+}));
 
-$('#model_manager').click(function() {
+$('#model_manager').on('click',(function() {
     window.location = LINK_MODEL_MANAGER;
-});
+}));
 
-$('#classification_manager').click(function() {
+$('#classification_manager').on('click',(function() {
     window.location = LINK_CLASSIFICATION_MANAGER;
-});
+}));
 
-$('#task_manager').click(function() {
+$('#task_manager').on('click',(function() {
     window.location = LINK_TASK_MANAGER;
-});
+}));
 
-$('#ontology_viewer').click(function() {
+$('#ontology_viewer').on('click',(function() {
     window.location = LINK_ONTOLOGY_VIEWER;
-});
+}));
 
-$('#permission_admin').click(function() {
+$('#permission_admin').on('click',(function() {
     window.location = LINK_PERMISSION_ADMIN;
-});
+}));
 
-$('#grammar_builder').click(function() {
+$('#grammar_builder').on('click',(function() {
     window.location = LINK_GRAMMAR_BUILDER;
-});
+}));
 
-$('#dataset_importer').click(function() {
+$('#dataset_importer').on('click',(function() {
     window.location = LINK_DATASET_IMPORTER;
-});
-$(".model-dropdown-menu li").click(function(){
+}));
+$(".model-dropdown-menu li").on('click',(function(){
 
     $("#model-dropdown").text($(this).text());
     $("#model-dropdown").val($(this).text());
 
- });
-$('#notRegistered').click(function() {
+ }));
+$('#notRegistered').on('click',(function() {
     $(this).hide();
     $('#registrationForm').slideDown(1000);
-});
+}));
 
-$('#cancelRegistrationBtn').click(function() {
+$('#cancelRegistrationBtn').on('click',(function() {
     $('#registrationForm').slideUp(1000, function() {
         $('#notRegistered').slideDown(300);
     });
     clearRegistrationForm();
-});
+}));
 
-$('#registrationForm > .form-group > .form-control').focus(function() {
+$('#registrationForm > .form-group > .form-control').on('focus',(function() {
     validateInput($(this).attr('id'));
-});
+}));
 
 function registerAccount() {
 

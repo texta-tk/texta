@@ -116,10 +116,10 @@ $(document).ready(function () {
 
 });
 
-$(document).mousemove(function (e) {
+$(document).on('mousemove',(function (e) {
     window.MOUSE_X = e.pageX;
     window.MOUSE_Y = e.pageY;
-});
+}));
 
 
 function in_array(value, array) {
@@ -1329,14 +1329,14 @@ function change_agg_field(field_nr) {
 
 
     selected_method = $("#sort_by_" + field_nr).children("#sort_by_" + field_nr);
-    selected_method.change(function () {
+    selected_method.on('change',(function () {
         // console.log(selected_method[0].options[selected_method[0].selectedIndex].text);
         if (selected_method[0].options[selected_method[0].selectedIndex].text == 'significant words') {
             $("#agg_field_2_button").addClass('hidden');
         } else {
             $("#agg_field_2_button").removeClass('hidden');
         }
-    });
+    }));
 }
 
 function toggle_agg_field_2(action) {
