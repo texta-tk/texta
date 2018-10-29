@@ -457,6 +457,8 @@ def search(es_params, request):
 
         for hit in response['hits']['hits']:
             hit_id = str(hit['_id'])
+            # Show the _id of the document as a col
+            hit['_source']['_es_id'] = hit_id
             row = OrderedDict([(x, '') for x in out['column_names']]) # OrderedDict to remember column names with their content
 
             inner_hits = hit['inner_hits'] if 'inner_hits' in hit else {}
@@ -482,7 +484,8 @@ def search(es_params, request):
                 #   - Repeat this until arrives at the last field
                 #   - If the field in the field_path is not in this hit structure,
                 #     make content empty (to allow dynamic mapping without breaking alignment)
-                content = hit['_source']
+
+                content = hit['_source'] 
                 for p in filed_path:
                     if col == u'texta_facts' and p in content:
                         new_content = []
@@ -554,19 +557,17 @@ def search(es_params, request):
             translit_search_cols = ['text', 'translit', 'lemmas']
             hl_cols = [x for x in cols_data if len(x.split('.')) > 1 and x.split('.')[-1] in translit_search_cols] # To get value before '.' as well
             row = highlight_transliterately(cols_data, row, hl_cols=hl_cols)
-
             # Checks if user wants to see full text or short version
             for col in row:
                 if 'show_short_version' in es_params.keys():
                     row[col] = additional_option_cut_text(row[col], es_params['short_version_n_char'])
 
             out['aaData'].append(row.values())
-
             out['lag'] = time.time()-start_time
+
             logger.set_context('query', es_m.get_combined_query())
             logger.set_context('user_name', request.user.username)
             logger.info('documents_queried')
-
         return out
 
     except Exception as e:
@@ -668,12 +669,25 @@ def tag_documents(request):
     tag_name = request.POST['tag_name']
     tag_value = request.POST['tag_value']
     tag_field = request.POST['tag_field']
-    #TODO why is my js array becoming a string when passed here? Is there a better way than string split?
-    tag_span = request.POST['tag_span'].split(',') if 'tag_span' in request.POST else None
     es_params = request.POST
 
     fact_m = FactManager(request)
-    fact_m.tag_documents_with_fact(es_params, tag_name, tag_value, tag_field, tag_span=tag_span)
+    fact_m.tag_documents_with_fact(es_params, tag_name, tag_value, tag_field)
+    return HttpResponse()
+
+@login_required
+def fact_to_doc(request):
+    """Add a fact to a certain document with given fact, span, and es_id"""
+    fact_name = request.POST['fact_name']
+    fact_value = request.POST['fact_value']
+    fact_field = request.POST['fact_field']
+    #TODO why is the js array becoming a string when passed here? Is there a better way than string split?
+    fact_span = request.POST['fact_span'].split(',')
+    doc_id = request.POST['doc_id']
+    es_params = request.POST
+
+    fact_m = FactManager(request)
+    fact_m.add_fact_to_doc(es_params, tag_name, tag_value, tag_field, tag_span, doc_id)
     return HttpResponse()
 
 def _get_facts_agg_count(es_m, facts):

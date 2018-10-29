@@ -604,7 +604,8 @@ function query(){
             // Which can be used as column selectors/for retriving column name
             var columns = []
             $("#columnsRow").find("th").each(function(index) {
-                columns.push({"className": $(this).text(), "targets": index});
+                // Append _DtCol to end to safe from naming conflicts
+                columns.push({"className": $(this).text()+'_DtCol', "targets": index});
             });
             console.log(columns);
             examplesTable = $('#examples').DataTable({
@@ -1614,14 +1615,19 @@ function tippyForSelect() {
                     showOnInit: 'true',
                 });
 
-
+            debugger;
             var fact_val = selection.toString();
             // Set template value to selected text
             temp.find('.textValue').html(fact_val)
             // Save as fact button
             btn = temp.find('#textPopoverSaveBtn');
+
+            // Get fact_path from td classname, remove _DtCol namesafing 
+            fact_path = this.className.trim().replace('_DtCol', '')
+            // id of the document where fact was derived from, and the document where it will be marked in
+            doc_id = $(this).siblings('._es_id_DtCol').prop('innerHTML')
             // Attr because click events don't seem to work
-            btn.attr('onclick', 'saveFactFromSelect("'+fact_val+'", "'+this.className.trim()+'", ['+loc_spans+'])');
+            btn.attr('onclick', 'saveFactFromSelect("'+fact_val+'", "'+fact_path+'", ['+loc_spans+'],"'+doc_id+'")');
             // Update span tippy content
             textSpan._tippy.setContent(temp.prop('outerHTML'))
         };
@@ -1678,24 +1684,25 @@ function tippyForText() {
 }
 
 // Grab fresh input value when called, then save as fact
-function saveFactFromSelect(fact_value, fact_field, fact_span) {
+function saveFactFromSelect(fact_value, fact_field, fact_span, doc_id) {
     // last() to avoid the dummy template selector
     fact_name = $('.textName').last().val();
-    saveAsFact(fact_name.toUpperCase(), fact_value, fact_field, fact_span);
+    saveAsFact(fact_name.toUpperCase(), fact_value, fact_field, fact_span, doc_id);
 }
 
 
-function saveAsFact(tag_name, tag_value, tag_field, tag_span) {
-    console.log(tag_name)
-    console.log(tag_value)
-    console.log(tag_field)
-    console.log(tag_span)
-    if (tag_name.length > 10 || tag_name == '') {
+function saveAsFact(fact_name, fact_value, fact_field, fact_span, doc_id) {
+    console.log(fact_name)
+    console.log(fact_value)
+    console.log(fact_field)
+    console.log(fact_span)
+    console.log(doc_id)
+    if (fact_name.length > 10 || fact_name == '') {
         swal('Warning!','Fact name longer than 10 characters, or empty!','warning');
     } else {
         swal({
             title: 'Are you sure you want to save this as a fact?',
-            html: 'The fact <b>'+tag_name+': '+tag_value+'</b> will be added as a fact to field <b>'+tag_field+'</b>',
+            html: 'The fact <b>'+fact_name+': '+fact_value+'</b> will be added as a fact to field <b>'+fact_field+'</b>',
             type: 'question',
             showCancelButton: true,
             confirmButtonColor: '#73AD21',
@@ -1704,14 +1711,14 @@ function saveAsFact(tag_name, tag_value, tag_field, tag_span) {
             }).then((result) => {
                 if(result.value) {
                     formElement = new FormData(document.getElementById("filters"));
-                    formElement.append('tag_name', tag_name);
-                    formElement.append('tag_value', tag_value);
-                    formElement.append('tag_field', tag_field);
-                    debugger;
-                    formElement.append('tag_span', tag_span);
+                    formElement.append('fact_name', fact_name);
+                    formElement.append('fact_value', fact_value);
+                    formElement.append('fact_field', fact_field);
+                    formElement.append('fact_span', fact_span);
+                    formElement.append('doc_id', doc_id);
                 
                     $.ajax({
-                        url: PREFIX + '/tag_documents',
+                        url: PREFIX + '/fact_to_doc',
                         data: formElement,
                         type: 'POST',
                         contentType: false,
@@ -1719,7 +1726,7 @@ function saveAsFact(tag_name, tag_value, tag_field, tag_span) {
                         success: function() {
                             swal({
                                 title:'Adding fact successful!',
-                                text:'Fact '+ tag_name + ': ' + tag_value + ' has been added.',
+                                text:'Fact '+ fact_name + ': ' + fact_value + ' has been added.',
                                 type:'success'});
                         },
                         error: function() {
@@ -1735,4 +1742,5 @@ function saveAsFact(tag_name, tag_value, tag_field, tag_span) {
 // But even then, it comes when a text search overlaps with a fact
 //TODO validate that fact name isn't empty
 //TODO check why backend fact is unsearchable
+//TODO make columnname classes something other than just the plain name to avoid conflicts
 //TODO put into other file

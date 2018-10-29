@@ -75,8 +75,8 @@ class ES_Manager:
     """
 
     TEXTA_RESERVED = []
+    TEXTA_META_FIELDS = ['_es_id']
     HEADERS = HEADERS
-    #TEXTA_RESERVED = ['texta_facts']
 
     # Redefine requests if LDAP authentication is used
     if es_use_ldap:
@@ -266,7 +266,9 @@ class ES_Manager:
         """
         mapped_fields = self.get_mapped_fields()
         column_names = [c['path'] for c in mapped_fields if not self._is_reserved_field(c['path'])]
+        # Add meta fields
         column_names.sort()
+        column_names += self.TEXTA_META_FIELDS
         return column_names
 
     def _is_reserved_field(self, field_name):
