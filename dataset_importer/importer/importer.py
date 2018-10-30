@@ -289,6 +289,9 @@ def _import_dataset(parameter_dict, n_processes, process_batch_size):
     :type n_processes: int
     :type process_batch_size: int
     """
+    from django import db
+    db.connections.close_all()
+
     # Local files are not extracted from archives due to directory permissions
     # If importing from local hard drive, extract first.
     if parameter_dict['is_local'] is False:
@@ -410,6 +413,9 @@ def _run_processing_jobs(parameter_dict, reader, n_processes, process_batch_size
     :type n_processes: int
     :type process_batch_size: int
     """
+    from django import db
+    db.connections.close_all()
+
     if parameter_dict.get('remove_existing_dataset', False):
         _remove_existing_dataset(parameter_dict)
 
