@@ -727,7 +727,7 @@ function query() {
                 // Append _DtCol to end to safe from naming conflicts
                 columns.push({"className": $(this).text()+'_DtCol', "targets": index});
             });
-            console.log(columns);
+
             examplesTable = $('#examples').DataTable({
                 "bAutoWidth": false,
                 "deferRender": true,
@@ -1735,7 +1735,7 @@ function createSelectionProps() {
 
 function tippyForFacts(spans) {
     // Select FACT spans
-    var spans = $(".\\[HL\\]");
+    var spans = $("span[title~='\\[fact\\]']")
     spans.addClass("tippyFactSpan");
     spans = document.querySelectorAll('.tippyFactSpan')
     // Select fact popover template
@@ -1750,9 +1750,11 @@ function tippyForFacts(spans) {
     // Create specific content for each span
     Array.prototype.forEach.call(spans, function (span, i) {
         // Display fact name and val
-        title = span.title.split(' ')
-        name = title[title.length - 1]
+        // Select span data attributes
+        s_data = $(span).data()
+        name = s_data['fact_name']
         val = span.innerText
+        // debugger;
         temp.find('.factName').html(name)
         temp.find('.factValue').html(val)
         // Fact delete button
@@ -1769,6 +1771,8 @@ function tippyForFacts(spans) {
 function tippyForSelect() {
     $("#examples").find('tbody').find('td').mouseup(function () {
         // Get selection content and span
+        // $('.kysimus_ja_vastus_mlp').text().indexOf(selection.toString())
+        // [$('.kysimus_ja_vastus_mlp').text().indexOf($('#test').text()), 28 + $('#test').text().length]
         var selection = window.getSelection();
         // Check if selection is bigger than 0
         if (!selection.isCollapsed) {
@@ -1843,19 +1847,18 @@ function tippyForText() {
             interactive: true,
             trigger: 'click',
         });
-    // TODO get selection spans
-    // TODO get selection name, value
-    // TODO oh no are the multiples of these going to conflict
-    // Create specific content for each span
+
     Array.prototype.forEach.call(spans, function (span, i) {
-        // Add val to temp
-        val = span.innerText
-        temp.find('.textValue').html(val)
-        // // Fact delete button
-        save_btn = temp.find('#textPopoverSaveBtn');
-        // Attr because click events don't seem to work
+        fact_val = span.innerText;
+        fact_path = this.className.trim().replace('_DtCol', '')
+        // id of the document where fact was derived from, and the document where it will be marked in
+        doc_id = $(this).siblings('._es_id_DtCol').prop('innerHTML')
+        
+        btn = temp.find('#textPopoverSaveBtn');
+        btn.attr('onclick', 'saveFactFromSelect("'+fact_val+'", "'+fact_path+'", ['+loc_spans+'],"'+doc_id+'")');
         // save_btn.attr('onclick', 'saveAsFact('+spans+','+content+')');
         // Update span tippy content
+        temp.find('.textValue').html(fact_val);
         span._tippy.setContent(temp.prop('outerHTML'))
     });
 }
@@ -1918,6 +1921,4 @@ function saveAsFact(fact_name, fact_value, fact_field, fact_span, doc_id) {
 // its from the backend [FACT] thing, need to remove that
 // But even then, it comes when a text search overlaps with a fact
 //TODO validate that fact name isn't empty
-//TODO check why backend fact is unsearchable
-//TODO make columnname classes something other than just the plain name to avoid conflicts
 //TODO put into other file

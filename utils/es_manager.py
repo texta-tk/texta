@@ -52,7 +52,7 @@ class ES_Manager:
         return index_string
 
     def bulk_post_update_documents(self, documents, ids):
-        """Do both plain_post_bulk and _update_by_query"""
+        """Do both plain_post_bulk and update_documents()"""
         data = ''
 
         for i, _id in enumerate(ids):
@@ -60,7 +60,7 @@ class ES_Manager:
             data += json.dumps({"doc": documents[i]}) + '\n'
 
         response = self.plain_post_bulk(self.es_url, data)
-        response = self._update_by_query()
+        response = self.update_documents()
         return response
 
     def bulk_post_documents(self, documents, ids, document_locations):
@@ -73,11 +73,6 @@ class ES_Manager:
 
         response = self.plain_post_bulk(self.es_url, data)
 
-        return response
-
-    def update_documents(self):
-        """Do just _update_by_query"""
-        response = self._update_by_query()
         return response
 
     def update_mapping_structure(self, new_field, new_field_properties):
@@ -99,7 +94,7 @@ class ES_Manager:
                 response = self.plain_put(url, json.dumps(properties))
 
 
-    def _update_by_query(self):
+    def update_documents(self):
         response = self.plain_post('{0}/{1}/_update_by_query?refresh&conflicts=proceed'.format(self.es_url, self.stringify_datasets()))
         return response
 

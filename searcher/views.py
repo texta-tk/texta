@@ -341,7 +341,7 @@ def fact_to_doc(request):
     fact_value = request.POST['fact_value']
     fact_field = request.POST['fact_field']
     #TODO why is the js array becoming a string when passed here? Is there a better way than string split?
-    fact_span = request.POST['fact_span'].split(',')
+    fact_span = [int(s) for s in request.POST['fact_span'].split(',')]
     doc_id = request.POST['doc_id']
     es_params = request.POST
 

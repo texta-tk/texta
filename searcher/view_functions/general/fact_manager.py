@@ -60,7 +60,7 @@ class FactManager:
             logger.set_context('es_params', self.es_params)
             logger.exception('remove_facts_from_document_failed')
 
-    def tag_documents_with_fact(self, es_params, tag_name, tag_value, tag_field, tag_span=None):
+    def tag_documents_with_fact(self, es_params, tag_name, tag_value, tag_field):
         '''Used to tag all documents in the current search with a certain fact'''
         self.es_m.build(es_params)
         self.es_m.load_combined_query(self.es_m.combined_query)
@@ -68,32 +68,44 @@ class FactManager:
 
         data = ''
         for document in response['hits']['hits']:
-            # If no custom span is passed in, make it the entire document
-            if not tag_span:
-                if 'mlp' in tag_field:
-                    split_field = tag_field.split('.')
-                    tag_span = [0, len(document['_source'][split_field[0]][split_field[1]])]
-                else:
-                    tag_span = [0, len(document['_source'][tag_field].strip())]
+            if 'mlp' in tag_field:
+                split_field = tag_field.split('.')
+                tag_span = [0, len(document['_source'][split_field[0]][split_field[1]])]
+            else:
+                tag_span = [0, len(document['_source'][tag_field].strip())]
             document['_source'][self.field].append({"str_val": tag_value, "spans": str([tag_span]), "fact": tag_name, "doc_path":tag_field})
 
             data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
             document = {'doc': {self.field: document['_source'][self.field]}}
             data += json.dumps(document)+'\n'
 
-        response = self.plain_post_bulk(self.es_m.es_url, data)
-        response = self._update_by_query()
+        response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
+        response = self.es_m.update_documents()
         return response
 
     def fact_to_doc(self, es_params, fact_name, fact_value, fact_field, fact_span, doc_id):
         """Add a fact to a certain document with given fact, span, and the document _id"""
-        # self.es_m.build(es_params)
-        # self.es_m.load_combined_query(self.es_m.combined_query)
         query = {"query": {"terms": {"_id": [doc_id] }}}
         response = self.es_m.perform_query(query)
-        print(response)
+        hits = response['hits']['hits']
+        import pdb;pdb.set_trace()
+        # Is this necessary
+        if 'texta_facts' not in hits[0]:
+            self.es_m.update_mapping_structure('texta_facts', FACT_PROPERTIES)
 
-        # bulk_post_update_documents
+        data = ''
+        for document in hits:
+            document['_source'][self.field].append({"str_val": fact_value, "spans": str([fact_span]), "fact": fact_name, "doc_path":fact_field})
+
+            data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
+            document = {'doc': {self.field: document['_source'][self.field]}}
+            data += json.dumps(document)+'\n'
+
+        response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
+        print(response)
+        response = self.es_m.update_documents()
+        print(response)
+        return response
 
     def count_cooccurrences(self, fact_pairs):
         """Finds the counts of cooccuring facts
