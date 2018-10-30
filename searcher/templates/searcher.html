@@ -33,7 +33,7 @@
 										<div class="col-sm-12">
 										    <div class="form-inline">
 												<div class="form-group">
-													<select id="constraint_field" name="constraint_field" multiple="multiple" class="form-control input-sm">
+													<select class='selectpicker' data-hide-disabled='true' multiple id="constraint_field" name="constraint_field" class="form-control input-sm">
 														{% for field in fields %}
 															<option value="{{field.data}}">{{field.label}}</option>
 														{% endfor %}

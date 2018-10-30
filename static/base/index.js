@@ -4,9 +4,6 @@ $(document).ready(function () {
         numberDisplayed: 1
     });
 
-    $('#constraint_field').multiselect({
-        numberDisplayed: 1
-    });
 
     $('#mlt_fields').multiselect({
         numberDisplayed: 1
@@ -15,6 +12,7 @@ $(document).ready(function () {
     $('#cluster_field').multiselect({
         numberDisplayed: 1
     });
+    
 });
 
 $('#lex_miner').on('click', (function () {
