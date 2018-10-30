@@ -1,89 +1,88 @@
-$(document).ready(function() {
+$(document).ready(function () {
     $('#dataset_to_activate').multiselect({
-    	includeSelectAllOption: true,
-    	numberDisplayed: 1
+        includeSelectAllOption: true,
+        numberDisplayed: 1
     });
 
     $('#constraint_field').multiselect({
-    	numberDisplayed: 1
+        numberDisplayed: 1
     });
 
     $('#mlt_fields').multiselect({
-    	numberDisplayed: 1
+        numberDisplayed: 1
     });
 
     $('#cluster_field').multiselect({
-    	numberDisplayed: 1
+        numberDisplayed: 1
     });
-    
 });
 
-$('#lex_miner').on('click',(function() {
+$('#lex_miner').on('click', (function () {
     window.location = LINK_LEXMINER;
 }));
 
-$('#searcher').on('click',(function() {
+$('#searcher').on('click', (function () {
     window.location = LINK_SEARCHER;
 }));
 
-$('#mwe_miner').on('click',(function() {
+$('#mwe_miner').on('click', (function () {
     window.location = LINK_MWE;
 }));
 
-$('#home').on('click',(function() {
+$('#home').on('click', (function () {
     window.location = LINK_ROOT;
 }));
 
-$('#conceptualizer').on('click',(function() {
+$('#conceptualizer').on('click', (function () {
     window.location = LINK_CONCEPTUALISER;
 }));
 
-$('#model_manager').on('click',(function() {
+$('#model_manager').on('click', (function () {
     window.location = LINK_MODEL_MANAGER;
 }));
 
-$('#classification_manager').on('click',(function() {
+$('#classification_manager').on('click', (function () {
     window.location = LINK_CLASSIFICATION_MANAGER;
 }));
 
-$('#task_manager').on('click',(function() {
+$('#task_manager').on('click', (function () {
     window.location = LINK_TASK_MANAGER;
 }));
 
-$('#ontology_viewer').on('click',(function() {
+$('#ontology_viewer').on('click', (function () {
     window.location = LINK_ONTOLOGY_VIEWER;
 }));
 
-$('#permission_admin').on('click',(function() {
+$('#permission_admin').on('click', (function () {
     window.location = LINK_PERMISSION_ADMIN;
 }));
 
-$('#grammar_builder').on('click',(function() {
+$('#grammar_builder').on('click', (function () {
     window.location = LINK_GRAMMAR_BUILDER;
 }));
 
-$('#dataset_importer').on('click',(function() {
+$('#dataset_importer').on('click', (function () {
     window.location = LINK_DATASET_IMPORTER;
 }));
-$(".model-dropdown-menu li").on('click',(function(){
+$(".model-dropdown-menu li").on('click', (function () {
 
     $("#model-dropdown").text($(this).text());
     $("#model-dropdown").val($(this).text());
 
- }));
-$('#notRegistered').on('click',(function() {
+}));
+$('#notRegistered').on('click', (function () {
     $(this).hide();
     $('#registrationForm').slideDown(1000);
 }));
 
-$('#cancelRegistrationBtn').on('click',(function() {
-    $('#registrationForm').slideUp(1000, function() {
+$('#cancelRegistrationBtn').on('click', (function () {
+    $('#registrationForm').slideUp(1000, function () {
         $('#notRegistered').slideDown(300);
     });
     clearRegistrationForm();
 }));
 
-$('#registrationForm > .form-group > .form-control').on('focus',(function() {
+$('#registrationForm > .form-group > .form-control').on('focus', (function () {
     validateInput($(this).attr('id'));
 }));
 
@@ -93,30 +92,34 @@ function registerAccount() {
     var passwordInput = $("#registrationPassword");
     var passwordAgainInput = $("#registrationPasswordAgain");
     var emailInput = $("#registrationEmail");
-    
+
     var failed = false;
-    
+
     if (passwordInput.val() != passwordAgainInput.val()) {
-        invalidateInput("registrationPasswordAgain","has-error","Passwords don't match.")
+        invalidateInput("registrationPasswordAgain", "has-error", "Passwords don't match.")
         return;
     }
-    
-    $.post(LINK_ACCOUNT+'/create', {username:usernameInput.val(), password:passwordInput.val(), email:emailInput.val()}, function(data){
+
+    $.post(LINK_ACCOUNT + '/create', {
+        username: usernameInput.val(),
+        password: passwordInput.val(),
+        email: emailInput.val()
+    }, function (data) {
         if (data.url == "#") {
             //console.log(data.issues.username[0]);
             if (data.issues && data.issues.username) {
-                invalidateInput("registrationUsername","has-error","Username exists or is too short.");
+                invalidateInput("registrationUsername", "has-error", "Username exists or is too short.");
             }
         } else {
             $('#confirm-email-modal').modal();
             //go_to(data.url);
         }
     }, "json");
-    
+
 }
 
 function invalidateInput(input_id, status, message) {
-    var input = $("#"+input_id);
+    var input = $("#" + input_id);
     var parent = input.parent();
     var helpBlock = parent.find(".help-block")
     if (helpBlock.length) {
@@ -129,54 +132,65 @@ function invalidateInput(input_id, status, message) {
     }
     parent.removeClass("has-success has-warning has-error");
     parent.addClass(status);
-    
+
     return input
 }
 
 function validateInput(input_id) {
-    var input = $("#"+input_id);
+    var input = $("#" + input_id);
     var parent = input.parent();
     parent.removeClass("has-success has-warning has-error");
     parent.find(".help-block").remove();
-    
+
     return input
 }
 
 function clearRegistrationForm() {
-    var ids = ['registrationUsername','registrationPassword','registrationPasswordAgain','registrationEmail'];
-    
-    for (var i = 0 ; i < ids.length ; i++) {
+    var ids = ['registrationUsername', 'registrationPassword', 'registrationPasswordAgain', 'registrationEmail'];
+
+    for (var i = 0; i < ids.length; i++) {
         validateInput(ids[i]).val("");
     }
 }
 
-function update_resources() {
-	var dataset_id = $("#dataset_to_activate").val();
-	var model_id = $("#model_to_activate").val();
-    var data = {dataset: dataset_id, model: model_id}
+function model_update_resources(self) {
+    var model_data = $(self).data();
+    update_resources(model_data)
+}
 
-	$.post(LINK_ROOT+'/update', data, function(data) {
-		if(data.length > 0){
+function dataset_update_resources() {
+    var dataset_id = $("#dataset_to_activate").val();
+    var data = {
+        dataset: dataset_id
+    }
+    update_resources(data)
+}
+
+function update_resources(data) {
+
+    $.post(LINK_ROOT + '/update', data, function (data) {
+        if (data.length > 0) {
             const notification = swal.mixin({
                 toast: true,
                 position: 'top',
                 showConfirmButton: false,
-                timer: 1000
+                timer: 100
             });
-            
+
             notification({
                 type: 'success',
                 title: 'Resources updated!',
-            }).then((result) => {});
-            
-		}else{
+            }).then((result) => {
+                location.reload()
+            });
+
+        } else {
             swal({
-                title:'Failed!',
-                text:'Resource update failed!',
-                type:'warning',
+                title: 'Failed!',
+                text: 'Resource update failed!',
+                type: 'warning',
             }).then((result) => {});
-		}
-	});
+        }
+    });
 
 }
-
