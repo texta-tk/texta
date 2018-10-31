@@ -10,6 +10,7 @@ from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import RadiusNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.pipeline import FeatureUnion
 
@@ -233,5 +234,8 @@ def get_pipeline_builder():
 
     params = {}
     pipe_builder.add_classifier('RadiusNeighborsClassifier', RadiusNeighborsClassifier, 'Radius Neighbors', params)
+
+    params = {}
+    pipe_builder.add_classifier('LogisticRegressionClassifier', LogisticRegression, 'Logistic Regression', params)
 
     return pipe_builder
