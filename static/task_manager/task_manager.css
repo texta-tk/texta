@@ -1,3 +1,56 @@
 #tasks-table {
     overflow-x: auto;
 }
+.lexicon-classifier-wrapper{
+    display: grid;
+    grid-gap: 10px 10px;
+    grid-template-rows: repeat(8, auto);
+    justify-items: stretch; /* row */
+    align-items: center; /* column */
+    justify-content: stretch;	
+}
+.lexicon-classifier-wrapper .grid-i{
+    display: grid;
+    align-items: center;
+    justify-items: stretch;
+    align-self: stretch;
+    grid-column-gap: 5px;
+    grid-template-rows: minmax(1fr, auto);
+    grid-template-columns: 0.3fr 1fr 20px;
+}   
+.lexicon-classifier-wrapper .grid-i>:nth-child(3){ /* tooltips */
+    justify-self: end;
+}
+.lexicon-classifier-wrapper .grid-i>:nth-child(2){ /* center grid item */
+    align-self: center;
+}
+.slider-wrapper{
+    margin-left:20px;
+    margin-right:20px;
+}
+#lexicon-classifier-slops{
+    width: 100%;
+}
+#lexicon-classifier-words_required{
+    width: 100%;
+}
+.grid-i>.group-radio-wrapper input{
+    margin-left:2px; 
+    margin-right:2px;
+}
+.grid-i>label{
+    margin-bottom:0px !important;
+}
+.c-lex-content-wrapper{
+    display: flex;
+    flex-flow: column;
+}
+.c-lex-content-wrapper>.grid-i{
+    padding-bottom:10px;
+}
+#lexicon-classifier-cl-slops{
+    width: 100%;
+}
+#params-lexicon_classifier{
+    padding: 5px;
+}
