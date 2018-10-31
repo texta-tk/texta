@@ -172,7 +172,7 @@ function update_resources(data) {
                 toast: true,
                 position: 'top',
                 showConfirmButton: false,
-                timer: 100
+                timer: 1000
             });
 
             notification({

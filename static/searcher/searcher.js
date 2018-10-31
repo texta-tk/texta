@@ -11,8 +11,8 @@ $(document).ready(function () {
 
     $('#constraint_field').on('changed.bs.select', function (e, clickedIndex, isSelected, previousValue) {
         filter_constraint_field($('#constraint_field option:selected').val())
-      });
-      
+    });
+
     var search_id = getUrlParameter('search');
     if (search_id != undefined) {
         render_saved_search(search_id);
@@ -191,17 +191,23 @@ function render_saved_search(search_id) {
         }
     });
 }
-function filter_constraint_field(valuegot){
-    console.log(valuegot)
-    field_type = JSON.parse(valuegot).type;
-    $("#constraint_field option").each(function () {
-        var val = $(this).val();
-        var data = JSON.parse(val);
-        if(data.type != field_type){
-            $(this).prop('disabled',true);
-        }
-    });
 
+function filter_constraint_field(element_to_filter) {
+
+    if (element_to_filter) {
+        field_type = JSON.parse(element_to_filter).type;
+        $("#constraint_field option").each(function () {
+            var val = $(this).val();
+            var data = JSON.parse(val);
+            if (data.type != field_type) {
+                $(this).prop('disabled', true);
+            }
+        });
+    } else {
+        $("#constraint_field option").each(function () {
+            $(this).prop('disabled', false);
+        });
+    }
     $('#constraint_field').selectpicker('refresh');
 }
 
