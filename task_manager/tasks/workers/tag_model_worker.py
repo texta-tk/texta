@@ -87,7 +87,7 @@ class TagModelWorker(BaseWorker):
 
             # Training the model.
             show_progress.update(1)
-            self.model, train_summary = self._train_model_with_cv(c_pipe, c_params, data_sample_x_map, data_sample_y, self.task_id)
+            self.model, train_summary = self._train_model_with_cv(c_pipe, c_params, data_sample_x_map, data_sample_y, self.task_id, n_jobs=self.n_jobs)
             train_summary['samples'] = statistics
 
             # Saving the model.
@@ -186,7 +186,7 @@ class TagModelWorker(BaseWorker):
         pass
 
     @staticmethod
-    def _train_model_with_cv(model, params, X_map, y, task_id):
+    def _train_model_with_cv(model, params, X_map, y, task_id, n_jobs=1):
         
         fields = list(X_map.keys())        
         total_samples = len(X_map[fields[0]])
@@ -204,7 +204,7 @@ class TagModelWorker(BaseWorker):
         df_test = pd.DataFrame(X_test)
 
         # Use Train data to parameter selection in a Grid Search
-        gs_clf = GridSearchCV(model, params, n_jobs=self.n_jobs, cv=5)
+        gs_clf = GridSearchCV(model, params, n_jobs=n_jobs, cv=5)
         gs_clf = gs_clf.fit(df_train, y_train)
         model = gs_clf.best_estimator_
 
