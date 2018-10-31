@@ -34,7 +34,14 @@ $(function () {
         $('[href="' + lastTab + '"]').tab('show');
     }
 });
+function show_c_lex_content(){
+    $(".c-lex-content-wrapper").toggleClass("hidden");
+}
 
+function toggle_required_percentage(element){
+    element_value = $(element).val()
+    $(".required-percentage-wrapper").toggleClass("hidden", element_value == "OR");
+}
 
 function start_task(task_id) {
     let formElement = document.getElementById("task_params");
