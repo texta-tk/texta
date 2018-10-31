@@ -5,6 +5,7 @@ import requests
 import itertools
 import traceback
 from utils.log_manager import LogManager
+from texta.settings import FACT_PROPERTIES
 
 class FactManager:
     """ Manage Searcher facts, like deleting/storing, adding facts.
@@ -88,10 +89,12 @@ class FactManager:
         query = {"query": {"terms": {"_id": [doc_id] }}}
         response = self.es_m.perform_query(query)
         hits = response['hits']['hits']
-        import pdb;pdb.set_trace()
         # Is this necessary
-        if 'texta_facts' not in hits[0]:
-            self.es_m.update_mapping_structure('texta_facts', FACT_PROPERTIES)
+        if self.field not in hits[0]:
+            self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
+            response = self.es_m.perform_query(query)
+            hits = response['hits']['hits']
+        import pdb;pdb.set_trace()
 
         data = ''
         for document in hits:

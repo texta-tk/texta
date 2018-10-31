@@ -92,6 +92,8 @@ class ES_Manager:
                 properties = {'properties': properties}
 
                 response = self.plain_put(url, json.dumps(properties))
+                print('THIS IS THE RESPONSE')
+                print(response)
 
 
     def update_documents(self):

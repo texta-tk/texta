@@ -1760,10 +1760,10 @@ function tippyForFacts(spans) {
         // Fact delete button
         btn_delete = temp.find('#factPopoverDeleteBtn');
         // Attr because click events don't seem to work
-        btn_delete.attr('onclick', 'deleteFactArray([{"'+name+'":"'+val+'"}], alert=true)');
+        btn_delete.attr('onclick', 'deleteFactArray([{"' + name + '":"' + val + '"}], alert=true)');
 
         btn_search = temp.find('#factPopoverSearchBtn');
-        btn_search.attr('onclick', 'addFactToSearch("'+name+'","'+val+'")');
+        btn_search.attr('onclick', 'addFactToSearch("' + name + '","' + val + '")');
         // Update span tippy content
         span._tippy.setContent(temp.prop('outerHTML'))
     });
@@ -1782,7 +1782,6 @@ function tippyForSelect() {
             }
             var range = selection.getRangeAt(0);
             // Tippy for selection
-            var loc_spans = [range['startOffset'], range['endOffset']];
             var textSpan = document.createElement('span');
             textSpan.className = 'selectedText';
             textSpan.appendChild(range.extractContents());
@@ -1798,17 +1797,18 @@ function tippyForSelect() {
                 });
 
             var fact_val = selection.toString();
+            loc_spans = getLocSpans(this, fact_val)
             // Set template value to selected text
             temp.find('.textValue').html(fact_val)
             // Save as fact button
             btn = temp.find('#textPopoverSaveBtn');
 
-            // Get fact_path from td classname, remove _DtCol namesafing 
+            // Get fact_path from td classname, remove _DtCol namesafing
             fact_path = this.className.trim().replace('_DtCol', '')
             // id of the document where fact was derived from, and the document where it will be marked in
             doc_id = $(this).siblings('._es_id_DtCol').prop('innerHTML')
             // Attr because click events don't seem to work
-            btn.attr('onclick', 'saveFactFromSelect("'+fact_val+'", "'+fact_path+'", ['+loc_spans+'],"'+doc_id+'")');
+            btn.attr('onclick', 'saveFactFromSelect("' + fact_val + '", "' + fact_path + '", [' + loc_spans + '],"' + doc_id + '")');
             // Update span tippy content
             textSpan._tippy.setContent(temp.prop('outerHTML'))
         };
@@ -1835,7 +1835,8 @@ function removeTextSelections(dom, tip) {
 
 function tippyForText() {
     // Select spans without [FACT] class
-    var spans = $("span[title='\\[HL\\]']")
+    spans = $(".\\[HL\\]")
+    // Get lens of spans for each parent
     spans.addClass("tippyTextSpan");
     spans = document.querySelectorAll('.tippyTextSpan')
     // Select text popover template
@@ -1849,14 +1850,14 @@ function tippyForText() {
         });
 
     Array.prototype.forEach.call(spans, function (span, i) {
+        parent = span.parentElement
         fact_val = span.innerText;
-        fact_path = this.className.trim().replace('_DtCol', '')
+        fact_path = parent.className.trim().replace('_DtCol', '')
         // id of the document where fact was derived from, and the document where it will be marked in
-        doc_id = $(this).siblings('._es_id_DtCol').prop('innerHTML')
-        
+        doc_id = $(parent).siblings('._es_id_DtCol').prop('innerHTML')
+        loc_spans = getLocSpans(parent, fact_val)
         btn = temp.find('#textPopoverSaveBtn');
-        btn.attr('onclick', 'saveFactFromSelect("'+fact_val+'", "'+fact_path+'", ['+loc_spans+'],"'+doc_id+'")');
-        // save_btn.attr('onclick', 'saveAsFact('+spans+','+content+')');
+        btn.attr('onclick', 'saveFactFromSelect("' + fact_val + '", "' + fact_path + '", [' + loc_spans + '],"' + doc_id + '")');
         // Update span tippy content
         temp.find('.textValue').html(fact_val);
         span._tippy.setContent(temp.prop('outerHTML'))
@@ -1878,47 +1879,88 @@ function saveAsFact(fact_name, fact_value, fact_field, fact_span, doc_id) {
     console.log(fact_span)
     console.log(doc_id)
     if (fact_name.length > 10 || fact_name == '') {
-        swal('Warning!','Fact name longer than 10 characters, or empty!','warning');
+        swal('Warning!', 'Fact name longer than 10 characters, or empty!', 'warning');
     } else {
         swal({
             title: 'Are you sure you want to save this as a fact?',
-            html: 'The fact <b>'+fact_name+': '+fact_value+'</b> will be added as a fact to field <b>'+fact_field+'</b>',
+            html: 'The fact <b>' + fact_name + ': ' + fact_value + '</b> will be added as a fact to field <b>' + fact_field + '</b>',
             type: 'question',
             showCancelButton: true,
             confirmButtonColor: '#73AD21',
             cancelButtonColor: '#d33',
             confirmButtonText: 'Yes'
-            }).then((result) => {
-                if(result.value) {
-                    formElement = new FormData(document.getElementById("filters"));
-                    formElement.append('fact_name', fact_name);
-                    formElement.append('fact_value', fact_value);
-                    formElement.append('fact_field', fact_field);
-                    formElement.append('fact_span', fact_span);
-                    formElement.append('doc_id', doc_id);
-                
-                    $.ajax({
-                        url: PREFIX + '/fact_to_doc',
-                        data: formElement,
-                        type: 'POST',
-                        contentType: false,
-                        processData: false,
-                        success: function() {
-                            swal({
-                                title:'Adding fact successful!',
-                                text:'Fact '+ fact_name + ': ' + fact_value + ' has been added.',
-                                type:'success'});
-                        },
-                        error: function() {
-                            swal('Error!','There was a problem saving as fact!','error');
-                        }
-                    });
-                }
-            });
+        }).then((result) => {
+            if (result.value) {
+                formElement = new FormData(document.getElementById("filters"));
+                formElement.append('fact_name', fact_name);
+                formElement.append('fact_value', fact_value);
+                formElement.append('fact_field', fact_field);
+                formElement.append('fact_span', fact_span);
+                formElement.append('doc_id', doc_id);
+
+                $.ajax({
+                    url: PREFIX + '/fact_to_doc',
+                    data: formElement,
+                    type: 'POST',
+                    contentType: false,
+                    processData: false,
+                    success: function () {
+                        swal({
+                            title: 'Adding fact successful!',
+                            text: 'Fact ' + fact_name + ': ' + fact_value + ' has been added.',
+                            type: 'success'
+                        });
+                    },
+                    error: function () {
+                        swal('Error!', 'There was a problem saving as fact!', 'error');
+                    }
+                });
+            }
+        });
     }
+}
+
+function getLocSpans(parent, val) {
+    loc_span_start = parent.innerText.indexOf(val);
+    loc_spans = [loc_span_start, loc_span_start + val.length];
+    return loc_spans
 }
 //TODO fix the fact key having [HL] in it thing
 // its from the backend [FACT] thing, need to remove that
 // But even then, it comes when a text search overlaps with a fact
 //TODO validate that fact name isn't empty
 //TODO put into other file
+
+
+
+/* Looks like method is not compatible with just text search
+// fact_span = getParentChildInd(spans, parent, span, lens);
+// function getParentChildInd(original, parent, child, lens) {
+//     parents = Array.prototype.slice.call($(original).parent())
+//     parent_ind = parents.indexOf(parent)
+//     child_ind = Array.prototype.slice.call(parent.children).indexOf(child)
+//     return lens[parent_ind][child_ind]
+// }
+
+// lens = countSpanLens(spans)
+// function countSpanLens(spans) {
+//     parents = spans.parent()
+//     lens = []
+//     Array.prototype.forEach.call(parents, function (parent, i) {
+//         // 0 so adding as cumsum on first iter wouldn't return NaN
+//         parent_lens = [0]
+//         Array.prototype.forEach.call(parent.children, function (span, i) {
+//             // append to array, add to cumulative sum
+//             parent_lens = [...parent_lens, parent_lens[parent_lens.length-1] + span.innerText.length]
+//         });
+//         // remove first dummy 0 value
+//         parent_lens.shift()
+//         lens = [...lens, parent_lens]
+//     });
+//     return lens;
+//     // For each parent create an array entry, that contains span lens in cumsum format, eg [[5, 10, ]]
+//     // Get lens of all child spans, maybe cumsum
+//     // Get index of the selected parent and in it span, match it to its len value,
+//     // Start indexof from that len value
+// }
+*/
