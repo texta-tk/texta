@@ -39,6 +39,7 @@ class TagModelWorker(BaseWorker):
         self.task_model_obj = None
         self.task_id = None
         self.task_model_obj = None
+        self.n_jobs = 1
 
     def run(self, task_id):
 
@@ -54,6 +55,9 @@ class TagModelWorker(BaseWorker):
         reductor_opt = int(task_params['reductor_opt'])
         normalizer_opt = int(task_params['normalizer_opt'])
         classifier_opt = int(task_params['classifier_opt'])
+
+        if 'num_threads' in task_params:
+            self.n_jobs = int(task_params['num_threads'])
 
         try:
             if 'fields' in task_params:
@@ -200,7 +204,7 @@ class TagModelWorker(BaseWorker):
         df_test = pd.DataFrame(X_test)
 
         # Use Train data to parameter selection in a Grid Search
-        gs_clf = GridSearchCV(model, params, n_jobs=1, cv=5)
+        gs_clf = GridSearchCV(model, params, n_jobs=self.n_jobs, cv=5)
         gs_clf = gs_clf.fit(df_train, y_train)
         model = gs_clf.best_estimator_
 
