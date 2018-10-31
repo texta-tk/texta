@@ -26,7 +26,7 @@ from task_manager.tasks.task_params import activate_task_worker
 # Define max number of background running processes
 MAX_RUNNING = 2
 # Total minutes allowed since last update in a task
-MAX_LAST_UPDATE_MINUTES = 30
+MAX_LAST_UPDATE_MINUTES = 60
 
 
 class Command(BaseCommand):
