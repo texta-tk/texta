@@ -22,9 +22,10 @@ from datetime import datetime, timedelta as td
 from collections import defaultdict
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, StreamingHttpResponse
+from django.http import HttpResponse, StreamingHttpResponse, JsonResponse
 from django.template import loader
 from django.utils.encoding import smart_str
+from searcher.dashboard.dashboard import SearcherDashboard
 # For string templates
 from django.template import Context
 from django.template import Template
@@ -126,6 +127,15 @@ def get_fields(es_m):
 def get_daterange(es_m, field):
     min_val,max_val = es_m.get_extreme_dates(field)
     return {'min':min_val,'max':max_val}
+
+
+def dashboard_endpoint(request):
+    ds = Datasets().activate_datasets(request.session)
+    es_m = ds.build_manager(ES_Manager)
+
+    latest = Search.objects.last().pk
+    dashboard = SearcherDashboard(request=request, elasticsearch_manager=es_m, search_model_pk=latest)
+    return JsonResponse(dashboard.json_response)
 
 
 @login_required

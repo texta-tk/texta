@@ -61,6 +61,6 @@ class SearcherDashboard:
         self.apply_aggregations_to_fields()
         self.response = self.search.execute()
 
-        pprint(self.response.to_dict())
+        self.json_response = self.response.to_dict()
 
         self.document_count = self.es_manager.get_document_count(self.query['main'])
