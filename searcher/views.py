@@ -137,6 +137,12 @@ def dashboard_endpoint(request):
     dashboard = SearcherDashboard(request=request, elasticsearch_manager=es_m, search_model_pk=latest)
     return JsonResponse(dashboard.json_response)
 
+def dashboard_visualize(request):
+    template = loader.get_template('dashboard/dashboard.html')
+    
+    return HttpResponse (template.render({'STATIC_URL': STATIC_URL,
+                       'URL_PREFIX': URL_PREFIX},request))
+
 
 @login_required
 def index(request):
