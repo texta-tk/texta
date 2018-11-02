@@ -21,7 +21,7 @@ except:
     from io import StringIO # NEW PY REQUIREMENT
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, StreamingHttpResponse
+from django.http import HttpResponse, StreamingHttpResponse, HttpResponseBadRequest
 from django.template import loader
 from django.utils.encoding import smart_str
 # For string templates
@@ -337,16 +337,21 @@ def tag_documents(request):
 @login_required
 def fact_to_doc(request):
     """Add a fact to a certain document with given fact, span, and the document _id"""
-    fact_name = request.POST['fact_name']
-    fact_value = request.POST['fact_value']
-    fact_field = request.POST['fact_field']
+    fact_name = request.POST['fact_name'].strip()
+    fact_value = request.POST['fact_value'].strip()
+    fact_field = request.POST['fact_field'].strip()
     #TODO why is the js array becoming a string when passed here? Is there a better way than string split?
     fact_span = [int(s) for s in request.POST['fact_span'].split(',')]
-    doc_id = request.POST['doc_id']
+    doc_id = request.POST['doc_id'].strip()
     es_params = request.POST
 
-    fact_m = FactManager(request)
-    fact_m.fact_to_doc(es_params, fact_name, fact_value, fact_field, fact_span, doc_id)
+    # Validate that params aren't empty strings
+    if len(fact_name)>0 and len(fact_value)>0 and len(fact_field)>0 and len(doc_id)>0 and len(fact_span)>0:
+        fact_m = FactManager(request)
+        fact_m.fact_to_doc(es_params, fact_name, fact_value, fact_field, fact_span, doc_id)
+    else:
+        return HttpResponseBadRequest()
+
     return HttpResponse()
 
 @login_required
