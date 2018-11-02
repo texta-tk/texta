@@ -954,7 +954,10 @@ function ajaxDeleteFacts(form_data, factArray) {
             swal({
                 title:'Deleted!',
                 text: factArray.length +' facts have been removed.',
-                type:'success'});
+                type:'success', 
+                showConfirmButton: false,
+                timer: 1000
+            });
         },
         error: function() {
             swal('Error!','There was a problem removing the facts!','error');
@@ -1203,7 +1206,8 @@ function save(){
             }
         })
         if (description) {
-            swal({type: 'success', title: 'Successfully saved search.'})
+            swal({type: 'success', title: 'Successfully saved search.',  showConfirmButton: false,
+            timer: 1000})
 
             $('#search_description').val(description);
             var formElement = document.getElementById("filters");

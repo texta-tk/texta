@@ -10,9 +10,12 @@ import requests
 import json
 import logging
 from django.conf import settings
+
 from dataset_importer.document_storer.storer import DocumentStorer
 from dataset_importer.document_reader.reader import DocumentReader, entity_reader_map, collection_reader_map, database_reader_map
-from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
+from dataset_importer.document_preprocessor import PREPROCESSOR_INSTANCES
+from dataset_importer.document_preprocessor import convert_to_utf8
+
 from dataset_importer.archive_extractor.extractor import ArchiveExtractor, extractor_map
 from threading import Lock
 from multiprocessing.pool import ThreadPool as Pool
@@ -370,11 +373,15 @@ def _processing_job(documents, parameter_dict):
     :type documents: list of dicts
     :type parameter_dict: dict
     """
-    dataset_name = '{0}_{1}'.format(parameter_dict['texta_elastic_index'], parameter_dict['texta_elastic_mapping'])
-
+    # dataset_name = '{0}_{1}'.format(parameter_dict['texta_elastic_index'], parameter_dict['texta_elastic_mapping'])
     try:
-        result_map = DocumentPreprocessor.process(documents=documents, **parameter_dict)
-        documents = result_map['documents']
+
+        documents = list(map(convert_to_utf8, documents))
+
+        for preprocessor_code in parameter_dict['preprocessors']:
+            preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
+            result_map = preprocessor.transform(documents, **parameter_dict)
+            documents = result_map['documents']
 
         storer = DocumentStorer.get_storer(**parameter_dict)
         stored_documents_count = storer.store(documents)
