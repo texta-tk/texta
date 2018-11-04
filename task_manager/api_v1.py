@@ -17,6 +17,8 @@ from task_manager.tools import MassHelper
 from task_manager.tools import get_pipeline_builder
 from task_manager.models import TagFeedback
 
+from dataset_importer.document_preprocessor import preprocessor_map
+from dataset_importer.document_preprocessor import PREPROCESSOR_INSTANCES
 
 API_VERSION = "1.0"
 
@@ -133,6 +135,25 @@ def api_apply(request, user, params):
         'user': task.user.username
     }
     data_json = json.dumps(data)
+    return HttpResponse(data_json, status=200, content_type='application/json')
+
+
+@csrf_exempt
+@api_auth
+def api_apply_text(request, user, params):
+    """ Apply preprocessor to input document
+    """
+    preprocessor_key = params["preprocessor_key"]
+    preprocessor_params = params["parameters"]
+    documents = params["documents"]
+
+    preprocessor = PREPROCESSOR_INSTANCES[preprocessor_key]
+    
+    try:
+        result_map = preprocessor.transform(documents, **preprocessor_params)
+    except Exception as e:
+        result_map = {"error": "preprocessor internal error: {}".format(repr(e))}
+    data_json = json.dumps(result_map)
     return HttpResponse(data_json, status=200, content_type='application/json')
 
 
