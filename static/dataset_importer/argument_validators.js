@@ -48,7 +48,7 @@ function fileInputSelection(active) {
 }
 
 //when preprocessor changed
-$("#apply-preprocessor").change(function () {
+$("#apply-preprocessor").on('change',(function () {
     if (this.checked) {
         $("#mlp-processor-feature-names").prop('required', true);
         if (fileInputFormats[0].some(element => $('#selected-data-formats-list').text().includes(element))) {
@@ -57,7 +57,7 @@ $("#apply-preprocessor").change(function () {
     } else {
         $("#mlp-processor-feature-names").prop('required', false);
     }
-});
+}));
 
 //when data formats text changed
 $("#selected-data-formats-list").bind("DOMSubtreeModified", function () {

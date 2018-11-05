@@ -9,6 +9,10 @@ var removed_facts = [];
 $(document).ready(function () {
     get_searches();
 
+    $('#constraint_field').on('changed.bs.select', function (e, clickedIndex, isSelected, previousValue) {
+        filter_constraint_field($('#constraint_field option:selected').val())
+    });
+
     var search_id = getUrlParameter('search');
     if (search_id != undefined) {
         render_saved_search(search_id);
@@ -116,10 +120,10 @@ $(document).ready(function () {
 
 });
 
-$(document).mousemove(function (e) {
+$(document).on('mousemove', (function (e) {
     window.MOUSE_X = e.pageX;
     window.MOUSE_Y = e.pageY;
-});
+}));
 
 
 function in_array(value, array) {
@@ -188,51 +192,117 @@ function render_saved_search(search_id) {
     });
 }
 
+function filter_constraint_field(element_to_filter) {
+
+    if (element_to_filter) {
+        field_type = JSON.parse(element_to_filter).type;
+        $("#constraint_field option").each(function () {
+            var val = $(this).val();
+            var data = JSON.parse(val);
+            if (data.type != field_type) {
+                $(this).prop('disabled', true);
+            }
+        });
+    } else {
+        $("#constraint_field option").each(function () {
+            $(this).prop('disabled', false);
+        });
+    }
+    $('#constraint_field').selectpicker('refresh');
+}
+
 function make_date_field(date_range_min, date_range_max, field_data) {
     counter++;
     new_id = 'field_' + counter.toString();
-    $("#field_hidden_date").clone().attr('id', new_id).appendTo("#constraints");
-    $("#field_" + counter.toString() + " #daterange_field_").attr('id', 'daterange_field_' + counter.toString()).attr('name', 'daterange_field_' + counter.toString()).val(field_data.field);
-    $("#field_" + counter.toString() + " #selected_field_").attr('id', 'selected_field_' + counter.toString()).attr('name', 'selected_field_' + counter.toString()).html(field_data.field);
-    $("#field_" + counter.toString() + " #remove_link").attr('onclick', "javascript:remove_field('" + new_id + "');");
+    field_with_id = '#field_' + counter.toString();
 
-    $("#field_" + counter.toString() + " #daterange_from_").attr('id', 'daterange_from_' + counter.toString());
-    $("#field_" + counter.toString() + " #daterange_from_" + counter.toString()).attr('name', 'daterange_from_' + counter.toString());
-    $("#field_" + counter.toString() + " #daterange_from_" + counter.toString()).datepicker({
+    $("#field_hidden_date").clone().attr('id', new_id).appendTo("#constraints");
+    $(field_with_id + " #daterange_field_").attr('id', 'daterange_field_' + counter.toString()).attr('name', 'daterange_field_' + counter.toString()).val(field_data.field);
+    $(field_with_id + " #selected_field_").attr('id', 'selected_field_' + counter.toString()).attr('name', 'selected_field_' + counter.toString()).html(field_data.field);
+    $(field_with_id + " #remove_link").attr('onclick', "javascript:remove_field('" + new_id + "');");
+
+    $(field_with_id + " #daterange_from_").attr('id', 'daterange_from_' + counter.toString());
+    $(field_with_id + " #daterange_from_" + counter.toString()).attr('name', 'daterange_from_' + counter.toString());
+    $(field_with_id + " #daterange_from_" + counter.toString()).datepicker({
         format: "yyyy-mm-dd",
         startView: 2,
         startDate: date_range_min,
         endDate: date_range_max
     });
-    $("#field_" + counter.toString() + " #daterange_to_").attr('id', 'daterange_to_' + counter.toString());
-    $("#field_" + counter.toString() + " #daterange_to_" + counter.toString()).attr('name', 'daterange_to_' + counter.toString());
-    $("#field_" + counter.toString() + " #daterange_to_" + counter.toString()).datepicker({
+    $(field_with_id + " #daterange_to_").attr('id', 'daterange_to_' + counter.toString());
+    $(field_with_id + " #daterange_to_" + counter.toString()).attr('name', 'daterange_to_' + counter.toString());
+    $(field_with_id + " #daterange_to_" + counter.toString()).datepicker({
         format: "yyyy-mm-dd",
         startView: 2,
         startDate: date_range_min,
         endDate: date_range_max
     });
-    $("#field_" + counter.toString()).show();
+    $(field_with_id).show();
 }
 
 function make_fact_field(field_data) {
     counter++;
     new_id = 'field_' + counter.toString();
     var fieldFullId = "fact_txt_" + counter.toString();
-
+    field_with_id = '#field_' + counter.toString();
     $("#field_hidden_fact").clone().attr('id', new_id).appendTo("#constraints");
-    $("#field_" + counter.toString() + " #fact_operator_").attr('id', 'fact_operator_' + counter.toString()).attr('name', 'fact_operator_' + counter.toString());
-    $("#field_" + counter.toString() + " #selected_field_").attr('id', 'selected_field_' + counter.toString()).html(field_data.field + ' [fact_names]');
-    $("#field_" + counter.toString() + " #fact_field_").attr('id', 'fact_field_' + counter.toString()).attr('name', 'fact_field_' + counter.toString()).val(field_data.field);
-    $("#field_" + counter.toString() + " #remove_link").attr('onclick', "javascript:remove_field('" + new_id + "');");
-    $("#field_" + counter.toString() + " #suggestions_").attr('id', 'suggestions_' + counter.toString()).attr('name', 'suggestions_' + counter.toString());
-    $("#field_" + counter.toString() + " #fact_txt_").attr('id', 'fact_txt_' + counter.toString()).attr('name', 'fact_txt_' + counter.toString());
-    $("#field_" + counter.toString() + " #fact_txt_" + counter.toString()).attr('onkeyup', 'lookup("' + fieldFullId + '",' + counter.toString() + ',"keyup", "FACT_NAME");');
-    $("#field_" + counter.toString() + " #fact_txt_" + counter.toString()).attr('onfocus', 'lookup("' + fieldFullId + '","' + counter.toString() + '","focus", "FACT_NAME");');
-    $("#field_" + counter.toString() + " #fact_txt_" + counter.toString()).attr('onblur', 'hide("' + counter.toString() + '");');
-    $("#field_" + counter.toString()).show();
+    $(field_with_id + " #fact_operator_").attr('id', 'fact_operator_' + counter.toString()).attr('name', 'fact_operator_' + counter.toString());
+    $(field_with_id + " #selected_field_").attr('id', 'selected_field_' + counter.toString()).html(field_data.field + ' [fact_names]');
+    $(field_with_id + " #fact_field_").attr('id', 'fact_field_' + counter.toString()).attr('name', 'fact_field_' + counter.toString()).val(field_data.field);
+    $(field_with_id + " #remove_link").attr('onclick', "javascript:remove_field('" + new_id + "');");
+    $(field_with_id + " #suggestions_").attr('id', 'suggestions_' + counter.toString()).attr('name', 'suggestions_' + counter.toString());
+    $(field_with_id + " #fact_txt_").attr('id', 'fact_txt_' + counter.toString()).attr('name', 'fact_txt_' + counter.toString());
+    $(field_with_id + " #fact_txt_" + counter.toString()).attr('onkeyup', 'lookup("' + fieldFullId + '",' + counter.toString() + ',"keyup", "FACT_NAME");');
+    $(field_with_id + " #fact_txt_" + counter.toString()).attr('onfocus', 'lookup("' + fieldFullId + '","' + counter.toString() + '","focus", "FACT_NAME");');
+    $(field_with_id + " #fact_txt_" + counter.toString()).attr('onblur', 'hide("' + counter.toString() + '");');
+    $(field_with_id).show();
 }
 
+function make_text_field(field_data) {
+    counter++;
+    new_id = 'field_' + counter.toString();
+    var fieldFullId = "fact_txt_" + counter.toString();
+    field_with_id = '#field_' + counter.toString();
+    $("#field_hidden").clone().attr('id', new_id).appendTo("#constraints");
+    $(field_with_id + " #match_operator_").attr('id', 'match_operator_' + counter.toString()).attr('name', 'match_operator_' + counter.toString());
+    $(field_with_id + " #selected_field_").attr('id', 'selected_field_' + counter.toString()).html(field_data.field);
+    $(field_with_id + " #match_field_").attr('id', 'match_field_' + counter.toString()).attr('name', 'match_field_' + counter.toString()).val(field_data.field);
+    $(field_with_id + " #match_type_").attr('id', 'match_type_' + counter.toString()).attr('name', 'match_type_' + counter.toString());
+    $(field_with_id + " #match_slop_").attr('id', 'match_slop_' + counter.toString()).attr('name', 'match_slop_' + counter.toString());
+    $(field_with_id + " #remove_link").attr('onclick', "javascript:remove_field('" + new_id + "');");
+    $(field_with_id + " #suggestions_").attr('id', 'suggestions_' + counter.toString()).attr('name', 'suggestions_' + counter.toString());
+    $(field_with_id + " #match_txt_").attr('id', 'match_txt_' + counter.toString()).attr('name', 'match_txt_' + counter.toString());
+    $(field_with_id + " #match_layer_").attr('id', 'match_layer_' + counter.toString()).attr('name', 'match_layer_' + counter.toString());
+
+    var suggestion_types = ["CONCEPT", "LEXICON"];
+    var fieldFullId = "match_txt_" + counter.toString();
+
+    $(field_with_id + " #match_txt_" + counter.toString()).attr('onkeyup', 'lookup("' + fieldFullId + '",' + counter.toString() + ',"keyup", \'' + suggestion_types + '\'); search_as_you_type_query();');
+    $(field_with_id + " #match_txt_" + counter.toString()).attr('onfocus', 'lookup("' + fieldFullId + '","' + counter.toString() + '","focus", \'' + suggestion_types + '\');');
+    $(field_with_id + " #match_txt_" + counter.toString()).attr('onblur', 'hide("' + counter.toString() + '");');
+    $(field_with_id).show();
+}
+
+function make_str_fact_field(field_data) {
+    var counterStr = counter.toString();
+
+    if (factValSubCounter[counterStr] === undefined) {
+        var subCounter = 1;
+    } else {
+        var subCounter = factValSubCounter[counterStr];
+    }
+
+    var subCounterStr = subCounter.toString();
+    var idCombination = counterStr + '_' + subCounterStr;
+
+    if (field_data.constraint_type == 'str_fact_val') {
+        addFactValueField(counterStr, subCounterStr, field_data.field, field_data.field, 'str');
+    } else if (field_data.constraint_type == 'fact_num_val') {
+        addFactValueField(counterStr, subCounterStr, field_data.field, field_data.field, 'num')
+    }
+    factValSubCounter[counterStr] = subCounter + 1
+    $("#field_" + counter.toString()).show();
+}
 
 function render_saved_search_field(field_data, min_date, max_date) {
 
@@ -242,16 +312,17 @@ function render_saved_search_field(field_data, min_date, max_date) {
         $("#field_" + counter.toString() + " #daterange_from_" + counter.toString()).val(field_data.start_date);
         $("#field_" + counter.toString() + " #daterange_to_" + counter.toString()).val(field_data.end_date);
     } else if (field_data.constraint_type === 'string') {
-        add_field(min_date, max_date, field_data, true);
+        make_text_field(field_data, true);
         $('#match_operator_' + counter.toString()).val(field_data.operator);
         $('#match_type_' + counter.toString()).val(field_data.match_type);
         $('#match_slop_' + counter.toString()).val(field_data.slop);
         $('#match_txt_' + counter.toString()).val(field_data.content.join('\n'));
     } else if (field_data.constraint_type === 'facts') {
-        make_fact_field(field_data)
+        make_fact_field(field_data);
         $('#fact_operator_' + counter.toString()).val(field_data.operator);
         $('#fact_txt_' + counter.toString()).val(field_data.content.join('\n'));
     } else if (field_data.constraint_type === 'str_fact_val') {
+        make_str_fact_field(field_data);
         $('#fact_operator_' + counter.toString()).val(field_data.operator);
         for (var i = 0; i < field_data.sub_constraints.length; i++) {
             var sub_constraint = field_data.sub_constraints[i];
@@ -392,21 +463,17 @@ function insert(resource_id, suggestionId, descriptive_term, lookup_type) {
 }
 
 
-function add_field(date_range_min, date_range_max, submitted_field_data, saved_search) {
+function add_field(date_range_min, date_range_max, submitted_field_data) {
     var field = Array();
+    $("#constraint_field option").filter(":selected").each(function () {
+        var val = $(this).val();
+        field.push(val);
+    });
+    if (!field) {
+        swal('Warning!', 'No field selected!', 'warning');
+        return;
 
-    if (!saved_search) {
-        $("#constraint_field option").filter(":selected").each(function () {
-            var val = $(this).val();
-            field.push(val);
-        });
-        if (!field) {
-            swal('Warning!', 'No field selected!', 'warning');
-            return;
-        }
     }
-
-
 
 
     counter++;
@@ -415,34 +482,20 @@ function add_field(date_range_min, date_range_max, submitted_field_data, saved_s
     var field_data = Array();
     var field_name = Array();
 
-    if (saved_search) {
-        field_name = submitted_field_data.field;
-        field_path = submitted_field_data.field;
-    } else {
-        field.forEach(function (data) {
-            var data = JSON.parse(data);
-            field_name.push(data.label);
-            field_path.push(data.path);
-        });
-    }
 
-
+    field.forEach(function (data) {
+        var data = JSON.parse(data);
+        field_name.push(data.label);
+        field_path.push(data.path);
+    });
 
     var field_name = field_name.join("; ");
 
 
-    if (!submitted_field_data) {
+    var field_data = JSON.parse(field[0])
+    var field_type = field_data.type;
+    var nested_layers = field_data.nested_layers;
 
-        var field_data = JSON.parse(field[0])
-        var field_type = field_data.type;
-        var nested_layers = field_data.nested_layers;
-
-    } else {
-
-        var field_type = submitted_field_data.constraint_type;
-        var nested_layers = Array();
-
-    }
 
     new_id = 'field_' + counter.toString();
 
@@ -531,7 +584,6 @@ function add_field(date_range_min, date_range_max, submitted_field_data, saved_s
     }
 
     $("#field_" + counter.toString()).show();
-    $("#constraint_field").multiselect('deselectAll', false).multiselect('refresh');
 
 }
 
@@ -1291,14 +1343,14 @@ function change_agg_field(field_nr) {
 
 
     selected_method = $("#sort_by_" + field_nr).children("#sort_by_" + field_nr);
-    selected_method.change(function () {
+    selected_method.on('change', (function () {
         // console.log(selected_method[0].options[selected_method[0].selectedIndex].text);
         if (selected_method[0].options[selected_method[0].selectedIndex].text == 'significant words') {
             $("#agg_field_2_button").addClass('hidden');
         } else {
             $("#agg_field_2_button").removeClass('hidden');
         }
-    });
+    }));
 }
 
 function toggle_agg_field_2(action) {

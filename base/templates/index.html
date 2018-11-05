@@ -6,7 +6,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
-	<script type="application/javascript" src="{{STATIC_URL}}jquery-1.11.2.min.js"></script>
+	<script type="application/javascript" src="{{STATIC_URL}}jquery-3.0.0.js"></script>
 	<script type="application/javascript" src="{{STATIC_URL}}datatables/datatables.min.js"></script>
 	<script type="application/javascript" src="{{STATIC_URL}}datatables_button/dataTables.buttons.js"></script>
 	<script type="application/javascript" src="{{STATIC_URL}}datatables_button/buttons.colVis.js"></script>
@@ -24,8 +24,11 @@
 <!-- <script type="application/javascript" src="{{STATIC_URL}}tippy.all.min.js"></script> -->
 <script src="https://unpkg.com/tippy.js@3/dist/tippy.all.min.js"></script>
 	<!-- https://developer.snapappointments.com/bootstrap-select/ -->
-	<script type="application/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-select.min.js"></script>
-	<link rel="stylesheet" href="{{STATIC_URL}}bootstrap/css/bootstrap-select.min.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.2/css/bootstrap-select.min.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.2/js/bootstrap-select.min.js"></script>
+ 
+	<!-- <script type="application/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-select.min.js"></script>
+	<link rel="stylesheet" href="{{STATIC_URL}}bootstrap/css/bootstrap-select.min.css"> -->
 	<!-- http://www.bacubacu.com/colresizable/ -->
 	<script type="application/javascript" src="{{STATIC_URL}}colResizable-1.6.js"></script>
 	<script type="application/javascript" src="{{STATIC_URL}}d3.min.js"></script>
@@ -102,33 +105,36 @@
 
 			<form class="navbar-form navbar-right">
 				<div>
-				<select id="dataset_to_activate" name="dataset_to_activate" multiple class="input-sm" onchange="update_resources();">
-					{% for dataset in allowed_datasets %}
-					{% if dataset.id|stringformat:"i" in request.session.dataset %}
-					<option class="datasetOption" value="{{dataset.id}}" selected="selected">Dataset {{dataset.id}}: {{dataset.index}}
-						- {{dataset.mapping}}</option>
-					{% else %}
-					<option class="datasetOption" value="{{dataset.id}}">Dataset {{dataset.id}}: {{dataset.index}} -
-						{{dataset.mapping}}</option>
-					{% endif %}
-					{% endfor %}
-				</select>
-			</div>
-
+					<select id="dataset_to_activate" name="dataset_to_activate" multiple class="input-sm" onchange="dataset_update_resources();">
+						{% for dataset in allowed_datasets %}
+						{% if dataset.id|stringformat:"i" in request.session.dataset %}
+						<option class="datasetOption" value="{{dataset.id}}" selected="selected">Dataset {{dataset.id}}:
+							{{dataset.index}}
+							- {{dataset.mapping}}</option>
+						{% else %}
+						<option class="datasetOption" value="{{dataset.id}}">Dataset {{dataset.id}}: {{dataset.index}} -
+							{{dataset.mapping}}</option>
+						{% endif %}
+						{% endfor %}
+					</select>
+				</div>
 
 				<div class="dropdown">
-					<button class="btn btn-default dropdown-toggle multiselect" id="model-dropdown" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-						Select model
+					<button class="btn btn-default dropdown-toggle " id="model-dropdown" type="button" data-toggle="dropdown"
+					 aria-haspopup="true" aria-expanded="false">
+						{% if request.session.model.pk %}
+						Model {{request.session.model.pk}}: {{request.session.model.description}}
+						{% else %}
+						Select Model
+						{% endif %}
+
 						<b class="caret"></b>
 					</button>
 
 					<ul class="dropdown-menu model-dropdown-menu" aria-labelledby="model-dropdown">
 						{% for model in language_models %}
-						{% if model.pk|slugify == request.session.model %}
-						<li class="datasetOption" value="{{model.pk}}" onclick=update_resources(); role="button"><a>Model {{model.pk}}: {{model.description}}</a></li>
-						{% else %}
-						<li class="datasetOption" value="{{model.pk}}" onclick=update_resources(); role="button"><a>Model {{model.pk}}: {{model.description}}</a></li>
-						{% endif %}
+						<li data-model_pk="{{model.pk}}" data-model_description="{{model.description}}" onclick=model_update_resources(this);
+						 role="button"><a>Model {{model.pk}}: {{model.description}}</a></li>
 						{% endfor %}
 					</ul>
 				</div>

@@ -45,10 +45,9 @@ def index(request):
 def update(request):
 	logger = LogManager(__name__, 'CHANGE_SETTINGS')
 
-	parameters = request.POST
-
-	if 'model' in parameters:
-		model = str(parameters['model'])
+	parameters = request.POST	
+	if 'model_pk' in parameters:
+		model = {"pk": parameters["model_pk"], "description": parameters["model_description"]}
 		request.session['model'] = model
 		logger.clean_context()
 		logger.set_context('user_name', request.user.username)
