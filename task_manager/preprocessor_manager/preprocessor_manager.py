@@ -22,7 +22,7 @@ else:
 
 class Preprocessor:
 
-    def __init__(self, scroll_size=1000, time_out='10m'):
+    def __init__(self, scroll_size=1000, time_out='20m'):
         self.es_m = None
         self.task_id = None
         self.params = None

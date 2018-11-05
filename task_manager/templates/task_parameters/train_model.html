@@ -19,9 +19,9 @@
 				<div class="col-sm-6">
 					<select name="{{task_param.id}}_field" class="form-control">
 						{% for field in fields %}
-							<option value="{{field.data}}">{{field.label}}</option>
+							<option value="{{field.path}}">{{field.label}}</option>
 						{% endfor %}
-					</select>			
+					</select>
 				</div>
 			  </div>
 			  <div class="row">
@@ -69,7 +69,7 @@
 									<option value="1000">1000</option>
 								</select>
 				</div>
-			  </div>		  
+			  </div>
 			  <div class="row">
 				<div class="col-sm-6">Max vocab size:</div>
 				<div class="col-sm-6">
@@ -86,14 +86,14 @@
 			  <div class="row">
 				<div class="col-sm-6">Description:</div>
 				<div class="col-sm-6">
-				  <input name="{{task_param.id}}_description" class="form-control input-sm">	
+				  <input name="{{task_param.id}}_description" class="form-control input-sm">
 				</div>
-			  </div>	
+			  </div>
 			  <div class="row">
 				<div class="col-sm-12">
 				  <button type="button" onclick="javascript:start_task('{{task_param.id}}');" class="btn btn-default form-control"><span class="glyphicon glyphicon-ok"></span> Start task</button>
 				</div>
-			  </div>				  
+			  </div>
 		  </div>
 		</div>
 	  </div>
