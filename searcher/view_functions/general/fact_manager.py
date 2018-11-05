@@ -63,58 +63,6 @@ class FactManager:
             logger.set_context('es_params', self.es_params)
             logger.exception('remove_facts_from_document_failed')
 
-    def tag_documents_with_fact(self, es_params, tag_name, tag_value, tag_field):
-        '''Used to tag all documents in the current search with a certain fact'''
-        # Crop fact name if its too long
-        tag_name = tag_name[:self.max_name_len]
-        self.es_m.build(es_params)
-        self.es_m.load_combined_query(self.es_m.combined_query)
-        response = self.es_m.scroll()
-
-        data = ''
-        for document in response['hits']['hits']:
-            if 'mlp' in tag_field:
-                split_field = tag_field.split('.')
-                tag_span = [0, len(document['_source'][split_field[0]][split_field[1]])]
-            else:
-                tag_span = [0, len(document['_source'][tag_field].strip())]
-            document['_source'][self.field].append({"str_val": tag_value, "spans": str([tag_span]), "fact": tag_name, "doc_path":tag_field})
-
-            data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
-            document = {'doc': {self.field: document['_source'][self.field]}}
-            data += json.dumps(document)+'\n'
-
-        response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
-        response = self.es_m.update_documents()
-        return response
-
-    def fact_to_doc(self, es_params, fact_name, fact_value, fact_field, fact_span, doc_id):
-        """Add a fact to a certain document with given fact, span, and the document _id"""
-        # Crop fact name if its too long
-        fact_name = fact_name[:self.max_name_len]
-        query = {"query": {"terms": {"_id": [doc_id] }}}
-        response = self.es_m.perform_query(query)
-        hits = response['hits']['hits']
-        # Is this necessary
-        if self.field not in hits[0]['_source']:
-            self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
-            response = self.es_m.perform_query(query)
-            hits = response['hits']['hits']
-        
-        data = ''
-        for document in hits:
-            if self.field not in document['_source']:
-                document['_source'][self.field] = [{'fact': fact_name, 'str_val': fact_value, 'doc_path': fact_field, 'spans': str([fact_span])}]
-            else:
-                document['_source'][self.field].append({"fact": fact_name, "str_val": fact_value, "doc_path": fact_field, "spans": str([fact_span])})
-
-            data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
-            document = {'doc': {self.field: document['_source'][self.field]}}
-            data += json.dumps(document)+'\n'
-
-        response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
-        response = self.es_m.update_documents()
-        return response
 
     def count_cooccurrences(self, fact_pairs):
         """Finds the counts of cooccuring facts
@@ -206,6 +154,7 @@ class FactManager:
         graph_data = json.dumps({"nodes": nodes, "links": links})
         return (graph_data, unique_fact_names, max_node_size, max_link_size, min_node_size)
 
+
     def _fact_deletion_query(self, rm_facts_dict):
         '''Creates the query for fact deletion based on dict of facts {name: val}'''
         fact_queries = []
@@ -220,3 +169,57 @@ class FactManager:
             }}}},"_source": [self.field]}}
 
         return query
+
+
+    def tag_documents_with_fact(self, es_params, tag_name, tag_value, tag_field):
+        '''Used to tag all documents in the current search with a certain fact'''
+        # Crop fact name if its too long
+        tag_name = tag_name[:self.max_name_len]
+        self.es_m.build(es_params)
+        self.es_m.load_combined_query(self.es_m.combined_query)
+        response = self.es_m.scroll()
+
+        data = ''
+        for document in response['hits']['hits']:
+            if 'mlp' in tag_field:
+                split_field = tag_field.split('.')
+                tag_span = [0, len(document['_source'][split_field[0]][split_field[1]])]
+            else:
+                tag_span = [0, len(document['_source'][tag_field].strip())]
+            document['_source'][self.field].append({"str_val": tag_value, "spans": str([tag_span]), "fact": tag_name, "doc_path":tag_field})
+
+            data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
+            document = {'doc': {self.field: document['_source'][self.field]}}
+            data += json.dumps(document)+'\n'
+
+        response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
+        response = self.es_m.update_documents()
+        return response
+
+    def fact_to_doc(self, es_params, fact_name, fact_value, fact_field, fact_span, doc_id):
+        """Add a fact to a certain document with given fact, span, and the document _id"""
+        # Crop fact name if its too long
+        fact_name = fact_name[:self.max_name_len]
+        query = {"query": {"terms": {"_id": [doc_id] }}}
+        response = self.es_m.perform_query(query)
+        hits = response['hits']['hits']
+        # Is this necessary
+        if self.field not in hits[0]['_source']:
+            self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
+            response = self.es_m.perform_query(query)
+            hits = response['hits']['hits']
+        
+        data = ''
+        for document in hits:
+            if self.field not in document['_source']:
+                document['_source'][self.field] = [{'fact': fact_name, 'str_val': fact_value, 'doc_path': fact_field, 'spans': str([fact_span])}]
+            else:
+                document['_source'][self.field].append({"fact": fact_name, "str_val": fact_value, "doc_path": fact_field, "spans": str([fact_span])})
+
+            data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
+            document = {'doc': {self.field: document['_source'][self.field]}}
+            data += json.dumps(document)+'\n'
+        response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
+        response = self.es_m.update_documents()
+
+        return response

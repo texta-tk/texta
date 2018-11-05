@@ -725,7 +725,7 @@ function query() {
             var columns = []
             $("#columnsRow").find("th").each(function(index) {
                 // Append _DtCol to end to safe from naming conflicts
-                columns.push({"className": $(this).text()+'_DtCol', "targets": index});
+                columns.push({"className": 'DtCol_'+$(this).text(), "targets": index});
             });
 
             examplesTable = $('#examples').DataTable({
@@ -1441,7 +1441,7 @@ function display_searches(searches) {
 
                 const notification = swal.mixin({
                     toast: true,
-                    position: 'bottom-start',
+                    position: 'top',
                     showConfirmButton: false,
                     timer: 3000
                 });
