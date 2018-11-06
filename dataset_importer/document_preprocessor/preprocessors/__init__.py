@@ -5,11 +5,12 @@ List here the new document preprocessors.
 
 from .text_tagger import TextTaggerPreprocessor
 from .mlp import MlpPreprocessor
+from .comment_preprocessor import CommentPreprocessor
 from .date_converter import DatePreprocessor
 from .lexicon_classifier import LexTagger 
 
-
-__all__ = ["TextTaggerPreprocessor",
+__all__ = ["CommentPreprocessor",
+           "DatePreprocessor",
            "MlpPreprocessor",
            "DatePreprocessor",
            "LexTagger"]

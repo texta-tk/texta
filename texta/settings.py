@@ -281,6 +281,7 @@ es_links = {
 	('etsa_new', 'event_dgn', 'patId'): ('https://p12.stacc.ee/common/aegread/index.php/aegrida/get/?id=', '')
 }
 
+
 # Date format used in Elasticsearch fields.
 #
 date_format = 'yyyy-MM-dd'
