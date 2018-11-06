@@ -563,7 +563,9 @@ def api_tag_text(request, user, params):
             except:
                 c = None
 
-            decision_id = uuid.uuid4().hex
+
+            # create (empty) feedback item
+            TagFeedback.create(user, text_dict, tagger_id, p)
 
             # Add explanation
             data['explain'].append({'tag': tagger.description,
@@ -571,11 +573,7 @@ def api_tag_text(request, user, params):
                                     'decision_id': decision_id,
                                     'prediction': p,
                                     'confidence': c,
-                                    'selected': is_tagger_selected,
-                                    'document': text_dict})
-            
-            # create (empty) feedback item
-            TagFeedback.log(user, decision_id, tagger_id, p)
+                                    'selected': is_tagger_selected})
 
         else:
             p = None

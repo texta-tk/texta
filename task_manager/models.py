@@ -1,6 +1,7 @@
 from datetime import datetime
 from django.db import models
 from django.contrib.auth.models import User
+import json
 
 MAX_INT_LEN = 10
 MAX_STR_LEN = 100
@@ -93,18 +94,29 @@ class TagFeedback(models.Model):
     document = models.TextField()
     tagger = models.ForeignKey(Task,on_delete=models.CASCADE)
     prediction = models.IntegerField(default=None)
+    in_dataset = models.IntegerField(default=0)
     time_updated = models.DateTimeField(null=True, blank=True, default=None)
 
     @staticmethod
-    def log(user, decision_id, tagger_id, prediction):
-        feedback_log = TagFeedback.objects.get(pk = decision_id)
+    def create(user, text_dict, tagger_id, prediction):
+        feedback_log = TagFeedback()
         feedback_log.user = user
+        feedback_log.document = json.dumps(text_dict)
         feedback_log.tagger = Task.objects.get(pk = tagger_id)
         feedback_log.prediction = prediction
         feedback_log.time_updated = datetime.now()
         feedback_log.save()
         return feedback_log
     
+    @staticmethod
+    def update(user, decision_id, prediction):
+        feedback_log = TagFeedback.objects.get(pk = decision_id)
+        feedback_log.user = user
+        feedback_log.prediction = prediction
+        feedback_log.time_updated = datetime.now()
+        feedback_log.save()
+        return feedback_log
+
     def to_json(self):
         data = {
             'feedback_id': self.id,
