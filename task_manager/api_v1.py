@@ -556,9 +556,16 @@ def api_tag_text(request, user, params):
 
             df_text = pd.DataFrame(text_dict)
             p = int(tagger.model.predict(df_text)[0])
+
+            try:
+                c = tagger.model.decision_function(df_text)[0]
+            except:
+                c = None
+
             # Add explanation
             data['explain'].append({'tag': tagger.description, 
                                     'prediction': p,
+                                    'confidence': c,
                                     'selected': is_tagger_selected })
         else:
             p = None

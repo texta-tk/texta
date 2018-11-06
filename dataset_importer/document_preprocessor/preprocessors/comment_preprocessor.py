@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from dateutil import parser
 import json
 
@@ -53,11 +54,13 @@ class CommentPreprocessor(object):
         input_features = json.loads(kwargs['comment_preprocessor_preprocessor_feature_names'])
 
         for input_feature in input_features:
-            month_label = '%s_month_comment_preprocessor' % input_feature
-            hour_label = '%s_hour_comment_preprocessor' % input_feature
-            label = '%s_comment_preprocessor' % input_feature
+            input_feature = json.loads(input_feature)["path"]
+
+            month_label = '%s_month_comment' % input_feature
+            hour_label = '%s_hour_comment' % input_feature
+            label = '%s_comment' % input_feature
             is_date = None
-            for document in documents:
+            for i,document in enumerate(documents):
                 if input_feature not in document:
                     continue
 
@@ -73,6 +76,9 @@ class CommentPreprocessor(object):
                     })
                 else:
                     document.update({label: self._clean_string(feature_text)})
+                
+                # update doc in list
+                documents[i] = document
 
         return {'documents': documents, 'meta': {}}
 

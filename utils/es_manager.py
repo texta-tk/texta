@@ -383,7 +383,6 @@ class ES_Manager:
         q = json.dumps(self.combined_query['main'])
         search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
         response = requests.post(search_url, data=q, headers=HEADERS).json()
-        print(response, '1111')
         scroll_id = response['_scroll_id']
         total_hits = response['hits']['total']
 
@@ -434,7 +433,6 @@ class ES_Manager:
     def get_indices():
         url = '{0}/_cat/indices?format=json'.format(es_url)
         response = ES_Manager.requests.get(url, headers=HEADERS).json()
-        print(response)
         return sorted([{'index':i['index'],'status':i['status'],'docs_count':i['docs.count'],'store_size':i['store.size']} for i in response], key=lambda k: k['index']) # NEW PY REQUIREMENT
 
     @staticmethod
