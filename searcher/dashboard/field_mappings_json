@@ -1,0 +1,672 @@
+[
+  {
+    "full_path": "Test20.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test8",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test39",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Väljakutse aeg",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "texta_facts.fact",
+    "is_nested": "True",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test25.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test31.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test13",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "sundmuse_kirjeldus",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "_texta_id",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test34",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Väljakutse liik.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test1",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test36.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test48",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test7",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test38",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test49",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test18",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "texta_facts.num_val",
+    "is_nested": "True",
+    "type": "long"
+  },
+  {
+    "full_path": "UUS Maakond",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test29.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test46",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test15.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test11",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test37",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Väljakutse aeg.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test15",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "kysimus_ja_vastus",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "sundmuse_kirjeldus.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test45",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "UUS KOV",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "vastaja_ja_asutus.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test33.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test8.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test44",
+    "is_nested": "False",
+    "type": "float"
+  },
+  {
+    "full_path": "kysimus_ja_vastus.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "UUS Keskus",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test3.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test23.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test35",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "vastaja_tiitel.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test35.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test23",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test2",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test20",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test42",
+    "is_nested": "False",
+    "type": "float"
+  },
+  {
+    "full_path": "Test32",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test33",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "UUS Linnaosa.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "teema.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test19",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test30",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "vastaja_nimi",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test16",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test19.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "pealkiri",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test47.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "_texta_id.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test49.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test24.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test21",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "kuupaev",
+    "is_nested": "False",
+    "type": "date"
+  },
+  {
+    "full_path": "Test11.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test48.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test25",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "UUS Keskus.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test16.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test3",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test1.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test27",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test9",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Abi kirjeldus",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test43.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test24",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test5.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test14",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Sündmuse täpsustav kirjeldus.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "pealkiri.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test31",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "UUS Maakond.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Sündmuse täpsustav kirjeldus",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test10",
+    "is_nested": "False",
+    "type": "float"
+  },
+  {
+    "full_path": "Test18.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Abi kirjeldus.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test45.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test27.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test9.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test47",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test37.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test41",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test32.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test7.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test5",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test34.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "texta_facts.spans",
+    "is_nested": "True",
+    "type": "keyword"
+  },
+  {
+    "full_path": "UUS Linnaosa",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test12",
+    "is_nested": "False",
+    "type": "float"
+  },
+  {
+    "full_path": "Test17",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "vastaja_nimi.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test30.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test46.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test22.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test36",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "texta_facts.doc_path",
+    "is_nested": "True",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test26",
+    "is_nested": "False",
+    "type": "float"
+  },
+  {
+    "full_path": "Test4.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test4",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Väljakutse tüüp",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test38.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "texta_facts.str_val",
+    "is_nested": "True",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test6",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test41.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "UUS KOV.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test13.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Kuu",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test2.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Kuu.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test6.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Väljakutse liik",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "vastaja_tiitel",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test14.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test28",
+    "is_nested": "False",
+    "type": "float"
+  },
+  {
+    "full_path": "Väljakutse tüüp.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test39.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test17.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "vastaja_ja_asutus",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test22",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test40",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test43",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test29",
+    "is_nested": "False",
+    "type": "text"
+  },
+  {
+    "full_path": "Test40.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "Test21.keyword",
+    "is_nested": "False",
+    "type": "keyword"
+  },
+  {
+    "full_path": "teema",
+    "is_nested": "False",
+    "type": "text"
+  }
+]

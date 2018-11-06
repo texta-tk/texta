@@ -3,6 +3,7 @@ from __future__ import print_function
 import json
 import copy
 from pprint import pprint
+from typing import List, Dict, Any
 
 import requests
 from functools import reduce
@@ -45,7 +46,12 @@ class ES_Manager:
         self.combined_query = None
         self._facts_map = None
 
-    def stringify_datasets(self):
+    def stringify_datasets(self) -> str:
+        """
+        Return a comma separated string of index names for
+        Elasticsearch multi-index operations.
+        :return:
+        """
         indices = [dataset.index for dataset in self.active_datasets]
         index_string = ','.join(indices)
         return index_string
@@ -192,7 +198,6 @@ class ES_Manager:
 
         for fact_type, query in fact_types_with_queries.items():
             for active_dataset in self.active_datasets:
-
                 aggs = {
                     fact_type: {
                         "nested": {"path": "texta_facts"},
@@ -568,6 +573,11 @@ class ES_Manager:
         return response
 
     def get_mapping_schema(self) -> dict:
+        """
+        Using the _mapping endpoint of Elasticsearch, returns the mapping dictionary
+        of all the indices specified. Supports multi-index.
+        :return: Mappings of the doc_types.
+        """
         endpoint_url = '{0}/{1}/_mapping'.format(es_url, self.stringify_datasets())
         response = self.plain_get(endpoint_url)
         return response
@@ -618,3 +628,106 @@ class ES_Manager:
             return unique_fields_with_schemas
         else:
             return fields_with_schemas
+
+    def get_field_mappings(self) -> dict:
+        """
+        Uses the _mapping endpoint to fetch the mapping data of ALL the fields in
+        the specified indices. This includes Elasticsearch's built-in values like "_id" and "_source".
+        :return:
+        """
+        url_endpoint = "{0}/{1}/_mapping/*/field/*".format(self.es_url, self.stringify_datasets())
+        response = requests.get(url_endpoint).json()
+
+        return response
+
+    def add_is_nested_to_fields(self, nested_fields, fields_and_types: List[Dict[str, str]], field_name_key='full_path', is_nested_key='is_nested'):
+        """
+        Given a list of dictionaries where one of the keys is a field name,
+        adds a value that determines if that field is of the nested datatype.
+        :param nested_fields:
+        :param is_nested_key: Key name that is added into the dict whether it is or isn't a nested field.
+        :param field_name_key: Key name that contains the field name.
+        :param fields_and_types: List of dictionaries that contain an ES field names (including dot notation)
+        :return:
+        """
+        new_list = []
+
+        for field_dict in fields_and_types:
+            for nested_field_name in nested_fields:
+                if nested_field_name in field_dict[field_name_key]:
+                    field_dict[is_nested_key] = True
+                else:
+                    field_dict[is_nested_key] = False
+                new_list.append(field_dict)
+
+        return new_list
+
+    def get_nested_field_names(self):
+        """
+        Traverses the doc_type's mapping schema to return
+        a list with unique field names of fields that are of the nested datatype.
+        Supports multiple indices.
+        :return:
+        """
+        index_mapping = self.get_mapping_schema()
+        nested_field_names = []
+
+        for index_name, index_dict in index_mapping.items():
+            for mapping_name, mapping_dict in index_dict['mappings'].items():
+                for field_name, field_dict in mapping_dict['properties'].items():
+                    if field_dict.get('type', None) == "nested":
+                        nested_field_names.append(field_name)
+
+        without_duplicates = list(set(nested_field_names))
+        return without_duplicates
+
+    def get_field_types(self, filtered_field_mapping) -> List[Dict[str, str]]:
+        """
+        Parses the results of the _mapping endpoint for fields to extract only the
+        full path name of the field and its type. Nested fields are not included,
+        multi-fields are by dot notation.
+        :return:
+        """
+        all_fields = []
+
+        for field_name, field_dict in filtered_field_mapping.items():
+            full_path_and_types = dict()
+            mapping_key = list(field_dict['mapping'].keys())[0]
+
+            full_path_and_types['full_path'] = field_dict['full_name']
+            full_path_and_types['type'] = field_dict['mapping'][mapping_key]['type']
+            all_fields.append(full_path_and_types)
+
+        return all_fields
+
+    def get_filtered_field_mappings(self, es_field_mappings):
+        """
+        Given the results of the _mapping endpoint for fields,
+        removes all keys that contains built-in ES values.
+        :return:
+        """
+        elastic_keys = ["_seq_no", "_mapping", "_id", "_version", "_uid", "_type", "_source", "_field_names", "_all", "_index", "_parent", "_routing"]
+        filtered_dict = dict()
+
+        for index_name, index_dict in es_field_mappings.items():
+            for mapping_name, mappings_dict in index_dict['mappings'].items():
+                for field_name, field_dict in mappings_dict.items():
+                    if field_name not in elastic_keys:
+                        filtered_dict[field_name] = field_dict
+
+        return filtered_dict
+
+    def get_aggregation_field_data(self):
+        """
+        Implements the helper functions to give the necessary data
+        about fields which is needed for the aggregations.
+        :return:
+        """
+        names_of_nested_fields = self.get_nested_field_names()
+
+        field_mappings = self.get_field_mappings()
+        filtered_field_mappings = self.get_filtered_field_mappings(field_mappings)
+        fieldnames_and_types = self.get_field_types(filtered_field_mappings)
+        with_is_nested = self.add_is_nested_to_fields(names_of_nested_fields, fieldnames_and_types)
+
+        return with_is_nested
