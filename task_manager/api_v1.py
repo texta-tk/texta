@@ -1,5 +1,6 @@
 import json
-from task_manager.models import Task
+import uuid
+from task_manager.models import Task, TagFeedback
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from account.api_auth import api_auth
@@ -562,16 +563,27 @@ def api_tag_text(request, user, params):
             except:
                 c = None
 
+            decision_id = uuid.uuid4().hex
+
             # Add explanation
-            data['explain'].append({'tag': tagger.description, 
+            data['explain'].append({'tag': tagger.description,
+                                    'tagger_id': tagger_id,
+                                    'decision_id': decision_id,
                                     'prediction': p,
                                     'confidence': c,
-                                    'selected': is_tagger_selected })
+                                    'selected': is_tagger_selected,
+                                    'document': text_dict})
+            
+            # create (empty) feedback item
+            TagFeedback.log(user, decision_id, tagger_id, p)
+
         else:
             p = None
         # Add prediction as tag
         if p == 1:
             data['tags'].append(tagger.description)
+        
+
     
     # Prepare response
     data_json = json.dumps(data)

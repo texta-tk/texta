@@ -86,25 +86,21 @@ class Task(models.Model):
         return data
 
 
+
 class TagFeedback(models.Model):
-    
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    dataset_id = models.IntegerField(default=None)
-    document_id = models.TextField(default=None)
-    field = models.CharField(max_length=MAX_STR_LEN, default=None)
-    tag = models.CharField(max_length=MAX_STR_LEN, default=None)
-    value = models.IntegerField(default=None)
+    document = models.TextField()
+    tagger = models.ForeignKey(Task,on_delete=models.CASCADE)
+    prediction = models.IntegerField(default=None)
     time_updated = models.DateTimeField(null=True, blank=True, default=None)
 
     @staticmethod
-    def log(user, dataset_id, document_id, field, tag, value):
-        feedback_log = TagFeedback()
+    def log(user, decision_id, tagger_id, prediction):
+        feedback_log = TagFeedback.objects.get(pk = decision_id)
         feedback_log.user = user
-        feedback_log.dataset_id = dataset_id
-        feedback_log.document_id = document_id
-        feedback_log.field = field
-        feedback_log.tag = tag
-        feedback_log.value = value
+        feedback_log.tagger = Task.objects.get(pk = tagger_id)
+        feedback_log.prediction = prediction
         feedback_log.time_updated = datetime.now()
         feedback_log.save()
         return feedback_log
