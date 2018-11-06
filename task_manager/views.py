@@ -7,7 +7,6 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.contrib.auth.decorators import login_required
 from task_manager.models import Task
-from lexicon_miner.models import Lexicon, Word
 from searcher.models import Search
 from permission_admin.models import Dataset
 from utils.datasets import Datasets
@@ -17,10 +16,6 @@ from texta.settings import MODELS_DIR
 from texta.settings import ERROR_LOGGER
 
 from dataset_importer.document_preprocessor import preprocessor_map
-# from .language_model_manager.language_model_manager import LanguageModel
-# from .tag_manager.tag_manager import TaggingModel, get_pipeline_builder
-# from task_manager.tasks import Preprocessor
-# from .models import Task
 
 from task_manager.tasks.task_params import task_params
 from task_manager.tools import get_pipeline_builder
