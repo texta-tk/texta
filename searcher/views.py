@@ -424,4 +424,3 @@ def fact_graph(request):
         return HttpResponse(template.render(template_params))
 
     return HttpResponse(template.render(template_params, request))
-

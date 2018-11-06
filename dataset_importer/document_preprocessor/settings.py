@@ -96,6 +96,18 @@ except Exception as e:
     print(e)
     log_preprocessor_status(code='text_tagger', status='disabled')
 
+try:
+    preprocessor_map['lexicon_classifier'] = {
+        'name': 'Lexicon Tagger Preprocessor',
+        'description': 'Applies lexicon-based tagging',
+        'class': preprocessors.lexicon_classifier.LexTagger,
+        'parameters_template': 'parameters/preprocessor_parameters/lexicon_classifier.html',
+        'arguments': {},
+        'is_enabled': True,
+        'match_types':['Prefix','Exact','Fuzzy'],
+        'operations':['OR','AND']
+    }
+    log_preprocessor_status(code='lexicon_classifier', status='enabled')
 
 def convert_to_utf8(document):
     """
@@ -115,3 +127,7 @@ PREPROCESSOR_INSTANCES = {
     preprocessor_code: preprocessor['class'](**preprocessor['arguments'])
     for preprocessor_code, preprocessor in preprocessor_map.items() if preprocessor['is_enabled']
 }
+
+except Exception as e:
+    print(e)
+    log_preprocessor_status(code='lexicon_classifier', status='disabled')

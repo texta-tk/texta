@@ -117,10 +117,10 @@ function collectMlpArguments(formData) {
 
 function collectDateConverterArguments(formData) {
     var featureNames = JSON.stringify($('#date-converter-processor-feature-names').val().split('\n'));
-	var featureLangs = JSON.stringify($('#date-converter-processor-feature-langs').val().split('\n'));
+	  var featureLangs = JSON.stringify($('#date-converter-processor-feature-langs').val().split('\n'));
 
     formData.append('date_converter_preprocessor_feature_names', featureNames);
-	formData.append('date_converter_preprocessor_input_langs',featureLangs);
+	  formData.append('date_converter_preprocessor_input_langs',featureLangs);
 
     return formData;
 }
@@ -135,6 +135,29 @@ function collectTextTaggerArguments(formData) {
     return formData;
 }
 
+function collectLexiconTaggerArguments(formData) {
+    var featureNames = JSON.stringify($('#lexicon-classifier-processor-feature-names').val().split('\n'));
+	var lexicons = JSON.stringify($('#lexicon-classifier-processor-lexicons').val().split('\n'));
+    var match_type = JSON.stringify($('.lexicon-classifier-processor-match-types:checked').val());
+	var operation = JSON.stringify($('.lexicon-classifier-processor-operations:checked').val());
+    var slop = JSON.stringify($('#lexicon-classifier-processor-slops').val());
+	var requiredWords = JSON.stringify($('#lexicon-classifier-processor-words-required').val());
+    var addCounterLexicon = JSON.stringify($('#lexicon-classifier-processor-add-cl').val());
+    var counterLexicons = JSON.stringify($('#lexicon-classifier-processor-counterlexicons').val());
+    var clSlop = JSON.stringify($('#lexicon-classifier-processor-cl-slops').val());
+
+    formData.append('lexicon_classifier_preprocessor_feature_names', featureName);
+	formData.append('lexicon_classifier_preprocessor_lexicons', lexicons);
+    formData.append('lexicon_classifier_preprocessor_match_types', match_type);
+    formData.append('lexicon_classifier_preprocessor_operations', operation);
+    formData.append('lexicon_classifier_preprocessor_slops', slop);
+    formData.append('lexicon_classifier_preprocessor_words_required', requiredWords);
+    formData.append('lexicon_classifier_preprocessor_counterlecixons', counterLexicons);
+    formData.append('lexicon_classifier_preprocessor_cl_slops', clSlop);
+    formData.append('lexicon_classifier_preprocessor_add_cl', addCounterLexicon);
+    
+    return formData;
+}
 
 // Key to collector map
 
@@ -151,6 +174,7 @@ var collectors = {
     postgres: collectPostgresArguments,
 
     mlp: collectMlpArguments,
-	date_converter: collectDateConverterArguments,
-	text_tagger: collectTextTaggerArguments
+	  date_converter: collectDateConverterArguments,
+	  text_tagger: collectTextTaggerArguments,
+    lexicon_coverter: collectLexiconTaggerArguments
 };

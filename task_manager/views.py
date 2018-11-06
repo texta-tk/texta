@@ -7,6 +7,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.contrib.auth.decorators import login_required
 from task_manager.models import Task
+from lexicon_miner.models import Lexicon, Word
 from searcher.models import Search
 from permission_admin.models import Dataset
 from utils.datasets import Datasets
