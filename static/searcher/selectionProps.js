@@ -213,7 +213,6 @@ function createSelectionProps() {
     }
     
     function initTippy(doms, tip_content, tip_showOnInit=false) {
-        console.log(tip_showOnInit)
         var tippy_instance = tippy(doms,
         {
             content: tip_content,
