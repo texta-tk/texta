@@ -383,7 +383,6 @@ class ES_Manager:
         q = json.dumps(self.combined_query['main'])
         search_url = '{0}/{1}/{2}/_search?scroll={3}'.format(es_url, self.index, self.mapping, time_out)
         response = requests.post(search_url, data=q, headers=HEADERS).json()
-        print(response, '1111')
         scroll_id = response['_scroll_id']
         total_hits = response['hits']['total']
 
