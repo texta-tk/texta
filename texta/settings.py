@@ -183,6 +183,7 @@ DATABASES = {
 		'PORT':         os.getenv('DJANGO_DATABASE_PORT', ''),
 		# Set to empty string for default. Not used with sqlite3.
 		'BACKUP_COUNT': 5,
+		'CONN_MAX_AGE': None
 	}
 }
 

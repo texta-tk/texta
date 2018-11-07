@@ -541,7 +541,22 @@ def api_tag_text(request, user, params):
         error = {'error': 'text parameter cannot be empty'}
         data_json = json.dumps(error)
         return HttpResponse(data_json, status=400, content_type='application/json')
+
+    # preprocess if necessary
+    preprocessor = params.get('preprocessor', None)
+    if preprocessor:
+        preprocessor_params = {}
+        preprocessor = PREPROCESSOR_INSTANCES[preprocessor]
     
+        try:
+            result_map = preprocessor.transform([text_dict], **preprocessor_params)
+        except Exception as e:
+            result_map = {"error": "preprocessor internal error: {}".format(repr(e))}
+            data_json = json.dumps(error)
+            return HttpResponse(data_json, status=400, content_type='application/json')
+
+        text_dict = result_map['documents'][0]
+
     # Select taggers
     tagger_ids_list = [tagger.id for tagger in Task.objects.filter(task_type='train_tagger').filter(status=Task.STATUS_COMPLETED)]
     data = {'tags': [], 'explain': []}

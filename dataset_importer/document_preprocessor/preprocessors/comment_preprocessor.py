@@ -49,17 +49,19 @@ class CommentPreprocessor(object):
         """
 
         if not kwargs.get('comment_preprocessor_preprocessor_feature_names', None):
-            return documents
-
-        input_features = json.loads(kwargs['comment_preprocessor_preprocessor_feature_names'])
+            # this is mostly for API requests as they might not have field data - apply to all in this case
+            input_features = documents[0].keys()
+        else:
+            input_features = json.loads(kwargs['comment_preprocessor_preprocessor_feature_names'])
 
         for input_feature in input_features:
-            input_feature = json.loads(input_feature)["path"]
+            try:
+                input_feature = json.loads(input_feature)["path"]
+            except:
+                pass
 
-            month_label = '%s_month_comment' % input_feature
-            hour_label = '%s_hour_comment' % input_feature
-            label = '%s_comment' % input_feature
             is_date = None
+
             for i,document in enumerate(documents):
                 if input_feature not in document:
                     continue
@@ -68,14 +70,11 @@ class CommentPreprocessor(object):
                 if is_date is None:
                     if not feature_text.isdigit():
                         is_date = self._is_date(feature_text)
-
+                
                 if is_date:
-                    document.update({
-                        month_label: self._get_month(feature_text),
-                        hour_label: self._get_hour(feature_text)
-                    })
+                    document[input_feature] = 'hour_{0} month_{1}'.format(self._get_hour(feature_text), self._get_month(feature_text))
                 else:
-                    document.update({label: self._clean_string(feature_text)})
+                    document[input_feature] = self._clean_string(feature_text)
                 
                 # update doc in list
                 documents[i] = document
