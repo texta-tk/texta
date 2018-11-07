@@ -60,7 +60,7 @@ STATIC_ROOT = os.path.join(os.path.abspath(os.path.join(BASE_DIR, os.pardir)), '
 SERVER_TYPE = os.getenv('TEXTA_SERVER_TYPE')
 
 if SERVER_TYPE is None:
-	SERVER_TYPE = os.getenv('SERVER_TYPE', 'development')
+	SERVER_TYPE = os.getenv('TEXTA_SERVER_TYPE', 'development')
 
 if SERVER_TYPE == 'development':
 	PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL', 'http'))

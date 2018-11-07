@@ -1,4 +1,4 @@
-var LINK_PREFIX = 'http://toolkit-dev.texta.ee/texta';
+var LINK_PREFIX = 'http://dev.texta.ee/';
 var STATIC_URL = '/texta/static/';
 
 var LINK_LEXMINER = LINK_PREFIX + '/lexicon_miner';
