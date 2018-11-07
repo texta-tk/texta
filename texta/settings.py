@@ -63,7 +63,7 @@ if SERVER_TYPE is None:
 	SERVER_TYPE = os.getenv('SERVER_TYPE', 'development')
 
 if SERVER_TYPE == 'development':
-	PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL', 'http://'))
+	PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL', 'http'))
 	DOMAIN = os.getenv('TEXTA_DOMAIN', 'localhost')
 	PORT = '8000'
 
@@ -74,7 +74,7 @@ if SERVER_TYPE == 'development':
 	DEBUG = True
 
 elif SERVER_TYPE == 'production':
-	PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL', 'http://'))
+	PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL', 'http'))
 	DOMAIN = os.getenv('TEXTA_DOMAIN', 'dev.texta.ee')
 
 	URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL, DOMAIN)
