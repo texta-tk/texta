@@ -164,7 +164,7 @@ def selectLexicon(request):
         lexicons = Lexicon.objects.filter(author=request.user)
 
         datasets = Datasets().get_allowed_datasets(request.user)
-        language_models = Task.objects.filter(task_type='train_model').filter(status='Completed').order_by('-pk')
+        language_models = Task.objects.filter(task_type='train_model').filter(status=Task.STATUS_COMPLETED).order_by('-pk')
 
         # Define selected mapping
         ds = Datasets().activate_dataset(request.session)
@@ -197,7 +197,7 @@ def get_example_texts(request, field, value):
 
 @login_required
 def query(request):
-
+    
     try:
         lexicon = Lexicon.objects.get(id=request.POST['lid'])
         suggestionset = SuggestionSet(lexicon=lexicon,method=request.POST['method'])
@@ -222,9 +222,10 @@ def query(request):
             return HttpResponse('<br><b style="color:red;">No suggestions available for the lexicon. Try adding more terms.</b>')
 
         suggestions = []
-
+        
         model_run_obj = Task.objects.get(id=int(request.session['model']))
-        tooltip_feature = json.loads(json.loads(model_run_obj.parameters)['field'])['path']
+        """ json.loads(json.loads(model_run_obj.parameters)['field'])['path'] """
+        tooltip_feature = json.loads(model_run_obj.parameters)['field']
 
         if request.POST['method'][:12] == 'most_similar':
             for a in getattr(model,request.POST['method'])(positive=positives,topn=40,ignored_idxes = ignored_idxes):

@@ -1,136 +1,166 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<script type="application/javascript" src="{{STATIC_URL}}jquery-1.11.2.min.js"></script>
-<script type="application/javascript" src="{{STATIC_URL}}datatables/datatables.min.js"></script>
-<script type="application/javascript" src="{{STATIC_URL}}datatables_button/dataTables.buttons.js"></script>
-<script type="application/javascript" src="{{STATIC_URL}}datatables_button/buttons.colVis.js"></script>
-<script type="application/javascript" src="{{STATIC_URL}}jquery-textrange.js"></script>
-<script type="application/javascript" src="{{STATIC_URL}}navigation.js"></script>
-<script type="application/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap.min.js"></script>
-<script type="application/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-datepicker.js"></script>
-<script type="application/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-slider.js"></script>
-<script type="application/javascript" src="{{STATIC_URL}}local-cache.js"></script>
+	<script type="application/javascript" src="{{STATIC_URL}}jquery-1.11.2.min.js"></script>
+	<script type="application/javascript" src="{{STATIC_URL}}datatables/datatables.min.js"></script>
+	<script type="application/javascript" src="{{STATIC_URL}}datatables_button/dataTables.buttons.js"></script>
+	<script type="application/javascript" src="{{STATIC_URL}}datatables_button/buttons.colVis.js"></script>
+	<script type="application/javascript" src="{{STATIC_URL}}jquery-textrange.js"></script>
+	<script type="application/javascript" src="{{STATIC_URL}}navigation.js"></script>
+	<script type="application/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap.min.js"></script>
+	<script type="application/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-datepicker.js"></script>
+	<script type="application/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-slider.js"></script>
+	<script type="application/javascript" src="{{STATIC_URL}}local-cache.js"></script>
 
-<script type="application/javascript" src="{{STATIC_URL}}morris.min.js"></script>
-<script type="application/javascript" src="{{STATIC_URL}}raphael-min.js"></script>
+	<script type="application/javascript" src="{{STATIC_URL}}morris.min.js"></script>
+	<script type="application/javascript" src="{{STATIC_URL}}raphael-min.js"></script>
 
-<!-- https://github.com/n457/LightRange.js
+	<!-- https://github.com/n457/LightRange.js
 <script type="application/javascript" src="{{STATIC_URL}}/LightRange.min.js"></script> -->
-<!-- https://developer.snapappointments.com/bootstrap-select/ -->
-<script type="application/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-select.min.js"></script>
-<link rel="stylesheet" href="{{STATIC_URL}}bootstrap/css/bootstrap-select.min.css">
-<!-- http://www.bacubacu.com/colresizable/ -->
-<script type="application/javascript" src="{{STATIC_URL}}colResizable-1.6.js"></script>
-<script type="application/javascript" src="{{STATIC_URL}}d3.min.js"></script>
-<!-- http://d3-legend.susielu.com/ -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/1.13.0/d3-legend.min.js"></script>
-<!-- https://github.com/patorjk/d3-context-menu -->
-<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}d3-context-menu.css">
-<script type="application/javascript" src="{{STATIC_URL}}d3-context-menu.js"></script>
-<!-- https://github.com/MasterMaps/d3-slider -->
-<script type="application/javascript" src="{{STATIC_URL}}d3-slider.js"></script>
-<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}d3-slider.css">
-<!-- https://sweetalert2.github.io/ -->
-<script type="application/javascript" src="{{STATIC_URL}}sweetalert2.all.min.js"></script>
-<!-- https://daneden.github.io/animate.css/ -->
-<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}/animate.css">
+	<!-- https://developer.snapappointments.com/bootstrap-select/ -->
+	<script type="application/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-select.min.js"></script>
+	<link rel="stylesheet" href="{{STATIC_URL}}bootstrap/css/bootstrap-select.min.css">
+	<!-- http://www.bacubacu.com/colresizable/ -->
+	<script type="application/javascript" src="{{STATIC_URL}}colResizable-1.6.js"></script>
+	<script type="application/javascript" src="{{STATIC_URL}}d3.min.js"></script>
+	<!-- http://d3-legend.susielu.com/ -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/1.13.0/d3-legend.min.js"></script>
+	<!-- https://github.com/patorjk/d3-context-menu -->
+	<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}d3-context-menu.css">
+	<script type="application/javascript" src="{{STATIC_URL}}d3-context-menu.js"></script>
+	<!-- https://github.com/MasterMaps/d3-slider -->
+	<script type="application/javascript" src="{{STATIC_URL}}d3-slider.js"></script>
+	<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}d3-slider.css">
+	<!-- https://sweetalert2.github.io/ -->
+	<script type="application/javascript" src="{{STATIC_URL}}sweetalert2.all.min.js"></script>
+	<!-- https://daneden.github.io/animate.css/ -->
+	<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}/animate.css">
 
-<script type="application/javascript" src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
-<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}bootstrap/css/bootstrap.min.css">
-<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}bootstrap/css/bootstrap-slider.css">
-<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}datatables/datatables.min.css">
-<link rel="stylesheet" href="{{STATIC_URL}}bootstrap/css/datepicker.css">
-<link rel="stylesheet" href="{{STATIC_URL}}bootstrap/css/bootstrap-theme.min.css">
-<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}base/frame.css">
-<link rel="shortcut icon" type="image/png" href="{{STATIC_URL}}/img/favicon.ico"/>
+	<script type="application/javascript" src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+	<link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}bootstrap/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}bootstrap/css/bootstrap-slider.css">
+	<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}datatables/datatables.min.css">
+	<link rel="stylesheet" href="{{STATIC_URL}}bootstrap/css/datepicker.css">
+	<link rel="stylesheet" href="{{STATIC_URL}}bootstrap/css/bootstrap-theme.min.css">
+	<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}base/frame.css">
+	<link rel="shortcut icon" type="image/png" href="{{STATIC_URL}}/img/favicon.ico" />
 
-<title>TEXTA Toolkit {{texta_version}}</title>
+	<title>TEXTA Toolkit {{texta_version}}</title>
 </head>
 
 <body>
-    <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
-		<div class="container-fluid">
-            <ul class="nav navbar-nav">
-                <li id="home"><a href="#"><span class="glyphicon glyphicon-home"></span> Home</a></li>
-                {% if request.user.is_authenticated %}
-                <li id="searcher"><a href="#"><span class="glyphicon glyphicon-search"></span> Searcher</a></li>
-                {% endif %}
-                {% if request.user.is_authenticated %}				
-					<li class="dropdown">
-						<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-pencil"></span> Terminology Management<span class="caret"></span></a>
-						<ul class="dropdown-menu">
-							<li id="ontology_viewer"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Terminology Overview</a></li>
-							<li id="lex_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Lexicon Miner</a></li>
-							<li id="conceptualizer"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Conceptualiser</a></li>
-							<li id="mwe_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> MWE Miner</a></li>
-							<li id="grammar_builder"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Grammar Miner</a></li>
+	<div class="body-grid-wrapper">
+		<div class="grid-item-navbar">
+			<nav class="navbar navbar-inverse navbar-static-top">
+				<div class="container-fluid">
+					<!-- Collect the nav links, forms, and other content for toggling -->
+					<div class="navbar-header">
+						<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"
+						 aria-expanded="false">
+							<span class="sr-only">Toggle navigation</span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+						</button>
+					</div>
+
+					<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+						<ul class="nav navbar-nav">
+							<li id="home"><a href="#"><span class="glyphicon glyphicon-home"></span> Home</a></li>
+							{% if request.user.is_authenticated %}
+							<li id="searcher"><a href="#"><span class="glyphicon glyphicon-search"></span> Searcher</a></li>
+							{% endif %}
+							{% if request.user.is_authenticated %}
+							<li class="dropdown">
+								<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-pencil"></span>
+									Terminology Management<span class="caret"></span></a>
+								<ul class="dropdown-menu">
+									<li id="ontology_viewer"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Terminology
+											Overview</a></li>
+									<li id="lex_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Lexicon Miner</a></li>
+									<li id="conceptualizer"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Conceptualiser</a></li>
+									<li id="mwe_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> MWE Miner</a></li>
+									<!-- <li id="grammar_builder"><a href="#"><span class="glyphicon glyphicon-chevron-right "></span> Grammar Miner</a></li> no longer used-->
+								</ul>
+							</li>
+							{% if request.user.is_superuser %}
+							<li class="dropdown">
+								<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-lock"></span>
+									Restricted<span class="caret"></span></a>
+								<ul class="dropdown-menu">
+									<li id="permission_admin"><a href="#"><span class='glyphicon glyphicon-wrench'></span> Administration </a></li>
+									<li id="dataset_importer"><a href="#"><span class='glyphicon glyphicon-share'></span> Dataset Importer </a></li>
+									<li id="task_manager"><a href="#"><span class='glyphicon glyphicon-menu-hamburger'></span> Task Manager </a></li>
+								</ul>
+							</li>
+							{% endif %}
+							{% endif %}
 						</ul>
-					</li>
-					{% if request.user.is_superuser %}
-						<li class="dropdown">
-							<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-lock"></span> Restricted<span class="caret"></span></a>
-							<ul class="dropdown-menu">
-								<li id="permission_admin"><a href="#"><span class='glyphicon glyphicon-wrench'></span> Administration </a></li>
-                                <li id="dataset_importer"><a href="#"><span class='glyphicon glyphicon-share'></span> Dataset Importer </a></li>
-                                <li id="task_manager"><a href="#"><span class='glyphicon glyphicon-menu-hamburger'></span> Task Manager </a></li>
-							</ul>
-						</li>
-					{% endif %}
-		        {% endif %}
-            </ul>
-            
-            {% if request.user.is_authenticated %}           
-				<form class="navbar-form navbar-right user-data" id="log_out_form" onsubmit="go_to(LINK_ACCOUNT + '/account/log_out','log_out_form')">
-					<span> Logged in as {{request.user.get_username}}. </span>
-					<div class="form-group">
-						<button type="submit" class="btn btn-danger btn-sm"><span class="glyphicon glyphicon-log-out"></span></button>
-					</div>
-				</form>
 
-            	<form class="navbar-form navbar-right">
-					<select id="dataset_to_activate" name="dataset_to_activate" class="input-sm" onchange="update_resources();">
-						{% for dataset in allowed_datasets %}
-							{% if dataset.id|stringformat:"i" == request.session.dataset %}
-								<option class="datasetOption" value="{{dataset.id}}" selected="selected">Dataset {{dataset.id}}: {{dataset.index}} - {{dataset.mapping}}</option>
+						<div class="navbar-right">
+							{% if request.user.is_authenticated %}
+							<form class="navbar-form">
+								<select id="dataset_to_activate" name="dataset_to_activate" class="input-sm" onchange="update_resources();">
+									{% for dataset in allowed_datasets %}
+									{% if dataset.id|stringformat:"i" == request.session.dataset %}
+									<option class="datasetOption" value="{{dataset.id}}" selected="selected">Dataset {{dataset.id}}:
+										{{dataset.index}} - {{dataset.mapping}}</option>
+									{% else %}
+									<option class="datasetOption" value="{{dataset.id}}">Dataset {{dataset.id}}: {{dataset.index}} -
+										{{dataset.mapping}}</option>
+									{% endif %}
+									{% endfor %}
+								</select>
+
+								<select id="model_to_activate" name="model_to_activate" class="input-sm" onchange="update_resources();">
+									{% for model in language_models %}
+									{% if model.pk|slugify == request.session.model %}
+									<option class="datasetOption" value="{{model.pk}}" selected="selected">Model {{model.pk}}:
+										{{model.description}}</option>
+									{% else %}
+									<option class="datasetOption" value="{{model.pk}}">Model {{model.pk}}: {{model.description}}</option>
+									{% endif %}
+									{% endfor %}
+								</select>
+							</form>
+
+							<div class="user-data navbar-form">
+								<span> Logged in as {{request.user.get_username}}. </span>
+								<button type="button" class="btn btn-danger btn-sm" onclick="go_to(LINK_ACCOUNT + '/account/log_out')">
+									<span class="glyphicon glyphicon-log-out"></span>
+								</button>
+							</div>
+							
 							{% else %}
-								<option class="datasetOption" value="{{dataset.id}}">Dataset {{dataset.id}}: {{dataset.index}} - {{dataset.mapping}}</option>
+							<form class="navbar-form form-inline" id="login_form" onsubmit="go_to(LINK_ROOT+'account/login','login_form')"
+							 method="POST">
+								<div class="form-group">
+									<label class="sr-only" for="loginUsername">Username</label>
+									<input type="text" class="form-control input-sm" id="loginUsername" name="username" placeholder="Username">
+								</div>
+								<div class="form-group">
+									<label class="sr-only" for="loginPassword">Password</label>
+									<input type="password" class="form-control input-sm" id="loginPassword" name="password" placeholder="Password">
+								</div>
+								<button type="submit" class="btn btn-success btn-sm"><span class="glyphicon glyphicon-log-in"></button>
+							</form>
 							{% endif %}
-						{% endfor %}
-					</select>
-
-					<select id="model_to_activate" name="model_to_activate" class="input-sm" onchange="update_resources();">
-						{% for model in language_models %}
-							{% if model.pk|slugify == request.session.model %}
-								<option class="datasetOption" value="{{model.pk}}" selected="selected">Model {{model.pk}}: {{model.description}}</option>
-							{% else %}
-								<option class="datasetOption" value="{{model.pk}}">Model {{model.pk}}: {{model.description}}</option>
-							{% endif %}
-						{% endfor %}
-					</select>
-            	</form>
-
-            {% else %}
-				<form class="navbar-form form-inline navbar-right" id="login_form" onsubmit="go_to(LINK_ROOT+'account/login','login_form')" method="POST">
-					<div class="form-group">
-						<label class="sr-only" for="loginUsername">Username</label>
-						<input type="text" class="form-control input-sm" id="loginUsername" name="username" placeholder="Username">
-					</div>
-					<div class="form-group">
-						<label class="sr-only" for="loginPassword">Password</label>
-						<input type="password" class="form-control input-sm" id="loginPassword" name="password" placeholder="Password">
-					</div>
-					<button type="submit" class="btn btn-success btn-sm"><span class="glyphicon glyphicon-log-in"></button>
-				</form>
-            {% endif %}
+						</div>
+					</div><!-- /.navbar-collapse -->
+				</div><!-- /.container-fluid -->
+			</nav>
 		</div>
-    </nav>
-<div class="container-fluid">{% block app %}{% endblock %}</div>
-<script src="{{STATIC_URL}}base/index.js"></script>
+		<div class="grid-item-content">
+			<div class="container-fluid">{% block app %}{% endblock %}</div>
+		</div>
+	</div>
+	<script src="{{STATIC_URL}}base/index.js"></script>
 </body>
+
 </html>

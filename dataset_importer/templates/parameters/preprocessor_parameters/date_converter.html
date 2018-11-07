@@ -5,9 +5,9 @@
 		    {% if fields %}
 		        <select class="form-control input-sm" multiple="multiple" id="date-converter-feature-names" name="date_converter_feature_names">
 				{% for field in fields %}
-					<option value="{{field.data}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{field.label}}</option>
+					<option value="{{field.path}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{field.label}}</option>
 				{% endfor %}
-				</select>        
+				</select>
 		    {% else %}
 		    	<textarea class="form-control" rows="2" id="date-converter-feature-names" name="date_converter_feature_names"></textarea>
 		    {% endif %}

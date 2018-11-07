@@ -2,6 +2,25 @@ var PREFIX = LINK_TASK_MANAGER;
 
 $(function () {
     // for bootstrap 3 use 'shown.bs.tab', for bootstrap 2 use 'shown' in the next line
+
+    $('#lexicon-classifier-cl-slops').bootstrapSlider({
+      formatter: function(value) {
+        return 'Current value: ' + value;
+      }
+    });
+
+    $('#lexicon-classifier-slops').bootstrapSlider({
+        formatter: function(value) {
+          return 'Current value: ' + value;
+        }
+    });
+
+    $('#lexicon-classifier-words-required').bootstrapSlider({
+        formatter: function(value) {
+          return 'Current value: ' + value;
+        }
+    });
+
     $('a[data-toggle="tab"]').each(function () {
         $(this).on('shown.bs.tab', function (e) {
             // save the latest tab; use cookies if you like 'em better:
@@ -15,7 +34,14 @@ $(function () {
         $('[href="' + lastTab + '"]').tab('show');
     }
 });
+function show_c_lex_content(){
+    $(".c-lex-content-wrapper").toggleClass("hidden");
+}
 
+function toggle_required_percentage(element){
+    element_value = $(element).val()
+    $(".required-percentage-wrapper").toggleClass("hidden", element_value == "OR");
+}
 
 function start_task(task_id) {
     let formElement = document.getElementById("task_params");
@@ -25,11 +51,23 @@ function start_task(task_id) {
     request.onreadystatechange=function() {
         location.reload();
     }
-    
+
     request.open("POST",PREFIX+'/start_task');
     request.send(new FormData(formElement),true);
 }
 
+function start_mass_task(task_id) {
+    let formElement = document.getElementById("task_params");
+    $("<input>").attr("type", "hidden").attr("name", "task_type").val(task_id).appendTo(formElement);
+
+    var request = new XMLHttpRequest();
+    request.onreadystatechange=function() {
+        location.reload();
+    }
+    
+    request.open("POST",PREFIX+'/start_mass_task');
+    request.send(new FormData(formElement),true);
+}
 
 function select_preprocessor(task_id) {
     let preprocessor_key = $("#" + task_id + "_preprocessor_key").val();
