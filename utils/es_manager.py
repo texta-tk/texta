@@ -1,27 +1,15 @@
 # -*- coding: utf8 -*-
 from __future__ import print_function
 import json
-# import re
 import copy
 import requests
-# from collections import defaultdict
-# import sys
-# import time
 from functools import reduce
-
-# # Import django-stuff only if imported from the django application / prevent errors when importing from scripts
-# if 'django' in sys.modules:
-#     from conceptualiser.models import Concept
-#     from conceptualiser.models import TermConcept
-#     from utils.log_manager import LogManager
-#     from lexicon_miner.models import Word,Lexicon
 
 from utils.query_builder import QueryBuilder
 from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, FACT_PROPERTIES
 
 # Need to update index.max_inner_result_window to increase
 HEADERS = {'Content-Type': 'application/json'}
-
 
 class Singleton(type):
 
@@ -150,15 +138,11 @@ class ES_Manager:
     def check_if_field_has_facts(self, sub_fields):
         """ Check if field is associate with facts in Elasticsearch
         """
-        # doc_type = self.mapping.lower()
-        field_path = [s.lower() for s in sub_fields]
-        doc_path = '.'.join(field_path)
+        doc_path = '.'.join(sub_fields)
 
         request_url = '{0}/{1}/{2}/_count'.format(es_url, self.index, self.mapping)
         base_query = {"query": {"bool": {"filter": {'and': []}}}}
-        base_query = {'query': {'nested': {'path': 'texta_facts', 'query': {'bool': {'filter': []}}}}}  # {'match':{'texta_facts.fact':'superhero'}}}}}
-        # base_query['query']['bool']['filter']['and'].append({"term": {'facts.doc_type': doc_type}})
-        # base_query['query']['bool']['filter']['and'].append({"term": {'facts.doc_path': doc_path}})
+        base_query = {'query': {'nested': {'path': 'texta_facts', 'query': {'bool': {'filter': []}}}}}
         base_query['query']['nested']['query']['bool']['filter'].append({'term': {'texta_facts.doc_path': doc_path}})
 
         has_facts = self._field_has_facts(request_url, base_query)
@@ -398,6 +382,14 @@ class ES_Manager:
             data = self.process_bulk(response['hits']['hits'])
             delete_url = '{0}/{1}/{2}/_bulk'.format(es_url, self.index, self.mapping)
             deleted = requests.post(delete_url, data=data, headers=HEADERS)
+        return True
+    
+    def add_document(self, document):
+        """ Indexes given json document
+        """
+        document = json.dumps(document)
+        url = '{0}/{1}/{2}/'.format(es_url, self.index, self.mapping)
+        response = self.plain_post(url, data=document)
         return True
 
     def scroll(self, scroll_id=None, time_out='1m', id_scroll=False, field_scroll=False, size=100, match_all=False):

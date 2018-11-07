@@ -545,17 +545,25 @@ def api_tag_text(request, user, params):
     # Select taggers
     tagger_ids_list = [tagger.id for tagger in Task.objects.filter(task_type='train_tagger').filter(status=Task.STATUS_COMPLETED)]
     data = {'tags': [], 'explain': []}
-    
+
     # Apply
     for tagger_id in tagger_ids_list:
         is_tagger_selected = taggers is None or tagger_id in taggers
         if is_tagger_selected:
             tagger = TagModelWorker()
             tagger.load(tagger_id)
-            for key in text_dict:
-                text_dict[key] = [text_dict[key]]
 
-            df_text = pd.DataFrame(text_dict)
+            tagger_fields = json.loads(Task.objects.get(pk = tagger_id).parameters)['fields']
+
+            text_dict_df = {}
+
+            for field in tagger_fields:
+                try:
+                    text_dict_df[field] = [text_dict[field]]
+                except KeyError:
+                    text_dict_df[field] = [""]
+
+            df_text = pd.DataFrame(text_dict_df)
             p = int(tagger.model.predict(df_text)[0])
 
             try:
@@ -565,26 +573,26 @@ def api_tag_text(request, user, params):
 
 
             # create (empty) feedback item
-            TagFeedback.create(user, text_dict, tagger_id, p)
+            feedback_obj = TagFeedback.create(user, text_dict, tagger_id, p)
 
             # Add explanation
             data['explain'].append({'tag': tagger.description,
                                     'tagger_id': tagger_id,
-                                    'decision_id': decision_id,
+                                    'decision_id': feedback_obj.pk,
                                     'prediction': p,
                                     'confidence': c,
                                     'selected': is_tagger_selected})
 
         else:
             p = None
+        
         # Add prediction as tag
         if p == 1:
             data['tags'].append(tagger.description)
-        
 
-    
     # Prepare response
     data_json = json.dumps(data)
+
     return HttpResponse(data_json, status=200, content_type='application/json')
 
 
@@ -592,40 +600,70 @@ def api_tag_text(request, user, params):
 @api_auth
 def api_tag_feedback(request, user, params):
     """ Apply tag feedback (via auth_token)
+        Currently working corrently with 1 tag per document. Needs further development.
     """
-    dataset_id = params.get('dataset', None)
-    document_ids = params.get('document_ids', None)
-    tag = params.get('tag', None)
-    field = params.get('field', None)
-    value = int(params.get('value', 1))
+    decision_id = params.get('decision_id', None)
+
+    if not decision_id:
+        error = {'error': 'no decision ID supported'}
+        data_json = json.dumps(error)
+        return HttpResponse(data_json, status=400, content_type='application/json')
+    
+    doc_path = params.get('doc_path', None)
+
+    if not doc_path:
+        error = {'error': 'no doc_path supported. cannot index feedback'}
+        data_json = json.dumps(error)
+        return HttpResponse(data_json, status=400, content_type='application/json')
+
+    prediction = params.get('prediction', None)
+
+    if not prediction:
+        error = {'error': 'no prediction supported'}
+        data_json = json.dumps(error)
+        return HttpResponse(data_json, status=400, content_type='application/json')
+
+    feedback_obj = TagFeedback.update(user, decision_id, prediction)
+
+    # retrieve dataset id from task params
+    params = Task.objects.get(pk = feedback_obj.tagger.pk).parameters
+    params_json = json.loads(params)
+    dataset_id = params_json['dataset']
+    tagger_name = params_json['description']
 
     ds = Datasets()
     ds.activate_dataset_by_id(dataset_id, use_default=False)
+
     # Check if dataset_id is valid
     if not ds.is_active():
         error = {'error': 'invalid dataset parameter'}
         data_json = json.dumps(error)
         return HttpResponse(data_json, status=400, content_type='application/json')
 
-    es_m = ds.build_manager(ES_Manager)
-    mass_helper = MassHelper(es_m)
-    resp = mass_helper.get_document_by_ids(document_ids)
 
-    docs_to_update = []
+    document = json.loads(feedback_obj.document)
+    in_dataset = int(feedback_obj.in_dataset)
 
-    for hit in resp['hits']['hits']:
-        doc = hit['_source']
-        if value == 1:
-            doc = _add_tag_to_document(doc, field, tag)
-        else:
-            doc = _remove_tag_from_document(doc, field, tag)
-        docs_to_update.append(doc)
-    
-    es_m.update_documents(docs_to_update, document_ids)
-    data = []
-    for doc_id in document_ids:
-        tag_feedback = TagFeedback.log(user, dataset_id, doc_id, field, tag, value)
-        data.append(tag_feedback.to_json())
+    data = {'success': True}
+
+    # check if document already indexed in ES
+    if in_dataset == 0:
+        es_m = ds.build_manager(ES_Manager)
+
+        # add tag to the document
+        if prediction > 0:
+            # add facts here!!!!
+            new_fact = {"fact": "TEXTA_TAG", "str_val": tagger_name, "doc_path": doc_path, "spans": "[[0,0]]"}
+            document['texta_facts'] = [new_fact]
+        
+        es_m.add_document(document)
+
+        feedback_obj.in_dataset = 1
+        feedback_obj.save()
+        data['feedback_indexed'] = True
+    else:
+        data['feedback_indexed'] = False
+
     data_json = json.dumps(data)
     return HttpResponse(data_json, status=200, content_type='application/json')
 
