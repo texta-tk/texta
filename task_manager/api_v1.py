@@ -552,8 +552,16 @@ def api_tag_text(request, user, params):
         if is_tagger_selected:
             tagger = TagModelWorker()
             tagger.load(tagger_id)
-            for key in text_dict:
-                text_dict[key] = [text_dict[key]]
+
+            tagger_fields = json.loads(Task.objects.get(pk = tagger_id).parameters)['fields']
+
+            for field in tagger_fields:
+                try:
+                    text_dict[field] = [text_dict[field]]
+                except KeyError:
+                    text_dict[field] = ""
+            #for key in text_dict:
+            #    text_dict[key] = [text_dict[key]]
 
             df_text = pd.DataFrame(text_dict)
             p = int(tagger.model.predict(df_text)[0])

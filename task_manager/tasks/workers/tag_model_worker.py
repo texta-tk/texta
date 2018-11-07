@@ -37,8 +37,6 @@ class TagModelWorker(BaseWorker):
         self.model_name = None
         self.description = None
         self.task_model_obj = None
-        self.task_id = None
-        self.task_model_obj = None
         self.n_jobs = 1
 
     def run(self, task_id):
