@@ -9,6 +9,7 @@ import json
 import re
 
 from lexicon_miner.models import Lexicon,Word
+from searcher.view_functions.general.searcher_utils import additional_option_cut_text
 
 
 class ClusterManager:
@@ -29,7 +30,7 @@ class ClusterManager:
         params_out = {}
 
         for param in params.keys(): # NEW PY REQUIREMENT
-            if param.startswith('cluster'):
+            if 'cluster' in param:
                 if param in ['cluster_lexicons']:
                     params_out[param] = params.getlist(param)
                 else:

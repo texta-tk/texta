@@ -278,54 +278,6 @@ def search(es_params, request):
     return out
 
 
-def additional_option_cut_text(content, window_size):
-    window_size = int(window_size)
-
-    if not content:
-        return ''
-
-    if not isinstance(content, str):
-        return content
-
-    if '[HL]' in content:
-        soup = bs4.BeautifulSoup(content,'lxml')
-        html_spans = soup.find_all('span')
-
-        html_spans_merged = []
-        num_spans = len(html_spans)
-        # merge together ovelapping spans
-        for i,html_span in enumerate(html_spans):
-            if not html_span.get('class'):
-                span_text = html_span.text
-                span_tokens = span_text.split(' ')
-                span_tokens_len = len(span_tokens)
-                if i == 0:
-                    if span_tokens_len > window_size:
-                        new_text = u' '.join(span_tokens[-window_size:])
-                        new_text = u'... {0}'.format(new_text)
-                        html_span.string = new_text
-                    html_spans_merged.append(str(html_span))
-                elif i == num_spans-1:
-                    if span_tokens_len > window_size:
-                        new_text = u' '.join(span_tokens[:window_size])
-                        new_text = u'{0} ...'.format(new_text)
-                        html_span.string = new_text
-                    html_spans_merged.append(str(html_span))
-                else:
-                    if span_tokens_len > window_size:
-                        new_text_left = u' '.join(span_tokens[:window_size])
-                        new_text_right = u' '.join(span_tokens[-window_size:])
-                        new_text = u'{0} ...\n... {1}'.format(new_text_left,new_text_right)
-                        html_span.string = new_text
-                    html_spans_merged.append(str(html_span))
-            else:
-                html_spans_merged.append(str(html_span))
-
-        return ''.join(html_spans_merged)
-    else:
-        return content
-
-
 @login_required
 def remove_by_query(request):
     es_params = request.POST
