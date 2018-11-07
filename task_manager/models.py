@@ -102,7 +102,7 @@ class TagFeedback(models.Model):
         feedback_log = TagFeedback()
         feedback_log.user = user
         feedback_log.document = json.dumps(text_dict)
-        feedback_log.tagger = Task.objects.get(pk = tagger_id)
+        feedback_log.tagger = Task.objects.get(pk = int(tagger_id))
         feedback_log.prediction = prediction
         feedback_log.time_updated = datetime.now()
         feedback_log.save()
@@ -110,9 +110,9 @@ class TagFeedback(models.Model):
     
     @staticmethod
     def update(user, decision_id, prediction):
-        feedback_log = TagFeedback.objects.get(pk = decision_id)
+        feedback_log = TagFeedback.objects.get(pk = int(decision_id))
         feedback_log.user = user
-        feedback_log.prediction = prediction
+        feedback_log.prediction = int(prediction)
         feedback_log.time_updated = datetime.now()
         feedback_log.save()
         return feedback_log

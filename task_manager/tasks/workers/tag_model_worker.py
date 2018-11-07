@@ -204,7 +204,7 @@ class TagModelWorker(BaseWorker):
         df_test = pd.DataFrame(X_test)
 
         # Use Train data to parameter selection in a Grid Search
-        gs_clf = GridSearchCV(model, params, n_jobs=n_jobs, cv=5)
+        gs_clf = GridSearchCV(model, params, n_jobs=n_jobs, cv=5, verbose=1)
         gs_clf = gs_clf.fit(df_train, y_train)
         model = gs_clf.best_estimator_
 
