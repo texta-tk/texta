@@ -387,6 +387,7 @@ class ES_Manager:
     def add_document(self, document):
         """ Indexes given json document
         """
+        document = json.dumps(document)
         url = '{0}/{1}/{2}/'.format(es_url, self.index, self.mapping)
         response = self.plain_post(url, data=document)
         return True

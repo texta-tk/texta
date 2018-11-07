@@ -555,15 +555,15 @@ def api_tag_text(request, user, params):
 
             tagger_fields = json.loads(Task.objects.get(pk = tagger_id).parameters)['fields']
 
+            text_dict_df = {}
+
             for field in tagger_fields:
                 try:
-                    text_dict[field] = [text_dict[field]]
+                    text_dict_df[field] = [text_dict[field]]
                 except KeyError:
-                    text_dict[field] = ""
-            #for key in text_dict:
-            #    text_dict[key] = [text_dict[key]]
+                    text_dict_df[field] = [""]
 
-            df_text = pd.DataFrame(text_dict)
+            df_text = pd.DataFrame(text_dict_df)
             p = int(tagger.model.predict(df_text)[0])
 
             try:
@@ -609,6 +609,13 @@ def api_tag_feedback(request, user, params):
         data_json = json.dumps(error)
         return HttpResponse(data_json, status=400, content_type='application/json')
     
+    doc_path = params.get('doc_path', None)
+
+    if not doc_path:
+        error = {'error': 'no doc_path supported. cannot index feedback'}
+        data_json = json.dumps(error)
+        return HttpResponse(data_json, status=400, content_type='application/json')
+
     prediction = params.get('prediction', None)
 
     if not prediction:
@@ -626,7 +633,7 @@ def api_tag_feedback(request, user, params):
 
     ds = Datasets()
     ds.activate_dataset_by_id(dataset_id, use_default=False)
-    
+
     # Check if dataset_id is valid
     if not ds.is_active():
         error = {'error': 'invalid dataset parameter'}
@@ -634,7 +641,7 @@ def api_tag_feedback(request, user, params):
         return HttpResponse(data_json, status=400, content_type='application/json')
 
 
-    document = feedback_obj.document
+    document = json.loads(feedback_obj.document)
     in_dataset = int(feedback_obj.in_dataset)
 
     data = {'success': True}
@@ -646,9 +653,9 @@ def api_tag_feedback(request, user, params):
         # add tag to the document
         if prediction > 0:
             # add facts here!!!!
-            new_fact = {"fact": "TEXTA_TAG", "str_val": tagger_name, "doc_path": "", "spans": "[[0,0]]"}
+            new_fact = {"fact": "TEXTA_TAG", "str_val": tagger_name, "doc_path": doc_path, "spans": "[[0,0]]"}
             document['texta_facts'] = [new_fact]
-
+        
         es_m.add_document(document)
 
         feedback_obj.in_dataset = 1
