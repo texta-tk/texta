@@ -126,7 +126,7 @@ def _prettify_standardize_hls(name_to_inner_hits, col, content, old_content):
 def _transliterate(cols_data, row, translit_cols=['text', 'translit', 'lemmas']):    
     # To get nested col value before '.'
     hl_cols = [x for x in cols_data if len(x.split('.')) > 1 and x.split('.')[-1] in translit_cols]
-    # Transliterate the highlighting between different cols
+    # Transliterate the highlighting between hl_cols
     row = hl_transliterately(cols_data, row, hl_cols=hl_cols)
     return row
 
