@@ -62,23 +62,23 @@ function createSelectionProps() {
                 temp = $('.textPopover').clone().removeAttr("style")
                 // Create tippy instance
                 textTippy = initTippy(textSpan, temp.prop('outerHTML'), true)
-    
+
                 var fact_val = selection.toString();
                 loc_spans = getLocSpans(this, fact_val)
                 // Set template value to selected text
                 temp.find('.textValue').html(fact_val)
                 // Save as fact button
                 btn = temp.find('.textPopoverSaveBtn');
-    
+
                 // Get fact_path from td classname, remove _DtCol namesafing
                 fact_path = this.className.trim().replace('DtCol_', '')
                 // id of the document where fact was derived from, and the document where it will be marked in
-                doc_id = examplesTable.row(this.parentElement).data()[examplesTable.columns()[0].length - 1]
+                doc_id = $(examplesTable.row(this.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
                 // add click event for save button in tippy
                 $(document).on('click', '.textPopoverSaveBtn', function () {
                     saveFactFromSelect(fact_val, fact_path, [loc_spans], doc_id);
                 });
-    
+
                 // Update span tippy content
                 textSpan._tippy.setContent(temp.prop('outerHTML'))
             } else {
@@ -95,8 +95,8 @@ function createSelectionProps() {
             }
         });
     }
-    
-    
+
+
     // Remove selection and tippy instance of selected text
     function removeTextSelections(dom, tip) {
         $(".selectedText").contents().unwrap();
@@ -108,8 +108,8 @@ function createSelectionProps() {
         dom.normalize()
         tip.destroyAll();
     }
-    
-    
+
+
     function tippyForText() {
         // Select spans without [FACT] title, add titles with [HL] (for when facts are also present)
         spans = $(".\\[HL\\]").not("span[title~='\\[fact\\]']")
@@ -121,97 +121,31 @@ function createSelectionProps() {
         var temp = $('.textPopover').clone().removeAttr("style")
         // Create tippy instance
         initTippy(spans, temp.prop('outerHTML'))
-    
+
         Array.prototype.forEach.call(spans, function (span, i) {
             parent = span.parentElement
             fact_val = span.innerText;
             fact_path = parent.className.trim().replace('DtCol_', '')
             // id of the document where fact was derived from, and the document where it will be marked in
             // get doc_id by taking datatables row data last column(_es_id) value
-            doc_id = examplesTable.row(parent.parentElement).data()[examplesTable.columns()[0].length - 1]
+            doc_id = $(examplesTable.row(parent.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
             loc_spans = getLocSpans(parent, fact_val)
             btn = temp.find('.textPopoverSaveBtn');
-            btn.attr('onclick', `saveFactFromSelect("${fact_val}", "${fact_path}", ${[loc_spans]}," ${doc_id}")`);
-    
+            btn.attr('onclick', `saveFactFromSelect("${fact_val}", "${fact_path}", [${loc_spans}]," ${doc_id}")`);
+
             // Update span tippy content
             temp.find('.textValue').html(fact_val);
             span._tippy.setContent(temp.prop('outerHTML'));
         });
     }
-    
-    // Grab fresh input value when called, then save as fact
-    function saveFactFromSelect(fact_value, fact_field, fact_span, doc_id) {
-        // last() to avoid the dummy template selector
-        fact_name = $('.textName').last().val();
-        saveAsFact(fact_name.toUpperCase().trim(), fact_value.trim(), fact_field.trim(), fact_span, doc_id.trim());
-    }
-    
-    
-    function saveAsFact(fact_name, fact_value, fact_field, fact_span, doc_id) {
-        if (fact_name.length > 15 || fact_name == '' || fact_value == '') {
-            swal('Warning!', 'Fact name longer than 15 characters, or values are empty!', 'warning');
-        } else {
-            swal({
-                title: 'Are you sure you want to save this as a fact?',
-                html: `The fact <b>${fact_name}: ${fact_value}</b> will be added as a fact to field <b>${fact_field}</b>`,
-                type: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#73AD21',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes'
-            }).then((result) => {
-                if (result.value) {
-                    formElement = new FormData(document.getElementById("filters"));
-                    formElement.append('fact_name', fact_name);
-                    formElement.append('fact_value', fact_value);
-                    formElement.append('fact_field', fact_field);
-                    formElement.append('fact_span', fact_span);
-                    formElement.append('doc_id', doc_id);
-    
-                    $.ajax({
-                        url: PREFIX + '/fact_to_doc',
-                        data: formElement,
-                        type: 'POST',
-                        contentType: false,
-                        processData: false,
-                        beforeSend: function() {
-                            const notification = swal.mixin({
-                                toast: true, position: 'top',
-                                showConfirmButton: false, timer: 3000});
-            
-                            notification({
-                                type: 'info',
-                                title: 'Starting job',
-                                text: 'Adding fact to dataset..'
-                            })
-                        },
-                        success: function () {
-                            const notification = swal.mixin({
-                                toast: true, position: 'top',
-                                showConfirmButton: false, timer: 3000
-                            });
-            
-                            notification({
-                                type: 'success',
-                                title: 'Adding fact successful!',
-                                text: `Fact ${fact_name}: ${fact_value} has been added.`
-                            })
-                        },
-                        error: function () {
-                            swal('Error!', 'There was a problem saving as fact!', 'error');
-                        }
-                    });
-                }
-            });
-        }
-    }
-    
+
+
     function getLocSpans(parent, val) {
         loc_span_start = parent.innerText.indexOf(val);
         loc_spans = [loc_span_start, loc_span_start + val.length];
         return loc_spans
     }
-    
+
     function initTippy(doms, tip_content, tip_showOnInit=false) {
         var tippy_instance = tippy(doms,
         {
@@ -220,39 +154,106 @@ function createSelectionProps() {
             trigger: 'click',
             showOnInit: tip_showOnInit,
         });
-    
+
         return tippy_instance
     }
 }
 
-/* Looks like method is not compatible with just text search
-// fact_span = getParentChildInd(spans, parent, span, lens);
-// function getParentChildInd(original, parent, child, lens) {
-//     parents = Array.prototype.slice.call($(original).parent())
-//     parent_ind = parents.indexOf(parent)
-//     child_ind = Array.prototype.slice.call(parent.children).indexOf(child)
-//     return lens[parent_ind][child_ind]
-// }
+// Grab fresh input value when called, then save as fact
+function saveFactFromSelect(fact_value, fact_field, fact_span, doc_id) {
+    // last() to avoid the dummy template selector
+    fact_name = $('.textName').last().val();
+    saveAsFact(fact_name.toUpperCase().trim(), fact_value.trim(), fact_field.trim(), fact_span, doc_id.trim());
+}
 
-// lens = countSpanLens(spans)
-// function countSpanLens(spans) {
-//     parents = spans.parent()
-//     lens = []
-//     Array.prototype.forEach.call(parents, function (parent, i) {
-//         // 0 so adding as cumsum on first iter wouldn't return NaN
-//         parent_lens = [0]
-//         Array.prototype.forEach.call(parent.children, function (span, i) {
-//             // append to array, add to cumulative sum
-//             parent_lens = [...parent_lens, parent_lens[parent_lens.length-1] + span.innerText.length]
-//         });
-//         // remove first dummy 0 value
-//         parent_lens.shift()
-//         lens = [...lens, parent_lens]
-//     });
-//     return lens;
-//     // For each parent create an array entry, that contains span lens in cumsum format, eg [[5, 10, ]]
-//     // Get lens of all child spans, maybe cumsum
-//     // Get index of the selected parent and in it span, match it to its len value,
-//     // Start indexof from that len value
-// }
+function saveAsFact(fact_name, fact_value, fact_field, fact_span, doc_id) {
+    if (fact_name.length > 15 || fact_name == '' || fact_value == '') {
+        swal('Warning!', 'Fact name longer than 15 characters, or values are empty!', 'warning');
+    } else {
+        swal({
+            title: 'Are you sure you want to save this as a fact?',
+            html: `The fact <b>${fact_name}: ${fact_value}</b> will be added as a fact to field <b>${fact_field}</b>`,
+            type: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#73AD21',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes'
+        }).then((result) => {
+            if (result.value) {
+                formElement = new FormData(document.getElementById("filters"));
+                formElement.append('fact_name', fact_name);
+                formElement.append('fact_value', fact_value);
+                formElement.append('fact_field', fact_field);
+                formElement.append('fact_span', fact_span);
+                formElement.append('doc_id', doc_id);
+
+                $.ajax({
+                    url: PREFIX + '/fact_to_doc',
+                    data: formElement,
+                    type: 'POST',
+                    contentType: false,
+                    processData: false,
+                    beforeSend: function() {
+                        const notification = swal.mixin({
+                            toast: true, position: 'top',
+                            showConfirmButton: false, timer: 3000});
+
+                        notification({
+                            type: 'info',
+                            title: 'Starting job',
+                            text: 'Adding fact to dataset..'
+                        })
+                    },
+                    success: function () {
+                        const notification = swal.mixin({
+                            toast: true, position: 'top',
+                            showConfirmButton: false, timer: 3000
+                        });
+
+                        notification({
+                            type: 'success',
+                            title: 'Adding fact successful!',
+                            text: `Fact ${fact_name}: ${fact_value} has been added.`
+                        })
+                    },
+                    error: function () {
+                        swal('Error!', 'There was a problem saving as fact!', 'error');
+                    }
+                });
+            }
+        });
+    }
+}
+
+
+/* Looks like method is not compatible with just text search
+fact_span = getParentChildInd(spans, parent, span, lens);
+function getParentChildInd(original, parent, child, lens) {
+    parents = Array.prototype.slice.call($(original).parent())
+    parent_ind = parents.indexOf(parent)
+    child_ind = Array.prototype.slice.call(parent.children).indexOf(child)
+    return lens[parent_ind][child_ind]
+}
+
+lens = countSpanLens(spans)
+function countSpanLens(spans) {
+    parents = spans.parent()
+    lens = []
+    Array.prototype.forEach.call(parents, function (parent, i) {
+        // 0 so adding as cumsum on first iter wouldn't return NaN
+        parent_lens = [0]
+        Array.prototype.forEach.call(parent.children, function (span, i) {
+            // append to array, add to cumulative sum
+            parent_lens = [...parent_lens, parent_lens[parent_lens.length-1] + span.innerText.length]
+        });
+        // remove first dummy 0 value
+        parent_lens.shift()
+        lens = [...lens, parent_lens]
+    });
+    return lens;
+    // For each parent create an array entry, that contains span lens in cumsum format, eg [[5, 10, ]]
+    // Get lens of all child spans, maybe cumsum
+    // Get index of the selected parent and in it span, match it to its len value,
+    // Start indexof from that len value
+}
 */
