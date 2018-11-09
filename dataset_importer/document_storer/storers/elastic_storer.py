@@ -1,4 +1,4 @@
-from texta.settings import FACT_PROPERTIES
+from texta.settings import FACT_PROPERTIES, es_prefix
 import requests
 import elasticsearch
 from elasticsearch.helpers import bulk
@@ -24,7 +24,11 @@ class ElasticStorer(object):
         # json.loads(connection_parameters['texta_elastic_not_analyzed']))
 
     def _correct_name(self, name):
-        return name.lower().replace(' ', '_')
+        name = name.lower().replace(' ', '_')
+        # add prefix if necessary
+        if es_prefix:
+            name = es_prefix+name
+        return name
 
     def _create_index_if_not_exists(self, url, index, mapping, not_analyzed_fields):
         """Prepares and creates an Elasticsearch index, if it is not existing yet.

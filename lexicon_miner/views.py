@@ -167,7 +167,7 @@ def selectLexicon(request):
         language_models = Task.objects.filter(task_type='train_model').filter(status=Task.STATUS_COMPLETED).order_by('-pk')
 
         # Define selected mapping
-        ds = Datasets().activate_dataset(request.session)
+        ds = Datasets().activate_datasets(request.session)
         es_m = ds.build_manager(ES_Manager)
         fields = es_m.get_column_names()
 
@@ -180,12 +180,11 @@ def selectLexicon(request):
 
 
 def get_example_texts(request, field, value):
-    ds = Datasets().activate_dataset(request.session)
-    dataset = ds.get_index()
-    mapping = ds.get_mapping()
+    ds = Datasets().activate_datasets(request.session)
+    es_m = ds.build_manager(ES_Manager)
+    query = { "size":10, "highlight": {"fields": {field: {}}}, "query": {"match": {field: value}}}
 
-    query = json.dumps({ "size":10, "highlight": {"fields": {field: {}}}, "query": {"match": {field: value}}})
-    response = ES_Manager.plain_scroll(es_url, dataset, mapping, query)
+    response = es_m.perform_query(query)
 
     matched_sentences = []
     for hit in response['hits']['hits']:

@@ -7,7 +7,7 @@ from typing import List, Any
 from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
 from searcher.models import Search
 from task_manager.models import Task
-from task_manager.progress_manager import ShowProgress
+from task_manager.tools.show_progress import ShowProgress
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.helper_functions import add_dicts
@@ -34,7 +34,7 @@ class Preprocessor:
         task = Task.objects.get(pk=self.task_id)
         params = json.loads(task.parameters)
 
-        ds = Datasets().activate_dataset_by_id(params['dataset'])
+        ds = Datasets().activate_datasets_by_id(params['dataset'])
         es_m = ds.build_manager(ES_Manager)
         es_m.load_combined_query(self._parse_query(params))
 

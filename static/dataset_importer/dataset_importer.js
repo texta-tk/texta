@@ -1,4 +1,3 @@
-$('select').val('');
 $('input[name="file"]').val('');
 $('#keep-synchronized').val('false');
 $('#remove-existing-dataset').val('false');
@@ -32,10 +31,10 @@ $('.apply-preprocessor').val([]);
 // $('#import-dataset-btn').click(function() {
 //     importDataset();
 // });
-$('#import-dataset-form').submit(function(){
+$('#import-dataset-form').on('submit',(function(){
     validateForm();
     importDataset();
-});
+}));
 
 function importDataset() {
     /**
@@ -97,29 +96,29 @@ function removeImportJob(id) {
 
 
 
-$('.file-input-method-btn').click(function() {
+$('.file-input-method-btn').on('click',(function() {
     $('.file-input-method-btn').removeClass('selected');
     $(this).addClass('selected');
     $('.file-input-method').hide();
     $('#' + $(this).val() + '-file-input').show();
 
     fileInputSelection($(this).val());
-});
+}));
 
-$('.apply-preprocessor').click(function() {
+$('.apply-preprocessor').on('click',(function() {
     var preprocessorIdx = $(this).data('preprocessorIdx');
     if (this.checked) {
         $('#preprocessor-' + preprocessorIdx + '-parameters').slideDown()
     } else {
         $('#preprocessor-' + preprocessorIdx + '-parameters').slideUp()
     }
-});
+}));
 
-$('#data-formats').change(function() {
+$('#data-formats').on('change',(function() {
     var parameterTags = getSelectedFormatsParameterTags(this);
     displayFormatsParameters(parameterTags);
     displaySelectedFormatsNames(this);
-});
+}));
 
 function getSelectedFormatsParameterTags(selectTag) {
     var checkedFormats = $(selectTag).find('option:checked');

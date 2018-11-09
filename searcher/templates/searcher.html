@@ -28,15 +28,21 @@
 											<b>Add Filter</b>
 										</div>
 										<div class="col-sm-12">
-											<b>Select field:</b>
+											<b>Select field(s):</b>
 										</div>
 										<div class="col-sm-12">
-											<select id="constraint_field" name="constraint_field" onchange="javascript:add_field('{{date_range.min}}','{{date_range.max}}');" class="form-control input-sm">
-												<option></option>
-												{% for field in fields %}
-													<option value="{{field.data}}">{{field.label}}</option>
-												{% endfor %}
-											</select>
+										    <div class="form-inline">
+												<div class="form-group">
+													<select class='selectpicker' data-hide-disabled='true' multiple id="constraint_field" name="constraint_field" class="form-control input-sm">
+														{% for field in fields %}
+															<option value="{{field.data}}">{{field.label}}</option>
+														{% endfor %}
+													</select>
+												</div>
+												<div class="form-group">
+													<button type="button" class="btn btn-default input-sm" onclick="javascript:add_field('{{date_range.min}}','{{date_range.max}}');">Add</button>
+												</div>
+											</div>
 										</div>
 									</div>
 								</div>
@@ -160,7 +166,7 @@
 									</div>
 									<div class="row padded-row">
 										<div class="col-sm-12">
-											<select name="cluster_field" id="cluster_field" class="form-control input-sm">
+											<select name="cluster_field" id="cluster_field" multiple="multiple" class="form-control input-sm">
 												{% for field in fields %}
 													{% if field.type == 'text' or field.type == 'keyword' %}
 														<option value="{{field.data}}">{{field.label}}</option>
@@ -703,33 +709,38 @@
 			</div>
 			<div class="row padded-row">
 				<div class="col-sm-4">
-					<b>Bool:</b><br>
 					<select id="match_operator_" name="match_operator_" class="form-control input-sm">
-						<option value="must" selected="selected">and</option>
-						<option value="should">or</option>
-						<option value="must_not">not</option>
+						<option value="must" selected="selected">Bool: and</option>
+						<option value="should">Bool: or</option>
+						<option value="must_not">Bool: not</option>
 					</select>
 				</div>
 				<div class="col-sm-5">
-					<b>Match type:</b><br>
 					<select id="match_type_" name="match_type_" class="form-control input-sm">
-						<option value="match">match</option>
-						<option value="match_phrase">match phrase</option>
-						<option value="match_phrase_prefix" selected="selected">match phrase prefix</option>
+						<option value="match">Match: word</option>
+						<option value="match_phrase">Match: phrase</option>
+						<option value="match_phrase_prefix" selected="selected">Match: phrase prefix</option>
 					</select> 
 				</div>
 				<div class="col-sm-3">
-					<b>Slop:</b><br>
 					<select id="match_slop_" name="match_slop_" class="form-control input-sm">
-						<option value="0">0</option>
-						<option value="1">1</option>
-						<option value="2">2</option>
-						<option value="3">3</option>
-						<option value="4">4</option>
-						<option value="2">5</option>
+						<option value="0">Slop: 0</option>
+						<option value="1">Slop: 1</option>
+						<option value="2">Slop: 2</option>
+						<option value="3">Slop: 3</option>
+						<option value="4">Slop: 4</option>
+						<option value="2">Slop: 5</option>
 					</select> 
 				</div>
 			</div>
+			<!--<div class="row padded-row">
+				<div class="col-sm-12">
+					<select id="match_layer_" name="match_layer_" class="form-control input-sm">
+						<option value="document">Match layer: document</option>
+					</select>
+				</div>
+			</div>
+			-->
 			<div class="row padded-row">
 				<div class="col-sm-12">
 					<textarea id="match_txt_" name="match_txt_" class="form-control"></textarea>

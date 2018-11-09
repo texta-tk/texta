@@ -19,8 +19,7 @@ class MassHelper:
     def __init__(self, es_manager):
         self.es_m = es_manager
         self.es_url = es_manager.es_url
-        self.index = es_manager.index
-        self.mapping = es_manager.mapping
+        self.index = es_manager.stringify_datasets()
 
     def get_document_by_ids(self, doc_ids):
         q = {"query": {"terms": {"_id": doc_ids}}}

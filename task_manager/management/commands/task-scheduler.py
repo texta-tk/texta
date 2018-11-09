@@ -68,7 +68,7 @@ class Command(BaseCommand):
             print(e)
             task.update_status(Task.STATUS_FAILED)
             log_data = json.dumps({'process': 'Task Scheduler', 'event': 'task_execution_error'})
-            logging.getLogger(ERROR_LOGGER).error(log_data)
+            logging.getLogger(ERROR_LOGGER).exception(log_data)
 
     def handle(self, *args, **options):
         """ Schedule tasks for background execution

@@ -14,7 +14,6 @@ else:
 import json
 import csv
 import re
-import bs4
 from datetime import datetime, timedelta as td
 try:
     from io import BytesIO # NEW PY REQUIREMENT
@@ -57,7 +56,7 @@ from searcher.view_functions.general.searcher_utils import collect_map_entries, 
 
 @login_required
 def index(request):
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     fields = get_fields(es_m)
 
@@ -80,9 +79,8 @@ def index(request):
                        'fields': fields,
                        'searches': Search.objects.filter(author=request.user),
                        'lexicons': Lexicon.objects.all().filter(author=request.user),
-                       'dataset': ds.get_index(),
-                       'language_models': language_models,
-                       'allowed_datasets': datasets,
+                       'language_models': language_models, 
+                       'allowed_datasets': datasets,                       
                        'enabled_preprocessors': enabled_preprocessors,
                        'task_params': task_params}
 
@@ -94,7 +92,7 @@ def index(request):
 @login_required
 def get_query(request):
     es_params = request.POST
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
     # GET ONLY MAIN QUERY
@@ -105,7 +103,8 @@ def get_query(request):
 @login_required
 def save(request):
     logger = LogManager(__name__, 'SAVE SEARCH')
-    ds = Datasets().activate_dataset(request.session)
+
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
 
     es_params = request.POST
@@ -116,8 +115,18 @@ def save(request):
         q = combined_query
         desc = request.POST['search_description']
         s_content = json.dumps([request.POST[x] for x in request.POST.keys() if 'match_txt' in x])
-        search = Search(author=request.user,search_content=s_content,description=desc,dataset=Dataset.objects.get(pk=int(request.session['dataset'])),query=json.dumps(q))
+
+
+
+        search = Search(author=request.user, search_content=s_content, description=desc, query=json.dumps(q))
         search.save()
+
+        for dataset_id in request.session['dataset']:
+            dataset = Dataset.objects.get(pk=int(dataset_id))
+            search.datasets.add(dataset)
+
+        search.save()
+
         logger.set_context('user_name', request.user.username)
         logger.set_context('search_id', search.id)
         logger.info('search_saved')
@@ -159,13 +168,15 @@ def autocomplete(request):
 
 @login_required
 def get_saved_searches(request):
-    searches = Search.objects.filter(author=request.user).filter(dataset=Dataset(pk=int(request.session['dataset'])))
+    active_dataset_ids = [int(ds) for ds in request.session['dataset']]
+    active_datasets = Dataset.objects.filter(pk__in=active_dataset_ids)
+    searches = Search.objects.filter(author=request.user).filter(datasets__in=active_datasets).distinct()
     return HttpResponse(json.dumps([{'id':search.pk,'desc':search.description} for search in searches],ensure_ascii=False))
 
 
 @login_required
 def get_table_header(request):
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
 
     # get columns names from ES mapping
@@ -175,8 +186,7 @@ def get_table_header(request):
                        'fields': fields,
                        'searches': Search.objects.filter(author=request.user),
                        'columns': [{'index':index, 'name':field_name} for index, field_name in enumerate(fields)],
-                       'dataset': ds.get_index(),
-                       'mapping': ds.get_mapping()}
+                       }
     template = loader.get_template('searcher_results.html')
     return HttpResponse(template.render(template_params, request))
 
@@ -202,7 +212,6 @@ def get_table_content(request):
 
 @login_required
 def mlt_query(request):
-    logger = LogManager(__name__, 'SEARCH MLT')
     es_params = request.POST
 
     mlt_fields = [json.loads(field)['path'] for field in es_params.getlist('mlt_fields')]
@@ -220,7 +229,7 @@ def mlt_query(request):
         words = Word.objects.filter(lexicon=lexicon)
         stopwords+=[word.wrd for word in words]
 
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
@@ -241,7 +250,7 @@ def mlt_query(request):
 @login_required
 def cluster_query(request):
     params = request.POST
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(params)
 
@@ -259,7 +268,7 @@ def cluster_query(request):
 def search(es_params, request):
     logger = LogManager(__name__, 'SEARCH CORPUS')
 
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
     try:
@@ -282,7 +291,7 @@ def search(es_params, request):
 def remove_by_query(request):
     es_params = request.POST
 
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
@@ -345,6 +354,7 @@ def get_search_query(request):
     query_constraints = extract_constraints(query)
 	# For original search content such as unpacked lexicons/concepts
     search_content = json.loads(search.search_content)
+
     for i in range(len([x for x in query_constraints if x['constraint_type'] == 'string'])):
         query_constraints[i]['content'] = [search_content[i]]
 

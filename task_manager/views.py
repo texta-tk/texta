@@ -31,7 +31,7 @@ from .task_manager import get_fields
 
 @login_required
 def index(request):
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     datasets = Datasets().get_allowed_datasets(request.user)
     language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
 
@@ -62,7 +62,7 @@ def index(request):
             'tasks':                 tasks,
             'language_models':       language_models,
             'allowed_datasets':      datasets,
-            'searches':              Search.objects.filter(dataset=Dataset(pk=int(request.session['dataset']))),  # Search.objects.filter(author=request.user, dataset=Dataset(pk=int(request.session['dataset']))),
+            'searches':              Search.objects.filter(datasets__in=[Dataset.objects.get(pk=ads.id).id for ads in ds.active_datasets]).distinct(),
             'enabled_preprocessors': enabled_preprocessors,
             'STATIC_URL':            STATIC_URL,
             'fields':                fields,
@@ -89,7 +89,7 @@ def start_task(request):
     description = task_params['description']
 
     if 'dataset' in request.session.keys():
-        task_params['dataset'] = int(request.session['dataset'])
+        task_params['dataset'] = request.session['dataset']
 
     # TODO: eliminate the need of this special treatment ?
     if task_type == 'apply_preprocessor':
@@ -102,6 +102,7 @@ def start_task(request):
     task.update_status(Task.STATUS_QUEUED)
 
     return HttpResponse()
+
 
 
 @login_required

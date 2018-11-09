@@ -28,6 +28,12 @@ tr {
     background-color: #ebebe0;
 }
 
+.grid-wrapper-dm{
+    display: grid;
+    grid-template-columns: 2.5fr 2.5fr 1fr 0.2fr 1fr;
+    grid-template-rows: 40px;
+}
+
 @media (min-width: 768px) {
   .modal-xl {
     width: 90%;

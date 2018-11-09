@@ -78,7 +78,7 @@ def translate_param(translation, value):
         try:
             return translation['pattern'][int(value)]
         except KeyError:
-            return '{0}: Dataset missing'.format(value)
+            return '{0}: Error parsing task parameters.'.format(value)
     elif translation['type'] == 'list':
         return [translation['pattern'][int(list_item)] for list_item in value if int(list_item) in translation['pattern']]
 
@@ -101,7 +101,7 @@ def translate_parameters(params):
                     'reductor_opt': {'type': 'dict', 'pattern': reductor_options},
                     'normalizer_opt': {'type': 'dict', 'pattern': normalizer_options},
                     'classifier_opt': {'type': 'dict', 'pattern': classifier_options},
-                    'dataset': {'type': 'dict', 'pattern': datasets},
+                    'dataset': {'type': 'list', 'pattern': datasets},
                     'text_tagger_taggers': {'type': 'list', 'pattern': enabled_taggers}}
 
     params = json.loads(params)
@@ -132,13 +132,14 @@ def get_fields(es_m):
     fields = []
     mapped_fields = es_m.get_mapped_fields()
 
-    for data in mapped_fields:
-        path = data['path']
+    for field_data in mapped_fields.keys():
+        field_data = json.loads(field_data)
+        path = field_data['path']
         if path not in illegal_paths:
             path_list = path.split('.')
             label = '{0} --> {1}'.format(path_list[0], ' --> '.join(path_list[1:])) if len(path_list) > 1 else path_list[0]
             label = label.replace('-->', u'→')
-            field = {'data': json.dumps(data), 'label': label, 'path': path}
+            field = {'data': json.dumps(field_data), 'label': label, 'path': path}
             fields.append(field)
 
     # Sort fields by label
