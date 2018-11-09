@@ -81,9 +81,9 @@ def hl_transliterately(cols_data, row, hl_cols=['text.text', 'text.translit', 't
             hl_data.insert(0, new_hl_data) # Insert to index 0
             content_hl_trans = Highlighter(average_colors=True, derive_spans=True,
                                     additional_style_string='font-weight: bold;').highlight(
-                                        cols_data_joined[hl_col]['old_content'],
+                                        str(cols_data_joined[hl_col]['old_content']),
                                         new_hl_data,
-                                        tagged_text=cols_data_joined[hl_col]['old_content'])
+                                        tagged_text=str(cols_data_joined[hl_col]['old_content']))
             row[hl_col] = content_hl_trans
 
     return row

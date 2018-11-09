@@ -117,9 +117,9 @@ def _prettify_standardize_hls(name_to_inner_hits, col, content, old_content):
 
     content = Highlighter(average_colors=True, derive_spans=True,
                                 additional_style_string='font-weight: bold;').highlight(
-                                    old_content,
+                                    str(old_content),
                                     hl_data,
-                                    tagged_text=content)
+                                    tagged_text=str(content))
     return content, hl_data
 
 
