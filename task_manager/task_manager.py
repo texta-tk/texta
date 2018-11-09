@@ -1,4 +1,3 @@
-
 import json
 from datetime import datetime
 from django.http import QueryDict
@@ -7,6 +6,7 @@ from texta.settings import URL_PREFIX
 from task_manager.models import Task
 from utils.datasets import Datasets
 from task_manager.tools import get_pipeline_builder
+from lexicon_miner.models import Lexicon
 
 
 def create_task(task_type: str, description: str, parameters: dict, user: User) -> int:
@@ -118,6 +118,8 @@ def collect_map_entries(map_):
     for key, value in map_.items():
         if key == 'text_tagger':
             value['enabled_taggers'] = Task.objects.filter(task_type="train_tagger", status=Task.STATUS_COMPLETED)
+        if key == 'lexicon_classifier':
+            value['enabled_lexicons'] = Lexicon.objects.all()
         value['key'] = key
         entries.append(value)
     return entries

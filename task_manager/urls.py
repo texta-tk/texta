@@ -19,6 +19,7 @@ urlpatterns = [
     url(r'^api/v1/train_model$', api_v1.api_train_model, name='api_train_model'),
     url(r'^api/v1/train_tagger$', api_v1.api_train_tagger, name='api_train_tagger'),
     url(r'^api/v1/apply$', api_v1.api_apply, name='api_apply'),
+    url(r'^api/v1/apply_text$', api_v1.api_apply_text, name='api_apply_text'),
     url(r'^api/v1/dataset_list$', api_v1.api_dataset_list, name='api_dataset_list'),
     url(r'^api/v1/search_list$', api_v1.api_search_list, name='api_search_list'),
     url(r'^api/v1/normalizer_list$', api_v1.api_normalizer_list, name='api_normalizer_list'),

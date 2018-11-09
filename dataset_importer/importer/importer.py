@@ -10,7 +10,7 @@ import requests
 import json
 import logging
 from django.conf import settings
-
+from django.db import connections
 from dataset_importer.document_storer.storer import DocumentStorer
 from dataset_importer.document_reader.reader import DocumentReader, entity_reader_map, collection_reader_map, database_reader_map
 from dataset_importer.document_preprocessor import PREPROCESSOR_INSTANCES
@@ -94,6 +94,7 @@ class DatasetImporter(object):
         :param import_id: ID of the cancelled job.
         :type import_id: int or string holding an int
         """
+        connections.close_all()
         import_dict = self._active_import_jobs.get(int(import_id), None)
 
         if import_dict:
@@ -220,6 +221,7 @@ class DatasetImporter(object):
         :return: dataset ID of the added dataset import entry
         :rtype: int
         """
+        connections.close_all()
         dataset_import = self._dao.objects.create(
             source_type=self._get_source_type(parameters.get('format', ''), parameters.get('archive', '')),
             source_name=self._get_source_name(parameters),
@@ -292,6 +294,9 @@ def _import_dataset(parameter_dict, n_processes, process_batch_size):
     :type n_processes: int
     :type process_batch_size: int
     """
+    from django import db
+    db.connections.close_all()
+
     # Local files are not extracted from archives due to directory permissions
     # If importing from local hard drive, extract first.
     if parameter_dict['is_local'] is False:
@@ -347,6 +352,7 @@ def _set_total_documents(parameter_dict, reader):
     :param parameter_dict: dataset import's parameters.
     :param reader: dataset importer's document reader.
     """
+    connections.close_all()
     dataset_import = DatasetImport.objects.get(pk=parameter_dict['import_id'])
     dataset_import.total_documents = reader.count_total_documents(**parameter_dict)
     dataset_import.save()
@@ -357,6 +363,7 @@ def _complete_import_job(parameter_dict):
 
     :param parameter_dict: dataset import's parameters.
     """
+    connections.close_all()
     import_id = parameter_dict['import_id']
     dataset_import = DatasetImport.objects.get(pk=import_id)
     dataset_import.end_time = datetime.now()
@@ -373,6 +380,7 @@ def _processing_job(documents, parameter_dict):
     :type documents: list of dicts
     :type parameter_dict: dict
     """
+    connections.close_all()
     # dataset_name = '{0}_{1}'.format(parameter_dict['texta_elastic_index'], parameter_dict['texta_elastic_mapping'])
     try:
 
@@ -417,6 +425,9 @@ def _run_processing_jobs(parameter_dict, reader, n_processes, process_batch_size
     :type n_processes: int
     :type process_batch_size: int
     """
+    from django import db
+    db.connections.close_all()
+
     if parameter_dict.get('remove_existing_dataset', False):
         _remove_existing_dataset(parameter_dict)
 

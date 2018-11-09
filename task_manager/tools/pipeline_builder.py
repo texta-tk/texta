@@ -10,6 +10,7 @@ from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import RadiusNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.pipeline import FeatureUnion
 
@@ -198,13 +199,13 @@ def get_pipeline_builder():
     pipe_builder = PipelineBuilder()
 
     # Feature Extraction
-    params = {'ngram_range': [(1, 1), (1, 2), (1, 3)], 'min_df': [5]}
-    pipe_builder.add_extractor('CountVectorizer', CountVectorizer, 'Count Vectorizer', params)
-
     params = {}
     pipe_builder.add_extractor('HashingVectorizer', HashingVectorizer, 'Hashing Vectorizer', params)
 
-    params = {}
+    params = {'ngram_range': [(1, 1), (1, 2)], 'min_df': [5]}
+    pipe_builder.add_extractor('CountVectorizer', CountVectorizer, 'Count Vectorizer', params)
+
+    params = {'ngram_range': [(1, 1), (1, 2)], 'min_df': [5]}
     pipe_builder.add_extractor('TfidfVectorizer', TfidfVectorizer, 'TfIdf Vectorizer', params)
 
     # Dimension Reduction
@@ -222,11 +223,12 @@ def get_pipeline_builder():
     pipe_builder.add_normalizer('Normalizer', Normalizer, 'Normalizer', params)
 
     # Classification Models
-    params = {}
-    pipe_builder.add_classifier('LinearSVC', LinearSVC, 'LinearSVC', params)
 
     params = {}
-    pipe_builder.add_classifier('BernoulliNB', BernoulliNB, 'Bernoulli Naive Bayes', params)
+    pipe_builder.add_classifier('LogisticRegressionClassifier', LogisticRegression, 'Logistic Regression', params)
+
+    params = {}
+    pipe_builder.add_classifier('LinearSVC', LinearSVC, 'LinearSVC', params)
 
     params = {}
     pipe_builder.add_classifier('KNeighborsClassifier', KNeighborsClassifier, 'K-Neighbors', params)

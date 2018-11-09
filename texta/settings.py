@@ -60,11 +60,11 @@ STATIC_ROOT = os.path.join(os.path.abspath(os.path.join(BASE_DIR, os.pardir)), '
 SERVER_TYPE = os.getenv('TEXTA_SERVER_TYPE')
 
 if SERVER_TYPE is None:
-	SERVER_TYPE = 'development'
+	SERVER_TYPE = os.getenv('TEXTA_SERVER_TYPE', 'development')
 
 if SERVER_TYPE == 'development':
-	PROTOCOL = 'http://'
-	DOMAIN = 'localhost'
+	PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL', 'http'))
+	DOMAIN = os.getenv('TEXTA_DOMAIN', 'localhost')
 	PORT = '8000'
 
 	URL_PREFIX_DOMAIN = '{0}{1}:{2}'.format(PROTOCOL, DOMAIN, PORT)
@@ -74,8 +74,8 @@ if SERVER_TYPE == 'development':
 	DEBUG = True
 
 elif SERVER_TYPE == 'production':
-	PROTOCOL = 'http://'
-	DOMAIN = 'dev.texta.ee'
+	PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL', 'http'))
+	DOMAIN = os.getenv('TEXTA_DOMAIN', 'dev.texta.ee')
 
 	URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL, DOMAIN)
 	URL_PREFIX_RESOURCE = '/texta'
@@ -85,7 +85,7 @@ elif SERVER_TYPE == 'production':
 
 elif SERVER_TYPE == 'docker':
 	PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL'))
-	DOMAIN = os.getenv('TEXTA_HOST')
+	DOMAIN = os.getenv('TEXTA_HOST', 'localhost')
 
 	URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL, DOMAIN)
 	URL_PREFIX_RESOURCE = ''
@@ -183,6 +183,7 @@ DATABASES = {
 		'PORT':         os.getenv('DJANGO_DATABASE_PORT', ''),
 		# Set to empty string for default. Not used with sqlite3.
 		'BACKUP_COUNT': 5,
+		'CONN_MAX_AGE': None
 	}
 }
 
@@ -282,6 +283,7 @@ es_links = {
 	('etsa_new', 'event_dgn', 'epiId'): ('https://p12.stacc.ee/common/epicrisis/?id=', ''),
 	('etsa_new', 'event_dgn', 'patId'): ('https://p12.stacc.ee/common/aegread/index.php/aegrida/get/?id=', '')
 }
+
 
 # Date format used in Elasticsearch fields.
 #

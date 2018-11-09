@@ -13,7 +13,6 @@ from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, 
 # Need to update index.max_inner_result_window to increase
 HEADERS = {'Content-Type': 'application/json'}
 
-
 class Singleton(type):
 
     _instances = {}
@@ -366,6 +365,14 @@ class ES_Manager:
             data = self.process_bulk(response['hits']['hits'])
             delete_url = '{0}/{1}/_bulk'.format(es_url, self.stringify_datasets())
             deleted = requests.post(delete_url, data=data, headers=HEADERS)
+        return True
+    
+    def add_document(self, document):
+        """ Indexes given json document
+        """
+        document = json.dumps(document)
+        url = '{0}/{1}/{2}/'.format(es_url, self.index, self.mapping)
+        response = self.plain_post(url, data=document)
         return True
 
     def scroll(self, scroll_id=None, time_out='1m', id_scroll=False, field_scroll=False, size=100, match_all=False):

@@ -89,7 +89,7 @@ class Highlighter(object):
         # > 0 avoids highlighting first match, therefore the entire document
         # When its >= it fixes that, but starts catching exceptions (doesn't break)
         # And some matches sometimes don't get highlighted
-        while start_tag_index > 0:
+        while start_tag_index >= 0:
             start_tag_end = tagged_text.find('>', start_tag_index + 5) + 1
             span_end = tagged_text.find('</span>', start_tag_end)
 

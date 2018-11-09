@@ -1162,9 +1162,11 @@ function ajaxDeleteFacts(form_data, factArray) {
                 });
             }
             swal({
-                title: 'Deleted!',
-                text: factArray.length + ' facts have been removed.',
-                type: 'success'
+                title:'Deleted!',
+                text: factArray.length +' facts have been removed.',
+                type:'success', 
+                showConfirmButton: false,
+                timer: 1000
             });
         },
         error: function () {
@@ -1413,10 +1415,7 @@ function save() {
             }
         })
         if (description) {
-            swal({
-                type: 'success',
-                title: 'Successfully saved search.'
-            })
+            swal({type: 'success', title: 'Successfully saved search.'})
 
             $('#search_description').val(description);
             var formElement = document.getElementById("filters");

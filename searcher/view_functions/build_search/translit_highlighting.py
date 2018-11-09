@@ -19,7 +19,7 @@ def transliterate_hl_spans(hl_data, source_text, target_text):
         wrapped by pass by value to dereference the variables.
     Arguments:
         hl_data {list of dict} -- The highlight data passed into the highlighter
-        source_text {string} -- The source text from which the spans come from
+        source_text {string} -- The source text from which the s,pans come from
         target_text {string} -- The target text to where the spans need to be corrected
 
     Returns:
@@ -44,7 +44,6 @@ def transliterate_hl_spans(hl_data, source_text, target_text):
                 translit_facts_spans[0] = 0
                 translit_facts_spans[1] = translit_facts_spans[1] - 1
             dict_val['spans'] = [translit_facts_spans]
-
     return hl_data
 
 def hl_transliterately(cols_data, row, hl_cols=['text.text', 'text.translit', 'text.lemmas']):
@@ -61,7 +60,8 @@ def hl_transliterately(cols_data, row, hl_cols=['text.text', 'text.translit', 't
     Returns:
         row {OrderedDict} -- The row now with transliterate highlighting on both .text and .translit
     """
-    cols_with_hl_data = {x for x in cols_data if cols_data[x]['highlight_data'] != []}
+    # Filter translit to be only between hl_cols fields
+    cols_with_hl_data = {x for x in cols_data if cols_data[x]['highlight_data'] != [] and x in hl_cols}
     cols_data_joined = cols_data
 
     for col in cols_with_hl_data:
@@ -81,9 +81,9 @@ def hl_transliterately(cols_data, row, hl_cols=['text.text', 'text.translit', 't
             hl_data.insert(0, new_hl_data) # Insert to index 0
             content_hl_trans = Highlighter(average_colors=True, derive_spans=True,
                                     additional_style_string='font-weight: bold;').highlight(
-                                        cols_data_joined[hl_col]['old_content'],
+                                        str(cols_data_joined[hl_col]['old_content']),
                                         new_hl_data,
-                                        tagged_text=cols_data_joined[col]['content'])
+                                        tagged_text=str(cols_data_joined[hl_col]['old_content']))
             row[hl_col] = content_hl_trans
 
     return row

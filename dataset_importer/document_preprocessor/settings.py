@@ -5,9 +5,13 @@
 
 from texta.settings import DATASET_IMPORTER
 
+from dataset_importer.document_preprocessor.preprocessors import CommentPreprocessor
+from dataset_importer.document_preprocessor.preprocessors import DatePreprocessor
+from dataset_importer.document_preprocessor.preprocessors import MlpPreprocessor
 from dataset_importer.document_preprocessor.preprocessors import TextTaggerPreprocessor
 from dataset_importer.document_preprocessor.preprocessors import MlpPreprocessor
 from dataset_importer.document_preprocessor.preprocessors import DatePreprocessor
+from dataset_importer.document_preprocessor.preprocessors import LexTagger
 
 
 mlp_field_properties = {
@@ -58,7 +62,6 @@ try:
         'is_enabled': True
     }
     log_preprocessor_status(code='mlp', status='enabled')
-
 except Exception as e:
     print(e)
     log_preprocessor_status(code='mlp', status='disabled')
@@ -75,7 +78,6 @@ try:
         'languages': ['Estonian', 'English', 'Russian', 'Latvian', 'Lithuanian', 'Other']
     }
     log_preprocessor_status(code='date_converter', status='enabled')
-
 except Exception as e:
     print(e)
     log_preprocessor_status(code='date_converter', status='disabled')
@@ -91,10 +93,40 @@ try:
         'is_enabled': True
     }
     log_preprocessor_status(code='text_tagger', status='enabled')
-
 except Exception as e:
     print(e)
     log_preprocessor_status(code='text_tagger', status='disabled')
+
+try:
+    preprocessor_map['lexicon_classifier'] = {
+        'name': 'Lexicon Tagger Preprocessor',
+        'description': 'Applies lexicon-based tagging',
+        'class': LexTagger,
+        'parameters_template': 'parameters/preprocessor_parameters/lexicon_classifier.html',
+        'arguments': {},
+        'is_enabled': True,
+        'match_types':['Prefix','Exact','Fuzzy'],
+        'operations':['OR','AND']
+    }
+    log_preprocessor_status(code='lexicon_classifier', status='enabled')
+
+except Exception as e:
+    print(e)
+    log_preprocessor_status(code='lexicon_classifier', status='disabled')
+
+try:
+    preprocessor_map['comment_preprocessor'] = {
+        'name': 'Comment preprocessor',
+        'description': 'Converts comments',
+        'class': CommentPreprocessor,
+        'parameters_template': 'parameters/preprocessor_parameters/comment_preprocessor.html',
+        'arguments': {},
+        'is_enabled': True
+    }
+    log_preprocessor_status(code='comment_preprocessor', status='enabled')
+except Exception as e:
+    print(e)
+    log_preprocessor_status(code='comment_preprocessor', status='disabled')
 
 
 def convert_to_utf8(document):
@@ -107,7 +139,6 @@ def convert_to_utf8(document):
     for key, value in document.items():
         if type(value) is bytes:
             document[key] = value.decode('utf8')
-
     return document
 
 

@@ -102,32 +102,32 @@ def _improve_facts_readability(content, paths, col):
 def _prettify_standardize_hls(name_to_inner_hits, col, content, old_content):
     '''Applies prettified and standardized highlights to content'''
     hl_data = []
-    if name_to_inner_hits[col]:
-        color_map = ColorPicker.get_color_map(keys={hit['fact'] for hit in name_to_inner_hits[col]})
-        for inner_hit in name_to_inner_hits[col]:
-            datum = {
-                'spans': json.loads(inner_hit['spans']),
-                'name': inner_hit['fact'],
-                'category': '[{0}]'.format(inner_hit['hit_type']),
-                'color': color_map[inner_hit['fact']]
-            }
+    # if name_to_inner_hits[col]:
+    color_map = ColorPicker.get_color_map(keys={hit['fact'] for hit in name_to_inner_hits[col]})
+    for inner_hit in name_to_inner_hits[col]:
+        datum = {
+            'spans': json.loads(inner_hit['spans']),
+            'name': inner_hit['fact'],
+            'category': '[{0}]'.format(inner_hit['hit_type']),
+            'color': color_map[inner_hit['fact']]
+        }
 
-            if inner_hit['hit_type'] == 'fact_val':
-                datum['value'] = inner_hit['str_val']
-            hl_data.append(datum)
+        if inner_hit['hit_type'] == 'fact_val':
+            datum['value'] = inner_hit['str_val']
+        hl_data.append(datum)
 
-        content = Highlighter(average_colors=True, derive_spans=True,
-                                    additional_style_string='font-weight: bold;').highlight(
-                                        old_content,
-                                        hl_data,
-                                        tagged_text=content)
+    content = Highlighter(average_colors=True, derive_spans=True,
+                                additional_style_string='font-weight: bold;').highlight(
+                                    str(old_content),
+                                    hl_data,
+                                    tagged_text=str(content))
     return content, hl_data
 
 
 def _transliterate(cols_data, row, translit_cols=['text', 'translit', 'lemmas']):    
     # To get nested col value before '.'
     hl_cols = [x for x in cols_data if len(x.split('.')) > 1 and x.split('.')[-1] in translit_cols]
-    # Transliterate the highlighting between different cols
+    # Transliterate the highlighting between hl_cols
     row = hl_transliterately(cols_data, row, hl_cols=hl_cols)
     return row
 

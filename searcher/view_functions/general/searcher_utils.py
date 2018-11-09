@@ -1,5 +1,6 @@
 import bs4
 import json
+import bs4
 
 def additional_option_cut_text(content, window_size):
     window_size = int(window_size)
@@ -13,7 +14,6 @@ def additional_option_cut_text(content, window_size):
     if '[HL]' in content:
         soup = bs4.BeautifulSoup(content,'lxml')
         html_spans = soup.find_all('span')
-
         html_spans_merged = []
         num_spans = len(html_spans)
         # merge together ovelapping spans

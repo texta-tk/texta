@@ -16,10 +16,6 @@ from texta.settings import MODELS_DIR
 from texta.settings import ERROR_LOGGER
 
 from dataset_importer.document_preprocessor import preprocessor_map
-# from .language_model_manager.language_model_manager import LanguageModel
-# from .tag_manager.tag_manager import TaggingModel, get_pipeline_builder
-# from task_manager.tasks import Preprocessor
-# from .models import Task
 
 from task_manager.tasks.task_params import task_params
 from task_manager.tools import get_pipeline_builder

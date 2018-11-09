@@ -196,7 +196,7 @@ def get_example_texts(request, field, value):
 
 @login_required
 def query(request):
-
+    
     try:
         lexicon = Lexicon.objects.get(id=request.POST['lid'])
         suggestionset = SuggestionSet(lexicon=lexicon,method=request.POST['method'])
@@ -221,9 +221,9 @@ def query(request):
             return HttpResponse('<br><b style="color:red;">No suggestions available for the lexicon. Try adding more terms.</b>')
 
         suggestions = []
-
+        
         model_run_obj = Task.objects.get(id=int(request.session['model']))
-        print(model_run_obj)
+        """ json.loads(json.loads(model_run_obj.parameters)['field'])['path'] """
         tooltip_feature = json.loads(model_run_obj.parameters)['field']
 
         if request.POST['method'][:12] == 'most_similar':
