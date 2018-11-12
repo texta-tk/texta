@@ -38,7 +38,7 @@ class PreprocessorWorker(BaseWorker):
         task.update_status(Task.STATUS_RUNNING)
 
         try:
-        
+
             ds = Datasets().activate_dataset_by_id(params['dataset'])
             es_m = ds.build_manager(ES_Manager)
             es_m.load_combined_query(self._parse_query(params))
@@ -46,7 +46,7 @@ class PreprocessorWorker(BaseWorker):
             self.es_m = es_m
             self.params = params
             self._preprocessor_worker()
-        
+
         except TaskCanceledException as e:
             # If here, task was canceled while processing
             # Delete task
@@ -54,7 +54,7 @@ class PreprocessorWorker(BaseWorker):
             task.delete()
             logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'PROCESSOR WORK', 'event': 'processor_worker_canceled', 'data': {'task_id': self.task_id}}), exc_info=True)
             print("--- Task canceled")
-        
+
         except Exception as e:
             logging.getLogger(ERROR_LOGGER).exception(json.dumps(
                 {'process': 'PROCESSOR WORK', 'event': 'processor_worker_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
@@ -137,7 +137,10 @@ class PreprocessorWorker(BaseWorker):
 
         documents = [hit['_source'] for hit in response['hits']['hits']]
         ids = [hit['_id'] for hit in response['hits']['hits']]
-        parameter_dict = {'preprocessors': [self.params['preprocessor_key']]}
+        #parameter_dict = {'preprocessors': [self.params['preprocessor_key']]}
+        active_index = response['hits']['hits'][0]['_index']
+        active_mapping = response['hits']['hits'][0]['_type']
+        parameter_dict = {'preprocessors': [self.params['preprocessor_key']],'index':active_index,'mapping':active_mapping}
 
         for key, value in self.params.items():
             if key.startswith(self.params['preprocessor_key']):

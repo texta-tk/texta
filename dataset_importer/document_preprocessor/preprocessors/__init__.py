@@ -7,10 +7,13 @@ from .text_tagger import TextTaggerPreprocessor
 from .mlp import MlpPreprocessor
 from .comment_preprocessor import CommentPreprocessor
 from .date_converter import DatePreprocessor
-from .lexicon_classifier import LexTagger 
+from .lexicon_classifier import LexTagger
+from .scoro import ScoroPreprocessor
+
 
 __all__ = ["CommentPreprocessor",
            "DatePreprocessor",
            "MlpPreprocessor",
            "DatePreprocessor",
-           "LexTagger"]
+           "LexTagger",
+           "ScoroPreprocessor"]

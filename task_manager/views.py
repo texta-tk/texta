@@ -106,7 +106,7 @@ def start_task(request):
 
 @login_required
 def start_mass_task(request):
-    
+
     user = request.user
     data_post = request.POST
 
