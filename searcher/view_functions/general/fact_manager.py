@@ -154,6 +154,8 @@ class FactManager:
         types = dict(zip(unique_fact_names, itertools.cycle(shapes)))
 
         nodes = []
+        max_node_size = 0
+        max_link_size = 0
         for i, fact in enumerate(facts):
             nodes.append({"source": facts[fact]['id'], "size": facts[fact]['doc_count'], "score": facts[fact]['doc_count'], "name": facts[fact]['name'], "id": facts[fact]['value'], "type": types[facts[fact]['name']]})
             # Track max/min count
