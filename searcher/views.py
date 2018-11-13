@@ -6,6 +6,8 @@ from collections import Counter
 import logging
 
 import platform
+from pprint import pprint
+
 if platform.system() == 'Windows':
     from threading import Thread as Process
 else:
@@ -133,9 +135,15 @@ def dashboard_endpoint(request):
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
 
-    latest = Search.objects.last().pk
-    dashboard = SearcherDashboard(request=request, elasticsearch_manager=es_m, search_model_pk=latest)
-    return JsonResponse(dashboard.json_response)
+    indices = es_m.stringify_datasets()
+    normal_fields, nested_fields = es_m.get_aggregation_field_data()
+
+    pprint(normal_fields)
+    pprint(nested_fields)
+
+    dashboard = SearcherDashboard(indices=indices, normal_fields=normal_fields, nested_fields=nested_fields)
+
+    return JsonResponse(dashboard.response.to_dict())
 
 def dashboard_visualize(request):
     template = loader.get_template('dashboard/dashboard.html')

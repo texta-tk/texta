@@ -593,42 +593,6 @@ class ES_Manager:
         response = ES_Manager.requests.get(url=endpoint_url, json=query).json()
         return response['count']
 
-    def get_fields_and_schemas(self, remove_duplicate_keys=False, include_reserved_fields=True) -> list:
-        """
-        Given an index or multiple ones, fetches ALL of the fields in those
-        indices and their respective schema types.
-
-        Ex: [{'type': 'text', 'field': '_texta_id'}]
-
-        :param include_reserved_fields: Whether to include fields like texta_facts etc.
-        :param remove_duplicate_keys: Whether to remove duplicate keys (same field name across multiple indices).
-        :return: List of dictionaries with field name and their schema as keys.
-        """
-        fields_with_schemas = []
-
-        mappings = self.get_mapping_schema()
-
-        # Handle single fields separately.
-        for field in self.get_column_names(include_reserved_fields):
-            for item in find_key_recursivly(field, mappings):
-                dictionary = {'field': field, 'type': item['type']}
-                fields_with_schemas.append(dictionary)
-
-        # Handle multifields separately.
-        field_mappings = list(find_key_recursivly('properties', mappings))[0]
-        for field_name in field_mappings.keys():
-            if 'fields' in field_mappings[field_name]:
-                for multifield_name in field_mappings[field_name]['fields'].keys():
-                    multifield_type = field_mappings[field_name]['fields'][multifield_name]['type']
-                    multifield_path = '{0}.{1}'.format(field_name, multifield_name)
-                    fields_with_schemas.append({'type': multifield_type, 'field': multifield_path})
-
-        if remove_duplicate_keys:
-            unique_fields_with_schemas = [i for n, i in enumerate(fields_with_schemas) if i not in fields_with_schemas[n + 1:]]
-            return unique_fields_with_schemas
-        else:
-            return fields_with_schemas
-
     def get_field_mappings(self) -> dict:
         """
         Uses the _mapping endpoint to fetch the mapping data of ALL the fields in
@@ -640,7 +604,7 @@ class ES_Manager:
 
         return response
 
-    def add_is_nested_to_fields(self, nested_fields, fields_and_types: List[Dict[str, str]], field_name_key='full_path', is_nested_key='is_nested'):
+    def add_is_nested_to_fields(self, nested_fields, fields_and_types: List[Dict], field_name_key='full_path', is_nested_key='is_nested'):
         """
         Given a list of dictionaries where one of the keys is a field name,
         adds a value that determines if that field is of the nested datatype.
@@ -700,7 +664,7 @@ class ES_Manager:
 
         return all_fields
 
-    def get_filtered_field_mappings(self, es_field_mappings):
+    def get_filtered_field_mappings(self, es_field_mappings: dict)-> dict:
         """
         Given the results of the _mapping endpoint for fields,
         removes all keys that contains built-in ES values.
@@ -717,6 +681,18 @@ class ES_Manager:
 
         return filtered_dict
 
+    def filter_nested_fields(self, fields_and_types: List[Dict]):
+        nested_fields = []
+        normal_fields = []
+
+        for field in fields_and_types:
+            if field.get('is_nested', None) is True:
+                nested_fields.append(field)
+            elif field.get('is_nested', None) is False:
+                normal_fields.append(field)
+
+        return normal_fields, nested_fields
+
     def get_aggregation_field_data(self):
         """
         Implements the helper functions to give the necessary data
@@ -730,4 +706,9 @@ class ES_Manager:
         fieldnames_and_types = self.get_field_types(filtered_field_mappings)
         with_is_nested = self.add_is_nested_to_fields(names_of_nested_fields, fieldnames_and_types)
 
-        return with_is_nested
+        normal_fields, nested_fields = self.filter_nested_fields(with_is_nested)
+
+        for nested_field in nested_fields:
+            nested_field['parent'] = nested_field['full_path'].split('.')[0]
+
+        return normal_fields, nested_fields
