@@ -203,8 +203,7 @@ def query(request):
         suggestionset.save()
 
         ignored_idxes = model_manager.get_negatives(request.session['model'],request.user.username,lexicon.id)
-
-        model = model_manager.get_model(request.session['model'])
+        model = model_manager.get_model(request.session['model']['pk'])
         if model.model.wv.syn0norm is None:
             model.model.init_sims()
 
@@ -222,7 +221,7 @@ def query(request):
 
         suggestions = []
         
-        model_run_obj = Task.objects.get(id=int(request.session['model']))
+        model_run_obj = Task.objects.get(id=int(request.session['model']['pk']))
         """ json.loads(json.loads(model_run_obj.parameters)['field'])['path'] """
         tooltip_feature = json.loads(model_run_obj.parameters)['field']
 
