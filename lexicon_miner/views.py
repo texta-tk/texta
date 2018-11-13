@@ -57,7 +57,7 @@ def newLexicon(request):
     lexiconName = request.POST['lexiconname']
 
     try:
-        model = str(request.session['model'])
+        model = str(request.session['model']['pk'])
     except KeyError:
         language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
         model = str(language_models[0].pk)
@@ -94,7 +94,7 @@ def newLexicon(request):
 def deleteLexicon(request):
     try:
         lexicon = Lexicon.objects.get(id=request.GET['id'])
-        model_manager.remove_negatives(request.session['model'],request.user.username,lexicon.id)
+        model_manager.remove_negatives(request.session['model']['pk'],request.user.username,lexicon.id)
         Word.objects.filter(lexicon=lexicon).delete()
         lexicon.delete()
 
@@ -126,7 +126,7 @@ def saveLexicon(request, local_request=False):
         if lexId:
             lexicon = Lexicon.objects.get(id=lexId)
             Word.objects.filter(lexicon=lexicon).delete()
-            model_manager.save_negatives(request.session['model'],request.user.username,lexicon.id)
+            model_manager.save_negatives(request.session['model']['pk'],request.user.username,lexicon.id)
             # Fix problems with '' and ""
             if local_request:
                 lexicon_words = uniq(json.loads(json.dumps(request.POST['lexicon'])))
@@ -202,7 +202,7 @@ def query(request):
         suggestionset = SuggestionSet(lexicon=lexicon,method=request.POST['method'])
         suggestionset.save()
 
-        ignored_idxes = model_manager.get_negatives(request.session['model'],request.user.username,lexicon.id)
+        ignored_idxes = model_manager.get_negatives(request.session['model']['pk'],request.user.username,lexicon.id)
         model = model_manager.get_model(request.session['model']['pk'])
         if model.model.wv.syn0norm is None:
             model.model.init_sims()
@@ -301,7 +301,7 @@ def reset_suggestions(request):
     lexicon_id = request.POST['lid']
 
     try:
-        model_manager.reset_negatives(request.session['model'],request.user.username,int(lexicon_id))
+        model_manager.reset_negatives(request.session['model']['pk'],request.user.username,int(lexicon_id))
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'suggestions_reset','args':{'user_name':request.user.username,'lexicon_id':lexicon_id}}))
     except Exception as e:
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'suggestions_reset','args':{'user_name':request.user.username,'lexicon_id':lexicon_id}}),exc_info=True)
