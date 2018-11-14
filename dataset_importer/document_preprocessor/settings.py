@@ -4,7 +4,7 @@
 # import preprocessors
 
 from texta.settings import DATASET_IMPORTER
-
+from texta.settings import SCORO_PREPROCESSOR_ENABLED
 from dataset_importer.document_preprocessor.preprocessors import CommentPreprocessor
 from dataset_importer.document_preprocessor.preprocessors import DatePreprocessor
 from dataset_importer.document_preprocessor.preprocessors import MlpPreprocessor
@@ -136,7 +136,7 @@ try:
         'class': ScoroPreprocessor,
         'parameters_template': 'parameters/preprocessor_parameters/scoro.html',
         'arguments': {},
-        'is_enabled': True,
+        'is_enabled': SCORO_PREPROCESSOR_ENABLED,
         'sentiment_lexicons':['Scoro','General','Custom'],
         'sentiment_analysis_methods':['Lexicon-based','Model-based'],
         'scoring_functions':['Mutual information','Chi square','GND','JLG'],
