@@ -26,7 +26,7 @@ BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 
 # When this is true, the scoro_preprocessor is enabled
 #
-SCORO_PREPROCESSOR_ENABLED = False
+SCORO_PREPROCESSOR_ENABLED = os.getenv('SCORO_PREPROCESSOR_ENABLED', False)
 
 # When this is true, email confirmation is enabled
 #
