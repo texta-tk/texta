@@ -1,11 +1,12 @@
 <!--<script type="application/javascript" src="{{STATIC_URL}}task_manager/task_manager.js"></script>-->
 
+
 <div class="scoro-task-manager-grid-wrapper form-horizontal">
   <div class="grid-i">
     <label class="control-label " for="scoro-preprocessor-feature-names">Fields:</label>
-    <div>
+    <div class='select-wrapper'>
       {% if fields %}
-      <select class="form-control input-sm" multiple="multiple" id="scoro-preprocessor-feature-names" name="scoro_feature_names">
+      <select class="selectpicker form-control input-sm" multiple data-selected-text-format="count" id="scoro-preprocessor-feature-names" name="scoro_feature_names">
         {% for field in fields %}
         <option value="{{field.data}}" {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{field.label}}</option>
         {% endfor %}
@@ -54,7 +55,7 @@
   <!-- Show if add-stopword-lex selected -->
   <div class="grid-i if-add-stopword hidden">
     <label class="control-label " for="scoro-preprocessor-stopword-lexicon">Stopword lexicon:</label>
-    <div>
+    <div class='select-wrapper'>
       <select id="scoro-preprocessor-stopword-lexicon" name="scoro_stopword_lexicon" class="form-control input-sm">
         {% for lex in preprocessor.enabled_lexicons %}
         <option value="{{lex.id}}">{{lex.name}}</option>
@@ -84,7 +85,7 @@
   <div class="scoro-task-manager-grid-wrapper if-sentiment hidden well">
     <div class="grid-i">
       <label class="control-label " for="scoro-preprocessor-sent-analysis-method">Method:</label>
-      <div>
+      <div class='select-wrapper'>
         <select id="scoro-preprocessor-sent-analysis-method " name="scoro_sent_analysis_method" onchange=showBasedOnMethod()
           class="form-control">
           {% for sent_method in preprocessor.sentiment_analysis_methods %}
@@ -101,7 +102,7 @@
     <div class="scoro-task-manager-grid-wrapper if-lexicon-based">
       <div class="grid-i">
         <label class="control-label " for="scoro-preprocessor-sentiment-lex">Sentiment lex:</label>
-        <div>
+        <div class='select-wrapper'>
           <select id="scoro-preprocessor-sentiment-lex " name="scoro_sentiment_lex" onchange=showIfSentimentLexCustom(value)
             class="form-control">
             {% for sent_lex in preprocessor.sentiment_lexicons %}
@@ -118,7 +119,7 @@
       <div class='if-sentiment-lex-custom hidden'>
         <div class="grid-i">
           <label class="control-label " for="scoro-preprocessor-pos-lexicon">Pos lexicon:</label>
-          <div>
+          <div class='select-wrapper'>
             <select id="scoro-preprocessor-pos-lexicon" name="scoro_pos_lexicon" class="form-control input-sm">
               {% for lex in preprocessor.enabled_lexicons %}
               <option value="{{lex.id}}">{{lex.name}}</option>
@@ -132,7 +133,7 @@
         <!-- Show if sentiment_lex = 'custom' selected -->
         <div class="grid-i">
           <label class="control-label " for="scoro-preprocessor-neg-lexicon">Neg lexicon:</label>
-          <div>
+          <div class='select-wrapper'>
             <select id="scoro-preprocessor-neg-lexicon" name="scoro_neg_lexicon" class="form-control input-sm">
               {% for lex in preprocessor.enabled_lexicons %}
               <option value="{{lex.id}}">{{lex.name}}</option>
@@ -243,7 +244,7 @@
         class="glyphicon glyphicon-question-sign texta-tooltip"></span>
     </div>
 
-    <div class='scoro-task-manager-grid-wrapper if-rake-wrapper hidden well'>
+    <div class='scoro-task-manager-grid-wrapper if-rake-wrapper hidden well deeper-well'>
       <!-- Show, if Rake = selected -->
       <div class="grid-i">
         <label class="control-label " for="scoro-preprocessor-rake-phrase-len">Max phrase length:</label>
@@ -328,7 +329,7 @@
     </div>
 
     <!-- show, if significant words = selected-->
-    <div class='scoro-task-manager-grid-wrapper if-significant-words-wrapper well hidden'>
+    <div class='scoro-task-manager-grid-wrapper if-significant-words-wrapper well deeper-well hidden'>
       <div class="grid-i">
         <label class="control-label " for="scoro-preprocessor-signif-min-term-freq">Min term freq:</label>
         <div class="slider-wrapper">
@@ -369,7 +370,7 @@
       <!-- show, if significant words = selected -->
       <div class="grid-i">
         <label class="control-label " for="scoro-preprocessor-signif-scoring-function">Scoring function</label>
-        <div>
+        <div class='select-wrapper'>
           <select id="scoro-preprocessor-signif-scoring-function " name="scoro_signif_scoring_function" class="form-control">
             {% for sc_function in preprocessor.scoring_functions %}
             <option value="{{ sc_function }}" {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{sc_function}}</option>
@@ -390,7 +391,7 @@
     </div>
 
     <!-- Show, if Noun = selected -->
-    <div class='scoro-task-manager-grid-wrapper if-nouns-wrapper well hidden'>
+    <div class='scoro-task-manager-grid-wrapper if-nouns-wrapper well deeper-well hidden'>
       <div class="grid-i">
         <label class="control-label " for="scoro-preprocessor-noun-bg-info">Use background info</label>
         <div>
