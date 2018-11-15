@@ -7,7 +7,7 @@ body {
 .body-grid-wrapper {
     display: grid;
     grid-template-columns: 100%;
-    grid-template-rows: 50px 1fr;
+    grid-template-rows: auto 1fr;
     grid-template-areas: "navbar"
         "content"
 }
@@ -27,18 +27,24 @@ body {
 
 .user-data {
     color: #EFEFEF;
+    align-items: center
 }
 
 .navbar-right {
+    display: flex;
+}
+.navbar-right>.navbar-form{
     display: flex;
 }
 
 .navbar-form {
     margin-left: 0px;
 }
-.navbar-form{
-    display: flex;
+
+.multiselect-native-select > .btn-group > .multiselect.dropdown-toggle.btn.btn-default{
+    height: 100%;
 }
+
 .panel-heading {
     background-color: #73AD21;
     color: #FFFFFF;
@@ -49,20 +55,31 @@ button.multiselect {
     height: 30px;
     font-size: 14px;
 }
-.btn-default:hover, .btn-default:focus, .btn-default:active, .btn-default.active, .open > .dropdown-toggle.btn-default {
+
+.btn-default:hover,
+.btn-default:focus,
+.btn-default:active,
+.btn-default.active,
+.open>.dropdown-toggle.btn-default {
     color: #527D17;
-	background: none;
+    background: none;
     border-color: #527D17;
 }
+
 .btn-danger {
-	background: none;
-	padding: 5px 22px;
-	border: 2px solid #BF3727;
+    background: none;
+    padding: 5px 22px;
+    border: 2px solid #BF3727;
     color: #BF3727;
 }
-.btn-danger:hover, .btn-danger:focus, .btn-danger:active, .btn-danger.active, .open > .dropdown-toggle.btn-danger {
+
+.btn-danger:hover,
+.btn-danger:focus,
+.btn-danger:active,
+.btn-danger.active,
+.open>.dropdown-toggle.btn-danger {
     color: #8B271D;
-	background: none;
+    background: none;
     border-color: #8B271D;
 }
 
@@ -145,4 +162,10 @@ button.multiselect {
 
 .datasetOption:checked {
     background-color: #dddddd;
+}
+
+@media (max-width: 767px) {
+    .navbar-right {
+        display: block;
+    }
 }

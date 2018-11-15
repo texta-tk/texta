@@ -61,102 +61,127 @@
 </head>
 
 <body>
-	<nav class="navbar navbar-inverse navbar-static-top" role="navigation">
-		<div class="container-fluid">
-			<ul class="nav navbar-nav">
-				<li id="home"><a href="#"><span class="glyphicon glyphicon-home"></span> Home</a></li>
-				{% if request.user.is_authenticated %}
-				<li id="searcher"><a href="#"><span class="glyphicon glyphicon-search"></span> Searcher</a></li>
-				{% endif %}
-				{% if request.user.is_authenticated %}
-				<li class="dropdown">
-					<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-pencil"></span>
-						Terminology Management<span class="caret"></span></a>
-					<ul class="dropdown-menu">
-						<li id="ontology_viewer"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Terminology Overview</a></li>
-						<li id="lex_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Lexicon Miner</a></li>
-						<li id="conceptualizer"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Conceptualiser</a></li>
-						<li id="mwe_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> MWE Miner</a></li>
-						<li id="grammar_builder"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Grammar Miner</a></li>
-					</ul>
-				</li>
-				{% if request.user.is_superuser %}
-				<li class="dropdown">
-					<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-lock"></span>
-						Restricted<span class="caret"></span></a>
-					<ul class="dropdown-menu">
-						<li id="permission_admin"><a href="#"><span class='glyphicon glyphicon-wrench'></span> Administration </a></li>
-						<li id="dataset_importer"><a href="#"><span class='glyphicon glyphicon-share'></span> Dataset Importer </a></li>
-						<li id="task_manager"><a href="#"><span class='glyphicon glyphicon-menu-hamburger'></span> Task Manager </a></li>
-					</ul>
-				</li>
-				{% endif %}
-				{% endif %}
-			</ul>
+	<div class="body-grid-wrapper">
+		<div class="grid-item-navbar">
+			<nav class="navbar navbar-inverse navbar-static-top">
+				<div class="container-fluid">
+					<!-- Collect the nav links, forms, and other content for toggling -->
+					<div class="navbar-header">
+						<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"
+						 aria-expanded="false">
+							<span class="sr-only">Toggle navigation</span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+						</button>
+					</div>
+					<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+						<ul class="nav navbar-nav">
+							<li id="home"><a href="#"><span class="glyphicon glyphicon-home"></span> Home</a></li>
+							{% if request.user.is_authenticated %}
+							<li id="searcher"><a href="#"><span class="glyphicon glyphicon-search"></span> Searcher</a></li>
+							{% endif %}
+							{% if request.user.is_authenticated %}
+							<li class="dropdown">
+								<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-pencil"></span>
+									Terminology Management<span class="caret"></span></a>
+								<ul class="dropdown-menu">
+									<li id="ontology_viewer"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span>
+											Terminology
+											Overview</a></li>
+									<li id="lex_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> Lexicon
+											Miner</a></li>
+									<li id="conceptualizer"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span>
+											Conceptualiser</a></li>
+									<li id="mwe_miner"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span> MWE Miner</a></li>
+								</ul>
+							</li>
+							{% if request.user.is_superuser %}
+							<li class="dropdown">
+								<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-lock"></span>
+									Restricted<span class="caret"></span></a>
+								<ul class="dropdown-menu">
+									<li id="permission_admin"><a href="#"><span class='glyphicon glyphicon-wrench'></span>
+											Administration </a></li>
+									<li id="dataset_importer"><a href="#"><span class='glyphicon glyphicon-share'></span> Dataset
+											Importer </a></li>
+									<li id="task_manager"><a href="#"><span class='glyphicon glyphicon-menu-hamburger'></span> Task
+											Manager </a></li>
+								</ul>
+							</li>
+							{% endif %}
+							{% endif %}
+						</ul>
 
-			{% if request.user.is_authenticated %}
-			<form class="navbar-form navbar-right user-data" id="log_out_form" onsubmit="go_to(LINK_ACCOUNT + '/account/log_out','log_out_form')">
-				<span> Logged in as {{request.user.get_username}}. </span>
-				<div class="form-group">
-					<button type="submit" class="btn btn-danger btn-sm"><span class="glyphicon glyphicon-log-out"></span></button>
-				</div>
-			</form>
 
-			<form class="navbar-form navbar-right">
-				<div>
-					<select id="dataset_to_activate" name="dataset_to_activate" multiple class="input-sm" onchange="dataset_update_resources();">
-						{% for dataset in allowed_datasets %}
-						{% if dataset.id|stringformat:"i" in request.session.dataset %}
-						<option class="datasetOption" value="{{dataset.id}}" selected="selected">Dataset {{dataset.id}}:
-							{{dataset.index}}
-							- {{dataset.mapping}}</option>
-						{% else %}
-						<option class="datasetOption" value="{{dataset.id}}">Dataset {{dataset.id}}: {{dataset.index}} -
-							{{dataset.mapping}}</option>
-						{% endif %}
-						{% endfor %}
-					</select>
-				</div>
+						<div class="navbar-right">
+							{% if request.user.is_authenticated %}
+							<form class="navbar-form">
+								<div>
+									<select id="dataset_to_activate" name="dataset_to_activate" multiple class="input-sm" onchange="dataset_update_resources();">
+										{% for dataset in allowed_datasets %}
+										{% if dataset.id|stringformat:"i" in request.session.dataset %}
+										<option class="datasetOption" value="{{dataset.id}}" selected="selected">Dataset {{dataset.id}}:
+											{{dataset.index}}
+											- {{dataset.mapping}}</option>
+										{% else %}
+										<option class="datasetOption" value="{{dataset.id}}">Dataset {{dataset.id}}: {{dataset.index}} -
+											{{dataset.mapping}}</option>
+										{% endif %}
+										{% endfor %}
+									</select>
+								</div>
+								<div class="dropdown">
+									<button class="btn btn-default dropdown-toggle " id="model-dropdown" type="button" data-toggle="dropdown"
+									 aria-haspopup="true" aria-expanded="false">
+										{% if request.session.model.pk %}
+										Model {{request.session.model.pk}}: {{request.session.model.description}}
+										{% else %}
+										Select Model
+										{% endif %}
 
-				<div class="dropdown">
-					<button class="btn btn-default dropdown-toggle " id="model-dropdown" type="button" data-toggle="dropdown"
-					 aria-haspopup="true" aria-expanded="false">
-						{% if request.session.model.pk %}
-						Model {{request.session.model.pk}}: {{request.session.model.description}}
-						{% else %}
-						Select Model
-						{% endif %}
+										<b class="caret"></b>
+									</button>
 
-						<b class="caret"></b>
-					</button>
+									<ul class="dropdown-menu model-dropdown-menu" aria-labelledby="model-dropdown">
+										{% for model in language_models %}
+										<li data-model_pk="{{model.pk}}" data-model_description="{{model.description}}" onclick=model_update_resources(this);
+										 role="button"><a>Model {{model.pk}}: {{model.description}}</a></li>
+										{% endfor %}
+									</ul>
+								</div>
+							</form>
+							<div class="user-data navbar-form">
+								<span> Logged in as {{request.user.get_username}}. </span>
+								<button type="button" class="btn btn-danger btn-sm" onclick="go_to(LINK_ACCOUNT + '/account/log_out')">
+									<span class="glyphicon glyphicon-log-out"></span>
+								</button>
+							</div>
+							{% else %}
+							<form class="navbar-form form-inline" id="login_form" onsubmit="go_to(LINK_ROOT+'account/login','login_form')"
+							 method="POST">
+								<div class="form-group">
+									<label class="sr-only" for="loginUsername">Username</label>
+									<input type="text" class="form-control input-sm" id="loginUsername" name="username" placeholder="Username">
+								</div>
+								<div class="form-group">
+									<label class="sr-only" for="loginPassword">Password</label>
+									<input type="password" class="form-control input-sm" id="loginPassword" name="password" placeholder="Password">
+								</div>
+								<button type="submit" class="btn btn-success btn-sm"><span class="glyphicon glyphicon-log-in"></button>
+							</form>
 
-					<ul class="dropdown-menu model-dropdown-menu" aria-labelledby="model-dropdown">
-						{% for model in language_models %}
-						<li data-model_pk="{{model.pk}}" data-model_description="{{model.description}}" onclick=model_update_resources(this);
-						 role="button"><a>Model {{model.pk}}: {{model.description}}</a></li>
-						{% endfor %}
-					</ul>
-				</div>
-			</form>
+							{% endif %}
 
-			{% else %}
-			<form class="navbar-form form-inline navbar-right" id="login_form" onsubmit="go_to(LINK_ROOT+'account/login','login_form')"
-			 method="POST">
-				<div class="form-group">
-					<label class="sr-only" for="loginUsername">Username</label>
-					<input type="text" class="form-control input-sm" id="loginUsername" name="username" placeholder="Username">
-				</div>
-				<div class="form-group">
-					<label class="sr-only" for="loginPassword">Password</label>
-					<input type="password" class="form-control input-sm" id="loginPassword" name="password" placeholder="Password">
-				</div>
-				<button type="submit" class="btn btn-success btn-sm"><span class="glyphicon glyphicon-log-in"></button>
-			</form>
-			{% endif %}
+						</div>
+					</div><!-- /.navbar-collapse -->
+				</div><!-- /.container-fluid -->
+			</nav>
 		</div>
-	</nav>
-	<div class="container-fluid">{% block app %}{% endblock %}</div>
-	<script src="{{STATIC_URL}}base/index.js"></script>
+		<div class="grid-item-content">
+			<div class="container-fluid">{% block app %}{% endblock %}</div>
+		</div>
+		<script src="{{STATIC_URL}}base/index.js"></script>
 </body>
 
 </html>

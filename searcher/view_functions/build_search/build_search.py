@@ -17,7 +17,6 @@ def execute_search(es_m, es_params):
     hl_config = _derive_hl_config(es_params)
     es_m.set_query_parameter('highlight', hl_config)
     response = es_m.search()
-
     out['iTotalRecords'] = response['hits']['total']
     out['iTotalDisplayRecords'] = response['hits']['total'] # number of docs
 
@@ -140,7 +139,8 @@ def _derive_hl_config(es_params):
     for field in es_params:
         if 'match_field' in field and es_params['match_operator_'+field.split('_')[-1]] != 'must_not':
             f = es_params[field]
-            hl_config['fields'][f] = {"number_of_fragments": 0}
+            for sub_f in f.split(','):
+                hl_config['fields'][sub_f] = {"number_of_fragments": 0}
     return hl_config
 
 
