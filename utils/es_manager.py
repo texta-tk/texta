@@ -89,10 +89,9 @@ class ES_Manager:
                     properties['texta_facts'] = FACT_PROPERTIES
 
                 properties = {'properties': properties}
-
+                url = '{0}/{1}/_mapping/{2}'.format(self.es_url, index, mapping)
                 response = self.plain_put(url, json.dumps(properties))
-                print('THIS IS THE RESPONSE')
-                print(response)
+                return response
 
 
     def update_documents(self):
@@ -209,7 +208,6 @@ class ES_Manager:
                 queries.append(json.dumps(query_body))
 
         responses = self.plain_multisearch(es_url, queries)
-
         fields_with_facts = {'fact': [], 'fact_str': [], 'fact_num': []}
 
         for response in responses:
@@ -554,8 +552,6 @@ class ES_Manager:
 
         _min = self._timestamp_to_str(aggs["min_date"]["value"])
         _max = self._timestamp_to_str(aggs["max_date"]["value"])
-
-        print(_min,_max)
 
         return _min, _max
 

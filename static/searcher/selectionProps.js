@@ -47,7 +47,7 @@ function createSelectionProps() {
         $("#examples").find('tbody').find('td').mouseup(function () {
             var selection = window.getSelection();
             // Check if selection is bigger than 0
-            if (!selection.isCollapsed) {
+            if (!selection.isCollapsed && selection.toString().trim().length>1) {
                 // Limit selection to the selection start element
                 if (selection.baseNode != selection.focusNode) {
                     selection.setBaseAndExtent(selection.baseNode, selection.baseOffset, selection.baseNode, selection.baseNode.length);
@@ -63,7 +63,7 @@ function createSelectionProps() {
                 // Create tippy instance
                 textTippy = initTippy(textSpan, temp.prop('outerHTML'), true)
 
-                var fact_val = selection.toString();
+                var fact_val = selection.toString().trim();
                 loc_spans = getLocSpans(this, fact_val)
                 // Set template value to selected text
                 temp.find('.textValue').html(fact_val)
@@ -169,6 +169,8 @@ function saveFactFromSelect(fact_value, fact_field, fact_span, doc_id) {
 function saveAsFact(fact_name, fact_value, fact_field, fact_span, doc_id) {
     if (fact_name.length > 15 || fact_name == '' || fact_value == '') {
         swal('Warning!', 'Fact name longer than 15 characters, or values are empty!', 'warning');
+    } else if (fact_field == '_es_id') {
+        swal('Warning!', `Saving facts in ${fact_field} not allowed`, 'warning')
     } else {
         swal({
             title: 'Are you sure you want to save this as a fact?',

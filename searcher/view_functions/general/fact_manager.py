@@ -205,12 +205,10 @@ class FactManager:
         query = {"query": {"terms": {"_id": [doc_id] }}}
         response = self.es_m.perform_query(query)
         hits = response['hits']['hits']
-        # Is this necessary
+        # If texta_facts not in document
         if self.field not in hits[0]['_source']:
             self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
-            response = self.es_m.perform_query(query)
-            hits = response['hits']['hits']
-        
+
         data = ''
         for document in hits:
             if self.field not in document['_source']:
@@ -223,5 +221,4 @@ class FactManager:
             data += json.dumps(document)+'\n'
         response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
         response = self.es_m.update_documents()
-
         return response
