@@ -32,17 +32,18 @@ body {
 
 .navbar-right {
     display: flex;
+    padding-top: 9px;
+    padding-bottom: 9px;
 }
-.navbar-right>.navbar-form{
+
+.navbar-right>.navbar-form {
     display: flex;
+    align-items: center;
+    margin: 0px;
 }
 
-.navbar-form {
-    margin-left: 0px;
-}
-
-.multiselect-native-select > .btn-group > .multiselect.dropdown-toggle.btn.btn-default{
-    height: 100%;
+.navbar-form>div {
+    margin-right: 5px;
 }
 
 .panel-heading {
@@ -50,10 +51,8 @@ body {
     color: #FFFFFF;
 }
 
-
-button.multiselect {
-    height: 30px;
-    font-size: 14px;
+.btn {
+    transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
 }
 
 .btn-default:hover,
@@ -62,7 +61,7 @@ button.multiselect {
 .btn-default.active,
 .open>.dropdown-toggle.btn-default {
     color: #527D17;
-    background: none;
+    background: #FFFFFF;;
     border-color: #527D17;
 }
 

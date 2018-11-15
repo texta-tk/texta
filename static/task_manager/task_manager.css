@@ -54,3 +54,6 @@
 #params-lexicon_classifier{
     padding: 5px;
 }
+.remove-col-padding{
+    padding:0;
+}
