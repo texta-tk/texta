@@ -5,7 +5,9 @@ import readers
 
 
 def log_reader_status(code, status):
-    print('[Dataset Importer] {code} reader {status}.'.format(**{'code': code, 'status': status}))
+    # only print if status disabled
+    if status == 'disabled':
+        print('[Dataset Importer] {code} reader {status}.'.format(**{'code': code, 'status': status}))
 
 
 entity_reader_map = {}
