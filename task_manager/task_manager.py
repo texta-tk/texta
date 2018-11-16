@@ -118,7 +118,7 @@ def collect_map_entries(map_):
     for key, value in map_.items():
         if key == 'text_tagger':
             value['enabled_taggers'] = Task.objects.filter(task_type="train_tagger", status=Task.STATUS_COMPLETED)
-        if key == 'lexicon_classifier':
+        if (key == 'lexicon_classifier' or key == 'scoro'):
             value['enabled_lexicons'] = Lexicon.objects.all()
         value['key'] = key
         entries.append(value)

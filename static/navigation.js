@@ -1,5 +1,5 @@
-var LINK_PREFIX = 'http://dev.texta.ee/';
-var STATIC_URL = '/texta/static/';
+var LINK_PREFIX = 'http://localhost:8000';
+var STATIC_URL = 'http://localhost:8000/static/';
 
 var LINK_LEXMINER = LINK_PREFIX + '/lexicon_miner';
 var LINK_SEARCHER = LINK_PREFIX + '/searcher';
