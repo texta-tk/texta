@@ -38,9 +38,12 @@ def index(request):
     es_m = ds.build_manager(ES_Manager)
     fields = get_fields(es_m)
 
-    mass_helper = MassHelper(es_m)
-    tag_set = mass_helper.get_unique_tags()
-
+    try:
+        mass_helper = MassHelper(es_m)
+        tag_set = mass_helper.get_unique_tags()
+    except KeyError:
+        tag_set = []
+        
     preprocessors = collect_map_entries(preprocessor_map)
     enabled_preprocessors = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True]
     
