@@ -476,10 +476,9 @@ FACT_PROPERTIES = {
 # Several scripts ran during the boot to set up files and directories.
 # Scripts will only be run if settings is imported from 'texta' directory, e.g. as a result of manager.py, or by Apache (user httpd / apache)
 
-if os.path.split(os.getcwd())[1] in ['texta', 'httpd', 'apache', 'www']:
-	from utils.setup import write_navigation_file, ensure_dir_existence
+from utils.setup import write_navigation_file, ensure_dir_existence
 
-	write_navigation_file(URL_PREFIX, STATIC_URL, STATIC_ROOT)
-	ensure_dir_existence(LOG_PATH)
-	ensure_dir_existence(MODELS_DIR)
-	ensure_dir_existence(USER_MODELS)
+write_navigation_file(URL_PREFIX, STATIC_URL, STATIC_ROOT)
+ensure_dir_existence(LOG_PATH)
+ensure_dir_existence(MODELS_DIR)
+ensure_dir_existence(USER_MODELS)
