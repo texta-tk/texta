@@ -1,15 +1,110 @@
 #tasks-table {
     overflow-x: auto;
 }
-.lexicon-classifier-wrapper{
+.scoro-task-manager-grid-wrapper {
+    display: grid;
+    grid-gap: 10px 10px;
+    grid-template-rows: repeat(auto, auto);
+    justify-items: stretch;
+    /* row */
+    align-items: center;
+    /* column */
+    justify-content: stretch;
+}
+
+.scoro-task-manager-grid-wrapper .grid-i {
+    display: grid;
+    align-items: center;
+    justify-items: stretch;
+    align-self: stretch;
+    grid-column-gap: 5px;
+    grid-template-rows: minmax(1fr, auto);
+    grid-template-columns: minmax(auto,auto) 1fr 20px;
+}
+
+.scoro-task-manager-grid-wrapper .grid-i>:nth-child(3) {
+    /* tooltips */
+    justify-self: end;
+    padding-right: 5px
+}
+
+.scoro-task-manager-grid-wrapper .grid-i>:nth-child(2) {
+    /* center grid item */
+    align-self: center;
+    justify-self: end;
+    margin-right:20px
+}
+.scoro-task-manager-grid-wrapper .grid-i>:nth-child(2).slider-wrapper {
+    /* center grid item */
+    align-self: center;
+    justify-self: stretch;
+    margin-right: 0px;
+}
+.scoro-task-manager-grid-wrapper .grid-i>:nth-child(2).select-wrapper {
+    /* center grid item */
+    align-self: center;
+    justify-self: stretch;
+    margin-right: 0px;
+}
+.scoro-task-manager-grid-wrapper .grid-i>:nth-child(1) {
+    /* center grid item */
+    justify-self: start;
+    text-align: unset;
+    padding-left: 5px
+}
+
+.slider-wrapper {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+.slider-wrapper .slider {
+    width: 100%;
+}
+
+.grid-i>.group-radio-wrapper input {
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+.grid-i>label {
+    margin-bottom: 0px !important;
+}
+
+.c-lex-content-wrapper {
+    display: flex;
+    flex-flow: column;
+}
+
+.c-lex-content-wrapper>.grid-i {
+    padding-bottom: 10px;
+}
+
+.grid-i>label {
+    padding-top: 0 !important;
+}
+
+.well {
+    background: #f5f5f5;
+    padding: 4px;
+    border: 0;
+}
+.deeper-well{
+    background: #fcfcfc;
+}
+
+.lexicon-classifier-wrapper {
     display: grid;
     grid-gap: 10px 10px;
     grid-template-rows: repeat(8, auto);
-    justify-items: stretch; /* row */
-    align-items: center; /* column */
-    justify-content: stretch;	
+    justify-items: stretch;
+    /* row */
+    align-items: center;
+    /* column */
+    justify-content: stretch;
 }
-.lexicon-classifier-wrapper .grid-i{
+
+.lexicon-classifier-wrapper .grid-i {
     display: grid;
     align-items: center;
     justify-items: stretch;
@@ -17,41 +112,49 @@
     grid-column-gap: 5px;
     grid-template-rows: minmax(1fr, auto);
     grid-template-columns: 0.3fr 1fr 20px;
-}   
-.lexicon-classifier-wrapper .grid-i>:nth-child(3){ /* tooltips */
+}
+
+.lexicon-classifier-wrapper .grid-i>:nth-child(3) {
+    /* tooltips */
     justify-self: end;
 }
-.lexicon-classifier-wrapper .grid-i>:nth-child(2){ /* center grid item */
+
+.lexicon-classifier-wrapper .grid-i>:nth-child(2) {
+    /* center grid item */
     align-self: center;
 }
-.slider-wrapper{
-    margin-left:20px;
-    margin-right:20px;
-}
-#lexicon-classifier-slops{
+
+#lexicon-classifier-slops {
     width: 100%;
 }
-#lexicon-classifier-words_required{
+
+#lexicon-classifier-words_required {
     width: 100%;
 }
-.grid-i>.group-radio-wrapper input{
-    margin-left:2px; 
-    margin-right:2px;
+
+.grid-i>.group-radio-wrapper input {
+    margin-left: 2px;
+    margin-right: 2px;
 }
-.grid-i>label{
-    margin-bottom:0px !important;
+
+.grid-i>label {
+    margin-bottom: 0px !important;
 }
-.c-lex-content-wrapper{
+
+.c-lex-content-wrapper {
     display: flex;
     flex-flow: column;
 }
-.c-lex-content-wrapper>.grid-i{
-    padding-bottom:10px;
+
+.c-lex-content-wrapper>.grid-i {
+    padding-bottom: 10px;
 }
-#lexicon-classifier-cl-slops{
+
+#lexicon-classifier-cl-slops {
     width: 100%;
 }
-#params-lexicon_classifier{
+
+#params-lexicon_classifier {
     padding: 5px;
 }
 .remove-col-padding{

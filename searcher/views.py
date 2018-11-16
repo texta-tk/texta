@@ -64,7 +64,7 @@ def index(request):
     language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
 
     preprocessors = collect_map_entries(preprocessor_map)
-    enabled_preprocessors = [preprocessor for preprocessor in preprocessors]
+    enabled_preprocessors = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True]
 
     # Hide fact graph if no facts_str_val is present in fields
     display_fact_graph = 'hidden'

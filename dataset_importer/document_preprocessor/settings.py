@@ -4,7 +4,7 @@
 # import preprocessors
 
 from texta.settings import DATASET_IMPORTER
-
+from texta.settings import SCORO_PREPROCESSOR_ENABLED
 from dataset_importer.document_preprocessor.preprocessors import CommentPreprocessor
 from dataset_importer.document_preprocessor.preprocessors import DatePreprocessor
 from dataset_importer.document_preprocessor.preprocessors import MlpPreprocessor
@@ -12,6 +12,7 @@ from dataset_importer.document_preprocessor.preprocessors import TextTaggerPrepr
 from dataset_importer.document_preprocessor.preprocessors import MlpPreprocessor
 from dataset_importer.document_preprocessor.preprocessors import DatePreprocessor
 from dataset_importer.document_preprocessor.preprocessors import LexTagger
+from dataset_importer.document_preprocessor.preprocessors import ScoroPreprocessor
 
 
 mlp_field_properties = {
@@ -128,6 +129,24 @@ except Exception as e:
     print(e)
     log_preprocessor_status(code='comment_preprocessor', status='disabled')
 
+try:
+    preprocessor_map['scoro'] = {
+        'name': 'Scoro preprocessor',
+        'description': 'Extracts topics and evaluates sentiment',
+        'class': ScoroPreprocessor,
+        'parameters_template': 'parameters/preprocessor_parameters/scoro.html',
+        'arguments': {},
+        'is_enabled': SCORO_PREPROCESSOR_ENABLED,
+        'sentiment_lexicons':['Scoro','General','Custom'],
+        'sentiment_analysis_methods':['Lexicon-based','Model-based'],
+        'scoring_functions':['Mutual information','Chi square','GND','JLG'],
+        'bg_favors': ['Doc','All']
+    }
+    log_preprocessor_status(code='scoro', status='enabled')
+
+except Exception as e:
+    print(e)
+    log_preprocessor_status(code='scoro', status='disabled')
 
 def convert_to_utf8(document):
     """
