@@ -632,10 +632,6 @@ function query(){
                 "scrollX": true
             });
 
-            $(function(){
-                $("#examples").colResizable({minWidth:50}); //in searcher_results.html template
-            });
-
             var dataset = $("#dataset").val();
             var mapping = $("#mapping").val();
             loadUserPreference(dataset,mapping);
