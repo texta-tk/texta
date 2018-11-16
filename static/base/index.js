@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 $(document).ready(function () {
     $('#dataset_to_activate').multiselect({
         includeSelectAllOption: true,
@@ -81,7 +82,24 @@ $('#registrationForm > .form-group > .form-control').on('focus', function () {
     validateInput($(this).attr('id'))
 })
 
-function registerAccount() {
+function login () {
+    var usernameInput = $('#loginUsername')
+    var passwordInput = $('#loginPassword')
+
+    $.post(LINK_ACCOUNT + '/login', {
+        username: usernameInput.val(),
+        password: passwordInput.val()
+    }, 'json').then((data) => {
+        data = JSON.parse(data)
+        if (data.event === 'login_process_failed') {
+            invalidateInput('login_form', 'has-error', 'Failed to login')
+        } else if (data.event === 'login_process_succeeded') {
+            go_to(LINK_ROOT)
+        }
+    })
+}
+
+function registerAccount () {
     var usernameInput = $('#registrationUsername')
     var passwordInput = $('#registrationPassword')
     var passwordAgainInput = $('#registrationPasswordAgain')
@@ -111,7 +129,7 @@ function registerAccount() {
     }, 'json')
 }
 
-function invalidateInput(input_id, status, message) {
+function invalidateInput (input_id, status, message) {
     var input = $('#' + input_id)
     var parent = input.parent()
     var helpBlock = parent.find('.help-block')
@@ -129,7 +147,7 @@ function invalidateInput(input_id, status, message) {
     return input
 }
 
-function validateInput(input_id) {
+function validateInput (input_id) {
     var input = $('#' + input_id)
     var parent = input.parent()
     parent.removeClass('has-success has-warning has-error')
@@ -138,7 +156,7 @@ function validateInput(input_id) {
     return input
 }
 
-function clearRegistrationForm() {
+function clearRegistrationForm () {
     var ids = ['registrationUsername', 'registrationPassword', 'registrationPasswordAgain', 'registrationEmail']
 
     for (var i = 0; i < ids.length; i++) {
@@ -146,12 +164,12 @@ function clearRegistrationForm() {
     }
 }
 
-function model_update_resources(self) {
+function model_update_resources (self) {
     var model_data = $(self).data()
     update_resources(model_data)
 }
 
-function dataset_update_resources() {
+function dataset_update_resources () {
     var dataset_id = $('#dataset_to_activate').val()
     var data = {
         dataset: dataset_id
@@ -159,7 +177,7 @@ function dataset_update_resources() {
     update_resources(data)
 }
 
-function update_resources(data) {
+function update_resources (data) {
     $.post(LINK_ROOT + '/update', data, function (data) {
         if (data.length > 0) {
             const notification = swal.mixin({
