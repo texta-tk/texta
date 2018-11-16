@@ -12,6 +12,24 @@ body {
         "content"
 }
 
+/* global style */
+.grid-2-col-1-row-default {
+    display: grid;
+    grid-template-columns: 20% 80%;
+    grid-template-rows: 100%;
+}
+@media screen and (max-width: 1405px) {
+    .grid-2-col-1-row-default{
+      grid-template-columns: 25% 75%;
+      grid-template-rows: 100%;
+    }
+  }
+  @media screen and (max-width: 992px) {
+    .grid-2-col-1-row-default{
+      grid-template-columns: 100%;
+      grid-template-rows: 100% 100%;
+    }
+  }
 .grid-item-navbar {
     grid-area: navbar;
 }
@@ -29,11 +47,13 @@ body {
     color: #EFEFEF;
     align-items: center
 }
-.navbar-right>.help-block{
+
+.navbar-right>.help-block {
     margin: 0;
     display: flex;
     align-items: center;
 }
+
 .navbar-right {
     display: flex;
     padding-top: 9px;
@@ -65,7 +85,8 @@ body {
 .btn-default.active,
 .open>.dropdown-toggle.btn-default {
     color: #527D17;
-    background: #FFFFFF;;
+    background: #FFFFFF;
+    ;
     border-color: #527D17;
 }
 

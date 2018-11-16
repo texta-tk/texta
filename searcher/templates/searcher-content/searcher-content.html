@@ -1,0 +1,246 @@
+
+<div class='searcher-content-wrapper' >
+    <div class="panel">
+        <div class="panel-heading">
+            Results
+            <div id="actions-btn" class="dropdown pull-right invisible">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-scissors"></span>
+                    Actions<span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                    <li><a href="#" data-toggle="modal" data-target="#export-modal"><span class="glyphicon glyphicon-save"></span>
+                            Export results</a></li>
+                    {% if request.user.is_superuser %}
+                    <li><a href="#" data-toggle="modal" data-target="#delete-modal"><span class="glyphicon glyphicon-remove"></span>
+                            Delete results</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+        <div class="panel-body" id="right"></div>
+
+        <div class="modal fade" id="export-modal" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Export</h4>
+                    </div>
+
+                    <div class="invisible" id="export-examples-modal">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label><input type="radio" name="export-extent" value="page" checked>Current
+                                    page</label><br>
+                                <label><input type="radio" name="export-extent" value="pages">Pages</label>
+                                <input type="text" id="export-start-page" placeholder="start" size="3">
+                                to
+                                <input type="text" id="export-end-page" placeholder="end" size="3"><br>
+                                <label><input type="radio" name="export-extent" value="rows">Rows</label>
+                                <input type="text" id="export-rows" placeholder="number" size="4"><br>
+                                <label><input type="radio" name="export-extent" value="all">All pages</label><br>
+                            </div>
+
+                            <div class="form-group">
+                                <label><input type="radio" name="export-features" value="selected" checked>Selected
+                                    features</label><br>
+                                <label><input type="radio" name="export-features" value="all">All features</label><br>
+                            </div>
+
+                            <div class="form-group form-inline">
+                                <label for="export-file-name">Save as: </label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="export-file-name-example"
+                                        value="{{dataset}}">
+                                    <span class="input-group-addon">.csv</span>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal" onclick="export_data('example');">Export</button>
+                        </div>
+
+                    </div>
+
+
+                    <div class="invisible" id="export-aggregation-modal">
+                        <div class="modal-body">
+                            <div class="form-group form-inline">
+                                <label for="export-file-name">Save as: </label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="export-file-name-agg" value="{{dataset}}">
+                                    <span class="input-group-addon">.csv</span>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal" onclick="export_data('agg');">Export</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="delete-modal" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Delete</h4>
+                    </div>
+                    <div class="modal-body">
+                        <b>Important:</b> This action will permanently remove the queried documents. The
+                        operation may take some time.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="javascript:remove_by_query();">Delete</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="tag-modal" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Tag search</h4>
+                    </div>
+                    <div class="modal-body">
+                        Add a custom fact to the resulting documents to tag the search.
+                        <div class="form-group">
+                            <label for="tag_name">Fact name:</label>
+                            <input type="text" class="form-control" name="tag_name" id="tag_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tag_value">Fact value:</label>
+                            <input type="text" class="form-control" name="tag_value" id="tag_value" required>
+                        </div>
+                        <div class="panel bg-grey">
+                            <div class="row padded-row">
+                                <div class="col-sm-12 text-center">
+                                    <b>Field to tag</b>
+                                </div>
+                                <div class="col-sm-12">
+                                    <b>Select field:</b>
+                                </div>
+                                <div class="col-sm-12">
+                                    <select id="tag_field" name="tag_field" class="form-control input-sm"
+                                        required>
+                                        <option></option>
+                                        {% for field in fields %}
+                                        <option value="{{field.data}}">{{field.label}}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-default" onclick="tag_by_query()">Tag</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="new-task-modal" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Start new task using selected documents</h4>
+                    </div>
+                    <div class="modal-body">
+
+                        <ul class="nav nav-tabs">
+                            {% for task_param in task_params %}
+                            <li {% if forloop.counter < 2 %}class="active" {% endif %}><a data-toggle="tab"
+                                    href="#task_{{task_param.id}}">{{task_param.name}}</a></li>
+                            {% endfor %}
+                        </ul>
+
+                        <div class="tab-content">
+                            {% for task_param in task_params %}
+                            <div id="task_{{task_param.id}}" class="tab-pane fade in {% if forloop.counter < 2 %}active{% endif %}">
+                                {% include task_param.template %}
+                            </div>
+                            {% endfor %}
+                        </div>
+
+
+
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal" onclick="javascript:apply_preprocessor();">Apply</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="modal fade" id="preprocessor-modal" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Apply preprocessor</h4>
+                    </div>
+                    <div class="modal-body">
+                        <b>Select field:</b>
+                        <select id="preprocessor_field" name="preprocessor_field" class="form-control input-sm">
+                            {%for field in fields%}
+                            {%if field.type == 'keyword' or field.type == 'text' %}
+                            <option value="{{field.data}}">{{field.label}}</option>
+                            {%endif%}
+                            {%endfor%}
+                        </select>
+                        <br>
+                        <b>Select preprocessor</b>
+                        <select id="preprocessor_key" name="preprocessor_key" class="form-control input-sm">
+                            {% for preprocessor in enabled_preprocessors %}
+                            <option value="{{preprocessor.key}}">{{preprocessor.name}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal" onclick="javascript:apply_preprocessor();">Apply</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="query-modal" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Query</h4>
+                    </div>
+                    <div class="modal-body" id="query-modal-content"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

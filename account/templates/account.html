@@ -2,8 +2,8 @@
 {% include 'email-modal.html' %}
 <script type="application/javascript" src="{{STATIC_URL}}base/account.js"></script>
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}base/account.css">
-<div class="row">
-	<div class="col-lg-3">
+<div class="grid-2-col-1-row-default">
+	<div class="">
 		{% if request.user.is_authenticated %}
 		<div class="panel">
 			<div class="panel-heading">Change Password</div>
@@ -61,7 +61,7 @@
 		{% endif %}
 	</div>
 
-	<div class="col-lg-9">
+	<div class="">
 		<div class="panel">
 			<div class="panel-heading">Information</div>
 			<div class="panel-body">

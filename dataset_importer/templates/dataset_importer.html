@@ -1,29 +1,30 @@
 {% extends "index.html" %}
 {% block app %}
 
-   
-    <script src="{{STATIC_URL}}jquery.doubleScroll.js"></script>
 
-    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}dataset_importer/dataset_importer.css">
+<script src="{{STATIC_URL}}jquery.doubleScroll.js"></script>
 
-    <div class="col-md-3">
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}dataset_importer/dataset_importer.css">
+<div class='grid-2-col-1-row-default'>
+    <div class="">
         <div class="panel">
             <div class="panel-heading">
                 New Dataset
             </div>
 
             <div class="panel-body">
-            <form action="" id="import-dataset-form" onsubmit="return false">
-                {% include "parameters/formats.html" %}
+                <form action="" id="import-dataset-form" onsubmit="return false">
+                    {% include "parameters/formats.html" %}
 
-                {% include "parameters/data.html" %}
+                    {% include "parameters/data.html" %}
 
-                {% include "parameters/elastic.html" %}
+                    {% include "parameters/elastic.html" %}
 
-                {% include "parameters/preprocessors.html" %}
+                    {% include "parameters/preprocessors.html" %}
 
-                <input type="submit" value="Import" id="import-dataset-btn" class="btn btn-success pull-right" disabled></button>
-            </form>
+                    <input type="submit" value="Import" id="import-dataset-btn" class="btn btn-success pull-right"
+                        disabled></button>
+                </form>
                 <div class="loaderDiv" id="loaderDiv">
                     <div id="loader" class="loader"></div>
                     <p class="statusText" id="status"> Error starting import job! </p>
@@ -33,7 +34,7 @@
         </div>
     </div>
 
-    <div class="col-md-9">
+    <div class="">
         <div class="panel">
             <div class="panel-heading">
                 Import Jobs
@@ -44,10 +45,10 @@
             </div>
         </div>
     </div>
-
-    <script type="application/javascript" src="{{STATIC_URL}}dataset_importer/argument_collectors.js"></script>
-    <script type="application/javascript" src="{{STATIC_URL}}dataset_importer/argument_validators.js"></script>
-    <script type="application/javascript" src="{{STATIC_URL}}dataset_importer/dataset_importer.js"></script>
-{#    https://cdnjs.com/libraries/1000hz-bootstrap-validator#}
+</div>
+<script type="application/javascript" src="{{STATIC_URL}}dataset_importer/argument_collectors.js"></script>
+<script type="application/javascript" src="{{STATIC_URL}}dataset_importer/argument_validators.js"></script>
+<script type="application/javascript" src="{{STATIC_URL}}dataset_importer/dataset_importer.js"></script>
+{# https://cdnjs.com/libraries/1000hz-bootstrap-validator#}
 
 {% endblock %}

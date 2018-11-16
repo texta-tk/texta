@@ -1,20 +1,46 @@
 .grid-wrapper-searcher{
   display: grid;
-/*   grid-template-columns: 0.25fr 1fr; */
-  grid-template-rows: 1700px;
-  grid-auto-columns: 0.25fr 1fr;
+  grid-template-columns: 20% 80%;
+  grid-template-rows: 100%;
 }
 
-.grid-item-content{
+@media screen and (max-width: 1405px) {
+  .grid-wrapper-searcher{
+    grid-template-columns: 25% 75%;
+    grid-template-rows: 100%;
+  }
 }
-.grid-item-sidebar{
+@media screen and (max-width: 992px) {
+  .grid-wrapper-searcher{
+    grid-template-columns: 100%;
+    grid-template-rows: 100% 100%;
+  }
 }
-/* 
-#right {
-    width: 100%;
-    overflow: auto;
+.grid-wrapper-sidebar .bootstrap-select{
+  width: 100% !important;
 }
-
+.grid-wrapper-sidebar .form-inline>.form-group{
+  width: 100%;
+}
+.grid-wrapper-content{
+  width: 100%;
+  height: 100%;
+}
+.searcher-content-wrapper{
+  width: 100%;
+  height: 100%;
+}
+.searcher-content-wrapper>.panel{
+  width: 100%;
+  height: 100%;
+}
+.searcher-content-wrapper>.panel>.panel-body{
+  width: 100%;
+  height: 100%;
+}
+.panel{
+  margin-bottom: 0
+}
 #chart_div {
     width: 100%;
     vertical-align: top;
@@ -99,7 +125,7 @@ textarea {
     max-width: 100%;
     max-height: 100%;
 }
-# Datatables buttons plugin hide columns buttons 
+/*  Datatables buttons plugin hide columns buttons */ 
 .dt-button.buttons-columnVisibility {
   background-color: Transparent;
   background-repeat:no-repeat;
@@ -136,8 +162,8 @@ textarea {
   display: inline-block;
   padding: 5px;
 }
-
-#With scroll head for some reason there are v-a: middle on td  
+/* 
+With scroll head for some reason there are v-a: middle on td  */ 
 .dataTable td {
   vertical-align: top !important;
 }
@@ -165,4 +191,4 @@ textarea {
 
 #saved-searches-panel::-webkit-scrollbar-thumb:hover {
   background: #555; 
-} */
+} 
