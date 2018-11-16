@@ -26,16 +26,16 @@ function createSelectionProps() {
         Array.prototype.forEach.call(spans, function (span, i) {
             // Display fact name and val
             // Select span data attributes
-            s_data = $(span).data()
-            name = s_data['fact_name']
-            val = span.innerText
+            var s_data = $(span).data()
+            var name = s_data['fact_name']
+            var val = span.innerText
             temp.find('.factName').html(name)
             temp.find('.factValue').html(val)
             // Fact delete button
-            btn_delete = temp.find('.factPopoverDeleteBtn');
+            var btn_delete = temp.find('.factPopoverDeleteBtn');
             // Attr because click events don't seem to work
             btn_delete.attr('onclick', `deleteFactArray([{"${name}":"${val}"}], alert=true)`);
-            btn_search = temp.find('.factPopoverSearchBtn');
+            var btn_search = temp.find('.factPopoverSearchBtn');
             btn_search.attr('onclick', `addFactToSearch("${name}","${val}")`);
             // Update span tippy content
             span._tippy.setContent(temp.prop('outerHTML'))
@@ -47,7 +47,7 @@ function createSelectionProps() {
         $("#examples").find('tbody').find('td').mouseup(function () {
             var selection = window.getSelection();
             // Check if selection is bigger than 0
-            if (!selection.isCollapsed && selection.toString().trim().length>1) {
+            if (!selection.isCollapsed && selection.toString().trim().length > 1 && selection.toString().trim().length < 300) {
                 // Limit selection to the selection start element
                 if (selection.baseNode != selection.focusNode) {
                     selection.setBaseAndExtent(selection.baseNode, selection.baseOffset, selection.baseNode, selection.baseNode.length);
@@ -59,21 +59,18 @@ function createSelectionProps() {
                 textSpan.appendChild(range.extractContents());
                 range.insertNode(textSpan);
                 // If selection is not of len 0
-                temp = $('.textPopover').clone().removeAttr("style")
+                var temp = $('.textPopover').clone().removeAttr("style")
                 // Create tippy instance
                 textTippy = initTippy(textSpan, temp.prop('outerHTML'), true)
 
                 var fact_val = selection.toString().trim();
-                loc_spans = getLocSpans(this, fact_val)
+                var loc_spans = getLocSpans(this, fact_val)
                 // Set template value to selected text
                 temp.find('.textValue').html(fact_val)
-                // Save as fact button
-                btn = temp.find('.textPopoverSaveBtn');
-
                 // Get fact_path from td classname, remove _DtCol namesafing
-                fact_path = this.className.trim().replace('DtCol_', '')
+                var fact_path = this.className.trim().replace('DtCol_', '')
                 // id of the document where fact was derived from, and the document where it will be marked in
-                doc_id = $(examplesTable.row(this.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
+                var doc_id = $(examplesTable.row(this.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
                 // add click event for save button in tippy
                 $(document).on('click', '.textPopoverSaveBtn', function () {
                     saveFactFromSelect(fact_val, fact_path, [loc_spans], doc_id);
@@ -90,7 +87,7 @@ function createSelectionProps() {
         // Mousedown for removing spans
         $("#examples").find('tbody').find('td').mousedown(function () {
             var selection = window.getSelection();
-            if (!selection.isCollapsed) {
+            if (!selection.isCollapsed && typeof textTippy != 'undefined') {
                 removeTextSelections(this, textTippy);
             }
         });
@@ -123,14 +120,14 @@ function createSelectionProps() {
         initTippy(spans, temp.prop('outerHTML'))
 
         Array.prototype.forEach.call(spans, function (span, i) {
-            parent = span.parentElement
-            fact_val = span.innerText;
-            fact_path = parent.className.trim().replace('DtCol_', '')
+            var parent = span.parentElement
+            var fact_val = span.innerText;
+            var fact_path = parent.className.trim().replace('DtCol_', '')
             // id of the document where fact was derived from, and the document where it will be marked in
             // get doc_id by taking datatables row data last column(_es_id) value
-            doc_id = $(examplesTable.row(parent.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
-            loc_spans = getLocSpans(parent, fact_val)
-            btn = temp.find('.textPopoverSaveBtn');
+            var doc_id = $(examplesTable.row(parent.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
+            var loc_spans = getLocSpans(parent, fact_val)
+            var btn = temp.find('.textPopoverSaveBtn');
             btn.attr('onclick', `saveFactFromSelect("${fact_val}", "${fact_path}", [${loc_spans}]," ${doc_id}")`);
 
             // Update span tippy content
@@ -146,14 +143,14 @@ function createSelectionProps() {
         return loc_spans
     }
 
-    function initTippy(doms, tip_content, tip_showOnInit=false) {
+    function initTippy(doms, tip_content, tip_showOnInit = false) {
         var tippy_instance = tippy(doms,
-        {
-            content: tip_content,
-            interactive: true,
-            trigger: 'click',
-            showOnInit: tip_showOnInit,
-        });
+            {
+                content: tip_content,
+                interactive: true,
+                trigger: 'click',
+                showOnInit: tip_showOnInit,
+            });
 
         return tippy_instance
     }
@@ -163,18 +160,37 @@ function createSelectionProps() {
 function saveFactFromSelect(fact_value, fact_field, fact_span, doc_id) {
     // last() to avoid the dummy template selector
     fact_name = $('.textName').last().val();
-    saveAsFact(fact_name.toUpperCase().trim(), fact_value.trim(), fact_field.trim(), fact_span, doc_id.trim());
+    if (validateWithFeedback(fact_name.toUpperCase().trim(), fact_value.trim(), fact_field.trim(), fact_span, doc_id.trim())) {
+        saveOptionsSwal(fact_name.toUpperCase().trim(), fact_value.trim(), fact_field.trim(), fact_span, doc_id.trim());
+        // saveAsFact(fact_name.toUpperCase().trim(), fact_value.trim(), fact_field.trim(), fact_span, doc_id.trim());
+    }
 }
 
-function saveAsFact(fact_name, fact_value, fact_field, fact_span, doc_id) {
-    if (fact_name.length > 15 || fact_name == '' || fact_value == '') {
-        swal('Warning!', 'Fact name longer than 15 characters, or values are empty!', 'warning');
-    } else if (fact_field == '_es_id') {
-        swal('Warning!', `Saving facts in ${fact_field} not allowed`, 'warning')
-    } else {
+
+function saveAsFact(method, fact_name, fact_value, fact_field, fact_span, doc_id) {
+    if (validateWithFeedback(fact_name, fact_value, fact_field, fact_span, doc_id)) {
+        var title = '';
+        var html = '';
+        switch(method) {
+            case 'select_only':
+                title = 'Are you sure you want to save this as a fact?';
+                html = `The fact <b>${fact_name}: ${fact_value}</b> will be added as a fact to field <b>${fact_field}</b>`;
+                break;
+            case 'all_in_doc':
+                title = 'Are you sure you want to save all exact matches of selected value in this document?';
+                html = `The fact <b>${fact_name}: ${fact_value}</b> will be added as a fact to field <b>${fact_field}</b> for <b> all matches in this document </b>`;
+                break;
+            case 'all_in_dataset':
+                title = 'Are you sure you want to save all exact matches of selected value in this dataset?';
+                html = `The fact <b>${fact_name}: ${fact_value}</b> will be added as a fact to field <b>${fact_field}</b> for <b> all matches in the dataset </b>`;
+                break;
+            default:
+                swal('Warning!', 'No saving method selected!', 'warning');
+                return false;
+        }
         swal({
-            title: 'Are you sure you want to save this as a fact?',
-            html: `The fact <b>${fact_name}: ${fact_value}</b> will be added as a fact to field <b>${fact_field}</b>`,
+            title: title,
+            html: html,
             type: 'question',
             showCancelButton: true,
             confirmButtonColor: '#73AD21',
@@ -195,15 +211,16 @@ function saveAsFact(fact_name, fact_value, fact_field, fact_span, doc_id) {
                     type: 'POST',
                     contentType: false,
                     processData: false,
-                    beforeSend: function() {
+                    beforeSend: function () {
                         const notification = swal.mixin({
                             toast: true, position: 'top',
-                            showConfirmButton: false, timer: 3000});
+                            showConfirmButton: false, timer: 3000
+                        });
 
                         notification({
                             type: 'info',
                             title: 'Starting job',
-                            text: 'Adding fact to dataset..'
+                            text: 'Adding fact..'
                         })
                     },
                     success: function () {
@@ -227,35 +244,46 @@ function saveAsFact(fact_name, fact_value, fact_field, fact_span, doc_id) {
     }
 }
 
+async function saveOptionsSwal(fact_name, fact_value, fact_field, fact_span, doc_id) {
+    // inputOptions can be an object or Promise
+    const inputOptions = new Promise((resolve) => {
+        resolve({
+            'select_only': 'Only selected value in this document',
+            'all_in_doc': 'All exact matches in this document',
+            'all_in_dataset': 'All exact matches in dataset'
+        })
+    })
 
-/* Looks like method is not compatible with just text search
-fact_span = getParentChildInd(spans, parent, span, lens);
-function getParentChildInd(original, parent, child, lens) {
-    parents = Array.prototype.slice.call($(original).parent())
-    parent_ind = parents.indexOf(parent)
-    child_ind = Array.prototype.slice.call(parent.children).indexOf(child)
-    return lens[parent_ind][child_ind]
+    const { value: save_method } = await swal({
+        title: 'Select saving method',
+        input: 'radio',
+        inputOptions: inputOptions,
+        inputValidator: (value) => {
+            return !value && 'You need to choose something!'
+        }
+    })
+
+    if (save_method) {
+        swal({ html: 'You selected: ' + save_method })
+            saveAsFact(save_method, fact_name.toUpperCase().trim(), fact_value.trim(), fact_field.trim(), fact_span, doc_id.trim());
+    }
 }
 
-lens = countSpanLens(spans)
-function countSpanLens(spans) {
-    parents = spans.parent()
-    lens = []
-    Array.prototype.forEach.call(parents, function (parent, i) {
-        // 0 so adding as cumsum on first iter wouldn't return NaN
-        parent_lens = [0]
-        Array.prototype.forEach.call(parent.children, function (span, i) {
-            // append to array, add to cumulative sum
-            parent_lens = [...parent_lens, parent_lens[parent_lens.length-1] + span.innerText.length]
-        });
-        // remove first dummy 0 value
-        parent_lens.shift()
-        lens = [...lens, parent_lens]
-    });
-    return lens;
-    // For each parent create an array entry, that contains span lens in cumsum format, eg [[5, 10, ]]
-    // Get lens of all child spans, maybe cumsum
-    // Get index of the selected parent and in it span, match it to its len value,
-    // Start indexof from that len value
+function validateWithFeedback(fact_name, fact_value, fact_field, fact_span, doc_id) {
+    if (typeof doc_id == 'undefined' || doc_id == '') {
+        swal('Warning!', 'Document id is invalid', 'warning');
+        return false;
+    }
+    if ((fact_span[1] - fact_span[0]) < 2 || (fact_span[1] - fact_span[0]) > 300) {
+        swal('Warning!', 'Fact length shorter than 2 or longer than 300!', 'warning');
+        return false;
+    }
+    if (fact_name.length > 15 || fact_name == '' || fact_value == '') {
+        swal('Warning!', 'Fact name longer than 15 characters, or values are empty!', 'warning');
+        return false;
+    } else if (fact_field == '_es_id') {
+        swal('Warning!', `Saving facts in ${fact_field} not allowed`, 'warning')
+        return false;
+    }
+    return true;
 }
-*/
