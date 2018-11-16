@@ -1,3 +1,15 @@
+.grid-wrapper-searcher{
+  display: grid;
+/*   grid-template-columns: 0.25fr 1fr; */
+  grid-template-rows: 1700px;
+  grid-auto-columns: 0.25fr 1fr;
+}
+
+.grid-item-content{
+}
+.grid-item-sidebar{
+}
+/* 
 #right {
     width: 100%;
     overflow: auto;
@@ -60,8 +72,7 @@
 }
 
 th {
-  /* border-top: 1px solid #dddddd; */
-  /* border-bottom: 1px solid #dddddd; */
+
   overflow: hidden;
   border-right: 1px solid #f1f1f1;
 }
@@ -88,7 +99,7 @@ textarea {
     max-width: 100%;
     max-height: 100%;
 }
-/* Datatables buttons plugin hide columns buttons */
+# Datatables buttons plugin hide columns buttons 
 .dt-button.buttons-columnVisibility {
   background-color: Transparent;
   background-repeat:no-repeat;
@@ -126,7 +137,7 @@ textarea {
   padding: 5px;
 }
 
-/* With scroll head for some reason there are v-a: middle on td  */
+#With scroll head for some reason there are v-a: middle on td  
 .dataTable td {
   vertical-align: top !important;
 }
@@ -136,22 +147,22 @@ textarea {
   max-height: 250px ;
   display: block;
 }
-/* width */
+
 #saved-searches-panel::-webkit-scrollbar {
   width: 10px;
 }
 
-/* Track */
+
 #saved-searches-panel::-webkit-scrollbar-track {
   background: #f1f1f1; 
 }
 
-/* Handle */
+
 #saved-searches-panel::-webkit-scrollbar-thumb {
   background: #888; 
 }
 
-/* Handle on hover */
+
 #saved-searches-panel::-webkit-scrollbar-thumb:hover {
   background: #555; 
-}
+} */

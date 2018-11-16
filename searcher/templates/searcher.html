@@ -5,8 +5,8 @@
 <script type="application/javascript" src="{{STATIC_URL}}local-cache.js"></script>
 <script type="application/javascript" src="{{STATIC_URL}}searcher/searcher.js"></script>
 
-	<div class="row">
-		<div class="col-lg-3">
+	<div class="grid-wrapper-searcher">
+		<div class="grid-item-sidebar">
 			<form id="filters">
 			<div class="panel">
 				<div class="panel-heading">Current Search <div class="pull-right"><span class="glyphicon glyphicon-floppy-disk pointer" onclick="javascript:save();"></span> <span onclick="get_query();" data-toggle="modal" data-target="#query-modal" class="glyphicon glyphicon-sunglasses pointer"></span></div></div>
@@ -460,7 +460,7 @@
 		</form>
 	
 		</div>
-		<div class="col-lg-9">
+		<div class="grid-item-content">
 			<div class="panel">
 				<div class="panel-heading">
                     Results
