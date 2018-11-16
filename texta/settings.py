@@ -16,6 +16,7 @@
 
 from time import strftime
 import json
+import ast
 import os
 
 # Path to TEXTA's root directory. It is used in other paths as a prefix.
@@ -27,6 +28,7 @@ BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 # When this is true, the scoro_preprocessor is enabled
 #
 SCORO_PREPROCESSOR_ENABLED = os.getenv('TEXTA_SCORO_PREPROCESSOR_ENABLED', False)
+SCORO_PREPROCESSOR_ENABLED = ast.literal_eval(str(SCORO_PREPROCESSOR_ENABLED))
 
 # When this is true, email confirmation is enabled
 #
