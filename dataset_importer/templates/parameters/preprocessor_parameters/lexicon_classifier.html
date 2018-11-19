@@ -1,7 +1,7 @@
-<div class="lexicon-classifier-wrapper">
+<div class="task-manager-grid-wrapper ">
     <div class="grid-i">
         <label class="control-label" for="lexicon-classifier-processor-feature-name">Fields:</label>
-        <div>
+        <div class="select-wrapper">
             {% if fields %}              
             <select class="selectpicker form-control input-sm" multiple  data-selected-text-format="count" id="lexicon-classidier-feature-names" name="lexicon_classifier_feature_names">
                 {% for field in fields %}
@@ -22,7 +22,7 @@
 
     <div class="grid-i">
         <label class="control-label" for="lexicon-classifier-processor-lexicons">Lexicons:</label>
-        <div>
+        <div class="select-wrapper">
             <select id="lexicon-classifier-processor-lexicons" name="lexicon_classifier_lexicons" class="selectpicker form-control input-sm"
                 multiple data-selected-text-format="count">
                 {% for lex in preprocessor.enabled_lexicons %}
@@ -44,7 +44,7 @@
     <div class="c-lex-content-wrapper hidden">
         <div class="grid-i">
             <label class="control-label " for="lexicon-classifier-processor-counterlexicons">C-Lexicon:</label>
-            <div>
+            <div class="select-wrapper">
                 <select id="lexicon-classifier-processor-counterlexicons" name="lexicon_classifier_counterlexicons"
                     class="form-control input-sm">
                     {% for lex in preprocessor.enabled_lexicons %}

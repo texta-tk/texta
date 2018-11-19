@@ -1,7 +1,7 @@
 <!--<script type="application/javascript" src="{{STATIC_URL}}task_manager/task_manager.js"></script>-->
 
 
-<div class="scoro-task-manager-grid-wrapper form-horizontal">
+<div class="task-manager-grid-wrapper form-horizontal">
   <div class="grid-i">
     <label class="control-label " for="scoro-preprocessor-feature-names">Fields:</label>
     <div class='select-wrapper'>
@@ -82,7 +82,7 @@
   </div>
 
   <!-- show if sentiment analysis selected -->
-  <div class="scoro-task-manager-grid-wrapper if-sentiment hidden well">
+  <div class="task-manager-grid-wrapper if-sentiment hidden well">
     <div class="grid-i">
       <label class="control-label " for="scoro-preprocessor-sent-analysis-method">Method:</label>
       <div class='select-wrapper'>
@@ -99,7 +99,7 @@
     </div>
 
     <!-- Show, if method == Lexicon-based -->
-    <div class="scoro-task-manager-grid-wrapper if-lexicon-based">
+    <div class="task-manager-grid-wrapper if-lexicon-based">
       <div class="grid-i">
         <label class="control-label " for="scoro-preprocessor-sentiment-lex">Sentiment lex:</label>
         <div class='select-wrapper'>
@@ -222,7 +222,7 @@
     <span data-toggle="tooltip" data-placement="bottom" title="Apply keyword extraction." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
   </div>
 
-  <div class='scoro-task-manager-grid-wrapper if-keyword-extraction well hidden'>
+  <div class='task-manager-grid-wrapper if-keyword-extraction well hidden'>
 
 
     <div class="grid-i">
@@ -244,7 +244,7 @@
         class="glyphicon glyphicon-question-sign texta-tooltip"></span>
     </div>
 
-    <div class='scoro-task-manager-grid-wrapper if-rake-wrapper hidden well deeper-well'>
+    <div class='task-manager-grid-wrapper if-rake-wrapper hidden well deeper-well'>
       <!-- Show, if Rake = selected -->
       <div class="grid-i">
         <label class="control-label " for="scoro-preprocessor-rake-phrase-len">Max phrase length:</label>
@@ -265,7 +265,7 @@
         <span data-toggle="tooltip" data-placement="bottom" title="Use background information of other documents for keyword extraction."
           class="glyphicon glyphicon-question-sign texta-tooltip"></span>
       </div>
-      <div class='scoro-task-manager-grid-wrapper if-bg-info-wrapper hidden'>
+      <div class='task-manager-grid-wrapper if-bg-info-wrapper hidden'>
         <!-- Show, if Rake=selected and bg info=selected -->
         <div class="grid-i">
           <label class="control-label " for="scoro-preprocessor-rake-bg-min-term-freq">Min term freq:</label>
@@ -329,7 +329,7 @@
     </div>
 
     <!-- show, if significant words = selected-->
-    <div class='scoro-task-manager-grid-wrapper if-significant-words-wrapper well deeper-well hidden'>
+    <div class='task-manager-grid-wrapper if-significant-words-wrapper well deeper-well hidden'>
       <div class="grid-i">
         <label class="control-label " for="scoro-preprocessor-signif-min-term-freq">Min term freq:</label>
         <div class="slider-wrapper">
@@ -391,7 +391,7 @@
     </div>
 
     <!-- Show, if Noun = selected -->
-    <div class='scoro-task-manager-grid-wrapper if-nouns-wrapper well deeper-well hidden'>
+    <div class='task-manager-grid-wrapper if-nouns-wrapper well deeper-well hidden'>
       <div class="grid-i">
         <label class="control-label " for="scoro-preprocessor-noun-bg-info">Use background info</label>
         <div>
@@ -401,7 +401,7 @@
         <span data-toggle="tooltip" data-placement="bottom" title="Use background information of other documents for keyword extraction."
           class="glyphicon glyphicon-question-sign texta-tooltip"></span>
       </div>
-      <div class='scoro-task-manager-grid-wrapper if-noun-bg-info-selected hidden'>
+      <div class='task-manager-grid-wrapper if-noun-bg-info-selected hidden'>
         <!-- Show, if noun = selected and bg info=selected -->
         <div class="grid-i">
           <label class="control-label " for="scoro-preprocessor-noun-bg-min-term-freq">Min term freq:</label>
