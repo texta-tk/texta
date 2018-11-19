@@ -204,6 +204,7 @@ function saveAsFact(method, fact_name, fact_value, fact_field, fact_span, doc_id
                 formElement.append('fact_field', fact_field);
                 formElement.append('fact_span', fact_span);
                 formElement.append('doc_id', doc_id);
+                formElement.append('method', method);
 
                 $.ajax({
                     url: PREFIX + '/fact_to_doc',

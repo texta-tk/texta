@@ -49,6 +49,7 @@ from searcher.view_functions.aggregations.agg_manager import AggManager
 from searcher.view_functions.build_search.build_search import execute_search
 from searcher.view_functions.cluster_search.cluster_manager import ClusterManager
 from searcher.view_functions.general.fact_manager import FactManager
+from searcher.view_functions.general.fact_manager import FactAdder
 from searcher.view_functions.general.get_saved_searches import extract_constraints
 from searcher.view_functions.general.export_pages import export_pages
 from searcher.view_functions.general.searcher_utils import collect_map_entries, get_fields_content, get_fields
@@ -338,6 +339,7 @@ def tag_documents(request):
 @login_required
 def fact_to_doc(request):
     """Add a fact to a certain document with given fact, span, and the document _id"""
+    method = request.POST['method'].strip()
     fact_name = request.POST['fact_name'].strip()
     fact_value = request.POST['fact_value'].strip()
     fact_field = request.POST['fact_field'].strip()
@@ -346,10 +348,12 @@ def fact_to_doc(request):
     doc_id = request.POST['doc_id'].strip()
     es_params = request.POST
 
+    
     # Validate that params aren't empty strings
-    if len(fact_name)>0 and len(fact_value)>0 and len(fact_field)>0 and len(doc_id)>0 and len(fact_span)>0:
-        fact_m = FactManager(request)
-        fact_m.fact_to_doc(es_params, fact_name, fact_value, fact_field, fact_span, doc_id)
+    if len(fact_name)>0 and len(fact_value)>0 and len(fact_field)>0 and len(doc_id)>0 and len(fact_span)>0 and len(method)>0:
+        # fact_m = FactManager(request
+        fact_a = FactAdder(request, es_params, fact_name, fact_value, fact_field, fact_span, doc_id, method)
+        fact_a.add_facts()
     else:
         return HttpResponseBadRequest()
 
