@@ -17,19 +17,35 @@ body {
     display: grid;
     grid-template-columns: 20% 80%;
     grid-template-rows: 100%;
+    margin: -1px;
 }
+
 @media screen and (max-width: 1405px) {
-    .grid-2-col-1-row-default{
-      grid-template-columns: 25% 75%;
-      grid-template-rows: 100%;
+    .grid-2-col-1-row-default {
+        grid-template-columns: 25% 75%;
+        grid-template-rows: 100%;
     }
-  }
-  @media screen and (max-width: 992px) {
-    .grid-2-col-1-row-default{
-      grid-template-columns: 100%;
-      grid-template-rows: 100% 100%;
+}
+
+@media screen and (max-width: 992px) {
+    .grid-2-col-1-row-default {
+        grid-template-columns: 100%;
+        grid-template-rows: 100% 100%;
     }
-  }
+}
+
+.panel-heading {
+    border-radius: 0px
+}
+
+.panel-body {
+    border-radius: 0px
+}
+.panel{
+    border-radius: 0px
+}
+/* end of global styles */
+
 .grid-item-navbar {
     grid-area: navbar;
 }

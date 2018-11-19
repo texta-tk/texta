@@ -126,3 +126,7 @@
 #params-lexicon_classifier {
     padding: 5px;
 }
+.form-group >.col-sm-12 >.row{
+    margin-bottom: 8px;
+    margin-top:8px
+}

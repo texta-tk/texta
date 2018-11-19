@@ -124,11 +124,11 @@ $(document).on('mousemove', function (e) {
     window.MOUSE_Y = e.pageY
 })
 
-function in_array (value, array) {
+function in_array(value, array) {
     return array.indexOf(value) > -1
 }
 
-var getUrlParameter = function getUrlParameter (sParam) {
+var getUrlParameter = function getUrlParameter(sParam) {
     var sPageURL = decodeURIComponent(window.location.search.substring(1))
 
     var sURLVariables = sPageURL.split('&')
@@ -146,7 +146,7 @@ var getUrlParameter = function getUrlParameter (sParam) {
     }
 }
 
-function get_query () {
+function get_query() {
     var formElement = document.getElementById('filters')
     var request = new XMLHttpRequest()
 
@@ -163,17 +163,17 @@ function get_query () {
     request.send(new FormData(formElement), true)
 }
 
-function search_as_you_type_query () {
+function search_as_you_type_query() {
     var search_as_you_type_selection = $('#search_as_you_type').prop('checked')
     if (search_as_you_type_selection) {
         clearTimeout(key_timer)
-        key_timer = setTimeout(function validate () {
+        key_timer = setTimeout(function validate() {
             query()
         }, 500)
     }
 }
 
-function render_saved_search (search_id) {
+function render_saved_search(search_id) {
     $.get(PREFIX + '/get_srch_query', {
         search_id: search_id
     }, function (data) {
@@ -186,7 +186,7 @@ function render_saved_search (search_id) {
     })
 }
 
-function filter_constraint_field (element_to_filter) {
+function filter_constraint_field(element_to_filter) {
     if (element_to_filter) {
         field_type = JSON.parse(element_to_filter).type
         $('#constraint_field option').each(function () {
@@ -204,7 +204,7 @@ function filter_constraint_field (element_to_filter) {
     $('#constraint_field').selectpicker('refresh')
 }
 
-function make_date_field (date_range_min, date_range_max, field_data) {
+function make_date_field(date_range_min, date_range_max, field_data) {
     counter++
     new_id = 'field_' + counter.toString()
     field_with_id = '#field_' + counter.toString()
@@ -233,7 +233,7 @@ function make_date_field (date_range_min, date_range_max, field_data) {
     $(field_with_id).show()
 }
 
-function make_fact_field (field_data) {
+function make_fact_field(field_data) {
     counter++
     new_id = 'field_' + counter.toString()
     var fieldFullId = 'fact_txt_' + counter.toString()
@@ -251,7 +251,7 @@ function make_fact_field (field_data) {
     $(field_with_id).show()
 }
 
-function make_text_field (field_data) {
+function make_text_field(field_data) {
     counter++
     new_id = 'field_' + counter.toString()
     var fieldFullId = 'fact_txt_' + counter.toString()
@@ -276,7 +276,7 @@ function make_text_field (field_data) {
     $(field_with_id).show()
 }
 
-function make_str_fact_field (field_data) {
+function make_str_fact_field(field_data) {
     var counterStr = counter.toString()
 
     if (factValSubCounter[counterStr] === undefined) {
@@ -297,7 +297,7 @@ function make_str_fact_field (field_data) {
     $('#field_' + counter.toString()).show()
 }
 
-function render_saved_search_field (field_data, min_date, max_date) {
+function render_saved_search_field(field_data, min_date, max_date) {
     if (field_data.constraint_type === 'date') {
         make_date_field(min_date, max_date, field_data)
         $('#field_' + counter.toString() + ' #daterange_from_' + counter.toString()).val(field_data.start_date)
@@ -331,7 +331,7 @@ function render_saved_search_field (field_data, min_date, max_date) {
     }
 }
 
-function derive_text_node_value (field_data) {
+function derive_text_node_value(field_data) {
     console.log(field_data)
     if (field_data.constraint_type === 'string' || field_data.constraint_type === 'date') {
         return field_data.field.replace('.', ' → ')
@@ -344,7 +344,7 @@ function derive_text_node_value (field_data) {
     }
 }
 
-function lookup (fieldFullId, fieldId, action, lookup_types) {
+function lookup(fieldFullId, fieldId, action, lookup_types) {
     var content = $('#' + fieldFullId).val()
 
     if (fieldFullId.match('^fact_constraint_val_')) {
@@ -374,7 +374,7 @@ function lookup (fieldFullId, fieldId, action, lookup_types) {
     })
 }
 
-function process_suggestions (suggestions, suggestions_container, field_id, lookup_types) {
+function process_suggestions(suggestions, suggestions_container, field_id, lookup_types) {
     var suggestions = JSON.parse(suggestions)
 
     $.each(suggestions, function (lookup_type, lookup_suggestions) {
@@ -396,7 +396,7 @@ function process_suggestions (suggestions, suggestions_container, field_id, look
     })
 }
 
-function insert (resource_id, suggestionId, descriptive_term, lookup_type) {
+function insert(resource_id, suggestionId, descriptive_term, lookup_type) {
     if (resource_id) {
         if (lookup_type == 'CONCEPT') {
             suggestion_prefix = '@C'
@@ -440,7 +440,7 @@ function insert (resource_id, suggestionId, descriptive_term, lookup_type) {
     }
 }
 
-function add_field (date_range_min, date_range_max, submitted_field_data) {
+function add_field(date_range_min, date_range_max, submitted_field_data) {
     var field = Array()
     $('#constraint_field option').filter(':selected').each(function () {
         var val = $(this).val()
@@ -554,7 +554,7 @@ function add_field (date_range_min, date_range_max, submitted_field_data) {
     $('#field_' + counter.toString()).show()
 }
 
-function addFactValueField (counterStr, subCounterStr, field_path, field_name, value_type) {
+function addFactValueField(counterStr, subCounterStr, field_path, field_name, value_type) {
     var idCombination = counterStr + '_' + subCounterStr
     if (value_type == 'str') {
         var headingSuffix = ' [fact_text_values]'
@@ -611,13 +611,13 @@ function addFactValueField (counterStr, subCounterStr, field_path, field_name, v
     $('#fact_constraint_val_' + idCombination).attr('onblur', 'hide("' + valIdCombination + '");')
 }
 
-function getFieldContent (fieldId) {
+function getFieldContent(fieldId) {
     var val = $('#' + fieldId).val()
 
     return val
 }
 
-function addFactValueFieldConstraint (counterStr, field_path) {
+function addFactValueFieldConstraint(counterStr, field_path) {
     if (factValSubCounter[counterStr] === undefined) {
         var subCounter = 1
     } else {
@@ -679,11 +679,11 @@ function addFactValueFieldConstraint (counterStr, field_path) {
     factValSubCounter[counterStr] = factValSubCounter[counterStr] + 1
 }
 
-function remove_fact_rule (rule_id) {
+function remove_fact_rule(rule_id) {
     $('#fact_val_rule_' + rule_id).remove()
 }
 
-function select_all_fields () {
+function select_all_fields() {
     if ($('#check_all_mapping_fields').prop('checked') == true) {
         $.each($("[name^='mapping_field_']"), function () {
             $(this).prop('checked', true)
@@ -695,7 +695,7 @@ function select_all_fields () {
     }
 }
 
-function hide (id) {
+function hide(id) {
     var separatorIdx = id.indexOf('_')
     if (separatorIdx > -1) {
         var fieldId = id.substring(0, separatorIdx)
@@ -717,14 +717,14 @@ function hide (id) {
     // });
 }
 
-function remove_field (id) {
+function remove_field(id) {
     $('#' + id).remove()
 }
 
-function query () {
+function query() {
     var formElement = document.getElementById('filters')
     var request = new XMLHttpRequest()
-
+    var data
     request.onreadystatechange = function () {
         if (request.readyState == 4 && request.status == 200) {
             $('#right').html(request.responseText)
@@ -739,27 +739,10 @@ function query () {
                 'fnServerParams': function (aoData) {
                     aoData.push({
                         'name': 'filterParams',
-                        'value': JSON.stringify($('#filters').serializeArray())
+                        'value': data = JSON.stringify($('#filters').serializeArray())
                     })
                 },
-                buttons: [{
-                    extend: 'columnVisibility',
-                    text: 'SHOW ALL',
-                    visibility: true,
-                    attr: {
-                        class: 'dt-button buttons-columnVisibility toggleAllButton'
-                    }
-                },
-                {
-                    extend: 'columnVisibility',
-                    text: 'HIDE ALL',
-                    visibility: false,
-                    attr: {
-                        class: 'dt-button buttons-columnVisibility toggleAllButton'
-                    }
-                },
-                'columnsToggle'
-                ],
+                buttons: [],
                 'oLanguage': {
                     'sProcessing': 'Loading...'
                 },
@@ -772,12 +755,48 @@ function query () {
                     })
                 },
                 'stateSave': true,
-                'stateSaveParams': function (settings, data) {
+                /* 'stateSaveParams': function (settings, data) {
                     data.start = 0
+                }, */
+                'stateLoadParams': function (settings, data) {
+                    $('#constraint_field').selectpicker('deselectAll')
+                    for (var i = 0, ien = data.columns.length; i < ien; i++) {
+                        if (data.columns[i].visible) {
+                            updateSelectColumnFilter(i)
+                        }
+                    }
+                    $('#toggle-column-select').selectpicker('refresh')
                 },
                 'scrollX': true
             })
-
+            var $select = $('#toggle-column-select')
+            $select.selectpicker({
+                style: 'btn btn-default',
+                maxWidth: 150
+            })
+            $select.selectpicker('selectall')
+            $('#right .bs-deselect-all').on('click', function () {
+                examplesTable.columns().visible(false)
+            })
+            $('#right .bs-select-all').on('click', function () {
+                examplesTable.columns().visible(true)
+            })
+            $select.on('changed.bs.select', function (e, clickedIndex, newValue, oldValue) {
+                /* if select all / deselect are not the callers */
+                if (newValue != null) {
+                    var selected = $(this).find('option').eq(clickedIndex).text()
+                    var indx
+                    var active = examplesTable
+                        .columns(function (idx, data, node) {
+                            if (node.textContent === selected) {
+                                indx = idx
+                                return true
+                            }
+                        }).data()
+                    examplesTable.column(indx).visible(!examplesTable.column(indx).visible())
+                }
+            })
+            $select.selectpicker('refresh')
             var dataset = $('#dataset').val()
             var mapping = $('#mapping').val()
             loadUserPreference(dataset, mapping)
@@ -791,7 +810,11 @@ function query () {
     request.send(new FormData(formElement))
 }
 
-function cluster_query () {
+function updateSelectColumnFilter(idx) {
+    $(`#toggle-column-select :nth-child(${idx + 1})`).prop('selected', true)
+}
+
+function cluster_query() {
     var formElement = document.getElementById('filters')
     var request = new XMLHttpRequest()
 
@@ -806,7 +829,7 @@ function cluster_query () {
     request.send(new FormData(formElement))
 }
 
-function mlt_query () {
+function mlt_query() {
     var formElement = document.getElementById('filters')
     var mlt_field = $("select[id='mlt_fields']").val()
     var request = new XMLHttpRequest()
@@ -825,17 +848,17 @@ function mlt_query () {
     }
 }
 
-function accept_document (id) {
+function accept_document(id) {
     $('#docs').val($('#docs').val() + id + '\n')
     $('#row_' + id).remove()
 }
 
-function reject_document (id) {
+function reject_document(id) {
     $('#docs_rejected').val($('#docs_rejected').val() + id + '\n')
     $('#row_' + id).remove()
 }
 
-function aggregate () {
+function aggregate() {
     var container = $('#right')
     container.empty()
     container.append('Loading...')
@@ -857,7 +880,7 @@ function aggregate () {
     request.send(new FormData(formElement), true)
 }
 
-function apply_preprocessor () {
+function apply_preprocessor() {
     var formElement = document.getElementById('filters')
 
     $('#preprocessor_field').appendTo(formElement)
@@ -875,7 +898,7 @@ function apply_preprocessor () {
     request.send(new FormData(formElement), true)
 }
 
-function factGraph () {
+function factGraph() {
     var container = $('#right')
     container.empty()
     container.append('Loading...')
@@ -892,7 +915,7 @@ function factGraph () {
     request.send(new FormData(formElement), true)
 }
 
-function displayAgg (response) {
+function displayAgg(response) {
     var data = response
     var container = $('#right')
     container.empty()
@@ -921,7 +944,7 @@ function displayAgg (response) {
     }
 }
 
-function drawTimeline (data) {
+function drawTimeline(data) {
     var timeline_children_container = $('<div></div>')
 
     new Morris.Line({
@@ -944,7 +967,7 @@ function drawTimeline (data) {
     $('#right').append(timeline_children_container)
 }
 
-function show_children (data, date, timeline_children_container) {
+function show_children(data, date, timeline_children_container) {
     timeline_children_container.empty()
     $.each(data, function (i, data_list) {
         var responseContainers = [$("<div style='float: left; padding-left: 20px;'></div>")]
@@ -997,7 +1020,7 @@ function show_children (data, date, timeline_children_container) {
     })
 }
 
-function drawStringAggs (data, type = null) {
+function drawStringAggs(data, type = null) {
     var response_container = $("<div style='float: left; padding-left: 20px;'></div>")
     var table_container = $("<div style='float: left'></div>")
     var children_container = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>")
@@ -1034,7 +1057,7 @@ function drawStringAggs (data, type = null) {
 
 var selectedFactCheckboxes = []
 
-function factDeleteCheckbox (checkbox) {
+function factDeleteCheckbox(checkbox) {
     inArray = false
     if (!selectedFactCheckboxes.length > 0) {
         selectedFactCheckboxes.push(checkbox)
@@ -1053,7 +1076,7 @@ function factDeleteCheckbox (checkbox) {
     }
 }
 
-function deleteFactsViaCheckboxes (checkboxes) {
+function deleteFactsViaCheckboxes(checkboxes) {
     factArray = []
     for (var i = 0; i < checkboxes.length; i++) {
         fact = JSON.parse(checkboxes[i].name.replace(/'/g, '"'))
@@ -1062,7 +1085,7 @@ function deleteFactsViaCheckboxes (checkboxes) {
     deleteFactArray(factArray, source = 'aggs')
 }
 
-function ajaxDeleteFacts (form_data, factArray) {
+function ajaxDeleteFacts(form_data, factArray) {
     $.ajax({
         url: PREFIX + '/delete_facts',
         data: form_data,
@@ -1097,7 +1120,7 @@ function ajaxDeleteFacts (form_data, factArray) {
     })
 }
 
-function deleteFactArray (factArray, source = 'aggs') {
+function deleteFactArray(factArray, source = 'aggs') {
     if (factArray.length >= 1) {
         var request = new XMLHttpRequest()
         var form_data = new FormData()
@@ -1129,7 +1152,7 @@ function deleteFactArray (factArray, source = 'aggs') {
     }
 }
 
-function addFactToSearch (fact_name, fact_val) {
+function addFactToSearch(fact_name, fact_val) {
     $('#constraint_field option').each(function () {
         if ($(this).val() != '') {
             if (JSON.parse($(this).val())['type'] == 'fact_str_val') {
@@ -1162,7 +1185,7 @@ function addFactToSearch (fact_name, fact_val) {
     $('#fact_constraint_val_' + suggestion_id).val(fact_val)
 }
 
-function show_string_children (data, children_container, grandchildren_container, row_key, type = null) {
+function show_string_children(data, children_container, grandchildren_container, row_key, type = null) {
     children_container.empty()
     grandchildren_container.empty()
 
@@ -1236,7 +1259,7 @@ function show_string_children (data, children_container, grandchildren_container
     children_container.removeClass('hidden')
 }
 
-function change_agg_field (field_nr) {
+function change_agg_field(field_nr) {
     var field_component = $('#agg_field_' + field_nr)
     var selected_field = field_component.val()
     var field_data = JSON.parse(selected_field)
@@ -1270,7 +1293,7 @@ function change_agg_field (field_nr) {
     })
 }
 
-function toggle_agg_field_2 (action) {
+function toggle_agg_field_2(action) {
     if (action == 'add') {
         $('#agg_field_2_container').removeClass('hidden')
         $('#agg_field_2_button').addClass('hidden')
@@ -1282,7 +1305,7 @@ function toggle_agg_field_2 (action) {
     }
 }
 
-function remove_by_query () {
+function remove_by_query() {
     var formElement = document.getElementById('filters')
     var request = new XMLHttpRequest()
 
@@ -1312,7 +1335,7 @@ function remove_by_query () {
     request.send(new FormData(formElement), true)
 }
 
-function save () {
+function save() {
     const prompt = async () => {
         const {
             value: description
@@ -1326,7 +1349,10 @@ function save () {
             }
         })
         if (description) {
-            swal({ type: 'success', title: 'Successfully saved search.' })
+            swal({
+                type: 'success',
+                title: 'Successfully saved search.'
+            })
 
             $('#search_description').val(description)
             var formElement = document.getElementById('filters')
@@ -1344,7 +1370,7 @@ function save () {
     prompt()
 }
 
-function get_searches () {
+function get_searches() {
     var request = new XMLHttpRequest()
 
     var formElement = document.getElementById('filters')
@@ -1361,12 +1387,12 @@ function get_searches () {
     request.send(new FormData(formElement), true)
 }
 
-function remove_search_callback (response_text) {
+function remove_search_callback(response_text) {
     var search_div = document.getElementById('search_' + response_text)
     search_div.parentNode.removeChild(search_div)
 }
 
-function display_searches (searches) {
+function display_searches(searches) {
     var searches_container = document.getElementById('saved_searches')
 
     while (searches_container.firstChild) {
@@ -1466,9 +1492,8 @@ function display_searches (searches) {
     }
 }
 
-function loadUserPreference (dataset, mapping) {
+function loadUserPreference(dataset, mapping) {
     var hiddenFeatures = localStorage.getCacheItem('hiddenFeatures_' + dataset + '_' + mapping)
-
     if (hiddenFeatures) {
         for (var featureIdx in hiddenFeatures) {
             if (hiddenFeatures.hasOwnProperty(featureIdx)) {
@@ -1478,7 +1503,7 @@ function loadUserPreference (dataset, mapping) {
     }
 }
 
-function tag_by_query () {
+function tag_by_query() {
     if ($('#tag_name')[0].checkValidity() && $('#tag_value')[0].checkValidity() && $('#tag_field')[0].checkValidity()) {
         var tag_name = $('#tag_name').val()
         var tag_value = $('#tag_value').val()
@@ -1511,7 +1536,7 @@ function tag_by_query () {
     }
 }
 
-function export_data (exportType) {
+function export_data(exportType) {
     var formElement = document.getElementById('filters')
 
     var query_args = $('#filters').serializeArray()
@@ -1535,50 +1560,63 @@ function export_data (exportType) {
         var pagingInfo = examplesTable.page.info()
 
         switch (extent_dec) {
-        case 'page':
-            query_args.push({
-                name: 'examples_start',
-                value: pagingInfo.start
-            })
-            query_args.push({
-                name: 'num_examples',
-                value: pagingInfo.length
-            })
-            break
-        case 'pages':
-            var startPage = Number($('#export-start-page').val()) - 1
-            var endPage = Number($('#export-end-page').val()) - 1
-            query_args.push({
-                name: 'examples_start',
-                value: startPage * pagingInfo.length
-            })
-            query_args.push({
-                name: 'num_examples',
-                value: (endPage - startPage + 1) * pagingInfo.length
-            })
+            case 'page':
+                query_args.push({
+                    name: 'examples_start',
+                    value: pagingInfo.start
+                })
+                query_args.push({
+                    name: 'num_examples',
+                    value: pagingInfo.length
+                })
+                break
+            case 'pages':
+                var startPage = Number($('#export-start-page').val()) - 1
+                var endPage = Number($('#export-end-page').val()) - 1
+                query_args.push({
+                    name: 'examples_start',
+                    value: startPage * pagingInfo.length
+                })
+                query_args.push({
+                    name: 'num_examples',
+                    value: (endPage - startPage + 1) * pagingInfo.length
+                })
 
-            break
-        case 'all':
-            query_args.push({
-                name: 'num_examples',
-                value: '*'
-            })
-            break
-        case 'rows':
-            query_args.push({
-                name: 'examples_start',
-                value: 0
-            })
-            query_args.push({
-                name: 'num_examples',
-                value: Number($('#export-rows').val())
-            })
-            break
+                break
+            case 'all':
+                query_args.push({
+                    name: 'num_examples',
+                    value: '*'
+                })
+                break
+            case 'rows':
+                query_args.push({
+                    name: 'examples_start',
+                    value: 0
+                })
+                query_args.push({
+                    name: 'num_examples',
+                    value: Number($('#export-rows').val())
+                })
+                break
         }
 
         var features_dec = $('input[name=export-features]:checked').val()
         var features = []
+        if (features_dec == 'all') {
+            var options = $('#toggle-column-select option');
 
+            var features = $.map(options, function (option) {
+                return option.value;
+            });
+        } else {
+            $('#toggle-column-select option').each(function () {
+                if (this.selected) {
+                    features.push($(this).text())
+                }
+            })
+        }
+/* 
         $('.buttons-columnVisibility').each(function () {
             if (!$(this).hasClass('toggleAllButton')) {
                 if (features_dec == 'all') {
@@ -1587,7 +1625,7 @@ function export_data (exportType) {
                     features.push($(this).text())
                 }
             }
-        })
+        }) */
 
         query_args.push({
             name: 'features',
@@ -1600,7 +1638,7 @@ function export_data (exportType) {
     window.open(query)
 }
 
-function hide_show_options () {
+function hide_show_options() {
     var x = document.getElementById('short_version_options')
 
     if (x.style.display === 'none') {
@@ -1610,7 +1648,7 @@ function hide_show_options () {
     }
 }
 
-function hide_show_options_cluster () {
+function hide_show_options_cluster() {
     var x = document.getElementById('short_version_options_cluster')
 
     if (x.style.display === 'none') {
@@ -1620,7 +1658,7 @@ function hide_show_options_cluster () {
     }
 }
 
-function cluster_to_lex (id) {
+function cluster_to_lex(id) {
     var cluster_form = document.getElementById('save_as_lexicon_' + id)
     var fd = new FormData(cluster_form)
     fd.set('lexiconname', fd.get('lexiconname').split(' ').slice(0, -1).join(' '))
