@@ -3,9 +3,10 @@
 <div class="toggle-column-select-wrapper">
     <select  data-actions-box="true" data-width="250px" data-hide-disabled='true' multiple name="toggle-column-select" id='toggle-column-select' class="form-control input-sm ">
         {% for column in columns %}
-        <option value="{{column.name}}" onclick=filterTableColumn(this)>{{column.name}}</option>
+        <option value="{{column.index}}" onclick=filterTableColumn(this)>{{column.name}}</option>
         {% endfor %}
     </select>
+    
 </div>
 
 <table id="examples" class="display cell-border">

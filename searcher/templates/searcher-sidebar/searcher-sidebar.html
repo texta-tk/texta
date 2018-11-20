@@ -9,14 +9,14 @@
             <div class="panel-body">
                 <div class="form-group">
 
-                    <ul class="nav nav-tabs">
-                        <li class="active"><a data-toggle="tab" href="#search_params" title="For building basic searches">Build
+                    <ul class="nav nav-tabs flex-col">
+                        <li class="flex-item-grow-1 active"><a data-toggle="tab" href="#search_params" title="For building basic searches">Build
                                 Search</a></li>
-                        <li><a data-toggle="tab" href="#mlt_params" title="For expanding basic searches via similarity queries">Expand
+                        <li class="flex-item-grow-1"><a data-toggle="tab" href="#mlt_params" title="For expanding basic searches via similarity queries">Expand
                                 Search</a></li>
-                        <li><a data-toggle="tab" href="#cluster_params" title="For analyzing search content via clustering">Cluster
+                        <li class="flex-item-grow-1" ><a data-toggle="tab" href="#cluster_params" title="For analyzing search content via clustering">Cluster
                                 Search</a></li>
-                    </ul>
+                        </ul>
 
                     <div class="tab-content">
                         <div id="search_params" class="tab-pane fade in active">
@@ -30,8 +30,8 @@
                                         <b>Select field(s):</b>
                                     </div>
                                     <div class="col-sm-12">
-                                        <div class="form-inline">
-                                            <div class="form-group">
+                                        <div class="form-inline flex-col">
+                                            <div class="form-group flex-item-grow-3">
                                                 <select class='selectpicker' data-hide-disabled='true'
                                                     multiple id="constraint_field" name="constraint_field"
                                                     class="form-control input-sm">
@@ -40,7 +40,7 @@
                                                     {% endfor %}
                                                 </select>
                                             </div>
-                                            <div class="form-group">
+                                            <div class="form-group flex-item-grow-1">
                                                 <button type="button" class="btn btn-default input-sm"
                                                     onclick="javascript:add_field('{{date_range.min}}','{{date_range.max}}');">Add</button>
                                             </div>

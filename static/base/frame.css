@@ -15,22 +15,22 @@ body {
 /* global style */
 .grid-2-col-1-row-default {
     display: grid;
-    grid-template-columns: 20% 80%;
+    grid-template-columns: 250px 1fr;
     grid-template-rows: 100%;
     margin: -1px;
 }
 
 @media screen and (max-width: 1405px) {
     .grid-2-col-1-row-default {
-        grid-template-columns: 25% 75%;
+        grid-template-columns: 250px 1fr;
         grid-template-rows: 100%;
     }
 }
 
 @media screen and (max-width: 992px) {
     .grid-2-col-1-row-default {
-        grid-template-columns: 100%;
-        grid-template-rows: 100% 100%;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
     }
 }
 
@@ -42,8 +42,25 @@ body {
     border-radius: 0px
 }
 .panel{
-    border-radius: 0px
+    border-radius: 0;
+    border: 0
 }
+.flex-col{
+    display: flex;
+    flex-direction: row;
+}
+.flex-item-grow-1{
+    flex-grow: 1
+}
+.flex-item-grow-1 > .btn{
+    width: 100%;
+    height: 100%
+}
+.flex-item-grow-3{
+    flex-grow: 3
+}
+
+
 /* end of global styles */
 
 .grid-item-navbar {

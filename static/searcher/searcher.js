@@ -725,6 +725,7 @@ function query() {
     var formElement = document.getElementById('filters')
     var request = new XMLHttpRequest()
     var data
+
     request.onreadystatechange = function () {
         if (request.readyState == 4 && request.status == 200) {
             $('#right').html(request.responseText)
@@ -755,48 +756,32 @@ function query() {
                     })
                 },
                 'stateSave': true,
-                /* 'stateSaveParams': function (settings, data) {
+                'stateSaveParams': function (settings, data) {
                     data.start = 0
-                }, */
+                },
                 'stateLoadParams': function (settings, data) {
-                    $('#constraint_field').selectpicker('deselectAll')
-                    for (var i = 0, ien = data.columns.length; i < ien; i++) {
-                        if (data.columns[i].visible) {
-                            updateSelectColumnFilter(i)
+                    /*  because state has the last saved state of the table, not the current one then we can check
+                    if the selected datasets were changed and if extra columns were added, removed,
+                    if they were then select all (also did this in previous version, with buttons) */
+                    if ($('#examples').DataTable().columns().nodes().length != data.columns.length) {
+                        $('#toggle-column-select').selectpicker('selectAll')
+                    } else {
+                        $('#toggle-column-select').selectpicker('deselectAll')
+                        for (var i = 0, ien = data.columns.length; i < ien; i++) {
+                            if (data.columns[i].visible) {
+                                /* sync select with the table*/
+                                updateSelectColumnFilter(i)
+                            }
                         }
                     }
+
                     $('#toggle-column-select').selectpicker('refresh')
                 },
                 'scrollX': true
             })
-            var $select = $('#toggle-column-select')
-            $select.selectpicker({
-                style: 'btn btn-default',
-                maxWidth: 150
-            })
-            $select.selectpicker('selectall')
-            $('#right .bs-deselect-all').on('click', function () {
-                examplesTable.columns().visible(false)
-            })
-            $('#right .bs-select-all').on('click', function () {
-                examplesTable.columns().visible(true)
-            })
-            $select.on('changed.bs.select', function (e, clickedIndex, newValue, oldValue) {
-                /* if select all / deselect are not the callers */
-                if (newValue != null) {
-                    var selected = $(this).find('option').eq(clickedIndex).text()
-                    var indx
-                    var active = examplesTable
-                        .columns(function (idx, data, node) {
-                            if (node.textContent === selected) {
-                                indx = idx
-                                return true
-                            }
-                        }).data()
-                    examplesTable.column(indx).visible(!examplesTable.column(indx).visible())
-                }
-            })
-            $select.selectpicker('refresh')
+
+            initColumnSelectVisiblity(examplesTable)
+
             var dataset = $('#dataset').val()
             var mapping = $('#mapping').val()
             loadUserPreference(dataset, mapping)
@@ -810,7 +795,36 @@ function query() {
     request.send(new FormData(formElement))
 }
 
+function initColumnSelectVisiblity(examplesTable) {
+    var $select = $('#toggle-column-select')
+    $select.selectpicker({
+        style: 'btn btn-default',
+        maxWidth: 150
+    })
+    $('#right .bs-deselect-all').on('click', function () {
+        examplesTable.columns().visible(false)
+    })
+    $('#right .bs-select-all').on('click', function () {
+        examplesTable.columns().visible(true)
+    })
+    $select.on('changed.bs.select', function (e, clickedIndex, newValue, oldValue) {
+        /* if select all / deselect buttons are not the callers */
+        if (newValue != null) {
+            /* clickedindex same as column index anyway, cause same order, so dont need to use this */
+            /* var selected = $(this).find('option').eq(clickedIndex).val() */
+            examplesTable.column(clickedIndex).visible(!examplesTable.column(clickedIndex).visible())
+        }
+    })
+    /* if its the users first time loading, then there is no state saved so just select all */
+    if (examplesTable.state.loaded() == null) {
+        $select.selectpicker('selectAll')
+    }
+    $select.selectpicker('refresh')
+
+}
+
 function updateSelectColumnFilter(idx) {
+    /* selects content is layed out the same order as the columns list, child starts at 1 instead of 0, so just add 1 */
     $(`#toggle-column-select :nth-child(${idx + 1})`).prop('selected', true)
 }
 
@@ -1604,11 +1618,11 @@ function export_data(exportType) {
         var features_dec = $('input[name=export-features]:checked').val()
         var features = []
         if (features_dec == 'all') {
-            var options = $('#toggle-column-select option');
+            var options = $('#toggle-column-select option')
 
             var features = $.map(options, function (option) {
-                return option.value;
-            });
+                return option.value
+            })
         } else {
             $('#toggle-column-select option').each(function () {
                 if (this.selected) {
@@ -1616,7 +1630,7 @@ function export_data(exportType) {
                 }
             })
         }
-/* 
+        /*
         $('.buttons-columnVisibility').each(function () {
             if (!$(this).hasClass('toggleAllButton')) {
                 if (features_dec == 'all') {
