@@ -185,18 +185,11 @@ class TagModelWorker(BaseWorker):
 
     @staticmethod
     def _train_model_with_cv(model, params, X_map, y, task_id, n_jobs=1):
-        
-        fields = list(X_map.keys())        
-        total_samples = len(X_map[fields[0]])
-        I_samples = range(total_samples)
-        I_train, I_test, y_train, y_test = train_test_split(I_samples, y, test_size=0.20)
-
+        fields = list(X_map.keys())
         X_train = {}
         X_test = {}
-        
         for field in fields:
-            X_train[field] = list(np.array(X_map[field])[I_train])
-            X_test[field] = list(np.array(X_map[field])[I_test])
+            X_train[field], X_test[field], y_train, y_test = train_test_split(X_map[field], y, test_size=0.20, random_state=42)
 
         df_train = pd.DataFrame(X_train)
         df_test = pd.DataFrame(X_test)
