@@ -64,7 +64,6 @@ function createSelectionProps() {
                 textTippy = initTippy(textSpan, temp.prop('outerHTML'), true)
 
                 var fact_val = selection.toString().trim();
-                var loc_spans = getLocSpans(this, fact_val)
                 // Set template value to selected text
                 temp.find('.textValue').html(fact_val)
                 // Get fact_path from td classname, remove _DtCol namesafing
@@ -73,7 +72,7 @@ function createSelectionProps() {
                 var doc_id = $(examplesTable.row(this.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
                 // add click event for save button in tippy
                 $(document).on('click', '.textPopoverSaveBtn', function () {
-                    saveFactFromSelect(fact_val, fact_path, [loc_spans], doc_id);
+                    saveFactFromSelect(fact_val, fact_path, doc_id);
                 });
 
                 // Update span tippy content
@@ -126,9 +125,8 @@ function createSelectionProps() {
             // id of the document where fact was derived from, and the document where it will be marked in
             // get doc_id by taking datatables row data last column(_es_id) value
             var doc_id = $(examplesTable.row(parent.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
-            var loc_spans = getLocSpans(parent, fact_val)
             var btn = temp.find('.textPopoverSaveBtn');
-            btn.attr('onclick', `saveFactFromSelect("${fact_val}", "${fact_path}", [${loc_spans}]," ${doc_id}")`);
+            btn.attr('onclick', `saveFactFromSelect("${fact_val}", "${fact_path}", "${doc_id}")`);
 
             // Update span tippy content
             temp.find('.textValue').html(fact_val);
@@ -136,12 +134,6 @@ function createSelectionProps() {
         });
     }
 
-
-    function getLocSpans(parent, val) {
-        loc_span_start = parent.innerText.indexOf(val);
-        loc_spans = [loc_span_start, loc_span_start + val.length];
-        return loc_spans
-    }
 
     function initTippy(doms, tip_content, tip_showOnInit = false) {
         var tippy_instance = tippy(doms,
@@ -157,125 +149,122 @@ function createSelectionProps() {
 }
 
 // Grab fresh input value when called, then save as fact
-function saveFactFromSelect(fact_value, fact_field, fact_span, doc_id) {
+function saveFactFromSelect(fact_value, fact_field, doc_id) {
     // last() to avoid the dummy template selector
-    fact_name = $('.textName').last().val();
-    if (validateWithFeedback(fact_name.toUpperCase().trim(), fact_value.trim(), fact_field.trim(), fact_span, doc_id.trim())) {
-        saveOptionsSwal(fact_name.toUpperCase().trim(), fact_value.trim(), fact_field.trim(), fact_span, doc_id.trim());
-        // saveAsFact(fact_name.toUpperCase().trim(), fact_value.trim(), fact_field.trim(), fact_span, doc_id.trim());
+    fact_name = $('.textName').last().val().trim().toUpperCase();
+    fact_value = fact_value.trim();
+    fact_field = fact_field.trim();
+    doc_id = doc_id.trim();
+    if (validateWithFeedback(fact_name, fact_value, fact_field, doc_id)) {
+        saveOptionsSwal(fact_name, fact_value, fact_field, doc_id);
     }
 }
 
 
-function saveAsFact(method, fact_name, fact_value, fact_field, fact_span, doc_id) {
-    if (validateWithFeedback(fact_name, fact_value, fact_field, fact_span, doc_id)) {
-        var title = '';
-        var html = '';
-        switch(method) {
-            case 'select_only':
-                title = 'Are you sure you want to save this as a fact?';
-                html = `The fact <b>${fact_name}: ${fact_value}</b> will be added as a fact to field <b>${fact_field}</b>`;
-                break;
-            case 'all_in_doc':
-                title = 'Are you sure you want to save all exact matches of selected value in this document?';
-                html = `The fact <b>${fact_name}: ${fact_value}</b> will be added as a fact to field <b>${fact_field}</b> for <b> all matches in this document </b>`;
-                break;
-            case 'all_in_dataset':
-                title = 'Are you sure you want to save all exact matches of selected value in this dataset?';
-                html = `The fact <b>${fact_name}: ${fact_value}</b> will be added as a fact to field <b>${fact_field}</b> for <b> all matches in the dataset </b>`;
-                break;
-            default:
-                swal('Warning!', 'No saving method selected!', 'warning');
-                return false;
+function saveAsFact(method, match_type, fact_name, fact_value, fact_field, doc_id) {
+    formElement = new FormData(document.getElementById("filters"));
+    formElement.append('fact_name', fact_name);
+    formElement.append('fact_value', fact_value);
+    formElement.append('fact_field', fact_field);
+    formElement.append('doc_id', doc_id);
+    formElement.append('method', method);
+    formElement.append('match_type', match_type);
+
+    $.ajax({
+        url: PREFIX + '/fact_to_doc',
+        data: formElement,
+        type: 'POST',
+        contentType: false,
+        processData: false,
+        beforeSend: function () {
+            const notification = swal.mixin({
+                toast: true, position: 'top',
+                showConfirmButton: false, timer: 3000
+            });
+
+            notification({
+                type: 'info',
+                title: 'Starting job',
+                text: 'Adding fact..'
+            })
+        },
+        success: function () {
+            const notification = swal.mixin({
+                toast: true, position: 'top',
+                showConfirmButton: false, timer: 3000
+            });
+
+            notification({
+                type: 'success',
+                title: 'Adding fact successful!',
+                text: `Fact ${fact_name}: ${fact_value} has been added.`
+            })
+        },
+        error: function () {
+            swal('Error!', 'There was a problem saving as fact!', 'error');
         }
-        swal({
-            title: title,
-            html: html,
-            type: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#73AD21',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes'
-        }).then((result) => {
-            if (result.value) {
-                formElement = new FormData(document.getElementById("filters"));
-                formElement.append('fact_name', fact_name);
-                formElement.append('fact_value', fact_value);
-                formElement.append('fact_field', fact_field);
-                formElement.append('fact_span', fact_span);
-                formElement.append('doc_id', doc_id);
-                formElement.append('method', method);
-
-                $.ajax({
-                    url: PREFIX + '/fact_to_doc',
-                    data: formElement,
-                    type: 'POST',
-                    contentType: false,
-                    processData: false,
-                    beforeSend: function () {
-                        const notification = swal.mixin({
-                            toast: true, position: 'top',
-                            showConfirmButton: false, timer: 3000
-                        });
-
-                        notification({
-                            type: 'info',
-                            title: 'Starting job',
-                            text: 'Adding fact..'
-                        })
-                    },
-                    success: function () {
-                        const notification = swal.mixin({
-                            toast: true, position: 'top',
-                            showConfirmButton: false, timer: 3000
-                        });
-
-                        notification({
-                            type: 'success',
-                            title: 'Adding fact successful!',
-                            text: `Fact ${fact_name}: ${fact_value} has been added.`
-                        })
-                    },
-                    error: function () {
-                        swal('Error!', 'There was a problem saving as fact!', 'error');
-                    }
-                });
-            }
-        });
-    }
+    });
 }
 
-async function saveOptionsSwal(fact_name, fact_value, fact_field, fact_span, doc_id) {
+async function saveOptionsSwal(fact_name, fact_value, fact_field, doc_id) {
     // inputOptions can be an object or Promise
-    const inputOptions = new Promise((resolve) => {
+    const inputMethod = new Promise((resolve) => {
         resolve({
-            'select_only': 'Only selected value in this document',
-            'all_in_doc': 'All exact matches in this document',
-            'all_in_dataset': 'All exact matches in dataset'
+            'select_only': 'Only the selected text in this document',
+            'all_in_doc': 'All matches in this document',
+            'all_in_dataset': 'All matches in dataset'
+        })
+    })
+    const inputType = new Promise((resolve) => {
+        resolve({
+            'phrase': 'Match the as a separate word',
+            'phrase_prefix': 'Match as phrase prefix',
+            'string': 'Match anywhere in text'
         })
     })
 
-    const { value: save_method } = await swal({
-        title: 'Select saving method',
-        input: 'radio',
-        inputOptions: inputOptions,
-        inputValidator: (value) => {
-            return !value && 'You need to choose something!'
-        }
-    })
-
-    if (save_method) {
-        swal({ html: 'You selected: ' + save_method })
-            saveAsFact(save_method, fact_name.toUpperCase().trim(), fact_value.trim(), fact_field.trim(), fact_span, doc_id.trim());
+    if (validateWithFeedback(fact_name, fact_value, fact_field, doc_id)) {
+        swal.mixin({
+            confirmButtonText: 'Next &rarr;',
+            showCancelButton: true,
+            progressSteps: ['1', '2', '3']
+        }).queue([
+            {
+                title: `Are you sure you want to save this as a fact?`,
+                html: `<b>${fact_name}: ${fact_value}</b> will be saved as a fact!`,
+                type: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#73AD21',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes'
+            },
+            {
+                title: 'Select saving method',
+                input: 'radio',
+                inputOptions: inputMethod
+            },
+            {
+                title: 'Select matching method',
+                input: 'radio',
+                inputOptions: inputType
+            }
+        ]).then((result) => {
+            if (result.value) {
+                method = result.value[1]
+                match_type = result.value[2]
+                saveAsFact(method, match_type, fact_name.toUpperCase(), fact_value, fact_field, doc_id);
+            }
+        })
     }
 }
 
-function validateWithFeedback(fact_name, fact_value, fact_field, fact_span, doc_id) {
+
+function validateWithFeedback(fact_name, fact_value, fact_field, doc_id) {
     if (typeof doc_id == 'undefined' || doc_id == '') {
         swal('Warning!', 'Document id is invalid', 'warning');
         return false;
     }
-    if ((fact_span[1] - fact_span[0]) < 2 || (fact_span[1] - fact_span[0]) > 300) {
+    if (fact_value.length < 2 || fact_value.length  > 300) {
         swal('Warning!', 'Fact length shorter than 2 or longer than 300!', 'warning');
         return false;
     }

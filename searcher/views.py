@@ -339,20 +339,17 @@ def tag_documents(request):
 @login_required
 def fact_to_doc(request):
     """Add a fact to a certain document with given fact, span, and the document _id"""
-    method = request.POST['method'].strip()
     fact_name = request.POST['fact_name'].strip()
     fact_value = request.POST['fact_value'].strip()
     fact_field = request.POST['fact_field'].strip()
-    #TODO why is the js array becoming a string when passed here? Is there a better way than string split?
-    fact_span = [int(s) for s in request.POST['fact_span'].split(',')]
+    method = request.POST['method'].strip()
+    match_type = request.POST['match_type'].strip()
     doc_id = request.POST['doc_id'].strip()
     es_params = request.POST
 
-    
     # Validate that params aren't empty strings
-    if len(fact_name)>0 and len(fact_value)>0 and len(fact_field)>0 and len(doc_id)>0 and len(fact_span)>0 and len(method)>0:
-        # fact_m = FactManager(request
-        fact_a = FactAdder(request, es_params, fact_name, fact_value, fact_field, fact_span, doc_id, method)
+    if len(fact_name)>0 and len(fact_value)>0 and len(fact_field)>0 and len(doc_id)>0 and len(method)>0:
+        fact_a = FactAdder(request, es_params, fact_name, fact_value, fact_field, doc_id, method, match_type)
         fact_a.add_facts()
     else:
         return HttpResponseBadRequest()

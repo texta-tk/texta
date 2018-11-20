@@ -281,31 +281,26 @@ class FactManager:
 
 
 class FactAdder(FactManager):
-    def __init__(self, request, es_params, fact_name, fact_value, fact_field, fact_span, doc_id, method):
+    def __init__(self, request, es_params, fact_name, fact_value, fact_field, doc_id, method, match_type):
         super().__init__(request)
         self.es_params = es_params
         self.fact_name = fact_name[:self.max_name_len]
         self.fact_value = fact_value
         self.fact_field = fact_field
-        self.fact_span = fact_span
         self.doc_id = doc_id
         self.method = method
-        self.pre_tags = '["MATCH_BEGIN"]'
-        self.post_tags = '["MATCH_END"]'
-
-        # TODO
-        # Fix the add to all documents scroll
-        # No need to get span for add to document and add to all documents
-        # Maybe can match just one without frontend either
+        self.match_type = match_type
 
 
     def add_facts(self):
         if self.method == 'select_only':
-            self.fact_to_doc()
+            response = self.fact_to_doc()
         elif self.method == 'all_in_doc':
-            self.doc_matches_to_facts()
+            response = self.doc_matches_to_facts()
         elif self.method == 'all_in_dataset':
-            self.matches_to_facts()
+            response = self.matches_to_facts()
+
+        return response
 
     def fact_to_doc(self):
         """Add a fact to a certain document with given fact, span, and the document _id"""
@@ -318,10 +313,13 @@ class FactAdder(FactManager):
 
         data = ''
         for document in hits:
+            match = re.search(r"{}".format(self.fact_value), document['_source'][self.fact_field], re.IGNORECASE | re.MULTILINE)
+            import pdb;pdb.set_trace()
+            new_fact = {'fact': self.fact_name, 'str_val':  match.group(), 'doc_path': self.fact_field, 'spans': str([list(match.span())])}
             if self.field not in document['_source']:
-                document['_source'][self.field] = [{'fact': self.fact_name, 'str_val': self.fact_value, 'doc_path': fact_field, 'spans': str([self.fact_span])}]
+                document['_source'][self.field] = [new_fact]
             else:
-                document['_source'][self.field].append({"fact": self.fact_name, "str_val": self.fact_value, "doc_path": self.fact_field, "spans": str([self.fact_span])})
+                document['_source'][self.field].append(new_fact)
 
             data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
             document = {'doc': {self.field: document['_source'][self.field]}}
@@ -334,15 +332,13 @@ class FactAdder(FactManager):
     def doc_matches_to_facts(self):
         """Add all matches in a certain doc as a fact"""
         query = {"query": {"terms": {"_id": [self.doc_id] }}}
-
         response = self.es_m.perform_query(query)
         hits = response['hits']['hits']
         # If texta_facts not in document
         if self.field not in hits[0]['_source']:
             self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
-        print('here')
+
         data = self._derive_match_spans(hits)
-        print('there')
         response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
         # response = self.es_m.update_documents()
         return response
@@ -350,46 +346,62 @@ class FactAdder(FactManager):
 
     def matches_to_facts(self):
         """Add all matches in dataset as a fact"""
-
-        # query = {"query":{"bool":{"should":[{"bool":{"must":[{"bool":
-        # {"minimum_should_match":1,"should":[{"multi_match":
-        # {"query":self.fact_value,"type":"phrase","fields":[self.fact_field],"slop":"0"}}]}}]}}],
-        # "must":[],"must_not":[],"minimum_should_match":1}}}
-
-
-        # query = {"query": {"multi_match" : {"query":self.fact_value, "fields": [self.fact_field]}}}
-        query = {"main": {"query": {"multi_match" : {"query":self.fact_value, "fields": [self.fact_field]}}}}
+        if self.match_type == 'string':
+            # Match the word everywhere in text
+            query = {"main": {"query": {"regexp": {self.fact_field: r"\w*{}\w*".format(self.fact_value)}}}}
+        else:
+            # Match prefix, or separate word
+            query =  {"main": {"query": {"multi_match" : {"query":self.fact_value, "fields": [self.fact_field], "type": self.match_type}}}}
 
         # response = self.es_m.perform_query(query)
         self.es_m.load_combined_query(query)
-        response = self.es_m.scroll(size=self.bs, field_scroll=self.field)
-        import pdb;pdb.set_trace()
+        response = self.es_m.scroll(size=self.bs, field_scroll=self.fact_field)
+        print(response)
         scroll_id = response['_scroll_id']
         total_docs = response['hits']['total']
         # If texta_facts not in document
         hits = response['hits']['hits']
-        if self.field not in hits[0]['_source']:
-            self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
-        while total_docs > 0:
-            print('total_docs', total_docs)
-            data = self._derive_match_spans(hits)
-            total_docs = len(response['hits']['hits'])
-            scroll_id = response['_scroll_id']
-            response = self.es_m.scroll(size=self.bs, field_scroll=self.field)
-            response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
-        print('done')
+        if hits:
+            if self.field not in hits[0]['_source']:
+                self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
+            while total_docs > 0:
+                try:
+                    print('total_docs', total_docs)
+                    data = self._derive_match_spans(hits)
+                    total_docs = len(response['hits']['hits'])
+                    scroll_id = response['_scroll_id']
+                    response = self.es_m.scroll(size=self.bs, field_scroll=self.field)
+                    response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
+                except:
+                    print('failed')
+                    print(response)
+                    import pdb;pdb.set_trace()
+            print('done')
+        else:
+            print('NO HITS ')
+            print('NO HITS ')
+            print('NO HITS ')
+            # TODO some kind of feedback of empty hits
         return response
 
 
     def _derive_match_spans(self, hits):
+        if self.match_type == 'phrase':
+            pattern = r"\b{}\b"
+        elif self.match_type == 'phrase_prefix':
+            pattern = r"\b{}\w*"
+        elif self.match_type == 'string':
+            pattern = r"\w*{}\w*"
+
+
         data = ''
         for document in hits:
             new_facts = []
-            import pdb;pdb.set_trace()
-            for match in re.finditer(r"\b"+self.fact_value+r"\b", document['_source'][self.fact_field], re.IGNORECASE):
+            for match in re.finditer(pattern.format(self.fact_value), document['_source'][self.fact_field], re.IGNORECASE):
                 new_facts.append({'fact': self.fact_name, 'str_val':  match.group(), 'doc_path': self.fact_field, 'spans': str([list(match.span())])})
             data = self._append_fact_to_doc(document, data, new_facts)
         return data
+
 
     def _append_fact_to_doc(self, document, data, new_facts):
         if self.field not in document['_source']:
