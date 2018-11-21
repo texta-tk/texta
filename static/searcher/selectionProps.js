@@ -210,9 +210,14 @@ function saveAsFact(method, match_type, case_sens, fact_name, fact_value, fact_f
                     title = 'Could not find given facts';
                     text = `Facts like ${fact_name}: ${fact_value} have not been added.`;
                     break
-                    case 'scrolling_error':
+                case 'scrolling_error':
                     type = 'warning'
-                    type = 'A problem occured whilst adding facts'
+                    title = 'A problem occured whilst adding facts'
+                    text = `${factsAdded} facts like ${fact_name}: ${fact_value} were added.`;
+                    break;
+                default:
+                    type = 'warning'
+                    title = 'A problem occured whilst adding facts'
                     text = `${factsAdded} facts like ${fact_name}: ${fact_value} were added.`;
             }
 
@@ -229,62 +234,124 @@ function saveAsFact(method, match_type, case_sens, fact_name, fact_value, fact_f
 }
 
 async function saveOptionsSwal(fact_name, fact_value, fact_field, doc_id) {
+    // if (validateWithFeedback(fact_name, fact_value, fact_field, doc_id)) {
+    //     swal.mixin({
+    //         confirmButtonText: 'Next &rarr;',
+    //         showCancelButton: true,
+    //         progressSteps: ['1', '2', '3', '4']
+    //     }).queue([
+    //         {
+    //             title: `Are you sure you want to save this as a fact?`,
+    //             html: `<b>${fact_name}: ${fact_value}</b> will be saved as a fact!`,
+    //             type: 'question',
+    //             showCancelButton: true,
+    //             confirmButtonColor: '#73AD21',
+    //             cancelButtonColor: '#d33',
+    //             confirmButtonText: 'Yes'
+    //         },
+    //         {
+    //             title: 'Select saving method',
+    //             input: 'radio',
+    //             inputOptions: {
+    //                 'select_only': 'Only the selected text in this document',
+    //                 'all_in_doc': 'All matches in this document',
+    //                 'all_in_dataset': 'All matches in dataset'
+    //             }
+    //         },
+    //         {
+    //             title: 'Select matching method',
+    //             input: 'radio',
+    //             inputOptions: {
+    //                 'phrase': 'Match as a separate word',
+    //                 'phrase_prefix': 'Match as phrase prefix',
+    //                 'string': 'Match anywhere in text'
+    //             },
+    //         },
+    //         {
+    //             title: 'Case sensitive?',
+    //             text: 'Save similar facts separately based on case',
+    //             input: 'radio',
+    //             inputOptions: {
+    //                 'True': 'Case sensitive',
+    //                 'False': 'Case insensitive',
+    //             },
+    //         }
+    //     ]).then((result) => {
+    //         if (result.value) {
+    //             method = result.value[1]
+    //             match_type = result.value[2]
+    //             case_sens = result.value[3]
+    //             if (method && match_type) {
+    //                 saveAsFact(method, match_type, case_sens, fact_name.toUpperCase(), fact_value, fact_field, doc_id);
+    //             }
+    //             else {
+    //                 swal('Warning!', 'Method or match type not selected!', 'warning');
+    //             }
+    //         }
+    //     })
+    // }
+
+
     if (validateWithFeedback(fact_name, fact_value, fact_field, doc_id)) {
-        swal.mixin({
-            confirmButtonText: 'Next &rarr;',
-            showCancelButton: true,
-            progressSteps: ['1', '2', '3', '4']
-        }).queue([
-            {
-                title: `Are you sure you want to save this as a fact?`,
-                html: `<b>${fact_name}: ${fact_value}</b> will be saved as a fact!`,
-                type: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#73AD21',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes'
-            },
-            {
-                title: 'Select saving method',
-                input: 'radio',
-                inputOptions: {
+
+        (async function backAndForth() {
+            const steps = ['1', '2', '3'];
+            const question = [`SAVING ${fact_name}: ${fact_value} AS FACT`, 'Select matching method', 'Case sensitive?'];
+            const values = [
+                {
                     'select_only': 'Only the selected text in this document',
                     'all_in_doc': 'All matches in this document',
                     'all_in_dataset': 'All matches in dataset'
-                }
-            },
-            {
-                title: 'Select matching method',
-                input: 'radio',
-                inputOptions: {
+                },
+                {
                     'phrase': 'Match as a separate word',
                     'phrase_prefix': 'Match as phrase prefix',
                     'string': 'Match anywhere in text'
                 },
-            },
-            {
-                title: 'Case sensitive?',
-                text: 'Save similar facts separately based on case',
-                input: 'radio',
-                inputOptions: {
+                {
                     'True': 'Case sensitive',
-                    'False': 'Case insensitive',
-                },
-            }
-        ]).then((result) => {
-            if (result.value) {
-                method = result.value[1]
-                match_type = result.value[2]
-                case_sens = result.value[3]
-                if (method && match_type) {
-                    saveAsFact(method, match_type, case_sens, fact_name.toUpperCase(), fact_value, fact_field, doc_id);
+                    'False': 'Case insensitive'
+                }];
+
+            let currentStep;
+            swal.setDefaults({
+                confirmButtonText: 'Forward',
+                cancelButtonText: 'Back',
+                progressSteps: steps,
+                input: 'radio'
+            })
+
+            for (currentStep = 0; currentStep < steps.length;) {
+                const result = await swal({
+                    title: question[currentStep],
+                    inputOptions: values[currentStep],
+                    showCancelButton: true,
+                    currentProgressStep: currentStep
+                });
+
+                if (result.value) {
+                    values[currentStep] = result.value
+                    currentStep++;
+                    if (currentStep == steps.length) {
+                        swal.resetDefaults();
+                        method = values[0]
+                        match_type = values[1]
+                        case_sens = values[2]
+                        if (method && match_type && case_sens) {
+                            saveAsFact(method, match_type, case_sens, fact_name, fact_value, fact_field, doc_id);
+                        }
+                        else {
+                            swal('Warning!', 'Method or match type not selected!', 'warning');
+                        }
+                        break
+                    }
+                } else if (result.dismiss === 'cancel') {
+                    currentStep--;
                 }
-                else {
-                    swal('Warning!', 'Method or match type not selected!', 'warning');
-                }
             }
-        })
+        })()
     }
+
 }
 
 

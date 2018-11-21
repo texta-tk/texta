@@ -357,7 +357,8 @@ def fact_to_doc(request):
         return HttpResponseBadRequest()
     if json_response:
         return JsonResponse(json_response)
-    return HttpResponse()
+    else:
+        return JsonResponse({'fact_count': 0, 'status': 'error'})
 
 @login_required
 def get_search_query(request):

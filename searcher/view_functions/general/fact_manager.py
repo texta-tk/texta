@@ -295,18 +295,13 @@ class FactAdder(FactManager):
 
 
     def add_facts(self):
-        logger = LogManager(__name__, 'FactAdder add_facts')
-        try:
-            if self.method == 'select_only':
-                json_response = self.fact_to_doc()
-            elif self.method == 'all_in_doc':
-                json_response = self.doc_matches_to_facts()
-            elif self.method == 'all_in_dataset':
-                json_response = self.matches_to_facts()
-            return json_response
-        except Exception as e:
-            print('-- Exception[{0}] {1}'.format(__name__, traceback.format_exc()))
-            logger.error('adding_facts_failed, traceback: \n{}'.format(str(traceback.format_exc())))
+        if self.method == 'select_only':
+            json_response = self.fact_to_doc()
+        elif self.method == 'all_in_doc':
+            json_response = self.doc_matches_to_facts()
+        elif self.method == 'all_in_dataset':
+            json_response = self.matches_to_facts()
+        return json_response
 
     def fact_to_doc(self):
         """Add a fact to a certain document with given fact, span, and the document _id"""
@@ -352,11 +347,10 @@ class FactAdder(FactManager):
 
     def matches_to_facts(self):
         """Add all matches in dataset as a fact"""
-        logger = LogManager(__name__, 'FactAdder matches_to_facts ')
 
         if self.match_type == 'string':
             # Match the word everywhere in text
-            query = {"main": {"query": {"regexp": {self.fact_field: {"match": r"\w*{}\w*".format(self.fact_value)}}}}}
+            query = {"main": {"query": {"regexp": {self.fact_field: r"\w*{}\w*".format(self.fact_value)}}}}
         else:
             # Match prefix, or separate word
             query =  {"main": {"query": {"multi_match" : {"query":self.fact_value, "fields": [self.fact_field], "type": self.match_type}}}}
@@ -377,12 +371,12 @@ class FactAdder(FactManager):
                 while total_docs > 0:
                     data, fact_count = self._derive_match_spans(hits)
                     response = self.es_m.scroll(scroll_id=scroll_id, size=self.bs, field_scroll=self.field)
-                    total_docs = len(response['hits']['hits'])
-                    scroll_id = response['_scroll_id']
+                    if response['hits']:
+                        total_docs = len(response['hits']['hits'])
+                        scroll_id = response['_scroll_id']
                     self.es_m.plain_post_bulk(self.es_m.es_url, data)
             except Exception as e:
-                print('-- Exception[{0}] {1}'.format(__name__, traceback.format_exc()))
-                logger.error('scrolling error in FactAdder matches_to_facts, traceback: \n{}'.format(traceback.format_exc()))
+                print(traceback.format_exc())
                 return {'fact_count': fact_count, 'status': 'scrolling_error'}
         else:
             return {'fact_count': 0, 'status': 'no_hits'}
