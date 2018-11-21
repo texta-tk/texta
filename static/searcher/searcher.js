@@ -724,18 +724,18 @@ function remove_field(id) {
 function query() {
     var formElement = document.getElementById('filters')
     var request = new XMLHttpRequest()
-    var data
-
     request.onreadystatechange = function () {
         if (request.readyState == 4 && request.status == 200) {
             $('#right').html(request.responseText)
             examplesTable = $('#examples').DataTable({
                 'bAutoWidth': false,
+                "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
                 'deferRender': true,
+                'scrollY': '80vh',
                 'bServerSide': true,
                 'processing': true,
                 'sAjaxSource': PREFIX + '/table_content',
-                'sDom': '<Bl"H"ipr>t<"F"lip>',
+                'dom':  "<'#top-part''row'<'col-xs-6'l><'col-xs-6'i>rp>t",
                 'sServerMethod': 'POST',
                 'fnServerParams': function (aoData) {
                     aoData.push({
@@ -743,13 +743,12 @@ function query() {
                         'value': data = JSON.stringify($('#filters').serializeArray())
                     })
                 },
-                buttons: [],
+               
                 'oLanguage': {
                     'sProcessing': 'Loading...'
                 },
                 'fnInitComplete': function () {
                     $('.dataTables_scrollHead').css('overflow-x', 'auto')
-
                     // Sync THEAD scrolling with TBODY
                     $('.dataTables_scrollHead').on('scroll', function () {
                         $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft())
@@ -769,22 +768,27 @@ function query() {
                         $('#toggle-column-select').selectpicker('deselectAll')
                         for (var i = 0, ien = data.columns.length; i < ien; i++) {
                             if (data.columns[i].visible) {
-                                /* sync select with the table*/
+                                /* sync select with the table */
                                 updateSelectColumnFilter(i)
                             }
                         }
                     }
-
                     $('#toggle-column-select').selectpicker('refresh')
                 },
-                'scrollX': true
+                'scrollX': true,
             })
 
             initColumnSelectVisiblity(examplesTable)
 
             var dataset = $('#dataset').val()
             var mapping = $('#mapping').val()
+            var div = $("#top-part")
+            var button = $(".toggle-column-select-wrapper")
+            button.appendTo(div)
+            console.log(div)
+            
             loadUserPreference(dataset, mapping)
+           /*  $("#top-part").appendChild($("toggle-column-select-wrapper")); */
             $('#actions-btn').removeClass('invisible')
             $('#export-examples-modal').removeClass('invisible')
             $('#export-aggregation-modal').addClass('invisible')
@@ -1318,8 +1322,110 @@ function toggle_agg_field_2(action) {
         $('#agg_field_2_selected').val('false')
     }
 }
+/* 
+function exportData(exportType) {
+    var formElement = document.getElementById('filters')
 
-function remove_by_query() {
+    var query_args = $('#filters').serializeArray()
+
+    query_args.push({
+        name: 'export_type',
+        value: exportType
+    })
+
+    if (exportType == 'agg') {
+        query_args.push({
+            name: 'filename',
+            value: $('#export-file-name-agg').val() + '.csv'
+        })
+    } else {
+        query_args.push({
+            name: 'filename',
+            value: $('#export-file-name-example').val() + '.csv'
+        })
+        var extent_dec = $('input[name=export-extent]:checked').val()
+        var pagingInfo = examplesTable.page.info()
+
+        switch (extent_dec) {
+            case 'page':
+                query_args.push({
+                    name: 'examples_start',
+                    value: pagingInfo.start
+                })
+                query_args.push({
+                    name: 'num_examples',
+                    value: pagingInfo.length
+                })
+                break
+            case 'pages':
+                var startPage = Number($('#export-start-page').val()) - 1
+                var endPage = Number($('#export-end-page').val()) - 1
+                query_args.push({
+                    name: 'examples_start',
+                    value: startPage * pagingInfo.length
+                })
+                query_args.push({
+                    name: 'num_examples',
+                    value: (endPage - startPage + 1) * pagingInfo.length
+                })
+
+                break
+            case 'all':
+                query_args.push({
+                    name: 'num_examples',
+                    value: '*'
+                })
+                break
+            case 'rows':
+                query_args.push({
+                    name: 'examples_start',
+                    value: 0
+                })
+                query_args.push({
+                    name: 'num_examples',
+                    value: Number($('#export-rows').val())
+                })
+                break
+        }
+
+        var features_dec = $('input[name=export-features]:checked').val()
+        var features = []
+        if (features_dec == 'all') {
+            var options = $('#toggle-column-select option')
+
+            var features = $.map(options, function (option) {
+                return option.value
+            })
+        } else {
+            $('#toggle-column-select option').each(function () {
+                if (this.selected) {
+                    features.push($(this).text())
+                }
+            })
+        } */
+        /*
+        $('.buttons-columnVisibility').each(function () {
+            if (!$(this).hasClass('toggleAllButton')) {
+                if (features_dec == 'all') {
+                    features.push($(this).text())
+                } else if ($(this).hasClass('active')) {
+                    features.push($(this).text())
+                }
+            }
+        }) */
+
+/*         query_args.push({
+            name: 'features',
+            value: features
+        })
+    }
+
+    var query = PREFIX + '/export?args=' + JSON.stringify(query_args)
+
+    window.open(query)
+} */
+
+/* function remove_by_query() {
     var formElement = document.getElementById('filters')
     var request = new XMLHttpRequest()
 
@@ -1347,7 +1453,7 @@ function remove_by_query() {
 
     request.open('POST', PREFIX + '/remove_by_query')
     request.send(new FormData(formElement), true)
-}
+} */
 
 function save() {
     const prompt = async () => {
@@ -1548,108 +1654,6 @@ function tag_by_query() {
     } else {
         swal('Warning!', 'Parameters not set!', 'warning')
     }
-}
-
-function export_data(exportType) {
-    var formElement = document.getElementById('filters')
-
-    var query_args = $('#filters').serializeArray()
-
-    query_args.push({
-        name: 'export_type',
-        value: exportType
-    })
-
-    if (exportType == 'agg') {
-        query_args.push({
-            name: 'filename',
-            value: $('#export-file-name-agg').val() + '.csv'
-        })
-    } else {
-        query_args.push({
-            name: 'filename',
-            value: $('#export-file-name-example').val() + '.csv'
-        })
-        var extent_dec = $('input[name=export-extent]:checked').val()
-        var pagingInfo = examplesTable.page.info()
-
-        switch (extent_dec) {
-            case 'page':
-                query_args.push({
-                    name: 'examples_start',
-                    value: pagingInfo.start
-                })
-                query_args.push({
-                    name: 'num_examples',
-                    value: pagingInfo.length
-                })
-                break
-            case 'pages':
-                var startPage = Number($('#export-start-page').val()) - 1
-                var endPage = Number($('#export-end-page').val()) - 1
-                query_args.push({
-                    name: 'examples_start',
-                    value: startPage * pagingInfo.length
-                })
-                query_args.push({
-                    name: 'num_examples',
-                    value: (endPage - startPage + 1) * pagingInfo.length
-                })
-
-                break
-            case 'all':
-                query_args.push({
-                    name: 'num_examples',
-                    value: '*'
-                })
-                break
-            case 'rows':
-                query_args.push({
-                    name: 'examples_start',
-                    value: 0
-                })
-                query_args.push({
-                    name: 'num_examples',
-                    value: Number($('#export-rows').val())
-                })
-                break
-        }
-
-        var features_dec = $('input[name=export-features]:checked').val()
-        var features = []
-        if (features_dec == 'all') {
-            var options = $('#toggle-column-select option')
-
-            var features = $.map(options, function (option) {
-                return option.value
-            })
-        } else {
-            $('#toggle-column-select option').each(function () {
-                if (this.selected) {
-                    features.push($(this).text())
-                }
-            })
-        }
-        /*
-        $('.buttons-columnVisibility').each(function () {
-            if (!$(this).hasClass('toggleAllButton')) {
-                if (features_dec == 'all') {
-                    features.push($(this).text())
-                } else if ($(this).hasClass('active')) {
-                    features.push($(this).text())
-                }
-            }
-        }) */
-
-        query_args.push({
-            name: 'features',
-            value: features
-        })
-    }
-
-    var query = PREFIX + '/export?args=' + JSON.stringify(query_args)
-
-    window.open(query)
 }
 
 function hide_show_options() {

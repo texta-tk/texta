@@ -1,0 +1,139 @@
+function toggleFullscreen () {
+    $('#grid-wrapper-searcher-id').toggleClass('grid-wrapper-searcher')
+    $('#grid-wrapper-searcher-id').toggleClass('grid-1-col-default')
+    $('.grid-wrapper-sidebar').toggleClass('hidden')
+    $('#top-part').toggleClass('hidden')
+}
+
+function exportData (exportType) {
+    var formElement = document.getElementById('filters')
+    /* When you don't pass any parameters to $().dataTable()
+     it will attempt to fund any tables which have already been initialised first and then use that for the API call. */
+    let examplesTable = $('#examples').DataTable()
+    var queryArgs = $('#filters').serializeArray()
+
+    queryArgs.push({
+        name: 'export_type',
+        value: exportType
+    })
+
+    if (exportType === 'agg') {
+        queryArgs.push({
+            name: 'filename',
+            value: $('#export-file-name-agg').val() + '.csv'
+        })
+    } else {
+        queryArgs.push({
+            name: 'filename',
+            value: $('#export-file-name-example').val() + '.csv'
+        })
+        var extentDec = $('input[name=export-extent]:checked').val()
+        var pagingInfo = examplesTable.page.info()
+
+        switch (extentDec) {
+        case 'page':
+            queryArgs.push({
+                name: 'examples_start',
+                value: pagingInfo.start
+            })
+            queryArgs.push({
+                name: 'num_examples',
+                value: pagingInfo.length
+            })
+            break
+        case 'pages':
+            var startPage = Number($('#export-start-page').val()) - 1
+            var endPage = Number($('#export-end-page').val()) - 1
+            queryArgs.push({
+                name: 'examples_start',
+                value: startPage * pagingInfo.length
+            })
+            queryArgs.push({
+                name: 'num_examples',
+                value: (endPage - startPage + 1) * pagingInfo.length
+            })
+
+            break
+        case 'all':
+            queryArgs.push({
+                name: 'num_examples',
+                value: '*'
+            })
+            break
+        case 'rows':
+            queryArgs.push({
+                name: 'examples_start',
+                value: 0
+            })
+            queryArgs.push({
+                name: 'num_examples',
+                value: Number($('#export-rows').val())
+            })
+            break
+        }
+
+        var featuresDec = $('input[name=export-features]:checked').val()
+        var features = []
+        if (featuresDec === 'all') {
+            var options = $('#toggle-column-select option')
+            features = $.map(options, function (option) {
+                return option.value
+            })
+        } else {
+            $('#toggle-column-select option').each(function () {
+                if (this.selected) {
+                    features.push($(this).text())
+                }
+            })
+        }
+        /*
+        $('.buttons-columnVisibility').each(function () {
+            if (!$(this).hasClass('toggleAllButton')) {
+                if (features_dec == 'all') {
+                    features.push($(this).text())
+                } else if ($(this).hasClass('active')) {
+                    features.push($(this).text())
+                }
+            }
+        }) */
+
+        queryArgs.push({
+            name: 'features',
+            value: features
+        })
+    }
+    /* global PREFIX */
+    var query = PREFIX + '/export?args=' + JSON.stringify(queryArgs)
+
+    window.open(query)
+}
+function removeByQuery () {
+    var formElement = document.getElementById('filters')
+    var request = new XMLHttpRequest()
+
+    request.onreadystatechange = function () {
+        if (request.readyState === 4 && request.status === 200) {
+            if (request.responseText.length > 0) {
+                /* global swal */
+                swal({
+                    title: 'The documents are being deleted. Check the progress by searching again.',
+                    animation: true,
+                    customClass: 'animated fadeInDown',
+                    width: 400,
+                    padding: 10,
+                    position: 'top',
+                    type: 'success',
+                    timer: 3500,
+                    background: '#f9f9f9',
+                    backdrop: `
+                    rgba(0,0,0,0.0)
+                    no-repeat
+                    `
+                })
+            }
+        }
+    }
+
+    request.open('POST', PREFIX + '/remove_by_query')
+    request.send(new FormData(formElement), true)
+}

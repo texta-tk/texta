@@ -3,14 +3,12 @@
 <link rel="stylesheet" href="{{STATIC_URL}}task_manager/task_manager.css">
 <script type="application/javascript" src="{{STATIC_URL}}task_manager/task_manager.js"></script>
 
-<div class="row">
-	<div class="col-md-12">
-		<ul class="nav nav-tabs">
-			{% for task_param in task_params %}
-			<li class="{% if forloop.counter0 < 1 %}active{% endif %}"><a data-toggle="tab" href="#{{task_param.id}}">{{task_param.name}}</a></li>
-			{% endfor %}
-		</ul>
-	</div>
+<div>
+	<ul class="flex-row nav nav-tabs">
+		{% for task_param in task_params %}
+		<li class="{% if forloop.counter0 < 1 %}active{% endif %}"><a data-toggle="tab" href="#{{task_param.id}}">{{task_param.name}}</a></li>
+		{% endfor %}
+	</ul>
 </div>
 
 <form id="task_params">

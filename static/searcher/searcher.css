@@ -20,6 +20,9 @@
 .grid-wrapper-sidebar .form-inline>.form-group{
   width: 100%;
 }
+.grid-wrapper-sidebar{
+  background-color: white;
+}
 .grid-wrapper-content{
   min-width: 0;
 }

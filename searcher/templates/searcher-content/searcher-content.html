@@ -1,3 +1,4 @@
+<script type="application/javascript" src="{{STATIC_URL}}searcher/searcher-content.js"></script>
 <div class='searcher-content-wrapper'>
     <div class="panel grid-wrapper-content-panel">
         <div class="panel-heading">
@@ -14,6 +15,7 @@
                     {% endif %}
                 </ul>
             </div>
+            <a class='glyphicon' onclick=toggleFullscreen()>PHP DEV BTW</a>
         </div>
         <div class="panel-body" id="right">
             
@@ -62,7 +64,7 @@
 
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-default" data-dismiss="modal" onclick="export_data('example');">Export</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal" onclick="exportData('example');">Export</button>
                     </div>
 
                 </div>
@@ -82,7 +84,7 @@
 
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-default" data-dismiss="modal" onclick="export_data('agg');">Export</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal" onclick="exportData('agg');">Export</button>
                     </div>
                 </div>
 
@@ -103,7 +105,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="javascript:remove_by_query();">Delete</button>
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="javascript:removeByQuery();">Delete</button>
                 </div>
 
             </div>
