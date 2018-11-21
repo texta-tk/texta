@@ -1,24 +1,9 @@
-var counter = 1
-var key_timer
 var PREFIX = LINK_SEARCHER
-var factValSubCounter = {}
 var examplesTable
 var layers = ['text', 'lemmas', 'facts']
 var removed_facts = []
 
 $(document).ready(function () {
-    get_searches()
-
-    $('#constraint_field').on('changed.bs.select', function (e, clickedIndex, isSelected, previousValue) {
-        filter_constraint_field($('#constraint_field option:selected').val())
-    })
-
-    var search_id = getUrlParameter('search')
-    if (search_id != undefined) {
-        render_saved_search(search_id)
-        query()
-    }
-
     change_agg_field(1)
 
     $('#agg_daterange_from_1').datepicker({
@@ -119,34 +104,7 @@ $(document).ready(function () {
     })
 })
 
-$(document).on('mousemove', function (e) {
-    window.MOUSE_X = e.pageX
-    window.MOUSE_Y = e.pageY
-})
-
-function in_array(value, array) {
-    return array.indexOf(value) > -1
-}
-
-var getUrlParameter = function getUrlParameter(sParam) {
-    var sPageURL = decodeURIComponent(window.location.search.substring(1))
-
-    var sURLVariables = sPageURL.split('&')
-
-    var sParameterName
-
-    var i
-
-    for (i = 0; i < sURLVariables.length; i++) {
-        sParameterName = sURLVariables[i].split('=')
-
-        if (sParameterName[0] === sParam) {
-            return sParameterName[1] === undefined ? true : sParameterName[1]
-        }
-    }
-}
-
-function get_query() {
+function get_query () {
     var formElement = document.getElementById('filters')
     var request = new XMLHttpRequest()
 
@@ -163,188 +121,7 @@ function get_query() {
     request.send(new FormData(formElement), true)
 }
 
-function search_as_you_type_query() {
-    var search_as_you_type_selection = $('#search_as_you_type').prop('checked')
-    if (search_as_you_type_selection) {
-        clearTimeout(key_timer)
-        key_timer = setTimeout(function validate() {
-            query()
-        }, 500)
-    }
-}
-
-function render_saved_search(search_id) {
-    $.get(PREFIX + '/get_srch_query', {
-        search_id: search_id
-    }, function (data) {
-        data = JSON.parse(data)
-
-        $('#constraints').empty()
-        for (var i = 0; i < data.length; i++) {
-            render_saved_search_field(data[i], '', '')
-        }
-    })
-}
-
-function filter_constraint_field(element_to_filter) {
-    if (element_to_filter) {
-        field_type = JSON.parse(element_to_filter).type
-        $('#constraint_field option').each(function () {
-            var val = $(this).val()
-            var data = JSON.parse(val)
-            if (data.type != field_type) {
-                $(this).prop('disabled', true)
-            }
-        })
-    } else {
-        $('#constraint_field option').each(function () {
-            $(this).prop('disabled', false)
-        })
-    }
-    $('#constraint_field').selectpicker('refresh')
-}
-
-function make_date_field(date_range_min, date_range_max, field_data) {
-    counter++
-    new_id = 'field_' + counter.toString()
-    field_with_id = '#field_' + counter.toString()
-
-    $('#field_hidden_date').clone().attr('id', new_id).appendTo('#constraints')
-    $(field_with_id + ' #daterange_field_').attr('id', 'daterange_field_' + counter.toString()).attr('name', 'daterange_field_' + counter.toString()).val(field_data.field)
-    $(field_with_id + ' #selected_field_').attr('id', 'selected_field_' + counter.toString()).attr('name', 'selected_field_' + counter.toString()).html(field_data.field)
-    $(field_with_id + ' #remove_link').attr('onclick', "javascript:remove_field('" + new_id + "');")
-
-    $(field_with_id + ' #daterange_from_').attr('id', 'daterange_from_' + counter.toString())
-    $(field_with_id + ' #daterange_from_' + counter.toString()).attr('name', 'daterange_from_' + counter.toString())
-    $(field_with_id + ' #daterange_from_' + counter.toString()).datepicker({
-        format: 'yyyy-mm-dd',
-        startView: 2,
-        startDate: date_range_min,
-        endDate: date_range_max
-    })
-    $(field_with_id + ' #daterange_to_').attr('id', 'daterange_to_' + counter.toString())
-    $(field_with_id + ' #daterange_to_' + counter.toString()).attr('name', 'daterange_to_' + counter.toString())
-    $(field_with_id + ' #daterange_to_' + counter.toString()).datepicker({
-        format: 'yyyy-mm-dd',
-        startView: 2,
-        startDate: date_range_min,
-        endDate: date_range_max
-    })
-    $(field_with_id).show()
-}
-
-function make_fact_field(field_data) {
-    counter++
-    new_id = 'field_' + counter.toString()
-    var fieldFullId = 'fact_txt_' + counter.toString()
-    field_with_id = '#field_' + counter.toString()
-    $('#field_hidden_fact').clone().attr('id', new_id).appendTo('#constraints')
-    $(field_with_id + ' #fact_operator_').attr('id', 'fact_operator_' + counter.toString()).attr('name', 'fact_operator_' + counter.toString())
-    $(field_with_id + ' #selected_field_').attr('id', 'selected_field_' + counter.toString()).html(field_data.field + ' [fact_names]')
-    $(field_with_id + ' #fact_field_').attr('id', 'fact_field_' + counter.toString()).attr('name', 'fact_field_' + counter.toString()).val(field_data.field)
-    $(field_with_id + ' #remove_link').attr('onclick', "javascript:remove_field('" + new_id + "');")
-    $(field_with_id + ' #suggestions_').attr('id', 'suggestions_' + counter.toString()).attr('name', 'suggestions_' + counter.toString())
-    $(field_with_id + ' #fact_txt_').attr('id', 'fact_txt_' + counter.toString()).attr('name', 'fact_txt_' + counter.toString())
-    $(field_with_id + ' #fact_txt_' + counter.toString()).attr('onkeyup', 'lookup("' + fieldFullId + '",' + counter.toString() + ',"keyup", "FACT_NAME");')
-    $(field_with_id + ' #fact_txt_' + counter.toString()).attr('onfocus', 'lookup("' + fieldFullId + '","' + counter.toString() + '","focus", "FACT_NAME");')
-    $(field_with_id + ' #fact_txt_' + counter.toString()).attr('onblur', 'hide("' + counter.toString() + '");')
-    $(field_with_id).show()
-}
-
-function make_text_field(field_data) {
-    counter++
-    new_id = 'field_' + counter.toString()
-    var fieldFullId = 'fact_txt_' + counter.toString()
-    field_with_id = '#field_' + counter.toString()
-    $('#field_hidden').clone().attr('id', new_id).appendTo('#constraints')
-    $(field_with_id + ' #match_operator_').attr('id', 'match_operator_' + counter.toString()).attr('name', 'match_operator_' + counter.toString())
-    $(field_with_id + ' #selected_field_').attr('id', 'selected_field_' + counter.toString()).html(field_data.field)
-    $(field_with_id + ' #match_field_').attr('id', 'match_field_' + counter.toString()).attr('name', 'match_field_' + counter.toString()).val(field_data.field)
-    $(field_with_id + ' #match_type_').attr('id', 'match_type_' + counter.toString()).attr('name', 'match_type_' + counter.toString())
-    $(field_with_id + ' #match_slop_').attr('id', 'match_slop_' + counter.toString()).attr('name', 'match_slop_' + counter.toString())
-    $(field_with_id + ' #remove_link').attr('onclick', "javascript:remove_field('" + new_id + "');")
-    $(field_with_id + ' #suggestions_').attr('id', 'suggestions_' + counter.toString()).attr('name', 'suggestions_' + counter.toString())
-    $(field_with_id + ' #match_txt_').attr('id', 'match_txt_' + counter.toString()).attr('name', 'match_txt_' + counter.toString())
-    $(field_with_id + ' #match_layer_').attr('id', 'match_layer_' + counter.toString()).attr('name', 'match_layer_' + counter.toString())
-
-    var suggestion_types = ['CONCEPT', 'LEXICON']
-    var fieldFullId = 'match_txt_' + counter.toString()
-
-    $(field_with_id + ' #match_txt_' + counter.toString()).attr('onkeyup', 'lookup("' + fieldFullId + '",' + counter.toString() + ',"keyup", \'' + suggestion_types + '\'); search_as_you_type_query();')
-    $(field_with_id + ' #match_txt_' + counter.toString()).attr('onfocus', 'lookup("' + fieldFullId + '","' + counter.toString() + '","focus", \'' + suggestion_types + '\');')
-    $(field_with_id + ' #match_txt_' + counter.toString()).attr('onblur', 'hide("' + counter.toString() + '");')
-    $(field_with_id).show()
-}
-
-function make_str_fact_field(field_data) {
-    var counterStr = counter.toString()
-
-    if (factValSubCounter[counterStr] === undefined) {
-        var subCounter = 1
-    } else {
-        var subCounter = factValSubCounter[counterStr]
-    }
-
-    var subCounterStr = subCounter.toString()
-    var idCombination = counterStr + '_' + subCounterStr
-
-    if (field_data.constraint_type == 'str_fact_val') {
-        addFactValueField(counterStr, subCounterStr, field_data.field, field_data.field, 'str')
-    } else if (field_data.constraint_type == 'fact_num_val') {
-        addFactValueField(counterStr, subCounterStr, field_data.field, field_data.field, 'num')
-    }
-    factValSubCounter[counterStr] = subCounter + 1
-    $('#field_' + counter.toString()).show()
-}
-
-function render_saved_search_field(field_data, min_date, max_date) {
-    if (field_data.constraint_type === 'date') {
-        make_date_field(min_date, max_date, field_data)
-        $('#field_' + counter.toString() + ' #daterange_from_' + counter.toString()).val(field_data.start_date)
-        $('#field_' + counter.toString() + ' #daterange_to_' + counter.toString()).val(field_data.end_date)
-    } else if (field_data.constraint_type === 'string') {
-        make_text_field(field_data, true)
-        $('#match_operator_' + counter.toString()).val(field_data.operator)
-        $('#match_type_' + counter.toString()).val(`match_${field_data.match_type}`)
-        $('#match_slop_' + counter.toString()).val(field_data.slop)
-        $('#match_txt_' + counter.toString()).val(field_data.content.join('\n'))
-    } else if (field_data.constraint_type === 'facts') {
-        make_fact_field(field_data)
-        $('#fact_operator_' + counter.toString()).val(field_data.operator)
-        $('#fact_txt_' + counter.toString()).val(field_data.content.join('\n'))
-    } else if (field_data.constraint_type === 'str_fact_val') {
-        make_str_fact_field(field_data)
-        $('#fact_operator_' + counter.toString()).val(field_data.operator)
-        for (var i = 0; i < field_data.sub_constraints.length; i++) {
-            var sub_constraint = field_data.sub_constraints[i]
-
-            $('#fact_txt_' + counter.toString() + '_' + (factValSubCounter[counter.toString()] - 1)).val(sub_constraint.fact_name)
-            $('#fact_constraint_op_' + counter.toString() + '_' + (factValSubCounter[counter.toString()] - 1)).val(sub_constraint.fact_val_operator)
-            $('#fact_constraint_val_' + counter.toString() + '_' + (factValSubCounter[counter.toString()] - 1)).val(sub_constraint.fact_val)
-
-            if (i < field_data.sub_constraints.length - 1) {
-                addFactValueFieldConstraint(counter.toString(), field_data.field)
-            }
-        }
-    } else if (field_data.constraint_type === 'num_fact_val') {
-
-    }
-}
-
-function derive_text_node_value(field_data) {
-    console.log(field_data)
-    if (field_data.constraint_type === 'string' || field_data.constraint_type === 'date') {
-        return field_data.field.replace('.', ' → ')
-    } else if (field_data.constraint_type === 'facts') {
-        return field_data.field.replace('.', ' → ') + ' [fact_names]'
-    } else if (field_data.constraint_type === 'str_fact_val') {
-        return field_data.field.replace('.', ' → ') + ' [fact_text_values]'
-    } else if (field_data.constraint_type === 'num_fact_val') {
-        return field_data.field.replace('.', ' → ') + ' [fact_num_values'
-    }
-}
-
-function lookup(fieldFullId, fieldId, action, lookup_types) {
+function lookup (fieldFullId, fieldId, action, lookup_types) {
     var content = $('#' + fieldFullId).val()
 
     if (fieldFullId.match('^fact_constraint_val_')) {
@@ -374,7 +151,7 @@ function lookup(fieldFullId, fieldId, action, lookup_types) {
     })
 }
 
-function process_suggestions(suggestions, suggestions_container, field_id, lookup_types) {
+function process_suggestions (suggestions, suggestions_container, field_id, lookup_types) {
     var suggestions = JSON.parse(suggestions)
 
     $.each(suggestions, function (lookup_type, lookup_suggestions) {
@@ -396,7 +173,7 @@ function process_suggestions(suggestions, suggestions_container, field_id, looku
     })
 }
 
-function insert(resource_id, suggestionId, descriptive_term, lookup_type) {
+function insert (resource_id, suggestionId, descriptive_term, lookup_type) {
     if (resource_id) {
         if (lookup_type == 'CONCEPT') {
             suggestion_prefix = '@C'
@@ -440,250 +217,11 @@ function insert(resource_id, suggestionId, descriptive_term, lookup_type) {
     }
 }
 
-function add_field(date_range_min, date_range_max, submitted_field_data) {
-    var field = Array()
-    $('#constraint_field option').filter(':selected').each(function () {
-        var val = $(this).val()
-        field.push(val)
-    })
-    if (!field) {
-        swal('Warning!', 'No field selected!', 'warning')
-        return
-    }
-
-    counter++
-
-    var field_path = Array()
-    var field_data = Array()
-    var field_name = Array()
-
-    field.forEach(function (data) {
-        var data = JSON.parse(data)
-        field_name.push(data.label)
-        field_path.push(data.path)
-    })
-
-    var field_name = field_name.join('; ')
-
-    var field_data = JSON.parse(field[0])
-    var field_type = field_data.type
-    var nested_layers = field_data.nested_layers
-
-    new_id = 'field_' + counter.toString()
-
-    if (field_type == 'date') {
-        $('#field_hidden_date').clone().attr('id', new_id).appendTo('#constraints')
-        $('#field_' + counter.toString() + ' #daterange_field_').attr('id', 'daterange_field_' + counter.toString()).attr('name', 'daterange_field_' + counter.toString()).val(field_path)
-        $('#field_' + counter.toString() + ' #selected_field_').attr('id', 'selected_field_' + counter.toString()).attr('name', 'selected_field_' + counter.toString()).html(field_name)
-        $('#field_' + counter.toString() + ' #remove_link').attr('onclick', "javascript:remove_field('" + new_id + "');")
-
-        $('#field_' + counter.toString() + ' #daterange_from_').attr('id', 'daterange_from_' + counter.toString())
-        $('#field_' + counter.toString() + ' #daterange_from_' + counter.toString()).attr('name', 'daterange_from_' + counter.toString())
-        $('#field_' + counter.toString() + ' #daterange_from_' + counter.toString()).datepicker({
-            format: 'yyyy-mm-dd',
-            startView: 2,
-            startDate: date_range_min,
-            endDate: date_range_max
-        })
-        $('#field_' + counter.toString() + ' #daterange_to_').attr('id', 'daterange_to_' + counter.toString())
-        $('#field_' + counter.toString() + ' #daterange_to_' + counter.toString()).attr('name', 'daterange_to_' + counter.toString())
-        $('#field_' + counter.toString() + ' #daterange_to_' + counter.toString()).datepicker({
-            format: 'yyyy-mm-dd',
-            startView: 2,
-            startDate: date_range_min,
-            endDate: date_range_max
-        })
-    } else if (field_type == 'facts') {
-        var fieldFullId = 'fact_txt_' + counter.toString()
-
-        $('#field_hidden_fact').clone().attr('id', new_id).appendTo('#constraints')
-        $('#field_' + counter.toString() + ' #fact_operator_').attr('id', 'fact_operator_' + counter.toString()).attr('name', 'fact_operator_' + counter.toString())
-        $('#field_' + counter.toString() + ' #selected_field_').attr('id', 'selected_field_' + counter.toString()).html(field_name + ' [fact_names]')
-        $('#field_' + counter.toString() + ' #fact_field_').attr('id', 'fact_field_' + counter.toString()).attr('name', 'fact_field_' + counter.toString()).val(field_path)
-        $('#field_' + counter.toString() + ' #remove_link').attr('onclick', "javascript:remove_field('" + new_id + "');")
-        $('#field_' + counter.toString() + ' #suggestions_').attr('id', 'suggestions_' + counter.toString()).attr('name', 'suggestions_' + counter.toString())
-        $('#field_' + counter.toString() + ' #fact_txt_').attr('id', 'fact_txt_' + counter.toString()).attr('name', 'fact_txt_' + counter.toString())
-        $('#field_' + counter.toString() + ' #fact_txt_' + counter.toString()).attr('onkeyup', 'lookup("' + fieldFullId + '",' + counter.toString() + ',"keyup", "FACT_NAME");')
-        $('#field_' + counter.toString() + ' #fact_txt_' + counter.toString()).attr('onfocus', 'lookup("' + fieldFullId + '","' + counter.toString() + '","focus", "FACT_NAME");')
-        $('#field_' + counter.toString() + ' #fact_txt_' + counter.toString()).attr('onblur', 'hide("' + counter.toString() + '");')
-    } else if (field_type.substring(0, 5) == 'fact_') {
-        var counterStr = counter.toString()
-
-        if (factValSubCounter[counterStr] === undefined) {
-            var subCounter = 1
-        } else {
-            var subCounter = factValSubCounter[counterStr]
-        }
-
-        var subCounterStr = subCounter.toString()
-        var idCombination = counterStr + '_' + subCounterStr
-
-        if (field_type == 'fact_str_val') {
-            addFactValueField(counterStr, subCounterStr, field_path, field_name, 'str')
-        } else if (field_type == 'fact_num_val') {
-            addFactValueField(counterStr, subCounterStr, field_path, field_name, 'num')
-        }
-
-        factValSubCounter[counterStr] = subCounter + 1
-    } else {
-        $('#field_hidden').clone().attr('id', new_id).appendTo('#constraints')
-        $('#field_' + counter.toString() + ' #match_operator_').attr('id', 'match_operator_' + counter.toString()).attr('name', 'match_operator_' + counter.toString())
-        $('#field_' + counter.toString() + ' #selected_field_').attr('id', 'selected_field_' + counter.toString()).html(field_name)
-        $('#field_' + counter.toString() + ' #match_field_').attr('id', 'match_field_' + counter.toString()).attr('name', 'match_field_' + counter.toString()).val(field_path)
-        $('#field_' + counter.toString() + ' #match_type_').attr('id', 'match_type_' + counter.toString()).attr('name', 'match_type_' + counter.toString())
-        $('#field_' + counter.toString() + ' #match_slop_').attr('id', 'match_slop_' + counter.toString()).attr('name', 'match_slop_' + counter.toString())
-        $('#field_' + counter.toString() + ' #remove_link').attr('onclick', "javascript:remove_field('" + new_id + "');")
-        $('#field_' + counter.toString() + ' #suggestions_').attr('id', 'suggestions_' + counter.toString()).attr('name', 'suggestions_' + counter.toString())
-        $('#field_' + counter.toString() + ' #match_txt_').attr('id', 'match_txt_' + counter.toString()).attr('name', 'match_txt_' + counter.toString())
-        $('#field_' + counter.toString() + ' #match_layer_').attr('id', 'match_layer_' + counter.toString()).attr('name', 'match_layer_' + counter.toString())
-
-        var suggestion_types = ['CONCEPT', 'LEXICON']
-        var fieldFullId = 'match_txt_' + counter.toString()
-
-        $('#field_' + counter.toString() + ' #match_txt_' + counter.toString()).attr('onkeyup', 'lookup("' + fieldFullId + '",' + counter.toString() + ',"keyup", \'' + suggestion_types + '\'); search_as_you_type_query();')
-        $('#field_' + counter.toString() + ' #match_txt_' + counter.toString()).attr('onfocus', 'lookup("' + fieldFullId + '","' + counter.toString() + '","focus", \'' + suggestion_types + '\');')
-        $('#field_' + counter.toString() + ' #match_txt_' + counter.toString()).attr('onblur', 'hide("' + counter.toString() + '");')
-
-        if (nested_layers.length > 0) {
-            $.each(nested_layers, function (index, value) {
-                $('#field_' + counter.toString() + ' #match_layer_' + counter.toString()).append(new Option('Match layer: ' + value, value))
-            })
-        }
-    }
-
-    $('#field_' + counter.toString()).show()
-}
-
-function addFactValueField(counterStr, subCounterStr, field_path, field_name, value_type) {
-    var idCombination = counterStr + '_' + subCounterStr
-    if (value_type == 'str') {
-        var headingSuffix = ' [fact_text_values]'
-    } else if (value_type == 'num') {
-        var headingSuffix = ' [fact_num_values]'
-    }
-
-    $('#field_hidden_fact_val').clone().attr('id', 'field_' + counterStr).appendTo('#constraints')
-    $('#field_' + counterStr + ' #fact_operator_').attr('id', 'fact_operator_' + counterStr).attr('name', 'fact_operator_' + counterStr)
-    $('#field_' + counterStr + ' #selected_field_').attr('id', 'selected_field_' + counterStr).html(field_name + headingSuffix)
-    $('#field_' + counterStr + ' #remove_link').attr('onclick', "javascript:remove_field('field_" + counterStr + "');")
-    $('#field_' + counterStr + ' #fact_field_').attr('id', 'fact_field_' + counterStr).attr('name', 'fact_field_' + counterStr).val(field_path)
-    $('#field_' + counterStr + " input[name='fact_constraint_type_']")
-        .attr('name', 'fact_constraint_type_' + counterStr)
-        .attr('id', 'fact_constraint_type_' + counterStr)
-        .val(value_type)
-
-    $('#field_' + counterStr + ' #fact_txt_').attr('id', 'fact_txt_' + idCombination).attr('name', 'fact_txt_' + idCombination)
-    $('#field_' + counterStr + " input[name='fact_constraint_val_']").attr('name', 'fact_constraint_val_' + idCombination).attr('id', 'fact_constraint_val_' + idCombination)
-
-    $('#field_' + counterStr + ' #fact_val_rules_').attr('id', 'fact_val_rules_' + counterStr)
-    $('#field_' + counterStr + ' #fact_val_rules_' + counterStr + ' #fact_val_rule_').attr('id', 'fact_val_rule_' + idCombination)
-    $('#fact_val_rule_' + idCombination + ' select')
-        .attr('name', 'fact_constraint_op_' + idCombination)
-        .attr('id', 'fact_constraint_op_' + idCombination)
-
-    // Remove numeric operators from textual fact value
-    if ($('#fact_constraint_type_' + counterStr).val() === 'str') {
-        $('#fact_constraint_op_' + idCombination + ' option').filter(function (index) {
-            return index in {
-                2: null,
-                3: null,
-                4: null,
-                5: null
-            }
-        }).remove()
-    }
-
-    $('#field_' + counterStr + ' button').attr('onclick', 'addFactValueFieldConstraint("' + counterStr + '","' + field_path + '")')
-
-    var keyFieldId = 'fact_txt_' + idCombination
-
-    $('#field_' + counterStr + ' div[name=constraint_key_container] #suggestions_').attr('id', 'suggestions_' + idCombination).attr('name', 'suggestions_' + idCombination)
-    $('#fact_txt_' + idCombination).attr('onkeyup', 'lookup("' + keyFieldId + '","' + idCombination + '","keyup", "FACT_NAME");')
-    $('#fact_txt_' + idCombination).attr('onfocus', 'lookup("' + keyFieldId + '","' + idCombination + '","focus", "FACT_NAME");')
-    $('#fact_txt_' + idCombination).attr('onblur', 'hide("' + idCombination + '");')
-
-    var valIdCombination = idCombination + '_val'
-    var valFieldId = 'fact_constraint_val_' + idCombination
-
-    $('#field_' + counterStr + ' div[name=constraint_val_container] #suggestions_').attr('id', 'suggestions_' + valIdCombination).attr('name', 'suggestions_' + valIdCombination)
-    $('#fact_constraint_val_' + idCombination).attr('onkeyup', 'lookup("' + valFieldId + '","' + valIdCombination + '","keyup", "FACT_VAL");')
-    $('#fact_constraint_val_' + idCombination).attr('onfocus', 'lookup("' + valFieldId + '","' + valIdCombination + '","focus", "FACT_VAL");')
-    $('#fact_constraint_val_' + idCombination).attr('onblur', 'hide("' + valIdCombination + '");')
-}
-
-function getFieldContent(fieldId) {
-    var val = $('#' + fieldId).val()
-
-    return val
-}
-
-function addFactValueFieldConstraint(counterStr, field_path) {
-    if (factValSubCounter[counterStr] === undefined) {
-        var subCounter = 1
-    } else {
-        var subCounter = factValSubCounter[counterStr]
-    }
-
-    var subCounterStr = subCounter.toString()
-
-    var idCombination = counterStr + '_' + subCounterStr
-
-    $('#fact_val_rule_').clone().attr('id', 'fact_val_rule_' + idCombination).appendTo('#fact_val_rules_' + counterStr)
-
-    $('#field_' + counterStr + ' #fact_txt_').attr('id', 'fact_txt_' + idCombination).attr('name', 'fact_txt_' + idCombination)
-    $('#field_' + counterStr + " input[name='fact_constraint_val_']").attr('name', 'fact_constraint_val_' + idCombination).attr('id', 'fact_constraint_val_' + idCombination)
-
-    var keyFieldId = 'fact_txt_' + idCombination
-
-    $('#field_' + counterStr + ' div[name=constraint_key_container] #suggestions_').attr('id', 'suggestions_' + idCombination).attr('name', 'suggestions_' + idCombination)
-    $('#fact_txt_' + idCombination).attr('onkeyup', 'lookup("' + keyFieldId + '","' + idCombination + '","keyup", "FACT_NAME");')
-    $('#fact_txt_' + idCombination).attr('onfocus', 'lookup("' + keyFieldId + '","' + idCombination + '","focus", "FACT_NAME");')
-    $('#fact_txt_' + idCombination).attr('onblur', 'hide("' + idCombination + '");')
-
-    var valIdCombination = idCombination + '_val'
-    var valFieldId = 'fact_constraint_val_' + idCombination
-
-    $('#field_' + counterStr + ' div[name=constraint_val_container] #suggestions_').attr('id', 'suggestions_' + valIdCombination).attr('name', 'suggestions_' + valIdCombination)
-    $('#fact_constraint_val_' + idCombination).attr('onkeyup', 'lookup("' + valFieldId + '","' + valIdCombination + '","keyup", "FACT_VAL");')
-    $('#fact_constraint_val_' + idCombination).attr('onfocus', 'lookup("' + valFieldId + '","' + valIdCombination + '","focus", "FACT_VAL");')
-    $('#fact_constraint_val_' + idCombination).attr('onblur', 'hide("' + valIdCombination + '");')
-
-    $('#fact_val_rule_' + idCombination + ' select').attr('name', 'fact_constraint_op_' + idCombination).attr('id', 'fact_constraint_op_' + idCombination)
-
-    // Remove numeric operators from textual fact value
-    if ($('#fact_constraint_type_' + counterStr).val() === 'str') {
-        $('#fact_constraint_op_' + idCombination + ' option').filter(function (index) {
-            return index in {
-                2: null,
-                3: null,
-                4: null,
-                5: null
-            }
-        }).remove()
-    }
-
-    var action_button_container = $('#fact_val_rule_' + idCombination + " div[name='fact_action_button']")
-    action_button_container.empty()
-
-    var remove_button = $('<button/>')
-        .attr('type', 'button')
-        .attr('onclick', 'remove_fact_rule("' + idCombination + '")')
-        .addClass('btn btn-sm center-block')
-
-    var remove_span = $('<span/>')
-        .addClass('glyphicon glyphicon-remove')
-        .appendTo(remove_button)
-
-    action_button_container.append(remove_button)
-
-    factValSubCounter[counterStr] = factValSubCounter[counterStr] + 1
-}
-
-function remove_fact_rule(rule_id) {
+function remove_fact_rule (rule_id) {
     $('#fact_val_rule_' + rule_id).remove()
 }
 
-function select_all_fields() {
+function select_all_fields () {
     if ($('#check_all_mapping_fields').prop('checked') == true) {
         $.each($("[name^='mapping_field_']"), function () {
             $(this).prop('checked', true)
@@ -695,7 +233,7 @@ function select_all_fields() {
     }
 }
 
-function hide(id) {
+function hide (id) {
     var separatorIdx = id.indexOf('_')
     if (separatorIdx > -1) {
         var fieldId = id.substring(0, separatorIdx)
@@ -717,11 +255,11 @@ function hide(id) {
     // });
 }
 
-function remove_field(id) {
+function remove_field (id) {
     $('#' + id).remove()
 }
 
-function query() {
+function query () {
     var formElement = document.getElementById('filters')
     var request = new XMLHttpRequest()
     request.onreadystatechange = function () {
@@ -729,13 +267,16 @@ function query() {
             $('#right').html(request.responseText)
             examplesTable = $('#examples').DataTable({
                 'bAutoWidth': false,
-                "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                'lengthMenu': [
+                    [10, 25, 50, -1],
+                    [10, 25, 50, 'All']
+                ],
                 'deferRender': true,
                 'scrollY': '80vh',
                 'bServerSide': true,
                 'processing': true,
                 'sAjaxSource': PREFIX + '/table_content',
-                'dom':  "<'#top-part''row'<'col-xs-6'l><'col-xs-6'i>rp>t",
+                'dom': "<'#top-part''row'<'col-xs-6'l><'col-xs-6'i>rp>t",
                 'sServerMethod': 'POST',
                 'fnServerParams': function (aoData) {
                     aoData.push({
@@ -743,7 +284,7 @@ function query() {
                         'value': data = JSON.stringify($('#filters').serializeArray())
                     })
                 },
-               
+
                 'oLanguage': {
                     'sProcessing': 'Loading...'
                 },
@@ -775,20 +316,18 @@ function query() {
                     }
                     $('#toggle-column-select').selectpicker('refresh')
                 },
-                'scrollX': true,
+                'scrollX': true
             })
 
             initColumnSelectVisiblity(examplesTable)
 
             var dataset = $('#dataset').val()
             var mapping = $('#mapping').val()
-            var div = $("#top-part")
-            var button = $(".toggle-column-select-wrapper")
+            var div = $('#top-part')
+            var button = $('.toggle-column-select-wrapper')
             button.appendTo(div)
-            console.log(div)
-            
+
             loadUserPreference(dataset, mapping)
-           /*  $("#top-part").appendChild($("toggle-column-select-wrapper")); */
             $('#actions-btn').removeClass('invisible')
             $('#export-examples-modal').removeClass('invisible')
             $('#export-aggregation-modal').addClass('invisible')
@@ -799,7 +338,7 @@ function query() {
     request.send(new FormData(formElement))
 }
 
-function initColumnSelectVisiblity(examplesTable) {
+function initColumnSelectVisiblity (examplesTable) {
     var $select = $('#toggle-column-select')
     $select.selectpicker({
         style: 'btn btn-default',
@@ -812,7 +351,7 @@ function initColumnSelectVisiblity(examplesTable) {
         examplesTable.columns().visible(true)
     })
     $select.on('changed.bs.select', function (e, clickedIndex, newValue, oldValue) {
-        /* if select all / deselect buttons are not the callers */
+        /* if (select all / deselect) buttons are not the callers */
         if (newValue != null) {
             /* clickedindex same as column index anyway, cause same order, so dont need to use this */
             /* var selected = $(this).find('option').eq(clickedIndex).val() */
@@ -824,59 +363,23 @@ function initColumnSelectVisiblity(examplesTable) {
         $select.selectpicker('selectAll')
     }
     $select.selectpicker('refresh')
-
 }
 
-function updateSelectColumnFilter(idx) {
+function updateSelectColumnFilter (idx) {
     /* selects content is layed out the same order as the columns list, child starts at 1 instead of 0, so just add 1 */
     $(`#toggle-column-select :nth-child(${idx + 1})`).prop('selected', true)
 }
-
-function cluster_query() {
-    var formElement = document.getElementById('filters')
-    var request = new XMLHttpRequest()
-
-    request.onreadystatechange = function () {
-        $('#right').html('Loading...')
-        if (request.readyState == 4 && request.status == 200) {
-            $('#right').html(request.responseText)
-        }
-    }
-
-    request.open('POST', PREFIX + '/cluster_query')
-    request.send(new FormData(formElement))
-}
-
-function mlt_query() {
-    var formElement = document.getElementById('filters')
-    var mlt_field = $("select[id='mlt_fields']").val()
-    var request = new XMLHttpRequest()
-
-    if (mlt_field != null) {
-        request.onreadystatechange = function () {
-            $('#right').html('Loading...')
-            if (request.readyState == 4 && request.status == 200) {
-                $('#right').html(request.responseText)
-            }
-        }
-        request.open('POST', PREFIX + '/mlt_query')
-        request.send(new FormData(formElement))
-    } else {
-        $('#right').html('No fields selected!')
-    }
-}
-
-function accept_document(id) {
+function accept_document (id) {
     $('#docs').val($('#docs').val() + id + '\n')
     $('#row_' + id).remove()
 }
 
-function reject_document(id) {
+function reject_document (id) {
     $('#docs_rejected').val($('#docs_rejected').val() + id + '\n')
     $('#row_' + id).remove()
 }
 
-function aggregate() {
+function aggregate () {
     var container = $('#right')
     container.empty()
     container.append('Loading...')
@@ -886,7 +389,6 @@ function aggregate() {
     request.onreadystatechange = function () {
         if (request.readyState == 4 && request.status == 200) {
             if (request.responseText.length > 0) {
-                debugger
                 displayAgg(JSON.parse(request.responseText))
                 $('#actions-btn').removeClass('invisible')
                 $('#export-examples-modal').addClass('invisible')
@@ -898,25 +400,7 @@ function aggregate() {
     request.send(new FormData(formElement), true)
 }
 
-function apply_preprocessor() {
-    var formElement = document.getElementById('filters')
-
-    $('#preprocessor_field').appendTo(formElement)
-    $('#preprocessor_key').appendTo(formElement)
-
-    var request = new XMLHttpRequest()
-    request.onreadystatechange = function () {
-        if (request.readyState == 4 && request.status == 200) {
-            if (request.responseText.length > 0) {
-
-            }
-        }
-    }
-    request.open('POST', PREFIX + '/apply_preprocessor')
-    request.send(new FormData(formElement), true)
-}
-
-function factGraph() {
+function factGraph () {
     var container = $('#right')
     container.empty()
     container.append('Loading...')
@@ -933,7 +417,7 @@ function factGraph() {
     request.send(new FormData(formElement), true)
 }
 
-function displayAgg(response) {
+function displayAgg (response) {
     var data = response
     var container = $('#right')
     container.empty()
@@ -953,7 +437,6 @@ function displayAgg(response) {
             } else if (data[i].type == 'fact') {
                 drawStringAggs(data[i], type = 'fact')
             } else if (data[i].type == 'fact_str_val') {
-                debugger
                 drawStringAggs(data[i])
             } else if (data[i].type == 'fact_num_val') {
                 drawStringAggs(data[i])
@@ -962,7 +445,7 @@ function displayAgg(response) {
     }
 }
 
-function drawTimeline(data) {
+function drawTimeline (data) {
     var timeline_children_container = $('<div></div>')
 
     new Morris.Line({
@@ -985,7 +468,7 @@ function drawTimeline(data) {
     $('#right').append(timeline_children_container)
 }
 
-function show_children(data, date, timeline_children_container) {
+function show_children (data, date, timeline_children_container) {
     timeline_children_container.empty()
     $.each(data, function (i, data_list) {
         var responseContainers = [$("<div style='float: left; padding-left: 20px;'></div>")]
@@ -1038,7 +521,7 @@ function show_children(data, date, timeline_children_container) {
     })
 }
 
-function drawStringAggs(data, type = null) {
+function drawStringAggs (data, type = null) {
     var response_container = $("<div style='float: left; padding-left: 20px;'></div>")
     var table_container = $("<div style='float: left'></div>")
     var children_container = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>")
@@ -1075,7 +558,7 @@ function drawStringAggs(data, type = null) {
 
 var selectedFactCheckboxes = []
 
-function factDeleteCheckbox(checkbox) {
+function factDeleteCheckbox (checkbox) {
     inArray = false
     if (!selectedFactCheckboxes.length > 0) {
         selectedFactCheckboxes.push(checkbox)
@@ -1094,7 +577,7 @@ function factDeleteCheckbox(checkbox) {
     }
 }
 
-function deleteFactsViaCheckboxes(checkboxes) {
+function deleteFactsViaCheckboxes (checkboxes) {
     factArray = []
     for (var i = 0; i < checkboxes.length; i++) {
         fact = JSON.parse(checkboxes[i].name.replace(/'/g, '"'))
@@ -1103,7 +586,7 @@ function deleteFactsViaCheckboxes(checkboxes) {
     deleteFactArray(factArray, source = 'aggs')
 }
 
-function ajaxDeleteFacts(form_data, factArray) {
+function ajaxDeleteFacts (form_data, factArray) {
     $.ajax({
         url: PREFIX + '/delete_facts',
         data: form_data,
@@ -1138,7 +621,7 @@ function ajaxDeleteFacts(form_data, factArray) {
     })
 }
 
-function deleteFactArray(factArray, source = 'aggs') {
+function deleteFactArray (factArray, source = 'aggs') {
     if (factArray.length >= 1) {
         var request = new XMLHttpRequest()
         var form_data = new FormData()
@@ -1170,7 +653,7 @@ function deleteFactArray(factArray, source = 'aggs') {
     }
 }
 
-function addFactToSearch(fact_name, fact_val) {
+function addFactToSearch (fact_name, fact_val) {
     $('#constraint_field option').each(function () {
         if ($(this).val() != '') {
             if (JSON.parse($(this).val())['type'] == 'fact_str_val') {
@@ -1187,7 +670,7 @@ function addFactToSearch(fact_name, fact_val) {
         }
     })
     if (!has_field) {
-        add_field('', '', '', false)
+        addField('', '', '', false)
     }
 
     var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_')
@@ -1203,7 +686,7 @@ function addFactToSearch(fact_name, fact_val) {
     $('#fact_constraint_val_' + suggestion_id).val(fact_val)
 }
 
-function show_string_children(data, children_container, grandchildren_container, row_key, type = null) {
+function show_string_children (data, children_container, grandchildren_container, row_key, type = null) {
     children_container.empty()
     grandchildren_container.empty()
 
@@ -1277,7 +760,7 @@ function show_string_children(data, children_container, grandchildren_container,
     children_container.removeClass('hidden')
 }
 
-function change_agg_field(field_nr) {
+function change_agg_field (field_nr) {
     var field_component = $('#agg_field_' + field_nr)
     var selected_field = field_component.val()
     var field_data = JSON.parse(selected_field)
@@ -1311,7 +794,7 @@ function change_agg_field(field_nr) {
     })
 }
 
-function toggle_agg_field_2(action) {
+function toggle_agg_field_2 (action) {
     if (action == 'add') {
         $('#agg_field_2_container').removeClass('hidden')
         $('#agg_field_2_button').addClass('hidden')
@@ -1322,297 +805,8 @@ function toggle_agg_field_2(action) {
         $('#agg_field_2_selected').val('false')
     }
 }
-/* 
-function exportData(exportType) {
-    var formElement = document.getElementById('filters')
 
-    var query_args = $('#filters').serializeArray()
-
-    query_args.push({
-        name: 'export_type',
-        value: exportType
-    })
-
-    if (exportType == 'agg') {
-        query_args.push({
-            name: 'filename',
-            value: $('#export-file-name-agg').val() + '.csv'
-        })
-    } else {
-        query_args.push({
-            name: 'filename',
-            value: $('#export-file-name-example').val() + '.csv'
-        })
-        var extent_dec = $('input[name=export-extent]:checked').val()
-        var pagingInfo = examplesTable.page.info()
-
-        switch (extent_dec) {
-            case 'page':
-                query_args.push({
-                    name: 'examples_start',
-                    value: pagingInfo.start
-                })
-                query_args.push({
-                    name: 'num_examples',
-                    value: pagingInfo.length
-                })
-                break
-            case 'pages':
-                var startPage = Number($('#export-start-page').val()) - 1
-                var endPage = Number($('#export-end-page').val()) - 1
-                query_args.push({
-                    name: 'examples_start',
-                    value: startPage * pagingInfo.length
-                })
-                query_args.push({
-                    name: 'num_examples',
-                    value: (endPage - startPage + 1) * pagingInfo.length
-                })
-
-                break
-            case 'all':
-                query_args.push({
-                    name: 'num_examples',
-                    value: '*'
-                })
-                break
-            case 'rows':
-                query_args.push({
-                    name: 'examples_start',
-                    value: 0
-                })
-                query_args.push({
-                    name: 'num_examples',
-                    value: Number($('#export-rows').val())
-                })
-                break
-        }
-
-        var features_dec = $('input[name=export-features]:checked').val()
-        var features = []
-        if (features_dec == 'all') {
-            var options = $('#toggle-column-select option')
-
-            var features = $.map(options, function (option) {
-                return option.value
-            })
-        } else {
-            $('#toggle-column-select option').each(function () {
-                if (this.selected) {
-                    features.push($(this).text())
-                }
-            })
-        } */
-        /*
-        $('.buttons-columnVisibility').each(function () {
-            if (!$(this).hasClass('toggleAllButton')) {
-                if (features_dec == 'all') {
-                    features.push($(this).text())
-                } else if ($(this).hasClass('active')) {
-                    features.push($(this).text())
-                }
-            }
-        }) */
-
-/*         query_args.push({
-            name: 'features',
-            value: features
-        })
-    }
-
-    var query = PREFIX + '/export?args=' + JSON.stringify(query_args)
-
-    window.open(query)
-} */
-
-/* function remove_by_query() {
-    var formElement = document.getElementById('filters')
-    var request = new XMLHttpRequest()
-
-    request.onreadystatechange = function () {
-        if (request.readyState == 4 && request.status == 200) {
-            if (request.responseText.length > 0) {
-                swal({
-                    title: 'The documents are being deleted. Check the progress by searching again.',
-                    animation: true,
-                    customClass: 'animated fadeInDown',
-                    width: 400,
-                    padding: 10,
-                    position: 'top',
-                    type: 'success',
-                    timer: 3500,
-                    background: '#f9f9f9',
-                    backdrop: `
-                    rgba(0,0,0,0.0)
-                    no-repeat
-                    `
-                })
-            }
-        }
-    }
-
-    request.open('POST', PREFIX + '/remove_by_query')
-    request.send(new FormData(formElement), true)
-} */
-
-function save() {
-    const prompt = async () => {
-        const {
-            value: description
-        } = await swal({
-            title: 'Enter description for the search.',
-            input: 'text',
-            inputPlaceholder: 'description',
-            showCancelButton: true,
-            inputValidator: (value) => {
-                return !value && 'Field empty!'
-            }
-        })
-        if (description) {
-            swal({
-                type: 'success',
-                title: 'Successfully saved search.'
-            })
-
-            $('#search_description').val(description)
-            var formElement = document.getElementById('filters')
-            var request = new XMLHttpRequest()
-            request.onreadystatechange = function () {
-                if (request.readyState == 4 && request.status == 200) {
-                    get_searches()
-                }
-            }
-
-            request.open('POST', PREFIX + '/save')
-            request.send(new FormData(formElement), true)
-        }
-    }
-    prompt()
-}
-
-function get_searches() {
-    var request = new XMLHttpRequest()
-
-    var formElement = document.getElementById('filters')
-
-    request.onreadystatechange = function () {
-        if (request.readyState == 4 && request.status == 200) {
-            if (request.responseText.length > 0) {
-                display_searches(JSON.parse(request.responseText))
-            }
-        }
-    }
-
-    request.open('GET', PREFIX + '/listing')
-    request.send(new FormData(formElement), true)
-}
-
-function remove_search_callback(response_text) {
-    var search_div = document.getElementById('search_' + response_text)
-    search_div.parentNode.removeChild(search_div)
-}
-
-function display_searches(searches) {
-    var searches_container = document.getElementById('saved_searches')
-
-    while (searches_container.firstChild) {
-        searches_container.removeChild(searches_container.firstChild)
-    }
-
-    for (var i = 0; i < searches.length; i++) {
-        search_div = document.createElement('tr')
-
-        inputElement = document.createElement('input')
-        urlElement = document.createElement('span')
-        aElement = document.createElement('span')
-
-        search_div.id = 'search_' + searches[i].id
-
-        inputElement.type = 'checkbox'
-        inputElement.name = 'saved_search_' + i
-        inputElement.value = searches[i].id
-
-        urlElement.className = 'glyphicon glyphicon-copy pointer'
-        aElement.className = 'glyphicon glyphicon-minus-sign pointer'
-
-        urlElement.onclick = (function (id) {
-            return function () {
-                var loc = window.location.href
-                search_url = loc + '?search=' + id
-
-                const el = document.createElement('textarea')
-                el.value = search_url
-                document.body.appendChild(el)
-                el.select()
-                document.execCommand('copy')
-                document.body.removeChild(el)
-
-                const notification = swal.mixin({
-                    toast: true,
-                    position: 'bottom-start',
-                    showConfirmButton: false,
-                    timer: 3000
-                })
-
-                notification({
-                    type: 'success',
-                    title: 'Copied search link to clipboard',
-                    text: search_url
-                })
-            }
-        }(searches[i].id))
-
-        aElement.onclick = (function (id) {
-            return function () {
-                swal({
-                    title: 'Are you sure you want to delete this search?',
-                    text: 'The saved search will be deleted.',
-                    type: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#73AD21',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes'
-                }).then((result) => {
-                    if (result.value) {
-                        async_get_query(PREFIX + '/corpus_tool/delete?pk=' + id, remove_search_callback)
-                    }
-                })
-            }
-        }(searches[i].id))
-
-        input_col = document.createElement('td')
-        input_col.appendChild(inputElement)
-        search_div.appendChild(input_col)
-
-        text_col = document.createElement('td')
-        textNode = document.createTextNode(searches[i].desc)
-
-        renderAnchor = document.createElement('a')
-        renderAnchor.appendChild(textNode)
-        renderAnchor.title = 'Display search parameters'
-        renderAnchor.href = '#'
-        renderAnchor.onclick = (function (id) {
-            return function () {
-                render_saved_search(id)
-            }
-        }(searches[i].id))
-
-        text_col.appendChild(renderAnchor)
-        search_div.appendChild(text_col)
-
-        url_col = document.createElement('td')
-        url_col.appendChild(urlElement)
-        search_div.appendChild(url_col)
-
-        remove_col = document.createElement('td')
-        remove_col.appendChild(aElement)
-        search_div.appendChild(remove_col)
-
-        searches_container.appendChild(search_div)
-    }
-}
-
-function loadUserPreference(dataset, mapping) {
+function loadUserPreference (dataset, mapping) {
     var hiddenFeatures = localStorage.getCacheItem('hiddenFeatures_' + dataset + '_' + mapping)
     if (hiddenFeatures) {
         for (var featureIdx in hiddenFeatures) {
@@ -1623,60 +817,7 @@ function loadUserPreference(dataset, mapping) {
     }
 }
 
-function tag_by_query() {
-    if ($('#tag_name')[0].checkValidity() && $('#tag_value')[0].checkValidity() && $('#tag_field')[0].checkValidity()) {
-        var tag_name = $('#tag_name').val()
-        var tag_value = $('#tag_value').val()
-        var tag_field = JSON.parse($('#tag_field').val())['path']
-
-        formElement = new FormData(document.getElementById('filters'))
-        formElement.append('tag_name', tag_name)
-        formElement.append('tag_value', tag_value)
-        formElement.append('tag_field', tag_field)
-
-        $.ajax({
-            url: PREFIX + '/tag_documents',
-            data: formElement,
-            type: 'POST',
-            contentType: false,
-            processData: false,
-            success: function () {
-                swal({
-                    title: 'Tag successful!',
-                    text: 'Search has been tagged with ' + tag_name + ': ' + tag_value,
-                    type: 'success'
-                })
-            },
-            error: function () {
-                swal('Error!', 'There was a problem tagging the search!', 'error')
-            }
-        })
-    } else {
-        swal('Warning!', 'Parameters not set!', 'warning')
-    }
-}
-
-function hide_show_options() {
-    var x = document.getElementById('short_version_options')
-
-    if (x.style.display === 'none') {
-        x.style.display = 'block'
-    } else {
-        x.style.display = 'none'
-    }
-}
-
-function hide_show_options_cluster() {
-    var x = document.getElementById('short_version_options_cluster')
-
-    if (x.style.display === 'none') {
-        x.style.display = 'block'
-    } else {
-        x.style.display = 'none'
-    }
-}
-
-function cluster_to_lex(id) {
+function cluster_to_lex (id) {
     var cluster_form = document.getElementById('save_as_lexicon_' + id)
     var fd = new FormData(cluster_form)
     fd.set('lexiconname', fd.get('lexiconname').split(' ').slice(0, -1).join(' '))

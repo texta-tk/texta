@@ -1,4 +1,4 @@
-
+<script type="application/javascript" src="{{STATIC_URL}}searcher/searcher-sidebar.js"></script>
 <div>
     <form id="filters">
         <div class="panel">
@@ -42,7 +42,7 @@
                                             </div>
                                             <div class="form-group flex-item-grow-1">
                                                 <button type="button" class="btn btn-default input-sm"
-                                                    onclick="javascript:add_field('{{date_range.min}}','{{date_range.max}}');">Add</button>
+                                                    onclick="javascript:addField('{{date_range.min}}','{{date_range.max}}');">Add</button>
                                             </div>
                                         </div>
                                     </div>
@@ -58,7 +58,7 @@
                                     </div>
                                     <div class="col-sm-12">
                                         Show short version:
-                                        <input type="checkbox" name="show_short_version" onclick="hide_show_options()"
+                                        <input type="checkbox" name="show_short_version" onclick="hideShowOptions()"
                                             class="pull-right">
                                     </div>
                                     <div class="col-sm-12" id="short_version_options" style="display: none;">
@@ -161,7 +161,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <button type="button" onclick="javascript:mlt_query();" class="btn btn-default form-control"><span
+                                    <button type="button" onclick="javascript:mltQuery();" class="btn btn-default form-control"><span
                                             class="glyphicon glyphicon-search"></span> Search for Similar</button>
 
                                 </div>
@@ -289,7 +289,7 @@
                                     </div>
                                     <div class="col-sm-12">
                                         Show short version:
-                                        <input type="checkbox" name="show_short_version_cluster" onclick="hide_show_options_cluster()"
+                                        <input type="checkbox" name="show_short_version_cluster" onclick="hideShowOptionsCluster()"
                                             class="pull-right">
                                     </div>
                                     <div class="col-sm-12">
@@ -312,7 +312,7 @@
 
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <button type="button" onclick="javascript:cluster_query();" class="btn btn-default form-control"><span
+                                    <button type="button" onclick="javascript:clusterQuery();" class="btn btn-default form-control"><span
                                             class="glyphicon glyphicon-search"></span> Cluster Search</button>
                                 </div>
                             </div>
@@ -497,4 +497,19 @@
 
     </form>
 
+    <div class="modal fade" id="query-modal" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Query</h4>
+                    </div>
+                    <div class="modal-body" id="query-modal-content"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+    
+                </div>
+            </div>
+        </div>
 </div>
