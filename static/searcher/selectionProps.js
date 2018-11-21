@@ -161,7 +161,7 @@ function saveFactFromSelect(fact_value, fact_field, doc_id) {
 }
 
 
-function saveAsFact(method, match_type, fact_name, fact_value, fact_field, doc_id) {
+function saveAsFact(method, match_type, case_sens, fact_name, fact_value, fact_field, doc_id) {
     formElement = new FormData(document.getElementById("filters"));
     formElement.append('fact_name', fact_name);
     formElement.append('fact_value', fact_value);
@@ -169,6 +169,7 @@ function saveAsFact(method, match_type, fact_name, fact_value, fact_field, doc_i
     formElement.append('doc_id', doc_id);
     formElement.append('method', method);
     formElement.append('match_type', match_type);
+    formElement.append('case_sens', case_sens);
 
     $.ajax({
         url: PREFIX + '/fact_to_doc',
@@ -188,16 +189,37 @@ function saveAsFact(method, match_type, fact_name, fact_value, fact_field, doc_i
                 text: 'Adding fact..'
             })
         },
-        success: function () {
+        success: function (data) {
             const notification = swal.mixin({
                 toast: true, position: 'top',
-                showConfirmButton: false, timer: 3000
+                showConfirmButton: false, timer: 5000
             });
 
+            factsAdded = data.fact_count
+            status = data.status
+            type = ''
+            title = ''
+            switch(status) {
+                case 'success':
+                    type = 'success';
+                    title = 'Adding fact successful!';
+                    text = `${factsAdded} facts like ${fact_name}: ${fact_value} have been added.`;
+                    break
+                case 'no_hits':
+                    type = 'warning';
+                    title = 'Could not find given facts';
+                    text = `Facts like ${fact_name}: ${fact_value} have not been added.`;
+                    break
+                    case 'scrolling_error':
+                    type = 'warning'
+                    type = 'A problem occured whilst adding facts'
+                    text = `${factsAdded} facts like ${fact_name}: ${fact_value} were added.`;
+            }
+
             notification({
-                type: 'success',
-                title: 'Adding fact successful!',
-                text: `Fact ${fact_name}: ${fact_value} has been added.`
+                type: type,
+                title: title,
+                text: text
             })
         },
         error: function () {
@@ -207,27 +229,11 @@ function saveAsFact(method, match_type, fact_name, fact_value, fact_field, doc_i
 }
 
 async function saveOptionsSwal(fact_name, fact_value, fact_field, doc_id) {
-    // inputOptions can be an object or Promise
-    const inputMethod = new Promise((resolve) => {
-        resolve({
-            'select_only': 'Only the selected text in this document',
-            'all_in_doc': 'All matches in this document',
-            'all_in_dataset': 'All matches in dataset'
-        })
-    })
-    const inputType = new Promise((resolve) => {
-        resolve({
-            'phrase': 'Match the as a separate word',
-            'phrase_prefix': 'Match as phrase prefix',
-            'string': 'Match anywhere in text'
-        })
-    })
-
     if (validateWithFeedback(fact_name, fact_value, fact_field, doc_id)) {
         swal.mixin({
             confirmButtonText: 'Next &rarr;',
             showCancelButton: true,
-            progressSteps: ['1', '2', '3']
+            progressSteps: ['1', '2', '3', '4']
         }).queue([
             {
                 title: `Are you sure you want to save this as a fact?`,
@@ -241,18 +247,41 @@ async function saveOptionsSwal(fact_name, fact_value, fact_field, doc_id) {
             {
                 title: 'Select saving method',
                 input: 'radio',
-                inputOptions: inputMethod
+                inputOptions: {
+                    'select_only': 'Only the selected text in this document',
+                    'all_in_doc': 'All matches in this document',
+                    'all_in_dataset': 'All matches in dataset'
+                }
             },
             {
                 title: 'Select matching method',
                 input: 'radio',
-                inputOptions: inputType
+                inputOptions: {
+                    'phrase': 'Match as a separate word',
+                    'phrase_prefix': 'Match as phrase prefix',
+                    'string': 'Match anywhere in text'
+                },
+            },
+            {
+                title: 'Case sensitive?',
+                text: 'Save similar facts separately based on case',
+                input: 'radio',
+                inputOptions: {
+                    'True': 'Case sensitive',
+                    'False': 'Case insensitive',
+                },
             }
         ]).then((result) => {
             if (result.value) {
                 method = result.value[1]
                 match_type = result.value[2]
-                saveAsFact(method, match_type, fact_name.toUpperCase(), fact_value, fact_field, doc_id);
+                case_sens = result.value[3]
+                if (method && match_type) {
+                    saveAsFact(method, match_type, case_sens, fact_name.toUpperCase(), fact_value, fact_field, doc_id);
+                }
+                else {
+                    swal('Warning!', 'Method or match type not selected!', 'warning');
+                }
             }
         })
     }

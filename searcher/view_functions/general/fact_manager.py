@@ -1,5 +1,6 @@
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
+import sys
 import re
 import json
 import requests
@@ -22,7 +23,7 @@ class FactManager:
 
     def remove_facts_from_document(self, rm_facts_dict):
         '''remove a certain fact from all documents given a [str]key and [str]val'''
-        logger = LogManager(__name__, 'FACT MANAGER REMOVE FACTS')
+        logger = LogManager(__name__, 'FactManager remove_facts_from_document')
 
         try:
             query = self._fact_deletion_query(rm_facts_dict)
@@ -63,7 +64,7 @@ class FactManager:
         except:
             print(traceback.format_exc())
             logger.set_context('es_params', self.es_params)
-            logger.exception('remove_facts_from_document_failed')
+            logger.exception('remove_facts_from_document_failed, {}'.format(traceback.format_exc()))
 
 
     def _fact_deletion_query(self, rm_facts_dict):
@@ -281,7 +282,7 @@ class FactManager:
 
 
 class FactAdder(FactManager):
-    def __init__(self, request, es_params, fact_name, fact_value, fact_field, doc_id, method, match_type):
+    def __init__(self, request, es_params, fact_name, fact_value, fact_field, doc_id, method, match_type, case_sens):
         super().__init__(request)
         self.es_params = es_params
         self.fact_name = fact_name[:self.max_name_len]
@@ -290,17 +291,22 @@ class FactAdder(FactManager):
         self.doc_id = doc_id
         self.method = method
         self.match_type = match_type
+        self.case_sens = case_sens
 
 
     def add_facts(self):
-        if self.method == 'select_only':
-            response = self.fact_to_doc()
-        elif self.method == 'all_in_doc':
-            response = self.doc_matches_to_facts()
-        elif self.method == 'all_in_dataset':
-            response = self.matches_to_facts()
-
-        return response
+        logger = LogManager(__name__, 'FactAdder add_facts')
+        try:
+            if self.method == 'select_only':
+                json_response = self.fact_to_doc()
+            elif self.method == 'all_in_doc':
+                json_response = self.doc_matches_to_facts()
+            elif self.method == 'all_in_dataset':
+                json_response = self.matches_to_facts()
+            return json_response
+        except Exception as e:
+            print('-- Exception[{0}] {1}'.format(__name__, traceback.format_exc()))
+            logger.error('adding_facts_failed, traceback: \n{}'.format(str(traceback.format_exc())))
 
     def fact_to_doc(self):
         """Add a fact to a certain document with given fact, span, and the document _id"""
@@ -314,8 +320,8 @@ class FactAdder(FactManager):
         data = ''
         for document in hits:
             match = re.search(r"{}".format(self.fact_value), document['_source'][self.fact_field], re.IGNORECASE | re.MULTILINE)
-            import pdb;pdb.set_trace()
-            new_fact = {'fact': self.fact_name, 'str_val':  match.group(), 'doc_path': self.fact_field, 'spans': str([list(match.span())])}
+            save_val = match.group().lower() if not self.case_sens else match.group()
+            new_fact = {'fact': self.fact_name, 'str_val':  save_val, 'doc_path': self.fact_field, 'spans': str([list(match.span())])}
             if self.field not in document['_source']:
                 document['_source'][self.field] = [new_fact]
             else:
@@ -326,7 +332,7 @@ class FactAdder(FactManager):
             data += json.dumps(document)+'\n'
         response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
         # response = self.es_m.update_documents()
-        return response
+        return {'fact_count': 1, 'status': 'success'}
 
 
     def doc_matches_to_facts(self):
@@ -338,17 +344,19 @@ class FactAdder(FactManager):
         if self.field not in hits[0]['_source']:
             self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
 
-        data = self._derive_match_spans(hits)
+        data, fact_count = self._derive_match_spans(hits)
         response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
         # response = self.es_m.update_documents()
-        return response
+        return {'fact_count': fact_count, 'status': 'success'}
 
 
     def matches_to_facts(self):
         """Add all matches in dataset as a fact"""
+        logger = LogManager(__name__, 'FactAdder matches_to_facts ')
+
         if self.match_type == 'string':
             # Match the word everywhere in text
-            query = {"main": {"query": {"regexp": {self.fact_field: r"\w*{}\w*".format(self.fact_value)}}}}
+            query = {"main": {"query": {"regexp": {self.fact_field: {"match": r"\w*{}\w*".format(self.fact_value)}}}}}
         else:
             # Match prefix, or separate word
             query =  {"main": {"query": {"multi_match" : {"query":self.fact_value, "fields": [self.fact_field], "type": self.match_type}}}}
@@ -356,33 +364,29 @@ class FactAdder(FactManager):
         # response = self.es_m.perform_query(query)
         self.es_m.load_combined_query(query)
         response = self.es_m.scroll(size=self.bs, field_scroll=self.fact_field)
-        print(response)
         scroll_id = response['_scroll_id']
         total_docs = response['hits']['total']
         # If texta_facts not in document
         hits = response['hits']['hits']
+
         if hits:
-            if self.field not in hits[0]['_source']:
-                self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
-            while total_docs > 0:
-                try:
-                    print('total_docs', total_docs)
-                    data = self._derive_match_spans(hits)
+            try:
+                fact_count = 0
+                if self.field not in hits[0]['_source']:
+                    self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
+                while total_docs > 0:
+                    data, fact_count = self._derive_match_spans(hits)
+                    response = self.es_m.scroll(scroll_id=scroll_id, size=self.bs, field_scroll=self.field)
                     total_docs = len(response['hits']['hits'])
                     scroll_id = response['_scroll_id']
-                    response = self.es_m.scroll(size=self.bs, field_scroll=self.field)
-                    response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
-                except:
-                    print('failed')
-                    print(response)
-                    import pdb;pdb.set_trace()
-            print('done')
+                    self.es_m.plain_post_bulk(self.es_m.es_url, data)
+            except Exception as e:
+                print('-- Exception[{0}] {1}'.format(__name__, traceback.format_exc()))
+                logger.error('scrolling error in FactAdder matches_to_facts, traceback: \n{}'.format(traceback.format_exc()))
+                return {'fact_count': fact_count, 'status': 'scrolling_error'}
         else:
-            print('NO HITS ')
-            print('NO HITS ')
-            print('NO HITS ')
-            # TODO some kind of feedback of empty hits
-        return response
+            return {'fact_count': 0, 'status': 'no_hits'}
+        return {'fact_count': fact_count, 'status': 'success'}
 
 
     def _derive_match_spans(self, hits):
@@ -393,14 +397,15 @@ class FactAdder(FactManager):
         elif self.match_type == 'string':
             pattern = r"\w*{}\w*"
 
-
         data = ''
         for document in hits:
             new_facts = []
-            for match in re.finditer(pattern.format(self.fact_value), document['_source'][self.fact_field], re.IGNORECASE):
-                new_facts.append({'fact': self.fact_name, 'str_val':  match.group(), 'doc_path': self.fact_field, 'spans': str([list(match.span())])})
+            for i, match in enumerate(re.finditer(pattern.format(self.fact_value), document['_source'][self.fact_field], re.IGNORECASE)):
+                save_val = match.group().lower() if not self.case_sens else match.group()
+                new_facts.append({'fact': self.fact_name, 'str_val':  save_val, 'doc_path': self.fact_field, 'spans': str([list(match.span())])})
+                fact_count = i
             data = self._append_fact_to_doc(document, data, new_facts)
-        return data
+        return data, fact_count
 
 
     def _append_fact_to_doc(self, document, data, new_facts):

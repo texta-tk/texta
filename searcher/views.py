@@ -21,7 +21,7 @@ except:
     from io import StringIO # NEW PY REQUIREMENT
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, StreamingHttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, StreamingHttpResponse, HttpResponseBadRequest, JsonResponse
 from django.template import loader
 from django.utils.encoding import smart_str
 # For string templates
@@ -53,6 +53,7 @@ from searcher.view_functions.general.fact_manager import FactAdder
 from searcher.view_functions.general.get_saved_searches import extract_constraints
 from searcher.view_functions.general.export_pages import export_pages
 from searcher.view_functions.general.searcher_utils import collect_map_entries, get_fields_content, get_fields
+
 
 
 @login_required
@@ -345,15 +346,17 @@ def fact_to_doc(request):
     method = request.POST['method'].strip()
     match_type = request.POST['match_type'].strip()
     doc_id = request.POST['doc_id'].strip()
+    case_sens = True if request.POST['case_sens'].strip() == "True" else False 
     es_params = request.POST
 
     # Validate that params aren't empty strings
     if len(fact_name)>0 and len(fact_value)>0 and len(fact_field)>0 and len(doc_id)>0 and len(method)>0:
-        fact_a = FactAdder(request, es_params, fact_name, fact_value, fact_field, doc_id, method, match_type)
-        fact_a.add_facts()
+        fact_a = FactAdder(request, es_params, fact_name, fact_value, fact_field, doc_id, method, match_type, case_sens)
+        json_response = fact_a.add_facts()
     else:
         return HttpResponseBadRequest()
-
+    if json_response:
+        return JsonResponse(json_response)
     return HttpResponse()
 
 @login_required
