@@ -48,7 +48,7 @@ class PreprocessorWorker(BaseWorker):
             self.es_m = es_m
             self.params = params
             self._preprocessor_worker()
-        
+
         except TaskCanceledException as e:
             # If here, task was canceled while processing
             # Delete task
@@ -56,7 +56,7 @@ class PreprocessorWorker(BaseWorker):
             task.delete()
             logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'PROCESSOR WORK', 'event': 'processor_worker_canceled', 'data': {'task_id': self.task_id}}), exc_info=True)
             print("--- Task canceled")
-        
+
         except Exception as e:
             logging.getLogger(ERROR_LOGGER).exception(json.dumps(
                 {'process': 'PROCESSOR WORK', 'event': 'processor_worker_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
