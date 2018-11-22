@@ -10,11 +10,13 @@
                 <div class="form-group">
 
                     <ul class="nav nav-tabs flex-row">
-                        <li class="flex-item flex-item-grow-1 active"><a data-toggle="tab" href="#search_params" title="For building basic searches">Build
+                        <li class="flex-item flex-item-grow-1 active"><a data-toggle="tab" href="#search_params"
+                                title="For building basic searches">Build
                                 Search</a></li>
                         <li class="flex-item flex-item-grow-1"><a data-toggle="tab" href="#mlt_params" title="For expanding basic searches via similarity queries">Expand
                                 Search</a></li>
-                        <li class="flex-item flex-item-grow-1"><a data-toggle="tab" href="#cluster_params" title="For analyzing search content via clustering">Cluster
+                        <li class="flex-item flex-item-grow-1"><a data-toggle="tab" href="#cluster_params"
+                                title="For analyzing search content via clustering">Cluster
                                 Search</a></li>
                     </ul>
 
@@ -99,7 +101,7 @@
 
                                 <div class="row padded-row">
                                     <div class="col-sm-12">
-                                        <select name="mlt_fields" id="mlt_fields" class="form-control input-sm"
+                                        <select name="mlt_fields" id="mlt_fields" class="selectpicker form-control input-sm"
                                             multiple="multiple">
                                             {% for field in fields %}
                                             {% if field.type == 'text' or field.type == 'keyword' %}
@@ -178,7 +180,7 @@
                                 <div class="row padded-row">
                                     <div class="col-sm-12">
                                         <select name="cluster_field" id="cluster_field" multiple="multiple"
-                                            class="form-control input-sm">
+                                            class="selectpicker form-control input-sm">
                                             {% for field in fields %}
                                             {% if field.type == 'text' or field.type == 'keyword' %}
                                             <option value="{{field.data}}">{{field.label}}</option>
@@ -348,153 +350,169 @@
         <input type="hidden" name="scroll_id" id="scroll_id">
 
         <div class="panel">
-            <div class="panel-heading">Aggregations</div>
-            <div class="panel-body">
+            <div class="flex-row panel-heading">
+                <div class="flex-item-justify-start">Aggregations</div>
+                <div class="flex-item-justify-end"><i type='button' role='button' data-toggle="collapse"
+                        aria-expanded="false" aria-controls="aggregations-panel" data-target="#aggregations-panel"
+                        class="glyphicon glyphicon-minus" onclick=togglePanelCollapse(this)></i>
+                </div>
+            </div>
+            <div class="collapse in" id="aggregations-panel">
+                <div class="panel-body">
 
-                <div class="panel bg-grey">
-                    <div class="row padded-row">
-                        <div class="col-sm-12 text-center">
-                            <b>Field #1</b>
-                        </div>
-                        <div class="col-sm-12">
-                            <b>Select field:</b>
-                            <select id="agg_field_1" name="agg_field_1" class="form-control input-sm"
-                                onchange="change_agg_field('1');">
-                                {% for field in fields %}
-                                <option value="{{field.data}}">{{field.label}}</option>
-                                {% endfor %}
-                            </select>
-                            <div id="agg_daterange_1" class="hidden">
-                                <b>Date range:</b>
-                                <div class="row">
-                                    <div class="col-sm-6">
-                                        <input type="text" placeholder="Daterange from" name="agg_daterange_from_1"
-                                            id="agg_daterange_from_1" class="form-control input-sm">
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <input type="text" placeholder="Daterange to" name="agg_daterange_to_1"
-                                            id="agg_daterange_to_1" class="form-control input-sm">
+                    <div class="panel bg-grey">
+                        <div class="row padded-row">
+                            <div class="col-sm-12 text-center">
+                                <b>Field #1</b>
+                            </div>
+                            <div class="col-sm-12">
+                                <b>Select field:</b>
+                                <select id="agg_field_1" name="agg_field_1" class="form-control input-sm"
+                                    onchange="change_agg_field('1');">
+                                    {% for field in fields %}
+                                    <option value="{{field.data}}">{{field.label}}</option>
+                                    {% endfor %}
+                                </select>
+                                <div id="agg_daterange_1" class="hidden">
+                                    <b>Date range:</b>
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <input type="text" placeholder="Daterange from" name="agg_daterange_from_1"
+                                                id="agg_daterange_from_1" class="form-control input-sm">
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <input type="text" placeholder="Daterange to" name="agg_daterange_to_1"
+                                                id="agg_daterange_to_1" class="form-control input-sm">
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div id="sort_by_1">
-                                <b>Aggregation:</b>
-                                <select id="sort_by_1" name="sort_by_1" class="form-control input-sm">
-                                    <option value="terms" selected="selected">frequent items</option>
-                                    <option value="significant_terms">significant items</option>
-                                    <option value="significant_text">significant words</option>
-                                </select>
-                            </div>
-                            <div id="agg_size_1">
-                                <b>Aggregation size:</b><br>
-                                <input id="n_agg_size_1" name="agg_size_1" class="form-control"
-                                    data-slider-id='agg_size_1' type="text" data-slider-min="10"
-                                    data-slider-max="300" data-slider-step="10" data-slider-value="30" />
-                            </div>
-                            <div id="freq_norm_1" class="hidden">
-                                <b>Frequency:</b>
-                                <select id="freq_norm_1" name="freq_norm_1" class="form-control input-sm">
-                                    <option value="raw_frquency" selected="selected">raw frequency</option>
-                                    <option value="relative_frequency">relative frequency</option>
-                                </select>
-                            </div>
-                            <div id="interval_1" class="hidden">
-                                <b>Interval:</b>
-                                <select id="interval_1" name="interval_1" class="form-control input-sm">
-                                    <option value="day">day</option>
-                                    <option value="week">week</option>
-                                    <option value="month" selected="selected">month</option>
-                                    <option value="quarter">quarter</option>
-                                    <option value="year">year</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel bg-grey">
-                    <div class="row" id="agg_field_2_button">
-                        <div class="col-sm-12 text-center">
-                            <span class="glyphicon glyphicon-plus pointer" onclick="toggle_agg_field_2('add');"></span>
-                        </div>
-                    </div>
-                    <div class="row padded-row hidden" id="agg_field_2_container">
-                        <div class="col-sm-12 text-center">
-                            <b>Field #2</b> <span class="glyphicon glyphicon-minus pull-right pointer"
-                                onclick="toggle_agg_field_2('remove');"></span>
-                        </div>
-                        <input type="hidden" id="agg_field_2_selected" name="agg_field_2_selected" value="false">
-                        <div class="col-sm-12">
-                            <b>Select field:</b>
-                            <select id="agg_field_2" name="agg_field_2" class="form-control input-sm">
-                                {% for field in fields %}
-                                {% if field.type == 'keyword' or field.type == 'text' or field.type == 'facts' %}
-                                <option value="{{field.data}}">{{field.label}}</option>
-                                {% endif %}
-                                {% endfor %}
-                            </select>
-
-                            <div id="sort_by_2">
-                                <b>Aggregation:</b>
-                                <select id="sort_by_2" name="sort_by_2" class="form-control input-sm">
-                                    <option value="terms" selected="selected">frequent items</option>
-                                    <option value="significant_terms">significant items</option>
-                                    <option value="significant_text">significant words</option>
-                                </select>
-                            </div>
-                            <div id="agg_size_2">
-                                <b>Aggregation size:</b><br>
-                                <input id="n_agg_size_2" name="agg_size_2" class="form-control"
-                                    data-slider-id='agg_size_2' type="text" data-slider-min="10"
-                                    data-slider-max="300" data-slider-step="10" data-slider-value="30" />
+                                <div id="sort_by_1">
+                                    <b>Aggregation:</b>
+                                    <select id="sort_by_1" name="sort_by_1" class="form-control input-sm">
+                                        <option value="terms" selected="selected">frequent items</option>
+                                        <option value="significant_terms">significant items</option>
+                                        <option value="significant_text">significant words</option>
+                                    </select>
+                                </div>
+                                <div id="agg_size_1">
+                                    <b>Aggregation size:</b><br>
+                                    <input id="n_agg_size_1" name="agg_size_1" class="form-control"
+                                        data-slider-id='agg_size_1' type="text" data-slider-min="10"
+                                        data-slider-max="300" data-slider-step="10" data-slider-value="30" />
+                                </div>
+                                <div id="freq_norm_1" class="hidden">
+                                    <b>Frequency:</b>
+                                    <select id="freq_norm_1" name="freq_norm_1" class="form-control input-sm">
+                                        <option value="raw_frquency" selected="selected">raw frequency</option>
+                                        <option value="relative_frequency">relative frequency</option>
+                                    </select>
+                                </div>
+                                <div id="interval_1" class="hidden">
+                                    <b>Interval:</b>
+                                    <select id="interval_1" name="interval_1" class="form-control input-sm">
+                                        <option value="day">day</option>
+                                        <option value="week">week</option>
+                                        <option value="month" selected="selected">month</option>
+                                        <option value="quarter">quarter</option>
+                                        <option value="year">year</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="panel bg-grey">
-                    <div class="row padded-row">
-                        <div class="col-sm-12 text-center">
-                            <b>Additional Options</b>
+                    <div class="panel bg-grey">
+                        <div class="row" id="agg_field_2_button">
+                            <div class="col-sm-12 text-center">
+                                <span class="glyphicon glyphicon-plus pointer" onclick="toggle_agg_field_2('add');"></span>
+                            </div>
                         </div>
-                        <div class="col-sm-12">
-                            <!--
+                        <div class="row padded-row hidden" id="agg_field_2_container">
+                            <div class="col-sm-12 text-center">
+                                <b>Field #2</b> <span class="glyphicon glyphicon-minus pull-right pointer"
+                                    onclick="toggle_agg_field_2('remove');"></span>
+                            </div>
+                            <input type="hidden" id="agg_field_2_selected" name="agg_field_2_selected" value="false">
+                            <div class="col-sm-12">
+                                <b>Select field:</b>
+                                <select id="agg_field_2" name="agg_field_2" class="form-control input-sm">
+                                    {% for field in fields %}
+                                    {% if field.type == 'keyword' or field.type == 'text' or field.type == 'facts' %}
+                                    <option value="{{field.data}}">{{field.label}}</option>
+                                    {% endif %}
+                                    {% endfor %}
+                                </select>
+
+                                <div id="sort_by_2">
+                                    <b>Aggregation:</b>
+                                    <select id="sort_by_2" name="sort_by_2" class="form-control input-sm">
+                                        <option value="terms" selected="selected">frequent items</option>
+                                        <option value="significant_terms">significant items</option>
+                                        <option value="significant_text">significant words</option>
+                                    </select>
+                                </div>
+                                <div id="agg_size_2">
+                                    <b>Aggregation size:</b><br>
+                                    <input id="n_agg_size_2" name="agg_size_2" class="form-control"
+                                        data-slider-id='agg_size_2' type="text" data-slider-min="10"
+                                        data-slider-max="300" data-slider-step="10" data-slider-value="30" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel bg-grey">
+                        <div class="row padded-row">
+                            <div class="col-sm-12 text-center">
+                                <b>Additional Options</b>
+                            </div>
+                            <div class="col-sm-12">
+                                <!--
                         <b>Background corpus:</b>
                             <select id="custom_bg" name="custom_bg" class="form-control input-sm">
                                 <option value="all_docs" selected="selected">All documents</option>
                                 <option value="">Search: online</option>
                             </select>
                         -->
-                            Hide current search in results:
-                            <input type="checkbox" name="ignore_active_search" class="pull-right">
+                                Hide current search in results:
+                                <input type="checkbox" name="ignore_active_search" class="pull-right">
+                            </div>
                         </div>
                     </div>
+
+                    <button type="button" onclick="javascript:aggregate();" class="btn btn-default form-control"><span
+                            class="glyphicon glyphicon-filter"></span> Aggregate</button>
+
                 </div>
-
-                <button type="button" onclick="javascript:aggregate();" class="btn btn-default form-control"><span
-                        class="glyphicon glyphicon-filter"></span> Aggregate</button>
-
             </div>
         </div>
 
         <div class="panel {{display_fact_graph}}">
-            <div class="panel-heading">Fact Graph</div>
-            <div class="panel-body" id="factGraphDiv">
-                <div class="panel bg-grey">
-                    <div class="row padded-row">
-                        <div class="col-sm-12">
-                            <b>Number of fact values per fact name:</b>
-                        </div>
-                        <div id="factGraphSliderDiv" class="col-sm-12">
-                            <input id="nFactGraphSize" name="fact_graph_size" class="form-control"
-                                data-slider-id='nFactGraphSizeId' type="text" data-slider-min="3"
-                                data-slider-max="30" data-slider-step="1" data-slider-value="15" />
+            <div class="flex-row panel-heading">
+                <div class="flex-item-justify-start">Fact Graph</div>
+                <div class="flex-item-justify-end"><i type='button' role='button' data-toggle="collapse"
+                        aria-expanded="false" aria-controls="fact-graph-panel" data-target="#fact-graph-panel"
+                        class="glyphicon glyphicon-minus" onclick=togglePanelCollapse(this)></i>
+                </div>
+            </div>
+            <div class="collapse in" id="fact-graph-panel">
+                <div class="panel-body" id="factGraphDiv">
+                    <div class="panel bg-grey">
+                        <div class="row padded-row">
+                            <div class="col-sm-12">
+                                <b>Number of fact values per fact name:</b>
+                            </div>
+                            <div id="factGraphSliderDiv" class="col-sm-12">
+                                <input id="nFactGraphSize" name="fact_graph_size" class="form-control"
+                                    data-slider-id='nFactGraphSizeId' type="text" data-slider-min="3"
+                                    data-slider-max="30" data-slider-step="1" data-slider-value="15" />
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <button type="button" id='factGraphButton' onclick="javascript:factGraph();" class="btn btn-default form-control"><span
-                        class="glyphicon glyphicon-eye-open"></span> Visualize </button>
+                    <button type="button" id='factGraphButton' onclick="javascript:factGraph();" class="btn btn-default form-control"><span
+                            class="glyphicon glyphicon-eye-open"></span> Visualize </button>
+                </div>
             </div>
         </div>
 

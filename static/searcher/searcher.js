@@ -337,8 +337,7 @@ function query () {
 function initColumnSelectVisiblity (examplesTable) {
     var $select = $('#toggle-column-select')
     $select.selectpicker({
-        style: 'btn btn-default',
-        maxWidth: 150
+        style: 'btn btn-default'
     })
     $('#right .bs-deselect-all').on('click', function () {
         examplesTable.columns().visible(false)

@@ -665,3 +665,7 @@ function mltQuery () {
         $('#right').html('No fields selected!')
     }
 }
+function togglePanelCollapse (element) {
+    $(element).toggleClass('glyphicon-plus')
+    $(element).toggleClass('glyphicon-minus')
+}
