@@ -89,9 +89,53 @@ function removeSearchCallback (responseText) {
     searchDiv.parentNode.removeChild(searchDiv)
 }
 
+function removeSearches () {
+    var searchesContainer = document.getElementById('saved_searches')
+    let checkboxList = searchesContainer.getElementsByTagName('input')
+    let pkArray = []
+    for (let item of checkboxList) {
+        if (item.checked) {
+            pkArray.push(item.value)
+        }
+    }
+    if (pkArray.length > 0) {
+        deleteSelectedSearches(pkArray)
+    } else {
+        swalNothingSelected()
+    }
+}
+function deleteSelectedSearches (pkArray) {
+    swal({
+        title: 'Are you sure you want to delete this search?',
+        text: 'The saved search will be deleted.',
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#73AD21',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes'
+    }).then((result) => {
+        if (result.value) {
+            $.ajax({
+                url: PREFIX + '/delete',
+                data: { data: JSON.stringify({ pks: pkArray }) },
+                type: 'POST'
+            }).then(() => {
+                pkArray.forEach(element => {
+                    let searchDiv = document.getElementById('search_' + element)
+                    searchDiv.parentNode.removeChild(searchDiv)
+                })
+            })
+        }
+    })
+}
+function swalNothingSelected () {
+    swal({
+        title: 'Please select a saved search first.',
+        type: 'warning'
+    })
+}
 function displaySearches (searches) {
     var searchesContainer = document.getElementById('saved_searches')
-
     while (searchesContainer.firstChild) {
         searchesContainer.removeChild(searchesContainer.firstChild)
     }
@@ -101,7 +145,6 @@ function displaySearches (searches) {
 
         let inputElement = document.createElement('input')
         let urlElement = document.createElement('span')
-        let aElement = document.createElement('span')
 
         searchDiv.id = 'search_' + searches[i].id
 
@@ -110,7 +153,6 @@ function displaySearches (searches) {
         inputElement.value = searches[i].id
 
         urlElement.className = 'glyphicon glyphicon-copy pointer'
-        aElement.className = 'glyphicon glyphicon-minus-sign pointer'
 
         urlElement.onclick = (function (id) {
             return function () {
@@ -139,25 +181,6 @@ function displaySearches (searches) {
             }
         }(searches[i].id))
 
-        aElement.onclick = (function (id) {
-            return function () {
-                swal({
-                    title: 'Are you sure you want to delete this search?',
-                    text: 'The saved search will be deleted.',
-                    type: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#73AD21',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes'
-                }).then((result) => {
-                    if (result.value) {
-                        // eslint-disable-next-line no-undef
-                        async_get_query(PREFIX + '/corpus_tool/delete?pk=' + id, removeSearchCallback)
-                    }
-                })
-            }
-        }(searches[i].id))
-
         let inputCol = document.createElement('td')
         inputCol.appendChild(inputElement)
         searchDiv.appendChild(inputCol)
@@ -181,13 +204,10 @@ function displaySearches (searches) {
         urlCol.appendChild(urlElement)
         searchDiv.appendChild(urlCol)
 
-        let removeCol = document.createElement('td')
-        removeCol.appendChild(aElement)
-        searchDiv.appendChild(removeCol)
-
         searchesContainer.appendChild(searchDiv)
     }
 }
+
 function renderSavedSearch (searchID) {
     $.get(PREFIX + '/get_srch_query', {
         search_id: searchID
@@ -591,6 +611,7 @@ function searchAsYouTypeQuery () {
         }, 500)
     }
 }
+
 function hideShowOptions () {
     var x = document.getElementById('short_version_options')
 

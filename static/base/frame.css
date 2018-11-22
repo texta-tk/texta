@@ -53,6 +53,19 @@ body {
     display: flex;
     flex-direction: row;
 }
+.flex-content-end{
+    display: flex;
+    justify-content: flex-end;
+}
+.flex-item-justify-end{
+    margin-left:auto
+}
+.flex-item-justify-start{
+    margin-right:auto
+}
+.flex-item{
+    flex: 1;
+}
 .flex-item-grow-1{
     flex-grow: 1
 }

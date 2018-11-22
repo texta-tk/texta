@@ -10,13 +10,13 @@
                 <div class="form-group">
 
                     <ul class="nav nav-tabs flex-row">
-                        <li class="flex-item-grow-1 active"><a data-toggle="tab" href="#search_params" title="For building basic searches">Build
+                        <li class="flex-item flex-item-grow-1 active"><a data-toggle="tab" href="#search_params" title="For building basic searches">Build
                                 Search</a></li>
-                        <li class="flex-item-grow-1"><a data-toggle="tab" href="#mlt_params" title="For expanding basic searches via similarity queries">Expand
+                        <li class="flex-item flex-item-grow-1"><a data-toggle="tab" href="#mlt_params" title="For expanding basic searches via similarity queries">Expand
                                 Search</a></li>
-                        <li class="flex-item-grow-1" ><a data-toggle="tab" href="#cluster_params" title="For analyzing search content via clustering">Cluster
+                        <li class="flex-item flex-item-grow-1"><a data-toggle="tab" href="#cluster_params" title="For analyzing search content via clustering">Cluster
                                 Search</a></li>
-                        </ul>
+                    </ul>
 
                     <div class="tab-content">
                         <div id="search_params" class="tab-pane fade in active">
@@ -31,8 +31,8 @@
                                     </div>
                                     <div class="col-sm-12">
                                         <div class="form-inline flex-row">
-                                            <div class="form-group flex-item-grow-3">
-                                                <select class='selectpicker' data-hide-disabled='true'
+                                            <div class="form-group flex-item flex-item-grow-3">
+                                                <select class='selectpicker form-control' data-hide-disabled='true'
                                                     multiple id="constraint_field" name="constraint_field"
                                                     class="form-control input-sm">
                                                     {% for field in fields %}
@@ -40,7 +40,7 @@
                                                     {% endfor %}
                                                 </select>
                                             </div>
-                                            <div class="form-group flex-item-grow-1">
+                                            <div class="form-group flex-item flex-item-grow-1">
                                                 <button type="button" class="btn btn-default input-sm"
                                                     onclick="javascript:addField('{{date_range.min}}','{{date_range.max}}');">Add</button>
                                             </div>
@@ -323,7 +323,11 @@
         </div>
 
         <div class="panel">
-            <div class="panel-heading">Saved Searches</div>
+            <div class="flex-row panel-heading">
+                <div class="flex-item-justify-start">Saved Searches</div>
+                <div class="flex-item-justify-end"><i role='button' onclick=removeSearches() class="glyphicon glyphicon glyphicon-remove"></i></div>
+            </div>
+
             <div class="panel-body" id='saved-searches-panel'>
                 <table class="table table-striped">
                     <thead>
@@ -331,7 +335,6 @@
                             <th>Select</th>
                             <th>Search Description</th>
                             <th>Copy url</th>
-                            <th>Remove</th>
                         </tr>
                     </thead>
                     <tbody id="saved_searches">
@@ -498,18 +501,18 @@
     </form>
 
     <div class="modal fade" id="query-modal" role="dialog">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                        <h4 class="modal-title">Query</h4>
-                    </div>
-                    <div class="modal-body" id="query-modal-content"></div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    </div>
-    
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Query</h4>
                 </div>
+                <div class="modal-body" id="query-modal-content"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+
             </div>
         </div>
+    </div>
 </div>

@@ -141,19 +141,21 @@ def save(request):
 
 @login_required
 def delete(request):
+    post_data = json.loads(request.POST['data'])
     logger = LogManager(__name__, 'DELETE SEARCH')
-    search_id = request.GET['pk']
+    search_ids = post_data['pks']
     logger.set_context('user_name', request.user.username)
-    logger.set_context('search_id', search_id)
+    logger.set_context('search_ids', search_ids)
     try:
-        Search.objects.get(pk=search_id).delete()
-        logger.info('search_deleted')
-
+        for search_id in search_ids:
+            Search.objects.get(pk=search_id).delete()
+            logger.info('search_deleted:'+search_id)
+       
     except Exception as e:
         print('-- Exception[{0}] {1}'.format(__name__, e))
         logger.exception('search_deletion_failed')
 
-    return HttpResponse(search_id)
+    return HttpResponse()
 
 
 @login_required

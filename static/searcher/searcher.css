@@ -49,7 +49,7 @@
   margin-bottom: 0
 }
 .toggle-column-select-wrapper{
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 #chart_div {
     width: 100%;
@@ -201,4 +201,4 @@ With scroll head for some reason there are v-a: middle on td  */
 
 #saved-searches-panel::-webkit-scrollbar-thumb:hover {
   background: #555; 
-} 
+}

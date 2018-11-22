@@ -266,22 +266,18 @@ function query () {
         if (request.readyState == 4 && request.status == 200) {
             $('#right').html(request.responseText)
             examplesTable = $('#examples').DataTable({
-                'bAutoWidth': false,
-                'lengthMenu': [
-                    [10, 25, 50, -1],
-                    [10, 25, 50, 'All']
-                ],
+                'autoWidth': false,
                 'deferRender': true,
-                'scrollY': '80vh',
+                'scrollY': '85vh',
                 'bServerSide': true,
                 'processing': true,
                 'sAjaxSource': PREFIX + '/table_content',
-                'dom': "<'#top-part''row'<'col-xs-6'l><'col-xs-6'i>rp>t",
+                'dom': "<'#top-part''row'<'col-xs-6'l><'col-xs-6'<'flex-content-end'i>>rp>t",
                 'sServerMethod': 'POST',
                 'fnServerParams': function (aoData) {
                     aoData.push({
                         'name': 'filterParams',
-                        'value': data = JSON.stringify($('#filters').serializeArray())
+                        'value': JSON.stringify($('#filters').serializeArray())
                     })
                 },
 

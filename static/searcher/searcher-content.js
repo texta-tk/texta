@@ -1,15 +1,17 @@
+
 function toggleFullscreen () {
     $('#grid-wrapper-searcher-id').toggleClass('grid-wrapper-searcher')
     $('#grid-wrapper-searcher-id').toggleClass('grid-1-col-default')
     $('.grid-wrapper-sidebar').toggleClass('hidden')
     $('#top-part').toggleClass('hidden')
+    /* global examplesTable */
+    if (examplesTable) {
+        examplesTable.columns.adjust()
+    }
 }
 
 function exportData (exportType) {
     var formElement = document.getElementById('filters')
-    /* When you don't pass any parameters to $().dataTable()
-     it will attempt to fund any tables which have already been initialised first and then use that for the API call. */
-    let examplesTable = $('#examples').DataTable()
     var queryArgs = $('#filters').serializeArray()
 
     queryArgs.push({
@@ -28,6 +30,7 @@ function exportData (exportType) {
             value: $('#export-file-name-example').val() + '.csv'
         })
         var extentDec = $('input[name=export-extent]:checked').val()
+        /* global examplesTable */
         var pagingInfo = examplesTable.page.info()
 
         switch (extentDec) {
