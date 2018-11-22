@@ -339,7 +339,7 @@ class FactAdder(FactManager):
         if self.field not in hits[0]['_source']:
             self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
 
-        data, fact_count = self._derive_match_spans(hits)
+        data, fact_count = self._derive_match_spans(hits, fact_count)
         response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
         # response = self.es_m.update_documents()
         return {'fact_count': fact_count, 'status': 'success'}
@@ -362,14 +362,14 @@ class FactAdder(FactManager):
         total_docs = response['hits']['total']
         # If texta_facts not in document
         hits = response['hits']['hits']
-
+        
+        fact_count = 0
         if hits:
             try:
-                fact_count = 0
                 if self.field not in hits[0]['_source']:
                     self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
                 while total_docs > 0:
-                    data, fact_count = self._derive_match_spans(hits)
+                    data, fact_count = self._derive_match_spans(hits, fact_count)
                     response = self.es_m.scroll(scroll_id=scroll_id, size=self.bs, field_scroll=self.field)
                     if response['hits']:
                         total_docs = len(response['hits']['hits'])
@@ -383,7 +383,7 @@ class FactAdder(FactManager):
         return {'fact_count': fact_count, 'status': 'success'}
 
 
-    def _derive_match_spans(self, hits):
+    def _derive_match_spans(self, hits, fact_count):
         if self.match_type == 'phrase':
             pattern = r"\b{}\b"
         elif self.match_type == 'phrase_prefix':
@@ -394,10 +394,10 @@ class FactAdder(FactManager):
         data = ''
         for document in hits:
             new_facts = []
-            for i, match in enumerate(re.finditer(pattern.format(self.fact_value), document['_source'][self.fact_field], re.IGNORECASE)):
+            for match in re.finditer(pattern.format(self.fact_value), document['_source'][self.fact_field], re.IGNORECASE):
                 save_val = match.group().lower() if not self.case_sens else match.group()
                 new_facts.append({'fact': self.fact_name, 'str_val':  save_val, 'doc_path': self.fact_field, 'spans': str([list(match.span())])})
-                fact_count = i
+                fact_count += 1
             data = self._append_fact_to_doc(document, data, new_facts)
         return data, fact_count
 
