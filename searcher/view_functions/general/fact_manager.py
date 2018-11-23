@@ -202,85 +202,6 @@ class FactManager:
         return response
 
 
-    # def fact_to_doc(self, es_params, fact_name, fact_value, fact_field, fact_span, doc_id):
-    #     """Add a fact to a certain document with given fact, span, and the document _id"""
-    #     # Crop fact name if its too long
-    #     fact_name = fact_name[:self.max_name_len]
-    #     query = {"query": {"terms": {"_id": [doc_id] }}}
-    #     response = self.es_m.perform_query(query)
-    #     hits = response['hits']['hits']
-    #     # If texta_facts not in document
-    #     if self.field not in hits[0]['_source']:
-    #         self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
-
-    #     data = ''
-    #     for document in hits:
-    #         if self.field not in document['_source']:
-    #             document['_source'][self.field] = [{'fact': fact_name, 'str_val': fact_value, 'doc_path': fact_field, 'spans': str([fact_span])}]
-    #         else:
-    #             document['_source'][self.field].append({"fact": fact_name, "str_val": fact_value, "doc_path": fact_field, "spans": str([fact_span])})
-
-    #         data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
-    #         document = {'doc': {self.field: document['_source'][self.field]}}
-    #         data += json.dumps(document)+'\n'
-    #     response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
-    #     response = self.es_m.update_documents()
-    #     return response
-
-
-    # def doc_matches_to_facts(self, es_params, fact_name, fact_value, fact_field, fact_span, doc_id):
-    #     """Add all matches in a certain doc as a fact"""
-    #     # Crop fact name if its too long
-    #     fact_name = fact_name[:self.max_name_len]
-    #     query = {"query": {"terms": {"_id": [doc_id] }}}
-    #     response = self.es_m.perform_query(query)
-    #     hits = response['hits']['hits']
-    #     # If texta_facts not in document
-    #     if self.field not in hits[0]['_source']:
-    #         self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
-
-    #     data = ''
-    #     for document in hits:
-    #         if self.field not in document['_source']:
-    #             document['_source'][self.field] = [{'fact': fact_name, 'str_val': fact_value, 'doc_path': fact_field, 'spans': str([fact_span])}]
-    #         else:
-    #             document['_source'][self.field].append({"fact": fact_name, "str_val": fact_value, "doc_path": fact_field, "spans": str([fact_span])})
-
-    #         data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
-    #         document = {'doc': {self.field: document['_source'][self.field]}}
-    #         data += json.dumps(document)+'\n'
-    #     response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
-    #     response = self.es_m.update_documents()
-    #     return response
-
-
-    # def matches_to_facts(self, es_params, fact_name, fact_value, fact_field, fact_span, doc_id):
-    #     """Add all matches in dataset as a fact"""        
-    #     # Crop fact name if its too long
-    #     fact_name = fact_name[:self.max_name_len]
-    #     query = {"query": {"terms": {"_id": [doc_id] }}}
-    #     response = self.es_m.perform_query(query)
-    #     hits = response['hits']['hits']
-    #     # If texta_facts not in document
-    #     if self.field not in hits[0]['_source']:
-    #         self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
-
-    #     data = ''
-    #     for document in hits:
-    #         if self.field not in document['_source']:
-    #             document['_source'][self.field] = [{'fact': fact_name, 'str_val': fact_value, 'doc_path': fact_field, 'spans': str([fact_span])}]
-    #         else:
-    #             document['_source'][self.field].append({"fact": fact_name, "str_val": fact_value, "doc_path": fact_field, "spans": str([fact_span])})
-
-    #         data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
-    #         document = {'doc': {self.field: document['_source'][self.field]}}
-    #         data += json.dumps(document)+'\n'
-    #     response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
-    #     response = self.es_m.update_documents()
-
-    #     return response
-
-
 class FactAdder(FactManager):
     def __init__(self, request, es_params, fact_name, fact_value, fact_field, doc_id, method, match_type, case_sens):
         super().__init__(request)
@@ -292,6 +213,10 @@ class FactAdder(FactManager):
         self.method = method
         self.match_type = match_type
         self.case_sens = case_sens
+        self.nested_field = None
+
+        if len(self.fact_field.split('.')) > 1:
+            self.nested_field = self.fact_field.split('.')
 
 
     def add_facts(self):
@@ -314,7 +239,8 @@ class FactAdder(FactManager):
 
         data = ''
         for document in hits:
-            match = re.search(r"{}".format(self.fact_value), document['_source'][self.fact_field], re.IGNORECASE | re.MULTILINE)
+            content = self._derive_content(document)
+            match = re.search(r"{}".format(self.fact_value), content, re.IGNORECASE | re.MULTILINE)
             save_val = match.group().lower() if not self.case_sens else match.group()
             new_fact = {'fact': self.fact_name, 'str_val':  save_val, 'doc_path': self.fact_field, 'spans': str([list(match.span())])}
             if self.field not in document['_source']:
@@ -338,6 +264,7 @@ class FactAdder(FactManager):
         if self.field not in hits[0]['_source']:
             self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
 
+        fact_count = 0
         data, fact_count = self._derive_match_spans(hits, fact_count)
         response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
         return {'fact_count': fact_count, 'status': 'success'}
@@ -391,8 +318,9 @@ class FactAdder(FactManager):
 
         data = ''
         for document in hits:
+            content = self._derive_content(document)
             new_facts = []
-            for match in re.finditer(pattern.format(self.fact_value), document['_source'][self.fact_field], re.IGNORECASE):
+            for match in re.finditer(pattern.format(self.fact_value), content, re.IGNORECASE):
                 save_val = match.group().lower() if not self.case_sens else match.group()
                 new_facts.append({'fact': self.fact_name, 'str_val':  save_val, 'doc_path': self.fact_field, 'spans': str([list(match.span())])})
                 fact_count += 1
@@ -410,3 +338,12 @@ class FactAdder(FactManager):
         document = {'doc': {self.field: document['_source'][self.field]}}
         data += json.dumps(document)+'\n'
         return data
+
+    def _derive_content(self, document):
+        if self.nested_field:
+            content = document['_source']
+            for key in self.nested_field:
+                content = content[key]
+        else:
+            content = document['_source'][self.fact_field]
+        return content
