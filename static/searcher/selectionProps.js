@@ -15,7 +15,7 @@ function createSelectionProps() {
     // Function declarations
     function tippyForFacts(spans) {
         // Select FACT spans
-        var spans = $("span[title~='\\[fact\\]']")
+        var spans = $("span[title^='\\[fact']")
         spans.addClass("tippyFactSpan");
         spans = document.querySelectorAll('.tippyFactSpan')
         // Select fact popover template
@@ -109,7 +109,7 @@ function createSelectionProps() {
     function tippyForText() {
         // Select spans without [FACT] title, add titles with [HL] (for when facts are also present)
         spans = $(".\\[HL\\]").not("span[title~='\\[fact\\]']")
-        spans = $(".\\[HL\\]").add("span[title~='\\[HL\\]']").not("span[title~='\\[fact\\]']")
+        spans = $(".\\[HL\\]").add("span[title~='\\[HL\\]']").not("span[title^='\\[fact']")
         // Get lens of spans for each parent
         spans.addClass("tippyTextSpan");
         spans = document.querySelectorAll('.tippyTextSpan')
@@ -322,7 +322,6 @@ async function saveOptionsSwal(fact_name, fact_value, fact_field, doc_id) {
             }) 
 
             for (currentStep = 0; currentStep < steps.length;) {
-                // debugger;
                 const result = await swal({
                     title: question[currentStep],
                     inputOptions: originalValues[currentStep],

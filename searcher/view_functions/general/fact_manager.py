@@ -326,7 +326,6 @@ class FactAdder(FactManager):
             document = {'doc': {self.field: document['_source'][self.field]}}
             data += json.dumps(document)+'\n'
         response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
-        # response = self.es_m.update_documents()
         return {'fact_count': 1, 'status': 'success'}
 
 
@@ -341,7 +340,6 @@ class FactAdder(FactManager):
 
         data, fact_count = self._derive_match_spans(hits, fact_count)
         response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
-        # response = self.es_m.update_documents()
         return {'fact_count': fact_count, 'status': 'success'}
 
 
@@ -350,7 +348,7 @@ class FactAdder(FactManager):
 
         if self.match_type == 'string':
             # Match the word everywhere in text
-            query = {"main": {"query": {"regexp": {self.fact_field: r"\w*{}\w*".format(self.fact_value)}}}}
+            query = {"main": {'query': {'query_string': {'query': '*{}*'.format(self.fact_value), 'fields': [self.fact_field]}}}}
         else:
             # Match prefix, or separate word
             query =  {"main": {"query": {"multi_match" : {"query":self.fact_value, "fields": [self.fact_field], "type": self.match_type}}}}
