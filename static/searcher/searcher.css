@@ -1,4 +1,5 @@
 .grid-wrapper-searcher{
+  height: 100%;
   display: grid;
   grid-template-columns: 350px 1fr;
   grid-template-rows: 100%;
@@ -20,7 +21,11 @@
 .grid-wrapper-sidebar .form-inline>.form-group{
   width: 100%;
 }
+.grid-wrapper-sidebar .panel{
+  box-shadow: none
+}
 .grid-wrapper-sidebar{
+  height: 100%;
   background-color: white;
 }
 .grid-wrapper-content{
@@ -33,18 +38,13 @@
   min-width: 0;
   min-height: 0;
 }
-.searcher-content-wrapper{
-  width: 100%;
-  height: 100%;
-}
+
 .searcher-content-wrapper>.panel{
   width: 100%;
   height: 100%;
+  background-color: #f9f9f9
 }
-.searcher-content-wrapper>.panel>.panel-body{
-  width: 100%;
-  height: 100%;
-}
+
 .panel{
   margin-bottom: 0
 }
@@ -201,4 +201,10 @@ With scroll head for some reason there are v-a: middle on td  */
 
 #saved-searches-panel::-webkit-scrollbar-thumb:hover {
   background: #555; 
+}
+#right{
+  padding: 0px;
+}
+#top-part{
+  padding:10px;
 }

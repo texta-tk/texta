@@ -134,7 +134,7 @@ function query () {
             examplesTable = $('#examples').DataTable({
                 'autoWidth': false,
                 'deferRender': true,
-                'scrollY': '85vh',
+                'scrollY': '82vh',
                 'bServerSide': true,
                 'processing': true,
                 'sAjaxSource': PREFIX + '/table_content',

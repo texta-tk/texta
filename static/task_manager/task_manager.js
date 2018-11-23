@@ -9,7 +9,9 @@ $(function () {
             localStorage.setItem('lastTab', $(this).attr('href'))
         })
     })
-
+    $('#tasks-table-datatable').DataTable({
+        'scrollX': true
+    })
     $('#scoro_nr_kws').slider({
         formatter: function (value) {
             return 'Current value: ' + value
@@ -210,3 +212,4 @@ function toggleRequiredPercentage (element) {
     let elementValue = $(element).val()
     $('.required-percentage-wrapper').toggleClass('hidden', elementValue == 'OR')
 }
+/* TODO DATATABLES */
