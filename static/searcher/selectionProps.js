@@ -297,7 +297,7 @@ async function saveOptionsSwal(fact_name, fact_value, fact_field, doc_id) {
         (async function backAndForth() {
             const steps = ['1', '2', '3'];
             const question = [`SAVING ${fact_name}: ${fact_value} AS FACT`, 'Select matching method', 'Case sensitive?'];
-            const values = [
+            const originalValues = [
                 {
                     'select_only': 'Only the selected text in this document',
                     'all_in_doc': 'All matches in this document',
@@ -312,21 +312,23 @@ async function saveOptionsSwal(fact_name, fact_value, fact_field, doc_id) {
                     'True': 'Case sensitive',
                     'False': 'Case insensitive'
                 }];
-
+            values = [...originalValues];
             let currentStep;
             swal.setDefaults({
                 confirmButtonText: 'Forward',
                 cancelButtonText: 'Back',
                 progressSteps: steps,
                 input: 'radio'
-            })
+            }) 
 
             for (currentStep = 0; currentStep < steps.length;) {
+                // debugger;
                 const result = await swal({
                     title: question[currentStep],
-                    inputOptions: values[currentStep],
-                    showCancelButton: true,
-                    currentProgressStep: currentStep
+                    inputOptions: originalValues[currentStep],
+                    showCancelButton: currentStep > 0,
+                    currentProgressStep: currentStep,
+                    showCloseButton: true
                 });
 
                 if (result.value) {
@@ -345,8 +347,13 @@ async function saveOptionsSwal(fact_name, fact_value, fact_field, doc_id) {
                         }
                         break
                     }
-                } else if (result.dismiss === 'cancel') {
+                } else if (result.dismiss == 'cancel') {
                     currentStep--;
+                }
+                else if (result.dismiss == 'overlay' || result.dismiss =='close') {
+                    swal.resetDefaults();
+                    swal.close();
+                    break;
                 }
             }
         })()
