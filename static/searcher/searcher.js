@@ -830,13 +830,9 @@ function query() {
                 "stateSaveParams": function (settings, data) {
                     data.start = 0;
                 },
-<<<<<<< HEAD
                 "scrollX": true,
                 // Add title with the corresponding column name to each element in column
                 "columnDefs": columns
-=======
-                "scrollX": true
->>>>>>> origin/dev
             });
 
             var dataset = $("#dataset").val();
