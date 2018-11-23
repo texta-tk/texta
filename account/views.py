@@ -17,8 +17,7 @@ from django.core.mail import EmailMessage
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-
-
+from django.core.mail import EmailMessage
 from .models import Profile
 from permission_admin.models import Dataset
 from utils.datasets import Datasets
@@ -27,10 +26,6 @@ from utils.log_manager import LogManager
 from task_manager.models import Task
 
 from texta.settings import REQUIRE_EMAIL_CONFIRMATION, USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_DEFAULT, es_url, STATIC_URL
-
-
-from django.core.mail import EmailMessage
-
 
 
 def index(request):
@@ -154,7 +149,6 @@ def change_password(request):
 
 	return HttpResponse()
 
-
 def login(request):
 	username = request.POST['username']
 	password = request.POST['password']
@@ -165,11 +159,13 @@ def login(request):
 		django_login(request, user)
 		logging.getLogger(INFO_LOGGER).info(
 				json.dumps({'process': '*', 'event': 'login_process_succeeded', 'args': {'user_name': username}}))
+		return HttpResponse(json.dumps({'process': '*', 'event': 'login_process_succeeded', 'args': {'user_name': username}}))
+
 	else:
 		logging.getLogger(INFO_LOGGER).info(
 				json.dumps({'process': '*', 'event': 'login_process_failed', 'args': {'user_name': username}}))
 
-	return HttpResponseRedirect(URL_PREFIX + '/')
+	return HttpResponse(json.dumps({'process': '*', 'event': 'login_process_failed', 'args': {'user_name': username}}))
 
 
 @login_required

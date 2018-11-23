@@ -30,8 +30,10 @@ tr {
 
 .grid-wrapper-dm{
     display: grid;
-    grid-template-columns: 2.5fr 2.5fr 1fr 0.2fr 1fr;
-    grid-template-rows: 40px;
+    grid-template-columns: repeat(5,auto);
+    grid-template-rows: auto;
+    grid-column-gap: 8px;
+    justify-content: start
 }
 
 @media (min-width: 768px) {

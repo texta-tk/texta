@@ -48,7 +48,7 @@ def index(request):
     database_formats = collect_map_entries(database_reader_map)
 
     preprocessors = collect_map_entries(preprocessor_map)
-    enabled_preprocessors = [preprocessor for preprocessor in preprocessors]
+    enabled_preprocessors = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True]
 
     datasets = Datasets().get_allowed_datasets(request.user)
     language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')

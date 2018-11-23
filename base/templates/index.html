@@ -115,6 +115,7 @@
 
 
 						<div class="navbar-right">
+							<div class='help-block'></div>
 							{% if request.user.is_authenticated %}
 							<form class="navbar-form">
 								<div>
@@ -132,8 +133,8 @@
 									</select>
 								</div>
 								<div class="dropdown">
-									<button class="btn btn-default dropdown-toggle " id="model-dropdown" type="button" data-toggle="dropdown"
-									 aria-haspopup="true" aria-expanded="false">
+									<button class="btn btn-default dropdown-toggle btn-sm " id="model-dropdown" type="button"
+									 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 										{% if request.session.model.pk %}
 										Model {{request.session.model.pk}}: {{request.session.model.description}}
 										{% else %}
@@ -158,8 +159,8 @@
 								</button>
 							</div>
 							{% else %}
-							<form class="navbar-form form-inline" id="login_form" onsubmit="go_to(LINK_ROOT+'account/login','login_form')"
-							 method="POST">
+
+							<form class="navbar-form form-inline" id="login_form">
 								<div class="form-group">
 									<label class="sr-only" for="loginUsername">Username</label>
 									<input type="text" class="form-control input-sm" id="loginUsername" name="username" placeholder="Username">
@@ -168,7 +169,7 @@
 									<label class="sr-only" for="loginPassword">Password</label>
 									<input type="password" class="form-control input-sm" id="loginPassword" name="password" placeholder="Password">
 								</div>
-								<button type="submit" class="btn btn-success btn-sm"><span class="glyphicon glyphicon-log-in"></button>
+								<button type="button" onclick=login() class="btn btn-success btn-sm"><span class="glyphicon glyphicon-log-in"></button>
 							</form>
 
 							{% endif %}
