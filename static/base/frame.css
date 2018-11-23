@@ -24,12 +24,12 @@ body {
     grid-template-rows: 100%;
 }
 
-@media screen and (max-width: 1405px) {
+/* @media screen and (max-width: 1405px) {
     .grid-2-col-1-row-default {
         grid-template-columns: 350px 1fr;
         grid-template-rows: 100%;
     }
-}
+} */
 
 @media screen and (max-width: 992px) {
     .grid-2-col-1-row-default {
@@ -72,6 +72,9 @@ body {
 .flex-item-grow-1 > .btn{
     width: 100%;
     height: 100%
+}
+.flex-item-grow-2{
+    flex-grow: 2
 }
 .flex-item-grow-3{
     flex-grow: 3

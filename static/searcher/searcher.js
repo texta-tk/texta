@@ -1,11 +1,10 @@
+/* eslint-disable no-multi-str */
+/* global LINK_SEARCHER */
 var PREFIX = LINK_SEARCHER
 var examplesTable
 var layers = ['text', 'lemmas', 'facts']
-var removed_facts = []
 
 $(document).ready(function () {
-    change_agg_field(1)
-
     $('#agg_daterange_from_1').datepicker({
         format: 'yyyy-mm-dd',
         startView: 2,
@@ -104,145 +103,17 @@ $(document).ready(function () {
     })
 })
 
-function get_query () {
-    var formElement = document.getElementById('filters')
-    var request = new XMLHttpRequest()
-
-    request.onreadystatechange = function () {
-        if (request.readyState == 4 && request.status == 200) {
-            if (request.responseText.length > 0) {
-                var query_container = $('#query-modal-content')
-                query_container.html(JSON.stringify(JSON.parse(request.responseText)))
-            }
-        }
-    }
-
-    request.open('POST', PREFIX + '/get_query')
-    request.send(new FormData(formElement), true)
-}
-
-function lookup (fieldFullId, fieldId, action, lookup_types) {
-    var content = $('#' + fieldFullId).val()
-
-    if (fieldFullId.match('^fact_constraint_val_')) {
-        var factName = $('#fact_txt_' + fieldId.slice(0, -4)).val()
-    } else {
-        var factName = ''
-    }
-
-    var lookup_data = {
-        content: content,
-        action: action,
-        lookup_types: lookup_types,
-        key_constraints: factName
-    }
-    $.post(PREFIX + '/autocomplete', lookup_data, function (data) {
-        if (data.length > 0) {
-            var suggestions_container = $('#suggestions_' + fieldId)
-            suggestions_container.empty()
-
-            process_suggestions(data, suggestions_container, fieldId, lookup_types)
-            if (suggestions_container.html()) {
-                $('#suggestions_' + fieldId).show()
-            }
-        } else {
-            $('#suggestions_' + fieldId).hide()
-        }
-    })
-}
-
-function process_suggestions (suggestions, suggestions_container, field_id, lookup_types) {
-    var suggestions = JSON.parse(suggestions)
-
-    $.each(suggestions, function (lookup_type, lookup_suggestions) {
-        if (lookup_suggestions.length > 0) {
-            var li = $('<div/>')
-                .text(lookup_type)
-                .css('font-weight', 'Bold')
-                .appendTo(suggestions_container)
-
-            $.each(lookup_suggestions, function (i) {
-                var li = $('<li/>')
-                    .addClass('list-group-item')
-                    .addClass('pointer')
-                    .attr('onclick', "insert('" + lookup_suggestions[i]['resource_id'] + "','" + field_id + "','" + lookup_suggestions[i]['entry_text'] + "','" + lookup_type + "')")
-                    .html(lookup_suggestions[i]['display_text'])
-                    .appendTo(suggestions_container)
-            })
-        }
-    })
-}
-
-function insert (resource_id, suggestionId, descriptive_term, lookup_type) {
-    if (resource_id) {
-        if (lookup_type == 'CONCEPT') {
-            suggestion_prefix = '@C'
-        } else if (lookup_type == 'LEXICON') {
-            suggestion_prefix = '@L'
-        }
-
-        $('#field_' + suggestionId + ' #match_txt_' + suggestionId).val(function (index, value) {
-            return value.replace(/[^(\n)]*$/, '')
-        })
-        $('#field_' + suggestionId + ' #match_txt_' + suggestionId).val($('#field_' + suggestionId + ' #match_txt_' + suggestionId).val() + suggestion_prefix + resource_id + '-' + descriptive_term + '\n')
-        $('#field_' + suggestionId + ' #match_txt_' + suggestionId).focus()
-    } else {
-        if (lookup_type == 'TEXT') {
-            $('#field_' + suggestionId + ' #match_txt_' + suggestionId).val(function (index, value) {
-                return value.replace(/[^(\n)]*$/, '')
-            })
-            $('#field_' + suggestionId + ' #match_txt_' + suggestionId).val($('#field_' + suggestionId + ' #match_txt_' + suggestionId).val() + descriptive_term + '\n')
-        }
-        if (lookup_type == 'FACT_NAME') {
-            var separatorIdx = suggestionId.indexOf('_')
-            if (separatorIdx > -1) {
-                var fieldId = suggestionId.substring(0, separatorIdx)
-            } else {
-                var fieldId = suggestionId
-            }
-
-            if (separatorIdx > -1) {
-                $('#field_' + fieldId + ' #fact_txt_' + suggestionId).val(descriptive_term)
-            } else {
-                $('#field_' + fieldId + ' #fact_txt_' + suggestionId).val(function (index, value) {
-                    return value.replace(/[^(\n)]*$/, '')
-                })
-                $('#field_' + fieldId + ' #fact_txt_' + suggestionId).val($('#field_' + suggestionId + ' #fact_txt_' + suggestionId).val() + descriptive_term + '\n')
-            }
-        }
-        if (lookup_type == 'FACT_VAL') {
-            var suggestionIdPrefix = suggestionId.replace('_val', '')
-            $('#fact_constraint_val_' + suggestionIdPrefix).val(descriptive_term)
-        }
-    }
-}
-
-function remove_fact_rule (rule_id) {
-    $('#fact_val_rule_' + rule_id).remove()
-}
-
-function select_all_fields () {
-    if ($('#check_all_mapping_fields').prop('checked') == true) {
-        $.each($("[name^='mapping_field_']"), function () {
-            $(this).prop('checked', true)
-        })
-    } else {
-        $.each($("[name^='mapping_field_']"), function () {
-            $(this).prop('checked', false)
-        })
-    }
-}
-
 function hide (id) {
     var separatorIdx = id.indexOf('_')
+    let fieldID
     if (separatorIdx > -1) {
-        var fieldId = id.substring(0, separatorIdx)
+        fieldID = id.substring(0, separatorIdx)
     } else {
-        var fieldId = id
+        fieldID = id
     }
-    $('#field_' + fieldId + ' #suggestions_' + id).mouseleave(function () {
-        if (!$('#field_' + fieldId + ' #suggestions_' + id).is(':hover')) {
-            $('#field_' + fieldId + ' #suggestions_' + id).hide()
+    $('#field_' + fieldID + ' #suggestions_' + id).mouseleave(function () {
+        if (!$('#field_' + fieldID + ' #suggestions_' + id).is(':hover')) {
+            $('#field_' + fieldID + ' #suggestions_' + id).hide()
         }
     })
     // setTimeout(function() {
@@ -254,16 +125,11 @@ function hide (id) {
     //     }, 1000);
     // });
 }
-
-function remove_field (id) {
-    $('#' + id).remove()
-}
-
 function query () {
     var formElement = document.getElementById('filters')
     var request = new XMLHttpRequest()
     request.onreadystatechange = function () {
-        if (request.readyState == 4 && request.status == 200) {
+        if (request.readyState === 4 && request.status === 200) {
             $('#right').html(request.responseText)
             examplesTable = $('#examples').DataTable({
                 'autoWidth': false,
@@ -299,7 +165,7 @@ function query () {
                     /*  because state has the last saved state of the table, not the current one then we can check
                     if the selected datasets were changed and if extra columns were added, removed,
                     if they were then select all (also did this in previous version, with buttons) */
-                    if ($('#examples').DataTable().columns().nodes().length != data.columns.length) {
+                    if ($('#examples').DataTable().columns().nodes().length !== data.columns.length) {
                         $('#toggle-column-select').selectpicker('selectAll')
                     } else {
                         $('#toggle-column-select').selectpicker('deselectAll')
@@ -364,12 +230,12 @@ function updateSelectColumnFilter (idx) {
     /* selects content is layed out the same order as the columns list, child starts at 1 instead of 0, so just add 1 */
     $(`#toggle-column-select :nth-child(${idx + 1})`).prop('selected', true)
 }
-function accept_document (id) {
+function acceptDocument (id) {
     $('#docs').val($('#docs').val() + id + '\n')
     $('#row_' + id).remove()
 }
 
-function reject_document (id) {
+function rejectDocument (id) {
     $('#docs_rejected').val($('#docs_rejected').val() + id + '\n')
     $('#row_' + id).remove()
 }
@@ -382,7 +248,7 @@ function aggregate () {
     var formElement = document.getElementById('filters')
     var request = new XMLHttpRequest()
     request.onreadystatechange = function () {
-        if (request.readyState == 4 && request.status == 200) {
+        if (request.readyState === 4 && request.status === 200) {
             if (request.responseText.length > 0) {
                 displayAgg(JSON.parse(request.responseText))
                 $('#actions-btn').removeClass('invisible')
@@ -404,7 +270,7 @@ function factGraph () {
     var request = new XMLHttpRequest()
 
     request.onreadystatechange = function () {
-        if (request.readyState == 4 && request.status == 200) {
+        if (request.readyState === 4 && request.status === 200) {
             $('#right').html(request.responseText)
         }
     }
@@ -417,23 +283,23 @@ function displayAgg (response) {
     var container = $('#right')
     container.empty()
 
-    var string_container = $("<div id='string_agg_container'></div>")
-    var chart_container = $("<div id='daterange_agg_container'></div>")
+    var stringContainer = $("<div id='string_agg_container'></div>")
+    var chartContainer = $("<div id='daterange_agg_container'></div>")
 
-    container.append(chart_container)
-    container.append(string_container)
+    container.append(chartContainer)
+    container.append(stringContainer)
 
     for (var i in data) {
         if (data.hasOwnProperty(i)) {
-            if (data[i].type == 'daterange') {
+            if (data[i].type === 'daterange') {
                 drawTimeline(data[i])
-            } else if (data[i].type == 'string') {
+            } else if (data[i].type === 'string') {
                 drawStringAggs(data[i])
-            } else if (data[i].type == 'fact') {
-                drawStringAggs(data[i], type = 'fact')
-            } else if (data[i].type == 'fact_str_val') {
+            } else if (data[i].type === 'fact') {
+                drawStringAggs(data[i], 'fact')
+            } else if (data[i].type === 'fact_str_val') {
                 drawStringAggs(data[i])
-            } else if (data[i].type == 'fact_num_val') {
+            } else if (data[i].type === 'fact_num_val') {
                 drawStringAggs(data[i])
             }
         }
@@ -441,8 +307,8 @@ function displayAgg (response) {
 }
 
 function drawTimeline (data) {
-    var timeline_children_container = $('<div></div>')
-
+    var timelineChildrenContainer = $('<div></div>')
+    /* global Morris  */
     new Morris.Line({
         element: 'daterange_agg_container',
         resize: true,
@@ -456,24 +322,24 @@ function drawTimeline (data) {
         labels: data.labels
 
     }).on('click', function (i, row) {
-        var children_data = data.children[row.date]
-        show_children(children_data, row.date, timeline_children_container)
+        var childrenData = data.children[row.date]
+        showChildren(childrenData, row.date, timelineChildrenContainer)
     })
 
-    $('#right').append(timeline_children_container)
+    $('#right').append(timelineChildrenContainer)
 }
 
-function show_children (data, date, timeline_children_container) {
-    timeline_children_container.empty()
-    $.each(data, function (i, data_list) {
+function showChildren (data, date, timelineChildrenContainer) {
+    timelineChildrenContainer.empty()
+    $.each(data, function (i, dataList) {
         var responseContainers = [$("<div style='float: left; padding-left: 20px;'></div>")]
 
         var tbody = $('<tbody></tbody>')
 
         var valTables = []
 
-        $.each(data_list.data, function (j, row) {
-            var row_container = $('<tr><td>' + row.val + '</td><td>' + row.key + '</td></tr>')
+        $.each(dataList.data, function (j, row) {
+            var rowContainer = $('<tr><td>' + row.val + '</td><td>' + row.key + '</td></tr>')
 
             var valsTbody = $('<tbody></tbody>')
             var valsTable = $("<table id='" + i + '-' + row.key + "-table' class='table table-striped table-hover fact-val-table-" + i + "' style='display: none;'></table>")
@@ -483,11 +349,11 @@ function show_children (data, date, timeline_children_container) {
                 row.children = []
             }
 
-            $.each(row.children, function (k, child_row) {
-                valsTbody.append($('<tr><td>' + child_row.val + '</td><td>' + child_row.key + '</td></tr>'))
+            $.each(row.children, function (k, childRow) {
+                valsTbody.append($('<tr><td>' + childRow.val + '</td><td>' + childRow.key + '</td></tr>'))
             })
 
-            row_container.click(function () {
+            rowContainer.click(function () {
                 $('.fact-val-table-' + i).hide()
                 $('#' + i + '-' + row.key + '-table').show()
             })
@@ -495,72 +361,73 @@ function show_children (data, date, timeline_children_container) {
             valsTable.append(valsTbody)
 
             if (row.children.length > 0) {
-                row_container.addClass('pointer')
+                rowContainer.addClass('pointer')
 
                 var responseContainer = $("<div style='float: left; padding-left: 20px;'></div>")
                 responseContainer.append(valsTable)
                 responseContainers.push(responseContainer)
             }
 
-            tbody.append(row_container)
+            tbody.append(rowContainer)
         })
 
         var table = $("<table class='table table-striped table-hover'></table>")
-        table.append("<thead><th colspan='2'>" + data_list.label + '</th></head>')
+        table.append("<thead><th colspan='2'>" + dataList.label + '</th></head>')
         table.append(tbody)
         responseContainers[0].append(table)
 
         $.each(responseContainers, function (i, container) {
-            timeline_children_container.append(container)
+            timelineChildrenContainer.append(container)
         })
     })
 }
 
 function drawStringAggs (data, type = null) {
-    var response_container = $("<div style='float: left; padding-left: 20px;'></div>")
-    var table_container = $("<div style='float: left'></div>")
-    var children_container = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>")
-    var grandchildren_container = $("<div id='grandchildren_container' style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>")
+    var responseContainer = $("<div style='float: left; padding-left: 20px;'></div>")
+    var tableContainer = $("<div style='float: left'></div>")
+    var childrenContainer = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>")
+    var grandchildrenContainer = $("<div id='grandchildren_container' style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>")
 
     var tbody = $('<tbody></tbody>')
 
     $.each(data.data, function (i, row) {
+        let rowContainer
         if (row.children.length > 0) {
-            var row_container = $('<tr><td>' + row.val + '</td><td>' + row.key + "</td><td><span class='glyphicon glyphicon-menu-right'></span></td></tr>")
-            row_container.click(function () {
-                show_string_children(row.children, children_container, grandchildren_container, row.key, type = type)
+            rowContainer = $('<tr><td>' + row.val + '</td><td>' + row.key + "</td><td><span class='glyphicon glyphicon-menu-right'></span></td></tr>")
+            rowContainer.click(function () {
+                showStringChildren(row.children, childrenContainer, grandchildrenContainer, row.key, type)
             })
-            row_container.addClass('pointer')
+            rowContainer.addClass('pointer')
         } else {
-            var row_container = $('<tr><td>' + row.val + '</td><td>' + row.key + '</td><td></td></tr>')
+            rowContainer = $('<tr><td>' + row.val + '</td><td>' + row.key + '</td><td></td></tr>')
         }
-        tbody.append(row_container)
+        tbody.append(rowContainer)
     })
 
     var table = $("<table class='table table-striped table-hover'></table>")
     table.append("<thead><th colspan='2'>Field #1</th></head>")
     table.append(tbody)
 
-    table_container.append(table)
+    tableContainer.append(table)
 
-    response_container.append("<div class='row text-center'><h3>" + data.label + '</h3></div>')
-    response_container.append(table_container)
-    response_container.append(children_container)
-    response_container.append(grandchildren_container)
+    responseContainer.append("<div class='row text-center'><h3>" + data.label + '</h3></div>')
+    responseContainer.append(tableContainer)
+    responseContainer.append(childrenContainer)
+    responseContainer.append(grandchildrenContainer)
 
-    $('#string_agg_container').append(response_container)
+    $('#string_agg_container').append(responseContainer)
 }
 
 var selectedFactCheckboxes = []
 
 function factDeleteCheckbox (checkbox) {
-    inArray = false
+    let inArray = false
     if (!selectedFactCheckboxes.length > 0) {
         selectedFactCheckboxes.push(checkbox)
     } else {
-        i = 0
+        let i = 0
         while (!inArray && i < selectedFactCheckboxes.length) {
-            if (selectedFactCheckboxes[i].name == checkbox.name) {
+            if (selectedFactCheckboxes[i].name === checkbox.name) {
                 selectedFactCheckboxes.splice(i, 1)
                 inArray = true
             }
@@ -573,18 +440,18 @@ function factDeleteCheckbox (checkbox) {
 }
 
 function deleteFactsViaCheckboxes (checkboxes) {
-    factArray = []
+    let factArray = []
     for (var i = 0; i < checkboxes.length; i++) {
-        fact = JSON.parse(checkboxes[i].name.replace(/'/g, '"'))
+        let fact = JSON.parse(checkboxes[i].name.replace(/'/g, '"'))
         factArray.push(fact)
     }
-    deleteFactArray(factArray, source = 'aggs')
+    deleteFactArray(factArray, 'aggs')
 }
 
-function ajaxDeleteFacts (form_data, factArray) {
+function ajaxDeleteFacts (formData, factArray) {
     $.ajax({
         url: PREFIX + '/delete_facts',
-        data: form_data,
+        data: formData,
         type: 'POST',
         contentType: false,
         processData: false,
@@ -596,12 +463,6 @@ function ajaxDeleteFacts (form_data, factArray) {
             })
         },
         success: function () {
-            for (var i = 0; i < factArray.length; i++) {
-                removed_facts.push({
-                    key: Object.keys(factArray[i])[0],
-                    value: factArray[Object.keys(factArray[i])[0]]
-                })
-            }
             swal({
                 title: 'Deleted!',
                 text: factArray.length + ' facts have been removed.',
@@ -616,17 +477,18 @@ function ajaxDeleteFacts (form_data, factArray) {
     })
 }
 
-function deleteFactArray (factArray, source = 'aggs') {
+function deleteFactArray (factArray, source) {
     if (factArray.length >= 1) {
         var request = new XMLHttpRequest()
-        var form_data = new FormData()
+        var formData = new FormData()
         for (var i = 0; i < factArray.length; i++) {
             for (var key in factArray[i]) {
-                form_data.append(key, factArray[i][key])
+                formData.append(key, factArray[i][key])
             }
         }
 
-        if (source == 'aggs') {
+        if (source === 'aggs') {
+            /* global swal */
             swal({
                 title: 'Are you sure you want to remove this fact from the dataset?',
                 text: 'This will remove ' + factArray.length + ' facts from the dataset.',
@@ -637,168 +499,125 @@ function deleteFactArray (factArray, source = 'aggs') {
                 confirmButtonText: 'Yes, remove them!'
             }).then((result) => {
                 if (result.value) {
-                    ajaxDeleteFacts(form_data, factArray)
+                    ajaxDeleteFacts(formData, factArray)
                 }
             })
-        } else if (source == 'fact_manager') {
-            ajaxDeleteFacts(form_data, factArray)
+        } else if (source === 'fact_manager') {
+            ajaxDeleteFacts(formData, factArray)
         }
     } else {
         swal('Warning!', 'No facts selected!', 'warning')
     }
 }
 
-function addFactToSearch (fact_name, fact_val) {
+function addFactToSearch (factName, factVal) {
     $('#constraint_field option').each(function () {
-        if ($(this).val() != '') {
-            if (JSON.parse($(this).val())['type'] == 'fact_str_val') {
+        if ($(this).val() !== '') {
+            if (JSON.parse($(this).val())['type'] === 'fact_str_val') {
                 $('#constraint_field').val($(this).val())
                 return false // break out of loop
             }
         }
     })
 
-    var has_field = false
+    var hasField = false
     $('span[id^=selected_field_]').each(function (index) {
         if ($(this).text().includes(['[fact_text_values]'])) {
-            has_field = true
+            hasField = true
         }
     })
-    if (!has_field) {
+    if (!hasField) {
+        /* global addField, sidebar */
         addField('', '', '', false)
     }
 
-    var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_')
-    var suggestion_id = split_id[split_id.length - 2] + '_' + split_id[split_id.length - 1]
-    if (has_field) {
-        addFactValueFieldConstraint(split_id[split_id.length - 2], $('#fact_field_' + split_id[split_id.length - 2]).val())
-        var split_id = $('input[name^=fact_txt_]').last().attr('id').split('_')
-        var suggestion_id = split_id[split_id.length - 2] + '_' + split_id[split_id.length - 1]
+    var splitID = $('input[name^=fact_txt_]').last().attr('id').split('_')
+    var suggestionID = splitID[splitID.length - 2] + '_' + splitID[splitID.length - 1]
+    if (hasField) {
+        /* global addFactValueFieldConstraint, sidebar */
+        /* this place had vars b4 (probably just bad redeclare) */
+        addFactValueFieldConstraint(splitID[splitID.length - 2], $('#fact_field_' + splitID[splitID.length - 2]).val())
+        splitID = $('input[name^=fact_txt_]').last().attr('id').split('_')
+        suggestionID = splitID[splitID.length - 2] + '_' + splitID[splitID.length - 1]
     }
 
-    $('#field_' + split_id[split_id.length - 2] + ' #fact_txt_' + suggestion_id).val(fact_name)
-    $('#fact_constraint_op_' + suggestion_id).val('=')
-    $('#fact_constraint_val_' + suggestion_id).val(fact_val)
+    $('#field_' + splitID[splitID.length - 2] + ' #fact_txt_' + suggestionID).val(factName)
+    $('#fact_constraint_op_' + suggestionID).val('=')
+    $('#fact_constraint_val_' + suggestionID).val(factVal)
 }
 
-function show_string_children (data, children_container, grandchildren_container, row_key, type = null) {
-    children_container.empty()
-    grandchildren_container.empty()
+function showStringChildren (data, childrenContainer, grandchildrenContainer, rowKey, type) {
+    childrenContainer.empty()
+    grandchildrenContainer.empty()
 
     var tbody = $('<tbody></tbody>')
-    $(data).each(function (fact_key) {
-        var row_container = $('<tr><td>' + this.val + '</td><td>' + this.key + '</td></tr>')
+    $(data).each(function (factKey) {
+        var rowContainer = $('<tr><td>' + this.val + '</td><td>' + this.key + '</td></tr>')
 
         if (this.hasOwnProperty('children') && this.children.length > 0) {
-            var row_container = $('<tr><td>' + this.val + '</td><td>' + this.key + "</td><td><span class='glyphicon glyphicon-menu-right'></span></td></tr>")
-            row_container.addClass('pointer')
+            rowContainer = $('<tr><td>' + this.val + '</td><td>' + this.key + "</td><td><span class='glyphicon glyphicon-menu-right'></span></td></tr>")
+            rowContainer.addClass('pointer')
         } else {
-            if (type == 'fact') {
-                var fact_data = {}
-                fact_data[fact_key] = this.key
+            if (type === 'fact') {
+                var factData = {}
+                factData[factKey] = this.key
 
-                var add_to_search_icon = '<i class="glyphicon glyphicon-search pull-right"\
+                var addToSearchIcon = '<i class="glyphicon glyphicon-search pull-right"\
                 data-toggle="tooltip" title="Add to search"\
                 style="cursor: pointer"\
-                onclick=\'addFactToSearch("' + fact_key + '","' + this.key + '");\'></i>'
+                onclick=\'addFactToSearch("' + factKey + '","' + this.key + '");\'></i>'
 
                 // keep track of checkboxes using their name as {NAME: VALUE}, otherwise when clicking on another fact name, they get overwritten
-                checkboxName = JSON.stringify(fact_data).replace(/"/g, "'")
+                let checkboxName = JSON.stringify(factData).replace(/"/g, "'")
                 var checkbox = '<input id="checkBox_' + this.val + '_' + this.key + '"\
                 type="checkbox" name="' + checkboxName + '" onchange="factDeleteCheckbox(this)"'
 
                 for (var i = 0; i < selectedFactCheckboxes.length; i++) {
-                    if (selectedFactCheckboxes[i].name == checkboxName) {
+                    if (selectedFactCheckboxes[i].name === checkboxName) {
                         checkbox = checkbox + ' checked'
                     }
                 }
 
-                var row_container = $('<tr><td>' + this.val + '</td><td>' + this.key + '</td><td>' + add_to_search_icon + '</td><td>' + checkbox + '></td></tr>')
+                rowContainer = $('<tr><td>' + this.val + '</td><td>' + this.key + '</td><td>' + addToSearchIcon + '</td><td>' + checkbox + '></td></tr>')
             } else {
-                var row_container = $('<tr><td>' + this.val + '</td><td>' + this.key + '</td><td></td></tr>')
+                rowContainer = $('<tr><td>' + this.val + '</td><td>' + this.key + '</td><td></td></tr>')
             }
         };
 
-        row_container.click(function () {
-            grandchildren_container.empty()
+        rowContainer.click(function () {
+            grandchildrenContainer.empty()
 
             if (this.hasOwnProperty('children') && this.children.length > 0) {
                 var grandchildrenTbody = $('<tbody></tbody>')
 
-                $.each(this.children, function (j, grandchild_data) {
-                    grandchildrenTbody.append($('<tr><td>' + grandchild_data.val + '</td><td>' + grandchild_data.key + '</td></tr>'))
+                $.each(this.children, function (j, grandchildData) {
+                    grandchildrenTbody.append($('<tr><td>' + grandchildData.val + '</td><td>' + grandchildData.key + '</td></tr>'))
                 })
 
                 var grandchildrenTable = $("<table class='table table-striped table-hover'></table>")
                 grandchildrenTable.append("<thead><th colspan='2'>&nbsp;</th></head>")
                 grandchildrenTable.append(grandchildrenTbody)
 
-                grandchildren_container.append(grandchildrenTable)
-                grandchildren_container.removeClass('hidden')
+                grandchildrenContainer.append(grandchildrenTable)
+                grandchildrenContainer.removeClass('hidden')
             }
         })
 
-        tbody.append(row_container)
-    }, [row_key])
+        tbody.append(rowContainer)
+    }, [rowKey])
 
     var table = $("<table class='table table-striped table-hover'></table>")
 
-    var delete_checked_facts = '<i class="glyphicon glyphicon-trash pull-right"\
+    var deleteCheckedFacts = '<i class="glyphicon glyphicon-trash pull-right"\
     data-toggle="tooltip" title="Delete checked facts"\
     style="cursor: pointer"\
     onclick=\'deleteFactsViaCheckboxes(selectedFactCheckboxes);\'></i>'
 
-    table.append("<thead><th colspan='2'>Field #2</th><th colspan='1'></th><th colspan='1'>" + delete_checked_facts + '</th></head>') // .click(function(){children_container.addClass('hidden')});;
+    table.append("<thead><th colspan='2'>Field #2</th><th colspan='1'></th><th colspan='1'>" + deleteCheckedFacts + '</th></head>') // .click(function(){children_container.addClass('hidden')});;
     table.append(tbody)
 
-    children_container.append(table)
-    children_container.removeClass('hidden')
-}
-
-function change_agg_field (field_nr) {
-    var field_component = $('#agg_field_' + field_nr)
-    var selected_field = field_component.val()
-    var field_data = JSON.parse(selected_field)
-    var selected_type = field_data['type']
-
-    if (selected_type != 'date') {
-        $('#sort_by_' + field_nr).removeClass('hidden')
-        $('#agg_size_' + field_nr).removeClass('hidden')
-        $('#freq_norm_' + field_nr).addClass('hidden')
-        $('#interval_' + field_nr).addClass('hidden')
-        $('#agg_daterange_' + field_nr).addClass('hidden')
-    } else if (selected_type == 'date') {
-        $('#agg_daterange_from_' + field_nr).val(field_data['range']['min'])
-        $('#agg_daterange_to_' + field_nr).val(field_data['range']['max'])
-
-        $('#agg_size_' + field_nr).addClass('hidden')
-        $('#freq_norm_' + field_nr).removeClass('hidden')
-        $('#interval_' + field_nr).removeClass('hidden')
-        $('#sort_by_' + field_nr).addClass('hidden')
-        $('#agg_daterange_' + field_nr).removeClass('hidden')
-    }
-
-    selected_method = $('#sort_by_' + field_nr).children('#sort_by_' + field_nr)
-    selected_method.on('change', function () {
-        // console.log(selected_method[0].options[selected_method[0].selectedIndex].text);
-        if (selected_method[0].options[selected_method[0].selectedIndex].text == 'significant words') {
-            $('#agg_field_2_button').addClass('hidden')
-        } else {
-            $('#agg_field_2_button').removeClass('hidden')
-        }
-    })
-}
-
-function toggle_agg_field_2 (action) {
-    if (action == 'add') {
-        $('#agg_field_2_container').removeClass('hidden')
-        $('#agg_field_2_button').addClass('hidden')
-        $('#agg_field_2_selected').val('true')
-    } else {
-        $('#agg_field_2_button').removeClass('hidden')
-        $('#agg_field_2_container').addClass('hidden')
-        $('#agg_field_2_selected').val('false')
-    }
+    childrenContainer.append(table)
+    childrenContainer.removeClass('hidden')
 }
 
 function loadUserPreference (dataset, mapping) {
@@ -812,10 +631,11 @@ function loadUserPreference (dataset, mapping) {
     }
 }
 
-function cluster_to_lex (id) {
-    var cluster_form = document.getElementById('save_as_lexicon_' + id)
-    var fd = new FormData(cluster_form)
+function clusterToLex (id) {
+    var clusterForm = document.getElementById('save_as_lexicon_' + id)
+    var fd = new FormData(clusterForm)
     fd.set('lexiconname', fd.get('lexiconname').split(' ').slice(0, -1).join(' '))
+    /* global LINK_LEXMINER */
     $.ajax({
         url: LINK_LEXMINER + '/new',
         data: fd,

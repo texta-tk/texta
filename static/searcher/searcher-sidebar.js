@@ -3,7 +3,7 @@ var counter = 1
 var factValSubCounter = {}
 $(document).ready(function () {
     getSearches()
-
+    changeAggField(1)
     $('#constraint_field').on('changed.bs.select', function (e, clickedIndex, isSelected, previousValue) {
         filterConstraintField($('#constraint_field option:selected').val())
     })
@@ -17,13 +17,13 @@ $(document).ready(function () {
 })
 
 var getUrlParameter = function getUrlParameter (sParam) {
-    var sPageURL = decodeURIComponent(window.location.search.substring(1))
+    let sPageURL = decodeURIComponent(window.location.search.substring(1))
 
-    var sURLVariables = sPageURL.split('&')
+    let sURLVariables = sPageURL.split('&')
 
-    var sParameterName
+    let sParameterName
 
-    var i
+    let i
 
     for (i = 0; i < sURLVariables.length; i++) {
         sParameterName = sURLVariables[i].split('=')
@@ -32,6 +32,22 @@ var getUrlParameter = function getUrlParameter (sParam) {
             return sParameterName[1] === undefined ? true : sParameterName[1]
         }
     }
+}
+function getQuery () {
+    let formElement = document.getElementById('filters')
+    let request = new XMLHttpRequest()
+
+    request.onreadystatechange = function () {
+        if (request.readyState === 4 && request.status === 200) {
+            if (request.responseText.length > 0) {
+                let queryQontainer = $('#query-modal-content')
+                queryQontainer.html(JSON.stringify(JSON.parse(request.responseText)))
+            }
+        }
+    }
+
+    request.open('POST', PREFIX + '/get_query')
+    request.send(new FormData(formElement), true)
 }
 
 function save () {
@@ -281,7 +297,7 @@ function makeDateField (dateRangeMin, dateRangeMax, fieldData) {
     $('#field_hidden_date').clone().attr('id', newID).appendTo('#constraints')
     $(fieldWithID + ' #daterange_field_').attr('id', 'daterange_field_' + counter.toString()).attr('name', 'daterange_field_' + counter.toString()).val(fieldData.field)
     $(fieldWithID + ' #selected_field_').attr('id', 'selected_field_' + counter.toString()).attr('name', 'selected_field_' + counter.toString()).html(fieldData.field)
-    $(fieldWithID + ' #remove_link').attr('onclick', "javascript:remove_field('" + newID + "');")
+    $(fieldWithID + ' #remove_link').attr('onclick', "javascript:removeField('" + newID + "');")
 
     $(fieldWithID + ' #daterange_from_').attr('id', 'daterange_from_' + counter.toString())
     $(fieldWithID + ' #daterange_from_' + counter.toString()).attr('name', 'daterange_from_' + counter.toString())
@@ -311,7 +327,7 @@ function makeFactField (fieldData) {
     $(fieldWithID + ' #fact_operator_').attr('id', 'fact_operator_' + counter.toString()).attr('name', 'fact_operator_' + counter.toString())
     $(fieldWithID + ' #selected_field_').attr('id', 'selected_field_' + counter.toString()).html(fieldData.field + ' [fact_names]')
     $(fieldWithID + ' #fact_field_').attr('id', 'fact_field_' + counter.toString()).attr('name', 'fact_field_' + counter.toString()).val(fieldData.field)
-    $(fieldWithID + ' #remove_link').attr('onclick', "javascript:remove_field('" + newID + "');")
+    $(fieldWithID + ' #remove_link').attr('onclick', "javascript:removeField('" + newID + "');")
     $(fieldWithID + ' #suggestions_').attr('id', 'suggestions_' + counter.toString()).attr('name', 'suggestions_' + counter.toString())
     $(fieldWithID + ' #fact_txt_').attr('id', 'fact_txt_' + counter.toString()).attr('name', 'fact_txt_' + counter.toString())
     $(fieldWithID + ' #fact_txt_' + counter.toString()).attr('onkeyup', 'lookup("' + fieldFullId + '",' + counter.toString() + ',"keyup", "FACT_NAME");')
@@ -331,7 +347,7 @@ function makeTextField (fieldData) {
     $(fieldWithID + ' #match_field_').attr('id', 'match_field_' + counter.toString()).attr('name', 'match_field_' + counter.toString()).val(fieldData.field)
     $(fieldWithID + ' #match_type_').attr('id', 'match_type_' + counter.toString()).attr('name', 'match_type_' + counter.toString())
     $(fieldWithID + ' #match_slop_').attr('id', 'match_slop_' + counter.toString()).attr('name', 'match_slop_' + counter.toString())
-    $(fieldWithID + ' #remove_link').attr('onclick', "javascript:remove_field('" + newID + "');")
+    $(fieldWithID + ' #remove_link').attr('onclick', "javascript:removeField('" + newID + "');")
     $(fieldWithID + ' #suggestions_').attr('id', 'suggestions_' + counter.toString()).attr('name', 'suggestions_' + counter.toString())
     $(fieldWithID + ' #match_txt_').attr('id', 'match_txt_' + counter.toString()).attr('name', 'match_txt_' + counter.toString())
     $(fieldWithID + ' #match_layer_').attr('id', 'match_layer_' + counter.toString()).attr('name', 'match_layer_' + counter.toString())
@@ -417,7 +433,7 @@ function addFactValueFieldConstraint (counterStr) {
 
     var removeButton = $('<button/>')
         .attr('type', 'button')
-        .attr('onclick', 'remove_fact_rule("' + idCombination + '")')
+        .attr('onclick', 'removeFactRule("' + idCombination + '")')
         .addClass('btn btn-sm center-block')
 
     var removeSpan = $('<span/>')
@@ -428,7 +444,9 @@ function addFactValueFieldConstraint (counterStr) {
 
     factValSubCounter[counterStr] = factValSubCounter[counterStr] + 1
 }
-
+function removeFactRule (ruleID) {
+    $('#fact_val_rule_' + ruleID).remove()
+}
 function addFactValueField (counterStr, subCounterStr, fieldPath, fieldName, valueType) {
     var idCombination = counterStr + '_' + subCounterStr
     var headingSuffix
@@ -441,7 +459,7 @@ function addFactValueField (counterStr, subCounterStr, fieldPath, fieldName, val
     $('#field_hidden_fact_val').clone().attr('id', 'field_' + counterStr).appendTo('#constraints')
     $('#field_' + counterStr + ' #fact_operator_').attr('id', 'fact_operator_' + counterStr).attr('name', 'fact_operator_' + counterStr)
     $('#field_' + counterStr + ' #selected_field_').attr('id', 'selected_field_' + counterStr).html(fieldName + headingSuffix)
-    $('#field_' + counterStr + ' #remove_link').attr('onclick', "javascript:remove_field('field_" + counterStr + "');")
+    $('#field_' + counterStr + ' #remove_link').attr('onclick', "javascript:removeField('field_" + counterStr + "');")
     $('#field_' + counterStr + ' #fact_field_').attr('id', 'fact_field_' + counterStr).attr('name', 'fact_field_' + counterStr).val(fieldPath)
     $('#field_' + counterStr + " input[name='fact_constraint_type_']")
         .attr('name', 'fact_constraint_type_' + counterStr)
@@ -522,7 +540,7 @@ function addField (dateRangeMin, dateRangeMax, submittedFieldData) {
         $('#field_hidden_date').clone().attr('id', newID).appendTo('#constraints')
         $('#field_' + counter.toString() + ' #daterange_field_').attr('id', 'daterange_field_' + counter.toString()).attr('name', 'daterange_field_' + counter.toString()).val(fieldPath)
         $('#field_' + counter.toString() + ' #selected_field_').attr('id', 'selected_field_' + counter.toString()).attr('name', 'selected_field_' + counter.toString()).html(fieldName)
-        $('#field_' + counter.toString() + ' #remove_link').attr('onclick', "javascript:remove_field('" + newID + "');")
+        $('#field_' + counter.toString() + ' #remove_link').attr('onclick', "javascript:removeField('" + newID + "');")
 
         $('#field_' + counter.toString() + ' #daterange_from_').attr('id', 'daterange_from_' + counter.toString())
         $('#field_' + counter.toString() + ' #daterange_from_' + counter.toString()).attr('name', 'daterange_from_' + counter.toString())
@@ -547,7 +565,7 @@ function addField (dateRangeMin, dateRangeMax, submittedFieldData) {
         $('#field_' + counter.toString() + ' #fact_operator_').attr('id', 'fact_operator_' + counter.toString()).attr('name', 'fact_operator_' + counter.toString())
         $('#field_' + counter.toString() + ' #selected_field_').attr('id', 'selected_field_' + counter.toString()).html(fieldName + ' [fact_names]')
         $('#field_' + counter.toString() + ' #fact_field_').attr('id', 'fact_field_' + counter.toString()).attr('name', 'fact_field_' + counter.toString()).val(fieldPath)
-        $('#field_' + counter.toString() + ' #remove_link').attr('onclick', "javascript:remove_field('" + newID + "');")
+        $('#field_' + counter.toString() + ' #remove_link').attr('onclick', "javascript:removeField('" + newID + "');")
         $('#field_' + counter.toString() + ' #suggestions_').attr('id', 'suggestions_' + counter.toString()).attr('name', 'suggestions_' + counter.toString())
         $('#field_' + counter.toString() + ' #fact_txt_').attr('id', 'fact_txt_' + counter.toString()).attr('name', 'fact_txt_' + counter.toString())
         $('#field_' + counter.toString() + ' #fact_txt_' + counter.toString()).attr('onkeyup', 'lookup("' + fieldFullID + '",' + counter.toString() + ',"keyup", "FACT_NAME");')
@@ -579,7 +597,7 @@ function addField (dateRangeMin, dateRangeMax, submittedFieldData) {
         $('#field_' + counter.toString() + ' #match_field_').attr('id', 'match_field_' + counter.toString()).attr('name', 'match_field_' + counter.toString()).val(fieldPath)
         $('#field_' + counter.toString() + ' #match_type_').attr('id', 'match_type_' + counter.toString()).attr('name', 'match_type_' + counter.toString())
         $('#field_' + counter.toString() + ' #match_slop_').attr('id', 'match_slop_' + counter.toString()).attr('name', 'match_slop_' + counter.toString())
-        $('#field_' + counter.toString() + ' #remove_link').attr('onclick', "javascript:remove_field('" + newID + "');")
+        $('#field_' + counter.toString() + ' #remove_link').attr('onclick', "javascript:removeField('" + newID + "');")
         $('#field_' + counter.toString() + ' #suggestions_').attr('id', 'suggestions_' + counter.toString()).attr('name', 'suggestions_' + counter.toString())
         $('#field_' + counter.toString() + ' #match_txt_').attr('id', 'match_txt_' + counter.toString()).attr('name', 'match_txt_' + counter.toString())
         $('#field_' + counter.toString() + ' #match_layer_').attr('id', 'match_layer_' + counter.toString()).attr('name', 'match_layer_' + counter.toString())
@@ -647,6 +665,104 @@ function clusterQuery () {
     request.send(new FormData(formElement))
 }
 
+function lookup (fieldFullId, fieldId, action, lookupTypes) {
+    var content = $('#' + fieldFullId).val()
+    let factName
+    if (fieldFullId.match('^fact_constraint_val_')) {
+        factName = $('#fact_txt_' + fieldId.slice(0, -4)).val()
+    } else {
+        factName = ''
+    }
+
+    var lookupData = {
+        content: content,
+        action: action,
+        lookup_types: lookupTypes,
+        key_constraints: factName
+    }
+    $.post(PREFIX + '/autocomplete', lookupData, function (data) {
+        if (data.length > 0) {
+            var suggestionsContainer = $('#suggestions_' + fieldId)
+            suggestionsContainer.empty()
+
+            processSuggestions(data, suggestionsContainer, fieldId, lookupTypes)
+            if (suggestionsContainer.html()) {
+                $('#suggestions_' + fieldId).show()
+            }
+        } else {
+            $('#suggestions_' + fieldId).hide()
+        }
+    })
+}
+
+function processSuggestions (suggestions, suggestionsContainer, fieldID, lookupTypes) {
+    suggestions = JSON.parse(suggestions)
+
+    $.each(suggestions, function (lookupType, lookupSuggestions) {
+        if (lookupSuggestions.length > 0) {
+            var li = $('<div/>')
+                .text(lookupType)
+                .css('font-weight', 'Bold')
+                .appendTo(suggestionsContainer)
+
+            $.each(lookupSuggestions, function (i) {
+                var li = $('<li/>')
+                    .addClass('list-group-item')
+                    .addClass('pointer')
+                    .attr('onclick', "insert('" + lookupSuggestions[i]['resource_id'] + "','" + fieldID + "','" + lookupSuggestions[i]['entry_text'] + "','" + lookupType + "')")
+                    .html(lookupSuggestions[i]['display_text'])
+                    .appendTo(suggestionsContainer)
+            })
+        }
+    })
+}
+
+function insert (resourceID, suggestionID, descriptiveTerm, lookupType) {
+    if (resourceID) {
+        let suggestionPrefix
+        if (lookupType === 'CONCEPT') {
+            suggestionPrefix = '@C'
+        } else if (lookupType === 'LEXICON') {
+            suggestionPrefix = '@L'
+        }
+
+        $('#field_' + suggestionID + ' #match_txt_' + suggestionID).val(function (index, value) {
+            return value.replace(/[^(\n)]*$/, '')
+        })
+        $('#field_' + suggestionID + ' #match_txt_' + suggestionID).val($('#field_' + suggestionID + ' #match_txt_' + suggestionID).val() + suggestionPrefix + resourceID + '-' + descriptiveTerm + '\n')
+        $('#field_' + suggestionID + ' #match_txt_' + suggestionID).focus()
+    } else {
+        if (lookupType === 'TEXT') {
+            $('#field_' + suggestionID + ' #match_txt_' + suggestionID).val(function (index, value) {
+                return value.replace(/[^(\n)]*$/, '')
+            })
+            $('#field_' + suggestionID + ' #match_txt_' + suggestionID).val($('#field_' + suggestionID + ' #match_txt_' + suggestionID).val() + descriptiveTerm + '\n')
+        }
+        if (lookupType === 'FACT_NAME') {
+            var separatorIdx = suggestionID.indexOf('_')
+            let fieldID
+            if (separatorIdx > -1) {
+                fieldID = suggestionID.substring(0, separatorIdx)
+            } else {
+                fieldID = suggestionID
+            }
+
+            if (separatorIdx > -1) {
+                $('#field_' + fieldID + ' #fact_txt_' + suggestionID).val(descriptiveTerm)
+            } else {
+                $('#field_' + fieldID + ' #fact_txt_' + suggestionID).val(function (index, value) {
+                    return value.replace(/[^(\n)]*$/, '')
+                })
+                $('#field_' + fieldID + ' #fact_txt_' + suggestionID).val($('#field_' + suggestionID + ' #fact_txt_' + suggestionID).val() + descriptiveTerm + '\n')
+            }
+        }
+        if (lookupType === 'FACT_VAL') {
+            var suggestionIdPrefix = suggestionID.replace('_val', '')
+            $('#fact_constraint_val_' + suggestionIdPrefix).val(descriptiveTerm)
+        }
+    }
+}
+
 function mltQuery () {
     var formElement = document.getElementById('filters')
     var mltField = $("select[id='mlt_fields']").val()
@@ -665,7 +781,58 @@ function mltQuery () {
         $('#right').html('No fields selected!')
     }
 }
+
+function removeField (id) {
+    $('#' + id).remove()
+}
+
 function togglePanelCollapse (element) {
     $(element).toggleClass('glyphicon-plus')
     $(element).toggleClass('glyphicon-minus')
+}
+
+function changeAggField (fieldNumber) {
+    var fieldComponent = $('#agg_field_' + fieldNumber)
+    var selectedField = fieldComponent.val()
+    var fieldData = JSON.parse(selectedField)
+    var selectedType = fieldData['type']
+
+    if (selectedType !== 'date') {
+        $('#sort_by_' + fieldNumber).removeClass('hidden')
+        $('#agg_size_' + fieldNumber).removeClass('hidden')
+        $('#freq_norm_' + fieldNumber).addClass('hidden')
+        $('#interval_' + fieldNumber).addClass('hidden')
+        $('#agg_daterange_' + fieldNumber).addClass('hidden')
+    } else if (selectedType === 'date') {
+        $('#agg_daterange_from_' + fieldNumber).val(fieldData['range']['min'])
+        $('#agg_daterange_to_' + fieldNumber).val(fieldData['range']['max'])
+
+        $('#agg_size_' + fieldNumber).addClass('hidden')
+        $('#freq_norm_' + fieldNumber).removeClass('hidden')
+        $('#interval_' + fieldNumber).removeClass('hidden')
+        $('#sort_by_' + fieldNumber).addClass('hidden')
+        $('#agg_daterange_' + fieldNumber).removeClass('hidden')
+    }
+
+    let selectedMethod = $('#sort_by_' + fieldNumber).children('#sort_by_' + fieldNumber)
+    selectedMethod.on('change', function () {
+        // console.log(selected_method[0].options[selected_method[0].selectedIndex].text);
+        if (selectedMethod[0].options[selectedMethod[0].selectedIndex].text === 'significant words') {
+            $('#agg_field_2_button').addClass('hidden')
+        } else {
+            $('#agg_field_2_button').removeClass('hidden')
+        }
+    })
+}
+
+function toggleAggField2 (action) {
+    if (action === 'add') {
+        $('#agg_field_2_container').removeClass('hidden')
+        $('#agg_field_2_button').addClass('hidden')
+        $('#agg_field_2_selected').val('true')
+    } else {
+        $('#agg_field_2_button').removeClass('hidden')
+        $('#agg_field_2_container').addClass('hidden')
+        $('#agg_field_2_selected').val('false')
+    }
 }
