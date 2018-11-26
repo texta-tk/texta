@@ -22,7 +22,7 @@ def execute_search(es_m, es_params):
 
     if int(out['iTotalDisplayRecords']) > 10000: # Allow less pages if over page limit
         out['iTotalDisplayRecords'] = '10000'
-    out['column_names'] = es_m.get_column_names() # get columns names from ES mapping
+    out['column_names'] = es_m.get_column_names(facts=True) # get columns names from ES mapping
 
     for hit in response['hits']['hits']:
         hit_id = str(hit['_id'])

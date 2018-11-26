@@ -182,7 +182,7 @@ def get_table_header(request):
     es_m = ds.build_manager(ES_Manager)
 
     # get columns names from ES mapping
-    fields = es_m.get_column_names()
+    fields = es_m.get_column_names(facts=True)
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'fields': fields,

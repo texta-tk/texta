@@ -110,7 +110,7 @@ class ES_Manager:
                 sub_structure = v['properties']
                 path_list = root_path[:]
                 path_list.append(k)
-                sub_mapping = [{'path': k, 'type': 'text'}]
+                sub_mapping = [{'path': k, 'type': 'fact'}]
                 mapping_data.extend(sub_mapping)
 
             # deal with object & nested structures 
@@ -244,7 +244,6 @@ class ES_Manager:
                 for mapping in index_properties['mappings']:
                     mapping_structure = index_properties['mappings'][mapping]['properties']
                     decoded_mapping_structure = self._decode_mapping_structure(mapping_structure)
-
                     for field_mapping in decoded_mapping_structure:
                         field_mapping_json = json.dumps(field_mapping)
                         if field_mapping_json not in mapping_data:
@@ -256,13 +255,16 @@ class ES_Manager:
 
         return mapping_data
 
-    def get_column_names(self)-> list:
+    def get_column_names(self, facts=False)-> list:
         """ Get Column names from flat mapping structure
             Returns: sorted list of names
         """
         mapped_fields = self.get_mapped_fields()
         mapped_fields = [json.loads(field_data) for field_data in list(mapped_fields.keys())]
-        column_names = [c['path'] for c in mapped_fields if not self._is_reserved_field(c['path'])]
+        if facts:
+            column_names = [c['path'] for c in mapped_fields]
+        else:
+            column_names = [c['path'] for c in mapped_fields if not self._is_reserved_field(c['path'])]
         # Add meta fields
         column_names.sort()
         column_names += self.TEXTA_META_FIELDS
