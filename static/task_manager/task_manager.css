@@ -1,6 +1,4 @@
-#tasks-table {
-    overflow-x: auto;
-}
+
 .task-manager-grid-wrapper {
     display: grid;
     grid-gap: 10px 10px;
@@ -126,7 +124,28 @@
 #params-lexicon_classifier {
     padding: 5px;
 }
+
 .form-group >.col-sm-12 >.row{
     margin-bottom: 8px;
     margin-top:8px
+}
+
+.grid-2-col-1-content{
+    min-width: 0;
+    min-height: 0;
+}
+
+.panel-heading{
+    background-color: #f9f9f9;
+    color: black;
+}
+
+.flex-row.nav.nav-tabs{
+    background-color: white;
+}
+.grid-wrapper-task-manager{
+    height: 100%;
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-rows: 45px 1fr;
 }

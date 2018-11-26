@@ -208,3 +208,7 @@ With scroll head for some reason there are v-a: middle on td  */
 #top-part{
   padding:10px;
 }
+.results-panel-heading{
+  background-color: #f9f9f9;
+  color: black;
+}

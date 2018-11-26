@@ -1,0 +1,64 @@
+<div class="panel">
+        <div class="panel-body tasks-table hidden">
+            <table id="train-model-results-table" class="data-table nowrap display" style="width: 100%">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Actions</th>
+                        <th>Type</th>
+                        <th>User</th>
+                        <th>Description</th>
+                        <th>Task Status</th>
+                        <th>Task Progress</th>
+                        <th>Task Started</th>
+                        <th>Task Completed</th>
+                        <th class="none">Parameters</th>
+                        <th class="none">Result</th>
+                    </tr>
+                </thead>
+                {% for task in tasks %}
+                {% if task.task_type == task_param.id %}
+                <tr>
+                    <td>{{task.id}}</td>
+                    <td>
+                        <a href="#" onclick="delete_task({{task.id}});" title="Delete task"><span class="glyphicon glyphicon-remove"></span></a>
+                        {% if 'train' in task.task_type %}
+                        <a href="javascript:void(0)" onclick="go_to(LINK_TASK_MANAGER + '/download_model?model_id={{task.id}}')"><span
+                             class="glyphicon glyphicon-download-alt"></span></a>
+                        {% endif %}
+                    </td>
+                    <td>{{task.task_type}}</td>
+                    <td>{{task.user}}</td>
+                    <td>{{task.description}}</td>
+                    <td>{{task.status}}</td>
+                    <td>{{task.progress_message}}</td>
+                    <td>{{task.time_started|date:"d.m.Y H:i"}}</td>
+                    <td>{{task.time_completed|date:"d.m.Y H:i"}}</td>
+                    <td>
+                        <table class="table table-striped table-condensed" style="width:auto">
+                            {% for k,v in task.parameters.items %}
+                            <tr>
+                                <td><b>{{k}}</b></td>
+                                <td>{{v|safe}}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </td>
+                    <td>
+                        <table class="table table-striped table-condensed" style="width:auto">
+                            {% for k,v in task.result.items %}
+                            <tr>
+                                <td><b>{{k}}</b></td>
+                                <td>{{v}}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </td>
+
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </table>
+
+        </div>
+    </div>

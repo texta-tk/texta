@@ -2,16 +2,25 @@
 var PREFIX = LINK_TASK_MANAGER
 
 $(function () {
-    // for bootstrap 3 use 'shown.bs.tab', for bootstrap 2 use 'shown' in the next line
-    $('a[data-toggle="tab"]').each(function () {
-        $(this).on('shown.bs.tab', function (e) {
-            // save the latest tab; use cookies if you like 'em better:
-            localStorage.setItem('lastTab', $(this).attr('href'))
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        $('.data-table:visible').each(function (e) {
+            $($.fn.dataTable.tables(true)).DataTable().columns.adjust().responsive.recalc()
         })
+        localStorage.setItem('lastTab', $(this).attr('href'))
     })
-    $('#tasks-table-datatable').DataTable({
-        'scrollX': true
+    /* inits all datatables */
+    $('.data-table').DataTable({
+        'paging': false,
+        'ordering': false,
+        'info': false,
+        'searching': false,
+        responsive: {
+            details: true
+        }
     })
+    /* dont show non datatables version */
+    $('.tasks-table').toggleClass('hidden')
+
     $('#scoro_nr_kws').slider({
         formatter: function (value) {
             return 'Current value: ' + value
@@ -102,8 +111,15 @@ $(function () {
 
     // go to the latest tab, if it exists:
     let lastTab = localStorage.getItem('lastTab')
+
     if (lastTab) {
         $('[href="' + lastTab + '"]').tab('show')
+    } else {
+        console.log('here')
+        let element = $('.flex-row.nav.nav-tabs li').first()
+        element.addClass('active')
+        /* TODO no redirect if not first time visit */
+        /* console.log($(element.children()[0])[0].val()) */
     }
 })
 
@@ -205,11 +221,12 @@ function showIfSignificantWordsSelected () {
 function showNounIfBgInfoSelected () {
     $('.if-noun-bg-info-selected ').toggleClass('hidden')
 }
+
 function showLexContent () {
     $('.c-lex-content-wrapper').toggleClass('hidden')
 }
+
 function toggleRequiredPercentage (element) {
     let elementValue = $(element).val()
     $('.required-percentage-wrapper').toggleClass('hidden', elementValue == 'OR')
 }
-/* TODO DATATABLES */
