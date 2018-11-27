@@ -29,6 +29,7 @@ class ES_Manager:
 
     HEADERS = HEADERS
     TEXTA_RESERVED = ['texta_facts']
+    TEXTA_META_FIELDS = ['_es_id']
 
     # Redefine requests if LDAP authentication is used
     if es_use_ldap:
@@ -50,7 +51,7 @@ class ES_Manager:
         return index_string
 
     def bulk_post_update_documents(self, documents, ids):
-        """Do both plain_post_bulk and _update_by_query"""
+        """Do both plain_post_bulk and update_documents()"""
         data = ''
 
         for i, _id in enumerate(ids):
@@ -58,7 +59,7 @@ class ES_Manager:
             data += json.dumps({"doc": documents[i]}) + '\n'
 
         response = self.plain_post_bulk(self.es_url, data)
-        response = self._update_by_query()
+        response = self.update_documents()
         return response
 
     def bulk_post_documents(self, documents, ids, document_locations):
@@ -71,11 +72,6 @@ class ES_Manager:
 
         response = self.plain_post_bulk(self.es_url, data)
 
-        return response
-
-    def update_documents(self):
-        """Do just _update_by_query"""
-        response = self._update_by_query()
         return response
 
     def update_mapping_structure(self, new_field, new_field_properties):
@@ -93,11 +89,12 @@ class ES_Manager:
                     properties['texta_facts'] = FACT_PROPERTIES
 
                 properties = {'properties': properties}
-
+                url = '{0}/{1}/_mapping/{2}'.format(self.es_url, index, mapping)
                 response = self.plain_put(url, json.dumps(properties))
+                return response
 
 
-    def _update_by_query(self):
+    def update_documents(self):
         response = self.plain_post('{0}/{1}/_update_by_query?refresh&conflicts=proceed'.format(self.es_url, self.stringify_datasets()))
         return response
 
@@ -113,7 +110,7 @@ class ES_Manager:
                 sub_structure = v['properties']
                 path_list = root_path[:]
                 path_list.append(k)
-                sub_mapping = [{'path': k, 'type': 'text'}]
+                sub_mapping = [{'path': k, 'type': 'fact'}]
                 mapping_data.extend(sub_mapping)
 
             # deal with object & nested structures 
@@ -211,7 +208,6 @@ class ES_Manager:
                 queries.append(json.dumps(query_body))
 
         responses = self.plain_multisearch(es_url, queries)
-
         fields_with_facts = {'fact': [], 'fact_str': [], 'fact_num': []}
 
         for response in responses:
@@ -248,7 +244,6 @@ class ES_Manager:
                 for mapping in index_properties['mappings']:
                     mapping_structure = index_properties['mappings'][mapping]['properties']
                     decoded_mapping_structure = self._decode_mapping_structure(mapping_structure)
-
                     for field_mapping in decoded_mapping_structure:
                         field_mapping_json = json.dumps(field_mapping)
                         if field_mapping_json not in mapping_data:
@@ -260,14 +255,19 @@ class ES_Manager:
 
         return mapping_data
 
-    def get_column_names(self)-> list:
+    def get_column_names(self, facts=False)-> list:
         """ Get Column names from flat mapping structure
             Returns: sorted list of names
         """
         mapped_fields = self.get_mapped_fields()
         mapped_fields = [json.loads(field_data) for field_data in list(mapped_fields.keys())]
-        column_names = [c['path'] for c in mapped_fields if not self._is_reserved_field(c['path'])]
+        if facts:
+            column_names = [c['path'] for c in mapped_fields]
+        else:
+            column_names = [c['path'] for c in mapped_fields if not self._is_reserved_field(c['path'])]
+        # Add meta fields
         column_names.sort()
+        column_names += self.TEXTA_META_FIELDS
         return column_names
 
     def _is_reserved_field(self, field_name):
@@ -554,8 +554,6 @@ class ES_Manager:
 
         _min = self._timestamp_to_str(aggs["min_date"]["value"])
         _max = self._timestamp_to_str(aggs["max_date"]["value"])
-
-        print(_min,_max)
 
         return _min, _max
 

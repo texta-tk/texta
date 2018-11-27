@@ -42,8 +42,7 @@ def get_rows(es_params, request):
         writer.writerow(es_params['features']) # NEW PY REQUIREMENT
     except:
         writer.writerow([feature for feature in es_params['features']])
-
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
@@ -140,10 +139,11 @@ def process_hits(hits, features, write=True, writer=None):
         row = []
         for feature_name in features:
             feature_path = feature_name.split('.')
+            # Stringify just in case value is something like a bool
             parent_source = hit['_source']
             for path_component in feature_path:
                 if path_component in parent_source:
-                    parent_source = parent_source[path_component]
+                    parent_source = str(parent_source[path_component])
                 else:
                     parent_source = ""
                     break
@@ -164,7 +164,6 @@ def process_hits(hits, features, write=True, writer=None):
                 content = '{}; {}'.format(content, parent_source) # Append JSON format
             else:
                 content = parent_source.replace('\n', '\\n').replace('"', '\"')
-
             row.append(content)
         if not write:
             rows.append(row)

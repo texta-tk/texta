@@ -21,7 +21,7 @@ except:
     from io import StringIO # NEW PY REQUIREMENT
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, StreamingHttpResponse
+from django.http import HttpResponse, StreamingHttpResponse, HttpResponseBadRequest, JsonResponse
 from django.template import loader
 from django.utils.encoding import smart_str
 # For string templates
@@ -49,9 +49,11 @@ from searcher.view_functions.aggregations.agg_manager import AggManager
 from searcher.view_functions.build_search.build_search import execute_search
 from searcher.view_functions.cluster_search.cluster_manager import ClusterManager
 from searcher.view_functions.general.fact_manager import FactManager
+from searcher.view_functions.general.fact_manager import FactAdder
 from searcher.view_functions.general.get_saved_searches import extract_constraints
 from searcher.view_functions.general.export_pages import export_pages
 from searcher.view_functions.general.searcher_utils import collect_map_entries, get_fields_content, get_fields
+
 
 
 @login_required
@@ -182,7 +184,7 @@ def get_table_header(request):
     es_m = ds.build_manager(ES_Manager)
 
     # get columns names from ES mapping
-    fields = es_m.get_column_names()
+    fields = es_m.get_column_names(facts=True)
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,
                        'fields': fields,
@@ -327,9 +329,7 @@ def delete_facts(request):
 
 @login_required
 def tag_documents(request):
-    """Add a fact to documents with given name and value
-       via Search > Actions > Tag results
-    """
+    """Add a fact to documents with given name and value"""
     tag_name = request.POST['tag_name']
     tag_value = request.POST['tag_value']
     tag_field = request.POST['tag_field']
@@ -339,6 +339,28 @@ def tag_documents(request):
     fact_m.tag_documents_with_fact(es_params, tag_name, tag_value, tag_field)
     return HttpResponse()
 
+@login_required
+def fact_to_doc(request):
+    """Add a fact to a certain document with given fact, span, and the document _id"""
+    fact_name = request.POST['fact_name'].strip()
+    fact_value = request.POST['fact_value'].strip()
+    fact_field = request.POST['fact_field'].strip()
+    method = request.POST['method'].strip()
+    match_type = request.POST['match_type'].strip()
+    doc_id = request.POST['doc_id'].strip()
+    case_sens = True if request.POST['case_sens'].strip() == "True" else False 
+    es_params = request.POST
+
+    # Validate that params aren't empty strings
+    if len(fact_name)>0 and len(fact_value)>0 and len(fact_field)>0 and len(doc_id)>0 and len(method)>0:
+        fact_a = FactAdder(request, es_params, fact_name, fact_value, fact_field, doc_id, method, match_type, case_sens)
+        json_response = fact_a.add_facts()
+    else:
+        return HttpResponseBadRequest()
+    if json_response:
+        return JsonResponse(json_response)
+    else:
+        return JsonResponse({'fact_count': 0, 'status': 'error'})
 
 @login_required
 def get_search_query(request):

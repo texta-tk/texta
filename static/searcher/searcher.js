@@ -131,6 +131,14 @@ function query () {
     request.onreadystatechange = function () {
         if (request.readyState === 4 && request.status === 200) {
             $('#right').html(request.responseText)
+            // Get header column names
+            // Used for setting title to all elements in corresponding column
+            // Which can be used as column selectors/for retriving column name
+            var columns = []
+            $('#columnsRow').find('th').each(function (index) {
+                // Append _DtCol to end to safe from naming conflicts
+                columns.push({ 'className': 'DtCol_' + $(this).text(), 'targets': index })
+            })
             examplesTable = $('#examples').DataTable({
                 'autoWidth': false,
                 'deferRender': true,
@@ -156,6 +164,9 @@ function query () {
                     $('.dataTables_scrollHead').on('scroll', function () {
                         $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft())
                     })
+                    // Initialize clicking HLs/selection text for properties
+                    /* global createSelectionProps, selectionProps */
+                    createSelectionProps()
                 },
                 'stateSave': true,
                 'stateSaveParams': function (settings, data) {
@@ -178,7 +189,9 @@ function query () {
                     }
                     $('#toggle-column-select').selectpicker('refresh')
                 },
-                'scrollX': true
+                'scrollX': true,
+                // Add title with the corresponding column name to each element in column
+                'columnDefs': columns
             })
 
             initColumnSelectVisiblity(examplesTable)
@@ -510,42 +523,6 @@ function deleteFactArray (factArray, source) {
     }
 }
 
-function addFactToSearch (factName, factVal) {
-    $('#constraint_field option').each(function () {
-        if ($(this).val() !== '') {
-            if (JSON.parse($(this).val())['type'] === 'fact_str_val') {
-                $('#constraint_field').val($(this).val())
-                return false // break out of loop
-            }
-        }
-    })
-
-    var hasField = false
-    $('span[id^=selected_field_]').each(function (index) {
-        if ($(this).text().includes(['[fact_text_values]'])) {
-            hasField = true
-        }
-    })
-    if (!hasField) {
-        /* global addField, sidebar */
-        addField('', '', '', false)
-    }
-
-    var splitID = $('input[name^=fact_txt_]').last().attr('id').split('_')
-    var suggestionID = splitID[splitID.length - 2] + '_' + splitID[splitID.length - 1]
-    if (hasField) {
-        /* global addFactValueFieldConstraint, sidebar */
-        /* this place had vars b4 (probably just bad redeclare) */
-        addFactValueFieldConstraint(splitID[splitID.length - 2], $('#fact_field_' + splitID[splitID.length - 2]).val())
-        splitID = $('input[name^=fact_txt_]').last().attr('id').split('_')
-        suggestionID = splitID[splitID.length - 2] + '_' + splitID[splitID.length - 1]
-    }
-
-    $('#field_' + splitID[splitID.length - 2] + ' #fact_txt_' + suggestionID).val(factName)
-    $('#fact_constraint_op_' + suggestionID).val('=')
-    $('#fact_constraint_val_' + suggestionID).val(factVal)
-}
-
 function showStringChildren (data, childrenContainer, grandchildrenContainer, rowKey, type) {
     childrenContainer.empty()
     grandchildrenContainer.empty()
@@ -649,4 +626,39 @@ function clusterToLex (id) {
             swal('Error!', 'There was a problem saving the cluster as a lexicon!', 'error')
         }
     })
+}
+
+function addFactToSearch (factName, factVal) {
+    $('#constraint_field option').each(function () {
+        if ($(this).val() !== '') {
+            if (JSON.parse($(this).val())['type'] === 'fact_str_val') {
+                $('#constraint_field').val($(this).val())
+                return false // break out of loop
+            }
+        }
+    })
+
+    var hasField = false
+    $('span[id^=selected_field_]').each(function (index) {
+        if ($(this).text().includes(['[fact_text_values]'])) {
+            hasField = true
+        }
+    })
+    if (!hasField) {
+        /* global addField, sidebar */
+        addField('', '', false)
+    }
+
+    var splitID = $('input[name^=fact_txt_]').last().attr('id').split('_')
+    var suggestionID = splitID[splitID.length - 2] + '_' + splitID[splitID.length - 1]
+    if (hasField) {
+        /* global addFactValueFieldConstraint, searcher-sidebar */
+        addFactValueFieldConstraint(splitID[splitID.length - 2], $('#fact_field_' + splitID[splitID.length - 2]).val())
+        splitID = $('input[name^=fact_txt_]').last().attr('id').split('_')
+        suggestionID = splitID[splitID.length - 2] + '_' + splitID[splitID.length - 1]
+    }
+
+    $('#field_' + splitID[splitID.length - 2] + ' #fact_txt_' + suggestionID).val(factName)
+    $('#fact_constraint_op_' + suggestionID).val('=')
+    $('#fact_constraint_val_' + suggestionID).val(factVal)
 }
