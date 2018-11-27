@@ -101,6 +101,11 @@ $(document).ready(function () {
             return 'Current value: ' + value
         }
     })
+    $('#constraint_field').on('loaded.bs.select', function (e, clickedIndex, isSelected, previousValue) {
+        let button = $('#constraint-field-button')
+        button.appendTo('.constraint-field-wrapper > div > div > div.bs-actionsbox')
+        button.removeClass('hidden')
+    })
 })
 
 function hide (id) {

@@ -212,3 +212,8 @@ With scroll head for some reason there are v-a: middle on td  */
   background-color: #f9f9f9;
   color: black;
 }
+
+/* needed for custom #constraint-field add button */
+.constraint-field-wrapper > div > div > div.bs-actionsbox > div{
+  display: none;
+}

@@ -43,19 +43,17 @@
                               </div>
                               <div class="col-sm-12">
                                  <div class="form-inline flex-row">
-                                    <div class="form-group flex-item flex-item-grow-3">
+                                    <div class="form-group flex-item flex-item-grow-3 constraint-field-wrapper">
                                        <select class='selectpicker form-control'
-                                          data-hide-disabled='true' multiple id="constraint_field"
+                                          data-hide-disabled='true' data-actions-box="true" multiple id="constraint_field"
                                           name="constraint_field" class="form-control input-sm">
                                           {% for field in fields %}
                                           <option value="{{field.data}}">{{field.label}}</option>
                                           {% endfor %}
                                        </select>
                                     </div>
-                                    <div class="form-group flex-item flex-item-grow-1">
-                                       <button type="button" class="btn btn-default input-sm"
+                                       <button type="button" class="hidden btn btn-default input-sm width-max" id='constraint-field-button'
                                           onclick="javascript:addField('{{date_range.min}}','{{date_range.max}}');">Add</button>
-                                    </div>
                                  </div>
                               </div>
                            </div>
