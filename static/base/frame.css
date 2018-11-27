@@ -196,10 +196,8 @@ html,body{
 .btn-default:active,
 .btn-default.active,
 .open>.dropdown-toggle.btn-default {
-    color: #527D17;
     background: #FFFFFF;
-    ;
-    border-color: #527D17;
+    border-color: grey;
 }
 
 .btn-danger {
