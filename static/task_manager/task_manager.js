@@ -115,11 +115,8 @@ $(function () {
     if (lastTab) {
         $('[href="' + lastTab + '"]').tab('show')
     } else {
-        console.log('here')
-        let element = $('.flex-row.nav.nav-tabs li').first()
-        element.addClass('active')
-        /* TODO no redirect if not first time visit */
-        /* console.log($(element.children()[0])[0].val()) */
+        let element = $('.flex-row.nav.nav-tabs li').first().children()
+        element.tab('show')
     }
 })
 
