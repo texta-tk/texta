@@ -49,6 +49,7 @@ function query () {
                 title: 'Oops. Something went wrong.',
                 text: 'No suggestions... Do you have a language model trained?',
                 type: 'warning',
+                heightAuto: false,
                 confirmButtonColor: '#73AD21',
                 cancelButtonColor: '#d33',
                 confirmButtonText: 'Ok'
