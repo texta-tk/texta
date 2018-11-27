@@ -2,8 +2,9 @@
 {% block app %}
 <script src="{{STATIC_URL}}jquery-textrange.js"></script>
 <script type="application/javascript" src="{{STATIC_URL}}lm/lm.js"></script>
-	<div class="row">
-		<div class="col-lg-3">
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}lm/lm.css"></link>
+	<div class="flex-row">
+		<div class="flex-item">
 			<div class="panel">
 				<div class="panel-heading">Lexicons</div>
 				<div class="panel-body">
@@ -36,16 +37,16 @@
 				</div>
 			</div>
 		</div>
-		<div class="col-lg-3">
+		<div class="flex-item selected-lexicon">
 			<div class="panel">
 				<div class="panel-heading">Selected Lexicon</div>
 				<div class="panel-body">{% block lex %}{% endblock %}</div>
 			</div>
 		</div>
-		<div class="col-lg-3">
+		<div class="flex-item">
 			<div class="panel">
 				<div class="panel-heading">Term Candidates</div>
-				<div class="panel-body" id="suggestions"></div>
+				<div class="panel-body flex-content-center" id="suggestions"></div>
 			</div>
 		</div>
 	</div>

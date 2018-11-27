@@ -15,8 +15,20 @@ body {
 }
 
 /* global style */
+
+.flex-content-space-around{
+    display: flex;
+    justify-content: space-around;
+}
+.flex-content-center{
+    display: flex;
+    justify-content: center;
+}
 .height-max{
     height: 100%;
+}
+.width-max{
+    width: 100%
 }
 .width-height-max{
     height: 100%;
@@ -25,10 +37,9 @@ body {
 html,body{
     height: 100%;
 }
-
 .navbar-inverse{
     background-image: none;
-    background-color: #000000 ;
+    background-color: #000000;
 }
 .panel{
     margin-bottom: 0px;
@@ -61,7 +72,6 @@ html,body{
     background-color: #f9f9f9;
 }
 
-
 /* @media screen and (max-width: 1405px) {
     .grid-2-col-1-row-default {
         grid-template-columns: 350px 1fr;
@@ -80,7 +90,6 @@ html,body{
 .panel-heading {
     border-radius: 0px
 }
-
 .panel-body {
     border-radius: 0px
 }

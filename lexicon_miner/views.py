@@ -273,7 +273,7 @@ def query(request):
 
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'TERM SUGGESTION','event':'terms_suggested','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'suggestion_method':request.POST['method']}}))
 
-        return HttpResponse(['<table><tr><td id=\'suggestion_cell_1\'>'] + suggestions[:20] + ['</td><td id=\'suggestion_cell_2\'>'] + suggestions[20:] + ['</td></tr></table>'])
+        return HttpResponse(['<table class="width-max"><tr class="flex-content-space-around"><td id=\'suggestion_cell_1\'>'] + suggestions[:20] + ['</td><td id=\'suggestion_cell_2\'>'] + suggestions[20:] + ['</td></tr></table>'])
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'TERM SUGGESTION','event':'term_suggestion_failed','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'suggestion_method':request.POST['method']}}),exc_info=True)
         return HttpResponse()

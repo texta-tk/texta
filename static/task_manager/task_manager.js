@@ -148,6 +148,7 @@ function delete_task (task_id) {
         title: 'Are you sure?',
         text: 'This will remove the task and it\'s resources.',
         type: 'warning',
+        heightAuto: false,
         showCancelButton: true,
         confirmButtonColor: '#73AD21',
         cancelButtonColor: '#d33',
