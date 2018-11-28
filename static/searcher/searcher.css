@@ -49,7 +49,7 @@
   margin-bottom: 0
 }
 .toggle-column-select-wrapper{
-  margin-bottom: 10px;
+  display: inline-block;
 }
 #chart_div {
     width: 100%;
@@ -206,11 +206,17 @@ With scroll head for some reason there are v-a: middle on td  */
   padding: 0px;
 }
 #top-part{
-  padding:10px;
+  padding:5px;
+}
+#examples_info{
+  padding: 0px;
 }
 .results-panel-heading{
   background-color: #f9f9f9;
   color: black;
+}
+#examples_length > label{
+  margin-bottom: 0px;
 }
 
 /* needed for custom #constraint-field add button */

@@ -3,13 +3,17 @@ function toggleFullscreen () {
     $('#grid-wrapper-searcher-id').toggleClass('grid-wrapper-searcher')
     $('#grid-wrapper-searcher-id').toggleClass('grid-1-col-default')
     $('.grid-wrapper-sidebar').toggleClass('hidden')
-    $('#top-part').toggleClass('hidden')
+    /* if searcher is displayed, a different fullscreen button is used */
+    if ($('.dataTables_scrollBody').length !== 0) {
+        $('.glyphicon-fullscreen-content-searcher.new-toggle').toggleClass('hidden')
+    } else {
+        $('.glyphicon-fullscreen-content').toggleClass('hidden')
+    }
     /* global examplesTable */
     if (examplesTable) {
         examplesTable.columns.adjust()
     }
 }
-
 function exportData (exportType) {
     var formElement = document.getElementById('filters')
     var queryArgs = $('#filters').serializeArray()

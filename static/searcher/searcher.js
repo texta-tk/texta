@@ -150,8 +150,9 @@ function query () {
                 'scrollY': '82vh',
                 'bServerSide': true,
                 'processing': true,
+                'filter': false,
                 'sAjaxSource': PREFIX + '/table_content',
-                'dom': "<'#top-part''row'<'col-xs-6'l><'col-xs-6'<'flex-content-end'i>>rp>t",
+                'dom': '<"#top-part.flex-row"<"flex-item flex-row align-center"<"flex-item flex-row align-center toggle-columns-select height-max"<"fullscreen-actions-div">>><"flex-content-end flex-item align-center"<"flex-item"i><"flex-item"l><"flex-item"p>>>t',
                 'sServerMethod': 'POST',
                 'fnServerParams': function (aoData) {
                     aoData.push({
@@ -200,12 +201,15 @@ function query () {
             })
 
             initColumnSelectVisiblity(examplesTable)
-
             var dataset = $('#dataset').val()
             var mapping = $('#mapping').val()
-            var div = $('#top-part')
+            var div = $('.toggle-columns-select')
             var button = $('.toggle-column-select-wrapper')
             button.appendTo(div)
+
+            if ($('.fullscreen-actions-div > i').length === 0) {
+                $('.glyphicon-fullscreen-content-searcher').clone().addClass('new-toggle').appendTo($('.fullscreen-actions-div'))
+            }
 
             loadUserPreference(dataset, mapping)
             $('#actions-btn').removeClass('invisible')

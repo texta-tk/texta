@@ -1,22 +1,8 @@
 <script type="application/javascript" src="{{STATIC_URL}}searcher/searcher-content.js"></script>
 <div class='searcher-content-wrapper width-height-max'>
     <div class="panel grid-wrapper-content-panel">
-        <div class="panel-heading results-panel-heading">
-            <i role='button' class='glyphicon glyphicon-fullscreen' onclick=toggleFullscreen()></i>
-            Results
-            <div id="actions-btn" class="dropdown pull-right invisible">
-                <a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-scissors"></span>
-                    Actions<span class="caret"></span></a>
-                <ul class="dropdown-menu">
-                    <li><a href="#" data-toggle="modal" data-target="#export-modal"><span class="glyphicon glyphicon-save"></span>
-                            Export results</a></li>
-                    {% if request.user.is_superuser %}
-                    <li><a href="#" data-toggle="modal" data-target="#delete-modal"><span class="glyphicon glyphicon-remove"></span>
-                            Delete results</a></li>
-                    {% endif %}
-                </ul>
-            </div>
-        </div>
+        <i role='button' class='padding-default glyphicon glyphicon-fullscreen glyphicon-fullscreen-content hidden' onclick=toggleFullscreen()></i>
+        <i role='button' class='padding-default glyphicon glyphicon-fullscreen glyphicon-fullscreen-content-searcher hidden' onclick=toggleFullscreen()></i>
         <div class="panel-body width-height-max" id="right">
 
         </div>

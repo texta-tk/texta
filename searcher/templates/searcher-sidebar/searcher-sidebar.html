@@ -6,13 +6,30 @@
             <div>Current Search
             </div>
             <div class="flex-item-justify-end">
-               <div><span class="reduce-horizontal-padding  glyphicon glyphicon-floppy-disk pointer"
+
+               <div>
+                  
+                     <span id="actions-btn" class="dropdown invisible">
+                           <i role="button" class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-scissors"></span></i>
+                           <ul class="dropdown-menu">
+                               <li><a href="#" data-toggle="modal" data-target="#export-modal"><span class="glyphicon glyphicon-save"></span>
+                                       Export results</a></li>
+                               {% if request.user.is_superuser %}
+                               <li><a href="#" data-toggle="modal" data-target="#delete-modal"><span class="glyphicon glyphicon-remove"></span>
+                                       Delete results</a></li>
+                               {% endif %}
+                           </ul>
+                          </span>
+                     <i role='button' class='glyphicon glyphicon-fullscreen' onclick=toggleFullscreen()></i>
+                  
+                  <span class="reduce-horizontal-padding  glyphicon glyphicon-floppy-disk pointer"
                   onclick="javascript:save();"></span> <span onclick="getQuery();" data-toggle="modal"
                   data-target="#query-modal" class="reduce-horizontal-padding  glyphicon glyphicon-sunglasses pointer"></span><i
                   type='button' role='button' data-toggle="collapse" aria-expanded="false"
                   aria-controls="current-search-panel" data-target="#current-search-panel" class="reduce-horizontal-padding  glyphicon glyphicon-minus"
                   onclick=togglePanelCollapse(this)></i></div>
             </div>
+            
          </div>
          <div class="collapse in" id="current-search-panel">
             <div class="panel-body">

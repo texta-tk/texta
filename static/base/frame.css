@@ -15,7 +15,16 @@ body {
 }
 
 /* global style */
-
+.padding-default{
+    padding: 5px;
+}
+.flex-row-reverse{
+    display: flex;
+    flex-direction: row-reverse;
+}
+.align-center{
+    align-items: center;
+}
 .flex-content-space-around{
     display: flex;
     justify-content: space-around;
