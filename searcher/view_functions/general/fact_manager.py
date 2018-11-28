@@ -73,8 +73,8 @@ class FactManager:
         for key in rm_facts_dict:
             for val in rm_facts_dict.getlist(key):
                 fact_queries.append(
-                    {"bool": {"must": [{"match": {self.field+".fact": key}},
-                    {"match": {self.field+".str_val": val}}]}})
+                    {"bool": {"must": [{"term": {self.field+".fact": key}},
+                    {"term": {self.field+".str_val": val}}]}})
 
         query = {"main": {"query": {"nested":
             {"path": self.field,"query": {"bool": {"should":fact_queries
@@ -155,7 +155,7 @@ class FactManager:
 
         nodes = []
         max_node_size = 0
-        max_link_size = 0
+        min_node_size = 0
         for i, fact in enumerate(facts):
             nodes.append({"source": facts[fact]['id'], "size": facts[fact]['doc_count'], "score": facts[fact]['doc_count'], "name": facts[fact]['name'], "id": facts[fact]['value'], "type": types[facts[fact]['name']]})
             # Track max/min count
