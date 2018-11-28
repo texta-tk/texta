@@ -197,7 +197,8 @@ function query () {
                 },
                 'scrollX': true,
                 // Add title with the corresponding column name to each element in column
-                'columnDefs': columns
+                'columnDefs': columns,
+                'ordering': false
             })
 
             initColumnSelectVisiblity(examplesTable)
@@ -537,7 +538,7 @@ function showStringChildren (data, childrenContainer, grandchildrenContainer, ro
     grandchildrenContainer.empty()
 
     var tbody = $('<tbody></tbody>')
-    $(data).each(function (factKey) {
+    $(data).each(function (index) {
         var rowContainer = $('<tr><td>' + this.val + '</td><td>' + this.key + '</td></tr>')
 
         if (this.hasOwnProperty('children') && this.children.length > 0) {
@@ -546,16 +547,15 @@ function showStringChildren (data, childrenContainer, grandchildrenContainer, ro
         } else {
             if (type === 'fact') {
                 var factData = {}
-                factData[factKey] = this.key
-
+                factData[rowKey] = this.key
                 var addToSearchIcon = '<i class="glyphicon glyphicon-search pull-right"\
                 data-toggle="tooltip" title="Add to search"\
                 style="cursor: pointer"\
-                onclick=\'addFactToSearch("' + factKey + '","' + this.key + '");\'></i>'
+                onclick=\'addFactToSearch("' + rowKey + '","' + this.key + '");\'></i>'
 
                 // keep track of checkboxes using their name as {NAME: VALUE}, otherwise when clicking on another fact name, they get overwritten
                 let checkboxName = JSON.stringify(factData).replace(/"/g, "'")
-                var checkbox = '<input id="checkBox_' + this.val + '_' + this.key + '"\
+                var checkbox = '<input id="checkBox_' + rowKey + '_' + this.key + '"\
                 type="checkbox" name="' + checkboxName + '" onchange="factDeleteCheckbox(this)"'
 
                 for (var i = 0; i < selectedFactCheckboxes.length; i++) {

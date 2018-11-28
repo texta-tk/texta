@@ -12,6 +12,18 @@ function createSelectionProps() {
     // Add popover system to selection spans
     tippyForSelect();
 
+
+    function initTippy(doms, tip_content, tip_showOnInit = false) {
+        var tippy_instance = tippy(doms,
+            {
+                content: tip_content,
+                interactive: true,
+                trigger: 'click',
+                showOnInit: tip_showOnInit,
+            });
+        return tippy_instance
+    }
+
     // Function declarations
     function tippyForFacts(spans) {
         // Select FACT spans
@@ -40,69 +52,6 @@ function createSelectionProps() {
             // Update span tippy content
             span._tippy.setContent(temp.prop('outerHTML'))
         });
-    }
-
-
-    function tippyForSelect() {
-        $("#examples").find('tbody').find('td').mouseup(function () {
-            var selection = window.getSelection();
-            // Check if selection is bigger than 0
-            if (!selection.isCollapsed && selection.toString().trim().length > 1 && selection.toString().trim().length < 300) {
-                // Limit selection to the selection start element
-                if (selection.baseNode != selection.focusNode) {
-                    selection.setBaseAndExtent(selection.baseNode, selection.baseOffset, selection.baseNode, selection.baseNode.length);
-                }
-                var range = selection.getRangeAt(0);
-                // Tippy for selection
-                var textSpan = document.createElement('span');
-                textSpan.className = 'selectedText';
-                textSpan.appendChild(range.extractContents());
-                range.insertNode(textSpan);
-                // If selection is not of len 0
-                var temp = $('.textPopover').clone().removeAttr("style")
-                // Create tippy instance
-                textTippy = initTippy(textSpan, temp.prop('outerHTML'), true)
-
-                var fact_val = selection.toString().trim();
-                // Set template value to selected text
-                temp.find('.textValue').html(fact_val)
-                // Get fact_path from td classname, remove _DtCol namesafing
-                var fact_path = this.className.trim().replace('DtCol_', '')
-                // id of the document where fact was derived from, and the document where it will be marked in
-                var doc_id = $(examplesTable.row(this.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
-                // add click event for save button in tippy
-                $(document).on('click', '.textPopoverSaveBtn', function () {
-                    saveFactFromSelect(fact_val, fact_path, doc_id);
-                });
-
-                // Update span tippy content
-                textSpan._tippy.setContent(temp.prop('outerHTML'))
-            } else {
-                if (typeof textTippy != 'undefined') {
-                    removeTextSelections(this, textTippy)
-                }
-            };
-        });
-        // Mousedown for removing spans
-        $("#examples").find('tbody').find('td').mousedown(function () {
-            var selection = window.getSelection();
-            if (!selection.isCollapsed && typeof textTippy != 'undefined') {
-                removeTextSelections(this, textTippy);
-            }
-        });
-    }
-
-
-    // Remove selection and tippy instance of selected text
-    function removeTextSelections(dom, tip) {
-        $(".selectedText").contents().unwrap();
-        // If content is unwrapped, but empty element remains
-        $(".selectedText").remove();
-        // Unwrapping contents breaks strings up into separate strings
-        // When its broken up, it breaks selections
-        // Normalizing concats them back together
-        dom.normalize()
-        tip.destroyAll();
     }
 
 
@@ -135,26 +84,75 @@ function createSelectionProps() {
     }
 
 
-    function initTippy(doms, tip_content, tip_showOnInit = false) {
-        var tippy_instance = tippy(doms,
-            {
-                content: tip_content,
-                interactive: true,
-                trigger: 'click',
-                showOnInit: tip_showOnInit,
-            });
+    function tippyForSelect() {
+        $("#examples").find('tbody').find('td').mouseup(function () {
+            var selection = window.getSelection();
+            // Check if selection is bigger than 0
+            if (!selection.isCollapsed && selection.toString().trim().length > 1 && selection.toString().trim().length < 300) {
+                // Limit selection to the selection start element
+                if (selection.baseNode != selection.focusNode) {
+                    selection.setBaseAndExtent(selection.baseNode, selection.baseOffset, selection.baseNode, selection.baseNode.length);
+                }
+                var range = selection.getRangeAt(0);
+                // Tippy for selection
+                var textSpan = document.createElement('span');
+                textSpan.className = 'selectedText';
+                textSpan.appendChild(range.extractContents());
+                range.insertNode(textSpan);
+                // If selection is not of len 0
+                var select_temp = $('.textPopover').clone().removeAttr("style")
+                // Create tippy instance
+                textTippy = initTippy(textSpan, select_temp.prop('outerHTML'), true)
 
-        return tippy_instance
+                var fact_val = selection.toString().trim();
+                // Set template value to selected text
+                select_temp.find('.textValue').html(fact_val)
+                // Get fact_path from td classname, remove _DtCol namesafing
+                var fact_path = this.className.trim().replace('DtCol_', '')
+                // id of the document where fact was derived from, and the document where it will be marked in
+                var doc_id = $(examplesTable.row(this.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
+                var btn = select_temp.find('.textPopoverSaveBtn');
+                btn.attr('onclick', `saveFactFromSelect("${fact_val}", "${fact_path}", "${doc_id}")`);
+
+                // Update span tippy content
+                textSpan._tippy.setContent(select_temp.prop('outerHTML'))
+            } else {
+                if (typeof textTippy != 'undefined') {
+                    removeTextSelections(this, textTippy)
+                }
+            };
+        });
+        // Mousedown for removing spans
+        $("#examples").find('tbody').find('td').mousedown(function () {
+            var selection = window.getSelection();
+            if (!selection.isCollapsed && typeof textTippy != 'undefined') {
+                removeTextSelections(this, textTippy);
+            }
+        });
+    }
+
+
+    // Remove selection and tippy instance of selected text
+    function removeTextSelections(dom, tip) {
+        $(".selectedText").contents().unwrap();
+        // If content is unwrapped, but empty element remains
+        $(".selectedText").remove();
+        // Unwrapping contents breaks strings up into separate strings
+        // When its broken up, it breaks selections
+        // Normalizing concats them back together
+        dom.normalize()
+        tip.destroyAll();
     }
 }
 
 // Grab fresh input value when called, then save as fact
 function saveFactFromSelect(fact_value, fact_field, doc_id) {
     // last() to avoid the dummy template selector
-    fact_name = $('.textName').last().val().trim().toUpperCase();
-    fact_value = fact_value.trim();
-    fact_field = fact_field.trim();
-    doc_id = doc_id.trim();
+    var fact_name = $('.textName').last().val().trim().toUpperCase();
+    var fact_value = fact_value.trim();
+    var fact_field = fact_field.trim();
+    var doc_id = doc_id.trim();
+
     if (validateWithFeedback(fact_name, fact_value, fact_field, doc_id)) {
         saveOptionsSwal(fact_name, fact_value, fact_field, doc_id);
     }
@@ -199,7 +197,7 @@ function saveAsFact(method, match_type, case_sens, fact_name, fact_value, fact_f
             status = data.status
             type = ''
             title = ''
-            switch(status) {
+            switch (status) {
                 case 'success':
                     type = 'success';
                     title = 'Adding fact successful!';
@@ -234,66 +232,7 @@ function saveAsFact(method, match_type, case_sens, fact_name, fact_value, fact_f
 }
 
 async function saveOptionsSwal(fact_name, fact_value, fact_field, doc_id) {
-    // if (validateWithFeedback(fact_name, fact_value, fact_field, doc_id)) {
-    //     swal.mixin({
-    //         confirmButtonText: 'Next &rarr;',
-    //         showCancelButton: true,
-    //         progressSteps: ['1', '2', '3', '4']
-    //     }).queue([
-    //         {
-    //             title: `Are you sure you want to save this as a fact?`,
-    //             html: `<b>${fact_name}: ${fact_value}</b> will be saved as a fact!`,
-    //             type: 'question',
-    //             showCancelButton: true,
-    //             confirmButtonColor: '#73AD21',
-    //             cancelButtonColor: '#d33',
-    //             confirmButtonText: 'Yes'
-    //         },
-    //         {
-    //             title: 'Select saving method',
-    //             input: 'radio',
-    //             inputOptions: {
-    //                 'select_only': 'Only the selected text in this document',
-    //                 'all_in_doc': 'All matches in this document',
-    //                 'all_in_dataset': 'All matches in dataset'
-    //             }
-    //         },
-    //         {
-    //             title: 'Select matching method',
-    //             input: 'radio',
-    //             inputOptions: {
-    //                 'phrase': 'Match as a separate word',
-    //                 'phrase_prefix': 'Match as phrase prefix',
-    //                 'string': 'Match anywhere in text'
-    //             },
-    //         },
-    //         {
-    //             title: 'Case sensitive?',
-    //             text: 'Save similar facts separately based on case',
-    //             input: 'radio',
-    //             inputOptions: {
-    //                 'True': 'Case sensitive',
-    //                 'False': 'Case insensitive',
-    //             },
-    //         }
-    //     ]).then((result) => {
-    //         if (result.value) {
-    //             method = result.value[1]
-    //             match_type = result.value[2]
-    //             case_sens = result.value[3]
-    //             if (method && match_type) {
-    //                 saveAsFact(method, match_type, case_sens, fact_name.toUpperCase(), fact_value, fact_field, doc_id);
-    //             }
-    //             else {
-    //                 swal('Warning!', 'Method or match type not selected!', 'warning');
-    //             }
-    //         }
-    //     })
-    // }
-
-
     if (validateWithFeedback(fact_name, fact_value, fact_field, doc_id)) {
-
         (async function backAndForth() {
             const steps = ['1', '2', '3'];
             const question = [`SAVING ${fact_name}: ${fact_value} AS FACT`, 'Select matching method', 'Case sensitive?'];
@@ -319,7 +258,7 @@ async function saveOptionsSwal(fact_name, fact_value, fact_field, doc_id) {
                 cancelButtonText: 'Back',
                 progressSteps: steps,
                 input: 'radio'
-            }) 
+            })
 
             for (currentStep = 0; currentStep < steps.length;) {
                 const result = await swal({
@@ -349,7 +288,7 @@ async function saveOptionsSwal(fact_name, fact_value, fact_field, doc_id) {
                 } else if (result.dismiss == 'cancel') {
                     currentStep--;
                 }
-                else if (result.dismiss == 'overlay' || result.dismiss =='close') {
+                else if (result.dismiss == 'overlay' || result.dismiss == 'close') {
                     swal.resetDefaults();
                     swal.close();
                     break;
@@ -357,7 +296,6 @@ async function saveOptionsSwal(fact_name, fact_value, fact_field, doc_id) {
             }
         })()
     }
-
 }
 
 
@@ -366,7 +304,7 @@ function validateWithFeedback(fact_name, fact_value, fact_field, doc_id) {
         swal('Warning!', 'Document id is invalid', 'warning');
         return false;
     }
-    if (fact_value.length < 2 || fact_value.length  > 300) {
+    if (fact_value.length < 2 || fact_value.length > 300) {
         swal('Warning!', 'Fact length shorter than 2 or longer than 300!', 'warning');
         return false;
     }
