@@ -196,7 +196,8 @@ function query () {
                 },
                 'scrollX': true,
                 // Add title with the corresponding column name to each element in column
-                'columnDefs': columns
+                'columnDefs': columns,
+                'ordering': false
             })
 
             initColumnSelectVisiblity(examplesTable)
