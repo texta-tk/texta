@@ -38,6 +38,7 @@ function createSelectionProps() {
         Array.prototype.forEach.call(spans, function (span, i) {
             // Display fact name and val
             // Select span data attributes
+            var parent = span.parentElement
             var s_data = $(span).data()
             var name = s_data['fact_name']
             var val = span.innerText
@@ -46,7 +47,8 @@ function createSelectionProps() {
             // Fact delete button
             var btn_delete = temp.find('.factPopoverDeleteBtn');
             // Attr because click events don't seem to work
-            btn_delete.attr('onclick', `deleteFactArray([{"${name}":"${val}"}], alert=true)`);
+            var doc_id = $(examplesTable.row(parent.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
+            btn_delete.attr('onclick', `deleteFactSwal("${name}", "${val}", "${doc_id}")`);
             var btn_search = temp.find('.factPopoverSearchBtn');
             btn_search.attr('onclick', `addFactToSearch("${name}","${val}")`);
             // Update span tippy content
@@ -69,16 +71,16 @@ function createSelectionProps() {
 
         Array.prototype.forEach.call(spans, function (span, i) {
             var parent = span.parentElement
-            var fact_val = span.innerText;
+            var fact_value = span.innerText;
             var fact_path = parent.className.trim().replace('DtCol_', '')
             // id of the document where fact was derived from, and the document where it will be marked in
             // get doc_id by taking datatables row data last column(_es_id) value
             var doc_id = $(examplesTable.row(parent.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
             var btn = temp.find('.textPopoverSaveBtn');
-            btn.attr('onclick', `saveFactFromSelect("${fact_val}", "${fact_path}", "${doc_id}")`);
+            btn.attr('onclick', `saveFactFromSelect("${fact_value}", "${fact_path}", "${doc_id}")`);
 
             // Update span tippy content
-            temp.find('.textValue').html(fact_val);
+            temp.find('.textValue').html(fact_value);
             span._tippy.setContent(temp.prop('outerHTML'));
         });
     }
@@ -104,15 +106,15 @@ function createSelectionProps() {
                 // Create tippy instance
                 textTippy = initTippy(textSpan, select_temp.prop('outerHTML'), true)
 
-                var fact_val = selection.toString().trim();
+                var fact_value = selection.toString().trim();
                 // Set template value to selected text
-                select_temp.find('.textValue').html(fact_val)
+                select_temp.find('.textValue').html(fact_value)
                 // Get fact_path from td classname, remove _DtCol namesafing
                 var fact_path = this.className.trim().replace('DtCol_', '')
                 // id of the document where fact was derived from, and the document where it will be marked in
                 var doc_id = $(examplesTable.row(this.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
                 var btn = select_temp.find('.textPopoverSaveBtn');
-                btn.attr('onclick', `saveFactFromSelect("${fact_val}", "${fact_path}", "${doc_id}")`);
+                btn.attr('onclick', `saveFactFromSelect("${fact_value}", "${fact_path}", "${doc_id}")`);
 
                 // Update span tippy content
                 textSpan._tippy.setContent(select_temp.prop('outerHTML'))
@@ -316,4 +318,32 @@ function validateWithFeedback(fact_name, fact_value, fact_field, doc_id) {
         return false;
     }
     return true;
+}
+
+async function deleteFactSwal(fact_name, fact_value, doc_id) { 
+    const inputOptions = new Promise((resolve) => {
+          resolve({
+            'this_doc': `Delete just in this document (${doc_id})`,
+            'all': 'Delete all occurances of this fact in the dataset',
+          })
+      })
+      
+      const {value: method} = await swal({
+        title: `Delete fact ${fact_name}:${fact_value}`,
+        input: 'radio',
+        inputOptions: inputOptions,
+        inputValidator: (value) => {
+          return !value && 'You need to choose something!'
+        }
+      })
+      
+      if (method) {
+          if (method == 'this_doc') {
+            deleteFactFromDoc(fact_name, fact_value, doc_id)
+          }
+          else if (method == 'all') {
+            
+            deleteFactArray([{[fact_name]: fact_value}], source='aggs')
+          }
+      }
 }
