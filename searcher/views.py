@@ -322,8 +322,12 @@ def aggregate(request):
 def delete_facts(request):
     fact_m = FactManager(request)
     #Process(target=fact_m.remove_facts_from_document, args=(dict(request.POST),)).start()
-    fact_m.remove_facts_from_document(request.POST)
-
+    params = dict(request.POST)
+    if 'doc_id' in params:
+        doc_id = params.pop('doc_id')[0]
+    else:
+        doc_id = False
+    fact_m.remove_facts_from_document(params, doc_id)
     return HttpResponse()
 
 
@@ -338,6 +342,7 @@ def tag_documents(request):
     fact_m = FactManager(request)
     fact_m.tag_documents_with_fact(es_params, tag_name, tag_value, tag_field)
     return HttpResponse()
+
 
 @login_required
 def fact_to_doc(request):

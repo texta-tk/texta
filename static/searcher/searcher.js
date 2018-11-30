@@ -501,7 +501,6 @@ function ajaxDeleteFacts (formData, factArray) {
 
 function deleteFactArray (factArray, source) {
     if (factArray.length >= 1) {
-        var request = new XMLHttpRequest()
         var formData = new FormData()
         for (var i = 0; i < factArray.length; i++) {
             for (var key in factArray[i]) {
@@ -669,4 +668,25 @@ function addFactToSearch (factName, factVal) {
     $('#field_' + splitID[splitID.length - 2] + ' #fact_txt_' + suggestionID).val(factName)
     $('#fact_constraint_op_' + suggestionID).val('=')
     $('#fact_constraint_val_' + suggestionID).val(factVal)
+}
+
+function deleteFactFromDoc(fact_name, fact_value, doc_id) {
+    var request = new XMLHttpRequest();
+    var form_data = new FormData();
+    form_data.append(fact_name, fact_value);
+    form_data.append('doc_id', doc_id);
+
+    swal({
+        title: 'Are you sure you want to remove this fact from the dataset?',
+        text: `This will remove ${fact_name}: ${fact_value} from document ${doc_id}.`,
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#73AD21',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, remove!'
+    }).then((result) => {
+        if (result.value) {
+            ajaxDeleteFacts(form_data, [{[fact_name]:fact_value}]);
+        }
+    });
 }
