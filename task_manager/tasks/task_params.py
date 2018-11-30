@@ -1,6 +1,7 @@
 
 from .workers.language_model_worker import LanguageModelWorker
 from .workers.tag_model_worker import TagModelWorker
+from .workers.entity_extractor_worker import EntityExtractorWorker
 from .workers.preprocessor_worker import PreprocessorWorker
 
 
@@ -17,6 +18,13 @@ task_params = [
         "id":              "train_tagger",
         "template":        "task_parameters/train_tagger.html",
         "worker":           TagModelWorker,
+        "allowed_actions": ["delete", "save"]
+    },
+    {
+        "name":            "Train Entity Extractor",
+        "id":              "train_entity_extractor",
+        "template":        "task_parameters/train_entity_extractor.html",
+        "worker":           EntityExtractorWorker,
         "allowed_actions": ["delete", "save"]
     },
     {
