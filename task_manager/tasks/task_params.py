@@ -26,6 +26,7 @@ task_params = [
         "name":            "Train Entity Extractor",
         "id":              "train_entity_extractor",
         "template":        "task_parameters/train_entity_extractor.html",
+        "result_template": "task-results/train-entity-extractor-results.html",
         "worker":           EntityExtractorWorker,
         "allowed_actions": ["delete", "save"]
     },

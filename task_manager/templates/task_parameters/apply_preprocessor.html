@@ -1,5 +1,5 @@
 <div class="panel">
-    <div class="panel-body">
+	<div class="panel-body">
 
 		<div class="row">
 			<div class="col-sm-6">Search:</div>
@@ -7,7 +7,7 @@
 				<select name="{{task_param.id}}_search" class="form-control">
 					<option value="all_docs">Empty (all documents)</option>
 					{% for search in searches %}
-						<option value="{{search.id}}">{{search.description}}</option>
+					<option value="{{search.id}}">{{search.description}}</option>
 					{% endfor %}
 				</select>
 			</div>
@@ -16,16 +16,17 @@
 		<div class="row">
 			<div class="col-sm-6">Description:</div>
 			<div class="col-sm-6">
-				<input name="{{task_param.id}}_description" class="form-control input-sm">	
+				<input name="{{task_param.id}}_description" class="form-control input-sm">
 			</div>
 		</div>
-		
+
 		<div class="row">
-		    <div class="col-sm-6">Preprocessor:</div>
+			<div class="col-sm-6">Preprocessor:</div>
 			<div class="col-sm-6">
-				<select id="{{task_param.id}}_preprocessor_key" name="{{task_param.id}}_preprocessor_key" class="form-control input-sm" onchange="select_preprocessor('{{task_param.id}}');">
+				<select id="{{task_param.id}}_preprocessor_key" name="{{task_param.id}}_preprocessor_key" class="form-control input-sm"
+				 onchange="select_preprocessor('{{task_param.id}}');">
 					{% for preprocessor in enabled_preprocessors %}
-						<option value="{{preprocessor.key}}">{{preprocessor.name}}</option>
+					<option value="{{preprocessor.key}}">{{preprocessor.name}}</option>
 					{% endfor %}
 				</select>
 			</div>
@@ -33,17 +34,18 @@
 
 		<div class="row">
 			{% for preprocessor in enabled_preprocessors %}
-                <div id="params-{{preprocessor.key}}" class="{% if forloop.counter > 1 %}hidden{% endif %}">
-                    {% include preprocessor.parameters_template %}
-                </div>
-			{%  endfor %}
+			<div id="params-{{preprocessor.key}}" class="{% if forloop.counter > 1 %}hidden{% endif %}">
+				{% include preprocessor.parameters_template %}
+			</div>
+			{% endfor %}
 		</div>
-		
+
 		<div class="row">
 			<div class="col-sm-12">
-			    <button type="button" onclick="javascript:start_task('{{task_param.id}}');" class="btn btn-default form-control"><span class="glyphicon glyphicon-ok"></span> Start task</button>
+				<button type="button" onclick="javascript:start_task('{{task_param.id}}');" class="btn btn-default form-control"><span
+					 class="glyphicon glyphicon-ok"></span> Start task</button>
 			</div>
 		</div>
 
-    </div>                            
+	</div>
 </div>
