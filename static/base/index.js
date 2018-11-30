@@ -1,10 +1,9 @@
 /* eslint-disable no-undef */
 $(document).ready(function () {
-    $('#dataset_to_activate').multiselect({
-        includeSelectAllOption: true,
-        numberDisplayed: 1
+    $('#dataset_to_activate').on('loaded.bs.select', function (e, clickedIndex, isSelected, previousValue) {
+        $('.dataset-select-dropdown>.btn').addClass('btn-sm')
+        $('#dataset-select-apply-button').removeClass('hidden').prependTo($('.dataset-select-dropdown > div > div.bs-actionsbox'))
     })
-    $('.multiselect.dropdown-toggle.btn').addClass('btn-sm')
 })
 
 $('#lex_miner').on('click', function () {

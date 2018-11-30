@@ -312,3 +312,6 @@ html,body{
         display: block;
     }
 }
+#dataset-select-apply-button{
+    margin-bottom: 5px;
+}
