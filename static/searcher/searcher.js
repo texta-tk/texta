@@ -15,7 +15,7 @@ $(document).ready(function () {
         startView: 2,
         autoclose: true
     })
-
+    
     $(document.body).on('click', 'a.toggle-visibility', function (e) {
         e.preventDefault()
 
@@ -200,7 +200,7 @@ function query () {
                 'columnDefs': columns,
                 'ordering': false
             })
-
+            $.fn.DataTable.ext.pager.numbers_length = 5
             initColumnSelectVisiblity(examplesTable)
             var dataset = $('#dataset').val()
             var mapping = $('#mapping').val()
@@ -211,7 +211,6 @@ function query () {
             if ($('.fullscreen-actions-div > i').length === 0) {
                 $('.glyphicon-fullscreen-content-searcher').clone().addClass('new-toggle').appendTo($('.fullscreen-actions-div'))
             }
-
             loadUserPreference(dataset, mapping)
             $('#actions-btn').removeClass('invisible')
             $('#export-examples-modal').removeClass('invisible')
