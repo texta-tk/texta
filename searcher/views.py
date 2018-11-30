@@ -143,19 +143,21 @@ def save(request):
 
 @login_required
 def delete(request):
+    post_data = json.loads(request.POST['data'])
     logger = LogManager(__name__, 'DELETE SEARCH')
-    search_id = request.GET['pk']
+    search_ids = post_data['pks']
     logger.set_context('user_name', request.user.username)
-    logger.set_context('search_id', search_id)
+    logger.set_context('search_ids', search_ids)
     try:
-        Search.objects.get(pk=search_id).delete()
-        logger.info('search_deleted')
-
+        for search_id in search_ids:
+            Search.objects.get(pk=search_id).delete()
+            logger.info('search_deleted:'+search_id)
+       
     except Exception as e:
         print('-- Exception[{0}] {1}'.format(__name__, e))
         logger.exception('search_deletion_failed')
 
-    return HttpResponse(search_id)
+    return HttpResponse()
 
 
 @login_required
@@ -320,8 +322,12 @@ def aggregate(request):
 def delete_facts(request):
     fact_m = FactManager(request)
     #Process(target=fact_m.remove_facts_from_document, args=(dict(request.POST),)).start()
-    fact_m.remove_facts_from_document(request.POST)
-
+    params = dict(request.POST)
+    if 'doc_id' in params:
+        doc_id = params.pop('doc_id')[0]
+    else:
+        doc_id = False
+    fact_m.remove_facts_from_document(params, doc_id)
     return HttpResponse()
 
 
@@ -336,6 +342,7 @@ def tag_documents(request):
     fact_m = FactManager(request)
     fact_m.tag_documents_with_fact(es_params, tag_name, tag_value, tag_field)
     return HttpResponse()
+
 
 @login_required
 def fact_to_doc(request):

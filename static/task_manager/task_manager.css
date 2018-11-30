@@ -1,7 +1,5 @@
-#tasks-table {
-    overflow-x: auto;
-}
-.scoro-task-manager-grid-wrapper {
+
+.task-manager-grid-wrapper {
     display: grid;
     grid-gap: 10px 10px;
     grid-template-rows: repeat(auto, auto);
@@ -12,7 +10,7 @@
     justify-content: stretch;
 }
 
-.scoro-task-manager-grid-wrapper .grid-i {
+.task-manager-grid-wrapper .grid-i {
     display: grid;
     align-items: center;
     justify-items: stretch;
@@ -22,31 +20,31 @@
     grid-template-columns: minmax(auto,auto) 1fr 20px;
 }
 
-.scoro-task-manager-grid-wrapper .grid-i>:nth-child(3) {
+.task-manager-grid-wrapper .grid-i>:nth-child(3) {
     /* tooltips */
     justify-self: end;
     padding-right: 5px
 }
 
-.scoro-task-manager-grid-wrapper .grid-i>:nth-child(2) {
+.task-manager-grid-wrapper .grid-i>:nth-child(2) {
     /* center grid item */
     align-self: center;
     justify-self: end;
     margin-right:20px
 }
-.scoro-task-manager-grid-wrapper .grid-i>:nth-child(2).slider-wrapper {
+.task-manager-grid-wrapper .grid-i>:nth-child(2).slider-wrapper {
     /* center grid item */
     align-self: center;
     justify-self: stretch;
     margin-right: 0px;
 }
-.scoro-task-manager-grid-wrapper .grid-i>:nth-child(2).select-wrapper {
+.task-manager-grid-wrapper .grid-i>:nth-child(2).select-wrapper {
     /* center grid item */
     align-self: center;
     justify-self: stretch;
     margin-right: 0px;
 }
-.scoro-task-manager-grid-wrapper .grid-i>:nth-child(1) {
+.task-manager-grid-wrapper .grid-i>:nth-child(1) {
     /* center grid item */
     justify-self: start;
     text-align: unset;
@@ -93,37 +91,6 @@
     background: #fcfcfc;
 }
 
-.lexicon-classifier-wrapper {
-    display: grid;
-    grid-gap: 10px 10px;
-    grid-template-rows: repeat(8, auto);
-    justify-items: stretch;
-    /* row */
-    align-items: center;
-    /* column */
-    justify-content: stretch;
-}
-
-.lexicon-classifier-wrapper .grid-i {
-    display: grid;
-    align-items: center;
-    justify-items: stretch;
-    align-self: stretch;
-    grid-column-gap: 5px;
-    grid-template-rows: minmax(1fr, auto);
-    grid-template-columns: 0.3fr 1fr 20px;
-}
-
-.lexicon-classifier-wrapper .grid-i>:nth-child(3) {
-    /* tooltips */
-    justify-self: end;
-}
-
-.lexicon-classifier-wrapper .grid-i>:nth-child(2) {
-    /* center grid item */
-    align-self: center;
-}
-
 #lexicon-classifier-slops {
     width: 100%;
 }
@@ -157,6 +124,28 @@
 #params-lexicon_classifier {
     padding: 5px;
 }
-.remove-col-padding{
-    padding:0;
+
+.form-group >.col-sm-12 >.row{
+    margin-bottom: 8px;
+    margin-top:8px
+}
+
+.grid-2-col-1-content{
+    min-width: 0;
+    min-height: 0;
+}
+
+.panel-heading{
+    background-color: #f9f9f9;
+    color: black;
+}
+
+.flex-row.nav.nav-tabs{
+    background-color: white;
+}
+.grid-wrapper-task-manager{
+    height: 100%;
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-rows: 45px 1fr;
 }

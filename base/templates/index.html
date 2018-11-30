@@ -5,11 +5,12 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-
+	
 	<script type="application/javascript" src="{{STATIC_URL}}jquery-3.0.0.js"></script>
 	<script type="application/javascript" src="{{STATIC_URL}}datatables/datatables.min.js"></script>
 	<script type="application/javascript" src="{{STATIC_URL}}datatables_button/dataTables.buttons.js"></script>
 	<script type="application/javascript" src="{{STATIC_URL}}datatables_button/buttons.colVis.js"></script>
+	<script type="application/javascript" src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
 	<script type="application/javascript" src="{{STATIC_URL}}jquery-textrange.js"></script>
 	<script type="application/javascript" src="{{STATIC_URL}}navigation.js"></script>
 	<script type="application/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap.min.js"></script>
@@ -49,14 +50,13 @@
 	<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}bootstrap/css/bootstrap.min.css">
 	<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}bootstrap/css/bootstrap-slider.css">
 	<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}datatables/datatables.min.css">
+	<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.min.css">
 	<link rel="stylesheet" href="{{STATIC_URL}}bootstrap/css/datepicker.css">
 	<link rel="stylesheet" href="{{STATIC_URL}}bootstrap/css/bootstrap-theme.min.css">
 	<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}base/frame.css">
 	<link rel="shortcut icon" type="image/png" href="{{STATIC_URL}}/img/favicon.ico" />
-
 	<link rel="stylesheet" href="{{STATIC_URL}}bootstrap/css/bootstrap-multiselect.css" type="text/css">
 	<script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-multiselect.js"></script>
-
 	<title>TEXTA Toolkit {{texta_version}}</title>
 </head>
 
@@ -180,8 +180,9 @@
 			</nav>
 		</div>
 		<div class="grid-item-content">
-			<div class="container-fluid">{% block app %}{% endblock %}</div>
+			{% block app %}{% endblock %}
 		</div>
+
 		<script src="{{STATIC_URL}}base/index.js"></script>
 </body>
 

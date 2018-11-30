@@ -1,8 +1,56 @@
-#right {
-    width: 100%;
-    overflow: auto;
+.grid-wrapper-searcher{
+  height: 100%;
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  grid-template-rows: 100%;
 }
 
+@media screen and (max-width: 1405px) {
+  .grid-wrapper-searcher{
+    grid-template-columns: 350px 1fr;
+    grid-template-rows: 100%;
+  }
+}
+@media screen and (max-width: 992px) {
+  .grid-wrapper-searcher{
+    grid-template-columns: 100%;
+    grid-template-rows: auto;
+  }
+}
+
+.grid-wrapper-sidebar .form-inline>.form-group{
+  width: 100%;
+}
+.grid-wrapper-sidebar .panel{
+  box-shadow: none
+}
+.grid-wrapper-sidebar{
+  height: 100%;
+  background-color: white;
+}
+.grid-wrapper-content{
+  min-width: 0;
+}
+.grid-wrapper-content-panel{
+  display: grid;
+  grid-template-columns: 100%;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+  min-height: 0;
+}
+
+.searcher-content-wrapper>.panel{
+  width: 100%;
+  height: 100%;
+  background-color: #f9f9f9
+}
+
+.panel{
+  margin-bottom: 0
+}
+.toggle-column-select-wrapper{
+  display: inline-block;
+}
 #chart_div {
     width: 100%;
     vertical-align: top;
@@ -60,8 +108,7 @@
 }
 
 th {
-  /* border-top: 1px solid #dddddd; */
-  /* border-bottom: 1px solid #dddddd; */
+
   overflow: hidden;
   border-right: 1px solid #f1f1f1;
 }
@@ -88,7 +135,7 @@ textarea {
     max-width: 100%;
     max-height: 100%;
 }
-/* Datatables buttons plugin hide columns buttons */
+/*  Datatables buttons plugin hide columns buttons */ 
 .dt-button.buttons-columnVisibility {
   background-color: Transparent;
   background-repeat:no-repeat;
@@ -125,8 +172,8 @@ textarea {
   display: inline-block;
   padding: 5px;
 }
-
-/* With scroll head for some reason there are v-a: middle on td  */
+/* 
+With scroll head for some reason there are v-a: middle on td  */ 
 .dataTable td {
   vertical-align: top !important;
 }
@@ -136,22 +183,46 @@ textarea {
   max-height: 250px ;
   display: block;
 }
-/* width */
+
 #saved-searches-panel::-webkit-scrollbar {
   width: 10px;
 }
 
-/* Track */
+
 #saved-searches-panel::-webkit-scrollbar-track {
   background: #f1f1f1; 
 }
 
-/* Handle */
+
 #saved-searches-panel::-webkit-scrollbar-thumb {
   background: #888; 
 }
 
-/* Handle on hover */
+
 #saved-searches-panel::-webkit-scrollbar-thumb:hover {
   background: #555; 
+}
+#right{
+  padding: 0px;
+}
+#top-part{
+  padding:5px;
+}
+#examples_info{
+  padding: 0px;
+}
+.results-panel-heading{
+  background-color: #f9f9f9;
+  color: black;
+}
+#examples_length > label{
+  margin-bottom: 0px;
+}
+#columnsRow th{
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+}
+/* needed for custom #constraint-field add button */
+.constraint-field-wrapper > div > div > div.bs-actionsbox > div{
+  display: none;
 }

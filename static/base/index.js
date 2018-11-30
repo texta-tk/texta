@@ -5,14 +5,6 @@ $(document).ready(function () {
         numberDisplayed: 1
     })
     $('.multiselect.dropdown-toggle.btn').addClass('btn-sm')
-
-    $('#mlt_fields').multiselect({
-        numberDisplayed: 1
-    })
-
-    $('#cluster_field').multiselect({
-        numberDisplayed: 1
-    })
 })
 
 $('#lex_miner').on('click', function () {

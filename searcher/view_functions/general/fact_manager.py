@@ -21,12 +21,12 @@ class FactManager:
         self.max_name_len = 15
         self.bs = 7500
 
-    def remove_facts_from_document(self, rm_facts_dict):
+    def remove_facts_from_document(self, rm_facts_dict, doc_id=False):
         '''remove a certain fact from all documents given a [str]key and [str]val'''
         logger = LogManager(__name__, 'FactManager remove_facts_from_document')
 
         try:
-            query = self._fact_deletion_query(rm_facts_dict)
+            query = self._fact_deletion_query(rm_facts_dict, doc_id)
             self.es_m.load_combined_query(query)
             response = self.es_m.scroll(size=self.bs, field_scroll=self.field)
             scroll_id = response['_scroll_id']
@@ -43,7 +43,7 @@ class FactManager:
                         # If the fact name is in rm_facts_dict keys
                         if fact["fact"] in rm_facts_dict:
                             # If the fact value is not in the delete key values
-                            if fact['str_val'] not in rm_facts_dict.getlist(fact["fact"]):
+                            if fact['str_val'] not in rm_facts_dict[fact["fact"]]:
                                 new_field.append(fact)
                         else:
                             new_field.append(fact)
@@ -67,18 +67,19 @@ class FactManager:
             logger.exception('remove_facts_from_document_failed, {}'.format(traceback.format_exc()))
 
 
-    def _fact_deletion_query(self, rm_facts_dict):
+    def _fact_deletion_query(self, rm_facts_dict, doc_id):
         '''Creates the query for fact deletion based on dict of facts {nampe: val}'''
         fact_queries = []
         for key in rm_facts_dict:
-            for val in rm_facts_dict.getlist(key):
-                fact_queries.append(
-                    {"bool": {"must": [{"match": {self.field+".fact": key}},
-                    {"match": {self.field+".str_val": val}}]}})
+            for val in rm_facts_dict[key]:
+                term = {self.field+".str_val": val, "_id": doc_id} 
+                terms = [{"term": {self.field+".fact": key}},{"term": {self.field+".str_val": val}}]
+                if doc_id:
+                    terms.append({"term": {"_id": doc_id}})
+                fact_queries.append({"bool": {"must": terms}})
 
-        query = {"main": {"query": {"nested":
-            {"path": self.field,"query": {"bool": {"should":fact_queries
-            }}}},"_source": [self.field]}}
+        query = {"main": {"query": {"nested": {"path": self.field,"query":
+         {"bool":{"should":fact_queries}}}},"_source": [self.field]}}
 
         return query
 
@@ -155,7 +156,7 @@ class FactManager:
 
         nodes = []
         max_node_size = 0
-        max_link_size = 0
+        min_node_size = 0
         for i, fact in enumerate(facts):
             nodes.append({"source": facts[fact]['id'], "size": facts[fact]['doc_count'], "score": facts[fact]['doc_count'], "name": facts[fact]['name'], "id": facts[fact]['value'], "type": types[facts[fact]['name']]})
             # Track max/min count

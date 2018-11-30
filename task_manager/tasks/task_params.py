@@ -10,6 +10,7 @@ task_params = [
         "name":            "Train Language Model",
         "id":              "train_model",
         "template":        "task_parameters/train_model.html",
+        "result_template": "task-results/train-model-results.html",
         "worker":           LanguageModelWorker,
         "allowed_actions": ["delete", "save"]
     },
@@ -17,6 +18,7 @@ task_params = [
         "name":            "Train Text Tagger",
         "id":              "train_tagger",
         "template":        "task_parameters/train_tagger.html",
+        "result_template": "task-results/train-tagger-results.html",
         "worker":           TagModelWorker,
         "allowed_actions": ["delete", "save"]
     },
@@ -31,6 +33,7 @@ task_params = [
         "name":            "Apply Preprocessor",
         "id":              "apply_preprocessor",
         "template":        "task_parameters/apply_preprocessor.html",
+        "result_template": "task-results/apply-preprocessor-results.html",
         "worker":          PreprocessorWorker,
         "allowed_actions": []
     }

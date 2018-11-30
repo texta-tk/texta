@@ -12,6 +12,18 @@ function createSelectionProps() {
     // Add popover system to selection spans
     tippyForSelect();
 
+
+    function initTippy(doms, tip_content, tip_showOnInit = false) {
+        var tippy_instance = tippy(doms,
+            {
+                content: tip_content,
+                interactive: true,
+                trigger: 'click',
+                showOnInit: tip_showOnInit,
+            });
+        return tippy_instance
+    }
+
     // Function declarations
     function tippyForFacts(spans) {
         // Select FACT spans
@@ -26,6 +38,7 @@ function createSelectionProps() {
         Array.prototype.forEach.call(spans, function (span, i) {
             // Display fact name and val
             // Select span data attributes
+            var parent = span.parentElement
             var s_data = $(span).data()
             var name = s_data['fact_name']
             var val = span.innerText
@@ -34,11 +47,41 @@ function createSelectionProps() {
             // Fact delete button
             var btn_delete = temp.find('.factPopoverDeleteBtn');
             // Attr because click events don't seem to work
-            btn_delete.attr('onclick', `deleteFactArray([{"${name}":"${val}"}], alert=true)`);
+            var doc_id = $(examplesTable.row(parent.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
+            btn_delete.attr('onclick', `deleteFactSwal("${name}", "${val}", "${doc_id}")`);
             var btn_search = temp.find('.factPopoverSearchBtn');
             btn_search.attr('onclick', `addFactToSearch("${name}","${val}")`);
             // Update span tippy content
             span._tippy.setContent(temp.prop('outerHTML'))
+        });
+    }
+
+
+    function tippyForText() {
+        // Select spans without [FACT] title, add titles with [HL] (for when facts are also present)
+        spans = $(".\\[HL\\]").not("span[title~='\\[fact\\]']")
+        spans = $(".\\[HL\\]").add("span[title~='\\[HL\\]']").not("span[title^='\\[fact']")
+        // Get lens of spans for each parent
+        spans.addClass("tippyTextSpan");
+        spans = document.querySelectorAll('.tippyTextSpan')
+        // Select text popover template
+        var temp = $('.textPopover').clone().removeAttr("style")
+        // Create tippy instance
+        initTippy(spans, temp.prop('outerHTML'))
+
+        Array.prototype.forEach.call(spans, function (span, i) {
+            var parent = span.parentElement
+            var fact_value = span.innerText;
+            var fact_path = parent.className.trim().replace('DtCol_', '')
+            // id of the document where fact was derived from, and the document where it will be marked in
+            // get doc_id by taking datatables row data last column(_es_id) value
+            var doc_id = $(examplesTable.row(parent.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
+            var btn = temp.find('.textPopoverSaveBtn');
+            btn.attr('onclick', `saveFactFromSelect("${fact_value}", "${fact_path}", "${doc_id}")`);
+
+            // Update span tippy content
+            temp.find('.textValue').html(fact_value);
+            span._tippy.setContent(temp.prop('outerHTML'));
         });
     }
 
@@ -59,24 +102,22 @@ function createSelectionProps() {
                 textSpan.appendChild(range.extractContents());
                 range.insertNode(textSpan);
                 // If selection is not of len 0
-                var temp = $('.textPopover').clone().removeAttr("style")
+                var select_temp = $('.textPopover').clone().removeAttr("style")
                 // Create tippy instance
-                textTippy = initTippy(textSpan, temp.prop('outerHTML'), true)
+                textTippy = initTippy(textSpan, select_temp.prop('outerHTML'), true)
 
-                var fact_val = selection.toString().trim();
+                var fact_value = selection.toString().trim();
                 // Set template value to selected text
-                temp.find('.textValue').html(fact_val)
+                select_temp.find('.textValue').html(fact_value)
                 // Get fact_path from td classname, remove _DtCol namesafing
                 var fact_path = this.className.trim().replace('DtCol_', '')
                 // id of the document where fact was derived from, and the document where it will be marked in
                 var doc_id = $(examplesTable.row(this.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
-                // add click event for save button in tippy
-                $(document).on('click', '.textPopoverSaveBtn', function () {
-                    saveFactFromSelect(fact_val, fact_path, doc_id);
-                });
+                var btn = select_temp.find('.textPopoverSaveBtn');
+                btn.attr('onclick', `saveFactFromSelect("${fact_value}", "${fact_path}", "${doc_id}")`);
 
                 // Update span tippy content
-                textSpan._tippy.setContent(temp.prop('outerHTML'))
+                textSpan._tippy.setContent(select_temp.prop('outerHTML'))
             } else {
                 if (typeof textTippy != 'undefined') {
                     removeTextSelections(this, textTippy)
@@ -104,57 +145,16 @@ function createSelectionProps() {
         dom.normalize()
         tip.destroyAll();
     }
-
-
-    function tippyForText() {
-        // Select spans without [FACT] title, add titles with [HL] (for when facts are also present)
-        spans = $(".\\[HL\\]").not("span[title~='\\[fact\\]']")
-        spans = $(".\\[HL\\]").add("span[title~='\\[HL\\]']").not("span[title^='\\[fact']")
-        // Get lens of spans for each parent
-        spans.addClass("tippyTextSpan");
-        spans = document.querySelectorAll('.tippyTextSpan')
-        // Select text popover template
-        var temp = $('.textPopover').clone().removeAttr("style")
-        // Create tippy instance
-        initTippy(spans, temp.prop('outerHTML'))
-
-        Array.prototype.forEach.call(spans, function (span, i) {
-            var parent = span.parentElement
-            var fact_val = span.innerText;
-            var fact_path = parent.className.trim().replace('DtCol_', '')
-            // id of the document where fact was derived from, and the document where it will be marked in
-            // get doc_id by taking datatables row data last column(_es_id) value
-            var doc_id = $(examplesTable.row(parent.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
-            var btn = temp.find('.textPopoverSaveBtn');
-            btn.attr('onclick', `saveFactFromSelect("${fact_val}", "${fact_path}", "${doc_id}")`);
-
-            // Update span tippy content
-            temp.find('.textValue').html(fact_val);
-            span._tippy.setContent(temp.prop('outerHTML'));
-        });
-    }
-
-
-    function initTippy(doms, tip_content, tip_showOnInit = false) {
-        var tippy_instance = tippy(doms,
-            {
-                content: tip_content,
-                interactive: true,
-                trigger: 'click',
-                showOnInit: tip_showOnInit,
-            });
-
-        return tippy_instance
-    }
 }
 
 // Grab fresh input value when called, then save as fact
 function saveFactFromSelect(fact_value, fact_field, doc_id) {
     // last() to avoid the dummy template selector
-    fact_name = $('.textName').last().val().trim().toUpperCase();
-    fact_value = fact_value.trim();
-    fact_field = fact_field.trim();
-    doc_id = doc_id.trim();
+    var fact_name = $('.textName').last().val().trim().toUpperCase();
+    var fact_value = fact_value.trim();
+    var fact_field = fact_field.trim();
+    var doc_id = doc_id.trim();
+
     if (validateWithFeedback(fact_name, fact_value, fact_field, doc_id)) {
         saveOptionsSwal(fact_name, fact_value, fact_field, doc_id);
     }
@@ -199,7 +199,7 @@ function saveAsFact(method, match_type, case_sens, fact_name, fact_value, fact_f
             status = data.status
             type = ''
             title = ''
-            switch(status) {
+            switch (status) {
                 case 'success':
                     type = 'success';
                     title = 'Adding fact successful!';
@@ -234,66 +234,7 @@ function saveAsFact(method, match_type, case_sens, fact_name, fact_value, fact_f
 }
 
 async function saveOptionsSwal(fact_name, fact_value, fact_field, doc_id) {
-    // if (validateWithFeedback(fact_name, fact_value, fact_field, doc_id)) {
-    //     swal.mixin({
-    //         confirmButtonText: 'Next &rarr;',
-    //         showCancelButton: true,
-    //         progressSteps: ['1', '2', '3', '4']
-    //     }).queue([
-    //         {
-    //             title: `Are you sure you want to save this as a fact?`,
-    //             html: `<b>${fact_name}: ${fact_value}</b> will be saved as a fact!`,
-    //             type: 'question',
-    //             showCancelButton: true,
-    //             confirmButtonColor: '#73AD21',
-    //             cancelButtonColor: '#d33',
-    //             confirmButtonText: 'Yes'
-    //         },
-    //         {
-    //             title: 'Select saving method',
-    //             input: 'radio',
-    //             inputOptions: {
-    //                 'select_only': 'Only the selected text in this document',
-    //                 'all_in_doc': 'All matches in this document',
-    //                 'all_in_dataset': 'All matches in dataset'
-    //             }
-    //         },
-    //         {
-    //             title: 'Select matching method',
-    //             input: 'radio',
-    //             inputOptions: {
-    //                 'phrase': 'Match as a separate word',
-    //                 'phrase_prefix': 'Match as phrase prefix',
-    //                 'string': 'Match anywhere in text'
-    //             },
-    //         },
-    //         {
-    //             title: 'Case sensitive?',
-    //             text: 'Save similar facts separately based on case',
-    //             input: 'radio',
-    //             inputOptions: {
-    //                 'True': 'Case sensitive',
-    //                 'False': 'Case insensitive',
-    //             },
-    //         }
-    //     ]).then((result) => {
-    //         if (result.value) {
-    //             method = result.value[1]
-    //             match_type = result.value[2]
-    //             case_sens = result.value[3]
-    //             if (method && match_type) {
-    //                 saveAsFact(method, match_type, case_sens, fact_name.toUpperCase(), fact_value, fact_field, doc_id);
-    //             }
-    //             else {
-    //                 swal('Warning!', 'Method or match type not selected!', 'warning');
-    //             }
-    //         }
-    //     })
-    // }
-
-
     if (validateWithFeedback(fact_name, fact_value, fact_field, doc_id)) {
-
         (async function backAndForth() {
             const steps = ['1', '2', '3'];
             const question = [`SAVING ${fact_name}: ${fact_value} AS FACT`, 'Select matching method', 'Case sensitive?'];
@@ -319,7 +260,7 @@ async function saveOptionsSwal(fact_name, fact_value, fact_field, doc_id) {
                 cancelButtonText: 'Back',
                 progressSteps: steps,
                 input: 'radio'
-            }) 
+            })
 
             for (currentStep = 0; currentStep < steps.length;) {
                 const result = await swal({
@@ -349,7 +290,7 @@ async function saveOptionsSwal(fact_name, fact_value, fact_field, doc_id) {
                 } else if (result.dismiss == 'cancel') {
                     currentStep--;
                 }
-                else if (result.dismiss == 'overlay' || result.dismiss =='close') {
+                else if (result.dismiss == 'overlay' || result.dismiss == 'close') {
                     swal.resetDefaults();
                     swal.close();
                     break;
@@ -357,7 +298,6 @@ async function saveOptionsSwal(fact_name, fact_value, fact_field, doc_id) {
             }
         })()
     }
-
 }
 
 
@@ -366,7 +306,7 @@ function validateWithFeedback(fact_name, fact_value, fact_field, doc_id) {
         swal('Warning!', 'Document id is invalid', 'warning');
         return false;
     }
-    if (fact_value.length < 2 || fact_value.length  > 300) {
+    if (fact_value.length < 2 || fact_value.length > 300) {
         swal('Warning!', 'Fact length shorter than 2 or longer than 300!', 'warning');
         return false;
     }
@@ -378,4 +318,32 @@ function validateWithFeedback(fact_name, fact_value, fact_field, doc_id) {
         return false;
     }
     return true;
+}
+
+async function deleteFactSwal(fact_name, fact_value, doc_id) { 
+    const inputOptions = new Promise((resolve) => {
+          resolve({
+            'this_doc': `Delete just in this document (${doc_id})`,
+            'all': 'Delete all occurances of this fact in the dataset',
+          })
+      })
+      
+      const {value: method} = await swal({
+        title: `Delete fact ${fact_name}:${fact_value}`,
+        input: 'radio',
+        inputOptions: inputOptions,
+        inputValidator: (value) => {
+          return !value && 'You need to choose something!'
+        }
+      })
+      
+      if (method) {
+          if (method == 'this_doc') {
+            deleteFactFromDoc(fact_name, fact_value, doc_id)
+          }
+          else if (method == 'all') {
+            
+            deleteFactArray([{[fact_name]: fact_value}], source='aggs')
+          }
+      }
 }

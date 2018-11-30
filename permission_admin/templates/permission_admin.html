@@ -6,15 +6,15 @@
 <div class="row">
 	<div class="col-lg-12">
 		<ul class="nav nav-tabs">
-			<li class="active"><a data-toggle="tab" href="#user-management-tab">User Access Managment</a></li>
-			<li><a data-toggle="tab" href="#index-management-tab">Dataset Managment</a></li>
+			<li class="active"><a data-toggle="tab" href="#index-management-tab">Dataset Managment</a></li>
+			<li><a data-toggle="tab" href="#user-management-tab">User Access Managment</a></li>
 		</ul>
 	</div>
 	<div class="tab-content">
-		<div class="col-lg-12 fade tab-pane in active" id="user-management-tab">
+		<div class="col-lg-12 fade tab-pane" id="user-management-tab">
 			{% include "user_management.html" %}
 		</div>
-		<div class="col-lg-12 fade tab-pane" id="index-management-tab">
+		<div class="col-lg-12 fade tab-pane in active" id="index-management-tab">
 			{% include "index_management.html" %}
 		</div>
 	</div>

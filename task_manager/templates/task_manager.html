@@ -3,99 +3,36 @@
 <link rel="stylesheet" href="{{STATIC_URL}}task_manager/task_manager.css">
 <script type="application/javascript" src="{{STATIC_URL}}task_manager/task_manager.js"></script>
 
-<div class="row">
-	<div class="col-md-12">
-		<ul class="nav nav-tabs">
+<div class="grid-wrapper-task-manager">
+	<div class=''>
+		<ul class="flex-row nav nav-tabs">
 			{% for task_param in task_params %}
-			<li class="{% if forloop.counter0 < 1 %}active{% endif %}"><a data-toggle="tab" href="#{{task_param.id}}">{{task_param.name}}</a></li>
+			<li><a value='{{task_param.id}}' data-toggle="tab" href="#{{task_param.id}}">{{task_param.name}}</a></li>
 			{% endfor %}
 		</ul>
 	</div>
-</div>
-
-<form id="task_params">
-	<div class="tab-content">
-
-		{% for task_param in task_params %}
-		<div id="{{task_param.id}}" class="tab-pane fade in {% if forloop.counter0 < 1 %}active{% endif %}">
-
-			<div class="col-lg-3 remove-col-padding">
-				<div class="tab-content">
-					{% include task_param.template %}
-				</div>
-			</div>
-
-			<div class="col-lg-9">
-				<div class="panel">
-					<div class="panel-heading">Tasks for: <b>{{task_param.name}}</b></div>
-					<div class="panel-body" id="tasks-table">
-						<table class="table table-striped">
-							<thead>
-								<tr>
-									<th>ID</th>
-									<th>Type</th>
-									<th>User</th>
-									<th>Description</th>
-									<th>Task Status</th>
-									<th>Task Progress</th>
-									<th>Task Started</th>
-									<th>Task Completed</th>
-									<th>Parameters</th>
-									<th>Result</th>
-									<th>Actions</th>
-								</tr>
-							</thead>
-							{% for task in tasks %}
-							{% if task.task_type == task_param.id %}
-							<tr>
-								<td>{{task.id}}</td>
-								<td>{{task.task_type}}</td>
-								<td>{{task.user}}</td>
-								<td>{{task.description}}</td>
-								<td>{{task.status}}</td>
-								<td>{{task.progress_message}}</td>
-								<td>{{task.time_started|date:"d.m.Y H:i"}}</td>
-								<td>{{task.time_completed|date:"d.m.Y H:i"}}</td>
-								<td>
-									<table class="table table-striped table-condensed">
-										{% for k,v in task.parameters.items %}
-										<tr>
-											<td><b>{{k}}</b></td>
-											<td>{{v|safe}}</td>
-										</tr>
-										{% endfor %}
-									</table>
-								</td>
-								<td>
-									<table class="table table-striped table-condensed">
-										{% for k,v in task.result.items %}
-										<tr>
-											<td><b>{{k}}</b></td>
-											<td>{{v}}</td>
-										</tr>
-										{% endfor %}
-									</table>
-								</td>
-								<td>
-									<a href="#" onclick="delete_task({{task.id}});" title="Delete task"><span class="glyphicon glyphicon-remove"></span></a>
-									{% if 'train' in task.task_type %}
-									<a href="javascript:void(0)" onclick="go_to(LINK_TASK_MANAGER + '/download_model?model_id={{task.id}}')"><span
-										 class="glyphicon glyphicon-download-alt"></span></a>
-									{% endif %}
-								</td>
-							</tr>
-							{% endif %}
-							{% endfor %}
-						</table>
+	<form id="task_params" class="flex-item tab-content height-max">
+		<div class="tab-content height-max">
+			{% for task_param in task_params %}
+			<div id="{{task_param.id}}" class="height-max tab-pane fade in ">
+				<div class="grid-2-col-1-row-default">
+					<div class="remove-col-padding grid-2-col-1-sidebar">
+						<div class="tab-content">
+							{% include task_param.template %}
+						</div>
 					</div>
+
+					<div class="grid-2-col-1-content">
+						{% include task_param.result_template %}
+					</div>
+
 				</div>
 			</div>
 
+			{% endfor %}
 		</div>
 
-		{% endfor %}
-
-
-	</div>
-</form>
+	</form>
+</div>
+</div>
 {% endblock %}
