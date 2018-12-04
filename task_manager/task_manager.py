@@ -91,6 +91,9 @@ def translate_parameters(params):
     all_taggers = Task.objects.filter(task_type="train_tagger", status=Task.STATUS_COMPLETED)
     enabled_taggers = {tagger.pk: tagger.description for tagger in all_taggers}
 
+    all_extraction_models = Task.objects.filter(task_type="train_entity_extractor", status=Task.STATUS_COMPLETED)
+    enabled_extractors = {model.pk: model.description for model in all_extraction_models}
+
     extractor_options = {a['index']: a['label'] for a in pipe_builder.get_extractor_options()}
     reductor_options = {a['index']: a['label'] for a in pipe_builder.get_reductor_options()}
     normalizer_options = {a['index']: a['label'] for a in pipe_builder.get_normalizer_options()}
@@ -102,7 +105,8 @@ def translate_parameters(params):
                     'normalizer_opt': {'type': 'dict', 'pattern': normalizer_options},
                     'classifier_opt': {'type': 'dict', 'pattern': classifier_options},
                     'dataset': {'type': 'list', 'pattern': datasets},
-                    'text_tagger_taggers': {'type': 'list', 'pattern': enabled_taggers}}
+                    'text_tagger_taggers': {'type': 'list', 'pattern': enabled_taggers},
+                    'entity_extractor_extractors': {'type': 'list', 'pattern': enabled_extractors}}
 
     params = json.loads(params)
 
@@ -118,6 +122,8 @@ def collect_map_entries(map_):
     for key, value in map_.items():
         if key == 'text_tagger':
             value['enabled_taggers'] = Task.objects.filter(task_type="train_tagger", status=Task.STATUS_COMPLETED)
+        if key == 'entity_extractor':
+            value['enabled_extractors'] = Task.objects.filter(task_type="train_entity_extractor", status=Task.STATUS_COMPLETED)
         if (key == 'lexicon_classifier' or key == 'scoro'):
             value['enabled_lexicons'] = Lexicon.objects.all()
         value['key'] = key

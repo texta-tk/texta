@@ -23,8 +23,6 @@ import multiprocessing
 import os
 import shutil
 
-import pdb
-
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)

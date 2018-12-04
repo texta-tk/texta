@@ -31,19 +31,15 @@ class PreprocessorWorker(BaseWorker):
         self.scroll_time_out = time_out
 
     def run(self, task_id):
-
         self.task_id = task_id
         task = Task.objects.get(pk=self.task_id)
         params = json.loads(task.parameters)
         task.update_status(Task.STATUS_RUNNING)
 
         try:
-
             ds = Datasets().activate_datasets_by_id(params['dataset'])
             es_m = ds.build_manager(ES_Manager)
             es_m.load_combined_query(self._parse_query(params))
-            # In case dataset is readonly, remove the block
-            es_m.clear_readonly_block()
 
             self.es_m = es_m
             self.params = params
@@ -66,7 +62,6 @@ class PreprocessorWorker(BaseWorker):
             task.update_status(Task.STATUS_FAILED, set_time_completed=True)
 
     def _preprocessor_worker(self):
-
         field_paths = []
         show_progress = ShowProgress(self.task_id)
         show_progress.update(0)
