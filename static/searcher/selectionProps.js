@@ -92,8 +92,8 @@ function createSelectionProps() {
             // Check if selection is bigger than 0
             if (!selection.isCollapsed && selection.toString().trim().length > 1 && selection.toString().trim().length < 300) {
                 // Limit selection to the selection start element
-                if (selection.baseNode != selection.focusNode) {
-                    selection.setBaseAndExtent(selection.baseNode, selection.baseOffset, selection.baseNode, selection.baseNode.length);
+                if (selection.anchorNode != selection.focusNode) {
+                    selection.setBaseAndExtent(selection.anchorNode, selection.baseOffset, selection.anchorNode, selection.anchorNode.length);
                 }
                 var range = selection.getRangeAt(0);
                 // Tippy for selection
