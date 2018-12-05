@@ -197,7 +197,15 @@ html,body{
 }
 
 .btn {
-    transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    transition: color .10s ease-in-out, background-color .10s ease-in-out, border-color .10s ease-in-out, box-shadow .10s ease-in-out;
+    border-radius: 0px !important;
+}
+.btn-default{
+    background-color:white;
+    background-image: none;
+    text-shadow: none;
+    color: black;
+    border-color: black;
 }
 
 .btn-default:hover,
@@ -205,8 +213,9 @@ html,body{
 .btn-default:active,
 .btn-default.active,
 .open>.dropdown-toggle.btn-default {
-    background: #FFFFFF;
-    border-color: grey;
+    background: #e4e4e4;
+    border-color: #4056a1;
+    color: black;
 }
 
 .btn-danger {
