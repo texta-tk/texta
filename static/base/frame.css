@@ -324,3 +324,6 @@ html,body{
 #dataset-select-apply-button{
     margin-bottom: 5px;
 }
+.form-control{
+    border-radius: 0px;
+}
