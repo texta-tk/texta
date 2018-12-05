@@ -1,4 +1,22 @@
 $(function () {
+    $('#lexicon-classifier-cl-slops').bootstrapSlider({
+        formatter: function (value) {
+            return 'Current value: ' + value
+        }
+    })
+
+    $('#lexicon-classifier-slops').bootstrapSlider({
+        formatter: function (value) {
+            return 'Current value: ' + value
+        }
+    })
+
+    $('#lexicon-classifier-words-required').bootstrapSlider({
+        formatter: function (value) {
+            return 'Current value: ' + value
+        }
+    })
+
     $('#scoro_nr_kws').slider({
         formatter: function (value) {
             return 'Current value: ' + value
