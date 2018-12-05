@@ -110,7 +110,7 @@
 th {
 
   overflow: hidden;
-  border-right: 1px solid #f1f1f1;
+  border-right: 1px solid #adadad;
 }
 
 th:first-child {
@@ -226,3 +226,4 @@ With scroll head for some reason there are v-a: middle on td  */
 .constraint-field-wrapper > div > div > div.bs-actionsbox > div{
   display: none;
 }
+thead th { white-space: nowrap; }
