@@ -218,6 +218,9 @@ def get_table_content(request):
 def mlt_query(request):
     es_params = request.POST
 
+    if('mlt_fields' not in es_params):
+        return HttpResponse(status=400,reason='no field selected')
+
     mlt_fields = [json.loads(field)['path'] for field in es_params.getlist('mlt_fields')]
 
     handle_negatives = request.POST['handle_negatives']
@@ -253,7 +256,10 @@ def mlt_query(request):
 
 @login_required
 def cluster_query(request):
+    
     params = request.POST
+    if('cluster_field' not in params):
+        return HttpResponse(status=400,reason='no field selected')
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(params)

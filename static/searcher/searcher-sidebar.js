@@ -658,6 +658,8 @@ function clusterQuery () {
         $('#right').html('Loading...')
         if (request.readyState === 4 && request.status === 200) {
             $('#right').html(request.responseText)
+        } else if (request.status === 400) {
+            $('#right').html('<p> Please select a field first</p>')
         }
     }
 
@@ -773,6 +775,8 @@ function mltQuery () {
             $('#right').html('Loading...')
             if (request.readyState === 4 && request.status === 200) {
                 $('#right').html(request.responseText)
+            } else if (request.status === 400) {
+                $('#right').html('<p> Please select a field first</p>')
             }
         }
         request.open('POST', PREFIX + '/mlt_query')
