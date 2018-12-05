@@ -39,7 +39,6 @@ from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
 from utils.highlighter import Highlighter, ColorPicker
 from utils.autocomplete import Autocomplete
-from dataset_importer.document_preprocessor import preprocessor_map
 
 from task_manager.views import task_params
 from task_manager.models import Task

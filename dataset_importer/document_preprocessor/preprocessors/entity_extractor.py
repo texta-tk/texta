@@ -13,16 +13,14 @@ class EntityExtractorPreprocessor(object):
 
     def transform(self, documents, **kwargs):
         input_features = json.loads(kwargs['entity_extractor_preprocessor_feature_names'])
-        model_ids_to_apply = [int(_id) for _id in json.loads(kwargs['entity_extractor_preprocessor_models'])]
+        model_ids_to_apply = [int(_id) for _id in json.loads(kwargs['entity_extractor_preprocessor_extractors'])]
         models_to_apply = []
-        
-        if not kwargs.get('entity_extractor_preprocessor_feature_names', None):
+        if not input_features:
             return documents
 
         # Load tagger models
         for _id in model_ids_to_apply:
             ent_ext = EntityExtractorWorker()
-            ent_ext.load(_id)
             models_to_apply.append(ent_ext)
 
         # Starts text map
@@ -45,15 +43,15 @@ class EntityExtractorPreprocessor(object):
                     text_map[field].append(decoded_text.strip().decode())
                 except AttributeError:
                     text_map[field].append(decoded_text.strip())
-
         # Apply tags to every input feature
         for field in input_features:
             results = []
-            tagger_descriptions = []
+            model_descriptions = []
 
-            for model in models_to_apply:
+            for i, model in enumerate(models_to_apply):
+                import pdb;pdb.set_trace()
                 model_descriptions.append(model.description)
-                result_vector = model.convert_and_predict(text_map[field])
+                result_vector = model.convert_and_predict(text_map[field], model.facts, model_ids_to_apply[i])
                 results.append(result_vector)
             # results_transposed = np.array(results).transpose()
             import pdb;pdb.set_trace()

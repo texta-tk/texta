@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import numpy as np
+import pickle as pkl
 from itertools import chain
 
 from task_manager.models import Task
@@ -33,6 +34,9 @@ class EntityExtractorWorker(BaseWorker):
         self.description = None
         self.task_model_obj = None
         self.n_jobs = 1
+        
+        self.tagger = None
+        self.facts = None
 
     def run(self, task_id):
 
@@ -65,9 +69,10 @@ class EntityExtractorWorker(BaseWorker):
             # Build Data sampler
             ds = Datasets().activate_datasets_by_id(task_params['dataset'])
             es_m = ds.build_manager(ES_Manager)
-            hits, facts = self._scroll_query_response(es_m, param_query, fields)
+            self.model_name = 'model_{0}'.format(self.task_id)
+            hits, raw_facts = self._scroll_query_response(es_m, param_query, fields)
             # Prepare data
-            X_train, y_train, X_val, y_val = self._prepare_data(hits, facts)
+            X_train, y_train, X_val, y_val = self._prepare_data(hits, raw_facts)
             # Training the model.
             show_progress.update(1)
             # Train and report validation
@@ -108,22 +113,30 @@ class EntityExtractorWorker(BaseWorker):
         print('Done with crf task')
 
 
-    def convert_and_predict(self, data):
+    def convert_and_predict(self, data, facts, task_id):
+        self.task_id = task_id
         # Recover features from model to check map
-        data = self._transform(text_map)
-        processed_data = (self._sent2features(s) for s in text_map)
+        self._load_tagger()
+        self._load_facts()
+        data = self._transform(data, self.facts)
+        import pdb;pdb.set_trace()
+        processed_data = (self._sent2features(s) for s in data)
 
-        tagger = self._load_tagger(task_id)
-        preds = tagger.tag(processed_data)
+        preds = self.tagger.tag(processed_data)
         return preds
 
 
-    def _prepare_data(self, hits, facts):
+    def _prepare_data(self, hits, raw_facts):
         X_train = []
         X_val = []
+        facts_train, facts_val = train_test_split(raw_facts, test_size=0.1, random_state=42)
+        facts_train = self._extract_facts(facts_train)
+        facts_val = self._extract_facts(facts_val)
+        # Save all facts for later tagging
+        all_facts = facts_train.update(facts_val)
+        self._save_as_pkl(all_facts, "facts")
+
         X_train, X_val = train_test_split(hits, test_size=0.1, random_state=42)
-        facts_train = self._extract_facts(facts)
-        facts_val = self._extract_facts(facts)
         X_train = self._transform(X_train, facts_train)
         X_val = self._transform(X_val, facts_val)
 
@@ -133,6 +146,10 @@ class EntityExtractorWorker(BaseWorker):
         X_val = (self._sent2features(s) for s in X_val)
         return X_train, y_train, X_val, y_val 
 
+    def _save_as_pkl(self, var, suffix):
+        path = os.path.join(MODELS_DIR, "{}_{}".format(self.model_name, suffix))
+        with open(path, "wb") as f:
+            pkl.dump(var, f)
 
     def _extract_facts(self, facts):
         extracted_facts = {}
@@ -207,23 +224,30 @@ class EntityExtractorWorker(BaseWorker):
 
     def _train_and_validate(self, X_train, y_train, X_val, y_val):
         model = self._train_and_save(X_train, y_train)
-        tagger = self._load_tagger(self.task_id)
-        report = self._validate(tagger, X_val, y_val)
+        # Initialize self.tagger
+        self._load_tagger(self.task_id)
+        report = self._validate(self.tagger, X_val, y_val)
         return model, report
 
+    def _load_facts(self):
+        file_path = os.path.join(MODELS_DIR, "{}_{}".format(self.model_name, "facts"))
+        with open(file_path, "rb") as f:
+            self.facts = pkl.load(f)
 
-    def _load_tagger(self, task_id):
-        model_name = 'model_{0}'.format(task_id)
-        file_path = os.path.join(MODELS_DIR, model_name)
-
+    def _load_tagger(self):
+        self.model_name = 'model_{0}'.format(self.task_id)
+        file_path = os.path.join(MODELS_DIR, self.model_name)
         try:
             tagger = Tagger()
             tagger.open(file_path)
         except Exception as e:
+            print(e)
             logging.getLogger(ERROR_LOGGER).error('Failed to load crf model from the filesystem.', exc_info=True, extra={
-                'model_name': model_name,
+                'model_name': self.model_name,
                 'file_path':  file_path})
-        return tagger
+
+        self.tagger = tagger
+        return self.tagger
 
 
     def _train_and_save(self, X_train, y_train):
@@ -239,8 +263,8 @@ class EntityExtractorWorker(BaseWorker):
             # transitions that are possible, but not observed
             'feature.possible_transitions': True})
 
-        model_name = 'model_{0}'.format(self.task_id)
-        output_model_file = os.path.join(MODELS_DIR, model_name)
+        self.model_name = 'model_{0}'.format(self.task_id)
+        output_model_file = os.path.join(MODELS_DIR, self.model_name)
         # Train and save
         trainer.train(output_model_file)
         return trainer
@@ -290,7 +314,7 @@ class EntityExtractorWorker(BaseWorker):
                 for field in fields:
                     content = source
                     facts.extend(content['texta_facts'])
-                    for sub_f in field.split(' '):
+                    for sub_f in field.split('.'):
                         content = content[sub_f]
                     hits.append(content)
             response = es_m.scroll(scroll_id=scroll_id)
