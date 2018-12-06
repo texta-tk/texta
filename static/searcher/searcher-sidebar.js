@@ -1,4 +1,4 @@
-/* global swal PREFIX */
+/* global swal PREFIX swalWarningDisplay */
 var counter = 1
 var factValSubCounter = {}
 $(document).ready(function () {
@@ -142,12 +142,6 @@ function deleteSelectedSearches (pkArray) {
                 })
             })
         }
-    })
-}
-function swalWarningDisplay (titleText) {
-    swal({
-        title: titleText,
-        type: 'warning'
     })
 }
 function displaySearches (searches) {

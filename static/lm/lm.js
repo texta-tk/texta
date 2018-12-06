@@ -1,3 +1,4 @@
+/* global swalWarningDisplay */
 var positive_to_sid = {}
 var name_to_punct = { '___r_para___': ')', '___exclamation___': '!', '___slash___': '/', '___comma___': ',', '___period___': '.', '___question___': '?', '___question___': ' ', '___backslash___': '\\', '___semicolon___': ';', '___quot___': '"', '___r_bracket___': ']', '___colon___': ':', '___l_bracket___': '[', '___hyphen___': '-', '___apo___': "'", '___l_para___': '(', '___space___': ' ', '___and___': '&', '___percentage___': '%' }
 var PREFIX = LINK_LEXMINER
@@ -6,7 +7,10 @@ $(document).ready(function () {
     $('#new_lexicon_button').on('click', function () {
         $('#inputDiv').slideToggle('slow', function () {})
     })
-
+    $('#new_lexicon_form').on('submit', function (event) {
+        event.preventDefault()
+        newLexiconForm()
+    })
     $('#lx-' + $('.selectedText').attr('id')).css({ 'font-weight': 'bold', 'color': '#333' })
 })
 
@@ -114,4 +118,26 @@ function reset_suggestions () {
     xhr.open('POST', PREFIX + '/reset_suggestions', false)
     $('body').css('cursor', 'wait')
     xhr.send(form_data)
+}
+function newLexiconForm () {
+    let lexiconName = $('#lexicon_name').val()
+
+    $.ajax({
+        /* global LINK_LEXMINER */
+        url: LINK_LEXMINER + '/new',
+        type: 'POST',
+        data: { 'lexiconname': lexiconName, 'ajax_lexicon_miner': true },
+
+        success: function (json) {
+            if (json.result === 'error') {
+                swalWarningDisplay(json.message)
+            } else if (json.result === 'success') {
+                go_to(json.message)
+            }
+        },
+
+        error: function (xhr, errmsg, err) {
+            console.log(xhr.status + ': ' + xhr.responseText)
+        }
+    })
 }

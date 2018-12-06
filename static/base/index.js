@@ -193,3 +193,10 @@ function update_resources (data) {
         }
     })
 }
+function swalWarningDisplay (titleText) {
+    swal({
+        title: titleText,
+        heightAuto: false,
+        type: 'warning'
+    })
+}
