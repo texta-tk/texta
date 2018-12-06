@@ -113,16 +113,14 @@ class EntityExtractorWorker(BaseWorker):
         print('Done with crf task')
 
 
-    def convert_and_predict(self, data, facts, task_id):
+    def convert_and_predict(self, data, task_id):
         self.task_id = task_id
         # Recover features from model to check map
         self._load_tagger()
         self._load_facts()
         data = self._transform(data, self.facts)
-        import pdb;pdb.set_trace()
         processed_data = (self._sent2features(s) for s in data)
-
-        preds = self.tagger.tag(processed_data)
+        preds = [self.tagger.tag(x) for x in processed_data]
         return preds
 
 
@@ -133,7 +131,7 @@ class EntityExtractorWorker(BaseWorker):
         facts_train = self._extract_facts(facts_train)
         facts_val = self._extract_facts(facts_val)
         # Save all facts for later tagging
-        all_facts = facts_train.update(facts_val)
+        all_facts = {**facts_train, **facts_val}
         self._save_as_pkl(all_facts, "facts")
 
         X_train, X_val = train_test_split(hits, test_size=0.1, random_state=42)
@@ -146,10 +144,13 @@ class EntityExtractorWorker(BaseWorker):
         X_val = (self._sent2features(s) for s in X_val)
         return X_train, y_train, X_val, y_val 
 
+
     def _save_as_pkl(self, var, suffix):
         path = os.path.join(MODELS_DIR, "{}_{}".format(self.model_name, suffix))
+        import pdb;pdb.set_trace()
         with open(path, "wb") as f:
             pkl.dump(var, f)
+
 
     def _extract_facts(self, facts):
         extracted_facts = {}
@@ -225,7 +226,7 @@ class EntityExtractorWorker(BaseWorker):
     def _train_and_validate(self, X_train, y_train, X_val, y_val):
         model = self._train_and_save(X_train, y_train)
         # Initialize self.tagger
-        self._load_tagger(self.task_id)
+        self._load_tagger()
         report = self._validate(self.tagger, X_val, y_val)
         return model, report
 
@@ -282,7 +283,7 @@ class EntityExtractorWorker(BaseWorker):
         y_true_combined = lb.fit_transform(list(chain.from_iterable(y_true)))
         y_pred_combined = lb.transform(list(chain.from_iterable(y_pred)))
 
-        tagset = set(lb.classes_) - {'O'}
+        tagset = set(lb.classes_) - {'<TEXTA_O>'}
         tagset = sorted(tagset, key=lambda tag: tag.split('-', 1)[::-1])
         class_indices = {cls: idx for idx, cls in enumerate(lb.classes_)}
 
