@@ -117,7 +117,7 @@ function removeSearches () {
     if (pkArray.length > 0) {
         deleteSelectedSearches(pkArray)
     } else {
-        swalNothingSelected()
+        swalWarningDisplay('Please select a saved search first.')
     }
 }
 function deleteSelectedSearches (pkArray) {
@@ -144,9 +144,9 @@ function deleteSelectedSearches (pkArray) {
         }
     })
 }
-function swalNothingSelected () {
+function swalWarningDisplay (titleText) {
     swal({
-        title: 'Please select a saved search first.',
+        title: titleText,
         type: 'warning'
     })
 }
@@ -655,11 +655,15 @@ function clusterQuery () {
     var request = new XMLHttpRequest()
 
     request.onreadystatechange = function () {
-        $('#right').html('Loading...')
-        if (request.readyState === 4 && request.status === 200) {
-            $('#right').html(request.responseText)
-        } else if (request.status === 400) {
-            $('#right').html('<p> Please select a field first</p>')
+        $('#right').html(`loading ${request.readyState}/4'`)
+        if (request.readyState === 4) {
+            $('#right').html('')
+            if (request.status === 200) {
+                $('#right').html(request.responseText)
+            }
+            if (request.status === 400 && request.statusText === 'field') {
+                swalWarningDisplay('Please select a field first')
+            }
         }
     }
 
@@ -772,11 +776,15 @@ function mltQuery () {
 
     if (mltField != null) {
         request.onreadystatechange = function () {
-            $('#right').html('Loading...')
-            if (request.readyState === 4 && request.status === 200) {
-                $('#right').html(request.responseText)
-            } else if (request.status === 400) {
-                $('#right').html('<p> Please select a field first</p>')
+            $('#right').html(`loading ${request.readyState}/4'`)
+            if (request.readyState === 4) {
+                $('#right').html('')
+                if (request.status === 200) {
+                    $('#right').html(request.responseText)
+                }
+                if (request.status === 400 && request.statusText === 'field') {
+                    swalWarningDisplay('Please select a field first')
+                }
             }
         }
         request.open('POST', PREFIX + '/mlt_query')

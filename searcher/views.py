@@ -219,7 +219,7 @@ def mlt_query(request):
     es_params = request.POST
 
     if('mlt_fields' not in es_params):
-        return HttpResponse(status=400,reason='no field selected')
+        return HttpResponse(status=400,reason='field')
 
     mlt_fields = [json.loads(field)['path'] for field in es_params.getlist('mlt_fields')]
 
@@ -259,7 +259,7 @@ def cluster_query(request):
     
     params = request.POST
     if('cluster_field' not in params):
-        return HttpResponse(status=400,reason='no field selected')
+        return HttpResponse(status=400,reason='field')
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(params)
