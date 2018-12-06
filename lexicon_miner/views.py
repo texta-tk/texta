@@ -101,7 +101,9 @@ def returnAjaxResult(result, message):
 def deleteLexicon(request):
     try:
         lexicon = Lexicon.objects.get(id=request.GET['id'])
-        model_manager.remove_negatives(request.session['model']['pk'],request.user.username,lexicon.id)
+        # if the user tries to delete a lexicon with no model it throws an error
+        if('model' in request.session):
+            model_manager.remove_negatives(request.session['model']['pk'],request.user.username,lexicon.id)
         Word.objects.filter(lexicon=lexicon).delete()
         lexicon.delete()
 
