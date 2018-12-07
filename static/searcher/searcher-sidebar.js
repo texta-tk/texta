@@ -234,21 +234,21 @@ function renderSavedSearch (searchID) {
 function renderSavedSearchField (fieldData, minDate, maxDate) {
     if (fieldData.constraint_type === 'date') {
         makeDateField(minDate, maxDate, fieldData)
-        $('#field_' + counter.toString() + ' #daterange_from_' + counter.toString()).val(fieldData.start_date)
-        $('#field_' + counter.toString() + ' #daterange_to_' + counter.toString()).val(fieldData.end_date)
+        $(`#field_${counter.toString()} #daterange_from_${counter.toString()}`).val(fieldData.start_date)
+        $(`#field_${counter.toString()} #daterange_to_${counter.toString()}`).val(fieldData.end_date)
     } else if (fieldData.constraint_type === 'string') {
         makeTextField(fieldData, true)
-        $('#match_operator_' + counter.toString()).val(fieldData.operator)
-        $('#match_type_' + counter.toString()).val(`match_${fieldData.match_type}`)
-        $('#match_slop_' + counter.toString()).val(fieldData.slop)
-        $('#match_txt_' + counter.toString()).val(fieldData.content.join('\n'))
+        $(`#match_operator_${counter.toString()}`).val(fieldData.operator)
+        $(`#match_type_${counter.toString()}`).val(`match_${fieldData.match_type}`)
+        $(`#match_slop_${counter.toString()}`).val(fieldData.slop)
+        $(`#match_txt_${counter.toString()}`).val(fieldData.content.join('\n'))
     } else if (fieldData.constraint_type === 'facts') {
         makeFactField(fieldData)
-        $('#fact_operator_' + counter.toString()).val(fieldData.operator)
-        $('#fact_txt_' + counter.toString()).val(fieldData.content.join('\n'))
+        $(`#fact_operator_${counter.toString()}`).val(fieldData.operator)
+        $(`#fact_txt_${counter.toString()}`).val(fieldData.content.join('\n'))
     } else if (fieldData.constraint_type === 'str_fact_val') {
         makeStrFactField(fieldData)
-        $('#fact_operator_' + counter.toString()).val(fieldData.operator)
+        $(`#fact_operator_${counter.toString()}`).val(fieldData.operator)
         for (var i = 0; i < fieldData.sub_constraints.length; i++) {
             var subConstraint = fieldData.sub_constraints[i]
 
