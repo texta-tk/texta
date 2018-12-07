@@ -50,7 +50,7 @@ def update(request):
 	logger = LogManager(__name__, 'CHANGE_SETTINGS')
 
 	parameters = request.POST
-
+	
 	if 'model' in parameters:
 		model = str(parameters['model'])
 		request.session['model'] = model
