@@ -8,44 +8,43 @@
             <div class="flex-item-justify-end">
 
                <div>
+
+                  <span id="actions-btn" class="dropdown invisible">
+                     <i role="button" class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-scissors"></span></i>
+                     <ul class="dropdown-menu">
+                        <li><a href="#" data-toggle="modal" data-target="#export-modal"><span class="glyphicon glyphicon-save"></span>
+                              Export results</a></li>
+                        {% if request.user.is_superuser %}
+                        <li><a href="#" data-toggle="modal" data-target="#delete-modal"><span class="glyphicon glyphicon-remove"></span>
+                              Delete results</a></li>
+                        {% endif %}
+                     </ul>
+                  </span>
                   
-                     <span id="actions-btn" class="dropdown invisible">
-                           <i role="button" class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-scissors"></span></i>
-                           <ul class="dropdown-menu">
-                               <li><a href="#" data-toggle="modal" data-target="#export-modal"><span class="glyphicon glyphicon-save"></span>
-                                       Export results</a></li>
-                               {% if request.user.is_superuser %}
-                               <li><a href="#" data-toggle="modal" data-target="#delete-modal"><span class="glyphicon glyphicon-remove"></span>
-                                       Delete results</a></li>
-                               {% endif %}
-                           </ul>
-                          </span>
-                     <i role='button' class='glyphicon glyphicon-fullscreen' onclick=toggleFullscreen()></i>
-                  
-                  <span class="reduce-horizontal-padding  glyphicon glyphicon-floppy-disk pointer"
-                  onclick="javascript:save();"></span> <span onclick="getQuery();" data-toggle="modal"
-                  data-target="#query-modal" class="reduce-horizontal-padding  glyphicon glyphicon-sunglasses pointer"></span><i
-                  type='button' role='button' data-toggle="collapse" aria-expanded="false"
-                  aria-controls="current-search-panel" data-target="#current-search-panel" class="reduce-horizontal-padding  glyphicon glyphicon-minus"
-                  onclick=togglePanelCollapse(this)></i></div>
+
+                  <span class="reduce-horizontal-padding  glyphicon glyphicon-floppy-disk pointer" onclick="javascript:save();"></span>
+                  <span onclick="getQuery();" data-toggle="modal" data-target="#query-modal" class="reduce-horizontal-padding  glyphicon glyphicon-sunglasses pointer"></span>
+                  <i role='button' class='glyphicon glyphicon-fullscreen' onclick=toggleFullscreen()></i>
+                  <i type='button' role='button' data-toggle="collapse" aria-expanded="false" aria-controls="current-search-panel"
+                     data-target="#current-search-panel" class="reduce-horizontal-padding  glyphicon glyphicon-minus"
+                     onclick=togglePanelCollapse(this)></i>
+               </div>
             </div>
-            
+
          </div>
          <div class="collapse in" id="current-search-panel">
             <div class="panel-body">
                <div class="form-group">
                   <ul class="nav nav-tabs flex-row">
                      <li class="flex-item flex-item-grow-1 active"><a data-toggle="tab" href="#search_params"
-                        title="For building basic searches">Build
-                        Search</a>
+                           title="For building basic searches">Build
+                           Search</a>
                      </li>
-                     <li class="flex-item flex-item-grow-1"><a data-toggle="tab" href="#mlt_params"
-                        title="For expanding basic searches via similarity queries">Expand
-                        Search</a>
+                     <li class="flex-item flex-item-grow-1"><a data-toggle="tab" href="#mlt_params" title="For expanding basic searches via similarity queries">Expand
+                           Search</a>
                      </li>
-                     <li class="flex-item flex-item-grow-1"><a data-toggle="tab" href="#cluster_params"
-                        title="For analyzing search content via clustering">Cluster
-                        Search</a>
+                     <li class="flex-item flex-item-grow-1"><a data-toggle="tab" href="#cluster_params" title="For analyzing search content via clustering">Cluster
+                           Search</a>
                      </li>
                   </ul>
                   <div class="tab-content">
@@ -61,16 +60,16 @@
                               <div class="col-sm-12">
                                  <div class="form-inline flex-row">
                                     <div class="form-group flex-item flex-item-grow-3 constraint-field-wrapper">
-                                       <select class='selectpicker form-control'
-                                          data-hide-disabled='true' data-actions-box="true" multiple id="constraint_field"
-                                          name="constraint_field" class="form-control input-sm">
+                                       <select class='selectpicker form-control' data-hide-disabled='true'
+                                          data-actions-box="true" multiple id="constraint_field" name="constraint_field"
+                                          class="form-control input-sm">
                                           {% for field in fields %}
                                           <option value="{{field.data}}">{{field.label}}</option>
                                           {% endfor %}
                                        </select>
                                     </div>
-                                       <button type="button" class="hidden btn btn-default input-sm width-max" id='constraint-field-button'
-                                          onclick="javascript:addField('{{date_range.min}}','{{date_range.max}}');">Add</button>
+                                    <button type="button" class="hidden btn btn-default input-sm width-max"
+                                       id='constraint-field-button' onclick="javascript:addField('{{date_range.min}}','{{date_range.max}}');">Add</button>
                                  </div>
                               </div>
                            </div>
@@ -89,8 +88,8 @@
                               <div class="col-sm-12" id="short_version_options" style="display: none;">
                                  Context window size (words):
                                  <input id="n_char" name="short_version_n_char" class="form-control"
-                                    data-slider-id='n_char' type="text" data-slider-min="1"
-                                    data-slider-max="20" data-slider-step="1" data-slider-value="5" />
+                                    data-slider-id='n_char' type="text" data-slider-min="1" data-slider-max="20"
+                                    data-slider-step="1" data-slider-value="5" />
                               </div>
                            </div>
                            <div class="row padded-row text-center">
@@ -102,9 +101,9 @@
                            </div>
                         </div>
                         <div class="row">
-                           <div class="col-sm-12"><button type="button" onclick="javascript:query();"
-                              class="btn btn-default form-control"><span class="glyphicon glyphicon-search"></span>
-                              Search</button>
+                           <div class="col-sm-12"><button type="button" onclick="javascript:query();" class="btn btn-default form-control"><span
+                                    class="glyphicon glyphicon-search"></span>
+                                 Search</button>
                            </div>
                         </div>
                      </div>
@@ -146,8 +145,8 @@
                            <div class="row padded-row">
                               <div class="col-sm-12">
                                  {% if lexicons|length != 0 %}
-                                 <select id="mlt_stopword_lexicons" name="mlt_stopword_lexicons"
-                                    class="form-control input-sm" multiple="multiple">
+                                 <select id="mlt_stopword_lexicons" name="mlt_stopword_lexicons" class="form-control input-sm"
+                                    multiple="multiple">
                                     {% for lexicon in lexicons %}
                                     <option value="{{lexicon.id}}">{{lexicon}}</option>
                                     {% endfor %}
@@ -174,7 +173,7 @@
                         <div class="row">
                            <div class="col-sm-12">
                               <button type="button" onclick="javascript:mltQuery();" class="btn btn-default form-control"><span
-                                 class="glyphicon glyphicon-search"></span> Search for Similar</button>
+                                    class="glyphicon glyphicon-search"></span> Search for Similar</button>
                            </div>
                         </div>
                      </div>
@@ -187,8 +186,7 @@
                            </div>
                            <div class="row padded-row">
                               <div class="col-sm-12">
-                                 <select name="cluster_field" id="cluster_field" multiple="multiple"
-                                    class="selectpicker form-control input-sm">
+                                 <select name="cluster_field" id="cluster_field" multiple="multiple" class="selectpicker form-control input-sm">
                                     {% for field in fields %}
                                     {% if field.type == 'text' or field.type == 'keyword' %}
                                     <option value="{{field.data}}">{{field.label}}</option>
@@ -244,8 +242,7 @@
                               <div class="col-sm-12">
                                  <input id="n_samples" name="cluster_n_samples" class="form-control"
                                     data-slider-id='n_samples' type="text" data-slider-min="100"
-                                    data-slider-max="5000" data-slider-step="100"
-                                    data-slider-value="1000" />
+                                    data-slider-max="5000" data-slider-step="100" data-slider-value="1000" />
                               </div>
                            </div>
                            <div class="row padded-row">
@@ -269,8 +266,7 @@
                               <div class="col-sm-12">
                                  <input id="n_features" name="cluster_n_features" class="form-control"
                                     data-slider-id='n_features' type="text" data-slider-min="100"
-                                    data-slider-max="10000" data-slider-step="100"
-                                    data-slider-value="1000" />
+                                    data-slider-max="10000" data-slider-step="100" data-slider-value="1000" />
                               </div>
                            </div>
                            <div class="row padded-row">
@@ -314,17 +310,16 @@
                                  <b>Context window size (words):</b>
                               </div>
                               <div class="col-sm-12">
-                                 <input id="n_char_cluster" name="short_version_n_char_cluster"
-                                    class="form-control" data-slider-id='n_char' type="text"
-                                    data-slider-min="1" data-slider-max="20" data-slider-step="1"
-                                    data-slider-value="5" />
+                                 <input id="n_char_cluster" name="short_version_n_char_cluster" class="form-control"
+                                    data-slider-id='n_char' type="text" data-slider-min="1" data-slider-max="20"
+                                    data-slider-step="1" data-slider-value="5" />
                               </div>
                            </div>
                         </div>
                         <div class="row">
                            <div class="col-sm-12">
                               <button type="button" onclick="javascript:clusterQuery();" class="btn btn-default form-control"><span
-                                 class="glyphicon glyphicon-search"></span> Cluster Search</button>
+                                    class="glyphicon glyphicon-search"></span> Cluster Search</button>
                            </div>
                         </div>
                      </div>
@@ -338,11 +333,11 @@
             <div class="flex-item-justify-start">Saved Searches</div>
             <div class="flex-item-justify-end">
                <i role='button' onclick=removeSearches() class="glyphicon glyphicon glyphicon-remove"></i>
-               <i type='button' role='button' data-toggle="collapse" aria-expanded="false" aria-controls="saved-searches-panel"
-                  data-target="#saved-searches-panel" class="glyphicon glyphicon-minus" onclick=togglePanelCollapse(this)></i>
+               <i type='button' role='button' data-toggle="collapse" aria-expanded="false" aria-controls="saved-searches-collapse"
+                  data-target="#saved-searches-collapse" class="glyphicon glyphicon-minus" onclick=togglePanelCollapse(this)></i>
             </div>
          </div>
-         <div class="collapse in" id="saved-searches-panel">
+         <div class="collapse in" id='saved-searches-collapse'>
             <div class="panel-body" id='saved-searches-panel'>
                <table class="table table-striped">
                   <thead>
@@ -365,8 +360,8 @@
          <div class="flex-row panel-heading">
             <div class="flex-item-justify-start">Aggregations</div>
             <div class="flex-item-justify-end"><i type='button' role='button' data-toggle="collapse"
-               aria-expanded="false" aria-controls="aggregations-panel" data-target="#aggregations-panel"
-               class="glyphicon glyphicon-minus" onclick=togglePanelCollapse(this)></i>
+                  aria-expanded="false" aria-controls="aggregations-panel" data-target="#aggregations-panel"
+                  class="glyphicon glyphicon-minus" onclick=togglePanelCollapse(this)></i>
             </div>
          </div>
          <div class="collapse in" id="aggregations-panel">
@@ -378,8 +373,7 @@
                      </div>
                      <div class="col-sm-12">
                         <b>Select field:</b>
-                        <select id="agg_field_1" name="agg_field_1" class="form-control input-sm"
-                           onchange="changeAggField('1');">
+                        <select id="agg_field_1" name="agg_field_1" class="form-control input-sm" onchange="changeAggField('1');">
                            {% for field in fields %}
                            <option value="{{field.data}}">{{field.label}}</option>
                            {% endfor %}
@@ -392,8 +386,8 @@
                                     id="agg_daterange_from_1" class="form-control input-sm">
                               </div>
                               <div class="col-sm-6">
-                                 <input type="text" placeholder="Daterange to" name="agg_daterange_to_1"
-                                    id="agg_daterange_to_1" class="form-control input-sm">
+                                 <input type="text" placeholder="Daterange to" name="agg_daterange_to_1" id="agg_daterange_to_1"
+                                    class="form-control input-sm">
                               </div>
                            </div>
                         </div>
@@ -407,9 +401,9 @@
                         </div>
                         <div id="agg_size_1">
                            <b>Aggregation size:</b><br>
-                           <input id="n_agg_size_1" name="agg_size_1" class="form-control"
-                              data-slider-id='agg_size_1' type="text" data-slider-min="10"
-                              data-slider-max="300" data-slider-step="10" data-slider-value="30" />
+                           <input id="n_agg_size_1" name="agg_size_1" class="form-control" data-slider-id='agg_size_1'
+                              type="text" data-slider-min="10" data-slider-max="300" data-slider-step="10"
+                              data-slider-value="30" />
                         </div>
                         <div id="freq_norm_1" class="hidden">
                            <b>Frequency:</b>
@@ -439,8 +433,7 @@
                   </div>
                   <div class="row padded-row hidden" id="agg_field_2_container">
                      <div class="col-sm-12 text-center">
-                        <b>Field #2</b> <span class="glyphicon glyphicon-minus pull-right pointer"
-                           onclick="toggleAggField2('remove');"></span>
+                        <b>Field #2</b> <span class="glyphicon glyphicon-minus pull-right pointer" onclick="toggleAggField2('remove');"></span>
                      </div>
                      <input type="hidden" id="agg_field_2_selected" name="agg_field_2_selected" value="false">
                      <div class="col-sm-12">
@@ -462,9 +455,9 @@
                         </div>
                         <div id="agg_size_2">
                            <b>Aggregation size:</b><br>
-                           <input id="n_agg_size_2" name="agg_size_2" class="form-control"
-                              data-slider-id='agg_size_2' type="text" data-slider-min="10"
-                              data-slider-max="300" data-slider-step="10" data-slider-value="30" />
+                           <input id="n_agg_size_2" name="agg_size_2" class="form-control" data-slider-id='agg_size_2'
+                              type="text" data-slider-min="10" data-slider-max="300" data-slider-step="10"
+                              data-slider-value="30" />
                         </div>
                      </div>
                   </div>
@@ -488,7 +481,7 @@
                   </div>
                </div>
                <button type="button" onclick="javascript:aggregate();" class="btn btn-default form-control"><span
-                  class="glyphicon glyphicon-filter"></span> Aggregate</button>
+                     class="glyphicon glyphicon-filter"></span> Aggregate</button>
             </div>
          </div>
       </div>
@@ -496,8 +489,8 @@
          <div class="flex-row panel-heading">
             <div class="flex-item-justify-start">Fact Graph</div>
             <div class="flex-item-justify-end"><i type='button' role='button' data-toggle="collapse"
-               aria-expanded="false" aria-controls="fact-graph-panel" data-target="#fact-graph-panel"
-               class="glyphicon glyphicon-minus" onclick=togglePanelCollapse(this)></i>
+                  aria-expanded="false" aria-controls="fact-graph-panel" data-target="#fact-graph-panel"
+                  class="glyphicon glyphicon-minus" onclick=togglePanelCollapse(this)></i>
             </div>
          </div>
          <div class="collapse in" id="fact-graph-panel">
@@ -508,14 +501,14 @@
                         <b>Number of fact values per fact name:</b>
                      </div>
                      <div id="factGraphSliderDiv" class="col-sm-12">
-                        <input id="nFactGraphSize" name="fact_graph_size" class="form-control"
-                           data-slider-id='nFactGraphSizeId' type="text" data-slider-min="3"
-                           data-slider-max="30" data-slider-step="1" data-slider-value="15" />
+                        <input id="nFactGraphSize" name="fact_graph_size" class="form-control" data-slider-id='nFactGraphSizeId'
+                           type="text" data-slider-min="3" data-slider-max="30" data-slider-step="1"
+                           data-slider-value="15" />
                      </div>
                   </div>
                </div>
                <button type="button" id='factGraphButton' onclick="javascript:factGraph();" class="btn btn-default form-control"><span
-                  class="glyphicon glyphicon-eye-open"></span> Visualize </button>
+                     class="glyphicon glyphicon-eye-open"></span> Visualize </button>
             </div>
          </div>
       </div>
@@ -650,7 +643,7 @@
             </div>
             <div class="col-sm-2" name="fact_action_button">
                <button type="button" class="btn btn-sm center-block" title="Add fact constraint">
-               <span class="glyphicon glyphicon-plus"></span>
+                  <span class="glyphicon glyphicon-plus"></span>
                </button>
             </div>
          </div>
