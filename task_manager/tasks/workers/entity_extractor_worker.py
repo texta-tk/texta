@@ -29,7 +29,6 @@ class EntityExtractorWorker(BaseWorker):
 
     def __init__(self):
         self.task_id = None
-        self.model = None
         self.model_name = None
         self.description = None
         self.task_model_obj = None
@@ -127,17 +126,19 @@ class EntityExtractorWorker(BaseWorker):
     def _prepare_data(self, hits, raw_facts):
         X_train = []
         X_val = []
+        # Split facts for training and testing 
         facts_train, facts_val = train_test_split(raw_facts, test_size=0.1, random_state=42)
         facts_train = self._extract_facts(facts_train)
         facts_val = self._extract_facts(facts_val)
         # Save all facts for later tagging
         all_facts = {**facts_train, **facts_val}
-        self._save_as_pkl(all_facts, "facts")
-
+        self._save_as_pkl(all_facts, "meta")
+        # Transform data 
         X_train, X_val = train_test_split(hits, test_size=0.1, random_state=42)
         X_train = self._transform(X_train, facts_train)
         X_val = self._transform(X_val, facts_val)
-
+    
+        # Create training data generators
         y_train = (self._sent2labels(s) for s in X_train)
         X_train = (self._sent2features(s) for s in X_train)
         y_val = (self._sent2labels(s) for s in X_val)
@@ -146,12 +147,14 @@ class EntityExtractorWorker(BaseWorker):
 
 
     def _save_as_pkl(self, var, suffix):
+        # Save facts as metadata for tagging, to covert new data into training data using facts
         path = os.path.join(MODELS_DIR, "{}_{}".format(self.model_name, suffix))
         with open(path, "wb") as f:
             pkl.dump(var, f)
 
 
     def _extract_facts(self, facts):
+        # Create a dict of unique facts, with value as key and name as dict key value
         extracted_facts = {}
         for fact in facts:
             if fact["str_val"] not in extracted_facts:
@@ -172,7 +175,7 @@ class EntityExtractorWorker(BaseWorker):
                     marked.append((word, '<TEXTA_O>'))
             marked_docs.append(marked)
 
-            if i % 5000 == 0:
+            if i % 5000 == 0: # DEBUG
                 print(i)
         return marked_docs
 
@@ -195,7 +198,7 @@ class EntityExtractorWorker(BaseWorker):
             '1' if word.istitle() else '0',
             #'word.isdigit=%s' % 
             '1' if word.isdigit() else '0']
-        
+
         if i > 0:
             word1 = sent[i-1][0]
             features.extend([
@@ -242,10 +245,12 @@ class EntityExtractorWorker(BaseWorker):
         report = self._validate(self.tagger, X_val, y_val)
         return model, report
 
+
     def _load_facts(self):
-        file_path = os.path.join(MODELS_DIR, "{}_{}".format(self.model_name, "facts"))
+        file_path = os.path.join(MODELS_DIR, "{}_{}".format(self.model_name, "meta"))
         with open(file_path, "rb") as f:
             self.facts = pkl.load(f)
+
 
     def _load_tagger(self):
         self.model_name = 'model_{0}'.format(self.task_id)
@@ -272,7 +277,6 @@ class EntityExtractorWorker(BaseWorker):
             'c1': 1.0,   # coefficient for L1 penalty
             'c2': 1e-3,  # coefficient for L2 penalty
             'max_iterations': 50,  # stop earlier
-
             # transitions that are possible, but not observed
             'feature.possible_transitions': True})
 
@@ -286,10 +290,7 @@ class EntityExtractorWorker(BaseWorker):
     def _bio_classification_report(self, y_true, y_pred):
         """
         Classification report for a list of BIO-encoded sequences.
-        It computes token-level metrics and discards "O" labels.
-        
-        Note that it requires scikit-learn 0.15+ (or a version from github master)
-        to calculate averages properly!
+        It computes token-level metrics and discards "<TEXTA_O>" labels.
         """
         lb = LabelBinarizer()
         y_true_combined = lb.fit_transform(list(chain.from_iterable(y_true)))
@@ -299,12 +300,13 @@ class EntityExtractorWorker(BaseWorker):
         tagset = sorted(tagset, key=lambda tag: tag.split('-', 1)[::-1])
         class_indices = {cls: idx for idx, cls in enumerate(lb.classes_)}
 
+        # Return sklearn classification_report, return report as dict
         return classification_report(
             y_true_combined,
             y_pred_combined,
-            labels = [class_indices[cls] for cls in tagset],
-            target_names = tagset,
-            output_dict = True)
+            labels=[class_indices[cls] for cls in tagset],
+            target_names=tagset,
+            output_dict=True)
 
 
     def _validate(self, model, X_val, y_val):
@@ -314,19 +316,20 @@ class EntityExtractorWorker(BaseWorker):
 
 
     def _scroll_query_response(self, es_m, query, fields):
+        # Scroll the search, extract facts
         hits = []
         facts = []
         es_m.load_combined_query(query)
         response = es_m.scroll()
         scroll_id = response['_scroll_id']
         total_docs = response['hits']['total']
-        batch = 0
         while total_docs > 0:
             for hit in response['hits']['hits']:
                 source = hit['_source']
                 for field in fields:
                     content = source
-                    facts.extend(content['texta_facts'])
+                    if 'texta_facts' in content:
+                        facts.extend(content['texta_facts'])
                     for sub_f in field.split('.'):
                         content = content[sub_f]
                     hits.append(content)

@@ -6,32 +6,42 @@
 			<div class="form-group">
 				<div class="col-sm-12">
 					<div class="row">
-						<div class="col-sm-6">Select a search:</div>
-						<div class="col-sm-6">
+						<div class="col-sm-5">Select a search:</div>
+						<div class="col-sm-5">
 							<select name="{{task_param.id}}_search" class="form-control">
 								{% for search in searches %}
 								<option title="{{search.description}}" value="{{search.id}}">{{search.description}}</option>
 								{% endfor %}
 							</select>
 						</div>
+						<div class="col-sm-1"><span data-toggle="tooltip" data-placement="bottom" title="Search from which facts for training data will be extracted" class="glyphicon glyphicon-question-sign texta-tooltip"></span></div>
 					</div>
 
 					<div class="row">
-						<div class="col-sm-6">Select fields:</div>
-						<div class="col-sm-6">
-							<select class="selectpicker form-control input-sm" multiple data-selected-text-format="count" name="{{task_param.id}}_fields">
-								{% for field in fields %}
-								<option title="{{field.path}}" value="{{field.path}}">{{field.label}}</option>
+						<div class="col-sm-5">Select fact names:</div>
+						<div class="col-sm-5">
+								<!-- <select class="form-control input-sm" multiple="multiple">
+									{% for field in fields %}
+									<option title="{{field.path}}" value="{{field.path}}">{{field.label}}</option>
+									{% endfor %}
+								</select> -->
+
+							<select class="selectpicker form-control input-sm" multiple="multiple" data-selected-text-format="count" data-live-search="true" name="{{task_param.id}}_fields">
+								{% for fact in facts %}
+								<option title="{{field.path}}" value="{{field.path}}">{{fact}}</option>
 								{% endfor %}
 							</select>
+
 						</div>
+						<div class="col-sm-1"><span data-toggle="tooltip" data-placement="bottom" title="Select field from which to get facts from, or all fields" class="glyphicon glyphicon-question-sign texta-tooltip"></span></div>
 					</div>
 
 					<div class="row">
-						<div class="col-sm-6">Description:</div>
-						<div class="col-sm-6">
+						<div class="col-sm-5">Description:</div>
+						<div class="col-sm-5">
 							<input name="{{task_param.id}}_description" class="form-control input-sm">
 						</div>
+						<div class="col-sm-1"><span data-toggle="tooltip" data-placement="bottom" title="Description for task" class="glyphicon glyphicon-question-sign texta-tooltip"></span></div>
 					</div>
 
 					<div class="row">

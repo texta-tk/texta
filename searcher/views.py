@@ -40,7 +40,6 @@ from utils.log_manager import LogManager
 from utils.highlighter import Highlighter, ColorPicker
 from utils.autocomplete import Autocomplete
 
-from task_manager.views import task_params
 from task_manager.models import Task
 
 from searcher.models import Search
@@ -82,8 +81,7 @@ def index(request):
                        'lexicons': Lexicon.objects.all().filter(author=request.user),
                        'language_models': language_models, 
                        'allowed_datasets': datasets,                       
-                       'enabled_preprocessors': enabled_preprocessors,
-                       'task_params': task_params}
+                       'enabled_preprocessors': enabled_preprocessors}
 
     template = loader.get_template('searcher.html')
 

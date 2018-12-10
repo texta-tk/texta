@@ -17,7 +17,7 @@ from texta.settings import ERROR_LOGGER
 
 from dataset_importer.document_preprocessor import preprocessor_map
 
-from task_manager.tasks.task_params import task_params
+from task_manager.tasks.task_params import TaskParams
 from task_manager.tools import get_pipeline_builder
 from task_manager.tools import MassHelper
 
@@ -57,6 +57,7 @@ def index(request):
         tasks.append(task_dict)
 
     if 'dataset' in request.session.keys():
+        task_params = TaskParams(es_m).task_params
         context = {
             'task_params':           task_params,
             'tasks':                 tasks,
@@ -150,8 +151,14 @@ def delete_task(request):
             except Exception:
                 file_path = os.path.join(MODELS_DIR, "model_" + str(task_id))
                 logging.getLogger(ERROR_LOGGER).error('Could not delete model.', extra={'file_path': file_path})
+        if 'entity_extractor' in task.task_type:
+            try:
+                file_path = os.path.join(MODELS_DIR, "model_" + str(task_id) + "_meta")
+                os.remove(file_path)
+            except Exception:
+                file_path = os.path.join(MODELS_DIR, "model_" + str(task_id) + "_meta")
+                logging.getLogger(ERROR_LOGGER).error('Could not delete entity extractor model metadata.', extra={'file_path': file_path})
         # Remove task
-        import pdb;pdb.set_trace()
         task.delete()
 
     return HttpResponse()
