@@ -9,9 +9,11 @@ function toggleFullscreen () {
     } else {
         $('.glyphicon-fullscreen-content').toggleClass('hidden')
     }
+    /* global recalcDatatablesHeight */
     /* global examplesTable */
     if (examplesTable) {
         examplesTable.columns.adjust()
+        recalcDatatablesHeight()
     }
 }
 function exportData (exportType) {

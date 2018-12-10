@@ -15,7 +15,11 @@ $(document).ready(function () {
         startView: 2,
         autoclose: true
     })
-    
+
+    $(window).resize(function (e, settings) {
+        recalcDatatablesHeight()
+    })
+
     $(document.body).on('click', 'a.toggle-visibility', function (e) {
         e.preventDefault()
 
@@ -147,7 +151,7 @@ function query () {
             examplesTable = $('#examples').DataTable({
                 'autoWidth': false,
                 'deferRender': true,
-                'scrollY': '85vh',
+                'scrollY': '100vh',
                 'bServerSide': true,
                 'processing': true,
                 'filter': false,
@@ -173,6 +177,7 @@ function query () {
                     // Initialize clicking HLs/selection text for properties
                     /* global createSelectionProps, selectionProps */
                     createSelectionProps()
+                    recalcDatatablesHeight()
                 },
                 'stateSave': true,
                 'stateSaveParams': function (settings, data) {
@@ -221,7 +226,15 @@ function query () {
     request.open('POST', PREFIX + '/table_header')
     request.send(new FormData(formElement))
 }
-
+function recalcDatatablesHeight () {
+    if (examplesTable) {
+        let datatablesNavHeight = $('#top-part').height()
+        let navbarHeight = $('.grid-item-navbar').height()
+        let datatablesColumHeight = $('div.dataTables_scrollHead').height()
+        let datatablesScrollBody = $(window).height()
+        $('div.dataTables_scrollBody').height(datatablesScrollBody - datatablesColumHeight - navbarHeight - datatablesNavHeight - 20)
+    }
+}
 function initColumnSelectVisiblity (examplesTable) {
     var $select = $('#toggle-column-select')
     $select.selectpicker({
@@ -531,7 +544,6 @@ function deleteFactArray (factArray, source) {
     }
 }
 
-
 function showStringChildren (data, childrenContainer, grandchildrenContainer, rowKey, type) {
     childrenContainer.empty()
     grandchildrenContainer.empty()
@@ -552,7 +564,7 @@ function showStringChildren (data, childrenContainer, grandchildrenContainer, ro
                 style="cursor: pointer"\
                 onclick=\'addFactToSearch("${rowKey}","${this.key}");\'></i>`
                 addToSearchIcon = strip(addToSearchIcon)
-                
+
                 // keep track of checkboxes using their name as {NAME: VALUE}, otherwise when clicking on another fact name, they get overwritten
                 let checkboxName = JSON.stringify(factData).replace(/"/g, "'")
                 var checkbox = `<input id="checkBox_${rowKey}_${this.key}"\
@@ -605,7 +617,6 @@ function showStringChildren (data, childrenContainer, grandchildrenContainer, ro
     childrenContainer.append(table)
     childrenContainer.removeClass('hidden')
 }
-
 
 function loadUserPreference (dataset, mapping) {
     var hiddenFeatures = localStorage.getCacheItem('hiddenFeatures_' + dataset + '_' + mapping)
@@ -673,11 +684,11 @@ function addFactToSearch (factName, factVal) {
     $('#fact_constraint_val_' + suggestionID).val(factVal)
 }
 
-function deleteFactFromDoc(fact_name, fact_value, doc_id) {
-    var request = new XMLHttpRequest();
-    var form_data = new FormData();
-    form_data.append(fact_name, fact_value);
-    form_data.append('doc_id', doc_id);
+function deleteFactFromDoc (fact_name, fact_value, doc_id) {
+    var request = new XMLHttpRequest()
+    var form_data = new FormData()
+    form_data.append(fact_name, fact_value)
+    form_data.append('doc_id', doc_id)
 
     swal({
         title: 'Are you sure you want to remove this fact from the dataset?',
@@ -689,13 +700,13 @@ function deleteFactFromDoc(fact_name, fact_value, doc_id) {
         confirmButtonText: 'Yes, remove!'
     }).then((result) => {
         if (result.value) {
-            ajaxDeleteFacts(form_data, [{[fact_name]:fact_value}]);
+            ajaxDeleteFacts(form_data, [{ [fact_name]: fact_value }])
         }
-    });
+    })
 }
 
-function strip(html){
+function strip (html) {
     // Strip html from string
-    var doc = new DOMParser().parseFromString(html, 'text/html');
-    return doc.body.textContent || "";
+    var doc = new DOMParser().parseFromString(html, 'text/html')
+    return doc.body.textContent || ''
 }

@@ -611,6 +611,7 @@ function addField (dateRangeMin, dateRangeMax, submittedFieldData) {
     }
 
     $('#field_' + counter.toString()).show()
+    $('#constraint_field').selectpicker('deselectAll')
 }
 
 function searchAsYouTypeQuery () {
