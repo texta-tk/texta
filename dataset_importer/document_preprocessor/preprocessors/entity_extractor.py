@@ -51,12 +51,10 @@ class EntityExtractorPreprocessor(object):
                 model_descriptions = []
 
                 for i, model in enumerate(models_to_apply):
-                    # import pdb;pdb.set_trace()
                     model_descriptions.append(model.description)
                     result_vector = model.convert_and_predict(field_docs, model_ids_to_apply[i])
                     results.extend(result_vector)
 
-                import pdb;pdb.set_trace()
                 new_facts = []
                 facts_added = 0
                 for i, (doc, result_doc) in enumerate(zip(field_docs, results)):
@@ -67,16 +65,6 @@ class EntityExtractorPreprocessor(object):
                         documents[i]['texta_facts'] = new_facts
                     else:
                         documents[i]['texta_facts'].extend(new_facts)
-                
-                print('loop')
-                import pdb;pdb.set_trace()
-                print('done')
-                # if 'texta_facts' not in documents[i]:
-                    # documents[i]['texta_facts'] = []
-                    # new_fact = {'fact': 'TEXTA_TAG', 'str_val': tag, 'doc_path': field, 'spans': json.dumps("""TODO""")}
-                    # texta_facts.append(new_fact)
-                # else:
-                    # documents[i]['texta_facts'].extend(texta_facts)
 
                 # Get total tagged documents, get np array of results
         except Exception as e:

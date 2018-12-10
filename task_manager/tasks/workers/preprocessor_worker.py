@@ -15,6 +15,7 @@ from task_manager.tools import ShowProgress
 from task_manager.tools import TaskCanceledException
 
 from utils.datasets import Datasets
+from utils.helper_functions import add_dicts
 from utils.es_manager import ES_Manager
 from texta.settings import FACT_PROPERTIES
 
@@ -96,11 +97,13 @@ class PreprocessorWorker(BaseWorker):
                 documents = list(map(convert_to_utf8, documents))
 
                 # Apply all preprocessors
+                meta = {}
                 for preprocessor_code in parameter_dict['preprocessors']:
                     preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
                     result_map = preprocessor.transform(documents, **parameter_dict)
                     documents = result_map['documents']
-                    total_positive += result_map['meta'].get('documents_tagged', 0)
+                    # total_positive += result_map['meta'].get('documents_tagged', 0)
+                    add_dicts(meta, result_map['meta'])
                 self.es_m.bulk_post_documents(documents, ids, document_locations)
                 # Update progress is important to check task is alive
                 show_progress.update(total_hits)
@@ -111,7 +114,8 @@ class PreprocessorWorker(BaseWorker):
 
             task = Task.objects.get(pk=self.task_id)
             show_progress.update(100)
-            task.result = json.dumps({'documents_processed': show_progress.n_total, 'documents_tagged': total_positive, 'preprocessor_key': self.params['preprocessor_key']})
+            # task.result = json.dumps({'documents_processed': show_progress.n_total, 'preprocessor_key': self.params['preprocessor_key']})
+            task.result = json.dumps({'documents_processed': show_progress.n_total, **meta, 'preprocessor_key': self.params['preprocessor_key']})
             task.update_status(Task.STATUS_UPDATING)
             self.es_m.update_documents()
             task.update_status(Task.STATUS_COMPLETED, set_time_completed=True)

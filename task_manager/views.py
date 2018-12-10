@@ -151,6 +151,7 @@ def delete_task(request):
                 file_path = os.path.join(MODELS_DIR, "model_" + str(task_id))
                 logging.getLogger(ERROR_LOGGER).error('Could not delete model.', extra={'file_path': file_path})
         # Remove task
+        import pdb;pdb.set_trace()
         task.delete()
 
     return HttpResponse()

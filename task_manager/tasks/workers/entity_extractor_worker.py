@@ -147,7 +147,6 @@ class EntityExtractorWorker(BaseWorker):
 
     def _save_as_pkl(self, var, suffix):
         path = os.path.join(MODELS_DIR, "{}_{}".format(self.model_name, suffix))
-        import pdb;pdb.set_trace()
         with open(path, "wb") as f:
             pkl.dump(var, f)
 
@@ -180,22 +179,32 @@ class EntityExtractorWorker(BaseWorker):
 
     def _word2features(self, sent, i):
         word = sent[i][0]
-        postag = sent[i][1]
+        # Using strings instead of bool/int to satisfy pycrfsuite
         features = [
-            'bias',
-            'word.lower=' + word.lower(),
-            'word[-3:]=' + word[-3:],
-            'word[-2:]=' + word[-2:],
-            'word.isupper=%s' % word.isupper(),
-            'word.istitle=%s' % word.istitle(),
-            'word.isdigit=%s' % word.isdigit()]
+            # Bias
+            'b',
+            #'word.lower='
+            word.lower(),
+            #'word[-3:]='
+            word[-3:],
+            #'word[-2:]='
+            word[-2:],
+            #'word.isupper=%s' % 
+            '1' if word.isupper() else '0',
+            #'word.istitle=%s' % 
+            '1' if word.istitle() else '0',
+            #'word.isdigit=%s' % 
+            '1' if word.isdigit() else '0']
         
         if i > 0:
             word1 = sent[i-1][0]
             features.extend([
-                '-1:word.lower=' + word1.lower(),
-                '-1:word.istitle=%s' % word1.istitle(),
-                '-1:word.isupper=%s' % word1.isupper(),
+                #'-1:word.lower=' + 
+                word1.lower(),
+                #'-1:word.istitle=%s' % 
+                '1' if word1.istitle() else '0',
+                #'-1:word.isupper=%s' % 
+                '1' if word1.isupper() else '0',
             ])
         else:
             features.append('BOS')
@@ -203,9 +212,12 @@ class EntityExtractorWorker(BaseWorker):
         if i < len(sent)-1:
             word1 = sent[i+1][0]
             features.extend([
-                '+1:word.lower=' + word1.lower(),
-                '+1:word.istitle=%s' % word1.istitle(),
-                '+1:word.isupper=%s' % word1.isupper()])
+                #'+1:word.lower=' + 
+                word1.lower(),
+                #'+1:word.istitle=%s' % 
+                '1' if word1.istitle() else '0',
+                # '+1:word.isupper=%s' % 
+                '1' if word1.isupper() else '0'])
         else:
             features.append('EOS')
         return features

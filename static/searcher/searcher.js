@@ -2,7 +2,7 @@
 /* global LINK_SEARCHER */
 var PREFIX = LINK_SEARCHER
 var examplesTable
-var layers = ['text', 'lemmas', 'facts']
+
 
 $(document).ready(function () {
     $('#agg_daterange_from_1').datepicker({
