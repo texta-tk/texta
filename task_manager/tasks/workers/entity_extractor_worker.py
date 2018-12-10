@@ -219,7 +219,7 @@ class EntityExtractorWorker(BaseWorker):
                 # '+1:word.isupper=%s' % 
                 '1' if word1.isupper() else '0'])
         else:
-            features.append('EOS')
+            features.append('<TEXTA_EOS>')
         return features
 
 
