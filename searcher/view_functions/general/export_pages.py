@@ -102,7 +102,7 @@ def get_all_rows(es_params, request):
 
     writer.writerow([feature for feature in es_params['features']])
 
-    ds = Datasets().activate_dataset(request.session)
+    ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
