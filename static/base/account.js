@@ -19,7 +19,7 @@ function change_pwd(){
 	if(pwd == pwd_2x && pwd.length>0){
 		var data = {new_password: pwd}
 
-		$.post(LINK_ROOT+'/update', data, function(data) {
+		$.post(LINK_ROOT+'/change_password', data, function(data) {
 		        swal({
 		            title:'Updated!',
 		            text:'Password updated!',
