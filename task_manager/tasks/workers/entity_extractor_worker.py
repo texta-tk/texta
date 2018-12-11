@@ -46,7 +46,7 @@ class EntityExtractorWorker(BaseWorker):
         steps = ["preparing data", "training", "done"]
         show_progress = ShowSteps(self.task_id, steps)
         show_progress.update_view()
-
+        import pdb;pdb.set_trace()
         if 'num_threads' in task_params:
             self.n_jobs = int(task_params['num_threads'])
 

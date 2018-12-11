@@ -72,7 +72,6 @@ class FactManager:
         fact_queries = []
         for key in rm_facts_dict:
             for val in rm_facts_dict[key]:
-                term = {self.field+".str_val": val, "_id": doc_id} 
                 terms = [{"term": {self.field+".fact": key}},{"term": {self.field+".str_val": val}}]
                 if doc_id:
                     terms.append({"term": {"_id": doc_id}})
@@ -84,71 +83,15 @@ class FactManager:
         return query
 
 
-    def count_cooccurrences(self, fact_pairs):
-        """Finds the counts of cooccuring facts
-
-        Arguments:
-            fact_pairs {list of tuples of tuples} -- Example:[(('ORG', 'Riigikohus'),('PER', 'Jaan')), (('ORG', 'Riigikohus'),('PER', 'Peeter'))]
-
-        Returns:
-            [int list] -- Occurances of the given facts
-        """
-        dataset_str = self.es_m.stringify_datasets()
-        
-        queries = []
-        for fact_pair in fact_pairs:
-            fact_constraints = []
-
-            for fact in fact_pair:
-                constraint = {"nested": {"path": "texta_facts", "query": {"bool":{"must": [{"term": {"texta_facts.fact": fact[0]}}, {"term": {"texta_facts.str_val": fact[1]}}]}}}}
-                fact_constraints.append(constraint)
-
-            query = {"query": {"bool": {"must": fact_constraints}}, "size": 0}
-            header = {"index": dataset_str}
-            
-            queries.append(json.dumps(header))
-            queries.append(json.dumps(query))
-        
-        responses = self.es_m.perform_queries(queries)
-        counts = [response["hits"]["total"] for response in responses]
-
-        return counts
-
-    def facts_via_aggregation(self, size=15):
-        """Finds all facts from current search.
-        Parameters:
-            size - [int=15] -- Amount of fact values per fact name to search in query
-        Returns:
-            facts - [dict] -- Details for each fact, ex: {'PER - kostja': {'id': 0, 'name': 'PER', 'value': 'kostja', 'doc_count': 44}}
-            fact_combinations - [list of tuples] -- All possible combinations of all facts: [(('FIRST_FACTNAME', 'FIRST_FACTVAL'), ('SECOND_FACTNAME', 'SECOND_FACTVAL'))]
-            unique_fact_names - [list of string] -- All unique fact names
-        """
-
-        aggs = {"facts": {"nested": {"path": "texta_facts"}, "aggs": {"fact_names": {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val", "size": size}}}}}}}
-        self.es_m.build(self.es_params)
-        self.es_m.set_query_parameter('aggs', aggs)
-
-        response = self.es_m.search()
-
-        response_aggs = response['aggregations']['facts']['fact_names']['buckets']
-
-        facts = {}
-        fact_combinations = []
-        fact_count = 0
-        unique_fact_names = []
-        for bucket in response_aggs:
-            unique_fact_names.append(bucket['key'])
-            for fact in bucket['fact_values']['buckets']:
-                facts[bucket['key'] + " - " + fact['key']] = {'id': fact_count, 'name': bucket['key'], 'value': fact['key'], 'doc_count': fact['doc_count']}
-                fact_combinations.append((bucket['key'], fact['key']))
-                fact_count += 1
-
-        fact_combinations = [x for x in itertools.combinations(fact_combinations, 2)]
-        return (facts, fact_combinations, unique_fact_names)
+class FactGraph(FactManager):
+    def __init__(self, request, es_params, search_size):
+        super().__init__(request)
+        self.es_params = es_params
+        self.search_size = search_size
 
 
-    def fact_graph(self, search_size):
-        facts, fact_combinations, unique_fact_names = self.facts_via_aggregation(size=search_size)
+    def fact_graph(self):
+        facts, fact_combinations, unique_fact_names = self.facts_via_aggregation(size=self.search_size)
         # Get cooccurrences and remove values with 0
         fact_combinations = {k:v for k,v in dict(zip(fact_combinations, self.count_cooccurrences(fact_combinations))).items() if v != 0}
         shapes = ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"]
@@ -176,31 +119,62 @@ class FactManager:
         graph_data = json.dumps({"nodes": nodes, "links": links})
         return (graph_data, unique_fact_names, max_node_size, max_link_size, min_node_size)
 
+    def facts_via_aggregation(self, size=15):
+        """Finds all facts from current search.
+        Parameters:
+            size - [int=15] -- Amount of fact values per fact name to search in query
+        Returns:
+            facts - [dict] -- Details for each fact, ex: {'PER - kostja': {'id': 0, 'name': 'PER', 'value': 'kostja', 'doc_count': 44}}
+            fact_combinations - [list of tuples] -- All possible combinations of all facts: [(('FIRST_FACTNAME', 'FIRST_FACTVAL'), ('SECOND_FACTNAME', 'SECOND_FACTVAL'))]
+            unique_fact_names - [list of string] -- All unique fact names
+        """
 
-    def tag_documents_with_fact(self, es_params, tag_name, tag_value, tag_field):
-        '''Used to tag all documents in the current search with a certain fact'''
-        # Crop fact name if its too long
-        tag_name = tag_name[:self.max_name_len]
-        self.es_m.build(es_params)
-        self.es_m.load_combined_query(self.es_m.combined_query)
-        response = self.es_m.scroll()
+        aggs = {"facts": {"nested": {"path": "texta_facts"}, "aggs": {"fact_names": {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val", "size": size}}}}}}}
+        self.es_m.build(self.es_params)
+        self.es_m.set_query_parameter('aggs', aggs)
 
-        data = ''
-        for document in response['hits']['hits']:
-            if 'mlp' in tag_field:
-                split_field = tag_field.split('.')
-                tag_span = [0, len(document['_source'][split_field[0]][split_field[1]])]
-            else:
-                tag_span = [0, len(document['_source'][tag_field].strip())]
-            document['_source'][self.field].append({"str_val": tag_value, "spans": str([tag_span]), "fact": tag_name, "doc_path":tag_field})
+        response = self.es_m.search()
+        response_aggs = response['aggregations']['facts']['fact_names']['buckets']
 
-            data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
-            document = {'doc': {self.field: document['_source'][self.field]}}
-            data += json.dumps(document)+'\n'
+        facts = {}
+        fact_combinations = []
+        fact_count = 0
+        unique_fact_names = []
+        for bucket in response_aggs:
+            unique_fact_names.append(bucket['key'])
+            for fact in bucket['fact_values']['buckets']:
+                facts[bucket['key'] + " - " + fact['key']] = {'id': fact_count, 'name': bucket['key'], 'value': fact['key'], 'doc_count': fact['doc_count']}
+                fact_combinations.append((bucket['key'], fact['key']))
+                fact_count += 1
+        fact_combinations = [x for x in itertools.combinations(fact_combinations, 2)]
+        return (facts, fact_combinations, unique_fact_names)
 
-        response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
-        response = self.es_m.update_documents()
-        return response
+
+    def count_cooccurrences(self, fact_pairs):
+        """Finds the counts of cooccuring facts
+
+        Arguments:
+            fact_pairs {list of tuples of tuples} -- Example:[(('ORG', 'Riigikohus'),('PER', 'Jaan')), (('ORG', 'Riigikohus'),('PER', 'Peeter'))]
+
+        Returns:
+            [int list] -- Occurances of the given facts
+        """
+        dataset_str = self.es_m.stringify_datasets()
+        
+        queries = []
+        for fact_pair in fact_pairs:
+            fact_constraints = []
+            for fact in fact_pair:
+                constraint = {"nested": {"path": "texta_facts", "query": {"bool":{"must": [{"term": {"texta_facts.fact": fact[0]}}, {"term": {"texta_facts.str_val": fact[1]}}]}}}}
+                fact_constraints.append(constraint)
+            query = {"query": {"bool": {"must": fact_constraints}}, "size": 0}
+            header = {"index": dataset_str}
+            queries.append(json.dumps(header))
+            queries.append(json.dumps(query))
+
+        responses = self.es_m.perform_queries(queries)
+        counts = [response["hits"]["total"] for response in responses]
+        return counts
 
 
 class FactAdder(FactManager):

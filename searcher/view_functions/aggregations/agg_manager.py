@@ -199,7 +199,6 @@ class AggManager:
             self.es_m.set_query_parameter("aggs", self.agg_query)
             self.es_m.set_query_parameter("size", 0)
             response = self.es_m.search()
-            import pdb;pdb.set_trace()
             #raise Exception(self.es_m.combined_query['main']['aggs'])
             responses.append({"id":"query","label":"Current Search","response":response})
 
@@ -240,8 +239,6 @@ class AggManager:
                 elif agg_name == 'string':
                     response_out.extend(self._parse_string_buckets(agg_results['buckets']))
                 elif agg_name == 'fact':
-                    import pdb;pdb.set_trace()
-                    
                     response_out.extend(self._parse_fact_buckets(agg_results['fact']['buckets']))
                 elif agg_name == 'fact_str_val' or agg_name == 'fact_num_val':
                     response_out.extend(self._parse_fact_buckets(agg_results[agg_name]['buckets']))

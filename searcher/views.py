@@ -48,6 +48,7 @@ from searcher.view_functions.build_search.build_search import execute_search
 from searcher.view_functions.cluster_search.cluster_manager import ClusterManager
 from searcher.view_functions.general.fact_manager import FactManager
 from searcher.view_functions.general.fact_manager import FactAdder
+from searcher.view_functions.general.fact_manager import FactGraph
 from searcher.view_functions.general.get_saved_searches import extract_constraints
 from searcher.view_functions.general.export_pages import export_pages
 from searcher.view_functions.general.searcher_utils import collect_map_entries, get_fields_content, get_fields
@@ -329,19 +330,6 @@ def delete_facts(request):
 
 
 @login_required
-def tag_documents(request):
-    """Add a fact to documents with given name and value"""
-    tag_name = request.POST['tag_name']
-    tag_value = request.POST['tag_value']
-    tag_field = request.POST['tag_field']
-    es_params = request.POST
-
-    fact_m = FactManager(request)
-    fact_m.tag_documents_with_fact(es_params, tag_name, tag_value, tag_field)
-    return HttpResponse()
-
-
-@login_required
 def fact_to_doc(request):
     """Add a fact to a certain document with given fact, span, and the document _id"""
     fact_name = request.POST['fact_name'].strip()
@@ -389,12 +377,12 @@ def get_search_query(request):
 
 @login_required
 def fact_graph(request):
-
     search_size = int(request.POST['fact_graph_size'])
-
-    fact_m = FactManager(request)
+    es_params = request.POST
+    # fact_m = FactManager(request)
+    fact_g = FactGraph(request, es_params, search_size)
     try:
-        graph_data, fact_names, max_node_size, max_link_size, min_node_size = fact_m.fact_graph(search_size)
+        graph_data, fact_names, max_node_size, max_link_size, min_node_size = fact_g.fact_graph()
 
         template_params = {'STATIC_URL': STATIC_URL,
                         'URL_PREFIX': URL_PREFIX,

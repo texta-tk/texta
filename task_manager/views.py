@@ -17,7 +17,7 @@ from texta.settings import ERROR_LOGGER
 
 from dataset_importer.document_preprocessor import preprocessor_map
 
-from task_manager.tasks.task_params import TaskParams
+from task_manager.tasks.task_params import task_params, get_fact_names
 from task_manager.tools import get_pipeline_builder
 from task_manager.tools import MassHelper
 
@@ -57,7 +57,7 @@ def index(request):
         tasks.append(task_dict)
 
     if 'dataset' in request.session.keys():
-        task_params = TaskParams(es_m).task_params
+        get_fact_names(es_m)
         context = {
             'task_params':           task_params,
             'tasks':                 tasks,
