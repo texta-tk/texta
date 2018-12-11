@@ -43,6 +43,15 @@
   </div>
 
   <div class="grid-i">
+    <label class="control-label " for="scoro-preprocessor-detect-lang">Detect language:</label>
+    <div>
+      <input type="checkbox" name="scoro_detect_lang" id="scoro-preprocessor-detect-lang"
+        class="checkbox" checked>
+    </div>
+    <span data-toggle="tooltip" data-placement="bottom" title="Detect language of the text" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+  </div>
+
+  <div class="grid-i">
     <label class="control-label " for="scoro-preprocessor-add-stopword-lex">Use custom
       stopword-lexicon:</label>
     <div>
@@ -170,6 +179,34 @@
 
     </div>
 
+    <!-- Show, if method == Model-based -->
+    <div class="grid-i if-model-based hidden">
+      <label class="control-label " for="scoro-preprocessor-neg-model">Neg model:</label>
+      <div class='select-wrapper'>
+        <select id="scoro-preprocessor-neg-model" name="scoro_neg_model" class="form-control input-sm">
+          {% for model in preprocessor.enabled_models %}
+          <option value="{{model.id}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{model.description}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <span data-toggle="tooltip" data-placement="bottom" title="Select model trained to filter negative sentiment"
+        class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+    </div>
+
+    <!-- Show, if method == Model-based -->
+    <div class="grid-i if-model-based hidden">
+      <label class="control-label " for="scoro-preprocessor-pos-model">Pos model:</label>
+      <div class='select-wrapper'>
+        <select id="scoro-preprocessor-pos-model" name="scoro_pos_model" class="form-control input-sm">
+          {% for model in preprocessor.enabled_models %}
+          <option value="{{model.id}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{model.description}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <span data-toggle="tooltip" data-placement="bottom" title="Select model trained to filter positive sentiment"
+        class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+    </div>
+
 
     <!-- Show, if method == Model-based -->
     <div class="grid-i if-model-based hidden">
@@ -272,7 +309,7 @@
           <div class="slider-wrapper">
             <input id="scoro_rake_bg_min_term_freq" name="scoro_rake_bg_min_term_freq" class="form-control"
               data-slider-id='scoro_rake_bg_min_term_freq' type="text" data-slider-min="1" data-slider-max="15"
-              data-slider-step="1" data-slider-value="2" />
+              data-slider-step="1" data-slider-value="1" />
           </div>
           <span data-toggle="tooltip" data-placement="bottom" title="Min number of times the keyword should occur in the dataset"
             class="glyphicon glyphicon-question-sign texta-tooltip"></span>
@@ -284,7 +321,7 @@
           <div class="slider-wrapper">
             <input id="scoro_rake_bg_max_term_freq" name="scoro_rake_bg_max_term_freq" class="form-control"
               data-slider-id='scoro_rake_bg_max_term_freq' type="text" data-slider-min="1" data-slider-max="100"
-              data-slider-step="1" data-slider-value="50" />
+              data-slider-step="1" data-slider-value="2" />
           </div>
           <span data-toggle="tooltip" data-placement="bottom" title="Max query terms"
             class="glyphicon glyphicon-question-sign texta-tooltip"></span>
@@ -335,7 +372,7 @@
         <div class="slider-wrapper">
           <input id="scoro_signif_min_term_freq" name="scoro_signif_min_term_freq" class="form-control"
             data-slider-id='scoro_signif_min_term_freq' type="text" data-slider-min="1" data-slider-max="15"
-            data-slider-step="1" data-slider-value="2" />
+            data-slider-step="1" data-slider-value="1" />
         </div>
         <span data-toggle="tooltip" data-placement="bottom" title="Min number of times the keyword should occur in the dataset"
           class="glyphicon glyphicon-question-sign texta-tooltip"></span>
@@ -348,7 +385,7 @@
         <div class="slider-wrapper">
           <input id="scoro_signif_max_term_freq" name="scoro_signif_max_term_freq" class="form-control"
             data-slider-id='scoro_signif_max_term_freq' type="text" data-slider-min="1" data-slider-max="100"
-            data-slider-step="1" data-slider-value="50" />
+            data-slider-step="1" data-slider-value="2" />
         </div>
         <span data-toggle="tooltip" data-placement="bottom" title="Max query terms"
           class="glyphicon glyphicon-question-sign texta-tooltip"></span>
@@ -408,7 +445,7 @@
           <div class="slider-wrapper">
             <input id="scoro_noun_bg_min_term_freq" name="scoro_noun_bg_min_term_freq" class="form-control"
               data-slider-id='scoro_noun_bg_min_term_freq' type="text" data-slider-min="1" data-slider-max="15"
-              data-slider-step="1" data-slider-value="2" />
+              data-slider-step="1" data-slider-value="1" />
           </div>
           <span data-toggle="tooltip" data-placement="bottom" title="Min number of times the keyword should occur in the dataset"
             class="glyphicon glyphicon-question-sign texta-tooltip"></span>
@@ -420,7 +457,7 @@
           <div class="slider-wrapper">
             <input id="scoro_noun_bg_max_term_freq" name="scoro_noun_bg_max_term_freq" class="form-control"
               data-slider-id='scoro_noun_bg_max_term_freq' type="text" data-slider-min="1" data-slider-max="100"
-              data-slider-step="1" data-slider-value="50" />
+              data-slider-step="1" data-slider-value="2" />
           </div>
           <span data-toggle="tooltip" data-placement="bottom" title="Max number of times the keywords should occur in the dataset"
             class="glyphicon glyphicon-question-sign texta-tooltip"></span>
