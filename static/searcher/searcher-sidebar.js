@@ -379,7 +379,7 @@ function makeStrFactField (fieldData) {
 function addFactValueFieldConstraint (counterStr) {
     var subCounter
     if (factValSubCounter[counterStr] === undefined) {
-        subCounter = 1
+        subCounter = 0
     } else {
         subCounter = factValSubCounter[counterStr]
     }
