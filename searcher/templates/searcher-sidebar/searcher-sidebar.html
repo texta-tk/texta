@@ -20,7 +20,7 @@
                         {% endif %}
                      </ul>
                   </span>
-                  
+
 
                   <span class="reduce-horizontal-padding  glyphicon glyphicon-floppy-disk pointer" onclick="javascript:save();"></span>
                   <span onclick="getQuery();" data-toggle="modal" data-target="#query-modal" class="reduce-horizontal-padding  glyphicon glyphicon-sunglasses pointer"></span>
@@ -36,14 +36,14 @@
             <div class="panel-body">
                <div class="form-group">
                   <ul class="nav nav-tabs flex-row">
-                     <li class="flex-item flex-item-grow-1 active"><a data-toggle="tab" href="#search_params"
+                     <li class="flex-item-grow-1 active"><a data-toggle="tab" href="#search_params"
                            title="For building basic searches">Build
                            Search</a>
                      </li>
-                     <li class="flex-item flex-item-grow-1"><a data-toggle="tab" href="#mlt_params" title="For expanding basic searches via similarity queries">Expand
+                     <li class="flex-item-grow-1"><a data-toggle="tab" href="#mlt_params" title="For expanding basic searches via similarity queries">Expand
                            Search</a>
                      </li>
-                     <li class="flex-item flex-item-grow-1"><a data-toggle="tab" href="#cluster_params" title="For analyzing search content via clustering">Cluster
+                     <li class="flex-item-grow-1"><a data-toggle="tab" href="#cluster_params" title="For analyzing search content via clustering">Cluster
                            Search</a>
                      </li>
                   </ul>
@@ -59,7 +59,7 @@
                               </div>
                               <div class="col-sm-12">
                                  <div class="form-inline flex-row">
-                                    <div class="form-group flex-item flex-item-grow-3 constraint-field-wrapper">
+                                    <div class="form-group flex-item-grow-3 constraint-field-wrapper">
                                        <select class='selectpicker form-control' data-hide-disabled='true'
                                           data-actions-box="true" multiple id="constraint_field" name="constraint_field"
                                           class="form-control input-sm">
@@ -537,21 +537,21 @@
       </div>
    </div>
    <div class='flex-row horizontal-padding'>
-      <div class="flex-item flex-item-grow-1">
+      <div class="flex-item-grow-1">
          <select id="match_operator_" name="match_operator_" class="reduce-horizontal-padding form-control input-sm">
             <option value="must" selected="selected">Bool: and</option>
             <option value="should">Bool: or</option>
             <option value="must_not">Bool: not</option>
          </select>
       </div>
-      <div class="flex-item flex-item-grow-2">
+      <div class="flex-item-grow-2">
          <select id="match_type_" name="match_type_" class="reduce-horizontal-padding  form-control input-sm">
             <option value="match">Match: word</option>
             <option value="match_phrase">Match: phrase</option>
             <option value="match_phrase_prefix" selected="selected">Match: phrase prefix</option>
          </select>
       </div>
-      <div class="flex-item flex-item-grow-1">
+      <div class="flex-item-grow-1">
          <select id="match_slop_" name="match_slop_" class="reduce-horizontal-padding  form-control input-sm">
             <option value="0">Slop: 0</option>
             <option value="1">Slop: 1</option>
@@ -604,29 +604,37 @@
 <div id="field_hidden_fact_val" class="panel bg-grey" style="display: none;">
    <input type="hidden" name="fact_field_" id="fact_field_">
    <input type="hidden" name="fact_constraint_type_">
-   <div class="row padded-row">
-      <div class="col-sm-12">
-         <b><span id="selected_field_"></span></b>
-         <a role='button' id="remove_link"><span class="glyphicon glyphicon-remove pull-right"></span></a>
-      </div>
+   <div class="flex-row flex-item-grow-1 padding-small">
+         <b class='padding-small'><span id="selected_field_"></span></b>
+         <a role='button' class='padding-small' id="remove_link"><span class="glyphicon glyphicon-remove flex-item-justify-end"></span></a>
    </div>
-   <div class="row padded-row">
-      <div class="col-sm-4">
-         <b>Bool:</b><br>
-         <select id="fact_operator_" name="fact_operator_" class="form-control input-sm">
-            <option value="must" selected="selected">and</option>
-            <option value="should">or</option>
-            <option value="must_not">not</option>
-         </select>
+   <div >
+      <div class="flex-column padding-small">
+         <b class='padding-small'>Bool:</b>
+         <div class='flex-item-justify-start padding-small'>
+            <select id="fact_operator_" name="fact_operator_" class="form-control input-sm " style='width:100px;'>
+               <option value="must" selected="selected">and</option>
+               <option value="should">or</option>
+               <option value="must_not">not</option>
+            </select>
+         </div>
       </div>
-      <div id="fact_val_rules_" class="col-sm-12">
-         <b>Facts:</b><br>
-         <div class="row row-padded" id="fact_val_rule_">
-            <div class="col-sm-3" style="padding-right: 3px" name="constraint_key_container">
-               <input id="fact_txt_" class="form-control input-sm" type="text" placeholder="Fact name"></input>
-               <ul name="suggestions_" id="suggestions_" class="list-group" style="display: none; width: 100%;"></ul>
+      <div id="fact_val_rules_" >
+
+         <div class="flex-item-grow-1 flex-row horizontal-padding flex-items-align-center">
+            <b class='padding-small'>Facts:</b>
+            <div class='padding-small flex-item-justify-end'>
+               <button type="button" class="btn btn-sm" title="Add fact constraint">
+                  <span class="glyphicon glyphicon-plus"></span>
+               </button>
             </div>
-            <div class="col-sm-2" style="padding-left: 3px; padding-right: 3px;">
+         </div>
+         <div class="flex-row horizontal-padding hidden" id="fact_val_rule_">
+            <div class="padding-small flex-item-grow-3" name="constraint_key_container">
+               <input id="fact_txt_" class="form-control input-sm" type="text" placeholder="Fact name"></input>
+               <ul name="suggestions_" id="suggestions_" class="list-group hidden"></ul>
+            </div>
+            <div class="padding-small flex-item-grow-2">
                <select class="form-control input-sm">
                   <option value="=">is</option>
                   <option value="!=">not</option>
@@ -636,15 +644,13 @@
                   <option value="&gt;=">&gt;=</option>
                </select>
             </div>
-            <div class="col-sm-5" style="padding-left: 3px" name="constraint_val_container">
+            <div class="padding-small flex-item-grow-3" name="constraint_val_container">
                <input id="fact_constraint_val_" name="fact_constraint_val_" class="form-control input-sm"
                   type="text" placeholder="Value (case sensitive)"></input>
-               <ul name="suggestions_" id="suggestions_" class="list-group" style="display: none;"></ul>
+               <ul name="suggestions_" id="suggestions_" class="list-group hidden"></ul>
             </div>
-            <div class="col-sm-2" name="fact_action_button">
-               <button type="button" class="btn btn-sm center-block" title="Add fact constraint">
-                  <span class="glyphicon glyphicon-plus"></span>
-               </button>
+            <div class="padding-small flex-item-grow-1" name="fact_action_button">
+
             </div>
          </div>
       </div>

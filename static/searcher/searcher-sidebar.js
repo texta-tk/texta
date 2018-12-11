@@ -247,7 +247,7 @@ function renderSavedSearchField (fieldData, minDate, maxDate) {
         $(`#fact_operator_${counter.toString()}`).val(fieldData.operator)
         $(`#fact_txt_${counter.toString()}`).val(fieldData.content.join('\n'))
     } else if (fieldData.constraint_type === 'str_fact_val') {
-        makeStrFactField(fieldData)
+        makeStrFactField(fieldData)        
         $(`#fact_operator_${counter.toString()}`).val(fieldData.operator)
         for (var i = 0; i < fieldData.sub_constraints.length; i++) {
             var subConstraint = fieldData.sub_constraints[i]
@@ -388,7 +388,7 @@ function addFactValueFieldConstraint (counterStr) {
 
     var idCombination = counterStr + '_' + subCounterStr
 
-    $('#fact_val_rule_').clone().attr('id', 'fact_val_rule_' + idCombination).appendTo('#fact_val_rules_' + counterStr)
+    $('#fact_val_rule_').clone().attr('id', 'fact_val_rule_' + idCombination).removeClass('hidden').appendTo('#fact_val_rules_' + counterStr)
 
     $('#field_' + counterStr + ' #fact_txt_').attr('id', 'fact_txt_' + idCombination).attr('name', 'fact_txt_' + idCombination)
     $('#field_' + counterStr + " input[name='fact_constraint_val_']").attr('name', 'fact_constraint_val_' + idCombination).attr('id', 'fact_constraint_val_' + idCombination)
@@ -579,6 +579,7 @@ function addField (dateRangeMin, dateRangeMax, submittedFieldData) {
 
         if (fieldType === 'fact_str_val') {
             addFactValueField(counterStr, subCounterStr, fieldPath, fieldName, 'str')
+            addFactValueFieldConstraint(counterStr)
         } else if (fieldType === 'fact_num_val') {
             addFactValueField(counterStr, subCounterStr, fieldPath, fieldName, 'num')
         }

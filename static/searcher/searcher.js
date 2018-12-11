@@ -156,7 +156,7 @@ function query () {
                 'processing': true,
                 'filter': false,
                 'sAjaxSource': PREFIX + '/table_content',
-                'dom': '<"#top-part.flex-row"<"flex-item flex-row align-center"<"flex-item flex-row align-center toggle-columns-select height-max"<"fullscreen-actions-div">>><"flex-content-end flex-item flex-item-grow-3 align-center"<"flex-item flex-item-grow-2"i><"flex-item flex-item-grow-1"l><"flex-item flex-item-grow-2"p>>>t',
+                'dom': '<"#top-part.flex-row"<"flex-item-grow-1 flex-row align-center"<"flex-item-grow-1 flex-row align-center toggle-columns-select height-max"<"fullscreen-actions-div">>><"flex-content-end flex-item-grow-3 align-center"<"flex-item-grow-2"i><"flex-item-grow-1"l><"flex-item-grow-2"p>>>t',
                 'sServerMethod': 'POST',
                 'fnServerParams': function (aoData) {
                     aoData.push({
