@@ -15,6 +15,9 @@ body {
 }
 
 /* global style */
+.margin-bottom{
+    margin-bottom: 5px;
+}
 .padding-default{
     padding: 5px;
 }
