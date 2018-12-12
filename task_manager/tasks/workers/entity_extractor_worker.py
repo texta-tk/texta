@@ -28,6 +28,7 @@ from .base_worker import BaseWorker
 class EntityExtractorWorker(BaseWorker):
 
     def __init__(self):
+        self.es_m = None
         self.task_id = None
         self.model_name = None
         self.description = None
@@ -46,7 +47,7 @@ class EntityExtractorWorker(BaseWorker):
         steps = ["preparing data", "training", "done"]
         show_progress = ShowSteps(self.task_id, steps)
         show_progress.update_view()
-        import pdb;pdb.set_trace()
+
         if 'num_threads' in task_params:
             self.n_jobs = int(task_params['num_threads'])
 
@@ -54,10 +55,10 @@ class EntityExtractorWorker(BaseWorker):
             if 'fields' in task_params:
                 fields = task_params['fields']
             else:
-                fields = [task_params['field']]
+                fields = task_params['field']
 
+            fact_names = task_params["facts"]
             show_progress.update(0)
-
             # Check if query was explicitly set
             if 'search_tag' in task_params:
                 # Use set query
@@ -65,11 +66,14 @@ class EntityExtractorWorker(BaseWorker):
             else:
                 # Otherwise, load query from saved search
                 param_query = json.loads(Search.objects.get(pk=int(task_params['search'])).query)
-            # Build Data sampler
+
+            # Get data
             ds = Datasets().activate_datasets_by_id(task_params['dataset'])
-            es_m = ds.build_manager(ES_Manager)
+            self.es_m = ds.build_manager(ES_Manager)
             self.model_name = 'model_{0}'.format(self.task_id)
-            hits, raw_facts = self._scroll_query_response(es_m, param_query, fields)
+            raw_facts = self._get_fact_values(fact_names)
+            hits = self._scroll_query_response(param_query, fields)
+
             # Prepare data
             X_train, y_train, X_val, y_val = self._prepare_data(hits, raw_facts)
             # Training the model.
@@ -157,8 +161,9 @@ class EntityExtractorWorker(BaseWorker):
         # Create a dict of unique facts, with value as key and name as dict key value
         extracted_facts = {}
         for fact in facts:
-            if fact["str_val"] not in extracted_facts:
-                extracted_facts[fact["str_val"]] = fact["fact"]
+            for val in fact:
+                if val not in extracted_facts:
+                    extracted_facts[val] = fact[val]
         return extracted_facts
 
 
@@ -315,12 +320,11 @@ class EntityExtractorWorker(BaseWorker):
         return report
 
 
-    def _scroll_query_response(self, es_m, query, fields):
-        # Scroll the search, extract facts
+    def _scroll_query_response(self, query, fields):
+        # Scroll the search, extract hits
         hits = []
-        facts = []
-        es_m.load_combined_query(query)
-        response = es_m.scroll()
+        self.es_m.load_combined_query(query)
+        response = self.es_m.scroll()
         scroll_id = response['_scroll_id']
         total_docs = response['hits']['total']
         while total_docs > 0:
@@ -328,12 +332,24 @@ class EntityExtractorWorker(BaseWorker):
                 source = hit['_source']
                 for field in fields:
                     content = source
-                    if 'texta_facts' in content:
-                        facts.extend(content['texta_facts'])
                     for sub_f in field.split('.'):
                         content = content[sub_f]
                     hits.append(content)
-            response = es_m.scroll(scroll_id=scroll_id)
+            response = self.es_m.scroll(scroll_id=scroll_id)
             total_docs = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
-        return hits, facts
+        return hits
+
+
+    def _get_fact_values(self, fact_names):
+        aggs = {'main': {'aggs': {"facts": {"nested": {"path": "texta_facts"}, "aggs": {"fact_names": {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val"}}}}}}}}}
+        self.es_m.load_combined_query(aggs)
+        response = self.es_m.search()
+        response_aggs = response['aggregations']['facts']['fact_names']['buckets']
+
+        fact_data = []
+        for fact in response_aggs:
+            for val in fact['fact_values']['buckets']:
+                for val_word in val.split(' '):
+                    fact_data.append({val_word['key']:fact["key"]})
+        return fact_data
