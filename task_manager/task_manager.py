@@ -20,8 +20,6 @@ def create_task(task_type: str, description: str, parameters: dict, user: User) 
     :return: Id of created Task model entry.
     """
     # Creates a db entry for new task and returns task ID
-    import pdb;pdb.set_trace()
-    
     new_task = Task(description=description,
                     task_type=task_type,
                     parameters=json.dumps(parameters),
@@ -51,7 +49,7 @@ def filter_params(post: QueryDict):
     for param in post:
         if param.startswith(prefix):
             param_name = param[len(prefix) + 1:]
-            if param_name == 'fields':
+            if param_name == 'fields' or param_name == 'facts':
                 param_val = post.getlist(param)
             else:
                 param_val = post[param]
