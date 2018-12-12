@@ -149,3 +149,6 @@
     grid-template-columns: 100%;
     grid-template-rows: 45px 1fr;
 }
+.content-wrap td{
+    white-space: normal !important;
+}
