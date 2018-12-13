@@ -92,9 +92,14 @@ elif SERVER_TYPE == 'production':
 elif SERVER_TYPE == 'docker':
 	PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL'))
 	DOMAIN = os.getenv('TEXTA_HOST', 'localhost')
-
-	URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL, DOMAIN)
-	URL_PREFIX_RESOURCE = ''
+	PORT = os.getenv('TEXTA_PORT', None)
+	URL_PREFIX_RESOURCE = os.getenv('TEXTA_PREFIX_RESOURCE', '')
+	
+	if PORT:
+		URL_PREFIX_DOMAIN = '{0}{1}:{2}'.format(PROTOCOL, DOMAIN, PORT)
+	else:
+		URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL, DOMAIN)
+	
 	ROOT_URLCONF = 'texta.urls'
 	STATIC_URL = '/static/'
 	DEBUG = True
