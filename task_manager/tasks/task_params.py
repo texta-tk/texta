@@ -44,7 +44,7 @@ task_params = [
 
 
 def get_fact_names(es_m):
-    aggs = {'main': {'aggs': {"facts": {"nested": {"path": "texta_facts"}, "aggs": {"fact_names": {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val"}}}}}}}}}
+    aggs = {'main': {'aggs': {"facts": {"nested": {"path": "texta_facts"}, "aggs": {"fact_names": {"terms": {"field": "texta_facts.fact", "size": 10000}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val"}}}}}}}}}
     es_m.load_combined_query(aggs)
     response = es_m.search()
     response_aggs = response['aggregations']['facts']['fact_names']['buckets']

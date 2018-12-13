@@ -82,17 +82,17 @@ def _improve_facts_readability(content, paths, col):
     for p in paths:
         if col == u'texta_facts' and p in content:
             new_content = []
-            facts = ['{ "'+x["fact"]+'": "'+x["str_val"]+'"}' for x in sorted(content[p], key=lambda k: k['fact'])]
-            fact_counts = Counter(facts)
+            facts = [(x["fact"], x["str_val"]) for x in sorted(content[p], key=lambda k: k['fact'])]
 
+            fact_counts = Counter(facts)
             facts = sorted(list(set(facts)))
-            facts_dict = [json.loads(x) for x in facts]
-            for i, d in enumerate(facts_dict):
-                for k in d:
-                    # Make factnames bold for searcher results
-                    if '<b>'+k+'</b>' not in new_content:
-                        new_content.append('<b>'+k+'</b>')
-                    new_content.append('    {}: {}'.format(d[k], fact_counts[facts[i]]))
+            facts_dict = dict(facts)
+
+            for i, k in enumerate(facts_dict):
+                # Make factnames bold for searcher results
+                if '<b>'+k+'</b>' not in new_content:
+                    new_content.append('<b>'+k+'</b>')
+                new_content.append('    {}: {}'.format(facts_dict[k], fact_counts[facts[i]]))
             content = '\n'.join(new_content)
         else:
             content = content[p] if p in content else ''

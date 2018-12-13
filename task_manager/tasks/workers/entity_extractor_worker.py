@@ -138,15 +138,19 @@ class EntityExtractorWorker(BaseWorker):
         all_facts = {**facts_train, **facts_val}
         self._save_as_pkl(all_facts, "meta")
         # Transform data 
+        print('here')
         X_train, X_val = train_test_split(hits, test_size=0.1, random_state=42)
         X_train = self._transform(X_train, facts_train)
         X_val = self._transform(X_val, facts_val)
-    
+        print('done w dataparse')
+
+        print('creating training data gens')
         # Create training data generators
-        y_train = (self._sent2labels(s) for s in X_train)
-        X_train = (self._sent2features(s) for s in X_train)
-        y_val = (self._sent2labels(s) for s in X_val)
-        X_val = (self._sent2features(s) for s in X_val)
+        y_train = [self._sent2labels(s) for s in X_train]
+        X_train = [self._sent2features(s) for s in X_train]
+        y_val = [self._sent2labels(s) for s in X_val]
+        X_val = [self._sent2features(s) for s in X_val]
+        print('done2')
         return X_train, y_train, X_val, y_val 
 
 
@@ -215,7 +219,7 @@ class EntityExtractorWorker(BaseWorker):
                 '1' if word1.isupper() else '0',
             ])
         else:
-            features.append('BOS')
+            features.append('<TEXTA_BOS>')
             
         if i < len(sent)-1:
             word1 = sent[i+1][0]
@@ -232,19 +236,20 @@ class EntityExtractorWorker(BaseWorker):
 
 
     def _sent2features(self, sent, facts=None):
-        return (self._word2features(sent, i) for i in range(len(sent)))
+        return [self._word2features(sent, i) for i in range(len(sent))]
 
 
     def _sent2labels(self, sent):
-        return (label for token, label in sent)
+        return [label for token, label in sent]
 
 
     def _sent2tokens(self, sent):
-        return (token for token, label in sent)
+        return [token for token, label in sent]
 
 
     def _train_and_validate(self, X_train, y_train, X_val, y_val):
         model = self._train_and_save(X_train, y_train)
+
         # Initialize self.tagger
         self._load_tagger()
         report = self._validate(self.tagger, X_val, y_val)
@@ -316,6 +321,7 @@ class EntityExtractorWorker(BaseWorker):
 
     def _validate(self, model, X_val, y_val):
         y_pred = [model.tag(xseq) for xseq in X_val]
+
         report = self._bio_classification_report(y_val, y_pred)
         return report
 
@@ -350,6 +356,6 @@ class EntityExtractorWorker(BaseWorker):
         fact_data = []
         for fact in response_aggs:
             for val in fact['fact_values']['buckets']:
-                for val_word in val.split(' '):
-                    fact_data.append({val_word['key']:fact["key"]})
+                for val_word in val["key"].split(' '):
+                    fact_data.append({val_word:fact["key"]})
         return fact_data
