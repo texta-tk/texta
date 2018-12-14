@@ -59,13 +59,11 @@ class Datasets:
 		return self
 
 
-
-
-
 	def get_datasets(self):
 		""" Returns: map of all dataset objects
 		"""
 		return self.datasets
+
 
 	def build_manager(self, manager_class):
 		""" Builds manager_class as:
@@ -74,18 +72,25 @@ class Datasets:
 		datasets = self.active_datasets
 		return manager_class(datasets)
 
+
 	def sort_datasets(self, indices):
 		out = []
 		open_indices = [index['index'] for index in indices if index['status'] == 'open']
+
 		for dataset in sorted(self.datasets.items(), key=lambda l: l[1]['index']):
+			print(dataset)
 			ds = dataset[1]
 			ds['id'] = dataset[0]
-			if ds['index'] in open_indices:
+			# wildcard dataset
+			if '*' in ds['index']:
+				out.append(ds)	
+			elif ds['index'] in open_indices:
 				out.append(ds)
 		return out
+
 
 	def get_allowed_datasets(self, user):
 		indices = ES_Manager.get_indices()
 		datasets = self.sort_datasets(indices)
+		#print(datasets)
 		return [dataset for dataset in datasets if user.has_perm('permission_admin.can_access_dataset_' + str(dataset['id']))]
-
