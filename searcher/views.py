@@ -213,12 +213,27 @@ def get_table_content(request):
 
     return HttpResponse(json.dumps(result, ensure_ascii=False))
 
+@login_required
+def table_header_mlt(request):
+    """ temporary """
+    ds = Datasets().activate_datasets(request.session)
+    es_m = ds.build_manager(ES_Manager)
+
+    # get columns names from ES mapping
+    fields = es_m.get_column_names(facts=True)
+    template_params = {'STATIC_URL': STATIC_URL,
+                       'URL_PREFIX': URL_PREFIX,
+                       'fields': fields,
+                       'searches': Search.objects.filter(author=request.user),
+                       'columns': [{'index':index, 'name':field_name} for index, field_name in enumerate(fields)],
+                       }
+    template = loader.get_template('mlt_results.html')
+    return HttpResponse(template.render(template_params, request))
 
 @login_required
 def mlt_query(request):
     es_params = request.POST
-
-    if('mlt_fields' not in es_params):
+    if('mltField' not in es_params):
         return HttpResponse(status=400,reason='field')
 
     mlt_fields = [json.loads(field)['path'] for field in es_params.getlist('mlt_fields')]
@@ -240,12 +255,14 @@ def mlt_query(request):
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
-    response = es_m.more_like_this_search(mlt_fields,docs_accepted=docs_accepted,docs_rejected=docs_rejected,handle_negatives=handle_negatives,stopwords=stopwords)
-
+    response = es_m.more_like_this_search(mlt_fields,docs_accepted=docs_accepted, docs_rejected=docs_rejected,handle_negatives=handle_negatives, stopwords=stopwords)
     documents = []
+  """   column_name = es_m.get_column_names(es_m) """
     for hit in response['hits']['hits']:
-        fields_content = get_fields_content(hit,mlt_fields)
-        documents.append({'id':hit['_id'],'content':fields_content})
+
+       """  fields_content = get_fields(es_m) """
+        fields_content = get_fields_content(hit, mlt_fields)
+        documents.append({'id':hit['_id'], 'content': fields_content})
 
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,

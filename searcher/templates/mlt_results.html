@@ -4,10 +4,10 @@
 			<th>Doc ID</th>
 			<th>Accept</th>
 			<th>Reject</th>
-			
-			{% for field_name in documents.0.content.keys %}
-				<th>{{field_name|safe}}</th>
-			{% endfor %}
+
+            {% for column in columns %}
+                <th>{{column.name}}</th>
+            {% endfor %}
 		</tr>
 	</thead>
 	<tbody>

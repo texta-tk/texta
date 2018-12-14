@@ -769,7 +769,7 @@ function mltQuery () {
     var formElement = document.getElementById('filters')
     var mltField = $("select[id='mlt_fields']").val()
     var request = new XMLHttpRequest()
-
+    var formData = new FormData(formElement)
     if (mltField != null) {
         request.onreadystatechange = function () {
             $('#right').html(`loading ${request.readyState}/4'`)
@@ -777,14 +777,27 @@ function mltQuery () {
                 $('#right').html('')
                 if (request.status === 200) {
                     $('#right').html(request.responseText)
+                    $('#mlt_table').DataTable({
+                        'dom': 'R',
+                        'processing': true,
+                        'serverSide': true,
+                        'ajax': {
+                            "url": PREFIX + '/mlt_query',
+                            "type": "POST",
+                            data: {
+                                'mltField': JSON.stringify(mltField),
+                                'handle_negatives': $('#handle_negatives').val()
+                            },
+                        },
+                    })
                 }
                 if (request.status === 400 && request.statusText === 'field') {
                     swalWarningDisplay('Please select a field first')
                 }
             }
         }
-        request.open('POST', PREFIX + '/mlt_query')
-        request.send(new FormData(formElement))
+        request.open('POST', PREFIX + '/table_header_mlt')
+        request.send(formData)
     } else {
         $('#right').html('No fields selected!')
     }
