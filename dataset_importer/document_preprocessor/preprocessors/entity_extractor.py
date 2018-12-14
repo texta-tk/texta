@@ -72,7 +72,7 @@ class EntityExtractorPreprocessor(object):
             print(e)
             logging.getLogger(ERROR_LOGGER).exception(json.dumps(
                 {'process': 'APPLY PREPROCESSOR', 'event': 'EntityExtractorPreprocessor:transform', 'data': {'model_ids_to_apply': model_ids_to_apply}}), exc_info=True)
-
+        print("Done with applying crf preprocessor")
         return {"documents":documents, "meta": {'facts_added': facts_added}}
 
 
@@ -87,7 +87,8 @@ class EntityExtractorPreprocessor(object):
                 new_fact = {'fact': pred, 'str_val': word, 'doc_path': field, 'spans': json.dumps([spans])}
                 new_facts.append(new_fact)
                 doc_num_facts += 1;
-            doc_spans.append(len(word))
+            # Add +1 for account for whitespace
+            doc_spans.append(doc_spans[i] + len(word) + 1)
 
 
         return new_facts, doc_num_facts

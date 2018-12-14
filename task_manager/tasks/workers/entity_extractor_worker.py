@@ -71,11 +71,11 @@ class EntityExtractorWorker(BaseWorker):
             ds = Datasets().activate_datasets_by_id(task_params['dataset'])
             self.es_m = ds.build_manager(ES_Manager)
             self.model_name = 'model_{0}'.format(self.task_id)
-            raw_facts = self._get_fact_values(fact_names)
+            facts = self._get_fact_values(fact_names)
             hits = self._scroll_query_response(param_query, fields)
 
             # Prepare data
-            X_train, y_train, X_val, y_val = self._prepare_data(hits, raw_facts)
+            X_train, y_train, X_val, y_val = self._prepare_data(hits, facts)
             # Training the model.
             show_progress.update(1)
             # Train and report validation
@@ -127,30 +127,21 @@ class EntityExtractorWorker(BaseWorker):
         return preds
 
 
-    def _prepare_data(self, hits, raw_facts):
+    def _prepare_data(self, hits, facts):
         X_train = []
         X_val = []
-        # Split facts for training and testing 
-        facts_train, facts_val = train_test_split(raw_facts, test_size=0.1, random_state=42)
-        facts_train = self._extract_facts(facts_train)
-        facts_val = self._extract_facts(facts_val)
         # Save all facts for later tagging
-        all_facts = {**facts_train, **facts_val}
-        self._save_as_pkl(all_facts, "meta")
-        # Transform data 
-        print('here')
-        X_train, X_val = train_test_split(hits, test_size=0.1, random_state=42)
-        X_train = self._transform(X_train, facts_train)
-        X_val = self._transform(X_val, facts_val)
-        print('done w dataparse')
+        self._save_as_pkl(facts, "meta")
 
-        print('creating training data gens')
+        # Transform data 
+        X_train, X_val = train_test_split(hits, test_size=0.1, random_state=42)
+        X_train = self._transform(X_train, facts)
+        X_val = self._transform(X_val, facts)
         # Create training data generators
         y_train = [self._sent2labels(s) for s in X_train]
         X_train = [self._sent2features(s) for s in X_train]
         y_val = [self._sent2labels(s) for s in X_val]
         X_val = [self._sent2features(s) for s in X_val]
-        print('done2')
         return X_train, y_train, X_val, y_val 
 
 
@@ -195,27 +186,18 @@ class EntityExtractorWorker(BaseWorker):
         features = [
             # Bias
             'b',
-            #'word.lower='
             word.lower(),
-            #'word[-3:]='
             word[-3:],
-            #'word[-2:]='
             word[-2:],
-            #'word.isupper=%s' % 
             '1' if word.isupper() else '0',
-            #'word.istitle=%s' % 
             '1' if word.istitle() else '0',
-            #'word.isdigit=%s' % 
             '1' if word.isdigit() else '0']
 
         if i > 0:
             word1 = sent[i-1][0]
             features.extend([
-                #'-1:word.lower=' + 
                 word1.lower(),
-                #'-1:word.istitle=%s' % 
                 '1' if word1.istitle() else '0',
-                #'-1:word.isupper=%s' % 
                 '1' if word1.isupper() else '0',
             ])
         else:
@@ -224,18 +206,15 @@ class EntityExtractorWorker(BaseWorker):
         if i < len(sent)-1:
             word1 = sent[i+1][0]
             features.extend([
-                #'+1:word.lower=' + 
                 word1.lower(),
-                #'+1:word.istitle=%s' % 
                 '1' if word1.istitle() else '0',
-                # '+1:word.isupper=%s' % 
                 '1' if word1.isupper() else '0'])
         else:
             features.append('<TEXTA_EOS>')
         return features
 
 
-    def _sent2features(self, sent, facts=None):
+    def _sent2features(self, sent):
         return [self._word2features(sent, i) for i in range(len(sent))]
 
 
@@ -284,8 +263,8 @@ class EntityExtractorWorker(BaseWorker):
         for xseq, yseq in zip(X_train, y_train):
             trainer.append(xseq, yseq)
         trainer.set_params({
-            'c1': 1.0,   # coefficient for L1 penalty
-            'c2': 1e-3,  # coefficient for L2 penalty
+            'c1': 0.5,   # coefficient for L1 penalty
+            'c2': 1e-4,  # coefficient for L2 penalty
             'max_iterations': 50,  # stop earlier
             # transitions that are possible, but not observed
             'feature.possible_transitions': True})
@@ -321,6 +300,17 @@ class EntityExtractorWorker(BaseWorker):
 
     def _validate(self, model, X_val, y_val):
         y_pred = [model.tag(xseq) for xseq in X_val]
+        # y_pred = []
+        # for i, xseq in enumerate(X_val):
+        #     pred = model.tag(xseq)
+        #     y_pred.append(pred)
+        #     for ind, sv in enumerate(xseq):
+        #         if y_val[i][ind] != '<TEXTA_O>' or pred[ind] != '<TEXTA_O>':
+        #             print()
+        #             print(y_val[i][ind])
+        #             print(pred[ind])
+        #             print(sv[1])
+        #             print()
 
         report = self._bio_classification_report(y_val, y_pred)
         return report
@@ -353,9 +343,10 @@ class EntityExtractorWorker(BaseWorker):
         response = self.es_m.search()
         response_aggs = response['aggregations']['facts']['fact_names']['buckets']
 
-        fact_data = []
+        fact_data = {}
         for fact in response_aggs:
-            for val in fact['fact_values']['buckets']:
-                for val_word in val["key"].split(' '):
-                    fact_data.append({val_word:fact["key"]})
+            if fact['key'] in fact_names:
+                for val in fact['fact_values']['buckets']:
+                    for val_word in val["key"].split(' '):
+                        fact_data[val_word] = fact["key"]
         return fact_data
