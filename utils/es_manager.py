@@ -614,3 +614,25 @@ class ES_Manager:
             return fields_with_schemas
 
 
+    def remove_html_from_hits(self, hits):
+        text_list = []
+        text_index = []
+
+        for i, hit in enumerate(hits):
+            doc = hit['_source']
+            for field_name, field_content in doc.items():
+                text_list.append(str(field_content))
+                text_index.append({'hit': i, 'field': field_name})
+
+        if text_list:
+            url = '{0}/_analyze'.format(es_url)
+            data = {"tokenizer": "keyword",
+                    "char_filter": ["html_strip"],
+                    "text": text_list}
+
+            response = self.plain_post(url, json.dumps(data))
+
+            for j, text in enumerate(response['tokens']):
+                hits[text_index[j]['hit']]['_source'][text_index[j]['field']] = text['token'].strip()
+
+        return hits
