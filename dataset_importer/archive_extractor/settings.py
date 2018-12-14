@@ -5,7 +5,8 @@ import extractors
 
 
 def log_extractor_status(code, status):
-    print('[Dataset Importer] {code} extractor {status}.'.format(**{'code': code, 'status': status}))
+    if status == 'disabled':
+        print('[Dataset Importer] {code} extractor {status}.'.format(**{'code': code, 'status': status}))
 
 
 extractor_map = {}
