@@ -233,7 +233,7 @@ def table_header_mlt(request):
 @login_required
 def mlt_query(request):
     es_params = request.POST
-    if('mltField' not in es_params):
+    if('mlt_fields' not in es_params):
         return HttpResponse(status=400,reason='field')
 
     mlt_fields = [json.loads(field)['path'] for field in es_params.getlist('mlt_fields')]
@@ -257,12 +257,18 @@ def mlt_query(request):
 
     response = es_m.more_like_this_search(mlt_fields,docs_accepted=docs_accepted, docs_rejected=docs_rejected,handle_negatives=handle_negatives, stopwords=stopwords)
     documents = []
-  """   column_name = es_m.get_column_names(es_m) """
+    columns_to_parse = []
+    """   column_name = es_m.get_column_names(es_m) """
     for hit in response['hits']['hits']:
+        for column in hit['_source']:
+            columns_to_parse.append(column)
 
-       """  fields_content = get_fields(es_m) """
-        fields_content = get_fields_content(hit, mlt_fields)
+        fields_content = get_fields_content(hit, columns_to_parse)
         documents.append({'id':hit['_id'], 'content': fields_content})
+        columns_to_parse.clear()
+        """  fields_content = get_fields(es_m) """
+        # fields_content = get_fields_content(hit, mlt_fields)
+        # documents.append({'id':hit['_id'], 'content': fields_content})
 
     template_params = {'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX,

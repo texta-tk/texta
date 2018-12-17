@@ -77,7 +77,7 @@ def get_fields_content(hit,fields):
             field_content = ''
 
         if type(field_content) == list:
-            field_content = '<br><br>'.join(field_content)
+            continue
 
         row[field] = field_content
 
