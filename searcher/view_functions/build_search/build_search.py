@@ -3,6 +3,7 @@ from collections import Counter
 from utils.highlighter import Highlighter, ColorPicker
 from searcher.view_functions.general.searcher_utils import additional_option_cut_text
 from searcher.view_functions.build_search.translit_highlighting import hl_transliterately
+from bs4 import BeautifulSoup
 import time
 import json
 
@@ -25,7 +26,7 @@ def execute_search(es_m, es_params):
     out['column_names'] = es_m.get_column_names(facts=True) # get columns names from ES mapping
 
     hits = response['hits']['hits']
-    hits = es_m.remove_html_from_hits(hits)
+    #hits = es_m.remove_html_from_hits(hits)
 
     for hit in hits:
         hit_id = str(hit['_id'])
@@ -40,8 +41,13 @@ def execute_search(es_m, es_params):
         for col in out['column_names']:
             # If the content is nested, need to break the flat name in a path list
             field_path = col.split('.')
+
             # Get content for the fields and make facts human readable
             content = _improve_facts_readability(hit['_source'], field_path, col)
+
+            soup = BeautifulSoup(content)
+            content = soup.get_text()
+
             # To strip fields with whitespace in front
             try:
                 old_content = content.strip()
