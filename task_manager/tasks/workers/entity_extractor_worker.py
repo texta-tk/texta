@@ -1,8 +1,10 @@
 import os
+import sys
 import json
 import logging
 import numpy as np
 import pickle as pkl
+import psutil
 from itertools import chain
 
 from task_manager.models import Task
@@ -138,12 +140,26 @@ class EntityExtractorWorker(BaseWorker):
         X_train = self._transform(X_train, facts)
         X_val = self._transform(X_val, facts)
         # Create training data generators
-        y_train = [self._sent2labels(s) for s in X_train]
-        X_train = [self._sent2features(s) for s in X_train]
-        y_val = [self._sent2labels(s) for s in X_val]
-        X_val = [self._sent2features(s) for s in X_val]
+        X_train, y_train = self._get_memory_safe_features(X_train)
+        X_val, y_val = self._get_memory_safe_features(X_val, min_available_memory=500)
+        import pdb;pdb.set_trace()
         return X_train, y_train, X_val, y_val 
 
+    def _get_memory_safe_features(self, X_data, min_available_memory=1500):
+        X_feats = []
+        y_feats = []
+        for i, x in enumerate(X_data):
+            y = self._sent2labels(x)
+            x = self._sent2features(x)
+            X_feats.append(x)
+            y_feats.append(y)
+            # check if there is less than min_available_memory in megabytes remaining in the machine
+            if i % 10000 == 0:
+                print(psutil.virtual_memory().available / 1000000, i)
+                if (psutil.virtual_memory().available / 1000000) < min_available_memory:
+                    print('EntityExtractorWorker:_get_memory_safe_features - Less than {} mb of memory remaining, breaking adding more data.'.format(min_available_memory))
+                    break
+        return x, y
 
     def _save_as_pkl(self, var, suffix):
         # Save facts as metadata for tagging, to covert new data into training data using facts
@@ -256,12 +272,12 @@ class EntityExtractorWorker(BaseWorker):
         self.tagger = tagger
         return self.tagger
 
-
     def _train_and_save(self, X_train, y_train):
         trainer = Trainer(verbose=False)
 
         for xseq, yseq in zip(X_train, y_train):
             trainer.append(xseq, yseq)
+
         trainer.set_params({
             'c1': 0.5,   # coefficient for L1 penalty
             'c2': 1e-4,  # coefficient for L2 penalty
@@ -300,18 +316,6 @@ class EntityExtractorWorker(BaseWorker):
 
     def _validate(self, model, X_val, y_val):
         y_pred = [model.tag(xseq) for xseq in X_val]
-        # y_pred = []
-        # for i, xseq in enumerate(X_val):
-        #     pred = model.tag(xseq)
-        #     y_pred.append(pred)
-        #     for ind, sv in enumerate(xseq):
-        #         if y_val[i][ind] != '<TEXTA_O>' or pred[ind] != '<TEXTA_O>':
-        #             print()
-        #             print(y_val[i][ind])
-        #             print(pred[ind])
-        #             print(sv[1])
-        #             print()
-
         report = self._bio_classification_report(y_val, y_pred)
         return report
 
