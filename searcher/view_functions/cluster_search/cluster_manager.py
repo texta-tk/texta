@@ -4,6 +4,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from itertools import combinations
 from time import time
 from utils.highlighter import Highlighter
+from bs4 import BeautifulSoup
 import numpy as np
 import json
 import re
@@ -176,6 +177,10 @@ class ClusterManager:
 
         for cluster_id,cluster_content in clusters.items():
             documents = [self.documents[doc_id] for doc_id in cluster_content]
+
+            # escape HTML
+            documents = [BeautifulSoup(document).get_text() for document in documents]
+
             cluster_label = 'Cluster {0} ({1})'.format(cluster_id+1,len(cluster_content))
             keywords = self.cluster_keywords[cluster_id]
             cluster_data = {'documents':self.highlight_cluster_keywords(documents,keywords),
