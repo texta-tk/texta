@@ -767,7 +767,7 @@ function insert (resourceID, suggestionID, descriptiveTerm, lookupType) {
 
 function mltQuery () {
     var formElement = document.getElementById('filters')
-    var mltField = $("select[id='mlt_fields']").val()
+    var mltField = $("select[id='mlt_fields']")
     var request = new XMLHttpRequest()
     var formData = new FormData(formElement)
     if (mltField != null) {
@@ -779,13 +779,14 @@ function mltQuery () {
                     $('#right').html(request.responseText)
                     $('#mlt_table').DataTable({
                         'dom': 'R',
+
                         'processing': true,
                         'serverSide': true,
                         'ajax': {
                             "url": PREFIX + '/mlt_query',
                             "type": "POST",
                             data: {
-                                'mltField': JSON.stringify(mltField),
+                                'mlt_fields': JSON.stringify(mltField.val()),
                                 'handle_negatives': $('#handle_negatives').val()
                             },
                         },

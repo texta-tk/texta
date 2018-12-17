@@ -117,7 +117,7 @@
                                     multiple="multiple">
                                     {% for field in fields %}
                                     {% if field.type == 'text' or field.type == 'keyword' %}
-                                    <option value="{{field.data}}">{{field.label}}</option>
+                                    <option value="{{field.label}}">{{field.label}}</option>
                                     {% endif %}
                                     {% endfor %}
                                  </select>

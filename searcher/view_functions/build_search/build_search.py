@@ -1,8 +1,8 @@
 from collections import OrderedDict, defaultdict
-from collections import Counter
 from utils.highlighter import Highlighter, ColorPicker
 from searcher.view_functions.general.searcher_utils import additional_option_cut_text
 from searcher.view_functions.build_search.translit_highlighting import hl_transliterately
+from searcher.view_functions.general.searcher_utils import improve_facts_readability
 import time
 import json
 
@@ -36,9 +36,14 @@ def execute_search(es_m, es_params):
         cols_data = {}
         for col in out['column_names']:
             # If the content is nested, need to break the flat name in a path list
+
             field_path = col.split('.')
             # Get content for the fields and make facts human readable
-            content = _improve_facts_readability(hit['_source'], field_path, col)
+            for p in field_path:
+                if col == u'texta_facts' and p in hit['_source']:
+                    content = improve_facts_readability(hit['_source'][p])
+                else:
+                    content = hit['_source'][p] if p in hit['_source'] else ''
             # To strip fields with whitespace in front
             try:
                 old_content = content.strip()
@@ -69,34 +74,6 @@ def execute_search(es_m, es_params):
         out['lag'] = time.time()-start_time
     return out
 
-def _improve_facts_readability(content, paths, col):
-    '''Changes texta_facts field content to be more human readable
-        Get content for this field path:
-        - Starts with the hit structure
-        - For every field in field_path, retrieve the specific content
-        - Repeat this until arrives at the last field
-        - If the field in the field_path is not in this hit structure,
-            make content empty (to allow dynamic mapping without breaking alignment)
-        - Improve facts readability in searcher results if field is texta_facts'''
-
-    for p in paths:
-        if col == u'texta_facts' and p in content:
-            new_content = []
-            facts = [(x["fact"], x["str_val"]) for x in sorted(content[p], key=lambda k: k['fact'])]
-
-            fact_counts = Counter(facts)
-            facts = sorted(list(set(facts)))
-            facts_dict = dict(facts)
-
-            for i, k in enumerate(facts_dict):
-                # Make factnames bold for searcher results
-                if '<b>'+k+'</b>' not in new_content:
-                    new_content.append('<b>'+k+'</b>')
-                new_content.append('    {}: {}'.format(facts_dict[k], fact_counts[facts[i]]))
-            content = '\n'.join(new_content)
-        else:
-            content = content[p] if p in content else ''
-    return content
 
 def _prettify_standardize_hls(name_to_inner_hits, col, content, old_content):
     '''Applies prettified and standardized highlights to content'''

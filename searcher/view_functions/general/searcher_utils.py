@@ -1,7 +1,7 @@
 import bs4
 import json
 import bs4
-
+from collections import Counter
 def additional_option_cut_text(content, window_size):
     window_size = int(window_size)
     
@@ -77,12 +77,29 @@ def get_fields_content(hit,fields):
             field_content = ''
 
         if type(field_content) == list:
-            continue
+            field_content = improve_facts_readability(field_content)
 
         row[field] = field_content
 
     return row
 
+def improve_facts_readability(content):
+    '''Changes texta_facts field content to be more human readable'''
+    new_content = []
+    facts = [(x["fact"], x["str_val"]) for x in sorted(content, key=lambda k: k['fact'])]
+
+    fact_counts = Counter(facts)
+    facts = sorted(list(set(facts)))
+    facts_dict = dict(facts)
+
+    for i, k in enumerate(facts_dict):
+        # Make factnames bold for searcher results
+        if '<b>'+k+'</b>' not in new_content:
+            new_content.append('<b>'+k+'</b>')
+        new_content.append('    {}: {}'.format(facts_dict[k], fact_counts[facts[i]]))
+    content = '\n'.join(new_content)
+
+    return content
 
 def get_fields(es_m):
     texta_reserved = ['texta_facts']

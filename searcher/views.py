@@ -53,7 +53,8 @@ from searcher.view_functions.general.fact_manager import FactAdder
 from searcher.view_functions.general.get_saved_searches import extract_constraints
 from searcher.view_functions.general.export_pages import export_pages
 from searcher.view_functions.general.searcher_utils import collect_map_entries, get_fields_content, get_fields
-
+from collections import OrderedDict, defaultdict
+from searcher.view_functions.general.searcher_utils import improve_facts_readability
 
 
 @login_required
@@ -216,6 +217,7 @@ def get_table_content(request):
 @login_required
 def table_header_mlt(request):
     """ temporary """
+    # todo fix all of this, refactor
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
 
@@ -230,17 +232,30 @@ def table_header_mlt(request):
     template = loader.get_template('mlt_results.html')
     return HttpResponse(template.render(template_params, request))
 
+def _derive_name_to_inner_hits(inner_hits):
+    # todo remove this, put it into utils maybe, and share with searcher
+    name_to_inner_hits = defaultdict(list)
+    for inner_hit_name, inner_hit in inner_hits.items():
+        hit_type, _, _ = inner_hit_name.rsplit('_', 2)
+        for inner_hit_hit in inner_hit['hits']['hits']:
+            source = inner_hit_hit['_source']
+            source['hit_type'] = hit_type
+            name_to_inner_hits[source['doc_path']].append(source)
+    return name_to_inner_hits
+
 @login_required
 def mlt_query(request):
+    # todo need alot of refactoring, fixing
     es_params = request.POST
+    draw = int(es_params['draw'])
     if('mlt_fields' not in es_params):
         return HttpResponse(status=400,reason='field')
 
-    mlt_fields = [json.loads(field)['path'] for field in es_params.getlist('mlt_fields')]
+    mlt_fields = [ field for field in json.loads(es_params['mlt_fields'])]
 
     handle_negatives = request.POST['handle_negatives']
-    docs_accepted = [a.strip() for a in request.POST['docs'].split('\n') if a]
-    docs_rejected = [a.strip() for a in request.POST['docs_rejected'].split('\n') if a]
+    # docs_accepted = [a.strip() for a in request.POST['docs'].split('\n') if a]
+    # docs_rejected = [a.strip() for a in request.POST['docs_rejected'].split('\n') if a]
 
     # stopwords
     stopword_lexicon_ids = request.POST.getlist('mlt_stopword_lexicons')
@@ -255,26 +270,57 @@ def mlt_query(request):
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
 
-    response = es_m.more_like_this_search(mlt_fields,docs_accepted=docs_accepted, docs_rejected=docs_rejected,handle_negatives=handle_negatives, stopwords=stopwords)
+    response = es_m.more_like_this_search(mlt_fields,handle_negatives=handle_negatives, stopwords=stopwords)
     documents = []
     columns_to_parse = []
+    column_names = es_m.get_column_names(facts=True)
+    row = OrderedDict([(x, '') for x in column_names])
     """   column_name = es_m.get_column_names(es_m) """
     for hit in response['hits']['hits']:
-        for column in hit['_source']:
-            columns_to_parse.append(column)
+        # for column in hit['_source']:
+        #     columns_to_parse.append(column)
+        #     if column not in column_names:
+        #         column_names.append(column)
+        hit_id = str(hit['_id'])
+        hit['_source']['_es_id'] = hit_id
 
-        fields_content = get_fields_content(hit, columns_to_parse)
-        documents.append({'id':hit['_id'], 'content': fields_content})
-        columns_to_parse.clear()
+        inner_hits = hit['inner_hits'] if 'inner_hits' in hit else {}
+        name_to_inner_hits = _derive_name_to_inner_hits(inner_hits)
+        cols_data = {}
+        for col in column_names:
+            # If the content is nested, need to break the flat name in a path list
+
+            field_path = col.split('.')
+            # Get content for the fields and make facts human readable
+            for p in field_path:
+                if col == u'texta_facts' and p in hit['_source']:
+                    content = improve_facts_readability(hit['_source'][p])
+                else:
+                    content = hit['_source'][p] if p in hit['_source'] else ''
+            # To strip fields with whitespace in front
+            try:
+                old_content = content.strip()
+            except:
+                old_content = content
+
+            # Append the final content of this col to the row
+            if row[col] == '':
+                row[col] = content
+            cols_data[col] = {'content': content, 'old_content': old_content}
+
+        # fields_content = get_fields_content(hit, columns_to_parse)
+        # documents.append(fields_content)
+        # columns_to_parse.clear()
         """  fields_content = get_fields(es_m) """
         # fields_content = get_fields_content(hit, mlt_fields)
         # documents.append({'id':hit['_id'], 'content': fields_content})
 
-    template_params = {'STATIC_URL': STATIC_URL,
-                       'URL_PREFIX': URL_PREFIX,
-                       'documents':documents}
-    template = loader.get_template('mlt_results.html')
-    return HttpResponse(template.render(template_params, request))
+    result = {'column_names': column_names,'data': [],'recordsTotal': response['hits']['total'],'recordsFiltered': response['hits']['total'], 'draw': draw}
+    result['data'].append(row.values())
+    for i in range(len(result['data'])):
+        result['data'][i] = list(result['data'][i])
+
+    return HttpResponse(json.dumps(result, ensure_ascii=False))
 
 
 @login_required
