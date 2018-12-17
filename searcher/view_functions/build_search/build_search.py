@@ -24,7 +24,10 @@ def execute_search(es_m, es_params):
         out['iTotalDisplayRecords'] = '10000'
     out['column_names'] = es_m.get_column_names(facts=True) # get columns names from ES mapping
 
-    for hit in response['hits']['hits']:
+    hits = response['hits']['hits']
+    hits = es_m.remove_html_from_hits(hits)
+
+    for hit in hits:
         hit_id = str(hit['_id'])
         hit['_source']['_es_id'] = hit_id
         row = OrderedDict([(x, '') for x in out['column_names']]) # OrderedDict to remember column names with their content
