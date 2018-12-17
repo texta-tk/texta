@@ -97,11 +97,7 @@ def get_fields(es_m):
         path = data['path']
         
         if path not in texta_reserved:
-        
-            path_list = path.split('.')
-
-            label = '{0} --> {1}'.format(path_list[0], path_list[-1]) if len(path_list) > 1 else path_list[0]
-            label = label.replace('-->', u'→')
+            label = path.replace('.', '→')
 
             if data['type'] == 'date':
                 data['range'] = get_daterange(es_m, path)
