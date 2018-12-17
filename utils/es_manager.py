@@ -621,8 +621,10 @@ class ES_Manager:
         for i, hit in enumerate(hits):
             doc = hit['_source']
             for field_name, field_content in doc.items():
-                text_list.append(str(field_content))
-                text_index.append({'hit': i, 'field': field_name})
+
+                if field_name not in self.TEXTA_RESERVED and not isinstance(field_content, dict):
+                    text_list.append(str(field_content))
+                    text_index.append({'hit': i, 'field': field_name})
 
         if text_list:
             url = '{0}/_analyze'.format(es_url)
