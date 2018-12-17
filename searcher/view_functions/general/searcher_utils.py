@@ -79,6 +79,8 @@ def get_fields_content(hit,fields):
         if type(field_content) == list:
             field_content = '<br><br>'.join(field_content)
 
+        # remove HTML
+        field_content = bs4.BeautifulSoup(field_content).get_text()
         row[field] = field_content
 
     return row
