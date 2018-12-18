@@ -1,4 +1,15 @@
 $(document).ready(function () {
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        localStorage.setItem('permissionAdminLastTab', $(this).attr('href'))
+    })
+    let lastTab = localStorage.getItem('permissionAdminLastTab')
+    if (lastTab) {
+        $('[href="' + lastTab + '"]').tab('show')
+    } else {
+        let element = $('.top-nav-tabs li').first().children()
+        /* element.toggleClass('active') */
+        element.tab('show')
+    }
     $('#daterange_from').datepicker({
         format: "yyyy-mm-dd",
         startView: 2
@@ -21,6 +32,7 @@ $('#index').on('change', function () {
         }
     });
 });
+
 
 $('#index').trigger('change');
 

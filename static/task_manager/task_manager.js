@@ -109,9 +109,23 @@ $(function () {
         }
     })
 
+    $('#lexicon-classifier-cl-slops').slider({
+        formatter: function (value) {
+            return 'Current value: ' + value
+        }
+    })
+    $('#lexicon-classifier-slops').slider({
+        formatter: function (value) {
+            return 'Current value: ' + value
+        }
+    })
+    $('#lexicon-classifier-words-required').slider({
+        formatter: function (value) {
+            return 'Current value: ' + value
+        }
+    })
     // go to the latest tab, if it exists:
     let lastTab = localStorage.getItem('lastTab')
-
     if (lastTab) {
         $('[href="' + lastTab + '"]').tab('show')
     } else {

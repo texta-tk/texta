@@ -4,7 +4,7 @@ import json
 import logging
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.template import loader
 from django.http import QueryDict
 import requests
@@ -55,13 +55,13 @@ def newLexicon(request):
         HttpResponseRedirect -- If created in lm, then redirects to new lexicon, else doesn't return anything
     """
     lexiconName = request.POST['lexiconname']
-
+    if(lexiconName == ''):
+        return returnAjaxResult('error', 'Lexicon name can\'t be empty')
+    
     try:
         model = str(request.session['model']['pk'])
     except KeyError:
-        language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
-        model = str(language_models[0].pk)
-        request.session['model'] = model
+        return returnAjaxResult('error', 'No model selected')
 
 
     if 'lexiconkeywords' in request.POST:
@@ -69,14 +69,16 @@ def newLexicon(request):
     else:
         lexiconKeywords = None
 
-    if lexiconName:
-        try:
-            Lexicon(name=lexiconName,description='na',author=request.user).save()
-        except Exception as e:
-            logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_creation_failed','args':{'user_name':request.user.username,'lexicon_name':lexiconName}}),exc_info=True)
+    try:
+        Lexicon(name=lexiconName,description='na',author=request.user).save()
+    except Exception as e:
+        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_creation_failed','args':{'user_name':request.user.username,'lexicon_name':lexiconName}}),exc_info=True)
 
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_created','args':{'user_name':request.user.username,'lexicon_name':lexiconName}}))
+    logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_created','args':{'user_name':request.user.username,'lexicon_name':lexiconName}}))
 
+    if 'ajax_lexicon_miner' in request.POST:
+        return returnAjaxResult('success', URL_PREFIX + '/lexicon_miner/select?id='+str(Lexicon.objects.filter(name=lexiconName).last().id))
+    
     if lexiconKeywords:
         request.POST._mutable = True
         request.POST = QueryDict('', mutable=True)
@@ -89,12 +91,19 @@ def newLexicon(request):
         # last to get the latest entry just in case there is a duplicate
         return HttpResponseRedirect(URL_PREFIX + '/lexicon_miner/select?id='+str(Lexicon.objects.filter(name=lexiconName).last().id))
 
+def returnAjaxResult(result, message):
+    response_data = {}
+    response_data['result'] = result
+    response_data['message'] = message
+    return JsonResponse(response_data)
 
 @login_required
 def deleteLexicon(request):
     try:
         lexicon = Lexicon.objects.get(id=request.GET['id'])
-        model_manager.remove_negatives(request.session['model']['pk'],request.user.username,lexicon.id)
+        # if the user tries to delete a lexicon with no model it throws an error
+        if('model' in request.session):
+            model_manager.remove_negatives(request.session['model']['pk'],request.user.username,lexicon.id)
         Word.objects.filter(lexicon=lexicon).delete()
         lexicon.delete()
 

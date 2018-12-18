@@ -117,9 +117,11 @@
 						<div class="navbar-right">
 							<div class='help-block'></div>
 							{% if request.user.is_authenticated %}
-							<form class="navbar-form">
+							<div class="navbar-form">
 								<div>
-									<select id="dataset_to_activate" name="dataset_to_activate" multiple class="input-sm" onchange="dataset_update_resources();">
+									<!-- button to clone to put into selectpicker after its initialized -->
+									<button id="dataset-select-apply-button" class="btn-sm btn btn-default hidden width-max" onclick="dataset_update_resources()">Apply changes</button>
+									<select id="dataset_to_activate" name="dataset_to_activate" multiple data-actions-box="true" class="selectpicker dataset-select-dropdown">
 										{% for dataset in allowed_datasets %}
 										{% if dataset.id|stringformat:"i" in request.session.dataset %}
 										<option class="datasetOption" value="{{dataset.id}}" selected="selected">Dataset {{dataset.id}}:
@@ -151,7 +153,7 @@
 										{% endfor %}
 									</ul>
 								</div>
-							</form>
+							</div>
 							<div class="user-data navbar-form">
 								<span> Logged in as {{request.user.get_username}}. </span>
 								<button type="button" class="btn btn-danger btn-sm" onclick="go_to(LINK_ACCOUNT + '/account/log_out')">
@@ -182,7 +184,7 @@
 		<div class="grid-item-content">
 			{% block app %}{% endblock %}
 		</div>
-
+	</div>
 		<script src="{{STATIC_URL}}base/index.js"></script>
 	</div>
 </body>

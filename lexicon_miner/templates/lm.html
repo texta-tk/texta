@@ -25,12 +25,12 @@
 							{% endfor %}
 						</table>
 					<div class="row">
-						<form id="new_lexicon_form" onsubmit="go_to(LINK_LEXMINER + '/new','new_lexicon_form')" method="post">
+						<form id="new_lexicon_form" action="/new/" method="post">
 							<div class="col-sm-6">
-								<input type="text" class="form-control" name="lexiconname" placeholder="Name your new lexicon...">
+								<input type="text" class="form-control" id='lexicon_name' name="lexiconname" placeholder="Name your new lexicon...">
 							</div>
 							<div class="col-sm-6">
-								<button class="btn btn-default form-control" type="submit"><span class="glyphicon glyphicon-ok"></span> Create</button>
+								<button class="btn btn-default form-control" ><span class="glyphicon glyphicon-ok"></span> Create</button>
 							</div>
 						</form>
 					</div>

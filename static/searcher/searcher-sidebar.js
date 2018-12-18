@@ -1,4 +1,4 @@
-/* global swal PREFIX */
+/* global swal PREFIX swalWarningDisplay */
 var counter = 1
 var factValSubCounter = {}
 $(document).ready(function () {
@@ -117,7 +117,7 @@ function removeSearches () {
     if (pkArray.length > 0) {
         deleteSelectedSearches(pkArray)
     } else {
-        swalNothingSelected()
+        swalWarningDisplay('Please select a saved search first.')
     }
 }
 function deleteSelectedSearches (pkArray) {
@@ -142,12 +142,6 @@ function deleteSelectedSearches (pkArray) {
                 })
             })
         }
-    })
-}
-function swalNothingSelected () {
-    swal({
-        title: 'Please select a saved search first.',
-        type: 'warning'
     })
 }
 function displaySearches (searches) {
@@ -240,21 +234,21 @@ function renderSavedSearch (searchID) {
 function renderSavedSearchField (fieldData, minDate, maxDate) {
     if (fieldData.constraint_type === 'date') {
         makeDateField(minDate, maxDate, fieldData)
-        $('#field_' + counter.toString() + ' #daterange_from_' + counter.toString()).val(fieldData.start_date)
-        $('#field_' + counter.toString() + ' #daterange_to_' + counter.toString()).val(fieldData.end_date)
+        $(`#field_${counter.toString()} #daterange_from_${counter.toString()}`).val(fieldData.start_date)
+        $(`#field_${counter.toString()} #daterange_to_${counter.toString()}`).val(fieldData.end_date)
     } else if (fieldData.constraint_type === 'string') {
         makeTextField(fieldData, true)
-        $('#match_operator_' + counter.toString()).val(fieldData.operator)
-        $('#match_type_' + counter.toString()).val(`match_${fieldData.match_type}`)
-        $('#match_slop_' + counter.toString()).val(fieldData.slop)
-        $('#match_txt_' + counter.toString()).val(fieldData.content.join('\n'))
+        $(`#match_operator_${counter.toString()}`).val(fieldData.operator)
+        $(`#match_type_${counter.toString()}`).val(`match_${fieldData.match_type}`)
+        $(`#match_slop_${counter.toString()}`).val(fieldData.slop)
+        $(`#match_txt_${counter.toString()}`).val(fieldData.content.join('\n'))
     } else if (fieldData.constraint_type === 'facts') {
         makeFactField(fieldData)
-        $('#fact_operator_' + counter.toString()).val(fieldData.operator)
-        $('#fact_txt_' + counter.toString()).val(fieldData.content.join('\n'))
+        $(`#fact_operator_${counter.toString()}`).val(fieldData.operator)
+        $(`#fact_txt_${counter.toString()}`).val(fieldData.content.join('\n'))
     } else if (fieldData.constraint_type === 'str_fact_val') {
         makeStrFactField(fieldData)
-        $('#fact_operator_' + counter.toString()).val(fieldData.operator)
+        $(`#fact_operator_${counter.toString()}`).val(fieldData.operator)
         for (var i = 0; i < fieldData.sub_constraints.length; i++) {
             var subConstraint = fieldData.sub_constraints[i]
 
@@ -655,9 +649,15 @@ function clusterQuery () {
     var request = new XMLHttpRequest()
 
     request.onreadystatechange = function () {
-        $('#right').html('Loading...')
-        if (request.readyState === 4 && request.status === 200) {
-            $('#right').html(request.responseText)
+        $('#right').html(`loading ${request.readyState}/4'`)
+        if (request.readyState === 4) {
+            $('#right').html('')
+            if (request.status === 200) {
+                $('#right').html(request.responseText)
+            }
+            if (request.status === 400 && request.statusText === 'field') {
+                swalWarningDisplay('Please select a field first')
+            }
         }
     }
 
@@ -770,9 +770,15 @@ function mltQuery () {
 
     if (mltField != null) {
         request.onreadystatechange = function () {
-            $('#right').html('Loading...')
-            if (request.readyState === 4 && request.status === 200) {
-                $('#right').html(request.responseText)
+            $('#right').html(`loading ${request.readyState}/4'`)
+            if (request.readyState === 4) {
+                $('#right').html('')
+                if (request.status === 200) {
+                    $('#right').html(request.responseText)
+                }
+                if (request.status === 400 && request.statusText === 'field') {
+                    swalWarningDisplay('Please select a field first')
+                }
             }
         }
         request.open('POST', PREFIX + '/mlt_query')

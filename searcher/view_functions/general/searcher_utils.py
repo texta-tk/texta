@@ -18,7 +18,7 @@ def additional_option_cut_text(content, window_size):
         num_spans = len(html_spans)
         # merge together ovelapping spans
         for i,html_span in enumerate(html_spans):
-            if not html_span.get('class'):
+            if not html_span.get('class')[0]:
                 span_text = html_span.text
                 span_tokens = span_text.split(' ')
                 span_tokens_len = len(span_tokens)

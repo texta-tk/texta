@@ -15,7 +15,7 @@ $(document).ready(function () {
         startView: 2,
         autoclose: true
     })
-
+    
     $(document.body).on('click', 'a.toggle-visibility', function (e) {
         e.preventDefault()
 
@@ -147,7 +147,7 @@ function query () {
             examplesTable = $('#examples').DataTable({
                 'autoWidth': false,
                 'deferRender': true,
-                'scrollY': '80vh',
+                'scrollY': '85vh',
                 'bServerSide': true,
                 'processing': true,
                 'filter': false,
@@ -200,7 +200,7 @@ function query () {
                 'columnDefs': columns,
                 'ordering': false
             })
-
+            $.fn.DataTable.ext.pager.numbers_length = 5
             initColumnSelectVisiblity(examplesTable)
             var dataset = $('#dataset').val()
             var mapping = $('#mapping').val()
@@ -211,7 +211,6 @@ function query () {
             if ($('.fullscreen-actions-div > i').length === 0) {
                 $('.glyphicon-fullscreen-content-searcher').clone().addClass('new-toggle').appendTo($('.fullscreen-actions-div'))
             }
-
             loadUserPreference(dataset, mapping)
             $('#actions-btn').removeClass('invisible')
             $('#export-examples-modal').removeClass('invisible')
@@ -532,6 +531,7 @@ function deleteFactArray (factArray, source) {
     }
 }
 
+
 function showStringChildren (data, childrenContainer, grandchildrenContainer, rowKey, type) {
     childrenContainer.empty()
     grandchildrenContainer.empty()
@@ -547,15 +547,16 @@ function showStringChildren (data, childrenContainer, grandchildrenContainer, ro
             if (type === 'fact') {
                 var factData = {}
                 factData[rowKey] = this.key
-                var addToSearchIcon = '<i class="glyphicon glyphicon-search pull-right"\
+                var addToSearchIcon = `<i class="glyphicon glyphicon-search pull-right"\
                 data-toggle="tooltip" title="Add to search"\
                 style="cursor: pointer"\
-                onclick=\'addFactToSearch("' + rowKey + '","' + this.key + '");\'></i>'
-
+                onclick=\'addFactToSearch("${rowKey}","${this.key}");\'></i>`
+                addToSearchIcon = strip(addToSearchIcon)
+                
                 // keep track of checkboxes using their name as {NAME: VALUE}, otherwise when clicking on another fact name, they get overwritten
                 let checkboxName = JSON.stringify(factData).replace(/"/g, "'")
-                var checkbox = '<input id="checkBox_' + rowKey + '_' + this.key + '"\
-                type="checkbox" name="' + checkboxName + '" onchange="factDeleteCheckbox(this)"'
+                var checkbox = `<input id="checkBox_${rowKey}_${this.key}"\
+                type="checkbox" name="${checkboxName}" onchange="factDeleteCheckbox(this)"`
 
                 for (var i = 0; i < selectedFactCheckboxes.length; i++) {
                     if (selectedFactCheckboxes[i].name === checkboxName) {
@@ -563,9 +564,9 @@ function showStringChildren (data, childrenContainer, grandchildrenContainer, ro
                     }
                 }
 
-                rowContainer = $('<tr><td>' + this.val + '</td><td>' + this.key + '</td><td>' + addToSearchIcon + '</td><td>' + checkbox + '></td></tr>')
+                rowContainer = $(`<tr><td> ${this.val} </td><td> ${this.key} </td><td> ${addToSearchIcon}</td><td> ${checkbox}></td></tr>`)
             } else {
-                rowContainer = $('<tr><td>' + this.val + '</td><td>' + this.key + '</td><td></td></tr>')
+                rowContainer = $(`<tr><td> ${this.val} </td><td> ${this.key} </td><td></td></tr>`)
             }
         };
 
@@ -604,6 +605,7 @@ function showStringChildren (data, childrenContainer, grandchildrenContainer, ro
     childrenContainer.append(table)
     childrenContainer.removeClass('hidden')
 }
+
 
 function loadUserPreference (dataset, mapping) {
     var hiddenFeatures = localStorage.getCacheItem('hiddenFeatures_' + dataset + '_' + mapping)
@@ -690,4 +692,10 @@ function deleteFactFromDoc(fact_name, fact_value, doc_id) {
             ajaxDeleteFacts(form_data, [{[fact_name]:fact_value}]);
         }
     });
+}
+
+function strip(html){
+    // Strip html from string
+    var doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || "";
 }
