@@ -248,9 +248,12 @@ def mlt_query(request):
     # todo need alot of refactoring, fixing
     es_params = request.POST
     draw = int(es_params['draw'])
+
     if('mlt_fields' not in es_params):
         return HttpResponse(status=400,reason='field')
-
+    else:
+        if(es_params['mlt_fields'] == '[]' ):
+            return HttpResponse(status=400,reason='field')
     mlt_fields = [ field for field in json.loads(es_params['mlt_fields'])]
 
     handle_negatives = request.POST['handle_negatives']
@@ -271,10 +274,11 @@ def mlt_query(request):
     es_m.build(es_params)
 
     response = es_m.more_like_this_search(mlt_fields,handle_negatives=handle_negatives, stopwords=stopwords)
+    result = {'data': [],'recordsTotal': response['hits']['total'],'recordsFiltered': response['hits']['total'], 'draw': draw}
     documents = []
     columns_to_parse = []
     column_names = es_m.get_column_names(facts=True)
-    row = OrderedDict([(x, '') for x in column_names])
+
     """   column_name = es_m.get_column_names(es_m) """
     for hit in response['hits']['hits']:
         # for column in hit['_source']:
@@ -283,10 +287,10 @@ def mlt_query(request):
         #         column_names.append(column)
         hit_id = str(hit['_id'])
         hit['_source']['_es_id'] = hit_id
-
+        row = OrderedDict([(x, '') for x in column_names])
         inner_hits = hit['inner_hits'] if 'inner_hits' in hit else {}
         name_to_inner_hits = _derive_name_to_inner_hits(inner_hits)
-        cols_data = {}
+
         for col in column_names:
             # If the content is nested, need to break the flat name in a path list
 
@@ -306,19 +310,9 @@ def mlt_query(request):
             # Append the final content of this col to the row
             if row[col] == '':
                 row[col] = content
-            cols_data[col] = {'content': content, 'old_content': old_content}
 
-        # fields_content = get_fields_content(hit, columns_to_parse)
-        # documents.append(fields_content)
-        # columns_to_parse.clear()
-        """  fields_content = get_fields(es_m) """
-        # fields_content = get_fields_content(hit, mlt_fields)
-        # documents.append({'id':hit['_id'], 'content': fields_content})
+        result['data'].append([hit_id, hit_id] + list(row.values()))
 
-    result = {'column_names': column_names,'data': [],'recordsTotal': response['hits']['total'],'recordsFiltered': response['hits']['total'], 'draw': draw}
-    result['data'].append(row.values())
-    for i in range(len(result['data'])):
-        result['data'][i] = list(result['data'][i])
 
     return HttpResponse(json.dumps(result, ensure_ascii=False))
 

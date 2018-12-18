@@ -2,9 +2,8 @@
 	<thead>
 		<tr>
 {#        todo fix all of this #}
-{#			<th>Doc ID</th>#}
-{#			<th>Accept</th>#}
-{#			<th>Reject</th>#}
+			<th>Accept</th>
+			<th>Reject</th>
 
             {% for column in columns %}
                 <th>{{column.name}}</th>
@@ -12,17 +11,7 @@
 		</tr>
 	</thead>
 	<tbody>
-{#		{% for doc in documents %}#}
-{#			<tr id="row_{{doc.id}}">#}
-{#				<td>{{doc.id}}</td>#}
-{#				<td><a href="javascript:acceptDocument('{{doc.id}}')"><span class="glyphicon glyphicon-plus"></span></a></td>#}
-{#				<td><a href="javascript:rejectDocument('{{doc.id}}')"><span class="glyphicon glyphicon-remove"></span></a></td>#}
-{##}
-{#				{% for field_content in doc.content.values %}#}
-{#					<td>{{field_content|safe}}</td>#}
-{#				{% endfor %}#}
-{#			</tr>#}
-{#		{% endfor %}#}
+
 	</tbody>
 </table>
 {#<script>#}

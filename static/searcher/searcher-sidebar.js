@@ -770,6 +770,7 @@ function mltQuery () {
     var mltField = $("select[id='mlt_fields']")
     var request = new XMLHttpRequest()
     var formData = new FormData(formElement)
+    var columns
     if (mltField != null) {
         request.onreadystatechange = function () {
             $('#right').html(`loading ${request.readyState}/4'`)
@@ -777,11 +778,38 @@ function mltQuery () {
                 $('#right').html('')
                 if (request.status === 200) {
                     $('#right').html(request.responseText)
+                    var columns = []
+                    $('#mlt_table > thead > tr').find('th').each(function (index) {
+                        // Append _DtCol to end to safe from naming conflicts
+                        columns.push({ 'className': 'DtCol_' + $(this).text(), 'targets': index })
+                    })
                     $('#mlt_table').DataTable({
                         'dom': 'R',
-
+                        'autoWidth': false,
                         'processing': true,
+                        "columnDefs": [
+                            columns,
+                            {
+                                "targets": 0,
+                                'searchable': false,
+                                "render": function ( data, type, row, meta ) {
+                                    return '<a onclick="javascript:acceptDocument("'+data+'")" role="button"><span class="glyphicon glyphicon-plus"></span></a>';
+                                }
+
+                            },
+                            {
+                                "targets": 1,
+                                'searchable': false,
+                                "render": function ( data, type, row, meta ) {
+                                    return '<a onclick="javascript:rejectDocument("'+data+'")" role="button"><span class="glyphicon glyphicon-remove"></span></a>';
+                                },
+
+                            },
+
+                        ],
                         'serverSide': true,
+                        'scrollY': "800px",
+                        'scrollX': true,
                         'ajax': {
                             "url": PREFIX + '/mlt_query',
                             "type": "POST",
@@ -789,12 +817,18 @@ function mltQuery () {
                                 'mlt_fields': JSON.stringify(mltField.val()),
                                 'handle_negatives': $('#handle_negatives').val()
                             },
+                            error: function (xhr, error, thrown) {
+                                if (xhr.status === 400 && xhr.statusText === 'field') {
+                                    swalWarningDisplay('Please select a field first')
+                                }
+                            }
+                        },
+                        'fnInitComplete': function () {
+
                         },
                     })
                 }
-                if (request.status === 400 && request.statusText === 'field') {
-                    swalWarningDisplay('Please select a field first')
-                }
+
             }
         }
         request.open('POST', PREFIX + '/table_header_mlt')
