@@ -39,6 +39,8 @@ class EntityExtractorWorker(BaseWorker):
         
         self.tagger = None
         self.facts = None
+        # If there is less than this amount of memory in Mb left in the machine, stop appending training data
+        self.min_mb_available_memory = 1500
 
     def run(self, task_id):
 
@@ -57,9 +59,15 @@ class EntityExtractorWorker(BaseWorker):
             if 'fields' in task_params:
                 fields = task_params['fields']
             else:
-                fields = task_params['field']
+                self._bad_params_result("No fields selected")
+                return False
 
-            fact_names = task_params["facts"]
+            if "facts" in task_params:
+                fact_names = task_params["facts"]
+            else:
+                self._bad_params_result("No fact names given")
+                return False
+
             show_progress.update(0)
             # Check if query was explicitly set
             if 'search_tag' in task_params:
@@ -139,27 +147,15 @@ class EntityExtractorWorker(BaseWorker):
         X_train, X_val = train_test_split(hits, test_size=0.1, random_state=42)
         X_train = self._transform(X_train, facts)
         X_val = self._transform(X_val, facts)
+
         # Create training data generators
-        X_train, y_train = self._get_memory_safe_features(X_train)
-        X_val, y_val = self._get_memory_safe_features(X_val, min_available_memory=500)
-        import pdb;pdb.set_trace()
+        y_train = (self._sent2labels(s) for s in X_train)
+        X_train = (self._sent2features(s) for s in X_train)
+        y_val = (self._sent2labels(s) for s in X_val)
+        X_val = (self._sent2features(s) for s in X_val)
+
         return X_train, y_train, X_val, y_val 
 
-    def _get_memory_safe_features(self, X_data, min_available_memory=1500):
-        X_feats = []
-        y_feats = []
-        for i, x in enumerate(X_data):
-            y = self._sent2labels(x)
-            x = self._sent2features(x)
-            X_feats.append(x)
-            y_feats.append(y)
-            # check if there is less than min_available_memory in megabytes remaining in the machine
-            if i % 10000 == 0:
-                print(psutil.virtual_memory().available / 1000000, i)
-                if (psutil.virtual_memory().available / 1000000) < min_available_memory:
-                    print('EntityExtractorWorker:_get_memory_safe_features - Less than {} mb of memory remaining, breaking adding more data.'.format(min_available_memory))
-                    break
-        return x, y
 
     def _save_as_pkl(self, var, suffix):
         # Save facts as metadata for tagging, to covert new data into training data using facts
@@ -189,10 +185,9 @@ class EntityExtractorWorker(BaseWorker):
                 else:
                     # Add no fact, with a special tag
                     marked.append((word, '<TEXTA_O>'))
-            marked_docs.append(marked)
-
             if i % 5000 == 0: # DEBUG
                 print(i)
+            marked_docs.append(marked)
         return marked_docs
 
 
@@ -231,15 +226,15 @@ class EntityExtractorWorker(BaseWorker):
 
 
     def _sent2features(self, sent):
-        return [self._word2features(sent, i) for i in range(len(sent))]
+        return (self._word2features(sent, i) for i in range(len(sent)))
 
 
     def _sent2labels(self, sent):
-        return [label for token, label in sent]
+        return (label for token, label in sent)
 
 
     def _sent2tokens(self, sent):
-        return [token for token, label in sent]
+        return (token for token, label in sent)
 
 
     def _train_and_validate(self, X_train, y_train, X_val, y_val):
@@ -274,8 +269,18 @@ class EntityExtractorWorker(BaseWorker):
 
     def _train_and_save(self, X_train, y_train):
         trainer = Trainer(verbose=False)
-
-        for xseq, yseq in zip(X_train, y_train):
+        for i, (xseq, yseq) in enumerate(zip(X_train, y_train)):
+            # Check how much memory left, stop adding more data if too little
+            if i % 2500 == 0:
+                print(psutil.virtual_memory().available / 1000000, i)
+                if (psutil.virtual_memory().available / 1000000) < self.min_mb_available_memory:
+                    print('EntityExtractorWorker:_get_memory_safe_features - Less than {} Mb of memory remaining, breaking adding more data.'.format(self.min_mb_available_memory))
+                    logging.getLogger(INFO_LOGGER).info(json.dumps({
+                        'process': 'EntityExtractorWorker:_train_and_save',
+                        'event':   'Less than {}Mb of memory available, stopping adding more training data. Iteration {}.'.format(self.min_mb_available_memory, i),
+                        'data':    {'task_id': self.task_id}
+                    }))
+                    break
             trainer.append(xseq, yseq)
 
         trainer.set_params({
@@ -354,3 +359,8 @@ class EntityExtractorWorker(BaseWorker):
                     for val_word in val["key"].split(' '):
                         fact_data[val_word] = fact["key"]
         return fact_data
+
+    def _bad_params_result(self, msg: str):
+        task = Task.objects.get(pk=self.task_id)
+        task.result = json.dumps({"error": msg})
+        task.update_status(Task.STATUS_FAILED, set_time_completed=True)
