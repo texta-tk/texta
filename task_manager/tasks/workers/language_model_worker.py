@@ -67,10 +67,11 @@ class LanguageModelWorker(BaseWorker):
         except Exception as e:
             # If here, internal error happened
             logging.getLogger(ERROR_LOGGER).exception(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_failed', 'data': {'task_id': self.id}}), exc_info=True)
-            print('--- Error: {0}'.format(e))
+            #print('--- Error: {0}'.format(e))
             # Declare the job as failed
             task = Task.objects.get(pk=self.id)
-            task.update_status(Task.STATUS_FAILED, set_time_completed=True)
+            task.result = json.dumps({"error": str(e)})
+            task.update_status(Task.STATUS_FAILED, set_time_completed=False)
 
         print('done')
 
