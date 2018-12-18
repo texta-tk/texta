@@ -5,7 +5,8 @@ import storers
 
 
 def log_storer_status(code, status):
-    print('[Dataset Importer] {code} storer {status}.'.format(**{'code': code, 'status': status}))
+    if status == 'disabled':
+        print('[Dataset Importer] {code} storer {status}.'.format(**{'code': code, 'status': status}))
 
 
 storer_map = {}

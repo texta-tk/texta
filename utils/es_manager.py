@@ -612,5 +612,3 @@ class ES_Manager:
             return unique_fields_with_schemas
         else:
             return fields_with_schemas
-
-
