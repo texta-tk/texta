@@ -17,9 +17,9 @@ from texta.settings import INFO_LOGGER
 from texta.settings import MODELS_DIR
 
 from pycrfsuite import Trainer, Tagger
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelBinarizer
+from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
 from task_manager.tools import ShowSteps
 from task_manager.tools import TaskCanceledException
 from task_manager.tools import get_pipeline_builder
@@ -39,6 +39,7 @@ class EntityExtractorWorker(BaseWorker):
         
         self.tagger = None
         self.facts = None
+        self.train_summary = {}
         # If there is less than this amount of memory in Mb left in the machine, stop appending training data
         self.min_mb_available_memory = 1500
 
@@ -89,17 +90,18 @@ class EntityExtractorWorker(BaseWorker):
             # Training the model.
             show_progress.update(1)
             # Train and report validation
-            model, report = self._train_and_validate(X_train, y_train, X_val, y_val)
+            model, report, confusion = self._train_and_validate(X_train, y_train, X_val, y_val)
             print(report)
-            train_summary = {}
-            train_summary['samples'] = len(hits)
-            train_summary['model_type'] = 'CRF'
-            train_summary.update(report)
+            self.train_summary['samples'] = len(hits)
+            self.train_summary['model_type'] = 'CRF'
+            import pdb;pdb.set_trace()
+            self.train_summary['confusion_matrix'] = confusion
+            self.train_summary.update(report)
             show_progress.update(2)
 
             # Declare the job as done
             r = Task.objects.get(pk=self.task_id)
-            r.result = json.dumps(train_summary)
+            r.result = json.dumps(self.train_summary)
             r.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
             logging.getLogger(INFO_LOGGER).info(json.dumps({
@@ -151,7 +153,7 @@ class EntityExtractorWorker(BaseWorker):
         # Create training data generators
         y_train = (self._sent2labels(s) for s in X_train)
         X_train = (self._sent2features(s) for s in X_train)
-        y_val = (self._sent2labels(s) for s in X_val)
+        y_val = [self._sent2labels(s) for s in X_val]
         X_val = (self._sent2features(s) for s in X_val)
 
         return X_train, y_train, X_val, y_val 
@@ -230,7 +232,7 @@ class EntityExtractorWorker(BaseWorker):
 
 
     def _sent2labels(self, sent):
-        return (label for token, label in sent)
+        return [label for token, label in sent]
 
 
     def _sent2tokens(self, sent):
@@ -242,8 +244,8 @@ class EntityExtractorWorker(BaseWorker):
 
         # Initialize self.tagger
         self._load_tagger()
-        report = self._validate(self.tagger, X_val, y_val)
-        return model, report
+        report, confusion = self._validate(self.tagger, X_val, y_val)
+        return model, report, confusion
 
 
     def _load_facts(self):
@@ -275,6 +277,7 @@ class EntityExtractorWorker(BaseWorker):
                 print(psutil.virtual_memory().available / 1000000, i)
                 if (psutil.virtual_memory().available / 1000000) < self.min_mb_available_memory:
                     print('EntityExtractorWorker:_get_memory_safe_features - Less than {} Mb of memory remaining, breaking adding more data.'.format(self.min_mb_available_memory))
+                    self.train_summary["warning"] = "Trained on {} documents, because more documents don't fit into memory".format(i)
                     logging.getLogger(INFO_LOGGER).info(json.dumps({
                         'process': 'EntityExtractorWorker:_train_and_save',
                         'event':   'Less than {}Mb of memory available, stopping adding more training data. Iteration {}.'.format(self.min_mb_available_memory, i),
@@ -310,19 +313,22 @@ class EntityExtractorWorker(BaseWorker):
         tagset = sorted(tagset, key=lambda tag: tag.split('-', 1)[::-1])
         class_indices = {cls: idx for idx, cls in enumerate(lb.classes_)}
 
+        # Confusion matrix
+        confusion = confusion_matrix(y_pred_combined.argmax(axis=1), y_true_combined.argmax(axis=1))
+
         # Return sklearn classification_report, return report as dict
         return classification_report(
             y_true_combined,
             y_pred_combined,
             labels=[class_indices[cls] for cls in tagset],
             target_names=tagset,
-            output_dict=True)
+            output_dict=True), confusion
 
 
     def _validate(self, model, X_val, y_val):
         y_pred = [model.tag(xseq) for xseq in X_val]
-        report = self._bio_classification_report(y_val, y_pred)
-        return report
+        report, confusion = self._bio_classification_report(y_val, y_pred)
+        return report, confusion
 
 
     def _scroll_query_response(self, query, fields):
