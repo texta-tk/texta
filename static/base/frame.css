@@ -15,6 +15,15 @@ body {
 }
 
 /* global style */
+.align-items-end{
+    align-items: flex-end;
+}
+.margin-right{
+    margin-right: 10px;
+}
+.margin-left{
+    margin-left: 10px;
+}
 .margin-bottom{
     margin-bottom: 5px;
 }
@@ -40,6 +49,7 @@ body {
     justify-content: center;
 }
 .flex-items-align-center{
+    display: flex;
     align-items: center;
 }
 .height-max{
@@ -56,8 +66,7 @@ html,body{
     height: 100%;
 }
 .navbar-inverse{
-    background-image: none;
-    background-color: #000000;
+    background: #000000 none;
 }
 .panel{
     margin-bottom: 0px;
@@ -150,8 +159,21 @@ html,body{
     padding-left:2px;
     padding-right:2px;
 }
+.low-opacity{
+    opacity: 0.5;
+}
 
 /* end of global styles */
+
+.dropdown-menu{
+    -webkit-border-radius: 0;
+    -moz-border-radius: 0;
+    border-radius: 0;
+}
+.account-dropdown-item{
+    padding-left: 5px !important;
+}
+
 
 .grid-item-navbar {
     grid-area: navbar;
@@ -168,13 +190,11 @@ html,body{
 
 .user-data {
     color: #EFEFEF;
-    align-items: center
 }
 
 .navbar-right>.help-block {
     margin: 0;
     display: flex;
-    align-items: center;
 }
 
 .navbar-right {
@@ -185,7 +205,6 @@ html,body{
 
 .navbar-right>.navbar-form {
     display: flex;
-    align-items: center;
     margin: 0px;
 }
 
@@ -328,4 +347,11 @@ html,body{
 }
 .form-control{
     border-radius: 0px;
+}
+#account-dropdown{
+    color: white;
+    text-decoration: inherit;
+}
+.navbar-collapse.in{
+    overflow-y: visible;
 }
