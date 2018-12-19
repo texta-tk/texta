@@ -227,3 +227,12 @@ With scroll head for some reason there are v-a: middle on td  */
   display: none;
 }
 thead th { white-space: nowrap; }
+
+.slider-wrapper {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.slider-wrapper .slider {
+  width: 100%;
+}

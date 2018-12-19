@@ -14,6 +14,12 @@ $(document).ready(function () {
         /* global query */
         query()
     }
+    $('#mlt_doc_slider').slider({
+        formatter: function (value) {
+            return value
+        }
+    })
+
 })
 
 var getUrlParameter = function getUrlParameter (sParam) {
@@ -770,8 +776,7 @@ function mltQuery () {
     var mltField = $("select[id='mlt_fields']")
     var request = new XMLHttpRequest()
     var formData = new FormData(formElement)
-    var columns
-    if (mltField != null) {
+    if (mltField.val().length !== 0) {
         request.onreadystatechange = function () {
             $('#right').html(`loading ${request.readyState}/4'`)
             if (request.readyState === 4) {
@@ -787,26 +792,7 @@ function mltQuery () {
                         'dom': 'R',
                         'autoWidth': false,
                         'processing': true,
-                        "columnDefs": [
-                            columns,
-                            {
-                                "targets": 0,
-                                'searchable': false,
-                                "render": function ( data, type, row, meta ) {
-                                    return '<a onclick="javascript:acceptDocument("'+data+'")" role="button"><span class="glyphicon glyphicon-plus"></span></a>';
-                                }
 
-                            },
-                            {
-                                "targets": 1,
-                                'searchable': false,
-                                "render": function ( data, type, row, meta ) {
-                                    return '<a onclick="javascript:rejectDocument("'+data+'")" role="button"><span class="glyphicon glyphicon-remove"></span></a>';
-                                },
-
-                            },
-
-                        ],
                         'serverSide': true,
                         'scrollY': "800px",
                         'scrollX': true,
@@ -814,19 +800,41 @@ function mltQuery () {
                             "url": PREFIX + '/mlt_query',
                             "type": "POST",
                             data: {
+                                /* todo send data from build search for docs rejected? */
                                 'mlt_fields': JSON.stringify(mltField.val()),
                                 'handle_negatives': $('#handle_negatives').val()
                             },
                             error: function (xhr, error, thrown) {
                                 if (xhr.status === 400 && xhr.statusText === 'field') {
                                     swalWarningDisplay('Please select a field first')
+                                    $('#right').html('No fields selected!')
                                 }
                             }
                         },
-                        'fnInitComplete': function () {
+                        "columnDefs": [
+                            columns,
+                            {
+                                "targets": 0,
+                                'searchable': false,
+                                "render": function ( data, type, row, meta ) {
+                                    return '<a onclick=javascript:acceptDocument("'+data+'") role="button"><span class="glyphicon glyphicon-plus"></span></a>';
+                                }
 
-                        },
+                            },
+                            {
+                                "targets": 1,
+                                'searchable': false,
+                                "render": function ( data, type, row, meta ) {
+                                    return '<a onclick=javascript:rejectDocument("'+data+'") role="button"><span class="glyphicon glyphicon-remove"></span></a>';
+                                },
+
+                            },
+
+                        ],
                     })
+                }
+                else{
+                    $('#right').html('Error:'+request.statusText)
                 }
 
             }
@@ -834,6 +842,7 @@ function mltQuery () {
         request.open('POST', PREFIX + '/table_header_mlt')
         request.send(formData)
     } else {
+        swalWarningDisplay('Please select a field first')
         $('#right').html('No fields selected!')
     }
 }
