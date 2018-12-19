@@ -249,21 +249,21 @@ def mlt_query(request):
     es_params = request.POST
     draw = int(es_params['draw'])
 
-    if('mlt_fields' not in es_params):
+    if 'mlt_fields' not in es_params:
         return HttpResponse(status=400,reason='field')
     else:
-        if(es_params['mlt_fields'] == '[]' ):
+        if es_params['mlt_fields'] == '[]':
             return HttpResponse(status=400,reason='field')
     mlt_fields = [ field for field in json.loads(es_params['mlt_fields'])]
 
-    handle_negatives = request.POST['handle_negatives']
-    # docs_accepted = [a.strip() for a in request.POST['docs'].split('\n') if a]
-    # docs_rejected = [a.strip() for a in request.POST['docs_rejected'].split('\n') if a]
+    handle_negatives = es_params['handle_negatives']
+    docs_accepted = [a.strip() for a in es_params['docs'].split('\n') if a]
+    docs_rejected = [a.strip() for a in es_params['docs_rejected'].split('\n') if a]
 
     # stopwords
-    stopword_lexicon_ids = request.POST.getlist('mlt_stopword_lexicons')
+    stopword_lexicon_ids = es_params.getlist('mlt_stopword_lexicons')
     stopwords = []
-
+    search_size = es_params['search_size']
     for lexicon_id in stopword_lexicon_ids:
         lexicon = Lexicon.objects.get(id=int(lexicon_id))
         words = Word.objects.filter(lexicon=lexicon)
@@ -272,9 +272,10 @@ def mlt_query(request):
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
-
-    response = es_m.more_like_this_search(mlt_fields,handle_negatives=handle_negatives, stopwords=stopwords)
-    result = {'data': [],'recordsTotal': response['hits']['total'],'recordsFiltered': response['hits']['total'], 'draw': draw}
+    es_m.set_query_parameter('from', es_params['start'])
+    es_m.set_query_parameter('size', search_size)
+    response = es_m.more_like_this_search(mlt_fields,docs_accepted=docs_accepted,docs_rejected=docs_rejected,handle_negatives=handle_negatives, stopwords=stopwords, search_size=search_size)
+    result = {'data': [], 'draw': draw, 'recordsTotal': len(response['hits']['hits'])}
     documents = []
     columns_to_parse = []
     column_names = es_m.get_column_names(facts=True)
@@ -312,7 +313,6 @@ def mlt_query(request):
                 row[col] = content
 
         result['data'].append([hit_id, hit_id] + list(row.values()))
-
 
     return HttpResponse(json.dumps(result, ensure_ascii=False))
 

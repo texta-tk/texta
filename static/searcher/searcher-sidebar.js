@@ -776,6 +776,10 @@ function mltQuery () {
     var mltField = $("select[id='mlt_fields']")
     var request = new XMLHttpRequest()
     var formData = new FormData(formElement)
+    var docSliderValue = $('#mlt_doc_slider').slider('getValue')
+    var mltFieldData = mltField.val().map((e)=>{
+        return JSON.parse(e).path;
+    })
     if (mltField.val().length !== 0) {
         request.onreadystatechange = function () {
             $('#right').html(`loading ${request.readyState}/4'`)
@@ -789,19 +793,21 @@ function mltQuery () {
                         columns.push({ 'className': 'DtCol_' + $(this).text(), 'targets': index })
                     })
                     $('#mlt_table').DataTable({
-                        'dom': 'R',
                         'autoWidth': false,
                         'processing': true,
-
                         'serverSide': true,
-                        'scrollY': "800px",
+                        'scrollY': "88vh",
                         'scrollX': true,
+                        'dom': 'rt',
                         'ajax': {
                             "url": PREFIX + '/mlt_query',
                             "type": "POST",
                             data: {
                                 /* todo send data from build search for docs rejected? */
-                                'mlt_fields': JSON.stringify(mltField.val()),
+                                'docs': docs.value,
+                                'docs_rejected': docs_rejected.value,
+                                'search_size' : docSliderValue,
+                                'mlt_fields': JSON.stringify(mltFieldData),
                                 'handle_negatives': $('#handle_negatives').val()
                             },
                             error: function (xhr, error, thrown) {
@@ -816,6 +822,7 @@ function mltQuery () {
                             {
                                 "targets": 0,
                                 'searchable': false,
+                                'className': 'dt-center',
                                 "render": function ( data, type, row, meta ) {
                                     return '<a onclick=javascript:acceptDocument("'+data+'") role="button"><span class="glyphicon glyphicon-plus"></span></a>';
                                 }
@@ -824,6 +831,7 @@ function mltQuery () {
                             {
                                 "targets": 1,
                                 'searchable': false,
+                                'className': 'dt-center',
                                 "render": function ( data, type, row, meta ) {
                                     return '<a onclick=javascript:rejectDocument("'+data+'") role="button"><span class="glyphicon glyphicon-remove"></span></a>';
                                 },
@@ -831,10 +839,19 @@ function mltQuery () {
                             },
 
                         ],
+                        'fnInitComplete': function () {
+                            $('.dataTables_scrollHead').css('overflow-x', 'auto')
+                            // Sync THEAD scrolling with TBODY
+                            $('.dataTables_scrollHead').on('scroll', function () {
+                                $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft())
+                            })
+                            // Initialize clicking HLs/selection text for properties
+                            /* global createSelectionProps, selectionProps */
+                        },
                     })
                 }
                 else{
-                    $('#right').html('Error:'+request.statusText)
+                    $('#right').html('Error Code='+request.status+' state = '+request.readyState+' response ='+request.statusText)
                 }
 
             }
