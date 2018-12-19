@@ -5,21 +5,22 @@ import logging
 import numpy as np
 import pickle as pkl
 import psutil
-from itertools import chain
+from itertools import chain, product
 
 from task_manager.models import Task
 from searcher.models import Search
 from utils.es_manager import ES_Manager
 from utils.datasets import Datasets
 
-from texta.settings import ERROR_LOGGER
-from texta.settings import INFO_LOGGER
-from texta.settings import MODELS_DIR
+from texta.settings import ERROR_LOGGER, INFO_LOGGER, MODELS_DIR, URL_PREFIX, MEDIA_URL, PROTECTED_MEDIA
 
+import pandas as pd
+import matplotlib.pyplot as plt
 from pycrfsuite import Trainer, Tagger
-from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
+
 from task_manager.tools import ShowSteps
 from task_manager.tools import TaskCanceledException
 from task_manager.tools import get_pipeline_builder
@@ -39,6 +40,9 @@ class EntityExtractorWorker(BaseWorker):
         
         self.tagger = None
         self.facts = None
+        self.oob_val = "<TEXTA_O>"
+        self.eos_val = "<TEXTA_BOS>"
+        self.bos_val = "<TEXTA_EOS>"
         self.train_summary = {}
         # If there is less than this amount of memory in Mb left in the machine, stop appending training data
         self.min_mb_available_memory = 1500
@@ -90,13 +94,13 @@ class EntityExtractorWorker(BaseWorker):
             # Training the model.
             show_progress.update(1)
             # Train and report validation
-            model, report, confusion = self._train_and_validate(X_train, y_train, X_val, y_val)
-            print(report)
+            model, report, confusion, plot_url = self._train_and_validate(X_train, y_train, X_val, y_val)
+
             self.train_summary['samples'] = len(hits)
             self.train_summary['model_type'] = 'CRF'
-            import pdb;pdb.set_trace()
-            self.train_summary['confusion_matrix'] = confusion
-            self.train_summary.update(report)
+            report_table = self._convert_dict_to_html_table(report)
+            self.train_summary["report"] = report_table
+            self.train_summary['confusion_matrix'] = '<img src="{}" style="max-width: 80%">'.format(plot_url)
             show_progress.update(2)
 
             # Declare the job as done
@@ -186,9 +190,7 @@ class EntityExtractorWorker(BaseWorker):
                     marked.append((word, facts[word]))
                 else:
                     # Add no fact, with a special tag
-                    marked.append((word, '<TEXTA_O>'))
-            if i % 5000 == 0: # DEBUG
-                print(i)
+                    marked.append((word, self.oob_val))
             marked_docs.append(marked)
         return marked_docs
 
@@ -214,7 +216,7 @@ class EntityExtractorWorker(BaseWorker):
                 '1' if word1.isupper() else '0',
             ])
         else:
-            features.append('<TEXTA_BOS>')
+            features.append(self.bos_val)
             
         if i < len(sent)-1:
             word1 = sent[i+1][0]
@@ -223,7 +225,7 @@ class EntityExtractorWorker(BaseWorker):
                 '1' if word1.istitle() else '0',
                 '1' if word1.isupper() else '0'])
         else:
-            features.append('<TEXTA_EOS>')
+            features.append(self.eos_val)
         return features
 
 
@@ -244,8 +246,8 @@ class EntityExtractorWorker(BaseWorker):
 
         # Initialize self.tagger
         self._load_tagger()
-        report, confusion = self._validate(self.tagger, X_val, y_val)
-        return model, report, confusion
+        report, confusion, plot_url = self._validate(self.tagger, X_val, y_val)
+        return model, report, confusion, plot_url
 
 
     def _load_facts(self):
@@ -274,7 +276,6 @@ class EntityExtractorWorker(BaseWorker):
         for i, (xseq, yseq) in enumerate(zip(X_train, y_train)):
             # Check how much memory left, stop adding more data if too little
             if i % 2500 == 0:
-                print(psutil.virtual_memory().available / 1000000, i)
                 if (psutil.virtual_memory().available / 1000000) < self.min_mb_available_memory:
                     print('EntityExtractorWorker:_get_memory_safe_features - Less than {} Mb of memory remaining, breaking adding more data.'.format(self.min_mb_available_memory))
                     self.train_summary["warning"] = "Trained on {} documents, because more documents don't fit into memory".format(i)
@@ -300,35 +301,71 @@ class EntityExtractorWorker(BaseWorker):
         return trainer
 
 
-    def _bio_classification_report(self, y_true, y_pred):
+    def _classification_reports(self, y_true, y_pred):
         """
-        Classification report for a list of BIO-encoded sequences.
-        It computes token-level metrics and discards "<TEXTA_O>" labels.
+        Classification report for a list of sequences.
+        It computes token-level metrics and discards self.oob_val labels.
         """
         lb = LabelBinarizer()
         y_true_combined = lb.fit_transform(list(chain.from_iterable(y_true)))
         y_pred_combined = lb.transform(list(chain.from_iterable(y_pred)))
-
-        tagset = set(lb.classes_) - {'<TEXTA_O>'}
-        tagset = sorted(tagset, key=lambda tag: tag.split('-', 1)[::-1])
+        tagset = sorted(set(lb.classes_) - {self.oob_val})
         class_indices = {cls: idx for idx, cls in enumerate(lb.classes_)}
-
-        # Confusion matrix
-        confusion = confusion_matrix(y_pred_combined.argmax(axis=1), y_true_combined.argmax(axis=1))
-
-        # Return sklearn classification_report, return report as dict
-        return classification_report(
+        # Labels accounting for the removal of self.oob_val
+        class_labels = [class_indices[cls] for cls in lb.classes_]
+        tagset_labels = [class_indices[cls] for cls in tagset]
+        report = classification_report(
             y_true_combined,
             y_pred_combined,
-            labels=[class_indices[cls] for cls in tagset],
+            labels=tagset_labels,
             target_names=tagset,
-            output_dict=True), confusion
+            output_dict=True)
+
+        # Confusion matrix
+        # confusion = confusion_matrix(y_pred_combined.argmax(axis=1), y_true_combined.argmax(axis=1))
+        confusion = confusion_matrix(y_pred_combined.argmax(axis=1), y_true_combined.argmax(axis=1), labels=class_labels)
+        # Set the self.oob_val prediction count to 0, to balance color highlights for other classes
+        confusion[class_indices[self.oob_val]][0] = 0
+
+        plt.figure()
+        cm_labels = lb.classes_ 
+        cm_labels[class_indices[self.oob_val]] = 'None'
+        self._plot_confusion_matrix(confusion, classes=cm_labels)
+        plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/{}_cm.svg".format(self.model_name))
+        plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager/{}_cm.svg".format(self.model_name))
+        plt.savefig(plot_path, format="svg", bbox_inches='tight')
+
+        # Return sklearn classification_report, return report as dict
+        return report, confusion, plot_url
+
+
+    def _plot_confusion_matrix(self, cm, classes, title='Confusion matrix'):
+        """
+        This function prints and plots the confusion matrix.
+        """
+        plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+        plt.title(title)
+        tick_marks = np.arange(len(classes))
+        plt.xticks(tick_marks, classes, rotation=45)
+        plt.yticks(tick_marks, classes)
+
+        fmt = 'd'
+        thresh = cm.max() / 2.
+        for i, j in product(range(cm.shape[0]), range(cm.shape[1])):
+            plt.text(j, i, format(cm[i, j], fmt),
+                    horizontalalignment="center",
+                    color="white" if cm[i, j] > thresh else "black")
+
+        plt.ylabel('True label')
+        plt.xlabel('Predicted label')
+        plt.tight_layout()
+
 
 
     def _validate(self, model, X_val, y_val):
         y_pred = [model.tag(xseq) for xseq in X_val]
-        report, confusion = self._bio_classification_report(y_val, y_pred)
-        return report, confusion
+        report, confusion, plot_url = self._classification_reports(y_val, y_pred)
+        return report, confusion, plot_url
 
 
     def _scroll_query_response(self, query, fields):
@@ -370,3 +407,11 @@ class EntityExtractorWorker(BaseWorker):
         task = Task.objects.get(pk=self.task_id)
         task.result = json.dumps({"error": msg})
         task.update_status(Task.STATUS_FAILED, set_time_completed=True)
+
+    @staticmethod
+    def _convert_dict_to_html_table(data_dict):
+        with pd.option_context('display.precision', 3):
+            df = pd.DataFrame(data=data_dict)
+            df = df.fillna(' ').T
+            talbe = df.to_html()
+        return talbe
