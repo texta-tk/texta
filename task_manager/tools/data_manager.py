@@ -207,7 +207,11 @@ class EsDataSample(object):
                         _temp_text = hit['_source']
                         for k in field.split('.'):
                             # Get nested fields encoded as: 'field.sub_field'
-                            _temp_text = _temp_text[k]
+                            try:
+                                _temp_text = _temp_text[k]
+                            except KeyError:
+                                logging.getLogger(ERROR_LOGGER).error('Field not present in document.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
+                                _temp_text = ''
                         # Save decoded text into positive sample map
                         negative_samples_map[field].append(_temp_text)
 
