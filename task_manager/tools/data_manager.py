@@ -7,7 +7,7 @@ from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from texta.settings import ERROR_LOGGER
 
-MAX_POSITIVE_SAMPLE_SIZE = 10000
+MAX_POSITIVE_SAMPLE_SIZE = 500000
 
 
 def get_fields(es_m):
@@ -126,7 +126,7 @@ class EsDataSample(object):
         for field in self.fields:
             positive_samples_map[field] = []
 
-        self.es_m.set_query_parameter('size', 100)
+        self.es_m.set_query_parameter('size', 500)
         response = self.es_m.scroll()
         scroll_id = response['_scroll_id']
         total_hits = response['hits']['total']
