@@ -3,6 +3,8 @@
 # sys.path.append(file_dir)
 # import preprocessors
 
+import logging
+from texta.settings import ERROR_LOGGER
 from texta.settings import DATASET_IMPORTER
 from texta.settings import SCORO_PREPROCESSOR_ENABLED
 from dataset_importer.document_preprocessor.preprocessors import CommentPreprocessor
@@ -65,7 +67,7 @@ try:
     }
     log_preprocessor_status(code='mlp', status='enabled')
 except Exception as e:
-    print(e)
+    logging.getLogger(ERROR_LOGGER).exception(e)
     log_preprocessor_status(code='mlp', status='disabled')
 
 
@@ -81,7 +83,7 @@ try:
     }
     log_preprocessor_status(code='date_converter', status='enabled')
 except Exception as e:
-    print(e)
+    logging.getLogger(ERROR_LOGGER).exception(e)
     log_preprocessor_status(code='date_converter', status='disabled')
 
 
@@ -96,7 +98,7 @@ try:
     }
     log_preprocessor_status(code='text_tagger', status='enabled')
 except Exception as e:
-    print(e)
+    logging.getLogger(ERROR_LOGGER).exception(e)
     log_preprocessor_status(code='text_tagger', status='disabled')
 
 try:
@@ -113,7 +115,7 @@ try:
     log_preprocessor_status(code='lexicon_classifier', status='enabled')
 
 except Exception as e:
-    print(e)
+    logging.getLogger(ERROR_LOGGER).exception(e)
     log_preprocessor_status(code='lexicon_classifier', status='disabled')
 
 try:
@@ -127,7 +129,7 @@ try:
     }
     log_preprocessor_status(code='comment_preprocessor', status='enabled')
 except Exception as e:
-    print(e)
+    logging.getLogger(ERROR_LOGGER).exception(e)
     log_preprocessor_status(code='comment_preprocessor', status='disabled')
 
 try:
@@ -146,7 +148,7 @@ try:
     log_preprocessor_status(code='scoro', status='enabled')
 
 except Exception as e:
-    print(e)
+    logging.getLogger(ERROR_LOGGER).exception(e)
     log_preprocessor_status(code='scoro', status='disabled')
 
 def convert_to_utf8(document):

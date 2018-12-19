@@ -3,11 +3,12 @@ from utils.es_manager import ES_Manager
 import sys
 import re
 import json
+import logging
 import requests
 import itertools
 import traceback
 from utils.log_manager import LogManager
-from texta.settings import FACT_PROPERTIES
+from texta.settings import FACT_PROPERTIES, ERROR_LOGGER
 
 class FactManager:
     """ Manage Searcher facts, like deleting/storing, adding facts.
@@ -62,7 +63,6 @@ class FactManager:
             logger.set_context('batch', batch)
             logger.info('remove_facts_from_document')
         except:
-            print(traceback.format_exc())
             logger.set_context('es_params', self.es_params)
             logger.exception('remove_facts_from_document_failed, {}'.format(traceback.format_exc()))
 
@@ -302,7 +302,7 @@ class FactAdder(FactManager):
                         scroll_id = response['_scroll_id']
                     self.es_m.plain_post_bulk(self.es_m.es_url, data)
             except Exception as e:
-                print(traceback.format_exc())
+                logging.getLogger(ERROR_LOGGER).exception(e)
                 return {'fact_count': fact_count, 'status': 'scrolling_error'}
         else:
             return {'fact_count': 0, 'status': 'no_hits'}

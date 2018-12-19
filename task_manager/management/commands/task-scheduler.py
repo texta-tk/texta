@@ -65,10 +65,13 @@ class Command(BaseCommand):
             worker.run(task_id)
         except Exception as e:
             # Capture generic task error
-            print(e)
             task.update_status(Task.STATUS_FAILED)
             log_data = json.dumps({'process': 'Task Scheduler', 'event': 'task_execution_error'})
-            logging.getLogger(ERROR_LOGGER).exception(log_data)
+
+            logging.getLogger(INFO_LOGGER).info(log_data)
+            logging.getLogger(ERROR_LOGGER).exception(e)
+
+            print(e)
 
     def handle(self, *args, **options):
         """ Schedule tasks for background execution

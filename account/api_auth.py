@@ -3,7 +3,8 @@ import json
 
 from django.http import HttpResponse
 from account.models import Profile
-
+import logging
+from texta.settings import ERROR_LOGGER
 
 class api_auth:
     """ API Authentication Decorator
@@ -43,10 +44,9 @@ class api_auth:
                 # Not authorized
                 # TODO: log invalid auth ?
                 return self.unauthorized()
+
         except Exception as e:
-            # Something went wrong...
-            # TODO: log exception info ?
-            print(e)
+            logging.getLogger(ERROR_LOGGER).exception(e)
             error = {'error': 'invalid request'}
             data_json = json.dumps(error)
             return HttpResponse(data_json, status=400, content_type='application/json')

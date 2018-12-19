@@ -24,7 +24,6 @@ class ExcelReader(CollectionReader):
 			for file_path in ExcelReader.get_file_list(directory, file_extension):
 
 				try:
-					print(file_path)
 					book = xlrd.open_workbook(file_path)
 					sheet = book.sheet_by_index(0)
 

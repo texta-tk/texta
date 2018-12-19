@@ -1,5 +1,4 @@
 # -*- coding: utf8 -*-
-from __future__ import print_function
 import json
 import copy
 import requests

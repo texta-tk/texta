@@ -67,8 +67,10 @@ class LanguageModel:
 			r.save()
 
 		except Exception as e:
-			logging.getLogger(ERROR_LOGGER).error(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_failed', 'data': {'task_id': self.id}}), exc_info=True)
-			print('--- Error: {0}'.format(e))
+			info_string = json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_failed', 'data': {'task_id': self.id}})
+
+			logging.getLogger(ERROR_LOGGER).exception(e)
+			logging.getLogger(INFO_LOGGER).info(info_string)
 
 			# declare the job as failed
 			r = Task.objects.get(pk=self.id)

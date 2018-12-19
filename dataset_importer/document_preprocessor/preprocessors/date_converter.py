@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import dateparser
 import re
 import json
+
+from texta.settings import ERROR_LOGGER
 
 
 class DatePreprocessor(object):
@@ -64,7 +67,7 @@ class DatePreprocessor(object):
                 formatted_date = datetime_object.strftime('%Y-%m-%d')
 
         except Exception as e:
-            print(e)
+            logging.getLogger(ERROR_LOGGER).exception(e)
             formatted_date = None
         return formatted_date
   
