@@ -2,7 +2,7 @@
 /* global LINK_SEARCHER */
 var PREFIX = LINK_SEARCHER
 var examplesTable
-var layers = ['text', 'lemmas', 'facts']
+
 
 $(document).ready(function () {
     $('#agg_daterange_from_1').datepicker({
@@ -559,11 +559,19 @@ function showStringChildren (data, childrenContainer, grandchildrenContainer, ro
             if (type === 'fact') {
                 var factData = {}
                 factData[rowKey] = this.key
+<<<<<<< HEAD
                 var addToSearchIcon = `<i class="glyphicon glyphicon-search pull-right"\
                 data-toggle="tooltip" title="Add to search"\
                 style="cursor: pointer"\
                 onclick=\'addFactToSearch("${rowKey}","${this.key}");\'></i>`
                 addToSearchIcon = strip(addToSearchIcon)
+=======
+
+                searchKey = strip_html(rowKey, true)
+                searchVal = strip_html(this.key, true)
+                var addToSearchIcon = `<i class="glyphicon glyphicon-search pull-right" data-toggle="tooltip" title="Add to search"\
+                style="cursor: pointer" onclick="addFactToSearch('${searchKey}','${searchVal}');"></i>`
+>>>>>>> entity_extractor
 
                 // keep track of checkboxes using their name as {NAME: VALUE}, otherwise when clicking on another fact name, they get overwritten
                 let checkboxName = JSON.stringify(factData).replace(/"/g, "'")
@@ -705,8 +713,14 @@ function deleteFactFromDoc (fact_name, fact_value, doc_id) {
     })
 }
 
-function strip (html) {
-    // Strip html from string
-    var doc = new DOMParser().parseFromString(html, 'text/html')
-    return doc.body.textContent || ''
+function strip_html(html, removeNewlines){
+    // Strip html from string, optionally remove newlines
+    var doc = new DOMParser().parseFromString(html, 'text/html');
+    newContent = doc.body.textContent
+
+    if (removeNewlines) {
+        newContent = newContent.replace(/(\r\n\t|\n|\r\t)/gm," ");
+    }
+
+    return newContent || "";
 }

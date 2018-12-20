@@ -14,10 +14,11 @@ from utils.es_manager import ES_Manager
 from texta.settings import STATIC_URL
 from texta.settings import MODELS_DIR
 from texta.settings import ERROR_LOGGER
+from texta.settings import PROTECTED_MEDIA
 
 from dataset_importer.document_preprocessor import preprocessor_map
 
-from task_manager.tasks.task_params import task_params
+from task_manager.tasks.task_params import task_params, get_fact_names
 from task_manager.tools import get_pipeline_builder
 from task_manager.tools import MassHelper
 
@@ -57,6 +58,7 @@ def index(request):
         tasks.append(task_dict)
 
     if 'dataset' in request.session.keys():
+        get_fact_names(es_m)
         context = {
             'task_params':           task_params,
             'tasks':                 tasks,
@@ -149,7 +151,17 @@ def delete_task(request):
                 os.remove(file_path)
             except Exception:
                 file_path = os.path.join(MODELS_DIR, "model_" + str(task_id))
-                logging.getLogger(ERROR_LOGGER).error('Could not delete model.', extra={'file_path': file_path})
+                logging.getLogger(ERROR_LOGGER).error('Could not delete model ({}).'.format(file_path))
+        if 'entity_extractor' in task.task_type:
+            try:
+                file_path = os.path.join(MODELS_DIR, "model_" + str(task_id) + "_facts")
+                plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/model_{}_cm.svg".format(task_id))
+                os.remove(file_path)
+                os.remove(plot_path)
+            except Exception:
+                plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/model_{}_cm.svg".format(task_id))
+                facts_path = os.path.join(MODELS_DIR, "model_" + str(task_id) + "_facts")
+                logging.getLogger(ERROR_LOGGER).error('Could not delete entity extractor model facts ({}) or plot ({}).'.format(facts_path, plot_path))
         # Remove task
         task.delete()
 

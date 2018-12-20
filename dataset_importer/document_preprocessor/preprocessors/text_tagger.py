@@ -48,7 +48,6 @@ class TextTaggerPreprocessor(object):
 
         # Apply tags to every input feature
         for field in input_features:
-
             results = []
             tagger_descriptions = []
 
@@ -56,7 +55,6 @@ class TextTaggerPreprocessor(object):
                 tagger_descriptions.append(tagger.description)
                 result_vector = tagger.tag(text_map)
                 results.append(result_vector)
-
             results_transposed = np.array(results).transpose()
 
             for i, tagger_ids in enumerate(results_transposed):

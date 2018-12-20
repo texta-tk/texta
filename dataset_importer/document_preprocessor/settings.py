@@ -15,6 +15,7 @@ from dataset_importer.document_preprocessor.preprocessors import MlpPreprocessor
 from dataset_importer.document_preprocessor.preprocessors import DatePreprocessor
 from dataset_importer.document_preprocessor.preprocessors import LexTagger
 from dataset_importer.document_preprocessor.preprocessors import ScoroPreprocessor
+from dataset_importer.document_preprocessor.preprocessors import EntityExtractorPreprocessor
 
 
 mlp_field_properties = {
@@ -146,10 +147,24 @@ try:
         'bg_favors': ['Doc','All']
     }
     log_preprocessor_status(code='scoro', status='enabled')
-
 except Exception as e:
     logging.getLogger(ERROR_LOGGER).exception(e)
     log_preprocessor_status(code='scoro', status='disabled')
+
+try:
+    preprocessor_map['entity_extractor'] = {
+        'name': 'Entity Extractor preprocessor',
+        'description': 'Extract entities from documents with TEXTA Entity Extractor',
+        'class': EntityExtractorPreprocessor,
+        'parameters_template': 'parameters/preprocessor_parameters/entity_extractor.html',
+        'arguments': {},
+        'is_enabled': True
+    }
+    log_preprocessor_status(code='entity_extractor', status='enabled')
+except Exception as e:
+    print(e)
+    log_preprocessor_status(code='entity_extractor', status='disabled')
+
 
 def convert_to_utf8(document):
     """
