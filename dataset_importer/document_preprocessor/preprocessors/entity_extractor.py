@@ -72,7 +72,6 @@ class EntityExtractorPreprocessor(object):
             print(e)
             logging.getLogger(ERROR_LOGGER).exception(json.dumps(
                 {'process': 'APPLY PREPROCESSOR', 'event': 'EntityExtractorPreprocessor:transform', 'data': {'model_ids_to_apply': model_ids_to_apply}}), exc_info=True)
-        print("Done with applying crf preprocessor")
 
         return {"documents":documents, "meta": {'facts_added': facts_added}}
 

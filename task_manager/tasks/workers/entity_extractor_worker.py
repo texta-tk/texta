@@ -147,7 +147,7 @@ class EntityExtractorWorker(BaseWorker):
         X_train = []
         X_val = []
         # Save all facts for later tagging
-        self._save_as_pkl(facts, "meta")
+        self._save_as_pkl(facts, "facts")
 
         # Transform data 
         X_train, X_val = train_test_split(hits, test_size=0.1, random_state=42)
@@ -251,7 +251,7 @@ class EntityExtractorWorker(BaseWorker):
 
 
     def _load_facts(self):
-        file_path = os.path.join(MODELS_DIR, "{}_{}".format(self.model_name, "meta"))
+        file_path = os.path.join(MODELS_DIR, "{}_{}".format(self.model_name, "facts"))
         with open(file_path, "rb") as f:
             self.facts = pkl.load(f)
 
@@ -328,7 +328,7 @@ class EntityExtractorWorker(BaseWorker):
         confusion[class_indices[self.oob_val]][0] = 0
 
         plt.figure()
-        cm_labels = lb.classes_ 
+        cm_labels = lb.classes_
         cm_labels[class_indices[self.oob_val]] = 'None'
         self._plot_confusion_matrix(confusion, classes=cm_labels)
         plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/{}_cm.svg".format(self.model_name))
