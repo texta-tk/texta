@@ -4,6 +4,9 @@ from utils.highlighter import Highlighter, ColorPicker
 from searcher.view_functions.general.searcher_utils import additional_option_cut_text
 from searcher.view_functions.build_search.translit_highlighting import hl_transliterately
 from bs4 import BeautifulSoup
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module='bs4')
+
 import time
 import json
 
@@ -49,11 +52,10 @@ def execute_search(es_m, es_params):
                 else:
                     content = str(hit['_source'][p] if p in hit['_source'] else '')
 
+            soup = BeautifulSoup(content, "lxml")
+            content = soup.get_text()
             # To strip fields with whitespace in front
-            try:
-                old_content = content.strip()
-            except:
-                old_content = content
+            old_content = content.strip()
 
             # Substitute feature value with value highlighted by Elasticsearch
             if col in hl_config['fields'] and 'highlight' in hit:
