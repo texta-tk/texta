@@ -1,14 +1,23 @@
 <table id='mlt_table' class="table table-striped">
 	<thead>
-		<tr>
-{#        todo fix all of this #}
-			<th>Accept</th>
-			<th>Reject</th>
-
+        <div class="mlt-column-select-wrapper">
+            <select data-show-subtext="true" data-live-search="true" data-actions-box="true" data-width="250px" data-hide-disabled='true' multiple name="mlt-column-select" id='mlt-column-select' class="form-control input-sm ">
+                <option>Accept</option>
+                <option>Reject</option>
+                {% for column in columns %}
+                    <option value="{{column.index}}">{{column.name}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <tr>
+            <th>Accept</th>
+            <th>Reject</th>
             {% for column in columns %}
                 <th>{{column.name}}</th>
             {% endfor %}
-		</tr>
+        </tr>
+
+
 	</thead>
 	<tbody>
 

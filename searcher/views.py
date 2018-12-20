@@ -178,7 +178,6 @@ def get_saved_searches(request):
     searches = Search.objects.filter(author=request.user).filter(datasets__in=active_datasets).distinct()
     return HttpResponse(json.dumps([{'id':search.pk,'desc':search.description} for search in searches],ensure_ascii=False))
 
-
 @login_required
 def get_table_header(request):
     ds = Datasets().activate_datasets(request.session)
@@ -216,8 +215,6 @@ def get_table_content(request):
 
 @login_required
 def table_header_mlt(request):
-    """ temporary """
-    # todo fix all of this, refactor
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
 
@@ -232,63 +229,49 @@ def table_header_mlt(request):
     template = loader.get_template('mlt_results.html')
     return HttpResponse(template.render(template_params, request))
 
-def _derive_name_to_inner_hits(inner_hits):
-    # todo remove this, put it into utils maybe, and share with searcher
-    name_to_inner_hits = defaultdict(list)
-    for inner_hit_name, inner_hit in inner_hits.items():
-        hit_type, _, _ = inner_hit_name.rsplit('_', 2)
-        for inner_hit_hit in inner_hit['hits']['hits']:
-            source = inner_hit_hit['_source']
-            source['hit_type'] = hit_type
-            name_to_inner_hits[source['doc_path']].append(source)
-    return name_to_inner_hits
-
 @login_required
 def mlt_query(request):
-    # todo need alot of refactoring, fixing
     es_params = request.POST
-    draw = int(es_params['draw'])
 
     if 'mlt_fields' not in es_params:
         return HttpResponse(status=400,reason='field')
     else:
         if es_params['mlt_fields'] == '[]':
             return HttpResponse(status=400,reason='field')
-    mlt_fields = [ field for field in json.loads(es_params['mlt_fields'])]
 
+    mlt_fields = [field for field in json.loads(es_params['mlt_fields'])]
     handle_negatives = es_params['handle_negatives']
     docs_accepted = [a.strip() for a in es_params['docs'].split('\n') if a]
     docs_rejected = [a.strip() for a in es_params['docs_rejected'].split('\n') if a]
 
-    # stopwords
-    stopword_lexicon_ids = es_params['mlt_stopword_lexicons']
-    stopword_lexicon_ids = json.loads(stopword_lexicon_ids)
+    stopword_lexicon_ids = json.loads(es_params['mlt_stopword_lexicons'])
     stopwords = []
-    search_size = es_params['search_size']
     for lexicon_id in stopword_lexicon_ids:
         lexicon = Lexicon.objects.get(id=int(lexicon_id))
         words = Word.objects.filter(lexicon=lexicon)
         stopwords+=[word.wrd for word in words]
+
+    search_size = es_params['search_size']
+    draw = int(es_params['draw'])
 
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
     es_m.set_query_parameter('from', es_params['start'])
     es_m.set_query_parameter('size', search_size)
+
     response = es_m.more_like_this_search(mlt_fields,docs_accepted=docs_accepted,docs_rejected=docs_rejected,handle_negatives=handle_negatives, stopwords=stopwords, search_size=search_size)
+
     result = {'data': [], 'draw': draw, 'recordsTotal': len(response['hits']['hits'])}
     column_names = es_m.get_column_names(facts=True)
 
-    """   column_name = es_m.get_column_names(es_m) """
     for hit in response['hits']['hits']:
         hit_id = str(hit['_id'])
         hit['_source']['_es_id'] = hit_id
         row = OrderedDict([(x, '') for x in column_names])
-        inner_hits = hit['inner_hits'] if 'inner_hits' in hit else {}
 
         for col in column_names:
             # If the content is nested, need to break the flat name in a path list
-
             field_path = col.split('.')
             # Get content for the fields and make facts human readable
             for p in field_path:

@@ -792,7 +792,7 @@ function mltQuery () {
                         // Append _DtCol to end to safe from naming conflicts
                         columns.push({ 'className': 'DtCol_' + $(this).text(), 'targets': index })
                     })
-                    $('#mlt_table').DataTable({
+                    let mltTable = $('#mlt_table').DataTable({
                         'autoWidth': false,
                         'processing': true,
                         'serverSide': true,
@@ -839,6 +839,28 @@ function mltQuery () {
                             },
 
                         ],
+                        'stateSave': true,
+                        'stateSaveParams': function (settings, data) {
+                            data.start = 0
+                        },
+                        'stateLoadParams': function (settings, data) {
+                            /*  because state has the last saved state of the table, not the current one then we can check
+                            if the selected datasets were changed and if extra columns were added, removed,
+                            if they were then select all (also did this in previous version, with buttons) */
+                            let selectPicker = $('#mlt-column-select')
+                            if ($('#mlt_table').DataTable().columns().nodes().length !== data.columns.length) {
+                                selectPicker.selectpicker('selectAll')
+                            } else {
+                                selectPicker.selectpicker('deselectAll')
+                                for (var i = 0, ien = data.columns.length; i < ien; i++) {
+                                    if (data.columns[i].visible) {
+                                        /* sync select with the table */
+                                        updateSelectColumnFilter(i, '#mlt-column-select')
+                                    }
+                                }
+                            }
+                            selectPicker.selectpicker('refresh')
+                        },
                         'fnInitComplete': function () {
                             $('.dataTables_scrollHead').css('overflow-x', 'auto')
                             // Sync THEAD scrolling with TBODY
@@ -849,6 +871,7 @@ function mltQuery () {
                             /* global createSelectionProps, selectionProps */
                         },
                     })
+                    initColumnSelectVisiblity(mltTable, $('#mlt-column-select'))
                 }
                 else{
                     $('#right').html('Error Code='+request.status+' state = '+request.readyState+' response ='+request.statusText)
