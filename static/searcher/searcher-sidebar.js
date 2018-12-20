@@ -803,9 +803,9 @@ function mltQuery () {
                             "url": PREFIX + '/mlt_query',
                             "type": "POST",
                             data: {
-                                /* todo send data from build search for docs rejected? */
                                 'docs': docs.value,
                                 'docs_rejected': docs_rejected.value,
+                                'mlt_stopword_lexicons' : JSON.stringify($('#mlt_stopword_lexicons').val()),
                                 'search_size' : docSliderValue,
                                 'mlt_fields': JSON.stringify(mltFieldData),
                                 'handle_negatives': $('#handle_negatives').val()

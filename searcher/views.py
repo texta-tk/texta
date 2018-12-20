@@ -261,7 +261,8 @@ def mlt_query(request):
     docs_rejected = [a.strip() for a in es_params['docs_rejected'].split('\n') if a]
 
     # stopwords
-    stopword_lexicon_ids = es_params.getlist('mlt_stopword_lexicons')
+    stopword_lexicon_ids = es_params['mlt_stopword_lexicons']
+    stopword_lexicon_ids = json.loads(stopword_lexicon_ids)
     stopwords = []
     search_size = es_params['search_size']
     for lexicon_id in stopword_lexicon_ids:
@@ -276,21 +277,14 @@ def mlt_query(request):
     es_m.set_query_parameter('size', search_size)
     response = es_m.more_like_this_search(mlt_fields,docs_accepted=docs_accepted,docs_rejected=docs_rejected,handle_negatives=handle_negatives, stopwords=stopwords, search_size=search_size)
     result = {'data': [], 'draw': draw, 'recordsTotal': len(response['hits']['hits'])}
-    documents = []
-    columns_to_parse = []
     column_names = es_m.get_column_names(facts=True)
 
     """   column_name = es_m.get_column_names(es_m) """
     for hit in response['hits']['hits']:
-        # for column in hit['_source']:
-        #     columns_to_parse.append(column)
-        #     if column not in column_names:
-        #         column_names.append(column)
         hit_id = str(hit['_id'])
         hit['_source']['_es_id'] = hit_id
         row = OrderedDict([(x, '') for x in column_names])
         inner_hits = hit['inner_hits'] if 'inner_hits' in hit else {}
-        name_to_inner_hits = _derive_name_to_inner_hits(inner_hits)
 
         for col in column_names:
             # If the content is nested, need to break the flat name in a path list
@@ -302,12 +296,7 @@ def mlt_query(request):
                     content = improve_facts_readability(hit['_source'][p])
                 else:
                     content = hit['_source'][p] if p in hit['_source'] else ''
-            # To strip fields with whitespace in front
-            try:
-                old_content = content.strip()
-            except:
-                old_content = content
-
+                    
             # Append the final content of this col to the row
             if row[col] == '':
                 row[col] = content
