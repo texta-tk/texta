@@ -74,15 +74,13 @@ def execute_search(es_m, es_params):
         # Transliterate between cols
         # TODO In the future possibly better for translit_cols params to be passed data from given request
         _transliterate(cols_data, row)
-
+        if col == "field_value_raw_mlp.lemmas":
+            import pdb;pdb.set_trace()
+        
         # Checks if user wants to see full text or short version
         for col in row:
             if 'show_short_version' in es_params.keys():
                 row[col] = additional_option_cut_text(row[col], es_params['short_version_n_char'])
-
-        # STILL ROW COL IS FINE, SOMETHING ELSE IS BROKEN
-        if col == "field_value_raw_mlp.lemmas":
-            import pdb;pdb.set_trace()
         out['aaData'].append(row.values())
         out['lag'] = time.time()-start_time
     return out
