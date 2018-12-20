@@ -45,9 +45,9 @@ def execute_search(es_m, es_params):
             # Get content for the fields and make facts human readable
             for p in field_path:
                 if col == u'texta_facts' and p in hit['_source']:
-                    content = improve_facts_readability(hit['_source'][p])
+                    content = str(improve_facts_readability(hit['_source'][p]))
                 else:
-                    content = hit['_source'][p] if p in hit['_source'] else ''
+                    content = str(hit['_source'][p] if p in hit['_source'] else '')
 
             # To strip fields with whitespace in front
             try:
