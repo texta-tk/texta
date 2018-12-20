@@ -46,11 +46,14 @@ def execute_search(es_m, es_params):
             field_path = col.split('.')
 
             # Get content for the fields and make facts human readable
-            for p in field_path:
-                if col == u'texta_facts' and p in hit['_source']:
-                    content = str(improve_facts_readability(hit['_source'][p]))
-                else:
-                    content = str(hit['_source'][p] if p in hit['_source'] else '')
+            content = hit['_source']
+            if col == u'texta_facts' and col in hit['_source']:
+                content = improve_facts_readability(hit['_source'][col])
+            else:
+                for p in field_path:
+                    # import pdb;pdb.set_trace()
+                    content = content[p] if p in content else ''
+            content = str(content)
 
             soup = BeautifulSoup(content, "lxml")
             content = soup.get_text()
@@ -77,6 +80,9 @@ def execute_search(es_m, es_params):
             if 'show_short_version' in es_params.keys():
                 row[col] = additional_option_cut_text(row[col], es_params['short_version_n_char'])
 
+        # STILL ROW COL IS FINE, SOMETHING ELSE IS BROKEN
+        if col == "field_value_raw_mlp.lemmas":
+            import pdb;pdb.set_trace()
         out['aaData'].append(row.values())
         out['lag'] = time.time()-start_time
     return out
