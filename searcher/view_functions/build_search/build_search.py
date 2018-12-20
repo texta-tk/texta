@@ -43,7 +43,7 @@ def execute_search(es_m, es_params):
             field_path = col.split('.')
 
             # Get content for the fields and make facts human readable
-            content = _improve_facts_readability(hit['_source'], field_path, col)
+            content = str(_improve_facts_readability(hit['_source'], field_path, col))
 
             soup = BeautifulSoup(content)
             content = soup.get_text()
