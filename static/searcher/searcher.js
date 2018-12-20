@@ -559,19 +559,11 @@ function showStringChildren (data, childrenContainer, grandchildrenContainer, ro
             if (type === 'fact') {
                 var factData = {}
                 factData[rowKey] = this.key
-<<<<<<< HEAD
-                var addToSearchIcon = `<i class="glyphicon glyphicon-search pull-right"\
-                data-toggle="tooltip" title="Add to search"\
-                style="cursor: pointer"\
-                onclick=\'addFactToSearch("${rowKey}","${this.key}");\'></i>`
-                addToSearchIcon = strip(addToSearchIcon)
-=======
 
                 searchKey = strip_html(rowKey, true)
                 searchVal = strip_html(this.key, true)
                 var addToSearchIcon = `<i class="glyphicon glyphicon-search pull-right" data-toggle="tooltip" title="Add to search"\
                 style="cursor: pointer" onclick="addFactToSearch('${searchKey}','${searchVal}');"></i>`
->>>>>>> entity_extractor
 
                 // keep track of checkboxes using their name as {NAME: VALUE}, otherwise when clicking on another fact name, they get overwritten
                 let checkboxName = JSON.stringify(factData).replace(/"/g, "'")
