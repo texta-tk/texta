@@ -46,9 +46,9 @@ function getParam(sParam) {
     }
 }
 
-function addWord(word) {
+function addWord(self,word) {
     positive_to_sid[word] = parseInt($('#sid').val())
-    $('#suggestion_' + word).remove()
+    $(self).parent().remove()
     for (var name in name_to_punct) {
         word = word.replace(name, name_to_punct[name])
     }
