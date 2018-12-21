@@ -200,9 +200,10 @@ var SwalType = {
     INFO: 'info',
     QUESTION: 'question'
 }
-function swalCustomTypeDisplay (swalType, titleText) {
+function swalCustomTypeDisplay (swalType, title, text) {
     swal({
-        title: titleText,
+        title: title,
+        text: text,
         heightAuto: false,
         type: swalType
     })

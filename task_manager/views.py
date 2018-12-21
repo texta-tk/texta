@@ -1,4 +1,3 @@
-
 import os
 import json
 import logging
@@ -6,6 +5,7 @@ import logging
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from task_manager.models import Task
 from searcher.models import Search
 from permission_admin.models import Dataset
@@ -71,6 +71,7 @@ def index(request):
             'text_tags':             sorted(tag_set)
         }
     else:
+        messages.warning(request, "No dataset selected, please select a dataset before using Task Manager!")
         return HttpResponseRedirect('/')
 
     pipe_builder = get_pipeline_builder()
