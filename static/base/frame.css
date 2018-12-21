@@ -1,7 +1,6 @@
 body {
     font-family: 'Open sans', serif;
-    background-image: url("img/bg.jpg");
-    background-repeat: repeat;
+    background: url("img/bg.jpg") repeat;
 }
 
 .body-grid-wrapper {
@@ -10,72 +9,89 @@ body {
     display: grid;
     grid-template-columns: 100%;
     grid-template-rows: auto 1fr;
-    grid-template-areas: "navbar"
-        "content"
+    grid-template-areas: "navbar" "content"
 }
 
 /* global style */
-.align-items-end{
+.align-items-end {
     align-items: flex-end;
 }
-.margin-right{
+
+.margin-right {
     margin-right: 10px;
 }
-.margin-left{
+
+.margin-left {
     margin-left: 10px;
 }
-.margin-bottom{
+
+.margin-bottom {
     margin-bottom: 5px;
 }
-.padding-default{
+
+.padding-default {
     padding: 5px;
 }
-.padding-small{
+
+.padding-small {
     padding: 3px;
 }
-.flex-row-reverse{
+
+.flex-row-reverse {
     display: flex;
     flex-direction: row-reverse;
 }
-.align-center{
+
+.align-center {
     align-items: center;
 }
-.flex-content-space-around{
+
+.flex-content-space-around {
     display: flex;
     justify-content: space-around;
 }
-.flex-content-center{
+
+.flex-content-center {
     display: flex;
     justify-content: center;
 }
-.flex-items-align-center{
+
+.flex-items-align-center {
     display: flex;
     align-items: center;
 }
-.height-max{
+
+.height-max {
     height: 100%;
 }
-.width-max{
+
+.width-max {
     width: 100%
 }
-.width-height-max{
+
+.width-height-max {
     height: 100%;
     width: 100%;
 }
-html,body{
+
+html, body {
     height: 100%;
 }
-.navbar-inverse{
+
+.navbar-inverse {
     background: #000000 none;
 }
-.panel{
+
+.panel {
     margin-bottom: 0px;
 }
-.grid-1-col-default{
+
+.grid-1-col-default {
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: 100%;
 }
+
 .grid-2-col-1-row-default {
     height: 100%;
     display: grid;
@@ -83,28 +99,28 @@ html,body{
     grid-template-rows: 100%;
     grid-template-areas: "default-sidebar default-content"
 }
-.grid-2-col-1-sidebar{
+
+.grid-2-col-1-sidebar {
     height: 100%;
     background-color: white;
     grid-area: default-sidebar;
 }
-.grid-2-col-1-sidebar .panel{
+
+.grid-2-col-1-sidebar .panel {
     box-shadow: none
 }
-.grid-2-col-1-content{
+
+.grid-2-col-1-content {
     grid-area: default-content;
 }
-.grid-2-col-1-content>.panel{
+
+.grid-2-col-1-content > .panel {
     height: 100%;
-    background-color: #f9f9f9;
 }
 
-/* @media screen and (max-width: 1405px) {
-    .grid-2-col-1-row-default {
-        grid-template-columns: 350px 1fr;
-        grid-template-rows: 100%;
-    }
-} */
+.area-bg-color {
+    background-color: #f5f5f5;
+}
 
 @media screen and (max-width: 992px) {
     .grid-2-col-1-row-default {
@@ -117,63 +133,76 @@ html,body{
 .panel-heading {
     border-radius: 0px
 }
+
 .panel-body {
     border-radius: 0px
 }
-.panel{
+
+.panel {
     border-radius: 0;
     border: 0
 }
-.flex-row{
+
+.flex-row {
     display: flex;
     flex-direction: row;
 }
-.flex-column{
+
+.flex-column {
     display: flex;
     flex-direction: column;
 }
-.flex-content-end{
+
+.flex-content-end {
     display: flex;
     justify-content: flex-end;
 }
-.flex-item-justify-end{
-    margin-left:auto
+
+.flex-item-justify-end {
+    margin-left: auto
 }
-.flex-item-justify-start{
-    margin-right:auto
+
+.flex-item-justify-start {
+    margin-right: auto
 }
-.flex-item-grow-1{
+
+.flex-item-grow-1 {
     flex: 1;
 }
-.flex-item-grow-2{
+
+.flex-item-grow-2 {
     flex: 2;
 }
-.flex-item-grow-3{
+
+.flex-item-grow-3 {
     flex: 3
 }
-.horizontal-padding{
-    padding-left:5px;
-    padding-right:5px;
+
+.horizontal-padding {
+    padding-left: 5px;
+    padding-right: 5px;
 }
-.reduce-horizontal-padding{
-    padding-left:2px;
-    padding-right:2px;
+
+.reduce-horizontal-padding {
+    padding-left: 2px;
+    padding-right: 2px;
 }
-.low-opacity{
+
+.low-opacity {
     opacity: 0.5;
 }
 
 /* end of global styles */
 
-.dropdown-menu{
+.dropdown-menu {
     -webkit-border-radius: 0;
     -moz-border-radius: 0;
     border-radius: 0;
 }
-.account-dropdown-item{
+
+.account-dropdown-item {
     padding-left: 5px !important;
 }
-
 
 .grid-item-navbar {
     grid-area: navbar;
@@ -192,7 +221,7 @@ html,body{
     color: #EFEFEF;
 }
 
-.navbar-right>.help-block {
+.navbar-right > .help-block {
     margin: 0;
     display: flex;
 }
@@ -203,17 +232,17 @@ html,body{
     padding-bottom: 9px;
 }
 
-.navbar-right>.navbar-form {
+.navbar-right > .navbar-form {
     display: flex;
     margin: 0px;
 }
 
-.navbar-form>div {
+.navbar-form > div {
     margin-right: 5px;
 }
 
 .panel-heading {
-    background-color: #4056a1;
+    background-color: #012849;
     color: #FFFFFF;
 }
 
@@ -221,9 +250,9 @@ html,body{
     transition: color .10s ease-in-out, background-color .10s ease-in-out, border-color .10s ease-in-out, box-shadow .10s ease-in-out;
     border-radius: 0px !important;
 }
-.btn-default{
-    background-color:white;
-    background-image: none;
+
+.btn-default {
+    background: white none;
     text-shadow: none;
     color: black;
     border-color: black;
@@ -233,9 +262,9 @@ html,body{
 .btn-default:focus,
 .btn-default:active,
 .btn-default.active,
-.open>.dropdown-toggle.btn-default {
+.open > .dropdown-toggle.btn-default {
     background: #e4e4e4;
-    border-color: #4056a1;
+    border-color: #012849;
     color: black;
 }
 
@@ -250,12 +279,11 @@ html,body{
 .btn-danger:focus,
 .btn-danger:active,
 .btn-danger.active,
-.open>.dropdown-toggle.btn-danger {
+.open > .dropdown-toggle.btn-danger {
     color: #8B271D;
     background: none;
     border-color: #8B271D;
 }
-
 
 .row {
     margin-top: 5px;
@@ -321,7 +349,7 @@ html,body{
 }
 
 .modal-header {
-    background-color: #4056a1;
+    background-color: #012849;
     color: #FFFFFF;
 }
 
@@ -342,16 +370,20 @@ html,body{
         display: block;
     }
 }
-#dataset-select-apply-button{
+
+#dataset-select-apply-button {
     margin-bottom: 5px;
 }
-.form-control{
+
+.form-control {
     border-radius: 0px;
 }
-#account-dropdown{
+
+#account-dropdown {
     color: white;
     text-decoration: inherit;
 }
-.navbar-collapse.in{
+
+.navbar-collapse.in {
     overflow-y: visible;
 }
