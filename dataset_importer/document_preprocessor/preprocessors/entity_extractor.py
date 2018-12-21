@@ -47,6 +47,7 @@ class EntityExtractorPreprocessor(object):
                     except AttributeError:
                         text_map[field].append(decoded_text.strip())
             # Apply tags to every input feature
+            facts_added = 0
             for field in input_features:
                 field_docs = text_map[field]
                 results = []
@@ -58,7 +59,6 @@ class EntityExtractorPreprocessor(object):
                     results.extend(result_vector)
 
                 new_facts = []
-                facts_added = 0
                 for i, (doc, result_doc) in enumerate(zip(field_docs, results)):
                     new_facts, doc_num_facts = self._preds_to_doc(str(doc), result_doc, field)
                     facts_added += doc_num_facts

@@ -87,6 +87,8 @@ class PreprocessorWorker(BaseWorker):
         total_positive = 0
 
         try:
+            # Metadata of preprocessor outputs
+            meta = {}
             while total_hits > 0:
                 documents, parameter_dict, ids, document_locations = self._prepare_preprocessor_data(response)
                 # Add facts field if necessary
@@ -97,7 +99,6 @@ class PreprocessorWorker(BaseWorker):
                 documents = list(map(convert_to_utf8, documents))
 
                 # Apply all preprocessors
-                meta = {}
                 for preprocessor_code in parameter_dict['preprocessors']:
                     preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
                     result_map = preprocessor.transform(documents, **parameter_dict)
