@@ -1,4 +1,4 @@
-/* global swal PREFIX swalWarningDisplay */
+/* global swal PREFIX swalCustomTypeDisplay */
 var counter = 1
 var factValSubCounter = {}
 $(document).ready(function () {
@@ -117,7 +117,7 @@ function removeSearches () {
     if (pkArray.length > 0) {
         deleteSelectedSearches(pkArray)
     } else {
-        swalWarningDisplay('Please select a saved search first.')
+        swalCustomTypeDisplay(SwalType.ERROR,'Please select a saved search first.')
     }
 }
 function deleteSelectedSearches (pkArray) {
@@ -673,7 +673,7 @@ function clusterQuery () {
                 $('#right').html(request.responseText)
             }
             if (request.status === 400 && request.statusText === 'field') {
-                swalWarningDisplay('Please select a field first')
+                swalCustomTypeDisplay(SwalType.ERROR,'Please select a field first')
             }
         }
     }
@@ -794,7 +794,7 @@ function mltQuery () {
                     $('#right').html(request.responseText)
                 }
                 if (request.status === 400 && request.statusText === 'field') {
-                    swalWarningDisplay('Please select a field first')
+                    swalCustomTypeDisplay(SwalType.ERROR,'Please select a field first')
                 }
             }
         }
