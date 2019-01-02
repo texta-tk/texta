@@ -20,3 +20,6 @@ json2table
 mysqlclient
 python-logstash-async
 pandas
+psutil
+python-crfsuite
+matplotlib

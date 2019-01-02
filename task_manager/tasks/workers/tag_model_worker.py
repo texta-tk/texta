@@ -175,7 +175,7 @@ class TagModelWorker(BaseWorker):
             return model
 
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).error('Failed to save model to filesystem.', exc_info=True, extra={
+            logging.getLogger(ERROR_LOGGER).error('Failed to load model from the filesystem.', exc_info=True, extra={
                 'model_name': model_name,
                 'file_path':  file_path
             })

@@ -9,6 +9,7 @@ from .comment_preprocessor import CommentPreprocessor
 from .date_converter import DatePreprocessor
 from .lexicon_classifier import LexTagger
 from .scoro import ScoroPreprocessor
+from .entity_extractor import EntityExtractorPreprocessor
 
 
 __all__ = ["CommentPreprocessor",
@@ -16,4 +17,5 @@ __all__ = ["CommentPreprocessor",
            "MlpPreprocessor",
            "DatePreprocessor",
            "LexTagger",
-           "ScoroPreprocessor"]
+           "ScoroPreprocessor",
+           "EntityExtractorPreprocessor"]

@@ -128,7 +128,6 @@ class Preprocessor:
         active_index = response['hits']['hits'][0]['_index']
         active_mapping = response['hits']['hits'][0]['_type']
         parameter_dict = {'preprocessors': [self.params['preprocessor_key']],'index':active_index,'mapping':active_mapping}
-        print(parameter_dict)
 
         for key, value in self.params.items():
             if key.startswith(self.params['preprocessor_key']):

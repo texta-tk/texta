@@ -39,9 +39,11 @@ def index(request):
             setattr(run,'num_mwes',num_mwes)
         #        setattr(run,'committed',len({approved_candidate.candidate for approved_candidate in approved_term_candidates} & {committed_candidate.term for committed_candidate in Term.objects.filter(author=request.user)}))
         except ValueError as e:
-            print('Exception', e)
+            logging.getLogger(ERROR_LOGGER).exception(e)
             pass
+
         runs.append(run)
+
     for lexicon in Lexicon.objects.all().filter(author=request.user):
         setattr(lexicon,'size',Word.objects.all().filter(lexicon=lexicon.id).count())
         lexicons.append(lexicon)
@@ -80,8 +82,10 @@ def delete_result(request):
         
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DELETE MWE RESULT','event':'mwe_result_deleted','args':{'user_name':request.user.username,'run_id':run_id}}))
     except Exception as e:
-        print(e)
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'DELETE MWE RESULT','event':'mwe_result_deletion_failed','args':{'user_name':request.user.username,'run_id':run_id}}),exc_info=True)
+        info_string = json.dumps({'process':'DELETE MWE RESULT','event':'mwe_result_deletion_failed','args':{'user_name':request.user.username,'run_id':run_id}})
+
+        logging.getLogger(INFO_LOGGER).info(info_string)
+        logging.getLogger(ERROR_LOGGER).exception(e)
         
     return HttpResponseRedirect(URL_PREFIX + '/mwe_miner')
 
@@ -98,7 +102,7 @@ def approve(request):
                 
                 for mwe in group['mwes']:
                     if mwe['id'] in ticked:
-                        if results[key]['mwes'][i]['accepted'] == False:
+                        if results[key]['mwes'][i]['accepted'] is False:
                             concept_term_name = group['concept_name']['label']
                             concepts = Concept.objects.filter(descriptive_term__term = concept_term_name).filter(author = request.user)
                             
@@ -186,8 +190,9 @@ def approve(request):
         
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'APPROVE MWE RESULT','event':'mwe_result_items_approved','args':{'user_name':request.user.username,'operator':operator,'run_id':run_id}}))
     except Exception as e:
-        print(e)
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'APPROVE MWE RESULT','event':'mwe_result_item_approval_failed','args':{'user_name':request.user.username,'operator':operator,'run_id':run_id}}),exc_info=True)
+        info_string = json.dumps({'process':'APPROVE MWE RESULT','event':'mwe_result_item_approval_failed','args':{'user_name':request.user.username,'operator':operator,'run_id':run_id}})
+        logging.getLogger(INFO_LOGGER).info(info_string)
+        logging.getLogger(ERROR_LOGGER).exception(e)
 
     return HttpResponse()
 
@@ -268,19 +273,19 @@ def find_mappings(request):
         for i in range(min_len,max_len+1):
             print('Permutation len:',i)
             for permutation in itertools.permutations(lexicon,i):
-                word_indices = list(flatten([word_index[word] for word in permutation])) 
+                word_indices = list(flatten([word_index[word] for word in permutation]))
                 if len(word_indices) == len(set(word_indices)):
                     permutation = ' '.join(permutation)
                     if slop > 0:
                         query = {"query": {"match_phrase": {match_field: {"query": permutation,"slop": slop}}}}
                     else:
                         query = {"query": {"match_phrase": {match_field: {"query": permutation}}}}
-                        
+
                     data.append(json.dumps({"index":dataset}))
                     data.append(json.dumps(query))
                     phrases.append(permutation)
-                    
-                    
+
+
                     if len(data) == batch_size:
                         for j,response in enumerate(es_m.perform_queries(data)):
                             try:
@@ -302,9 +307,9 @@ def find_mappings(request):
                         data = []
                         phrases = []
             logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'MINE MWEs','event':'mwe_mining_progress','args':{'user_name':request.user.username,'run_id':new_run.id},'data':{'permutations_processed':i+1-min_len,'total_permutations':max_len-min_len+1}}))
-        
+
         m_response = es_m.perform_queries(data)
-        
+
         for j,response in enumerate(m_response):
             try:
                 if response['hits']['total'] >= min_freq:
@@ -320,7 +325,7 @@ def find_mappings(request):
                     if response['hits']['total'] > final[sorted_conceptualised_phrase]['display_name']['freq']:
                         final[sorted_conceptualised_phrase]['display_name']['freq'] = response['hits']['total']
                         final[sorted_conceptualised_phrase]['display_name']['label'] = phrases[j]
-            except KeyError as e:       
+            except KeyError as e:
                 raise e
         for key in final:
             final[key]['concept_name'] = {'freq':-1,'label':''}
@@ -330,6 +335,8 @@ def find_mappings(request):
         r.results =json.dumps(final)
         r.save()
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'MINE MWEs','event':'mwe_mining_completed','args':{'user_name':request.user.username,'run_id':new_run.id}}))
+
     except Exception as e:
-        print(e)
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'MINE MWEs','event':'mwe_mining_failed','args':{'user_name':request.user.username,'run_id':new_run.id}}),exc_info=True)
+        info_string = json.dumps({'process':'MINE MWEs','event':'mwe_mining_failed', 'args':{'user_name':request.user.username, 'run_id':new_run.id}})
+        logging.getLogger(INFO_LOGGER).info(info_string)
+        logging.getLogger(ERROR_LOGGER).exception(e)

@@ -193,10 +193,18 @@ function update_resources (data) {
         }
     })
 }
-function swalWarningDisplay (titleText) {
+var SwalType = {
+    SUCCESS: 'success',
+    ERROR: 'error',
+    WARNING: 'warning',
+    INFO: 'info',
+    QUESTION: 'question'
+}
+function swalCustomTypeDisplay (swalType, title, text) {
     swal({
-        title: titleText,
+        title: title,
+        text: text,
         heightAuto: false,
-        type: 'warning'
+        type: swalType
     })
 }

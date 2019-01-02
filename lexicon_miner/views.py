@@ -238,7 +238,7 @@ def query(request):
             for a in getattr(model,request.POST['method'])(positive=positives,topn=40,ignored_idxes = ignored_idxes):
                 encoded_a = encode_for_id(a[0])
                 matched_sentences = get_example_texts(request, tooltip_feature, a[0])
-                suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded_a + '\'>&bull; <a title="' + '\n'.join(matched_sentences).replace('"','') + '" href="javascript:addWord(\''+encoded_a+'\');">'+a[0]+'</a></div>')
+                suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded_a + '\'>&bull; <a role="button" title="' + '\n'.join(matched_sentences).replace('"','') + '" onclick="javascript:addWord(this,\''+encoded_a+'\');">'+a[0]+'</a></div>')
         elif request.POST['method'][:17] == 'simple_precluster':
             method = request.POST['method'][18:]
 
@@ -256,7 +256,7 @@ def query(request):
             for a in getattr(model,method)(positive=new_positives,topn=40,ignored_idxes = ignored_idxes):
                 encoded_a = encode_for_id(a[0])
                 matched_sentences = get_example_texts(request, tooltip_feature, a[0])
-                suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded_a + '\'>&bull; <a title="' + '\n'.join(matched_sentences).replace('"','') + '" href="javascript:addWord(\''+encoded_a+'\');">'+a[0]+'</a></div>')
+                suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded_a + '\'>&bull; <a role="button" title="' + '\n'.join(matched_sentences).replace('"','') + '" onclick="javascript:addWord(this,\''+encoded_a+'\');">'+a[0]+'</a></div>')
 
 
         elif request.POST['method'][:10] == 'precluster':
@@ -294,7 +294,7 @@ def RRA_suggestions(suggestions_list, tooltip_feature, request):
     suggestions = []
     for (name,encoded) in encoded_suggestions:
         matched_sentences = get_example_texts(request, tooltip_feature, name)
-        suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded + '\'>&bull; <a title="' + '\n'.join(matched_sentences).replace('"','') + '" href="javascript:addWord(\'' + encoded + '\');">' + name + '</a></div>')
+        suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded + '\'>&bull; <a role="button" title="' + '\n'.join(matched_sentences).replace('"','') + '" onclick="javascript:addWord(this,\'' + encoded + '\');">' + name + '</a></div>')
     return suggestions
 
 

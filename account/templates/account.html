@@ -1,6 +1,7 @@
 {% extends "index.html" %} {% block app %}
 {% include 'email-modal.html' %}
 <script type="application/javascript" src="{{STATIC_URL}}base/account.js"></script>
+<script type="application/javascript" src="{{STATIC_URL}}base/index.js"></script>
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}base/account.css">
 <div class="grid-2-col-1-row-default">
 	<div class="">
@@ -67,7 +68,6 @@
 			<div class="panel-body">
 
 				<h3>Documentation for TEXTA Toolkit is available <a href="https://texta-tk.github.io" target="_blank">HERE</a>!</h3>
-
 				<br><br>
 				<div class="row">
 					<div class="col-lg-5">
@@ -85,7 +85,15 @@
 							<img style="width:50%" src="{{STATIC_URL}}/img/ekt_logo.png">
 						</div>
 					</div>
+					
 				</div>
+				{% if messages %}
+				{% for message in messages %}
+					<script>
+						swalCustomTypeDisplay('{{message.tags}}','{{message.tags}}!','{{message}}');
+					</script>
+					{% endfor %}
+				{% endif %}
 				<br><br>
 			</div>
 		</div>

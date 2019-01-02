@@ -46,10 +46,10 @@ class ElasticStorer(object):
         index_creation_query = {"mappings": {mapping: {"properties": {"texta_facts": FACT_PROPERTIES}}}}
 
         # self._add_not_analyzed_declarations(index_creation_query['mappings'][mapping], not_analyzed_fields)
-        print(self._request.put("{url}/{index}".format(**{
+        self._request.put("{url}/{index}".format(**{
             'url':   url,
             'index': index,
-        }), data=json.dumps(index_creation_query), headers=self._headers).text)
+        }), data=json.dumps(index_creation_query), headers=self._headers)
 
     def _add_not_analyzed_declarations(self, mapping_dict, not_analyzed_fields):
         """Adds not analyzed fields to index creation schema.

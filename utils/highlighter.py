@@ -201,7 +201,7 @@ class Highlighter(object):
         for highlight_data in highlight_data_list:
             category = highlight_data.get('category', self._default_category)
             name = highlight_data.get('name', '')
-            value = highlight_data.get('value', None)
+            value = highlight_data.get('value', '')
 
             # Creating category_name_value[category][name] = [].
             # Important for cases when value is missing.
@@ -211,21 +211,29 @@ class Highlighter(object):
                 category_name_value[category][name].append(value)
 
         title_lines = []
+        fact_name = ''
+        fact_value = ''
         for category in category_name_value:
             title_line_tokens = [category]
-            for name in category_name_value[category]:
-                if category_name_value[category][name]:
-                    for value in category_name_value[category][name]:
-                        title_line_tokens.append('%s=%s'%(name, value))
+            # Get name of fact
+            for name in category_name_value[category].keys():
+                if name:
+                    fact_name = name
+                    if category_name_value[category][name]:
+                        # Get value of fact for fact_str_val searches 
+                        for value in category_name_value[category][name]:
+                            fact_value = value
+                            title_line_tokens.append('%s=%s'%(name, value))
                 else:
                     title_line_tokens.append(name)
             title_lines.append(' '.join(title_line_tokens))
+        
         title = ('&#13;'.join(title_lines))
         color = self._get_color([highlight_data['color'] for highlight_data in highlight_data_list if 'color' in highlight_data])
 
-        span_str = '<span class="{}" title="{}" style="background-color: {};{}" data-fact_name={} data-fact_val={}>'
+        span_str = '<span class="{}" title="{}" style="background-color: {};{}" data-fact_name="{}" data-fact_val="{}">'
         if '[fact]' in title or '[fact_val]' in title or '[ES]' in title:
-            return span_str.format('[HL]', title, color, (self._additional_style_string if color != 'none' else ''), name, value)
+            return span_str.format('[HL]', title, color, (self._additional_style_string if color != 'none' else ''), fact_name, fact_value)
 
         return span_str.format('', title, color, (self._additional_style_string if color != 'none' else ''), '', '')
 

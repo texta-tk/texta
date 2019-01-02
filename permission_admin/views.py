@@ -23,8 +23,6 @@ import multiprocessing
 import os
 import shutil
 
-import pdb
-
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -160,6 +158,10 @@ def get_datasets(indices=None):
                     ds_out['status'] = index['status']
                     ds_out['docs_count'] = index['docs_count']
                     ds_out['store_size'] = index['store_size']
+                elif '*' in ds_out['index']:
+                    ds_out['status'] = 'open'
+                    ds_out['docs_count'] = 'multiindex'
+                    ds_out['store_size'] = 'multiindex'
 
         datasets_out.append(ds_out)
 

@@ -3,6 +3,8 @@
 # sys.path.append(file_dir)
 # import preprocessors
 
+import logging
+from texta.settings import ERROR_LOGGER
 from texta.settings import DATASET_IMPORTER
 from texta.settings import SCORO_PREPROCESSOR_ENABLED
 from dataset_importer.document_preprocessor.preprocessors import CommentPreprocessor
@@ -13,6 +15,7 @@ from dataset_importer.document_preprocessor.preprocessors import MlpPreprocessor
 from dataset_importer.document_preprocessor.preprocessors import DatePreprocessor
 from dataset_importer.document_preprocessor.preprocessors import LexTagger
 from dataset_importer.document_preprocessor.preprocessors import ScoroPreprocessor
+from dataset_importer.document_preprocessor.preprocessors import EntityExtractorPreprocessor
 
 
 mlp_field_properties = {
@@ -44,7 +47,8 @@ mlp_field_properties = {
 
 
 def log_preprocessor_status(code, status):
-    print('[Dataset Importer] {code} preprocessor {status}.'.format(**{'code': code, 'status': status}))
+    if status == 'disabled':
+        print('[Dataset Importer] {code} preprocessor {status}.'.format(**{'code': code, 'status': status}))
 
 
 preprocessor_map = {}
@@ -64,7 +68,7 @@ try:
     }
     log_preprocessor_status(code='mlp', status='enabled')
 except Exception as e:
-    print(e)
+    logging.getLogger(ERROR_LOGGER).exception(e)
     log_preprocessor_status(code='mlp', status='disabled')
 
 
@@ -80,7 +84,7 @@ try:
     }
     log_preprocessor_status(code='date_converter', status='enabled')
 except Exception as e:
-    print(e)
+    logging.getLogger(ERROR_LOGGER).exception(e)
     log_preprocessor_status(code='date_converter', status='disabled')
 
 
@@ -95,7 +99,7 @@ try:
     }
     log_preprocessor_status(code='text_tagger', status='enabled')
 except Exception as e:
-    print(e)
+    logging.getLogger(ERROR_LOGGER).exception(e)
     log_preprocessor_status(code='text_tagger', status='disabled')
 
 try:
@@ -112,7 +116,7 @@ try:
     log_preprocessor_status(code='lexicon_classifier', status='enabled')
 
 except Exception as e:
-    print(e)
+    logging.getLogger(ERROR_LOGGER).exception(e)
     log_preprocessor_status(code='lexicon_classifier', status='disabled')
 
 try:
@@ -126,7 +130,7 @@ try:
     }
     log_preprocessor_status(code='comment_preprocessor', status='enabled')
 except Exception as e:
-    print(e)
+    logging.getLogger(ERROR_LOGGER).exception(e)
     log_preprocessor_status(code='comment_preprocessor', status='disabled')
 
 try:
@@ -143,10 +147,24 @@ try:
         'bg_favors': ['Doc','All']
     }
     log_preprocessor_status(code='scoro', status='enabled')
+except Exception as e:
+    logging.getLogger(ERROR_LOGGER).exception(e)
+    log_preprocessor_status(code='scoro', status='disabled')
 
+try:
+    preprocessor_map['entity_extractor'] = {
+        'name': 'Entity Extractor preprocessor',
+        'description': 'Extract entities from documents with TEXTA Entity Extractor',
+        'class': EntityExtractorPreprocessor,
+        'parameters_template': 'parameters/preprocessor_parameters/entity_extractor.html',
+        'arguments': {},
+        'is_enabled': True
+    }
+    log_preprocessor_status(code='entity_extractor', status='enabled')
 except Exception as e:
     print(e)
-    log_preprocessor_status(code='scoro', status='disabled')
+    log_preprocessor_status(code='entity_extractor', status='disabled')
+
 
 def convert_to_utf8(document):
     """

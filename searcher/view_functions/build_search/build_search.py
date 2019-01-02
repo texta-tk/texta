@@ -3,6 +3,10 @@ from utils.highlighter import Highlighter, ColorPicker
 from searcher.view_functions.general.searcher_utils import additional_option_cut_text
 from searcher.view_functions.build_search.translit_highlighting import hl_transliterately
 from searcher.view_functions.general.searcher_utils import improve_facts_readability
+from bs4 import BeautifulSoup
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module='bs4')
+
 import time
 import json
 
@@ -24,7 +28,10 @@ def execute_search(es_m, es_params):
         out['iTotalDisplayRecords'] = '10000'
     out['column_names'] = es_m.get_column_names(facts=True) # get columns names from ES mapping
 
-    for hit in response['hits']['hits']:
+    hits = response['hits']['hits']
+    #hits = es_m.remove_html_from_hits(hits)
+
+    for hit in hits:
         hit_id = str(hit['_id'])
         hit['_source']['_es_id'] = hit_id
         row = OrderedDict([(x, '') for x in out['column_names']]) # OrderedDict to remember column names with their content
@@ -38,17 +45,21 @@ def execute_search(es_m, es_params):
             # If the content is nested, need to break the flat name in a path list
 
             field_path = col.split('.')
+
             # Get content for the fields and make facts human readable
-            for p in field_path:
-                if col == u'texta_facts' and p in hit['_source']:
-                    content = improve_facts_readability(hit['_source'][p])
-                else:
-                    content = hit['_source'][p] if p in hit['_source'] else ''
+            content = hit['_source']
+            if col == u'texta_facts' and col in hit['_source']:
+                content = improve_facts_readability(hit['_source'][col])
+            else:
+                for p in field_path:
+                    # import pdb;pdb.set_trace()
+                    content = content[p] if p in content else ''
+            content = str(content)
+
+            soup = BeautifulSoup(content, "lxml")
+            content = soup.get_text()
             # To strip fields with whitespace in front
-            try:
-                old_content = content.strip()
-            except:
-                old_content = content
+            old_content = content.strip()
 
             # Substitute feature value with value highlighted by Elasticsearch
             if col in hl_config['fields'] and 'highlight' in hit:
@@ -64,12 +75,11 @@ def execute_search(es_m, es_params):
         # Transliterate between cols
         # TODO In the future possibly better for translit_cols params to be passed data from given request
         _transliterate(cols_data, row)
-
+    
         # Checks if user wants to see full text or short version
         for col in row:
             if 'show_short_version' in es_params.keys():
                 row[col] = additional_option_cut_text(row[col], es_params['short_version_n_char'])
-
         out['aaData'].append(row.values())
         out['lag'] = time.time()-start_time
     return out

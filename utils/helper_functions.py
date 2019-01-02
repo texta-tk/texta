@@ -1,8 +1,9 @@
 def add_dicts(dict1, dict2):
     '''
-    Helper function to += values of keys from two dicts
+    Helper function to += values of keys from two dicts with a single level nesting
     '''
-    # check if dicts are dict
+    # Check if params are dict
+    # Dicts are passed in as reference, so dict1 gets updated from call
     if set([type(dict1), type(dict2)]).issubset([dict]):
         for key, val in dict2.items():
             if key not in dict1:
@@ -10,6 +11,7 @@ def add_dicts(dict1, dict2):
             else:
                 if type(val) == dict:
                     for k, v in val.items():
-                        dict1[key][k] += v
+                        if type(v) != dict:
+                            dict1[key][k] += v
                 else:
                     dict1[key] += val

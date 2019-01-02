@@ -192,7 +192,7 @@ class AggManager:
                 self.es_m.set_query_parameter("aggs", self.agg_query)
                 response = self.es_m.search()
                 responses.append({"id":"search_"+str(s.pk),"label":name,"response":response})
-
+        
         # EXECUTE THE LIVE QUERY
         if "ignore_active_search" not in self.es_params:
             self.es_m.build(self.es_params)
@@ -211,7 +211,7 @@ class AggManager:
             self.es_m.set_query_parameter("aggs", self.agg_query)
             response = self.es_m.search()
             out["empty_timeline_response"] = response
-
+        
         return out
 
 
