@@ -17,7 +17,9 @@
     grid-template-rows: auto;
   }
 }
-
+.build-search-selectpicker{
+  flex:0.7;
+}
 .grid-wrapper-sidebar .form-inline>.form-group{
   width: 100%;
 }
