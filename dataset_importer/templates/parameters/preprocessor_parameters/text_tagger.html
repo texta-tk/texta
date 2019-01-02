@@ -1,10 +1,10 @@
-<div class="form-horizontal">
+<div class="form-horizontal padding-default well width-max">
 	<div class="form-group">
 		<label class="control-label col-sm-3" for="text-tagger-processor-feature-name">Fields:</label>
 		<div class="col-sm-7">
 			{% if fields %}
-			<select class="selectpicker form-control input-sm" multiple data-selected-text-format="count" id="text-tagger-processor-feature-names"
-			 name="text_tagger_feature_names">
+			<select class="selectpicker" multiple data-selected-text-format="count" id="text-tagger-processor-feature-names"
+			 name="text_tagger_feature_names" data-style="btn-sm btn-default">
 				{% for field in fields %}
 				<option value="{{field.path}}" {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{field.label}}</option>
 				{% endfor %}
@@ -29,13 +29,12 @@
 	<div class="form-group">
 		<label class="control-label col-sm-3" for="text-tagger-processor-tagger">Taggers:</label>
 		<div class="col-sm-7">
-			<select id="text-tagger-processor-taggers" name="text_tagger_taggers" class="form-control input-sm"
-			 multiple="multiple">
+			<select id="text-tagger-processor-taggers" name="text_tagger_taggers" class="selectpicker"
+			 multiple="multiple" data-style="btn-sm btn-default">
 				{% for tagger in preprocessor.enabled_taggers %}
 				<option value="{{tagger.id}}" {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{tagger.description}}</option>
 				{% endfor %}
 			</select>
 		</div>
-		<span data-toggle="tooltip" data-placement="bottom" title="Select one or more taggers to apply." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
 	</div>
 </div>

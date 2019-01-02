@@ -1,10 +1,9 @@
-<div class="form-horizontal">
-    <div class="form-group">
+<div class="padding-default bg-grey width-max">
         <label class="control-label col-sm-3" for="comment-preprocessor-feature-names">Fields:</label>
         <div class="col-sm-7">
             {% if fields %}
-            <select class="selectpicker form-control input-sm" multiple data-selected-text-format="count" id="comment-preprocessor-feature-names"
-                name="comment_preprocessor_feature_names">
+            <select class="selectpicker" multiple data-selected-text-format="count" id="comment-preprocessor-feature-names"
+                name="comment_preprocessor_feature_names" data-style="btn-sm btn-default">
                 {% for field in fields %}
                 <option value="{{field.data}}" {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{field.label}}</option>
                 {% endfor %}
@@ -19,6 +18,5 @@
         my_field1
         my_field2"
             class="glyphicon glyphicon-question-sign texta-tooltip"></span>
-    </div>
 
 </div>

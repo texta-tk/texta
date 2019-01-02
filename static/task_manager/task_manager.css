@@ -51,7 +51,6 @@
     /* center grid item */
     justify-self: start;
     text-align: unset;
-    padding-left: 5px
 }
 
 .slider-wrapper {
@@ -125,9 +124,6 @@
     width: 100%;
 }
 
-#params-lexicon_classifier {
-    padding: 5px;
-}
 
 .form-group > .col-sm-12 > .row {
     margin-bottom: 8px;

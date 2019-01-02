@@ -1,10 +1,10 @@
-<div class="form-horizontal">
+<div class="padding-default well width-max">
     <div class="form-group">
         <label class="control-label col-sm-3" for="mlp-processor-feature-name">Fields:</label>
         <div class="col-sm-7">
             {% if fields %}
-            <select class="selectpicker form-control input-sm" multiple data-selected-text-format="count" id="mlp-processor-feature-names"
-                name="mlp_feature_names">
+            <select class="selectpicker" multiple data-selected-text-format="count" id="mlp-processor-feature-names"
+                name="mlp_feature_names" data-style="btn-sm btn-default">
                 {% for field in fields %}
                 <option title="{{field.label}}" value="{{field.path}}" {% if forloop.counter < 2 %}selected="selected"
                     {% endif %}>{{field.label}}</option>
