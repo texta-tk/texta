@@ -52,8 +52,12 @@ from searcher.view_functions.general.fact_manager import FactGraph
 from searcher.view_functions.general.get_saved_searches import extract_constraints
 from searcher.view_functions.general.export_pages import export_pages
 from searcher.view_functions.general.searcher_utils import collect_map_entries, get_fields_content, get_fields
+from collections import OrderedDict, defaultdict
+from searcher.view_functions.general.searcher_utils import improve_facts_readability
 
 
+class BuildSearchEsManager:
+    buildSearchEsManager = None
 
 @login_required
 def index(request):
@@ -150,7 +154,7 @@ def delete(request):
         for search_id in search_ids:
             Search.objects.get(pk=search_id).delete()
             logger.info('search_deleted:'+search_id)
-       
+
     except Exception as e:
         print('-- Exception[{0}] {1}'.format(__name__, e))
         logger.exception('search_deletion_failed')
@@ -174,7 +178,6 @@ def get_saved_searches(request):
     active_datasets = Dataset.objects.filter(pk__in=active_dataset_ids)
     searches = Search.objects.filter(author=request.user).filter(datasets__in=active_datasets).distinct()
     return HttpResponse(json.dumps([{'id':search.pk,'desc':search.description} for search in searches],ensure_ascii=False))
-
 
 @login_required
 def get_table_header(request):
@@ -211,50 +214,87 @@ def get_table_content(request):
 
     return HttpResponse(json.dumps(result, ensure_ascii=False))
 
+@login_required
+def table_header_mlt(request):
+    ds = Datasets().activate_datasets(request.session)
+    es_m = ds.build_manager(ES_Manager)
+
+    # get columns names from ES mapping
+    fields = es_m.get_column_names(facts=True)
+    template_params = {'STATIC_URL': STATIC_URL,
+                       'URL_PREFIX': URL_PREFIX,
+                       'fields': fields,
+                       'searches': Search.objects.filter(author=request.user),
+                       'columns': [{'index':index, 'name':field_name} for index, field_name in enumerate(fields)],
+                       }
+    template = loader.get_template('mlt_results.html')
+    return HttpResponse(template.render(template_params, request))
 
 @login_required
 def mlt_query(request):
     es_params = request.POST
-
-    if('mlt_fields' not in es_params):
+    
+    if 'mlt_fields' not in es_params:
         return HttpResponse(status=400,reason='field')
+    else:
+        if es_params['mlt_fields'] == '[]':
+            return HttpResponse(status=400,reason='field')
+    if BuildSearchEsManager.buildSearchEsManager is None:
+        return HttpResponse(status=400, reason='search')
 
-    mlt_fields = [json.loads(field)['path'] for field in es_params.getlist('mlt_fields')]
+    mlt_fields = [field for field in json.loads(es_params['mlt_fields'])]
+    handle_negatives = es_params['handle_negatives']
+    docs_accepted = [a.strip() for a in es_params['docs'].split('\n') if a]
+    docs_rejected = [a.strip() for a in es_params['docs_rejected'].split('\n') if a]
 
-    handle_negatives = request.POST['handle_negatives']
-    docs_accepted = [a.strip() for a in request.POST['docs'].split('\n') if a]
-    docs_rejected = [a.strip() for a in request.POST['docs_rejected'].split('\n') if a]
-
-    # stopwords
-    stopword_lexicon_ids = request.POST.getlist('mlt_stopword_lexicons')
+    stopword_lexicon_ids = json.loads(es_params['mlt_stopword_lexicons'])
     stopwords = []
-
     for lexicon_id in stopword_lexicon_ids:
         lexicon = Lexicon.objects.get(id=int(lexicon_id))
         words = Word.objects.filter(lexicon=lexicon)
         stopwords+=[word.wrd for word in words]
 
+    search_size = es_params['search_size']
+    draw = int(es_params['draw'])
+
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
+    es_m.set_query_parameter('from', es_params['start'])
+    es_m.set_query_parameter('size', search_size)
 
-    response = es_m.more_like_this_search(mlt_fields,docs_accepted=docs_accepted,docs_rejected=docs_rejected,handle_negatives=handle_negatives,stopwords=stopwords)
+    response = es_m.more_like_this_search(mlt_fields,docs_accepted=docs_accepted,docs_rejected=docs_rejected,handle_negatives=handle_negatives, stopwords=stopwords, search_size=search_size, scroll_id=BuildSearchEsManager.buildSearchEsManager.buildSearchScrollID)
 
-    documents = []
+    result = {'data': [], 'draw': draw, 'recordsTotal': len(response['hits']['hits'])}
+    column_names = es_m.get_column_names(facts=True)
+
     for hit in response['hits']['hits']:
-        fields_content = get_fields_content(hit,mlt_fields)
-        documents.append({'id':hit['_id'],'content':fields_content})
+        hit_id = str(hit['_id'])
+        hit['_source']['_es_id'] = hit_id
+        row = OrderedDict([(x, '') for x in column_names])
 
-    template_params = {'STATIC_URL': STATIC_URL,
-                       'URL_PREFIX': URL_PREFIX,
-                       'documents':documents}
-    template = loader.get_template('mlt_results.html')
-    return HttpResponse(template.render(template_params, request))
+        for col in column_names:
+            # If the content is nested, need to break the flat name in a path list
+            field_path = col.split('.')
+            # Get content for the fields and make facts human readable
+            for p in field_path:
+                if col == u'texta_facts' and p in hit['_source']:
+                    content = improve_facts_readability(hit['_source'][p])
+                else:
+                    content = hit['_source'][p] if p in hit['_source'] else ''
+
+            # Append the final content of this col to the row
+            if row[col] == '':
+                row[col] = content
+
+        result['data'].append([hit_id, hit_id] + list(row.values()))
+
+    return HttpResponse(json.dumps(result, ensure_ascii=False))
 
 
 @login_required
 def cluster_query(request):
-    
+
     params = request.POST
     if('cluster_field' not in params):
         return HttpResponse(status=400,reason='field')
@@ -279,6 +319,7 @@ def search(es_params, request):
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
+    BuildSearchEsManager.buildSearchEsManager = es_m
     try:
         out = execute_search(es_m, es_params)
     except Exception as e:
@@ -344,7 +385,7 @@ def fact_to_doc(request):
     method = request.POST['method'].strip()
     match_type = request.POST['match_type'].strip()
     doc_id = request.POST['doc_id'].strip()
-    case_sens = True if request.POST['case_sens'].strip() == "True" else False 
+    case_sens = True if request.POST['case_sens'].strip() == "True" else False
     es_params = request.POST
 
     # Validate that params aren't empty strings

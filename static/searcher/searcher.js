@@ -194,7 +194,7 @@ function query () {
                         for (var i = 0, ien = data.columns.length; i < ien; i++) {
                             if (data.columns[i].visible) {
                                 /* sync select with the table */
-                                updateSelectColumnFilter(i)
+                                updateSelectColumnFilter(i,'#toggle-column-select')
                             }
                         }
                     }
@@ -206,7 +206,7 @@ function query () {
                 'ordering': false
             })
             $.fn.DataTable.ext.pager.numbers_length = 5
-            initColumnSelectVisiblity(examplesTable)
+            initColumnSelectVisiblity(examplesTable, $('#toggle-column-select'))
             var dataset = $('#dataset').val()
             var mapping = $('#mapping').val()
             var div = $('.toggle-columns-select')
@@ -235,8 +235,8 @@ function recalcDatatablesHeight () {
         $('div.dataTables_scrollBody').height(datatablesScrollBody - datatablesColumHeight - navbarHeight - datatablesNavHeight - 20)
     }
 }
-function initColumnSelectVisiblity (examplesTable) {
-    var $select = $('#toggle-column-select')
+function initColumnSelectVisiblity (examplesTable, selectPicker) {
+    var $select = selectPicker
     $select.selectpicker({
         style: 'btn btn-default'
     })
@@ -261,9 +261,9 @@ function initColumnSelectVisiblity (examplesTable) {
     $select.selectpicker('refresh')
 }
 
-function updateSelectColumnFilter (idx) {
+function updateSelectColumnFilter (idx, selectPicker) {
     /* selects content is layed out the same order as the columns list, child starts at 1 instead of 0, so just add 1 */
-    $(`#toggle-column-select :nth-child(${idx + 1})`).prop('selected', true)
+    $(`${selectPicker} :nth-child(${idx + 1})`).prop('selected', true)
 }
 function acceptDocument (id) {
     $('#docs').val($('#docs').val() + id + '\n')

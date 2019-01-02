@@ -1,10 +1,10 @@
-<div class="form-horizontal">
+<div class="form-horizontal padding-default well width-max">
 	<div class="form-group">
 		<label class="control-label col-sm-3" for="date-converter-processor-feature-name">Fields:</label>
 		<div class="col-sm-7">
 			{% if fields %}
-			<select class="selectpicker form-control input-sm" multiple data-selected-text-format="count" id="date-converter-feature-names"
-			 name="date_converter_feature_names">
+			<select class="selectpicker" multiple data-selected-text-format="count" id="date-converter-feature-names"
+			 name="date_converter_feature_names" data-style="btn-sm btn-default">
 				{% for field in fields %}
 				<option value="{{field.path}}" {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{field.label}}</option>
 				{% endfor %}
@@ -23,12 +23,11 @@
 	<div class="form-group">
 		<label class="control-label col-sm-3" for="date-converter-processor-feature-langs">Language:</label>
 		<div class="col-sm-7">
-			<select id="date-converter-processor-feature-langs" name="date_converter_feature_langs" class="form-control">
+			<select id="date-converter-processor-feature-langs" name="date_converter_feature_langs" class="selectpicker" data-style="btn-sm btn-default">
 				{% for language in preprocessor.languages %}
 				<option value="{{ language }}" {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{language}}</option>
 				{% endfor %}
 			</select>
 		</div>
-		<span data-toggle="tooltip" data-placement="bottom" title="Language of the field" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
 	</div>
 </div>

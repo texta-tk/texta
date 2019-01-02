@@ -1,8 +1,8 @@
 from collections import OrderedDict, defaultdict
-from collections import Counter
 from utils.highlighter import Highlighter, ColorPicker
 from searcher.view_functions.general.searcher_utils import additional_option_cut_text
 from searcher.view_functions.build_search.translit_highlighting import hl_transliterately
+from searcher.view_functions.general.searcher_utils import improve_facts_readability
 from bs4 import BeautifulSoup
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module='bs4')
@@ -43,6 +43,7 @@ def execute_search(es_m, es_params):
         cols_data = {}
         for col in out['column_names']:
             # If the content is nested, need to break the flat name in a path list
+
             field_path = col.split('.')
 
             # Get content for the fields and make facts human readable
@@ -83,23 +84,6 @@ def execute_search(es_m, es_params):
         out['lag'] = time.time()-start_time
     return out
 
-def improve_facts_readability(content):
-    '''Changes texta_facts field content to be more human readable'''
-    new_content = []
-    facts = [(x["fact"], x["str_val"]) for x in sorted(content, key=lambda k: k['fact'])]
-
-    fact_counts = Counter(facts)
-    facts = sorted(list(set(facts)))
-    facts_dict = dict(facts)
-
-    for i, k in enumerate(facts_dict):
-        # Make factnames bold for searcher results
-        if '<b>'+k+'</b>' not in new_content:
-            new_content.append('<b>'+k+'</b>')
-        new_content.append('    {}: {}'.format(facts_dict[k], fact_counts[facts[i]]))
-    content = '\n'.join(new_content)
-
-    return content
 
 def _prettify_standardize_hls(name_to_inner_hits, col, content, old_content):
     '''Applies prettified and standardized highlights to content'''

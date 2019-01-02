@@ -1,12 +1,12 @@
 <!--<script type="application/javascript" src="{{STATIC_URL}}task_manager/task_manager.js"></script>-->
 
 
-<div class="task-manager-grid-wrapper form-horizontal">
+<div class="task-manager-grid-wrapper form-horizontal padding-default well width-max">
   <div class="grid-i">
     <label class="control-label " for="scoro-preprocessor-feature-names">Fields:</label>
     <div class='select-wrapper'>
       {% if fields %}
-      <select class="selectpicker form-control input-sm" multiple data-selected-text-format="count" id="scoro-preprocessor-feature-names" name="scoro_feature_names">
+      <select class="selectpicker" data-width="100%" multiple data-selected-text-format="count" id="scoro-preprocessor-feature-names" name="scoro_feature_names" data-style="btn-sm btn-default">
         {% for field in fields %}
         <option value="{{field.data}}" {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{field.label}}</option>
         {% endfor %}
@@ -87,7 +87,7 @@
       <label class="control-label " for="scoro-preprocessor-sent-analysis-method">Method:</label>
       <div class='select-wrapper'>
         <select id="scoro-preprocessor-sent-analysis-method " name="scoro_sent_analysis_method" onchange=showBasedOnMethod()
-          class="form-control">
+          class="form-control input-sm">
           {% for sent_method in preprocessor.sentiment_analysis_methods %}
           <option value="{{ sent_method }}" {% if forloop.counter < 2 %}selected="selected" {% endif%}>
             {{sent_method}}</option>
@@ -104,7 +104,7 @@
         <label class="control-label " for="scoro-preprocessor-sentiment-lex">Sentiment lex:</label>
         <div class='select-wrapper'>
           <select id="scoro-preprocessor-sentiment-lex " name="scoro_sentiment_lex" onchange=showIfSentimentLexCustom(value)
-            class="form-control">
+            class="form-control input-sm">
             {% for sent_lex in preprocessor.sentiment_lexicons %}
             <option value="{{ sent_lex }}" {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{sent_lex}}</option>
             {% endfor %}
@@ -371,7 +371,7 @@
       <div class="grid-i">
         <label class="control-label " for="scoro-preprocessor-signif-scoring-function">Scoring function</label>
         <div class='select-wrapper'>
-          <select id="scoro-preprocessor-signif-scoring-function " name="scoro_signif_scoring_function" class="form-control">
+          <select id="scoro-preprocessor-signif-scoring-function " name="scoro_signif_scoring_function" class="form-control input-sm">
             {% for sc_function in preprocessor.scoring_functions %}
             <option value="{{ sc_function }}" {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{sc_function}}</option>
             {% endfor %}

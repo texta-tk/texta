@@ -32,9 +32,9 @@
 			</div>
 		</div>
 
-		<div class="row">
+		<div class="flex-column">
 			{% for preprocessor in enabled_preprocessors %}
-			<div id="params-{{preprocessor.key}}" class="{% if forloop.counter > 1 %}hidden{% endif %}">
+			<div id="params-{{preprocessor.key}}" class="{% if forloop.counter > 1 %}hidden{% endif %} flex-row height-max">
 				{% include preprocessor.parameters_template %}
 			</div>
 			{% endfor %}

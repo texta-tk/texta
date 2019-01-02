@@ -1,664 +1,730 @@
-<script type="application/javascript" src="{{STATIC_URL}}searcher/searcher-sidebar.js"></script>
+<script type="application/javascript" src="{{ STATIC_URL }}searcher/searcher-sidebar.js"></script>
 <div>
-   <form id="filters">
-      <div class="panel">
-         <div class="flex-row panel-heading">
-            <div>Current Search
-            </div>
-            <div class="flex-item-justify-end">
-               <div>
+    <form id="filters">
+        <div class="panel">
+            <div class="flex-row panel-heading">
+                <div>Current Search
+                </div>
+                <div class="flex-item-justify-end">
+                    <div>
                   <span id="actions-btn" class="dropdown invisible">
-                     <i role="button" class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-scissors"></span></i>
+                     <i role="button" class="dropdown-toggle" data-toggle="dropdown" href="#"><span
+                             class="glyphicon glyphicon-scissors"></span></i>
                      <ul class="dropdown-menu">
-                        <li><a href="#" data-toggle="modal" data-target="#export-modal"><span class="glyphicon glyphicon-save"></span>
+                        <li><a href="#" data-toggle="modal" data-target="#export-modal"><span
+                                class="glyphicon glyphicon-save"></span>
                               Export results</a></li>
-                        {% if request.user.is_superuser %}
-                        <li><a href="#" data-toggle="modal" data-target="#delete-modal"><span class="glyphicon glyphicon-remove"></span>
+                         {% if request.user.is_superuser %}
+                             <li><a href="#" data-toggle="modal" data-target="#delete-modal"><span
+                                     class="glyphicon glyphicon-remove"></span>
                               Delete results</a></li>
-                        {% endif %}
+                         {% endif %}
                      </ul>
                   </span>
-                  <span class="reduce-horizontal-padding  glyphicon glyphicon-floppy-disk pointer" onclick="javascript:save();"></span>
-                  <span onclick="getQuery();" data-toggle="modal" data-target="#query-modal" class="reduce-horizontal-padding  glyphicon glyphicon-sunglasses pointer"></span>
-                  <i role='button' class='glyphicon glyphicon-fullscreen' onclick=toggleFullscreen()></i>
-                  <i type='button' role='button' data-toggle="collapse" aria-expanded="false" aria-controls="current-search-panel"
-                     data-target="#current-search-panel" class="reduce-horizontal-padding  glyphicon glyphicon-minus"
-                     onclick=togglePanelCollapse(this)></i>
+                        <span class="reduce-horizontal-padding  glyphicon glyphicon-floppy-disk pointer"
+                              onclick="javascript:save();"></span>
+                        <span onclick="getQuery();" data-toggle="modal" data-target="#query-modal"
+                              class="reduce-horizontal-padding  glyphicon glyphicon-sunglasses pointer"></span>
+                        <i role='button' class='glyphicon glyphicon-fullscreen' onclick=toggleFullscreen()></i>
+                        <i type='button' role='button' data-toggle="collapse" aria-expanded="false"
+                           aria-controls="current-search-panel"
+                           data-target="#current-search-panel"
+                           class="reduce-horizontal-padding  glyphicon glyphicon-minus"
+                           onclick=togglePanelCollapse(this)></i>
 
-               </div>
+                    </div>
+                </div>
+
             </div>
+            <div class="collapse in" id="current-search-panel">
+                <div class="panel-body">
+                    <div class="form-group">
+                        <ul class="nav nav-tabs flex-row">
+                            <li class="flex-item-grow-1 active"><a data-toggle="tab" href="#search_params"
+                                                                   title="For building basic searches">Build
+                                Search</a>
+                            </li>
+                            <li class="flex-item-grow-1"><a data-toggle="tab" href="#mlt_params"
+                                                            title="For expanding basic searches via similarity queries">Expand
+                                Search</a>
+                            </li>
+                            <li class="flex-item-grow-1"><a data-toggle="tab" href="#cluster_params"
+                                                            title="For analyzing search content via clustering">Cluster
+                                Search</a>
+                            </li>
+                        </ul>
+                        <div class="tab-content">
 
-         </div>
-         <div class="collapse in" id="current-search-panel">
-            <div class="panel-body">
-               <div class="form-group">
-                  <ul class="nav nav-tabs flex-row">
-                     <li class="flex-item-grow-1 active"><a data-toggle="tab" href="#search_params" title="For building basic searches">Build
-                           Search</a>
-                     </li>
-                     <li class="flex-item-grow-1"><a data-toggle="tab" href="#mlt_params" title="For expanding basic searches via similarity queries">Expand
-                           Search</a>
-                     </li>
-                     <li class="flex-item-grow-1"><a data-toggle="tab" href="#cluster_params" title="For analyzing search content via clustering">Cluster
-                           Search</a>
-                     </li>
-                  </ul>
-                  <div class="tab-content">
-                     <div id="search_params" class="tab-pane fade in active ">
-                        <div class="padding-small horizontal-padding bg-grey margin-bottom">
-                           <div class="flex-column">
-                              <div class="flex-row flex-content-center">
-                                 <b>Add Filter</b>
-                              </div>
-                              <div class="flex-column">
-                                 <div class='flex-row flex-item-justify-start'>
-                                    <b>Select field(s):</b>
-                                 </div>
-                                 <div class="form-inline flex-row">
-                                    <div class="form-group flex-item-grow-1 constraint-field-wrapper">
-                                       <select class='selectpicker form-control' data-hide-disabled='true'
-                                          data-actions-box="true" multiple id="constraint_field" name="constraint_field"
-                                          class="form-control input-sm">
-                                          {% for field in fields %}
-                                          <option value="{{field.data}}">{{field.label}}</option>
-                                          {% endfor %}
-                                       </select>
+                            <div id="search_params" class="tab-pane fade in active ">
+                                <div class="padding-small horizontal-padding bg-grey margin-bottom">
+                                    <div class="flex-column">
+                                        <div class="flex-row flex-content-center">
+                                            <b>Add Filter</b>
+                                        </div>
+                                        <div class="flex-column">
+                                            <div class='flex-row flex-item-justify-start'>
+                                                <b>Select field(s):</b>
+                                            </div>
+                                            <div class="form-inline flex-row">
+                                                <div class="form-group flex-item-grow-1 constraint-field-wrapper">
+                                                    <select class='selectpicker form-control' data-hide-disabled='true'
+                                                            data-actions-box="true" multiple id="constraint_field"
+                                                            name="constraint_field"
+                                                            class="form-control input-sm">
+                                                        {% for field in fields %}
+                                                            <option value="{{ field.data }}">{{ field.label }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <button type="button" class="hidden btn btn-default input-sm width-max"
+                                                        id='constraint-field-button'
+                                                        onclick="javascript:addField('{{ date_range.min }}','{{ date_range.max }}');">
+                                                    Add
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <button type="button" class="hidden btn btn-default input-sm width-max"
-                                       id='constraint-field-button' onclick="javascript:addField('{{date_range.min}}','{{date_range.max}}');">Add</button>
-                                 </div>
-                              </div>
-                           </div>
+                                </div>
+                                <div id="constraints"></div>
+                                <div class="panel bg-grey">
+                                    <div class="row padded-row text-center">
+                                        <div class="col-sm-12 text-center">
+                                            <b>Search Options</b>
+                                        </div>
+                                        <div class="col-sm-12">
+                                            Show short version:
+                                            <input type="checkbox" name="show_short_version" onclick="hideShowOptions()"
+                                                   class="pull-right">
+                                        </div>
+                                        <div class="col-sm-12" id="short_version_options" style="display: none;">
+                                            Context window size (words):
+                                            <input id="n_char" name="short_version_n_char" class="form-control"
+                                                   data-slider-id='n_char' type="text" data-slider-min="1"
+                                                   data-slider-max="20"
+                                                   data-slider-step="1" data-slider-value="5"/>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row text-center">
+                                        <div class="col-sm-12">
+                                            Search as you type:
+                                            <input type="checkbox" name="search_as_you_type" id="search_as_you_type"
+                                                   checked="true" class="pull-right">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <button type="button" onclick="javascript:query();"
+                                                class="btn btn-default form-control"><span
+                                                class="glyphicon glyphicon-search"></span>
+                                            Search
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="mlt_params" class="tab-pane fade">
+                                <input type="hidden" id="docs_rejected" name="docs_rejected">
+                                <div class="panel bg-grey">
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <b>Select fields:</b>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <select name="mlt_fields" id="mlt_fields"
+                                                    class="selectpicker form-control input-sm"
+                                                    multiple="multiple">
+                                                {% for field in fields %}
+                                                    {% if field.type == 'text' or field.type == 'keyword' %}
+                                                        <option value="{{ field.data}}">{{ field.label }}</option>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <b>Selected documents:</b>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <textarea class="form-control input-sm" rows="5" id="docs"
+                                                      name="docs"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <b>Stopword lexicons:</b>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            {% if lexicons|length != 0 %}
+                                                <select id="mlt_stopword_lexicons" name="mlt_stopword_lexicons"
+                                                        class="form-control input-sm"
+                                                        multiple="multiple">
+                                                    {% for lexicon in lexicons %}
+                                                        <option value="{{ lexicon.id }}">{{ lexicon }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            {% else %}
+                                                <span class="text-danger">No lexicons!</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="flex-column">
+                                        <label class='flex-grow-1 horizontal-padding'>Amount of docs to see</label>
+                                        <div class="slider-wrapper flex-grow-1">
+                                            <input id="mlt_doc_slider" name="mlt_doc_slider" class="form-control "
+                                                   data-slider-id='mltDocSlider' type="text" data-slider-min="1"
+                                                   data-slider-max="500"
+                                                   data-slider-step="1" data-slider-value="50"/>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <b>Handle rejected documents:</b>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <select id="handle_negatives" name="handle_negatives" class="form-control">
+                                                <option value="ignore" selected="selected">ignore rejected</option>
+                                                <option value="unlike">unlike rejected</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <button type="button" onclick="javascript:mltQuery();"
+                                                class="btn btn-default form-control">
+                                            <span class="glyphicon glyphicon-search"></span> Search for Similar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="cluster_params" class="tab-pane fade">
+                                <div class="panel bg-grey">
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <b>Select field:</b>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <select name="cluster_field" id="cluster_field" multiple="multiple"
+                                                    class="selectpicker form-control input-sm">
+                                                {% for field in fields %}
+                                                    {% if field.type == 'text' or field.type == 'keyword' %}
+                                                        <option value="{{ field.data }}">{{ field.label }}</option>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <b>Clustering method:</b>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <select id="cluster_method" name="cluster_method"
+                                                    class="form-control input-sm">
+                                                <option value="hierarchical">Hierarchical</option>
+                                                <option value="kmeans" selected="selected">K-means</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <b>Vectorizer:</b>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <select id="cluster_vectorizer" name="cluster_vectorizer"
+                                                    class="form-control input-sm">
+                                                <option value="count">CountVectorizer</option>
+                                                <option value="tfidf" selected="selected">TfidfVectorizer</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <b>Number of clusters:</b>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <input id="n_clusters" name="cluster_n_clusters" class="form-control"
+                                                   data-slider-id='n_clusters' type="text" data-slider-min="2"
+                                                   data-slider-max="100" data-slider-step="1" data-slider-value="10"/>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <b>Maximum number of documents:</b>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <input id="n_samples" name="cluster_n_samples" class="form-control"
+                                                   data-slider-id='n_samples' type="text" data-slider-min="100"
+                                                   data-slider-max="5000" data-slider-step="100"
+                                                   data-slider-value="1000"/>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <b>Number of keywords per cluster:</b>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <input id="n_keywords" name="cluster_n_keywords" class="form-control"
+                                                   data-slider-id='n_keywords' type="text" data-slider-min="5"
+                                                   data-slider-max="50" data-slider-step="5" data-slider-value="10"/>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <b>Maximum total words:</b>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <input id="n_features" name="cluster_n_features" class="form-control"
+                                                   data-slider-id='n_features' type="text" data-slider-min="100"
+                                                   data-slider-max="10000" data-slider-step="100"
+                                                   data-slider-value="1000"/>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            <b>Stopword lexicons:</b>
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row">
+                                        <div class="col-sm-12">
+                                            {% if lexicons|length != 0 %}
+                                                <select id="cluster_lexicons" name="cluster_lexicons"
+                                                        class="form-control input-sm"
+                                                        multiple="multiple">
+                                                    {% for lexicon in lexicons %}
+                                                        <option value="{{ lexicon.id }}">{{ lexicon }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            {% else %}
+                                                <span class="text-danger">No lexicons!</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="panel bg-grey">
+                                    <div class="row padded-row text-center">
+                                        <div class="col-sm-12 text-center">
+                                            <b>Additional Options</b>
+                                        </div>
+                                        <div class="col-sm-12">
+                                            Show short version:
+                                            <input type="checkbox" name="show_short_version_cluster"
+                                                   onclick="hideShowOptionsCluster()"
+                                                   class="pull-right">
+                                        </div>
+                                        <div class="col-sm-12">
+                                            Show only documents with matches:
+                                            <input id="show_unhighlighted" type="checkbox" name="show_unhighlighted"
+                                                   class="pull-right">
+                                        </div>
+                                    </div>
+                                    <div class="row padded-row" id="short_version_options_cluster"
+                                         style="display: none;">
+                                        <div class="col-sm-12">
+                                            <b>Context window size (words):</b>
+                                        </div>
+                                        <div class="col-sm-12">
+                                            <input id="n_char_cluster" name="short_version_n_char_cluster"
+                                                   class="form-control"
+                                                   data-slider-id='n_char' type="text" data-slider-min="1"
+                                                   data-slider-max="20"
+                                                   data-slider-step="1" data-slider-value="5"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <button type="button" onclick="javascript:clusterQuery();"
+                                                class="btn btn-default form-control"><span
+                                                class="glyphicon glyphicon-search"></span> Cluster Search
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
-                        <div id="constraints"></div>
-                        <div class="panel bg-grey">
-                           <div class="row padded-row text-center">
-                              <div class="col-sm-12 text-center">
-                                 <b>Search Options</b>
-                              </div>
-                              <div class="col-sm-12">
-                                 Show short version:
-                                 <input type="checkbox" name="show_short_version" onclick="hideShowOptions()"
-                                    class="pull-right">
-                              </div>
-                              <div class="col-sm-12" id="short_version_options" style="display: none;">
-                                 Context window size (words):
-                                 <input id="n_char" name="short_version_n_char" class="form-control"
-                                    data-slider-id='n_char' type="text" data-slider-min="1" data-slider-max="20"
-                                    data-slider-step="1" data-slider-value="5" />
-                              </div>
-                           </div>
-                           <div class="row padded-row text-center">
-                              <div class="col-sm-12">
-                                 Search as you type:
-                                 <input type="checkbox" name="search_as_you_type" id="search_as_you_type"
-                                    checked="true" class="pull-right">
-                              </div>
-                           </div>
-                        </div>
-                        <div class="row">
-                           <div class="col-sm-12"><button type="button" onclick="javascript:query();" class="btn btn-default form-control"><span
-                                    class="glyphicon glyphicon-search"></span>
-                                 Search</button>
-                           </div>
-                        </div>
-                     </div>
-                     <div id="mlt_params" class="tab-pane fade">
-                        <input type="hidden" id="docs_rejected" name="docs_rejected">
-                        <div class="panel bg-grey">
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <b>Select fields:</b>
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <select name="mlt_fields" id="mlt_fields" class="selectpicker form-control input-sm"
-                                    multiple="multiple">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="flex-row panel-heading">
+                <div class="flex-item-justify-start">Saved Searches</div>
+                <div class="flex-item-justify-end">
+                    <i role='button' onclick=removeSearches() class="glyphicon glyphicon glyphicon-remove"></i>
+                    <i type='button' role='button' data-toggle="collapse" aria-expanded="false"
+                       aria-controls="saved-searches-collapse"
+                       data-target="#saved-searches-collapse" class="glyphicon glyphicon-minus"
+                       onclick=togglePanelCollapse(this)></i>
+                </div>
+            </div>
+            <div class="collapse in" id='saved-searches-collapse'>
+                <div class="panel-body" id='saved-searches-panel'>
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Select</th>
+                            <th>Search Description</th>
+                            <th>Copy url</th>
+                        </tr>
+                        </thead>
+                        <tbody id="saved_searches">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <input type="hidden" name="search_description" id="search_description">
+        <input type="hidden" name="chart_type" id="chart_type">
+        <input type="hidden" name="scroll_id" id="scroll_id">
+        <div class="panel">
+            <div class="flex-row panel-heading">
+                <div class="flex-item-justify-start">Aggregations</div>
+                <div class="flex-item-justify-end"><i type='button' role='button' data-toggle="collapse"
+                                                      aria-expanded="false" aria-controls="aggregations-panel"
+                                                      data-target="#aggregations-panel"
+                                                      class="glyphicon glyphicon-minus"
+                                                      onclick=togglePanelCollapse(this)></i>
+                </div>
+            </div>
+            <div class="collapse in" id="aggregations-panel">
+                <div class="panel-body">
+                    <div class="panel bg-grey">
+                        <div class="row padded-row">
+                            <div class="col-sm-12 text-center">
+                                <b>Field #1</b>
+                            </div>
+                            <div class="col-sm-12">
+                                <b>Select field:</b>
+                                <select id="agg_field_1" name="agg_field_1" class="form-control input-sm"
+                                        onchange="changeAggField('1');">
                                     {% for field in fields %}
-                                    {% if field.type == 'text' or field.type == 'keyword' %}
-                                    <option value="{{field.data}}">{{field.label}}</option>
-                                    {% endif %}
+                                        <option value="{{ field.data }}">{{ field.label }}</option>
                                     {% endfor %}
-                                 </select>
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <b>Selected documents:</b>
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <textarea class="form-control input-sm" rows="5" id="docs" name="docs"></textarea>
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <b>Stopword lexicons:</b>
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 {% if lexicons|length != 0 %}
-                                 <select id="mlt_stopword_lexicons" name="mlt_stopword_lexicons" class="form-control input-sm"
-                                    multiple="multiple">
-                                    {% for lexicon in lexicons %}
-                                    <option value="{{lexicon.id}}">{{lexicon}}</option>
-                                    {% endfor %}
-                                 </select>
-                                 {% else %}
-                                 <span class="text-danger">No lexicons!</span>
-                                 {% endif %}
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <b>Handle rejected documents:</b>
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <select id="handle_negatives" name="handle_negatives" class="form-control">
-                                    <option value="ignore" selected="selected">ignore rejected</option>
-                                    <option value="unlike">unlike rejected</option>
-                                 </select>
-                              </div>
-                           </div>
+                                </select>
+                                <div id="agg_daterange_1" class="hidden">
+                                    <b>Date range:</b>
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <input type="text" placeholder="Daterange from" name="agg_daterange_from_1"
+                                                   id="agg_daterange_from_1" class="form-control input-sm">
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <input type="text" placeholder="Daterange to" name="agg_daterange_to_1"
+                                                   id="agg_daterange_to_1"
+                                                   class="form-control input-sm">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="sort_by_1">
+                                    <b>Aggregation:</b>
+                                    <select id="sort_by_1" name="sort_by_1" class="form-control input-sm">
+                                        <option value="terms" selected="selected">frequent items</option>
+                                        <option value="significant_terms">significant items</option>
+                                        <option value="significant_text">significant words</option>
+                                    </select>
+                                </div>
+                                <div id="agg_size_1">
+                                    <b>Aggregation size:</b><br>
+                                    <input id="n_agg_size_1" name="agg_size_1" class="form-control"
+                                           data-slider-id='agg_size_1'
+                                           type="text" data-slider-min="10" data-slider-max="300" data-slider-step="10"
+                                           data-slider-value="30"/>
+                                </div>
+                                <div id="freq_norm_1" class="hidden">
+                                    <b>Frequency:</b>
+                                    <select id="freq_norm_1" name="freq_norm_1" class="form-control input-sm">
+                                        <option value="raw_frquency" selected="selected">raw frequency</option>
+                                        <option value="relative_frequency">relative frequency</option>
+                                    </select>
+                                </div>
+                                <div id="interval_1" class="hidden">
+                                    <b>Interval:</b>
+                                    <select id="interval_1" name="interval_1" class="form-control input-sm">
+                                        <option value="day">day</option>
+                                        <option value="week">week</option>
+                                        <option value="month" selected="selected">month</option>
+                                        <option value="quarter">quarter</option>
+                                        <option value="year">year</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-                        <div class="row">
-                           <div class="col-sm-12">
-                              <button type="button" onclick="javascript:mltQuery();" class="btn btn-default form-control"><span
-                                    class="glyphicon glyphicon-search"></span> Search for Similar</button>
-                           </div>
+                    </div>
+                    <div class="panel bg-grey">
+                        <div class="row" id="agg_field_2_button">
+                            <div class="col-sm-12 text-center">
+                                <span class="glyphicon glyphicon-plus pointer" onclick="toggleAggField2('add');"></span>
+                            </div>
                         </div>
-                     </div>
-                     <div id="cluster_params" class="tab-pane fade">
-                        <div class="panel bg-grey">
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <b>Select field:</b>
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <select name="cluster_field" id="cluster_field" multiple="multiple" class="selectpicker form-control input-sm">
+                        <div class="row padded-row hidden" id="agg_field_2_container">
+                            <div class="col-sm-12 text-center">
+                                <b>Field #2</b> <span class="glyphicon glyphicon-minus pull-right pointer"
+                                                      onclick="toggleAggField2('remove');"></span>
+                            </div>
+                            <input type="hidden" id="agg_field_2_selected" name="agg_field_2_selected" value="false">
+                            <div class="col-sm-12">
+                                <b>Select field:</b>
+                                <select id="agg_field_2" name="agg_field_2" class="form-control input-sm">
                                     {% for field in fields %}
-                                    {% if field.type == 'text' or field.type == 'keyword' %}
-                                    <option value="{{field.data}}">{{field.label}}</option>
-                                    {% endif %}
+                                        {% if field.type == 'keyword' or field.type == 'text' or field.type == 'facts' %}
+                                            <option value="{{ field.data }}">{{ field.label }}</option>
+                                        {% endif %}
                                     {% endfor %}
-                                 </select>
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <b>Clustering method:</b>
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <select id="cluster_method" name="cluster_method" class="form-control input-sm">
-                                    <option value="hierarchical">Hierarchical</option>
-                                    <option value="kmeans" selected="selected">K-means</option>
-                                 </select>
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <b>Vectorizer:</b>
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <select id="cluster_vectorizer" name="cluster_vectorizer" class="form-control input-sm">
-                                    <option value="count">CountVectorizer</option>
-                                    <option value="tfidf" selected="selected">TfidfVectorizer</option>
-                                 </select>
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <b>Number of clusters:</b>
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <input id="n_clusters" name="cluster_n_clusters" class="form-control"
-                                    data-slider-id='n_clusters' type="text" data-slider-min="2"
-                                    data-slider-max="100" data-slider-step="1" data-slider-value="10" />
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <b>Maximum number of documents:</b>
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <input id="n_samples" name="cluster_n_samples" class="form-control"
-                                    data-slider-id='n_samples' type="text" data-slider-min="100"
-                                    data-slider-max="5000" data-slider-step="100" data-slider-value="1000" />
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <b>Number of keywords per cluster:</b>
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <input id="n_keywords" name="cluster_n_keywords" class="form-control"
-                                    data-slider-id='n_keywords' type="text" data-slider-min="5"
-                                    data-slider-max="50" data-slider-step="5" data-slider-value="10" />
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <b>Maximum total words:</b>
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <input id="n_features" name="cluster_n_features" class="form-control"
-                                    data-slider-id='n_features' type="text" data-slider-min="100"
-                                    data-slider-max="10000" data-slider-step="100" data-slider-value="1000" />
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 <b>Stopword lexicons:</b>
-                              </div>
-                           </div>
-                           <div class="row padded-row">
-                              <div class="col-sm-12">
-                                 {% if lexicons|length != 0 %}
-                                 <select id="cluster_lexicons" name="cluster_lexicons" class="form-control input-sm"
-                                    multiple="multiple">
-                                    {% for lexicon in lexicons %}
-                                    <option value="{{lexicon.id}}">{{lexicon}}</option>
-                                    {% endfor %}
-                                 </select>
-                                 {% else %}
-                                 <span class="text-danger">No lexicons!</span>
-                                 {% endif %}
-                              </div>
-                           </div>
+                                </select>
+                                <div id="sort_by_2">
+                                    <b>Aggregation:</b>
+                                    <select id="sort_by_2" name="sort_by_2" class="form-control input-sm">
+                                        <option value="terms" selected="selected">frequent items</option>
+                                        <option value="significant_terms">significant items</option>
+                                        <option value="significant_text">significant words</option>
+                                    </select>
+                                </div>
+                                <div id="agg_size_2">
+                                    <b>Aggregation size:</b><br>
+                                    <input id="n_agg_size_2" name="agg_size_2" class="form-control"
+                                           data-slider-id='agg_size_2'
+                                           type="text" data-slider-min="10" data-slider-max="300" data-slider-step="10"
+                                           data-slider-value="30"/>
+                                </div>
+                            </div>
                         </div>
-                        <div class="panel bg-grey">
-                           <div class="row padded-row text-center">
-                              <div class="col-sm-12 text-center">
-                                 <b>Additional Options</b>
-                              </div>
-                              <div class="col-sm-12">
-                                 Show short version:
-                                 <input type="checkbox" name="show_short_version_cluster" onclick="hideShowOptionsCluster()"
-                                    class="pull-right">
-                              </div>
-                              <div class="col-sm-12">
-                                 Show only documents with matches:
-                                 <input id="show_unhighlighted" type="checkbox" name="show_unhighlighted"
-                                    class="pull-right">
-                              </div>
-                           </div>
-                           <div class="row padded-row" id="short_version_options_cluster" style="display: none;">
-                              <div class="col-sm-12">
-                                 <b>Context window size (words):</b>
-                              </div>
-                              <div class="col-sm-12">
-                                 <input id="n_char_cluster" name="short_version_n_char_cluster" class="form-control"
-                                    data-slider-id='n_char' type="text" data-slider-min="1" data-slider-max="20"
-                                    data-slider-step="1" data-slider-value="5" />
-                              </div>
-                           </div>
+                    </div>
+                    <div class="panel bg-grey">
+                        <div class="row padded-row">
+                            <div class="col-sm-12 text-center">
+                                <b>Additional Options</b>
+                            </div>
+                            <div class="col-sm-12">
+                                <!--
+                                   <b>Background corpus:</b>
+                                       <select id="custom_bg" name="custom_bg" class="form-control input-sm">
+                                           <option value="all_docs" selected="selected">All documents</option>
+                                           <option value="">Search: online</option>
+                                       </select>
+                                   -->
+                                Hide current search in results:
+                                <input type="checkbox" name="ignore_active_search" class="pull-right">
+                            </div>
                         </div>
-                        <div class="row">
-                           <div class="col-sm-12">
-                              <button type="button" onclick="javascript:clusterQuery();" class="btn btn-default form-control"><span
-                                    class="glyphicon glyphicon-search"></span> Cluster Search</button>
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-               </div>
+                    </div>
+                    <button type="button" onclick="javascript:aggregate();" class="btn btn-default form-control"><span
+                            class="glyphicon glyphicon-filter"></span> Aggregate
+                    </button>
+                </div>
             </div>
-         </div>
-      </div>
-      <div class="panel">
-         <div class="flex-row panel-heading">
-            <div class="flex-item-justify-start">Saved Searches</div>
-            <div class="flex-item-justify-end">
-               <i role='button' onclick=removeSearches() class="glyphicon glyphicon glyphicon-remove"></i>
-               <i type='button' role='button' data-toggle="collapse" aria-expanded="false" aria-controls="saved-searches-collapse"
-                  data-target="#saved-searches-collapse" class="glyphicon glyphicon-minus" onclick=togglePanelCollapse(this)></i>
+        </div>
+        <div class="panel {{ display_fact_graph }}">
+            <div class="flex-row panel-heading">
+                <div class="flex-item-justify-start">Fact Graph</div>
+                <div class="flex-item-justify-end"><i type='button' role='button' data-toggle="collapse"
+                                                      aria-expanded="false" aria-controls="fact-graph-panel"
+                                                      data-target="#fact-graph-panel"
+                                                      class="glyphicon glyphicon-minus"
+                                                      onclick=togglePanelCollapse(this)></i>
+                </div>
             </div>
-         </div>
-         <div class="collapse in" id='saved-searches-collapse'>
-            <div class="panel-body" id='saved-searches-panel'>
-               <table class="table table-striped">
-                  <thead>
-                     <tr>
-                        <th>Select</th>
-                        <th>Search Description</th>
-                        <th>Copy url</th>
-                     </tr>
-                  </thead>
-                  <tbody id="saved_searches">
-                  </tbody>
-               </table>
-            </div>
-         </div>
-      </div>
-      <input type="hidden" name="search_description" id="search_description">
-      <input type="hidden" name="chart_type" id="chart_type">
-      <input type="hidden" name="scroll_id" id="scroll_id">
-      <div class="panel">
-         <div class="flex-row panel-heading">
-            <div class="flex-item-justify-start">Aggregations</div>
-            <div class="flex-item-justify-end"><i type='button' role='button' data-toggle="collapse"
-                  aria-expanded="false" aria-controls="aggregations-panel" data-target="#aggregations-panel"
-                  class="glyphicon glyphicon-minus" onclick=togglePanelCollapse(this)></i>
-            </div>
-         </div>
-         <div class="collapse in" id="aggregations-panel">
-            <div class="panel-body">
-               <div class="panel bg-grey">
-                  <div class="row padded-row">
-                     <div class="col-sm-12 text-center">
-                        <b>Field #1</b>
-                     </div>
-                     <div class="col-sm-12">
-                        <b>Select field:</b>
-                        <select id="agg_field_1" name="agg_field_1" class="form-control input-sm" onchange="changeAggField('1');">
-                           {% for field in fields %}
-                           <option value="{{field.data}}">{{field.label}}</option>
-                           {% endfor %}
-                        </select>
-                        <div id="agg_daterange_1" class="hidden">
-                           <b>Date range:</b>
-                           <div class="row">
-                              <div class="col-sm-6">
-                                 <input type="text" placeholder="Daterange from" name="agg_daterange_from_1"
-                                    id="agg_daterange_from_1" class="form-control input-sm">
-                              </div>
-                              <div class="col-sm-6">
-                                 <input type="text" placeholder="Daterange to" name="agg_daterange_to_1" id="agg_daterange_to_1"
-                                    class="form-control input-sm">
-                              </div>
-                           </div>
+            <div class="collapse in" id="fact-graph-panel">
+                <div class="panel-body" id="factGraphDiv">
+                    <div class="panel bg-grey">
+                        <div class="row padded-row">
+                            <div class="col-sm-12">
+                                <b>Number of fact values per fact name:</b>
+                            </div>
+                            <div id="factGraphSliderDiv" class="col-sm-12">
+                                <input id="nFactGraphSize" name="fact_graph_size" class="form-control"
+                                       data-slider-id='nFactGraphSizeId'
+                                       type="text" data-slider-min="3" data-slider-max="30" data-slider-step="1"
+                                       data-slider-value="15"/>
+                            </div>
                         </div>
-                        <div id="sort_by_1">
-                           <b>Aggregation:</b>
-                           <select id="sort_by_1" name="sort_by_1" class="form-control input-sm">
-                              <option value="terms" selected="selected">frequent items</option>
-                              <option value="significant_terms">significant items</option>
-                              <option value="significant_text">significant words</option>
-                           </select>
-                        </div>
-                        <div id="agg_size_1">
-                           <b>Aggregation size:</b><br>
-                           <input id="n_agg_size_1" name="agg_size_1" class="form-control" data-slider-id='agg_size_1'
-                              type="text" data-slider-min="10" data-slider-max="300" data-slider-step="10"
-                              data-slider-value="30" />
-                        </div>
-                        <div id="freq_norm_1" class="hidden">
-                           <b>Frequency:</b>
-                           <select id="freq_norm_1" name="freq_norm_1" class="form-control input-sm">
-                              <option value="raw_frquency" selected="selected">raw frequency</option>
-                              <option value="relative_frequency">relative frequency</option>
-                           </select>
-                        </div>
-                        <div id="interval_1" class="hidden">
-                           <b>Interval:</b>
-                           <select id="interval_1" name="interval_1" class="form-control input-sm">
-                              <option value="day">day</option>
-                              <option value="week">week</option>
-                              <option value="month" selected="selected">month</option>
-                              <option value="quarter">quarter</option>
-                              <option value="year">year</option>
-                           </select>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-               <div class="panel bg-grey">
-                  <div class="row" id="agg_field_2_button">
-                     <div class="col-sm-12 text-center">
-                        <span class="glyphicon glyphicon-plus pointer" onclick="toggleAggField2('add');"></span>
-                     </div>
-                  </div>
-                  <div class="row padded-row hidden" id="agg_field_2_container">
-                     <div class="col-sm-12 text-center">
-                        <b>Field #2</b> <span class="glyphicon glyphicon-minus pull-right pointer" onclick="toggleAggField2('remove');"></span>
-                     </div>
-                     <input type="hidden" id="agg_field_2_selected" name="agg_field_2_selected" value="false">
-                     <div class="col-sm-12">
-                        <b>Select field:</b>
-                        <select id="agg_field_2" name="agg_field_2" class="form-control input-sm">
-                           {% for field in fields %}
-                           {% if field.type == 'keyword' or field.type == 'text' or field.type == 'facts' %}
-                           <option value="{{field.data}}">{{field.label}}</option>
-                           {% endif %}
-                           {% endfor %}
-                        </select>
-                        <div id="sort_by_2">
-                           <b>Aggregation:</b>
-                           <select id="sort_by_2" name="sort_by_2" class="form-control input-sm">
-                              <option value="terms" selected="selected">frequent items</option>
-                              <option value="significant_terms">significant items</option>
-                              <option value="significant_text">significant words</option>
-                           </select>
-                        </div>
-                        <div id="agg_size_2">
-                           <b>Aggregation size:</b><br>
-                           <input id="n_agg_size_2" name="agg_size_2" class="form-control" data-slider-id='agg_size_2'
-                              type="text" data-slider-min="10" data-slider-max="300" data-slider-step="10"
-                              data-slider-value="30" />
-                        </div>
-                     </div>
-                  </div>
-               </div>
-               <div class="panel bg-grey">
-                  <div class="row padded-row">
-                     <div class="col-sm-12 text-center">
-                        <b>Additional Options</b>
-                     </div>
-                     <div class="col-sm-12">
-                        <!--
-                           <b>Background corpus:</b>
-                               <select id="custom_bg" name="custom_bg" class="form-control input-sm">
-                                   <option value="all_docs" selected="selected">All documents</option>
-                                   <option value="">Search: online</option>
-                               </select>
-                           -->
-                        Hide current search in results:
-                        <input type="checkbox" name="ignore_active_search" class="pull-right">
-                     </div>
-                  </div>
-               </div>
-               <button type="button" onclick="javascript:aggregate();" class="btn btn-default form-control"><span
-                     class="glyphicon glyphicon-filter"></span> Aggregate</button>
+                    </div>
+                    <button type="button" id='factGraphButton' onclick="javascript:factGraph();"
+                            class="btn btn-default form-control"><span
+                            class="glyphicon glyphicon-eye-open"></span> Visualize
+                    </button>
+                </div>
             </div>
-         </div>
-      </div>
-      <div class="panel {{display_fact_graph}}">
-         <div class="flex-row panel-heading">
-            <div class="flex-item-justify-start">Fact Graph</div>
-            <div class="flex-item-justify-end"><i type='button' role='button' data-toggle="collapse"
-                  aria-expanded="false" aria-controls="fact-graph-panel" data-target="#fact-graph-panel"
-                  class="glyphicon glyphicon-minus" onclick=togglePanelCollapse(this)></i>
+        </div>
+    </form>
+    <div class="modal fade" id="query-modal" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Query</h4>
+                </div>
+                <div class="modal-body" id="query-modal-content"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
             </div>
-         </div>
-         <div class="collapse in" id="fact-graph-panel">
-            <div class="panel-body" id="factGraphDiv">
-               <div class="panel bg-grey">
-                  <div class="row padded-row">
-                     <div class="col-sm-12">
-                        <b>Number of fact values per fact name:</b>
-                     </div>
-                     <div id="factGraphSliderDiv" class="col-sm-12">
-                        <input id="nFactGraphSize" name="fact_graph_size" class="form-control" data-slider-id='nFactGraphSizeId'
-                           type="text" data-slider-min="3" data-slider-max="30" data-slider-step="1"
-                           data-slider-value="15" />
-                     </div>
-                  </div>
-               </div>
-               <button type="button" id='factGraphButton' onclick="javascript:factGraph();" class="btn btn-default form-control"><span
-                     class="glyphicon glyphicon-eye-open"></span> Visualize </button>
-            </div>
-         </div>
-      </div>
-   </form>
-   <div class="modal fade" id="query-modal" role="dialog">
-      <div class="modal-dialog">
-         <div class="modal-content">
-            <div class="modal-header">
-               <button type="button" class="close" data-dismiss="modal">&times;</button>
-               <h4 class="modal-title">Query</h4>
-            </div>
-            <div class="modal-body" id="query-modal-content"></div>
-            <div class="modal-footer">
-               <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            </div>
-         </div>
-      </div>
-   </div>
+        </div>
+    </div>
 </div>
-<div id="field_hidden" style="display: none;" class="bg-grey padding-small horizontal-padding flex-column margin-bottom">
-   <input type="hidden" name="match_field_" id="match_field_">
+<div id="field_hidden" style="display: none;"
+     class="bg-grey padding-small horizontal-padding flex-column margin-bottom">
+    <input type="hidden" name="match_field_" id="match_field_">
 
-   <div class="flex-row">
-      <b><span id="selected_field_"></span></b>
-      <a role='button' id="remove_link" class='flex-item-justify-end'><span class="glyphicon glyphicon-remove"></span></a>
-   </div>
+    <div class="flex-row">
+        <b><span id="selected_field_"></span></b>
+        <a role='button' id="remove_link" class='flex-item-justify-end'><span class="glyphicon glyphicon-remove"></span></a>
+    </div>
 
-   <div class='flex-row'>
-      <div class="flex-item-grow-1">
-         <select id="match_operator_" name="match_operator_" class="reduce-horizontal-padding form-control input-sm">
-            <option value="must" selected="selected">Bool: and</option>
-            <option value="should">Bool: or</option>
-            <option value="must_not">Bool: not</option>
-         </select>
-      </div>
-      <div class="flex-item-grow-2">
-         <select id="match_type_" name="match_type_" class="reduce-horizontal-padding  form-control input-sm">
-            <option value="match">Match: word</option>
-            <option value="match_phrase">Match: phrase</option>
-            <option value="match_phrase_prefix" selected="selected">Match: phrase prefix</option>
-         </select>
-      </div>
-      <div class="flex-item-grow-1">
-         <select id="match_slop_" name="match_slop_" class="reduce-horizontal-padding  form-control input-sm">
-            <option value="0">Slop: 0</option>
-            <option value="1">Slop: 1</option>
-            <option value="2">Slop: 2</option>
-            <option value="3">Slop: 3</option>
-            <option value="4">Slop: 4</option>
-            <option value="2">Slop: 5</option>
-         </select>
-      </div>
-   </div>
+    <div class='flex-row'>
+        <div class="flex-item-grow-1">
+            <select id="match_operator_" name="match_operator_" class="reduce-horizontal-padding form-control input-sm">
+                <option value="must" selected="selected">Bool: and</option>
+                <option value="should">Bool: or</option>
+                <option value="must_not">Bool: not</option>
+            </select>
+        </div>
+        <div class="flex-item-grow-2">
+            <select id="match_type_" name="match_type_" class="reduce-horizontal-padding  form-control input-sm">
+                <option value="match">Match: word</option>
+                <option value="match_phrase">Match: phrase</option>
+                <option value="match_phrase_prefix" selected="selected">Match: phrase prefix</option>
+            </select>
+        </div>
+        <div class="flex-item-grow-1">
+            <select id="match_slop_" name="match_slop_" class="reduce-horizontal-padding  form-control input-sm">
+                <option value="0">Slop: 0</option>
+                <option value="1">Slop: 1</option>
+                <option value="2">Slop: 2</option>
+                <option value="3">Slop: 3</option>
+                <option value="4">Slop: 4</option>
+                <option value="2">Slop: 5</option>
+            </select>
+        </div>
+    </div>
 
-   <div class="flex-row">
-      <textarea id="match_txt_" name="match_txt_" class="form-control"></textarea>
-      <ul name="suggestions_" id="suggestions_" class="list-group" style="display: none;"></ul>
-   </div>
-   <!--<div class="row padded-row">
-      <div class="col-sm-12">
-          <select id="match_layer_" name="match_layer_" class="form-control input-sm">
-              <option value="document">Match layer: document</option>
-          </select>
-      </div>
-      </div>
-      -->
+    <div class="flex-row">
+        <textarea id="match_txt_" name="match_txt_" class="form-control"></textarea>
+        <ul name="suggestions_" id="suggestions_" class="list-group" style="display: none;"></ul>
+    </div>
+    <!--<div class="row padded-row">
+       <div class="col-sm-12">
+           <select id="match_layer_" name="match_layer_" class="form-control input-sm">
+               <option value="document">Match layer: document</option>
+           </select>
+       </div>
+       </div>
+       -->
 
 </div>
 <div id="field_hidden_fact" class="bg-grey padding-small horizontal-padding margin-bottom" style="display: none;">
-   <input type="hidden" name="fact_field_" id="fact_field_">
-   <div class="flex-row">
-      <b><span id="selected_field_"></span></b>
-      <a role='button' id="remove_link" class='flex-item-justify-end'><span class="glyphicon glyphicon-remove"></span></a>
-   </div>
-   <div class="flex-row">
-      <div class="flex-column">
-         <b>Bool:</b>
-         <select id="fact_operator_" name="fact_operator_" class="form-control input-sm">
-            <option value="must" selected="selected">and</option>
-            <option value="should">or</option>
-            <option value="must_not">not</option>
-         </select>
-      </div>
-      <div class="flex-column flex-item-justify-end">
-         <b>Facts:</b>
-         <textarea id="fact_txt_" name="fact_txt_" class="form-control"></textarea>
-         <ul name="suggestions_" id="suggestions_" class="list-group" style="display: none;"></ul>
-      </div>
-   </div>
+    <input type="hidden" name="fact_field_" id="fact_field_">
+    <div class="flex-row">
+        <b><span id="selected_field_"></span></b>
+        <a role='button' id="remove_link" class='flex-item-justify-end'><span class="glyphicon glyphicon-remove"></span></a>
+    </div>
+    <div class="flex-row">
+        <div class="flex-column">
+            <b>Bool:</b>
+            <select id="fact_operator_" name="fact_operator_" class="form-control input-sm">
+                <option value="must" selected="selected">and</option>
+                <option value="should">or</option>
+                <option value="must_not">not</option>
+            </select>
+        </div>
+        <div class="flex-column flex-item-justify-end">
+            <b>Facts:</b>
+            <textarea id="fact_txt_" name="fact_txt_" class="form-control"></textarea>
+            <ul name="suggestions_" id="suggestions_" class="list-group" style="display: none;"></ul>
+        </div>
+    </div>
 </div>
 <div id="field_hidden_fact_val" class="bg-grey padding-small horizontal-padding margin-bottom" style="display: none;">
-   <input type="hidden" name="fact_field_" id="fact_field_">
-   <input type="hidden" name="fact_constraint_type_">
-   <div class="flex-row flex-item-grow-1 ">
-      <b><span id="selected_field_"></span></b>
-      <a role='button' class=' flex-item-justify-end' id="remove_link"><span class="glyphicon glyphicon-remove"></span></a>
-   </div>
-   <div>
-      <div class="flex-column">
-         <b>Bool:</b>
-         <div class='flex-item-justify-start'>
-            <select id="fact_operator_" name="fact_operator_" class="form-control input-sm " style='width:100px;'>
-               <option value="must" selected="selected">and</option>
-               <option value="should">or</option>
-               <option value="must_not">not</option>
-            </select>
-         </div>
-      </div>
-      <div id="fact_val_rules_">
+    <input type="hidden" name="fact_field_" id="fact_field_">
+    <input type="hidden" name="fact_constraint_type_">
+    <div class="flex-row flex-item-grow-1 ">
+        <b><span id="selected_field_"></span></b>
+        <a role='button' class=' flex-item-justify-end' id="remove_link"><span
+                class="glyphicon glyphicon-remove"></span></a>
+    </div>
+    <div>
+        <div class="flex-column">
+            <b>Bool:</b>
+            <div class='flex-item-justify-start'>
+                <select id="fact_operator_" name="fact_operator_" class="form-control input-sm " style='width:100px;'>
+                    <option value="must" selected="selected">and</option>
+                    <option value="should">or</option>
+                    <option value="must_not">not</option>
+                </select>
+            </div>
+        </div>
+        <div id="fact_val_rules_">
 
-         <div class="flex-item-grow-1 flex-row flex-items-align-center">
-            <b>Facts:</b>
-            <div class=' flex-item-justify-end'>
-               <button type="button" class="btn btn-sm" title="Add fact constraint">
-                  <span class="glyphicon glyphicon-plus"></span>
-               </button>
+            <div class="flex-item-grow-1 flex-row flex-items-align-center">
+                <b>Facts:</b>
+                <div class=' flex-item-justify-end'>
+                    <button type="button" class="btn btn-sm" title="Add fact constraint">
+                        <span class="glyphicon glyphicon-plus"></span>
+                    </button>
+                </div>
             </div>
-         </div>
-         <div class="flex-row hidden" id="fact_val_rule_">
-            <div class=" flex-item-grow-3" name="constraint_key_container">
-               <input id="fact_txt_" class="form-control input-sm" type="text" placeholder="Fact name"></input>
-               <ul name="suggestions_" id="suggestions_" class="list-group " style="display: none; width: 100%;"></ul>
-            </div>
-            <div class=" flex-item-grow-2">
-               <select class="form-control input-sm">
-                  <option value="=">is</option>
-                  <option value="!=">not</option>
-                  <option value="&lt;">&lt;</option>
-                  <option value="&gt;">&gt;</option>
-                  <option value="&lt;=">&lt;=</option>
-                  <option value="&gt;=">&gt;=</option>
-               </select>
-            </div>
-            <div class="flex-item-grow-3" name="constraint_val_container">
-               <input id="fact_constraint_val_" name="fact_constraint_val_" class="form-control input-sm"
-                  type="text" placeholder="Value (case sensitive)"></input>
-               <ul name="suggestions_" id="suggestions_" class="list-group" style="display: none; width: 100%;"></ul>
-            </div>
-            <div class="flex-item-grow-1 flex-item-justify-end" name="fact_action_button">
+            <div class="flex-row hidden" id="fact_val_rule_">
+                <div class=" flex-item-grow-3" name="constraint_key_container">
+                    <input id="fact_txt_" class="form-control input-sm" type="text" placeholder="Fact name"></input>
+                    <ul name="suggestions_" id="suggestions_" class="list-group "
+                        style="display: none; width: 100%;"></ul>
+                </div>
+                <div class=" flex-item-grow-2">
+                    <select class="form-control input-sm">
+                        <option value="=">is</option>
+                        <option value="!=">not</option>
+                        <option value="&lt;">&lt;</option>
+                        <option value="&gt;">&gt;</option>
+                        <option value="&lt;=">&lt;=</option>
+                        <option value="&gt;=">&gt;=</option>
+                    </select>
+                </div>
+                <div class="flex-item-grow-3" name="constraint_val_container">
+                    <input id="fact_constraint_val_" name="fact_constraint_val_" class="form-control input-sm"
+                           type="text" placeholder="Value (case sensitive)"></input>
+                    <ul name="suggestions_" id="suggestions_" class="list-group"
+                        style="display: none; width: 100%;"></ul>
+                </div>
+                <div class="flex-item-grow-1 flex-item-justify-end" name="fact_action_button">
 
+                </div>
             </div>
-         </div>
-      </div>
-   </div>
+        </div>
+    </div>
 </div>
-<div id="field_hidden_date" style="display: none;" class="bg-grey padding-small horizontal-padding flex-column margin-bottom">
-   <input type="hidden" name="daterange_field_" id="daterange_field_">
-   <div class="flex-row">
-      <b><span id="selected_field_"></span></b>
-      <a role='button' id="remove_link" class='flex-item-justify-end'><span class="glyphicon glyphicon-remove"></span></a>
-   </div>
-   <div class="flex-column">
-      <b class='flex-item-grow-1'>Date range (yyyy-mm-dd):</b>
-      <input type="text" placeholder="from" id="daterange_from_" class="form-control input-sm flex-item-grow-1">
-      <input type="text" id="daterange_to_" placeholder="to" class="form-control input-sm flex-item-grow-1">
-   </div>
+<div id="field_hidden_date" style="display: none;"
+     class="bg-grey padding-small horizontal-padding flex-column margin-bottom">
+    <input type="hidden" name="daterange_field_" id="daterange_field_">
+    <div class="flex-row">
+        <b><span id="selected_field_"></span></b>
+        <a role='button' id="remove_link" class='flex-item-justify-end'><span class="glyphicon glyphicon-remove"></span></a>
+    </div>
+    <div class="flex-column">
+        <b class='flex-item-grow-1'>Date range (yyyy-mm-dd):</b>
+        <input type="text" placeholder="from" id="daterange_from_" class="form-control input-sm flex-item-grow-1">
+        <input type="text" id="daterange_to_" placeholder="to" class="form-control input-sm flex-item-grow-1">
+    </div>
 </div>
