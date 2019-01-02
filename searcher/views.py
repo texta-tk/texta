@@ -57,7 +57,7 @@ from searcher.view_functions.general.searcher_utils import improve_facts_readabi
 
 
 class BuildSearchEsManager:
-    buildSearchEsManager = None
+    build_search_es_m = None
 
 @login_required
 def index(request):
@@ -239,7 +239,7 @@ def mlt_query(request):
     else:
         if es_params['mlt_fields'] == '[]':
             return HttpResponse(status=400,reason='field')
-    if BuildSearchEsManager.buildSearchEsManager is None:
+    if BuildSearchEsManager.build_search_es_m is None:
         return HttpResponse(status=400, reason='search')
 
     mlt_fields = [field for field in json.loads(es_params['mlt_fields'])]
@@ -263,7 +263,7 @@ def mlt_query(request):
     es_m.set_query_parameter('from', es_params['start'])
     es_m.set_query_parameter('size', search_size)
 
-    response = es_m.more_like_this_search(mlt_fields,docs_accepted=docs_accepted,docs_rejected=docs_rejected,handle_negatives=handle_negatives, stopwords=stopwords, search_size=search_size, scroll_id=BuildSearchEsManager.buildSearchEsManager.buildSearchScrollID)
+    response = es_m.more_like_this_search(mlt_fields,docs_accepted=docs_accepted,docs_rejected=docs_rejected,handle_negatives=handle_negatives, stopwords=stopwords, search_size=search_size, build_search_query=BuildSearchEsManager.build_search_es_m.build_search_query)
 
     result = {'data': [], 'draw': draw, 'recordsTotal': len(response['hits']['hits'])}
     column_names = es_m.get_column_names(facts=True)
@@ -319,7 +319,7 @@ def search(es_params, request):
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
-    BuildSearchEsManager.buildSearchEsManager = es_m
+    BuildSearchEsManager.build_search_es_m = es_m
     try:
         out = execute_search(es_m, es_params)
     except Exception as e:

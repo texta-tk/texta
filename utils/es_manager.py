@@ -29,7 +29,7 @@ class ES_Manager:
     HEADERS = HEADERS
     TEXTA_RESERVED = ['texta_facts']
     TEXTA_META_FIELDS = ['_es_id']
-    buildSearchScrollID = None
+    build_search_query = None
     # Redefine requests if LDAP authentication is used
     if es_use_ldap:
         requests = requests.Session()
@@ -333,7 +333,7 @@ class ES_Manager:
         q = json.dumps(self.combined_query['main'])
         search_url = '{0}/{1}/_search'.format(es_url, self.stringify_datasets())
         response = self.plain_post(search_url, q)
-        self.buildSearchScrollID = self._scroll_doc_ids()
+        self.build_search_query = self.combined_query
         return response
 
     def process_bulk(self, hits):
@@ -459,10 +459,12 @@ class ES_Manager:
             for constraint in query_dict['main']['query']['bool']['must_not']:
                 self.combined_query['main']['query']['bool']['must_not'].append(constraint)
 
-    def more_like_this_search(self, fields, stopwords=[], docs_accepted=[], docs_rejected=[], handle_negatives='ignore', search_size=10, scroll_id=None):
+    def more_like_this_search(self, fields, stopwords=[], docs_accepted=[], docs_rejected=[], handle_negatives='ignore', search_size=10, build_search_query=None):
 
         # Get ids from basic search
-        docs_search = scroll_id
+
+        self.combined_query = build_search_query
+        docs_search =  self._scroll_doc_ids()
         # Combine ids from basic search and mlt search
 
         docs_search = [json.dumps(d) for d in docs_search]
@@ -519,19 +521,13 @@ class ES_Manager:
     def _scroll_doc_ids(self, limit=500):
         ids = []
 
-
         response = self.scroll(id_scroll=True, size=100)
         scroll_id = response['_scroll_id']
-        hits = response['hits']['hits']
 
-        while hits:
-            hits = response['hits']['hits']
-            for hit in hits:
-                ids.append({'_index': hit['_index'], '_type': hit['_type'], '_id': hit['_id']})
-                if len(ids) == limit:
-                    return ids
-            response = self.scroll(scroll_id=scroll_id)
-            scroll_id = response['_scroll_id']
+        for hit in response['hits']['hits']:
+            ids.append({'_index': hit['_index'], '_type': hit['_type'], '_id': hit['_id']})
+            if len(ids) == limit:
+                return ids
 
         return ids
 
