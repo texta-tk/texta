@@ -796,7 +796,7 @@ function mltQuery () {
                         'autoWidth': false,
                         'processing': true,
                         'serverSide': true,
-                        'scrollY': "88vh",
+                        'scrollY': "100vh",
                         'scrollX': true,
                         'dom': 'rt',
                         'ajax': {
@@ -814,6 +814,10 @@ function mltQuery () {
                                 if (xhr.status === 400 && xhr.statusText === 'field') {
                                     swalWarningDisplay('Please select a field first')
                                     $('#right').html('No fields selected!')
+                                }
+                                if (xhr.status === 400 && xhr.statusText === 'search') {
+                                    swalWarningDisplay('Please perform a build search first')
+                                    $('#right').html('No search data!')
                                 }
                             }
                         },
@@ -867,11 +871,21 @@ function mltQuery () {
                             $('.dataTables_scrollHead').on('scroll', function () {
                                 $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft())
                             })
+
+                            let datatablesNavHeight = $('.mlt-column-select-wrapper').height()
+                            let navbarHeight = $('.grid-item-navbar').height()
+                            let datatablesColumHeight = $('div.dataTables_scrollHead').height()
+                            let datatablesScrollBody = $(window).height()
+                            $('div.dataTables_scrollBody').height(datatablesScrollBody - datatablesColumHeight - navbarHeight - datatablesNavHeight - 25)
+
                             // Initialize clicking HLs/selection text for properties
                             /* global createSelectionProps, selectionProps */
                         },
                     })
                     initColumnSelectVisiblity(mltTable, $('#mlt-column-select'))
+                    if ($('.mlt-fullscreen-actions > i').length === 0) {
+                        $('.glyphicon-fullscreen-content-searcher').clone().addClass('new-toggle').appendTo($('.mlt-fullscreen-actions'))
+                    }
                 }
                 else{
                     $('#right').html('Error Code='+request.status+' state = '+request.readyState+' response ='+request.statusText)
@@ -882,8 +896,11 @@ function mltQuery () {
         request.open('POST', PREFIX + '/table_header_mlt')
         request.send(formData)
     } else {
+
         swalWarningDisplay('Please select a field first')
         $('#right').html('No fields selected!')
+
+
     }
 }
 

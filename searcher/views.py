@@ -57,6 +57,9 @@ from collections import OrderedDict, defaultdict
 from searcher.view_functions.general.searcher_utils import improve_facts_readability
 
 
+class BuildSearchEsManager:
+    buildSearchEsManager = None
+
 @login_required
 def index(request):
     ds = Datasets().activate_datasets(request.session)
@@ -82,8 +85,8 @@ def index(request):
                        'fields': fields,
                        'searches': Search.objects.filter(author=request.user),
                        'lexicons': Lexicon.objects.all().filter(author=request.user),
-                       'language_models': language_models, 
-                       'allowed_datasets': datasets,                       
+                       'language_models': language_models,
+                       'allowed_datasets': datasets,
                        'enabled_preprocessors': enabled_preprocessors,
                        'task_params': task_params}
 
@@ -153,7 +156,7 @@ def delete(request):
         for search_id in search_ids:
             Search.objects.get(pk=search_id).delete()
             logger.info('search_deleted:'+search_id)
-       
+
     except Exception as e:
         print('-- Exception[{0}] {1}'.format(__name__, e))
         logger.exception('search_deletion_failed')
@@ -232,12 +235,14 @@ def table_header_mlt(request):
 @login_required
 def mlt_query(request):
     es_params = request.POST
-
+    
     if 'mlt_fields' not in es_params:
         return HttpResponse(status=400,reason='field')
     else:
         if es_params['mlt_fields'] == '[]':
             return HttpResponse(status=400,reason='field')
+    if BuildSearchEsManager.buildSearchEsManager is None:
+        return HttpResponse(status=400, reason='search')
 
     mlt_fields = [field for field in json.loads(es_params['mlt_fields'])]
     handle_negatives = es_params['handle_negatives']
@@ -260,7 +265,7 @@ def mlt_query(request):
     es_m.set_query_parameter('from', es_params['start'])
     es_m.set_query_parameter('size', search_size)
 
-    response = es_m.more_like_this_search(mlt_fields,docs_accepted=docs_accepted,docs_rejected=docs_rejected,handle_negatives=handle_negatives, stopwords=stopwords, search_size=search_size)
+    response = es_m.more_like_this_search(mlt_fields,docs_accepted=docs_accepted,docs_rejected=docs_rejected,handle_negatives=handle_negatives, stopwords=stopwords, search_size=search_size, scroll_id=BuildSearchEsManager.buildSearchEsManager.buildSearchScrollID)
 
     result = {'data': [], 'draw': draw, 'recordsTotal': len(response['hits']['hits'])}
     column_names = es_m.get_column_names(facts=True)
@@ -279,7 +284,7 @@ def mlt_query(request):
                     content = improve_facts_readability(hit['_source'][p])
                 else:
                     content = hit['_source'][p] if p in hit['_source'] else ''
-                    
+
             # Append the final content of this col to the row
             if row[col] == '':
                 row[col] = content
@@ -291,7 +296,7 @@ def mlt_query(request):
 
 @login_required
 def cluster_query(request):
-    
+
     params = request.POST
     if('cluster_field' not in params):
         return HttpResponse(status=400,reason='field')
@@ -316,6 +321,7 @@ def search(es_params, request):
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
+    BuildSearchEsManager.buildSearchEsManager = es_m
     try:
         out = execute_search(es_m, es_params)
     except Exception as e:
@@ -394,7 +400,7 @@ def fact_to_doc(request):
     method = request.POST['method'].strip()
     match_type = request.POST['match_type'].strip()
     doc_id = request.POST['doc_id'].strip()
-    case_sens = True if request.POST['case_sens'].strip() == "True" else False 
+    case_sens = True if request.POST['case_sens'].strip() == "True" else False
     es_params = request.POST
 
     # Validate that params aren't empty strings
