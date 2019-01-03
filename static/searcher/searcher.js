@@ -2,7 +2,7 @@
 /* global LINK_SEARCHER */
 var PREFIX = LINK_SEARCHER
 var examplesTable
-
+var selectedFactCheckboxes = []
 
 $(document).ready(function () {
     $('#agg_daterange_from_1').datepicker({
@@ -453,23 +453,15 @@ function drawStringAggs (data, type = null) {
     $('#string_agg_container').append(responseContainer)
 }
 
-var selectedFactCheckboxes = []
 
 function factDeleteCheckbox (checkbox) {
-    let inArray = false
-    if (!selectedFactCheckboxes.length > 0) {
-        selectedFactCheckboxes.push(checkbox)
-    } else {
-        let i = 0
-        while (!inArray && i < selectedFactCheckboxes.length) {
-            if (selectedFactCheckboxes[i].name === checkbox.name) {
-                selectedFactCheckboxes.splice(i, 1)
-                inArray = true
-            }
-            i++
+    if (checkbox.checked) {
+        if (!selectedFactCheckboxes.includes(checkbox)) {
+            selectedFactCheckboxes.push(checkbox);
         }
-        if (!inArray) {
-            selectedFactCheckboxes.push(checkbox)
+    } else if (!checkbox.checked) {
+        if (selectedFactCheckboxes.includes(checkbox)) {
+            selectedFactCheckboxes.pop(checkbox);
         }
     }
 }
@@ -481,6 +473,12 @@ function deleteFactsViaCheckboxes (checkboxes) {
         factArray.push(fact)
     }
     deleteFactArray(factArray, 'aggs')
+}
+
+function uncheckDeletedFacts() {
+    selectedFactCheckboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
 }
 
 function ajaxDeleteFacts (formData, factArray) {
@@ -498,6 +496,8 @@ function ajaxDeleteFacts (formData, factArray) {
             })
         },
         success: function () {
+            uncheckDeletedFacts()
+            selectedFactCheckboxes = []
             swal({
                 title: 'Deleted!',
                 text: factArray.length + ' facts have been removed.',
@@ -557,26 +557,40 @@ function showStringChildren (data, childrenContainer, grandchildrenContainer, ro
             rowContainer.addClass('pointer')
         } else {
             if (type === 'fact') {
-                var factData = {}
-                factData[rowKey] = this.key
-
                 searchKey = strip_html(rowKey, true)
                 searchVal = strip_html(this.key, true)
-                var addToSearchIcon = `<i class="glyphicon glyphicon-search pull-right" data-toggle="tooltip" title="Add to search"\
-                style="cursor: pointer" onclick="addFactToSearch('${searchKey}','${searchVal}');"></i>`
 
+                var addToSearchIcon =  $('<i>', {
+                    class: "glyphicon glyphicon-search pull-right",
+                    'data-toggle': "tooltip",
+                    title:"Add to search",
+                    style:"cursor: pointer",
+                    onclick: `addFactToSearch("${searchKey}","${searchVal}")`
+                });
+                
                 // keep track of checkboxes using their name as {NAME: VALUE}, otherwise when clicking on another fact name, they get overwritten
+                var factData = {}
+                factData[searchKey] = searchVal
                 let checkboxName = JSON.stringify(factData).replace(/"/g, "'")
-                var checkbox = `<input id="checkBox_${rowKey}_${this.key}"\
-                type="checkbox" name="${checkboxName}" onchange="factDeleteCheckbox(this)"`
 
-                for (var i = 0; i < selectedFactCheckboxes.length; i++) {
-                    if (selectedFactCheckboxes[i].name === checkboxName) {
-                        checkbox = checkbox + ' checked'
+                var checkbox =  $('<input>', {
+                    id: `checkBox_${searchKey}_${searchVal}`,
+                    type: "checkbox",
+                    name: checkboxName,
+                    onchange: "factDeleteCheckbox(this)"
+                });
+
+                selectedFactCheckboxes.filter((e)=>{
+                    if(e.id===checkbox.get(0).id) {
+                        checkbox.get(0).checked = true
                     }
-                }
-
-                rowContainer = $(`<tr><td> ${this.val} </td><td> ${this.key} </td><td> ${addToSearchIcon}</td><td> ${checkbox}></td></tr>`)
+                })
+                
+                rowContainer = $('<tr>').append(
+                    $(`<td> ${this.val} </td><td> ${this.key} </td>`)
+                        .add($('<td>').append(addToSearchIcon))
+                        .add($(`<td>`).append(checkbox))
+                )
             } else {
                 rowContainer = $(`<tr><td> ${this.val} </td><td> ${this.key} </td><td></td></tr>`)
             }
