@@ -40,8 +40,6 @@ def index(request):
 	datasets = Datasets().get_allowed_datasets(request.user)
 	language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
 
-	#print(language_models)
-
 	return HttpResponse(
 			template.render({'STATIC_URL': STATIC_URL, 'allowed_datasets': datasets, 'language_models': language_models}, request))
 
