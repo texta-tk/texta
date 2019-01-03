@@ -13,6 +13,10 @@ body {
 }
 
 /* global style */
+.panel-borderless {
+    border: 0;
+    box-shadow: none;
+}
 .align-items-end {
     align-items: flex-end;
 }
