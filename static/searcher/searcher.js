@@ -164,7 +164,9 @@ function query () {
                         'value': JSON.stringify($('#filters').serializeArray())
                     })
                 },
-
+                "fnDrawCallback": function( oSettings ) {
+                    createSelectionProps()
+                },
                 'oLanguage': {
                     'sProcessing': 'Loading...'
                 },
@@ -176,7 +178,7 @@ function query () {
                     })
                     // Initialize clicking HLs/selection text for properties
                     /* global createSelectionProps, selectionProps */
-                    createSelectionProps()
+                    //createSelectionProps()
                     recalcDatatablesHeight()
                 },
                 'stateSave': true,
