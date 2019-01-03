@@ -8,7 +8,7 @@
                 <div class="flex-item-justify-end">
                     <div>
                   <span id="actions-btn" class="dropdown invisible">
-                     <i role="button" class="dropdown-toggle" data-toggle="dropdown" href="#"><span
+                     <i role="button" class="dropdown-toggle" title="Export/Delete results" data-toggle="dropdown" href="#"><span
                              class="glyphicon glyphicon-scissors"></span></i>
                      <ul class="dropdown-menu">
                         <li><a href="#" data-toggle="modal" data-target="#export-modal"><span
@@ -22,11 +22,11 @@
                      </ul>
                   </span>
                         <span class="reduce-horizontal-padding  glyphicon glyphicon-floppy-disk pointer"
-                              onclick="javascript:save();"></span>
-                        <span onclick="getQuery();" data-toggle="modal" data-target="#query-modal"
+                              onclick="javascript:save();" title="Save the search"></span>
+                        <span onclick="getQuery();" data-toggle="modal" title="View query" data-target="#query-modal"
                               class="reduce-horizontal-padding  glyphicon glyphicon-sunglasses pointer"></span>
-                        <i role='button' class='glyphicon glyphicon-fullscreen' onclick=toggleFullscreen()></i>
-                        <i type='button' role='button' data-toggle="collapse" aria-expanded="false"
+                        <i role='button' title="Fullscreen the results" class='glyphicon glyphicon-fullscreen' onclick=toggleFullscreen()></i>
+                        <i type='button' title="Collapse the panel" role='button' data-toggle="collapse" aria-expanded="false"
                            aria-controls="current-search-panel"
                            data-target="#current-search-panel"
                            class="reduce-horizontal-padding  glyphicon glyphicon-minus"
@@ -374,10 +374,10 @@
             <div class="flex-row panel-heading">
                 <div class="flex-item-justify-start">Saved Searches</div>
                 <div class="flex-item-justify-end">
-                    <i role='button' onclick=removeSearches() class="glyphicon glyphicon glyphicon-remove"></i>
+                    <i role='button' onclick=removeSearches() title="Delete selected searches" class="glyphicon glyphicon glyphicon-remove"></i>
                     <i type='button' role='button' data-toggle="collapse" aria-expanded="false"
                        aria-controls="saved-searches-collapse"
-                       data-target="#saved-searches-collapse" class="glyphicon glyphicon-minus"
+                       data-target="#saved-searches-collapse" title="Collapse the panel" class="glyphicon glyphicon-minus"
                        onclick=togglePanelCollapse(this)></i>
                 </div>
             </div>
@@ -407,6 +407,7 @@
                                                       aria-expanded="false" aria-controls="aggregations-panel"
                                                       data-target="#aggregations-panel"
                                                       class="glyphicon glyphicon-minus"
+                                                      title="Collapse the panel"
                                                       onclick=togglePanelCollapse(this)></i>
                 </div>
             </div>
