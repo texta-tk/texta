@@ -22,7 +22,7 @@ $(document).ready(function () {
 
 })
 
-var getUrlParameter = function getUrlParameter (sParam) {
+var getUrlParameter = function getUrlParameter(sParam) {
     let sPageURL = decodeURIComponent(window.location.search.substring(1))
 
     let sURLVariables = sPageURL.split('&')
@@ -39,7 +39,8 @@ var getUrlParameter = function getUrlParameter (sParam) {
         }
     }
 }
-function getQuery () {
+
+function getQuery() {
     let formElement = document.getElementById('filters')
     let request = new XMLHttpRequest()
 
@@ -56,7 +57,7 @@ function getQuery () {
     request.send(new FormData(formElement), true)
 }
 
-function save () {
+function save() {
     const prompt = async () => {
         const {
             value: description
@@ -90,7 +91,8 @@ function save () {
     }
     prompt()
 }
-function getSearches () {
+
+function getSearches() {
     var request = new XMLHttpRequest()
     var formElement = document.getElementById('filters')
 
@@ -106,12 +108,12 @@ function getSearches () {
     request.send(new FormData(formElement), true)
 }
 
-function removeSearchCallback (responseText) {
+function removeSearchCallback(responseText) {
     var searchDiv = document.getElementById('search_' + responseText)
     searchDiv.parentNode.removeChild(searchDiv)
 }
 
-function removeSearches () {
+function removeSearches() {
     var searchesContainer = document.getElementById('saved_searches')
     let checkboxList = searchesContainer.getElementsByTagName('input')
     let pkArray = []
@@ -123,10 +125,11 @@ function removeSearches () {
     if (pkArray.length > 0) {
         deleteSelectedSearches(pkArray)
     } else {
-        swalCustomTypeDisplay(SwalType.ERROR,'Please select a saved search first.')
+        swalCustomTypeDisplay(SwalType.ERROR, 'Please select a saved search first.')
     }
 }
-function deleteSelectedSearches (pkArray) {
+
+function deleteSelectedSearches(pkArray) {
     swal({
         title: 'Are you sure you want to delete this search?',
         text: 'The saved search will be deleted.',
@@ -139,7 +142,7 @@ function deleteSelectedSearches (pkArray) {
         if (result.value) {
             $.ajax({
                 url: PREFIX + '/delete',
-                data: { data: JSON.stringify({ pks: pkArray }) },
+                data: {data: JSON.stringify({pks: pkArray})},
                 type: 'POST'
             }).then(() => {
                 pkArray.forEach(element => {
@@ -150,7 +153,8 @@ function deleteSelectedSearches (pkArray) {
         }
     })
 }
-function displaySearches (searches) {
+
+function displaySearches(searches) {
     var searchesContainer = document.getElementById('saved_searches')
     while (searchesContainer.firstChild) {
         searchesContainer.removeChild(searchesContainer.firstChild)
@@ -224,7 +228,7 @@ function displaySearches (searches) {
     }
 }
 
-function renderSavedSearch (searchID) {
+function renderSavedSearch(searchID) {
     $.get(PREFIX + '/get_srch_query', {
         search_id: searchID
     }, function (data) {
@@ -237,7 +241,7 @@ function renderSavedSearch (searchID) {
     })
 }
 
-function renderSavedSearchField (fieldData, minDate, maxDate) {
+function renderSavedSearchField(fieldData, minDate, maxDate) {
     if (fieldData.constraint_type === 'date') {
         makeDateField(minDate, maxDate, fieldData)
         $(`#field_${counter.toString()} #daterange_from_${counter.toString()}`).val(fieldData.start_date)
@@ -253,7 +257,7 @@ function renderSavedSearchField (fieldData, minDate, maxDate) {
         $(`#fact_operator_${counter.toString()}`).val(fieldData.operator)
         $(`#fact_txt_${counter.toString()}`).val(fieldData.content.join('\n'))
     } else if (fieldData.constraint_type === 'str_fact_val') {
-        makeStrFactField(fieldData)        
+        makeStrFactField(fieldData)
         $(`#fact_operator_${counter.toString()}`).val(fieldData.operator)
         for (var i = 0; i < fieldData.sub_constraints.length; i++) {
             var subConstraint = fieldData.sub_constraints[i]
@@ -271,7 +275,7 @@ function renderSavedSearchField (fieldData, minDate, maxDate) {
     }
 }
 
-function filterConstraintField (elementToFilter) {
+function filterConstraintField(elementToFilter) {
     if (elementToFilter) {
         let fieldType = JSON.parse(elementToFilter).type
         $('#constraint_field option').each(function () {
@@ -288,10 +292,12 @@ function filterConstraintField (elementToFilter) {
     }
     $('#constraint_field').selectpicker('refresh')
 }
-function changeFieldElementIdAndName(field, element, elementToChangeTo){
+
+function changeFieldElementIdAndName(field, element, elementToChangeTo) {
     return $(`${field} #${element}`).attr('id', elementToChangeTo).attr('name', elementToChangeTo)
 }
-function makeDateField (dateRangeMin, dateRangeMax, fieldData) {
+
+function makeDateField(dateRangeMin, dateRangeMax, fieldData) {
     counter++
     let newID = 'field_' + counter.toString()
     let fieldWithID = '#field_' + counter.toString()
@@ -321,7 +327,7 @@ function makeDateField (dateRangeMin, dateRangeMax, fieldData) {
     $(fieldWithID).show()
 }
 
-function makeFactField (fieldData) {
+function makeFactField(fieldData) {
     counter++
     let newID = 'field_' + counter.toString()
     var fieldFullId = 'fact_txt_' + counter.toString()
@@ -339,7 +345,7 @@ function makeFactField (fieldData) {
     $(fieldWithID).show()
 }
 
-function makeTextField (fieldData) {
+function makeTextField(fieldData) {
     counter++
     let newID = 'field_' + counter.toString()
     var fieldFullId = 'fact_txt_' + counter.toString()
@@ -364,7 +370,7 @@ function makeTextField (fieldData) {
     $(fieldWithID).show()
 }
 
-function makeStrFactField (fieldData) {
+function makeStrFactField(fieldData) {
     var counterStr = counter.toString()
     var subCounter
     if (factValSubCounter[counterStr] === undefined) {
@@ -385,7 +391,7 @@ function makeStrFactField (fieldData) {
     $('#field_' + counter.toString()).show()
 }
 
-function addFactValueFieldConstraint (counterStr) {
+function addFactValueFieldConstraint(counterStr) {
     var subCounter
     if (factValSubCounter[counterStr] === undefined) {
         subCounter = 0
@@ -449,10 +455,12 @@ function addFactValueFieldConstraint (counterStr) {
 
     factValSubCounter[counterStr] = factValSubCounter[counterStr] + 1
 }
-function removeFactRule (ruleID) {
+
+function removeFactRule(ruleID) {
     $('#fact_val_rule_' + ruleID).remove()
 }
-function addFactValueField (counterStr, subCounterStr, fieldPath, fieldName, valueType) {
+
+function addFactValueField(counterStr, subCounterStr, fieldPath, fieldName, valueType) {
     var idCombination = counterStr + '_' + subCounterStr
     var headingSuffix
     if (valueType === 'str') {
@@ -514,7 +522,7 @@ function addFactValueField (counterStr, subCounterStr, fieldPath, fieldName, val
     factConstraintElement.attr('onblur', 'hide("' + valIdCombination + '");')
 }
 
-function addField (dateRangeMin, dateRangeMax, submittedFieldData) {
+function addField(dateRangeMin, dateRangeMax, submittedFieldData) {
     var field = []
     $('#constraint_field option').filter(':selected').each(function () {
         var val = $(this).val()
@@ -636,18 +644,18 @@ function addField (dateRangeMin, dateRangeMax, submittedFieldData) {
     $('#constraint_field').selectpicker('deselectAll')
 }
 
-function searchAsYouTypeQuery () {
+function searchAsYouTypeQuery() {
     var selection = $('#search_as_you_type').prop('checked')
     var keyTimer
     if (selection) {
         clearTimeout(keyTimer)
-        keyTimer = setTimeout(function validate () {
+        keyTimer = setTimeout(function validate() {
             query()
         }, 500)
     }
 }
 
-function hideShowOptions () {
+function hideShowOptions() {
     var x = document.getElementById('short_version_options')
 
     if (x.style.display === 'none') {
@@ -657,7 +665,7 @@ function hideShowOptions () {
     }
 }
 
-function hideShowOptionsCluster () {
+function hideShowOptionsCluster() {
     var x = document.getElementById('short_version_options_cluster')
 
     if (x.style.display === 'none') {
@@ -667,7 +675,7 @@ function hideShowOptionsCluster () {
     }
 }
 
-function clusterQuery () {
+function clusterQuery() {
     var formElement = document.getElementById('filters')
     var request = new XMLHttpRequest()
 
@@ -679,7 +687,7 @@ function clusterQuery () {
                 $('#right').html(request.responseText)
             }
             if (request.status === 400 && request.statusText === 'field') {
-                swalCustomTypeDisplay(SwalType.ERROR,'Please select a field first')
+                swalCustomTypeDisplay(SwalType.ERROR, 'Please select a field first')
             }
         }
     }
@@ -688,7 +696,7 @@ function clusterQuery () {
     request.send(new FormData(formElement))
 }
 
-function lookup (fieldFullId, fieldId, action, lookupTypes) {
+function lookup(fieldFullId, fieldId, action, lookupTypes) {
     var content = $('#' + fieldFullId).val()
     let factName
     if (fieldFullId.match('^fact_constraint_val_')) {
@@ -718,7 +726,7 @@ function lookup (fieldFullId, fieldId, action, lookupTypes) {
     })
 }
 
-function processSuggestions (suggestions, suggestionsContainer, fieldID, lookupTypes) {
+function processSuggestions(suggestions, suggestionsContainer, fieldID, lookupTypes) {
     suggestions = JSON.parse(suggestions)
 
     $.each(suggestions, function (lookupType, lookupSuggestions) {
@@ -740,7 +748,7 @@ function processSuggestions (suggestions, suggestionsContainer, fieldID, lookupT
     })
 }
 
-function insert (resourceID, suggestionID, descriptiveTerm, lookupType) {
+function insert(resourceID, suggestionID, descriptiveTerm, lookupType) {
     if (resourceID) {
         let suggestionPrefix
         if (lookupType === 'CONCEPT') {
@@ -786,18 +794,17 @@ function insert (resourceID, suggestionID, descriptiveTerm, lookupType) {
     }
 }
 
-function mltQuery () {
+function mltQuery() {
     var formElement = document.getElementById('filters')
     var mltField = $("select[id='mlt_fields']")
     var request = new XMLHttpRequest()
     var formData = new FormData(formElement)
     var docSliderValue = $('#mlt_doc_slider').slider('getValue')
-    var mltFieldData = mltField.val().map((e)=>{
+    var mltFieldData = mltField.val().map((e) => {
         return JSON.parse(e).path;
     })
     if (mltField.val().length !== 0) {
         request.onreadystatechange = function () {
-            $('#right').html(`loading ${request.readyState}/4'`)
             if (request.readyState === 4) {
                 $('#right').html('')
                 if (request.status === 200) {
@@ -805,7 +812,7 @@ function mltQuery () {
                     var columns = []
                     $('#mlt_table > thead > tr').find('th').each(function (index) {
                         // Append _DtCol to end to safe from naming conflicts
-                        columns.push({ 'className': 'DtCol_' + $(this).text(), 'targets': index })
+                        columns.push({'className': 'DtCol_' + $(this).text(), 'targets': index})
                     })
                     let mltTable = $('#mlt_table').DataTable({
                         'autoWidth': false,
@@ -820,21 +827,21 @@ function mltQuery () {
                             data: {
                                 'docs': docs.value,
                                 'docs_rejected': docs_rejected.value,
-                                'mlt_stopword_lexicons' : JSON.stringify($('#mlt_stopword_lexicons').val()),
-                                'search_size' : docSliderValue,
+                                'mlt_stopword_lexicons': JSON.stringify($('#mlt_stopword_lexicons').val()),
+                                'search_size': docSliderValue,
                                 'mlt_fields': JSON.stringify(mltFieldData),
                                 'handle_negatives': $('#handle_negatives').val()
                             },
                             error: function (xhr, error, thrown) {
                                 if (xhr.status === 400 && xhr.statusText === 'field') {
-                                    swalWarningDisplay('Please select a field first')
+                                    swalCustomTypeDisplay(SwalType.ERROR, 'Please select a field first')
                                     $('#right').html('No fields selected!')
                                 }
                                 if (xhr.status === 400 && xhr.statusText === 'search') {
-                                    swalWarningDisplay('Please perform a build search first')
+                                    swalCustomTypeDisplay(SwalType.ERROR, 'Please perform a build search first')
                                     $('#right').html('No search data!')
                                 }
-                            }
+                            },
                         },
                         "columnDefs": [
                             columns,
@@ -842,8 +849,8 @@ function mltQuery () {
                                 "targets": 0,
                                 'searchable': false,
                                 'className': 'dt-center',
-                                "render": function ( data, type, row, meta ) {
-                                    return '<a onclick=javascript:acceptDocument("'+data+'") role="button"><span class="glyphicon glyphicon-plus"></span></a>';
+                                "render": function (data, type, row, meta) {
+                                    return '<a onclick=javascript:acceptDocument("' + data + '") role="button"><span class="glyphicon glyphicon-plus"></span></a>';
                                 }
 
                             },
@@ -851,8 +858,8 @@ function mltQuery () {
                                 "targets": 1,
                                 'searchable': false,
                                 'className': 'dt-center',
-                                "render": function ( data, type, row, meta ) {
-                                    return '<a onclick=javascript:rejectDocument("'+data+'") role="button"><span class="glyphicon glyphicon-remove"></span></a>';
+                                "render": function (data, type, row, meta) {
+                                    return '<a onclick=javascript:rejectDocument("' + data + '") role="button"><span class="glyphicon glyphicon-remove"></span></a>';
                                 },
 
                             },
@@ -881,9 +888,10 @@ function mltQuery () {
                             selectPicker.selectpicker('refresh')
                         },
                         'fnInitComplete': function () {
-                            $('.dataTables_scrollHead').css('overflow-x', 'auto')
+                            let scrollhead = $('.dataTables_scrollHead');
+                            scrollhead.css('overflow-x', 'auto')
                             // Sync THEAD scrolling with TBODY
-                            $('.dataTables_scrollHead').on('scroll', function () {
+                            scrollhead.on('scroll', function () {
                                 $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft())
                             })
 
@@ -902,8 +910,8 @@ function mltQuery () {
                         $('.glyphicon-fullscreen-content-searcher').clone().addClass('new-toggle').appendTo($('.mlt-fullscreen-actions'))
                     }
                 }
-                else{
-                    $('#right').html('Error Code='+request.status+' state = '+request.readyState+' response ='+request.statusText)
+                else {
+                    $('#right').html('Error Code=' + request.status + ' state = ' + request.readyState + ' response =' + request.statusText)
                 }
 
             }
@@ -911,24 +919,23 @@ function mltQuery () {
         request.open('POST', PREFIX + '/table_header_mlt')
         request.send(formData)
     } else {
-
-        swalWarningDisplay('Please select a field first')
+        swalCustomTypeDisplay(SwalType.ERROR, 'Please select a field first')
         $('#right').html('No fields selected!')
 
 
     }
 }
 
-function removeField (id) {
+function removeField(id) {
     $('#' + id).remove()
 }
 
-function togglePanelCollapse (element) {
+function togglePanelCollapse(element) {
     $(element).toggleClass('glyphicon-plus')
     $(element).toggleClass('glyphicon-minus')
 }
 
-function changeAggField (fieldNumber) {
+function changeAggField(fieldNumber) {
     var fieldComponent = $('#agg_field_' + fieldNumber)
     var selectedField = fieldComponent.val()
     var fieldData = JSON.parse(selectedField)
@@ -962,7 +969,7 @@ function changeAggField (fieldNumber) {
     })
 }
 
-function toggleAggField2 (action) {
+function toggleAggField2(action) {
     if (action === 'add') {
         $('#agg_field_2_container').removeClass('hidden')
         $('#agg_field_2_button').addClass('hidden')
