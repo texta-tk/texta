@@ -1,4 +1,10 @@
-
+.preprocessor-wrapper{
+    margin-left:-15px;
+    margin-right:-15px;
+}
+.preprocessor-padding{
+    padding: 15px;
+}
 .task-manager-grid-wrapper {
     display: grid;
     grid-gap: 10px 10px;
