@@ -53,7 +53,7 @@ def get_fact_names(es_m):
         es_m.load_combined_query(aggs)
         response = es_m.search()
         # Check if aggregations in response, then check if facts in response['aggregations']
-        if ('aggregations' in response) and ('facts' in response['aggregations']):
+        if ('aggregations' in response) and ('facts' in response['aggregations']) and ('fact_names' in response['aggregations']['facts']):
             response_aggs = response['aggregations']['facts']['fact_names']['buckets']
             fact_data = {}
             for fact in response_aggs:
@@ -63,7 +63,7 @@ def get_fact_names(es_m):
             fact_names.update(fact_data)
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(json.dumps(
-            {'process': 'GET TASK PARAMS', 'event': 'get_fact_names', 'data': {'active_datasets_ids_and_names': [(ds.id, ds.index) for ds in es_m.active_datasets], 'response_keys': response.keys()}}), exc_info=True)
+            {'process': 'GET TASK PARAMS', 'event': 'get_fact_names', 'data': {'active_datasets_ids_and_names': [(ds.id, ds.index) for ds in es_m.active_datasets], 'response_keys': list(response.keys())}}), exc_info=True)
 
 
 def activate_task_worker(task_type):
