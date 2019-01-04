@@ -149,20 +149,24 @@ def delete_task(request):
         if 'train' in task.task_type:
             try:
                 file_path = os.path.join(MODELS_DIR, "model_" + str(task_id))
-                os.remove(file_path)
-            except Exception:
+                if (os.path.exists(file_path)):
+                    os.remove(file_path)
+            except Exception as e:
                 file_path = os.path.join(MODELS_DIR, "model_" + str(task_id))
-                logging.getLogger(ERROR_LOGGER).error('Could not delete model ({}).'.format(file_path))
-        if 'entity_extractor' in task.task_type:
+                logging.getLogger(ERROR_LOGGER).error('Could not delete model ({}).'.format(file_path), exc_info=True)
+        if 'entity_extractor' in task.task_type or 'train_tagger' in task.task_type :
             try:
-                file_path = os.path.join(MODELS_DIR, "model_" + str(task_id) + "_facts")
                 plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/model_{}_cm.svg".format(task_id))
-                os.remove(file_path)
-                os.remove(plot_path)
-            except Exception:
+                meta_path = os.path.join(MODELS_DIR, "model_" + str(task_id) + "_meta")
+                
+                if (os.path.exists(plot_path)):
+                    os.remove(plot_path)
+                if os.path.exists(meta_path):
+                    os.remove(meta_path)
+            except Exception as e:
                 plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/model_{}_cm.svg".format(task_id))
-                facts_path = os.path.join(MODELS_DIR, "model_" + str(task_id) + "_facts")
-                logging.getLogger(ERROR_LOGGER).error('Could not delete entity extractor model facts ({}) or plot ({}).'.format(facts_path, plot_path))
+                facts_path = os.path.join(MODELS_DIR, "model_" + str(task_id) + "_meta")
+                logging.getLogger(ERROR_LOGGER).error('Could not delete Extractor/Tagger model meta ({}) or plot ({}).'.format(facts_path, plot_path), exc_info=True)
         # Remove task
         task.delete()
 

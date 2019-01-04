@@ -14,6 +14,9 @@ from utils.datasets import Datasets
 from texta.settings import ERROR_LOGGER
 from texta.settings import INFO_LOGGER
 from texta.settings import MODELS_DIR
+from texta.settings import MEDIA_URL
+from texta.settings import PROTECTED_MEDIA
+from texta.settings import URL_PREFIX
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
@@ -25,6 +28,7 @@ from sklearn.model_selection import GridSearchCV
 from task_manager.tools import ShowSteps
 from task_manager.tools import TaskCanceledException
 from task_manager.tools import get_pipeline_builder
+from utils.helper_functions import plot_confusion_matrix
 
 from .base_worker import BaseWorker
 
@@ -80,14 +84,15 @@ class TagModelWorker(BaseWorker):
             # Build Data sampler
             ds = Datasets().activate_datasets_by_id(task_params['dataset'])
             es_m = ds.build_manager(ES_Manager)
+            self.model_name = 'model_{0}'.format(self.task_id)
             es_data = EsDataSample(fields=fields, query=param_query, es_m=es_m)
             data_sample_x_map, data_sample_y, statistics = es_data.get_data_samples()
 
             # Training the model.
             show_progress.update(1)
-            self.model, train_summary = self._train_model_with_cv(c_pipe, c_params, data_sample_x_map, data_sample_y, self.task_id, n_jobs=self.n_jobs)
+            self.model, train_summary, plot_url = self._train_model_with_cv(c_pipe, c_params, data_sample_x_map, data_sample_y, self.task_id, n_jobs=self.n_jobs)
             train_summary['samples'] = statistics
-
+            train_summary['confusion_matrix'] = '<img src="{}" style="max-width: 80%">'.format(plot_url)
             # Saving the model.
             show_progress.update(2)
             self.save()
@@ -146,16 +151,14 @@ class TagModelWorker(BaseWorker):
         Saves trained model as a pickle to the filesystem.
         :rtype: bool
         """
-        model_name = 'model_{0}'.format(self.task_id)
-        self.model_name = model_name
-        output_model_file = os.path.join(MODELS_DIR, model_name)
+        output_model_file = os.path.join(MODELS_DIR, self.model_name)
         try:
             joblib.dump(self.model, output_model_file)
             return True
 
         except Exception as e:
             logging.getLogger(ERROR_LOGGER).error('Failed to save model to filesystem.', exc_info=True, extra={
-                'model_name': model_name,
+                'model_name': self.model_name,
                 'file_path':  output_model_file
             })
 
@@ -183,8 +186,7 @@ class TagModelWorker(BaseWorker):
     def _training_process(self):
         pass
 
-    @staticmethod
-    def _train_model_with_cv(model, params, X_map, y, task_id, n_jobs=1):
+    def _train_model_with_cv(self, model, params, X_map, y, task_id, n_jobs=1):
         fields = list(X_map.keys())
         X_train = {}
         X_test = {}
@@ -205,6 +207,12 @@ class TagModelWorker(BaseWorker):
         # Report
         _f1 = f1_score(y_test, y_pred, average='micro')
         _confusion = confusion_matrix(y_test, y_pred)
+
+        plt = plot_confusion_matrix(_confusion, classes=["negative", "positive"])
+        plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/{}_cm.svg".format(self.model_name))
+        plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager/{}_cm.svg".format(self.model_name))
+        plt.savefig(plot_path, format="svg", bbox_inches='tight')
+
         __precision = precision_score(y_test, y_pred)
         _recall = recall_score(y_test, y_pred)
         _statistics = {
@@ -214,4 +222,4 @@ class TagModelWorker(BaseWorker):
             'recall':           round(_recall, 3)
         }
 
-        return model, _statistics
+        return model, _statistics, plot_url

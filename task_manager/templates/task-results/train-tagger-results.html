@@ -49,7 +49,7 @@
                         {% for k,v in task.result.items %}
                         <tr>
                             <td><b>{{k}}</b></td>
-                            <td>{{v}}</td>
+                            <td>{{v|safe}}</td>
                         </tr>
                         {% endfor %}
                     </table>

@@ -52,7 +52,6 @@ def execute_search(es_m, es_params):
                 content = improve_facts_readability(hit['_source'][col])
             else:
                 for p in field_path:
-                    # import pdb;pdb.set_trace()
                     content = content[p] if p in content else ''
             content = str(content)
 

@@ -13,7 +13,7 @@ from utils.es_manager import ES_Manager
 from utils.datasets import Datasets
 
 from texta.settings import ERROR_LOGGER, INFO_LOGGER, MODELS_DIR, URL_PREFIX, MEDIA_URL, PROTECTED_MEDIA
-
+from utils.helper_functions import plot_confusion_matrix
 import pandas as pd
 import matplotlib.pyplot as plt
 from pycrfsuite import Trainer, Tagger
@@ -147,7 +147,7 @@ class EntityExtractorWorker(BaseWorker):
         X_train = []
         X_val = []
         # Save all facts for later tagging
-        self._save_as_pkl(facts, "facts")
+        self._save_as_pkl(facts, "meta")
 
         # Transform data 
         X_train, X_val = train_test_split(hits, test_size=0.1, random_state=42)
@@ -251,7 +251,7 @@ class EntityExtractorWorker(BaseWorker):
 
 
     def _load_facts(self):
-        file_path = os.path.join(MODELS_DIR, "{}_{}".format(self.model_name, "facts"))
+        file_path = os.path.join(MODELS_DIR, "{}_{}".format(self.model_name, "meta"))
         with open(file_path, "rb") as f:
             self.facts = pkl.load(f)
 
@@ -322,44 +322,20 @@ class EntityExtractorWorker(BaseWorker):
             output_dict=True)
 
         # Confusion matrix
-        # confusion = confusion_matrix(y_pred_combined.argmax(axis=1), y_true_combined.argmax(axis=1))
         confusion = confusion_matrix(y_pred_combined.argmax(axis=1), y_true_combined.argmax(axis=1), labels=class_labels)
         # Set the self.oob_val prediction count to 0, to balance color highlights for other classes
         confusion[class_indices[self.oob_val]][0] = 0
 
-        plt.figure()
         cm_labels = lb.classes_
         cm_labels[class_indices[self.oob_val]] = 'None'
-        self._plot_confusion_matrix(confusion, classes=cm_labels)
+        # Updates the plt variable to draw a confusion matrix graph
+        plt = plot_confusion_matrix(confusion, classes=cm_labels)
         plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/{}_cm.svg".format(self.model_name))
         plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager/{}_cm.svg".format(self.model_name))
         plt.savefig(plot_path, format="svg", bbox_inches='tight')
 
         # Return sklearn classification_report, return report as dict
         return report, confusion, plot_url
-
-
-    def _plot_confusion_matrix(self, cm, classes, title='Confusion matrix'):
-        """
-        This function prints and plots the confusion matrix.
-        """
-        plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
-        plt.title(title)
-        tick_marks = np.arange(len(classes))
-        plt.xticks(tick_marks, classes, rotation=45)
-        plt.yticks(tick_marks, classes)
-
-        fmt = 'd'
-        thresh = cm.max() / 2.
-        for i, j in product(range(cm.shape[0]), range(cm.shape[1])):
-            plt.text(j, i, format(cm[i, j], fmt),
-                    horizontalalignment="center",
-                    color="white" if cm[i, j] > thresh else "black")
-
-        plt.ylabel('True label')
-        plt.xlabel('Predicted label')
-        plt.tight_layout()
-
 
 
     def _validate(self, model, X_val, y_val):
