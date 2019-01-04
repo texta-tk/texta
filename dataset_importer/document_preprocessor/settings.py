@@ -47,6 +47,7 @@ mlp_field_properties = {
 
 
 def log_preprocessor_status(code, status):
+    # only print if status disabled
     if status == 'disabled':
         print('[Dataset Importer] {code} preprocessor {status}.'.format(**{'code': code, 'status': status}))
 

@@ -41,7 +41,7 @@ class TagModelWorker(BaseWorker):
         self.model_name = None
         self.description = None
         self.task_model_obj = None
-        self.n_jobs = 1
+        self.n_jobs = 6
 
     def run(self, task_id):
 

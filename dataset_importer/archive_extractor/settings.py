@@ -5,6 +5,7 @@ import extractors
 
 
 def log_extractor_status(code, status):
+    # only print if status disabled
     if status == 'disabled':
         print('[Dataset Importer] {code} extractor {status}.'.format(**{'code': code, 'status': status}))
 

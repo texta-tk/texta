@@ -5,6 +5,7 @@ import readers
 
 
 def log_reader_status(code, status):
+    # only print if status disabled
     if status == 'disabled':
         print('[Dataset Importer] {code} reader {status}.'.format(**{'code': code, 'status': status}))
 

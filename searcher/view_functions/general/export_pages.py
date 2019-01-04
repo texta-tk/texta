@@ -7,18 +7,16 @@ from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 
 try:
-    from io import StringIO # NEW PY REQUIREMENT
+    from io import StringIO  # NEW PY REQUIREMENT
 except:
-    from io import BytesIO # NEW PY REQUIREMENT
-
+    from io import BytesIO  # NEW PY REQUIREMENT
 
 ES_SCROLL_BATCH = 100
 
 
 @login_required
 def export_pages(request):
-
-    es_params = {entry['name']: entry['value'] for entry in json.loads(request.GET['args'])}
+    es_params = {entry['name']: entry['value'] for entry in json.loads(request.GET['args'], encoding='utf8')}
 
     if es_params['num_examples'] == '*':
         response = StreamingHttpResponse(get_all_rows(es_params, request), content_type='text/csv')
@@ -29,8 +27,8 @@ def export_pages(request):
 
     return response
 
-def get_rows(es_params, request):
 
+def get_rows(es_params, request):
     try:
         buffer_ = StringIO()
     except:
@@ -39,7 +37,7 @@ def get_rows(es_params, request):
     writer = csv.writer(buffer_)
 
     try:
-        writer.writerow(es_params['features']) # NEW PY REQUIREMENT
+        writer.writerow(es_params['features'])  # NEW PY REQUIREMENT
     except:
         writer.writerow([feature for feature in es_params['features']])
     ds = Datasets().activate_datasets(request.session)
@@ -63,7 +61,7 @@ def get_rows(es_params, request):
 
         if left > len(rows):
             for row in rows:
-                writer.writerow([element if isinstance(element,str) else element for element in row])
+                writer.writerow([element if isinstance(element, str) else element for element in row])
             buffer_.seek(0)
             data = buffer_.read()
             buffer_.seek(0)
@@ -77,7 +75,7 @@ def get_rows(es_params, request):
 
         elif left == len(rows):
             for row in rows:
-                writer.writerow([element if isinstance(element,str) else element for element in row])
+                writer.writerow([element if isinstance(element, str) else element for element in row])
             buffer_.seek(0)
             data = buffer_.read()
             buffer_.seek(0)
@@ -87,7 +85,7 @@ def get_rows(es_params, request):
             break
         else:
             for row in rows[:left]:
-                writer.writerow([element if isinstance(element,str) else element for element in row])
+                writer.writerow([element if isinstance(element, str) else element for element in row])
             buffer_.seek(0)
             data = buffer_.read()
             buffer_.seek(0)
@@ -96,22 +94,24 @@ def get_rows(es_params, request):
 
             break
 
+
 def get_all_rows(es_params, request):
+    features = sorted(es_params['features'])
+
+    # Prepare in-memory csv writer.
     buffer_ = StringIO()
     writer = csv.writer(buffer_)
 
+    # Write the first headers.
     writer.writerow([feature for feature in es_params['features']])
 
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
-
     es_m.set_query_parameter('size', ES_SCROLL_BATCH)
 
-    features = sorted(es_params['features'])
-
+    # Fetch the initial scroll results.
     response = es_m.scroll()
-
     scroll_id = response['_scroll_id']
     hits = response['hits']['hits']
 
@@ -122,22 +122,29 @@ def get_all_rows(es_params, request):
         data = buffer_.read()
         buffer_.seek(0)
         buffer_.truncate()
-        yield data
+        yield data  # Return some data with the StreamingResponce
 
+        # Continue with the scroll.
         response = es_m.scroll(scroll_id=scroll_id)
         hits = response['hits']['hits']
         scroll_id = response['_scroll_id']
 
 
 def process_hits(hits, features, write=True, writer=None):
-    '''Loops over hits and process them.
+    """
+    Loops over hits and process them.
     In the end either write with a csvwriter or append to an array.
-    write - bool: True to write with csvwriter, False, to append to an array'''
+    write - bool: True to write with csvwriter, False, to append to an array
+    """
     if not write:
         rows = []
+
     for hit in hits:
         row = []
+
         for feature_name in features:
+
+            # Some features like mlp.lemmas are dot, separated.
             feature_path = feature_name.split('.')
             # Stringify just in case value is something like a bool
             parent_source = hit['_source']
@@ -145,30 +152,40 @@ def process_hits(hits, features, write=True, writer=None):
                 if path_component in parent_source:
                     parent_source = str(parent_source[path_component])
                 else:
-                    parent_source = ""
+                    document_content = ""
                     break
 
             if feature_name == u'texta_facts':
                 content = []
-                facts = ['{ "'+x["fact"]+'": "'+x["str_val"]+'"}' for x in sorted(parent_source, key=lambda k: k['fact'])]
+                facts = ['{ "' + x["fact"] + '": "' + x["str_val"] + '"}' for x in sorted(document_content, key=lambda k: k['fact'])]
                 fact_counts = Counter(facts)
 
                 facts = list(set(facts))
-                facts_dict = [json.loads(x) for x in facts]
-                for i, d in enumerate(facts_dict):
-                    for k in d:
-                        if k not in content:
-                            content.append(k)
-                        content.append('{}: {}'.format(d[k], fact_counts[facts[i]]))
+                facts_dict = []
+                for fact in facts:
+                    try:
+                        facts_dict.append(json.loads(fact, encoding='utf8'))
+                    except json.decoder.JSONDecodeError as e:
+                        facts_dict.append({'system_message': "Faulty content"})
+
+                for index, dictionary in enumerate(facts_dict):
+
+                    for dict_key in dictionary:
+                        if dict_key not in content:
+                            content.append(dict_key)
+                        content.append('{}: {}'.format(dictionary[dict_key], fact_counts[facts[index]]))
+
                 content = ' - '.join(content)
-                content = '{}; {}'.format(content, parent_source) # Append JSON format
+                content = '{}; {}'.format(content, document_content)  # Append JSON format
             else:
+                content = document_content.replace('\n', '\\n').replace('"', '\"') if isinstance(document_content, str) else document_content
+
                 content = parent_source.replace('\n', '\\n').replace('"', '\"')
             row.append(content)
         if not write:
             rows.append(row)
         elif write:
-            writer.writerow([element if isinstance(element,str) else element for element in row])
+            writer.writerow([element if isinstance(element, str) else element for element in row])
 
     # If write, no need to return the writer
     if not write:

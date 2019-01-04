@@ -5,6 +5,7 @@ import storers
 
 
 def log_storer_status(code, status):
+    # only print if status disabled
     if status == 'disabled':
         print('[Dataset Importer] {code} storer {status}.'.format(**{'code': code, 'status': status}))
 

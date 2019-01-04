@@ -54,7 +54,7 @@ def filter_params(post: QueryDict):
             else:
                 param_val = post[param]
             filtered_params[param_name] = param_val
-            
+
     if 'description' not in filtered_params:
         filtered_params['description'] = ''
 
@@ -126,6 +126,8 @@ def collect_map_entries(map_):
             value['enabled_extractors'] = Task.objects.filter(task_type="train_entity_extractor", status=Task.STATUS_COMPLETED)
         if (key == 'lexicon_classifier' or key == 'scoro'):
             value['enabled_lexicons'] = Lexicon.objects.all()
+        if (key == 'scoro'):
+            value['enabled_models'] = Task.objects.filter(task_type="train_tagger", status=Task.STATUS_COMPLETED)
         value['key'] = key
         entries.append(value)
     return entries
