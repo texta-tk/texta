@@ -163,11 +163,11 @@ function showNounIfBgInfoSelected () {
     $('.if-noun-bg-info-selected ').toggleClass('hidden')
 }
 
-function show_c_lex_content () {
+function showLexContent () {
     $('.c-lex-content-wrapper').toggleClass('hidden')
 }
 
-function toggle_required_percentage (element) {
+function toggleRequiredPercentage (element) {
     let elementValue = $(element).val()
     $('.required-percentage-wrapper').toggleClass('hidden', elementValue == 'OR')
 }

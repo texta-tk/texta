@@ -1,10 +1,11 @@
 <div class="task-manager-grid-wrapper bg-grey preprocessor-padding width-max">
     <div class="grid-i">
         <label class="control-label " for="entity-extractor-processor-feature-name">Fields:</label>
-        <div class="">
+        <div class="select-wrapper">
             {% if fields %}
                 <select class="selectpicker" multiple data-selected-text-format="count"
                         id="entity-extractor-processor-feature-names"
+                        data-width="100%"
                         name="entity_extractor_feature_names" data-style="btn-sm btn-default">
                     {% for field in fields %}
                         <option value="{{ field.path }}"
@@ -30,9 +31,10 @@
 
     <div class="grid-i">
         <label class="control-label " for="entity-extractor-processor-extractor">Extractors:</label>
-        <div class="">
+        <div class="select-wrapper">
             <select id="entity-extractor-processor-extractors" name="entity_extractor_extractors"
                     class="selectpicker"
+                    data-width="100%"
                     multiple="multiple" data-style="btn-sm btn-default">
                 {% for extractor in preprocessor.enabled_extractors %}
                     <option value="{{ extractor.id }}"
