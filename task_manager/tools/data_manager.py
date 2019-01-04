@@ -7,7 +7,7 @@ from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from texta.settings import ERROR_LOGGER
 
-MAX_POSITIVE_SAMPLE_SIZE = 10000
+MAX_POSITIVE_SAMPLE_SIZE = 500000
 
 
 def get_fields(es_m):
@@ -126,7 +126,7 @@ class EsDataSample(object):
         for field in self.fields:
             positive_samples_map[field] = []
 
-        self.es_m.set_query_parameter('size', 100)
+        self.es_m.set_query_parameter('size', 500)
         response = self.es_m.scroll()
         scroll_id = response['_scroll_id']
         total_hits = response['hits']['total']
@@ -207,7 +207,11 @@ class EsDataSample(object):
                         _temp_text = hit['_source']
                         for k in field.split('.'):
                             # Get nested fields encoded as: 'field.sub_field'
-                            _temp_text = _temp_text[k]
+                            try:
+                                _temp_text = _temp_text[k]
+                            except KeyError:
+                                logging.getLogger(ERROR_LOGGER).error('Field not present in document.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
+                                _temp_text = ''
                         # Save decoded text into positive sample map
                         negative_samples_map[field].append(_temp_text)
 
