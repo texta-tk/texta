@@ -30,31 +30,33 @@
 		<div class="panel">
 			<div class="panel-heading">Registration</div>
 			<div class="panel-body">
-				<div class="col-sm-12">
-					<form onsubmit="registerAccount(); return false;">
-						<div class="form-group">
-							<label for="registrationUsername" class="sr-only">Username</label>
-							<input type="text" class="form-control input-sm" id="registrationUsername" name="username" placeholder="Username">
-						</div>
-						<div class="form-group">
-							<label for="registrationPassword" class="sr-only">Password</label>
-							<input type="password" class="form-control input-sm" id="registrationPassword" name="password" placeholder="Password">
-						</div>
-						<div class="form-group">
-							<label for="registrationPasswordAgain" class="sr-only">Password again</label>
-							<input type="password" class="form-control input-sm" id="registrationPasswordAgain" name="password_again" placeholder="Password again">
-						</div>
-						<div class="form-group">
-							<label for="registrationEmail" class="sr-only">E-mail</label>
-							<input type="email" class="form-control input-sm" id="registrationEmail" name="email" placeholder="E-mail">
-						</div>
-						<!--
-						<div class="checkbox">
-							<label><input type="checkbox">Request permissions</label>
-						</div> -->
-						<a type="button" class="btn btn-default btn-sm pull-left"  href="{% url 'password_reset' %}">Forgot Password</a>
-						<input type="submit" class="btn btn-default btn-sm pull-right" value="Register">
-					</form>
+				<div class='row'>
+					<div class="col-sm-12">
+						<form onsubmit="registerAccount(); return false;">
+							<div class="form-group">
+								<label for="registrationUsername" class="sr-only">Username</label>
+								<input type="text" class="form-control input-sm" id="registrationUsername" name="username" placeholder="Username">
+							</div>
+							<div class="form-group">
+								<label for="registrationPassword" class="sr-only">Password</label>
+								<input type="password" class="form-control input-sm" id="registrationPassword" name="password" placeholder="Password">
+							</div>
+							<div class="form-group">
+								<label for="registrationPasswordAgain" class="sr-only">Password again</label>
+								<input type="password" class="form-control input-sm" id="registrationPasswordAgain" name="password_again" placeholder="Password again">
+							</div>
+							<div class="form-group">
+								<label for="registrationEmail" class="sr-only">E-mail</label>
+								<input type="email" class="form-control input-sm" id="registrationEmail" name="email" placeholder="E-mail">
+							</div>
+							<!--
+							<div class="checkbox">
+								<label><input type="checkbox">Request permissions</label>
+							</div> -->
+							<a type="button" class="btn btn-default btn-sm pull-left"  href="{% url 'password_reset' %}">Forgot Password</a>
+							<input type="submit" class="btn btn-default btn-sm pull-right" value="Register">
+						</form>
+					</div>
 				</div>
 			</div>
 		</div>
