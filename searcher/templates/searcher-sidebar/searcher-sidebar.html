@@ -2,13 +2,20 @@
 <div>
     <form id="filters">
         <div class="panel">
-            <div class="flex-row panel-heading">
-                <div>Current Search
+            <div class="flex-row ">
+                <div class="flex-item-grow-1 flex-row panel-heading" role="button" onclick=togglePanelCollapse(this)
+                     data-toggle="collapse"
+                     aria-expanded="false"
+                     aria-controls="current-search-panel"
+                     data-target="#current-search-panel">
+                    <i class="margin-right align-center  glyphicon glyphicon-minus"></i>
+                    <p class="no-margin">Current Search</p>
                 </div>
-                <div class="flex-item-justify-end">
+                <div class="flex-item-justify-end panel-heading">
                     <div>
-                  <span id="actions-btn" class="dropdown invisible">
-                     <i role="button" class="dropdown-toggle" title="Export/Delete results" data-toggle="dropdown" href="#"><span
+                        <span id="actions-btn" class="dropdown invisible">
+                     <i role="button" class="dropdown-toggle" title="Export/Delete results" data-toggle="dropdown"
+                        href="#"><span
                              class="glyphicon glyphicon-scissors"></span></i>
                      <ul class="dropdown-menu">
                         <li><a href="#" data-toggle="modal" data-target="#export-modal"><span
@@ -25,13 +32,8 @@
                               onclick="javascript:save();" title="Save the search"></span>
                         <span onclick="getQuery();" data-toggle="modal" title="View query" data-target="#query-modal"
                               class="reduce-horizontal-padding  glyphicon glyphicon-sunglasses pointer"></span>
-                        <i role='button' title="Fullscreen the results" class='glyphicon glyphicon-fullscreen' onclick=toggleFullscreen()></i>
-                        <i type='button' title="Collapse the panel" role='button' data-toggle="collapse" aria-expanded="false"
-                           aria-controls="current-search-panel"
-                           data-target="#current-search-panel"
-                           class="reduce-horizontal-padding  glyphicon glyphicon-minus"
-                           onclick=togglePanelCollapse(this)></i>
-
+                        <i role='button' title="Fullscreen the results" class='glyphicon glyphicon-fullscreen'
+                           onclick=toggleFullscreen()></i>
                     </div>
                 </div>
 
@@ -137,7 +139,7 @@
                                                     multiple="multiple">
                                                 {% for field in fields %}
                                                     {% if field.type == 'text' or field.type == 'keyword' %}
-                                                        <option value="{{ field.data}}">{{ field.label }}</option>
+                                                        <option value="{{ field.data }}">{{ field.label }}</option>
                                                     {% endif %}
                                                 {% endfor %}
                                             </select>
@@ -371,14 +373,18 @@
             </div>
         </div>
         <div class="panel">
-            <div class="flex-row panel-heading">
-                <div class="flex-item-justify-start">Saved Searches</div>
-                <div class="flex-item-justify-end">
-                    <i role='button' onclick=removeSearches() title="Delete selected searches" class="glyphicon glyphicon glyphicon-remove"></i>
-                    <i type='button' role='button' data-toggle="collapse" aria-expanded="false"
-                       aria-controls="saved-searches-collapse"
-                       data-target="#saved-searches-collapse" title="Collapse the panel" class="glyphicon glyphicon-minus"
-                       onclick=togglePanelCollapse(this)></i>
+            <div class="flex-row ">
+                <div class="flex-item-grow-1 flex-row panel-heading " role='button' data-toggle="collapse"
+                     aria-expanded="false"
+                     aria-controls="saved-searches-collapse"
+                     data-target="#saved-searches-collapse" title="Collapse the panel"
+                     onclick=togglePanelCollapse(this)>
+                    <i class="margin-right  glyphicon glyphicon-minus"></i>
+                    <p class="no-margin">Saved Searches</p></div>
+                <div class="flex-item-justify-end panel-heading">
+                    <i role='button' onclick=removeSearches() title="Delete selected searches"
+                       class="glyphicon glyphicon glyphicon-remove"></i>
+
                 </div>
             </div>
             <div class="collapse in" id='saved-searches-collapse'>
@@ -401,14 +407,15 @@
         <input type="hidden" name="chart_type" id="chart_type">
         <input type="hidden" name="scroll_id" id="scroll_id">
         <div class="panel">
-            <div class="flex-row panel-heading">
-                <div class="flex-item-justify-start">Aggregations</div>
-                <div class="flex-item-justify-end"><i type='button' role='button' data-toggle="collapse"
-                                                      aria-expanded="false" aria-controls="aggregations-panel"
-                                                      data-target="#aggregations-panel"
-                                                      class="glyphicon glyphicon-minus"
-                                                      title="Collapse the panel"
-                                                      onclick=togglePanelCollapse(this)></i>
+            <div class="flex-row">
+                <div class="flex-item-grow-1 panel-heading flex-row" role='button' data-toggle="collapse"
+                     aria-expanded="false" aria-controls="aggregations-panel"
+                     data-target="#aggregations-panel"
+                     title="Collapse the panel"
+                     onclick=togglePanelCollapse(this)>
+                    <i class="margin-right align-center  glyphicon glyphicon-minus"></i>
+                    <p class="no-margin">Aggregations</p></div>
+                <div class="flex-item-justify-end panel-heading">
                 </div>
             </div>
             <div class="collapse in" id="aggregations-panel">
@@ -539,13 +546,16 @@
             </div>
         </div>
         <div class="panel {{ display_fact_graph }}">
-            <div class="flex-row panel-heading">
-                <div class="flex-item-justify-start">Fact Graph</div>
-                <div class="flex-item-justify-end"><i type='button' role='button' data-toggle="collapse"
-                                                      aria-expanded="false" aria-controls="fact-graph-panel"
-                                                      data-target="#fact-graph-panel"
-                                                      class="glyphicon glyphicon-minus"
-                                                      onclick=togglePanelCollapse(this)></i>
+            <div class="flex-row ">
+                <div class="flex-item-grow-1 panel-heading flex-row" role='button' data-toggle="collapse"
+                     aria-expanded="false" aria-controls="fact-graph-panel"
+                     data-target="#fact-graph-panel"
+                     onclick=togglePanelCollapse(this)>
+                    <i class="margin-right align-center glyphicon glyphicon-minus"></i>
+                    <p class="no-margin">Fact Graph</p></div>
+
+                <div class="flex-item-justify-end panel-heading">
+
                 </div>
             </div>
             <div class="collapse in" id="fact-graph-panel">

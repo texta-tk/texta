@@ -932,8 +932,8 @@ function removeField(id) {
 }
 
 function togglePanelCollapse(element) {
-    $(element).toggleClass('glyphicon-plus')
-    $(element).toggleClass('glyphicon-minus')
+    $(element).children('.glyphicon').toggleClass('glyphicon-plus')
+    $(element).children('.glyphicon').toggleClass('glyphicon-minus')
 }
 
 function changeAggField(fieldNumber) {

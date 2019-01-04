@@ -13,6 +13,9 @@ body {
 }
 
 /* global style */
+.no-margin{
+    margin:0;
+}
 .panel-borderless {
     border: 0;
     box-shadow: none;
