@@ -1,37 +1,38 @@
 {% extends "index.html" %}
 {% block app %}
-<link rel="stylesheet" href="{{STATIC_URL}}task_manager/task_manager.css">
-<link rel="stylesheet" href="{{STATIC_URL}}task_manager/preprocessor-front.css">
-<script type="application/javascript" src="{{STATIC_URL}}task_manager/task_manager.js"></script>
+    <link rel="stylesheet" href="{{ STATIC_URL }}task_manager/task_manager.css">
+    <link rel="stylesheet" href="{{ STATIC_URL }}task_manager/preprocessor-front.css">
+    <script type="application/javascript" src="{{ STATIC_URL }}task_manager/preprocessor-front.js"></script>
+    <script type="application/javascript" src="{{ STATIC_URL }}task_manager/task_manager.js"></script>
+    <div class="grid-wrapper-task-manager">
+        <div class=''>
+            <ul class="flex-row nav nav-tabs">
+                {% for task_param in task_params %}
+                    <li><a value='{{ task_param.id }}' data-toggle="tab"
+                           href="#{{ task_param.id }}">{{ task_param.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <form id="task_params" class="flex-item-grow-1 tab-content height-max" autocomplete="off">
+            <div class="tab-content height-max">
+                {% for task_param in task_params %}
+                    <div id="{{ task_param.id }}" class="height-max tab-pane fade in ">
+                        <div class="grid-2-col-1-row-default">
+                            <div class="remove-col-padding grid-2-col-1-sidebar">
+                                <div class="tab-content">
+                                    {% include task_param.template %}
+                                </div>
+                            </div>
 
-<div class="grid-wrapper-task-manager">
-	<div class=''>
-		<ul class="flex-row nav nav-tabs">
-			{% for task_param in task_params %}
-			<li><a value='{{task_param.id}}' data-toggle="tab" href="#{{task_param.id}}">{{task_param.name}}</a></li>
-			{% endfor %}
-		</ul>
-	</div>
-	<form id="task_params" class="flex-item-grow-1 tab-content height-max" autocomplete="off">
-		<div class="tab-content height-max">
-			{% for task_param in task_params %}
-			<div id="{{task_param.id}}" class="height-max tab-pane fade in ">
-				<div class="grid-2-col-1-row-default">
-					<div class="remove-col-padding grid-2-col-1-sidebar">
-						<div class="tab-content">
-							{% include task_param.template %}
-						</div>
-					</div>
+                            <div class="grid-2-col-1-content">
+                                {% include task_param.result_template %}
+                            </div>
 
-					<div class="grid-2-col-1-content">
-						{% include task_param.result_template %}
-					</div>
+                        </div>
+                    </div>
 
-				</div>
-			</div>
-
-			{% endfor %}
-		</div>
-	</form>
-</div>
+                {% endfor %}
+            </div>
+        </form>
+    </div>
 {% endblock %}

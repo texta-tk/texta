@@ -1,10 +1,11 @@
 <div class="task-manager-grid-wrapper preprocessor-padding bg-grey width-max">
     <div class="grid-i">
         <label class="control-label" for="comment-preprocessor-feature-names">Fields:</label>
-        <div class="">
+        <div class="select-wrapper">
             {% if fields %}
                 <select class="selectpicker" multiple data-selected-text-format="count"
                         id="comment-preprocessor-feature-names"
+                        data-width="100%"
                         name="comment_preprocessor_feature_names" data-style="btn-sm btn-default">
                     {% for field in fields %}
                         <option value="{{ field.data }}"
@@ -16,6 +17,16 @@
                           name="comment_preprocessor_feature_names"></textarea>
             {% endif %}
         </div>
+        {% if not fields %}
+            <span data-toggle="tooltip" data-placement="bottom" title="List of feature names one below another.
+
+		Example:
+
+		    my_field1
+		    my_field2"
+                  class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+
+        {% endif %}
     </div>
 
 </div>
