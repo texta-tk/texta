@@ -819,6 +819,7 @@ function mltQuery() {
                         'processing': true,
                         'serverSide': true,
                         'scrollY': "100vh",
+                        'ordering': false,
                         'scrollX': true,
                         'dom': 'rt',
                         'ajax': {
