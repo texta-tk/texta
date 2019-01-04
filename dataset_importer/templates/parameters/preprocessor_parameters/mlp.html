@@ -1,9 +1,10 @@
 <div class="task-manager-grid-wrapper preprocessor-padding bg-grey width-max">
     <div class="grid-i">
         <label class="control-label" for="mlp-processor-feature-name">Fields:</label>
-        <div class="">
+        <div class="select-wrapper">
             {% if fields %}
-                <select class="selectpicker" multiple data-selected-text-format="count" id="mlp-processor-feature-names"
+                <select class="selectpicker" multiple data-selected-text-format="count"
+                        data-width="100%" id="mlp-processor-feature-names"
                         name="mlp_feature_names" data-style="btn-sm btn-default">
                     {% for field in fields %}
                         <option title="{{ field.label }}" value="{{ field.path }}"

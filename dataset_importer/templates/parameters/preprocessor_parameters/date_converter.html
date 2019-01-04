@@ -1,10 +1,11 @@
 <div class="task-manager-grid-wrapper bg-grey preprocessor-padding width-max">
     <div class="grid-i">
         <label class="control-label" for="date-converter-processor-feature-name">Fields:</label>
-        <div>
+        <div class="select-wrapper">
             {% if fields %}
                 <select class="selectpicker" multiple data-selected-text-format="count"
                         id="date-converter-feature-names"
+                        data-width="100%"
                         name="date_converter_feature_names" data-style="btn-sm btn-default">
                     {% for field in fields %}
                         <option value="{{ field.path }}"
@@ -27,8 +28,8 @@
     </div>
     <div class="grid-i">
         <label class="control-label" for="date-converter-processor-feature-langs">Language:</label>
-        <div>
-            <select id="date-converter-processor-feature-langs" name="date_converter_feature_langs" class="selectpicker"
+        <div class="select-wrapper">
+            <select id="date-converter-processor-feature-langs" data-width="100%" name="date_converter_feature_langs" class="selectpicker"
                     data-style="btn-sm btn-default">
                 {% for language in preprocessor.languages %}
                     <option value="{{ language }}"
