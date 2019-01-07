@@ -44,7 +44,11 @@ class PreprocessorWorker(BaseWorker):
 
             self.es_m = es_m
             self.params = params
-            self._preprocessor_worker()
+            valid, msg = self._check_if_request_bad(self.params)
+            if valid:
+                self._preprocessor_worker()
+            else:
+                raise UserWarning(msg)
 
         except TaskCanceledException as e:
             # If here, task was canceled while processing
@@ -61,6 +65,7 @@ class PreprocessorWorker(BaseWorker):
             task = Task.objects.get(pk=self.task_id)
             task.result = json.dumps({'error': repr(e)})
             task.update_status(Task.STATUS_FAILED, set_time_completed=True)
+
 
     def _preprocessor_worker(self):
         field_paths = []
@@ -168,3 +173,15 @@ class PreprocessorWorker(BaseWorker):
         else:
             query = json.loads(Search.objects.get(pk=int(search)).query)
         return query
+
+    @staticmethod
+    def _check_if_request_bad(args):
+        '''Check if models/fields are selected'''
+        if not any(['feature_names' in k for k in args]):
+            return False, "No field selected"
+
+        if args['preprocessor_key'] in ['text_tagger', 'entity_extractor']:
+            if not any(['preprocessor_models' in k for k in args]):
+                return False, "No preprocessor selected"
+
+        return True, ""

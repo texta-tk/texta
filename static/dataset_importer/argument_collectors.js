@@ -136,7 +136,7 @@ function collectTextTaggerArguments(formData) {
     var taggers = JSON.stringify($('#text-tagger-processor-taggers').val());
 
     formData.append('text_tagger_preprocessor_feature_names', featureNames);
-    formData.append('text_tagger_preprocessor_taggers', taggers);
+    formData.append('text_tagger_preprocessor_models', taggers);
 
     return formData;
 }
