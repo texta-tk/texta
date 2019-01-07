@@ -43,7 +43,7 @@ def filter_params(post: QueryDict):
     :param post: Django POST input in the form of a QueryDict.
     :return: Form data relevant to the actual Task type being invoked.
     """
-    prefix = post['task_type']
+    prefix = post['preprocessor_key']
     filtered_params = {}
 
     for param in post:

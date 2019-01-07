@@ -4,7 +4,7 @@
         <div class="row">
             <div class="col-sm-6">Search:</div>
             <div class="col-sm-6">
-                <select name="{{ task_param.id }}_search" class="selectpicker" data-width='100%'>
+                <select id='apply-preprocessor-search-param' name="{{ task_param.id }}_search" class="selectpicker" data-width='100%'>
                     <option value="all_docs">Empty (all documents)</option>
                     {% for search in searches %}
                         <option value="{{ search.id }}">{{ search.description }}</option>
@@ -16,7 +16,7 @@
         <div class="row">
             <div class="col-sm-6">Description:</div>
             <div class="col-sm-6">
-                <input name="{{ task_param.id }}_description" class="form-control input-sm">
+                <input id='apply-preprocessor-description-param' name="{{ task_param.id }}_description" class="form-control input-sm">
             </div>
         </div>
 
@@ -40,7 +40,7 @@
 
                 <div id="params-{{ preprocessor.key }}"
                      class="{% if forloop.counter > 1 %}hidden{% endif %} flex-row height-max ">
-                    <form class="flex-column height-max width-max" action="javascript:start_task('{{ task_param.id }}');">
+                    <form class="flex-column height-max width-max" action="javascript:start_task_preprocessor('{{ task_param.id }}','form_{{ task_param.id }}_{{ preprocessor.key }}','{{ preprocessor.key }}');" id="form_{{ task_param.id }}_{{ preprocessor.key }}">
                         {% include preprocessor.parameters_template %}
 
                         <div class="row">
