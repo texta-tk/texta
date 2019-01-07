@@ -65,7 +65,7 @@
   <div class="grid-i if-add-stopword hidden">
     <label class="control-label " for="scoro-preprocessor-stopword-lexicon">Stopword lexicon:</label>
     <div class='select-wrapper'>
-      <select id="scoro-preprocessor-stopword-lexicon" name="scoro_stopword_lexicon" class="form-control input-sm">
+      <select id="scoro-preprocessor-stopword-lexicon" name="scoro_stopword_lexicon" class="selectpicker" data-width='100%'>
         {% for lex in preprocessor.enabled_lexicons %}
         <option value="{{lex.id}}">{{lex.name}}</option>
         {% endfor %}
@@ -96,7 +96,7 @@
       <label class="control-label " for="scoro-preprocessor-sent-analysis-method">Method:</label>
       <div class='select-wrapper'>
         <select id="scoro-preprocessor-sent-analysis-method " name="scoro_sent_analysis_method" onchange=showBasedOnMethod()
-          class="form-control input-sm">
+                class="selectpicker" data-width='100%'>
           {% for sent_method in preprocessor.sentiment_analysis_methods %}
           <option value="{{ sent_method }}" {% if forloop.counter < 2 %}selected="selected" {% endif%}>
             {{sent_method}}</option>
@@ -113,7 +113,7 @@
         <label class="control-label " for="scoro-preprocessor-sentiment-lex">Sentiment lex:</label>
         <div class='select-wrapper'>
           <select id="scoro-preprocessor-sentiment-lex " name="scoro_sentiment_lex" onchange=showIfSentimentLexCustom(value)
-            class="form-control input-sm">
+                  class="selectpicker" data-width='100%'>
             {% for sent_lex in preprocessor.sentiment_lexicons %}
             <option value="{{ sent_lex }}" {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{sent_lex}}</option>
             {% endfor %}
@@ -129,7 +129,7 @@
         <div class="grid-i">
           <label class="control-label " for="scoro-preprocessor-pos-lexicon">Pos lexicon:</label>
           <div class='select-wrapper'>
-            <select id="scoro-preprocessor-pos-lexicon" name="scoro_pos_lexicon" class="form-control input-sm">
+            <select id="scoro-preprocessor-pos-lexicon" name="scoro_pos_lexicon" class="selectpicker" data-width='100%'>
               {% for lex in preprocessor.enabled_lexicons %}
               <option value="{{lex.id}}">{{lex.name}}</option>
               {% endfor %}
@@ -143,7 +143,7 @@
         <div class="grid-i">
           <label class="control-label " for="scoro-preprocessor-neg-lexicon">Neg lexicon:</label>
           <div class='select-wrapper'>
-            <select id="scoro-preprocessor-neg-lexicon" name="scoro_neg_lexicon" class="form-control input-sm">
+            <select id="scoro-preprocessor-neg-lexicon" name="scoro_neg_lexicon" class="selectpicker" data-width='100%'>
               {% for lex in preprocessor.enabled_lexicons %}
               <option value="{{lex.id}}">{{lex.name}}</option>
               {% endfor %}
@@ -183,7 +183,7 @@
     <div class="grid-i if-model-based hidden">
       <label class="control-label " for="scoro-preprocessor-neg-model">Neg model:</label>
       <div class='select-wrapper'>
-        <select id="scoro-preprocessor-neg-model" name="scoro_neg_model" class="form-control input-sm">
+        <select id="scoro-preprocessor-neg-model" name="scoro_neg_model" class="selectpicker" data-width='100%'>
           {% for model in preprocessor.enabled_models %}
           <option value="{{model.id}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{model.description}}</option>
           {% endfor %}
@@ -197,7 +197,7 @@
     <div class="grid-i if-model-based hidden">
       <label class="control-label " for="scoro-preprocessor-pos-model">Pos model:</label>
       <div class='select-wrapper'>
-        <select id="scoro-preprocessor-pos-model" name="scoro_pos_model" class="form-control input-sm">
+        <select id="scoro-preprocessor-pos-model" name="scoro_pos_model" class="selectpicker" data-width='100%'>
           {% for model in preprocessor.enabled_models %}
           <option value="{{model.id}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{model.description}}</option>
           {% endfor %}
@@ -408,7 +408,7 @@
       <div class="grid-i">
         <label class="control-label " for="scoro-preprocessor-signif-scoring-function">Scoring function</label>
         <div class='select-wrapper'>
-          <select id="scoro-preprocessor-signif-scoring-function " name="scoro_signif_scoring_function" class="form-control input-sm">
+          <select id="scoro-preprocessor-signif-scoring-function " name="scoro_signif_scoring_function" class="selectpicker" data-width='100%'>
             {% for sc_function in preprocessor.scoring_functions %}
             <option value="{{ sc_function }}" {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{sc_function}}</option>
             {% endfor %}

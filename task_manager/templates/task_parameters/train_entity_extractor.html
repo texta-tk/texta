@@ -1,63 +1,86 @@
+<div class="panel">
+    <div class="panel-heading">Train a New Entity Extractor Model</div>
+    <div class="panel-body">
 
-	<div class="panel">
-		<div class="panel-heading">Train a New Entity Extractor Model</div>
-		<div class="panel-body">
+        <div class="form-group" autocomplete="off">
+            <form action="javascript:start_task('{{ task_param.id }}');" id="form_{{ task_param.id }}">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-xs-5">Select a search:</div>
+                        <div class="col-xs-5">
+                            <select name="{{ task_param.id }}_search"
+                                    class="selectpicker"
+                                    data-width='100%'
+                                    required
+                                    autocomplete="off">
+                                {% for search in searches %}
+                                    <option title="{{ search.description }}"
+                                            value="{{ search.id }}">{{ search.description }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-xs-1"><span data-toggle="tooltip" data-placement="bottom"
+                                                    title="Search from which facts for training data will be extracted"
+                                                    class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+                        </div>
+                    </div>
 
-			<div class="form-group" autocomplete="off">
-				<div class="col-sm-12">
-					<div class="row">
-						<div class="col-sm-5">Select a search:</div>
-						<div class="col-sm-5">
-							<select name="{{task_param.id}}_search" class="form-control"  autocomplete="off">
-								{% for search in searches %}
-								<option title="{{search.description}}" value="{{search.id}}">{{search.description}}</option>
-								{% endfor %}
-							</select>
-						</div>
-						<div class="col-sm-1"><span data-toggle="tooltip" data-placement="bottom" title="Search from which facts for training data will be extracted" class="glyphicon glyphicon-question-sign texta-tooltip"></span></div>
-					</div>
+                    <div class="row">
+                        <div class="col-xs-5">Select fields:</div>
+                        <div class="col-xs-5">
 
-					<div class="row">
-						<div class="col-sm-5">Select fields:</div>
-						<div class="col-sm-5">
+                            <select class="selectpicker" required data-width='100%' multiple data-selected-text-format="count"
+                                    name="{{ task_param.id }}_fields" autocomplete="off">
+                                {% for field in fields %}
+                                    <option title="{{ field.path }}" value="{{ field.path }}">{{ field.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-xs-1"><span data-toggle="tooltip" data-placement="bottom"
+                                                    title="Select field to train the model on"
+                                                    class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+                        </div>
 
-							<select class="selectpicker form-control input-sm" multiple data-selected-text-format="count" name="{{task_param.id}}_fields"  autocomplete="off">
-								{% for field in fields %}
-								<option title="{{field.path}}" value="{{field.path}}">{{field.label}}</option>
-								{% endfor %}
-							</select>
-						</div>
-						<div class="col-sm-1"><span data-toggle="tooltip" data-placement="bottom" title="Select field to train the model on" class="glyphicon glyphicon-question-sign texta-tooltip"></span></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-5">Select fact names:</div>
+                        <div class="col-xs-5">
+                            <select class="selectpicker" required data-width='100%' multiple data-selected-text-format="count"
+                                    data-live-search="true" name="{{ task_param.id }}_facts" autocomplete="off">
+                                {% for fact in task_param.facts %}
+                                    <option title="{{ fact }}" value="{{ fact }}">{{ fact }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-xs-1"><span data-toggle="tooltip" data-placement="bottom"
+                                                    title="Select the fact names, of which the values will be used for training"
+                                                    class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+                        </div>
+                    </div>
 
-					</div>
-					<div class="row">
-						<div class="col-sm-5">Select fact names:</div>
-						<div class="col-sm-5">
-							<select class="selectpicker form-control input-sm" multiple data-selected-text-format="count" data-live-search="true"  name="{{task_param.id}}_facts" autocomplete="off">
-								{% for fact in task_param.facts %}
-								<option title="{{fact}}" value="{{fact}}">{{fact}}</option>
-								{% endfor %}
-							</select>
-						</div>
-						<div class="col-sm-1"><span data-toggle="tooltip" data-placement="bottom" title="Select the fact names, of which the values will be used for training" class="glyphicon glyphicon-question-sign texta-tooltip"></span></div>
-					</div>
+                    <div class="row">
+                        <div class="col-xs-5">Description:</div>
+                        <div class="col-xs-5">
+                            <input name="{{ task_param.id }}_description" class="form-control input-sm"
+                                   autocomplete="off">
+                        </div>
+                        <div class="col-xs-1"><span data-toggle="tooltip" data-placement="bottom"
+                                                    title="Description for task"
+                                                    class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+                        </div>
+                    </div>
 
-					<div class="row">
-						<div class="col-sm-5">Description:</div>
-						<div class="col-sm-5">
-							<input name="{{task_param.id}}_description" class="form-control input-sm"  autocomplete="off">
-						</div>
-						<div class="col-sm-1"><span data-toggle="tooltip" data-placement="bottom" title="Description for task" class="glyphicon glyphicon-question-sign texta-tooltip"></span></div>
-					</div>
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <button type="submit"
+                                    class="btn btn-default form-control" autocomplete="off"><span
+                                    class="glyphicon glyphicon-ok"></span> Start task
+                            </button>
+                        </div>
+                    </div>
 
-					<div class="row">
-						<div class="col-sm-12">
-							<button type="button" onclick="javascript:start_task('{{task_param.id}}');" class="btn btn-default form-control" autocomplete="off"><span
-								 class="glyphicon glyphicon-ok"></span> Start task</button>
-						</div>
-					</div>
-
-				</div>
-			</div>
-		</div>
-	</div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

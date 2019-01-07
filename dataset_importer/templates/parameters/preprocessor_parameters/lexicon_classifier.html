@@ -46,7 +46,7 @@
             <label class="control-label " for="lexicon-classifier-processor-counterlexicons">C-Lexicon:</label>
             <div class="select-wrapper">
                 <select id="lexicon-classifier-processor-counterlexicons" name="lexicon_classifier_counterlexicons"
-                    class="" data-style="btn-sm btn-default">
+                        class="selectpicker" data-width='100%' data-style="btn-sm btn-default">
                     {% for lex in preprocessor.enabled_lexicons %}
                     <option value="{{lex.id}}" {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{lex.name}}</option>
                     {% endfor %}
