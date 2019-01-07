@@ -74,8 +74,8 @@ class PreprocessorWorker(BaseWorker):
 
         # TODO: remove "preprocessor_key" need from here? this should be worked out in the view (controller interface)
         # Add new field to mapping definition if necessary
-        if 'field_properties' in preprocessor_map[self.params['preprocessor_key']]:
-            preprocessor_key = self.params['preprocessor_key']
+        preprocessor_key = self.params['preprocessor_key']
+        if 'field_properties' in preprocessor_map[preprocessor_key]:
             fields = self.params['{0}_feature_names'.format(preprocessor_key)]
             for field in fields:
                 field_paths.append(field)
@@ -89,7 +89,6 @@ class PreprocessorWorker(BaseWorker):
 
         total_hits = len(response['hits']['hits'])
         show_progress.set_total(total_docs)
-        total_positive = 0
 
         try:
             # Metadata of preprocessor outputs
@@ -108,7 +107,6 @@ class PreprocessorWorker(BaseWorker):
                     preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
                     result_map = preprocessor.transform(documents, **parameter_dict)
                     documents = result_map['documents']
-                    # total_positive += result_map['meta'].get('documents_tagged', 0)
                     add_dicts(meta, result_map['meta'])
                 self.es_m.bulk_post_documents(documents, ids, document_locations)
                 # Update progress is important to check task is alive
