@@ -3,9 +3,10 @@
         <label class="control-label " for="entity-extractor-processor-feature-name">Fields:</label>
         <div class="select-wrapper">
             {% if fields %}
-                <select class="selectpicker" multiple data-selected-text-format="count"
+                <select required class="selectpicker" multiple data-selected-text-format="count"
                         id="entity-extractor-processor-feature-names"
                         data-width="100%"
+                        required
                         name="entity_extractor_feature_names" data-style="btn-sm btn-default">
                     {% for field in fields %}
                         <option value="{{ field.path }}"
@@ -35,6 +36,7 @@
             <select id="entity-extractor-processor-extractors" name="entity_extractor_extractors"
                     class="selectpicker"
                     data-width="100%"
+                    required
                     multiple="multiple" data-style="btn-sm btn-default">
                 {% for extractor in preprocessor.enabled_extractors %}
                     <option value="{{ extractor.id }}"

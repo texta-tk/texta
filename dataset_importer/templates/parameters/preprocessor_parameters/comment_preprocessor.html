@@ -6,6 +6,7 @@
                 <select class="selectpicker" multiple data-selected-text-format="count"
                         id="comment-preprocessor-feature-names"
                         data-width="100%"
+                        required
                         name="comment_preprocessor_feature_names" data-style="btn-sm btn-default">
                     {% for field in fields %}
                         <option value="{{ field.data }}"

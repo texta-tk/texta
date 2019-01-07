@@ -32,7 +32,7 @@ $(function () {
 })
 
 function start_task (task_id) {
-    let formElement = document.getElementById('task_params')
+    let formElement = document.getElementById('form_'+task_id)
     $('<input>').attr('type', 'hidden').attr('name', 'task_type').val(task_id).appendTo(formElement)
 
     var request = new XMLHttpRequest()
