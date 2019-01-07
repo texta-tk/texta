@@ -141,7 +141,6 @@ class PreprocessorWorker(BaseWorker):
         :param response:
         :return:
         """
-
         documents = [hit['_source'] for hit in response['hits']['hits']]
         ids = [hit['_id'] for hit in response['hits']['hits']]
         document_locations = [{'_index': hit['_index'], '_type': hit['_type']} for hit in response['hits']['hits']]

@@ -34,8 +34,8 @@ function start_task_preprocessor(task_id ,formElement,preprocessorKey){
     formElement = document.getElementById(formElement)
     $('<input>').attr('type', 'hidden').attr('name', 'task_type').val(task_id).appendTo(formElement)
     $('<input>').attr('type', 'hidden').attr('name', 'preprocessor_key').val(preprocessorKey).appendTo(formElement)
-    $('<input>').attr('type', 'hidden').attr('name', preprocessorKey+'_description').val($('#apply-preprocessor-description-param').val()).appendTo(formElement)
-    $('<input>').attr('type', 'hidden').attr('name', preprocessorKey+'_search').val($('#apply-preprocessor-search-param').val()).appendTo(formElement)
+    $('<input>').attr('type', 'hidden').attr('name', 'description').val($('#apply-preprocessor-description-param').val()).appendTo(formElement)
+    $('<input>').attr('type', 'hidden').attr('name', 'search').val($('#apply-preprocessor-search-param').val()).appendTo(formElement)
 
     var request = new XMLHttpRequest()
     request.onreadystatechange = function () {

@@ -23,7 +23,6 @@ from task_manager.tools import get_pipeline_builder
 from task_manager.tools import MassHelper
 
 from .task_manager import create_task
-from .task_manager import filter_params
 from .task_manager import filter_preprocessor_params
 from .task_manager import translate_parameters
 from .task_manager import collect_map_entries
@@ -91,13 +90,11 @@ def index(request):
 def start_task(request):
     user = request.user
     task_type = request.POST['task_type']
-    task_params = filter_params(request.POST)
+    task_params = request.POST.dict()
     description = task_params['description']
-
     if 'dataset' in request.session.keys():
         task_params['dataset'] = request.session['dataset']
 
-    task_params['preprocessor_key'] = request.POST['preprocessor_key']
     # Create execution task
     task_id = create_task(task_type, description, task_params, user)
     # Add task to queue
