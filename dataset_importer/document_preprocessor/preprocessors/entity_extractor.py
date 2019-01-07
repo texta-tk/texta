@@ -16,10 +16,11 @@ class EntityExtractorPreprocessor(object):
     def transform(self, documents, **kwargs):
         try:
             input_features = json.loads(kwargs['entity_extractor_preprocessor_feature_names'])
-            model_ids_to_apply = [int(_id) for _id in json.loads(kwargs['entity_extractor_preprocessor_extractors'])]
+            model_ids_to_apply = [int(_id) for _id in json.loads(kwargs['entity_extractor_preprocessor_models'])]
             models_to_apply = []
-            if not input_features:
-                return documents
+
+            if not input_features or not model_ids_to_apply:
+                return {"documents":documents, "meta": {'facts_added': 0}}
 
             # Load tagger models
             for _id in model_ids_to_apply:
@@ -42,10 +43,7 @@ class EntityExtractorPreprocessor(object):
                         else:
                             decoded_text = ''
                             break
-                    try:
-                        text_map[field].append(decoded_text.strip().decode())
-                    except AttributeError:
-                        text_map[field].append(decoded_text.strip())
+                    text_map[field].append(decoded_text.strip())
             # Apply tags to every input feature
             facts_added = 0
             for field in input_features:
@@ -69,11 +67,12 @@ class EntityExtractorPreprocessor(object):
                         documents[i]['texta_facts'].extend(new_facts)
 
         except Exception as e:
-            print(e)
-            logging.getLogger(ERROR_LOGGER).exception(json.dumps(
-                {'process': 'APPLY PREPROCESSOR', 'event': 'EntityExtractorPreprocessor:transform', 'data': {'model_ids_to_apply': model_ids_to_apply}}), exc_info=True)
-
-        return {"documents":documents, "meta": {'facts_added': facts_added}}
+            if is_bad:
+                logging.getLogger(ERROR_LOGGER).exception(json.dumps({'process': 'APPLY PREPROCESSOR', 'event': 'EntityExtractorPreprocessor:transform', 'data': {"warning": message}}), exc_info=True)
+                return {"documents":documents, "meta": {'facts_added': 0}}
+            else:
+                logging.getLogger(ERROR_LOGGER).exception(json.dumps({'process': 'APPLY PREPROCESSOR', 'event': 'EntityExtractorPreprocessor:transform', 'data': {'entity_extractor_preprocessor_models': json.loads(kwargs['entity_extractor_preprocessor_models'])}}), exc_info=True)
+                return {"documents":documents, "meta": {'facts_added': facts_added}}
 
 
     def _preds_to_doc(self, doc, result_doc, field):
@@ -89,10 +88,4 @@ class EntityExtractorPreprocessor(object):
                 doc_num_facts += 1;
             # Add +1 for account for whitespace
             doc_spans.append(doc_spans[i] + len(word) + 1)
-
-
         return new_facts, doc_num_facts
-
-
-    def _pred_to_fact(self, pred, ind, doc):
-        pass
