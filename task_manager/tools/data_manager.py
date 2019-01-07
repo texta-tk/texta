@@ -8,6 +8,7 @@ from utils.es_manager import ES_Manager
 from texta.settings import ERROR_LOGGER
 
 MAX_POSITIVE_SAMPLE_SIZE = 500000
+ES_SCROLL_SIZE = 10000
 
 
 def get_fields(es_m):
@@ -71,7 +72,7 @@ class EsIterator:
         return query
 
     def __iter__(self):
-        self.es_m.set_query_parameter('size', 10000)
+        self.es_m.set_query_parameter('size', ES_SCROLL_SIZE)
         response = self.es_m.scroll()
 
         scroll_id = response['_scroll_id']
@@ -126,7 +127,7 @@ class EsDataSample(object):
         for field in self.fields:
             positive_samples_map[field] = []
 
-        self.es_m.set_query_parameter('size', 10000)
+        self.es_m.set_query_parameter('size', ES_SCROLL_SIZE)
         response = self.es_m.scroll()
         scroll_id = response['_scroll_id']
         total_hits = response['hits']['total']
@@ -174,7 +175,7 @@ class EsDataSample(object):
         for field in self.fields:
             negative_samples_map[field] = []
 
-        self.es_m.set_query_parameter('size', 500)
+        self.es_m.set_query_parameter('size', ES_SCROLL_SIZE)
         response = self.es_m.scroll(match_all=True)
         scroll_id = response['_scroll_id']
         hit_length = response['hits']['total']
