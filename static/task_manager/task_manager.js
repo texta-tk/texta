@@ -30,9 +30,26 @@ $(function () {
         element.tab('show')
     }
 })
+function start_task_preprocessor(task_id ,formElement,preprocessorKey){
+    formElement = document.getElementById(formElement)
+    $('<input>').attr('type', 'hidden').attr('name', 'task_type').val(task_id).appendTo(formElement)
+    $('<input>').attr('type', 'hidden').attr('name', 'preprocessor_key').val(preprocessorKey).appendTo(formElement)
+    $('<input>').attr('type', 'hidden').attr('name', preprocessorKey+'_description').val($('#apply-preprocessor-description-param').val()).appendTo(formElement)
+    $('<input>').attr('type', 'hidden').attr('name', preprocessorKey+'_search').val($('#apply-preprocessor-search-param').val()).appendTo(formElement)
 
-function start_task (task_id) {
-    let formElement = document.getElementById('form_'+task_id)
+    var request = new XMLHttpRequest()
+    request.onreadystatechange = function () {
+        location.reload()
+    }
+
+    request.open('POST', PREFIX + '/start_task')
+    request.send(new FormData(formElement), true)
+
+}
+
+function start_task (task_id, formElement) {
+
+    formElement = document.getElementById(formElement)
     $('<input>').attr('type', 'hidden').attr('name', 'task_type').val(task_id).appendTo(formElement)
 
     var request = new XMLHttpRequest()

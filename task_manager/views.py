@@ -97,10 +97,7 @@ def start_task(request):
     if 'dataset' in request.session.keys():
         task_params['dataset'] = request.session['dataset']
 
-    # TODO: eliminate the need of this special treatment ?
-    if task_type == 'apply_preprocessor':
-        task_params = filter_preprocessor_params(request.POST, task_params)
-
+    task_params['preprocessor_key'] = request.POST['preprocessor_key']
     # Create execution task
     task_id = create_task(task_type, description, task_params, user)
     # Add task to queue
