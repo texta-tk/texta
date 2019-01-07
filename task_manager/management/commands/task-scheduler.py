@@ -24,7 +24,7 @@ from task_manager.models import Task
 from task_manager.tasks.task_params import activate_task_worker
 
 # Define max number of background running processes
-MAX_RUNNING = 2
+MAX_RUNNING = 4
 # Total minutes allowed since last update in a task
 MAX_LAST_UPDATE_MINUTES = 1000
 
