@@ -8,7 +8,7 @@
                     <div class="row">
                         <div class="col-sm-6">Select a search:</div>
                         <div class="col-sm-6">
-                            <select name="{{task_param.id}}_search" class="form-control">
+                            <select name="{{task_param.id}}_search" class="selectpicker" data-width='100%'>
                                 {% for search in searches %}
                                 <option title="{{search.description}}" value="{{search.id}}">{{search.description}}</option>
                                 {% endfor %}
@@ -19,7 +19,7 @@
                     <div class="row">
                         <div class="col-sm-6">Select fields:</div>
                         <div class="col-sm-6">
-                            <select class="selectpicker form-control input-sm" multiple data-selected-text-format="count"
+                            <select class="selectpicker" data-width='100%' multiple data-selected-text-format="count"
                                 name="{{task_param.id}}_fields">
                                 {% for field in fields %}
                                 <option title="{{field.path}}" value="{{field.path}}">{{field.label}}</option>
@@ -31,7 +31,7 @@
                     <div class="row">
                         <div class="col-sm-6">Feature Extraction:</div>
                         <div class="col-sm-6">
-                            <select name="{{task_param.id}}_extractor_opt" class="form-control">
+                            <select name="{{task_param.id}}_extractor_opt" class="selectpicker" data-width='100%'>
                                 {% for extractor_opt in train_tagger_extractor_opt_list %}
                                 <option title="{{extractor_opt.label}}" value="{{ extractor_opt.index }}">{{extractor_opt.label }}</option>
                                 {% endfor %}
@@ -41,7 +41,7 @@
                     <div class="row">
                         <div class="col-sm-6">Dimension Reduction:</div>
                         <div class="col-sm-6">
-                            <select name="{{task_param.id}}_reductor_opt" class="form-control">
+                            <select name="{{task_param.id}}_reductor_opt" class="selectpicker" data-width='100%'>
                                 {% for reductor_opt in train_tagger_reductor_opt_list %}
                                 <option title="{{reductor_opt.label}}" value="{{ reductor_opt.index }}">{{reductor_opt.label }}</option>
                                 {% endfor %}
@@ -51,7 +51,7 @@
                     <div class="row">
                         <div class="col-sm-6">Normalization:</div>
                         <div class="col-sm-6">
-                            <select name="{{task_param.id}}_normalizer_opt" class="form-control">
+                            <select name="{{task_param.id}}_normalizer_opt" class="selectpicker" data-width='100%'>
                                 {% for normalizer_opt in train_tagger_normalizer_opt_list %}
                                 <option title="{{normalizer_opt.label}}" value="{{ normalizer_opt.index }}">{{normalizer_opt.label }}</option>
                                 {% endfor %}
@@ -61,7 +61,7 @@
                     <div class="row">
                         <div class="col-sm-6">Classifier:</div>
                         <div class="col-sm-6">
-                            <select name="{{task_param.id}}_classifier_opt" class="form-control">
+                            <select name="{{task_param.id}}_classifier_opt" class="selectpicker" data-width='100%'>
                                 {% for classifier_opt in train_tagger_classifier_opt_list %}
                                 <option title="{{classifier_opt.label}}" value="{{ classifier_opt.index }}">{{classifier_opt.label }}</option>
                                 {% endfor %}
@@ -96,7 +96,7 @@
             <div class="row">
                 <div class="col-sm-6">Tags:</div>
                 <div class="col-sm-6">
-                    <select name="mass_tagger_selection" class="form-control input-sm" multiple="multiple">
+                    <select name="mass_tagger_selection" class="selectpicker" data-width='100%' multiple="multiple">
                         {% for text_tag in text_tags %}
                         <option value="{{text_tag}}" {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{text_tag}}</option>
                         {% endfor %}
@@ -107,7 +107,7 @@
             <div class="row">
                 <div class="col-sm-6">Select field:</div>
                 <div class="col-sm-6">
-                    <select name="mass_field" class="form-control">
+                    <select name="mass_field" class="selectpicker" data-width='100%'>
                         {% for field in fields %}
                         <option title="{{field.path}}" value="{{field.path}}">{{field.label}}</option>
                         {% endfor %}
@@ -118,7 +118,7 @@
             <div class="row">
                 <div class="col-sm-6">Feature Extraction:</div>
                 <div class="col-sm-6">
-                    <select name="mass_extractor_opt" class="form-control">
+                    <select name="mass_extractor_opt" class="selectpicker" data-width='100%'>
                         {% for extractor_opt in train_tagger_extractor_opt_list %}
                         <option title="{{extractor_opt.label}}" value="{{ extractor_opt.index }}">{{extractor_opt.label }}</option>
                         {% endfor %}
@@ -128,7 +128,7 @@
             <div class="row">
                 <div class="col-sm-6">Dimension Reduction:</div>
                 <div class="col-sm-6">
-                    <select name="mass_reductor_opt" class="form-control">
+                    <select name="mass_reductor_opt" class="selectpicker" data-width='100%'>
                         {% for reductor_opt in train_tagger_reductor_opt_list %}
                         <option title="{{reductor_opt.label}}" value="{{ reductor_opt.index }}">{{ reductor_opt.label}}</option>
                         {% endfor %}
@@ -138,7 +138,7 @@
             <div class="row">
                 <div class="col-sm-6">Normalization:</div>
                 <div class="col-sm-6">
-                    <select name="mass_normalizer_opt" class="form-control">
+                    <select name="mass_normalizer_opt" class="selectpicker" data-width='100%'>
                         {% for normalizer_opt in train_tagger_normalizer_opt_list %}
                         <option title="{{normalizer_opt.label}}" value="{{ normalizer_opt.index }}">{{normalizer_opt.label }}</option>
                         {% endfor %}
@@ -148,7 +148,7 @@
             <div class="row">
                 <div class="col-sm-6">Classifier:</div>
                 <div class="col-sm-6">
-                    <select name="mass_classifier_opt" class="form-control">
+                    <select name="mass_classifier_opt" class="selectpicker" data-width='100%'>
                         {% for classifier_opt in train_tagger_classifier_opt_list %}
                         <option title="{{classifier_opt.label}}" value="{{ classifier_opt.index }}">{{classifier_opt.label }}</option>
                         {% endfor %}

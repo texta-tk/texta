@@ -5,7 +5,7 @@
 				<div class="row">
 					<div class="col-sm-6">Select a search:</div>
 					<div class="col-sm-6">
-						<select name="{{task_param.id}}_search" class="form-control">
+						<select name="{{task_param.id}}_search" class="selectpicker" data-width='100%'>
 							<option value="all_docs">Empty (all documents)</option>
 							{% for search in searches %}
 							<option value="{{search.id}}">{{search.description}}</option>
@@ -16,7 +16,7 @@
 				<div class="row">
 					<div class="col-sm-6">Select field:</div>
 					<div class="col-sm-6">
-						<select name="{{task_param.id}}_field" class="form-control">
+						<select name="{{task_param.id}}_field" class="selectpicker" data-width='100%'>
 							{% for field in fields %}
 							<option value="{{field.path}}">{{field.label}}</option>
 							{% endfor %}
@@ -26,7 +26,7 @@
 				<div class="row">
 					<div class="col-sm-6">No of dimensions:</div>
 					<div class="col-sm-6">
-						<select name="{{task_param.id}}_num_dimensions" class="form-control">
+						<select name="{{task_param.id}}_num_dimensions" class="selectpicker" data-width='100%'>
 							<option value="50">50</option>
 							<option value="100" selected="selected">100</option>
 							<option value="150">150</option>
@@ -39,7 +39,7 @@
 				<div class="row">
 					<div class="col-sm-6">No of workers:</div>
 					<div class="col-sm-6">
-						<select name="{{task_param.id}}_num_workers" class="form-control">
+						<select name="{{task_param.id}}_num_workers" class="selectpicker" data-width='100%'>
 							<option value="1">1</option>
 							<option value="2" selected="selected">2</option>
 							<option value="3">3</option>
@@ -56,7 +56,7 @@
 				<div class="row">
 					<div class="col-sm-6">Frequency threshold:</div>
 					<div class="col-sm-6">
-						<select name="{{task_param.id}}_min_freq" class="form-control">
+						<select name="{{task_param.id}}_min_freq" class="selectpicker" data-width='100%'>
 							<option value="1">1</option>
 							<option value="5">5</option>
 							<option value="10" selected="selected">10</option>
@@ -72,7 +72,7 @@
 				<div class="row">
 					<div class="col-sm-6">Max vocab size:</div>
 					<div class="col-sm-6">
-						<select name="{{task_param.id}}_max_vocab" class="form-control">
+						<select name="{{task_param.id}}_max_vocab" class="selectpicker" data-width='100%'>
 							<option value="" selected="selected">No limit</option>
 							<option value="50000">50 000</option>
 							<option value="100000">100 000</option>

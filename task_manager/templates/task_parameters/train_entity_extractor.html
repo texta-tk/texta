@@ -8,7 +8,7 @@
 					<div class="row">
 						<div class="col-xs-5">Select a search:</div>
 						<div class="col-xs-5">
-							<select name="{{task_param.id}}_search" class="form-control"  autocomplete="off">
+							<select name="{{task_param.id}}_search" class="selectpicker" data-width='100%'  autocomplete="off">
 								{% for search in searches %}
 								<option title="{{search.description}}" value="{{search.id}}">{{search.description}}</option>
 								{% endfor %}
@@ -21,7 +21,7 @@
 						<div class="col-xs-5">Select fields:</div>
 						<div class="col-xs-5">
 
-							<select class="selectpicker form-control input-sm" multiple data-selected-text-format="count" name="{{task_param.id}}_fields"  autocomplete="off">
+							<select class="selectpicker" data-width='100%' multiple data-selected-text-format="count" name="{{task_param.id}}_fields"  autocomplete="off">
 								{% for field in fields %}
 								<option title="{{field.path}}" value="{{field.path}}">{{field.label}}</option>
 								{% endfor %}
@@ -33,7 +33,7 @@
 					<div class="row">
 						<div class="col-xs-5">Select fact names:</div>
 						<div class="col-xs-5">
-							<select class="selectpicker form-control input-sm" multiple data-selected-text-format="count" data-live-search="true"  name="{{task_param.id}}_facts" autocomplete="off">
+							<select class="selectpicker" data-width='100%' multiple data-selected-text-format="count" data-live-search="true"  name="{{task_param.id}}_facts" autocomplete="off">
 								{% for fact in task_param.facts %}
 								<option title="{{fact}}" value="{{fact}}">{{fact}}</option>
 								{% endfor %}
