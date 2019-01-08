@@ -57,7 +57,7 @@ class QueryBuilder:
                     
                     if match_type == 'best_fields':
                         # match query
-                        synonym_query['multi_match'] = {'query': synonym, 'type': 'best_fields', 'fields': match_field, 'operator': 'and', 'slop': match_slop}
+                        synonym_query['multi_match'] = {'query': synonym, 'type': 'best_fields', 'fields': match_field, 'operator': 'and', 'slop': 0}
                     if match_type == 'phrase':
                         # match phrase query
                         synonym_query['multi_match'] = {'query': synonym, 'type': 'phrase', 'fields': match_field, 'slop': match_slop}
