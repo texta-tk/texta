@@ -35,13 +35,12 @@ def _extract_string_constraint(raw_constraint):
 
     for entry in raw_constraint['bool'][operator]:
         constraint_details = list(entry['bool']['should'])[0]
-        match_type = constraint_details['multi_match']['type']
+        match_type = constraint_details['multi_match']['type'] if 'type' in constraint_details['multi_match'] else 'word'
         field = ','.join(constraint_details['multi_match']['fields'])
         content = constraint_details['multi_match']['query']
-        # match_type 'match' does not need a slop
-        slop = int(constraint_details['multi_match']['slop']) if match_type != 'match' else 0
+        # Match: word does not need a slop
+        slop = int(constraint_details['multi_match']['slop']) if match_type != 'word' else 0
         constraint_content.append(content)
-
     return {
         'constraint_type': 'string',
         'operator': operator,
