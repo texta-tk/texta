@@ -564,42 +564,42 @@ def api_tag_text(request, user, params):
     # Apply
     for tagger_id in tagger_ids_list:
         is_tagger_selected = taggers is None or tagger_id in taggers
+
+        p = 0
+        c = None
+
         if is_tagger_selected:
             tagger = TagModelWorker()
             tagger.load(tagger_id)
 
+            explain = {'tag': tagger.description,
+                       'tagger_id': tagger_id}
+
+            # create input for the tagger
             tagger_fields = json.loads(Task.objects.get(pk = tagger_id).parameters)['fields']
-
             text_dict_df = {}
-
             for field in tagger_fields:
-                try:
+                if field in text_dict:
                     text_dict_df[field] = [text_dict[field]]
-                except KeyError:
-                    text_dict_df[field] = [""]
+                else:
+                    explain['error'] = 'Required field not present: {0}'.format(field)
 
-            df_text = pd.DataFrame(text_dict_df)
-            p = int(tagger.model.predict(df_text)[0])
-
-            try:
-                c = tagger.model.decision_function(df_text)[0]
-            except:
-                c = None
-
-
-            # create (empty) feedback item
-            feedback_obj = TagFeedback.create(user, text_dict, tagger_id, p)
-
-            # Add explanation
-            data['explain'].append({'tag': tagger.description,
-                                    'tagger_id': tagger_id,
-                                    'decision_id': feedback_obj.pk,
-                                    'prediction': p,
-                                    'confidence': c,
-                                    'selected': is_tagger_selected})
-
-        else:
-            p = None
+            if 'error' not in explain:
+                try:
+                    df_text = pd.DataFrame(text_dict_df)
+                    # tag
+                    p = int(tagger.model.predict(df_text)[0])
+                    # get confidence
+                    c = tagger.model.decision_function(df_text)[0]
+                    # create (empty) feedback item
+                    feedback_obj = TagFeedback.create(user, text_dict, tagger_id, p)
+                    explain['decision_id'] = feedback_obj.pk
+                except Exception as e:
+                    explain['error'] = str(e)
+            
+            explain['prediction'] = p
+            explain['confidence'] = c
+            data['explain'].append(explain)
         
         # Add prediction as tag
         if p == 1:
@@ -607,7 +607,6 @@ def api_tag_text(request, user, params):
 
     # Prepare response
     data_json = json.dumps(data)
-
     return HttpResponse(data_json, status=200, content_type='application/json')
 
 
