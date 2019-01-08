@@ -55,13 +55,13 @@ class QueryBuilder:
                 for synonym in synonyms:
                     synonym_query = {'multi_match': {}}
                     
-                    if match_type == 'match':
+                    if match_type == 'best_fields':
                         # match query
-                        synonym_query['multi_match'] = {'query': synonym, 'fields': match_field, 'operator': 'and'}
-                    if match_type == 'match_phrase':
+                        synonym_query['multi_match'] = {'query': synonym, 'type': 'best_fields', 'fields': match_field, 'operator': 'and', 'slop': match_slop}
+                    if match_type == 'phrase':
                         # match phrase query
                         synonym_query['multi_match'] = {'query': synonym, 'type': 'phrase', 'fields': match_field, 'slop': match_slop}
-                    if match_type == 'match_phrase_prefix':
+                    if match_type == 'phrase_prefix':
                         # match phrase prefix query
                         synonym_query['multi_match'] = {'query': synonym, 'type': 'phrase_prefix', 'fields': match_field, 'slop': match_slop}
                     
