@@ -9,11 +9,12 @@ from .comment_preprocessor import CommentPreprocessor
 from .date_converter import DatePreprocessor
 from .lexicon_classifier import LexTagger
 from .scoro import ScoroPreprocessor
-
+from .paasteamet import PaasteametPreprocessor
 
 __all__ = ["CommentPreprocessor",
            "DatePreprocessor",
            "MlpPreprocessor",
            "DatePreprocessor",
            "LexTagger",
-           "ScoroPreprocessor"]
+           "ScoroPreprocessor",
+           "PaasteametPreprocessor"]

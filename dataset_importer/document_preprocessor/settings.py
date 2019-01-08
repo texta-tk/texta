@@ -5,6 +5,7 @@
 
 from texta.settings import DATASET_IMPORTER
 from texta.settings import SCORO_PREPROCESSOR_ENABLED
+from texta.settings import PAASTEAMET_PREPROCESSOR_ENABLED
 from dataset_importer.document_preprocessor.preprocessors import CommentPreprocessor
 from dataset_importer.document_preprocessor.preprocessors import DatePreprocessor
 from dataset_importer.document_preprocessor.preprocessors import MlpPreprocessor
@@ -13,6 +14,7 @@ from dataset_importer.document_preprocessor.preprocessors import MlpPreprocessor
 from dataset_importer.document_preprocessor.preprocessors import DatePreprocessor
 from dataset_importer.document_preprocessor.preprocessors import LexTagger
 from dataset_importer.document_preprocessor.preprocessors import ScoroPreprocessor
+from dataset_importer.document_preprocessor.preprocessors import PaasteametPreprocessor
 
 
 mlp_field_properties = {
@@ -149,6 +151,21 @@ try:
 except Exception as e:
     print(e)
     log_preprocessor_status(code='scoro', status='disabled')
+
+try:
+    preprocessor_map['paasteamet'] = {
+        'name': 'Paasteamet preprocessor',
+        'description': 'Extracts information from PA regulations',
+        'class': PaasteametPreprocessor,
+        'parameters_template': 'parameters/preprocessor_parameters/paasteamet.html',
+        'arguments': {},
+        'is_enabled': PAASTEAMET_PREPROCESSOR_ENABLED
+    }
+    log_preprocessor_status(code='paasteamet', status='enabled')
+
+except Exception as e:
+    print(e)
+    log_preprocessor_status(code='paasteamet', status='disabled')
 
 def convert_to_utf8(document):
     """
