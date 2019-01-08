@@ -4,7 +4,9 @@
         <div class="select-wrapper">
             {% if fields %}
                 <select class="selectpicker" multiple data-selected-text-format="count"
-                        data-width="100%" id="mlp-processor-feature-names"
+                        data-width="100%"
+                        id="mlp-processor-feature-names"
+                        required
                         name="mlp_feature_names" data-style="btn-sm btn-default">
                     {% for field in fields %}
                         <option title="{{ field.label }}" value="{{ field.path }}"

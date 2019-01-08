@@ -697,32 +697,7 @@
                     </button>
                 </div>
             </div>
-            <div class="flex-row hidden" id="fact_val_rule_">
-                <div class=" flex-item-grow-3" name="constraint_key_container">
-                    <input id="fact_txt_" class="form-control input-sm" type="text" placeholder="Fact name"></input>
-                    <ul name="suggestions_" id="suggestions_" class="list-group "
-                        style="display: none; width: 100%;"></ul>
-                </div>
-                <div class=" flex-item-grow-2">
-                    <select class="form-control input-sm">
-                        <option value="=">is</option>
-                        <option value="!=">not</option>
-                        <option value="&lt;">&lt;</option>
-                        <option value="&gt;">&gt;</option>
-                        <option value="&lt;=">&lt;=</option>
-                        <option value="&gt;=">&gt;=</option>
-                    </select>
-                </div>
-                <div class="flex-item-grow-3" name="constraint_val_container">
-                    <input id="fact_constraint_val_" name="fact_constraint_val_" class="form-control input-sm"
-                           type="text" placeholder="Value (case sensitive)"></input>
-                    <ul name="suggestions_" id="suggestions_" class="list-group"
-                        style="display: none; width: 100%;"></ul>
-                </div>
-                <div class="flex-item-grow-1 flex-item-justify-end" name="fact_action_button">
-
-                </div>
-            </div>
+            
         </div>
     </div>
 </div>
@@ -737,5 +712,31 @@
         <b class='flex-item-grow-1'>Date range (yyyy-mm-dd):</b>
         <input type="text" placeholder="from" id="daterange_from_" class="form-control input-sm flex-item-grow-1">
         <input type="text" id="daterange_to_" placeholder="to" class="form-control input-sm flex-item-grow-1">
+    </div>
+</div>
+<div class="flex-row hidden" id="fact_val_rule_">
+    <div class=" flex-item-grow-3" name="constraint_key_container">
+        <input id="fact_txt_" class="form-control input-sm" type="text" placeholder="Fact name">
+        <ul name="suggestions_" id="suggestions_" class="list-group "
+            style="display: none; width: 100%;"></ul>
+    </div>
+    <div class=" flex-item-grow-2">
+        <select class="form-control input-sm">
+            <option value="=">is</option>
+            <option value="!=">not</option>
+            <option value="&lt;">&lt;</option>
+            <option value="&gt;">&gt;</option>
+            <option value="&lt;=">&lt;=</option>
+            <option value="&gt;=">&gt;=</option>
+        </select>
+    </div>
+    <div class="flex-item-grow-3" name="constraint_val_container">
+        <input id="fact_constraint_val_" name="fact_constraint_val_" class="form-control input-sm"
+                type="text" placeholder="Value (case sensitive)"></input>
+        <ul name="suggestions_" id="suggestions_" class="list-group"
+            style="display: none; width: 100%;"></ul>
+    </div>
+    <div class="flex-item-grow-1 flex-item-justify-end" name="fact_action_button">
+
     </div>
 </div>
