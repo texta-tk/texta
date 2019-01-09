@@ -95,9 +95,11 @@ class EsIterator:
                     for k in self.field.split('.'):
                         # get nested fields encoded as: 'field.sub_field'
                         decoded_text = decoded_text[k]
-                    sentences = decoded_text.split('\n')
-                    for sentence in sentences:
-                        yield [word.strip().lower() for word in sentence.split(' ')]
+                    
+                    if decoded_text:
+                        sentences = decoded_text.split('\n')
+                        for sentence in sentences:
+                            yield [word.strip().lower() for word in sentence.split(' ')]
 
                 except KeyError:
                     # If the field is missing from the document
