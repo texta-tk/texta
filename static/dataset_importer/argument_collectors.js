@@ -133,7 +133,7 @@ function collectCommentPreprocessorArguments(formData) {
 
 function collectTextTaggerArguments(formData) {
     var featureNames = JSON.stringify($('#text-tagger-processor-feature-names').val().split('\n'));
-    var taggers = JSON.stringify($('#text-tagger-processor-taggers').val());
+    var taggers = JSON.stringify($('#text-tagger-processor-models').val());
 
     formData.append('text_tagger_feature_names', featureNames);
     formData.append('text_tagger_preprocessor_models', taggers);
