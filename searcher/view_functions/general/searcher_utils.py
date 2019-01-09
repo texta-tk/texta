@@ -88,17 +88,28 @@ def get_fields_content(hit,fields):
 def improve_facts_readability(content):
     '''Changes texta_facts field content to be more human readable'''
     new_content = []
+    # facts = [(x["fact"], x["str_val"]) for x in sorted(content, key=lambda k: k['fact'])]
+
+    # fact_counts = Counter(facts)
+    # facts = sorted(list(set(facts)))
+    # facts_dict = dict(facts)
+
+    # for i, k in enumerate(facts_dict):
+    #     # Make factnames bold for searcher results
+    #     if '<b>'+k+'</b>' not in new_content:
+    #         new_content.append('<b>'+k+'</b>')
+    #     new_content.append('    {}: {}'.format(facts_dict[k], fact_counts[facts[i]]))
+    # content = '\n'.join(new_content)
+
     facts = [(x["fact"], x["str_val"]) for x in sorted(content, key=lambda k: k['fact'])]
 
     fact_counts = Counter(facts)
     facts = sorted(list(set(facts)))
-    facts_dict = dict(facts)
 
-    for i, k in enumerate(facts_dict):
-        # Make factnames bold for searcher results
-        if '<b>'+k+'</b>' not in new_content:
-            new_content.append('<b>'+k+'</b>')
-        new_content.append('    {}: {}'.format(facts_dict[k], fact_counts[facts[i]]))
+    for ind, (name, val) in enumerate(facts):
+        if name not in new_content:
+            new_content.append(name)
+        new_content.append('    {}: {}'.format(val, fact_counts[facts[ind]]))
     content = '\n'.join(new_content)
 
     return content
