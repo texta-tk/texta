@@ -118,8 +118,8 @@ class DatePreprocessor(object):
 
         input_features = json.loads(kwargs['date_converter_feature_names'])
 
-        if kwargs.get('date_converter_preprocessor_input_langs',None):
-            input_langs = json.loads(kwargs['date_converter_preprocessor_input_langs'])
+        if kwargs.get('date_converter_input_langs',None):
+            input_langs = json.loads(kwargs['date_converter_input_langs'])
             if input_langs:
                 self._languages = self._lang_map[input_langs[0]]
 
