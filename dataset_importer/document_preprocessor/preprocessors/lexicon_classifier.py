@@ -198,17 +198,17 @@ class LexTagger(object):
 
     def _load_arguments(self,kwargs):
         input_features  = json.loads(kwargs['lexicon_classifier_feature_names'])
-        lex_ids         = json.loads(kwargs['lexicon_classifier_preprocessor_lexicons'])
-        match_type      = json.loads(kwargs['lexicon_classifier_preprocessor_match_types'])[0]
-        operation       = json.loads(kwargs['lexicon_classifier_preprocessor_operations'])[0]
-        slop            = json.loads(kwargs['lexicon_classifier_preprocessor_slops'])[0]
-        words_required  = json.loads(kwargs['lexicon_classifier_preprocessor_words_required'])[0]
-        counter_lex_id  = json.loads(kwargs['lexicon_classifier_preprocessor_counterlexicons'])[0]
-        cl_slop         = json.loads(kwargs['lexicon_classifier_preprocessor_cl_slops'])[0]
+        lex_ids         = json.loads(kwargs['lexicon_classifier_lexicons'])
+        match_type      = json.loads(kwargs['lexicon_classifier_match_types'])[0]
+        operation       = json.loads(kwargs['lexicon_classifier_operations'])[0]
+        slop            = json.loads(kwargs['lexicon_classifier_slops'])[0]
+        words_required  = json.loads(kwargs['lexicon_classifier_words_required'])[0]
+        counter_lex_id  = json.loads(kwargs['lexicon_classifier_counterlexicons'])[0]
+        cl_slop         = json.loads(kwargs['lexicon_classifier_cl_slops'])[0]
 
         add_counter_lex = False
 
-        if 'lexicon_classifier_preprocessor_add_cl' in kwargs:
+        if 'lexicon_classifier_add_cl' in kwargs:
             add_counter_lex = True
 
         args_to_parse = {'input_features':input_features,'lex_ids':lex_ids,'match_type':match_type,\
