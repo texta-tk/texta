@@ -15,7 +15,7 @@ class EntityExtractorPreprocessor(object):
 
     def transform(self, documents, **kwargs):
         try:
-            input_features = json.loads(kwargs['entity_extractor_preprocessor_feature_names'])
+            input_features = json.loads(kwargs['entity_extractor_feature_names'])
             model_ids_to_apply = [int(_id) for _id in json.loads(kwargs['entity_extractor_preprocessor_models'])]
             models_to_apply = []
 

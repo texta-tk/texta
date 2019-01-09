@@ -47,11 +47,11 @@ class CommentPreprocessor(object):
         :return: enhanced documents
         :rtype: list of dicts
         """
-        if not kwargs.get('comment_preprocessor_preprocessor_feature_names', None):
+        if not kwargs.get('comment_preprocessor_feature_names', None):
             # this is mostly for API requests as they might not have field data - apply to all in this case
             input_features = documents[0].keys()
         else:
-            input_features = json.loads(kwargs['comment_preprocessor_preprocessor_feature_names'])
+            input_features = json.loads(kwargs['comment_preprocessor_feature_names'])
 
         for input_feature in input_features:
             try:

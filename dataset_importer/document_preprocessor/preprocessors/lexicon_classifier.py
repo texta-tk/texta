@@ -177,7 +177,7 @@ class LexTagger(object):
         return ratio
 
     def _all_args_exist(self,**kwargs):
-        if not kwargs.get('lexicon_classifier_preprocessor_feature_names', None):
+        if not kwargs.get('lexicon_classifier_feature_names', None):
             return False
         return True
 
@@ -197,7 +197,7 @@ class LexTagger(object):
         return parsed_args
 
     def _load_arguments(self,kwargs):
-        input_features  = json.loads(kwargs['lexicon_classifier_preprocessor_feature_names'])
+        input_features  = json.loads(kwargs['lexicon_classifier_feature_names'])
         lex_ids         = json.loads(kwargs['lexicon_classifier_preprocessor_lexicons'])
         match_type      = json.loads(kwargs['lexicon_classifier_preprocessor_match_types'])[0]
         operation       = json.loads(kwargs['lexicon_classifier_preprocessor_operations'])[0]

@@ -99,7 +99,7 @@ class PreprocessorWorker(BaseWorker):
                     if 'texta_facts' not in documents[0]:
                         self.es_m.update_mapping_structure('texta_facts', FACT_PROPERTIES)
 
-                documents = list(map(convert_to_utf8, documents))
+                documents = list(map(convert_to_utf8, documents))              
 
                 # Apply all preprocessors
                 for preprocessor_code in parameter_dict['preprocessors']:
@@ -146,7 +146,7 @@ class PreprocessorWorker(BaseWorker):
         for key, value in self.params.items():
             if key.startswith(self.params['preprocessor_key']):
                 new_key_suffix = key[len(self.params['preprocessor_key']) + 1:]
-                new_key = '{0}_preprocessor_{1}'.format(self.params['preprocessor_key'], new_key_suffix)
+                new_key = '{0}_{1}'.format(self.params['preprocessor_key'], new_key_suffix)
                 # TODO: check why this json.dumps is necessary? probably isn't
                 parameter_dict[new_key] = json.dumps(value)
 
@@ -177,7 +177,7 @@ class PreprocessorWorker(BaseWorker):
             return False, "No field selected"
 
         if args['preprocessor_key'] in ['text_tagger', 'entity_extractor']:
-            if not any([args['preprocessor_key']+'_preprocessor_models' in k for k in args]):
+            if not any(['preprocessor_models' in k for k in args]):
                 return False, "No preprocessor model selected"
 
         return True, ""
