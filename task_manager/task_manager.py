@@ -66,16 +66,26 @@ def filter_params(post: QueryDict):
     filtered_params = {}
 
     for param in post:
-        if param.startswith(prefix):
+        if prefix != 'apply_preprocessor':
             param_name = param[len(prefix) + 1:]
-            if param_name == 'fields' or param_name == 'facts':
-                param_val = post.getlist(param)
-            else:
-                param_val = post[param]
-            filtered_params[param_name] = param_val
+        else:
+            param_name = param
+
+        if param_name == 'fields' or param_name == 'facts' or 'feature_names' in param_name or 'preprocessor_models' in param_name:
+            param_val = post.getlist(param)
+        else:
+            param_val = post[param]
+
+        if 'feature_names' in param_name:
+            try:
+                param_val = [json.loads(a)['path'] for a in param_val]
+            except:
+                Exception
+
+        filtered_params[param_name] = param_val
 
     if 'description' not in filtered_params:
-        filtered_params['description'] = ''
+        filtered_params['description'] = '_blank'
 
     return filtered_params
 

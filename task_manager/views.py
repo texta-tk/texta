@@ -91,11 +91,7 @@ def index(request):
 def start_task(request):
     user = request.user
     task_type = request.POST['task_type']
-    
-    if task_type != "apply_preprocessor":
-        task_params = filter_params(request.POST)
-    else:
-        task_params = request.POST.dict()
+    task_params = filter_params(request.POST)
     
     description = task_params['description']
     if 'dataset' in request.session.keys():

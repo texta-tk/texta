@@ -15,8 +15,8 @@ class TextTaggerPreprocessor(object):
         input_features = json.loads(kwargs['text_tagger_feature_names'])
         tagger_ids_to_apply = [int(_id) for _id in json.loads(kwargs['text_tagger_preprocessor_models'])]
         taggers_to_apply = []
-        
-        if not input_features or tagger_ids_to_apply:
+
+        if not input_features or not tagger_ids_to_apply:
             return {"documents":documents, "meta": {'documents_tagged': 0}}
 
         # Load tagger models
@@ -29,7 +29,7 @@ class TextTaggerPreprocessor(object):
         text_map = {}
         for field in input_features:
             text_map[field] = []
-        
+
         # Prepare text map with docs
         for document in documents:
             # Extract text
