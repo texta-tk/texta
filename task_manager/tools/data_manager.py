@@ -111,12 +111,13 @@ class EsIterator:
 
 class EsDataSample(object):
 
-    def __init__(self, fields, query, es_m):
+    def __init__(self, fields, query, es_m, negative_set_multiplier=1.0):
         """ Sample data - Positive and Negative samples from query
         """
         self.fields = fields
         self.es_m = es_m
         self.es_m.load_combined_query(query)
+        self.negative_set_multiplier = negative_set_multiplier
 
     def _get_positive_samples(self, sample_size):
         
@@ -177,7 +178,7 @@ class EsDataSample(object):
         response = self.es_m.scroll(match_all=True)
         scroll_id = response['_scroll_id']
         hit_length = response['hits']['total']
-        sample_size = len(positive_set)
+        sample_size = len(positive_set) * self.negative_set_multiplier
 
         while hit_length > 0 and len(negative_set) <= sample_size:
 

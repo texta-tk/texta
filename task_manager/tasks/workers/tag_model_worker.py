@@ -53,6 +53,8 @@ class TagModelWorker(BaseWorker):
         reductor_opt = int(task_params['reductor_opt'])
         normalizer_opt = int(task_params['normalizer_opt'])
         classifier_opt = int(task_params['classifier_opt'])
+        negative_set_multiplier = float(task_params['negative_multiplier_opt'])
+
 
         if 'num_threads' in task_params:
             self.n_jobs = int(task_params['num_threads'])
@@ -80,7 +82,7 @@ class TagModelWorker(BaseWorker):
             # Build Data sampler
             ds = Datasets().activate_dataset_by_id(task_params['dataset'])
             es_m = ds.build_manager(ES_Manager)
-            es_data = EsDataSample(fields=fields, query=param_query, es_m=es_m)
+            es_data = EsDataSample(fields=fields, query=param_query, es_m=es_m, negative_set_multiplier=negative_set_multiplier)
             data_sample_x_map, data_sample_y, statistics = es_data.get_data_samples()
 
             # Training the model.
