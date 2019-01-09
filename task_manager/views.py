@@ -22,6 +22,7 @@ from task_manager.tasks.task_params import task_params, get_fact_names
 from task_manager.tools import get_pipeline_builder
 from task_manager.tools import MassHelper
 
+from .task_manager import filter_params
 from .task_manager import create_task
 from .task_manager import filter_preprocessor_params
 from .task_manager import translate_parameters
@@ -90,7 +91,12 @@ def index(request):
 def start_task(request):
     user = request.user
     task_type = request.POST['task_type']
-    task_params = request.POST.dict()
+    
+    if task_type != "apply_preprocessor":
+        task_params = filter_params(request.POST)
+    else:
+        task_params = request.POST.dict()
+    
     description = task_params['description']
     if 'dataset' in request.session.keys():
         task_params['dataset'] = request.session['dataset']

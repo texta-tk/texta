@@ -52,7 +52,7 @@ class TagModelWorker(BaseWorker):
         steps = ["preparing data", "training", "saving", "done"]
         show_progress = ShowSteps(self.task_id, steps)
         show_progress.update_view()
-
+        
         extractor_opt = int(task_params['extractor_opt'])
         reductor_opt = int(task_params['reductor_opt'])
         normalizer_opt = int(task_params['normalizer_opt'])

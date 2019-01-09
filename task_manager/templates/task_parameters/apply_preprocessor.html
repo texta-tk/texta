@@ -40,7 +40,7 @@
 
                 <div id="params-{{ preprocessor.key }}"
                      class="{% if forloop.counter > 1 %}hidden{% endif %} flex-row height-max ">
-                    <form class="flex-column height-max width-max" action="javascript:start_task_preprocessor('{{ task_param.id }}','form_{{ task_param.id }}_{{ preprocessor.key }}','{{ preprocessor.key }}');" id="form_{{ task_param.id }}_{{ preprocessor.key }}">
+                    <form autocomplete="off" class="flex-column height-max width-max" action="javascript:start_task_preprocessor('{{ task_param.id }}','form_{{ task_param.id }}_{{ preprocessor.key }}','{{ preprocessor.key }}');" id="form_{{ task_param.id }}_{{ preprocessor.key }}">
                         {% include preprocessor.parameters_template %}
 
                         <div class="row">

@@ -119,9 +119,6 @@ def save(request):
         q = combined_query
         desc = request.POST['search_description']
         s_content = json.dumps([request.POST[x] for x in request.POST.keys() if 'match_txt' in x])
-
-
-
         search = Search(author=request.user, search_content=s_content, description=desc, query=json.dumps(q))
         search.save()
 
@@ -130,16 +127,13 @@ def save(request):
             search.datasets.add(dataset)
 
         search.save()
-
         logger.set_context('user_name', request.user.username)
         logger.set_context('search_id', search.id)
         logger.info('search_saved')
-
     except Exception as e:
         print('-- Exception[{0}] {1}'.format(__name__, e))
         logger.set_context('es_params', es_params)
         logger.exception('search_saving_failed')
-
     return HttpResponse()
 
 
