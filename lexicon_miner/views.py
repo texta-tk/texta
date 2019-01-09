@@ -57,12 +57,6 @@ def newLexicon(request):
     lexiconName = request.POST['lexiconname']
     if(lexiconName == ''):
         return returnAjaxResult('error', 'Lexicon name can\'t be empty')
-    
-    try:
-        model = str(request.session['model']['pk'])
-    except KeyError:
-        return returnAjaxResult('error', 'No model selected')
-
 
     if 'lexiconkeywords' in request.POST:
         lexiconKeywords = request.POST['lexiconkeywords']
@@ -135,7 +129,13 @@ def saveLexicon(request, local_request=False):
         if lexId:
             lexicon = Lexicon.objects.get(id=lexId)
             Word.objects.filter(lexicon=lexicon).delete()
-            model_manager.save_negatives(request.session['model']['pk'],request.user.username,lexicon.id)
+
+            try:
+                model_manager.save_negatives(request.session['model']['pk'],request.user.username,lexicon.id)
+            except KeyError:
+                logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'SAVE LEXICON','event':'negatives_saving_failed','args':{'user_name':request.user.username,'lexicon_id':lexId},'reason':'No model provided.'}))
+
+
             # Fix problems with '' and ""
             if local_request:
                 lexicon_words = uniq(json.loads(json.dumps(request.POST['lexicon'])))

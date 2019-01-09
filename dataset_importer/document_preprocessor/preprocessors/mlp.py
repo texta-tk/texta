@@ -34,10 +34,10 @@ class MlpPreprocessor(object):
         if not self._enabled_features:
             return documents
 
-        if not kwargs.get('mlp_preprocessor_feature_names', None):
-            kwargs['mlp_preprocessor_feature_names'] = '["text"]'
+        if not kwargs.get('mlp_feature_names', None):
+            kwargs['mlp_feature_names'] = '["text"]'
 
-        input_features = json.loads(kwargs['mlp_preprocessor_feature_names'])
+        input_features = json.loads(kwargs['mlp_feature_names'])
 
         for input_feature in input_features:
 
