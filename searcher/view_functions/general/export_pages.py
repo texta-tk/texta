@@ -141,46 +141,34 @@ def process_hits(hits, features, write=True, writer=None):
 
     for hit in hits:
         row = []
-
         for feature_name in features:
-
+            document_content = hit['_source']
             # Some features like mlp.lemmas are dot, separated.
-            feature_path = feature_name.split('.')
-            # Stringify just in case value is something like a bool
-            parent_source = hit['_source']
-            for path_component in feature_path:
-                if path_component in parent_source:
-                    parent_source = str(parent_source[path_component])
+            for sub_field in feature_name.split('.'):
+                if sub_field in document_content:
+                    document_content = document_content[sub_field]
                 else:
                     document_content = ""
                     break
 
-            if feature_name == u'texta_facts':
+            if feature_name == 'texta_facts':
                 content = []
-                facts = ['{ "' + x["fact"] + '": "' + x["str_val"] + '"}' for x in sorted(document_content, key=lambda k: k['fact'])]
+
+                facts = [(x["fact"], x["str_val"]) for x in sorted(document_content, key=lambda k: k['fact'])]
                 fact_counts = Counter(facts)
+                facts = sorted(list(set(facts)))
 
-                facts = list(set(facts))
-                facts_dict = []
-                for fact in facts:
-                    try:
-                        facts_dict.append(json.loads(fact, encoding='utf8'))
-                    except json.decoder.JSONDecodeError as e:
-                        facts_dict.append({'system_message': "Faulty content"})
-
-                for index, dictionary in enumerate(facts_dict):
-
-                    for dict_key in dictionary:
-                        if dict_key not in content:
-                            content.append(dict_key)
-                        content.append('{}: {}'.format(dictionary[dict_key], fact_counts[facts[index]]))
-
+                for ind, (name, val) in enumerate(facts):
+                    if name not in content:
+                        content.append(name)
+                    content.append('{}: {}'.format(val, fact_counts[facts[ind]]))
                 content = ' - '.join(content)
                 content = '{}; {}'.format(content, document_content)  # Append JSON format
-            else:
-                content = document_content.replace('\n', '\\n').replace('"', '\"') if isinstance(document_content, str) else document_content
 
-                content = parent_source.replace('\n', '\\n').replace('"', '\"')
+            else:
+                # stringify just in case value is something like a bool
+                document_content = str(document_content)
+                content = document_content.replace('\n', '\\n').replace('"', '\"') if isinstance(document_content, str) else document_content
             row.append(content)
         if not write:
             rows.append(row)
