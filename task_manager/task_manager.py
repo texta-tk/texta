@@ -33,34 +33,6 @@ def create_task(task_type: str, description: str, parameters: dict, user: User) 
     return new_task.pk
 
 
-def filter_params(post: QueryDict):
-    """
-    Because ALL of the form data from the page is sent to the server,
-    including the Task types you did not want, filtering them is necessary.
-
-    ex. apply_preprocessor_description or train_model_dataset etc.
-
-    :param post: Django POST input in the form of a QueryDict.
-    :return: Form data relevant to the actual Task type being invoked.
-    """
-    prefix = post['task_type']
-    filtered_params = {}
-
-    for param in post:
-        if param.startswith(prefix):
-            param_name = param[len(prefix) + 1:]
-            if param_name == 'fields' or param_name == 'facts':
-                param_val = post.getlist(param)
-            else:
-                param_val = post[param]
-            filtered_params[param_name] = param_val
-
-    if 'description' not in filtered_params:
-        filtered_params['description'] = ''
-
-    return filtered_params
-
-
 def filter_preprocessor_params(post, filtered_params):
     prefix = post['apply_preprocessor_preprocessor_key']
 
@@ -82,6 +54,30 @@ def translate_param(translation, value):
     elif translation['type'] == 'list':
         return [translation['pattern'][int(list_item)] for list_item in value if int(list_item) in translation['pattern']]
 
+def filter_params(post: QueryDict):
+    """
+    Because ALL of the form data from the page is sent to the server,
+    including the Task types you did not want, filtering them is necessary.
+    ex. apply_preprocessor_description or train_model_dataset etc.
+    :param post: Django POST input in the form of a QueryDict.
+    :return: Form data relevant to the actual Task type being invoked.
+    """
+    prefix = post['task_type']
+    filtered_params = {}
+
+    for param in post:
+        if param.startswith(prefix):
+            param_name = param[len(prefix) + 1:]
+            if param_name == 'fields' or param_name == 'facts':
+                param_val = post.getlist(param)
+            else:
+                param_val = post[param]
+            filtered_params[param_name] = param_val
+
+    if 'description' not in filtered_params:
+        filtered_params['description'] = ''
+
+    return filtered_params
 
 def translate_parameters(params):
     pipe_builder = get_pipeline_builder()

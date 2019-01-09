@@ -119,7 +119,7 @@ function collectDateConverterArguments(formData) {
     var featureNames = JSON.stringify($('#date-converter-processor-feature-names').val().split('\n'));
 	  var featureLangs = JSON.stringify($('#date-converter-processor-feature-langs').val().split('\n'));
 
-    formData.append('date_converter_preprocessor_feature_names', featureNames);
+    formData.append('date_converter_feature_names', featureNames);
 	  formData.append('date_converter_preprocessor_input_langs',featureLangs);
 
     return formData;
@@ -127,7 +127,7 @@ function collectDateConverterArguments(formData) {
 
 function collectCommentPreprocessorArguments(formData) {
     var featureNames = JSON.stringify($('#comment-preprocessor-feature-names').val().split('\n'));
-    formData.append('comment_preprocessor_feature_names', featureNames);
+    formData.append('comment_feature_names', featureNames);
     return formData;
 }
 
@@ -135,8 +135,8 @@ function collectTextTaggerArguments(formData) {
     var featureNames = JSON.stringify($('#text-tagger-processor-feature-names').val().split('\n'));
     var taggers = JSON.stringify($('#text-tagger-processor-taggers').val());
 
-    formData.append('text_tagger_preprocessor_feature_names', featureNames);
-    formData.append('text_tagger_preprocessor_taggers', taggers);
+    formData.append('text_tagger_feature_names', featureNames);
+    formData.append('text_tagger_preprocessor_models', taggers);
 
     return formData;
 }
@@ -152,7 +152,7 @@ function collectLexiconTaggerArguments(formData) {
     var counterLexicons = JSON.stringify($('#lexicon-classifier-processor-counterlexicons').val());
     var clSlop = JSON.stringify($('#lexicon-classifier-processor-cl-slops').val());
 
-    formData.append('lexicon_classifier_preprocessor_feature_names', featureName);
+    formData.append('lexicon_classifier_feature_names', featureName);
 	formData.append('lexicon_classifier_preprocessor_lexicons', lexicons);
     formData.append('lexicon_classifier_preprocessor_match_types', match_type);
     formData.append('lexicon_classifier_preprocessor_operations', operation);

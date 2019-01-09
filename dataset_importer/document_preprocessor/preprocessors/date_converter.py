@@ -113,10 +113,10 @@ class DatePreprocessor(object):
         :rtype: list of dicts
         '''
 
-        if not kwargs.get('date_converter_preprocessor_feature_names', None):
+        if not kwargs.get('date_converter_feature_names', None):
             return documents
 
-        input_features = json.loads(kwargs['date_converter_preprocessor_feature_names'])
+        input_features = json.loads(kwargs['date_converter_feature_names'])
 
         if kwargs.get('date_converter_preprocessor_input_langs',None):
             input_langs = json.loads(kwargs['date_converter_preprocessor_input_langs'])

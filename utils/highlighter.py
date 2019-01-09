@@ -161,15 +161,13 @@ class Highlighter(object):
                         text_index_to_data_index[alignment[text_index]].append(data_index)
                     except Exception as e:
                         # Throws exception when index out of range
-                        # For example Gets index out of range if in _derive_highlight_data while uses >= instead of >
-                        print('-- Exception[{0}] {1}'.format(__name__, e))
-                        logger.set_context('text', text)
-                        logger.exception('_get_tags_for_text_index try catch execption')
-
-                        
+                        # Possibly started happening when _derive_highlight_data started using >= instead of >
+                        # As a result, the highlgihts will be slightly misaligned, but wont break the search(?)
+                        # Also possibly caused by double quotes in text sometimes
+                        # TODO something to handle this better
+                        pass
 
         text_index_to_data_index = [frozenset(data_indices) for data_indices in text_index_to_data_index]
-
         spans_to_tags = [(spans, self._get_tag_from_highlight_data([data_mapping[data_index] for data_index in data_indices]))
                          for spans, data_indices in self._get_spans_to_data_indices(text_index_to_data_index)]
 

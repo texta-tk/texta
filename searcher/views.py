@@ -30,7 +30,7 @@ from django.template import Template
 
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER
 
-from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
+from dataset_importer.document_preprocessor.preprocessor import preprocessor_map
 from conceptualiser.models import Term, TermConcept
 from permission_admin.models import Dataset
 from lexicon_miner.models import Lexicon,Word

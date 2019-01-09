@@ -18,12 +18,12 @@ from texta.settings import PROTECTED_MEDIA
 
 from dataset_importer.document_preprocessor import preprocessor_map
 
-from task_manager.tasks.task_params import task_params, get_fact_names
+from task_manager.tasks.task_params import task_params, get_fact_names, fact_names
 from task_manager.tools import get_pipeline_builder
 from task_manager.tools import MassHelper
 
-from .task_manager import create_task
 from .task_manager import filter_params
+from .task_manager import create_task
 from .task_manager import filter_preprocessor_params
 from .task_manager import translate_parameters
 from .task_manager import collect_map_entries
@@ -38,12 +38,6 @@ def index(request):
 
     es_m = ds.build_manager(ES_Manager)
     fields = get_fields(es_m)
-
-    try:
-        mass_helper = MassHelper(es_m)
-        tag_set = mass_helper.get_unique_tags()
-    except KeyError:
-        tag_set = []
         
     preprocessors = collect_map_entries(preprocessor_map)
     enabled_preprocessors = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True]
@@ -62,6 +56,12 @@ def index(request):
 
     if 'dataset' in request.session.keys():
         get_fact_names(es_m)
+
+        if 'TEXTA_TAG' in fact_names:
+            tag_set = sorted(fact_names['TEXTA_TAG'])
+        else:
+            tag_set = []
+
         context = {
             'task_params':           task_params,
             'tasks':                 tasks,
@@ -71,7 +71,7 @@ def index(request):
             'enabled_preprocessors': enabled_preprocessors,
             'STATIC_URL':            STATIC_URL,
             'fields':                fields,
-            'text_tags':             sorted(tag_set)
+            'text_tags':             tag_set
         }
     else:
         messages.warning(request, "No dataset selected, please select a dataset before using Task Manager!")
@@ -91,15 +91,15 @@ def index(request):
 def start_task(request):
     user = request.user
     task_type = request.POST['task_type']
-    task_params = filter_params(request.POST)
+    
+    if task_type != "apply_preprocessor":
+        task_params = filter_params(request.POST)
+    else:
+        task_params = request.POST.dict()
+    
     description = task_params['description']
-
     if 'dataset' in request.session.keys():
         task_params['dataset'] = request.session['dataset']
-
-    # TODO: eliminate the need of this special treatment ?
-    if task_type == 'apply_preprocessor':
-        task_params = filter_preprocessor_params(request.POST, task_params)
 
     # Create execution task
     task_id = create_task(task_type, description, task_params, user)

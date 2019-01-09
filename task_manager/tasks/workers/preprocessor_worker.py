@@ -44,7 +44,11 @@ class PreprocessorWorker(BaseWorker):
 
             self.es_m = es_m
             self.params = params
-            self._preprocessor_worker()
+            valid, msg = self._check_if_request_bad(self.params)
+            if valid:
+                self._preprocessor_worker()
+            else:
+                raise UserWarning(msg)
 
         except TaskCanceledException as e:
             # If here, task was canceled while processing
@@ -62,15 +66,15 @@ class PreprocessorWorker(BaseWorker):
             task.result = json.dumps({'error': repr(e)})
             task.update_status(Task.STATUS_FAILED, set_time_completed=True)
 
+
     def _preprocessor_worker(self):
         field_paths = []
         show_progress = ShowProgress(self.task_id)
         show_progress.update(0)
-
         # TODO: remove "preprocessor_key" need from here? this should be worked out in the view (controller interface)
         # Add new field to mapping definition if necessary
-        if 'field_properties' in preprocessor_map[self.params['preprocessor_key']]:
-            preprocessor_key = self.params['preprocessor_key']
+        preprocessor_key = self.params['preprocessor_key']
+        if 'field_properties' in preprocessor_map[preprocessor_key]:
             fields = self.params['{0}_feature_names'.format(preprocessor_key)]
             for field in fields:
                 field_paths.append(field)
@@ -84,7 +88,6 @@ class PreprocessorWorker(BaseWorker):
 
         total_hits = len(response['hits']['hits'])
         show_progress.set_total(total_docs)
-        total_positive = 0
 
         try:
             # Metadata of preprocessor outputs
@@ -96,14 +99,13 @@ class PreprocessorWorker(BaseWorker):
                     if 'texta_facts' not in documents[0]:
                         self.es_m.update_mapping_structure('texta_facts', FACT_PROPERTIES)
 
-                documents = list(map(convert_to_utf8, documents))
+                documents = list(map(convert_to_utf8, documents))              
 
                 # Apply all preprocessors
                 for preprocessor_code in parameter_dict['preprocessors']:
                     preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
                     result_map = preprocessor.transform(documents, **parameter_dict)
                     documents = result_map['documents']
-                    # total_positive += result_map['meta'].get('documents_tagged', 0)
                     add_dicts(meta, result_map['meta'])
                 self.es_m.bulk_post_documents(documents, ids, document_locations)
                 # Update progress is important to check task is alive
@@ -136,7 +138,6 @@ class PreprocessorWorker(BaseWorker):
         :param response:
         :return:
         """
-
         documents = [hit['_source'] for hit in response['hits']['hits']]
         ids = [hit['_id'] for hit in response['hits']['hits']]
         document_locations = [{'_index': hit['_index'], '_type': hit['_type']} for hit in response['hits']['hits']]
@@ -145,7 +146,7 @@ class PreprocessorWorker(BaseWorker):
         for key, value in self.params.items():
             if key.startswith(self.params['preprocessor_key']):
                 new_key_suffix = key[len(self.params['preprocessor_key']) + 1:]
-                new_key = '{0}_preprocessor_{1}'.format(self.params['preprocessor_key'], new_key_suffix)
+                new_key = '{0}_{1}'.format(self.params['preprocessor_key'], new_key_suffix)
                 # TODO: check why this json.dumps is necessary? probably isn't
                 parameter_dict[new_key] = json.dumps(value)
 
@@ -168,3 +169,15 @@ class PreprocessorWorker(BaseWorker):
         else:
             query = json.loads(Search.objects.get(pk=int(search)).query)
         return query
+
+    @staticmethod
+    def _check_if_request_bad(args):
+        '''Check if models/fields are selected'''
+        if not any(['feature_names' in k for k in args]):
+            return False, "No field selected"
+
+        if args['preprocessor_key'] in ['text_tagger', 'entity_extractor']:
+            if not any(['preprocessor_models' in k for k in args]):
+                return False, "No preprocessor model selected"
+
+        return True, ""

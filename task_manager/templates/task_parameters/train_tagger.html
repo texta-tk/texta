@@ -1,16 +1,17 @@
-<form class="form-horizontal" role="form">
-    <div class="panel">
-        <div class="panel-heading">Train a New Classification Model</div>
-        <div class="panel-body">
+<div class="panel">
+    <div class="panel-heading">Train a New Classification Model</div>
+    <div class="panel-body">
 
-            <div class="form-group">
+        <div class="form-group">
+            <form action="javascript:start_task('{{ task_param.id }}','form_{{ task_param.id }}');" id="form_{{ task_param.id }}" autocomplete="off">
                 <div class="col-sm-12">
                     <div class="row">
                         <div class="col-sm-6">Select a search:</div>
                         <div class="col-sm-6">
-                            <select name="{{task_param.id}}_search" class="selectpicker" data-width='100%'>
+                            <select name="{{ task_param.id }}_search" class="selectpicker" required data-width='100%'>
                                 {% for search in searches %}
-                                <option title="{{search.description}}" value="{{search.id}}">{{search.description}}</option>
+                                    <option title="{{ search.description }}"
+                                            value="{{ search.id }}">{{ search.description }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -19,10 +20,13 @@
                     <div class="row">
                         <div class="col-sm-6">Select fields:</div>
                         <div class="col-sm-6">
-                            <select class="selectpicker" data-width='100%' multiple data-selected-text-format="count"
-                                name="{{task_param.id}}_fields">
+                            <select class="selectpicker" data-width='100%' multiple
+                                    required
+                                    data-selected-text-format="count"
+                                    name="{{ task_param.id }}_fields">
                                 {% for field in fields %}
-                                <option title="{{field.path}}" value="{{field.path}}">{{field.label}}</option>
+                                    <option title="{{ field.path }}"
+                                            value="{{ field.path }}">{{ field.label }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -31,9 +35,10 @@
                     <div class="row">
                         <div class="col-sm-6">Feature Extraction:</div>
                         <div class="col-sm-6">
-                            <select name="{{task_param.id}}_extractor_opt" class="selectpicker" data-width='100%'>
+                            <select name="{{ task_param.id }}_extractor_opt" class="selectpicker" data-width='100%'>
                                 {% for extractor_opt in train_tagger_extractor_opt_list %}
-                                <option title="{{extractor_opt.label}}" value="{{ extractor_opt.index }}">{{extractor_opt.label }}</option>
+                                    <option title="{{ extractor_opt.label }}"
+                                            value="{{ extractor_opt.index }}">{{ extractor_opt.label }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -41,9 +46,10 @@
                     <div class="row">
                         <div class="col-sm-6">Dimension Reduction:</div>
                         <div class="col-sm-6">
-                            <select name="{{task_param.id}}_reductor_opt" class="selectpicker" data-width='100%'>
+                            <select name="{{ task_param.id }}_reductor_opt" class="selectpicker" data-width='100%'>
                                 {% for reductor_opt in train_tagger_reductor_opt_list %}
-                                <option title="{{reductor_opt.label}}" value="{{ reductor_opt.index }}">{{reductor_opt.label }}</option>
+                                    <option title="{{ reductor_opt.label }}"
+                                            value="{{ reductor_opt.index }}">{{ reductor_opt.label }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -51,9 +57,11 @@
                     <div class="row">
                         <div class="col-sm-6">Normalization:</div>
                         <div class="col-sm-6">
-                            <select name="{{task_param.id}}_normalizer_opt" class="selectpicker" data-width='100%'>
+                            <select name="{{ task_param.id }}_normalizer_opt" class="selectpicker"
+                                    data-width='100%'>
                                 {% for normalizer_opt in train_tagger_normalizer_opt_list %}
-                                <option title="{{normalizer_opt.label}}" value="{{ normalizer_opt.index }}">{{normalizer_opt.label }}</option>
+                                    <option title="{{ normalizer_opt.label }}"
+                                            value="{{ normalizer_opt.index }}">{{ normalizer_opt.label }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -61,9 +69,11 @@
                     <div class="row">
                         <div class="col-sm-6">Classifier:</div>
                         <div class="col-sm-6">
-                            <select name="{{task_param.id}}_classifier_opt" class="selectpicker" data-width='100%'>
+                            <select name="{{ task_param.id }}_classifier_opt" class="selectpicker"
+                                    data-width='100%'>
                                 {% for classifier_opt in train_tagger_classifier_opt_list %}
-                                <option title="{{classifier_opt.label}}" value="{{ classifier_opt.index }}">{{classifier_opt.label }}</option>
+                                    <option title="{{ classifier_opt.label }}"
+                                            value="{{ classifier_opt.index }}">{{ classifier_opt.label }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -71,34 +81,37 @@
                     <div class="row">
                         <div class="col-sm-6">Description:</div>
                         <div class="col-sm-6">
-                            <input name="{{task_param.id}}_description" class="form-control input-sm">
+                            <input name="{{ task_param.id }}_description" class="form-control input-sm">
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="col-sm-12">
-                            <button type="button" onclick="javascript:start_task('{{task_param.id}}');" class="btn btn-default form-control"><span
-                                    class="glyphicon glyphicon-ok"></span> Start task</button>
+                            <button type="submit"
+                                    class="btn btn-default form-control"><span
+                                    class="glyphicon glyphicon-ok"></span> Start task
+                            </button>
                         </div>
                     </div>
 
                 </div>
-            </div>
+            </form>
         </div>
     </div>
+</div>
 
 
-
-    <div class="panel">
-        <div class="panel-heading">Mass Trainer</div>
-        <div class="panel-body">
-
+<div class="panel">
+    <div class="panel-heading">Mass Trainer</div>
+    <div class="panel-body">
+        <form action="javascript:start_mass_task('{{ task_param.id }}');" id="mass_form_{{ task_param.id }}">
             <div class="row">
                 <div class="col-sm-6">Tags:</div>
                 <div class="col-sm-6">
                     <select name="mass_tagger_selection" class="selectpicker" data-width='100%' multiple="multiple">
                         {% for text_tag in text_tags %}
-                        <option value="{{text_tag}}" {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{text_tag}}</option>
+                            <option value="{{ text_tag }}"
+                                    {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{ text_tag }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -109,7 +122,7 @@
                 <div class="col-sm-6">
                     <select name="mass_field" class="selectpicker" data-width='100%'>
                         {% for field in fields %}
-                        <option title="{{field.path}}" value="{{field.path}}">{{field.label}}</option>
+                            <option title="{{ field.path }}" value="{{ field.path }}">{{ field.label }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -120,7 +133,8 @@
                 <div class="col-sm-6">
                     <select name="mass_extractor_opt" class="selectpicker" data-width='100%'>
                         {% for extractor_opt in train_tagger_extractor_opt_list %}
-                        <option title="{{extractor_opt.label}}" value="{{ extractor_opt.index }}">{{extractor_opt.label }}</option>
+                            <option title="{{ extractor_opt.label }}"
+                                    value="{{ extractor_opt.index }}">{{ extractor_opt.label }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -130,7 +144,8 @@
                 <div class="col-sm-6">
                     <select name="mass_reductor_opt" class="selectpicker" data-width='100%'>
                         {% for reductor_opt in train_tagger_reductor_opt_list %}
-                        <option title="{{reductor_opt.label}}" value="{{ reductor_opt.index }}">{{ reductor_opt.label}}</option>
+                            <option title="{{ reductor_opt.label }}"
+                                    value="{{ reductor_opt.index }}">{{ reductor_opt.label }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -140,7 +155,8 @@
                 <div class="col-sm-6">
                     <select name="mass_normalizer_opt" class="selectpicker" data-width='100%'>
                         {% for normalizer_opt in train_tagger_normalizer_opt_list %}
-                        <option title="{{normalizer_opt.label}}" value="{{ normalizer_opt.index }}">{{normalizer_opt.label }}</option>
+                            <option title="{{ normalizer_opt.label }}"
+                                    value="{{ normalizer_opt.index }}">{{ normalizer_opt.label }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -150,7 +166,8 @@
                 <div class="col-sm-6">
                     <select name="mass_classifier_opt" class="selectpicker" data-width='100%'>
                         {% for classifier_opt in train_tagger_classifier_opt_list %}
-                        <option title="{{classifier_opt.label}}" value="{{ classifier_opt.index }}">{{classifier_opt.label }}</option>
+                            <option title="{{ classifier_opt.label }}"
+                                    value="{{ classifier_opt.index }}">{{ classifier_opt.label }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -158,12 +175,14 @@
 
             <div class="row">
                 <div class="col-sm-12">
-                    <button type="button" onclick="javascript:start_mass_task('{{task_param.id}}');" class="btn btn-default form-control">
+                    <button type="submit"
+                            disabled
+                            class="btn btn-default form-control">
                         <span class="glyphicon glyphicon-ok"></span> Start Mass Trainer
                     </button>
                 </div>
 
             </div>
-        </div>
+        </form>
     </div>
-</form>
+</div>

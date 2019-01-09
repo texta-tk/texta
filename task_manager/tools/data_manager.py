@@ -103,6 +103,10 @@ class EsIterator:
                     # If the field is missing from the document
                     logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
 
+                except TypeError:
+                    # If split failed
+                    logging.getLogger(ERROR_LOGGER).error('Error splitting the text.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
+            
             if self.callback_progress:
                 self.callback_progress.update(total_hits)
 
