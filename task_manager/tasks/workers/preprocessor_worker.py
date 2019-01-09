@@ -71,7 +71,6 @@ class PreprocessorWorker(BaseWorker):
         field_paths = []
         show_progress = ShowProgress(self.task_id)
         show_progress.update(0)
-
         # TODO: remove "preprocessor_key" need from here? this should be worked out in the view (controller interface)
         # Add new field to mapping definition if necessary
         preprocessor_key = self.params['preprocessor_key']
@@ -178,7 +177,7 @@ class PreprocessorWorker(BaseWorker):
             return False, "No field selected"
 
         if args['preprocessor_key'] in ['text_tagger', 'entity_extractor']:
-            if not any(['preprocessor_models' in k for k in args]):
-                return False, "No preprocessor selected"
+            if not any([args['preprocessor_key']+'_preprocessor_models' in k for k in args]):
+                return False, "No preprocessor model selected"
 
         return True, ""

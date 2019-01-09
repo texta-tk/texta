@@ -32,7 +32,7 @@
     <div class="grid-i">
         <label class="control-label" for="text-tagger-processor-tagger">Taggers:</label>
         <div class="select-wrapper">
-            <select id="text-tagger-processor-taggers" data-width="100%" name="text_tagger_taggers" class="selectpicker"
+            <select id="text-tagger-processor-taggers" data-width="100%" name="text_tagger_preprocessor_models" class="selectpicker"
                     multiple="multiple" data-style="btn-sm btn-default">
                 {% for tagger in preprocessor.enabled_taggers %}
                     <option value="{{ tagger.id }}"
