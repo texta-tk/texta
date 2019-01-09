@@ -32,9 +32,9 @@
         {% endif %}
     </div>
     <div class="grid-i">
-        <label class="control-label" for="text-tagger-processor-tagger">Taggers:</label>
+        <label class="control-label" for="text-tagger-processor-models">Taggers:</label>
         <div class="select-wrapper">
-            <select id="text-tagger-processor-taggers" required data-width="100%" name="text_tagger_preprocessor_models" class="selectpicker"
+            <select id="text-tagger-processor-models" data-width="100%" name="text_tagger_preprocessor_models" class="selectpicker"
                     multiple="multiple" data-style="btn-sm btn-default">
                 {% for tagger in preprocessor.enabled_taggers %}
                     <option value="{{ tagger.id }}"

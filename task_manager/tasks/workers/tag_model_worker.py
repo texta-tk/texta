@@ -41,7 +41,7 @@ class TagModelWorker(BaseWorker):
         self.model_name = None
         self.description = None
         self.task_model_obj = None
-        self.n_jobs = 6
+        self.n_jobs = 1
 
     def run(self, task_id):
 
@@ -90,7 +90,7 @@ class TagModelWorker(BaseWorker):
 
             # Training the model.
             show_progress.update(1)
-            self.model, train_summary, plot_url = self._train_model_with_cv(c_pipe, c_params, data_sample_x_map, data_sample_y, self.task_id, n_jobs=self.n_jobs)
+            self.model, train_summary, plot_url = self._train_model_with_cv(c_pipe, c_params, data_sample_x_map, data_sample_y)
             train_summary['samples'] = statistics
             train_summary['confusion_matrix'] = '<img src="{}" style="max-width: 80%">'.format(plot_url)
             # Saving the model.
@@ -186,7 +186,7 @@ class TagModelWorker(BaseWorker):
     def _training_process(self):
         pass
 
-    def _train_model_with_cv(self, model, params, X_map, y, task_id, n_jobs=1):
+    def _train_model_with_cv(self, model, params, X_map, y):
         fields = list(X_map.keys())
         X_train = {}
         X_test = {}
@@ -197,13 +197,11 @@ class TagModelWorker(BaseWorker):
         df_test = pd.DataFrame(X_test)
 
         # Use Train data to parameter selection in a Grid Search
-        gs_clf = GridSearchCV(model, params, n_jobs=n_jobs, cv=5, verbose=1)
+        gs_clf = GridSearchCV(model, params, n_jobs=self.n_jobs, cv=5, verbose=1)
         gs_clf = gs_clf.fit(df_train, y_train)
         model = gs_clf.best_estimator_
-
         # Use best model and test data for final evaluation
         y_pred = model.predict(df_test)
-
         # Report
         _f1 = f1_score(y_test, y_pred, average='micro')
         _confusion = confusion_matrix(y_test, y_pred)
