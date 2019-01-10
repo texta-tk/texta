@@ -17,7 +17,6 @@ function toggleFullscreen () {
     }
 }
 function exportData (exportType) {
-    var formElement = document.getElementById('filters')
     var queryArgs = $('#filters').serializeArray()
 
     queryArgs.push({
@@ -86,7 +85,7 @@ function exportData (exportType) {
         if (featuresDec === 'all') {
             var options = $('#toggle-column-select option')
             features = $.map(options, function (option) {
-                return option.value
+                return option.text
             })
         } else {
             $('#toggle-column-select option').each(function () {

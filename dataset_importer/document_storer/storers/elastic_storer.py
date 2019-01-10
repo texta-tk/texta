@@ -89,8 +89,6 @@ class ElasticStorer(object):
         if not isinstance(documents, list):
             documents = list(documents)
 
-        data_to_send = []
-
         if 'elastic_id' in documents[0]:  # Use predefined ID value
             batch_payload = []
 
@@ -100,7 +98,7 @@ class ElasticStorer(object):
                 batch_payload.append(single_payload)
 
             client = elasticsearch.Elasticsearch(hosts=[self._es_url])
-            response = bulk(client=client, actions=batch_payload)
+            response = bulk(client=client, actions=batch_payload, stats_only=True, raise_on_error=False)
 
         else:  # Let Elasticsearch generate random ID value
             batch_payload = []
