@@ -55,6 +55,7 @@ class TagModelWorker(BaseWorker):
         classifier_opt = int(task_params['classifier_opt'])
         negative_set_multiplier = float(task_params['negative_multiplier_opt'])
         max_sample_size_opt = int(task_params['max_sample_size_opt'])
+        score_threshold_opt = float(task_params['score_threshold_opt'])
 
         if 'num_threads' in task_params:
             self.n_jobs = int(task_params['num_threads'])
@@ -86,7 +87,8 @@ class TagModelWorker(BaseWorker):
                                    query=param_query,
                                    es_m=es_m,
                                    negative_set_multiplier=negative_set_multiplier,
-                                   max_positive_sample_size=max_sample_size_opt)
+                                   max_positive_sample_size=max_sample_size_opt,
+                                   score_threshold=score_threshold_opt)
             data_sample_x_map, data_sample_y, statistics = es_data.get_data_samples()
 
             # Training the model.
