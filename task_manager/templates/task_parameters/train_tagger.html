@@ -3,7 +3,8 @@
     <div class="panel-body">
 
         <div class="form-group">
-            <form action="javascript:start_task('{{ task_param.id }}','form_{{ task_param.id }}');" id="form_{{ task_param.id }}" autocomplete="off">
+            <form action="javascript:start_task('{{ task_param.id }}','form_{{ task_param.id }}');"
+                  id="form_{{ task_param.id }}" autocomplete="off">
                 <div class="col-sm-12">
                     <div class="row">
                         <div class="col-sm-6">Select a search:</div>
@@ -44,6 +45,7 @@
                             </select>
                         </div>
                     </div>
+
                     <div class="row">
                         <div class="col-sm-6">Dimension Reduction:</div>
                         <div class="col-sm-6">
@@ -55,6 +57,7 @@
                             </select>
                         </div>
                     </div>
+
                     <div class="row">
                         <div class="col-sm-6">Normalization:</div>
                         <div class="col-sm-6">
@@ -67,6 +70,7 @@
                             </select>
                         </div>
                     </div>
+
                     <div class="row">
                         <div class="col-sm-6">Classifier:</div>
                         <div class="col-sm-6">
@@ -77,12 +81,52 @@
                                             value="{{ classifier_opt.index }}">{{ classifier_opt.label }}</option>
                                 {% endfor %}
                             </select>
+
                         </div>
                     </div>
+
+                    <div class="row">
+                        <div class="col-sm-6">Negative set multiplier:</div>
+                        <div class="col-sm-6">
+                            <select name="{{ task_param.id }}_negative_multiplier_opt" class="form-control">
+                                <option title="0.5" value="0.5">0.5</option>
+                                <option title="0.75" value="0.75">0.75</option>
+                                <option title="1.0" value="1.0" selected="selected">1.0</option>
+                                <option title="1.5" value="1.5">1.5</option>
+                                <option title="2.0" value="2.0">2.0</option>
+                                <option title="3.0" value="3.0">3.0</option>
+                                <option title="4.0" value="4.0">4.0</option>
+                                <option title="5.0" value="5.0">5.0</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-sm-6">Description:</div>
                         <div class="col-sm-6">
                             <input required name="{{ task_param.id }}_description" class="form-control input-sm">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-6">Training set score threshold:</div>
+                        <div class="col-sm-6">
+                            <select name="{{ task_param.id }}_score_threshold_opt" class="form-control">
+                                <option title="0.0 (use all)" value="0.0">0.0</option>
+                                <option title="0.1" value="0.1">0.1</option>
+                                <option title="0.2" value="0.2">0.2</option>
+                                <option title="0.3" value="0.3">0.3</option>
+                                <option title="0.4" value="0.4">0.4</option>
+                                <option title="0.5" value="0.5">0.5</option>
+
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-6">Description:</div>
+                        <div class="col-sm-6">
+                            <input name="{{ task_param.id }}_description" class="form-control input-sm">
                         </div>
                     </div>
 
@@ -112,7 +156,7 @@
                     <select name="mass_tagger_selection" class="selectpicker" data-width='100%' multiple="multiple">
                         {% for text_tag in text_tags %}
                             <option value="{{ text_tag }}"
-                                    >{{ text_tag }}</option>
+                            >{{ text_tag }}</option>
                         {% endfor %}
                     </select>
                 </div>
