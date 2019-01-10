@@ -2,8 +2,8 @@
     <div class="grid-i">
         <label class="control-label" for="lexicon-classifier-processor-feature-name">Fields:</label>
         <div class="select-wrapper">
-            {% if fields %}              
-            <select class="selectpicker" multiple data-width="100%"  required data-selected-text-format="count"  id="lexicon-classidier-feature-names" name="lexicon_classifier_feature_names" data-style="btn-sm btn-default">
+            {% if fields %}
+            <select class="selectpicker" multiple data-width="100%"  required data-selected-text-format="count"  id="lexicon-classifier-feature-names" name="lexicon_classifier_feature_names" data-style="btn-sm btn-default">
                 {% for field in fields %}
                 <option value="{{field.data}}" {% if forloop.counter < 2 %} selected="selected" {% endif %}>{{field.label}}</option>
                 {% endfor %}

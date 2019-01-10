@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from lexicon_miner.models import Lexicon, Word
-
+from texta.settings import ERROR_LOGGER, INFO_LOGGER
 import numpy as np
+import logging
 import json
 import re
 import os
@@ -199,8 +200,8 @@ class LexTagger(object):
     def _load_arguments(self,kwargs):
         input_features  = json.loads(kwargs['lexicon_classifier_feature_names'])
         lex_ids         = json.loads(kwargs['lexicon_classifier_lexicons'])
-        match_type      = json.loads(kwargs['lexicon_classifier_match_types'])[0]
-        operation       = json.loads(kwargs['lexicon_classifier_operations'])[0]
+        match_type      = json.loads(kwargs['lexicon_classifier_match_types'])
+        operation       = json.loads(kwargs['lexicon_classifier_operations'])
         slop            = json.loads(kwargs['lexicon_classifier_slops'])[0]
         words_required  = json.loads(kwargs['lexicon_classifier_words_required'])[0]
         counter_lex_id  = json.loads(kwargs['lexicon_classifier_counterlexicons'])[0]
@@ -225,13 +226,20 @@ class LexTagger(object):
         # {'lex_name_1':[lex_w1,lexw2],'lex_name2':[lex_w2]} etc
         lexicons = {}
         for lex_id in lex_ids:
+            print(lex_id)
             words = []
-            lex_object = Lexicon.objects.filter(pk=lex_id)[0]
-            word_objects = Word.objects.filter(lexicon=lex_id)
-            for wo in word_objects:
-                words.append(wo.wrd)
-            lex_name = lex_object.name
-            lexicons[lex_name] = words
+            lex_object = None
+            try:
+                lex_object = Lexicon.objects.get(pk=lex_id)
+            except Exception as e:
+                logging.getLogger(ERROR_LOGGER).error('Lexcion does not exist.', exc_info=True)
+            if lex_object:
+                word_objects = Word.objects.filter(lexicon=lex_id)
+                for wo in word_objects:
+                    words.append(wo.wrd)
+                lex_name = lex_object.name
+                lexicons[lex_name] = words
+        print(lexicons)
         return lexicons
 
     def _get_classifiers(self,lexicons,counter_lexicon,args):
@@ -270,7 +278,6 @@ class LexTagger(object):
 
 
     def transform(self, documents, **kwargs):
-
         if not self._all_args_exist(**kwargs):
             return documents
 
@@ -282,7 +289,12 @@ class LexTagger(object):
 
         lexicons_to_apply = self._unpack_lexicons(lex_ids)
 
-        counter_lexicon = list(self._unpack_lexicons(counter_lex_ids).items())[0][1]
+        try:
+            counter_lexicon = list(self._unpack_lexicons(counter_lex_ids).items())[0][1]
+        except Exception as e:
+            counter_lexicon = []
+            logging.getLogger(ERROR_LOGGER).error('Loading Counter Lexicon failed.', exc_info=True)
+
         classifiers = self._get_classifiers(lexicons_to_apply,counter_lexicon,args)
 
         for input_feature in input_features:
