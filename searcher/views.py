@@ -28,7 +28,7 @@ from django.utils.encoding import smart_str
 # For string templates
 from django.template import Context
 from django.template import Template
-
+import collections
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER
 
 from dataset_importer.document_preprocessor.preprocessor import DocumentPreprocessor, preprocessor_map
@@ -115,8 +115,20 @@ def save(request):
     try:
         q = combined_query
         desc = request.POST['search_description']
-        s_content = json.dumps([request.POST[x] for x in request.POST.keys() if 'match_txt' in x])
-        search = Search(author=request.user,search_content=s_content,description=desc,dataset=Dataset.objects.get(pk=int(request.session['dataset'])),query=json.dumps(q))
+        s_content = {}
+
+        # make json
+        for x in request.POST.keys():
+            if 'match_txt' in x:
+                # get the ID of the field, eg match_txt_1 returns 1 match_txt_1533 returns 1533
+                field_id = x.rsplit("_", 1)[-1]
+                match_field = request.POST['match_field_'+field_id]
+                if match_field in s_content.keys():
+                    s_content[match_field].append(request.POST[x])
+                else:
+                    s_content[match_field] = [request.POST[x]]
+
+        search = Search(author=request.user,search_content=json.dumps(s_content),description=desc,dataset=Dataset.objects.get(pk=int(request.session['dataset'])),query=json.dumps(q))
         search.save()
         logger.set_context('user_name', request.user.username)
         logger.set_context('search_id', search.id)
@@ -343,10 +355,31 @@ def get_search_query(request):
 
     query = json.loads(search.query)
     query_constraints = extract_constraints(query)
-	# For original search content such as unpacked lexicons/concepts
     search_content = json.loads(search.search_content)
-    for i in range(len([x for x in query_constraints if x['constraint_type'] == 'string'])):
-        query_constraints[i]['content'] = [search_content[i]]
+
+    # For original search content such as unpacked lexicons/concepts
+    matches = []
+    query_txt = [x for x in query_constraints if x['constraint_type'] == 'string']
+    for i in range(len(query_txt)):
+        field_text = query_constraints[i]['content']
+        field_type = query_constraints[i]['field']
+        not_present = True
+        for x in search_content[field_type]:
+            # strings match with query and text field match_txt
+            if field_text[0] == x:
+                query_constraints[i]['content'] = [x]
+                search_content[field_type].remove(x)
+                not_present = False
+
+        if not_present:
+            matches.append(i)
+
+    for k in matches:
+        field_type = query_constraints[k]['field']
+        for x in search_content[field_type]:
+            # strings match with query and text field match_txt
+            query_constraints[k]['content'] = [x]
+            search_content[field_type].remove(x)
 
     return HttpResponse(json.dumps(query_constraints))
 
