@@ -7,8 +7,6 @@ from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from texta.settings import ERROR_LOGGER
 
-MAX_POSITIVE_SAMPLE_SIZE = 500000
-
 
 def get_fields(es_m):
     """ Crete field list from fields in the Elasticsearch mapping
@@ -111,15 +109,17 @@ class EsIterator:
 
 class EsDataSample(object):
 
-    def __init__(self, fields, query, es_m, negative_set_multiplier=1.0):
+    def __init__(self, fields, query, es_m, negative_set_multiplier=1.0, max_positive_sample_size=10000):
         """ Sample data - Positive and Negative samples from query
         """
         self.fields = fields
         self.es_m = es_m
         self.es_m.load_combined_query(query)
         self.negative_set_multiplier = negative_set_multiplier
+        self.max_positive_sample_size = max_positive_sample_size
 
-    def _get_positive_samples(self, sample_size):
+    def _get_positive_samples(self):
+        sample_size = self.max_positive_sample_size
         
         positive_samples_map = {}
         positive_set = set()
@@ -222,9 +222,8 @@ class EsDataSample(object):
 
         return negative_samples_map, negative_set
 
-    def get_data_samples(self, sample_size=MAX_POSITIVE_SAMPLE_SIZE):
-
-        positive_samples, positive_set = self._get_positive_samples(sample_size)
+    def get_data_samples(self):
+        positive_samples, positive_set = self._get_positive_samples()
         negative_samples, negative_set = self._get_negative_samples(positive_set)
 
         # Build X feature map
