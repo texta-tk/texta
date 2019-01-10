@@ -8,7 +8,7 @@
       {% if fields %}
       <select class="selectpicker" data-width="100%" multiple data-selected-text-format="count" id="scoro-preprocessor-feature-names" name="scoro_feature_names" data-style="btn-sm btn-default">
         {% for field in fields %}
-        <option value="{{field.data}}" {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{field.label}}</option>
+        <option value="{{field.data}}" >{{field.label}}</option>
         {% endfor %}
       </select>
       {% else %}

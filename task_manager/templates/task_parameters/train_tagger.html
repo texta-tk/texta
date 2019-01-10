@@ -24,6 +24,7 @@
                                     required
                                     data-selected-text-format="count"
                                     name="{{ task_param.id }}_fields">
+                                <option data-hidden="true"></option>
                                 {% for field in fields %}
                                     <option title="{{ field.path }}"
                                             value="{{ field.path }}">{{ field.label }}</option>
@@ -111,7 +112,7 @@
                     <select name="mass_tagger_selection" class="selectpicker" data-width='100%' multiple="multiple">
                         {% for text_tag in text_tags %}
                             <option value="{{ text_tag }}"
-                                    {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{ text_tag }}</option>
+                                    >{{ text_tag }}</option>
                         {% endfor %}
                     </select>
                 </div>

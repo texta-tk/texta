@@ -9,9 +9,7 @@
                         required
                         name="mlp_feature_names" data-style="btn-sm btn-default">
                     {% for field in fields %}
-                        <option title="{{ field.label }}" value="{{ field.path }}"
-                                {% if forloop.counter < 2 %}selected="selected"
-                                {% endif %}>{{ field.label }}</option>
+                        <option title="{{ field.label }}" value="{{ field.path }}">{{ field.label }}</option>
                     {% endfor %}
                 </select>
             {% else %}

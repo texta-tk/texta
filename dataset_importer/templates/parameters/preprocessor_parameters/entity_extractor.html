@@ -9,8 +9,7 @@
                         required
                         name="entity_extractor_feature_names" data-style="btn-sm btn-default">
                     {% for field in fields %}
-                        <option value="{{ field.path }}"
-                                {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{ field.label }}</option>
+                        <option value="{{ field.path }}">{{ field.label }}</option>
                     {% endfor %}
                 </select>
             {% else %}
@@ -39,7 +38,7 @@
                     multiple="multiple" data-style="btn-sm btn-default">
                 {% for extractor in preprocessor.enabled_extractors %}
                     <option value="{{ extractor.id }}"
-                            {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{ extractor.description }}</option>
+                            >{{ extractor.description }}</option>
                 {% endfor %}
             </select>
         </div>

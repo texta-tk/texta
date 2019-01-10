@@ -9,8 +9,7 @@
                         required
                         name="comment_preprocessor_feature_names" data-style="btn-sm btn-default">
                     {% for field in fields %}
-                        <option value="{{ field.data }}"
-                                {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{ field.label }}</option>
+                        <option value="{{ field.data }}">{{ field.label }}</option>
                     {% endfor %}
                 </select>
             {% else %}

@@ -28,9 +28,9 @@
                     <div class="row">
                         <div class="col-xs-5">Select fields:</div>
                         <div class="col-xs-5">
-
                             <select class="selectpicker" required data-width='100%' multiple data-selected-text-format="count"
                                     name="{{ task_param.id }}_fields" autocomplete="off">
+                                <option data-hidden="true"></option>
                                 {% for field in fields %}
                                     <option title="{{ field.path }}" value="{{ field.path }}">{{ field.label }}</option>
                                 {% endfor %}
