@@ -564,8 +564,6 @@ def api_tag_text(request, user, params):
     # Apply
     for tagger_id in tagger_ids_list:
         is_tagger_selected = taggers is None or tagger_id in taggers
-
-        input_empty = True
         c = None
         p = 0
 
@@ -579,17 +577,13 @@ def api_tag_text(request, user, params):
             # create input for the tagger
             tagger_fields = json.loads(Task.objects.get(pk = tagger_id).parameters)['fields']
             text_dict_df = {}
-            for field in tagger_fields:
-                if field in text_dict:
-                    if text_dict[field]:
-                        # reverse value of input_empty if found some content (len>0)
-                        input_empty = False
-                        text_dict_df[field] = [text_dict[field]]
-                else:
-                    explain['error'] = 'required field not present: {0}'.format(field)
 
-            if input_empty == True:
-                explain['error'] = 'no input text found for the tagger'
+            for field in tagger_fields:
+                sub_field_content = text_dict
+                for sub_field in field.split('.'):
+                    sub_field_content = sub_field_content[sub_field]
+
+                text_dict_df[field] = [sub_field_content]
 
             if 'error' not in explain:
                 try:
