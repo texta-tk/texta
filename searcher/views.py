@@ -417,20 +417,21 @@ def get_search_query(request):
 
     # For original search content such as unpacked lexicons/concepts
     matches = []
-    query_txt = [x for x in query_constraints if x['constraint_type'] == 'string']
-    for i in range(len(query_txt)):
-        field_text = query_constraints[i]['content']
-        field_type = query_constraints[i]['field']
-        not_present = True
-        for x in search_content[field_type]:
-            # strings match with query and text field match_txt
-            if field_text[0] == x:
-                query_constraints[i]['content'] = [x]
-                search_content[field_type].remove(x)
-                not_present = False
 
-        if not_present:
-            matches.append(i)
+    for i in range(len(query_constraints)):
+        if query_constraints[i]['constraint_type'] == 'string':
+            field_text = query_constraints[i]['content']
+            field_type = query_constraints[i]['field']
+            not_present = True
+            for x in search_content[field_type]:
+                # strings match with query and text field match_txt
+                if field_text[0] == x:
+                    query_constraints[i]['content'] = [x]
+                    search_content[field_type].remove(x)
+                    not_present = False
+
+            if not_present:
+                matches.append(i)
 
     for k in matches:
         field_type = query_constraints[k]['field']
