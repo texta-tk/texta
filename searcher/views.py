@@ -131,7 +131,11 @@ def save(request):
                 else:
                     s_content[match_field] = [request.POST[x]]
 
-        search = Search(author=request.user,search_content=json.dumps(s_content),description=desc,dataset=Dataset.objects.get(pk=int(request.session['dataset'])),query=json.dumps(q))
+        search = Search(author=request.user,search_content=json.dumps(s_content),description=desc,query=json.dumps(q))
+        search.save()
+        for dataset_id in request.session['dataset']:
+            dataset = Dataset.objects.get(pk=int(dataset_id))
+            search.datasets.add(dataset)
         search.save()
         logger.set_context('user_name', request.user.username)
         logger.set_context('search_id', search.id)
