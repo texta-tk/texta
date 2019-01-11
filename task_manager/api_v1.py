@@ -547,7 +547,7 @@ def api_tag_text(request, user, params):
     if preprocessor:
         preprocessor_params = {}
         preprocessor = PREPROCESSOR_INSTANCES[preprocessor]
-    
+
         try:
             result_map = preprocessor.transform([text_dict], **preprocessor_params)
         except Exception as e:
@@ -565,8 +565,9 @@ def api_tag_text(request, user, params):
     for tagger_id in tagger_ids_list:
         is_tagger_selected = taggers is None or tagger_id in taggers
 
-        p = 0
+        input_empty = True
         c = None
+        p = 0
 
         if is_tagger_selected:
             tagger = TagModelWorker()
@@ -580,9 +581,15 @@ def api_tag_text(request, user, params):
             text_dict_df = {}
             for field in tagger_fields:
                 if field in text_dict:
-                    text_dict_df[field] = [text_dict[field]]
+                    if text_dict[field]:
+                        # reverse value of input_empty if found some content (len>0)
+                        input_empty = False
+                        text_dict_df[field] = [text_dict[field]]
                 else:
-                    explain['error'] = 'Required field not present: {0}'.format(field)
+                    explain['error'] = 'required field not present: {0}'.format(field)
+
+            if input_empty == True:
+                explain['error'] = 'no input text found for the tagger'
 
             if 'error' not in explain:
                 try:
