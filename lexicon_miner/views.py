@@ -133,7 +133,7 @@ def saveLexicon(request, local_request=False):
             try:
                 model_manager.save_negatives(request.session['model']['pk'],request.user.username,lexicon.id)
             except KeyError:
-                logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'SAVE LEXICON','event':'negatives_saving_failed','args':{'user_name':request.user.username,'lexicon_id':lexId},'reason':'No model provided.'}))
+                logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'SAVE LEXICON','event':'negatives_saving_failed','args':{'user_name':request.user.username,'lexicon_id':lexId},'reason':'no negatives to save'}))
 
 
             # Fix problems with '' and ""
