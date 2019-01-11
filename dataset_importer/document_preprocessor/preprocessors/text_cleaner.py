@@ -55,7 +55,7 @@ class TextCleanerPreprocessor(object):
                 elif isinstance(stat_val, float):
                     processed_stats[stat_key] = str(stat_val).replace('.', '_')
                 elif isinstance(stat_val, int):
-                    processed_stats[stat_key] = len(str(stat_val))
+                    processed_stats[stat_key] = str(len(str(stat_val)))
                 else:
                     processed_stats[stat_key] = stat_val
         
