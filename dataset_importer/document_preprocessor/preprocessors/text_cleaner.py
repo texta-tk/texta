@@ -1,5 +1,6 @@
 from dateutil import parser
 import requests
+import logging
 import json
 
 from texta.settings import mlp_url
@@ -37,9 +38,28 @@ class TextCleanerPreprocessor(object):
         except ValueError:
             return ''
 
-    @classmethod
-    def _clean_string(cls, string):
-        return string.strip().lower()
+    @staticmethod
+    def _process_stats(stats):
+        """ Processes stats from TextCleaner to make them categorical
+        """
+        processed_stats = {}
+        if stats:
+            for stat_key, stat_val in stats.items():
+                if isinstance(stat_val, list) and stat_key == 'obfuscated':
+                    if stat_val:
+                        processed_stats[stat_key] = 'obfuscated'
+                    else:
+                        processed_stats[stat_key] = 'not_obfuscated'
+                if isinstance(stat_val, list):
+                    processed_stats[stat_key] = ' '.join(stat_val)
+                elif isinstance(stat_val, float):
+                    processed_stats[stat_key] = str(stat_val).replace('.', '_')
+                elif isinstance(stat_val, int):
+                    processed_stats[stat_key] = len(str(stat_val))
+                else:
+                    processed_stats[stat_key] = stat_val
+        
+        return processed_stats
 
     def transform(self, documents, **kwargs):
         """Takes input documents and creates new fields for further commentary analysis.
@@ -50,8 +70,6 @@ class TextCleanerPreprocessor(object):
         :return: enhanced documents
         :rtype: list of dicts
         """
-
-        print(kwargs)
 
         if not kwargs.get('text_cleaner_preprocessor_feature_names', None):
             # this is mostly for API requests as they might not have field data - apply to all in this case
@@ -72,25 +90,17 @@ class TextCleanerPreprocessor(object):
             except AttributeError:
                 texts = [document[input_feature] for document in documents if input_feature in document]
 
-            #print(texts)
-
             data = {'texts': json.dumps(texts, ensure_ascii=False)}
 
             try:
                 analyzation_data = requests.post(text_cleaner_url, data=data).json()
             except Exception:
-                #logging.error('Failed to achieve connection with mlp.', extra={'mlp_url':self._text_cleaner_url, 'enabled_features':self._enabled_features})
+                logging.error('Failed to achieve connection with mlp.', extra={'mlp_url':text_cleaner_url})
                 break
 
-            #print(analyzation_data)
-
             for analyzation_idx, analyzation_datum in enumerate(analyzation_data):
-                analyzation_datum = analyzation_datum[0]
-
-                documents[analyzation_idx][input_feature+'_clean'] = analyzation_datum['text']
-                documents[analyzation_idx][input_feature+'_stats'] = analyzation_datum['stats']
-        
-        print(documents[0])
+                documents[analyzation_idx][input_feature+'_clean'] = {}
+                documents[analyzation_idx][input_feature+'_clean']['text'] = analyzation_datum['text']
+                documents[analyzation_idx][input_feature+'_clean']['stats'] = self._process_stats(analyzation_datum['stats'])
 
         return {'documents': documents, 'meta': {}}
-
