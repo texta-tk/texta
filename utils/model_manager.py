@@ -140,13 +140,15 @@ class ModelManager(threading.Thread):
 
                 try:
                     os.makedirs(negatives_dir)
-                except:
-                    OSError
+                except OSError as e:
+                    print(e)
 
                 with open(negatives_path,'wb') as fout:
                     fout.write(pickle.dumps(self._model_negatives[model_name][username][lexicon_id].negatives))
 
                 self._model_negatives[model_name][username][lexicon_id].access_time = time()
+            else:
+                print('lexicon_id didnt exist'+self._model_negatives[model_name][username][lexicon_id])
 
     def reset_negatives(self,model_name,username,lexicon_id):
         model_name = str(model_name)
