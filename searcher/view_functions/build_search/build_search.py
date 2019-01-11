@@ -79,7 +79,7 @@ def execute_search(es_m, es_params):
         for col in row:
             if 'show_short_version' in es_params.keys():
                 row[col] = additional_option_cut_text(row[col], es_params['short_version_n_char'])
-        out['aaData'].append(row.values())
+        out['aaData'].append([hit_id] + list(row.values()))
         out['lag'] = time.time()-start_time
     return out
 

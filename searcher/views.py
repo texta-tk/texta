@@ -28,7 +28,7 @@ from django.utils.encoding import smart_str
 from django.template import Context
 from django.template import Template
 import collections
-from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER
+from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER, es_url
 
 from dataset_importer.document_preprocessor.preprocessor import preprocessor_map
 from conceptualiser.models import Term, TermConcept
@@ -211,11 +211,6 @@ def get_table_content(request):
     result = search(es_params, request)
     result['sEcho'] = echo
 
-    # NEW PY REQUIREMENT
-    # Get rid of 'odict_values' otherwise can't json dumps
-    for i in range(len(result['aaData'])):
-        result['aaData'][i] = list(result['aaData'][i])
-
     return HttpResponse(json.dumps(result, ensure_ascii=False))
 
 @login_required
@@ -339,6 +334,14 @@ def search(es_params, request):
     logger.info('documents_queried')
     return out
 
+def delete_document(request):
+    ds = Datasets().activate_datasets(request.session)
+    es_m = ds.build_manager(ES_Manager)
+    es_m.build(request.POST)
+    url = es_url+'/'+ds.active_datasets[0].mapping+'/'+ds.active_datasets[0].mapping+'/'+request.POST['document_id']
+    es_m.plain_delete(url)
+
+    return HttpResponse()
 
 @login_required
 def remove_by_query(request):

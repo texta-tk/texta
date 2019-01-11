@@ -204,7 +204,20 @@ function query () {
                 },
                 'scrollX': true,
                 // Add title with the corresponding column name to each element in column
-                'columnDefs': columns,
+
+                "columnDefs": [
+                    columns,
+                    {
+                        "targets": 0,
+                        'searchable': false,
+                        'className': 'dt-center',
+                        "render": function (data, type, row, meta) {
+                            return '<a onclick=javascript:deleteDocument(this,"' + data + '") role="button"><i role="button"  title="Delete selected searches" class="glyphicon glyphicon glyphicon glyphicon-trash"></a>';
+                        }
+
+                    },
+
+                ],
                 'ordering': false
             })
             $.fn.DataTable.ext.pager.numbers_length = 5
@@ -227,6 +240,29 @@ function query () {
 
     request.open('POST', PREFIX + '/table_header')
     request.send(new FormData(formElement))
+}
+
+async function deleteDocument (self, doc_id) {
+    //delete here TODO:
+    $.ajax({
+        url: PREFIX+'/delete_document',
+        data: {document_id: doc_id},
+        type: 'POST',
+        success: function(result) {
+            deleteDatatableRow($(self).parents('tr'))
+        }
+    });
+
+}
+async function deleteDatatableRow(row){
+    examplesTable.rows(row).remove()
+    //TODO:
+    //temporary hack, for some reason datatables doesnt redraw properly if chaining after remove so just sleep 500 ms
+    await sleep(1000)
+    examplesTable.draw(false);
+}
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 function recalcDatatablesHeight () {
     if (examplesTable) {

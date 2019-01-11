@@ -2,6 +2,7 @@
 <input id="mapping" type="hidden" value="{{mapping}}">
 <div class="toggle-column-select-wrapper">
     <select data-show-subtext="true" data-live-search="true" data-actions-box="true" data-width="250px" data-hide-disabled='true' multiple name="toggle-column-select" id='toggle-column-select' class="form-control input-sm ">
+        <option>Del Doc</option>
         {% for column in columns %}
         <option value="{{column.index}}">{{column.name}}</option>
         {% endfor %}
@@ -12,6 +13,7 @@
 <table id="examples" class="display cell-border compact">
     <thead>
         <tr id="columnsRow">
+            <th>Del Doc</th>
             {% for column in columns %}
             <th>{{column.name}}</th>
             {% endfor %}
