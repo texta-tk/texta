@@ -100,10 +100,12 @@
                                         </div>
                                         <div class="col-sm-12" id="short_version_options" style="display: none;">
                                             Context window size (words):
-                                            <input id="n_char" name="short_version_n_char" class="form-control"
-                                                   data-slider-id='n_char' type="text" data-slider-min="1"
-                                                   data-slider-max="20"
-                                                   data-slider-step="1" data-slider-value="5"/>
+                                            <div class="slider-wrapper">
+                                                <input id="n_char" name="short_version_n_char" class="form-control"
+                                                       data-slider-id='n_char' type="text" data-slider-min="1"
+                                                       data-slider-max="20"
+                                                       data-slider-step="1" data-slider-value="5"/>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="row padded-row text-center">
@@ -262,9 +264,12 @@
                                     </div>
                                     <div class="row padded-row">
                                         <div class="col-sm-12">
-                                            <input id="n_clusters" name="cluster_n_clusters" class="form-control"
-                                                   data-slider-id='n_clusters' type="text" data-slider-min="2"
-                                                   data-slider-max="100" data-slider-step="1" data-slider-value="10"/>
+                                            <div class="slider-wrapper">
+                                                <input id="n_clusters" name="cluster_n_clusters" class="form-control"
+                                                       data-slider-id='n_clusters' type="text" data-slider-min="2"
+                                                       data-slider-max="100" data-slider-step="1"
+                                                       data-slider-value="10"/>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="row padded-row">
@@ -274,10 +279,12 @@
                                     </div>
                                     <div class="row padded-row">
                                         <div class="col-sm-12">
-                                            <input id="n_samples" name="cluster_n_samples" class="form-control"
-                                                   data-slider-id='n_samples' type="text" data-slider-min="100"
-                                                   data-slider-max="5000" data-slider-step="100"
-                                                   data-slider-value="1000"/>
+                                            <div class="slider-wrapper">
+                                                <input id="n_samples" name="cluster_n_samples" class="form-control"
+                                                       data-slider-id='n_samples' type="text" data-slider-min="100"
+                                                       data-slider-max="5000" data-slider-step="100"
+                                                       data-slider-value="1000"/>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="row padded-row">
@@ -287,9 +294,12 @@
                                     </div>
                                     <div class="row padded-row">
                                         <div class="col-sm-12">
-                                            <input id="n_keywords" name="cluster_n_keywords" class="form-control"
-                                                   data-slider-id='n_keywords' type="text" data-slider-min="5"
-                                                   data-slider-max="50" data-slider-step="5" data-slider-value="10"/>
+                                            <div class="slider-wrapper">
+                                                <input id="n_keywords" name="cluster_n_keywords" class="form-control"
+                                                       data-slider-id='n_keywords' type="text" data-slider-min="5"
+                                                       data-slider-max="50" data-slider-step="5"
+                                                       data-slider-value="10"/>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="row padded-row">
@@ -299,10 +309,12 @@
                                     </div>
                                     <div class="row padded-row">
                                         <div class="col-sm-12">
-                                            <input id="n_features" name="cluster_n_features" class="form-control"
-                                                   data-slider-id='n_features' type="text" data-slider-min="100"
-                                                   data-slider-max="10000" data-slider-step="100"
-                                                   data-slider-value="1000"/>
+                                            <div class="slider-wrapper">
+                                                <input id="n_features" name="cluster_n_features" class="form-control"
+                                                       data-slider-id='n_features' type="text" data-slider-min="100"
+                                                       data-slider-max="10000" data-slider-step="100"
+                                                       data-slider-value="1000"/>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="row padded-row">
@@ -349,11 +361,13 @@
                                             <b>Context window size (words):</b>
                                         </div>
                                         <div class="col-sm-12">
-                                            <input id="n_char_cluster" name="short_version_n_char_cluster"
-                                                   class="form-control"
-                                                   data-slider-id='n_char' type="text" data-slider-min="1"
-                                                   data-slider-max="20"
-                                                   data-slider-step="1" data-slider-value="5"/>
+                                            <div class="slider-wrapper">
+                                                <input id="n_char_cluster" name="short_version_n_char_cluster"
+                                                       class="form-control"
+                                                       data-slider-id='n_char' type="text" data-slider-min="1"
+                                                       data-slider-max="20"
+                                                       data-slider-step="1" data-slider-value="5"/>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -457,10 +471,13 @@
                                 </div>
                                 <div id="agg_size_1">
                                     <b>Aggregation size:</b><br>
-                                    <input id="n_agg_size_1" name="agg_size_1" class="form-control"
-                                           data-slider-id='agg_size_1'
-                                           type="text" data-slider-min="10" data-slider-max="300" data-slider-step="10"
-                                           data-slider-value="30"/>
+                                    <div class="slider-wrapper">
+                                        <input id="n_agg_size_1" name="agg_size_1" class="form-control"
+                                               data-slider-id='agg_size_1' data
+                                               type="text" data-slider-min="10" data-slider-max="300"
+                                               data-slider-step="10"
+                                               data-slider-value="30"/>
+                                    </div>
                                 </div>
                                 <div id="freq_norm_1" class="hidden">
                                     <b>Frequency:</b>
@@ -566,10 +583,12 @@
                                 <b>Number of fact values per fact name:</b>
                             </div>
                             <div id="factGraphSliderDiv" class="col-sm-12">
-                                <input id="nFactGraphSize" name="fact_graph_size" class="form-control"
-                                       data-slider-id='nFactGraphSizeId'
-                                       type="text" data-slider-min="3" data-slider-max="30" data-slider-step="1"
-                                       data-slider-value="15"/>
+                                <div class="slider-wrapper">
+                                    <input id="nFactGraphSize" name="fact_graph_size" class="form-control"
+                                           data-slider-id='nFactGraphSizeId'
+                                           type="text" data-slider-min="3" data-slider-max="30" data-slider-step="1"
+                                           data-slider-value="15"/>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -697,7 +716,7 @@
                     </button>
                 </div>
             </div>
-            
+
         </div>
     </div>
 </div>
@@ -732,7 +751,7 @@
     </div>
     <div class="flex-item-grow-3" name="constraint_val_container">
         <input id="fact_constraint_val_" name="fact_constraint_val_" class="form-control input-sm"
-                type="text" placeholder="Value (case sensitive)"></input>
+               type="text" placeholder="Value (case sensitive)"></input>
         <ul name="suggestions_" id="suggestions_" class="list-group"
             style="display: none; width: 100%;"></ul>
     </div>
