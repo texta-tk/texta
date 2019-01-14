@@ -212,7 +212,7 @@ function query () {
                         'searchable': false,
                         'className': 'dt-center',
                         "render": function (data, type, row, meta) {
-                            return '<a onclick=javascript:deleteDocument(this,"' + data + '") role="button"><i role="button"  title="Delete selected searches" class="glyphicon glyphicon glyphicon glyphicon-trash"></a>';
+                            return '<input type="checkbox" id='+data+' name=dt_delete_doc_checkbox>';
                         }
 
                     },
@@ -242,10 +242,16 @@ function query () {
     request.send(new FormData(formElement))
 }
 
-function deleteDocument (self, doc_id) {
+function deleteDocument () {
+    let doc_ids = []
+    $('input[name="dt_delete_doc_checkbox"]').each(function() {
+        if ($( this ).is(":checked")) {
+            doc_ids.push($(this).attr('id'))
+        }
+    });
     $.ajax({
         url: PREFIX+'/delete_document',
-        data: {document_id: doc_id},
+        data: {'document_id[]': doc_ids},
         type: 'POST',
         success: function(result) {
             //refresh dt, so deleted row isnt visible
