@@ -1,6 +1,10 @@
 import os
 import json
 import logging
+import glob
+import zipfile
+from zipfile import ZipFile
+from tempfile import SpooledTemporaryFile
 
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
@@ -182,12 +186,34 @@ def download_model(request):
     :return:
     """
     model_id = request.GET['model_id']
-    file_path = os.path.join(MODELS_DIR, "model_" + str(model_id))
+    task_object = Task.objects.get(pk=model_id)
+    task_json_name = "task_{}.json".format(model_id)
 
-    if os.path.exists(file_path):
-        with open(file_path, 'rb') as fh:
-            response = HttpResponse(fh)
-            response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(file_path)
+    model_name = "model_" + str(model_id)
+    model_file_path = os.path.join(MODELS_DIR, model_name)
+
+    model_files = []
+    for file in glob.glob(model_file_path + '*'):
+        # Add path and name
+        model_files.append((file, os.path.basename(file)))
+    
+    zip_path = "zipped_model_{}.zip".format(model_id)
+    if os.path.exists(model_file_path):
+        # Make temporary Zip file
+        with SpooledTemporaryFile() as tmp:
+            with ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as archive:
+                # Write Task model object as json
+                archive.writestr(task_json_name, json.dumps(task_object.to_json()))
+                # Write model files
+                for path, name in model_files:
+                    archive.write(path, name)
+
+            # Reset file pointer
+            tmp.seek(0)
+            # Write file data to response
+            response = HttpResponse(tmp.read())
+            # Download file
+            response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(zip_path)
             return response
 
     return HttpResponse()
