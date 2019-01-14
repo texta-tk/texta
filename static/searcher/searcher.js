@@ -242,28 +242,18 @@ function query () {
     request.send(new FormData(formElement))
 }
 
-async function deleteDocument (self, doc_id) {
-    //delete here TODO:
+function deleteDocument (self, doc_id) {
     $.ajax({
         url: PREFIX+'/delete_document',
         data: {document_id: doc_id},
         type: 'POST',
         success: function(result) {
-            deleteDatatableRow($(self).parents('tr'))
+            //refresh dt, so deleted row isnt visible
+            examplesTable.draw('page')
         }
-    });
+    })
+}
 
-}
-async function deleteDatatableRow(row){
-    examplesTable.rows(row).remove()
-    //TODO:
-    //temporary hack, for some reason datatables doesnt redraw properly if chaining after remove so just sleep 500 ms
-    await sleep(1000)
-    examplesTable.draw(false);
-}
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
 function recalcDatatablesHeight () {
     if (examplesTable) {
         let datatablesNavHeight = $('#top-part').height()
