@@ -27,8 +27,8 @@ from django.utils.encoding import smart_str
 # For string templates
 from django.template import Context
 from django.template import Template
-
-from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER
+import collections
+from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER, es_url
 
 from dataset_importer.document_preprocessor.preprocessor import preprocessor_map
 from conceptualiser.models import Term, TermConcept
@@ -118,14 +118,24 @@ def save(request):
     try:
         q = combined_query
         desc = request.POST['search_description']
-        s_content = json.dumps([request.POST[x] for x in request.POST.keys() if 'match_txt' in x])
-        search = Search(author=request.user, search_content=s_content, description=desc, query=json.dumps(q))
-        search.save()
+        s_content = {}
 
+        # make json
+        for x in request.POST.keys():
+            if 'match_txt' in x:
+                # get the ID of the field, eg match_txt_1 returns 1 match_txt_1533 returns 1533
+                field_id = x.rsplit("_", 1)[-1]
+                match_field = request.POST['match_field_'+field_id]
+                if match_field in s_content.keys():
+                    s_content[match_field].append(request.POST[x])
+                else:
+                    s_content[match_field] = [request.POST[x]]
+
+        search = Search(author=request.user,search_content=json.dumps(s_content),description=desc,query=json.dumps(q))
+        search.save()
         for dataset_id in request.session['dataset']:
             dataset = Dataset.objects.get(pk=int(dataset_id))
             search.datasets.add(dataset)
-
         search.save()
         logger.set_context('user_name', request.user.username)
         logger.set_context('search_id', search.id)
@@ -200,11 +210,6 @@ def get_table_content(request):
     es_params['num_examples'] = request_param['iDisplayLength']
     result = search(es_params, request)
     result['sEcho'] = echo
-
-    # NEW PY REQUIREMENT
-    # Get rid of 'odict_values' otherwise can't json dumps
-    for i in range(len(result['aaData'])):
-        result['aaData'][i] = list(result['aaData'][i])
 
     return HttpResponse(json.dumps(result, ensure_ascii=False))
 
@@ -330,6 +335,26 @@ def search(es_params, request):
     return out
 
 
+def delete_document(request):
+    ds = Datasets().activate_datasets(request.session)
+    es_m = ds.build_manager(ES_Manager)
+    es_m.build(request.POST)
+
+    active_indices = es_m.stringify_datasets()
+    doc_ids = request.POST.getlist('document_id[]')
+
+    url = 'http://localhost:9200/'+active_indices+'/_delete_by_query?refresh=true'
+    response = es_m.plain_post(url, data=json.dumps(
+        {
+            "query": {
+                "ids": {
+                    "values": doc_ids
+                }
+            }
+        }
+    ))
+    return HttpResponse(json.dumps(response))
+
 @login_required
 def remove_by_query(request):
     es_params = request.POST
@@ -407,11 +432,32 @@ def get_search_query(request):
 
     query = json.loads(search.query)
     query_constraints = extract_constraints(query)
-	# For original search content such as unpacked lexicons/concepts
     search_content = json.loads(search.search_content)
 
-    for i in range(len([x for x in query_constraints if x['constraint_type'] == 'string'])):
-        query_constraints[i]['content'] = [search_content[i]]
+    # For original search content such as unpacked lexicons/concepts
+    matches = []
+
+    for i in range(len(query_constraints)):
+        if query_constraints[i]['constraint_type'] == 'string':
+            field_text = query_constraints[i]['content']
+            field_type = query_constraints[i]['field']
+            not_present = True
+            for x in search_content[field_type]:
+                # strings match with query and text field match_txt
+                if field_text[0] == x:
+                    query_constraints[i]['content'] = [x]
+                    search_content[field_type].remove(x)
+                    not_present = False
+
+            if not_present:
+                matches.append(i)
+
+    for k in matches:
+        field_type = query_constraints[k]['field']
+        for x in search_content[field_type]:
+            # strings match with query and text field match_txt
+            query_constraints[k]['content'] = [x]
+            search_content[field_type].remove(x)
 
     return HttpResponse(json.dumps(query_constraints))
 

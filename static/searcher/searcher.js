@@ -204,7 +204,20 @@ function query () {
                 },
                 'scrollX': true,
                 // Add title with the corresponding column name to each element in column
-                'columnDefs': columns,
+
+                "columnDefs": [
+                    columns,
+                    {
+                        "targets": 0,
+                        'searchable': false,
+                        'className': 'dt-center',
+                        "render": function (data, type, row, meta) {
+                            return '<input type="checkbox" id='+data+' name=dt_delete_doc_checkbox>';
+                        }
+
+                    },
+
+                ],
                 'ordering': false
             })
             $.fn.DataTable.ext.pager.numbers_length = 5
@@ -228,6 +241,25 @@ function query () {
     request.open('POST', PREFIX + '/table_header')
     request.send(new FormData(formElement))
 }
+
+function deleteDocument () {
+    let doc_ids = []
+    $('input[name="dt_delete_doc_checkbox"]').each(function() {
+        if ($( this ).is(":checked")) {
+            doc_ids.push($(this).attr('id'))
+        }
+    });
+    $.ajax({
+        url: PREFIX+'/delete_document',
+        data: {'document_id[]': doc_ids},
+        type: 'POST',
+        success: function(result) {
+            //refresh dt, so deleted row isnt visible
+            examplesTable.draw('page')
+        }
+    })
+}
+
 function recalcDatatablesHeight () {
     if (examplesTable) {
         let datatablesNavHeight = $('#top-part').height()

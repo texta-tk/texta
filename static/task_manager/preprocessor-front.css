@@ -36,7 +36,8 @@
     /* center grid item */
     align-self: center;
     justify-self: stretch;
-    margin-right: 0;
+    margin-right: 5px;
+    margin-left: 5px;
 }
 
 .task-manager-grid-wrapper .grid-i > :nth-child(2).select-wrapper {
