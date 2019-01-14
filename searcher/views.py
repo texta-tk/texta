@@ -339,10 +339,18 @@ def delete_document(request):
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(request.POST)
-    ds_mapping = ds.active_datasets[0].mapping
+    active_indices = es_m.stringify_datasets()
     doc_id = request.POST['document_id']
-    url = '{0}/{1}/{2}/{3}?refresh=wait_for'.format(es_url,ds_mapping,ds_mapping, doc_id)
-    response = es_m.plain_delete(url)
+    url = 'http://localhost:9200/'+active_indices+'/_delete_by_query?refresh=true'
+    response = es_m.plain_post(url, data=json.dumps(
+        {
+            "query": {
+                "ids": {
+                    "values": [doc_id]
+                }
+            }
+        }
+    ))
     return HttpResponse(json.dumps(response))
 
 @login_required
