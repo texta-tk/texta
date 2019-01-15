@@ -11,6 +11,11 @@
                     <li><a value='{{ task_param.id }}' data-toggle="tab"
                            href="#{{ task_param.id }}">{{ task_param.name }}</a></li>
                 {% endfor %}
+                <li>
+                    <a href="#" data-toggle="modal" data-target="#myModal">
+                        <span class="glyphicon glyphicon-upload"></span>
+                    </a>
+                </li>
             </ul>
         </div>
             <div class="tab-content height-max">
@@ -26,11 +31,35 @@
                             <div class="grid-2-col-1-content">
                                 {% include task_param.result_template %}
                             </div>
-
                         </div>
                     </div>
-
                 {% endfor %}
             </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="myModal" role="dialog">
+            <div class="modal-dialog">
+            
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Upload exported Task archive </h4>
+                </div>
+                <form method="post" enctype="multipart/form-data" id="form_upload_task" action="javascript:uploadTask('form_upload_task');">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <input title="Select exported task archive" type="file" name="task_archive" class="custom-file-input" id="customFile" accept=".zip">
+                    </div>
+                    <div class="modal-footer">
+                    <button type="submit" class="btn btn-default pull-left">Upload</button>
+                </form>
+
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+            
+            </div>
+        </div>
     </div>
 {% endblock %}

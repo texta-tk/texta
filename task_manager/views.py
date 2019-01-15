@@ -5,8 +5,8 @@ import glob
 import zipfile
 from zipfile import ZipFile
 from tempfile import SpooledTemporaryFile
-
-from django.http import HttpResponse, HttpResponseRedirect
+from django.core import serializers
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, JsonResponse
 from django.template import loader
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -151,16 +151,16 @@ def delete_task(request):
     else:
         if 'train' in task.task_type:
             try:
-                file_path = os.path.join(MODELS_DIR, "model_" + str(task_id))
+                file_path = os.path.join(MODELS_DIR, "model_{}".format(task_id))
                 if (os.path.exists(file_path)):
                     os.remove(file_path)
             except Exception as e:
-                file_path = os.path.join(MODELS_DIR, "model_" + str(task_id))
+                file_path = os.path.join(MODELS_DIR, "model_{}".format(task_id))
                 logging.getLogger(ERROR_LOGGER).error('Could not delete model ({}).'.format(file_path), exc_info=True)
         if 'entity_extractor' in task.task_type or 'train_tagger' in task.task_type :
             try:
                 plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/model_{}_cm.svg".format(task_id))
-                meta_path = os.path.join(MODELS_DIR, "model_" + str(task_id) + "_meta")
+                meta_path = os.path.join(MODELS_DIR, "model_{}_meta".format(task_id))
                 
                 if (os.path.exists(plot_path)):
                     os.remove(plot_path)
@@ -187,26 +187,37 @@ def download_model(request):
     """
     model_id = request.GET['model_id']
     task_object = Task.objects.get(pk=model_id)
-    task_json_name = "task_{}.json".format(model_id)
+    task_xml_name = "task_{}.xml".format(model_id)
 
     model_name = "model_" + str(model_id)
     model_file_path = os.path.join(MODELS_DIR, model_name)
+
+    media_path = os.path.join(PROTECTED_MEDIA, "task_manager/{}".format(model_name))
 
     model_files = []
     for file in glob.glob(model_file_path + '*'):
         # Add path and name
         model_files.append((file, os.path.basename(file)))
+
+    media_files = []
+    for file in glob.glob(media_path + '*'):
+        # Add path and name
+        media_files.append((file, os.path.basename(file)))
     
     zip_path = "zipped_model_{}.zip".format(model_id)
     if os.path.exists(model_file_path):
         # Make temporary Zip file
         with SpooledTemporaryFile() as tmp:
             with ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as archive:
-                # Write Task model object as json
-                archive.writestr(task_json_name, json.dumps(task_object.to_json()))
+                # Write Task model object as xml
+                task_xml_data = serializers.serialize("xml", [task_object])
+                archive.writestr(task_xml_name, task_xml_data)
                 # Write model files
                 for path, name in model_files:
-                    archive.write(path, name)
+                    archive.write(path, "model/"+name)
+
+                for path, name in media_files:
+                    archive.write(path, "media/"+name)
 
             # Reset file pointer
             tmp.seek(0)
@@ -217,3 +228,46 @@ def download_model(request):
             return response
 
     return HttpResponse()
+
+@login_required
+def upload_task_archive(request):
+    task_archive = request.FILES['task_archive']
+    if (zipfile.is_zipfile(task_archive)):
+        with ZipFile(task_archive, 'r') as zf:
+            for file_name in zf.namelist():
+                dirname = os.path.dirname(file_name)
+                # Handle Task object xml
+                if dirname == '' and file_name.lower().endswith('.xml'):
+                    _load_xml_to_database(zf.read(file_name))
+                elif dirname == 'model':
+                    _load_media_file(zf.read(file_name), os.path.basename(file_name))
+                elif dirname == 'media':
+                    _load_media_file(zf.read(file_name), os.path.basename(file_name))
+                else:
+                    json_response = {"text": "Archive seem to not contain any required files"}
+    else:
+        json_response = {"text": "Archive contents malformed or not a .zip file"}
+        return JsonResponse(json_response)
+    return HttpResponse()
+
+
+def _load_xml_to_database(xml_model_object):
+    # Decode bytes object
+    xml_model_object = xml_model_object.decode('utf8')
+    for obj in serializers.deserialize("xml", xml_model_object):
+        # Save object to model dataset
+        obj.save()
+
+
+def _load_model_file(file, file_name):
+    '''For extracting the uploaded model in upload_task_archive'''
+    model_file_path = os.path.join(MODELS_DIR, file_name)
+    with open(model_file_path, 'wb+') as f:
+        f.write(file)
+
+
+def _load_media_file(file, file_name):
+    '''For extracting the uploaded model mediadata in upload_task_archive'''
+    media_file_path = os.path.join(PROTECTED_MEDIA, "task_manager/{}".format(file_name))
+    with open(media_file_path, 'wb+') as f:
+        f.write(file)

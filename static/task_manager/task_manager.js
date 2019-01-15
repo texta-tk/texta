@@ -90,3 +90,14 @@ function delete_task (task_id) {
         }
     })
 }
+
+function uploadTask(task_form_id) {
+    formElement = document.getElementById(task_form_id)
+
+    var request = new XMLHttpRequest()
+    request.onreadystatechange = function () {
+        // location.reload()
+    }
+    request.open('POST', PREFIX + '/upload_task_archive')
+    request.send(new FormData(formElement), true)
+}
