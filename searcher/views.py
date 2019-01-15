@@ -49,7 +49,7 @@ from dataset_importer.document_preprocessor import preprocessor_map
 from task_manager.views import task_params
 from task_manager.models import Task
 
-from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER
+from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER, es_url
 
 from searcher.view_functions.export_pages import export_pages
 from searcher.view_functions.tranlist_highlighting import transliterate_highlight_spans, highlight_transliterately
@@ -82,16 +82,16 @@ def get_fields(es_m):
     texta_reserved = ['texta_facts']
     mapped_fields = es_m.get_mapped_fields()
     fields_with_facts = es_m.get_fields_with_facts()
-    
+
     fields = []
-    
+
     for mapped_field,dataset_info in mapped_fields.items():
         data = json.loads(mapped_field)
 
         path = data['path']
-        
+
         if path not in texta_reserved:
-        
+
             path_list = path.split('.')
 
             label = '{0} --> {1}'.format(path_list[0], path_list[-1]) if len(path_list) > 1 else path_list[0]
@@ -104,7 +104,7 @@ def get_fields(es_m):
 
             field = {'data': json.dumps(data), 'label': label, 'type': data['type']}
             fields.append(field)
-        
+
             if path in fields_with_facts['fact']:
                 data['type'] = 'facts'
                 field = {'data': json.dumps(data), 'label': label + ' [fact_names]', 'type':'facts'}
@@ -119,10 +119,10 @@ def get_fields(es_m):
                 data['type'] = 'fact_num_val'
                 field = {'data': json.dumps(data), 'label': label + ' [fact_num_values]', 'type':'facts'}
                 fields.append(field)
-    
+
     # Sort fields by label
     fields = sorted(fields, key=lambda l: l['label'])
-    
+
     return fields
 
 
@@ -136,18 +136,14 @@ def dashboard_endpoint(request):
     es_m = ds.build_manager(ES_Manager)
 
     indices = es_m.stringify_datasets()
-    normal_fields, nested_fields = es_m.get_aggregation_field_data()
+    dashboard = SearcherDashboard(es_url=es_url, indices=indices)
+    result = dashboard.response
 
-    pprint(normal_fields)
-    pprint(nested_fields)
-
-    dashboard = SearcherDashboard(indices=indices, normal_fields=normal_fields, nested_fields=nested_fields)
-
-    return JsonResponse(dashboard.response.to_dict())
+    return JsonResponse(result)
 
 def dashboard_visualize(request):
     template = loader.get_template('dashboard/dashboard.html')
-    
+
     return HttpResponse (template.render({'STATIC_URL': STATIC_URL,
                        'URL_PREFIX': URL_PREFIX},request))
 
@@ -177,8 +173,8 @@ def index(request):
                        'fields': fields,
                        'searches': Search.objects.filter(author=request.user),
                        'lexicons': Lexicon.objects.all().filter(author=request.user),
-                       'language_models': language_models, 
-                       'allowed_datasets': datasets,                       
+                       'language_models': language_models,
+                       'allowed_datasets': datasets,
                        'enabled_preprocessors': enabled_preprocessors,
                        'task_params': task_params}
 
@@ -227,8 +223,6 @@ def save(request):
         q = combined_query
         desc = request.POST['search_description']
         s_content = json.dumps([request.POST[x] for x in request.POST.keys() if 'match_txt' in x])
-
-
 
         search = Search(author=request.user, search_content=s_content, description=desc, query=json.dumps(q))
         search.save()

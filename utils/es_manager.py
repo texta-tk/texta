@@ -604,12 +604,12 @@ class ES_Manager:
 
         return response
 
-    def add_is_nested_to_fields(self, nested_fields, fields_and_types: List[Dict], field_name_key='full_path', is_nested_key='is_nested'):
+
+    def add_is_nested_to_fields(self, nested_fields, fields_and_types: List[Dict], field_name_key='full_path'):
         """
-        Given a list of dictionaries where one of the keys is a field name,
+        Given a list of dictionaries where the keys are field names,
         adds a value that determines if that field is of the nested datatype.
         :param nested_fields:
-        :param is_nested_key: Key name that is added into the dict whether it is or isn't a nested field.
         :param field_name_key: Key name that contains the field name.
         :param fields_and_types: List of dictionaries that contain an ES field names (including dot notation)
         :return:
@@ -619,9 +619,9 @@ class ES_Manager:
         for field_dict in fields_and_types:
             for nested_field_name in nested_fields:
                 if nested_field_name in field_dict[field_name_key]:
-                    field_dict[is_nested_key] = True
+                    field_dict['is_nested'] = True
                 else:
-                    field_dict[is_nested_key] = False
+                    field_dict['is_nested'] = False
                 new_list.append(field_dict)
 
         return new_list
@@ -655,12 +655,13 @@ class ES_Manager:
         all_fields = []
 
         for field_name, field_dict in filtered_field_mapping.items():
-            full_path_and_types = dict()
-            mapping_key = list(field_dict['mapping'].keys())[0]
+            if field_dict['mapping']:  # Empty dicts evaluate to False.
+                full_path_and_types = dict()
+                mapping_key = list(field_dict['mapping'].keys())[0]
 
-            full_path_and_types['full_path'] = field_dict['full_name']
-            full_path_and_types['type'] = field_dict['mapping'][mapping_key]['type']
-            all_fields.append(full_path_and_types)
+                full_path_and_types['full_path'] = field_dict['full_name']
+                full_path_and_types['type'] = field_dict['mapping'][mapping_key]['type']
+                all_fields.append(full_path_and_types)
 
         return all_fields
 
@@ -681,7 +682,7 @@ class ES_Manager:
 
         return filtered_dict
 
-    def filter_nested_fields(self, fields_and_types: List[Dict]):
+    def split_nested_fields(self, fields_and_types: List[Dict]):
         nested_fields = []
         normal_fields = []
 
@@ -706,9 +707,9 @@ class ES_Manager:
         fieldnames_and_types = self.get_field_types(filtered_field_mappings)
         with_is_nested = self.add_is_nested_to_fields(names_of_nested_fields, fieldnames_and_types)
 
-        normal_fields, nested_fields = self.filter_nested_fields(with_is_nested)
+        normal_fields, nested_fields = self.split_nested_fields(with_is_nested)
 
         for nested_field in nested_fields:
-            nested_field['parent'] = nested_field['full_path'].split('.')[0]
+            nested_field['parent'] = nested_field['full_path'].split('.')[0]  # By ES dot notation, "field.data"
 
         return normal_fields, nested_fields

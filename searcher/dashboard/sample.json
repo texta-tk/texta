@@ -1,0 +1,165 @@
+{
+  "indices": [{
+    "index_name": "ss",
+    "total_documents": 24450,
+    "aggregations": {
+      "sterms": {
+        "article_head": {
+          "buckets": [
+            {},
+            {},
+            {}
+          ]
+        },
+        "rubric": {
+          "buckets": [
+            {},
+            {},
+            {}
+          ]
+        },
+        "time": {
+          "buckets": [
+            {},
+            {},
+            {}
+          ]
+        },
+        "creation_string": {
+          "buckets": [
+            {},
+            {},
+            {}
+          ]
+        },
+        "footnotes": {
+          "buckets": [
+            {},
+            {},
+            {}
+          ]
+        }
+      },
+      "nested": {
+        "texta_facts": {
+        }
+      },
+      "value_count": {
+        "kysimus_ja_vastus": {
+          "value": 145,
+          "percentage": 20
+        }
+      }
+    }
+  },
+    {
+    "index_name": "ss",
+    "total_documents": 24450,
+    "aggregations": {
+      "sterms": {
+        "article_head": {
+          "buckets": [
+            {},
+            {},
+            {}
+          ]
+        },
+        "rubric": {
+          "buckets": [
+            {},
+            {},
+            {}
+          ]
+        },
+        "time": {
+          "buckets": [
+            {},
+            {},
+            {}
+          ]
+        },
+        "creation_string": {
+          "buckets": [
+            {},
+            {},
+            {}
+          ]
+        },
+        "footnotes": {
+          "buckets": [
+            {},
+            {},
+            {}
+          ]
+        }
+      },
+      "nested": {
+        "texta_facts": {
+        }
+      },
+      "value_count": {
+        "kysimus_ja_vastus": {
+          "value": 145,
+          "percentage": 20
+        }
+      }
+    }
+  },
+    {
+    "index_name": "ss",
+    "total_documents": 24450,
+    "aggregations": {
+      "sterms": {
+        "article_head": {
+          "buckets": [
+            {},
+            {},
+            {}
+          ]
+        },
+        "rubric": {
+          "buckets": [
+            {},
+            {},
+            {}
+          ]
+        },
+        "time": {
+          "buckets": [
+            {},
+            {},
+            {}
+          ]
+        },
+        "creation_string": {
+          "buckets": [
+            {},
+            {},
+            {}
+          ]
+        },
+        "footnotes": {
+          "buckets": [
+            {},
+            {},
+            {}
+          ]
+        }
+      },
+      "nested": {
+        "texta_facts": {
+        }
+      },
+      "value_count": {
+        "kysimus_ja_vastus": {
+          "value": 145,
+          "percentage": 20
+        }
+      }
+    }
+  }
+  ]
+
+}
+
+
