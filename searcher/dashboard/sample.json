@@ -1,165 +1,3429 @@
 {
-  "indices": [{
-    "index_name": "ss",
-    "total_documents": 24450,
-    "aggregations": {
-      "sterms": {
-        "article_head": {
-          "buckets": [
-            {},
-            {},
-            {}
-          ]
+  'hits': {
+    'max_score': 0.0,
+    'hits': [],
+    'total': 25368
+  },
+  'timed_out': False,
+  'aggregations': {
+    'sigsterms#ArticleID#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 752,
+          'bg_count': 756,
+          'key': '83007857',
+          'score': 0.031661654468308244
         },
-        "rubric": {
-          "buckets": [
-            {},
-            {},
-            {}
-          ]
+        {
+          'doc_count': 496,
+          'bg_count': 497,
+          'key': '82963597',
+          'score': 0.021016509140488818
         },
-        "time": {
-          "buckets": [
-            {},
-            {},
-            {}
-          ]
+        {
+          'doc_count': 597,
+          'bg_count': 676,
+          'key': '83020007',
+          'score': 0.01967659709044904
         },
-        "creation_string": {
-          "buckets": [
-            {},
-            {},
-            {}
-          ]
+        {
+          'doc_count': 434,
+          'bg_count': 437,
+          'key': '83011725',
+          'score': 0.0182168312457647
         },
-        "footnotes": {
-          "buckets": [
-            {},
-            {},
-            {}
-          ]
+        {
+          'doc_count': 423,
+          'bg_count': 427,
+          'key': '83009095',
+          'score': 0.017668351821811208
+        },
+        {
+          'doc_count': 399,
+          'bg_count': 404,
+          'key': '83010161',
+          'score': 0.016567510256628493
+        },
+        {
+          'doc_count': 337,
+          'bg_count': 338,
+          'key': '82995227',
+          'score': 0.014253220101555926
+        },
+        {
+          'doc_count': 330,
+          'bg_count': 341,
+          'key': '82985113',
+          'score': 0.01316473435225503
+        },
+        {
+          'doc_count': 410,
+          'bg_count': 472,
+          'key': '83026029',
+          'score': 0.013026276582606296
+        },
+        {
+          'doc_count': 356,
+          'bg_count': 384,
+          'key': '83014423',
+          'score': 0.013015677569496675
         }
-      },
-      "nested": {
-        "texta_facts": {
+      ]
+    },
+    'value_count#CommentText#keyword_count': {
+      'value': 19283
+    },
+    'sterms#ArticleTitle#keyword_terms': {
+      'sum_other_doc_count': 19354,
+      'doc_count_error_upper_bound': 156,
+      'buckets': [
+        {
+          'doc_count': 1879,
+          'key': ''
+        },
+        {
+          'doc_count': 752,
+          'key': 'Kolonel Riho Ühtegi: venelased võivad jõuda Tallinna kahe päevaga, aga nad surevad siin'
+        },
+        {
+          'doc_count': 597,
+          'key': 'Vene riigiduuma kaitsekomitee esimees Šamanov: kolonel Ühtegi koht on hullumajas'
+        },
+        {
+          'doc_count': 496,
+          'key': 'Lapsele elatisraha maksvad isad ei tea, millele naised selle kulutavad'
+        },
+        {
+          'doc_count': 434,
+          'key': 'Yana Toom vihastas kolonel Riho Ühtegi peale, kes venelaste hukkumisest räägib: minut kuulsust ja trummipõrinaga lahingusse! Mul pole sõnu...'
+        },
+        {
+          'doc_count': 423,
+          'key': 'Tartu kiirabi juht: teeäärsest sünnitajast Facebooki pildi postitanud töötaja jääb ametisse, ent saab ilmselt noomituse. Ta käitus valesti'
+        },
+        {
+          'doc_count': 399,
+          'key': 'Palju õnne! Äsja abiellunud Mart Haber ja Taivo Piller saavad kaksikute isadeks'
+        },
+        {
+          'doc_count': 356,
+          'key': 'Kaja Kallas: väita, et parempoolsed vihkavad vene emakeelega inimesi, on sulaselge vale ja viha õhutamine'
+        },
+        {
+          'doc_count': 341,
+          'key': 'Mees soovitab eestlannades pettunud sookaaslastel valida vene naine: temaga ma tundsin esimest korda elus ennast õige mehena'
+        },
+        {
+          'doc_count': 337,
+          'key': 'Sotsiaalmeedia kihab: kas kõrge Tallinna linnaametnik mõnitab mustanahalisi? Ma kehastusin kaevuriks, pareerib Talvo Rüütelmaa'
         }
-      },
-      "value_count": {
-        "kysimus_ja_vastus": {
-          "value": 145,
-          "percentage": 20
+      ]
+    },
+    'sigsterms#CommentText#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 11654,
+          'bg_count': 12727,
+          'key': 'on',
+          'score': 0.4151996084431797
+        },
+        {
+          'doc_count': 11418,
+          'bg_count': 12451,
+          'key': 'ja',
+          'score': 0.4080490177296888
+        },
+        {
+          'doc_count': 8919,
+          'bg_count': 9698,
+          'key': 'ei',
+          'score': 0.3206707031619376
+        },
+        {
+          'doc_count': 7311,
+          'bg_count': 7980,
+          'key': 'et',
+          'score': 0.26075482818337853
+        },
+        {
+          'doc_count': 6609,
+          'bg_count': 7191,
+          'key': 'kui',
+          'score': 0.23728806392954485
+        },
+        {
+          'doc_count': 5361,
+          'bg_count': 5849,
+          'key': 'see',
+          'score': 0.19138235698573047
+        },
+        {
+          'doc_count': 5132,
+          'bg_count': 5578,
+          'key': 'siis',
+          'score': 0.18466933447043424
+        },
+        {
+          'doc_count': 4858,
+          'bg_count': 5290,
+          'key': 'ka',
+          'score': 0.17413029616695547
+        },
+        {
+          'doc_count': 4293,
+          'bg_count': 4707,
+          'key': 'aga',
+          'score': 0.15166513746855545
+        },
+        {
+          'doc_count': 3359,
+          'bg_count': 3620,
+          'key': 'oma',
+          'score': 0.12303301057264235
         }
+      ]
+    },
+    'value_count#Livefeed#keyword_count': {
+      'value': 25368
+    },
+    'sigsterms#Livefeed#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 23489,
+          'bg_count': 25528,
+          'key': 'false',
+          'score': 0.8453871437574744
+        }
+      ]
+    },
+    'sigsterms#ParentText#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 6385,
+          'bg_count': 7018,
+          'key': 'on',
+          'score': 0.2243988057577937
+        },
+        {
+          'doc_count': 6084,
+          'bg_count': 6654,
+          'key': 'ja',
+          'score': 0.21608095717096623
+        },
+        {
+          'doc_count': 4873,
+          'bg_count': 5344,
+          'key': 'ei',
+          'score': 0.1720829194168879
+        },
+        {
+          'doc_count': 4268,
+          'bg_count': 4655,
+          'key': 'et',
+          'score': 0.15246711285581524
+        },
+        {
+          'doc_count': 3902,
+          'bg_count': 4257,
+          'key': 'kui',
+          'score': 0.13931062438712868
+        },
+        {
+          'doc_count': 2922,
+          'bg_count': 3186,
+          'key': 'see',
+          'score': 0.10444911964500518
+        },
+        {
+          'doc_count': 2730,
+          'bg_count': 2978,
+          'key': 'siis',
+          'score': 0.09749311530908841
+        },
+        {
+          'doc_count': 2417,
+          'bg_count': 2628,
+          'key': 'aga',
+          'score': 0.08690725821738327
+        },
+        {
+          'doc_count': 2390,
+          'bg_count': 2621,
+          'key': 'ka',
+          'score': 0.08439975730923259
+        },
+        {
+          'doc_count': 1842,
+          'bg_count': 2028,
+          'key': 'oma',
+          'score': 0.06450714176754063
+        }
+      ]
+    },
+    'value_count#ThumbsDown#keyword_count': {
+      'value': 25368
+    },
+    'sigsterms#CryingFace#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': []
+    },
+    'sigsterms#ArticleURL#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 25368,
+          'bg_count': 27616,
+          'key': 'delfi.ee',
+          'score': 0.9098348783314019
+        },
+        {
+          'doc_count': 25368,
+          'bg_count': 27616,
+          'key': 'a',
+          'score': 0.9098348783314019
+        },
+        {
+          'doc_count': 25368,
+          'bg_count': 27616,
+          'key': 'http',
+          'score': 0.9098348783314019
+        },
+        {
+          'doc_count': 752,
+          'bg_count': 756,
+          'key': '83007857',
+          'score': 0.031661654468308244
+        },
+        {
+          'doc_count': 496,
+          'bg_count': 497,
+          'key': '82963597',
+          'score': 0.021016509140488818
+        },
+        {
+          'doc_count': 597,
+          'bg_count': 676,
+          'key': '83020007',
+          'score': 0.01967659709044904
+        },
+        {
+          'doc_count': 434,
+          'bg_count': 437,
+          'key': '83011725',
+          'score': 0.0182168312457647
+        },
+        {
+          'doc_count': 423,
+          'bg_count': 427,
+          'key': '83009095',
+          'score': 0.017668351821811208
+        },
+        {
+          'doc_count': 399,
+          'bg_count': 404,
+          'key': '83010161',
+          'score': 0.016567510256628493
+        },
+        {
+          'doc_count': 337,
+          'bg_count': 338,
+          'key': '82995227',
+          'score': 0.014253220101555926
+        }
+      ]
+    },
+    'sterms#PublishTime#keyword_terms': {
+      'sum_other_doc_count': 19002,
+      'doc_count_error_upper_bound': 174,
+      'buckets': [
+        {
+          'doc_count': 1879,
+          'key': ''
+        },
+        {
+          'doc_count': 752,
+          'key': '2018-07-11 09:06:52'
+        },
+        {
+          'doc_count': 597,
+          'key': '2018-07-12 09:09:51'
+        },
+        {
+          'doc_count': 511,
+          'key': '2018-07-10 00:05:04'
+        },
+        {
+          'doc_count': 478,
+          'key': '2018-07-09 00:05:03'
+        },
+        {
+          'doc_count': 460,
+          'key': '2018-07-12 00:05:19'
+        },
+        {
+          'doc_count': 434,
+          'key': '2018-07-11 14:19:39'
+        },
+        {
+          'doc_count': 433,
+          'key': '2018-07-13 00:05:03'
+        },
+        {
+          'doc_count': 423,
+          'key': '2018-07-11 11:29:29'
+        },
+        {
+          'doc_count': 399,
+          'key': '2018-07-11 11:54:49'
+        }
+      ]
+    },
+    'sigsterms#ArticleTitle#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 5664,
+          'bg_count': 6230,
+          'key': 'on',
+          'score': 0.19875586090287953
+        },
+        {
+          'doc_count': 4829,
+          'bg_count': 5226,
+          'key': 'ja',
+          'score': 0.1753455897707116
+        },
+        {
+          'doc_count': 3089,
+          'bg_count': 3346,
+          'key': 'ei',
+          'score': 0.11195141712477073
+        },
+        {
+          'doc_count': 1997,
+          'bg_count': 2115,
+          'key': 'ühtegi',
+          'score': 0.07581485739772677
+        },
+        {
+          'doc_count': 1997,
+          'bg_count': 2115,
+          'key': 'kolonel',
+          'score': 0.07581485739772677
+        },
+        {
+          'doc_count': 2137,
+          'bg_count': 2339,
+          'key': 'et',
+          'score': 0.07577584642737262
+        },
+        {
+          'doc_count': 1893,
+          'bg_count': 2089,
+          'key': 'eesti',
+          'score': 0.06596599949451165
+        },
+        {
+          'doc_count': 1891,
+          'bg_count': 2129,
+          'key': 'vene',
+          'score': 0.063112123788037
+        },
+        {
+          'doc_count': 1551,
+          'bg_count': 1589,
+          'key': 'tallinna',
+          'score': 0.06293485277980626
+        },
+        {
+          'doc_count': 1787,
+          'bg_count': 1979,
+          'key': 'video',
+          'score': 0.061804414881010475
+        }
+      ]
+    },
+    'sigsterms#ParentID#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 95,
+          'bg_count': 96,
+          'key': '69240935',
+          'score': 0.0039599022847782404
+        },
+        {
+          'doc_count': 73,
+          'bg_count': 78,
+          'key': '69259909',
+          'score': 0.002721678437362116
+        },
+        {
+          'doc_count': 64,
+          'bg_count': 71,
+          'key': '69262957',
+          'score': 0.0022052265586714687
+        },
+        {
+          'doc_count': 39,
+          'bg_count': 39,
+          'key': '69248377',
+          'score': 0.0016589389801795903
+        },
+        {
+          'doc_count': 43,
+          'bg_count': 46,
+          'key': '69244727',
+          'score': 0.00159925164734447
+        },
+        {
+          'doc_count': 37,
+          'bg_count': 37,
+          'key': '69218995',
+          'score': 0.0015738651863242263
+        },
+        {
+          'doc_count': 30,
+          'bg_count': 30,
+          'key': '69223815',
+          'score': 0.001276106907830454
+        },
+        {
+          'doc_count': 28,
+          'bg_count': 28,
+          'key': '69204259',
+          'score': 0.0011910331139750902
+        },
+        {
+          'doc_count': 24,
+          'bg_count': 24,
+          'key': '69244013',
+          'score': 0.0010208855262643633
+        },
+        {
+          'doc_count': 24,
+          'bg_count': 26,
+          'key': '69210045',
+          'score': 0.0008695809631858801
+        }
+      ]
+    },
+    'value_count#ParentID#keyword_count': {
+      'value': 25368
+    },
+    'value_count#ArticleID#keyword_count': {
+      'value': 25368
+    },
+    'sigsterms#CommentAdded#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 25368,
+          'bg_count': 27616,
+          'key': '2018',
+          'score': 0.9098348783314019
+        },
+        {
+          'doc_count': 25368,
+          'bg_count': 27616,
+          'key': '07',
+          'score': 0.9098348783314019
+        },
+        {
+          'doc_count': 7994,
+          'bg_count': 8327,
+          'key': '11',
+          'score': 0.31383979369896614
+        },
+        {
+          'doc_count': 7265,
+          'bg_count': 7559,
+          'key': '10',
+          'score': 0.285872466037479
+        },
+        {
+          'doc_count': 7921,
+          'bg_count': 8899,
+          'key': '12',
+          'score': 0.2655900471653996
+        },
+        {
+          'doc_count': 6580,
+          'bg_count': 7287,
+          'key': '09',
+          'score': 0.22757122299055527
+        },
+        {
+          'doc_count': 5501,
+          'bg_count': 6274,
+          'key': '13',
+          'score': 0.1784484504965969
+        },
+        {
+          'doc_count': 4139,
+          'bg_count': 4609,
+          'key': '08',
+          'score': 0.14146861142584743
+        },
+        {
+          'doc_count': 3117,
+          'bg_count': 3441,
+          'key': '14',
+          'score': 0.10853384172335366
+        },
+        {
+          'doc_count': 3149,
+          'bg_count': 3511,
+          'key': '15',
+          'score': 0.10733932175213227
+        }
+      ]
+    },
+    'value_count#ArticleTitle#keyword_count': {
+      'value': 25368
+    },
+    'sterms#RedHeart#keyword_terms': {
+      'sum_other_doc_count': 0,
+      'doc_count_error_upper_bound': 0,
+      'buckets': [
+        {
+          'doc_count': 25368,
+          'key': ''
+        }
+      ]
+    },
+    'sterms#ArticleID#keyword_terms': {
+      'sum_other_doc_count': 20823,
+      'doc_count_error_upper_bound': 157,
+      'buckets': [
+        {
+          'doc_count': 752,
+          'key': '83007857'
+        },
+        {
+          'doc_count': 597,
+          'key': '83020007'
+        },
+        {
+          'doc_count': 496,
+          'key': '82963597'
+        },
+        {
+          'doc_count': 434,
+          'key': '83011725'
+        },
+        {
+          'doc_count': 423,
+          'key': '83009095'
+        },
+        {
+          'doc_count': 410,
+          'key': '83026029'
+        },
+        {
+          'doc_count': 399,
+          'key': '83010161'
+        },
+        {
+          'doc_count': 356,
+          'key': '83014423'
+        },
+        {
+          'doc_count': 341,
+          'key': '83002443'
+        },
+        {
+          'doc_count': 337,
+          'key': '82995227'
+        }
+      ]
+    },
+    'sterms#CryingFace#keyword_terms': {
+      'sum_other_doc_count': 0,
+      'doc_count_error_upper_bound': 0,
+      'buckets': [
+        {
+          'doc_count': 25368,
+          'key': ''
+        }
+      ]
+    },
+    'sterms#ThumbsUp#keyword_terms': {
+      'sum_other_doc_count': 13464,
+      'doc_count_error_upper_bound': 258,
+      'buckets': [
+        {
+          'doc_count': 1708,
+          'key': ''
+        },
+        {
+          'doc_count': 1651,
+          'key': '1'
+        },
+        {
+          'doc_count': 1538,
+          'key': '2'
+        },
+        {
+          'doc_count': 1308,
+          'key': '3'
+        },
+        {
+          'doc_count': 1192,
+          'key': '4'
+        },
+        {
+          'doc_count': 1058,
+          'key': '5'
+        },
+        {
+          'doc_count': 1033,
+          'key': '6'
+        },
+        {
+          'doc_count': 847,
+          'key': '7'
+        },
+        {
+          'doc_count': 799,
+          'key': '8'
+        },
+        {
+          'doc_count': 770,
+          'key': '9'
+        }
+      ]
+    },
+    'sigsterms#CommentText_clean#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 24878,
+          'bg_count': 27109,
+          'key': 'et',
+          'score': 0.8904353496928804
+        },
+        {
+          'doc_count': 389,
+          'bg_count': 396,
+          'key': 'ru',
+          'score': 0.01598329753571679
+        },
+        {
+          'doc_count': 101,
+          'bg_count': 111,
+          'key': 'en',
+          'score': 0.0035504950156641504
+        }
+      ]
+    },
+    'sigsterms#PublishTime#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 23466,
+          'bg_count': 25501,
+          'key': '2018',
+          'score': 0.8446983807760647
+        },
+        {
+          'doc_count': 23398,
+          'bg_count': 25424,
+          'key': '07',
+          'score': 0.8424659714684171
+        },
+        {
+          'doc_count': 7610,
+          'bg_count': 7894,
+          'key': '11',
+          'score': 0.3012674824738059
+        },
+        {
+          'doc_count': 6526,
+          'bg_count': 6865,
+          'key': '10',
+          'score': 0.2511844538249765
+        },
+        {
+          'doc_count': 6253,
+          'bg_count': 6856,
+          'key': '09',
+          'score': 0.2209099463195001
+        },
+        {
+          'doc_count': 6280,
+          'bg_count': 6912,
+          'key': '00',
+          'score': 0.22007114857348928
+        },
+        {
+          'doc_count': 6342,
+          'bg_count': 7203,
+          'key': '12',
+          'score': 0.20763917812022764
+        },
+        {
+          'doc_count': 3928,
+          'bg_count': 4273,
+          'key': '05',
+          'score': 0.14109280428780938
+        },
+        {
+          'doc_count': 4135,
+          'bg_count': 4714,
+          'key': '13',
+          'score': 0.13426560655214848
+        },
+        {
+          'doc_count': 2757,
+          'bg_count': 3111,
+          'key': '08',
+          'score': 0.09156291786461887
+        }
+      ]
+    },
+    'value_count#ParentSubject#keyword_count': {
+      'value': 25368
+    },
+    'sigsterms#CountryCode#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 22478,
+          'bg_count': 24491,
+          'key': 'ee',
+          'score': 0.8047258272244011
+        },
+        {
+          'doc_count': 1387,
+          'bg_count': 1492,
+          'key': 'fi',
+          'score': 0.05099884023185951
+        },
+        {
+          'doc_count': 254,
+          'bg_count': 278,
+          'key': 'se',
+          'score': 0.00900722193731049
+        },
+        {
+          'doc_count': 223,
+          'bg_count': 248,
+          'key': 'gb',
+          'score': 0.007643356003933351
+        },
+        {
+          'doc_count': 198,
+          'bg_count': 210,
+          'key': 'us',
+          'score': 0.007495024769385724
+        },
+        {
+          'doc_count': 95,
+          'bg_count': 99,
+          'key': 'eu',
+          'score': 0.0037264241720995923
+        },
+        {
+          'doc_count': 99,
+          'bg_count': 110,
+          'key': 'de',
+          'score': 0.0033997820763321334
+        },
+        {
+          'doc_count': 90,
+          'bg_count': 96,
+          'key': 'it',
+          'score': 0.00336731463286161
+        },
+        {
+          'doc_count': 46,
+          'bg_count': 49,
+          'key': 'ru',
+          'score': 0.0017258806037730241
+        },
+        {
+          'doc_count': 40,
+          'bg_count': 41,
+          'key': 'ie',
+          'score': 0.0016215181811714881
+        }
+      ]
+    },
+    'sterms#ThumbsDown#keyword_terms': {
+      'sum_other_doc_count': 6523,
+      'doc_count_error_upper_bound': 134,
+      'buckets': [
+        {
+          'doc_count': 4969,
+          'key': ''
+        },
+        {
+          'doc_count': 3268,
+          'key': '1'
+        },
+        {
+          'doc_count': 2498,
+          'key': '2'
+        },
+        {
+          'doc_count': 1948,
+          'key': '3'
+        },
+        {
+          'doc_count': 1503,
+          'key': '4'
+        },
+        {
+          'doc_count': 1322,
+          'key': '5'
+        },
+        {
+          'doc_count': 1053,
+          'key': '6'
+        },
+        {
+          'doc_count': 913,
+          'key': '7'
+        },
+        {
+          'doc_count': 750,
+          'key': '8'
+        },
+        {
+          'doc_count': 621,
+          'key': '9'
+        }
+      ]
+    },
+    'value_count#CommentSubject#keyword_count': {
+      'value': 25368
+    },
+    'sigsterms#ArticleLead#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 11572,
+          'bg_count': 12668,
+          'key': 'ja',
+          'score': 0.4101838585372972
+        },
+        {
+          'doc_count': 8607,
+          'bg_count': 9365,
+          'key': 'on',
+          'score': 0.30902016572779684
+        },
+        {
+          'doc_count': 7491,
+          'bg_count': 8139,
+          'key': 'et',
+          'score': 0.26976426702074274
+        },
+        {
+          'doc_count': 5027,
+          'bg_count': 5468,
+          'key': 'eesti',
+          'score': 0.18060506475825303
+        },
+        {
+          'doc_count': 4142,
+          'bg_count': 4543,
+          'key': 'ei',
+          'score': 0.14622409764719707
+        },
+        {
+          'doc_count': 3158,
+          'bg_count': 3468,
+          'key': 'oma',
+          'score': 0.11119602170973164
+        },
+        {
+          'doc_count': 2771,
+          'bg_count': 3126,
+          'key': 'ka',
+          'score': 0.09207922477991311
+        },
+        {
+          'doc_count': 2313,
+          'bg_count': 2496,
+          'key': 'riho',
+          'score': 0.08448939551141525
+        },
+        {
+          'doc_count': 2175,
+          'bg_count': 2309,
+          'key': 'kes',
+          'score': 0.08217289926184122
+        },
+        {
+          'doc_count': 2090,
+          'bg_count': 2206,
+          'key': 'täna',
+          'score': 0.07989505773491197
+        }
+      ]
+    },
+    'sterms#ArticleBody#keyword_terms': {
+      'sum_other_doc_count': 60,
+      'doc_count_error_upper_bound': 1,
+      'buckets': [
+        {
+          'doc_count': 1903,
+          'key': ''
+        },
+        {
+          'doc_count': 118,
+          'key': 'Fotodelt näeme, et Ratas abikaasaga ja Trumpid kõndisid õhtusöögile kõrvuti ja aina vesteldes.          '
+        },
+        {
+          'doc_count': 25,
+          'key': 'Читатель Delfi прислал в редакцию фотографию, рассказывающую о том, как в Маарду после проигрыша России раздосадованный болельщик выкинул из окна пятого этажа телевизор.'
+        },
+        {
+          'doc_count': 25,
+          'key': '„Kallis Ameerika, hinda oma liitlasi, lõpuks ei ole sul neid nii palju,” ütles Tusk pärast koostööleppe allkirjastamist Euroopa Liidu ja NATO vahel, vahendab Reuters.'
+        },
+        {
+          'doc_count': 17,
+          'key': 'Politsei pressieseindaja Ilmar Kahro andmeil sai politsei teate õnnetuse kohta kella 13 ajal. Lisaks politseile saabus kohale ka kiirabi. Autot juhtinud 79-aastasele mehele anti kohapeal esmaabi.  Politsei uurib õnnetuse põhjuseid.  '
+        },
+        {
+          'doc_count': 13,
+          'key': 'Rally Estonial on kavas kaks testikatset. Esimene algas kell 10.00, millest võtavad osa WRC sõitjad. Teine testikatse algab kell 12.00.    Galeriid täiendatakse jooksvalt.    '
+        },
+        {
+          'doc_count': 9,
+          'key': 'Aga nad tahavad — ja ongi õige, sest oma hirmudega tuleb silmitsi seista. Vaata videot ja ütle meile ka, kas ja millisega neist sina tiiru teha tahaksid.'
+        },
+        {
+          'doc_count': 7,
+          'key': 'Kell 10.00 algas esimene testikatse, millest võtsid osa WRC sõitjad ning Jari Huttunen, Georg Gross ja Valeri Gorban. Ott Tänaku kõrval sõitis kaardilugejana ka Markko Märtin.  '
+        },
+        {
+          'doc_count': 6,
+          'key': 'Что конкретно случилось, Лиги сначала не уточнил, но позже сообщил, что речь идет о старой спортивной травме и уже не первой операции.'
+        },
+        {
+          'doc_count': 4,
+          'key': 'Lutikatest ei pruugi hotellitoas esmapilgul miski märku anda. Aga parem, kui tead, kuidas kontrollida, kas nad on seal või mitte, sest lisaks valusasti hammustamisele võivad nad ka erinevaid haigusi edasi kanda.'
+        }
+      ]
+    },
+    'sigsterms#UserID#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 102,
+          'bg_count': 110,
+          'key': '837369',
+          'score': 0.0037307942422536394
+        },
+        {
+          'doc_count': 82,
+          'bg_count': 90,
+          'key': '682704',
+          'score': 0.002890652717545231
+        },
+        {
+          'doc_count': 93,
+          'bg_count': 109,
+          'key': '892369',
+          'score': 0.002837110516648194
+        },
+        {
+          'doc_count': 64,
+          'bg_count': 68,
+          'key': '1030011',
+          'score': 0.0024138187649370823
+        },
+        {
+          'doc_count': 56,
+          'bg_count': 59,
+          'key': '451566',
+          'score': 0.0021486981730325207
+        },
+        {
+          'doc_count': 58,
+          'bg_count': 64,
+          'key': '712836',
+          'score': 0.002021500800863451
+        },
+        {
+          'doc_count': 51,
+          'bg_count': 53,
+          'key': '781659',
+          'score': 0.0020116538733101455
+        },
+        {
+          'doc_count': 52,
+          'bg_count': 56,
+          'key': '776379',
+          'score': 0.0019075082692839344
+        },
+        {
+          'doc_count': 47,
+          'bg_count': 49,
+          'key': '449806',
+          'score': 0.0018420112167558866
+        },
+        {
+          'doc_count': 58,
+          'bg_count': 67,
+          'key': '893543',
+          'score': 0.0018286121828437387
+        }
+      ]
+    },
+    'sterms#ArticleURL#keyword_terms': {
+      'sum_other_doc_count': 20823,
+      'doc_count_error_upper_bound': 157,
+      'buckets': [
+        {
+          'doc_count': 752,
+          'key': 'http://delfi.ee/a/83007857'
+        },
+        {
+          'doc_count': 597,
+          'key': 'http://delfi.ee/a/83020007'
+        },
+        {
+          'doc_count': 496,
+          'key': 'http://delfi.ee/a/82963597'
+        },
+        {
+          'doc_count': 434,
+          'key': 'http://delfi.ee/a/83011725'
+        },
+        {
+          'doc_count': 423,
+          'key': 'http://delfi.ee/a/83009095'
+        },
+        {
+          'doc_count': 410,
+          'key': 'http://delfi.ee/a/83026029'
+        },
+        {
+          'doc_count': 399,
+          'key': 'http://delfi.ee/a/83010161'
+        },
+        {
+          'doc_count': 356,
+          'key': 'http://delfi.ee/a/83014423'
+        },
+        {
+          'doc_count': 341,
+          'key': 'http://delfi.ee/a/83002443'
+        },
+        {
+          'doc_count': 337,
+          'key': 'http://delfi.ee/a/82995227'
+        }
+      ]
+    },
+    'sterms#CommentText#keyword_terms': {
+      'sum_other_doc_count': 19263,
+      'doc_count_error_upper_bound': 5,
+      'buckets': [
+        {
+          'doc_count': 3,
+          'key': 'Kui oleks alimentide asemel lastetusmaks, siis poleks lastetusmaksu kätte saamisega probleeme. Selle maksaks tööandja töövõtja palgalt nii, nagu maksab praegu töövõtja sotsmaksu pensioniosa enne, kui kannab palgapäevaks raha töövõtja kontole.'
+        },
+        {
+          'doc_count': 2,
+          'key': '&#x1F575;&#x1F3FF;\u200d♂️'
+        },
+        {
+          'doc_count': 2,
+          'key': 'Eesti kolonel on kohusetundlik asjatundlik sõjamees.\\\n\\\nPutinikuud trollid on jobud.'
+        },
+        {
+          'doc_count': 2,
+          'key': 'Ega keegi neid putinlikke sõjardeid ei kardagi.\\\n\\\nLihtsalt valmistutakse nende hävitamiseks kui nad peaksid nii rumalad olema, et Eestit ründavad.\\\n\\\nNii saabgi rahu püsida.'
+        },
+        {
+          'doc_count': 2,
+          'key': 'Kui NATO sooviks Putini impeeriumiga sõda alustada, ei eksisteeriks enam mingit Putini impeeriumi.\\\n\\\nNATO on loodud kollektiivseks kaitseks.'
+        },
+        {
+          'doc_count': 2,
+          'key': 'Sõda NATO-ga ei ole jalutuskäik.\\\n\\\nSõda NATO-ga on okupandi kindel surm.'
+        },
+        {
+          'doc_count': 2,
+          'key': 'tegemist on homoseksuaalide vandenõuga.kellele ei meeldiks 11a poisid.\\\nmiks trump ei ole midagi twiitinud.asi on kahtlane.\\\npealegi pole nad kristlased,häbiväärne sellistele kaasa tunda.'
+        },
+        {
+          'doc_count': 2,
+          'key': 'А я и не спорю.\\\nСпасибо за информацию.'
+        },
+        {
+          'doc_count': 2,
+          'key': 'Вставай проклятьем заклеймленный\\\nВесь мир голодных путинских рабов\\\nКипит наш разум возмущенный\\\nИ в смертмый бой идти гoтов'
+        },
+        {
+          'doc_count': 1,
+          'key': ' '
+        }
+      ]
+    },
+    'value_count#AstonishedFace#keyword_count': {
+      'value': 25368
+    },
+    'sterms#CommentText_clean#keyword_terms': {
+      'sum_other_doc_count': 21923,
+      'doc_count_error_upper_bound': 5,
+      'buckets': [
+        {
+          'doc_count': 18,
+          'key': '.'
+        },
+        {
+          'doc_count': 14,
+          'key': '?'
+        },
+        {
+          'doc_count': 13,
+          'key': 'торжественно заявлять :\\\n воффка пукин - реинкарнация воффки ленин . \\\n лысый карлик - моральный физический урод .'
+        },
+        {
+          'doc_count': 11,
+          'key': ''
+        },
+        {
+          'doc_count': 8,
+          'key': 'вставать проклятие заклеймленный \\\n голодный путинский раб \\\n кипеть разум возмущать \\\n смертмыя бой готовый'
+        },
+        {
+          'doc_count': 5,
+          'key': 'плешивый убирать каки ына - ум сходить . \\\n поставлять . \\\n ( сходить ум какой-то . \\s поменять )'
+        },
+        {
+          'doc_count': 4,
+          'key': 'ын клоп . \\\n давить - вонища окрест . \\s уничтожать , пачкаться западло .'
+        },
+        {
+          'doc_count': 3,
+          'key': '!'
+        },
+        {
+          'doc_count': 3,
+          'key': 'alimendid lastetusmaks , lastetusmaks saamine probleem . maksma tööandja töövõtja palk , maksma töövõtja sotsmaks pensioniosa , kandma palgapäev raha töövõtja konto .'
+        },
+        {
+          'doc_count': 2,
+          'key': '&# x1f575 &# x1f3ff \u200d♂️'
+        }
+      ]
+    },
+    'sterms#UserID#keyword_terms': {
+      'sum_other_doc_count': 4293,
+      'doc_count_error_upper_bound': 38,
+      'buckets': [
+        {
+          'doc_count': 20477,
+          'key': ''
+        },
+        {
+          'doc_count': 102,
+          'key': '837369'
+        },
+        {
+          'doc_count': 93,
+          'key': '892369'
+        },
+        {
+          'doc_count': 82,
+          'key': '682704'
+        },
+        {
+          'doc_count': 64,
+          'key': '1030011'
+        },
+        {
+          'doc_count': 58,
+          'key': '712836'
+        },
+        {
+          'doc_count': 52,
+          'key': '893543'
+        },
+        {
+          'doc_count': 51,
+          'key': '781659'
+        },
+        {
+          'doc_count': 49,
+          'key': '451566'
+        },
+        {
+          'doc_count': 47,
+          'key': '449806'
+        }
+      ]
+    },
+    'value_count#CommentID#keyword_count': {
+      'value': 25368
+    },
+    'value_count#CountryCode#keyword_count': {
+      'value': 25368
+    },
+    'sterms#ArticleLead#keyword_terms': {
+      'sum_other_doc_count': 15080,
+      'doc_count_error_upper_bound': 139,
+      'buckets': [
+        {
+          'doc_count': 2062,
+          'key': ''
+        },
+        {
+          'doc_count': 752,
+          'key': 'Eesti kaitseväe erioperatsioonide üksuse ülem, kolonel Riho Ühtegi rääkis väljaandele Politico Eesti valmistumisest võimalikuks konfliktiks Venemaaga.'
+        },
+        {
+          'doc_count': 597,
+          'key': 'Eesti erioperatsioonide üksuse ülema, kolonel Riho Ühtegi koht ei ole relvajõududes, vaid hullumajas, leiab Vene riigiduuma riigikaitsekomitee esimees ja Vene õhudessantvägede endine ülem Vladimir Šamanov.'
+        },
+        {
+          'doc_count': 496,
+          'key': 'Ministeeriumi hinnangul oleks järelevalve elatisraha kulutamise üle liiga koormav ja isadel tuleks abi otsida kohtust.'
+        },
+        {
+          'doc_count': 434,
+          'key': 'Kolonel Riho Ühtegi jutt sellest, kuidas venelased Tallinnat rünnates sureks, vihastas välja Yana Toomi. "Hurraa, võitsime kõiki. Mul lihtsalt pole sõnu," kirjutab ta Facebookis.'
+        },
+        {
+          'doc_count': 423,
+          'key': 'Tartu kiirabi juhataja Ago Kõrgvee kinnitas täna Delfile, et kiirabitöötaja, kes sotsiaalmeedias kiirabibrigaadist ja äsja sünnitanud emast pilti jagas, jätkab ametis. Küll aga mingi karistus taolise käitumise eest ikkagi järgneb'
+        },
+        {
+          'doc_count': 399,
+          'key': 'Maikuus abiellusid ShiShi omanikud Mart Haber ja Taivo Piller New Yorgis. Nüüd teatasid mehed oma elu järgmisest suurest rõõmusündmusest. Nende perekonnaga liituvad peagi kaksikud lapsukesed!'
+        },
+        {
+          'doc_count': 356,
+          'key': 'Reformierakonna esimees Kaja Kallas on esmaspäevast täisajaga tagasi Eestis ning kinnitab, et Reformierakond võidab valimised ja temast saab järgmine peaminister. Võimalike valitsusliidu partnerite seast ei kipu Kallas praegu kedagi välistama.'
+        },
+        {
+          'doc_count': 341,
+          'key': 'Nii tahan ka oma lugu jagada. Räägin ausalt ja südamest, kuidas mina asju näen ja oma elu jooksul olen kogenud.'
+        },
+        {
+          'doc_count': 330,
+          'key': 'Tartu kiirabibrigaadi liige jagas eile Facebookis postitust, kus on just aidatud ilmale väike ilmakodanik - seda maantee ääres.'
+        }
+      ]
+    },
+    'value_count#ArticleTags#keyword_count': {
+      'value': 25308
+    },
+    'sterms#AstonishedFace#keyword_terms': {
+      'sum_other_doc_count': 0,
+      'doc_count_error_upper_bound': 0,
+      'buckets': [
+        {
+          'doc_count': 25368,
+          'key': ''
+        }
+      ]
+    },
+    'sigsterms#ParentSubject#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 193,
+          'bg_count': 213,
+          'key': 'on',
+          'score': 0.006724397520329312
+        },
+        {
+          'doc_count': 168,
+          'bg_count': 178,
+          'key': 'irw',
+          'score': 0.00637267535575268
+        },
+        {
+          'doc_count': 154,
+          'bg_count': 158,
+          'key': 'ants',
+          'score': 0.0062311549799398715
+        },
+        {
+          'doc_count': 140,
+          'bg_count': 149,
+          'key': 'kes',
+          'score': 0.005262109433626698
+        },
+        {
+          'doc_count': 121,
+          'bg_count': 124,
+          'key': 'кукушкин',
+          'score': 0.00490704307893251
+        },
+        {
+          'doc_count': 113,
+          'bg_count': 118,
+          'key': 'mees',
+          'score': 0.004414249855719479
+        },
+        {
+          'doc_count': 119,
+          'bg_count': 129,
+          'key': 'ei',
+          'score': 0.004305856628830783
+        },
+        {
+          'doc_count': 113,
+          'bg_count': 123,
+          'key': 'peterson',
+          'score': 0.004053734382766081
+        },
+        {
+          'doc_count': 103,
+          'bg_count': 108,
+          'key': 'tegelikult',
+          'score': 0.003990488635939171
+        },
+        {
+          'doc_count': 109,
+          'bg_count': 118,
+          'key': 'muu',
+          'score': 0.003955170390491648
+        }
+      ]
+    },
+    'sigsterms#IP#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 248,
+          'bg_count': 284,
+          'key': '193.40.150.53',
+          'score': 0.007972710765362472
+        },
+        {
+          'doc_count': 186,
+          'bg_count': 208,
+          'key': '88.196.243.44',
+          'score': 0.00629952357824373
+        },
+        {
+          'doc_count': 146,
+          'bg_count': 160,
+          'key': '217.159.161.188',
+          'score': 0.0051633908967224145
+        },
+        {
+          'doc_count': 140,
+          'bg_count': 155,
+          'key': '193.40.12.10',
+          'score': 0.004844785308573684
+        },
+        {
+          'doc_count': 131,
+          'bg_count': 143,
+          'key': '90.190.229.213',
+          'score': 0.00467138359919535
+        },
+        {
+          'doc_count': 112,
+          'bg_count': 117,
+          'key': '195.250.161.197',
+          'score': 0.004371861366437628
+        },
+        {
+          'doc_count': 92,
+          'bg_count': 94,
+          'key': '146.255.181.233',
+          'score': 0.003752968757203227
+        },
+        {
+          'doc_count': 99,
+          'bg_count': 105,
+          'key': '85.196.228.166',
+          'score': 0.003747512384692862
+        },
+        {
+          'doc_count': 91,
+          'bg_count': 101,
+          'key': '195.50.203.229',
+          'score': 0.003132436423546745
+        },
+        {
+          'doc_count': 95,
+          'bg_count': 108,
+          'key': '84.50.7.76',
+          'score': 0.0031038158716231966
+        }
+      ]
+    },
+    'value_count#CryingFace#keyword_count': {
+      'value': 25368
+    },
+    'value_count#LaughingFace#keyword_count': {
+      'value': 25368
+    },
+    'sterms#IP#keyword_terms': {
+      'sum_other_doc_count': 24028,
+      'doc_count_error_upper_bound': 63,
+      'buckets': [
+        {
+          'doc_count': 248,
+          'key': '193.40.150.53'
+        },
+        {
+          'doc_count': 186,
+          'key': '88.196.243.44'
+        },
+        {
+          'doc_count': 146,
+          'key': '217.159.161.188'
+        },
+        {
+          'doc_count': 140,
+          'key': '193.40.12.10'
+        },
+        {
+          'doc_count': 131,
+          'key': '90.190.229.213'
+        },
+        {
+          'doc_count': 112,
+          'key': '195.250.161.197'
+        },
+        {
+          'doc_count': 99,
+          'key': '85.196.228.166'
+        },
+        {
+          'doc_count': 95,
+          'key': '84.50.7.76'
+        },
+        {
+          'doc_count': 92,
+          'key': '146.255.181.233'
+        },
+        {
+          'doc_count': 91,
+          'key': '195.50.203.229'
+        }
+      ]
+    },
+    'sigsterms#AstonishedFace#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': []
+    },
+    'value_count#CommentText_clean#long_count': {
+      'value': 25368
+    },
+    'value_count#CommentAdded#keyword_count': {
+      'value': 25368
+    },
+    'value_count#UserID#keyword_count': {
+      'value': 25368
+    },
+    'sigsterms#ArticleBody#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 21483,
+          'bg_count': 23370,
+          'key': 'ja',
+          'score': 0.7716552996783185
+        },
+        {
+          'doc_count': 21476,
+          'bg_count': 23398,
+          'key': 'on',
+          'score': 0.7689410807819095
+        },
+        {
+          'doc_count': 20347,
+          'bg_count': 22189,
+          'key': 'et',
+          'score': 0.7270662660977072
+        },
+        {
+          'doc_count': 18381,
+          'bg_count': 20024,
+          'key': 'ei',
+          'score': 0.6582645755584956
+        },
+        {
+          'doc_count': 17116,
+          'bg_count': 18620,
+          'key': 'kui',
+          'score': 0.6147550932342551
+        },
+        {
+          'doc_count': 16432,
+          'bg_count': 17896,
+          'key': 'ka',
+          'score': 0.5887972241365789
+        },
+        {
+          'doc_count': 16191,
+          'bg_count': 17572,
+          'key': 'see',
+          'score': 0.5844278696401588
+        },
+        {
+          'doc_count': 14094,
+          'bg_count': 15368,
+          'key': 'aga',
+          'score': 0.5037580367180112
+        },
+        {
+          'doc_count': 13577,
+          'bg_count': 14849,
+          'key': 'mis',
+          'score': 0.4822048049336566
+        },
+        {
+          'doc_count': 13308,
+          'bg_count': 14477,
+          'key': 'ta',
+          'score': 0.4780100369329163
+        }
+      ]
+    },
+    'value_count#CommentText_mlp#keyword_count': {
+      'value': 25368
+    },
+    'sigsterms#ArticleTags#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 3375,
+          'bg_count': 3676,
+          'key': 'eesti',
+          'score': 0.12091303366853942
+        },
+        {
+          'doc_count': 1977,
+          'bg_count': 2114,
+          'key': 'venemaa',
+          'score': 0.07359503201118596
+        },
+        {
+          'doc_count': 1777,
+          'bg_count': 1872,
+          'key': 'tallinn',
+          'score': 0.06819730200481519
+        },
+        {
+          'doc_count': 1353,
+          'bg_count': 1437,
+          'key': 'riho',
+          'score': 0.051070489838243215
+        },
+        {
+          'doc_count': 1349,
+          'bg_count': 1432,
+          'key': 'ühtegi',
+          'score': 0.05097414621496583
+        },
+        {
+          'doc_count': 1325,
+          'bg_count': 1446,
+          'key': 'euroopa',
+          'score': 0.04727446032341965
+        },
+        {
+          'doc_count': 1031,
+          'bg_count': 1147,
+          'key': 'trump',
+          'score': 0.035310042808974915
+        },
+        {
+          'doc_count': 1010,
+          'bg_count': 1123,
+          'key': 'donald',
+          'score': 0.03463304850329898
+        },
+        {
+          'doc_count': 975,
+          'bg_count': 1077,
+          'key': 'brüssel',
+          'score': 0.03390561221820003
+        },
+        {
+          'doc_count': 993,
+          'bg_count': 1122,
+          'key': 'nato',
+          'score': 0.03288227634910493
+        }
+      ]
+    },
+    'sterms#ParentID#keyword_terms': {
+      'sum_other_doc_count': 12353,
+      'doc_count_error_upper_bound': 25,
+      'buckets': [
+        {
+          'doc_count': 12569,
+          'key': ''
+        },
+        {
+          'doc_count': 95,
+          'key': '69240935'
+        },
+        {
+          'doc_count': 73,
+          'key': '69259909'
+        },
+        {
+          'doc_count': 64,
+          'key': '69262957'
+        },
+        {
+          'doc_count': 43,
+          'key': '69244727'
+        },
+        {
+          'doc_count': 37,
+          'key': '69218995'
+        },
+        {
+          'doc_count': 36,
+          'key': '69204259'
+        },
+        {
+          'doc_count': 35,
+          'key': '69248377'
+        },
+        {
+          'doc_count': 33,
+          'key': '69196903'
+        },
+        {
+          'doc_count': 30,
+          'key': '69223815'
+        }
+      ]
+    },
+    'sigsterms#CommentSubject#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 882,
+          'bg_count': 970,
+          'key': 'to',
+          'score': 0.030959660161405462
+        },
+        {
+          'doc_count': 411,
+          'bg_count': 453,
+          'key': 'on',
+          'score': 0.014359628233470196
+        },
+        {
+          'doc_count': 309,
+          'bg_count': 335,
+          'key': 'ei',
+          'score': 0.011178409710722967
+        },
+        {
+          'doc_count': 293,
+          'bg_count': 310,
+          'key': 'ja',
+          'score': 0.011146452685157408
+        },
+        {
+          'doc_count': 237,
+          'bg_count': 257,
+          'key': 'irw',
+          'score': 0.00856967077534695
+        },
+        {
+          'doc_count': 236,
+          'bg_count': 271,
+          'key': 'asotsiaal',
+          'score': 0.007540693532348729
+        },
+        {
+          'doc_count': 188,
+          'bg_count': 200,
+          'key': 'no',
+          'score': 0.007072465741994649
+        },
+        {
+          'doc_count': 195,
+          'bg_count': 220,
+          'key': 'mees',
+          'score': 0.0064786103014474105
+        },
+        {
+          'doc_count': 182,
+          'bg_count': 200,
+          'key': 'jah',
+          'score': 0.006399265504924249
+        },
+        {
+          'doc_count': 168,
+          'bg_count': 178,
+          'key': 'aga',
+          'score': 0.00637267535575268
+        }
+      ]
+    },
+    'sigsterms#CommentLabel#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 25368,
+          'bg_count': 27616,
+          'key': 'processed',
+          'score': 0.9098348783314019
+        },
+        {
+          'doc_count': 22935,
+          'bg_count': 25122,
+          'key': 'ignored',
+          'score': 0.8119482593810556
+        },
+        {
+          'doc_count': 2433,
+          'bg_count': 2494,
+          'key': 'disabled',
+          'score': 0.0986151930137064
+        }
+      ]
+    },
+    'sterms#CommentID#keyword_terms': {
+      'sum_other_doc_count': 25358,
+      'doc_count_error_upper_bound': 5,
+      'buckets': [
+        {
+          'doc_count': 1,
+          'key': '69186037'
+        },
+        {
+          'doc_count': 1,
+          'key': '69186047'
+        },
+        {
+          'doc_count': 1,
+          'key': '69186067'
+        },
+        {
+          'doc_count': 1,
+          'key': '69186097'
+        },
+        {
+          'doc_count': 1,
+          'key': '69186099'
+        },
+        {
+          'doc_count': 1,
+          'key': '69186109'
+        },
+        {
+          'doc_count': 1,
+          'key': '69186121'
+        },
+        {
+          'doc_count': 1,
+          'key': '69186125'
+        },
+        {
+          'doc_count': 1,
+          'key': '69186137'
+        },
+        {
+          'doc_count': 1,
+          'key': '69186143'
+        }
+      ]
+    },
+    'sterms#CommentSubject#keyword_terms': {
+      'sum_other_doc_count': 24135,
+      'doc_count_error_upper_bound': 58,
+      'buckets': [
+        {
+          'doc_count': 229,
+          'key': 'asotsiaal'
+        },
+        {
+          'doc_count': 193,
+          'key': '...'
+        },
+        {
+          'doc_count': 144,
+          'key': 'Mofo'
+        },
+        {
+          'doc_count': 126,
+          'key': 'Irw'
+        },
+        {
+          'doc_count': 126,
+          'key': 'Kpyтихин'
+        },
+        {
+          'doc_count': 109,
+          'key': 'ha- ha'
+        },
+        {
+          'doc_count': 83,
+          'key': 'BeirutKristjan'
+        },
+        {
+          'doc_count': 79,
+          'key': 'irw'
+        },
+        {
+          'doc_count': 74,
+          'key': 'sm. Ungern'
+        },
+        {
+          'doc_count': 70,
+          'key': 'Söör krat'
+        }
+      ]
+    },
+    'sterms#LaughingFace#keyword_terms': {
+      'sum_other_doc_count': 0,
+      'doc_count_error_upper_bound': 0,
+      'buckets': [
+        {
+          'doc_count': 25368,
+          'key': ''
+        }
+      ]
+    },
+    'nested#texta_facts': {
+      'doc_count': 23210,
+      'sterms#fact_category': {
+        'sum_other_doc_count': 0,
+        'doc_count_error_upper_bound': 0,
+        'buckets': [
+          {
+            'doc_count': 11690,
+            'key': 'LOC',
+            'sigsterms#significant_facts': {
+              'doc_count': 11690,
+              'bg_count': 52742,
+              'buckets': [
+                {
+                  'doc_count': 2340,
+                  'bg_count': 2532,
+                  'key': 'Eesti',
+                  'score': 0.6344619781046463
+                },
+                {
+                  'doc_count': 1055,
+                  'bg_count': 1151,
+                  'key': 'Venemaa',
+                  'score': 0.28296527254987164
+                },
+                {
+                  'doc_count': 494,
+                  'bg_count': 545,
+                  'key': 'USA',
+                  'score': 0.13055806499176473
+                },
+                {
+                  'doc_count': 382,
+                  'bg_count': 416,
+                  'key': 'Tallinn',
+                  'score': 0.1027045108403222
+                },
+                {
+                  'doc_count': 352,
+                  'bg_count': 390,
+                  'key': 'Euroopa',
+                  'score': 0.09250511785348357
+                },
+                {
+                  'doc_count': 283,
+                  'bg_count': 305,
+                  'key': 'Saksamaa',
+                  'score': 0.07713587246847628
+                },
+                {
+                  'doc_count': 239,
+                  'bg_count': 250,
+                  'key': 'Läti',
+                  'score': 0.06773786993774884
+                },
+                {
+                  'doc_count': 223,
+                  'bg_count': 244,
+                  'key': 'Vene',
+                  'score': 0.05958269466440114
+                },
+                {
+                  'doc_count': 199,
+                  'bg_count': 212,
+                  'key': 'Soome',
+                  'score': 0.05507069446726988
+                },
+                {
+                  'doc_count': 190,
+                  'bg_count': 207,
+                  'key': 'D',
+                  'score': 0.05105444225456146
+                }
+              ]
+            }
+          },
+          {
+            'doc_count': 6074,
+            'key': 'PER',
+            'sigsterms#significant_facts': {
+              'doc_count': 6074,
+              'bg_count': 52742,
+              'buckets': [
+                {
+                  'doc_count': 258,
+                  'bg_count': 279,
+                  'key': 'Putin',
+                  'score': 0.2985928565553642
+                },
+                {
+                  'doc_count': 91,
+                  'bg_count': 98,
+                  'key': 'Trump',
+                  'score': 0.1058172181986864
+                },
+                {
+                  'doc_count': 60,
+                  'bg_count': 60,
+                  'key': 'Ansip',
+                  'score': 0.07589634546769193
+                },
+                {
+                  'doc_count': 60,
+                  'bg_count': 61,
+                  'key': 'Stalin',
+                  'score': 0.0744902058822221
+                },
+                {
+                  'doc_count': 50,
+                  'bg_count': 50,
+                  'key': 'Ossinovski',
+                  'score': 0.06324695455640993
+                },
+                {
+                  'doc_count': 46,
+                  'bg_count': 47,
+                  'key': 'Hitler',
+                  'score': 0.05678803944124879
+                },
+                {
+                  'doc_count': 31,
+                  'bg_count': 34,
+                  'key': 'Riho',
+                  'score': 0.03530280306596914
+                },
+                {
+                  'doc_count': 27,
+                  'bg_count': 27,
+                  'key': 'Salliv',
+                  'score': 0.03415335546046137
+                },
+                {
+                  'doc_count': 33,
+                  'bg_count': 40,
+                  'key': 'Mäggi',
+                  'score': 0.033487192966040934
+                },
+                {
+                  'doc_count': 26,
+                  'bg_count': 26,
+                  'key': 'Jüri',
+                  'score': 0.03288841636933315
+                }
+              ]
+            }
+          },
+          {
+            'doc_count': 4958,
+            'key': 'ORG',
+            'sigsterms#significant_facts': {
+              'doc_count': 4958,
+              'bg_count': 52742,
+              'buckets': [
+                {
+                  'doc_count': 414,
+                  'bg_count': 454,
+                  'key': 'NATO',
+                  'score': 0.7265048549757391
+                },
+                {
+                  'doc_count': 171,
+                  'bg_count': 187,
+                  'key': 'Delfi',
+                  'score': 0.3010115527865152
+                },
+                {
+                  'doc_count': 145,
+                  'bg_count': 163,
+                  'key': 'EKRE',
+                  'score': 0.2475070893567974
+                },
+                {
+                  'doc_count': 72,
+                  'bg_count': 76,
+                  'key': 'KGB',
+                  'score': 0.13182876456495835
+                },
+                {
+                  'doc_count': 61,
+                  'bg_count': 63,
+                  'key': 'EV',
+                  'score': 0.11442175990350809
+                },
+                {
+                  'doc_count': 58,
+                  'bg_count': 59,
+                  'key': 'Kreml',
+                  'score': 0.11063583281506525
+                },
+                {
+                  'doc_count': 56,
+                  'bg_count': 57,
+                  'key': 'RE',
+                  'score': 0.10674934875485804
+                },
+                {
+                  'doc_count': 56,
+                  'bg_count': 60,
+                  'key': 'Keskerakond',
+                  'score': 0.10084713746878922
+                },
+                {
+                  'doc_count': 54,
+                  'bg_count': 57,
+                  'key': 'KE',
+                  'score': 0.09887157342371876
+                },
+                {
+                  'doc_count': 54,
+                  'bg_count': 58,
+                  'key': 'IRL',
+                  'score': 0.09697910683876793
+                }
+              ]
+            }
+          },
+          {
+            'doc_count': 213,
+            'key': 'DRUG',
+            'sigsterms#significant_facts': {
+              'doc_count': 213,
+              'bg_count': 52742,
+              'buckets': [
+                {
+                  'doc_count': 162,
+                  'bg_count': 164,
+                  'key': 'is',
+                  'score': 185.2696861346713
+                },
+                {
+                  'doc_count': 26,
+                  'bg_count': 29,
+                  'key': 'tarka',
+                  'score': 26.976486298938738
+                },
+                {
+                  'doc_count': 22,
+                  'bg_count': 30,
+                  'key': 'samba',
+                  'score': 18.65190475140882
+                }
+              ]
+            }
+          },
+          {
+            'doc_count': 131,
+            'key': 'COMPANY',
+            'sigsterms#significant_facts': {
+              'doc_count': 131,
+              'bg_count': 52742,
+              'buckets': [
+                {
+                  'doc_count': 31,
+                  'bg_count': 36,
+                  'key': 'kaitsevägi',
+                  'score': 81.80510395017126
+                },
+                {
+                  'doc_count': 16,
+                  'bg_count': 17,
+                  'key': 'indrek saar',
+                  'score': 46.15910906055797
+                },
+                {
+                  'doc_count': 6,
+                  'bg_count': 6,
+                  'key': 'prokuratuur',
+                  'score': 18.394382611735914
+                },
+                {
+                  'doc_count': 6,
+                  'bg_count': 6,
+                  'key': 'mihkel rebane',
+                  'score': 18.394382611735914
+                },
+                {
+                  'doc_count': 4,
+                  'bg_count': 4,
+                  'key': 'baabad',
+                  'score': 12.262921741157275
+                },
+                {
+                  'doc_count': 3,
+                  'bg_count': 3,
+                  'key': 'toomas vara',
+                  'score': 9.197191305867957
+                },
+                {
+                  'doc_count': 3,
+                  'bg_count': 3,
+                  'key': 'andrus vaarik',
+                  'score': 9.197191305867957
+                },
+                {
+                  'doc_count': 3,
+                  'bg_count': 4,
+                  'key': 'rahandusministeerium',
+                  'score': 6.892168288561273
+                },
+                {
+                  'doc_count': 3,
+                  'bg_count': 5,
+                  'key': 'konkurentsiamet',
+                  'score': 5.509154478177262
+                },
+                {
+                  'doc_count': 3,
+                  'bg_count': 5,
+                  'key': 'riigikohus',
+                  'score': 5.509154478177262
+                }
+              ]
+            }
+          },
+          {
+            'doc_count': 69,
+            'key': 'SUBSTANCE',
+            'sigsterms#significant_facts': {
+              'doc_count': 69,
+              'bg_count': 52742,
+              'buckets': [
+                {
+                  'doc_count': 46,
+                  'bg_count': 49,
+                  'key': 'loomad',
+                  'score': 477.718820861678
+                },
+                {
+                  'doc_count': 7,
+                  'bg_count': 7,
+                  'key': 'jood',
+                  'score': 77.4440243646293
+                },
+                {
+                  'doc_count': 10,
+                  'bg_count': 15,
+                  'key': 'hapnik',
+                  'score': 73.70790450185537
+                }
+              ]
+            }
+          },
+          {
+            'doc_count': 54,
+            'key': 'ADDR',
+            'sigsterms#significant_facts': {
+              'doc_count': 54,
+              'bg_count': 52742,
+              'buckets': [
+                {
+                  'doc_count': 9,
+                  'bg_count': 10,
+                  'key': 'kuu 20',
+                  'score': 146.33888888888887
+                },
+                {
+                  'doc_count': 6,
+                  'bg_count': 6,
+                  'key': 'vabaduse 26',
+                  'score': 108.41152263374485
+                },
+                {
+                  'doc_count': 3,
+                  'bg_count': 3,
+                  'key': 'pere 3',
+                  'score': 54.205761316872426
+                },
+                {
+                  'doc_count': 3,
+                  'bg_count': 4,
+                  'key': 'õnne 13',
+                  'score': 40.64043209876542
+                }
+              ]
+            }
+          },
+          {
+            'doc_count': 11,
+            'key': 'EML',
+            'sigsterms#significant_facts': {
+              'doc_count': 11,
+              'bg_count': 52742,
+              'buckets': [
+                {
+                  'doc_count': 4,
+                  'bg_count': 5,
+                  'key': 'Spriinits @ gmail.com',
+                  'score': 1394.4661157024793
+                },
+                {
+                  'doc_count': 3,
+                  'bg_count': 3,
+                  'key': 'kristjan @ beirut.com',
+                  'score': 1307.3801652892562
+                }
+              ]
+            }
+          },
+          {
+            'doc_count': 10,
+            'key': 'PHO',
+            'sigsterms#significant_facts': {
+              'doc_count': 10,
+              'bg_count': 52742,
+              'buckets': []
+            }
+          }
+        ]
       }
+    },
+    'sterms#ParentSubject#keyword_terms': {
+      'sum_other_doc_count': 11850,
+      'doc_count_error_upper_bound': 43,
+      'buckets': [
+        {
+          'doc_count': 12589,
+          'key': ''
+        },
+        {
+          'doc_count': 144,
+          'key': 'Irw'
+        },
+        {
+          'doc_count': 126,
+          'key': 'Ants'
+        },
+        {
+          'doc_count': 121,
+          'key': 'Кукушкин'
+        },
+        {
+          'doc_count': 109,
+          'key': 'Peterson, kes muu...'
+        },
+        {
+          'doc_count': 100,
+          'key': 'Pärdik'
+        },
+        {
+          'doc_count': 97,
+          'key': 'njah'
+        },
+        {
+          'doc_count': 89,
+          'key': 'Ilmselgelt'
+        },
+        {
+          'doc_count': 74,
+          'key': '...'
+        },
+        {
+          'doc_count': 69,
+          'key': 'jah'
+        }
+      ]
+    },
+    'sigsterms#LaughingFace#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': []
+    },
+    'sigsterms#IsAnonymous#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 20477,
+          'bg_count': 22326,
+          'key': '1',
+          'score': 0.7320403098304308
+        },
+        {
+          'doc_count': 4891,
+          'bg_count': 5290,
+          'key': '0',
+          'score': 0.1778137251948618
+        }
+      ]
+    },
+    'value_count#ThumbsUp#keyword_count': {
+      'value': 25368
+    },
+    'sigsterms#CommentText_mlp#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 16145,
+          'bg_count': 17637,
+          'key': 'olema',
+          'score': 0.5748231002878678
+        },
+        {
+          'doc_count': 11434,
+          'bg_count': 12469,
+          'key': 'ja',
+          'score': 0.4085827404216351
+        },
+        {
+          'doc_count': 10515,
+          'bg_count': 11454,
+          'key': 'see',
+          'score': 0.37662715314788586
+        },
+        {
+          'doc_count': 8926,
+          'bg_count': 9706,
+          'key': 'ei',
+          'score': 0.32089544192071984
+        },
+        {
+          'doc_count': 7313,
+          'bg_count': 7982,
+          'key': 'et',
+          'score': 0.2608387502443872
+        },
+        {
+          'doc_count': 6649,
+          'bg_count': 7233,
+          'key': 'kui',
+          'score': 0.2388296335676593
+        },
+        {
+          'doc_count': 5138,
+          'bg_count': 5586,
+          'key': 'siis',
+          'score': 0.1847826900777067
+        },
+        {
+          'doc_count': 5073,
+          'bg_count': 5508,
+          'key': 'tema',
+          'score': 0.18295412593055324
+        },
+        {
+          'doc_count': 4991,
+          'bg_count': 5434,
+          'key': 'saama',
+          'score': 0.17895472713485513
+        },
+        {
+          'doc_count': 4872,
+          'bg_count': 5307,
+          'key': 'ka',
+          'score': 0.17451084855591853
+        }
+      ]
+    },
+    'value_count#PublishTime#keyword_count': {
+      'value': 25368
+    },
+    'value_count#CommentText_clean#keyword_count': {
+      'value': 22004
+    },
+    'value_count#ArticleLead#keyword_count': {
+      'value': 21270
+    },
+    'sterms#IsAnonymous#keyword_terms': {
+      'sum_other_doc_count': 0,
+      'doc_count_error_upper_bound': 0,
+      'buckets': [
+        {
+          'doc_count': 20477,
+          'key': '1'
+        },
+        {
+          'doc_count': 4891,
+          'key': '0'
+        }
+      ]
+    },
+    'value_count#ArticleBody#keyword_count': {
+      'value': 2187
+    },
+    'sterms#ArticleTags#keyword_terms': {
+      'sum_other_doc_count': 10773,
+      'doc_count_error_upper_bound': 124,
+      'buckets': [
+        {
+          'doc_count': 10988,
+          'key': ''
+        },
+        {
+          'doc_count': 752,
+          'key': 'Riho Ühtegi Tallinn Venemaa Eesti Pentagon Balti riigid'
+        },
+        {
+          'doc_count': 597,
+          'key': 'Eesti Riho Ühtegi Venemaa Tallinn'
+        },
+        {
+          'doc_count': 399,
+          'key': 'Mart Haber Instagram New York (Osariik) New York Palju õnne! Taivo Piller'
+        },
+        {
+          'doc_count': 396,
+          'key': 'Kuum'
+        },
+        {
+          'doc_count': 341,
+          'key': 'mees suhted armastus suhe'
+        },
+        {
+          'doc_count': 337,
+          'key': 'Talvo Rüütelmaa Eesti Tallinna transpordiamet Tallinn Taavi Aas Linnavalitsus Delfi (Portaal) Või Aivar Riisalu Euroopa Süüria Brüssel Ameerika'
+        },
+        {
+          'doc_count': 324,
+          'key': 'NATO Brüssel Kanada Donald Trump Eesti'
+        },
+        {
+          'doc_count': 221,
+          'key': 'Läti alkoholiaktsiis'
+        },
+        {
+          'doc_count': 180,
+          'key': 'Maamajandus autovedude seadus Jaan Sõrra Tartumaa Põllumeeste Liit Majandus- ja kommunikatsiooniministeerium Euroopa Liit (EL) veoteenus Autoveoseadus'
+        }
+      ]
+    },
+    'value_count#IP#keyword_count': {
+      'value': 25368
+    },
+    'sterms#CountryCode#keyword_terms': {
+      'sum_other_doc_count': 456,
+      'doc_count_error_upper_bound': 12,
+      'buckets': [
+        {
+          'doc_count': 22478,
+          'key': 'ee'
+        },
+        {
+          'doc_count': 1387,
+          'key': 'fi'
+        },
+        {
+          'doc_count': 254,
+          'key': 'se'
+        },
+        {
+          'doc_count': 223,
+          'key': 'gb'
+        },
+        {
+          'doc_count': 198,
+          'key': 'us'
+        },
+        {
+          'doc_count': 99,
+          'key': 'de'
+        },
+        {
+          'doc_count': 95,
+          'key': 'eu'
+        },
+        {
+          'doc_count': 90,
+          'key': 'it'
+        },
+        {
+          'doc_count': 46,
+          'key': 'ru'
+        },
+        {
+          'doc_count': 42,
+          'key': 'no'
+        }
+      ]
+    },
+    'sigsterms#ThumbsUp#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 1651,
+          'bg_count': 1808,
+          'key': '1',
+          'score': 0.05847856375642604
+        },
+        {
+          'doc_count': 1538,
+          'bg_count': 1684,
+          'key': '2',
+          'score': 0.054493481901934315
+        },
+        {
+          'doc_count': 1308,
+          'bg_count': 1448,
+          'key': '3',
+          'score': 0.045273689626328564
+        },
+        {
+          'doc_count': 1192,
+          'bg_count': 1302,
+          'key': '4',
+          'score': 0.04245040631569421
+        },
+        {
+          'doc_count': 1058,
+          'bg_count': 1145,
+          'key': '5',
+          'score': 0.03841558216162029
+        },
+        {
+          'doc_count': 1033,
+          'bg_count': 1119,
+          'key': '6',
+          'score': 0.037434033796776324
+        },
+        {
+          'doc_count': 847,
+          'bg_count': 929,
+          'key': '7',
+          'score': 0.029901500504138274
+        },
+        {
+          'doc_count': 799,
+          'bg_count': 868,
+          'key': '8',
+          'score': 0.028781506649824234
+        },
+        {
+          'doc_count': 770,
+          'bg_count': 846,
+          'key': '9',
+          'score': 0.027084258772239203
+        },
+        {
+          'doc_count': 656,
+          'bg_count': 716,
+          'key': '11',
+          'score': 0.02339887856775304
+        }
+      ]
+    },
+    'value_count#RedHeart#keyword_count': {
+      'value': 25368
+    },
+    'value_count#CommentLabel#keyword_count': {
+      'value': 25368
+    },
+    'value_count#IsAnonymous#keyword_count': {
+      'value': 25368
+    },
+    'value_count#ParentText#keyword_count': {
+      'value': 21802
+    },
+    'value_count#ArticleURL#keyword_count': {
+      'value': 25368
+    },
+    'sigsterms#RedHeart#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': []
+    },
+    'sigsterms#ThumbsDown#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': [
+        {
+          'doc_count': 3268,
+          'bg_count': 3565,
+          'key': '1',
+          'score': 0.11669731538950988
+        },
+        {
+          'doc_count': 2498,
+          'bg_count': 2737,
+          'key': '2',
+          'score': 0.08837996131616105
+        },
+        {
+          'doc_count': 1948,
+          'bg_count': 2162,
+          'key': '3',
+          'score': 0.06705917968522333
+        },
+        {
+          'doc_count': 1503,
+          'bg_count': 1669,
+          'key': '4',
+          'score': 0.051681297992970346
+        },
+        {
+          'doc_count': 1322,
+          'bg_count': 1446,
+          'key': '5',
+          'score': 0.04694263817487863
+        },
+        {
+          'doc_count': 1053,
+          'bg_count': 1131,
+          'key': '6',
+          'score': 0.03883960486720137
+        },
+        {
+          'doc_count': 913,
+          'bg_count': 996,
+          'key': '7',
+          'score': 0.032600652661714746
+        },
+        {
+          'doc_count': 750,
+          'bg_count': 809,
+          'key': '8',
+          'score': 0.02741987758292156
+        },
+        {
+          'doc_count': 621,
+          'bg_count': 658,
+          'key': '9',
+          'score': 0.023553532020959073
+        },
+        {
+          'doc_count': 593,
+          'bg_count': 632,
+          'key': '10',
+          'score': 0.022225311563630275
+        }
+      ]
+    },
+    'sigsterms#CommentID#text_sigterms': {
+      'doc_count': 25368,
+      'bg_count': 52742,
+      'buckets': []
+    },
+    'extended_stats#CommentText_clean#long_stats': {
+      'count': 25368,
+      'max': 4.0,
+      'std_deviation': 0.538778965744341,
+      'avg': 2.5972879217912332,
+      'min': 1.0,
+      'std_deviation_bounds': {
+        'upper': 3.6748458532799155,
+        'lower': 1.5197299903025512
+      },
+      'sum_of_squares': 178494.0,
+      'sum': 65888.0,
+      'variance': 0.2902827739285418
+    },
+    'sterms#CommentAdded#keyword_terms': {
+      'sum_other_doc_count': 25329,
+      'doc_count_error_upper_bound': 10,
+      'buckets': [
+        {
+          'doc_count': 7,
+          'key': '2018-07-09 16:05:17'
+        },
+        {
+          'doc_count': 7,
+          'key': '2018-07-11 12:56:09'
+        },
+        {
+          'doc_count': 4,
+          'key': '2018-07-10 12:52:28'
+        },
+        {
+          'doc_count': 3,
+          'key': '2018-07-09 11:01:59'
+        },
+        {
+          'doc_count': 3,
+          'key': '2018-07-11 10:49:51'
+        },
+        {
+          'doc_count': 3,
+          'key': '2018-07-11 13:56:12'
+        },
+        {
+          'doc_count': 3,
+          'key': '2018-07-11 16:15:09'
+        },
+        {
+          'doc_count': 3,
+          'key': '2018-07-12 13:28:49'
+        },
+        {
+          'doc_count': 3,
+          'key': '2018-07-13 12:50:13'
+        },
+        {
+          'doc_count': 3,
+          'key': '2018-07-13 13:21:29'
+        }
+      ]
+    },
+    'sterms#Livefeed#keyword_terms': {
+      'sum_other_doc_count': 0,
+      'doc_count_error_upper_bound': 0,
+      'buckets': [
+        {
+          'doc_count': 23489,
+          'key': 'False'
+        },
+        {
+          'doc_count': 1879,
+          'key': ''
+        }
+      ]
+    },
+    'sterms#CommentText_mlp#keyword_terms': {
+      'sum_other_doc_count': 0,
+      'doc_count_error_upper_bound': 0,
+      'buckets': [
+        {
+          'doc_count': 24878,
+          'key': 'et'
+        },
+        {
+          'doc_count': 389,
+          'key': 'ru'
+        },
+        {
+          'doc_count': 101,
+          'key': 'en'
+        }
+      ]
+    },
+    'sterms#CommentLabel#keyword_terms': {
+      'sum_other_doc_count': 0,
+      'doc_count_error_upper_bound': 0,
+      'buckets': [
+        {
+          'doc_count': 22935,
+          'key': 'Processed(ignored)'
+        },
+        {
+          'doc_count': 2433,
+          'key': 'Processed(disabled)'
+        }
+      ]
+    },
+    'sterms#ParentText#keyword_terms': {
+      'sum_other_doc_count': 8833,
+      'doc_count_error_upper_bound': 24,
+      'buckets': [
+        {
+          'doc_count': 12569,
+          'key': ''
+        },
+        {
+          'doc_count': 95,
+          'key': 'Tore, et on sellist võitlusvaimu ja usku, kiidan. Aga milleks sellist paanikauudist on vaja toota? Mis selle mõte on? Muidugi, delfi saab klikke, sellest saan aru, aga üldiselt- misjaoks on vaja rahuajal heietada mingist KUI tulevad, ÄKKI tulevad jahust?'
+        },
+        {
+          'doc_count': 73,
+          'key': 'Me ei vihka mittekedagi keele pärast, vaid suhtumise ja käitumise pärast.'
+        },
+        {
+          'doc_count': 43,
+          'key': 'Kumb sünnitab?'
+        },
+        {
+          'doc_count': 37,
+          'key': 'Jube raske? Tee arve lapsele. No kui ema sealt võtab, saab tõestada ju?'
+        },
+        {
+          'doc_count': 35,
+          'key': 'mis ta nüüd siis nii lolli jutu peale vihastas..............'
+        },
+        {
+          'doc_count': 31,
+          'key': 'panen lapse erakooli ning tennise ja golfi trenni ja elatisraha tõuseb kohe hüppeliselt?'
+        },
+        {
+          'doc_count': 30,
+          'key': 'Loodame, et lätlased oskavad meile tänulikud olla. \\\nKas meie olime soomlastele tänulikud? Arvan , et ei. Sõimasime veel põtradeks, porodeks …………\\\nKarma!'
+        },
+        {
+          'doc_count': 28,
+          'key': 'Kes see Gertu Juhmur on?'
+        },
+        {
+          'doc_count': 28,
+          'key': 'Üks &quot;riigireformija&quot; juba näitas vanalinnnas ametnikku sõimates mis masti tegelastega on tegu.'
+        }
+      ]
     }
   },
-    {
-    "index_name": "ss",
-    "total_documents": 24450,
-    "aggregations": {
-      "sterms": {
-        "article_head": {
-          "buckets": [
-            {},
-            {},
-            {}
-          ]
-        },
-        "rubric": {
-          "buckets": [
-            {},
-            {},
-            {}
-          ]
-        },
-        "time": {
-          "buckets": [
-            {},
-            {},
-            {}
-          ]
-        },
-        "creation_string": {
-          "buckets": [
-            {},
-            {},
-            {}
-          ]
-        },
-        "footnotes": {
-          "buckets": [
-            {},
-            {},
-            {}
-          ]
+  '_shards': {
+    'successful': 29,
+    'failed': 281,
+    'failures': [
+      {
+        'index': 'account',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
         }
       },
-      "nested": {
-        "texta_facts": {
+      {
+        'index': 'cv_demo',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
         }
       },
-      "value_count": {
-        "kysimus_ja_vastus": {
-          "value": 145,
-          "percentage": 20
+      {
+        'index': 'delfi-comments-est',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'delfi_articles',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'delfi_comments_2y',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'delfi_un',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [CommentText_mlp#text_sigterms] cannot process field [CommentText_mlp.lemmas] since it is not present'
+        }
+      },
+      {
+        'index': 'eki_sentiment',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'en_sentiment_corpora',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'en_sentiment_data',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'feedback',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'god_bless_the_holy_hand_grenade',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'hankevaidlused_live',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'aggregation_execution_exception',
+          'reason': '[nested] nested path [texta_facts] is not nested'
+        }
+      },
+      {
+        'index': 'initiative',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'initiative_big',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'kliinik_ee',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'ohtuleht_2019',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'ohtuleht_2019_lemmatized',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'ohtuleht_2019_lemmatized_2',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'ol_test_marit_1',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'ol_test_marit_2',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'ol_test_marit_hl1',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'ol_test_marit_hl2',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'pa_test_marit_1',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'pa_test_marit_2',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'pa_test_marit_3',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'paasteamet',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'paasteamet_ettekirjutised',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'ria',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_en',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_eng',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'aggregation_execution_exception',
+          'reason': '[nested] nested path [texta_facts] is not nested'
+        }
+      },
+      {
+        'index': 'scoro_feedback',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_mlp',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_new',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_restructured',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_restructured_clean',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_restructured_clean_sent',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_restructured_copy',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_test_linda_1',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_test_linda_10',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_test_linda_2',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_test_linda_3',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_test_linda_4',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_test_linda_5',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_test_linda_6',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_test_linda_7',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_test_linda_8',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_test_linda_9',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_test_marit_1',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'scoro_test_marit_2',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'send_help_now',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'sputnik_en',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'test',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'test-migrate',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'test_xlsx',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'test_xlx',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'wakyecols',
+        'shard': 0,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
+        }
+      },
+      {
+        'index': 'marit_test',
+        'shard': 3,
+        'node': 'qc49VgboQ0yf8my-43SXvQ',
+        'reason': {
+          'type': 'illegal_argument_exception',
+          'reason': 'Aggregation [ArticleTags#text_sigterms] cannot process field [ArticleTags] since it is not present'
         }
       }
-    }
+    ],
+    'skipped': 0,
+    'total': 310
   },
-    {
-    "index_name": "ss",
-    "total_documents": 24450,
-    "aggregations": {
-      "sterms": {
-        "article_head": {
-          "buckets": [
-            {},
-            {},
-            {}
-          ]
-        },
-        "rubric": {
-          "buckets": [
-            {},
-            {},
-            {}
-          ]
-        },
-        "time": {
-          "buckets": [
-            {},
-            {},
-            {}
-          ]
-        },
-        "creation_string": {
-          "buckets": [
-            {},
-            {},
-            {}
-          ]
-        },
-        "footnotes": {
-          "buckets": [
-            {},
-            {},
-            {}
-          ]
-        }
-      },
-      "nested": {
-        "texta_facts": {
-        }
-      },
-      "value_count": {
-        "kysimus_ja_vastus": {
-          "value": 145,
-          "percentage": 20
-        }
-      }
-    }
-  }
-  ]
-
+  'took': 3802
 }
-
-

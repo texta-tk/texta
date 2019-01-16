@@ -2,9 +2,9 @@ import logging
 from typing import *
 
 import elasticsearch_dsl
-from elasticsearch import Elasticsearch
-
+import elasticsearch
 from searcher.dashboard.es_helper import DashboardEsHelper
+from elasticsearch_dsl.connections import connections
 from texta.settings import ERROR_LOGGER
 
 
@@ -16,17 +16,21 @@ class SearcherDashboard:
         self.excluded_fields = excluded_fields
         self.query_body = query_body
 
+        self.elasticsearch = elasticsearch.Elasticsearch(self.es_url, index=self.indices, timeout=15, )
+
         self.response = self.query_conductor()
         self.response = self.format_result()
 
     def query_conductor(self) -> Dict[str, Any]:
         result = {}
-        elasticsearch = Elasticsearch(self.es_url, index=self.indices, timeout=10)
 
         list_of_indices = self.indices.split(',')
         for index in list_of_indices:
             # Establish the connection.
-            search = elasticsearch_dsl.Search(using=elasticsearch).params(typed_keys=True, size=0)
+            if self.query_body:
+                search = elasticsearch_dsl.Search.from_dict(self.query_body).using(self.elasticsearch).params(typed_keys=True, size=0)
+            else:
+                search = elasticsearch_dsl.Search().using(self.elasticsearch).params(typed_keys=True, size=0)
 
             # Fetch all the fields and their types, then filter the ones we don't want like _texta_id.
             normal_fields, nested_fields = DashboardEsHelper(es_url=self.es_url, indices=index).get_aggregation_field_data()
@@ -39,9 +43,8 @@ class SearcherDashboard:
 
             # Send the query towards Elasticsearch and then save it into the result
             # dict under its index's name.
-            response = search.execute().to_dict()
+            response = search.execute(ignore_cache=True).to_dict()
             result[index] = response
-            del search
 
         return result
 
@@ -74,27 +77,27 @@ class SearcherDashboard:
             bucket_name = self._format_field_to_bucket(field_name)
 
             if field_type == "text":
-                search_dsl.aggs.bucket(bucket_name + '_text_sigterms', 'significant_text', field=field_name)
+                search_dsl.aggs.bucket(bucket_name + '#text_sigterms', 'significant_text', field=field_name)
 
             elif field_type == "keyword":
-                search_dsl.aggs.bucket(bucket_name + '_keyword_terms', 'terms', field=field_name)
-                search_dsl.aggs.bucket(bucket_name + '_keyword_count', 'value_count', field=field_name)
+                search_dsl.aggs.bucket(bucket_name + '#keyword_terms', 'terms', field=field_name)
+                search_dsl.aggs.bucket(bucket_name + '#keyword_count', 'value_count', field=field_name)
 
             elif field_type == "date":
-                search_dsl.aggs.bucket(bucket_name + "_date_month", 'date_histogram', field=field_name, interval='month')
-                search_dsl.aggs.bucket(bucket_name + "_date_year", 'date_histogram', field=field_name, interval='year')
+                search_dsl.aggs.bucket(bucket_name + "#date_month", 'date_histogram', field=field_name, interval='month')
+                search_dsl.aggs.bucket(bucket_name + "#date_year", 'date_histogram', field=field_name, interval='year')
 
             elif field_type == "integer":
-                search_dsl.aggs.bucket(bucket_name + "_int_stats", 'extended_stats', field=field_name)
-                search_dsl.aggs.bucket(bucket_name + '_int_count', 'value_count', field=field_name)
+                search_dsl.aggs.bucket(bucket_name + "#int_stats", 'extended_stats', field=field_name)
+                search_dsl.aggs.bucket(bucket_name + '#int_count', 'value_count', field=field_name)
 
             elif field_type == "long":
-                search_dsl.aggs.bucket(bucket_name + "_long_stats", 'extended_stats', field=field_name)
-                search_dsl.aggs.bucket(bucket_name + '_long_count', 'value_count', field=field_name)
+                search_dsl.aggs.bucket(bucket_name + "#long_stats", 'extended_stats', field=field_name)
+                search_dsl.aggs.bucket(bucket_name + '#long_count', 'value_count', field=field_name)
 
             elif field_type == "float":
-                search_dsl.aggs.bucket(bucket_name + "_float_stats", 'extended_stats', field=field_name)
-                search_dsl.aggs.bucket(bucket_name + '_float_count', 'value_count', field=field_name)
+                search_dsl.aggs.bucket(bucket_name + "#float_stats", 'extended_stats', field=field_name)
+                search_dsl.aggs.bucket(bucket_name + '#float_count', 'value_count', field=field_name)
 
     def _texta_facts_agg_handler(self, search_dsl):
         search_dsl.aggs.bucket('texta_facts', 'nested', path='texta_facts') \
@@ -135,9 +138,15 @@ class SearcherDashboard:
 
         # Categorize all the aggregations into groups, depending on their agg-type (ex sterms, value_counts, extended_stats etc)
         for field_name, aggregation_dict in agg_dict.items():
-            agg_type, agg_name = field_name.split('#')
+
+            if 'texta_facts' not in field_name:
+                agg_type, field_name, bucket_suffix = field_name.split('#')
+            else:
+                agg_type, field_name, bucket_suffix = ('nested', 'texta_facts', '')
 
             if agg_type not in final_result:
+                # Field names are in format agg_type#bucket_name which contains the field_name.
+                # Keep only the bucket/field name for better parsing in the front end.
                 final_result[agg_type] = {field_name: aggregation_dict}
             else:
                 final_result[agg_type].update({field_name: aggregation_dict})
