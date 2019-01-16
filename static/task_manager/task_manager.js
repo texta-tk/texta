@@ -66,12 +66,14 @@ function select_preprocessor (task_id) {
     $('[id^=params-]').addClass('hidden')
     $('#params-' + preprocessor_key).removeClass('hidden')
 }
-
-function delete_task (task_id) {
-    let data = {
-        task_id: task_id
-    }
-
+function deleteDocuments (type) {
+    let task_ids = []
+    $('input[name="dt_'+type+'_delete"]').each(function() {
+        if ($( this ).is(":checked")) {
+            task_ids.push($(this).attr('id'))
+        }
+    });
+    console.log(task_ids)
     swal({
         title: 'Are you sure?',
         text: 'This will remove the task and it\'s resources.',
@@ -84,12 +86,24 @@ function delete_task (task_id) {
 
     }).then((result) => {
         if (result.value) {
-            $.post(PREFIX + '/delete_task', data, function (data) {
-                location.reload()
+            $.ajax({
+                url: PREFIX+'/delete_task',
+                data: {'task_ids[]': task_ids},
+                type: 'POST',
+                success: function(result) {
+                    if(result.error){
+                        swalCustomTypeDisplay(SwalType.ERROR, result.error)
+                    }else{
+                        location.reload()
+                    }
+
+                }
             })
         }
     })
+
 }
+
 
 function uploadTask(task_form_id) {
     formElement = document.getElementById(task_form_id)

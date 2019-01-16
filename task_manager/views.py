@@ -137,37 +137,40 @@ def delete_task(request):
     :param request:
     :return:
     """
-    task_id = int(request.POST['task_id'])
-    task = Task.objects.get(pk=task_id)
+    task_ids = request.POST.getlist('task_ids[]')
+    if not task_ids:
+        json_response = {"error": "No tasks selected"}
+        return JsonResponse(json_response)
+    for task_id in task_ids:
+        task = Task.objects.get(pk=task_id)
+        if task.status == Task.STATUS_RUNNING:
+            # If task is running, mark it to cancel
+            task.status = Task.STATUS_CANCELED
+            task.save()
+        else:
+            if 'train' in task.task_type:
+                try:
+                    file_path = os.path.join(MODELS_DIR, "model_{}".format(task_id))
+                    if (os.path.exists(file_path)):
+                        os.remove(file_path)
+                except Exception as e:
+                    file_path = os.path.join(MODELS_DIR, "model_{}".format(task_id))
+                    logging.getLogger(ERROR_LOGGER).error('Could not delete model ({}).'.format(file_path), exc_info=True)
+            if 'entity_extractor' in task.task_type or 'train_tagger' in task.task_type :
+                try:
+                    plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/model_{}_cm.svg".format(task_id))
+                    meta_path = os.path.join(MODELS_DIR, "model_{}_meta".format(task_id))
 
-    if task.status == Task.STATUS_RUNNING:
-        # If task is running, mark it to cancel
-        task.status = Task.STATUS_CANCELED
-        task.save()
-    else:
-        if 'train' in task.task_type:
-            try:
-                file_path = os.path.join(MODELS_DIR, "model_{}".format(task_id))
-                if (os.path.exists(file_path)):
-                    os.remove(file_path)
-            except Exception as e:
-                file_path = os.path.join(MODELS_DIR, "model_{}".format(task_id))
-                logging.getLogger(ERROR_LOGGER).error('Could not delete model ({}).'.format(file_path), exc_info=True)
-        if 'entity_extractor' in task.task_type or 'train_tagger' in task.task_type :
-            try:
-                plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/model_{}_cm.svg".format(task_id))
-                meta_path = os.path.join(MODELS_DIR, "model_{}_meta".format(task_id))
-                
-                if (os.path.exists(plot_path)):
-                    os.remove(plot_path)
-                if os.path.exists(meta_path):
-                    os.remove(meta_path)
-            except Exception as e:
-                plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/model_{}_cm.svg".format(task_id))
-                facts_path = os.path.join(MODELS_DIR, "model_" + str(task_id) + "_meta")
-                logging.getLogger(ERROR_LOGGER).error('Could not delete Extractor/Tagger model meta ({}) or plot ({}).'.format(facts_path, plot_path), exc_info=True)
-        # Remove task
-        task.delete()
+                    if (os.path.exists(plot_path)):
+                        os.remove(plot_path)
+                    if os.path.exists(meta_path):
+                        os.remove(meta_path)
+                except Exception as e:
+                    plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/model_{}_cm.svg".format(task_id))
+                    facts_path = os.path.join(MODELS_DIR, "model_" + str(task_id) + "_meta")
+                    logging.getLogger(ERROR_LOGGER).error('Could not delete Extractor/Tagger model meta ({}) or plot ({}).'.format(facts_path, plot_path), exc_info=True)
+            # Remove task
+            task.delete()
 
     return HttpResponse()
 
