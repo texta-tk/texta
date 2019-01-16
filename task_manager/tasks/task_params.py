@@ -1,8 +1,11 @@
-
+import logging
+import json
 from .workers.language_model_worker import LanguageModelWorker
 from .workers.tag_model_worker import TagModelWorker
 from .workers.preprocessor_worker import PreprocessorWorker
+from texta.settings import ERROR_LOGGER
 
+fact_names = {}
 
 task_params = [
     {
@@ -27,6 +30,26 @@ task_params = [
         "allowed_actions": []
     }
 ]
+
+
+def get_fact_names(es_m):
+    try:
+        fact_names.clear()
+        aggs = {'main': {'aggs': {"facts": {"nested": {"path": "texta_facts"}, "aggs": {"fact_names": {"terms": {"field": "texta_facts.fact", "size": 10000}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val"}}}}}}}}}
+        es_m.load_combined_query(aggs)
+        response = es_m.search()
+        # Check if aggregations in response, then check if facts in response['aggregations']
+        if ('aggregations' in response) and ('facts' in response['aggregations']) and ('fact_names' in response['aggregations']['facts']):
+            response_aggs = response['aggregations']['facts']['fact_names']['buckets']
+            fact_data = {}
+            for fact in response_aggs:
+                fact_data[fact['key']] = []
+                for val in fact['fact_values']['buckets']:
+                    fact_data[fact['key']].append(val['key'])
+            fact_names.update(fact_data)
+    except Exception as e:
+        logging.getLogger(ERROR_LOGGER).exception(json.dumps(
+            {'process': 'GET TASK PARAMS', 'event': 'get_fact_names', 'data': {'active_datasets_ids_and_names': [(ds.id, ds.index) for ds in es_m.active_datasets], 'response_keys': list(response.keys())}}), exc_info=True)
 
 
 def activate_task_worker(task_type):
