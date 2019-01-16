@@ -147,7 +147,7 @@ def dashboard_endpoint(request):
     es_m = ds.build_manager(ES_Manager)
 
     indices = es_m.stringify_datasets()
-    dashboard = SearcherDashboard(es_url='http://elastic-dev.texta.ee:9200', indices=indices)
+    dashboard = SearcherDashboard(es_url=es_url, indices=indices)
     result = dashboard.response
 
     return JsonResponse(result)

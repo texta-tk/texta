@@ -4,7 +4,6 @@ from typing import *
 import elasticsearch_dsl
 import elasticsearch
 from searcher.dashboard.es_helper import DashboardEsHelper
-from elasticsearch_dsl.connections import connections
 from texta.settings import ERROR_LOGGER
 
 
@@ -17,11 +16,12 @@ class SearcherDashboard:
         self.query_body = query_body
 
         self.elasticsearch = elasticsearch.Elasticsearch(self.es_url, index=self.indices, timeout=15, )
+        self.search_querys = []
 
         self.response = self.query_conductor()
         self.response = self.format_result()
 
-    def query_conductor(self) -> Dict[str, Any]:
+    def query_conductor(self) -> Dict[str, Dict[str, Any]]:
         result = {}
 
         list_of_indices = self.indices.split(',')
@@ -43,7 +43,8 @@ class SearcherDashboard:
 
             # Send the query towards Elasticsearch and then save it into the result
             # dict under its index's name.
-            response = search.execute(ignore_cache=True).to_dict()
+            self.search_querys.append(search.to_dict())  # Save query for debug purposes.
+            response = search.execute().to_dict()
             result[index] = response
 
         return result
