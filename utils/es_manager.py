@@ -1,5 +1,4 @@
 # -*- coding: utf8 -*-
-from __future__ import print_function
 import json
 import copy
 from pprint import pprint
@@ -16,7 +15,6 @@ from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, 
 # Need to update index.max_inner_result_window to increase
 HEADERS = {'Content-Type': 'application/json'}
 
-
 class Singleton(type):
     _instances = {}
 
@@ -32,7 +30,8 @@ class ES_Manager:
 
     HEADERS = HEADERS
     TEXTA_RESERVED = ['texta_facts']
-
+    TEXTA_META_FIELDS = ['_es_id']
+    build_search_query = None
     # Redefine requests if LDAP authentication is used
     if es_use_ldap:
         requests = requests.Session()
@@ -45,6 +44,7 @@ class ES_Manager:
         self.active_datasets = active_datasets
         self.combined_query = None
         self._facts_map = None
+        self.clear_readonly_block()
 
     def stringify_datasets(self) -> str:
         """
@@ -57,7 +57,7 @@ class ES_Manager:
         return index_string
 
     def bulk_post_update_documents(self, documents, ids):
-        """Do both plain_post_bulk and _update_by_query"""
+        """Do both plain_post_bulk and update_documents()"""
         data = ''
 
         for i, _id in enumerate(ids):
@@ -65,23 +65,19 @@ class ES_Manager:
             data += json.dumps({"doc": documents[i]}) + '\n'
 
         response = self.plain_post_bulk(self.es_url, data)
-        response = self._update_by_query()
+        response = self.update_documents()
         return response
 
-    def bulk_post_documents(self, documents, ids):
+    def bulk_post_documents(self, documents, ids, document_locations):
         """Do just plain_post_bulk"""
         data = ''
 
-        for i, _id in enumerate(ids):
-            data += json.dumps({"update": {"_id": _id, "_index": self.stringify_datasets()}}) + '\n'
-            data += json.dumps({"doc": documents[i]}) + '\n'
+        for i,_id in enumerate(ids):
+            data += json.dumps({"update": {"_id": _id, "_index": document_locations[i]['_index'], "_type": document_locations[i]['_type']}})+'\n'
+            data += json.dumps({"doc": documents[i]})+'\n'
 
         response = self.plain_post_bulk(self.es_url, data)
-        return response
 
-    def update_documents(self):
-        """Do just _update_by_query"""
-        response = self._update_by_query()
         return response
 
     def update_mapping_structure(self, new_field, new_field_properties):
@@ -99,10 +95,12 @@ class ES_Manager:
                     properties['texta_facts'] = FACT_PROPERTIES
 
                 properties = {'properties': properties}
-
+                url = '{0}/{1}/_mapping/{2}'.format(self.es_url, index, mapping)
                 response = self.plain_put(url, json.dumps(properties))
+                return response
 
-    def _update_by_query(self):
+
+    def update_documents(self):
         response = self.plain_post('{0}/{1}/_update_by_query?refresh&conflicts=proceed'.format(self.es_url, self.stringify_datasets()))
         return response
 
@@ -117,7 +115,7 @@ class ES_Manager:
                 sub_structure = v['properties']
                 path_list = root_path[:]
                 path_list.append(k)
-                sub_mapping = [{'path': k, 'type': 'text'}]
+                sub_mapping = [{'path': k, 'type': 'fact'}]
                 mapping_data.extend(sub_mapping)
 
             # deal with object & nested structures 
@@ -218,7 +216,6 @@ class ES_Manager:
                 queries.append(json.dumps(query_body))
 
         responses = self.plain_multisearch(es_url, queries)
-
         fields_with_facts = {'fact': [], 'fact_str': [], 'fact_num': []}
 
         for response in responses:
@@ -253,7 +250,6 @@ class ES_Manager:
                 for mapping in index_properties['mappings']:
                     mapping_structure = index_properties['mappings'][mapping]['properties']
                     decoded_mapping_structure = self._decode_mapping_structure(mapping_structure)
-
                     for field_mapping in decoded_mapping_structure:
                         field_mapping_json = json.dumps(field_mapping)
                         if field_mapping_json not in mapping_data:
@@ -265,21 +261,19 @@ class ES_Manager:
 
         return mapping_data
 
-    def get_column_names(self, include_reserved_fields=False) -> list:
+    def get_column_names(self, facts=False)-> list:
         """ Get Column names from flat mapping structure
             Returns: sorted list of names
         """
         mapped_fields = self.get_mapped_fields()
-
-        if include_reserved_fields is False:
-            mapped_fields = [json.loads(field_data) for field_data in list(mapped_fields.keys())]
-            column_names = [c['path'] for c in mapped_fields if not self._is_reserved_field(c['path'])]
-            column_names.sort()
-        else:
-            mapped_fields = [json.loads(field_data) for field_data in list(mapped_fields.keys())]
+        mapped_fields = [json.loads(field_data) for field_data in list(mapped_fields.keys())]
+        if facts:
             column_names = [c['path'] for c in mapped_fields]
-            column_names.sort()
-
+        else:
+            column_names = [c['path'] for c in mapped_fields if not self._is_reserved_field(c['path'])]
+        # Add meta fields
+        column_names.sort()
+        column_names += self.TEXTA_META_FIELDS
         return column_names
 
     def _is_reserved_field(self, field_name):
@@ -346,6 +340,7 @@ class ES_Manager:
         q = json.dumps(self.combined_query['main'])
         search_url = '{0}/{1}/_search'.format(es_url, self.stringify_datasets())
         response = self.plain_post(search_url, q)
+        self.build_search_query = self.combined_query
         return response
 
     def process_bulk(self, hits):
@@ -377,7 +372,14 @@ class ES_Manager:
             data = self.process_bulk(response['hits']['hits'])
             delete_url = '{0}/{1}/_bulk'.format(es_url, self.stringify_datasets())
             deleted = requests.post(delete_url, data=data, headers=HEADERS)
-
+        return True
+    
+    def add_document(self, document):
+        """ Indexes given json document
+        """
+        document = json.dumps(document)
+        url = '{0}/{1}/{2}/'.format(es_url, self.index, self.mapping)
+        response = self.plain_post(url, data=document)
         return True
 
     def scroll(self, scroll_id=None, time_out='1m', id_scroll=False, field_scroll=False, size=100, match_all=False):
@@ -464,10 +466,12 @@ class ES_Manager:
             for constraint in query_dict['main']['query']['bool']['must_not']:
                 self.combined_query['main']['query']['bool']['must_not'].append(constraint)
 
-    def more_like_this_search(self, fields, stopwords=[], docs_accepted=[], docs_rejected=[], handle_negatives='ignore', search_size=10):
+    def more_like_this_search(self, fields, stopwords=[], docs_accepted=[], docs_rejected=[], handle_negatives='ignore', search_size=10, build_search_query=None):
 
         # Get ids from basic search
-        docs_search = self._scroll_doc_ids()
+
+        self.combined_query = build_search_query
+        docs_search =  self._scroll_doc_ids()
         # Combine ids from basic search and mlt search
 
         docs_search = [json.dumps(d) for d in docs_search]
@@ -526,16 +530,11 @@ class ES_Manager:
 
         response = self.scroll(id_scroll=True, size=100)
         scroll_id = response['_scroll_id']
-        hits = response['hits']['hits']
 
-        while hits:
-            hits = response['hits']['hits']
-            for hit in hits:
-                ids.append({'_index': hit['_index'], '_type': hit['_type'], '_id': hit['_id']})
-                if len(ids) == limit:
-                    return ids
-            response = self.scroll(scroll_id=scroll_id)
-            scroll_id = response['_scroll_id']
+        for hit in response['hits']['hits']:
+            ids.append({'_index': hit['_index'], '_type': hit['_type'], '_id': hit['_id']})
+            if len(ids) == limit:
+                return ids
 
         return ids
 
@@ -556,8 +555,6 @@ class ES_Manager:
         _min = self._timestamp_to_str(aggs["min_date"]["value"])
         _max = self._timestamp_to_str(aggs["max_date"]["value"])
 
-        print(_min, _max)
-
         return _min, _max
 
     @staticmethod
@@ -566,8 +563,8 @@ class ES_Manager:
         return datetime.date.strftime(date_object, date_format)
 
     def clear_readonly_block(self):
-        """changes read_only_allow_delete to False"""
-        data = {"index": {"blocks": {"read_only_allow_delete": "false"}}}
+        '''changes the property read_only_allow_delete of an index to False'''
+        data = {"index":{"blocks":{"read_only_allow_delete":"false"}}}
         url = "{0}/{1}/_settings".format(self.es_url, self.stringify_datasets())
         response = self.plain_put(url, json.dumps(data))
         return response
@@ -663,7 +660,11 @@ class ES_Manager:
                 full_path_and_types['type'] = field_dict['mapping'][mapping_key]['type']
                 all_fields.append(full_path_and_types)
 
-        return all_fields
+        if remove_duplicate_keys:
+            unique_fields_with_schemas = [i for n, i in enumerate(fields_with_schemas) if i not in fields_with_schemas[n + 1:]]
+            return unique_fields_with_schemas
+        else:
+            return fields_with_schemas
 
     def get_filtered_field_mappings(self, es_field_mappings: dict)-> dict:
         """

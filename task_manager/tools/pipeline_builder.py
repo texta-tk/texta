@@ -1,6 +1,6 @@
 
 # Uses scikit-learn 0.18.1
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -10,163 +10,230 @@ from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import RadiusNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
+from sklearn.pipeline import FeatureUnion
 
 
 class ModelNull(BaseEstimator):
 
-	def fit(self, x, y):
-		# Do nothing
-		return self
+    def fit(self, x, y):
+        # Do nothing
+        return self
 
-	def transform(self, x):
-		# Do nothing
-		return x
+    def transform(self, x):
+        # Do nothing
+        return x
 
 
 class ModelStep:
 
-	def __init__(self, name, model, label, params):
-		self.name = name
-		self.model = model
-		self.label = label
-		self.params = params
+    def __init__(self, name, model, label, params):
+        self.name = name
+        self.model = model
+        self.label = label
+        self.params = params
 
-	def __str__(self):
-		return self.name
+    def __str__(self):
+        return self.name
 
-	def __repr__(self):
-		return self.name
+    def __repr__(self):
+        return self.name
 
-	def get_step(self):
-		return (self.name, self.model())
+    def get_step(self):
+        return (self.name, self.model())
 
-	def get_param(self):
-		param_dict = {}
-		for k in self.params:
-			p_name = '{0}__{1}'.format(self.name, k)
-			p_value = self.params[k]
-			param_dict[p_name] = p_value
-		return param_dict
+    def get_param(self):
+        param_dict = {}
+        for k in self.params:
+            p_name = '{0}__{1}'.format(self.name, k)
+            p_value = self.params[k]
+            param_dict[p_name] = p_value
+        return param_dict
+
+
+class ItemSelector(BaseEstimator, TransformerMixin):
+    """For data grouped by feature, select subset of data at a provided key.
+
+    The data is expected to be stored in a 2D data structure, where the first
+    index is over features and the second is over samples.  i.e.
+
+    >> len(data[key]) == n_samples
+
+    Please note that this is the opposite convention to scikit-learn feature
+    matrixes (where the first index corresponds to sample).
+
+    ItemSelector only requires that the collection implement getitem
+    (data[key]).  Examples include: a dict of lists, 2D numpy array, Pandas
+    DataFrame, numpy record array, etc.
+
+    >> data = {'a': [1, 5, 2, 5, 2, 8],
+               'b': [9, 4, 1, 4, 1, 3]}
+    >> ds = ItemSelector(key='a')
+    >> data['a'] == ds.transform(data)
+
+    ItemSelector is not designed to handle data grouped by sample.  (e.g. a
+    list of dicts).  If your data is structured this way, consider a
+    transformer along the lines of `sklearn.feature_extraction.DictVectorizer`.
+
+    Parameters
+    ----------
+    key : hashable, required
+        The key corresponding to the desired value in a mappable.
+
+    Reference: http://scikit-learn.org/0.19/auto_examples/hetero_feature_union.html
+    """
+    def __init__(self, key):
+        self.key = key
+
+    def fit(self, x, y=None):
+        return self
+
+    def transform(self, data_dict):
+        return data_dict[self.key]
 
 
 class PipelineBuilder:
 
-	def __init__(self):
-		self.extractor_list = []
-		self.reductor_list = []
-		self.normalizer_list = []
-		self.classifier_list = []
-		self.extractor_op = 0
-		self.reductor_op = 0
-		self.normalizer_op = 0
-		self.classifier_op = 0
+    def __init__(self):
+        self.extractor_list = []
+        self.reductor_list = []
+        self.normalizer_list = []
+        self.classifier_list = []
+        self.extractor_op = 0
+        self.reductor_op = 0
+        self.normalizer_op = 0
+        self.classifier_op = 0
 
-	def add_extractor(self, name, model, label, params):
-		self.extractor_list.append(ModelStep(name, model, label, params))
+    def add_extractor(self, name, model, label, params):
+        self.extractor_list.append(ModelStep(name, model, label, params))
 
-	def add_reductor(self, name, model, label, params):
-		self.reductor_list.append(ModelStep(name, model, label, params))
+    def add_reductor(self, name, model, label, params):
+        self.reductor_list.append(ModelStep(name, model, label, params))
 
-	def add_normalizer(self, name, model, label, params):
-		self.normalizer_list.append(ModelStep(name, model, label, params))
+    def add_normalizer(self, name, model, label, params):
+        self.normalizer_list.append(ModelStep(name, model, label, params))
 
-	def add_classifier(self, name, model, label, params):
-		self.classifier_list.append(ModelStep(name, model, label, params))
+    def add_classifier(self, name, model, label, params):
+        self.classifier_list.append(ModelStep(name, model, label, params))
 
-	def get_extractor_options(self):
-		options = []
-		for i, x in enumerate(self.extractor_list):
-			options.append({'index': i, 'label': x.label})
-		return options
+    def get_extractor_options(self):
+        options = []
+        for i, x in enumerate(self.extractor_list):
+            options.append({'index': i, 'label': x.label})
+        return options
 
-	def get_reductor_options(self):
-		options = []
-		for i, x in enumerate(self.reductor_list):
-			options.append({'index': i, 'label': x.label})
-		return options
+    def get_reductor_options(self):
+        options = []
+        for i, x in enumerate(self.reductor_list):
+            options.append({'index': i, 'label': x.label})
+        return options
 
-	def get_normalizer_options(self):
-		options = []
-		for i, x in enumerate(self.normalizer_list):
-			options.append({'index': i, 'label': x.label})
-		return options
+    def get_normalizer_options(self):
+        options = []
+        for i, x in enumerate(self.normalizer_list):
+            options.append({'index': i, 'label': x.label})
+        return options
 
-	def get_classifier_options(self):
-		options = []
-		for i, x in enumerate(self.classifier_list):
-			options.append({'index': i, 'label': x.label})
-		return options
+    def get_classifier_options(self):
+        options = []
+        for i, x in enumerate(self.classifier_list):
+            options.append({'index': i, 'label': x.label})
+        return options
 
-	def set_pipeline_options(self, extractor_op, reductor_op, normalizer_op, classifier_op):
-		self.extractor_op = extractor_op
-		self.reductor_op = reductor_op
-		self.normalizer_op = normalizer_op
-		self.classifier_op = classifier_op
+    def set_pipeline_options(self, extractor_op, reductor_op, normalizer_op, classifier_op):
+        self.extractor_op = extractor_op
+        self.reductor_op = reductor_op
+        self.normalizer_op = normalizer_op
+        self.classifier_op = classifier_op
 
-	def pipeline_representation(self):
-		e = self.extractor_list[self.extractor_op].name
-		r = self.reductor_list[self.reductor_op].name
-		n = self.normalizer_list[self.normalizer_op].name
-		c = self.classifier_list[self.classifier_op].name
-		rep = "{0} | {1} | {2} | {3}".format(e, r, n, c)
-		return rep
+    def pipeline_representation(self):
+        e = self.extractor_list[self.extractor_op].name
+        r = self.reductor_list[self.reductor_op].name
+        n = self.normalizer_list[self.normalizer_op].name
+        c = self.classifier_list[self.classifier_op].name
+        rep = "{0} | {1} | {2} | {3}".format(e, r, n, c)
+        return rep
 
-	def build(self):
-		# Build model Pipeline
-		steps = []
-		steps.append(self.extractor_list[self.extractor_op].get_step())
-		steps.append(self.reductor_list[self.reductor_op].get_step())
-		steps.append(self.normalizer_list[self.normalizer_op].get_step())
-		steps.append(self.classifier_list[self.classifier_op].get_step())
-		pipe = Pipeline(steps)
-		# Build model params for Grid Search
-		params = {}
-		params.update(self.extractor_list[self.extractor_op].get_param())
-		params.update(self.reductor_list[self.reductor_op].get_param())
-		params.update(self.normalizer_list[self.normalizer_op].get_param())
-		params.update(self.classifier_list[self.classifier_op].get_param())
-		return pipe, params
+    def build(self, fields):
+        """ Build model Pipeline and Grid Search params
+        """
+        params = {}
+        # Field transform pipeline per field + params
+        transformer_list = []
+
+        for field in fields:
+            pipe_key = 'pipe_{}'.format(field)
+            steps = []    
+            steps.append(tuple(['selector', ItemSelector(key=field)]))
+            steps.append(self.extractor_list[self.extractor_op].get_step())
+            steps.append(self.reductor_list[self.reductor_op].get_step())
+            steps.append(self.normalizer_list[self.normalizer_op].get_step())
+            transformer_list.append(tuple([pipe_key, Pipeline(steps)]))
+            # Nest params inside the union field - Extractor
+            p_dict = self.extractor_list[self.extractor_op].get_param()
+            for k in p_dict:
+                new_k = '{}__{}__{}'.format('union', pipe_key, k)
+                params[new_k] = p_dict[k]
+            # Nest params inside the union field - Reductor
+            p_dict = self.reductor_list[self.reductor_op].get_param()
+            for k in p_dict:
+                new_k = '{}__{}__{}'.format('union', pipe_key, k)
+                params[new_k] = p_dict[k]
+            # Nest params inside the union field - Normalizer
+            p_dict = self.normalizer_list[self.normalizer_op].get_param()
+            for k in p_dict:
+                new_k = '{}__{}__{}'.format('union', pipe_key, k)
+                params[new_k] = p_dict[k]
+
+        # Classifier pipeline + params
+        steps = []
+        steps.append(tuple(['union', FeatureUnion(transformer_list=transformer_list)]))
+        steps.append(self.classifier_list[self.classifier_op].get_step())
+        pipe = Pipeline(steps)
+        params.update(self.classifier_list[self.classifier_op].get_param())
+        return pipe, params
 
 
 def get_pipeline_builder():
-	pipe_builder = PipelineBuilder()
+    pipe_builder = PipelineBuilder()
 
-	# Feature Extraction
-	params = {'ngram_range': [(1, 1), (1, 2), (1, 3)], 'min_df': [5]}
-	pipe_builder.add_extractor('CountVectorizer', CountVectorizer, 'Count Vectorizer', params)
+    # Feature Extraction
+    params = {}
+    pipe_builder.add_extractor('HashingVectorizer', HashingVectorizer, 'Hashing Vectorizer', params)
 
-	params = {}
-	pipe_builder.add_extractor('HashingVectorizer', HashingVectorizer, 'Hashing Vectorizer', params)
+    params = {'ngram_range': [(1, 1), (1, 2)], 'min_df': [5]}
+    pipe_builder.add_extractor('CountVectorizer', CountVectorizer, 'Count Vectorizer', params)
 
-	params = {}
-	pipe_builder.add_extractor('TfidfVectorizer', TfidfVectorizer, 'TfIdf Vectorizer', params)
+    params = {'ngram_range': [(1, 1), (1, 2)], 'min_df': [5]}
+    pipe_builder.add_extractor('TfidfVectorizer', TfidfVectorizer, 'TfIdf Vectorizer', params)
 
-	# Dimension Reduction
-	params = {}
-	pipe_builder.add_reductor('No_Reduction', ModelNull, 'None', params)
+    # Dimension Reduction
+    params = {}
+    pipe_builder.add_reductor('No_Reduction', ModelNull, 'None', params)
 
-	params = {}
-	pipe_builder.add_reductor('TruncatedSVD', TruncatedSVD, 'Truncated SVD', params)
+    params = {}
+    pipe_builder.add_reductor('TruncatedSVD', TruncatedSVD, 'Truncated SVD', params)
 
-	# Normalization
-	params = {}
-	pipe_builder.add_normalizer('No_Normalization', ModelNull, 'None', params)
+    # Normalization
+    params = {}
+    pipe_builder.add_normalizer('No_Normalization', ModelNull, 'None', params)
 
-	params = {}
-	pipe_builder.add_normalizer('Normalizer', Normalizer, 'Normalizer', params)
+    params = {}
+    pipe_builder.add_normalizer('Normalizer', Normalizer, 'Normalizer', params)
 
-	# Classification Models
-	params = {}
-	pipe_builder.add_classifier('LinearSVC', LinearSVC, 'LinearSVC', params)
+    # Classification Models
 
-	params = {}
-	pipe_builder.add_classifier('BernoulliNB', BernoulliNB, 'Bernoulli Naive Bayes', params)
+    params = {}
+    pipe_builder.add_classifier('LogisticRegressionClassifier', LogisticRegression, 'Logistic Regression', params)
 
-	params = {}
-	pipe_builder.add_classifier('KNeighborsClassifier', KNeighborsClassifier, 'K-Neighbors', params)
+    params = {}
+    pipe_builder.add_classifier('LinearSVC', LinearSVC, 'LinearSVC', params)
 
-	params = {}
-	pipe_builder.add_classifier('RadiusNeighborsClassifier', RadiusNeighborsClassifier, 'Radius Neighbors', params)
+    params = {}
+    pipe_builder.add_classifier('KNeighborsClassifier', KNeighborsClassifier, 'K-Neighbors', params)
 
-	return pipe_builder
+    params = {}
+    pipe_builder.add_classifier('RadiusNeighborsClassifier', RadiusNeighborsClassifier, 'Radius Neighbors', params)
+
+    return pipe_builder

@@ -16,6 +16,7 @@
 
 from time import strftime
 import json
+import ast
 import os
 
 # Path to TEXTA's root directory. It is used in other paths as a prefix.
@@ -23,6 +24,23 @@ import os
 # the path programmatically but may occasionally fail.
 #
 BASE_DIR = os.path.realpath(os.path.dirname(__file__))
+
+# When this is true, the scoro_preprocessor is enabled
+#
+SCORO_PREPROCESSOR_ENABLED = os.getenv('TEXTA_SCORO_PREPROCESSOR_ENABLED', False)
+SCORO_PREPROCESSOR_ENABLED = ast.literal_eval(str(SCORO_PREPROCESSOR_ENABLED))
+
+# When this is true, email confirmation is enabled
+#
+REQUIRE_EMAIL_CONFIRMATION = False
+
+# Email settings
+#
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'emailaddress@gmail.com'
+EMAIL_HOST_PASSWORD = 'hunter2'
+EMAIL_PORT = 587
 
 ############################ Server Type ###########################
 
@@ -48,11 +66,11 @@ STATIC_ROOT = os.path.join(os.path.abspath(os.path.join(BASE_DIR, os.pardir)), '
 SERVER_TYPE = os.getenv('TEXTA_SERVER_TYPE')
 
 if SERVER_TYPE is None:
-	SERVER_TYPE = 'development'
+	SERVER_TYPE = os.getenv('TEXTA_SERVER_TYPE', 'development')
 
 if SERVER_TYPE == 'development':
-	PROTOCOL = 'http://'
-	DOMAIN = 'localhost'
+	PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL', 'http'))
+	DOMAIN = os.getenv('TEXTA_DOMAIN', 'localhost')
 	PORT = '8000'
 
 	URL_PREFIX_DOMAIN = '{0}{1}:{2}'.format(PROTOCOL, DOMAIN, PORT)
@@ -62,21 +80,26 @@ if SERVER_TYPE == 'development':
 	DEBUG = True
 
 elif SERVER_TYPE == 'production':
-	PROTOCOL = 'http://'
-	DOMAIN = 'dev.texta.ee'
+	PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL', 'http'))
+	DOMAIN = os.getenv('TEXTA_DOMAIN', 'dev.texta.ee')
 
 	URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL, DOMAIN)
-	URL_PREFIX_RESOURCE = '/texta'
+	URL_PREFIX_RESOURCE = ''
 	ROOT_URLCONF = 'texta.urls'
-	STATIC_URL = '/texta/static/'
+	STATIC_URL = URL_PREFIX_DOMAIN + '/static/'
 	DEBUG = False
 
 elif SERVER_TYPE == 'docker':
 	PROTOCOL = '{0}://'.format(os.getenv('TEXTA_PROTOCOL'))
-	DOMAIN = os.getenv('TEXTA_HOST')
-
-	URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL, DOMAIN)
-	URL_PREFIX_RESOURCE = ''
+	DOMAIN = os.getenv('TEXTA_HOST', 'localhost')
+	PORT = os.getenv('TEXTA_PORT', None)
+	URL_PREFIX_RESOURCE = os.getenv('TEXTA_PREFIX_RESOURCE', '')
+	
+	if PORT:
+		URL_PREFIX_DOMAIN = '{0}{1}:{2}'.format(PROTOCOL, DOMAIN, PORT)
+	else:
+		URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL, DOMAIN)
+	
 	ROOT_URLCONF = 'texta.urls'
 	STATIC_URL = '/static/'
 	DEBUG = True
@@ -135,7 +158,7 @@ MANAGERS = ADMINS
 
 # Avoid errors when sending too big files through the importer API.
 # Increased vulnerability to DDoS attacks.
-DATA_UPLOAD_MAX_MEMORY_SIZE = 26214400000
+DATA_UPLOAD_MAX_MEMORY_SIZE = os.getenv('DJANGO_DATA_UPLOAD_MAX_MEMORY_SIZE', None)
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 
 # New user are created as activated or deactivated (in which case superuser has to activate them manually)
@@ -171,6 +194,7 @@ DATABASES = {
 		'PORT':         os.getenv('DJANGO_DATABASE_PORT', ''),
 		# Set to empty string for default. Not used with sqlite3.
 		'BACKUP_COUNT': 5,
+		'CONN_MAX_AGE': None
 	}
 }
 
@@ -259,7 +283,7 @@ INSTALLED_APPS = (
 
 
 # Elasticsearch URL with protocol specification. Can be either localhost
-# or remote address.
+# or remote address ex: http://elastic-dev.texta.ee:9200.
 es_url = os.getenv('TEXTA_ELASTICSEARCH_URL', 'http://localhost:9200')
 
 es_prefix = os.getenv('TEXTA_ELASTICSEARCH_PREFIX', '')
@@ -270,6 +294,7 @@ es_links = {
 	('etsa_new', 'event_dgn', 'epiId'): ('https://p12.stacc.ee/common/epicrisis/?id=', ''),
 	('etsa_new', 'event_dgn', 'patId'): ('https://p12.stacc.ee/common/aegread/index.php/aegrida/get/?id=', '')
 }
+
 
 # Date format used in Elasticsearch fields.
 #
@@ -464,10 +489,9 @@ FACT_PROPERTIES = {
 # Several scripts ran during the boot to set up files and directories.
 # Scripts will only be run if settings is imported from 'texta' directory, e.g. as a result of manager.py, or by Apache (user httpd / apache)
 
-if os.path.split(os.getcwd())[1] in ['texta', 'httpd', 'apache', 'www']:
-	from utils.setup import write_navigation_file, ensure_dir_existence
+from utils.setup import write_navigation_file, ensure_dir_existence
 
-	write_navigation_file(URL_PREFIX, STATIC_URL, STATIC_ROOT)
-	ensure_dir_existence(LOG_PATH)
-	ensure_dir_existence(MODELS_DIR)
-	ensure_dir_existence(USER_MODELS)
+write_navigation_file(URL_PREFIX, STATIC_URL, STATIC_ROOT)
+ensure_dir_existence(LOG_PATH)
+ensure_dir_existence(MODELS_DIR)
+ensure_dir_existence(USER_MODELS)

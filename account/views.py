@@ -13,7 +13,11 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.views.decorators.http import require_POST
 from django.template import loader
-
+from django.core.mail import EmailMessage
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.core.mail import EmailMessage
 from .models import Profile
 from permission_admin.models import Dataset
 from utils.datasets import Datasets
@@ -21,9 +25,7 @@ from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
 from task_manager.models import Task
 
-from texta.settings import USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_DEFAULT, es_url, STATIC_URL
-
-
+from texta.settings import REQUIRE_EMAIL_CONFIRMATION, USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_DEFAULT, es_url, STATIC_URL
 
 
 def index(request):
@@ -34,15 +36,13 @@ def index(request):
 	return HttpResponse(
 			template.render({'STATIC_URL': STATIC_URL, 'allowed_datasets': datasets, 'language_models': language_models}, request))
 
-
 @login_required
 def update(request):
 	logger = LogManager(__name__, 'CHANGE_SETTINGS')
 
-	parameters = request.POST
-
-	if 'model' in parameters:
-		model = str(parameters['model'])
+	parameters = request.POST	
+	if 'model_pk' in parameters:
+		model = {"pk": parameters["model_pk"], "description": parameters["model_description"]}
 		request.session['model'] = model
 		logger.clean_context()
 		logger.set_context('user_name', request.user.username)
@@ -67,8 +67,22 @@ def update(request):
 
 	return HttpResponseRedirect(URL_PREFIX + '/')
 
-
 ### MANAGING ACCOUNTS ###
+
+def _send_confirmation_email(user,email):
+	if(REQUIRE_EMAIL_CONFIRMATION):
+		token=_generate_random_token()
+		email = EmailMessage('Email Confirmation', 'Please confirm your email by clicking this link:'+URL_PREFIX+'/confirm/'+token, to=[email])
+	
+		try:
+			user.profile
+		except:
+			Profile.objects.create(user=user).save()
+
+		user.profile.email_confirmation_token = token
+		user.save()
+		email.send()
+
 
 def create(request):
 	username = request.POST['username']
@@ -80,10 +94,12 @@ def create(request):
 		return HttpResponse(json.dumps({'url': '#', 'issues': issues}))
 
 	user = User.objects.create_user(username, email, password)
+	_send_confirmation_email(user,email)
 
 	if USER_ISACTIVE_DEFAULT == False:
 		user.is_active = False
 		user.save()
+		
 
 	if user:
 		initialize_permissions(user)
@@ -91,12 +107,12 @@ def create(request):
 	user_path = os.path.join(USER_MODELS, username)
 	if not os.path.exists(user_path):
 		os.makedirs(user_path)
-
+		
 	logging.getLogger(INFO_LOGGER).info(json.dumps(
 			{'process': 'CREATE USER', 'event': 'create_user', 'args': {'user_name': username, 'email': email}}))
 
 	if USER_ISACTIVE_DEFAULT == True:
-		user = authenticate(username=username, password=password)
+		user = authenticate(username=username, password=password)	
 		if user is not None:
 			django_login(request, user)
 
@@ -133,7 +149,6 @@ def change_password(request):
 
 	return HttpResponse()
 
-
 def login(request):
 	username = request.POST['username']
 	password = request.POST['password']
@@ -144,11 +159,13 @@ def login(request):
 		django_login(request, user)
 		logging.getLogger(INFO_LOGGER).info(
 				json.dumps({'process': '*', 'event': 'login_process_succeeded', 'args': {'user_name': username}}))
+		return HttpResponse(json.dumps({'process': '*', 'event': 'login_process_succeeded', 'args': {'user_name': username}}))
+
 	else:
 		logging.getLogger(INFO_LOGGER).info(
 				json.dumps({'process': '*', 'event': 'login_process_failed', 'args': {'user_name': username}}))
 
-	return HttpResponseRedirect(URL_PREFIX + '/')
+	return HttpResponse(json.dumps({'process': '*', 'event': 'login_process_failed', 'args': {'user_name': username}}))
 
 
 @login_required
@@ -231,3 +248,25 @@ def _validate_user_auth_input(request):
 		content_body['password']
 	except:
 		raise KeyError('Password missing.')
+
+def confirm_email(request, email_auth_token):
+	template = loader.get_template('email-confirmation.html')
+	
+	profile = Profile.objects.get(email_confirmation_token=email_auth_token)
+	if(profile.email_confirmed == False):	
+		profile.email_confirmed=True
+		profile.save()
+
+
+		template_params={
+			profile.user.username,
+			profile.user.password,
+			profile.user.email,
+			profile.auth_token,
+			profile.email_confirmation_token,
+			str(profile.email_confirmed),
+		}
+		return HttpResponse(
+				template.render( {'user_data': template_params}, request))
+	else:
+		return HttpResponseRedirect(URL_PREFIX + '/')

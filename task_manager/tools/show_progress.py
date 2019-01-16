@@ -1,5 +1,6 @@
 
 from task_manager.models import Task
+from .data_manager import TaskCanceledException
 
 
 class ShowProgress(object):
@@ -26,6 +27,9 @@ class ShowProgress(object):
 
     def update_view(self, percentage):
         r = Task.get_by_id(self.task_pk)
+        # Check if task was canceled
+        if r.status == Task.STATUS_CANCELED:
+            raise TaskCanceledException()
         r.status = Task.STATUS_RUNNING
         progress_message = '{0:3.0f} %'.format(percentage)
         r.update_progress(percentage, progress_message)

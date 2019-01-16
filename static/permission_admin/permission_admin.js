@@ -1,4 +1,15 @@
 $(document).ready(function () {
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        localStorage.setItem('permissionAdminLastTab', $(this).attr('href'))
+    })
+    let lastTab = localStorage.getItem('permissionAdminLastTab')
+    if (lastTab) {
+        $('[href="' + lastTab + '"]').tab('show')
+    } else {
+        let element = $('.top-nav-tabs li').first().children()
+        /* element.toggleClass('active') */
+        element.tab('show')
+    }
     $('#daterange_from').datepicker({
         format: "yyyy-mm-dd",
         startView: 2
@@ -21,6 +32,7 @@ $('#index').on('change', function () {
         }
     });
 });
+
 
 $('#index').trigger('change');
 
@@ -190,15 +202,15 @@ function moveItems(origin, destination) {
     $(origin).find(':selected').appendTo(destination)
 }
 
-$('.allow-btn').click(function (obj) {
+$('.allow-btn').on('click',(function (obj) {
     var userid = $(this).data('userid');
     moveItems('#' + userid + '-disallowed-datasets', '#' + userid + '-allowed-datasets')
-});
+}));
 
-$('.disallow-btn').click(function () {
+$('.disallow-btn').on('click',(function () {
     var userid = $(this).data('userid');
     moveItems('#' + userid + '-allowed-datasets', '#' + userid + '-disallowed-datasets')
-});
+}));
 
 function update_dataset_permissions(userId) {
     var allowedDatasets = []

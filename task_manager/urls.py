@@ -11,6 +11,7 @@ urlpatterns = [
     url(r'^start_mass_task$', views.start_mass_task, name='start_mass_task'),
     url(r'^delete_task$', views.delete_task, name='delete_task'),
     url(r'download_model$', views.download_model, name='download_model'),
+    url(r'upload_task_archive', views.upload_task_archive, name='upload_model'),
 
     # API
     url(r'^api/v1$', api_v1.api_info, name='api_info'),
@@ -19,6 +20,7 @@ urlpatterns = [
     url(r'^api/v1/train_model$', api_v1.api_train_model, name='api_train_model'),
     url(r'^api/v1/train_tagger$', api_v1.api_train_tagger, name='api_train_tagger'),
     url(r'^api/v1/apply$', api_v1.api_apply, name='api_apply'),
+    url(r'^api/v1/apply_text$', api_v1.api_apply_text, name='api_apply_text'),
     url(r'^api/v1/dataset_list$', api_v1.api_dataset_list, name='api_dataset_list'),
     url(r'^api/v1/search_list$', api_v1.api_search_list, name='api_search_list'),
     url(r'^api/v1/normalizer_list$', api_v1.api_normalizer_list, name='api_normalizer_list'),
@@ -26,6 +28,7 @@ urlpatterns = [
     url(r'^api/v1/reductor_list$', api_v1.api_reductor_list, name='api_reductor_list'),
     url(r'^api/v1/extractor_list$', api_v1.api_extractor_list, name='api_extractor_list'),
     url(r'^api/v1/tagger_list$', api_v1.api_tagger_list, name='api_tagger_list'),
+    url(r'^api/v1/tagger_info$', api_v1.api_tagger_info, name='api_tagger_info'),
     url(r'^api/v1/tag_list$', api_v1.api_tag_list, name='api_tag_list'),
     url(r'^api/v1/field_list$', api_v1.api_field_list, name='api_field_list'),
     url(r'^api/v1/mass_train_tagger$', api_v1.api_mass_train_tagger, name='api_mass_train_tagger'),

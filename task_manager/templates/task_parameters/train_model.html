@@ -1,100 +1,104 @@
-	<div class="panel">
-	  <div class="panel-heading">Train a Model</div>
-	  <div class="panel-body">
-		  <div class="form-group">
-			  <div class="col-sm-12">
-			  <div class="row">
-				<div class="col-sm-6">Select a search:</div>
-				<div class="col-sm-6">
-					<select name="{{task_param.id}}_search" class="form-control">
-						<option value="all_docs">Empty (all documents)</option>
-						{% for search in searches %}
-							<option value="{{search.id}}">{{search.description}}</option>
-						{% endfor %}
-					</select>
-				</div>
-			  </div>
-			  <div class="row">
-				<div class="col-sm-6">Select field:</div>
-				<div class="col-sm-6">
-					<select name="{{task_param.id}}_field" class="form-control">
-						{% for field in fields %}
-							<option value="{{field.path}}">{{field.label}}</option>
-						{% endfor %}
-					</select>
-				</div>
-			  </div>
-			  <div class="row">
-				<div class="col-sm-6">No of dimensions:</div>
-				<div class="col-sm-6">
-								<select name="{{task_param.id}}_num_dimensions" class="form-control">
-									<option value="50">50</option>
-									<option value="100" selected="selected">100</option>
-									<option value="150">150</option>
-									<option value="200">200</option>
-									<option value="250">250</option>
-									<option value="300">300</option>
-								</select>		
-				</div>
-			  </div>
-			  <div class="row">
-				<div class="col-sm-6">No of workers:</div>
-				<div class="col-sm-6">
-								<select name="{{task_param.id}}_num_workers" class="form-control">
-									<option value="1">1</option>
-									<option value="2" selected="selected">2</option>
-									<option value="3">3</option>
-									<option value="4">4</option>
-									<option value="5">5</option>
-									<option value="6">6</option>
-									<option value="7">7</option>
-									<option value="8">8</option>
-									<option value="9">9</option>
-									<option value="10">10</option>
-								</select>
-				</div>
-			  </div>
-			  <div class="row">
-				<div class="col-sm-6">Frequency threshold:</div>
-				<div class="col-sm-6">
-								<select name="{{task_param.id}}_min_freq" class="form-control">
-									<option value="1">1</option>
-									<option value="5">5</option>
-									<option value="10" selected="selected">10</option>
-									<option value="25">25</option>
-									<option value="50">50</option>
-									<option value="100">100</option>
-									<option value="250">250</option>
-									<option value="500">500</option>
-									<option value="1000">1000</option>
-								</select>
-				</div>
-			  </div>
-			  <div class="row">
-				<div class="col-sm-6">Max vocab size:</div>
-				<div class="col-sm-6">
-								<select name="{{task_param.id}}_max_vocab" class="form-control">
-									<option value="" selected="selected">No limit</option>
-									<option value="50000">50 000</option>
-									<option value="100000">100 000</option>
-									<option value="250000">250 000</option>
-									<option value="500000">500 000</option>
-									<option value="1000000">1 000 000</option>
-								</select>
-				</div>
-			  </div>		  
-			  <div class="row">
-				<div class="col-sm-6">Description:</div>
-				<div class="col-sm-6">
-				  <input name="{{task_param.id}}_description" class="form-control input-sm">
-				</div>
-			  </div>
-			  <div class="row">
-				<div class="col-sm-12">
-				  <button type="button" onclick="javascript:start_task('{{task_param.id}}');" class="btn btn-default form-control"><span class="glyphicon glyphicon-ok"></span> Start task</button>
-				</div>
-			  </div>
-		  </div>
-		</div>
-	  </div>
-	</div>
+<div class="panel">
+    <div class="panel-body">
+        <div class="form-group">
+            <form action="javascript:start_task('{{ task_param.id }}','form_{{ task_param.id }}');" id="form_{{ task_param.id }}" autocomplete="off">
+                <div class="col-sm-12">
+                    <div class="row">
+                        <div class="col-sm-6">Select a search:</div>
+                        <div class="col-sm-6">
+                            <select name="{{ task_param.id }}_search" class="selectpicker" data-width='100%'>
+                                <option value="all_docs">Empty (all documents)</option>
+                                {% for search in searches %}
+                                    <option value="{{ search.id }}">{{ search.description }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">Select field:</div>
+                        <div class="col-sm-6">
+                            <select name="{{ task_param.id }}_field" class="selectpicker" required data-width='100%'>
+                                {% for field in fields %}
+                                    <option value="{{ field.path }}">{{ field.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">No of dimensions:</div>
+                        <div class="col-sm-6">
+                            <select name="{{ task_param.id }}_num_dimensions" class="selectpicker" data-width='100%'>
+                                <option value="50">50</option>
+                                <option value="100" selected="selected">100</option>
+                                <option value="150">150</option>
+                                <option value="200">200</option>
+                                <option value="250">250</option>
+                                <option value="300">300</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">No of workers:</div>
+                        <div class="col-sm-6">
+                            <select name="{{ task_param.id }}_num_workers" class="selectpicker" data-width='100%'>
+                                <option value="1">1</option>
+                                <option value="2" selected="selected">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">Frequency threshold:</div>
+                        <div class="col-sm-6">
+                            <select name="{{ task_param.id }}_min_freq" class="selectpicker" data-width='100%'>
+                                <option value="1">1</option>
+                                <option value="5">5</option>
+                                <option value="10" selected="selected">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="250">250</option>
+                                <option value="500">500</option>
+                                <option value="1000">1000</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">Max vocab size:</div>
+                        <div class="col-sm-6">
+                            <select name="{{ task_param.id }}_max_vocab" class="selectpicker" data-width='100%'>
+                                <option value="" selected="selected">No limit</option>
+                                <option value="50000">50 000</option>
+                                <option value="100000">100 000</option>
+                                <option value="250000">250 000</option>
+                                <option value="500000">500 000</option>
+                                <option value="1000000">1 000 000</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">Description:</div>
+                        <div class="col-sm-6">
+                            <input required name="{{ task_param.id }}_description" class="form-control input-sm">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <button type="submit"
+                                    class="btn btn-default form-control"><span
+                                    class="glyphicon glyphicon-ok"></span> Start task
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -46,7 +46,7 @@ def load_terms(request):
     lexicon_ids = json.loads(request.POST['lids'])
 
     try:
-        model = model_manager.get_model(request.session['model']).model
+        model = model_manager.get_model(request.session['model']['pk']).model
     except LookupError as e:
         return HttpResponseRedirect(URL_PREFIX + '/')
 

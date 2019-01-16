@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import dateparser
 import re
 import json
+
+from texta.settings import ERROR_LOGGER
 
 
 class DatePreprocessor(object):
@@ -64,7 +67,7 @@ class DatePreprocessor(object):
                 formatted_date = datetime_object.strftime('%Y-%m-%d')
 
         except Exception as e:
-            print(e)
+            logging.getLogger(ERROR_LOGGER).exception(e)
             formatted_date = None
         return formatted_date
   
@@ -110,13 +113,13 @@ class DatePreprocessor(object):
         :rtype: list of dicts
         '''
 
-        if not kwargs.get('date_converter_preprocessor_feature_names', None):
+        if not kwargs.get('date_converter_feature_names', None):
             return documents
 
-        input_features = json.loads(kwargs['date_converter_preprocessor_feature_names'])
+        input_features = json.loads(kwargs['date_converter_feature_names'])
 
-        if kwargs.get('date_converter_preprocessor_input_langs',None):
-            input_langs = json.loads(kwargs['date_converter_preprocessor_input_langs'])
+        if kwargs.get('date_converter_input_langs',None):
+            input_langs = json.loads(kwargs['date_converter_input_langs'])
             if input_langs:
                 self._languages = self._lang_map[input_langs[0]]
 

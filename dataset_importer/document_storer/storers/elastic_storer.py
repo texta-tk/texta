@@ -46,10 +46,10 @@ class ElasticStorer(object):
         index_creation_query = {"mappings": {mapping: {"properties": {"texta_facts": FACT_PROPERTIES}}}}
 
         # self._add_not_analyzed_declarations(index_creation_query['mappings'][mapping], not_analyzed_fields)
-        print(self._request.put("{url}/{index}".format(**{
+        self._request.put("{url}/{index}".format(**{
             'url':   url,
             'index': index,
-        }), data=json.dumps(index_creation_query), headers=self._headers).text)
+        }), data=json.dumps(index_creation_query), headers=self._headers)
 
     def _add_not_analyzed_declarations(self, mapping_dict, not_analyzed_fields):
         """Adds not analyzed fields to index creation schema.
@@ -89,8 +89,6 @@ class ElasticStorer(object):
         if not isinstance(documents, list):
             documents = list(documents)
 
-        data_to_send = []
-
         if 'elastic_id' in documents[0]:  # Use predefined ID value
             batch_payload = []
 
@@ -100,7 +98,7 @@ class ElasticStorer(object):
                 batch_payload.append(single_payload)
 
             client = elasticsearch.Elasticsearch(hosts=[self._es_url])
-            response = bulk(client=client, actions=batch_payload)
+            response = bulk(client=client, actions=batch_payload, stats_only=True, raise_on_error=False)
 
         else:  # Let Elasticsearch generate random ID value
             batch_payload = []

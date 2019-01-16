@@ -49,7 +49,6 @@ class Autocomplete:
         if lookup_type == 'FACT_VAL' and key_constraint:
             facts = []
             for bucket in self.es_m.search()["aggregations"][agg_subfield][agg_subfield]["buckets"]:
-                print(bucket)
                 if bucket["key"] == key_constraint:
                     facts += [self._format_suggestion(sub_bucket["key"], sub_bucket["key"]) for sub_bucket in bucket["fact_values"]["buckets"]]
 

@@ -1,29 +1,28 @@
 <table id='mlt_table' class="table table-striped">
 	<thead>
-		<tr>
-			<th>Doc ID</th>
-			<th>Accept</th>
-			<th>Reject</th>
-			
-			{% for field_name in documents.0.content.keys %}
-				<th>{{field_name|safe}}</th>
-			{% endfor %}
-		</tr>
+        <div class="mlt-column-select-wrapper padding-default flex-row align-center">
+            <div class="mlt-fullscreen-actions">
+
+            </div>
+            <select data-show-subtext="true" data-live-search="true" data-actions-box="true" data-width="250px" data-hide-disabled='true' multiple name="mlt-column-select" id='mlt-column-select' class="form-control input-sm ">
+                <option>Accept</option>
+                <option>Reject</option>
+                {% for column in columns %}
+                    <option value="{{column.index}}">{{column.name}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <tr>
+            <th>Accept</th>
+            <th>Reject</th>
+            {% for column in columns %}
+                <th>{{column.name}}</th>
+            {% endfor %}
+        </tr>
+
+
 	</thead>
 	<tbody>
-		{% for doc in documents %}
-			<tr id="row_{{doc.id}}">
-				<td>{{doc.id}}</td>
-				<td><a href="javascript:accept_document('{{doc.id}}')"><span class="glyphicon glyphicon-plus"></span></a></td>
-				<td><a href="javascript:reject_document('{{doc.id}}')"><span class="glyphicon glyphicon-remove"></span></a></a></td>
-				
-				{% for field_content in doc.content.values %}
-					<td>{{field_content|safe}}</td>
-				{% endfor %}
-			</tr>
-		{% endfor %}
+
 	</tbody>
 </table>
-<script>
-	$("#mlt_table").colResizable({minWidth:50});
-</script>

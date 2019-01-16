@@ -1,0 +1,116 @@
+<div class="task-manager-grid-wrapper bg-grey width-max preprocessor-padding">
+    <div class="grid-i">
+        <label class="control-label" for="lexicon-classifier-processor-feature-name">Fields:</label>
+        <div class="select-wrapper">
+            {% if fields %}
+            <select class="selectpicker" multiple data-width="100%"  required data-selected-text-format="count"  id="lexicon-classifier-feature-names" name="lexicon_classifier_feature_names" data-style="btn-sm btn-default">
+                {% for field in fields %}
+                <option value="{{field.data}}">{{field.label}}</option>
+                {% endfor %}
+            </select>
+            {% else %}
+            <textarea class="form-control" rows="2" id="lexicon-classifier-processor-feature-names" name="lexicon_classifier_feature_names"></textarea>
+            {% endif %}
+        </div>
+
+        {% if fields %}
+        <span data-toggle="tooltip" data-placement="bottom" title="Select one or more fields to process." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+        {% else %}
+        <span data-toggle="tooltip" data-placement="bottom" title="List of feature names one below another." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+        {% endif %}
+    </div>
+
+    <div class="grid-i">
+        <label class="control-label" for="lexicon-classifier-processor-lexicons">Lexicons:</label>
+        <div class="select-wrapper">
+            <select id="lexicon-classifier-processor-lexicons" data-width="100%" name="lexicon_classifier_lexicons" class="selectpicker"
+                multiple data-selected-text-format="count" data-style="btn-sm btn-default">
+                {% for lex in preprocessor.enabled_lexicons %}
+                <option value="{{lex.id}}" {% if forloop.counter < 2 %} selected="selected" {% endif %}>{{lex.name}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <span data-toggle="tooltip" data-placement="bottom" title="Select one or more lexicons to apply." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+    </div>
+
+    <div class="grid-i">
+        <label class="control-label " for="lexicon-classifier-processor-add-cl">Add c-lex:</label>
+        <div>
+            <input type="checkbox" name="lexicon_classifier_add_cl" id="lexicon-classifier-processor-add-cl" onclick="showLexContent()"
+                class="checkbox">
+        </div>
+        <span data-toggle="tooltip" data-placement="bottom" title="Add counter lexicon?" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+    </div>
+    <div class="c-lex-content-wrapper hidden">
+        <div class="grid-i">
+            <label class="control-label " for="lexicon-classifier-processor-counterlexicons">C-Lexicon:</label>
+            <div class="select-wrapper">
+                <select id="lexicon-classifier-processor-counterlexicons" name="lexicon_classifier_counterlexicons"
+                        class="selectpicker" data-width='100%' data-style="btn-sm btn-default">
+                    {% for lex in preprocessor.enabled_lexicons %}
+                    <option value="{{lex.id}}" {% if forloop.counter < 2 %}selected="selected" {% endif %}>{{lex.name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <span data-toggle="tooltip" data-placement="bottom" title="Select one or more lexicons to apply." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+        </div>
+
+        <div class="grid-i">
+            <label class="control-label " for="lexicon-classifier-processor-cl-slops">CL Slop:</label>
+            <div class="slider-wrapper">
+                <input id="lexicon-classifier-cl-slops" name="lexicon_classifier_cl_slops" class="form-control"
+                    data-slider-id="lexicon-classifier-cl-slops" type="text" data-slider-min="0" data-slider-max="10"
+                    data-slider-step="1" data-slider-value="0" />
+            </div>
+            <span data-toggle="tooltip" data-placement="bottom" title="Select how many words are allowed between counter lex entries and main lex entries."
+                class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+        </div>
+    </div>
+    <div class="grid-i">
+        <label class="control-label " for="lexicon-classifier-processor-match-types">Match:</label>
+        <div class="group-radio-wrapper">
+            {% for match_type in preprocessor.match_types %}
+            <input type="radio" name="lexicon_classifier_match_types" class="lexicon-classifier-processor-match-types"
+                value="{{match_type}}" {% if forloop.first%}checked="checked" {% endif %}>{{match_type}}
+            {% endfor %}
+        </div>
+        <span data-toggle="tooltip" data-placement="bottom" title="Choose match type." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+    </div>
+
+    <div class="grid-i">
+        <label class="control-label " for="lexicon-classifier-processor-slops">Slop:</label>
+        <div class="slider-wrapper">
+            <input id="lexicon-classifier-slops" name="lexicon_classifier_slops" class="form-control" data-slider-id="lexicon-classifier-slops"
+                type="text" data-slider-min="0" data-slider-max="10" data-slider-step="1" data-slider-value="0" />
+        </div>
+        <span data-toggle="tooltip" data-placement="bottom" title="Choose how many words are allowed between phrase entities."
+            class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+    </div>
+
+    <div class="grid-i">
+        <label class="control-label " for="lexicon-classifier-processor-operations">Operation:</label>
+        <div class="group-radio-wrapper">
+            {% for operation in preprocessor.operations %}
+            <input type="radio" class='lexicon-classifier-processor-operations' name="lexicon_classifier_operations"
+                value="{{operation}}" onclick="toggleRequiredPercentage(this)" {% if forloop.first%} checked="checked"
+                {% endif %}>{{operation}}
+            {% endfor %}
+        </div>
+
+        <span data-toggle="tooltip" data-placement="bottom" title="Choose logic operation connecting lexicon entries."
+            class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+    </div>
+
+    <div class="grid-i required-percentage-wrapper hidden">
+        <label class="control-label " for="lexicon-classifier-processor-words-required">Required %:</label>
+        <div class="slider-wrapper">
+            <input id="lexicon-classifier-words-required" name="lexicon_classifier_words_required" class="form-control"
+                data-slider-id="lexicon-classifier-words_required" type="text" data-slider-min="1" data-slider-max="100"
+                data-slider-step="1" data-slider-value="100" />
+        </div>
+        <span data-toggle="tooltip" data-placement="bottom" title="The percentage of lexicon entries required for acquiring the tag."
+            class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+
+    </div>
+
+</div>

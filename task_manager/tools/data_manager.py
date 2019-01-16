@@ -8,6 +8,7 @@ from utils.es_manager import ES_Manager
 from texta.settings import ERROR_LOGGER
 
 MAX_POSITIVE_SAMPLE_SIZE = 10000
+ES_SCROLL_SIZE = 5000
 
 
 def get_fields(es_m):
@@ -28,6 +29,12 @@ def get_fields(es_m):
     fields = sorted(fields, key=lambda l: l['label'])
 
     return fields
+
+
+class TaskCanceledException(Exception):
+    """ Task Canceled Exception
+    """
+    pass
 
 
 class EsIteratorError(Exception):
@@ -65,7 +72,7 @@ class EsIterator:
         return query
 
     def __iter__(self):
-        self.es_m.set_query_parameter('size', 500)
+        self.es_m.set_query_parameter('size', ES_SCROLL_SIZE)
         response = self.es_m.scroll()
 
         scroll_id = response['_scroll_id']
@@ -84,18 +91,24 @@ class EsIterator:
 
             for hit in response['hits']['hits']:
                 try:
-                    # Take into account nested fields encoded as: 'field.sub_field'
                     decoded_text = hit['_source']
                     for k in self.field.split('.'):
+                        # get nested fields encoded as: 'field.sub_field'
                         decoded_text = decoded_text[k]
-                    sentences = decoded_text.split('\n')
-                    for sentence in sentences:
-                        yield [word.strip().lower() for word in sentence.split(' ')]
+                    
+                    if decoded_text:
+                        sentences = decoded_text.split('\n')
+                        for sentence in sentences:
+                            yield [word.strip().lower() for word in sentence.split(' ')]
 
                 except KeyError:
                     # If the field is missing from the document
                     logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
 
+                except TypeError:
+                    # If split failed
+                    logging.getLogger(ERROR_LOGGER).error('Error splitting the text.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
+            
             if self.callback_progress:
                 self.callback_progress.update(total_hits)
 
@@ -105,22 +118,32 @@ class EsIterator:
 
 class EsDataSample(object):
 
-    def __init__(self, field, query, es_m):
+    def __init__(self, fields, query, es_m, negative_set_multiplier=1.0, max_positive_sample_size=10000, score_threshold=0.0):
         """ Sample data - Positive and Negative samples from query
+        negative_set_multiplier (float): length of positive set is multiplied by this to determine negative sample size (to over- or underfit models)
+        max_positive_sample_size (int): maximum number of documents per class used to train the model
+        score_threshold (float): hits' max_score is multiplied by this to determine the score cutoff point (lowest allowed score) , value between 0.0 and 1.0
         """
-        self.field = field
+        self.fields = fields
         self.es_m = es_m
         self.es_m.load_combined_query(query)
+        self.negative_set_multiplier = negative_set_multiplier
+        self.max_positive_sample_size = max_positive_sample_size
+        self.score_threshold = score_threshold
 
     def _get_positive_samples(self, sample_size):
-        positive_samples = []
+        
+        positive_samples_map = {}
         positive_set = set()
+        # Initialize sample map
+        for field in self.fields:
+            positive_samples_map[field] = []
 
-        self.es_m.set_query_parameter('size', 100)
+        self.es_m.set_query_parameter('size', ES_SCROLL_SIZE)
         response = self.es_m.scroll()
         scroll_id = response['_scroll_id']
         total_hits = response['hits']['total']
-        while total_hits > 0 and len(positive_samples) <= sample_size:
+        while total_hits > 0 and len(positive_set) <= sample_size:
 
             response = self.es_m.scroll(scroll_id=scroll_id)
             total_hits = len(response['hits']['hits'])
@@ -133,32 +156,48 @@ class EsDataSample(object):
                                                                               response['timed_out'], response['took'])
                 raise EsIteratorError(msg)
 
+            lowest_allowed_score = response['hits']['max_score'] * self.score_threshold
+
+            # Iterate over all docs
             for hit in response['hits']['hits']:
-                try:
-                    # Take into account nested fields encoded as: 'field.sub_field'
-                    decoded_text = hit['_source']
-                    for k in self.field.split('.'):
-                        decoded_text = decoded_text[k]
+                if hit['_score'] >= lowest_allowed_score:
+                    try:
+                        for field in self.fields:
+                            # Extract text content for every field
+                            _temp_text = hit['_source']
+                            for k in field.split('.'):
+                                # Get nested fields encoded as: 'field.sub_field'
+                                _temp_text = _temp_text[k]
+                            # Save decoded text into positive sample map
+                            positive_samples_map[field].append(_temp_text)
+                        
+                        # Save sampled doc id
+                        doc_id = str(hit['_id'])
+                        positive_set.add(doc_id)
 
-                    doc_id = str(hit['_id'])
-                    positive_samples.append(decoded_text)
-                    positive_set.add(doc_id)
+                    except KeyError as e:
+                        # If the field is missing from the document
+                        logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
+                else:
+                    break
 
-                except KeyError as e:
-                    # If the field is missing from the document
-                    logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
-                    pass
-
-        return positive_samples, positive_set
+        return positive_samples_map, positive_set
 
     def _get_negative_samples(self, positive_set):
-        negative_samples = []
+
+        negative_samples_map = {}
+        negative_set = set()
+        # Initialize sample map
+        for field in self.fields:
+            negative_samples_map[field] = []
+
+        self.es_m.set_query_parameter('size', ES_SCROLL_SIZE)
         response = self.es_m.scroll(match_all=True)
         scroll_id = response['_scroll_id']
         hit_length = response['hits']['total']
         sample_size = len(positive_set)
 
-        while hit_length > 0 and len(negative_samples) <= sample_size:
+        while hit_length > 0 and len(negative_set) <= sample_size:
 
             response = self.es_m.scroll(scroll_id=scroll_id)
             hit_length = len(response['hits']['hits'])
@@ -173,30 +212,47 @@ class EsDataSample(object):
 
             for hit in response['hits']['hits']:
                 try:
+                    # Get doc id
                     doc_id = str(hit['_id'])
                     if doc_id in positive_set:
+                        # If used already, continue
                         continue
-                    # Take into account nested fields encoded as: 'field.sub_field'
-                    decoded_text = hit['_source']
-                    for k in self.field.split('.'):
-                        decoded_text = decoded_text[k]
+                    # Otherwise, consider as negative sample
+                    negative_set.add(doc_id)
 
-                    negative_samples.append(decoded_text)
+                    for field in self.fields:
+                        # Extract text content for every field
+                        _temp_text = hit['_source']
+                        for k in field.split('.'):
+                            # Get nested fields encoded as: 'field.sub_field'
+                            try:
+                                _temp_text = _temp_text[k]
+                            except KeyError:
+                                logging.getLogger(ERROR_LOGGER).error('Field not present in document.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
+                                _temp_text = ''
+                        # Save decoded text into positive sample map
+                        negative_samples_map[field].append(_temp_text)
+
                 except KeyError as e:
                     # If the field is missing from the document
                     logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
-                    pass
 
-        return negative_samples
+        return negative_samples_map, negative_set
 
     def get_data_samples(self, sample_size=MAX_POSITIVE_SAMPLE_SIZE):
-        positive_samples, positive_set = self._get_positive_samples(sample_size)
-        negative_samples = self._get_negative_samples(positive_set)
 
-        data_sample_x = positive_samples + negative_samples
-        data_sample_y = [1] * len(positive_samples) + [0] * len(negative_samples)
+        positive_samples, positive_set = self._get_positive_samples(sample_size)
+        negative_samples, negative_set = self._get_negative_samples(positive_set)
+
+        # Build X feature map
+        data_sample_x_map = {}
+        for field in self.fields:
+            data_sample_x_map[field] = positive_samples[field] + negative_samples[field]
+
+        # Build target (positive + negative samples) for binary classifier
+        data_sample_y = [1] * len(positive_set) + [0] * len(negative_set)
 
         statistics = {}
-        statistics['total_positive'] = len(positive_samples)
-        statistics['total_negative'] = len(negative_samples)
-        return data_sample_x, data_sample_y, statistics
+        statistics['total_positive'] = len(positive_set)
+        statistics['total_negative'] = len(negative_set)
+        return data_sample_x_map, data_sample_y, statistics

@@ -121,6 +121,11 @@
     table-layout: fixed;
     width: 100%;
 }
+
+.importDetails td{
+    word-wrap: break-word;
+}
+
 .detailText {
     word-wrap: break-word;
 }

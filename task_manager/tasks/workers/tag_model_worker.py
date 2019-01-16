@@ -2,6 +2,8 @@
 import os
 import json
 import logging
+import numpy as np
+import pandas as pd
 
 from task_manager.models import Task
 from task_manager.tools import EsDataSample
@@ -12,6 +14,9 @@ from utils.datasets import Datasets
 from texta.settings import ERROR_LOGGER
 from texta.settings import INFO_LOGGER
 from texta.settings import MODELS_DIR
+from texta.settings import MEDIA_URL
+from texta.settings import PROTECTED_MEDIA
+from texta.settings import URL_PREFIX
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
@@ -21,7 +26,9 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.model_selection import GridSearchCV
 from task_manager.tools import ShowSteps
+from task_manager.tools import TaskCanceledException
 from task_manager.tools import get_pipeline_builder
+from utils.helper_functions import plot_confusion_matrix
 
 from .base_worker import BaseWorker
 
@@ -34,10 +41,10 @@ class TagModelWorker(BaseWorker):
         self.model_name = None
         self.description = None
         self.task_model_obj = None
-        self.task_id = None
-        self.task_model_obj = None
+        self.n_jobs = 1
 
     def run(self, task_id):
+
         self.task_id = task_id
         self.task_model_obj = Task.objects.get(pk=self.task_id)
 
@@ -45,20 +52,30 @@ class TagModelWorker(BaseWorker):
         steps = ["preparing data", "training", "saving", "done"]
         show_progress = ShowSteps(self.task_id, steps)
         show_progress.update_view()
-
+        
         extractor_opt = int(task_params['extractor_opt'])
         reductor_opt = int(task_params['reductor_opt'])
         normalizer_opt = int(task_params['normalizer_opt'])
         classifier_opt = int(task_params['classifier_opt'])
+        negative_set_multiplier = float(task_params['negative_multiplier_opt'])
+        max_sample_size_opt = int(task_params['max_sample_size_opt'])
+        score_threshold_opt = float(task_params['score_threshold_opt'])
+
+        if 'num_threads' in task_params:
+            self.n_jobs = int(task_params['num_threads'])
 
         try:
+            if 'fields' in task_params:
+                fields = task_params['fields']
+            else:
+                fields = [task_params['field']]
+
             show_progress.update(0)
             pipe_builder = get_pipeline_builder()
             pipe_builder.set_pipeline_options(extractor_opt, reductor_opt, normalizer_opt, classifier_opt)
             # clf_arch = pipe_builder.pipeline_representation()
-            c_pipe, c_params = pipe_builder.build()
+            c_pipe, c_params = pipe_builder.build(fields=fields)
 
-            param_field = task_params['field']
             # Check if query was explicitly set
             if 'search_tag' in task_params:
                 # Use set query
@@ -70,14 +87,20 @@ class TagModelWorker(BaseWorker):
             # Build Data sampler
             ds = Datasets().activate_datasets_by_id(task_params['dataset'])
             es_m = ds.build_manager(ES_Manager)
-            es_data = EsDataSample(field=param_field, query=param_query, es_m=es_m)
-            data_sample_x, data_sample_y, statistics = es_data.get_data_samples()
+            self.model_name = 'model_{0}'.format(self.task_id)
+            es_data = EsDataSample(fields=fields, 
+                                   query=param_query,
+                                   es_m=es_m,
+                                   negative_set_multiplier=negative_set_multiplier,
+                                   max_positive_sample_size=max_sample_size_opt,
+                                   score_threshold=score_threshold_opt)
+            data_sample_x_map, data_sample_y, statistics = es_data.get_data_samples()
 
             # Training the model.
             show_progress.update(1)
-            self.model, train_summary = self._train_model_with_cv(c_pipe, c_params, data_sample_x, data_sample_y, self.task_id)
+            self.model, train_summary, plot_url = self._train_model_with_cv(c_pipe, c_params, data_sample_x_map, data_sample_y)
             train_summary['samples'] = statistics
-
+            train_summary['confusion_matrix'] = '<img src="{}" style="max-width: 80%">'.format(plot_url)
             # Saving the model.
             show_progress.update(2)
             self.save()
@@ -96,18 +119,37 @@ class TagModelWorker(BaseWorker):
                 'data':    {'task_id': self.task_id}
             }))
 
-            print('done')
+        except TaskCanceledException as e:
+            # If here, task was canceled while training
+            # Delete task
+            task = Task.objects.get(pk=self.task_id)
+            task.delete()
+            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE CLASSIFIER', 'event': 'model_training_canceled', 'data': {'task_id': self.task_id}}), exc_info=True)
+            print("--- Task canceled")
 
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).error(json.dumps(
+            logging.getLogger(ERROR_LOGGER).exception(json.dumps(
                 {'process': 'CREATE CLASSIFIER', 'event': 'model_training_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
             # declare the job as failed.
-            r = Task.objects.get(pk=self.task_id)
-            r.result = json.dumps({'error': repr(e)})
-            r.update_status(Task.STATUS_FAILED, set_time_completed=True)
+            task = Task.objects.get(pk=self.task_id)
+            task.result = json.dumps({'error': repr(e)})
+            task.update_status(Task.STATUS_FAILED, set_time_completed=True)
+        
+        print('done')
 
-    def tag(self, texts):
-        return self.model.predict(texts)
+    def tag(self, text_map, check_map_consistency=True):
+        # Recover features from model to check map
+        union_features = [x[0] for x in self.model.named_steps['union'].transformer_list if x[0].startswith('pipe_')]
+        field_features = [x[5:] for x in union_features]
+        df_text = pd.DataFrame(text_map)
+        for field in field_features:
+            if field not in text_map:
+                if check_map_consistency:
+                    raise RuntimeError("Mapped field not present: {}".format(field))
+                else:
+                    df_text[field] = ""
+        # Predict        
+        return self.model.predict(df_text)
 
     def delete(self):
         pass
@@ -117,16 +159,14 @@ class TagModelWorker(BaseWorker):
         Saves trained model as a pickle to the filesystem.
         :rtype: bool
         """
-        model_name = 'model_{0}'.format(self.task_id)
-        self.model_name = model_name
-        output_model_file = os.path.join(MODELS_DIR, model_name)
+        output_model_file = os.path.join(MODELS_DIR, self.model_name)
         try:
             joblib.dump(self.model, output_model_file)
             return True
 
         except Exception as e:
             logging.getLogger(ERROR_LOGGER).error('Failed to save model to filesystem.', exc_info=True, extra={
-                'model_name': model_name,
+                'model_name': self.model_name,
                 'file_path':  output_model_file
             })
 
@@ -146,7 +186,7 @@ class TagModelWorker(BaseWorker):
             return model
 
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).error('Failed to save model to filesystem.', exc_info=True, extra={
+            logging.getLogger(ERROR_LOGGER).error('Failed to load model from the filesystem.', exc_info=True, extra={
                 'model_name': model_name,
                 'file_path':  file_path
             })
@@ -154,21 +194,31 @@ class TagModelWorker(BaseWorker):
     def _training_process(self):
         pass
 
-    @staticmethod
-    def _train_model_with_cv(model, params, X, y, task_id):
+    def _train_model_with_cv(self, model, params, X_map, y):
+        fields = list(X_map.keys())
+        X_train = {}
+        X_test = {}
+        for field in fields:
+            X_train[field], X_test[field], y_train, y_test = train_test_split(X_map[field], y, test_size=0.20, random_state=42)
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20)
+        df_train = pd.DataFrame(X_train)
+        df_test = pd.DataFrame(X_test)
 
         # Use Train data to parameter selection in a Grid Search
-        gs_clf = GridSearchCV(model, params, n_jobs=1, cv=5)
-        gs_clf = gs_clf.fit(X_train, y_train)
+        gs_clf = GridSearchCV(model, params, n_jobs=self.n_jobs, cv=5, verbose=1)
+        gs_clf = gs_clf.fit(df_train, y_train)
         model = gs_clf.best_estimator_
-
         # Use best model and test data for final evaluation
-        y_pred = model.predict(X_test)
-
+        y_pred = model.predict(df_test)
+        # Report
         _f1 = f1_score(y_test, y_pred, average='micro')
         _confusion = confusion_matrix(y_test, y_pred)
+
+        plt = plot_confusion_matrix(_confusion, classes=["negative", "positive"])
+        plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/{}_cm.svg".format(self.model_name))
+        plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager/{}_cm.svg".format(self.model_name))
+        plt.savefig(plot_path, format="svg", bbox_inches='tight')
+
         __precision = precision_score(y_test, y_pred)
         _recall = recall_score(y_test, y_pred)
         _statistics = {
@@ -178,4 +228,4 @@ class TagModelWorker(BaseWorker):
             'recall':           round(_recall, 3)
         }
 
-        return model, _statistics
+        return model, _statistics, plot_url

@@ -4,7 +4,7 @@ SETUP_FILES_DIR = os.path.join(os.path.realpath(os.path.dirname(__file__)),'setu
 
 def write_navigation_file(link_prefix, static_url, static_root):
     
-    variables_template = """var LINK_PREFIX = '{link_prefix}';\nvar STATIC_URL = '{static_url}'\n\n"""
+    variables_template = """var LINK_PREFIX = '{link_prefix}';\nvar STATIC_URL = '{static_url}';\n\n"""
     
     variables = {'link_prefix':link_prefix, 'static_url':static_url}
     

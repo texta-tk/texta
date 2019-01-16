@@ -1,40 +1,300 @@
 body {
-	font-family: 'Open sans',serif;
-    background-image: url("img/bg.jpg");
-    background-repeat: repeat;
+    font-family: 'Open sans', serif;
+    background: url("img/bg.jpg") repeat;
+}
+
+.body-grid-wrapper {
+    height: 100%;
+    background-color: white;
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "navbar" "content"
+}
+
+/* global style */
+.no-margin{
+    margin:0;
+}
+.panel-borderless {
+    border: 0;
+    box-shadow: none;
+}
+.align-items-end {
+    align-items: flex-end;
+}
+
+.margin-right {
+    margin-right: 10px;
+}
+
+.margin-left {
+    margin-left: 10px;
+}
+
+.margin-bottom {
+    margin-bottom: 5px;
+}
+
+.padding-default {
+    padding: 5px;
+}
+
+.padding-small {
+    padding: 3px;
+}
+
+.flex-row-reverse {
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.align-center {
+    align-items: center;
+}
+
+.flex-content-space-around {
+    display: flex;
+    justify-content: space-around;
+}
+
+.flex-content-center {
+    display: flex;
+    justify-content: center;
+}
+
+.flex-items-align-center {
+    display: flex;
+    align-items: center;
+}
+
+.height-max {
+    height: 100%;
+}
+
+.width-max {
+    width: 100%
+}
+
+.width-height-max {
+    height: 100%;
+    width: 100%;
+}
+
+html, body {
+    height: 100%;
+}
+
+.navbar-inverse {
+    background: #000000 none;
+}
+
+.panel {
+    margin-bottom: 0px;
+}
+
+.grid-1-col-default {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 100%;
+}
+
+.grid-2-col-1-row-default {
+    height: 100%;
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    grid-template-rows: 100%;
+    grid-template-areas: "default-sidebar default-content"
+}
+
+.grid-2-col-1-sidebar {
+    height: 100%;
+    background-color: white;
+    grid-area: default-sidebar;
+}
+
+.grid-2-col-1-sidebar .panel {
+    box-shadow: none
+}
+
+.grid-2-col-1-content {
+    grid-area: default-content;
+}
+
+.grid-2-col-1-content > .panel {
+    height: 100%;
+}
+
+.area-bg-color {
+    background-color: #f5f5f5;
+}
+
+@media screen and (max-width: 992px) {
+    .grid-2-col-1-row-default {
+        grid-template-columns: 100%;
+        grid-template-rows: auto;
+        grid-template-areas: "default-sidebar" "default-content"
+    }
+}
+
+.panel-heading {
+    border-radius: 0px
+}
+
+.panel-body {
+    border-radius: 0px
+}
+
+.panel {
+    border-radius: 0;
+    border: 0
+}
+
+.flex-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.flex-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.flex-content-end {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.flex-item-justify-end {
+    margin-left: auto
+}
+
+.flex-item-justify-start {
+    margin-right: auto
+}
+
+.flex-item-grow-1 {
+    flex: 1;
+}
+
+.flex-item-grow-2 {
+    flex: 2;
+}
+
+.flex-item-grow-3 {
+    flex: 3
+}
+
+.horizontal-padding {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.reduce-horizontal-padding {
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+.low-opacity {
+    opacity: 0.5;
+}
+
+/* end of global styles */
+
+.dropdown-menu {
+    -webkit-border-radius: 0;
+    -moz-border-radius: 0;
+    border-radius: 0;
+}
+
+.account-dropdown-item {
+    padding-left: 5px !important;
+}
+
+.grid-item-navbar {
+    grid-area: navbar;
+}
+
+.grid-item-content {
+    grid-area: content;
+}
+
+.navbar {
+    margin: 0;
+    border: 0;
 }
 
 .user-data {
     color: #EFEFEF;
 }
 
-.navbar .nav li {
-    white-space: nowrap;
-	font-size: 16px;
-}
-.navbar {
-    -webkit-box-shadow: 0 8px 6px -6px #999;
-    -moz-box-shadow: 0 8px 6px -6px #999;
-    box-shadow: 0 8px 6px -6px #999;
-}
-.navbar-form{
+.navbar-right > .help-block {
+    margin: 0;
     display: flex;
 }
+
+.navbar-right {
+    display: flex;
+    padding-top: 9px;
+    padding-bottom: 9px;
+}
+
+.navbar-right > .navbar-form {
+    display: flex;
+    margin: 0px;
+}
+
+.navbar-form > div {
+    margin-right: 5px;
+}
+
 .panel-heading {
-	background-color: #73AD21;
-	color: #FFFFFF;
+    background-color: #012849;
+    color: #FFFFFF;
 }
 
-
-button.multiselect {
-    height: 30px;
-    font-size: 14px;
+.btn {
+    transition: color .10s ease-in-out, background-color .10s ease-in-out, border-color .10s ease-in-out, box-shadow .10s ease-in-out;
+    border-radius: 0px !important;
 }
 
+.btn-default {
+    background: white none;
+    text-shadow: none;
+    color: black;
+    border-color: black;
+}
+
+.btn-default:hover,
+.btn-default:focus,
+.btn-default:active,
+.btn-default.active,
+.open > .dropdown-toggle.btn-default {
+    background: #e4e4e4;
+    border-color: #012849;
+    color: black;
+}
+
+.btn-danger {
+    background: none;
+    padding: 5px 22px;
+    border: 2px solid #BF3727;
+    color: #BF3727;
+}
+
+.btn-danger:hover,
+.btn-danger:focus,
+.btn-danger:active,
+.btn-danger.active,
+.open > .dropdown-toggle.btn-danger {
+    color: #8B271D;
+    background: none;
+    border-color: #8B271D;
+}
 
 .row {
-	margin-top: 5px;
-	margin-bottom: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
 #registration {
@@ -43,8 +303,8 @@ button.multiselect {
     color: #FFF;
     font-weight: bold;
     padding: 5px;
-    border-bottom-left-radius:5%;
-    border-bottom-right-radius:5%;
+    border-bottom-left-radius: 5%;
+    border-bottom-right-radius: 5%;
 }
 
 #registrationForm {
@@ -72,16 +332,16 @@ button.multiselect {
 }
 
 .suggestions {
-	line-height: 125%;
-	color: #000000;
-	padding: 3px;
-	vertical-align: top;
+    line-height: 125%;
+    color: #000000;
+    padding: 3px;
+    vertical-align: top;
 }
 
 .list-group-item:hover {
-	background-color: #EFEFEF;
+    background-color: #EFEFEF;
 }
-	
+
 .list_item {
     display: block;
     padding: 5px;
@@ -92,22 +352,45 @@ button.multiselect {
 }
 
 .pointer {
-	cursor: pointer;
+    cursor: pointer;
 }
 
 .modal-header {
-    background-color: #73AD21;
+    background-color: #012849;
     color: #FFFFFF;
 }
 
 .bg-grey {
-	background: #EFEFEF;
+    background: #EFEFEF;
 }
 
-.table-condensed{
-  font-size: 11px;
+.table-condensed {
+    font-size: 11px;
 }
 
 .datasetOption:checked {
     background-color: #dddddd;
+}
+
+@media (max-width: 767px) {
+    .navbar-right {
+        display: block;
+    }
+}
+
+#dataset-select-apply-button {
+    margin-bottom: 5px;
+}
+
+.form-control {
+    border-radius: 0px;
+}
+
+#account-dropdown {
+    color: white;
+    text-decoration: inherit;
+}
+
+.navbar-collapse.in {
+    overflow-y: visible;
 }
