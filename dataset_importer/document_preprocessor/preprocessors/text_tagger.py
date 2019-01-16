@@ -1,4 +1,4 @@
-from task_manager.tasks.workers.tag_model_worker import TagModelWorker
+from task_manager.tasks.workers.text_tagger_worker import TagModelWorker
 
 import numpy as np
 import json

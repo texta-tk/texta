@@ -13,7 +13,7 @@ from utils.es_manager import ES_Manager
 
 from task_manager.task_manager import create_task
 from task_manager.task_manager import get_fields
-from task_manager.tasks.workers.tag_model_worker import TagModelWorker
+from task_manager.tasks.workers.text_tagger_worker import TagModelWorker
 from task_manager.tools import MassHelper
 from task_manager.tools import get_pipeline_builder
 from task_manager.models import TagFeedback

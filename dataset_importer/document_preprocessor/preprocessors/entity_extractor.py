@@ -18,9 +18,10 @@ class EntityExtractorPreprocessor(object):
             input_features = json.loads(kwargs['entity_extractor_feature_names'])
             model_ids_to_apply = [int(_id) for _id in json.loads(kwargs['entity_extractor_preprocessor_models'])]
             models_to_apply = []
+            facts_added = 0
 
             if not input_features or not model_ids_to_apply:
-                return {"documents":documents, "meta": {'facts_added': 0}}
+                return {"documents":documents, "meta": {'facts_added': facts_added}}
 
             # Load tagger models
             for _id in model_ids_to_apply:
@@ -45,7 +46,6 @@ class EntityExtractorPreprocessor(object):
                             break
                     text_map[field].append(decoded_text.strip())
             # Apply tags to every input feature
-            facts_added = 0
             for field in input_features:
                 field_docs = text_map[field]
                 results = []
@@ -67,12 +67,13 @@ class EntityExtractorPreprocessor(object):
                         documents[i]['texta_facts'].extend(new_facts)
 
         except Exception as e:
-            if is_bad:
-                logging.getLogger(ERROR_LOGGER).exception(json.dumps({'process': 'APPLY PREPROCESSOR', 'event': 'EntityExtractorPreprocessor:transform', 'data': {"warning": message}}), exc_info=True)
-                return {"documents":documents, "meta": {'facts_added': 0}}
-            else:
-                logging.getLogger(ERROR_LOGGER).exception(json.dumps({'process': 'APPLY PREPROCESSOR', 'event': 'EntityExtractorPreprocessor:transform', 'data': {'entity_extractor_preprocessor_models': json.loads(kwargs['entity_extractor_preprocessor_models'])}}), exc_info=True)
-                return {"documents":documents, "meta": {'facts_added': facts_added}}
+            logging.getLogger(ERROR_LOGGER).exception(json.dumps(
+                {'process': 'APPLY PREPROCESSOR',
+                'event': 'EntityExtractorPreprocessor:transform',
+                'data': {'entity_extractor_preprocessor_models': json.loads(kwargs['entity_extractor_preprocessor_models'])}}
+                ), exc_info=True)
+            return {"documents":documents, "meta": {'facts_added': facts_added}}
+        return {"documents":documents, "meta": {'facts_added': facts_added}}
 
 
     def _preds_to_doc(self, doc, result_doc, field):
