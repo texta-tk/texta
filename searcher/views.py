@@ -47,9 +47,6 @@ from task_manager.models import Task
 
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER, es_url
 
-from searcher.view_functions.export_pages import export_pages
-from searcher.view_functions.tranlist_highlighting import transliterate_highlight_spans, highlight_transliterately
-
 
 try:
     from io import BytesIO # NEW PY REQUIREMENT
@@ -74,8 +71,9 @@ from searcher.view_functions.general.searcher_utils import improve_facts_readabi
 class BuildSearchEsManager:
     build_search_es_m = None
 
+
 def ngrams(input_list, n):
-  return zip(*[input_list[i:] for i in range(n)])
+    return zip(*[input_list[i:] for i in range(n)])
 
 
 def convert_date(date_string,frmt):
@@ -143,15 +141,17 @@ def get_daterange(es_m, field):
     min_val,max_val = es_m.get_extreme_dates(field)
     return {'min':min_val,'max':max_val}
 
+
 def dashboard_endpoint(request):
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
 
     indices = es_m.stringify_datasets()
-    dashboard = SearcherDashboard(es_url='http://elastic-dev.texta.ee:9200', indices='delfi_json,kliinik_ee')
+    dashboard = SearcherDashboard(es_url='http://elastic-dev.texta.ee:9200', indices=indices)
     result = dashboard.response
 
     return JsonResponse(result)
+
 
 def dashboard_visualize(request):
     template = loader.get_template('dashboard/dashboard.html')
