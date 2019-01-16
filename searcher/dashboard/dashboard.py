@@ -85,8 +85,8 @@ class SearcherDashboard:
                 search_dsl.aggs.bucket(bucket_name + '#keyword_count', 'value_count', field=field_name)
 
             elif field_type == "date":
-                search_dsl.aggs.bucket(bucket_name + "#date_month", 'date_histogram', field=field_name, interval='month')
-                search_dsl.aggs.bucket(bucket_name + "#date_year", 'date_histogram', field=field_name, interval='year')
+                search_dsl.aggs.bucket(bucket_name + "_month#date_month", 'date_histogram', field=field_name, interval='month')
+                search_dsl.aggs.bucket(bucket_name + "_year#date_year", 'date_histogram', field=field_name, interval='year')
 
             elif field_type == "integer":
                 search_dsl.aggs.bucket(bucket_name + "#int_stats", 'extended_stats', field=field_name)
