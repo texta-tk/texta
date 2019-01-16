@@ -60,11 +60,7 @@ def index(request):
 
     if 'dataset' in request.session.keys():
         get_fact_names(es_m)
-
-        if 'TEXTA_TAG' in fact_names:
-            tag_set = sorted(fact_names['TEXTA_TAG'])
-        else:
-            tag_set = []
+        tag_set = fact_names if fact_names else []
 
         context = {
             'task_params':           task_params,
