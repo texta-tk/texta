@@ -1,4 +1,4 @@
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}searcher/dashboard/dashboard.css">
+
 <script type="application/javascript" src="{{ STATIC_URL }}searcher/dashboard/dashboard.js"></script>
 
 
@@ -27,11 +27,13 @@
                         <option value="{{ index }}">{{ index }}</option>
                     {% endfor %}
                 </select>
+
                 {% for index in indices %}
-                    <div class="flex-column hidden" id="datatables-container-{{ index }}">
+                    <div class="hidden index-tables-holder" id="datatables-container-{{ index }}">
 
                     </div>
                 {% endfor %}
+
             </div>
         </div>
     </div>
