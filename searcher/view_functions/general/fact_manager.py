@@ -5,6 +5,8 @@ import requests
 import itertools
 import traceback
 from utils.log_manager import LogManager
+import logging
+from texta.settings import ERROR_LOGGER
 
 class FactManager:
     """ Manage Searcher facts, like deleting/storing, adding facts.
@@ -19,8 +21,6 @@ class FactManager:
 
     def remove_facts_from_document(self, rm_facts_dict, bs=7500):
         '''remove a certain fact from all documents given a [str]key and [str]val'''
-        logger = LogManager(__name__, 'FACT MANAGER REMOVE FACTS')
-
         try:
             query = self._fact_deletion_query(rm_facts_dict)
             self.es_m.load_combined_query(query)
@@ -29,38 +29,42 @@ class FactManager:
             total_docs = response['hits']['total']
             docs_left = total_docs # DEBUG
             print('Starting.. Total docs - ', total_docs) # DEBUG
-            batch = 0
             while total_docs > 0:
-                print('Docs left:', docs_left) # DEBUG
-                data = ''
-                for document in response['hits']['hits']:
-                    new_field = [] # The new facts field
-                    for fact in document['_source'][self.field]:
-                        # If the fact name is in rm_facts_dict keys
-                        if fact["fact"] in rm_facts_dict:
-                            # If the fact value is not in the delete key values
-                            if fact['str_val'] not in rm_facts_dict.getlist(fact["fact"]):
+                try:
+                    print('Docs left:', docs_left) # DEBUG
+                    data = ''
+                    for document in response['hits']['hits']:
+                        new_field = [] # The new facts field
+                        for fact in document['_source'][self.field]:
+                            # If the fact name is in rm_facts_dict keys
+                            if fact["fact"] in rm_facts_dict:
+                                # If the fact value is not in the delete key values
+                                if fact['str_val'] not in rm_facts_dict.getlist(fact["fact"]):
+                                    new_field.append(fact)
+                            else:
                                 new_field.append(fact)
-                        else:
-                            new_field.append(fact)
-                    # Update dataset
-                    data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
-                    document = {'doc': {self.field: new_field}}
-                    data += json.dumps(document)+'\n'
-                response = self.es_m.scroll(scroll_id=scroll_id, size=bs, field_scroll=self.field)
-                total_docs = len(response['hits']['hits'])
-                docs_left -= bs # DEBUG
-                scroll_id = response['_scroll_id']
-                self.es_m.plain_post_bulk(self.es_m.es_url, data)
+                        # Update dataset
+                        data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
+                        document = {'doc': {self.field: new_field}}
+                        data += json.dumps(document)+'\n'
+                    response = self.es_m.scroll(scroll_id=scroll_id, size=bs, field_scroll=self.field)
+                    total_docs = len(response['hits']['hits'])
+                    docs_left -= bs # DEBUG
+                    scroll_id = response['_scroll_id']
+                    self.es_m.plain_post_bulk(self.es_m.es_url, data)
+                except:
+                    logging.getLogger(ERROR_LOGGER).error('A problem occurred during the fact deletion scrolling.', exc_info=True, extra={
+                        'total_docs': total_docs,
+                        'response': response,
+                        'rm_facts_dict': rm_facts_dict
+                    })
             print('DONE') # DEBUG
-
-            logger.set_context('docs_left', total_docs)
-            logger.set_context('batch', batch)
-            logger.info('remove_facts_from_document')
         except:
-            print(traceback.format_exc())
-            logger.set_context('es_params', self.es_params)
-            logger.exception('remove_facts_from_document_failed')
+            logging.getLogger(ERROR_LOGGER).error('A problem occurred when attempting to delete facts.', exc_info=True, extra={
+                'rm_facts_dict': rm_facts_dict,
+                'total_docs': total_docs,
+                'response': response,
+            })
 
     def tag_documents_with_fact(self, es_params, tag_name, tag_value, tag_field):
         '''Used to tag all documents in the current search with a certain fact'''
