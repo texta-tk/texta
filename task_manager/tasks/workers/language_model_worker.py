@@ -20,13 +20,13 @@ class LanguageModelWorker(BaseWorker):
         self.id = None
         self.model = None
         self.model_name = None
-        self.task_model_obj = None
+        self.task_obj = None
         self.task_type = None
 
     def run(self, task_id):
         self.id = task_id
-        self.task_model_obj = Task.objects.get(pk=self.id)
-        self.task_type = self.task_model_obj.task_type
+        self.task_obj = Task.objects.get(pk=self.id)
+        self.task_type = self.task_obj.task_type
 
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_started', 'data': {'task_id': self.id}}))
 
@@ -37,7 +37,7 @@ class LanguageModelWorker(BaseWorker):
         show_progress.update_view(0)
         model = word2vec.Word2Vec()
 
-        task_params = json.loads(self.task_model_obj.parameters)
+        task_params = json.loads(self.task_obj.parameters)
 
         try:
             sentences = EsIterator(task_params, callback_progress=show_progress)
@@ -84,7 +84,7 @@ class LanguageModelWorker(BaseWorker):
 
     def save(self):
         try:
-            self.model_name = 'model_{}'.format(self.task_model_obj.unique_id)
+            self.model_name = 'model_{}'.format(self.task_obj.unique_id)
             output_model_file = self.create_file_path(self.model_name, MODELS_DIR, self.task_type)
             self.model.save(output_model_file)
             return True

@@ -211,8 +211,8 @@ def query(request):
         suggestionset = SuggestionSet(lexicon=lexicon,method=request.POST['method'])
         suggestionset.save()
 
-        ignored_idxes = model_manager.get_negatives(request.session['model']['pk'],request.user.username,lexicon.id)
-        model = model_manager.get_model(request.session['model']['pk'])
+        ignored_idxes = model_manager.get_negatives(request.session['model']['unique_id'],request.user.username,lexicon.id)
+        model = model_manager.get_model(request.session['model']['unique_id'])
         if model.model.wv.syn0norm is None:
             model.model.init_sims()
 

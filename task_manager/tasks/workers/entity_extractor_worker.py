@@ -35,7 +35,7 @@ class EntityExtractorWorker(BaseWorker):
         self.task_id = None
         self.model_name = None
         self.description = None
-        self.task_model_obj = None
+        self.task_obj = None
         self.task_type = None
         self.n_jobs = 1
         
@@ -51,10 +51,10 @@ class EntityExtractorWorker(BaseWorker):
     def run(self, task_id):
 
         self.task_id = task_id
-        self.task_model_obj = Task.objects.get(pk=self.task_id)
-        self.task_type = self.task_model_obj.task_type
+        self.task_obj = Task.objects.get(pk=self.task_id)
+        self.task_type = self.task_obj.task_type
 
-        task_params = json.loads(self.task_model_obj.parameters)
+        task_params = json.loads(self.task_obj.parameters)
         steps = ["preparing data", "training", "done"]
         show_progress = ShowSteps(self.task_id, steps)
         show_progress.update_view()
@@ -86,7 +86,7 @@ class EntityExtractorWorker(BaseWorker):
             # Get data
             ds = Datasets().activate_datasets_by_id(task_params['dataset'])
             self.es_m = ds.build_manager(ES_Manager)
-            self.model_name = 'model_{}'.format(self.task_model_obj.unique_id)
+            self.model_name = 'model_{}'.format(self.task_obj.unique_id)
             facts = self._get_fact_values(fact_names)
             hits = self._scroll_query_response(param_query, fields)
 
@@ -105,8 +105,8 @@ class EntityExtractorWorker(BaseWorker):
             show_progress.update(2)
 
             # Declare the job as done
-            self.task_model_obj.result = json.dumps(self.train_summary)
-            self.task_model_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+            self.task_obj.result = json.dumps(self.train_summary)
+            self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
             logging.getLogger(INFO_LOGGER).info(json.dumps({
                 'process': 'CREATE CRF MODEL',
@@ -117,7 +117,7 @@ class EntityExtractorWorker(BaseWorker):
         except TaskCanceledException as e:
             # If here, task was canceled while training
             # Delete task
-            self.task_model_obj.delete()
+            self.task_obj.delete()
             logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE CLASSIFIER', 'event': 'crf_training_canceled', 'data': {'task_id': self.task_id}}), exc_info=True)
             print("--- Task canceled")
 
@@ -125,13 +125,15 @@ class EntityExtractorWorker(BaseWorker):
             logging.getLogger(ERROR_LOGGER).exception(json.dumps(
                 {'process': 'CREATE CLASSIFIER', 'event': 'crf_training_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
             # declare the job as failed.
-            self.task_model_obj.result = json.dumps({'error': repr(e)})
-            self.task_model_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
+            self.task_obj.result = json.dumps({'error': repr(e)})
+            self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
         print('Done with crf task')
 
 
     def convert_and_predict(self, data, task_id):
         self.task_id = task_id
+        self.task_obj = Task.objects.get(pk=self.task_id)
+        self.task_type = self.task_obj.task_type
         # Recover features from model to check map
         self._load_tagger()
         self._load_facts()
@@ -250,15 +252,14 @@ class EntityExtractorWorker(BaseWorker):
 
 
     def _load_facts(self):
-        file_path = os.path.join(MODELS_DIR, self.task_type, "{}_meta".format(self.model_name, "meta"))
+        file_path = os.path.join(MODELS_DIR, self.task_type, "{}_meta".format(self.model_name))
         with open(file_path, "rb") as f:
             self.facts = pkl.load(f)
 
 
     def _load_tagger(self):
         # In pycrfsuite, you have to save the model first, then load it as a tagger
-        task_object = Task.objects.get(pk=self.task_id)
-        self.model_name = 'model_{}'.format(task_object.unique_id)
+        self.model_name = 'model_{}'.format(self.task_obj.unique_id)
         file_path = os.path.join(MODELS_DIR, self.task_type, self.model_name)
         try:
             tagger = Tagger()
@@ -385,8 +386,8 @@ class EntityExtractorWorker(BaseWorker):
 
 
     def _bad_params_result(self, msg: str):
-        self.task_model_obj.result = json.dumps({"error": msg})
-        self.task_model_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
+        self.task_obj.result = json.dumps({"error": msg})
+        self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
 
     @staticmethod
     def _convert_dict_to_html_table(data_dict):

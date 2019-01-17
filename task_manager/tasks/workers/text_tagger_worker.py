@@ -40,7 +40,7 @@ class TagModelWorker(BaseWorker):
         self.model = None
         self.model_name = None
         self.description = None
-        self.task_model_obj = None
+        self.task_obj = None
         self.task_params = None
         self.task_type = None
         self.n_jobs = 1
@@ -48,10 +48,10 @@ class TagModelWorker(BaseWorker):
     def run(self, task_id):
 
         self.task_id = task_id
-        self.task_model_obj = Task.objects.get(pk=self.task_id)
-        self.task_type = self.task_model_obj.task_type
+        self.task_obj = Task.objects.get(pk=self.task_id)
+        self.task_type = self.task_obj.task_type
 
-        self.task_params = json.loads(self.task_model_obj.parameters)
+        self.task_params = json.loads(self.task_obj.parameters)
         steps = ["preparing data", "training", "saving", "done"]
         show_progress = ShowSteps(self.task_id, steps)
         show_progress.update_view()
@@ -90,7 +90,7 @@ class TagModelWorker(BaseWorker):
             # Build Data sampler
             ds = Datasets().activate_datasets_by_id(self.task_params['dataset'])
             es_m = ds.build_manager(ES_Manager)
-            self.model_name = 'model_{0}'.format(self.task_model_obj.unique_id)
+            self.model_name = 'model_{0}'.format(self.task_obj.unique_id)
             es_data = EsDataSample(fields=fields, 
                                    query=param_query,
                                    es_m=es_m,
@@ -112,8 +112,8 @@ class TagModelWorker(BaseWorker):
             show_progress.update(3)
 
             # Declare the job as done
-            self.task_model_obj.result = json.dumps(train_summary)
-            self.task_model_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+            self.task_obj.result = json.dumps(train_summary)
+            self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
             logging.getLogger(INFO_LOGGER).info(json.dumps({
                 'process': 'CREATE CLASSIFIER',
@@ -124,7 +124,7 @@ class TagModelWorker(BaseWorker):
         except TaskCanceledException as e:
             # If here, task was canceled while training
             # Delete task
-            self.task_model_obj.delete()
+            self.task_obj.delete()
             logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE CLASSIFIER', 'event': 'model_training_canceled', 'data': {'task_id': self.task_id}}), exc_info=True)
             print("--- Task canceled")
 
@@ -132,8 +132,8 @@ class TagModelWorker(BaseWorker):
             logging.getLogger(ERROR_LOGGER).exception(json.dumps(
                 {'process': 'CREATE CLASSIFIER', 'event': 'model_training_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
             # declare the job as failed.
-            self.task_model_obj.result = json.dumps({'error': repr(e)})
-            self.task_model_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
+            self.task_obj.result = json.dumps({'error': repr(e)})
+            self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
         
         print('done')
 
@@ -177,14 +177,15 @@ class TagModelWorker(BaseWorker):
         :param task_id: id of task it was saved from.
         :return: serialized model pickle.
         """
-        task_object = Task.objects.get(pk=task_id)
-        model_name = 'model_{}'.format(task_object.unique_id)
-        file_path = os.path.join(MODELS_DIR, task_object.task_type, model_name)
+        self.task_obj = Task.objects.get(pk=task_id)
+        model_name = 'model_{}'.format(self.task_obj.unique_id)
+        self.task_type = self.task_obj.task_type
+        file_path = os.path.join(MODELS_DIR, self.task_type, model_name)
         try:
             model = joblib.load(file_path)
             self.model = model
             self.task_id = int(task_id)
-            self.description = task_object.description
+            self.description = self.task_obj.description
             return model
 
         except Exception as e:

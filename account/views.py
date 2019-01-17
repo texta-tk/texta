@@ -42,7 +42,7 @@ def update(request):
 
 	parameters = request.POST	
 	if 'model_pk' in parameters:
-		model = {"pk": parameters["model_pk"], "description": parameters["model_description"]}
+		model = {"pk": parameters["model_pk"], "description": parameters["model_description"], "unique_id": parameters["model_uuid"]}
 		request.session['model'] = model
 		logger.clean_context()
 		logger.set_context('user_name', request.user.username)

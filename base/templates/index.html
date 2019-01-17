@@ -169,6 +169,7 @@
                                         {% for model in language_models %}
                                             <li data-model_pk="{{ model.pk }}"
                                                 data-model_description="{{ model.description }}"
+                                                data-model_uuid="{{ model.unique_id }}"
                                                 onclick=model_update_resources(this);
                                                 role="button"><a>Model {{ model.pk }}: {{ model.description }}</a></li>
                                         {% endfor %}

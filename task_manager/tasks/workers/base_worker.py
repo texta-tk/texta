@@ -13,7 +13,7 @@ class BaseWorker:
             filename - The name of the file
             args - Unpacked list of strings for directory of the file
         Example usage: 
-            plot_url = self.create_file_path(plot_name, URL_PREFIX, MEDIA_URL, "task_manager", self.task_model_obj.task_type)
+            plot_url = self.create_file_path(plot_name, URL_PREFIX, MEDIA_URL, "task_manager", self.task_obj.task_type)
         '''
 
         dir_path = os.path.join(*args)

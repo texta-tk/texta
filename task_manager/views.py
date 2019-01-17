@@ -191,22 +191,15 @@ def download_model(request):
     task_object = Task.objects.get(pk=model_id)
     unique_id = task_object.unique_id
     task_type = task_object.task_type
+
     task_xml_name = "task_{}.xml".format(unique_id)
-
     model_name = "model_{}".format(unique_id)
-    model_file_path = os.path.join(MODELS_DIR, task_type, model_name)
 
+    model_file_path = os.path.join(MODELS_DIR, task_type, model_name)
     media_path = os.path.join(PROTECTED_MEDIA, "task_manager/", task_type, model_name)
 
-    model_files = []
-    for file in glob.glob(model_file_path + '*'):
-        # Add path and name
-        model_files.append((file, os.path.basename(file)))
-
-    media_files = []
-    for file in glob.glob(media_path + '*'):
-        # Add path and name
-        media_files.append((file, os.path.basename(file)))
+    model_files = _get_wildcard_files(model_file_path)
+    media_files = _get_wildcard_files(media_path)
 
     zip_path = "zipped_model_{}.zip".format(model_id)
     if os.path.exists(model_file_path):
@@ -237,15 +230,18 @@ def download_model(request):
 def upload_task_archive(request):
     task_archive = request.FILES['task_archive']
     if zipfile.is_zipfile(task_archive):
+        task_loaded = False
         with ZipFile(task_archive, 'r') as zf:
             for file_name in zf.namelist():
                 dirname = os.path.dirname(file_name)
                 # Handle Task object xml
                 if dirname == '' and file_name.lower().endswith('.xml'):
                     task = _load_xml_to_database(zf.read(file_name))
+                    task_loaded = True
 
+                if task_loaded:
                     if dirname == 'model':
-                        _load_media_file(task, zf.read(file_name), os.path.basename(file_name))
+                        _load_model_file(task, zf.read(file_name), os.path.basename(file_name))
                     elif dirname == 'media':
                         _load_media_file(task, zf.read(file_name), os.path.basename(file_name))
                     json_response = {"text": "Archive seems to not contain task files"}
@@ -264,12 +260,14 @@ def _load_xml_to_database(xml_model_object):
     for task in serializers.deserialize("xml", xml_model_object):
         # Save object to model dataset
         task.save()
-    return task
+    # Return the Task obj from the Deserialized object
+    return task.object
 
 
 def _load_model_file(task, file, file_name):
     '''For extracting the uploaded model in upload_task_archive'''
     model_file_path = os.path.join(MODELS_DIR, task.task_type, file_name)
+    
     with open(model_file_path, 'wb+') as f:
         f.write(file)
 
@@ -277,6 +275,7 @@ def _load_model_file(task, file, file_name):
 def _load_media_file(task, file, file_name):
     '''For extracting the uploaded model mediadata in upload_task_archive'''
     media_file_path = os.path.join(PROTECTED_MEDIA, "task_manager/", task.task_type, file_name)
+    
     with open(media_file_path, 'wb+') as f:
         f.write(file)
 
