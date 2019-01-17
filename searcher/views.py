@@ -147,7 +147,10 @@ def dashboard_endpoint(request):
     es_m = ds.build_manager(ES_Manager)
 
     indices = es_m.stringify_datasets()
-    dashboard = SearcherDashboard(es_url=es_url, indices=indices)
+
+    # search_query = Search.objects.all()[0].query
+    query_dict = None  # json.loads(search_query, encoding='utf8')['main']
+    dashboard = SearcherDashboard(es_url=es_url, indices=indices, query_body=query_dict)
     result = dashboard.response
 
     return JsonResponse(result)
@@ -185,8 +188,8 @@ def index(request):
                        'fields': fields,
                        'searches': Search.objects.filter(author=request.user),
                        'lexicons': Lexicon.objects.all().filter(author=request.user),
-                       'language_models': language_models, 
-                       'allowed_datasets': datasets,                       
+                       'language_models': language_models,
+                       'allowed_datasets': datasets,
                        'enabled_preprocessors': enabled_preprocessors}
 
     template = loader.get_template('searcher.html')
@@ -333,7 +336,7 @@ def table_header_mlt(request):
 @login_required
 def mlt_query(request):
     es_params = request.POST
-    
+
     if 'mlt_fields' not in es_params:
         return HttpResponse(status=400,reason='field')
     else:
