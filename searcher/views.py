@@ -145,7 +145,10 @@ def dashboard_endpoint(request):
     es_m = ds.build_manager(ES_Manager)
 
     indices = es_m.stringify_datasets()
-    dashboard = SearcherDashboard(es_url=es_url, indices=indices)
+
+    # search_query = Search.objects.all()[0].query
+    query_dict = None  # json.loads(search_query, encoding='utf8')['main']
+    dashboard = SearcherDashboard(es_url=es_url, indices=indices, query_body=query_dict)
     result = dashboard.response
 
     return JsonResponse(result)

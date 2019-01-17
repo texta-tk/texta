@@ -9,13 +9,13 @@ from texta.settings import ERROR_LOGGER
 
 class SearcherDashboard:
 
-    def __init__(self, es_url: str, indices: str, query_body: dict = None, excluded_fields=('_texta_id', '_texta_id.keyword')):
+    def __init__(self, es_url: str, indices: str, query_body: dict = None, excluded_fields: list = None):
         self.indices = indices
         self.es_url = es_url
-        self.excluded_fields = excluded_fields
+        self.excluded_fields = ['_texta_id', '_texta_id.keyword'] + excluded_fields if isinstance(excluded_fields, list) else ['_texta_id', '_texta_id.keyword']
         self.query_body = query_body
 
-        self.elasticsearch = elasticsearch.Elasticsearch(self.es_url, index=self.indices, timeout=15, )
+        self.elasticsearch = elasticsearch.Elasticsearch(self.es_url, timeout=120, )
         self.search_querys = []
 
         self.response = self.query_conductor()
@@ -28,9 +28,9 @@ class SearcherDashboard:
         for index in list_of_indices:
             # Establish the connection.
             if self.query_body:
-                search = elasticsearch_dsl.Search.from_dict(self.query_body).using(self.elasticsearch).params(typed_keys=True, size=0)
+                search = elasticsearch_dsl.Search.from_dict(self.query_body).index(index).using(self.elasticsearch).params(typed_keys=True, size=0)
             else:
-                search = elasticsearch_dsl.Search().using(self.elasticsearch).params(typed_keys=True, size=0)
+                search = elasticsearch_dsl.Search().index(index).using(self.elasticsearch).params(typed_keys=True, size=0)
 
             # Fetch all the fields and their types, then filter the ones we don't want like _texta_id.
             normal_fields, nested_fields = DashboardEsHelper(es_url=self.es_url, indices=index).get_aggregation_field_data()
@@ -46,6 +46,7 @@ class SearcherDashboard:
             self.search_querys.append(search.to_dict())  # Save query for debug purposes.
             response = search.execute().to_dict()
             result[index] = response
+            del search
 
         return result
 
@@ -64,8 +65,9 @@ class SearcherDashboard:
             reformated_agg_dict["aggregations"] = self._format_aggregation_dict(aggregations_dict)  # Re-add the reformatted dict into the new result.
 
             # Manually insert percentages into the value_counts aggregation.
-            grouped_aggrigations = reformated_agg_dict['aggregations']
-            reformated_agg_dict["aggregations"]['value_count'] = self._add_value_count_percentages(grouped_aggrigations, total_documents)
+            grouped_aggregations = reformated_agg_dict['aggregations']
+            if grouped_aggregations.get('value_count', None):
+                grouped_aggregations['value_count'] = self._add_value_count_percentages(grouped_aggregations, total_documents)
 
             final_result['indices'].append(reformated_agg_dict)
 
@@ -78,15 +80,15 @@ class SearcherDashboard:
             bucket_name = self._format_field_to_bucket(field_name)
 
             if field_type == "text":
-                search_dsl.aggs.bucket(bucket_name + '#text_sigterms', 'significant_text', field=field_name)
+                search_dsl.aggs.bucket(bucket_name + '#text_sigterms', 'significant_text', field=field_name, filter_duplicate_text=True)
 
             elif field_type == "keyword":
                 search_dsl.aggs.bucket(bucket_name + '#keyword_terms', 'terms', field=field_name)
                 search_dsl.aggs.bucket(bucket_name + '#keyword_count', 'value_count', field=field_name)
 
             elif field_type == "date":
-                search_dsl.aggs.bucket(bucket_name + "_month#date_month", 'date_histogram', field=field_name, interval='month')
-                search_dsl.aggs.bucket(bucket_name + "_year#date_year", 'date_histogram', field=field_name, interval='year')
+                search_dsl.aggs.bucket(bucket_name + "_month" + "#date_month", 'date_histogram', field=field_name, interval='month')
+                search_dsl.aggs.bucket(bucket_name + "_year" + "#date_year", 'date_histogram', field=field_name, interval='year')
 
             elif field_type == "integer":
                 search_dsl.aggs.bucket(bucket_name + "#int_stats", 'extended_stats', field=field_name)
