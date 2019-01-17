@@ -1,9 +1,11 @@
-.morris-hover{position:absolute;z-index:1000;}
-.morris-hover.morris-default-style{border-radius:10px;padding:6px;color:#666;background:rgba(255, 255, 255, 0.8);border:solid 2px rgba(230, 230, 230, 0.8);font-family:sans-serif;font-size:12px;text-align:center;}
-.morris-hover.morris-default-style .morris-hover-row-label{font-weight:bold;margin:0.25em 0;}
-.morris-hover.morris-default-style .morris-hover-point{white-space:nowrap;margin:0.1em 0;}
 .graph-background>svg{
     background-color: #FFF;
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0,0,0,.2);
+}
+
+.index-tables-holder{
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(450px, 1fr));
+    grid-gap: 0px 5px;
 }
