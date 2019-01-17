@@ -1,8 +1,36 @@
-{% extends "index.html" %}
-{% block app %}
-<script type="application/javascript" src="{{STATIC_URL}}searcher/dashboard/dashboard.js"></script>
-<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}searcher/dashboard/dashboard.css">
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}searcher/dashboard/dashboard.css">
+<script type="application/javascript" src="{{ STATIC_URL }}searcher/dashboard/dashboard.js"></script>
 
-<button class="btn btn-primary" onclick=display_aggregation_timeline()>Timeline</button>
-<div class="graph-background" id="timeline-agg-container" ></div>
-{% endblock %}
+
+<div class="flex-column">
+    <ul class="nav nav-tabs flex-row">
+        <li class="flex-item-grow-1 active"><a data-toggle="tab" href="#timeline"
+                                               title="For building basic searches">Timeline</a>
+        </li>
+        <li class="flex-item-grow-1"><a data-toggle="tab" href="#facts"
+                                        title="For expanding basic searches via similarity queries">Facts</a>
+        </li>
+
+    </ul>
+    <div class="tab-content">
+        <div id="timeline" class="tab-pane fade in active ">
+            {% for index in indices %}
+                <div class="flex-item-grow-1 " id="timeline-agg-container-{{ index }}">
+                </div>
+            {% endfor %}
+        </div>
+        <div id="facts" class="tab-pane fade in ">
+            <div class="flex-column width-height-max" style="height: 500px;">
+                <select name="index_fields" id="index_fields"
+                        class="">
+                    {% for index in indices %}
+                        <option value="{{ index }}">{{ index }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+

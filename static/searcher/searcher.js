@@ -308,7 +308,19 @@ function rejectDocument (id) {
     $('#docs_rejected').val($('#docs_rejected').val() + id + '\n')
     $('#row_' + id).remove()
 }
+function dashboard () {
+    var container = $('#right')
+    container.empty()
+    container.append('Loading...')
 
+    $.ajax({
+        url: PREFIX + '/dashboard_visualize',
+        type: 'GET',
+        success: function(result) {
+            container.html(result)
+        }
+    })
+}
 function aggregate () {
     var container = $('#right')
     container.empty()
