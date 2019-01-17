@@ -20,13 +20,18 @@
             {% endfor %}
         </div>
         <div id="facts" class="tab-pane fade in ">
-            <div class="flex-column width-height-max" style="height: 500px;">
+            <div class="flex-column width-height-max">
                 <select name="index_fields" id="index_fields"
                         class="">
                     {% for index in indices %}
                         <option value="{{ index }}">{{ index }}</option>
                     {% endfor %}
                 </select>
+                {% for index in indices %}
+                    <div class="flex-column hidden" id="datatables-container-{{ index }}">
+
+                    </div>
+                {% endfor %}
             </div>
         </div>
     </div>

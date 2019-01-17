@@ -6,8 +6,6 @@ class Index {
     }
 
     getDates() {
-
-
         if(checkNested(this.aggregations, 'date_histogram','kuupaev_year','buckets')){
             return this.aggregations.date_histogram.kuupaev_year.buckets;
         }else{
