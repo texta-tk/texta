@@ -22,6 +22,7 @@
             <div class="flex-column width-height-max">
                 <select name="index_fields" id="index_fields"
                         class="">
+                    <option disabled selected value> -- select an option -- </option>
                     {% for index in indices %}
                         <option value="{{ index }}">{{ index }}</option>
                     {% endfor %}
@@ -55,8 +56,6 @@
                             </div>
                             <div id='{{ index }}-nested' class="tab-pane fade in">
                                 <div id='{{ index }}-nested-table' class="tab-pane fade in index-tables-holder">
-
-                                    <p>{{ index }}</p>
 
                                 </div>
 

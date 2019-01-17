@@ -23,44 +23,6 @@ class Index {
     }
 
 
-    formatSTERMS(field) {
-        /* datatables parsable format */
-        let result = (this.aggregations[this.AggregationTpes.STERMS][field].buckets.map((e) => {
-            return [e.key, e.doc_count]
-        }));
-
-        /* filter out garbage */
-        let notAllowedToEnterHeaven = []
-        result.filter((e) => {
-            if (e[1] < 50) {
-                notAllowedToEnterHeaven.push(e[1])
-            }
-        });
-
-        if (notAllowedToEnterHeaven.length < 3 && result.length > 3) {
-            return result;
-        }
-        return null;
-    }
-    formatSIGSTERMS(field) {
-        /* datatables parsable format */
-        let result = (this.aggregations[this.AggregationTpes.SIGSTERMS][field].buckets.map((e) => {
-            return [e.key, e.doc_count]
-        }));
-
-        /* filter out garbage */
-        let notAllowedToEnterHeaven = []
-        result.filter((e) => {
-            if (e[1] < 50) {
-                notAllowedToEnterHeaven.push(e[1])
-            }
-        });
-
-        if (notAllowedToEnterHeaven.length < 3 && result.length > 3) {
-            return result;
-        }
-        return null;
-    }
 
 }
 
