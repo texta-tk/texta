@@ -1,4 +1,3 @@
-
 <script type="application/javascript" src="{{ STATIC_URL }}searcher/dashboard/dashboard.js"></script>
 
 
@@ -29,8 +28,41 @@
                 </select>
 
                 {% for index in indices %}
-                    <div class="hidden index-tables-holder" id="datatables-container-{{ index }}">
+                    <div class="hidden" id="datatables-container-{{ index }}">
 
+                        <ul class="nav nav-tabs flex-row">
+                            <li class="flex-item-grow-1 active"><a data-toggle="tab" href="#{{ index }}-sterms"
+                                                                   title="For building basic searches">sterms</a>
+                            </li>
+                            <li class="flex-item-grow-1"><a data-toggle="tab" href="#{{ index }}-sigsterms"
+                                                            title="For expanding basic searches via similarity queries">sigsterms</a>
+                            </li>
+                            <li class="flex-item-grow-1"><a data-toggle="tab" href="#{{ index }}-nested"
+                                                            title="For expanding basic searches via similarity queries">nested</a>
+                            </li>
+
+                        </ul>
+                        <div class="tab-content">
+                            <div id='{{ index }}-sterms' class="tab-pane fade in active">
+                                <div id='{{ index }}-sterms-table' class=" index-tables-holder">
+
+                                </div>
+                            </div>
+                            <div id='{{ index }}-sigsterms' class="tab-pane fade in">
+                                <div id='{{ index }}-sigsterms-table' class="index-tables-holder">
+
+                                </div>
+                            </div>
+                            <div id='{{ index }}-nested' class="tab-pane fade in">
+                                <div id='{{ index }}-nested-table' class="tab-pane fade in index-tables-holder">
+
+                                    <p>{{ index }}</p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
                     </div>
                 {% endfor %}
 
