@@ -14,11 +14,34 @@ class Index {
     }
 
     getDates() {
-        if (checkNested(this.aggregations, 'date_histogram', 'kuupaev_year', 'buckets')) {
-            return this.aggregations.date_histogram.kuupaev_year.buckets;
+        if (checkNested(this.aggregations, this.AggregationTpes.DATE_HISTOGRAM, 'kuupaev_year', 'buckets')) {
+            return this.aggregations[this.AggregationTpes.DATE_HISTOGRAM].kuupaev_year.buckets;
         } else {
-            console.error(`index named ${this.index_name} does not have date_histogram field!`);
+            console.error(`index ${this.index_name}, does not have date_histogram field!`);
             return undefined
+        }
+    }
+    getSTERMS(){
+        if(checkNested(this.aggregations, this.AggregationTpes.STERMS, )){
+            return this.aggregations[this.AggregationTpes.STERMS]
+        }else{
+            console.error(`index ${this.index_name}, Properties did not match expected format: STERMS!`)
+            return undefined
+        }
+    }
+    getSIGSTERMS(){
+        if(checkNested(this.aggregations, this.AggregationTpes.SIGSTERMS, )){
+            return this.aggregations[this.AggregationTpes.SIGSTERMS]
+        }else{
+            console.error(`index ${this.index_name}, Properties did not match expected format: SIGSTERMS!`)
+            return undefined
+        }
+    }
+    getFACTS(){
+        if(checkNested(this.aggregations, this.AggregationTpes.NESTED, 'texta_facts' )){
+            return this.aggregations[this.AggregationTpes.NESTED].texta_facts
+        }else{
+            console.error(`index ${this.index_name}, Properties did not match expected format: NESTED!`)
         }
     }
 

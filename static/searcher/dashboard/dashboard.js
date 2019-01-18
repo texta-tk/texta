@@ -32,7 +32,6 @@ function initListeners() {
 }
 
 function initDashBoard(indices) {
-    //timelines
     indices.forEach((e) => {
         makeTimeline(e);
         makeSTERMSTables(e);
@@ -60,12 +59,15 @@ function makeTimeline(index) {
 }
 
 function makeFACTSTables(index) {
-    let t_id = 0;
-    for (let field in index.aggregations[index.AggregationTpes.NESTED]) {
-        let result = formatFACTS(index, field)
+    let result = formatFACTS(index)
 
-        if (result != null) {
-            $('#' + index.index_name + '-nested-table').append(`<table id="${index.AggregationTpes.NESTED}-generated-${index.index_name}${t_id}" style="width:100%"></table>`);
+    if (result) {
+        let t_id = 0;
+        result.forEach((e) => {
+            let result = e.facts.map((x) => {
+                return [x.key, x.doc_count]
+            });
+            $('#' + index.index_name + '-nested-table').append(`<table id="${index.AggregationTpes.NESTED}-generated-${index.index_name}${t_id}" style="width:100%"><caption>${e.key}</caption></table>`);
 
             $(`#${index.AggregationTpes.NESTED}-generated-${index.index_name}${t_id}`).DataTable({
                 data: result,
@@ -74,13 +76,17 @@ function makeFACTSTables(index) {
                 order: [1, 'desc'],
                 paging: false,
                 columns: [
-                    {title: field},
+                    {title: "facts"},
                     {title: "count"}
                 ]
             });
             t_id += 1;
-        }
+        })
+    } else {
+        console.log('No facts present: '+index.index_name)
     }
+
+
 }
 
 function makeSIGSTERMSTables(index) {
@@ -133,37 +139,43 @@ function makeSTERMSTables(index) {
 
 function formatSTERMS(index, field) {
     /* datatables parsable format */
-    let result = (index.aggregations[index.AggregationTpes.STERMS][field].buckets.map((e) => {
-        /*Stuff to display in datatables, change columns titles accordingly*/
-        return [e.key, e.doc_count]
-    }));
-
-    /* filter out garbage */
-    return filterResults(result)
+    let root = index.getSTERMS()
+    if (checkNested(root, field, 'buckets')) {
+        let result = (root[field].buckets.map((e) => {
+            return [e.key, e.doc_count]
+        }));
+        return filterResults(result)
+    } else {
+        console.error('formatSTERMS, properties did not match expected format')
+        return []
+    }
 }
 
 function formatSIGSTERMS(index, field) {
     /* datatables parsable format */
-    let result = (index.aggregations[index.AggregationTpes.SIGSTERMS][field].buckets.map((e) => {
-        return [e.key, e.doc_count]
-    }));
-
-    /* filter out garbage */
-    return filterResults(result)
+    let root = index.getSIGSTERMS()
+    if (checkNested(root, field, 'buckets')) {
+        let result = (root[field].buckets.map((e) => {
+            return [e.key, e.doc_count]
+        }));
+        return filterResults(result)
+    } else {
+        console.error('formatSIGSTERMS, properties did not match expected format')
+        return []
+    }
 }
 
-function formatFACTS(index, field) {
-    /* datatables parsable format */
+function formatFACTS(index) {
+    /* todo:this*/
     let result = []
-    for (let facts in index.aggregations[index.AggregationTpes.NESTED][field]) {
-        if (checkNested(index.aggregations[index.AggregationTpes.NESTED][field], facts, 'buckets')) {
-            result = (index.aggregations[index.AggregationTpes.NESTED][field][facts].buckets.map((e) => {
-                return [e.key, e.doc_count]
-            }));
-        }
-
-
+    let root = index.getFACTS()
+    if (checkNested(root, ['sterms#fact_category'], 'buckets')) {
+        result = (root['sterms#fact_category'].buckets.map((e) => {
+            return {"key": e.key, "facts": e['sigsterms#significant_facts'].buckets}
+        }));
     }
+    console.log(result)
+
     /* filter out garbage */
     return filterResults(result)
 }
@@ -181,3 +193,47 @@ function filterResults(result) {
     }
     return null;
 }
+
+/*ex data structure*/
+/*    var data = {
+        "name": "A1",
+        "children": [
+            {
+                "name": "B1",
+                "children": [
+                    {
+                        "name": "C1",
+                        "value": 100
+                    },
+                    {
+                        "name": "C2",
+                        "value": 300
+                    },
+                    {
+                        "name": "C3",
+                        "value": 200
+                    }
+                ]
+            },
+            {
+                "name": "B2",
+                "value": 200
+            }
+        ]
+    };*/
+
+/*  this is for d3 things, acceptable hiearchy format
+    var tempList = []
+
+    index.getFACTS()['sterms#fact_category'].buckets.forEach((e) => {
+        tempList.push({
+            'key': e.key,
+            'children': e['sigsterms#significant_facts'].buckets
+        })
+    })
+
+    console.log(tempList)
+    var temp = {
+        "key": 'FACTS',
+        "children" : tempList
+    }*/
