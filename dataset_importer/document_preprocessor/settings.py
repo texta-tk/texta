@@ -6,7 +6,7 @@
 from texta.settings import DATASET_IMPORTER
 from texta.settings import SCORO_PREPROCESSOR_ENABLED
 from texta.settings import PAASTEAMET_PREPROCESSOR_ENABLED
-from dataset_importer.document_preprocessor.preprocessors import CommentPreprocessor
+from dataset_importer.document_preprocessor.preprocessors import TextCleanerPreprocessor
 from dataset_importer.document_preprocessor.preprocessors import DatePreprocessor
 from dataset_importer.document_preprocessor.preprocessors import MlpPreprocessor
 from dataset_importer.document_preprocessor.preprocessors import TextTaggerPreprocessor
@@ -120,18 +120,18 @@ except Exception as e:
     log_preprocessor_status(code='lexicon_classifier', status='disabled')
 
 try:
-    preprocessor_map['comment_preprocessor'] = {
-        'name': 'Comment preprocessor',
-        'description': 'Converts comments',
-        'class': CommentPreprocessor,
-        'parameters_template': 'parameters/preprocessor_parameters/comment_preprocessor.html',
+    preprocessor_map['text_cleaner'] = {
+        'name': 'Text Cleaner preprocessor',
+        'description': 'Cleans texts for classification',
+        'class': TextCleanerPreprocessor,
+        'parameters_template': 'parameters/preprocessor_parameters/text_cleaner.html',
         'arguments': {},
         'is_enabled': True
     }
-    log_preprocessor_status(code='comment_preprocessor', status='enabled')
+    log_preprocessor_status(code='text_cleaner', status='enabled')
 except Exception as e:
     print(e)
-    log_preprocessor_status(code='comment_preprocessor', status='disabled')
+    log_preprocessor_status(code='text_cleaner', status='disabled')
 
 try:
     preprocessor_map['scoro'] = {

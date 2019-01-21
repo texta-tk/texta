@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from lexicon_miner.models import Lexicon, Word
-
+from texta.settings import ERROR_LOGGER
 import numpy as np
+import logging
 import json
 import re
 import os
@@ -181,6 +182,18 @@ class LexTagger(object):
             return False
         return True
 
+    def _load_input_features(self,**kwargs):
+        try:
+            input_features = [json.loads(inp_feature)['path'] for inp_feature in json.loads(kwargs['lexicon_classifier_preprocessor_feature_names']) if json.loads(inp_feature)['type']=='text']
+        except:
+            try:
+                input_features = json.loads(kwargs['lexicon_classifier_preprocessor_feature_names'])
+            except:
+                logging.getLogger(ERROR_LOGGER).info('Did not detect any input features.', exc_info=True)
+                input_features = []
+        return input_features
+
+
     def _parse_arguments(self,kwargs):
         input_features = kwargs['input_features']
         lex_ids = [int(_id) for _id in kwargs['lex_ids']]
@@ -197,7 +210,7 @@ class LexTagger(object):
         return parsed_args
 
     def _load_arguments(self,kwargs):
-        input_features  = json.loads(kwargs['lexicon_classifier_preprocessor_feature_names'])
+        input_features  = self._load_input_features(**kwargs)
         lex_ids         = json.loads(kwargs['lexicon_classifier_preprocessor_lexicons'])
         match_type      = json.loads(kwargs['lexicon_classifier_preprocessor_match_types'])[0]
         operation       = json.loads(kwargs['lexicon_classifier_preprocessor_operations'])[0]

@@ -23,7 +23,7 @@ from .base_worker import BaseWorker
 
 class PreprocessorWorker(BaseWorker):
 
-    def __init__(self, scroll_size=1000, time_out='10m'):
+    def __init__(self, scroll_size=10000, time_out='10m'):
         self.es_m = None
         self.task_id = None
         self.params = None
