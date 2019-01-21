@@ -228,29 +228,49 @@ def download_model(request):
 
 @login_required
 def upload_task_archive(request):
-    task_archive = request.FILES['task_archive']
-    if zipfile.is_zipfile(task_archive):
-        task_loaded = False
-        with ZipFile(task_archive, 'r') as zf:
-            for file_name in zf.namelist():
-                dirname = os.path.dirname(file_name)
-                # Handle Task object xml
-                if dirname == '' and file_name.lower().endswith('.xml'):
-                    task = _load_xml_to_database(zf.read(file_name))
-                    task_loaded = True
+    # Empty json response for unknown errors
+    json_response = {}
+    try:
+        # Check if file is added, else return failed JsonResponse
+        if 'task_archive' in request.FILES:
+            task_archive = request.FILES['task_archive']
+            # Check if file is zipfile, else return failed JsonResponse
+            if zipfile.is_zipfile(task_archive):
+                task_loaded = False
+                with ZipFile(task_archive, 'r') as zf:
+                    for file_name in zf.namelist():
+                        dirname = os.path.dirname(file_name)
+                        # Handle Task object xml
+                        if dirname == '' and file_name.lower().endswith('.xml'):
+                            task = _load_xml_to_database(zf.read(file_name))
+                            task_loaded = True
+                        # Check if task is loaded else return failed JsonResponse
+                        if task_loaded:
+                            if dirname == 'model':
+                                _load_model_file(task, zf.read(file_name), os.path.basename(file_name))
+                                model_loaded = True
+                            elif dirname == 'media':
+                                _load_media_file(task, zf.read(file_name), os.path.basename(file_name))
 
-                if task_loaded:
-                    if dirname == 'model':
-                        _load_model_file(task, zf.read(file_name), os.path.basename(file_name))
-                    elif dirname == 'media':
-                        _load_media_file(task, zf.read(file_name), os.path.basename(file_name))
-                    json_response = {"text": "Archive seems to not contain task files"}
-                else:
-                    json_response = {"text": "Archive seems to not contain a valid task model object"}
-    else:
-        json_response = {"text": "Archive contents malformed or not a .zip file"}
-        return JsonResponse(json_response)
-    return HttpResponse()
+                # Give successful response if task and model were loaded
+                if task_loaded and model_loaded:
+                    json_response = {"status": "success", "text": "Task successfully uploaded!"}   
+                else: 
+                    json_response = {"status": "failed", "text": "Archive seems to not contain a valid model or Task object"}
+            # If file is not zipfile
+            else:
+                json_response = {"status": "failed", "text": "Archive contents malformed or not a .zip file"}
+                return JsonResponse(json_response)
+        # If there is no file found in request.FILES
+        else:
+            json_response = {"status": "failed", "text": "No file provided"}
+    except:
+        logging.getLogger(ERROR_LOGGER).error(
+            'Exception in Task Manager views:upload_task_archive',
+            exc_info=True
+        )
+
+    return JsonResponse(json_response)
 
 
 def _load_xml_to_database(xml_model_object):

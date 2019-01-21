@@ -93,11 +93,48 @@ function delete_task (task_id) {
 
 function uploadTask(task_form_id) {
     formElement = document.getElementById(task_form_id)
-
-    var request = new XMLHttpRequest()
-    request.onreadystatechange = function () {
+    // var request = new XMLHttpRequest()
+    // request.onreadystatechange = function () {
         // location.reload()
-    }
-    request.open('POST', PREFIX + '/upload_task_archive')
-    request.send(new FormData(formElement), true)
+        // }
+        // request.open('POST', PREFIX + '/upload_task_archive')
+        // request.send(new FormData(formElement), true)
+        
+        
+        
+    formData = new FormData(formElement);
+    
+    statusTextElem = $('#uploadStatus')
+    $.ajax({
+        url: PREFIX + '/upload_task_archive',
+        data: formData,
+        type: 'POST',
+        contentType: false,
+        processData: false,
+        beforeSend: function () {
+            statusTextElem.get(0).textContent = "Importing, please wait.."
+            statusTextElem.attr('class', 'taskUploadStatusTextDefault')
+        },
+        success: function (data) {
+            status = data.status
+            switch (status) {
+                case 'success':
+                    statusTextElem.get(0).textContent = data.text
+                    statusTextElem.attr('class', 'taskUploadStatusTextSuccess')
+                    break
+                case 'failed':
+                    statusTextElem.get(0).textContent = data.text
+                    statusTextElem.attr('class', 'taskUploadStatusTextFailed')
+                    break
+                default:
+                    statusTextElem.get(0).textContent = "An unknown error has occurred, make sure the exported Task data is valid and try again."
+                    statusTextElem.attr('class', 'taskUploadStatusTextFailed')
+                    break
+            }
+        },
+        error: function () {
+            statusTextElem.get(0).textContent = "An unknown error has occurred, make sure the exported Task data is valid and try again."
+            statusTextElem.attr('class', 'taskUploadStatusTextFailed')
+        }
+    });
 }
