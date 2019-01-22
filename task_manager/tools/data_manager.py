@@ -118,7 +118,7 @@ class EsIterator:
 
 class EsDataSample(object):
 
-    def __init__(self, fields, query, es_m, negative_set_multiplier=1.0, max_positive_sample_size=10000, score_threshold=0.0):
+    def __init__(self, fields, query, es_m, negative_set_multiplier=1.0, max_positive_sample_size=MAX_POSITIVE_SAMPLE_SIZE, score_threshold=0.0):
         """ Sample data - Positive and Negative samples from query
         negative_set_multiplier (float): length of positive set is multiplied by this to determine negative sample size (to over- or underfit models)
         max_positive_sample_size (int): maximum number of documents per class used to train the model
