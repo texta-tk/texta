@@ -37,9 +37,17 @@ function initDashBoard(indices) {
         makeSTERMSTables(e);
         makeSIGSTERMSTables(e);
         makeFACTSTables(e);
+        makeStatistics(e);
+
     })
 }
-
+function makeStatistics(index){
+    let response = index.getVALUECOUNT()
+    console.log(response)
+    for (let f in response){
+        console.log(f)
+    }
+}
 function makeTimeline(index) {
     let div = document.getElementById('timeline-agg-container-' + index.index_name);
     let dates = index.getDates();
@@ -174,7 +182,6 @@ function formatFACTS(index) {
             return {"key": e.key, "facts": e['sigsterms#significant_facts'].buckets}
         }));
     }
-    console.log(result)
 
     /* filter out garbage */
     return filterResults(result)

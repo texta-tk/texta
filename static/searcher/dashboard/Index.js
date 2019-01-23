@@ -44,6 +44,13 @@ class Index {
             console.error(`index ${this.index_name}, Properties did not match expected format: NESTED!`)
         }
     }
+    getVALUECOUNT(){
+        if(checkNested(this.aggregations, this.AggregationTpes.VALUECOUNT )){
+            return this.aggregations[this.AggregationTpes.VALUECOUNT]
+        }else{
+            console.error(`index ${this.index_name}, Properties did not match expected format: VALUECOUNT!`)
+        }
+    }
 
 
 

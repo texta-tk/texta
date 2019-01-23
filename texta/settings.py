@@ -284,7 +284,7 @@ INSTALLED_APPS = (
 
 # Elasticsearch URL with protocol specification. Can be either localhost
 # or remote address ex: http://elastic-dev.texta.ee:9200.
-es_url = os.getenv('TEXTA_ELASTICSEARCH_URL', 'http://localhost:9200')
+es_url = os.getenv('TEXTA_ELASTICSEARCH_URL', 'http://elastic-dev.texta.ee:9200')
 
 es_prefix = os.getenv('TEXTA_ELASTICSEARCH_PREFIX', '')
 
