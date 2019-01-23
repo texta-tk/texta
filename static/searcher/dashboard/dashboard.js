@@ -4,16 +4,17 @@ var PREFIX = LINK_SEARCHER;
 $(function () {
     console.log(PREFIX);
     $.get(PREFIX + '/dashboard', function (data) {
-        let indices = [];
+
 
         if (checkNested(data, 'indices')) {
+            let indices = [];
             console.table(data.indices);
             data.indices.forEach((element) => {
                 indices.push(new Index(element.aggregations, element.index_name, element.total_documents))
             })
+            initListeners();
+            initDashBoard(indices)
         }
-        initListeners();
-        initDashBoard(indices)
     });
 });
 
@@ -91,29 +92,31 @@ function makeFactsTables(index) {
             let result = e.facts.map((x) => {
                 return [x.key, x.doc_count]
             });
-            let minMax = findMinMax(result)
+            if (result.length>1) {
+                let minMax = findMinMax(result)
 
-            let color = d3.scale.linear()
-                .domain([minMax[0], minMax[1]])
-                .range([d3.rgb("#bfffc4"), d3.rgb('#02e012')]);
-            let tableID = `${index.AggregationTpes.NESTED}-generated-${index.index_name}${t_id}`
-            $('#' + index.index_name + '-nested-table').append(`<table id="${tableID}" style="width:100%"><caption>${e.key}</caption></table>`);
+                let color = d3.scale.linear()
+                    .domain([minMax[0], minMax[1]])
+                    .range([d3.rgb("#bfffc4"), d3.rgb('#02e012')]);
+                let tableID = `${index.AggregationTpes.NESTED}-generated-${index.index_name}${t_id}`
+                $('#' + index.index_name + '-nested-table').append(`<table id="${tableID}" style="width:100%"><caption>${e.key}</caption></table>`);
 
-            $(`#${tableID}`).DataTable({
-                data: result,
-                dom: 't',
-                ordering: true,
-                order: [1, 'desc'],
-                paging: false,
-                columns: [
-                    {title: "facts"},
-                    {title: "count"}
-                ],
-                "rowCallback": function (row, data, index) {
-                    $($(row).children()[1]).css('background-color', color(data[1]))
-                }
-            });
-            t_id += 1;
+                $(`#${tableID}`).DataTable({
+                    data: result,
+                    dom: 't',
+                    ordering: true,
+                    order: [1, 'desc'],
+                    paging: false,
+                    columns: [
+                        {title: "facts"},
+                        {title: "count"}
+                    ],
+                    "rowCallback": function (row, data, index) {
+                        $($(row).children()[1]).css('background-color', color(data[1]))
+                    }
+                });
+                t_id += 1;
+            }
         })
     } else {
         console.log('No facts present: ' + index.index_name)
@@ -241,16 +244,19 @@ function formatFacts(index) {
 
 
 function findMinMax(arr) {
-    let min = arr[0][1], max = arr[0][1];
 
-    for (let i = 1, len=arr.length; i < len; i++) {
-        let v = arr[i][1];
-        min = (v < min) ? v : min;
-        max = (v > max) ? v : max;
-    }
+        let min = arr[0][1], max = arr[0][1];
 
-    return [min, max];
+        for (let i = 1, len = arr.length; i < len; i++) {
+            let v = arr[i][1];
+            min = (v < min) ? v : min;
+            max = (v > max) ? v : max;
+        }
+
+        return [min, max];
+
 }
+
 /*ex data structure*/
 /*    var data = {
         "name": "A1",
