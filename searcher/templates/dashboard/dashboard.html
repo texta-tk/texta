@@ -2,77 +2,69 @@
 
 
 <div class="flex-column">
-    <ul class="nav nav-tabs flex-row">
-        <li class="flex-item-grow-1 active"><a data-toggle="tab" href="#timeline"
-                                               title="For building basic searches">Timeline</a>
-        </li>
-        <li class="flex-item-grow-1"><a data-toggle="tab" href="#facts"
-                                        title="For expanding basic searches via similarity queries">Facts</a>
-        </li>
+    <div class="">
+        {% for index in indices %}
+            <div class="flex-item-grow-1 " id="timeline-agg-container-{{ index }}">
+            </div>
+        {% endfor %}
+    </div>
 
-    </ul>
-    <div class="tab-content">
-        <div id="timeline" class="tab-pane fade in active ">
+
+    <div class="flex-column width-height-max">
+        <select name="index_fields" id="index_fields"
+                class="">
+            <option disabled selected value> -- select an option --</option>
             {% for index in indices %}
-                <div class="flex-item-grow-1 " id="timeline-agg-container-{{ index }}">
-                </div>
+                <option value="{{ index }}">{{ index }}</option>
             {% endfor %}
-        </div>
-        <div id="facts" class="tab-pane fade in ">
-            <div class="flex-column width-height-max">
-                <select name="index_fields" id="index_fields"
-                        class="">
-                    <option disabled selected value> -- select an option --</option>
-                    {% for index in indices %}
-                        <option value="{{ index }}">{{ index }}</option>
-                    {% endfor %}
-                </select>
+        </select>
 
-                {% for index in indices %}
-                    <div class="hidden" id="datatables-container-{{ index }}">
+        {% for index in indices %}
+            <div class="hidden" id="datatables-container-{{ index }}">
 
-                        <ul class="nav nav-tabs flex-row">
-                            <li class="flex-item-grow-1 active"><a data-toggle="tab" href="#{{ index }}-sterms"
-                                                                   title="For building basic searches">sterms</a>
-                            </li>
-                            <li class="flex-item-grow-1"><a data-toggle="tab" href="#{{ index }}-sigsterms"
-                                                            title="For expanding basic searches via similarity queries">sigsterms</a>
-                            </li>
-                            <li class="flex-item-grow-1"><a data-toggle="tab" href="#{{ index }}-nested"
-                                                            title="For expanding basic searches via similarity queries">nested</a>
-                            </li>
-                            <li class="flex-item-grow-1"><a data-toggle="tab" href="#{{ index }}-statistics"
-                                                            title="For expanding basic searches via similarity queries">statistics</a>
-                            </li>
+                <ul class="nav nav-tabs flex-row">
+                    <li class="flex-item-grow-1 active"><a data-toggle="tab" href="#{{ index }}-sterms"
+                                                           title="For building basic searches">sterms</a>
+                    </li>
+                    <li class="flex-item-grow-1"><a data-toggle="tab" href="#{{ index }}-sigsterms"
+                                                    title="For expanding basic searches via similarity queries">sigsterms</a>
+                    </li>
+                    <li class="flex-item-grow-1"><a data-toggle="tab" href="#{{ index }}-nested"
+                                                    title="For expanding basic searches via similarity queries">nested</a>
+                    </li>
+                    <li class="flex-item-grow-1"><a data-toggle="tab" href="#{{ index }}-value_count"
+                                                    title="For expanding basic searches via similarity queries">statistics</a>
+                    </li>
 
-                        </ul>
-                        <div class="tab-content">
-                            <div id='{{ index }}-sterms' class="tab-pane fade in active">
-                                <div id='{{ index }}-sterms-table' class=" index-tables-holder">
-
-                                </div>
-                            </div>
-                            <div id='{{ index }}-sigsterms' class="tab-pane fade in">
-                                <div id='{{ index }}-sigsterms-table' class="index-tables-holder">
-
-                                </div>
-                            </div>
-                            <div id='{{ index }}-nested' class="tab-pane fade in">
-                                <div id='{{ index }}-nested-table' class="tab-pane fade in index-tables-holder">
-
-                                </div>
-                            </div>
-                            <div id='{{ index }}-statistics' class="tab-pane fade in">
-                                <p>some statistics here</p>
-                            </div>
+                </ul>
+                <div class="tab-content">
+                    <div id='{{ index }}-sterms' class="tab-pane fade in active">
+                        <div id='{{ index }}-sterms-table' class=" index-tables-holder">
 
                         </div>
                     </div>
-                {% endfor %}
+                    <div id='{{ index }}-sigsterms' class="tab-pane fade in">
+                        <div id='{{ index }}-sigsterms-table' class="index-tables-holder">
 
+                        </div>
+                    </div>
+                    <div id='{{ index }}-nested' class="tab-pane fade in">
+                        <div id='{{ index }}-nested-table' class="index-tables-holder">
+
+                        </div>
+                    </div>
+                    <div id='{{ index }}-value_count' class="tab-pane fade in">
+                        <div id='{{ index }}-value_count-table' class="index-tables-holder">
+
+                        </div>
+                    </div>
+
+                </div>
             </div>
-        </div>
+        {% endfor %}
+
     </div>
+
 </div>
 
 

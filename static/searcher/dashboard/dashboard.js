@@ -34,20 +34,35 @@ function initListeners() {
 function initDashBoard(indices) {
     indices.forEach((e) => {
         makeTimeline(e);
-        makeSTERMSTables(e);
-        makeSIGSTERMSTables(e);
-        makeFACTSTables(e);
+        makeStermsTables(e);
+        makeSigstermsTables(e);
+        makeFactsTables(e);
         makeStatistics(e);
-
     })
 }
-function makeStatistics(index){
-    let response = index.getVALUECOUNT()
-    console.log(response)
-    for (let f in response){
-        console.log(f)
+
+function makeStatistics(index) {
+    let response = formatStatistics(index);
+    if (response) {
+        let tableID = `${index.AggregationTpes.VALUECOUNT}-generated-${index.index_name}`;
+        $('#' + index.index_name + '-value_count-table').append(`<table id="${tableID}" style="width:100%"></table>`);
+        $(`#${tableID}`).DataTable({
+            data: response,
+            dom: 't',
+            ordering: true,
+            order: [1, 'desc'],
+            paging: false,
+            columns: [
+                {title: "field"},
+                {title: "percentage"},
+                {title: "count"}
+            ]
+        });
+
     }
+
 }
+
 function makeTimeline(index) {
     let div = document.getElementById('timeline-agg-container-' + index.index_name);
     let dates = index.getDates();
@@ -66,18 +81,25 @@ function makeTimeline(index) {
     }
 }
 
-function makeFACTSTables(index) {
-    let result = formatFACTS(index)
+function makeFactsTables(index) {
+    let result = formatFacts(index)
 
     if (result) {
         let t_id = 0;
+        /*nested*/
         result.forEach((e) => {
             let result = e.facts.map((x) => {
                 return [x.key, x.doc_count]
             });
-            $('#' + index.index_name + '-nested-table').append(`<table id="${index.AggregationTpes.NESTED}-generated-${index.index_name}${t_id}" style="width:100%"><caption>${e.key}</caption></table>`);
+            let minMax = findMinMax(result)
 
-            $(`#${index.AggregationTpes.NESTED}-generated-${index.index_name}${t_id}`).DataTable({
+            let color = d3.scale.linear()
+                .domain([minMax[0], minMax[1]])
+                .range([d3.rgb("#bfffc4"), d3.rgb('#02e012')]);
+            let tableID = `${index.AggregationTpes.NESTED}-generated-${index.index_name}${t_id}`
+            $('#' + index.index_name + '-nested-table').append(`<table id="${tableID}" style="width:100%"><caption>${e.key}</caption></table>`);
+
+            $(`#${tableID}`).DataTable({
                 data: result,
                 dom: 't',
                 ordering: true,
@@ -86,26 +108,35 @@ function makeFACTSTables(index) {
                 columns: [
                     {title: "facts"},
                     {title: "count"}
-                ]
+                ],
+                "rowCallback": function (row, data, index) {
+                    $($(row).children()[1]).css('background-color', color(data[1]))
+                }
             });
             t_id += 1;
         })
     } else {
-        console.log('No facts present: '+index.index_name)
+        console.log('No facts present: ' + index.index_name)
     }
-
 
 }
 
-function makeSIGSTERMSTables(index) {
+function makeSigstermsTables(index) {
     let t_id = 0;
-    for (let field in index.aggregations[index.AggregationTpes.SIGSTERMS]) {
-        let result = formatSIGSTERMS(index, field)
-
+    let rootProperty = index.getSigsterms()
+    for (let field in rootProperty) {
+        let result = formatSigsterms(index, rootProperty[field])
         if (result != null) {
-            $('#' + index.index_name + '-sigsterms-table').append(`<table id="${index.AggregationTpes.SIGSTERMS}-generated-${index.index_name}${t_id}" style="width:100%"></table>`);
+            let minMax = findMinMax(result)
 
-            $(`#${index.AggregationTpes.SIGSTERMS}-generated-${index.index_name}${t_id}`).DataTable({
+            let color = d3.scale.linear()
+                .domain([minMax[0], minMax[1]])
+                .range([d3.rgb("#bfffc4"), d3.rgb('#02e012')]);
+
+            let tableID = `${index.AggregationTpes.SIGSTERMS}-generated-${index.index_name}${t_id}`
+            $('#' + index.index_name + '-sigsterms-table').append(`<table id="${tableID}" style="width:100%"></table>`);
+
+            $(`#${tableID}`).DataTable({
                 data: result,
                 dom: 't',
                 ordering: true,
@@ -114,22 +145,33 @@ function makeSIGSTERMSTables(index) {
                 columns: [
                     {title: field},
                     {title: "count"}
-                ]
+                ],
+                "rowCallback": function (row, data, index) {
+                    $($(row).children()[1]).css('background-color', color(data[1]))
+                }
             });
             t_id += 1;
         }
     }
 }
 
-function makeSTERMSTables(index) {
+function makeStermsTables(index) {
     let t_id = 0;
-    for (let field in index.aggregations[index.AggregationTpes.STERMS]) {
-        let result = formatSTERMS(index, field)
+    let rootProperty = index.getSterms()
+    for (let field in rootProperty) {
+        let result = formatSterms(index, rootProperty[field])
 
         if (result != null) {
-            $('#' + index.index_name + '-sterms-table').append(`<table id="${index.AggregationTpes.STERMS}-generated-${index.index_name}${t_id}" style="width:100%"></table>`);
+            let minMax = findMinMax(result)
 
-            $(`#${index.AggregationTpes.STERMS}-generated-${index.index_name}${t_id}`).DataTable({
+            let color = d3.scale.linear()
+                .domain([minMax[0], minMax[1]])
+                .range([d3.rgb("#bfffc4"), d3.rgb('#02e012')]);
+
+            let tableID = `${index.AggregationTpes.STERMS}-generated-${index.index_name}${t_id}`
+            $('#' + index.index_name + '-sterms-table').append(`<table id="${tableID}" style="width:100%"></table>`);
+
+            $(`#${tableID}`).DataTable({
                 data: result,
                 dom: 't',
                 ordering: true,
@@ -138,69 +180,77 @@ function makeSTERMSTables(index) {
                 columns: [
                     {title: field},
                     {title: "count"}
-                ]
+                ],
+                "rowCallback": function (row, data, index) {
+                    $($(row).children()[1]).css('background-color', color(data[1]))
+                }
             });
             t_id += 1;
         }
     }
 }
 
-function formatSTERMS(index, field) {
+function formatSterms(index, field) {
     /* datatables parsable format */
-    let root = index.getSTERMS()
-    if (checkNested(root, field, 'buckets')) {
-        let result = (root[field].buckets.map((e) => {
+
+    if (checkNested(field, 'buckets')) {
+        let result = (field.buckets.map((e) => {
             return [e.key, e.doc_count]
         }));
-        return filterResults(result)
+        return index.filterTerms(result)
     } else {
-        console.error('formatSTERMS, properties did not match expected format')
+        console.error('formatSterms, properties did not match expected format')
         return []
     }
 }
 
-function formatSIGSTERMS(index, field) {
+function formatSigsterms(index, field) {
     /* datatables parsable format */
-    let root = index.getSIGSTERMS()
-    if (checkNested(root, field, 'buckets')) {
-        let result = (root[field].buckets.map((e) => {
+
+    if (checkNested(field, 'buckets')) {
+        let result = (field.buckets.map((e) => {
             return [e.key, e.doc_count]
         }));
-        return filterResults(result)
+        return index.filterTerms(result)
     } else {
-        console.error('formatSIGSTERMS, properties did not match expected format')
+        console.error('formatSigsterms, properties did not match expected format')
         return []
     }
 }
 
-function formatFACTS(index) {
+function formatStatistics(index) {
+    let data = index.getStatistics();
+
+    let result = [];
+    for (let f in data) {
+        result.push([f, data[f].percentage, data[f].value])
+    }
+
+    return result;
+}
+
+function formatFacts(index) {
     /* todo:this*/
-    let result = []
-    let root = index.getFACTS()
-    if (checkNested(root, ['sterms#fact_category'], 'buckets')) {
-        result = (root['sterms#fact_category'].buckets.map((e) => {
+    let root = index.getFacts()
+    if (checkNested(root, 'texta_facts', 'sterms#fact_category', 'buckets')) {
+        return (root.texta_facts['sterms#fact_category'].buckets.map((e) => {
             return {"key": e.key, "facts": e['sigsterms#significant_facts'].buckets}
         }));
     }
-
-    /* filter out garbage */
-    return filterResults(result)
 }
 
-function filterResults(result) {
-    let notAllowedToEnterHeaven = []
-    result.filter((e) => {
-        if (e[1] < 50) {
-            notAllowedToEnterHeaven.push(e[1])
-        }
-    });
 
-    if (notAllowedToEnterHeaven.length < 3 && result.length > 3) {
-        return result;
+function findMinMax(arr) {
+    let min = arr[0][1], max = arr[0][1];
+
+    for (let i = 1, len=arr.length; i < len; i++) {
+        let v = arr[i][1];
+        min = (v < min) ? v : min;
+        max = (v > max) ? v : max;
     }
-    return null;
-}
 
+    return [min, max];
+}
 /*ex data structure*/
 /*    var data = {
         "name": "A1",
@@ -232,7 +282,7 @@ function filterResults(result) {
 /*  this is for d3 things, acceptable hiearchy format
     var tempList = []
 
-    index.getFACTS()['sterms#fact_category'].buckets.forEach((e) => {
+    index.getFacts()['sterms#fact_category'].buckets.forEach((e) => {
         tempList.push({
             'key': e.key,
             'children': e['sigsterms#significant_facts'].buckets

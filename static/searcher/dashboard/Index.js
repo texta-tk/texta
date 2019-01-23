@@ -4,12 +4,14 @@ class Index {
         this.index_name = index_name;
         this.total_documents = total_documents;
         this.AggregationTpes = {
-            "VALUECOUNT": 'valuecount',
+            "VALUECOUNT": 'value_count',
             "STERMS": 'sterms',
             "SIGSTERMS": 'sigsterms',
             "DATE_HISTOGRAM": 'date_histogram',
             "NESTED": 'nested'
         };
+        this.minCountFilter = 50;
+        this.minAmountData = 3;
         Object.freeze(this.AggregationTpes);
     }
 
@@ -21,7 +23,7 @@ class Index {
             return undefined
         }
     }
-    getSTERMS(){
+    getSterms(){
         if(checkNested(this.aggregations, this.AggregationTpes.STERMS, )){
             return this.aggregations[this.AggregationTpes.STERMS]
         }else{
@@ -29,7 +31,7 @@ class Index {
             return undefined
         }
     }
-    getSIGSTERMS(){
+    getSigsterms(){
         if(checkNested(this.aggregations, this.AggregationTpes.SIGSTERMS, )){
             return this.aggregations[this.AggregationTpes.SIGSTERMS]
         }else{
@@ -37,21 +39,34 @@ class Index {
             return undefined
         }
     }
-    getFACTS(){
-        if(checkNested(this.aggregations, this.AggregationTpes.NESTED, 'texta_facts' )){
-            return this.aggregations[this.AggregationTpes.NESTED].texta_facts
+    getFacts(){
+        if(checkNested(this.aggregations, this.AggregationTpes.NESTED)){
+            return this.aggregations[this.AggregationTpes.NESTED]
         }else{
             console.error(`index ${this.index_name}, Properties did not match expected format: NESTED!`)
         }
     }
-    getVALUECOUNT(){
+    getStatistics(){
         if(checkNested(this.aggregations, this.AggregationTpes.VALUECOUNT )){
             return this.aggregations[this.AggregationTpes.VALUECOUNT]
         }else{
             console.error(`index ${this.index_name}, Properties did not match expected format: VALUECOUNT!`)
         }
     }
+    /*so each index can filter seperately if in the future you want to adjust filtering settings for each index */
+    filterTerms(result) {
+        let notAllowedToEnterHeaven = []
+        result.filter((e) => {
+            if (e[1] < this.minCountFilter) {
+                notAllowedToEnterHeaven.push(e[1])
+            }
+        });
 
+        if (notAllowedToEnterHeaven.length < this.minAmountData && result.length > this.minAmountData) {
+            return result;
+        }
+        return null;
+    }
 
 
 }
@@ -61,6 +76,8 @@ function checkNested(obj) {
 
     for (var i = 0; i < args.length; i++) {
         if (!obj || !obj.hasOwnProperty(args[i])) {
+            console.error('no property: '+args[i])
+            console.error('obj: '+args)
             return false;
         }
         obj = obj[args[i]];
