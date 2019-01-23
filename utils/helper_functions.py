@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from itertools import product
+import glob
 
 def add_dicts(dict1, dict2):
     '''
@@ -42,3 +43,15 @@ def plot_confusion_matrix(cm, classes, title='Confusion matrix'):
     plt.xlabel('Predicted label')
     plt.tight_layout()
     return plt
+
+def get_wildcard_files(path):
+    '''
+    Gets all the other files with a given name as prefix, uses wildcard.
+    -   returns - [(str: path, str: filename)]
+    '''
+    files = []
+    for file in glob.glob(path + '*'):
+        # Add path and name
+        files.append((file, os.path.basename(file)))
+
+    return files

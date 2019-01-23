@@ -1,7 +1,6 @@
 import os
 import json
 import logging
-import glob
 import zipfile
 from zipfile import ZipFile
 from tempfile import SpooledTemporaryFile
@@ -15,10 +14,11 @@ from searcher.models import Search
 from permission_admin.models import Dataset
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
+from utils.helper_functions import get_wildcard_files
 from texta.settings import STATIC_URL
 from texta.settings import MODELS_DIR
-from texta.settings import ERROR_LOGGER
 from texta.settings import PROTECTED_MEDIA
+from texta.settings import ERROR_LOGGER
 
 from dataset_importer.document_preprocessor import preprocessor_map
 
@@ -149,8 +149,8 @@ def delete_task(request):
             file_path = os.path.join(MODELS_DIR, task.task_type, "model_{}".format(task.unique_id))
             media_path = os.path.join(PROTECTED_MEDIA, "task_manager/", task.task_type, "model_{}".format(task.unique_id))
 
-            model_files = _get_wildcard_files(file_path)
-            media_files = _get_wildcard_files(media_path)
+            model_files = get_wildcard_files(file_path)
+            media_files = get_wildcard_files(media_path)
 
             for path, filename in model_files:
                 if os.path.exists(path):
@@ -166,16 +166,6 @@ def delete_task(request):
         task.delete()
 
     return HttpResponse()
-
-
-def _get_wildcard_files(path):
-    '''Gets all the other files with a given name as prefix, uses wildcard, returns a list of filenames'''
-    files = []
-    for file in glob.glob(path + '*'):
-        # Add path and name
-        files.append((file, os.path.basename(file)))
-
-    return files
 
 
 @login_required
@@ -201,8 +191,8 @@ def download_model(request):
             model_file_path = os.path.join(MODELS_DIR, task_type, model_name)
             media_path = os.path.join(PROTECTED_MEDIA, "task_manager/", task_type, model_name)
 
-            model_files = _get_wildcard_files(model_file_path)
-            media_files = _get_wildcard_files(media_path)
+            model_files = get_wildcard_files(model_file_path)
+            media_files = get_wildcard_files(media_path)
 
             zip_path = "zipped_model_{}.zip".format(model_id)
             # Make temporary Zip file
