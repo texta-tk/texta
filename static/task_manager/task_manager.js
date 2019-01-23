@@ -73,7 +73,7 @@ function deleteDocuments (type) {
             task_ids.push($(this).attr('id'))
         }
     });
-    console.log(task_ids)
+
     swal({
         title: 'Are you sure?',
         text: 'This will remove the task and it\'s resources.',
@@ -104,18 +104,12 @@ function deleteDocuments (type) {
 
 }
 
+function downloadModel(model_id_to_download) {
+    window.location.href = `${LINK_TASK_MANAGER}/download_model?model_id=${model_id_to_download}`
+}
 
 function uploadTask(task_form_id) {
     formElement = document.getElementById(task_form_id)
-    // var request = new XMLHttpRequest()
-    // request.onreadystatechange = function () {
-        // location.reload()
-        // }
-        // request.open('POST', PREFIX + '/upload_task_archive')
-        // request.send(new FormData(formElement), true)
-        
-        
-        
     formData = new FormData(formElement);
     
     statusTextElem = $('#uploadStatus')

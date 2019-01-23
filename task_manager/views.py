@@ -187,42 +187,45 @@ def download_model(request):
     :param request:
     :return:
     """
-    model_id = request.GET['model_id']
-    task_object = Task.objects.get(pk=model_id)
-    unique_id = task_object.unique_id
-    task_type = task_object.task_type
 
-    task_xml_name = "task_{}.xml".format(unique_id)
-    model_name = "model_{}".format(unique_id)
+    if 'model_id' in request.GET:
+        model_id = request.GET['model_id']
+        task_object = Task.objects.get(pk=model_id)
+        if task_object.status == "completed":
+            unique_id = task_object.unique_id
+            task_type = task_object.task_type
 
-    model_file_path = os.path.join(MODELS_DIR, task_type, model_name)
-    media_path = os.path.join(PROTECTED_MEDIA, "task_manager/", task_type, model_name)
+            task_xml_name = "task_{}.xml".format(unique_id)
+            model_name = "model_{}".format(unique_id)
 
-    model_files = _get_wildcard_files(model_file_path)
-    media_files = _get_wildcard_files(media_path)
+            model_file_path = os.path.join(MODELS_DIR, task_type, model_name)
+            media_path = os.path.join(PROTECTED_MEDIA, "task_manager/", task_type, model_name)
 
-    zip_path = "zipped_model_{}.zip".format(model_id)
-    if os.path.exists(model_file_path):
-        # Make temporary Zip file
-        with SpooledTemporaryFile() as tmp:
-            with ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as archive:
-                # Write Task model object as xml
-                task_xml_data = serializers.serialize("xml", [task_object])
-                archive.writestr(task_xml_name, task_xml_data)
-                # Write model files
-                for path, name in model_files:
-                    archive.write(path, "model/"+name)
+            model_files = _get_wildcard_files(model_file_path)
+            media_files = _get_wildcard_files(media_path)
 
-                for path, name in media_files:
-                    archive.write(path, "media/"+name)
+            zip_path = "zipped_model_{}.zip".format(model_id)
+            # Make temporary Zip file
+            with SpooledTemporaryFile() as tmp:
+                with ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as archive:
+                    # Write Task model object as xml
+                    task_xml_data = serializers.serialize("xml", [task_object])
+                    archive.writestr(task_xml_name, task_xml_data)
+                    # Write model files
+                    for path, name in model_files:
+                        archive.write(path, "model/"+name)
 
-            # Reset file pointer
-            tmp.seek(0)
-            # Write file data to response
-            response = HttpResponse(tmp.read())
-            # Download file
-            response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(zip_path)
-            return response
+                    for path, name in media_files:
+                        archive.write(path, "media/"+name)
+
+                # Reset file pointer
+                tmp.seek(0)
+                # Write file data to response
+                response = HttpResponse(tmp.read())
+                # Download file
+                response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(zip_path)
+
+                return response
 
     return HttpResponse()
 

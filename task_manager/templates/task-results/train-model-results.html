@@ -28,9 +28,11 @@
                         <td>{{ task.id }}</td>
                         <td>
                             <input type="checkbox" id='{{ task.id }}' name="dt_model_delete">
-                            <a href="javascript:void(0)"
-                               onclick="go_to(LINK_TASK_MANAGER + '/download_model?model_id={{ task.id }}')"><span
-                                    class="glyphicon glyphicon-download-alt"></span></a>
+                            {% if task.status == 'completed' %}
+                                <a href="javascript:void(0)"
+                                onclick="downloadModel({{task.id}})"><span
+                                class="glyphicon glyphicon-download-alt"></span></a>
+                            {% endif %}
                         </td>
                         <td>{{ task.task_type }}</td>
                         <td>{{ task.user }}</td>
