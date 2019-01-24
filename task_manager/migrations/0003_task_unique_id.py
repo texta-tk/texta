@@ -18,13 +18,9 @@ def combine_names(apps, schema_editor):
     for task in Task.objects.all():
         newuuid = uuid.uuid4()
         logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'combine_names', 'info': 'New UUID: {}'.format(newuuid), 'task_id': task.id, 'task_type': task.task_type}))
-        print('New UUID for Task: {} - {}'.format(task.id, newuuid))
         task.unique_id = newuuid
         task.save()
-        print('Moving files..')
         rename_files(task)
-        print()
-        print()
 
 
 def rename_files(task):
