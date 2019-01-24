@@ -17,14 +17,17 @@ def combine_names(apps, schema_editor):
         print(newuuid)
         task.unique_id = newuuid
         task.save()
+        rename_files(task)
 
 
 def rename_files(task):
     file_path = os.path.join(MODELS_DIR, task.task_type, "model_{}".format(task.id))
     media_path = os.path.join(PROTECTED_MEDIA, "task_manager/", task.task_type, "model_{}".format(task.id))
 
+    
     model_files = get_wildcard_files(file_path)
     media_files = get_wildcard_files(media_path)
+    import pdb;pdb.set_trace()
 
     for path, filename in model_files:
         if os.path.exists(path):
