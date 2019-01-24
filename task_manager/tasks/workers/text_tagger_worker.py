@@ -28,7 +28,7 @@ from sklearn.model_selection import GridSearchCV
 from task_manager.tools import ShowSteps
 from task_manager.tools import TaskCanceledException
 from task_manager.tools import get_pipeline_builder
-from utils.helper_functions import plot_confusion_matrix
+from utils.helper_functions import plot_confusion_matrix, create_file_path
 
 from .base_worker import BaseWorker
 
@@ -159,8 +159,8 @@ class TagModelWorker(BaseWorker):
         Saves trained model as a pickle to the filesystem.
         :rtype: bool
         """
-        # Inherited create_file_path from BaseWorker, creates missing folders and returns a path
-        output_model_file = self.create_file_path(self.model_name, MODELS_DIR, self.task_type)
+        # create_file_path from helper_functions creates missing folders and returns a path
+        output_model_file = create_file_path(self.model_name, MODELS_DIR, self.task_type)
         try:
             joblib.dump(self.model, output_model_file)
             return True
@@ -220,8 +220,7 @@ class TagModelWorker(BaseWorker):
         # Plotting
         plt = plot_confusion_matrix(_confusion, classes=["negative", "positive"])
         plot_name = "{}_cm.svg".format(self.model_name)
-        # Inherited create_file_path
-        plot_path = self.create_file_path(plot_name, PROTECTED_MEDIA, "task_manager/", self.task_type)
+        plot_path = create_file_path(plot_name, PROTECTED_MEDIA, "task_manager/", self.task_type)
         plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager/", self.task_type, plot_name)
         plt.savefig(plot_path, format="svg", bbox_inches='tight')
 

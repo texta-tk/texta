@@ -3,26 +3,23 @@
 import uuid
 import os
 from django.db import migrations, models
-from utils.helper_functions import get_wildcard_files
+from utils.helper_functions import get_wildcard_files, create_file_path
 from texta.settings import MODELS_DIR
 from texta.settings import PROTECTED_MEDIA
 
 
 def combine_names(apps, schema_editor):
     
+    print('Creating new UUID field for existing Task entries..')
     Task = apps.get_model('task_manager', 'Task')
-    for i, task in enumerate(Task.objects.all()):
+    for task in Task.objects.all():
         newuuid = uuid.uuid4()
         print(newuuid)
-        task.unique_id = newuuid#newid
+        task.unique_id = newuuid
         task.save()
 
 
-
-
 def rename_files(task):
-    # file_path = os.path.join(MODELS_DIR, task.task_type, "model_{}".format(task.unique_id))
-    # media_path = os.path.join(PROTECTED_MEDIA, "task_manager/", task.task_type, "model_{}".format(task.unique_id))
     file_path = os.path.join(MODELS_DIR, task.task_type, "model_{}".format(task.id))
     media_path = os.path.join(PROTECTED_MEDIA, "task_manager/", task.task_type, "model_{}".format(task.id))
 
@@ -31,16 +28,25 @@ def rename_files(task):
 
     for path, filename in model_files:
         if os.path.exists(path):
-            pass
-            # TODO rename/create folders if dont exist with the task manager base worker inherited function
-            # os.rename(path, path.replace(filename, '{}/model_{}'.format(task.task_type, task.unique_id), 1))
+            move_model_files(path, filename, task)
 
     for path, filename in media_files:
         if os.path.exists(path):
-            pass
-            # TODO rename/create folders if dont exist with the task manager base worker inherited function
-            # os.rename(path, path.replace(filename, 'media_{}'.format(task.unique_id), 1))
-            # os.remove(path)
+            move_media_files(path, filename, task)
+
+
+def move_model_files(path, filename, task):
+    new_filename = filename.replace(filename, 'model_{}'.format(task.unique_id), 1)
+    new_path = create_file_path(new_filename, MODELS_DIR, task.task_type)
+    # Move file
+    os.rename(path, new_path)
+
+
+def move_media_files(path, filename, task):
+    new_filename = filename.replace(filename, 'model_{}'.format(task.unique_id), 1)
+    new_path = create_file_path(new_filename, PROTECTED_MEDIA, "task_manager/", task.task_type)
+    # Move file
+    os.rename(path, new_path)
 
 
 class Migration(migrations.Migration):

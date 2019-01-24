@@ -5,6 +5,7 @@ import os
 
 from gensim.models import word2vec
 
+from utils.helper_functions import create_file_path
 from task_manager.models import Task
 from task_manager.tools import EsIterator
 from task_manager.tools import ShowProgress
@@ -85,7 +86,7 @@ class LanguageModelWorker(BaseWorker):
     def save(self):
         try:
             self.model_name = 'model_{}'.format(self.task_obj.unique_id)
-            output_model_file = self.create_file_path(self.model_name, MODELS_DIR, self.task_type)
+            output_model_file = create_file_path(self.model_name, MODELS_DIR, self.task_type)
             self.model.save(output_model_file)
             return True
 
