@@ -1,6 +1,9 @@
 import json
+import logging
+
 from permission_admin.models import Dataset
 from account.models import Profile
+from texta.settings import ERROR_LOGGER
 
 
 class RestProcessor(object):
@@ -57,7 +60,7 @@ class RestProcessor(object):
             raise Exception('Authentication token missing.')
 
         try:
-            profile = Profile.objects.get(auth_token = auth_token)
+            profile = Profile.objects.get(auth_token=auth_token)
         except:
             raise Exception('Invalid authentication token.')
 
@@ -93,7 +96,7 @@ class RestProcessor(object):
             raise Exception('Authentication token missing.')
 
         try:
-            profile = Profile.objects.get(auth_token = auth_token)
+            profile = Profile.objects.get(auth_token=auth_token)
         except:
             raise Exception('Invalid authentication token.')
 
@@ -117,7 +120,6 @@ class RestProcessor(object):
 
 
 class Validator(object):
-
     valid_fields = {
         'string': {
             'field': {'mandatory': True, 'values': None},
@@ -275,7 +277,6 @@ class Validator(object):
 
         Validator._validate_constraints(data_dict.get('constraints', []), search_position)
 
-
     @staticmethod
     def _validate_constraints(constraints, search_position):
         for_search_position_str = ' for search {0}'.format(search_position) if search_position != None else ''
@@ -315,22 +316,25 @@ class Validator(object):
                         field, constraint[field], field_data['values'], constraint_idx, in_search_position_str
                     ))
 
-
     @staticmethod
     def get_validated_user(request):
         try:
-            processed_query = json.loads(request.body)
-        except:
+            unicode_body = request.body.decode('utf-8')
+            processed_query = json.loads(unicode_body)
+        except Exception as e:
+            logging.getLogger(ERROR_LOGGER).exception(e)
             raise Exception('Unable to parse JSON.')
 
         try:
             auth_token = processed_query['auth_token']
-        except:
+        except Exception as e:
+            logging.getLogger(ERROR_LOGGER).exception(e)
             raise Exception('Authentication token missing.')
 
         try:
-            profile = Profile.objects.get(auth_token = auth_token)
-        except:
+            profile = Profile.objects.get(auth_token=auth_token)
+        except Exception as e:
+            logging.getLogger(ERROR_LOGGER).exception(e)
             raise Exception('Invalid authentication token.')
 
         return profile.user

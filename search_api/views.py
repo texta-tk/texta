@@ -65,7 +65,7 @@ def list_fields(request):
     except Exception as validation_error:
         return HttpResponse(json.dumps({'error': str(validation_error)}))
 
-    request_body = json.loads(request.body)
+    request_body = json.loads(request.body.decode('utf8'))
     if 'dataset' not in request_body:
         return HttpResponse(json.dumps({'error': 'Dataset not defined.'}))
 

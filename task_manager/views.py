@@ -17,7 +17,7 @@ from texta.settings import ERROR_LOGGER
 
 from dataset_importer.document_preprocessor import preprocessor_map
 
-from task_manager.tasks.task_params import task_params
+from task_manager.tasks.task_params import task_params, get_fact_names, fact_names
 from task_manager.tools import get_pipeline_builder
 from task_manager.tools import MassHelper
 
@@ -38,12 +38,6 @@ def index(request):
     es_m = ds.build_manager(ES_Manager)
     fields = get_fields(es_m)
 
-    try:
-        mass_helper = MassHelper(es_m)
-        tag_set = mass_helper.get_unique_tags()
-    except KeyError:
-        tag_set = []
-        
     preprocessors = collect_map_entries(preprocessor_map)
     enabled_preprocessors = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True]
     
@@ -60,6 +54,9 @@ def index(request):
         tasks.append(task_dict)
 
     if 'dataset' in request.session.keys():
+        get_fact_names(es_m)
+        tag_set = fact_names if fact_names else []
+
         context = {
             'task_params':           task_params,
             'tasks':                 tasks,
@@ -69,7 +66,7 @@ def index(request):
             'enabled_preprocessors': enabled_preprocessors,
             'STATIC_URL':            STATIC_URL,
             'fields':                fields,
-            'text_tags':             sorted(tag_set)
+            'text_tags':             tag_set
         }
     else:
         return HttpResponseRedirect('/')
