@@ -1,12 +1,10 @@
 import django # For making sure the correct Python environment is used.
-from texta.settings import INSTALLED_APPS, MIGRATION_LOGGER
+from texta.settings import INSTALLED_APPS
 import subprocess
 from time import sleep
 import sys
 import os
 import shutil
-import json
-import logging
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "texta.settings")
 django.setup()
@@ -27,12 +25,12 @@ def create_admin():
 
 
 def migrate(custom_apps):
-    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'migrate', 'info': 'Toolkit: Detecting database changes.'}))
+    print('Toolkit: Detecting database changes.')
     make_migrations_output = subprocess.check_output(['python', 'manage.py', 'makemigrations'] + custom_apps)
-    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'migrate', 'info': 'Toolkit: Making database changes.'}))
+    print('Toolkit: Making database changes.')
     sleep(2)
     migrate_output = subprocess.check_output(['python', 'manage.py', 'migrate'])
-    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'migrate', 'info': 'Toolkit: Creating Admin user if necessary.'}))
+    print('Toolkit: Creating Admin user if necessary.')
     sleep(2)
     create_admin()
     return True
@@ -43,7 +41,7 @@ custom_apps = [app for app in INSTALLED_APPS if not app.startswith('django')] # 
 
 if len(sys.argv) > 1:
     if sys.argv[1] == 'purge_migrations':
-        logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'DELETE_MIGRATIONS', 'info': 'Deleting migrations...'}))
+        print('Deleting migrations...')
         for custom_app in custom_apps:
             migrations_dir = os.path.join(cwd,custom_app,'migrations')
             if os.path.exists(migrations_dir):
@@ -51,9 +49,8 @@ if len(sys.argv) > 1:
 
 try:
     migrate(custom_apps)
-except Exception as e:
-    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'RUN_MIGRATIONS', 'ERROR': 'Exception occurred {}'.format(e)}))
-    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'RUN_MIGRATIONS', 'info': 'Migrations failed - MySQL possibly not ready yet. Sleeping for 10 sec & trying again.'}))
+except Exception:
+    print('Migrations failed - MySQL possibly not ready yet. Sleeping for 10 sec & trying again.')
     sleep(10)
     migrate(custom_apps)
     
