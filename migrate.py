@@ -4,7 +4,7 @@ import subprocess
 from time import sleep
 import sys
 import os
-
+import shutil
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "texta.settings")
 django.setup()
