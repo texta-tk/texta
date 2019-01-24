@@ -108,11 +108,15 @@ def _prettify_standardize_hls(name_to_inner_hits, col, content, old_content):
             'spans': json.loads(inner_hit['spans']),
             'name': inner_hit['fact'],
             'category': '[{0}]'.format(inner_hit['hit_type']),
-            'color': color_map[inner_hit['fact']]
+            'color': color_map[inner_hit['fact']],
         }
 
-        if inner_hit['hit_type'] == 'fact_val':
+        if 'description' in inner_hit:
+            datum['description'] = inner_hit['description']
+
+        if inner_hit['hit_type'] in ['fact_val']:
             datum['value'] = inner_hit['str_val']
+
         hl_data.append(datum)
 
     content = Highlighter(average_colors=True, derive_spans=True,
