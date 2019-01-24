@@ -311,8 +311,6 @@ function rejectDocument (id) {
 function dashboard () {
     var container = $('#right')
     container.empty()
-    container.append('Loading...')
-
     $.ajax({
         url: PREFIX + '/dashboard_visualize',
         type: 'GET',

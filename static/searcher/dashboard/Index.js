@@ -14,8 +14,7 @@ class Index {
         this.minAmountData = 3;
         Object.freeze(this.AggregationTpes);
     }
-
-    getDates() {
+    getDatesYear() {
         if (checkNested(this.aggregations, this.AggregationTpes.DATE_HISTOGRAM, 'kuupaev_year', 'buckets')) {
             return this.aggregations[this.AggregationTpes.DATE_HISTOGRAM].kuupaev_year.buckets;
         } else {
@@ -23,7 +22,15 @@ class Index {
             return undefined
         }
     }
-    getSterms(){
+    getDatesMonth() {
+        if (checkNested(this.aggregations, this.AggregationTpes.DATE_HISTOGRAM, 'kuupaev_month', 'buckets')) {
+            return this.aggregations[this.AggregationTpes.DATE_HISTOGRAM].kuupaev_month.buckets;
+        } else {
+            console.error(`index ${this.index_name}, does not have date_histogram field!`);
+            return undefined
+        }
+    }
+    getFrequentItems(){
         if(checkNested(this.aggregations, this.AggregationTpes.STERMS, )){
             return this.aggregations[this.AggregationTpes.STERMS]
         }else{
@@ -31,7 +38,7 @@ class Index {
             return undefined
         }
     }
-    getSigsterms(){
+    getSignificantWords(){
         if(checkNested(this.aggregations, this.AggregationTpes.SIGSTERMS, )){
             return this.aggregations[this.AggregationTpes.SIGSTERMS]
         }else{
