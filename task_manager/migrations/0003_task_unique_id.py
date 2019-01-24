@@ -9,43 +9,60 @@ from texta.settings import PROTECTED_MEDIA
 
 
 def combine_names(apps, schema_editor):
-    
+    print()
+    print()
     print('Creating new UUID field for existing Task entries..')
     Task = apps.get_model('task_manager', 'Task')
     for task in Task.objects.all():
         newuuid = uuid.uuid4()
-        print(newuuid)
+        print('New UUID for Task: {} - {}'.format(task.id, newuuid))
         task.unique_id = newuuid
         task.save()
+        print('Moving files..')
         rename_files(task)
+        print()
+        print()
 
 
 def rename_files(task):
-    file_path = os.path.join(MODELS_DIR, "model_{}".format(task.id))
-    media_path = os.path.join(PROTECTED_MEDIA, "task_manager/", "model_{}".format(task.id))
+    try:
+        id_name = 'model_{}'.format(task.id)
+        uuid_name = 'model_{}'.format(task.unique_id)
 
-    model_files = get_wildcard_files(file_path)
-    media_files = get_wildcard_files(media_path)
+        file_path = os.path.join(MODELS_DIR, id_name)
+        media_path = os.path.join(PROTECTED_MEDIA, 'task_manager/', id_name)
 
-    for path, filename in model_files:
-        if os.path.exists(path):
-            move_model_files(path, filename, task)
+        model_files = get_wildcard_files(file_path)
+        media_files = get_wildcard_files(media_path)
+        num_modelfiles_moved = 0
+        for path, filename in model_files:
+            if os.path.exists(path):
+                move_model_files(path, filename, task, id_name, uuid_name)
+                num_modelfiles_moved += 1
+        print('Moved {} model files for Task: {}!'.format(num_modelfiles_moved, task.id))
 
-    for path, filename in media_files:
-        if os.path.exists(path):
-            move_media_files(path, filename, task)
+        num_mediafiles_moved = 0
+        for path, filename in media_files:
+            if os.path.exists(path):
+                move_media_files(path, filename, task, id_name, uuid_name)
+                num_mediafiles_moved += 1
+        print('Moved {} media files for Task: {}!'.format(num_mediafiles_moved, task.id))
+
+    except Exception as e:
+        print('Exception occurred on Task: {}'.format(task.id))
+        print(e)
 
 
-def move_model_files(path, filename, task):
-    new_filename = filename.replace(filename, 'model_{}'.format(task.unique_id), 1)
+def move_model_files(path, filename, task, id_name, uuid_name):
+    new_filename = filename.replace(id_name, uuid_name, 1)
     new_path = create_file_path(new_filename, MODELS_DIR, task.task_type)
     # Move file
     os.rename(path, new_path)
 
 
-def move_media_files(path, filename, task):
-    new_filename = filename.replace(filename, 'model_{}'.format(task.unique_id), 1)
-    new_path = create_file_path(new_filename, PROTECTED_MEDIA, "task_manager/", task.task_type)
+def move_media_files(path, filename, task, id_name, uuid_name):
+    new_filename = filename.replace(id_name, uuid_name, 1)
+    new_path = create_file_path(new_filename, PROTECTED_MEDIA, 'task_manager/', task.task_type)
     # Move file
     os.rename(path, new_path)
 
