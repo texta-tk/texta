@@ -6,15 +6,18 @@ from django.db import migrations, models
 from utils.helper_functions import get_wildcard_files, create_file_path
 from texta.settings import MODELS_DIR
 from texta.settings import PROTECTED_MEDIA
+from texta.settings import STATIC_URL, URL_PREFIX, MIGRATION_LOGGER
+import json
+import logging
 
 
 def combine_names(apps, schema_editor):
-    print()
-    print()
-    print('Creating new UUID field for existing Task entries..')
+    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'combine_names', 'info': 'Creating new UUID field for existing Task entries.'}))
+
     Task = apps.get_model('task_manager', 'Task')
     for task in Task.objects.all():
         newuuid = uuid.uuid4()
+        logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'combine_names', 'info': 'New UUID: {}'.format(newuuid), 'task_id': task.id, 'task_type': task.task_type}))
         print('New UUID for Task: {} - {}'.format(task.id, newuuid))
         task.unique_id = newuuid
         task.save()
@@ -39,16 +42,18 @@ def rename_files(task):
             if os.path.exists(path):
                 move_model_files(path, filename, task, id_name, uuid_name)
                 num_modelfiles_moved += 1
-        print('Moved {} model files for Task: {}!'.format(num_modelfiles_moved, task.id))
+        logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'rename_files', 'info': 'Moved {} model files'.format(num_modelfiles_moved), 'task_id': task.id, 'task_type': task.task_type}))
+
 
         num_mediafiles_moved = 0
         for path, filename in media_files:
             if os.path.exists(path):
                 move_media_files(path, filename, task, id_name, uuid_name)
                 num_mediafiles_moved += 1
-        print('Moved {} media files for Task: {}!'.format(num_mediafiles_moved, task.id))
+        logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'rename_files', 'info': 'Moved {} media files'.format(num_mediafiles_moved), 'task_id': task.id, 'task_type': task.task_type}))
 
     except Exception as e:
+        logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'rename_files', 'ERROR': 'Exception occurred {}'.format(e), 'task_id': task.id, 'task_type': task.task_type}))
         print('Exception occurred on Task: {}'.format(task.id))
         print(e)
 

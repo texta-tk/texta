@@ -349,10 +349,12 @@ logging_separator = ' - '
 # Paths to info and error log files.
 info_log_file_name = os.path.join(LOG_PATH, "info.log")
 error_log_file_name = os.path.join(LOG_PATH, "error.log")
+migration_log_file_name = os.path.join(LOG_PATH, "migration.log")
 
 # Logger IDs, used in apps. Do not change.
 INFO_LOGGER = 'info_logger'
 ERROR_LOGGER = 'error_logger'
+MIGRATION_LOGGER = 'migration_logger'
 
 # Most of the following logging settings can be changed.
 # Especially format, logging levels, logging class and filenames.
@@ -410,6 +412,14 @@ LOGGING = {
 			'encoding':  'utf8',
 			'mode':      'a',
 		},
+		'migration_file':            {
+			'level':     'INFO',
+			'class':     'logging.FileHandler',
+			'formatter': 'detailed',
+			'filename':  migration_log_file_name,
+			'encoding':  'utf8',
+			'mode':      'a',
+		},
 
 		'null':                  {
 			"class": 'logging.NullHandler',
@@ -443,6 +453,10 @@ LOGGING = {
 			'level':    'ERROR',
 			'handlers': ['console', 'error_file', 'logstash']
 		},
+		MIGRATION_LOGGER:    {
+			'level':    'INFO',
+			'handlers': ['console', 'migration_file', 'logstash']
+		},
 
 		# Big parent of all the Django loggers, MOST (not all) of this will get overwritten.
 		# https://docs.djangoproject.com/en/2.1/topics/logging/#topic-logging-parts-loggers
@@ -465,7 +479,7 @@ LOGGING = {
 		# everything else is logged as INFO.
 		'django.server': {
 			'handlers':  ['console', 'logstash'],
-			'level':     'INFO',
+			'level':     'ERROR',
 			'propagate': False,
 		}
 

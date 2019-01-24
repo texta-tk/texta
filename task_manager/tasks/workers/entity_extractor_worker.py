@@ -100,7 +100,7 @@ class EntityExtractorWorker(BaseWorker):
             self.train_summary['samples'] = len(hits)
             self.train_summary['model_type'] = 'CRF'
             report_table = self._convert_dict_to_html_table(report)
-            self.train_summary["report"] = report_table
+            self.train_summary['report'] = report_table
             self.train_summary['confusion_matrix'] = '<img src="{}" style="max-width: 80%">'.format(plot_url)
             show_progress.update(2)
 
