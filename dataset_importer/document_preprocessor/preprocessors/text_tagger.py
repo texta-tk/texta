@@ -41,6 +41,11 @@ class TextTaggerPreprocessor(object):
                     else:
                         decoded_text = ''
                         break
+                
+                # sanity check to filter out None values
+                if not decoded_text:
+                    decoded_text = ''
+
                 try:
                     text_map[field].append(decoded_text.strip().decode())
                 except AttributeError:

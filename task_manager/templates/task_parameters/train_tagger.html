@@ -112,6 +112,18 @@
                         </div>
                     </div>
                     <div class="row">
+                        <div class="col-sm-6">Maximum sample size per class:</div>
+                        <div class="col-sm-6">
+                            <select name="{{task_param.id}}_max_sample_size_opt" class="form-control">
+                                <option title="10000" value="10000">10000</option>
+                                <option title="25000" value="25000">25000</option>
+                                <option title="50000" value="50000">50000</option>
+                                <option title="100000" value="100000">100000</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
                         <div class="col-sm-6">Training set score threshold:</div>
                         <div class="col-sm-6">
                             <select name="{{ task_param.id }}_score_threshold_opt" class="form-control">
