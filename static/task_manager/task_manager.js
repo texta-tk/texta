@@ -104,6 +104,10 @@ function deleteDocuments (type) {
 
 }
 
+function togglePanelCollapse(element) {
+    $(element).children('.glyphicon').toggleClass('glyphicon-plus')
+    $(element).children('.glyphicon').toggleClass('glyphicon-minus')
+}
 
 function uploadTask(task_form_id) {
     formElement = document.getElementById(task_form_id)
