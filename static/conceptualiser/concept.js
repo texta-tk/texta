@@ -624,7 +624,12 @@ function get_lexicons_for_plotting() {
 function ends_with(str, suffix) {
     return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
-
+function swalWarningDisplay (titleText) {
+    swal({
+        title: titleText,
+        type: 'warning'
+    })
+}
 function plot_lexicons() {
     
     $("#plot_settings").hide(0);
@@ -644,10 +649,10 @@ function plot_lexicons() {
                 return window.innerHeight - $(this).offset().top - $("#top_line").height()-40;
             });
 
-            if (xmlhttp.responseText) {
+            if (xmlhttp.readyState==4 && xmlhttp.status==200 && xmlhttp.responseText) {
                 draw_plot(JSON.parse(xmlhttp.responseText));
-            }else{
-
+            }else if (xmlhttp.readyState==4 && xmlhttp.status===400){
+                swalWarningDisplay('Please select a model first')
             }
             CURRENT_LEXICONS = chosen_lexicons;
         }
