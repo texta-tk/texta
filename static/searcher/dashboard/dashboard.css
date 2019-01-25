@@ -1,14 +1,21 @@
-.graph-background>svg{
+.graph-background > svg {
     background-color: #FFF;
     border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,.2);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .2);
 }
 
-.index-tables-holder{
+.dashboard-caption {
+    background-color: white;
+    text-align: center;
+}
+
+.index-tables-holder {
+
     display: grid;
-    grid-template-columns: repeat(auto-fill,minmax(450px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
     grid-gap: 0px 5px;
 }
+
 .loader {
     border: 16px solid #f3f3f3; /* Light grey */
     border-top: 16px solid #3498db; /* Blue */
@@ -19,11 +26,33 @@
     margin-left: auto;
     margin-right: auto;
 }
-#loader-text{
+
+.dashboard-nav-a {
+    color: white;
+    background-color: #012849;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-bottom: 1px solid transparent !important;
+}
+.dashboard-nav-tabs > li.active > a, .nav-tabs > li.active > a:focus, .dashboard-nav-tabs > li.active > a:hover {
+    color: black;
+    background-color: white;
+}
+.dashboard-nav-a:hover {
+    color: black;
+}
+
+#loader-text {
     margin-left: auto;
     margin-right: auto;
 }
+
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }

@@ -156,7 +156,7 @@ function query () {
                 'processing': true,
                 'filter': false,
                 'sAjaxSource': PREFIX + '/table_content',
-                'dom': '<"#top-part.flex-row"<"build-search-selectpicker margin-right flex-row align-center"<"flex-item-grow-1 flex-row align-center toggle-columns-select height-max"<"fullscreen-actions-div">>><"flex-content-end flex-item-grow-3 align-center"<"flex-item-grow-2"i><"margin-left"l><"flex-item-grow-2"p>>>t',
+                'dom': '<"#top-part.flex-row"<"build-search-selectpicker margin-right flex-row align-center"<"flex-1 flex-row align-center toggle-columns-select height-max"<"fullscreen-actions-div">>><"flex-content-end flex-3 align-center"<"flex-2"i><"margin-left"l><"flex-2"p>>>t',
                 'sServerMethod': 'POST',
                 'fnServerParams': function (aoData) {
                     aoData.push({
@@ -311,13 +311,19 @@ function rejectDocument (id) {
 function dashboard () {
     var container = $('#right')
     container.empty()
-    $.ajax({
-        url: PREFIX + '/dashboard_visualize',
-        type: 'GET',
-        success: function(result) {
-            container.html(result)
+
+    var formElement = document.getElementById('filters')
+    var request = new XMLHttpRequest()
+
+    request.onreadystatechange = function () {
+        if (request.readyState === 4 && request.status === 200) {
+            container.html(request.response)
         }
-    })
+    }
+
+    request.open('POST', PREFIX + '/dashboard_visualize')
+    request.send(new FormData(formElement), true)
+
 }
 function aggregate () {
     var container = $('#right')

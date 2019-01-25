@@ -1,17 +1,29 @@
 var PREFIX = LINK_SEARCHER;
-
-
+var ColorSettings = Object.freeze({"GLOBAL": 'color-global', "FIELD": 'color-field'})
+var Colors = Object.freeze({"COLOR_MIN": colorMinimum, "COLOR_MAX": colorMaximum})
 $(function () {
+
     updateLoaderStatus('Getting data from the server')
-    $.get(PREFIX + '/dashboard', function (data) {
-        if (checkNested(data, 'indices')) {
-            updateLoaderStatus('Drawing Dashboard')
-            console.table(data.indices);
-            let indicesArray = [];
-            createIndices(indicesArray, data)
-            initListeners();
-            initDashBoard(indicesArray);
-            removeLoader()
+    $.ajax({
+        type: "get",
+        url: PREFIX + '/dashboard',
+        error: function (request, error) {
+            swalCustomTypeDisplay(SwalType.ERROR, request.statusText)
+            $('#right').empty()
+        },
+        success: function (data) {
+            if (checkNested(data, 'indices')) {
+                updateLoaderStatus('Drawing Dashboard')
+                let indicesArray = [];
+                createIndices(indicesArray, data)
+                initListeners();
+                initDashBoard(indicesArray);
+                //no point showing upper navtab when you only have 1 index
+                if(indicesArray.length===1){
+                    $('#outermost-navtab').remove()
+                }
+                removeLoader()
+            }
         }
     });
 });
@@ -59,8 +71,8 @@ function initDashBoard(indices) {
 function makeTimelines(index) {
     let width = getHiddenDivMaxWidth(`timeline-agg-container-month-${index.index_name}`)
     /*more readable and scalable like this, really dont want to make this into 1 function*/
-    makeMonthTimeline(index,width)
-    makeYearTimeline(index,width)
+    makeMonthTimeline(index, width)
+    makeYearTimeline(index, width)
 }
 
 function makeMonthTimeline(index, width) {
@@ -110,39 +122,29 @@ function makeYearTimeline(index, width) {
 
 }
 
-function getHiddenDivMaxWidth(elementID) {
-    /*disgusting hack to get hidden element width*/
-    let cloneID = `${elementID}_cloned`
-    let clonedTimelineContainer = $(`#${elementID}`).clone()
-    clonedTimelineContainer.attr('id', cloneID)
-    clonedTimelineContainer.addClass('timeline-clone')
-    $('.page-wrapper').append(clonedTimelineContainer)
-    let width = $('#' + cloneID).width()
-    clonedTimelineContainer.remove()
-    return width
-}
-
 function makeFactsTables(index) {
     let result = formatFacts(index)
-
+    /*has to be a number field*/
+    let colorRowIndex = 1
     if (result) {
         let t_id = 0;
         /*nested*/
         result.forEach((e) => {
-            let result = e.facts.map((x) => {
+            let resultFormatted = e.facts.map((x) => {
                 return [x.key, x.doc_count]
             });
-            if (result.length > 1) {
-                let minMax = findMinMax(result, 1)
+            if (resultFormatted.length > 1) {
 
+                let minMax = getColorRange(resultFormatted, colorRowIndex, index)
                 let color = d3.scale.linear()
-                    .domain([0, index.total_documents])
-                    .range([d3.rgb("#bfffc4"), d3.rgb('#02e012')]);
+                    .domain([minMax[0], minMax[1]])
+                    .range([d3.rgb(Colors.COLOR_MIN), d3.rgb(Colors.COLOR_MAX)]);
+
                 let tableID = `${index.AggregationTpes.NESTED}-generated-${index.index_name}${t_id}`
-                $('#' + index.index_name + '-nested-table').append(`<table id="${tableID}" style="width:100%"><caption>${e.key}</caption></table>`);
+                $(`#${index.index_name}-nested-table`).append(`<table id="${tableID}" style="width:100%"><caption class="dashboard-caption">${e.key}</caption></table>`);
 
                 $(`#${tableID}`).DataTable({
-                    data: result,
+                    data: resultFormatted,
                     dom: 't',
                     ordering: true,
                     order: [1, 'desc'],
@@ -152,7 +154,7 @@ function makeFactsTables(index) {
                         {title: "count"}
                     ],
                     "rowCallback": function (row, data, index) {
-                        $($(row).children()[1]).css('background-color', color(data[1]))
+                        $($(row).children()[colorRowIndex]).css('background-color', color(data[colorRowIndex]))
                     }
                 });
                 t_id += 1;
@@ -167,17 +169,19 @@ function makeFactsTables(index) {
 function makeSignificantWordsTables(index) {
     let t_id = 0;
     let rootProperty = index.getSignificantWords()
+    /*has to be a number field*/
+    let colorRowIndex = 1
     for (let field in rootProperty) {
         let result = formatSignificantWords(index, rootProperty[field])
         if (result != null) {
-            let minMax = findMinMax(result, 1)
 
+            let minMax = getColorRange(result, colorRowIndex, index)
             let color = d3.scale.linear()
-                .domain([0, index.total_documents])
-                .range([d3.rgb("#bfffc4"), d3.rgb('#02e012')]);
+                .domain([minMax[0], minMax[1]])
+                .range([d3.rgb(Colors.COLOR_MIN), d3.rgb(Colors.COLOR_MAX)]);
 
             let tableID = `${index.AggregationTpes.SIGSTERMS}-generated-${index.index_name}${t_id}`
-            $('#' + index.index_name + '-sigsterms-table').append(`<table id="${tableID}" style="width:100%"></table>`);
+            $(`#${index.index_name}-sigsterms-table`).append(`<table id="${tableID}" style="width:100%"></table>`);
 
             $(`#${tableID}`).DataTable({
                 data: result,
@@ -190,7 +194,7 @@ function makeSignificantWordsTables(index) {
                     {title: "count"}
                 ],
                 "rowCallback": function (row, data, index) {
-                    $($(row).children()[1]).css('background-color', color(data[1]))
+                    $($(row).children()[colorRowIndex]).css('background-color', color(data[colorRowIndex]))
                 }
             });
             t_id += 1;
@@ -201,18 +205,19 @@ function makeSignificantWordsTables(index) {
 function makeFrequentItemsTables(index) {
     let t_id = 0;
     let rootProperty = index.getFrequentItems()
+    /*has to be a number field*/
+    let colorRowIndex = 1
     for (let field in rootProperty) {
         let result = formatFrequentItems(index, rootProperty[field])
 
         if (result != null) {
-            let minMax = findMinMax(result, 1)
-
+            let minMax = getColorRange(result, colorRowIndex, index)
             let color = d3.scale.linear()
-                .domain([0, index.total_documents])
-                .range([d3.rgb("#bfffc4"), d3.rgb('#02e012')]);
+                .domain([minMax[0], minMax[1]])
+                .range([d3.rgb(Colors.COLOR_MIN), d3.rgb(Colors.COLOR_MAX)]);
 
             let tableID = `${index.AggregationTpes.STERMS}-generated-${index.index_name}${t_id}`
-            $('#' + index.index_name + '-sterms-table').append(`<table id="${tableID}" style="width:100%"></table>`);
+            $(`#${index.index_name}-sterms-table`).append(`<table id="${tableID}" style="width:100%"></table>`);
 
             $(`#${tableID}`).DataTable({
                 data: result,
@@ -225,7 +230,7 @@ function makeFrequentItemsTables(index) {
                     {title: "count"}
                 ],
                 "rowCallback": function (row, data, index) {
-                    $($(row).children()[1]).css('background-color', color(data[1]))
+                    $($(row).children()[colorRowIndex]).css('background-color', color(data[colorRowIndex]))
                 }
             });
             t_id += 1;
@@ -235,15 +240,17 @@ function makeFrequentItemsTables(index) {
 
 function makeStatistics(index) {
     let response = formatStatistics(index);
+    /*has to be a number field*/
+    let colorRowIndex = 2
     if (response) {
-        let minMax = findMinMax(response, 2)
+        let minMax = findMinMax(response, colorRowIndex, index)
 
         let color = d3.scale.linear()
             .domain([0, minMax[1]])
-            .range([d3.rgb("#bfffc4"), d3.rgb('#02e012')]);
+            .range([d3.rgb(Colors.COLOR_MIN), d3.rgb(Colors.COLOR_MAX)]);
 
         let tableID = `${index.AggregationTpes.VALUECOUNT}-generated-${index.index_name}`;
-        $('#' + index.index_name + '-value_count-table').append(`<table id="${tableID}" style="width:100%"></table>`);
+        $(`#${index.index_name}-value_count-table`).append(`<table id="${tableID}" style="width:100%"></table>`);
         $(`#${tableID}`).DataTable({
             data: response,
             dom: 't',
@@ -256,7 +263,7 @@ function makeStatistics(index) {
                 {title: "percentage"}
             ],
             "rowCallback": function (row, data, index) {
-                $($(row).children()[2]).css('background-color', color(data[2]))
+                $($(row).children()[colorRowIndex]).css('background-color', color(data[colorRowIndex]))
             }
         });
 
@@ -314,7 +321,6 @@ function formatFacts(index) {
 }
 
 function findMinMax(arr, indexToParse) {
-    /*todo: hardcoded, cba to make it better right now*/
     let min = arr[0][indexToParse], max = arr[0][indexToParse];
 
     for (let i = 1, len = arr.length; i < len; i++) {
@@ -324,4 +330,24 @@ function findMinMax(arr, indexToParse) {
     }
 
     return [min, max];
+}
+
+function getColorRange(source, colorCellIndex, index) {
+    if (colorSetting === ColorSettings.GLOBAL) {
+        return [0, index.total_documents]
+    } else if (colorSetting === ColorSettings.FIELD) {
+        return findMinMax(source, colorCellIndex)
+    }
+}
+
+function getHiddenDivMaxWidth(elementID) {
+    /*disgusting hack to get hidden element width*/
+    let cloneID = `${elementID}_cloned`
+    let clonedTimelineContainer = $(`#${elementID}`).clone()
+    clonedTimelineContainer.attr('id', cloneID)
+    clonedTimelineContainer.addClass('timeline-clone')
+    $('.page-wrapper').append(clonedTimelineContainer)
+    let width = $('#' + cloneID).width()
+    clonedTimelineContainer.remove()
+    return width
 }

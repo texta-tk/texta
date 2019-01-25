@@ -1,13 +1,13 @@
 .grid-wrapper-searcher{
   height: 100%;
   display: grid;
-  grid-template-columns: 350px 1fr;
+  grid-template-columns: 360px 1fr;
   grid-template-rows: 100%;
 }
 
 @media screen and (max-width: 1405px) {
   .grid-wrapper-searcher{
-    grid-template-columns: 350px 1fr;
+    grid-template-columns: 360px 1fr;
     grid-template-rows: 100%;
   }
 }

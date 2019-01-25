@@ -1,5 +1,12 @@
+<script>
+    var colorSetting = "{{color_setting}}";
+    var colorMinimum = "{{color_min}}";
+    var colorMaximum = "{{color_max}}";
+</script>
+
 <script type="application/javascript" src="{{ STATIC_URL }}searcher/dashboard/dashboard.js"></script>
-<div class="page-wrapper width-height-max">
+
+<div id='dashboard-page-wrapper' class="page-wrapper width-height-max">
     <div class="loader-wrapper flex-column">
         <div class="loader width-height-max">
         </div>
@@ -11,45 +18,56 @@
 
         <div class="flex-column width-height-max">
 
-
-            <ul class="nav nav-tabs flex-row">
+            <ul id="outermost-navtab" class="nav nav-tabs dashboard-nav-tabs flex-row">
                 {% for index in indices %}
                     {% if forloop.first %}
-                        <li class="flex-item-grow-1 active"><a data-toggle="tab"
-                                                               href="#datatables-container-{{ index }}"
-                                                               title="For building basic searches">{{ index }}</a>
-                        </li>
+                        {% if indices|length == 1 %}
+                            <li class="flex-1 active hidden"><a data-toggle="tab"
+                                                                href="#datatables-container-{{ index }}"
+                                                                title="For building basic searches">{{ index }}</a>
+                            </li>
+                        {% else %}
+                            <li class="flex-1 active"><a class="dashboard-nav-a" data-toggle="tab"
+                                                         href="#datatables-container-{{ index }}"
+                                                         title="For building basic searches">{{ index }}</a>
+                            </li>
+                        {% endif %}
+
                     {% else %}
-                        <li class="flex-item-grow-1"><a data-toggle="tab" href="#datatables-container-{{ index }}"
-                                                        title="For building basic searches">{{ index }}</a>
+                        <li class="flex-1"><a class="dashboard-nav-a" data-toggle="tab"
+                                              href="#datatables-container-{{ index }}"
+                                              title="For building basic searches">{{ index }}</a>
                         </li>
                     {% endif %}
                 {% endfor %}
             </ul>
-
 
             <div class="tab-content">
                 {% for index in indices %}
                     <div class=" tab-pane fade in{% if forloop.first %} active{% endif %}"
                          id="datatables-container-{{ index }}">
 
-                        <ul class="nav nav-tabs flex-row">
-                            <li class="flex-item-grow-1 active"><a data-toggle="tab" href="#{{ index }}-sterms"
-                                                                   title="For building basic searches">Frequent
+                        <ul class="nav nav-tabs dashboard-nav-tabs flex-row">
+                            <li class="flex-1 active"><a class="dashboard-nav-a" data-toggle="tab"
+                                                         href="#{{ index }}-sterms"
+                                                         title="For building basic searches">Frequent
                                 items</a>
                             </li>
-                            <li class="flex-item-grow-1"><a data-toggle="tab" href="#{{ index }}-sigsterms"
-                                                            title="For expanding basic searches via similarity queries">Significant
+                            <li class="flex-1"><a class="dashboard-nav-a" data-toggle="tab"
+                                                  href="#{{ index }}-sigsterms"
+                                                  title="For expanding basic searches via similarity queries">Significant
                                 words</a>
                             </li>
-                            <li class="flex-item-grow-1"><a data-toggle="tab" href="#{{ index }}-nested"
-                                                            title="For expanding basic searches via similarity queries">Facts</a>
+                            <li class="flex-1"><a class="dashboard-nav-a" data-toggle="tab" href="#{{ index }}-nested"
+                                                  title="For expanding basic searches via similarity queries">Facts</a>
                             </li>
-                            <li class="flex-item-grow-1"><a data-toggle="tab" href="#{{ index }}-value_count"
-                                                            title="For expanding basic searches via similarity queries">Statistics</a>
+                            <li class="flex-1"><a class="dashboard-nav-a" data-toggle="tab"
+                                                  href="#{{ index }}-value_count"
+                                                  title="For expanding basic searches via similarity queries">Statistics</a>
                             </li>
-                            <li class="flex-item-grow-1"><a data-toggle="tab" href="#{{ index }}-timelines"
-                                                            title="For expanding basic searches via similarity queries">Timelines</a>
+                            <li class="flex-1"><a class="dashboard-nav-a" data-toggle="tab"
+                                                  href="#{{ index }}-timelines"
+                                                  title="For expanding basic searches via similarity queries">Timelines</a>
                             </li>
 
                         </ul>
@@ -91,6 +109,5 @@
         </div>
 
     </div>
-
 
 </div>

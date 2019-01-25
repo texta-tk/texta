@@ -158,12 +158,16 @@ def dashboard_endpoint(request):
 def dashboard_visualize(request):
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
-
     indices = es_m.stringify_datasets().split(',')
-
+    color_setting = request.POST['dashboard-color']
+    color_max = request.POST['dashboard-color-maximum']
+    color_min = request.POST['dashboard-color-minimum']
     template = loader.get_template('dashboard/dashboard.html')
 
     return HttpResponse(template.render({'STATIC_URL': STATIC_URL,
+                                         'color_setting': color_setting,
+                                         'color_max': color_max,
+                                         'color_min': color_min,
                                          'URL_PREFIX': URL_PREFIX,
                                          'indices': indices}, request))
 
