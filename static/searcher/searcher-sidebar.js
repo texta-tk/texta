@@ -643,13 +643,13 @@ function addField(dateRangeMin, dateRangeMax, submittedFieldData) {
     $('#field_' + counter.toString()).show()
     $('#constraint_field').selectpicker('deselectAll')
 }
-
+var keyTimer
 function searchAsYouTypeQuery() {
     var selection = $('#search_as_you_type').prop('checked')
-    var keyTimer
+
     if (selection) {
-        clearTimeout(keyTimer)
-        keyTimer = setTimeout(function validate() {
+        clearTimeout(this.keyTimer)
+        this.keyTimer = setTimeout(function validate() {
             query()
         }, 500)
     }
@@ -697,33 +697,33 @@ function clusterQuery() {
 }
 
 function lookup(fieldFullId, fieldId, action, lookupTypes) {
-    var content = $('#' + fieldFullId).val()
-    let factName
-    if (fieldFullId.match('^fact_constraint_val_')) {
-        factName = $('#fact_txt_' + fieldId.slice(0, -4)).val()
-    } else {
-        factName = ''
-    }
-
-    var lookupData = {
-        content: content,
-        action: action,
-        lookup_types: lookupTypes,
-        key_constraints: factName
-    }
-    $.post(PREFIX + '/autocomplete', lookupData, function (data) {
-        if (data.length > 0) {
-            var suggestionsContainer = $('#suggestions_' + fieldId)
-            suggestionsContainer.empty()
-
-            processSuggestions(data, suggestionsContainer, fieldId, lookupTypes)
-            if (suggestionsContainer.html()) {
-                $('#suggestions_' + fieldId).show()
-            }
+        var content = $('#' + fieldFullId).val()
+        let factName
+        if (fieldFullId.match('^fact_constraint_val_')) {
+            factName = $('#fact_txt_' + fieldId.slice(0, -4)).val()
         } else {
-            $('#suggestions_' + fieldId).hide()
+            factName = ''
         }
-    })
+
+        var lookupData = {
+            content: content,
+            action: action,
+            lookup_types: lookupTypes,
+            key_constraints: factName
+        }
+        $.post(PREFIX + '/autocomplete', lookupData, function (data) {
+            if (data.length > 0) {
+                var suggestionsContainer = $('#suggestions_' + fieldId)
+                suggestionsContainer.empty()
+
+                processSuggestions(data, suggestionsContainer, fieldId, lookupTypes)
+                if (suggestionsContainer.html()) {
+                    $('#suggestions_' + fieldId).show()
+                }
+            } else {
+                $('#suggestions_' + fieldId).hide()
+            }
+        })
 }
 
 function processSuggestions(suggestions, suggestionsContainer, fieldID, lookupTypes) {
