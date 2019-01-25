@@ -20,6 +20,7 @@
                             <div class="col-sm-6">
                                 <select name="{{ task_param.id }}_search" class="selectpicker" required
                                         data-width='100%'>
+                                    <option value="all_docs">Empty (all documents)</option>
                                     {% for search in searches %}
                                         <option title="{{ search.description }}"
                                                 value="{{ search.id }}">{{ search.description }}</option>
