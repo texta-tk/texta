@@ -45,7 +45,7 @@ class Highlighter(object):
             # logger.set_context('highlight_data', highlight_data)
             # logger.info('original_text was empty - "", with HL data')
             # return ''
-        
+
         if tagged_text:
             if self._derive_spans:
                 alignment = [char_idx for char_idx in range(len(original_text))]
@@ -197,32 +197,41 @@ class Highlighter(object):
         return spans_to_data_indices
 
     def _get_tag_from_highlight_data(self, highlight_data_list):
-        category_name_value = defaultdict(lambda: defaultdict(list))
+        category_name_value = {}
         for highlight_data in highlight_data_list:
             category = highlight_data.get('category', self._default_category)
             name = highlight_data.get('name', '')
             value = highlight_data.get('value', None)
+            description = highlight_data.get('description', None)
+            if category not in category_name_value:
+                category_name_value[category] = {}
 
             # Creating category_name_value[category][name] = [].
             # Important for cases when value is missing.
-            category_name_value[category][name]
-
+            category_name_value[category][name] = {"values": [], "descriptions": []}
             if value:
-                category_name_value[category][name].append(value)
+                category_name_value[category][name]["values"].append(value)
+            if description:
+                category_name_value[category][name]["descriptions"].append(description)
 
         title_lines = []
         for category in category_name_value:
             title_line_tokens = [category]
             for name in category_name_value[category]:
                 if category_name_value[category][name]:
-                    for value in category_name_value[category][name]:
-                        title_line_tokens.append('%s=%s'%(name, value))
+                    #for value in category_name_value[category][name]["values"]:
+                    #    title_line_tokens.append('%s=%s'%(name, value))
+                    title_line_tokens.append(name)
+                    for description in category_name_value[category][name]["descriptions"]:
+                        title_line_tokens.append('\n{0}'.format(description))
                 else:
                     title_line_tokens.append(name)
+                
             title_lines.append(' '.join(title_line_tokens))
 
         title = ('&#13;'.join(title_lines))
         color = self._get_color([highlight_data['color'] for highlight_data in highlight_data_list if 'color' in highlight_data])
+
 
         if '[fact]' in title or '[fact_val]' in title or '[ES]' in title:
             return u'<span class="[HL]" title="{0}" style="background-color: {1};{2}">'.format(
