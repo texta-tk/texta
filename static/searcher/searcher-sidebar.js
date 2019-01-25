@@ -696,7 +696,10 @@ function clusterQuery() {
     request.send(new FormData(formElement))
 }
 
+var keyTimerLookup
 function lookup(fieldFullId, fieldId, action, lookupTypes) {
+    clearTimeout(this.keyTimerLookup)
+    this.keyTimerLookup = setTimeout(function validate() {
         var content = $('#' + fieldFullId).val()
         let factName
         if (fieldFullId.match('^fact_constraint_val_')) {
@@ -724,6 +727,7 @@ function lookup(fieldFullId, fieldId, action, lookupTypes) {
                 $('#suggestions_' + fieldId).hide()
             }
         })
+    }, 150)
 }
 
 function processSuggestions(suggestions, suggestionsContainer, fieldID, lookupTypes) {
