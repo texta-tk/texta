@@ -112,7 +112,8 @@ function removeSearchCallback(responseText) {
     var searchDiv = document.getElementById('search_' + responseText)
     searchDiv.parentNode.removeChild(searchDiv)
 }
-function renderMultipleSavedSearches(){
+
+function renderMultipleSavedSearches() {
     var searchesContainer = document.getElementById('saved_searches')
     let checkboxList = searchesContainer.getElementsByTagName('input')
     let pkArray = []
@@ -121,20 +122,25 @@ function renderMultipleSavedSearches(){
             pkArray.push(item.value)
         }
     }
-    $.ajax({
-        url: PREFIX+'/get_srch_query',
-        data: {'search_ids[]': pkArray},
-        type: 'POST',
-        success: function(result) {
-            let data = JSON.parse(result)
-            $('#constraints').empty()
-            for (var i = 0; i < data.length; i++) {
-                renderSavedSearchField(data[i], '', '')
+    if (pkArray.length > 0) {
+        $.ajax({
+            url: PREFIX + '/get_srch_query',
+            data: {'search_ids[]': pkArray},
+            type: 'POST',
+            success: function (result) {
+                let data = JSON.parse(result)
+                $('#constraints').empty()
+                for (var i = 0; i < data.length; i++) {
+                    renderSavedSearchField(data[i], '', '')
+                }
             }
-        }
-    })
-    console.log(pkArray)
+        })
+    } else {
+        swalCustomTypeDisplay(SwalType.ERROR, 'Please select a saved search first.')
+    }
+
 }
+
 function removeSearches() {
     var searchesContainer = document.getElementById('saved_searches')
     let checkboxList = searchesContainer.getElementsByTagName('input')
@@ -252,10 +258,10 @@ function displaySearches(searches) {
 
 function renderSavedSearch(searchID) {
     $.ajax({
-        url: PREFIX+'/get_srch_query',
+        url: PREFIX + '/get_srch_query',
         data: {'search_ids[]': [searchID]},
         type: 'POST',
-        success: function(data) {
+        success: function (data) {
             data = JSON.parse(data)
 
             $('#constraints').empty()
@@ -668,7 +674,9 @@ function addField(dateRangeMin, dateRangeMax, submittedFieldData) {
     $('#field_' + counter.toString()).show()
     $('#constraint_field').selectpicker('deselectAll')
 }
+
 var keyTimer
+
 function searchAsYouTypeQuery() {
     var selection = $('#search_as_you_type').prop('checked')
 
@@ -722,6 +730,7 @@ function clusterQuery() {
 }
 
 var keyTimerLookup
+
 function lookup(fieldFullId, fieldId, action, lookupTypes) {
     clearTimeout(this.keyTimerLookup)
     this.keyTimerLookup = setTimeout(function validate() {
