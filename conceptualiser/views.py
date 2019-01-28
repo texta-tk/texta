@@ -4,7 +4,7 @@ import logging
 import numpy as np
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.template import loader
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE, MDS
@@ -48,7 +48,8 @@ def load_terms(request):
     try:
         model = model_manager.get_model(request.session['model']).model
     except LookupError as e:
-        return HttpResponseRedirect(URL_PREFIX + '/')
+        return JsonResponse(status=400, data={'status':'false','message':'Please select a model first'})
+
 
     if model.wv.syn0norm is None:
         model.init_sims()
@@ -99,6 +100,7 @@ def load_terms(request):
 
 
     return HttpResponse(json.dumps(output), content_type='application/json')
+
 
 @login_required
 def get_term_lexicons(request):
