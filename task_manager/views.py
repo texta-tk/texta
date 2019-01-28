@@ -14,7 +14,7 @@ from searcher.models import Search
 from permission_admin.models import Dataset
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
-from utils.helper_functions import get_wildcard_files
+from utils.helper_functions import get_wildcard_files, create_file_path
 from texta.settings import STATIC_URL
 from texta.settings import MODELS_DIR
 from texta.settings import PROTECTED_MEDIA
@@ -279,16 +279,16 @@ def _load_xml_to_database(xml_model_object):
 
 def _load_model_file(task, file, file_name):
     '''For extracting the uploaded model in upload_task_archive'''
-    model_file_path = os.path.join(MODELS_DIR, task.task_type, file_name)
-    
+    model_file_path = create_file_path(file_name, MODELS_DIR, task.task_type)#os.path.join(MODELS_DIR, task.task_type, file_name)
+
     with open(model_file_path, 'wb+') as f:
         f.write(file)
 
 
 def _load_media_file(task, file, file_name):
     '''For extracting the uploaded model mediadata in upload_task_archive'''
-    media_file_path = os.path.join(PROTECTED_MEDIA, "task_manager/", task.task_type, file_name)
+    # media_file_path = os.path.join(PROTECTED_MEDIA, "task_manager/", task.task_type, file_name)
+    media_file_path = create_file_path(file_name, PROTECTED_MEDIA, "task_manager/", task.task_type)
     
     with open(media_file_path, 'wb+') as f:
         f.write(file)
-

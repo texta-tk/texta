@@ -108,6 +108,11 @@ function downloadModel(model_id_to_download) {
     window.location.href = `${LINK_TASK_MANAGER}/download_model?model_id=${model_id_to_download}`
 }
 
+function togglePanelCollapse(element) {
+    $(element).children('.glyphicon').toggleClass('glyphicon-plus')
+    $(element).children('.glyphicon').toggleClass('glyphicon-minus')
+}
+
 function uploadTask(task_form_id) {
     formElement = document.getElementById(task_form_id)
     formData = new FormData(formElement);

@@ -8,7 +8,7 @@ from utils.es_manager import ES_Manager
 from texta.settings import ERROR_LOGGER
 
 MAX_POSITIVE_SAMPLE_SIZE = 10000
-ES_SCROLL_SIZE = 5000
+ES_SCROLL_SIZE = 500
 
 
 def get_fields(es_m):

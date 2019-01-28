@@ -13,6 +13,7 @@
                                     data-width='100%'
                                     required
                                     autocomplete="off">
+                                <option value="all_docs">Empty (all documents)</option>
                                 {% for search in searches %}
                                     <option title="{{ search.description }}"
                                             value="{{ search.id }}">{{ search.description }}</option>
