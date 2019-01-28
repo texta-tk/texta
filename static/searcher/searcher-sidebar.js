@@ -112,7 +112,29 @@ function removeSearchCallback(responseText) {
     var searchDiv = document.getElementById('search_' + responseText)
     searchDiv.parentNode.removeChild(searchDiv)
 }
-
+function renderMultipleSavedSearches(){
+    var searchesContainer = document.getElementById('saved_searches')
+    let checkboxList = searchesContainer.getElementsByTagName('input')
+    let pkArray = []
+    for (let item of checkboxList) {
+        if (item.checked) {
+            pkArray.push(item.value)
+        }
+    }
+    $.ajax({
+        url: PREFIX+'/get_srch_query',
+        data: {'search_ids[]': pkArray},
+        type: 'POST',
+        success: function(result) {
+            let data = JSON.parse(result)
+            $('#constraints').empty()
+            for (var i = 0; i < data.length; i++) {
+                renderSavedSearchField(data[i], '', '')
+            }
+        }
+    })
+    console.log(pkArray)
+}
 function removeSearches() {
     var searchesContainer = document.getElementById('saved_searches')
     let checkboxList = searchesContainer.getElementsByTagName('input')
@@ -229,14 +251,17 @@ function displaySearches(searches) {
 }
 
 function renderSavedSearch(searchID) {
-    $.get(PREFIX + '/get_srch_query', {
-        search_id: searchID
-    }, function (data) {
-        data = JSON.parse(data)
+    $.ajax({
+        url: PREFIX+'/get_srch_query',
+        data: {'search_ids[]': [searchID]},
+        type: 'POST',
+        success: function(data) {
+            data = JSON.parse(data)
 
-        $('#constraints').empty()
-        for (var i = 0; i < data.length; i++) {
-            renderSavedSearchField(data[i], '', '')
+            $('#constraints').empty()
+            for (var i = 0; i < data.length; i++) {
+                renderSavedSearchField(data[i], '', '')
+            }
         }
     })
 }

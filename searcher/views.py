@@ -420,46 +420,50 @@ def fact_to_doc(request):
 
 @login_required
 def get_search_query(request):
-    search_id = request.GET.get('search_id', None)
+    search_ids = request.POST.getlist('search_ids[]')
 
-    if search_id == None:
+    if search_ids == []:
         return HttpResponse(status=400)
 
-    search = Search.objects.get(pk=search_id)
-
-    if not search:
+    if not search_ids:
         return HttpResponse(status=404)
 
-    query = json.loads(search.query)
-    query_constraints = extract_constraints(query)
-    search_content = json.loads(search.search_content)
+    queries = []
+    for search_id in search_ids:
 
-    # For original search content such as unpacked lexicons/concepts
-    matches = []
+        search = Search.objects.get(pk=search_id)
 
-    for i in range(len(query_constraints)):
-        if query_constraints[i]['constraint_type'] == 'string':
-            field_text = query_constraints[i]['content']
-            field_type = query_constraints[i]['field']
-            not_present = True
+        query = json.loads(search.query)
+        query_constraints = extract_constraints(query)
+        search_content = json.loads(search.search_content)
+
+        # For original search content such as unpacked lexicons/concepts
+        matches = []
+
+        for i in range(len(query_constraints)):
+            if query_constraints[i]['constraint_type'] == 'string':
+                field_text = query_constraints[i]['content']
+                field_type = query_constraints[i]['field']
+                not_present = True
+                for x in search_content[field_type]:
+                    # strings match with query and text field match_txt
+                    if field_text[0] == x:
+                        query_constraints[i]['content'] = [x]
+                        search_content[field_type].remove(x)
+                        not_present = False
+
+                if not_present:
+                    matches.append(i)
+
+        for k in matches:
+            field_type = query_constraints[k]['field']
             for x in search_content[field_type]:
                 # strings match with query and text field match_txt
-                if field_text[0] == x:
-                    query_constraints[i]['content'] = [x]
-                    search_content[field_type].remove(x)
-                    not_present = False
+                query_constraints[k]['content'] = [x]
+                search_content[field_type].remove(x)
+        queries = queries+query_constraints
 
-            if not_present:
-                matches.append(i)
-
-    for k in matches:
-        field_type = query_constraints[k]['field']
-        for x in search_content[field_type]:
-            # strings match with query and text field match_txt
-            query_constraints[k]['content'] = [x]
-            search_content[field_type].remove(x)
-
-    return HttpResponse(json.dumps(query_constraints))
+    return HttpResponse(json.dumps(queries))
 
 
 @login_required
