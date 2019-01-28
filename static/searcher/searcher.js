@@ -156,7 +156,7 @@ function query () {
                 'processing': true,
                 'filter': false,
                 'sAjaxSource': PREFIX + '/table_content',
-                'dom': '<"#top-part.flex-row"<"build-search-selectpicker margin-right flex-row align-center"<"flex-item-grow-1 flex-row align-center toggle-columns-select height-max"<"fullscreen-actions-div">>><"flex-content-end flex-item-grow-3 align-center"<"flex-item-grow-2"i><"margin-left"l><"flex-item-grow-2"p>>>t',
+                'dom': '<"#top-part.flex-row"<"build-search-selectpicker margin-right flex-row align-center"<"flex-item-grow-1 flex-row align-center toggle-columns-select height-max"<"fullscreen-actions-div">><"margin-left selection-props-checkbox">><"flex-content-end flex-item-grow-3 align-center" <"flex-item-grow-2"i><"margin-left"l><"flex-item-grow-2 flex-content-end"p>>>t',
                 'sServerMethod': 'POST',
                 'fnServerParams': function (aoData) {
                     aoData.push({
@@ -176,6 +176,10 @@ function query () {
                     $('.dataTables_scrollHead').on('scroll', function () {
                         $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft())
                     })
+                    $('.selection-props-checkbox').append(
+                        $(`<input type="checkbox" id="scales" name="toggleTextSelectionCheckbox" onchange="toggleTextSelection(this)" checked title="Toggle fact adding menu in text selecting">`),
+                        $(`<label for="toggleTextSelectionCheckbox" title="Toggle fact adding menu in text selecting"> <span class="glyphicon glyphicon-hand-up"></span></label>`)
+                        );
                     // Initialize clicking HLs/selection text for properties
                     /* global createSelectionProps, selectionProps */
                     //createSelectionProps()

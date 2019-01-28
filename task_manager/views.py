@@ -137,33 +137,36 @@ def delete_task(request):
     :param request:
     :return:
     """
-    task_id = int(request.POST['task_id'])
-    task = Task.objects.get(pk=task_id)
+    task_ids = request.POST.getlist('task_ids[]')
 
-    if task.status == Task.STATUS_RUNNING:
-        # If task is running, mark it to cancel
-        task.status = Task.STATUS_CANCELED
-        task.save()
-    else:
-        try:
-            file_path = os.path.join(MODELS_DIR, task.task_type, "model_{}".format(task.unique_id))
-            media_path = os.path.join(PROTECTED_MEDIA, "task_manager/", task.task_type, "model_{}".format(task.unique_id))
+    for task_id in task_ids:
+        task_id = int(task_id)
+        task = Task.objects.get(pk=task_id)
 
-            model_files = get_wildcard_files(file_path)
-            media_files = get_wildcard_files(media_path)
+        if task.status == Task.STATUS_RUNNING:
+            # If task is running, mark it to cancel
+            task.status = Task.STATUS_CANCELED
+            task.save()
+        else:
+            try:
+                file_path = os.path.join(MODELS_DIR, task.task_type, "model_{}".format(task.unique_id))
+                media_path = os.path.join(PROTECTED_MEDIA, "task_manager/", task.task_type, "model_{}".format(task.unique_id))
 
-            for path, filename in model_files:
-                if os.path.exists(path):
-                    os.remove(path)
+                model_files = get_wildcard_files(file_path)
+                media_files = get_wildcard_files(media_path)
 
-            for path, filename in media_files:
-                if os.path.exists(path):
-                    os.remove(path)
+                for path, filename in model_files:
+                    if os.path.exists(path):
+                        os.remove(path)
 
-        except Exception as e:
-            logging.getLogger(ERROR_LOGGER).error('Could not delete model, paths: ({}\n{}).'.format(model_files, media_files), exc_info=True)
-        # Remove task
-        task.delete()
+                for path, filename in media_files:
+                    if os.path.exists(path):
+                        os.remove(path)
+
+            except Exception as e:
+                logging.getLogger(ERROR_LOGGER).error('Could not delete model, paths: ({}\n{}).'.format(model_files, media_files), exc_info=True)
+            # Remove task
+            task.delete()
 
     return HttpResponse()
 
