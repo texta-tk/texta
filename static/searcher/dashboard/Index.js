@@ -51,6 +51,7 @@ class Index {
             return this.aggregations[this.AggregationTpes.NESTED]
         }else{
             console.error(`index ${this.index_name}, Properties did not match expected format: NESTED!`)
+            return undefined
         }
     }
     getStatistics(){
@@ -58,6 +59,7 @@ class Index {
             return this.aggregations[this.AggregationTpes.VALUECOUNT]
         }else{
             console.error(`index ${this.index_name}, Properties did not match expected format: VALUECOUNT!`)
+            return undefined
         }
     }
     /*so each index can filter seperately if in the future you want to adjust filtering settings for each index */
@@ -84,7 +86,6 @@ function checkNested(obj) {
     for (var i = 0; i < args.length; i++) {
         if (!obj || !obj.hasOwnProperty(args[i])) {
             console.error('no property: '+args[i])
-            console.error('obj: '+args)
             return false;
         }
         obj = obj[args[i]];

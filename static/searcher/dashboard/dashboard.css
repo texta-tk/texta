@@ -27,6 +27,15 @@
     margin-right: auto;
 }
 
+.dashboard-nav-a-index {
+    color: white;
+    background-color: #012849;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-bottom: 1px solid transparent !important;
+}
+
 .dashboard-nav-a {
     color: white;
     background-color: #012849;
@@ -35,10 +44,16 @@
     border: 0 !important;
     border-bottom: 1px solid transparent !important;
 }
-.dashboard-nav-tabs > li.active > a, .nav-tabs > li.active > a:focus, .dashboard-nav-tabs > li.active > a:hover {
+
+.dashboard-nav-tabs > li.active > a,
+.dashboard-nav-tabs > li.active > a:focus,
+.dashboard-nav-tabs > li.active > a:hover,
+.dashboard-nav-tabs > li > a:hover,
+.dashboard-nav-tabs > li > a:focus {
     color: black;
-    background-color: white;
+    background-color: #fcfcfc;
 }
+
 .dashboard-nav-a:hover {
     color: black;
 }

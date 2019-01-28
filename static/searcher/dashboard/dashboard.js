@@ -16,7 +16,6 @@ $(function () {
                 updateLoaderStatus('Drawing Dashboard')
                 let indicesArray = [];
                 createIndices(indicesArray, data)
-                initListeners();
                 initDashBoard(indicesArray);
                 //no point showing upper navtab when you only have 1 index
                 if(indicesArray.length===1){
@@ -44,20 +43,6 @@ function createIndices(indicesArray, data) {
     return indicesArray
 }
 
-function initListeners() {
-    let previous = '';
-    $('#index_fields').on('change', function () {
-        if (previous === '') {
-            $(`#datatables-container-${this.value}`).removeClass('hidden');
-            previous = this.value
-        } else {
-            $(`#datatables-container-${previous}`).addClass('hidden');
-            $(`#datatables-container-${this.value}`).removeClass('hidden');
-            previous = this.value
-        }
-    });
-}
-
 function initDashBoard(indices) {
     indices.forEach((e) => {
         makeFrequentItemsTables(e);
@@ -70,7 +55,6 @@ function initDashBoard(indices) {
 
 function makeTimelines(index) {
     let width = getHiddenDivMaxWidth(`timeline-agg-container-month-${index.index_name}`)
-    /*more readable and scalable like this, really dont want to make this into 1 function*/
     makeMonthTimeline(index, width)
     makeYearTimeline(index, width)
 }
