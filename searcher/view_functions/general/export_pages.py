@@ -7,9 +7,9 @@ from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 
 try:
-    from io import StringIO  # NEW PY REQUIREMENT
+    from io import StringIO 
 except:
-    from io import BytesIO  # NEW PY REQUIREMENT
+    from io import BytesIO 
 
 ES_SCROLL_BATCH = 100
 
@@ -37,7 +37,7 @@ def get_rows(es_params, request):
     writer = csv.writer(buffer_)
 
     try:
-        writer.writerow(es_params['features'])  # NEW PY REQUIREMENT
+        writer.writerow(es_params['features']) 
     except:
         writer.writerow([feature for feature in es_params['features']])
     ds = Datasets().activate_datasets(request.session)

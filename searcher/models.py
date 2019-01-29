@@ -11,8 +11,8 @@ class Search(models.Model):
     id = models.AutoField(primary_key=True)
     search_content = models.TextField(default='') # JSON string
     description = models.CharField(max_length=MAX_STR_LEN)
-    datasets = models.ManyToManyField(Dataset) # NEW PY REQUIREMENT
-    author = models.ForeignKey(User, on_delete=models.CASCADE) # NEW PY REQUIREMENT
+    datasets = models.ManyToManyField(Dataset)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default='')
 
     def __str__(self):

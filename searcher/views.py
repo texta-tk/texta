@@ -16,9 +16,9 @@ import csv
 import re
 from datetime import datetime, timedelta as td
 try:
-    from io import BytesIO # NEW PY REQUIREMENT
+    from io import BytesIO
 except:
-    from io import StringIO # NEW PY REQUIREMENT
+    from io import StringIO
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, StreamingHttpResponse, HttpResponseBadRequest, JsonResponse

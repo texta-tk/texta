@@ -242,7 +242,7 @@ TEMPLATES = [
 
 # List of Django plugins used in TEXTA.
 #
-# NEW PY REQUIREMENT
+
 MIDDLEWARE = (
 	'django.middleware.common.CommonMiddleware',
 	'django.contrib.sessions.middleware.SessionMiddleware',

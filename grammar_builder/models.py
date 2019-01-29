@@ -11,7 +11,7 @@ class GrammarComponent(models.Model):
     layer = models.CharField(max_length=64, null=True, blank=True)
     join_by = models.CharField(max_length=32, null=True, blank=True)
     sub_components = models.ManyToManyField('grammar_builder.GrammarComponent')
-    author = models.ForeignKey(User, on_delete=models.CASCADE, # NEW PY REQUIREMENT
+    author = models.ForeignKey(User, on_delete=models.CASCADE,
     related_name='grammar_components')
     
     def __str__(self):
@@ -29,15 +29,15 @@ class GrammarPageMapping(models.Model):
     page = models.IntegerField()
     elastic_start = models.IntegerField()
     elastic_end = models.IntegerField()
-    author = models.ForeignKey(User, on_delete=models.CASCADE) # NEW PY REQUIREMENT
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     
 class Grammar(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=64)
     json = models.CharField(max_length=2048)
     last_modified = models.DateTimeField()
-    author = models.ForeignKey(User, on_delete=models.CASCADE) # NEW PY REQUIREMENT
-    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE) # NEW PY REQUIREMENT
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE)
 
     def save(self, *args, **kwargs):
         """From http://stackoverflow.com/questions/1737017/django-auto-now-and-auto-now-add - update last_modified on save """

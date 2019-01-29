@@ -105,9 +105,9 @@ class AggManager:
         agg_name_2 = field_type_to_name[agg_field_2['type']]
 
         # If aggregating over text field, use .keyword instead
-        if  agg_field_1['type'] == 'text' and sort_by_1 in ['terms', 'significant_terms']: # NEW PY REQUIREMENT
+        if  agg_field_1['type'] == 'text' and sort_by_1 in ['terms', 'significant_terms']:
             agg_field_1['path'] = '{0}.keyword'.format(agg_field_1['path'])
-        if  agg_field_2['type'] == 'text' and sort_by_2 in ['terms', 'significant_terms']: # NEW PY REQUIREMENT
+        if  agg_field_2['type'] == 'text' and sort_by_2 in ['terms', 'significant_terms']:
             agg_field_2['path'] = '{0}.keyword'.format(agg_field_2['path'])
 
         # 1st LEVEL AGGREGATION
