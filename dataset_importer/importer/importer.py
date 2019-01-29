@@ -13,7 +13,6 @@ from django.conf import settings
 from django.db import connections
 from dataset_importer.document_storer.storer import DocumentStorer
 from dataset_importer.document_reader.reader import DocumentReader, entity_reader_map, collection_reader_map, database_reader_map
-# from task_manager.document_preprocessor import PREPROCESSOR_INSTANCES
 
 from dataset_importer.archive_extractor.extractor import ArchiveExtractor, extractor_map
 from threading import Lock
@@ -123,7 +122,6 @@ class DatasetImporter(object):
         :rtype: dict
         """
         parameters['formats'] = json.loads(parameters.get('formats', '[]'))
-        # parameters['preprocessors'] = json.loads(parameters.get('preprocessors', '[]'))
         parameters['is_local'] = True if parameters.get('host_directory', None) else False
         parameters['keep_synchronized'] = self._determine_if_should_synchronize(parameters=parameters)
         parameters['remove_existing_dataset'] = True if parameters.get('remove_existing_dataset', 'false') == 'true' else False
@@ -382,11 +380,6 @@ def _processing_job(documents, parameter_dict):
     connections.close_all()
     # dataset_name = '{0}_{1}'.format(parameter_dict['texta_elastic_index'], parameter_dict['texta_elastic_mapping'])
     try:
-        # for preprocessor_code in parameter_dict['preprocessors']:
-            # preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
-            # result_map = preprocessor.transform(documents, **parameter_dict)
-            # documents = result_map['documents']
-
         storer = DocumentStorer.get_storer(**parameter_dict)
         stored_documents_count = storer.store(documents)
 
