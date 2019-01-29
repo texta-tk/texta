@@ -30,7 +30,6 @@ from django.template import Template
 import collections
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER, es_url
 
-from dataset_importer.document_preprocessor.preprocessor import preprocessor_map
 from conceptualiser.models import Term, TermConcept
 from permission_admin.models import Dataset
 from lexicon_miner.models import Lexicon,Word
@@ -68,9 +67,6 @@ def index(request):
     datasets = Datasets().get_allowed_datasets(request.user)
     language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
 
-    preprocessors = collect_map_entries(preprocessor_map)
-    enabled_preprocessors = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True]
-
     # Hide fact graph if no facts_str_val is present in fields
     display_fact_graph = 'hidden'
     for i in fields:
@@ -86,7 +82,7 @@ def index(request):
                        'lexicons': Lexicon.objects.all().filter(author=request.user),
                        'language_models': language_models, 
                        'allowed_datasets': datasets,                       
-                       'enabled_preprocessors': enabled_preprocessors}
+                       }
 
     template = loader.get_template('searcher.html')
 

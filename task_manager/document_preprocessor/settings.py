@@ -7,15 +7,15 @@ import logging
 from texta.settings import ERROR_LOGGER
 from texta.settings import DATASET_IMPORTER
 from texta.settings import SCORO_PREPROCESSOR_ENABLED
-from dataset_importer.document_preprocessor.preprocessors import CommentPreprocessor
-from dataset_importer.document_preprocessor.preprocessors import DatePreprocessor
-from dataset_importer.document_preprocessor.preprocessors import MlpPreprocessor
-from dataset_importer.document_preprocessor.preprocessors import TextTaggerPreprocessor
-from dataset_importer.document_preprocessor.preprocessors import MlpPreprocessor
-from dataset_importer.document_preprocessor.preprocessors import DatePreprocessor
-from dataset_importer.document_preprocessor.preprocessors import LexTagger
-from dataset_importer.document_preprocessor.preprocessors import ScoroPreprocessor
-from dataset_importer.document_preprocessor.preprocessors import EntityExtractorPreprocessor
+from task_manager.document_preprocessor.preprocessors import CommentPreprocessor
+from task_manager.document_preprocessor.preprocessors import DatePreprocessor
+from task_manager.document_preprocessor.preprocessors import MlpPreprocessor
+from task_manager.document_preprocessor.preprocessors import TextTaggerPreprocessor
+from task_manager.document_preprocessor.preprocessors import MlpPreprocessor
+from task_manager.document_preprocessor.preprocessors import DatePreprocessor
+from task_manager.document_preprocessor.preprocessors import LexTagger
+from task_manager.document_preprocessor.preprocessors import ScoroPreprocessor
+from task_manager.document_preprocessor.preprocessors import EntityExtractorPreprocessor
 
 
 mlp_field_properties = {
@@ -165,19 +165,6 @@ try:
 except Exception as e:
     print(e)
     log_preprocessor_status(code='entity_extractor', status='disabled')
-
-
-def convert_to_utf8(document):
-    """
-    Loops through all key, value pairs in dict, checks if it is a string/bytes
-    and tries to decode it to utf8.
-    :param document: Singular document.
-    :return: Singular document decoded into utf8.
-    """
-    for key, value in document.items():
-        if type(value) is bytes:
-            document[key] = value.decode('utf8')
-    return document
 
 
 PREPROCESSOR_INSTANCES = {

@@ -13,7 +13,7 @@ from task_manager.models import Task
 from .models import DatasetImport
 from utils.datasets import Datasets
 
-from dataset_importer.document_preprocessor import preprocessor_map
+# from task_manager.document_preprocessor import preprocessor_map
 from dataset_importer.importer.importer import DatasetImporter, entity_reader_map, collection_reader_map, database_reader_map, extractor_map
 from dataset_importer.syncer.syncer_process import Syncer
 from texta.settings import DATASET_IMPORTER as DATASET_IMPORTER_CONF, es_url
@@ -47,8 +47,8 @@ def index(request):
     document_collection_formats = collect_map_entries(collection_reader_map)
     database_formats = collect_map_entries(database_reader_map)
 
-    preprocessors = collect_map_entries(preprocessor_map)
-    enabled_preprocessors = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True]
+    # preprocessors = collect_map_entries(preprocessor_map)
+    # enabled_preprocessors = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True]
 
     datasets = Datasets().get_allowed_datasets(request.user)
     language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
@@ -61,8 +61,8 @@ def index(request):
         'database_formats': database_formats,
         'language_models': language_models,
         'allowed_datasets': datasets,
-        'jobs': jobs,
-        'enabled_preprocessors': enabled_preprocessors
+        'jobs': jobs
+        # 'enabled_preprocessors': enabled_preprocessors
     }
 
     return HttpResponse(template.render(context, request))
