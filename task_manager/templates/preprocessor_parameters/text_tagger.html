@@ -44,15 +44,15 @@
 		    my_field1
 		    my_field2"
                   class="glyphicon glyphicon-question-sign texta-tooltip"></span>
-
-        {% endif %}
-    </div>
-
-    <div class="grid-i">
-        <label class="control-label" for="text-tagger-processor-path">Path:</label>
-        <div class="select-wrapper">
-            {% if fields %}
-                <select class="selectpicker" multiple data-selected-text-format="count"
+                  
+                  {% endif %}
+                </div>
+                
+                <div class="grid-i">
+                    <label class="control-label" for="text-tagger-processor-path">Tag path:</label>
+                    <div class="select-wrapper">
+                        {% if fields %}
+                <select class="selectpicker" data-selected-text-format="count"
                         id="text-tagger-processor-path"
                         data-width="100%"
                         required
