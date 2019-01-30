@@ -7,7 +7,6 @@ import logging
 from texta.settings import ERROR_LOGGER
 from texta.settings import DATASET_IMPORTER
 from texta.settings import SCORO_PREPROCESSOR_ENABLED
-from task_manager.document_preprocessor.preprocessors import CommentPreprocessor
 from task_manager.document_preprocessor.preprocessors import DatePreprocessor
 from task_manager.document_preprocessor.preprocessors import MlpPreprocessor
 from task_manager.document_preprocessor.preprocessors import TextTaggerPreprocessor
@@ -120,19 +119,6 @@ except Exception as e:
     logging.getLogger(ERROR_LOGGER).exception(e)
     log_preprocessor_status(code='lexicon_classifier', status='disabled')
 
-try:
-    preprocessor_map['comment_preprocessor'] = {
-        'name': 'Comment preprocessor',
-        'description': 'Converts comments',
-        'class': CommentPreprocessor,
-        'parameters_template': 'preprocessor_parameters/comment_preprocessor.html',
-        'arguments': {},
-        'is_enabled': True
-    }
-    log_preprocessor_status(code='comment_preprocessor', status='enabled')
-except Exception as e:
-    logging.getLogger(ERROR_LOGGER).exception(e)
-    log_preprocessor_status(code='comment_preprocessor', status='disabled')
 
 try:
     preprocessor_map['scoro'] = {

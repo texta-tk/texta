@@ -13,12 +13,10 @@ class Highlighter(object):
             average_colors: boolean
                 If True, color codes of the overlapping highlights are averaged.
                 If False, the most common color code for the overlapping highlights is selected.
-
             derive_spans: boolean
                 If True, Highlighter will try to derive further highlight_data from the existing tagged_text.
                 Expects highlights to be represented as spans.
                 If False, Highlighter wont try to derive highlight_data.
-
             default_category: string
                 If derive_spans == True and derived highlight_data misses class attribute to use as a category,
                 its category will be set to default_dategory.
@@ -45,7 +43,7 @@ class Highlighter(object):
             # logger.set_context('highlight_data', highlight_data)
             # logger.info('original_text was empty - "", with HL data')
             # return ''
-
+        
         if tagged_text:
             if self._derive_spans:
                 alignment = [char_idx for char_idx in range(len(original_text))]
@@ -195,44 +193,41 @@ class Highlighter(object):
         return spans_to_data_indices
 
     def _get_tag_from_highlight_data(self, highlight_data_list):
-        category_name_value = {}
+        category_name_value = defaultdict(lambda: defaultdict(list))
         for highlight_data in highlight_data_list:
             category = highlight_data.get('category', self._default_category)
             name = highlight_data.get('name', '')
-            value = highlight_data.get('value', None)
-            description = highlight_data.get('description', None)
-            if category not in category_name_value:
-                category_name_value[category] = {}
+            value = highlight_data.get('value', '')
 
             # Creating category_name_value[category][name] = [].
             # Important for cases when value is missing.
-            category_name_value[category][name] = {"values": [], "descriptions": []}
+            category_name_value[category][name]
+
             if value:
-                category_name_value[category][name]["values"].append(value)
-            if description:
-                category_name_value[category][name]["descriptions"].append(description)
+                category_name_value[category][name].append(value)
 
         title_lines = []
         fact_name = ''
         fact_value = ''
         for category in category_name_value:
             title_line_tokens = [category]
-            for name in category_name_value[category]:
-                if category_name_value[category][name]:
-                    #for value in category_name_value[category][name]["values"]:
-                    #    title_line_tokens.append('%s=%s'%(name, value))
-                    title_line_tokens.append(name)
-                    for description in category_name_value[category][name]["descriptions"]:
-                        title_line_tokens.append('\n{0}'.format(description))
+            # Get name of fact
+            for name in category_name_value[category].keys():
+                if name:
+                    fact_name = name
+                    if category_name_value[category][name]:
+                        # Get value of fact for fact_str_val searches 
+                        for value in category_name_value[category][name]:
+                            fact_value = value
+                            title_line_tokens.append('%s=%s'%(name, value))
                 else:
                     title_line_tokens.append(name)
-                
             title_lines.append(' '.join(title_line_tokens))
         
         title = ('&#13;'.join(title_lines))
         color = self._get_color([highlight_data['color'] for highlight_data in highlight_data_list if 'color' in highlight_data])
 
-
+        span_str = '<span class="{}" title="{}" style="background-color: {};{}" data-fact_name="{}" data-fact_val="{}">'
         if '[fact]' in title or '[fact_val]' in title or '[ES]' in title:
             return span_str.format('[HL]', title, color, (self._additional_style_string if color != 'none' else ''), fact_name, fact_value)
 
