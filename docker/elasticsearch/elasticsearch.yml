@@ -2,3 +2,5 @@ cluster.name: TEXTA
 node.name: TEXTA-1
 path.data: /usr/share/elasticsearch/data
 network.host: 0.0.0.0
+
+

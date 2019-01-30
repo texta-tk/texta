@@ -14,54 +14,71 @@ class Index {
         this.minAmountData = 3;
         Object.freeze(this.AggregationTpes);
     }
+
     getDatesYear() {
-        if (checkNested(this.aggregations, this.AggregationTpes.DATE_HISTOGRAM, 'kuupaev_year', 'buckets')) {
-            return this.aggregations[this.AggregationTpes.DATE_HISTOGRAM].kuupaev_year.buckets;
+        let keys = Object.keys(this.aggregations[this.AggregationTpes.DATE_HISTOGRAM]);
+        let key = keys.filter(function (key) {
+            return key.endsWith("_year")
+        })[0];
+
+        if (checkNested(this.aggregations, this.AggregationTpes.DATE_HISTOGRAM, key, 'buckets')) {
+            return this.aggregations[this.AggregationTpes.DATE_HISTOGRAM][key].buckets;
         } else {
             console.error(`index ${this.index_name}, does not have date_histogram field!`);
             return undefined
         }
     }
+
     getDatesMonth() {
-        if (checkNested(this.aggregations, this.AggregationTpes.DATE_HISTOGRAM, 'kuupaev_month', 'buckets')) {
-            return this.aggregations[this.AggregationTpes.DATE_HISTOGRAM].kuupaev_month.buckets;
+        let keys = Object.keys(this.aggregations[this.AggregationTpes.DATE_HISTOGRAM]);
+        let key = keys.filter(function (key) {
+            return key.endsWith("_month")
+        })[0];
+
+        if (checkNested(this.aggregations, this.AggregationTpes.DATE_HISTOGRAM, key, 'buckets')) {
+            return this.aggregations[this.AggregationTpes.DATE_HISTOGRAM][key].buckets;
         } else {
             console.error(`index ${this.index_name}, does not have date_histogram field!`);
             return undefined
         }
     }
-    getFrequentItems(){
-        if(checkNested(this.aggregations, this.AggregationTpes.STERMS, )){
+
+    getFrequentItems() {
+        if (checkNested(this.aggregations, this.AggregationTpes.STERMS,)) {
             return this.aggregations[this.AggregationTpes.STERMS]
-        }else{
+        } else {
             console.error(`index ${this.index_name}, Properties did not match expected format: STERMS!`)
             return undefined
         }
     }
-    getSignificantWords(){
-        if(checkNested(this.aggregations, this.AggregationTpes.SIGSTERMS, )){
+
+    getSignificantWords() {
+        if (checkNested(this.aggregations, this.AggregationTpes.SIGSTERMS,)) {
             return this.aggregations[this.AggregationTpes.SIGSTERMS]
-        }else{
+        } else {
             console.error(`index ${this.index_name}, Properties did not match expected format: SIGSTERMS!`)
             return undefined
         }
     }
-    getFacts(){
-        if(checkNested(this.aggregations, this.AggregationTpes.NESTED)){
+
+    getFacts() {
+        if (checkNested(this.aggregations, this.AggregationTpes.NESTED)) {
             return this.aggregations[this.AggregationTpes.NESTED]
-        }else{
+        } else {
             console.error(`index ${this.index_name}, Properties did not match expected format: NESTED!`)
             return undefined
         }
     }
-    getStatistics(){
-        if(checkNested(this.aggregations, this.AggregationTpes.VALUECOUNT )){
+
+    getStatistics() {
+        if (checkNested(this.aggregations, this.AggregationTpes.VALUECOUNT)) {
             return this.aggregations[this.AggregationTpes.VALUECOUNT]
-        }else{
+        } else {
             console.error(`index ${this.index_name}, Properties did not match expected format: VALUECOUNT!`)
             return undefined
         }
     }
+
     /*so each index can filter seperately if in the future you want to adjust filtering settings for each index */
     filterTerms(result) {
         let notAllowedToEnterHeaven = []
@@ -85,7 +102,7 @@ function checkNested(obj) {
 
     for (var i = 0; i < args.length; i++) {
         if (!obj || !obj.hasOwnProperty(args[i])) {
-            console.error('no property: '+args[i])
+            console.error('no property: ' + args[i])
             return false;
         }
         obj = obj[args[i]];

@@ -26,7 +26,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, StreamingHttpResponse, HttpResponseBadRequest, JsonResponse
 from django.template import loader
 from django.utils.encoding import smart_str
-from searcher.dashboard.dashboard import SearcherDashboard
+from searcher.dashboard.dashboard import SingleSearcherDashboard, MultiSearcherDashboard
 # For string templates
 from django.template import Context
 from django.template import Template
@@ -148,10 +148,12 @@ def dashboard_endpoint(request):
 
     # search_query = Search.objects.all()[0].query
     query_dict = None  # json.loads(search_query, encoding='utf8')['main']
-    dashboard = SearcherDashboard(es_url=es_url, indices=indices, query_body=query_dict)
-    result = dashboard.response
+    dashboard = SingleSearcherDashboard(es_url=es_url, indices=indices, query_body=query_dict)
 
-    return JsonResponse(result)
+    query_result = dashboard.conduct_query()
+    formated_result = dashboard.format_result(query_result)
+
+    return JsonResponse(formated_result)
 
 
 @login_required
