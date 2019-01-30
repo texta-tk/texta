@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from django.urls import reverse  # NEW PY REQUIREMENT
+from django.urls import reverse 
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.core.files.storage import default_storage
@@ -335,7 +335,7 @@ def _unpickle_method(func_name, obj, cls):
     return func.__get__(obj, cls)
 
 
-import copyreg  # NEW PY REQUIREMENT
+import copyreg 
 import types
 
-copyreg.pickle(types.MethodType, _pickle_method, _unpickle_method)  # NEW PY REQUIREMENT
+copyreg.pickle(types.MethodType, _pickle_method, _unpickle_method) 

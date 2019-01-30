@@ -1,7 +1,7 @@
 $('input[name="file"]').val('');
 $('#keep-synchronized').val('false');
 $('#remove-existing-dataset').val('false');
-$('.apply-preprocessor').val([]);
+// $('.apply-preprocessor').val([]);
 
 // $('#input-type').change(function () {
 //     $(".input-type-pane").hide();
@@ -45,7 +45,7 @@ function importDataset() {
     formData = collectFormats(formData);
     formData = collectTextaDatasetArguments(formData);
     formData = collectDataArguments(formData);
-    formData = collectPreprocessorArguments(formData);
+    // formData = collectPreprocessorArguments(formData);
 
     var isImporting = false;
 
@@ -105,14 +105,14 @@ $('.file-input-method-btn').on('click',(function() {
     fileInputSelection($(this).val());
 }));
 
-$('.apply-preprocessor').on('click',(function() {
-    var preprocessorIdx = $(this).data('preprocessorIdx');
-    if (this.checked) {
-        $('#preprocessor-' + preprocessorIdx + '-parameters').slideDown()
-    } else {
-        $('#preprocessor-' + preprocessorIdx + '-parameters').slideUp()
-    }
-}));
+// $('.apply-preprocessor').on('click',(function() {
+//     var preprocessorIdx = $(this).data('preprocessorIdx');
+//     if (this.checked) {
+//         $('#preprocessor-' + preprocessorIdx + '-parameters').slideDown()
+//     } else {
+//         $('#preprocessor-' + preprocessorIdx + '-parameters').slideUp()
+//     }
+// }));
 
 $('#data-formats').on('change',(function() {
     var parameterTags = getSelectedFormatsParameterTags(this);

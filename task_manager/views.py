@@ -20,7 +20,7 @@ from texta.settings import MODELS_DIR
 from texta.settings import PROTECTED_MEDIA
 from texta.settings import ERROR_LOGGER
 
-from dataset_importer.document_preprocessor import preprocessor_map
+from task_manager.document_preprocessor import preprocessor_map
 
 from task_manager.tasks.task_params import task_params, get_fact_names, fact_names
 from task_manager.tools import get_pipeline_builder

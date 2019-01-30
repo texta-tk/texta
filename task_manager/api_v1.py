@@ -18,8 +18,8 @@ from task_manager.tools import MassHelper
 from task_manager.tools import get_pipeline_builder
 from task_manager.models import TagFeedback
 
-from dataset_importer.document_preprocessor import preprocessor_map
-from dataset_importer.document_preprocessor import PREPROCESSOR_INSTANCES
+from task_manager.document_preprocessor import preprocessor_map
+from task_manager.document_preprocessor import PREPROCESSOR_INSTANCES
 
 API_VERSION = "1.0"
 
