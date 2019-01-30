@@ -1,26 +1,31 @@
 <input id="dataset" type="hidden" value="{{dataset}}">
 <input id="mapping" type="hidden" value="{{mapping}}">
+<div class="toggle-column-select-wrapper">
+    <select data-show-subtext="true" data-live-search="true" data-actions-box="true" data-width="250px" data-hide-disabled='true' multiple name="toggle-column-select" id='toggle-column-select' class="form-control input-sm ">
+        <option>Actions Column</option>
+        {% for column in columns %}
+        <option value="{{column.index}}">{{column.name}}</option>
+        {% endfor %}
+    </select>
+    
+</div>
 
 <table id="examples" class="display cell-border">
     <thead>
-        <tr>
+        <tr id="columnsRow">
+            <th class="dt-center"><a onclick=javascript:deleteDocument() role="button" class="dt_center"><i role="button"  title="Delete selected searches" class="glyphicon glyphicon glyphicon glyphicon-trash"></i></a></th>
             {% for column in columns %}
-                <th>{{column.name}}</th>
+            <th>{{column.name}}</th>
             {% endfor %}
         </tr>
     </thead>
 
-    <tr><td>
+    <tr>
+        <td>
 
-        <br/><br/><br/>
+            <br /><br /><br />
 
-    </td></tr>
+        </td>
+    </tr>
 
-    <tfoot>
-        <tr>
-            {% for column in columns %}
-                <th>{{column.name}}</th>
-            {% endfor %}
-        </tr>
-    </tfoot>
 </table>

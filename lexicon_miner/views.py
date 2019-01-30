@@ -4,7 +4,7 @@ import json
 import logging
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.template import loader
 from django.http import QueryDict
 import requests
@@ -55,28 +55,24 @@ def newLexicon(request):
         HttpResponseRedirect -- If created in lm, then redirects to new lexicon, else doesn't return anything
     """
     lexiconName = request.POST['lexiconname']
-
-    try:
-        model = str(request.session['model'])
-    except KeyError:
-        language_models = Task.objects.filter(task_type='train_model').filter(status='completed').order_by('-pk')
-        model = str(language_models[0].pk)
-        request.session['model'] = model
-
+    if(lexiconName == ''):
+        return returnAjaxResult('error', 'Lexicon name can\'t be empty')
 
     if 'lexiconkeywords' in request.POST:
         lexiconKeywords = request.POST['lexiconkeywords']
     else:
         lexiconKeywords = None
 
-    if lexiconName:
-        try:
-            Lexicon(name=lexiconName,description='na',author=request.user).save()
-        except Exception as e:
-            logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_creation_failed','args':{'user_name':request.user.username,'lexicon_name':lexiconName}}),exc_info=True)
+    try:
+        Lexicon(name=lexiconName,description='na',author=request.user).save()
+    except Exception as e:
+        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_creation_failed','args':{'user_name':request.user.username,'lexicon_name':lexiconName}}),exc_info=True)
 
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_created','args':{'user_name':request.user.username,'lexicon_name':lexiconName}}))
+    logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_created','args':{'user_name':request.user.username,'lexicon_name':lexiconName}}))
 
+    if 'ajax_lexicon_miner' in request.POST:
+        return returnAjaxResult('success', URL_PREFIX + '/lexicon_miner/select?id='+str(Lexicon.objects.filter(name=lexiconName).last().id))
+    
     if lexiconKeywords:
         request.POST._mutable = True
         request.POST = QueryDict('', mutable=True)
@@ -89,12 +85,19 @@ def newLexicon(request):
         # last to get the latest entry just in case there is a duplicate
         return HttpResponseRedirect(URL_PREFIX + '/lexicon_miner/select?id='+str(Lexicon.objects.filter(name=lexiconName).last().id))
 
+def returnAjaxResult(result, message):
+    response_data = {}
+    response_data['result'] = result
+    response_data['message'] = message
+    return JsonResponse(response_data)
 
 @login_required
 def deleteLexicon(request):
     try:
         lexicon = Lexicon.objects.get(id=request.GET['id'])
-        model_manager.remove_negatives(request.session['model'],request.user.username,lexicon.id)
+        # if the user tries to delete a lexicon with no model it throws an error
+        if('model' in request.session):
+            model_manager.remove_negatives(request.session['model']['pk'],request.user.username,lexicon.id)
         Word.objects.filter(lexicon=lexicon).delete()
         lexicon.delete()
 
@@ -126,7 +129,13 @@ def saveLexicon(request, local_request=False):
         if lexId:
             lexicon = Lexicon.objects.get(id=lexId)
             Word.objects.filter(lexicon=lexicon).delete()
-            model_manager.save_negatives(request.session['model'],request.user.username,lexicon.id)
+
+            try:
+                model_manager.save_negatives(request.session['model']['pk'],request.user.username,lexicon.id)
+            except KeyError:
+                logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'SAVE LEXICON','event':'negatives_saving_failed','args':{'user_name':request.user.username,'lexicon_id':lexId},'reason':'no negatives to save'}))
+
+
             # Fix problems with '' and ""
             if local_request:
                 lexicon_words = uniq(json.loads(json.dumps(request.POST['lexicon'])))
@@ -167,7 +176,7 @@ def selectLexicon(request):
         language_models = Task.objects.filter(task_type='train_model').filter(status=Task.STATUS_COMPLETED).order_by('-pk')
 
         # Define selected mapping
-        ds = Datasets().activate_dataset(request.session)
+        ds = Datasets().activate_datasets(request.session)
         es_m = ds.build_manager(ES_Manager)
         fields = es_m.get_column_names()
 
@@ -180,12 +189,11 @@ def selectLexicon(request):
 
 
 def get_example_texts(request, field, value):
-    ds = Datasets().activate_dataset(request.session)
-    dataset = ds.get_index()
-    mapping = ds.get_mapping()
+    ds = Datasets().activate_datasets(request.session)
+    es_m = ds.build_manager(ES_Manager)
+    query = { "size":10, "highlight": {"fields": {field: {}}}, "query": {"match": {field: value}}}
 
-    query = json.dumps({ "size":10, "highlight": {"fields": {field: {}}}, "query": {"match": {field: value}}})
-    response = ES_Manager.plain_scroll(es_url, dataset, mapping, query)
+    response = es_m.perform_query(query)
 
     matched_sentences = []
     for hit in response['hits']['hits']:
@@ -203,9 +211,8 @@ def query(request):
         suggestionset = SuggestionSet(lexicon=lexicon,method=request.POST['method'])
         suggestionset.save()
 
-        ignored_idxes = model_manager.get_negatives(request.session['model'],request.user.username,lexicon.id)
-
-        model = model_manager.get_model(request.session['model'])
+        ignored_idxes = model_manager.get_negatives(request.session['model']['unique_id'],request.user.username,lexicon.id)
+        model = model_manager.get_model(request.session['model']['unique_id'])
         if model.model.wv.syn0norm is None:
             model.model.init_sims()
 
@@ -223,7 +230,7 @@ def query(request):
 
         suggestions = []
         
-        model_run_obj = Task.objects.get(id=int(request.session['model']))
+        model_run_obj = Task.objects.get(id=int(request.session['model']['pk']))
         """ json.loads(json.loads(model_run_obj.parameters)['field'])['path'] """
         tooltip_feature = json.loads(model_run_obj.parameters)['field']
 
@@ -231,7 +238,7 @@ def query(request):
             for a in getattr(model,request.POST['method'])(positive=positives,topn=40,ignored_idxes = ignored_idxes):
                 encoded_a = encode_for_id(a[0])
                 matched_sentences = get_example_texts(request, tooltip_feature, a[0])
-                suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded_a + '\'>&bull; <a title="' + '\n'.join(matched_sentences).replace('"','') + '" href="javascript:addWord(\''+encoded_a+'\');">'+a[0]+'</a></div>')
+                suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded_a + '\'>&bull; <a role="button" title="' + '\n'.join(matched_sentences).replace('"','') + '" onclick="javascript:addWord(this,\''+encoded_a+'\');">'+a[0]+'</a></div>')
         elif request.POST['method'][:17] == 'simple_precluster':
             method = request.POST['method'][18:]
 
@@ -249,7 +256,7 @@ def query(request):
             for a in getattr(model,method)(positive=new_positives,topn=40,ignored_idxes = ignored_idxes):
                 encoded_a = encode_for_id(a[0])
                 matched_sentences = get_example_texts(request, tooltip_feature, a[0])
-                suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded_a + '\'>&bull; <a title="' + '\n'.join(matched_sentences).replace('"','') + '" href="javascript:addWord(\''+encoded_a+'\');">'+a[0]+'</a></div>')
+                suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded_a + '\'>&bull; <a role="button" title="' + '\n'.join(matched_sentences).replace('"','') + '" onclick="javascript:addWord(this,\''+encoded_a+'\');">'+a[0]+'</a></div>')
 
 
         elif request.POST['method'][:10] == 'precluster':
@@ -275,7 +282,7 @@ def query(request):
 
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'TERM SUGGESTION','event':'terms_suggested','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'suggestion_method':request.POST['method']}}))
 
-        return HttpResponse(['<table><tr><td id=\'suggestion_cell_1\'>'] + suggestions[:20] + ['</td><td id=\'suggestion_cell_2\'>'] + suggestions[20:] + ['</td></tr></table>'])
+        return HttpResponse(['<table class="width-max"><tr class="flex-content-space-around"><td id=\'suggestion_cell_1\'>'] + suggestions[:20] + ['</td><td id=\'suggestion_cell_2\'>'] + suggestions[20:] + ['</td></tr></table>'])
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'TERM SUGGESTION','event':'term_suggestion_failed','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'suggestion_method':request.POST['method']}}),exc_info=True)
         return HttpResponse()
@@ -287,7 +294,7 @@ def RRA_suggestions(suggestions_list, tooltip_feature, request):
     suggestions = []
     for (name,encoded) in encoded_suggestions:
         matched_sentences = get_example_texts(request, tooltip_feature, name)
-        suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded + '\'>&bull; <a title="' + '\n'.join(matched_sentences).replace('"','') + '" href="javascript:addWord(\'' + encoded + '\');">' + name + '</a></div>')
+        suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded + '\'>&bull; <a role="button" title="' + '\n'.join(matched_sentences).replace('"','') + '" onclick="javascript:addWord(this,\'' + encoded + '\');">' + name + '</a></div>')
     return suggestions
 
 
@@ -303,7 +310,7 @@ def reset_suggestions(request):
     lexicon_id = request.POST['lid']
 
     try:
-        model_manager.reset_negatives(request.session['model'],request.user.username,int(lexicon_id))
+        model_manager.reset_negatives(request.session['model']['pk'],request.user.username,int(lexicon_id))
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'suggestions_reset','args':{'user_name':request.user.username,'lexicon_id':lexicon_id}}))
     except Exception as e:
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'suggestions_reset','args':{'user_name':request.user.username,'lexicon_id':lexicon_id}}),exc_info=True)

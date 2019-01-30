@@ -28,9 +28,9 @@ import csv
 import sys, os
 
 try:
-    from io import BytesIO # NEW PY REQUIREMENT
+    from io import BytesIO
 except:
-    from io import StringIO # NEW PY REQUIREMENT
+    from io import StringIO
 
 ES_SCROLL_BATCH = 100
 

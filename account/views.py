@@ -17,8 +17,7 @@ from django.core.mail import EmailMessage
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-
-
+from django.core.mail import EmailMessage
 from .models import Profile
 from permission_admin.models import Dataset
 from utils.datasets import Datasets
@@ -29,14 +28,8 @@ from task_manager.models import Task
 from texta.settings import REQUIRE_EMAIL_CONFIRMATION, USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_DEFAULT, es_url, STATIC_URL
 
 
-from django.core.mail import EmailMessage
-
-
-
 def index(request):
 	template = loader.get_template('account.html')
-	ds = Datasets().activate_dataset(request.session)
-	
 	datasets = Datasets().get_allowed_datasets(request.user)
 	language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
 
@@ -47,30 +40,30 @@ def index(request):
 def update(request):
 	logger = LogManager(__name__, 'CHANGE_SETTINGS')
 
-	parameters = request.POST
-	
-	if 'model' in parameters:
-		model = str(parameters['model'])
+	parameters = request.POST	
+	if 'model_pk' in parameters:
+		model = {"pk": parameters["model_pk"], "description": parameters["model_description"], "unique_id": parameters["model_uuid"]}
 		request.session['model'] = model
 		logger.clean_context()
 		logger.set_context('user_name', request.user.username)
 		logger.set_context('new_model', model)
-		logger.info('dataset_updated')
+		logger.info('model_updated')
 
-	if 'dataset' in parameters:
+	if 'dataset[]' in parameters:
 		# TODO: check if is a valid mapping_id before change session[dataset]
-		new_dataset = parameters['dataset']
+		new_datasets = parameters.getlist('dataset[]')
+		
+		new_datasets = [new_dataset for new_dataset in new_datasets if request.user.has_perm('permission_admin.can_access_dataset_' + str(new_dataset))]
 
-		if request.user.has_perm('permission_admin.can_access_dataset_' + str(new_dataset)):
-			request.session['dataset'] = new_dataset
+		request.session['dataset'] = new_datasets
 
-			logger.clean_context()
-			logger.set_context('user_name', request.user.username)
-			logger.set_context('new_dataset', new_dataset)
-			logger.info('dataset_updated')
+		logger.clean_context()
+		logger.set_context('user_name', request.user.username)
+		logger.set_context('new_datasets', new_datasets)
+		logger.info('datasets_updated')
 
-		ds = Datasets().activate_dataset(request.session)
-		es_m = ds.build_manager(ES_Manager)
+		ds = Datasets().activate_datasets(request.session)
+		#es_m = ds.build_manager(ES_Manager)
 
 	return HttpResponseRedirect(URL_PREFIX + '/')
 
@@ -156,7 +149,6 @@ def change_password(request):
 
 	return HttpResponse()
 
-
 def login(request):
 	username = request.POST['username']
 	password = request.POST['password']
@@ -167,11 +159,13 @@ def login(request):
 		django_login(request, user)
 		logging.getLogger(INFO_LOGGER).info(
 				json.dumps({'process': '*', 'event': 'login_process_succeeded', 'args': {'user_name': username}}))
+		return HttpResponse(json.dumps({'process': '*', 'event': 'login_process_succeeded', 'args': {'user_name': username}}))
+
 	else:
 		logging.getLogger(INFO_LOGGER).info(
 				json.dumps({'process': '*', 'event': 'login_process_failed', 'args': {'user_name': username}}))
 
-	return HttpResponseRedirect(URL_PREFIX + '/')
+	return HttpResponse(json.dumps({'process': '*', 'event': 'login_process_failed', 'args': {'user_name': username}}))
 
 
 @login_required

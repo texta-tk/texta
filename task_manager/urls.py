@@ -11,6 +11,7 @@ urlpatterns = [
     url(r'^start_mass_task$', views.start_mass_task, name='start_mass_task'),
     url(r'^delete_task$', views.delete_task, name='delete_task'),
     url(r'download_model$', views.download_model, name='download_model'),
+    url(r'upload_task_archive', views.upload_task_archive, name='upload_model'),
 
     # API
     url(r'^api/v1$', api_v1.api_info, name='api_info'),

@@ -1,30 +1,33 @@
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
+import sys
+import re
 import json
+import logging
 import requests
 import itertools
 import traceback
 from utils.log_manager import LogManager
-import logging
-from texta.settings import ERROR_LOGGER
+from texta.settings import FACT_PROPERTIES, ERROR_LOGGER
 
 class FactManager:
     """ Manage Searcher facts, like deleting/storing, adding facts.
     """
     def __init__(self,request):
         self.es_params = request.POST
-        self.ds = Datasets().activate_dataset(request.session)
-        self.index = self.ds.get_index()
-        self.mapping = self.ds.get_mapping()
-        self.es_m = ES_Manager(self.index, self.mapping)
+        self.ds = Datasets().activate_datasets(request.session)
+        self.es_m = self.ds.build_manager(ES_Manager)
         self.field = 'texta_facts'
+        # Maybe should come from some settings file
+        self.max_name_len = 15
+        self.bs = 7500
 
-    def remove_facts_from_document(self, rm_facts_dict, bs=7500):
+    def remove_facts_from_document(self, rm_facts_dict, doc_id=False):
         '''remove a certain fact from all documents given a [str]key and [str]val'''
         try:
-            query = self._fact_deletion_query(rm_facts_dict)
+            query = self._fact_deletion_query(rm_facts_dict, doc_id)
             self.es_m.load_combined_query(query)
-            response = self.es_m.scroll(size=bs, field_scroll=self.field)
+            response = self.es_m.scroll(size=self.bs, field_scroll=self.field)
             scroll_id = response['_scroll_id']
             total_docs = response['hits']['total']
             docs_left = total_docs # DEBUG
@@ -39,7 +42,7 @@ class FactManager:
                             # If the fact name is in rm_facts_dict keys
                             if fact["fact"] in rm_facts_dict:
                                 # If the fact value is not in the delete key values
-                                if fact['str_val'] not in rm_facts_dict.getlist(fact["fact"]):
+                                if fact['str_val'] not in rm_facts_dict[fact["fact"]]:
                                     new_field.append(fact)
                             else:
                                 new_field.append(fact)
@@ -47,9 +50,9 @@ class FactManager:
                         data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
                         document = {'doc': {self.field: new_field}}
                         data += json.dumps(document)+'\n'
-                    response = self.es_m.scroll(scroll_id=scroll_id, size=bs, field_scroll=self.field)
+                    response = self.es_m.scroll(scroll_id=scroll_id, size=self.bs, field_scroll=self.field)
                     total_docs = len(response['hits']['hits'])
-                    docs_left -= bs # DEBUG
+                    docs_left -= self.bs # DEBUG
                     scroll_id = response['_scroll_id']
                     self.es_m.plain_post_bulk(self.es_m.es_url, data)
                 except:
@@ -66,98 +69,40 @@ class FactManager:
                 'response': response,
             })
 
-    def tag_documents_with_fact(self, es_params, tag_name, tag_value, tag_field):
-        '''Used to tag all documents in the current search with a certain fact'''
 
-        self.es_m.build(es_params)
-        self.es_m.load_combined_query(self.es_m.combined_query)
+    def _fact_deletion_query(self, rm_facts_dict, doc_id):
+        '''Creates the query for fact deletion based on dict of facts {nampe: val}'''
+        fact_queries = []
+        for key in rm_facts_dict:
+            for val in rm_facts_dict[key]:
+                terms = [{"term": {self.field+".fact": key}},{"term": {self.field+".str_val": val}}]
+                if doc_id:
+                    terms.append({"term": {"_id": doc_id}})
+                fact_queries.append({"bool": {"must": terms}})
 
-        response = self.es_m.scroll()
+        query = {"main": {"query": {"nested": {"path": self.field,"query":
+         {"bool":{"should":fact_queries}}}},"_source": [self.field]}}
 
-        data = ''
-        for document in response['hits']['hits']:
-            if 'mlp' in tag_field:
-                split_field = tag_field.split('.')
-                span = [0, len(document['_source'][split_field[0]][split_field[1]])]
-            else:
-                span = [0, len(document['_source'][tag_field].strip())]
-            document['_source'][self.field].append({"str_val": tag_value, "spans": str([span]), "fact": tag_name, "doc_path":tag_field})
-
-            data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
-            document = {'doc': {self.field: document['_source'][self.field]}}
-            data += json.dumps(document)+'\n'
-        self.es_m.plain_post_bulk(self.es_m.es_url, data)
-        response = requests.post('{0}/{1}/_update_by_query?refresh&conflicts=proceed'.format(self.es_m.es_url, self.index), headers=self.es_m.HEADERS)
-
-    def count_cooccurrences(self, fact_pairs):
-        """Finds the counts of cooccuring facts
-
-        Arguments:
-            fact_pairs {list of tuples of tuples} -- Example:[(('ORG', 'Riigikohus'),('PER', 'Jaan')), (('ORG', 'Riigikohus'),('PER', 'Peeter'))]
-
-        Returns:
-            [int list] -- Occurances of the given facts
-        """
-        queries = []
-        for fact_pair in fact_pairs:
-            fact_constraints = []
-
-            for fact in fact_pair:
-                constraint = {"nested": {"path": "texta_facts", "query": {"bool":{"must": [{"term": {"texta_facts.fact": fact[0]}}, {"term": {"texta_facts.str_val": fact[1]}}]}}}}
-                fact_constraints.append(constraint)
-
-            query = {"query": {"bool": {"must": fact_constraints}}, "size": 0}
-            queries.append(json.dumps(query))
-
-        header = json.dumps({"index": self.index})
-        data = "\n".join(["{0}\n{1}".format(header, q) for q in queries])+"\n"
-
-        responses = requests.post("{0}/{1}/_msearch".format(self.es_m.es_url, self.index), data=data, headers={"Content-Type":"application/json"})
-        counts = [response["hits"]["total"] for response in responses.json()['responses']]
-
-        return counts
-
-    def facts_via_aggregation(self, size=15):
-        """Finds all facts from current search.
-        Parameters:
-            size - [int=15] -- Amount of fact values per fact name to search in query
-        Returns:
-            facts - [dict] -- Details for each fact, ex: {'PER - kostja': {'id': 0, 'name': 'PER', 'value': 'kostja', 'doc_count': 44}}
-            fact_combinations - [list of tuples] -- All possible combinations of all facts: [(('FIRST_FACTNAME', 'FIRST_FACTVAL'), ('SECOND_FACTNAME', 'SECOND_FACTVAL'))]
-            unique_fact_names - [list of string] -- All unique fact names
-        """
-
-        aggs = {"facts": {"nested": {"path": "texta_facts"}, "aggs": {"fact_names": {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val", "size": size}}}}}}}
-        self.es_m.build(self.es_params)
-        self.es_m.set_query_parameter('aggs', aggs)
-
-        response = self.es_m.search()
-
-        response_aggs = response['aggregations']['facts']['fact_names']['buckets']
-
-        facts = {}
-        fact_combinations = []
-        fact_count = 0
-        unique_fact_names = []
-        for bucket in response_aggs:
-            unique_fact_names.append(bucket['key'])
-            for fact in bucket['fact_values']['buckets']:
-                facts[bucket['key'] + " - " + fact['key']] = {'id': fact_count, 'name': bucket['key'], 'value': fact['key'], 'doc_count': fact['doc_count']}
-                fact_combinations.append((bucket['key'], fact['key']))
-                fact_count += 1
-
-        fact_combinations = [x for x in itertools.combinations(fact_combinations, 2)]
-        return (facts, fact_combinations, unique_fact_names)
+        return query
 
 
-    def fact_graph(self, search_size):
-        facts, fact_combinations, unique_fact_names = self.facts_via_aggregation(size=search_size)
+class FactGraph(FactManager):
+    def __init__(self, request, es_params, search_size):
+        super().__init__(request)
+        self.es_params = es_params
+        self.search_size = search_size
+
+
+    def fact_graph(self):
+        facts, fact_combinations, unique_fact_names = self.facts_via_aggregation(size=self.search_size)
         # Get cooccurrences and remove values with 0
         fact_combinations = {k:v for k,v in dict(zip(fact_combinations, self.count_cooccurrences(fact_combinations))).items() if v != 0}
         shapes = ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"]
         types = dict(zip(unique_fact_names, itertools.cycle(shapes)))
 
         nodes = []
+        max_node_size = 0
+        min_node_size = 0
         for i, fact in enumerate(facts):
             nodes.append({"source": facts[fact]['id'], "size": facts[fact]['doc_count'], "score": facts[fact]['doc_count'], "name": facts[fact]['name'], "id": facts[fact]['value'], "type": types[facts[fact]['name']]})
             # Track max/min count
@@ -177,17 +122,206 @@ class FactManager:
         graph_data = json.dumps({"nodes": nodes, "links": links})
         return (graph_data, unique_fact_names, max_node_size, max_link_size, min_node_size)
 
-    def _fact_deletion_query(self, rm_facts_dict):
-        '''Creates the query for fact deletion based on dict of facts {name: val}'''
-        fact_queries = []
-        for key in rm_facts_dict:
-            for val in rm_facts_dict.getlist(key):
-                fact_queries.append(
-                    {"bool": {"must": [{"match": {self.field+".fact": key}},
-                    {"match": {self.field+".str_val": val}}]}})
+    def facts_via_aggregation(self, size=15):
+        """Finds all facts from current search.
+        Parameters:
+            size - [int=15] -- Amount of fact values per fact name to search in query
+        Returns:
+            facts - [dict] -- Details for each fact, ex: {'PER - kostja': {'id': 0, 'name': 'PER', 'value': 'kostja', 'doc_count': 44}}
+            fact_combinations - [list of tuples] -- All possible combinations of all facts: [(('FIRST_FACTNAME', 'FIRST_FACTVAL'), ('SECOND_FACTNAME', 'SECOND_FACTVAL'))]
+            unique_fact_names - [list of string] -- All unique fact names
+        """
 
-        query = {"main": {"query": {"nested":
-            {"path": self.field,"query": {"bool": {"should":fact_queries
-            }}}},"_source": [self.field]}}
+        aggs = {"facts": {"nested": {"path": "texta_facts"}, "aggs": {"fact_names": {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val", "size": size}}}}}}}
+        self.es_m.build(self.es_params)
+        self.es_m.set_query_parameter('aggs', aggs)
 
-        return query
+        response = self.es_m.search()
+        response_aggs = response['aggregations']['facts']['fact_names']['buckets']
+
+        facts = {}
+        fact_combinations = []
+        fact_count = 0
+        unique_fact_names = []
+        for bucket in response_aggs:
+            unique_fact_names.append(bucket['key'])
+            for fact in bucket['fact_values']['buckets']:
+                facts[bucket['key'] + " - " + fact['key']] = {'id': fact_count, 'name': bucket['key'], 'value': fact['key'], 'doc_count': fact['doc_count']}
+                fact_combinations.append((bucket['key'], fact['key']))
+                fact_count += 1
+        fact_combinations = [x for x in itertools.combinations(fact_combinations, 2)]
+        return (facts, fact_combinations, unique_fact_names)
+
+
+    def count_cooccurrences(self, fact_pairs):
+        """Finds the counts of cooccuring facts
+
+        Arguments:
+            fact_pairs {list of tuples of tuples} -- Example:[(('ORG', 'Riigikohus'),('PER', 'Jaan')), (('ORG', 'Riigikohus'),('PER', 'Peeter'))]
+
+        Returns:
+            [int list] -- Occurances of the given facts
+        """
+        dataset_str = self.es_m.stringify_datasets()
+        
+        queries = []
+        for fact_pair in fact_pairs:
+            fact_constraints = []
+            for fact in fact_pair:
+                constraint = {"nested": {"path": "texta_facts", "query": {"bool":{"must": [{"term": {"texta_facts.fact": fact[0]}}, {"term": {"texta_facts.str_val": fact[1]}}]}}}}
+                fact_constraints.append(constraint)
+            query = {"query": {"bool": {"must": fact_constraints}}, "size": 0}
+            header = {"index": dataset_str}
+            queries.append(json.dumps(header))
+            queries.append(json.dumps(query))
+
+        responses = self.es_m.perform_queries(queries)
+        counts = [response["hits"]["total"] for response in responses]
+        return counts
+
+
+class FactAdder(FactManager):
+    def __init__(self, request, es_params, fact_name, fact_value, fact_field, doc_id, method, match_type, case_sens):
+        super().__init__(request)
+        self.es_params = es_params
+        self.fact_name = fact_name[:self.max_name_len]
+        self.fact_value = fact_value
+        self.fact_field = fact_field
+        self.doc_id = doc_id
+        self.method = method
+        self.match_type = match_type
+        self.case_sens = case_sens
+        self.nested_field = None
+
+        if len(self.fact_field.split('.')) > 1:
+            self.nested_field = self.fact_field.split('.')
+
+
+    def add_facts(self):
+        if self.method == 'select_only':
+            json_response = self.fact_to_doc()
+        elif self.method == 'all_in_doc':
+            json_response = self.doc_matches_to_facts()
+        elif self.method == 'all_in_dataset':
+            json_response = self.matches_to_facts()
+        return json_response
+
+    def fact_to_doc(self):
+        """Add a fact to a certain document with given fact, span, and the document _id"""
+        query = {"query": {"terms": {"_id": [self.doc_id] }}}
+        response = self.es_m.perform_query(query)
+        hits = response['hits']['hits']
+        # If texta_facts not in document
+        if self.field not in hits[0]['_source']:
+            self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
+
+        data = ''
+        for document in hits:
+            content = self._derive_content(document)
+            match = re.search(r"{}".format(self.fact_value), content, re.IGNORECASE | re.MULTILINE)
+            save_val = match.group().lower() if not self.case_sens else match.group()
+            new_fact = {'fact': self.fact_name, 'str_val':  save_val, 'doc_path': self.fact_field, 'spans': str([list(match.span())])}
+            if self.field not in document['_source']:
+                document['_source'][self.field] = [new_fact]
+            else:
+                document['_source'][self.field].append(new_fact)
+
+            data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
+            document = {'doc': {self.field: document['_source'][self.field]}}
+            data += json.dumps(document)+'\n'
+        response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
+        return {'fact_count': 1, 'status': 'success'}
+
+
+    def doc_matches_to_facts(self):
+        """Add all matches in a certain doc as a fact"""
+        query = {"query": {"terms": {"_id": [self.doc_id] }}}
+        response = self.es_m.perform_query(query)
+        hits = response['hits']['hits']
+        # If texta_facts not in document
+        if self.field not in hits[0]['_source']:
+            self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
+
+        fact_count = 0
+        data, fact_count = self._derive_match_spans(hits, fact_count)
+        response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
+        return {'fact_count': fact_count, 'status': 'success'}
+
+
+    def matches_to_facts(self):
+        """Add all matches in dataset as a fact"""
+
+        if self.match_type == 'string':
+            # Match the word everywhere in text
+            query = {"main": {'query': {'query_string': {'query': '*{}*'.format(self.fact_value), 'fields': [self.fact_field]}}}}
+        else:
+            # Match prefix, or separate word
+            query =  {"main": {"query": {"multi_match" : {"query":self.fact_value, "fields": [self.fact_field], "type": self.match_type}}}}
+
+        # response = self.es_m.perform_query(query)
+        self.es_m.load_combined_query(query)
+        response = self.es_m.scroll(size=self.bs, field_scroll=self.fact_field)
+        scroll_id = response['_scroll_id']
+        total_docs = response['hits']['total']
+        # If texta_facts not in document
+        hits = response['hits']['hits']
+        
+        fact_count = 0
+        if hits:
+            try:
+                if self.field not in hits[0]['_source']:
+                    self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
+                while total_docs > 0:
+                    data, fact_count = self._derive_match_spans(hits, fact_count)
+                    response = self.es_m.scroll(scroll_id=scroll_id, size=self.bs, field_scroll=self.field)
+                    if response['hits']:
+                        total_docs = len(response['hits']['hits'])
+                        scroll_id = response['_scroll_id']
+                    self.es_m.plain_post_bulk(self.es_m.es_url, data)
+            except Exception as e:
+                logging.getLogger(ERROR_LOGGER).exception(e)
+                return {'fact_count': fact_count, 'status': 'scrolling_error'}
+        else:
+            return {'fact_count': 0, 'status': 'no_hits'}
+        return {'fact_count': fact_count, 'status': 'success'}
+
+
+    def _derive_match_spans(self, hits, fact_count):
+        if self.match_type == 'phrase':
+            pattern = r"\b{}\b"
+        elif self.match_type == 'phrase_prefix':
+            pattern = r"\b{}\w*"
+        elif self.match_type == 'string':
+            pattern = r"\w*{}\w*"
+
+        data = ''
+        for document in hits:
+            content = self._derive_content(document)
+            new_facts = []
+            for match in re.finditer(pattern.format(self.fact_value), content, re.IGNORECASE):
+                save_val = match.group().lower() if not self.case_sens else match.group()
+                new_facts.append({'fact': self.fact_name, 'str_val':  save_val, 'doc_path': self.fact_field, 'spans': str([list(match.span())])})
+                fact_count += 1
+            data = self._append_fact_to_doc(document, data, new_facts)
+        return data, fact_count
+
+
+    def _append_fact_to_doc(self, document, data, new_facts):
+        if self.field not in document['_source']:
+            document['_source'][self.field] = new_facts
+        else:
+            document['_source'][self.field].extend(new_facts)
+
+        data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
+        document = {'doc': {self.field: document['_source'][self.field]}}
+        data += json.dumps(document)+'\n'
+        return data
+
+    def _derive_content(self, document):
+        if self.nested_field:
+            content = document['_source']
+            for key in self.nested_field:
+                content = content[key]
+        else:
+            content = document['_source'][self.fact_field]
+        return content

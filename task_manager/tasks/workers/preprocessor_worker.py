@@ -1,11 +1,10 @@
-
+from datetime import datetime
 import json
 import logging
 from datetime import datetime
 
-from dataset_importer.document_preprocessor import preprocessor_map
-from dataset_importer.document_preprocessor import PREPROCESSOR_INSTANCES
-from dataset_importer.document_preprocessor import convert_to_utf8
+from task_manager.document_preprocessor import preprocessor_map
+from task_manager.document_preprocessor import PREPROCESSOR_INSTANCES
 
 from texta.settings import ERROR_LOGGER
 from texta.settings import INFO_LOGGER
@@ -15,6 +14,7 @@ from task_manager.tools import ShowProgress
 from task_manager.tools import TaskCanceledException
 
 from utils.datasets import Datasets
+from utils.helper_functions import add_dicts
 from utils.es_manager import ES_Manager
 from texta.settings import FACT_PROPERTIES
 
@@ -31,21 +31,23 @@ class PreprocessorWorker(BaseWorker):
         self.scroll_time_out = time_out
 
     def run(self, task_id):
-
         self.task_id = task_id
         task = Task.objects.get(pk=self.task_id)
         params = json.loads(task.parameters)
         task.update_status(Task.STATUS_RUNNING)
 
         try:
-
-            ds = Datasets().activate_dataset_by_id(params['dataset'])
+            ds = Datasets().activate_datasets_by_id(params['dataset'])
             es_m = ds.build_manager(ES_Manager)
             es_m.load_combined_query(self._parse_query(params))
 
             self.es_m = es_m
             self.params = params
-            self._preprocessor_worker()
+            valid, msg = self._check_if_request_bad(self.params)
+            if valid:
+                self._preprocessor_worker()
+            else:
+                raise UserWarning(msg)
 
         except TaskCanceledException as e:
             # If here, task was canceled while processing
@@ -63,16 +65,15 @@ class PreprocessorWorker(BaseWorker):
             task.result = json.dumps({'error': repr(e)})
             task.update_status(Task.STATUS_FAILED, set_time_completed=True)
 
-    def _preprocessor_worker(self):
 
+    def _preprocessor_worker(self):
         field_paths = []
         show_progress = ShowProgress(self.task_id)
         show_progress.update(0)
-
         # TODO: remove "preprocessor_key" need from here? this should be worked out in the view (controller interface)
         # Add new field to mapping definition if necessary
-        if 'field_properties' in preprocessor_map[self.params['preprocessor_key']]:
-            preprocessor_key = self.params['preprocessor_key']
+        preprocessor_key = self.params['preprocessor_key']
+        if 'field_properties' in preprocessor_map[preprocessor_key]:
             fields = self.params['{0}_feature_names'.format(preprocessor_key)]
             for field in fields:
                 field_paths.append(field)
@@ -86,25 +87,24 @@ class PreprocessorWorker(BaseWorker):
 
         total_hits = len(response['hits']['hits'])
         show_progress.set_total(total_docs)
-        total_positive = 0
 
         try:
+            # Metadata of preprocessor outputs
+            meta = {}
             while total_hits > 0:
-                documents, parameter_dict, ids = self._prepare_preprocessor_data(response)
+                documents, parameter_dict, ids, document_locations = self._prepare_preprocessor_data(response)
                 # Add facts field if necessary
                 if documents:
                     if 'texta_facts' not in documents[0]:
                         self.es_m.update_mapping_structure('texta_facts', FACT_PROPERTIES)
-
-                documents = list(map(convert_to_utf8, documents))
 
                 # Apply all preprocessors
                 for preprocessor_code in parameter_dict['preprocessors']:
                     preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
                     result_map = preprocessor.transform(documents, **parameter_dict)
                     documents = result_map['documents']
-                    total_positive += result_map['meta'].get('documents_tagged', 0)
-                self.es_m.bulk_post_documents(documents, ids)
+                    add_dicts(meta, result_map['meta'])
+                self.es_m.bulk_post_documents(documents, ids, document_locations)
                 # Update progress is important to check task is alive
                 show_progress.update(total_hits)
                 # Get next page if any
@@ -114,12 +114,15 @@ class PreprocessorWorker(BaseWorker):
 
             task = Task.objects.get(pk=self.task_id)
             show_progress.update(100)
-            task.result = json.dumps({'documents_processed': show_progress.n_total, 'documents_tagged': total_positive, 'preprocessor_key': self.params['preprocessor_key']})
+            # task.result = json.dumps({'documents_processed': show_progress.n_total, 'preprocessor_key': self.params['preprocessor_key']})
+            task.result = json.dumps({'documents_processed': show_progress.n_total, **meta, 'preprocessor_key': self.params['preprocessor_key']})
             task.update_status(Task.STATUS_UPDATING)
             self.es_m.update_documents()
             task.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
         # If runs into an exception, give feedback
         except Exception as e:
+            logging.getLogger(ERROR_LOGGER).exception(json.dumps(
+                {'process': '_preprocessor_worker', 'event': 'main_scroll_logic_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
             task = Task.objects.get(pk=self.task_id)
             task.status = 'Failed'
             task.result = json.dumps({'documents_processed': show_progress.n_count, 'preprocessor_key': self.params['preprocessor_key'], 'error': str(e)})
@@ -134,22 +137,19 @@ class PreprocessorWorker(BaseWorker):
         :param response:
         :return:
         """
-
         documents = [hit['_source'] for hit in response['hits']['hits']]
         ids = [hit['_id'] for hit in response['hits']['hits']]
-        #parameter_dict = {'preprocessors': [self.params['preprocessor_key']]}
-        active_index = response['hits']['hits'][0]['_index']
-        active_mapping = response['hits']['hits'][0]['_type']
-        parameter_dict = {'preprocessors': [self.params['preprocessor_key']],'index':active_index,'mapping':active_mapping}
+        document_locations = [{'_index': hit['_index'], '_type': hit['_type']} for hit in response['hits']['hits']]
+        parameter_dict = {'preprocessors': [self.params['preprocessor_key']]}
 
         for key, value in self.params.items():
             if key.startswith(self.params['preprocessor_key']):
                 new_key_suffix = key[len(self.params['preprocessor_key']) + 1:]
-                new_key = '{0}_preprocessor_{1}'.format(self.params['preprocessor_key'], new_key_suffix)
+                new_key = '{0}_{1}'.format(self.params['preprocessor_key'], new_key_suffix)
                 # TODO: check why this json.dumps is necessary? probably isn't
                 parameter_dict[new_key] = json.dumps(value)
 
-        return documents, parameter_dict, ids
+        return documents, parameter_dict, ids, document_locations
 
     @staticmethod
     def _parse_query(parameters):
@@ -168,3 +168,15 @@ class PreprocessorWorker(BaseWorker):
         else:
             query = json.loads(Search.objects.get(pk=int(search)).query)
         return query
+
+    @staticmethod
+    def _check_if_request_bad(args):
+        '''Check if models/fields are selected'''
+        if not any(['feature_names' in k for k in args]):
+            return False, "No field selected"
+
+        if args['preprocessor_key'] in ['text_tagger', 'entity_extractor']:
+            if not any(['preprocessor_models' in k for k in args]):
+                return False, "No preprocessor model selected"
+
+        return True, ""

@@ -1,5 +1,5 @@
 
-$("#new-project-files").change(function() {
+$("#new-project-files").on('change',(function() {
     var fileInput = document.getElementById('new-project-files');
     var fileNames = [];
     for (var i = 0; i < fileInput.files.length; ++i) {
@@ -7,7 +7,7 @@ $("#new-project-files").change(function() {
     }
 
     setOptions(fileNames);
-})
+}))
 
 $(document).on('click', '.delete-btn', function() {
     var listItem = $(this).parent().parent().parent()
@@ -62,7 +62,7 @@ function getProjectList() {
 }
 
 
-$('#add-project-form').submit(function(event) {
+$('#add-project-form').on('submit',(function(event) {
     event.preventDefault();
     var $form = $( this ),
     url = $form.attr( 'action' );
@@ -82,8 +82,8 @@ $('#add-project-form').submit(function(event) {
         }
 });
 
-})
+}))
 
-$('#new-project-btn').click(getProjectList)
+$('#new-project-btn').on('click',(getProjectList))
 
 getProjectList()

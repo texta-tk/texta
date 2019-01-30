@@ -1,8 +1,10 @@
 import logging
 import json
 from .workers.language_model_worker import LanguageModelWorker
-from .workers.tag_model_worker import TagModelWorker
+from .workers.text_tagger_worker import TagModelWorker
+from .workers.entity_extractor_worker import EntityExtractorWorker
 from .workers.preprocessor_worker import PreprocessorWorker
+from utils.es_manager import ES_Manager
 from texta.settings import ERROR_LOGGER
 
 fact_names = {}
@@ -12,6 +14,7 @@ task_params = [
         "name":            "Train Language Model",
         "id":              "train_model",
         "template":        "task_parameters/train_model.html",
+        "result_template": "task-results/train-model-results.html",
         "worker":           LanguageModelWorker,
         "allowed_actions": ["delete", "save"]
     },
@@ -19,13 +22,24 @@ task_params = [
         "name":            "Train Text Tagger",
         "id":              "train_tagger",
         "template":        "task_parameters/train_tagger.html",
+        "result_template": "task-results/train-tagger-results.html",
         "worker":           TagModelWorker,
-        "allowed_actions": ["delete", "save"]
+        "allowed_actions": ["delete"]
+    },
+    {
+        "name":            "Train Entity Extractor",
+        "id":              "train_entity_extractor",
+        "template":        "task_parameters/train_entity_extractor.html",
+        "result_template": "task-results/train-entity-extractor-results.html",
+        "worker":          EntityExtractorWorker,
+        "facts":           fact_names,
+        "allowed_actions": ["delete"]
     },
     {
         "name":            "Apply Preprocessor",
         "id":              "apply_preprocessor",
         "template":        "task_parameters/apply_preprocessor.html",
+        "result_template": "task-results/apply-preprocessor-results.html",
         "worker":          PreprocessorWorker,
         "allowed_actions": []
     }

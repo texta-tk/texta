@@ -21,3 +21,4 @@ texta/documentation/sphinx/source/images_bu/*
 
 db.sqlite3
 .env
+texta.iml

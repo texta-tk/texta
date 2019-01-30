@@ -33,34 +33,6 @@ def create_task(task_type: str, description: str, parameters: dict, user: User) 
     return new_task.pk
 
 
-def filter_params(post: QueryDict):
-    """
-    Because ALL of the form data from the page is sent to the server,
-    including the Task types you did not want, filtering them is necessary.
-
-    ex. apply_preprocessor_description or train_model_dataset etc.
-
-    :param post: Django POST input in the form of a QueryDict.
-    :return: Form data relevant to the actual Task type being invoked.
-    """
-    prefix = post['task_type']
-    filtered_params = {}
-
-    for param in post:
-        if param.startswith(prefix):
-            param_name = param[len(prefix) + 1:]
-            if param_name == 'fields':
-                param_val = post.getlist(param)
-            else:
-                param_val = post[param]
-            filtered_params[param_name] = param_val
-
-    if 'description' not in filtered_params:
-        filtered_params['description'] = ''
-
-    return filtered_params
-
-
 def filter_preprocessor_params(post, filtered_params):
     prefix = post['apply_preprocessor_preprocessor_key']
 
@@ -78,10 +50,44 @@ def translate_param(translation, value):
         try:
             return translation['pattern'][int(value)]
         except KeyError:
-            return '{0}: Dataset missing'.format(value)
+            return '{0}: Error parsing task parameters.'.format(value)
     elif translation['type'] == 'list':
         return [translation['pattern'][int(list_item)] for list_item in value if int(list_item) in translation['pattern']]
 
+def filter_params(post: QueryDict):
+    """
+    Because ALL of the form data from the page is sent to the server,
+    including the Task types you did not want, filtering them is necessary.
+    ex. apply_preprocessor_description or train_model_dataset etc.
+    :param post: Django POST input in the form of a QueryDict.
+    :return: Form data relevant to the actual Task type being invoked.
+    """
+    prefix = post['task_type']
+    filtered_params = {}
+
+    for param in post:
+        if prefix != 'apply_preprocessor':
+            param_name = param[len(prefix) + 1:]
+        else:
+            param_name = param
+
+        if param_name == 'fields' or param_name == 'facts' or 'feature_names' in param_name or 'preprocessor_models' in param_name or 'lexicons' in param_name:
+            param_val = post.getlist(param)
+        else:
+            param_val = post[param]
+
+        if 'feature_names' in param_name:
+            try:
+                param_val = [json.loads(a)['path'] for a in param_val]
+            except:
+                Exception
+
+        filtered_params[param_name] = param_val
+
+    if 'description' not in filtered_params:
+        filtered_params['description'] = '_blank'
+
+    return filtered_params
 
 def translate_parameters(params):
     pipe_builder = get_pipeline_builder()
@@ -90,6 +96,9 @@ def translate_parameters(params):
 
     all_taggers = Task.objects.filter(task_type="train_tagger", status=Task.STATUS_COMPLETED)
     enabled_taggers = {tagger.pk: tagger.description for tagger in all_taggers}
+
+    all_extraction_models = Task.objects.filter(task_type="train_entity_extractor", status=Task.STATUS_COMPLETED)
+    enabled_extractors = {model.pk: model.description for model in all_extraction_models}
 
     extractor_options = {a['index']: a['label'] for a in pipe_builder.get_extractor_options()}
     reductor_options = {a['index']: a['label'] for a in pipe_builder.get_reductor_options()}
@@ -101,8 +110,9 @@ def translate_parameters(params):
                     'reductor_opt': {'type': 'dict', 'pattern': reductor_options},
                     'normalizer_opt': {'type': 'dict', 'pattern': normalizer_options},
                     'classifier_opt': {'type': 'dict', 'pattern': classifier_options},
-                    'dataset': {'type': 'dict', 'pattern': datasets},
-                    'text_tagger_taggers': {'type': 'list', 'pattern': enabled_taggers}}
+                    'dataset': {'type': 'list', 'pattern': datasets},
+                    'text_tagger_taggers': {'type': 'list', 'pattern': enabled_taggers},
+                    'entity_extractor_extractors': {'type': 'list', 'pattern': enabled_extractors}}
 
     params = json.loads(params)
 
@@ -118,6 +128,8 @@ def collect_map_entries(map_):
     for key, value in map_.items():
         if key == 'text_tagger':
             value['enabled_taggers'] = Task.objects.filter(task_type="train_tagger", status=Task.STATUS_COMPLETED)
+        if key == 'entity_extractor':
+            value['enabled_extractors'] = Task.objects.filter(task_type="train_entity_extractor", status=Task.STATUS_COMPLETED)
         if (key == 'lexicon_classifier' or key == 'scoro'):
             value['enabled_lexicons'] = Lexicon.objects.all()
         if (key == 'scoro'):
@@ -134,13 +146,14 @@ def get_fields(es_m):
     fields = []
     mapped_fields = es_m.get_mapped_fields()
 
-    for data in mapped_fields:
-        path = data['path']
+    for field_data in mapped_fields.keys():
+        field_data = json.loads(field_data)
+        path = field_data['path']
         if path not in illegal_paths:
             path_list = path.split('.')
             label = '{0} --> {1}'.format(path_list[0], ' --> '.join(path_list[1:])) if len(path_list) > 1 else path_list[0]
             label = label.replace('-->', u'→')
-            field = {'data': json.dumps(data), 'label': label, 'path': path}
+            field = {'data': json.dumps(field_data), 'label': label, 'path': path}
             fields.append(field)
 
     # Sort fields by label

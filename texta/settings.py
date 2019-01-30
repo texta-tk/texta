@@ -84,9 +84,9 @@ elif SERVER_TYPE == 'production':
 	DOMAIN = os.getenv('TEXTA_DOMAIN', 'dev.texta.ee')
 
 	URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL, DOMAIN)
-	URL_PREFIX_RESOURCE = '/texta'
+	URL_PREFIX_RESOURCE = ''
 	ROOT_URLCONF = 'texta.urls'
-	STATIC_URL = '/texta/static/'
+	STATIC_URL = URL_PREFIX_DOMAIN + '/static/'
 	DEBUG = False
 
 elif SERVER_TYPE == 'docker':
@@ -242,7 +242,7 @@ TEMPLATES = [
 
 # List of Django plugins used in TEXTA.
 #
-# NEW PY REQUIREMENT
+
 MIDDLEWARE = (
 	'django.middleware.common.CommonMiddleware',
 	'django.contrib.sessions.middleware.SessionMiddleware',
@@ -283,8 +283,10 @@ INSTALLED_APPS = (
 
 
 # Elasticsearch URL with protocol specification. Can be either localhost
-# or remote address.
+# or remote address ex: http://elastic-dev.texta.ee:9200.
 es_url = os.getenv('TEXTA_ELASTICSEARCH_URL', 'http://localhost:9200')
+
+es_prefix = os.getenv('TEXTA_ELASTICSEARCH_PREFIX', '')
 
 # Elasticsearch links to outside world
 # ('index_name','mapping_name','field_name'):('url_prefix','url_suffix')
@@ -296,7 +298,11 @@ es_links = {
 
 # Date format used in Elasticsearch fields.
 #
-date_format = 'yyyy-MM-dd'
+es_date_format = 'yyyy-MM-dd'
+
+# Python date format
+#
+date_format = '%Y-%m-%d'
 
 # Set to True if Elasticsearch needs authentication. Tested with basic auth.
 es_use_ldap = False
@@ -343,10 +349,12 @@ logging_separator = ' - '
 # Paths to info and error log files.
 info_log_file_name = os.path.join(LOG_PATH, "info.log")
 error_log_file_name = os.path.join(LOG_PATH, "error.log")
+migration_log_file_name = os.path.join(LOG_PATH, "migration.log")
 
 # Logger IDs, used in apps. Do not change.
 INFO_LOGGER = 'info_logger'
 ERROR_LOGGER = 'error_logger'
+MIGRATION_LOGGER = 'migration_logger'
 
 # Most of the following logging settings can be changed.
 # Especially format, logging levels, logging class and filenames.
@@ -404,6 +412,14 @@ LOGGING = {
 			'encoding':  'utf8',
 			'mode':      'a',
 		},
+		'migration_file':            {
+			'level':     'INFO',
+			'class':     'logging.FileHandler',
+			'formatter': 'detailed',
+			'filename':  migration_log_file_name,
+			'encoding':  'utf8',
+			'mode':      'a',
+		},
 
 		'null':                  {
 			"class": 'logging.NullHandler',
@@ -437,6 +453,10 @@ LOGGING = {
 			'level':    'ERROR',
 			'handlers': ['console', 'error_file', 'logstash']
 		},
+		MIGRATION_LOGGER:    {
+			'level':    'INFO',
+			'handlers': ['console', 'migration_file', 'logstash']
+		},
 
 		# Big parent of all the Django loggers, MOST (not all) of this will get overwritten.
 		# https://docs.djangoproject.com/en/2.1/topics/logging/#topic-logging-parts-loggers
@@ -459,7 +479,7 @@ LOGGING = {
 		# everything else is logged as INFO.
 		'django.server': {
 			'handlers':  ['console', 'logstash'],
-			'level':     'INFO',
+			'level':     'ERROR',
 			'propagate': False,
 		}
 

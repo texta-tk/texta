@@ -24,7 +24,7 @@ from task_manager.models import Task
 from task_manager.tasks.task_params import activate_task_worker
 
 # Define max number of background running processes
-MAX_RUNNING = 4
+MAX_RUNNING = 6
 # Total minutes allowed since last update in a task
 MAX_LAST_UPDATE_MINUTES = 1000
 
@@ -65,10 +65,13 @@ class Command(BaseCommand):
             worker.run(task_id)
         except Exception as e:
             # Capture generic task error
-            print(e)
             task.update_status(Task.STATUS_FAILED)
             log_data = json.dumps({'process': 'Task Scheduler', 'event': 'task_execution_error'})
-            logging.getLogger(ERROR_LOGGER).error(log_data)
+
+            logging.getLogger(INFO_LOGGER).info(log_data)
+            logging.getLogger(ERROR_LOGGER).exception(e)
+
+            print(e)
 
     def handle(self, *args, **options):
         """ Schedule tasks for background execution

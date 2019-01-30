@@ -6,10 +6,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <script type="application/javascript" src="{{ STATIC_URL }}jquery-1.11.2.min.js"></script>
+    <script type="application/javascript" src="{{ STATIC_URL }}jquery-3.0.0.js"></script>
     <script type="application/javascript" src="{{ STATIC_URL }}datatables/datatables.min.js"></script>
     <script type="application/javascript" src="{{ STATIC_URL }}datatables_button/dataTables.buttons.js"></script>
     <script type="application/javascript" src="{{ STATIC_URL }}datatables_button/buttons.colVis.js"></script>
+    <script type="application/javascript"
+            src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
     <script type="application/javascript" src="{{ STATIC_URL }}jquery-textrange.js"></script>
     <script type="application/javascript" src="{{ STATIC_URL }}navigation.js"></script>
     <script type="application/javascript" src="{{ STATIC_URL }}bootstrap/js/bootstrap.min.js"></script>
@@ -20,9 +22,10 @@
     <script type="application/javascript" src="{{ STATIC_URL }}morris.min.js"></script>
     <script type="application/javascript" src="{{ STATIC_URL }}raphael-min.js"></script>
 
-    <!-- https://github.com/n457/LightRange.js
-<script type="application/javascript" src="{{STATIC_URL}}/LightRange.min.js"></script> -->
+    <!-- https://atomiks.github.io/tippyjs/#creating-html-templates -->
+    <script type="application/javascript" src="{{ STATIC_URL }}tippy.all.min.js"></script>
     <!-- https://developer.snapappointments.com/bootstrap-select/ -->
+
     <script type="application/javascript" src="{{ STATIC_URL }}bootstrap/js/bootstrap-select.min.js"></script>
     <link rel="stylesheet" href="{{ STATIC_URL }}bootstrap/css/bootstrap-select.min.css">
     <!-- http://www.bacubacu.com/colresizable/ -->
@@ -46,11 +49,13 @@
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}bootstrap/css/bootstrap-slider.css">
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}datatables/datatables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.min.css">
     <link rel="stylesheet" href="{{ STATIC_URL }}bootstrap/css/datepicker.css">
     <link rel="stylesheet" href="{{ STATIC_URL }}bootstrap/css/bootstrap-theme.min.css">
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}base/frame.css">
     <link rel="shortcut icon" type="image/png" href="{{ STATIC_URL }}/img/favicon.ico"/>
-
+    <link rel="stylesheet" href="{{ STATIC_URL }}bootstrap/css/bootstrap-multiselect.css" type="text/css">
+    <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/js/bootstrap-multiselect.js"></script>
     <title>TEXTA Toolkit {{ texta_version }}</title>
 </head>
 
@@ -70,8 +75,8 @@
                         <span class="icon-bar"></span>
                     </button>
                 </div>
-
                 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+
                     <ul class="nav navbar-nav">
                         <li id="home"><a href="#"><span class="glyphicon glyphicon-home"></span> Home</a></li>
                         {% if request.user.is_authenticated %}
@@ -85,15 +90,17 @@
                                     Terminology Management<span class="caret"></span></a>
                                 <ul class="dropdown-menu">
                                     <li id="ontology_viewer"><a href="#"><span
-                                            class="glyphicon glyphicon-chevron-right"></span> Terminology
+                                            class="glyphicon glyphicon-chevron-right"></span>
+                                        Terminology
                                         Overview</a></li>
                                     <li id="lex_miner"><a href="#"><span
-                                            class="glyphicon glyphicon-chevron-right"></span> Lexicon Miner</a></li>
+                                            class="glyphicon glyphicon-chevron-right"></span> Lexicon
+                                        Miner</a></li>
                                     <li id="conceptualizer"><a href="#"><span
-                                            class="glyphicon glyphicon-chevron-right"></span> Conceptualiser</a></li>
+                                            class="glyphicon glyphicon-chevron-right"></span>
+                                        Conceptualiser</a></li>
                                     <li id="mwe_miner"><a href="#"><span
                                             class="glyphicon glyphicon-chevron-right"></span> MWE Miner</a></li>
-                                    <!-- <li id="grammar_builder"><a href="#"><span class="glyphicon glyphicon-chevron-right "></span> Grammar Miner</a></li> no longer used-->
                                 </ul>
                             </li>
                             {% if request.user.is_superuser %}
@@ -103,68 +110,97 @@
                                         Restricted<span class="caret"></span></a>
                                     <ul class="dropdown-menu">
                                         <li id="permission_admin"><a href="#"><span
-                                                class='glyphicon glyphicon-wrench'></span> Administration </a></li>
+                                                class='glyphicon glyphicon-wrench'></span>
+                                            Administration </a></li>
                                         <li id="dataset_importer"><a href="#"><span
-                                                class='glyphicon glyphicon-share'></span> Dataset Importer </a></li>
+                                                class='glyphicon glyphicon-share'></span> Dataset
+                                            Importer </a></li>
                                         <li id="task_manager"><a href="#"><span
-                                                class='glyphicon glyphicon-menu-hamburger'></span> Task Manager </a>
-                                        </li>
+                                                class='glyphicon glyphicon-menu-hamburger'></span> Task
+                                            Manager </a></li>
                                     </ul>
                                 </li>
                             {% endif %}
                         {% endif %}
                     </ul>
 
+
                     <div class="navbar-right">
+                        <div class='help-block'></div>
                         {% if request.user.is_authenticated %}
-                            <form class="navbar-form">
-                                <select id="dataset_to_activate" name="dataset_to_activate" class="input-sm"
-                                        onchange="update_resources();">
-                                    {% for dataset in allowed_datasets %}
-                                        {% if dataset.id|stringformat:"i" == request.session.dataset %}
-                                            <option class="datasetOption" value="{{ dataset.id }}" selected="selected">
-                                                Dataset {{ dataset.id }}:
-                                                {{ dataset.index }} - {{ dataset.mapping }}</option>
+                            <div class="navbar-form">
+                                <div>
+                                    <!-- button to clone to put into selectpicker after its initialized -->
+                                    <button id="dataset-select-apply-button"
+                                            class="btn-sm btn btn-default hidden width-max"
+                                            onclick="dataset_update_resources()">Apply changes
+                                    </button>
+                                    <select id="dataset_to_activate" name="dataset_to_activate" multiple
+                                            data-actions-box="true" class="selectpicker dataset-select-dropdown">
+                                        {% for dataset in allowed_datasets %}
+                                            {% if dataset.id|stringformat:"i" in request.session.dataset %}
+                                                <option class="datasetOption" value="{{ dataset.id }}"
+                                                        selected="selected">Dataset {{ dataset.id }}:
+                                                    {{ dataset.index }}
+                                                    - {{ dataset.mapping }}</option>
+                                            {% else %}
+                                                <option class="datasetOption" value="{{ dataset.id }}">
+                                                    Dataset {{ dataset.id }}: {{ dataset.index }} -
+                                                    {{ dataset.mapping }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-default dropdown-toggle btn-sm " id="model-dropdown"
+                                            type="button"
+                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        {% if request.session.model.pk %}
+                                            Model {{ request.session.model.pk }}:
+                                            {{ request.session.model.description }}
                                         {% else %}
-                                            <option class="datasetOption" value="{{ dataset.id }}">
-                                                Dataset {{ dataset.id }}: {{ dataset.index }} -
-                                                {{ dataset.mapping }}</option>
+                                            Select Model
                                         {% endif %}
-                                    {% endfor %}
-                                </select>
 
-                                <select id="model_to_activate" name="model_to_activate" class="input-sm"
-                                        onchange="update_resources();">
-                                    {% if request.session.model|length > 0 %}
-                                        <option value="" disabled>Select a model</option>
-                                    {% else %}
-                                        <option value="" disabled selected="selected">Select a model</option>
-                                    {% endif %}
+                                        <b class="caret"></b>
+                                    </button>
 
-                                    {% for model in language_models %}
-                                        {% if model.pk|slugify == request.session.model %}
-                                            <option class="datasetOption" value="{{ model.pk }}" selected="selected">
-                                                Model {{ model.pk }}: {{ model.description }}</option>
-                                        {% else %}
-                                            <option class="datasetOption" value="{{ model.pk }}">
-                                                Model {{ model.pk }}: {{ model.description }}</option>
-                                        {% endif %}
-                                    {% endfor %}
-                                </select>
-                            </form>
+                                    <ul class="dropdown-menu model-dropdown-menu" aria-labelledby="model-dropdown">
+                                        {% for model in language_models %}
+                                            <li data-model_pk="{{ model.pk }}"
+                                                data-model_description="{{ model.description }}"
+                                                data-model_uuid="{{ model.unique_id }}"
+                                                onclick=model_update_resources(this);
+                                                role="button"><a>Model {{ model.pk }}: {{ model.description }}</a></li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div class="flex-items-align-center flex-item-justify-end">
+                                    <div class="dropdown margin-left">
+                                        <a class="dropdown-toggle" id="account-dropdown" role="button"
+                                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            {{ request.user.get_username }}
 
-                            <div class="user-data navbar-form">
-                                <span> Logged in as {{ request.user.get_username }}. </span>
-                                <button type="button" class="btn btn-danger btn-sm"
-                                        onclick="go_to(LINK_ACCOUNT + '/account/log_out')">
-                                    <span class="glyphicon glyphicon-log-out"></span>
-                                </button>
+                                            <b class="caret"></b>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-right account-dropdown-menu"
+                                            aria-labelledby="account-dropdown">
+
+                                            <li onclick="go_to(LINK_ACCOUNT + '/account/log_out')"
+                                                role="button"><a class="account-dropdown-item">
+                                                <span class="glyphicon glyphicon-log-out low-opacity margin-right"></span>
+                                                Log out</a>
+                                            </li>
+
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
 
+
                         {% else %}
-                            <form class="navbar-form form-inline" id="login_form"
-                                  onsubmit="go_to(LINK_ROOT+'account/login','login_form')"
-                                  method="POST">
+
+                            <form class="navbar-form form-inline" id="login_form">
                                 <div class="form-group">
                                     <label class="sr-only" for="loginUsername">Username</label>
                                     <input type="text" class="form-control input-sm" id="loginUsername" name="username"
@@ -175,17 +211,19 @@
                                     <input type="password" class="form-control input-sm" id="loginPassword"
                                            name="password" placeholder="Password">
                                 </div>
-                                <button type="submit" class="btn btn-success btn-sm"><span
-                                        class="glyphicon glyphicon-log-in"></button>
+                                <button class="btn btn-success btn-sm" type="button" onclick=login();>
+                                    <span class="glyphicon glyphicon-log-in"></span></button>
                             </form>
+
                         {% endif %}
+
                     </div>
                 </div><!-- /.navbar-collapse -->
             </div><!-- /.container-fluid -->
         </nav>
     </div>
     <div class="grid-item-content">
-        <div class="container-fluid">{% block app %}{% endblock %}</div>
+        {% block app %}{% endblock %}
     </div>
 </div>
 <script src="{{ STATIC_URL }}base/index.js"></script>

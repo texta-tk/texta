@@ -4,6 +4,7 @@ import subprocess
 from time import sleep
 import sys
 import os
+import shutil
 
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "texta.settings")
@@ -53,3 +54,4 @@ except Exception:
     print('Migrations failed - MySQL possibly not ready yet. Sleeping for 10 sec & trying again.')
     sleep(10)
     migrate(custom_apps)
+    

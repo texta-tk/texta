@@ -1,16 +1,17 @@
-import os
+import os, errno
 import shutil
 import threading
 from collections import defaultdict
 from time import sleep,time
-
+import json
 import gensim
 import traceback
 
 from .gensim_wrapper.masked_word2vec import MaskedWord2Vec
 
 from texta.settings import USER_MODELS, MODELS_DIR
-
+import logging
+from texta.settings import ERROR_LOGGER
 
 try:
    import cPickle as pickle
@@ -82,7 +83,7 @@ class ModelManager(threading.Thread):
             for deleted_model,reason in self.to_be_deleted_models:
                 if reason == 'removed':
                     if deleted_model in self._models:
-                        model_path = os.path.join(MODELS_DIR,"model_%s"%deleted_model)
+                        model_path = os.path.join(MODELS_DIR, "train_moodel/", "model_%s"%deleted_model)
                         if os.path.exists(model_path):
                             os.remove(model_path)
 
@@ -103,17 +104,17 @@ class ModelManager(threading.Thread):
         with self._negatives_lock:
             self.to_be_deleted_models.append((str(model_name),'removed'))
 
-    def get_model(self,model_name):
+    def get_model(self,model_uuid):
         with self._models_lock:
-            if model_name not in self._models:
-                model_path = os.path.join(MODELS_DIR,"model_%s"%model_name)
+            if model_uuid not in self._models:
+                model_path = os.path.join(MODELS_DIR,"train_model", "model_%s"%model_uuid)
                 if os.path.exists(model_path):
-                    self._models[model_name] = ModelEntry(MaskedWord2Vec(gensim.models.Word2Vec.load(model_path)))
+                    self._models[model_uuid] = ModelEntry(MaskedWord2Vec(gensim.models.Word2Vec.load(model_path)))
                 else:
-                    raise LookupError("Model %s not found."%model_name)
+                    logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'get_model','event':'model_path does not exist!','args':{'model_uuid':model_uuid,'model_path':model_path}}))
 
-            self._models[model_name].access_time = time()
-            return self._models[model_name].model
+            self._models[model_uuid].access_time = time()
+            return self._models[model_uuid].model
 
 
 
@@ -123,8 +124,11 @@ class ModelManager(threading.Thread):
             if lexicon_id not in self._model_negatives[model_name][username]:
                 negatives_path = os.path.join(USER_MODELS,model_name,username,"lexicon_%d_negatives.pickle"%lexicon_id)
                 if os.path.exists(negatives_path):
-                    with open(negatives_path,'rb') as fin:
-                        self._model_negatives[model_name][username][lexicon_id] = NegativesEntry(pickle.loads(fin.read().strip()))
+                    if os.path.getsize(negatives_path) > 0:
+                        with open(negatives_path,'rb') as fin:
+                            self._model_negatives[model_name][username][lexicon_id] = NegativesEntry(pickle.loads(fin.read().strip()))
+                    else:
+                        self._model_negatives[model_name][username][lexicon_id] = NegativesEntry([])
                 else:
                     self._model_negatives[model_name][username][lexicon_id] = NegativesEntry([])
 
@@ -140,13 +144,15 @@ class ModelManager(threading.Thread):
 
                 try:
                     os.makedirs(negatives_dir)
-                except:
-                    OSError
+                except OSError as e:
+                    if e.errno != errno.EEXIST:
+                        raise
 
                 with open(negatives_path,'wb') as fout:
                     fout.write(pickle.dumps(self._model_negatives[model_name][username][lexicon_id].negatives))
 
                 self._model_negatives[model_name][username][lexicon_id].access_time = time()
+
 
     def reset_negatives(self,model_name,username,lexicon_id):
         model_name = str(model_name)

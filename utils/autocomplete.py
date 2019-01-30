@@ -18,11 +18,9 @@ class Autocomplete:
         self.lookup_types = request.POST['lookup_types'].split(',')
         self.key_constraints = request.POST['key_constraints'].split(',')
         self.content = request.POST['content'].split('\n')[-1].strip()
-        print(self.content)
-        ds = Datasets().activate_dataset(request.session)
-        self.dataset = ds.get_index()
-        self.mapping = ds.get_mapping()
-        self.es_m = ES_Manager(self.dataset, self.mapping)
+        
+        ds = Datasets().activate_datasets(request.session)
+        self.es_m = ds.build_manager(ES_Manager)
 
         self.user = request.user
 

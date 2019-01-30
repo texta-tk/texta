@@ -28,9 +28,36 @@ tr {
     background-color: #ebebe0;
 }
 
+.grid-wrapper-dm {
+    display: grid;
+    grid-template-columns: repeat(5, auto);
+    grid-template-rows: auto;
+    grid-column-gap: 8px;
+    justify-content: start
+}
+
 @media (min-width: 768px) {
-  .modal-xl {
-    width: 90%;
-   max-width:1200px;
-  }
+    .modal-xl {
+        width: 90%;
+        max-width: 1200px;
+    }
+}
+
+.nav.nav-tabs {
+    background-color: #012849;
+    border-bottom: 1px solid #012849;
+}
+
+.nav-tabs > li > a {
+    border-radius: 0;
+    color: white;
+}
+
+.nav-tabs > li.active > a, .nav-tabs > li.active > a:focus, .nav-tabs > li.active > a:hover {
+    color: black;
+    background-color: white;
+}
+
+.nav > li > a:focus, .nav > li > a:hover {
+    color: black;
 }

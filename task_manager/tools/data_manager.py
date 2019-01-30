@@ -7,6 +7,8 @@ from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from texta.settings import ERROR_LOGGER
 
+MAX_POSITIVE_SAMPLE_SIZE = 10000
+ES_SCROLL_SIZE = 500
 
 def get_fields(es_m):
     """ Crete field list from fields in the Elasticsearch mapping
@@ -45,7 +47,7 @@ class EsIterator:
     """
 
     def __init__(self, parameters, callback_progress=None):
-        ds = Datasets().activate_dataset_by_id(parameters['dataset'])
+        ds = Datasets().activate_datasets_by_id(parameters['dataset'])
         query = self._parse_query(parameters)
 
         # self.field = json.loads(parameters['field'])['path']
@@ -69,7 +71,7 @@ class EsIterator:
         return query
 
     def __iter__(self):
-        self.es_m.set_query_parameter('size', 500)
+        self.es_m.set_query_parameter('size', ES_SCROLL_SIZE)
         response = self.es_m.scroll()
 
         scroll_id = response['_scroll_id']
@@ -92,14 +94,20 @@ class EsIterator:
                     for k in self.field.split('.'):
                         # get nested fields encoded as: 'field.sub_field'
                         decoded_text = decoded_text[k]
-                    sentences = decoded_text.split('\n')
-                    for sentence in sentences:
-                        yield [word.strip().lower() for word in sentence.split(' ')]
+                    
+                    if decoded_text:
+                        sentences = decoded_text.split('\n')
+                        for sentence in sentences:
+                            yield [word.strip().lower() for word in sentence.split(' ')]
 
                 except KeyError:
                     # If the field is missing from the document
                     logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
 
+                except TypeError:
+                    # If split failed
+                    logging.getLogger(ERROR_LOGGER).error('Error splitting the text.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
+            
             if self.callback_progress:
                 self.callback_progress.update(total_hits)
 
@@ -109,7 +117,7 @@ class EsIterator:
 
 class EsDataSample(object):
 
-    def __init__(self, fields, query, es_m, negative_set_multiplier=1.0, max_positive_sample_size=10000, score_threshold=0.0):
+    def __init__(self, fields, query, es_m, negative_set_multiplier=1.0, max_positive_sample_size=MAX_POSITIVE_SAMPLE_SIZE, score_threshold=0.0):
         """ Sample data - Positive and Negative samples from query
         negative_set_multiplier (float): length of positive set is multiplied by this to determine negative sample size (to over- or underfit models)
         max_positive_sample_size (int): maximum number of documents per class used to train the model
@@ -131,7 +139,7 @@ class EsDataSample(object):
         for field in self.fields:
             positive_samples_map[field] = []
 
-        self.es_m.set_query_parameter('size', 5000)
+        self.es_m.set_query_parameter('size', ES_SCROLL_SIZE)
         response = self.es_m.scroll()
         scroll_id = response['_scroll_id']
         total_hits = response['hits']['total']
@@ -159,7 +167,14 @@ class EsDataSample(object):
                             _temp_text = hit['_source']
                             for k in field.split('.'):
                                 # Get nested fields encoded as: 'field.sub_field'
-                                _temp_text = _temp_text[k]
+                                try:
+                                    _temp_text = _temp_text[k]
+                                except Exception:
+                                    logging.getLogger(ERROR_LOGGER).error('Field not present in document.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
+                                    _temp_text = ''
+                                # sanity check to remove None values
+                                if not _temp_text:
+                                    _temp_text = ''
                             # Save decoded text into positive sample map
                             positive_samples_map[field].append(_temp_text)
                         
@@ -183,6 +198,7 @@ class EsDataSample(object):
         for field in self.fields:
             negative_samples_map[field] = []
 
+        self.es_m.set_query_parameter('size', ES_SCROLL_SIZE)
         response = self.es_m.scroll(match_all=True)
         scroll_id = response['_scroll_id']
         hit_length = response['hits']['total']
@@ -218,8 +234,11 @@ class EsDataSample(object):
                             # Get nested fields encoded as: 'field.sub_field'
                             try:
                                 _temp_text = _temp_text[k]
-                            except KeyError:
+                            except Exception:
                                 logging.getLogger(ERROR_LOGGER).error('Field not present in document.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
+                                _temp_text = ''
+                            # sanity check to remove None values
+                            if not _temp_text:
                                 _temp_text = ''
                         # Save decoded text into positive sample map
                         negative_samples_map[field].append(_temp_text)

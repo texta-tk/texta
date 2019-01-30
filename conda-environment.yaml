@@ -1,0 +1,31 @@
+name: texta-toolkit
+channels:
+    - conda-forge
+    - defaults
+    - bioconda
+dependencies:
+    - python=3.5
+    - numpy
+    - cython
+    - scipy
+    - gensim
+    - django=2.0.2
+    - sympy
+    - lxml
+    - beautifulsoup4
+    - mysqlclient
+    - psycopg2
+    - pip:
+        - python-logstash-async
+        - sklearn
+        - textract==1.5.0
+        - dateparser
+        - json2table
+        - setuptools
+        - wheel
+        - requests
+        - pathlib
+        - dateutils
+        - elasticsearch
+
+

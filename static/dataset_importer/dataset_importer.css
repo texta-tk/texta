@@ -45,7 +45,7 @@
     font-size: 16px;
     color: #73AD21;
 }
-
+/* 
 .preprocessor-parameters {
     display: none;
 }
@@ -57,7 +57,7 @@
 
 .preprocessor-name {
     font-weight: bold;
-}
+} */
 
 .format-parameters {
     display: none;
@@ -121,6 +121,11 @@
     table-layout: fixed;
     width: 100%;
 }
+
+.importDetails td{
+    word-wrap: break-word;
+}
+
 .detailText {
     word-wrap: break-word;
 }

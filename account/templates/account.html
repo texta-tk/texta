@@ -1,12 +1,13 @@
 {% extends "index.html" %} {% block app %}
 {% include 'email-modal.html' %}
 <script type="application/javascript" src="{{STATIC_URL}}base/account.js"></script>
+<script type="application/javascript" src="{{STATIC_URL}}base/index.js"></script>
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}base/account.css">
-<div class="row">
-	<div class="col-lg-3">
+<div class="grid-2-col-1-row-default">
+	<div class="">
 		{% if request.user.is_authenticated %}
-		<div class="panel">
-			<div class="panel-heading">Change Password</div>
+		<div class="panel panel-borderless">
+
 			<div class="panel-body">
 				<div class="row padded-row">
 					<div class="col-sm-12">
@@ -27,7 +28,7 @@
 			</div>
 		</div>
 		{% else %}
-		<div class="panel">
+		<div class="panel panel-borderless">
 			<div class="panel-heading">Registration</div>
 			<div class="panel-body">
 				<div class='row'>
@@ -63,13 +64,12 @@
 		{% endif %}
 	</div>
 
-	<div class="col-lg-9">
-		<div class="panel">
-			<div class="panel-heading">Information</div>
+	<div class="">
+		<div class="panel panel-borderless">
+		
 			<div class="panel-body">
 
 				<h3>Documentation for TEXTA Toolkit is available <a href="https://texta-tk.github.io" target="_blank">HERE</a>!</h3>
-
 				<br><br>
 				<div class="row">
 					<div class="col-lg-5">
@@ -79,15 +79,18 @@
 					</div>
 					<div class="col-lg-4">
 						<div class="holder">
-							<img src="{{STATIC_URL}}/img/stacc_logo.png">
+							<img style="width:75%" src="{{STATIC_URL}}/img/ekt_logo.png">
 						</div>
 					</div>
-					<div class="col-lg-3">
-						<div class="holder">
-							<img style="width:50%" src="{{STATIC_URL}}/img/ekt_logo.png">
-						</div>
-					</div>
+					
 				</div>
+				{% if messages %}
+				{% for message in messages %}
+					<script>
+						swalCustomTypeDisplay('{{message.tags}}','{{message.tags}}!','{{message}}');
+					</script>
+					{% endfor %}
+				{% endif %}
 				<br><br>
 			</div>
 		</div>

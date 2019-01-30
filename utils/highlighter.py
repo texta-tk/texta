@@ -161,15 +161,13 @@ class Highlighter(object):
                         text_index_to_data_index[alignment[text_index]].append(data_index)
                     except Exception as e:
                         # Throws exception when index out of range
-                        # For example Gets index out of range if in _derive_highlight_data while uses >= instead of >
-                        print('-- Exception[{0}] {1}'.format(__name__, e))
-                        logger.set_context('text', text)
-                        logger.exception('_get_tags_for_text_index try catch execption')
-
-                        
+                        # Possibly started happening when _derive_highlight_data started using >= instead of >
+                        # As a result, the highlgihts will be slightly misaligned, but wont break the search(?)
+                        # Also possibly caused by double quotes in text sometimes
+                        # TODO something to handle this better
+                        pass
 
         text_index_to_data_index = [frozenset(data_indices) for data_indices in text_index_to_data_index]
-
         spans_to_tags = [(spans, self._get_tag_from_highlight_data([data_mapping[data_index] for data_index in data_indices]))
                          for spans, data_indices in self._get_spans_to_data_indices(text_index_to_data_index)]
 
@@ -215,6 +213,8 @@ class Highlighter(object):
                 category_name_value[category][name]["descriptions"].append(description)
 
         title_lines = []
+        fact_name = ''
+        fact_value = ''
         for category in category_name_value:
             title_line_tokens = [category]
             for name in category_name_value[category]:
@@ -228,17 +228,15 @@ class Highlighter(object):
                     title_line_tokens.append(name)
                 
             title_lines.append(' '.join(title_line_tokens))
-
+        
         title = ('&#13;'.join(title_lines))
         color = self._get_color([highlight_data['color'] for highlight_data in highlight_data_list if 'color' in highlight_data])
 
 
         if '[fact]' in title or '[fact_val]' in title or '[ES]' in title:
-            return u'<span class="[HL]" title="{0}" style="background-color: {1};{2}">'.format(
-            title, color, (self._additional_style_string if color != 'none' else ''))
+            return span_str.format('[HL]', title, color, (self._additional_style_string if color != 'none' else ''), fact_name, fact_value)
 
-        return u'<span title="{0}" style="background-color: {1};{2}">'.format(
-            title, color, (self._additional_style_string if color != 'none' else ''))
+        return span_str.format('', title, color, (self._additional_style_string if color != 'none' else ''), '', '')
 
     def _get_color(self, color_code_list):
         if not color_code_list:

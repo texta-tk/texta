@@ -2,7 +2,7 @@ from functools import update_wrapper
 
 from django.contrib.admin import AdminSite
 from django.contrib.auth import REDIRECT_FIELD_NAME
-from django.urls import reverse # NEW PY REQUIREMENT
+from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect

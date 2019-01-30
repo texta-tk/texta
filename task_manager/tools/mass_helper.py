@@ -19,8 +19,7 @@ class MassHelper:
     def __init__(self, es_manager):
         self.es_m = es_manager
         self.es_url = es_manager.es_url
-        self.index = es_manager.index
-        self.mapping = es_manager.mapping
+        self.index = es_manager.stringify_datasets()
 
     def get_document_by_ids(self, doc_ids):
         q = {"query": {"terms": {"_id": doc_ids}}}
@@ -34,18 +33,20 @@ class MassHelper:
         # scroll
         resp = self.es_m.requests.get('{}/{}/_search?scroll=1m'.format(self.es_url, self.index), json=q)
         data = resp.json()
-        scroll_id = data['_scroll_id']
-        docs = data['hits']['hits']
-        while docs:
-            # Consume all page docs
-            for d in docs:
-                yield d
-            # Next page
-            resp = self.es_m.requests.get('{}/_search/scroll'.format(self.es_url),
-                                          json={'scroll': '1m', 'scroll_id': scroll_id})
-            data = resp.json()
+        
+        if '_scroll_id' in data:
             scroll_id = data['_scroll_id']
             docs = data['hits']['hits']
+            while docs:
+                # Consume all page docs
+                for d in docs:
+                    yield d
+                # Next page
+                resp = self.es_m.requests.get('{}/_search/scroll'.format(self.es_url),
+                                            json={'scroll': '1m', 'scroll_id': scroll_id})
+                data = resp.json()
+                scroll_id = data['_scroll_id']
+                docs = data['hits']['hits']
 
     def _get_total(self, q):
         """ Total of documents for a given query q
