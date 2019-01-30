@@ -9,12 +9,11 @@ import logging
 
 def to_multiindex(apps, schema_editor):
     logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'to_multiindex', 'info': 'Changing Dataset field to Datasets field.'}))
-    import pdb;pdb.set_trace()
-    
+
     Search = apps.get_model('searcher', 'Search')
     for search in Search.objects.all():
         logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'to_multiindex', 'info': 'Search changed to multiindex', 'pk': search.id, 'desc': search.description}))
-        search.datasets = [search.dataset]
+        search.datasets.set([search.dataset])
         search.save()
 
 
