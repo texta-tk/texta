@@ -13,6 +13,7 @@ class TextTaggerPreprocessor(object):
 
     def transform(self, documents, **kwargs):
         input_features = json.loads(kwargs['text_tagger_feature_names'])
+        input_path = json.loads(kwargs['text_tagger_path'])
         tagger_ids_to_apply = [int(_id) for _id in json.loads(kwargs['text_tagger_preprocessor_models'])]
         taggers_to_apply = []
 

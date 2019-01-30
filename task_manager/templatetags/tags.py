@@ -3,6 +3,6 @@ import json
 
 register = template.Library()
 
-@register.json_tag
-def entry_saved_data(value):
-    return json.loads(value)
+@register.simple_tag
+def get_field(value):
+    return json.dumps(json.loads(value)['fields'])

@@ -1,4 +1,19 @@
 $(function () {
+    $("#text-tagger-processor-models").on("changed.bs.select",
+        function (e, clickedIndex, newValue, oldValue) {
+            let fields = []
+            $('#text-tagger-processor-models option:selected').each((index, element) => {
+                fields.push($(element).data('fields'))
+            })
+            if (fields.length >= 1) {
+                fields.forEach((e) => {
+                    $('#text-tagger-processor-feature-names').selectpicker('val', e);
+                })
+            } else {
+                $('#text-tagger-processor-feature-names').selectpicker('deselectAll');
+            }
+        });
+
     $('#lexicon-classifier-cl-slops').bootstrapSlider({
         formatter: function (value) {
             return 'Current value: ' + value
@@ -106,36 +121,36 @@ $(function () {
     })
 })
 
-function showIfLemmatize () {
+function showIfLemmatize() {
     $('.if-lemmatize').toggleClass('hidden')
 }
 
-function showIfAddStopword () {
+function showIfAddStopword() {
     $('.if-add-stopword').toggleClass('hidden')
 }
 
-function showIfSentiment () {
+function showIfSentiment() {
     $('.if-sentiment').toggleClass('hidden')
 }
 
-function showIfMethodLexicon () {
+function showIfMethodLexicon() {
     $('.if-lexicon-based').toggleClass('hidden')
 }
 
-function showIfMethodModel () {
+function showIfMethodModel() {
     $('.if-model-based').toggleClass('hidden')
 }
 
-function showIfKeywordExtraction () {
+function showIfKeywordExtraction() {
     $('.if-keyword-extraction').toggleClass('hidden')
 }
 
-function showBasedOnMethod () {
+function showBasedOnMethod() {
     showIfMethodLexicon() // lexicon selected by default so just have to toggle classes onchange
     showIfMethodModel()
 }
 
-function showIfSentimentLexCustom (value) {
+function showIfSentimentLexCustom(value) {
     if (value === 'Custom') {
         $('.if-sentiment-lex-custom').removeClass('hidden')
     } else {
@@ -143,31 +158,31 @@ function showIfSentimentLexCustom (value) {
     }
 }
 
-function showIfRakeSelected () {
+function showIfRakeSelected() {
     $('.if-rake-wrapper').toggleClass('hidden')
 }
 
-function showIfNounSelected () {
+function showIfNounSelected() {
     $('.if-nouns-wrapper').toggleClass('hidden')
 }
 
-function showIfBgInfoSelected () {
+function showIfBgInfoSelected() {
     $('.if-bg-info-wrapper').toggleClass('hidden')
 }
 
-function showIfSignificantWordsSelected () {
+function showIfSignificantWordsSelected() {
     $('.if-significant-words-wrapper').toggleClass('hidden')
 }
 
-function showNounIfBgInfoSelected () {
+function showNounIfBgInfoSelected() {
     $('.if-noun-bg-info-selected ').toggleClass('hidden')
 }
 
-function showLexContent () {
+function showLexContent() {
     $('.c-lex-content-wrapper').toggleClass('hidden')
 }
 
-function toggleRequiredPercentage (element) {
+function toggleRequiredPercentage(element) {
     let elementValue = $(element).val()
     $('.required-percentage-wrapper').toggleClass('hidden', elementValue == 'OR')
 }

@@ -1,4 +1,20 @@
+{% load tags %}
 <div class="task-manager-grid-wrapper bg-grey preprocessor-padding width-max">
+    <div class="grid-i">
+        <label class="control-label" for="text-tagger-processor-models">Taggers:</label>
+        <div class="select-wrapper">
+            <select id="text-tagger-processor-models" data-width="100%" name="text_tagger_preprocessor_models"
+                    class="selectpicker"
+                    multiple="multiple" data-style="btn-sm btn-default">
+                {% for tagger in preprocessor.enabled_taggers %}
+
+                    {% get_field tagger.parameters as field %}
+                    <option value="{{ tagger.id }}" data-fields="{{ field }}"
+                    >{{ tagger.description }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
     <div class="grid-i">
         <label class="control-label" for="text-tagger-processor-feature-name">Fields:</label>
         <div class="select-wrapper">
@@ -11,7 +27,7 @@
                         data-style="btn-sm btn-default">
                     {% for field in fields %}
                         <option value="{{ field.path }}"
-                                >{{ field.label }}</option>
+                        >{{ field.label }}</option>
                     {% endfor %}
                 </select>
             {% else %}
@@ -31,16 +47,26 @@
 
         {% endif %}
     </div>
+
     <div class="grid-i">
-        <label class="control-label" for="text-tagger-processor-models">Taggers:</label>
+        <label class="control-label" for="text-tagger-processor-path">Path:</label>
         <div class="select-wrapper">
-            <select id="text-tagger-processor-models" data-width="100%" name="text_tagger_preprocessor_models" class="selectpicker"
-                    multiple="multiple" data-style="btn-sm btn-default">
-                {% for tagger in preprocessor.enabled_taggers %}
-                    <option value="{{ tagger.id }}"
-                            >{{ tagger.description }}</option>
-                {% endfor %}
-            </select>
+            {% if fields %}
+                <select class="selectpicker" multiple data-selected-text-format="count"
+                        id="text-tagger-processor-path"
+                        data-width="100%"
+                        required
+                        name="text_tagger_path"
+                        data-style="btn-sm btn-default">
+                    {% for field in fields %}
+                        <option value="{{ field.path }}"
+                        >{{ field.label }}</option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <textarea class="form-control" rows="2" id="text-tagger-processor-path"
+                          name="text_tagger_path"></textarea>
+            {% endif %}
         </div>
     </div>
 </div>
