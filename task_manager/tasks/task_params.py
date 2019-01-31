@@ -4,6 +4,8 @@ from .workers.language_model_worker import LanguageModelWorker
 from .workers.text_tagger_worker import TagModelWorker
 from .workers.entity_extractor_worker import EntityExtractorWorker
 from .workers.preprocessor_worker import PreprocessorWorker
+from .workers.management_workers.management_worker import ManagementWorker
+from .workers.management_workers.fact_deletion_worker import FactDeletionWorker
 from utils.es_manager import ES_Manager
 from texta.settings import ERROR_LOGGER
 
@@ -41,6 +43,21 @@ task_params = [
         "template":        "task_parameters/apply_preprocessor.html",
         "result_template": "task-results/apply-preprocessor-results.html",
         "worker":          PreprocessorWorker,
+        "allowed_actions": []
+    },
+    {
+        "name":            "Management Task",
+        "id":              "management_task",
+        "template":        "task_parameters/management_task.html",
+        "result_template": "task-results/management-task-results.html",
+        "worker":          ManagementWorker,
+        "enabled_managers":[
+            {'key': 'fact_deletion_worker',
+             'name': 'Fact Deleter',
+             'worker': FactDeletionWorker,
+             'parameters_template': 'management_parameters/fact_deleter.html',
+            },
+        ],
         "allowed_actions": []
     }
 ]

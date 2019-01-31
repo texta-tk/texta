@@ -3,9 +3,6 @@ import json
 import logging
 from datetime import datetime
 
-from task_manager.document_preprocessor import preprocessor_map
-from task_manager.document_preprocessor import PREPROCESSOR_INSTANCES
-
 from texta.settings import ERROR_LOGGER
 from texta.settings import INFO_LOGGER
 from searcher.models import Search

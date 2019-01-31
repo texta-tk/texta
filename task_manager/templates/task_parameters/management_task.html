@@ -1,0 +1,63 @@
+<div class="panel">
+    <div class="panel-body">
+
+        <div class="row">
+            <div class="col-sm-6">Search:</div>
+            <div class="col-sm-6">
+                <select id='management-task-search-param' name="{{ task_param.id }}_search" class="selectpicker" data-width='100%'>
+                    <option value="all_docs">Empty (all documents)</option>
+                    {% for search in searches %}
+                        <option value="{{ search.id }}">{{ search.description }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-6">Description:</div>
+            <div class="col-sm-6">
+                <input required id='management-task-description-param' name="{{ task_param.id }}_description" class="form-control input-sm">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-6">Manager:</div>
+            <div class="col-sm-6">
+                <select id="{{ task_param.id }}_management_key" autocomplete="off"
+                        name="{{ task_param.id }}_management_key" class="selectpicker" data-width='100%'
+                        onchange="select_management('{{ task_param.id }}');">
+                    {% for manager in task_param.enabled_managers %}
+                        <option value="{{ manager.key }}">{{ manager.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="flex-column management-wrapper">
+            {% for manager in task_param.enabled_managers %}
+
+
+                <div id="params-{{ manager.key }}"
+                     class="{% if forloop.counter > 1 %}hidden{% endif %} flex-row height-max ">
+                    <form autocomplete="off" class="flex-column height-max width-max" action="javascript:start_task_management('{{ task_param.id }}','form_{{ task_param.id }}_{{ manager.key }}','{{ manager.key }}');" id="form_{{ task_param.id }}_{{ manager.key }}">
+                        {% include manager.parameters_template %}
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <button type="submit"
+                                        class="btn btn-default form-control"><span
+                                        class="glyphicon glyphicon-ok"></span> Start task
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+
+
+            {% endfor %}
+        </div>
+
+
+    </div>
+</div>

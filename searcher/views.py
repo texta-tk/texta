@@ -45,9 +45,9 @@ from searcher.models import Search
 from searcher.view_functions.aggregations.agg_manager import AggManager
 from searcher.view_functions.build_search.build_search import execute_search
 from searcher.view_functions.cluster_search.cluster_manager import ClusterManager
-from searcher.view_functions.general.fact_manager import FactManager
-from searcher.view_functions.general.fact_manager import FactAdder
-from searcher.view_functions.general.fact_manager import FactGraph
+from utils.fact_manager import FactManager
+from utils.fact_manager import FactAdder
+from utils.fact_manager import FactGraph
 from searcher.view_functions.general.get_saved_searches import extract_constraints
 from searcher.view_functions.general.export_pages import export_pages
 from searcher.view_functions.general.searcher_utils import collect_map_entries, get_fields_content, get_fields
