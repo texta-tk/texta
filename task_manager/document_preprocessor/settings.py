@@ -55,7 +55,7 @@ preprocessor_map = {}
 
 try:
     preprocessor_map['mlp'] = {
-        'name': 'Multilingual preprocessor',
+        'name': 'Multilingual processor',
         'description': 'Extracts lemmas and identifies language code from multiple languages.',
         'class': MlpPreprocessor,
         'parameters_template': 'preprocessor_parameters/mlp.html',
@@ -74,7 +74,7 @@ except Exception as e:
 
 try:
     preprocessor_map['date_converter'] = {
-        'name': 'Date conversion preprocessor',
+        'name': 'Date conversion processor',
         'description': 'Converts date field values to correct format',
         'class': DatePreprocessor,
         'parameters_template': 'preprocessor_parameters/date_converter.html',
@@ -90,7 +90,7 @@ except Exception as e:
 
 try:
     preprocessor_map['text_tagger'] = {
-        'name': 'Text Tagger preprocessor',
+        'name': 'Text Tagger processor',
         'description': 'Tags documents with TEXTA Text Tagger',
         'class': TextTaggerPreprocessor,
         'parameters_template': 'preprocessor_parameters/text_tagger.html',
@@ -104,7 +104,7 @@ except Exception as e:
 
 try:
     preprocessor_map['lexicon_classifier'] = {
-        'name': 'Lexicon Tagger Preprocessor',
+        'name': 'Lexicon Tagger processor',
         'description': 'Applies lexicon-based tagging',
         'class': LexTagger,
         'parameters_template': 'preprocessor_parameters/lexicon_classifier.html',
@@ -140,7 +140,7 @@ except Exception as e:
 
 try:
     preprocessor_map['entity_extractor'] = {
-        'name': 'Entity Extractor preprocessor',
+        'name': 'Entity Extractor processor',
         'description': 'Extract entities from documents with TEXTA Entity Extractor',
         'class': EntityExtractorPreprocessor,
         'parameters_template': 'preprocessor_parameters/entity_extractor.html',

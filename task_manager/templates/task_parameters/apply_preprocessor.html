@@ -21,13 +21,13 @@
         </div>
 
         <div class="row">
-            <div class="col-sm-6">Preprocessor:</div>
+            <div class="col-sm-6">Processor:</div>
             <div class="col-sm-6">
 
                 <select id="{{ task_param.id }}_preprocessor_key" autocomplete="off"
                         name="{{ task_param.id }}_preprocessor_key" class="selectpicker" data-width='100%'
                         onchange="select_preprocessor('{{ task_param.id }}');">
-                    {% for preprocessor in enabled_preprocessors %}
+                    {% for preprocessor in enabled_preprocessors|dictsort:"name" %}
                         <option value="{{ preprocessor.key }}">{{ preprocessor.name }}</option>
                     {% endfor %}
                 </select>

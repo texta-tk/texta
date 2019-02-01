@@ -36,7 +36,7 @@ task_params = [
         "allowed_actions": ["delete"]
     },
     {
-        "name":            "Apply Preprocessor",
+        "name":            "Apply Processor",
         "id":              "apply_preprocessor",
         "template":        "task_parameters/apply_preprocessor.html",
         "result_template": "task-results/apply-preprocessor-results.html",
