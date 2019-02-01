@@ -126,6 +126,9 @@ function showIfMethodModel () {
     $('.if-model-based').toggleClass('hidden')
 }
 
+function showIfUseCustomModels() {
+    $('.if-use-custom-models').toggleClass('hidden')
+}
 function showIfKeywordExtraction () {
     $('.if-keyword-extraction').toggleClass('hidden')
 }

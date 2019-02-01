@@ -179,8 +179,17 @@
 
     </div>
 
-    <!-- Show, if method == Model-based -->
     <div class="grid-i if-model-based hidden">
+      <label class="control-label " for="scoro-preprocessor-use-custom-models">Custom:</label>
+      <div>
+        <input type="checkbox" name="scoro_use_custom_models" id="scoro-preprocessor-use-custom-models" onchange=showIfUseCustomModels()
+          class="checkbox">
+      </div>
+      <span data-toggle="tooltip" data-placement="bottom" title="Use previously trained custom taggers for the analysis." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+    </div>
+
+    <!-- Show, if method == Model-based -->
+    <div class="grid-i if-use-custom-models hidden">
       <label class="control-label " for="scoro-preprocessor-neg-model">Neg model:</label>
       <div class='select-wrapper'>
         <select id="scoro-preprocessor-neg-model" name="scoro_neg_model" class="form-control input-sm">
@@ -194,7 +203,7 @@
     </div>
 
     <!-- Show, if method == Model-based -->
-    <div class="grid-i if-model-based hidden">
+    <div class="grid-i if-use-custom-models hidden">
       <label class="control-label " for="scoro-preprocessor-pos-model">Pos model:</label>
       <div class='select-wrapper'>
         <select id="scoro-preprocessor-pos-model" name="scoro_pos_model" class="form-control input-sm">
