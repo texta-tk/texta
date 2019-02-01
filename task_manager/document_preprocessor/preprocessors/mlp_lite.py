@@ -1,42 +1,18 @@
 from dateutil import parser
+from time import sleep
 import requests
 import logging
 import json
 
-from texta.settings import mlp_url
+from utils.mlp_task_adapter import MLPTaskAdapter
 
-# derive url from mlp url
-text_cleaner_url = mlp_url.replace('/mlp/process', '/text_cleaner/process')
-
-class TextCleanerPreprocessor(object):
+class MLPLitePreprocessor(object):
     """
     Cleans texts for classification. Lemmatizes text.
     """
 
-    def __init__(self):
-        pass
-
-    @classmethod
-    def _is_date(cls, string):
-        try:
-            parser.parse(string)
-            return True
-        except ValueError:
-            return False
-
-    @classmethod
-    def _get_hour(cls, string):
-        try:
-            return str(parser.parse(string).hour)
-        except ValueError:
-            return ''
-
-    @classmethod
-    def _get_month(cls, string):
-        try:
-            return str(parser.parse(string).month)
-        except ValueError:
-            return ''
+    def __init__(self, mlp_url=None):
+        self.mlp_url = mlp_url
 
     @staticmethod
     def _process_stats(stats):
@@ -83,24 +59,13 @@ class TextCleanerPreprocessor(object):
                 pass
 
             texts = [document[input_feature] for document in documents if input_feature in document]
-
-            try:
-                texts = [document[input_feature].decode() for document in documents if input_feature in document]
-            except AttributeError:
-                texts = [document[input_feature] for document in documents if input_feature in document]
-
             data = {'texts': json.dumps(texts, ensure_ascii=False)}
 
-            try:
-                analyzation_data = requests.post(text_cleaner_url, data=data).json()
-            except Exception:
-                logging.error('Failed to achieve connection with mlp.', extra={'mlp_url':text_cleaner_url})
-                break
+            analyzation_data, errors = MLPTaskAdapter(self.mlp_url, mlp_type='mlp_lite').process(data)
 
             for analyzation_idx, analyzation_datum in enumerate(analyzation_data):
-                documents[analyzation_idx][input_feature+'_clean'] = {}
-                documents[analyzation_idx][input_feature+'_clean']['text'] = analyzation_datum['text']
-                documents[analyzation_idx][input_feature+'_clean']['stats'] = self._process_stats(analyzation_datum['stats'])
+                documents[analyzation_idx][input_feature+'_mlp-lite'] = {}
+                documents[analyzation_idx][input_feature+'_mlp-lite']['text'] = analyzation_datum['text']
+                documents[analyzation_idx][input_feature+'_mlp-lite']['stats'] = self._process_stats(analyzation_datum['stats'])
 
-        return {'documents': documents, 'meta': {}}
-        
+        return {'documents': documents, 'meta': {}, 'erros': errors}

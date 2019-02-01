@@ -5,7 +5,7 @@ import requests
 import logging
 import json
 
-from django.conf import settings
+from utils.mlp_task_adapter import MLPTaskAdapter
 
 
 class MlpPreprocessor(object):
@@ -42,39 +42,16 @@ class MlpPreprocessor(object):
         for input_feature in input_features:
 
             texts = [document[input_feature] for document in documents if input_feature in document]
-            data = {'texts': json.dumps(texts, ensure_ascii=False), 'doc_path': 'mlp_' + input_feature}
-
-            try:
-                texts = [document[input_feature].decode() for document in documents if input_feature in document]
-            except AttributeError:
-                texts = [document[input_feature] for document in documents if input_feature in document]
-
             data = {'texts': json.dumps(texts, ensure_ascii=False), 'doc_path': input_feature+'_mlp'}
 
-            try:
-                analyzation_data = requests.post(self._mlp_url, data=data).json()
-            except Exception:
-
-                logging.error('Failed to achieve connection with mlp.', extra={'mlp_url':self._mlp_url, 'enabled_features':self._enabled_features})
-                break
+            analyzation_data, errors = MLPTaskAdapter(self._mlp_url, mlp_type='mlp').process(data)
 
             for analyzation_idx, analyzation_datum in enumerate(analyzation_data):
                 analyzation_datum = analyzation_datum[0]
-
                 documents[analyzation_idx][input_feature+'_mlp'] = analyzation_datum['text']
                 documents[analyzation_idx][input_feature+'_mlp']['lang'] = analyzation_datum['text']['lang']
-
                 if 'texta_facts' not in documents[analyzation_idx]:
                     documents[analyzation_idx]['texta_facts'] = []
-
                 documents[analyzation_idx]['texta_facts'].extend(analyzation_datum['texta_facts'])
 
-        return {'documents': documents, 'meta': {}}
-
-
-if __name__ == '__main__':
-    mlp_processor = MlpPreprocessor(settings.DATASET_IMPORTER['urls'])
-    docs = [{'text': u'Mina olen väga ilus.'}, {'text': u'Little cute donkey watched as little girl ate.'}]
-    mlp_processor.transform(docs, **{'feature_map': {'text': 'tekst', 'lang': 'keel'}})
-
-    print(docs)
+        return {'documents': documents, 'meta': {}, 'errors': errors}
