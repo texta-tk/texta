@@ -5,12 +5,12 @@
 
 import logging
 from texta.settings import ERROR_LOGGER
-from texta.settings import DATASET_IMPORTER
+from texta.settings import MLP_URL
 from texta.settings import SCORO_PREPROCESSOR_ENABLED
 from task_manager.document_preprocessor.preprocessors import DatePreprocessor
 from task_manager.document_preprocessor.preprocessors import MlpPreprocessor
 from task_manager.document_preprocessor.preprocessors import TextTaggerPreprocessor
-from task_manager.document_preprocessor.preprocessors import MlpPreprocessor
+from task_manager.document_preprocessor.preprocessors import MLPLitePreprocessor
 from task_manager.document_preprocessor.preprocessors import DatePreprocessor
 from task_manager.document_preprocessor.preprocessors import LexTagger
 from task_manager.document_preprocessor.preprocessors import ScoroPreprocessor
@@ -55,13 +55,28 @@ preprocessor_map = {}
 
 try:
     preprocessor_map['mlp'] = {
-        'name': 'Multilingual processor',
+        'name': 'MLP',
         'description': 'Extracts lemmas and identifies language code from multiple languages.',
         'class': MlpPreprocessor,
         'parameters_template': 'preprocessor_parameters/mlp.html',
         'arguments': {
-            'mlp_url': DATASET_IMPORTER['urls']['mlp'],
-            'enabled_features': ['text', 'lang', 'texta_facts'],
+            'mlp_url': MLP_URL,
+        },
+        'is_enabled': True
+    }
+    log_preprocessor_status(code='mlp_lite', status='enabled')
+except Exception as e:
+    logging.getLogger(ERROR_LOGGER).exception(e)
+    log_preprocessor_status(code='mlp_lite', status='disabled')
+
+try:
+    preprocessor_map['mlp_lite'] = {
+        'name': 'MLP Lite',
+        'description': 'Extracts lemmas and calculates statistics for classifiers.',
+        'class': MLPLitePreprocessor,
+        'parameters_template': 'preprocessor_parameters/mlp_lite.html',
+        'arguments': {
+            'mlp_url': MLP_URL,
         },
         'field_properties': mlp_field_properties,
         'is_enabled': True
@@ -74,7 +89,7 @@ except Exception as e:
 
 try:
     preprocessor_map['date_converter'] = {
-        'name': 'Date conversion processor',
+        'name': 'Date converter',
         'description': 'Converts date field values to correct format',
         'class': DatePreprocessor,
         'parameters_template': 'preprocessor_parameters/date_converter.html',
@@ -90,7 +105,7 @@ except Exception as e:
 
 try:
     preprocessor_map['text_tagger'] = {
-        'name': 'Text Tagger processor',
+        'name': 'Text Tagger',
         'description': 'Tags documents with TEXTA Text Tagger',
         'class': TextTaggerPreprocessor,
         'parameters_template': 'preprocessor_parameters/text_tagger.html',
@@ -104,7 +119,7 @@ except Exception as e:
 
 try:
     preprocessor_map['lexicon_classifier'] = {
-        'name': 'Lexicon Tagger processor',
+        'name': 'Lexicon Tagger',
         'description': 'Applies lexicon-based tagging',
         'class': LexTagger,
         'parameters_template': 'preprocessor_parameters/lexicon_classifier.html',
@@ -122,7 +137,7 @@ except Exception as e:
 
 try:
     preprocessor_map['scoro'] = {
-        'name': 'Scoro preprocessor',
+        'name': 'Scoro',
         'description': 'Extracts topics and evaluates sentiment',
         'class': ScoroPreprocessor,
         'parameters_template': 'preprocessor_parameters/scoro.html',
@@ -140,7 +155,7 @@ except Exception as e:
 
 try:
     preprocessor_map['entity_extractor'] = {
-        'name': 'Entity Extractor processor',
+        'name': 'Entity Extractor',
         'description': 'Extract entities from documents with TEXTA Entity Extractor',
         'class': EntityExtractorPreprocessor,
         'parameters_template': 'preprocessor_parameters/entity_extractor.html',
