@@ -78,6 +78,8 @@ def get_fact_names(es_m):
                 for val in fact['fact_values']['buckets']:
                     fact_data[fact['key']].append(val['key'])
             fact_names.update(fact_data)
+            import pdb;pdb.set_trace()
+            
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(json.dumps(
             {'process': 'GET TASK PARAMS', 'event': 'get_fact_names', 'data': {'active_datasets_ids_and_names': [(ds.id, ds.index) for ds in es_m.active_datasets], 'response_keys': list(response.keys())}}), exc_info=True)

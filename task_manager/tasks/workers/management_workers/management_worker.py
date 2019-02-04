@@ -28,8 +28,9 @@ class ManagementWorker(BaseWorker):
         self.params = None
         self.scroll_size = scroll_size
         self.scroll_time_out = time_out
-
-        self.manager_map = {'fact_deleter': FactDeleterWorker}
+        self.manager_map = {
+            'fact_deleter': FactDeleterWorker
+        }
 
     def run(self, task_id):
         self.task_id = task_id
@@ -41,14 +42,14 @@ class ManagementWorker(BaseWorker):
             ds = Datasets().activate_datasets_by_id(params['dataset'])
             es_m = ds.build_manager(ES_Manager)
             # es_m.load_combined_query(self._parse_query(params))
-
             self.es_m = es_m
             self.params = params
-            # valid, msg = self._check_if_request_bad(self.params)
-            # if valid:
-                # self._preprocessor_worker()
-            # else:
-                # raise UserWarning(msg)
+            valid, msg = self._check_if_request_bad(self.params)
+            if valid:
+                self._preprocessor_worker()
+            else:
+                raise UserWarning(msg)
+
             self._start_subworker()
 
         except TaskCanceledException as e:
@@ -56,12 +57,12 @@ class ManagementWorker(BaseWorker):
             # Delete task
             task = Task.objects.get(pk=self.task_id)
             task.delete()
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'PROCESSOR WORK', 'event': 'processor_worker_canceled', 'data': {'task_id': self.task_id}}), exc_info=True)
+            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'PROCESSOR WORK', 'event': 'management_worker_canceled', 'data': {'task_id': self.task_id}}))
             print("--- Task canceled")
 
         except Exception as e:
             logging.getLogger(ERROR_LOGGER).exception(json.dumps(
-                {'process': 'PROCESSOR WORK', 'event': 'processor_worker_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
+                {'process': 'PROCESSOR WORK', 'event': 'manager_worker_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
             # declare the job as failed.
             task = Task.objects.get(pk=self.task_id)
             task.result = json.dumps({'error': repr(e)})
@@ -70,19 +71,20 @@ class ManagementWorker(BaseWorker):
 
     def _start_subworker(self):
         # Get sub-worker
-        sub_worker = self.manager_map[self.params['manager_key']]()
+        sub_worker = self.manager_map[self.params['manager_key']](self.es_m, self.task_id, self.params,self.scroll_size, self.scroll_time_out)
         sub_worker.run(self.task_id)
 
 
 
     @staticmethod
     def _check_if_request_bad(args):
-        '''Check if models/fields are selected'''
-        if not any(['feature_names' in k for k in args]):
-            return False, "No field selected"
+        # TODO TODO TODO TODO TODO TODO
+        # '''Check if models/fields are selected'''
+        # if not any(['feature_names' in k for k in args]):
+        #     return False, "No field selected"
 
-        if args['preprocessor_key'] in ['text_tagger', 'entity_extractor']:
-            if not any(['preprocessor_models' in k for k in args]):
-                return False, "No preprocessor model selected"
+        # if args['preprocessor_key'] in ['text_tagger', 'entity_extractor']:
+        #     if not any(['preprocessor_models' in k for k in args]):
+        #         return False, "No preprocessor model selected"
 
         return True, ""

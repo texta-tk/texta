@@ -13,11 +13,12 @@ from texta.settings import FACT_PROPERTIES, ERROR_LOGGER
 class FactManager:
     """ Manage Searcher facts, like deleting/storing, adding facts.
     """
+    f_field = 'texta_facts'
+
     def __init__(self,request):
         self.es_params = request.POST
         self.ds = Datasets().activate_datasets(request.session)
         self.es_m = self.ds.build_manager(ES_Manager)
-        self.field = 'texta_facts'
         # Maybe should come from some settings file
         self.max_name_len = 15
         self.bs = 7500
@@ -27,7 +28,7 @@ class FactManager:
         try:
             query = self._fact_deletion_query(rm_facts_dict, doc_id)
             self.es_m.load_combined_query(query)
-            response = self.es_m.scroll(size=self.bs, field_scroll=self.field)
+            response = self.es_m.scroll(size=self.bs, field_scroll=f_field)
             scroll_id = response['_scroll_id']
             total_docs = response['hits']['total']
             docs_left = total_docs # DEBUG
@@ -38,7 +39,7 @@ class FactManager:
                     data = ''
                     for document in response['hits']['hits']:
                         new_field = [] # The new facts field
-                        for fact in document['_source'][self.field]:
+                        for fact in document['_source'][f_field]:
                             # If the fact name is in rm_facts_dict keys
                             if fact["fact"] in rm_facts_dict:
                                 # If the fact value is not in the delete key values
@@ -48,9 +49,9 @@ class FactManager:
                                 new_field.append(fact)
                         # Update dataset
                         data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
-                        document = {'doc': {self.field: new_field}}
+                        document = {'doc': {f_field: new_field}}
                         data += json.dumps(document)+'\n'
-                    response = self.es_m.scroll(scroll_id=scroll_id, size=self.bs, field_scroll=self.field)
+                    response = self.es_m.scroll(scroll_id=scroll_id, size=self.bs, field_scroll=f_field)
                     total_docs = len(response['hits']['hits'])
                     docs_left -= self.bs # DEBUG
                     scroll_id = response['_scroll_id']
@@ -75,13 +76,13 @@ class FactManager:
         fact_queries = []
         for key in rm_facts_dict:
             for val in rm_facts_dict[key]:
-                terms = [{"term": {self.field+".fact": key}},{"term": {self.field+".str_val": val}}]
+                terms = [{"term": {f_field+".fact": key}},{"term": {f_field+".str_val": val}}]
                 if doc_id:
                     terms.append({"term": {"_id": doc_id}})
                 fact_queries.append({"bool": {"must": terms}})
 
-        query = {"main": {"query": {"nested": {"path": self.field,"query":
-         {"bool":{"should":fact_queries}}}},"_source": [self.field]}}
+        query = {"main": {"query": {"nested": {"path": f_field,"query":
+         {"bool":{"should":fact_queries}}}},"_source": [f_field]}}
 
         return query
 
@@ -212,8 +213,8 @@ class FactAdder(FactManager):
         response = self.es_m.perform_query(query)
         hits = response['hits']['hits']
         # If texta_facts not in document
-        if self.field not in hits[0]['_source']:
-            self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
+        if f_field not in hits[0]['_source']:
+            self.es_m.update_mapping_structure(f_field, FACT_PROPERTIES)
 
         data = ''
         for document in hits:
@@ -221,13 +222,13 @@ class FactAdder(FactManager):
             match = re.search(r"{}".format(self.fact_value), content, re.IGNORECASE | re.MULTILINE)
             save_val = match.group().lower() if not self.case_sens else match.group()
             new_fact = {'fact': self.fact_name, 'str_val':  save_val, 'doc_path': self.fact_field, 'spans': str([list(match.span())])}
-            if self.field not in document['_source']:
-                document['_source'][self.field] = [new_fact]
+            if f_field not in document['_source']:
+                document['_source'][f_field] = [new_fact]
             else:
-                document['_source'][self.field].append(new_fact)
+                document['_source'][f_field].append(new_fact)
 
             data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
-            document = {'doc': {self.field: document['_source'][self.field]}}
+            document = {'doc': {f_field: document['_source'][f_field]}}
             data += json.dumps(document)+'\n'
         response = self.es_m.plain_post_bulk(self.es_m.es_url, data)
         return {'fact_count': 1, 'status': 'success'}
@@ -239,8 +240,8 @@ class FactAdder(FactManager):
         response = self.es_m.perform_query(query)
         hits = response['hits']['hits']
         # If texta_facts not in document
-        if self.field not in hits[0]['_source']:
-            self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
+        if f_field not in hits[0]['_source']:
+            self.es_m.update_mapping_structure(f_field, FACT_PROPERTIES)
 
         fact_count = 0
         data, fact_count = self._derive_match_spans(hits, fact_count)
@@ -269,11 +270,11 @@ class FactAdder(FactManager):
         fact_count = 0
         if hits:
             try:
-                if self.field not in hits[0]['_source']:
-                    self.es_m.update_mapping_structure(self.field, FACT_PROPERTIES)
+                if f_field not in hits[0]['_source']:
+                    self.es_m.update_mapping_structure(f_field, FACT_PROPERTIES)
                 while total_docs > 0:
                     data, fact_count = self._derive_match_spans(hits, fact_count)
-                    response = self.es_m.scroll(scroll_id=scroll_id, size=self.bs, field_scroll=self.field)
+                    response = self.es_m.scroll(scroll_id=scroll_id, size=self.bs, field_scroll=f_field)
                     if response['hits']:
                         total_docs = len(response['hits']['hits'])
                         scroll_id = response['_scroll_id']
@@ -307,13 +308,13 @@ class FactAdder(FactManager):
 
 
     def _append_fact_to_doc(self, document, data, new_facts):
-        if self.field not in document['_source']:
-            document['_source'][self.field] = new_facts
+        if f_field not in document['_source']:
+            document['_source'][f_field] = new_facts
         else:
-            document['_source'][self.field].extend(new_facts)
+            document['_source'][f_field].extend(new_facts)
 
         data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
-        document = {'doc': {self.field: document['_source'][self.field]}}
+        document = {'doc': {f_field: document['_source'][f_field]}}
         data += json.dumps(document)+'\n'
         return data
 
