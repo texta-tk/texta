@@ -1,7 +1,7 @@
 <div class="panel">
     <div class="panel-body">
 
-        <div class="row">
+        <!-- <div class="row">
             <div class="col-sm-6">Search:</div>
             <div class="col-sm-6">
                 <select id='management-task-search-param' name="{{ task_param.id }}_search" class="selectpicker" data-width='100%'>
@@ -11,7 +11,7 @@
                     {% endfor %}
                 </select>
             </div>
-        </div>
+        </div> -->
 
         <div class="row">
             <div class="col-sm-6">Description:</div>
@@ -23,9 +23,9 @@
         <div class="row">
             <div class="col-sm-6">Manager:</div>
             <div class="col-sm-6">
-                <select id="{{ task_param.id }}_management_key" autocomplete="off"
-                        name="{{ task_param.id }}_management_key" class="selectpicker" data-width='100%'
-                        onchange="select_management('{{ task_param.id }}');">
+                <select id="{{ task_param.id }}_manager_key" autocomplete="off"
+                        name="{{ task_param.id }}_manager_key" class="selectpicker" data-width='100%'
+                        onchange="select_manager('{{ task_param.id }}');">
                     {% for manager in task_param.enabled_managers %}
                         <option value="{{ manager.key }}">{{ manager.name }}</option>
                     {% endfor %}

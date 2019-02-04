@@ -5,7 +5,7 @@ from .workers.text_tagger_worker import TagModelWorker
 from .workers.entity_extractor_worker import EntityExtractorWorker
 from .workers.preprocessor_worker import PreprocessorWorker
 from .workers.management_workers.management_worker import ManagementWorker
-from .workers.management_workers.fact_deletion_worker import FactDeletionWorker
+from .workers.management_workers.fact_deleter_worker import FactDeleterWorker
 from utils.es_manager import ES_Manager
 from texta.settings import ERROR_LOGGER
 
@@ -52,9 +52,9 @@ task_params = [
         "result_template": "task-results/management-task-results.html",
         "worker":          ManagementWorker,
         "enabled_managers":[
-            {'key': 'fact_deletion_worker',
+            {'key': 'fact_deleter',
              'name': 'Fact Deleter',
-             'worker': FactDeletionWorker,
+             'worker': FactDeleterWorker,
              'parameters_template': 'management_parameters/fact_deleter.html',
             },
         ],

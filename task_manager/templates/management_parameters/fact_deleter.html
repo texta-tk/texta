@@ -1,20 +1,20 @@
 <div class="task-manager-grid-wrapper management-padding bg-grey width-max">
     <div class="grid-i">
-        <label class="control-label" for="comment-management-feature-names">Fields:</label>
+        <label class="control-label" for="fact_deleter-feature-names">Fields:</label>
         <div class="select-wrapper">
             {% if fields %}
                 <select class="selectpicker" multiple data-selected-text-format="count"
-                        id="comment-management-feature-names"
+                        id="fact_deleter-feature-names"
                         data-width="100%"
                         required
-                        name="comment_management_feature_names" data-style="btn-sm btn-default">
+                        name="fact_deleter_feature_names" data-style="btn-sm btn-default">
                     {% for field in fields %}
                         <option value="{{ field.data }}">{{ field.label }}</option>
                     {% endfor %}
                 </select>
             {% else %}
-                <textarea class="form-control" rows="2" id="comment-management-feature-names"
-                          name="comment_management_feature_names"></textarea>
+                <textarea class="form-control" rows="2" id="fact_deleter-feature-names"
+                          name="fact_deleter_feature_names"></textarea>
             {% endif %}
         </div>
         {% if not fields %}

@@ -30,12 +30,30 @@ $(function () {
         element.tab('show')
     }
 })
+
 function start_task_preprocessor(task_id ,formElement,preprocessorKey){
     formElement = document.getElementById(formElement)
     $('<input>').attr('type', 'hidden').attr('name', 'task_type').val(task_id).appendTo(formElement)
     $('<input>').attr('type', 'hidden').attr('name', 'preprocessor_key').val(preprocessorKey).appendTo(formElement)
     $('<input>').attr('type', 'hidden').attr('name', 'description').val($('#apply-preprocessor-description-param').val()).appendTo(formElement)
     $('<input>').attr('type', 'hidden').attr('name', 'search').val($('#apply-preprocessor-search-param').val()).appendTo(formElement)
+
+    var request = new XMLHttpRequest()
+    request.onreadystatechange = function () {
+        location.reload()
+    }
+
+    request.open('POST', PREFIX + '/start_task')
+    request.send(new FormData(formElement), true)
+
+}
+
+function start_task_management(task_id ,formElement,managerKey){
+    formElement = document.getElementById(formElement)
+    $('<input>').attr('type', 'hidden').attr('name', 'task_type').val(task_id).appendTo(formElement)
+    $('<input>').attr('type', 'hidden').attr('name', 'manager_key').val(managerKey).appendTo(formElement)
+    $('<input>').attr('type', 'hidden').attr('name', 'description').val($('#management-task-description-param').val()).appendTo(formElement)
+    // $('<input>').attr('type', 'hidden').attr('name', 'search').val($('#management-task-search-param').val()).appendTo(formElement)
 
     var request = new XMLHttpRequest()
     request.onreadystatechange = function () {
@@ -66,6 +84,13 @@ function select_preprocessor (task_id) {
     $('[id^=params-]').addClass('hidden')
     $('#params-' + preprocessor_key).removeClass('hidden')
 }
+
+function select_manager (task_id) {
+    let manager_key = $('#' + task_id + '_manager_key').val()
+    $('[id^=params-]').addClass('hidden')
+    $('#params-' + manager_key).removeClass('hidden')
+}
+
 function deleteDocuments (type) {
     let task_ids = []
     $('input[name="dt_'+type+'_delete"]').each(function() {

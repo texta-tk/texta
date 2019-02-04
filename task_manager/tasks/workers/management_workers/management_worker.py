@@ -10,6 +10,7 @@ from searcher.models import Search
 from task_manager.models import Task
 from task_manager.tools import ShowProgress
 from task_manager.tools import TaskCanceledException
+from task_manager.tasks.workers.management_workers.fact_deleter_worker import FactDeleterWorker
 
 from utils.datasets import Datasets
 from utils.helper_functions import add_dicts
@@ -27,6 +28,8 @@ class ManagementWorker(BaseWorker):
         self.params = None
         self.scroll_size = scroll_size
         self.scroll_time_out = time_out
+
+        self.manager_map = {'fact_deleter': FactDeleterWorker}
 
     def run(self, task_id):
         self.task_id = task_id
@@ -67,8 +70,8 @@ class ManagementWorker(BaseWorker):
 
     def _start_subworker(self):
         # Get sub-worker
-        sub_worker = manager_map[self.params['manager_key']]
-        sub_worker.run()
+        sub_worker = self.manager_map[self.params['manager_key']]()
+        sub_worker.run(self.task_id)
 
 
 

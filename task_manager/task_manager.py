@@ -66,7 +66,7 @@ def filter_params(post: QueryDict):
     filtered_params = {}
 
     for param in post:
-        if prefix != 'apply_preprocessor':
+        if prefix not in ['apply_preprocessor', 'management_task']:
             param_name = param[len(prefix) + 1:]
         else:
             param_name = param
