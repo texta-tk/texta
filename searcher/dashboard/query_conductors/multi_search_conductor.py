@@ -47,7 +47,7 @@ class MultiSearchConductor:
 
             elif field_type == "keyword":
                 search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
-                search_dsl.aggs.bucket("terms#" + bucket_name + '#keyword_terms', 'terms', field=field_name)
+                search_dsl.aggs.bucket("sterms#" + bucket_name + '#keyword_terms', 'terms', field=field_name)
                 search_dsl.aggs.bucket("value_count#" + bucket_name + '#keyword_count', 'value_count', field=field_name)
                 self.multi_search = self.multi_search.add(search_dsl)
 
@@ -71,15 +71,15 @@ class MultiSearchConductor:
 
             elif field_type == "float":
                 search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
-                search_dsl.aggs.bucket("#extended_stats" + bucket_name + "#float_stats", 'extended_stats', field=field_name)
+                search_dsl.aggs.bucket("extended_stats#" + bucket_name + "#float_stats", 'extended_stats', field=field_name)
                 search_dsl.aggs.bucket("value_count#" + bucket_name + '#float_count', 'value_count', field=field_name)
                 self.multi_search = self.multi_search.add(search_dsl)
 
     def _texta_facts_agg_handler(self, query_body, index, elasticsearch):
         search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
         search_dsl.aggs.bucket("nested#" + 'texta_facts', 'nested', path='texta_facts') \
-            .bucket('terms#fact_category', 'terms', field='texta_facts.fact') \
-            .bucket("sterms#" + 'significant_facts', 'significant_terms', field='texta_facts.str_val')
+            .bucket('sterms#fact_category', 'terms', field='texta_facts.fact') \
+            .bucket("sigsterms#" + 'significant_facts', 'significant_terms', field='texta_facts.str_val')
         self.multi_search = self.multi_search.add(search_dsl)
 
     def _filter_excluded_fields(self, excluded_fields, normal_fields, nested_fields):
@@ -103,7 +103,6 @@ class MultiSearchConductor:
 
     def _create_search_object(self, query_body, index, elasticsearch):
         if query_body:
-
             search = elasticsearch_dsl.Search.from_dict(query_body).index(index).using(elasticsearch).extra(size=0).source(False)
             return search
         else:

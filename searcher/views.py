@@ -148,7 +148,7 @@ def dashboard_endpoint(request):
 
     # search_query = Search.objects.all()[0].query
     query_dict = None  # json.loads(search_query, encoding='utf8')['main']
-    dashboard = SingleSearcherDashboard(es_url=es_url, indices=indices, query_body=query_dict)
+    dashboard = MultiSearcherDashboard(es_url=es_url, indices=indices, query_body=query_dict)
 
     query_result = dashboard.conduct_query()
     formated_result = dashboard.format_result(query_result)
