@@ -32,7 +32,7 @@ from .task_manager import filter_preprocessor_params
 from .task_manager import translate_parameters
 from .task_manager import collect_map_entries
 from .task_manager import get_fields
-
+from operator import itemgetter
 
 @login_required
 def index(request):
@@ -45,7 +45,7 @@ def index(request):
         
     preprocessors = collect_map_entries(preprocessor_map)
     enabled_preprocessors = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True]
-    
+    enabled_preprocessors = sorted(enabled_preprocessors, key=itemgetter('name'), reverse=False)
     tasks = []
 
     for task in Task.objects.all().order_by('-pk'):

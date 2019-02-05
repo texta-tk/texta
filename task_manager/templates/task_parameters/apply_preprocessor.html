@@ -27,7 +27,7 @@
                 <select id="{{ task_param.id }}_preprocessor_key" autocomplete="off"
                         name="{{ task_param.id }}_preprocessor_key" class="selectpicker" data-width='100%'
                         onchange="select_preprocessor('{{ task_param.id }}');">
-                    {% for preprocessor in enabled_preprocessors|dictsort:"name" %}
+                    {% for preprocessor in enabled_preprocessors%}
                         <option value="{{ preprocessor.key }}">{{ preprocessor.name }}</option>
                     {% endfor %}
                 </select>
