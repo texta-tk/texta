@@ -99,6 +99,12 @@ def get_query(request):
     query = es_m.combined_query['main']
     return HttpResponse(json.dumps(query))
 
+@login_required
+def export_args(request):
+    es_params = {entry['name']: entry['value'] for entry in json.loads(request.POST['args'], encoding='utf8')}
+    request.session['export_args'] = es_params
+    return HttpResponse()
+
 
 @login_required
 def save(request):

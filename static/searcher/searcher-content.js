@@ -110,10 +110,20 @@ function exportData (exportType) {
             value: features
         })
     }
-    /* global PREFIX */
-    var query = PREFIX + '/export?args=' + JSON.stringify(queryArgs)
 
-    window.open(query)
+    /* global PREFIX */
+
+    $.ajax({
+        url: PREFIX + '/export_args',
+        data: {'args': JSON.stringify(queryArgs)},
+        type: 'POST',
+        success: function (result) {
+            /*really hacky, but no other ideas how to do this, post args and then set session variable nad then open get*/
+            window.open(PREFIX + '/export')
+        }
+    })
+    /*    var query = PREFIX + '/export?args=' + JSON.stringify(queryArgs)
+      window.open(query)*/
 }
 function removeByQuery () {
     var formElement = document.getElementById('filters')
