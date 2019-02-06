@@ -170,6 +170,13 @@ class LexTagger(object):
 
     def __init__(self, feature_map={}):
         self._feature_map = feature_map
+        self._default_params = {'match_type':'prefix',
+                                'operation':'or',
+                                'required_p':1.0,
+                                'add_counter_lex':False,
+                                'slop':0,
+                                'counter_slop':0,
+                                'input_features':['text']}
 
 
     def _convert_to_ratio(self,percentage_str):
@@ -194,6 +201,74 @@ class LexTagger(object):
         return input_features
 
 
+
+    def _parse_api_args(self,kwargs):
+
+        try:
+            input_features = {'lexicon_classifier_preprocessor_feature_names':kwargs['lexicon_classifier_preprocessor_feature_names']}
+        except Exception as e:
+            input_features = self._default_params['input_features']
+
+        try:
+            kwargs = json.loads(kwargs['lexicon_classifier_preprocessor_params'])
+        except Exception as e:
+            pass
+
+        lex_ids = []
+        counter_lex_id = None
+        lexicons = {}
+        counter_lexicon = []
+        add_counter_lex = False
+
+        if 'lexicons' in kwargs:
+            lexicon = kwargs['lexicons']
+            if isinstance(lexicon,list):
+                lex_ids = lexicon
+            elif isinstance(lexicon,dict):
+                lexicon = lexicon
+        if 'counter_lexicon' in kwargs:
+            counter_lex = kwargs['counter_lexicon']
+            add_counter_lex = True
+            if isinstance(counter_lex,list):
+                counter_lexicon = counter_lex
+            elif isinstance(counter_lex,basestring) or isinstance(count_lex,int):
+                counter_lex_id = int(counter_lex)
+
+        if 'match_type' in kwargs:
+            match_type = kwargs['match_type'].lower()
+        else:
+            match_type = self._default_params['match_type']
+
+        if 'operation' in kwargs:
+            operation = kwargs['operation'].lower()
+        else:
+            operation = self._default_params['operation']
+
+        if 'required_ratio' in kwargs:
+            operation = 'AND'
+            words_required = float(kwargs['required_ratio'])
+        else:
+            words_required = self._default_params['required_p']
+
+        if 'slop' in kwargs:
+            slop = int(kwargs['slop'])
+        else:
+            slop = self._default_params['slop']
+
+        if 'counter_slop' in kwargs:
+            cl_slop = kwargs['counter_slop']
+        else:
+            cl_slop = self._default_params['counter_slop']
+
+
+        args = {'input_features':input_features,'lex_ids':lex_ids,'lexicons':lexicon,'match_type':match_type,\
+                'operation':operation,'slop':slop,'words_required':words_required,'cl_slop':cl_slop,\
+                'counter_lex_id':counter_lex_id,'counter_lexicon':counter_lexicon,'add_counter_lex':add_counter_lex,}
+
+        return args
+
+
+
     def _parse_arguments(self,kwargs):
         input_features = kwargs['input_features']
         lex_ids = [int(_id) for _id in kwargs['lex_ids']]
@@ -204,9 +279,9 @@ class LexTagger(object):
         cl_slop = int(kwargs['cl_slop'])
         words_required = self._convert_to_ratio(kwargs['words_required'])
 
-        parsed_args = {'input_features':input_features,'lex_ids':lex_ids,'match_type':match_type,\
+        parsed_args = {'input_features':input_features,'lex_ids':lex_ids,'lexicons':[],'match_type':match_type,\
                        'operation':operation,'slop':slop,'words_required':words_required,'cl_slop':cl_slop,\
-                       'counter_lex_id':cl_id}
+                       'counter_lex_id':cl_id,'counter_lexicon':[]}
         return parsed_args
 
     def _load_arguments(self,kwargs):
@@ -284,18 +359,25 @@ class LexTagger(object):
 
     def transform(self, documents, **kwargs):
 
-        if not self._all_args_exist(**kwargs):
-            return documents
-
-        args = self._load_arguments(kwargs)
+        if "API" in kwargs or 'lexicon_classifier_preprocessor_params' in kwargs and "API" in kwargs['lexicon_classifier_preprocessor_params']:
+            args = self._parse_api_args(kwargs)
+        else:
+            args = self._load_arguments(kwargs)
 
         lex_ids = args['lex_ids']
         counter_lex_ids = args['counter_lex_id']
+
         input_features = args['input_features']
 
-        lexicons_to_apply = self._unpack_lexicons(lex_ids)
+        if lex_ids:
+            lexicons_to_apply = self._unpack_lexicons(lex_ids)
+        else:
+            lexicons_to_apply = args['lexicons']
 
-        counter_lexicon = list(self._unpack_lexicons(counter_lex_ids).items())[0][1]
+        if counter_lex_ids:
+            counter_lexicon = list(self._unpack_lexicons(counter_lex_ids).items())[0][1]
+        else:
+            counter_lexicon = args['counter_lexicon']
         classifiers = self._get_classifiers(lexicons_to_apply,counter_lexicon,args)
 
         for input_feature in input_features:
