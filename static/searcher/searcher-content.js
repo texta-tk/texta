@@ -119,7 +119,7 @@ function exportData (exportType) {
         type: 'POST',
         success: function (result) {
             /*really hacky, but no other ideas how to do this, post args and then set session variable nad then open get*/
-            window.open(PREFIX + '/export')
+            window.location.href = PREFIX + '/export'
         }
     })
     /*    var query = PREFIX + '/export?args=' + JSON.stringify(queryArgs)
