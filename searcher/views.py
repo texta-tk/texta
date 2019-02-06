@@ -141,13 +141,15 @@ def get_daterange(es_m, field):
 
 
 def dashboard_endpoint(request):
+    es_params = request.POST
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
+    es_m.build(es_params)
+    query_dict = es_m.combined_query['main']  # GET ONLY MAIN QUERY
+    print(query_dict)
 
-    indices = es_m.stringify_datasets()
+    indices = request.POST.get("chosen_index", None)
 
-    # search_query = Search.objects.all()[0].query
-    query_dict = None  # json.loads(search_query, encoding='utf8')['main']
     dashboard = MultiSearcherDashboard(es_url=es_url, indices=indices, query_body=query_dict)
 
     query_result = dashboard.conduct_query()
@@ -158,9 +160,14 @@ def dashboard_endpoint(request):
 
 @login_required
 def dashboard_visualize(request):
+    es_params = request.POST
+
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
-    indices = es_m.stringify_datasets().split(',')
+    es_m.build(es_params)
+
+    indices = es_params.get("chosen_index", None).split(',')
+
     color_setting = request.POST['dashboard-color']
     color_max = request.POST['dashboard-color-maximum']
     color_min = request.POST['dashboard-color-minimum']

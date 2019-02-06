@@ -582,6 +582,12 @@
                         <div id="dashboard" class="tab-pane fade in">
 
                             <div class="flex-column bg-grey padding-default">
+                                <select name="chosen_index">
+                                {% for dataset in allowed_datasets %}
+                                    <option value="{{ dataset.index }}">{{ dataset.index }}</option>
+                                {% endfor %}
+                                </select>
+
                                 <div class="flex-row margin-bottom">
                                     <input type="radio" id='color-field' name="dashboard-color" value="color-field" checked>
                                     <label class="margin-left">colors based on field maximum</label>

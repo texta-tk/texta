@@ -2,11 +2,20 @@ var PREFIX = LINK_SEARCHER;
 var ColorSettings = Object.freeze({"GLOBAL": 'color-global', "FIELD": 'color-field'})
 var Colors = Object.freeze({"COLOR_MIN": colorMinimum, "COLOR_MAX": colorMaximum})
 $(function () {
+    let container = $('#right');
+    container.empty();
 
-    updateLoaderStatus('Getting data from the server')
+    let formElement = document.getElementById('filters');
+    let fd = new FormData(formElement);
+
+
+    updateLoaderStatus('Getting data from the server');
     $.ajax({
-        type: "get",
+        type: "POST",
         url: PREFIX + '/dashboard',
+        data: fd,
+        processData: false,
+        contentType: false,
         error: function (request, error) {
             swalCustomTypeDisplay(SwalType.ERROR, request.statusText)
             $('#right').empty()
@@ -62,8 +71,8 @@ function makeTimelines(index) {
 
 function makeMonthTimeline(index, width) {
     let dates = index.getDatesMonth();
-
     let div = document.getElementById(`timeline-agg-container-month-${index.index_name}`);
+
     if (dates) {
         let xData = dates.map((e) => e.key_as_string);
         let yData = dates.map((e) => e.doc_count);
