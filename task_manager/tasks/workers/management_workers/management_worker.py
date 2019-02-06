@@ -10,7 +10,7 @@ from searcher.models import Search
 from task_manager.models import Task
 from task_manager.tools import ShowProgress
 from task_manager.tools import TaskCanceledException
-from task_manager.tasks.workers.management_workers.fact_deleter_worker import FactDeleterWorker
+from task_manager.tasks.workers.management_workers.fact_deleter_sub_worker import FactDeleterSubWorker
 
 from utils.datasets import Datasets
 from utils.helper_functions import add_dicts
@@ -28,9 +28,11 @@ class ManagementWorker(BaseWorker):
         self.params = None
         self.scroll_size = scroll_size
         self.scroll_time_out = time_out
-        self.manager_map = {
-            'fact_deleter': FactDeleterWorker
+        # Map of sub-managers for ManagementWorker
+        self.sub_manager_map = {
+            'fact_deleter': FactDeleterSubWorker
         }
+
 
     def run(self, task_id):
         self.task_id = task_id
@@ -44,11 +46,6 @@ class ManagementWorker(BaseWorker):
             # es_m.load_combined_query(self._parse_query(params))
             self.es_m = es_m
             self.params = params
-            valid, msg = self._check_if_request_bad(self.params)
-            if valid:
-                self._preprocessor_worker()
-            else:
-                raise UserWarning(msg)
 
             self._start_subworker()
 
@@ -71,20 +68,6 @@ class ManagementWorker(BaseWorker):
 
     def _start_subworker(self):
         # Get sub-worker
-        sub_worker = self.manager_map[self.params['manager_key']](self.es_m, self.task_id, self.params,self.scroll_size, self.scroll_time_out)
-        sub_worker.run(self.task_id)
-
-
-
-    @staticmethod
-    def _check_if_request_bad(args):
-        # TODO TODO TODO TODO TODO TODO
-        # '''Check if models/fields are selected'''
-        # if not any(['feature_names' in k for k in args]):
-        #     return False, "No field selected"
-
-        # if args['preprocessor_key'] in ['text_tagger', 'entity_extractor']:
-        #     if not any(['preprocessor_models' in k for k in args]):
-        #         return False, "No preprocessor model selected"
-
-        return True, ""
+        sub_worker = self.sub_manager_map[self.params['manager_key']](self.es_m, self.task_id, self.params,self.scroll_size, self.scroll_time_out)
+        # Run sub-worker
+        sub_worker.run()

@@ -23,8 +23,19 @@ class FactManager:
         self.max_name_len = 15
         self.bs = 7500
 
-    def remove_facts_from_document(self, rm_facts_dict, doc_id=False):
-        '''remove a certain fact from all documents given a [str]key and [str]val'''
+    def remove_facts_from_document(self, rm_facts_dict, doc_id=None):
+        """Remove facts from documents.
+        
+        Arguments:
+            rm_facts_dict {Dict[str: List[str]]} -- Dict of fact values to remove
+            Examples:
+                General format - { 'factname1': ['factvalue1','factvalue2', ...]}
+                Real example - {'CITY': ['tallinna', 'tallinn'], 'CAR': ['bmw', 'audi']}
+        
+        Keyword Arguments:
+            doc_id {str} -- If present, deletes the facts only in a given document (default: {None})
+        """
+        
         try:
             query = self._fact_deletion_query(rm_facts_dict, doc_id)
             self.es_m.load_combined_query(query)

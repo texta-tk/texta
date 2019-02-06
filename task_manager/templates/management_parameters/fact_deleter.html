@@ -1,32 +1,20 @@
 <div class="task-manager-grid-wrapper management-padding bg-grey width-max">
     <div class="grid-i">
-        <label class="control-label" for="fact_deleter-feature-names">Fields:</label>
+        <label class="control-label" for="fact_deleter-fact-values">Fact values:</label>
         <div class="select-wrapper">
-            {% if fields %}
-                <select class="selectpicker" multiple data-selected-text-format="count"
-                        id="fact_deleter-feature-names"
-                        data-width="100%"
-                        required
-                        name="fact_deleter_feature_names" data-style="btn-sm btn-default">
-                    {% for field in fields %}
-                        <option value="{{ field.data }}">{{ field.label }}</option>
+            <select class="selectpicker" multiple data-selected-text-format="count"
+                    id="fact_deleter-fact-values"
+                    data-width="100%"
+                    required
+                    name="fact_deleter_fact_values" data-style="btn-sm btn-default">
+                {% for fact, values in manager.facts.items %}
+                    {% for val in values %}
+                    <option value='{"{{fact}}": "{{val}}"}'>{{ fact }}: {{ val }}</option>
                     {% endfor %}
-                </select>
-            {% else %}
-                <textarea class="form-control" rows="2" id="fact_deleter-feature-names"
-                          name="fact_deleter_feature_names"></textarea>
-            {% endif %}
+                {% endfor %}
+
+            </select>
         </div>
-        {% if not fields %}
-            <span data-toggle="tooltip" data-placement="bottom" title="List of feature names one below another.
-
-		Example:
-
-		    my_field1
-		    my_field2"
-                  class="glyphicon glyphicon-question-sign texta-tooltip"></span>
-
-        {% endif %}
     </div>
 
 </div>

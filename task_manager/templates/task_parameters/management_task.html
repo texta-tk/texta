@@ -26,7 +26,7 @@
                 <select id="{{ task_param.id }}_manager_key" autocomplete="off"
                         name="{{ task_param.id }}_manager_key" class="selectpicker" data-width='100%'
                         onchange="select_manager('{{ task_param.id }}');">
-                    {% for manager in task_param.enabled_managers %}
+                    {% for manager in task_param.enabled_sub_managers %}
                         <option value="{{ manager.key }}">{{ manager.name }}</option>
                     {% endfor %}
                 </select>
@@ -34,7 +34,7 @@
         </div>
 
         <div class="flex-column management-wrapper">
-            {% for manager in task_param.enabled_managers %}
+            {% for manager in task_param.enabled_sub_managers %}
 
 
                 <div id="params-{{ manager.key }}"

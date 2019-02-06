@@ -81,6 +81,9 @@ def filter_params(post: QueryDict):
                 param_val = [json.loads(a)['path'] for a in param_val]
             except:
                 Exception
+        # For handling fact_deleter fact_values param
+        if 'fact_values' in param_name:
+            param_val = _format_raw_fact_values(post.getlist(param))
 
         filtered_params[param_name] = param_val
 
@@ -159,3 +162,15 @@ def get_fields(es_m):
     # Sort fields by label
     fields = sorted(fields, key=lambda l: l['label'])
     return fields
+
+def _format_raw_fact_values(facts):
+    formatted_facts = {}
+    for fact in facts:
+        for k, v in json.loads(fact).items():
+            if k not in formatted_facts:
+                formatted_facts[k] = []
+            if v not in formatted_facts[k]:
+                formatted_facts[k].append(v)
+
+    return formatted_facts
+

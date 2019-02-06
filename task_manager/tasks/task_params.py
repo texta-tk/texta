@@ -5,7 +5,6 @@ from .workers.text_tagger_worker import TagModelWorker
 from .workers.entity_extractor_worker import EntityExtractorWorker
 from .workers.preprocessor_worker import PreprocessorWorker
 from .workers.management_workers.management_worker import ManagementWorker
-from .workers.management_workers.fact_deleter_worker import FactDeleterWorker
 from utils.es_manager import ES_Manager
 from texta.settings import ERROR_LOGGER
 
@@ -51,11 +50,11 @@ task_params = [
         "template":        "task_parameters/management_task.html",
         "result_template": "task-results/management-task-results.html",
         "worker":          ManagementWorker,
-        "enabled_managers":[
-            {'key': 'fact_deleter',
-             'name': 'Fact Deleter',
-             'worker': FactDeleterWorker,
-             'parameters_template': 'management_parameters/fact_deleter.html',
+        "enabled_sub_managers":[
+            {"key": "fact_deleter",
+             "name": "Fact Deleter",
+             "parameters_template": "management_parameters/fact_deleter.html",
+             "facts": fact_names,
             },
         ],
         "allowed_actions": []
@@ -78,8 +77,7 @@ def get_fact_names(es_m):
                 for val in fact['fact_values']['buckets']:
                     fact_data[fact['key']].append(val['key'])
             fact_names.update(fact_data)
-            import pdb;pdb.set_trace()
-            
+
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(json.dumps(
             {'process': 'GET TASK PARAMS', 'event': 'get_fact_names', 'data': {'active_datasets_ids_and_names': [(ds.id, ds.index) for ds in es_m.active_datasets], 'response_keys': list(response.keys())}}), exc_info=True)
@@ -88,6 +86,7 @@ def get_fact_names(es_m):
 def activate_task_worker(task_type):
     for task_param in task_params:
         if task_param['id'] == task_type:
+            # Instantiate worker
             worker_instance = task_param['worker']()
             return worker_instance
     return None
