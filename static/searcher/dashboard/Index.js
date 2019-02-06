@@ -10,38 +10,52 @@ class Index {
             "DATE_HISTOGRAM": 'date_histogram',
             "NESTED": 'nested'
         };
-        this.minCountFilter = 50;
-        this.minAmountData = 3;
+        this.minCountFilter = 0;
+        this.minAmountData = 0;
         Object.freeze(this.AggregationTpes);
     }
 
     getDatesYear() {
-        let keys = Object.keys(this.aggregations[this.AggregationTpes.DATE_HISTOGRAM]);
-        let key = keys.filter(function (key) {
-            return key.endsWith("_year")
-        })[0];
 
-        if (checkNested(this.aggregations, this.AggregationTpes.DATE_HISTOGRAM, key, 'buckets')) {
-            return this.aggregations[this.AggregationTpes.DATE_HISTOGRAM][key]['buckets'];
-        } else {
+        if (this.aggregations[this.AggregationTpes.DATE_HISTOGRAM] === undefined) {
             console.error(`index ${this.index_name}, does not have date_histogram field!`);
             return undefined
+        } else {
+            let keys = Object.keys(this.aggregations[this.AggregationTpes.DATE_HISTOGRAM]);
+            let key = keys.filter(function (key) {
+                return key.endsWith("_year")
+            })[0];
+
+            if (checkNested(this.aggregations, this.AggregationTpes.DATE_HISTOGRAM, key, 'buckets')) {
+                return this.aggregations[this.AggregationTpes.DATE_HISTOGRAM][key]['buckets'];
+            } else {
+                console.error(`index ${this.index_name}, does not have date_histogram field!`);
+                return undefined
+            }
         }
     }
 
     getDatesMonth() {
-        let keys = Object.keys(this.aggregations[this.AggregationTpes.DATE_HISTOGRAM]);
-        let key = keys.filter(function (key) {
-            return key.endsWith("_month")
-        })[0];
 
-        if (checkNested(this.aggregations, this.AggregationTpes.DATE_HISTOGRAM, key, 'buckets')) {
-            return this.aggregations[this.AggregationTpes.DATE_HISTOGRAM][key]['buckets'];
-        } else {
+        if (this.aggregations[this.AggregationTpes.DATE_HISTOGRAM] === undefined) {
             console.error(`index ${this.index_name}, does not have date_histogram field!`);
             return undefined
+
+        } else {
+            let keys = Object.keys(this.aggregations[this.AggregationTpes.DATE_HISTOGRAM]);
+            let key = keys.filter(function (key) {
+                return key.endsWith("_month")
+            })[0];
+
+            if (checkNested(this.aggregations, this.AggregationTpes.DATE_HISTOGRAM, key, 'buckets')) {
+                return this.aggregations[this.AggregationTpes.DATE_HISTOGRAM][key]['buckets'];
+            } else {
+                console.error(`index ${this.index_name}, does not have date_histogram field!`);
+                return undefined
+            }
         }
     }
+
 
     getFrequentItems() {
         if (checkNested(this.aggregations, this.AggregationTpes.STERMS)) {

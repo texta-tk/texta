@@ -2,9 +2,6 @@ var PREFIX = LINK_SEARCHER;
 var ColorSettings = Object.freeze({"GLOBAL": 'color-global', "FIELD": 'color-field'})
 var Colors = Object.freeze({"COLOR_MIN": colorMinimum, "COLOR_MAX": colorMaximum})
 $(function () {
-    let container = $('#right');
-    container.empty();
-
     let formElement = document.getElementById('filters');
     let fd = new FormData(formElement);
 
@@ -186,7 +183,7 @@ function makeStatistics(index) {
     let result = formatStatistics(index);
     /*has to be a number field*/
     let colorRowIndex = 2
-    if (result) {
+    if (result && result.length > 0) {
         let minMax = findMinMax(result, colorRowIndex, index)
 
         let color = d3.scale.linear()
@@ -253,15 +250,19 @@ function formatFacts(index) {
 }
 
 function findMinMax(arr, indexToParse) {
-    let min = arr[0][indexToParse], max = arr[0][indexToParse];
+    if (arr.length > 0) {
+        let min = arr[0][indexToParse], max = arr[0][indexToParse];
 
-    for (let i = 1, len = arr.length; i < len; i++) {
-        let v = arr[i][indexToParse];
-        min = (v < min) ? v : min;
-        max = (v > max) ? v : max;
+        for (let i = 1, len = arr.length; i < len; i++) {
+            let v = arr[i][indexToParse];
+            min = (v < min) ? v : min;
+            max = (v > max) ? v : max;
+        }
+
+        return [min, max];
+    }else{
+        return [0,0]
     }
-
-    return [min, max];
 }
 
 function getColorRange(source, colorCellIndex, index) {

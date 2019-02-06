@@ -145,10 +145,11 @@ def dashboard_endpoint(request):
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
-    query_dict = es_m.combined_query['main']  # GET ONLY MAIN QUERY
-    print(query_dict)
+
+    query_dict = None if es_m.is_combined_query_empty() else es_m.combined_query['main']
 
     indices = request.POST.get("chosen_index", None)
+    if not indices: raise ValueError("Please import an index first.")
 
     dashboard = MultiSearcherDashboard(es_url=es_url, indices=indices, query_body=query_dict)
 

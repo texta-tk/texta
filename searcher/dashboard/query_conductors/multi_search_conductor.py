@@ -41,9 +41,10 @@ class MultiSearchConductor:
             # Do not play around with the #, they exist to avoid naming conflicts as awkward as they may be.
             # TODO Find a better solution for this.
             if field_type == "text":
-                search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
-                search_dsl.aggs.bucket("sigsterms#" + bucket_name + '#text_sigterms', 'significant_text', field=field_name, filter_duplicate_text=True)
-                self.multi_search = self.multi_search.add(search_dsl)
+                if query_body is not None:
+                    search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
+                    search_dsl.aggs.bucket("sigsterms#" + bucket_name + '#text_sigterms', 'significant_text', field=field_name, filter_duplicate_text=True)
+                    self.multi_search = self.multi_search.add(search_dsl)
 
             elif field_type == "keyword":
                 search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
@@ -78,7 +79,7 @@ class MultiSearchConductor:
     def _texta_facts_agg_handler(self, query_body, index, elasticsearch):
         search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
         search_dsl.aggs.bucket("nested#" + 'texta_facts', 'nested', path='texta_facts') \
-            .bucket('sterms#fact_category', 'terms', field='texta_facts.fact') \
+            .bucket('sterms#fact_category', 'terms', field='texta_facts.fact', collect_mode="breadth_first") \
             .bucket("sigsterms#" + 'significant_facts', 'significant_terms', field='texta_facts.str_val')
         self.multi_search = self.multi_search.add(search_dsl)
 
