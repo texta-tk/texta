@@ -176,10 +176,7 @@ function query () {
                     $('.dataTables_scrollHead').on('scroll', function () {
                         $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft())
                     })
-                    $('.selection-props-checkbox').append(
-                        $(`<input type="checkbox" id="scales" name="toggleTextSelectionCheckbox" onchange="toggleTextSelection(this)" checked title="Toggle fact adding menu in text selecting">`),
-                        $(`<label for="toggleTextSelectionCheckbox" title="Toggle fact adding menu in text selecting"> <span class="glyphicon glyphicon-hand-up"></span></label>`)
-                        );
+
                     // Initialize clicking HLs/selection text for properties
                     /* global createSelectionProps, selectionProps */
                     //createSelectionProps()
@@ -231,7 +228,10 @@ function query () {
             var div = $('.toggle-columns-select')
             var button = $('.toggle-column-select-wrapper')
             button.appendTo(div)
-
+            $('.selection-props-checkbox').append(
+                $(`<input type="checkbox" id="scales" name="toggleTextSelectionCheckbox" onchange="toggleTextSelection(this)" checked title="Toggle fact adding menu in text selecting">`),
+                $(`<label for="toggleTextSelectionCheckbox" title="Toggle fact adding menu in text selecting"> <span class="glyphicon glyphicon-hand-up"></span></label>`)
+            );
             if ($('.fullscreen-actions-div > i').length === 0) {
                 $('.glyphicon-fullscreen-content-searcher').clone().addClass('new-toggle').appendTo($('.fullscreen-actions-div'))
             }
