@@ -16,9 +16,10 @@ $(function () {
                 updateLoaderStatus('Drawing Dashboard')
                 let indicesArray = [];
                 createIndices(indicesArray, data)
+                console.table(indicesArray)
                 initDashBoard(indicesArray);
                 //no point showing upper navtab when you only have 1 index
-                if(indicesArray.length===1){
+                if (indicesArray.length === 1) {
                     $('#outermost-navtab').remove()
                 }
                 removeLoader()
@@ -117,32 +118,15 @@ function makeFactsTables(index) {
             let resultFormatted = e.facts.map((x) => {
                 return [x.key, x.doc_count]
             });
-            if (resultFormatted.length > 1) {
 
-                let minMax = getColorRange(resultFormatted, colorRowIndex, index)
-                let color = d3.scale.linear()
-                    .domain([minMax[0], minMax[1]])
-                    .range([d3.rgb(Colors.COLOR_MIN), d3.rgb(Colors.COLOR_MAX)]);
+            let minMax = getColorRange(resultFormatted, colorRowIndex, index)
+            let color = d3.scale.linear()
+                .domain([minMax[0], minMax[1]])
+                .range([d3.rgb(Colors.COLOR_MIN), d3.rgb(Colors.COLOR_MAX)]);
 
-                let tableID = `${index.AggregationTpes.NESTED}-generated-${index.index_name}${t_id}`
-                $(`#${index.index_name}-nested-table`).append(`<table id="${tableID}" style="width:100%"><caption class="dashboard-caption">${e.key}</caption></table>`);
+            drawFactsTable(index, resultFormatted, color, colorRowIndex, e.key, t_id)
+            t_id += 1;
 
-                $(`#${tableID}`).DataTable({
-                    data: resultFormatted,
-                    dom: 't',
-                    ordering: true,
-                    order: [1, 'desc'],
-                    paging: false,
-                    columns: [
-                        {title: "facts"},
-                        {title: "count"}
-                    ],
-                    "rowCallback": function (row, data, index) {
-                        $($(row).children()[colorRowIndex]).css('background-color', color(data[colorRowIndex]))
-                    }
-                });
-                t_id += 1;
-            }
         })
     } else {
         console.log('No facts present: ' + index.index_name)
@@ -157,30 +141,13 @@ function makeSignificantWordsTables(index) {
     let colorRowIndex = 1
     for (let field in rootProperty) {
         let result = formatSignificantWords(index, rootProperty[field])
-        if (result != null) {
-
+        if (result) {
             let minMax = getColorRange(result, colorRowIndex, index)
             let color = d3.scale.linear()
                 .domain([minMax[0], minMax[1]])
                 .range([d3.rgb(Colors.COLOR_MIN), d3.rgb(Colors.COLOR_MAX)]);
+            drawSignificantWordsTable(index, result, color, colorRowIndex, field, t_id)
 
-            let tableID = `${index.AggregationTpes.SIGSTERMS}-generated-${index.index_name}${t_id}`
-            $(`#${index.index_name}-sigsterms-table`).append(`<table id="${tableID}" style="width:100%"></table>`);
-
-            $(`#${tableID}`).DataTable({
-                data: result,
-                dom: 't',
-                ordering: true,
-                order: [1, 'desc'],
-                paging: false,
-                columns: [
-                    {title: field},
-                    {title: "count"}
-                ],
-                "rowCallback": function (row, data, index) {
-                    $($(row).children()[colorRowIndex]).css('background-color', color(data[colorRowIndex]))
-                }
-            });
             t_id += 1;
         }
     }
@@ -194,66 +161,35 @@ function makeFrequentItemsTables(index) {
     for (let field in rootProperty) {
         let result = formatFrequentItems(index, rootProperty[field])
 
-        if (result != null) {
+        if (result) {
             let minMax = getColorRange(result, colorRowIndex, index)
             let color = d3.scale.linear()
                 .domain([minMax[0], minMax[1]])
                 .range([d3.rgb(Colors.COLOR_MIN), d3.rgb(Colors.COLOR_MAX)]);
+            drawFrequentItemsTable(index, result, color, colorRowIndex, field, t_id)
 
-            let tableID = `${index.AggregationTpes.STERMS}-generated-${index.index_name}${t_id}`
-            $(`#${index.index_name}-sterms-table`).append(`<table id="${tableID}" style="width:100%"></table>`);
-
-            $(`#${tableID}`).DataTable({
-                data: result,
-                dom: 't',
-                ordering: true,
-                order: [1, 'desc'],
-                paging: false,
-                columns: [
-                    {title: field},
-                    {title: "count"}
-                ],
-                "rowCallback": function (row, data, index) {
-                    $($(row).children()[colorRowIndex]).css('background-color', color(data[colorRowIndex]))
-                }
-            });
             t_id += 1;
         }
     }
 }
 
 function makeStatistics(index) {
-    let response = formatStatistics(index);
+    let result = formatStatistics(index);
     /*has to be a number field*/
     let colorRowIndex = 2
-    if (response) {
-        let minMax = findMinMax(response, colorRowIndex, index)
+    if (result) {
+        let minMax = findMinMax(result, colorRowIndex, index)
 
         let color = d3.scale.linear()
             .domain([0, minMax[1]])
             .range([d3.rgb(Colors.COLOR_MIN), d3.rgb(Colors.COLOR_MAX)]);
 
-        let tableID = `${index.AggregationTpes.VALUECOUNT}-generated-${index.index_name}`;
-        $(`#${index.index_name}-value_count-table`).append(`<table id="${tableID}" style="width:100%"></table>`);
-        $(`#${tableID}`).DataTable({
-            data: response,
-            dom: 't',
-            ordering: true,
-            order: [1, 'desc'],
-            paging: false,
-            columns: [
-                {title: "field"},
-                {title: "count"},
-                {title: "percentage"}
-            ],
-            "rowCallback": function (row, data, index) {
-                $($(row).children()[colorRowIndex]).css('background-color', color(data[colorRowIndex]))
-            }
-        });
+        drawStatisticsTable(index, result, color, colorRowIndex)
 
     }
 
 }
+
 
 function formatFrequentItems(index, field) {
     /* datatables parsable format */
@@ -263,9 +199,10 @@ function formatFrequentItems(index, field) {
             return [e.key, e.doc_count]
         }));
         return index.filterTerms(result)
+
     } else {
         console.error('formatFrequentItems, properties did not match expected format')
-        return []
+        return undefined
     }
 }
 
@@ -277,9 +214,10 @@ function formatSignificantWords(index, field) {
             return [e.key, e.doc_count]
         }));
         return index.filterTerms(result)
+
     } else {
         console.error('formatSignificantWords, properties did not match expected format')
-        return []
+        return undefined
     }
 }
 
@@ -302,6 +240,7 @@ function formatFacts(index) {
             return {"key": e.key, "facts": e['sigsterms#significant_facts'].buckets}
         }));
     }
+    return undefined
 }
 
 function findMinMax(arr, indexToParse) {
@@ -334,4 +273,84 @@ function getHiddenDivMaxWidth(elementID) {
     let width = $('#' + cloneID).width()
     clonedTimelineContainer.remove()
     return width
+}
+
+function drawSignificantWordsTable(index, result, color, colorRowIndex, columnTitle, t_id) {
+    let tableID = `${index.AggregationTpes.SIGSTERMS}-generated-${index.index_name}${t_id}`
+    $(`#${index.index_name}-sigsterms-table`).append(`<table id="${tableID}" style="width:100%"></table>`);
+
+    $(`#${tableID}`).DataTable({
+        data: result,
+        dom: 't',
+        ordering: true,
+        order: [1, 'desc'],
+        paging: false,
+        columns: [
+            {title: columnTitle},
+            {title: "count"}
+        ],
+        "rowCallback": function (row, data, index) {
+            $($(row).children()[colorRowIndex]).css('background-color', color(data[colorRowIndex]))
+        }
+    });
+}
+
+function drawFrequentItemsTable(index, result, color, colorRowIndex, columnTitle, t_id) {
+    let tableID = `${index.AggregationTpes.STERMS}-generated-${index.index_name}${t_id}`
+    $(`#${index.index_name}-sterms-table`).append(`<table id="${tableID}" style="width:100%"></table>`);
+
+    $(`#${tableID}`).DataTable({
+        data: result,
+        dom: 't',
+        ordering: true,
+        order: [1, 'desc'],
+        paging: false,
+        columns: [
+            {title: columnTitle},
+            {title: "count"}
+        ],
+        "rowCallback": function (row, data, index) {
+            $($(row).children()[colorRowIndex]).css('background-color', color(data[colorRowIndex]))
+        }
+    });
+}
+
+function drawFactsTable(index, result, color, colorRowIndex, tableTitle, t_id) {
+    let tableID = `${index.AggregationTpes.NESTED}-generated-${index.index_name}${t_id}`
+    $(`#${index.index_name}-nested-table`).append(`<table id="${tableID}" style="width:100%"><caption class="dashboard-caption">${tableTitle}</caption></table>`);
+
+    $(`#${tableID}`).DataTable({
+        data: result,
+        dom: 't',
+        ordering: true,
+        order: [1, 'desc'],
+        paging: false,
+        columns: [
+            {title: "facts"},
+            {title: "count"}
+        ],
+        "rowCallback": function (row, data, index) {
+            $($(row).children()[colorRowIndex]).css('background-color', color(data[colorRowIndex]))
+        }
+    });
+}
+
+function drawStatisticsTable(index, result, color, colorRowIndex) {
+    let tableID = `${index.AggregationTpes.VALUECOUNT}-generated-${index.index_name}`;
+    $(`#${index.index_name}-value_count-table`).append(`<table id="${tableID}" style="width:100%"></table>`);
+    $(`#${tableID}`).DataTable({
+        data: result,
+        dom: 't',
+        ordering: true,
+        order: [1, 'desc'],
+        paging: false,
+        columns: [
+            {title: "field"},
+            {title: "count"},
+            {title: "percentage"}
+        ],
+        "rowCallback": function (row, data, index) {
+            $($(row).children()[colorRowIndex]).css('background-color', color(data[colorRowIndex]))
+        }
+    });
 }

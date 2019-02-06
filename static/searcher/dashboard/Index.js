@@ -22,7 +22,7 @@ class Index {
         })[0];
 
         if (checkNested(this.aggregations, this.AggregationTpes.DATE_HISTOGRAM, key, 'buckets')) {
-            return this.aggregations[this.AggregationTpes.DATE_HISTOGRAM][key].buckets;
+            return this.aggregations[this.AggregationTpes.DATE_HISTOGRAM][key]['buckets'];
         } else {
             console.error(`index ${this.index_name}, does not have date_histogram field!`);
             return undefined
@@ -36,7 +36,7 @@ class Index {
         })[0];
 
         if (checkNested(this.aggregations, this.AggregationTpes.DATE_HISTOGRAM, key, 'buckets')) {
-            return this.aggregations[this.AggregationTpes.DATE_HISTOGRAM][key].buckets;
+            return this.aggregations[this.AggregationTpes.DATE_HISTOGRAM][key]['buckets'];
         } else {
             console.error(`index ${this.index_name}, does not have date_histogram field!`);
             return undefined
@@ -44,7 +44,7 @@ class Index {
     }
 
     getFrequentItems() {
-        if (checkNested(this.aggregations, this.AggregationTpes.STERMS,)) {
+        if (checkNested(this.aggregations, this.AggregationTpes.STERMS)) {
             return this.aggregations[this.AggregationTpes.STERMS]
         } else {
             console.error(`index ${this.index_name}, Properties did not match expected format: STERMS!`)
@@ -53,7 +53,7 @@ class Index {
     }
 
     getSignificantWords() {
-        if (checkNested(this.aggregations, this.AggregationTpes.SIGSTERMS,)) {
+        if (checkNested(this.aggregations, this.AggregationTpes.SIGSTERMS)) {
             return this.aggregations[this.AggregationTpes.SIGSTERMS]
         } else {
             console.error(`index ${this.index_name}, Properties did not match expected format: SIGSTERMS!`)
@@ -81,17 +81,11 @@ class Index {
 
     /*so each index can filter seperately if in the future you want to adjust filtering settings for each index */
     filterTerms(result) {
-        let notAllowedToEnterHeaven = []
-        result.filter((e) => {
-            if (e[1] < this.minCountFilter) {
-                notAllowedToEnterHeaven.push(e[1])
-            }
-        });
-
-        if (notAllowedToEnterHeaven.length < this.minAmountData && result.length > this.minAmountData) {
-            return result;
+        let filteredResult = result.filter((e) => e[1] > this.minCountFilter);
+        if (filteredResult.length > this.minAmountData) {
+            return filteredResult;
         }
-        return null;
+        return undefined;
     }
 
 
