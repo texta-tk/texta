@@ -65,6 +65,7 @@ class ManagementWorker(BaseWorker):
             # declare the job as failed.
             self.task_obj.result = json.dumps({'error': repr(e)})
             self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
+        print('Done with management task')
 
 
     def _start_subworker(self):

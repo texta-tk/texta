@@ -5,11 +5,12 @@
             <select class="selectpicker" multiple data-selected-text-format="count"
                     id="fact_deleter-fact-values"
                     data-width="100%"
+                    data-live-search="true"
                     required
                     name="fact_deleter_fact_values" data-style="btn-sm btn-default">
                 {% for fact, values in manager.facts.items %}
                     {% for val in values %}
-                    <option value='{"{{fact}}": "{{val}}"}'>{{ fact }}: {{ val.value }} ({{ val.count }})</option>
+                    <option value='{"{{fact}}": "{{val.value}}"}'>{{ fact }}: {{ val.value }} ({{ val.count }})</option>
                     {% endfor %}
                 {% endfor %}
 
