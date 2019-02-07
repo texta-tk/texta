@@ -50,3 +50,17 @@
 .nav > li > a:focus, .nav > li > a:hover {
     color: black;
 }
+
+.taskUploadStatusTextDefault {
+    font-weight: bold;
+}
+.taskUploadStatusTextSuccess {
+    font-weight: bold;
+    color: green;
+    
+}
+.taskUploadStatusTextFailed {
+    font-weight: bold;
+    color: red;
+    
+}

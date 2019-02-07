@@ -13,13 +13,13 @@ from utils.es_manager import ES_Manager
 
 from task_manager.task_manager import create_task
 from task_manager.task_manager import get_fields
-from task_manager.tasks.workers.tag_model_worker import TagModelWorker
+from task_manager.tasks.workers.text_tagger_worker import TagModelWorker
 from task_manager.tools import MassHelper
 from task_manager.tools import get_pipeline_builder
 from task_manager.models import TagFeedback
 
-from dataset_importer.document_preprocessor import preprocessor_map
-from dataset_importer.document_preprocessor import PREPROCESSOR_INSTANCES
+from task_manager.document_preprocessor import preprocessor_map
+from task_manager.document_preprocessor import PREPROCESSOR_INSTANCES
 
 API_VERSION = "1.0"
 
@@ -547,7 +547,7 @@ def api_tag_text(request, user, params):
     if preprocessor:
         preprocessor_params = {}
         preprocessor = PREPROCESSOR_INSTANCES[preprocessor]
-    
+
         try:
             result_map = preprocessor.transform([text_dict], **preprocessor_params)
         except Exception as e:
@@ -564,42 +564,43 @@ def api_tag_text(request, user, params):
     # Apply
     for tagger_id in tagger_ids_list:
         is_tagger_selected = taggers is None or tagger_id in taggers
+        c = None
+        p = 0
+
         if is_tagger_selected:
             tagger = TagModelWorker()
             tagger.load(tagger_id)
 
-            tagger_fields = json.loads(Task.objects.get(pk = tagger_id).parameters)['fields']
+            explain = {'tag': tagger.description,
+                       'tagger_id': tagger_id}
 
+            # create input for the tagger
+            tagger_fields = json.loads(Task.objects.get(pk = tagger_id).parameters)['fields']
             text_dict_df = {}
 
             for field in tagger_fields:
+                sub_field_content = text_dict
+                for sub_field in field.split('.'):
+                    sub_field_content = sub_field_content[sub_field]
+
+                text_dict_df[field] = [sub_field_content]
+
+            if 'error' not in explain:
                 try:
-                    text_dict_df[field] = [text_dict[field]]
-                except KeyError:
-                    text_dict_df[field] = [""]
-
-            df_text = pd.DataFrame(text_dict_df)
-            p = int(tagger.model.predict(df_text)[0])
-
-            try:
-                c = tagger.model.decision_function(df_text)[0]
-            except:
-                c = None
-
-
-            # create (empty) feedback item
-            feedback_obj = TagFeedback.create(user, text_dict, tagger_id, p)
-
-            # Add explanation
-            data['explain'].append({'tag': tagger.description,
-                                    'tagger_id': tagger_id,
-                                    'decision_id': feedback_obj.pk,
-                                    'prediction': p,
-                                    'confidence': c,
-                                    'selected': is_tagger_selected})
-
-        else:
-            p = None
+                    df_text = pd.DataFrame(text_dict_df)
+                    # tag
+                    p = int(tagger.model.predict(df_text)[0])
+                    # get confidence
+                    c = tagger.model.decision_function(df_text)[0]
+                    # create (empty) feedback item
+                    feedback_obj = TagFeedback.create(user, text_dict, tagger_id, p)
+                    explain['decision_id'] = feedback_obj.pk
+                except Exception as e:
+                    explain['error'] = str(e)
+            
+            explain['prediction'] = p
+            explain['confidence'] = c
+            data['explain'].append(explain)
         
         # Add prediction as tag
         if p == 1:
@@ -607,7 +608,6 @@ def api_tag_text(request, user, params):
 
     # Prepare response
     data_json = json.dumps(data)
-
     return HttpResponse(data_json, status=200, content_type='application/json')
 
 

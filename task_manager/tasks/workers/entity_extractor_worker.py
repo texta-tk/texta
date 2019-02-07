@@ -13,7 +13,7 @@ from utils.es_manager import ES_Manager
 from utils.datasets import Datasets
 
 from texta.settings import ERROR_LOGGER, INFO_LOGGER, MODELS_DIR, URL_PREFIX, MEDIA_URL, PROTECTED_MEDIA
-from utils.helper_functions import plot_confusion_matrix
+from utils.helper_functions import plot_confusion_matrix, create_file_path
 import pandas as pd
 import matplotlib.pyplot as plt
 from pycrfsuite import Trainer, Tagger
@@ -35,7 +35,8 @@ class EntityExtractorWorker(BaseWorker):
         self.task_id = None
         self.model_name = None
         self.description = None
-        self.task_model_obj = None
+        self.task_obj = None
+        self.task_type = None
         self.n_jobs = 1
         
         self.tagger = None
@@ -50,9 +51,10 @@ class EntityExtractorWorker(BaseWorker):
     def run(self, task_id):
 
         self.task_id = task_id
-        self.task_model_obj = Task.objects.get(pk=self.task_id)
+        self.task_obj = Task.objects.get(pk=self.task_id)
+        self.task_type = self.task_obj.task_type
 
-        task_params = json.loads(self.task_model_obj.parameters)
+        task_params = json.loads(self.task_obj.parameters)
         steps = ["preparing data", "training", "done"]
         show_progress = ShowSteps(self.task_id, steps)
         show_progress.update_view()
@@ -84,7 +86,7 @@ class EntityExtractorWorker(BaseWorker):
             # Get data
             ds = Datasets().activate_datasets_by_id(task_params['dataset'])
             self.es_m = ds.build_manager(ES_Manager)
-            self.model_name = 'model_{0}'.format(self.task_id)
+            self.model_name = 'model_{}'.format(self.task_obj.unique_id)
             facts = self._get_fact_values(fact_names)
             hits = self._scroll_query_response(param_query, fields)
 
@@ -98,14 +100,13 @@ class EntityExtractorWorker(BaseWorker):
             self.train_summary['samples'] = len(hits)
             self.train_summary['model_type'] = 'CRF'
             report_table = self._convert_dict_to_html_table(report)
-            self.train_summary["report"] = report_table
+            self.train_summary['report'] = report_table
             self.train_summary['confusion_matrix'] = '<img src="{}" style="max-width: 80%">'.format(plot_url)
             show_progress.update(2)
 
             # Declare the job as done
-            r = Task.objects.get(pk=self.task_id)
-            r.result = json.dumps(self.train_summary)
-            r.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+            self.task_obj.result = json.dumps(self.train_summary)
+            self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
             logging.getLogger(INFO_LOGGER).info(json.dumps({
                 'process': 'CREATE CRF MODEL',
@@ -116,8 +117,7 @@ class EntityExtractorWorker(BaseWorker):
         except TaskCanceledException as e:
             # If here, task was canceled while training
             # Delete task
-            task = Task.objects.get(pk=self.task_id)
-            task.delete()
+            self.task_obj.delete()
             logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE CLASSIFIER', 'event': 'crf_training_canceled', 'data': {'task_id': self.task_id}}), exc_info=True)
             print("--- Task canceled")
 
@@ -125,14 +125,15 @@ class EntityExtractorWorker(BaseWorker):
             logging.getLogger(ERROR_LOGGER).exception(json.dumps(
                 {'process': 'CREATE CLASSIFIER', 'event': 'crf_training_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
             # declare the job as failed.
-            task = Task.objects.get(pk=self.task_id)
-            task.result = json.dumps({'error': repr(e)})
-            task.update_status(Task.STATUS_FAILED, set_time_completed=True)
+            self.task_obj.result = json.dumps({'error': repr(e)})
+            self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
         print('Done with crf task')
 
 
     def convert_and_predict(self, data, task_id):
         self.task_id = task_id
+        self.task_obj = Task.objects.get(pk=self.task_id)
+        self.task_type = self.task_obj.task_type
         # Recover features from model to check map
         self._load_tagger()
         self._load_facts()
@@ -164,8 +165,9 @@ class EntityExtractorWorker(BaseWorker):
 
     def _save_as_pkl(self, var, suffix):
         # Save facts as metadata for tagging, to covert new data into training data using facts
-        path = os.path.join(MODELS_DIR, "{}_{}".format(self.model_name, suffix))
-        with open(path, "wb") as f:
+        filename = "{}_{}".format(self.model_name, suffix)
+        output_model_file = create_file_path(filename, MODELS_DIR, self.task_type)
+        with open(output_model_file, "wb") as f:
             pkl.dump(var, f)
 
 
@@ -250,14 +252,15 @@ class EntityExtractorWorker(BaseWorker):
 
 
     def _load_facts(self):
-        file_path = os.path.join(MODELS_DIR, "{}_{}".format(self.model_name, "meta"))
+        file_path = os.path.join(MODELS_DIR, self.task_type, "{}_meta".format(self.model_name))
         with open(file_path, "rb") as f:
             self.facts = pkl.load(f)
 
 
     def _load_tagger(self):
-        self.model_name = 'model_{0}'.format(self.task_id)
-        file_path = os.path.join(MODELS_DIR, self.model_name)
+        # In pycrfsuite, you have to save the model first, then load it as a tagger
+        self.model_name = 'model_{}'.format(self.task_obj.unique_id)
+        file_path = os.path.join(MODELS_DIR, self.task_type, self.model_name)
         try:
             tagger = Tagger()
             tagger.open(file_path)
@@ -269,6 +272,7 @@ class EntityExtractorWorker(BaseWorker):
 
         self.tagger = tagger
         return self.tagger
+
 
     def _train_and_save(self, X_train, y_train):
         trainer = Trainer(verbose=False)
@@ -293,10 +297,9 @@ class EntityExtractorWorker(BaseWorker):
             # transitions that are possible, but not observed
             'feature.possible_transitions': True})
 
-        self.model_name = 'model_{0}'.format(self.task_id)
-        output_model_file = os.path.join(MODELS_DIR, self.model_name)
+        output_model_path = create_file_path(self.model_name, MODELS_DIR, self.task_type)
         # Train and save
-        trainer.train(output_model_file)
+        trainer.train(output_model_path)
         return trainer
 
 
@@ -329,8 +332,10 @@ class EntityExtractorWorker(BaseWorker):
         cm_labels[class_indices[self.oob_val]] = 'None'
         # Updates the plt variable to draw a confusion matrix graph
         plt = plot_confusion_matrix(confusion, classes=cm_labels)
-        plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/{}_cm.svg".format(self.model_name))
-        plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager/{}_cm.svg".format(self.model_name))
+        plot_name = "{}_cm.svg".format(self.model_name)
+
+        plot_path = create_file_path(plot_name, PROTECTED_MEDIA, "task_manager/", self.task_type)
+        plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager/", self.task_type, plot_name)
         plt.savefig(plot_path, format="svg", bbox_inches='tight')
 
         # Return sklearn classification_report, return report as dict
@@ -378,10 +383,10 @@ class EntityExtractorWorker(BaseWorker):
                         fact_data[val_word] = fact["key"]
         return fact_data
 
+
     def _bad_params_result(self, msg: str):
-        task = Task.objects.get(pk=self.task_id)
-        task.result = json.dumps({"error": msg})
-        task.update_status(Task.STATUS_FAILED, set_time_completed=True)
+        self.task_obj.result = json.dumps({"error": msg})
+        self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
 
     @staticmethod
     def _convert_dict_to_html_table(data_dict):

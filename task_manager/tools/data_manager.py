@@ -8,8 +8,7 @@ from utils.es_manager import ES_Manager
 from texta.settings import ERROR_LOGGER
 
 MAX_POSITIVE_SAMPLE_SIZE = 10000
-ES_SCROLL_SIZE = 5000
-
+ES_SCROLL_SIZE = 500
 
 def get_fields(es_m):
     """ Crete field list from fields in the Elasticsearch mapping
@@ -118,7 +117,7 @@ class EsIterator:
 
 class EsDataSample(object):
 
-    def __init__(self, fields, query, es_m, negative_set_multiplier=1.0, max_positive_sample_size=10000, score_threshold=0.0):
+    def __init__(self, fields, query, es_m, negative_set_multiplier=1.0, max_positive_sample_size=MAX_POSITIVE_SAMPLE_SIZE, score_threshold=0.0):
         """ Sample data - Positive and Negative samples from query
         negative_set_multiplier (float): length of positive set is multiplied by this to determine negative sample size (to over- or underfit models)
         max_positive_sample_size (int): maximum number of documents per class used to train the model
@@ -131,7 +130,8 @@ class EsDataSample(object):
         self.max_positive_sample_size = max_positive_sample_size
         self.score_threshold = score_threshold
 
-    def _get_positive_samples(self, sample_size):
+    def _get_positive_samples(self):
+        sample_size = self.max_positive_sample_size
         
         positive_samples_map = {}
         positive_set = set()
@@ -167,7 +167,14 @@ class EsDataSample(object):
                             _temp_text = hit['_source']
                             for k in field.split('.'):
                                 # Get nested fields encoded as: 'field.sub_field'
-                                _temp_text = _temp_text[k]
+                                try:
+                                    _temp_text = _temp_text[k]
+                                except Exception:
+                                    logging.getLogger(ERROR_LOGGER).error('Field not present in document.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
+                                    _temp_text = ''
+                                # sanity check to remove None values
+                                if not _temp_text:
+                                    _temp_text = ''
                             # Save decoded text into positive sample map
                             positive_samples_map[field].append(_temp_text)
                         
@@ -195,7 +202,7 @@ class EsDataSample(object):
         response = self.es_m.scroll(match_all=True)
         scroll_id = response['_scroll_id']
         hit_length = response['hits']['total']
-        sample_size = len(positive_set)
+        sample_size = len(positive_set) * self.negative_set_multiplier
 
         while hit_length > 0 and len(negative_set) <= sample_size:
 
@@ -227,8 +234,11 @@ class EsDataSample(object):
                             # Get nested fields encoded as: 'field.sub_field'
                             try:
                                 _temp_text = _temp_text[k]
-                            except KeyError:
+                            except Exception:
                                 logging.getLogger(ERROR_LOGGER).error('Field not present in document.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
+                                _temp_text = ''
+                            # sanity check to remove None values
+                            if not _temp_text:
                                 _temp_text = ''
                         # Save decoded text into positive sample map
                         negative_samples_map[field].append(_temp_text)
@@ -239,9 +249,8 @@ class EsDataSample(object):
 
         return negative_samples_map, negative_set
 
-    def get_data_samples(self, sample_size=MAX_POSITIVE_SAMPLE_SIZE):
-
-        positive_samples, positive_set = self._get_positive_samples(sample_size)
+    def get_data_samples(self):
+        positive_samples, positive_set = self._get_positive_samples()
         negative_samples, negative_set = self._get_negative_samples(positive_set)
 
         # Build X feature map

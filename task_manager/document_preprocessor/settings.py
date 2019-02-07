@@ -5,17 +5,16 @@
 
 import logging
 from texta.settings import ERROR_LOGGER
-from texta.settings import DATASET_IMPORTER
+from texta.settings import MLP_URL
 from texta.settings import SCORO_PREPROCESSOR_ENABLED
-from dataset_importer.document_preprocessor.preprocessors import CommentPreprocessor
-from dataset_importer.document_preprocessor.preprocessors import DatePreprocessor
-from dataset_importer.document_preprocessor.preprocessors import MlpPreprocessor
-from dataset_importer.document_preprocessor.preprocessors import TextTaggerPreprocessor
-from dataset_importer.document_preprocessor.preprocessors import MlpPreprocessor
-from dataset_importer.document_preprocessor.preprocessors import DatePreprocessor
-from dataset_importer.document_preprocessor.preprocessors import LexTagger
-from dataset_importer.document_preprocessor.preprocessors import ScoroPreprocessor
-from dataset_importer.document_preprocessor.preprocessors import EntityExtractorPreprocessor
+from task_manager.document_preprocessor.preprocessors import DatePreprocessor
+from task_manager.document_preprocessor.preprocessors import MlpPreprocessor
+from task_manager.document_preprocessor.preprocessors import TextTaggerPreprocessor
+from task_manager.document_preprocessor.preprocessors import MLPLitePreprocessor
+from task_manager.document_preprocessor.preprocessors import DatePreprocessor
+from task_manager.document_preprocessor.preprocessors import LexTagger
+from task_manager.document_preprocessor.preprocessors import ScoroPreprocessor
+from task_manager.document_preprocessor.preprocessors import EntityExtractorPreprocessor
 
 
 mlp_field_properties = {
@@ -56,13 +55,28 @@ preprocessor_map = {}
 
 try:
     preprocessor_map['mlp'] = {
-        'name': 'Multilingual preprocessor',
+        'name': 'MLP',
         'description': 'Extracts lemmas and identifies language code from multiple languages.',
         'class': MlpPreprocessor,
-        'parameters_template': 'parameters/preprocessor_parameters/mlp.html',
+        'parameters_template': 'preprocessor_parameters/mlp.html',
         'arguments': {
-            'mlp_url': DATASET_IMPORTER['urls']['mlp'],
-            'enabled_features': ['text', 'lang', 'texta_facts'],
+            'mlp_url': MLP_URL,
+        },
+        'is_enabled': True
+    }
+    log_preprocessor_status(code='mlp_lite', status='enabled')
+except Exception as e:
+    logging.getLogger(ERROR_LOGGER).exception(e)
+    log_preprocessor_status(code='mlp_lite', status='disabled')
+
+try:
+    preprocessor_map['mlp_lite'] = {
+        'name': 'MLP Lite',
+        'description': 'Extracts lemmas and calculates statistics for classifiers.',
+        'class': MLPLitePreprocessor,
+        'parameters_template': 'preprocessor_parameters/mlp_lite.html',
+        'arguments': {
+            'mlp_url': MLP_URL,
         },
         'field_properties': mlp_field_properties,
         'is_enabled': True
@@ -75,10 +89,10 @@ except Exception as e:
 
 try:
     preprocessor_map['date_converter'] = {
-        'name': 'Date conversion preprocessor',
+        'name': 'Date converter',
         'description': 'Converts date field values to correct format',
         'class': DatePreprocessor,
-        'parameters_template': 'parameters/preprocessor_parameters/date_converter.html',
+        'parameters_template': 'preprocessor_parameters/date_converter.html',
         'arguments': {},
         'is_enabled': True,
         'languages': ['Estonian', 'English', 'Russian', 'Latvian', 'Lithuanian', 'Other']
@@ -91,10 +105,10 @@ except Exception as e:
 
 try:
     preprocessor_map['text_tagger'] = {
-        'name': 'Text Tagger preprocessor',
+        'name': 'Text Tagger',
         'description': 'Tags documents with TEXTA Text Tagger',
         'class': TextTaggerPreprocessor,
-        'parameters_template': 'parameters/preprocessor_parameters/text_tagger.html',
+        'parameters_template': 'preprocessor_parameters/text_tagger.html',
         'arguments': {},
         'is_enabled': True
     }
@@ -105,10 +119,10 @@ except Exception as e:
 
 try:
     preprocessor_map['lexicon_classifier'] = {
-        'name': 'Lexicon Tagger Preprocessor',
+        'name': 'Lexicon Tagger',
         'description': 'Applies lexicon-based tagging',
         'class': LexTagger,
-        'parameters_template': 'parameters/preprocessor_parameters/lexicon_classifier.html',
+        'parameters_template': 'preprocessor_parameters/lexicon_classifier.html',
         'arguments': {},
         'is_enabled': True,
         'match_types':['Prefix','Exact','Fuzzy'],
@@ -120,26 +134,13 @@ except Exception as e:
     logging.getLogger(ERROR_LOGGER).exception(e)
     log_preprocessor_status(code='lexicon_classifier', status='disabled')
 
-try:
-    preprocessor_map['comment_preprocessor'] = {
-        'name': 'Comment preprocessor',
-        'description': 'Converts comments',
-        'class': CommentPreprocessor,
-        'parameters_template': 'parameters/preprocessor_parameters/comment_preprocessor.html',
-        'arguments': {},
-        'is_enabled': True
-    }
-    log_preprocessor_status(code='comment_preprocessor', status='enabled')
-except Exception as e:
-    logging.getLogger(ERROR_LOGGER).exception(e)
-    log_preprocessor_status(code='comment_preprocessor', status='disabled')
 
 try:
     preprocessor_map['scoro'] = {
-        'name': 'Scoro preprocessor',
+        'name': 'Scoro',
         'description': 'Extracts topics and evaluates sentiment',
         'class': ScoroPreprocessor,
-        'parameters_template': 'parameters/preprocessor_parameters/scoro.html',
+        'parameters_template': 'preprocessor_parameters/scoro.html',
         'arguments': {},
         'is_enabled': SCORO_PREPROCESSOR_ENABLED,
         'sentiment_lexicons':['Scoro','General','Custom'],
@@ -154,10 +155,10 @@ except Exception as e:
 
 try:
     preprocessor_map['entity_extractor'] = {
-        'name': 'Entity Extractor preprocessor',
+        'name': 'Entity Extractor',
         'description': 'Extract entities from documents with TEXTA Entity Extractor',
         'class': EntityExtractorPreprocessor,
-        'parameters_template': 'parameters/preprocessor_parameters/entity_extractor.html',
+        'parameters_template': 'preprocessor_parameters/entity_extractor.html',
         'arguments': {},
         'is_enabled': True
     }
@@ -165,19 +166,6 @@ try:
 except Exception as e:
     print(e)
     log_preprocessor_status(code='entity_extractor', status='disabled')
-
-
-def convert_to_utf8(document):
-    """
-    Loops through all key, value pairs in dict, checks if it is a string/bytes
-    and tries to decode it to utf8.
-    :param document: Singular document.
-    :return: Singular document decoded into utf8.
-    """
-    for key, value in document.items():
-        if type(value) is bytes:
-            document[key] = value.decode('utf8')
-    return document
 
 
 PREPROCESSOR_INSTANCES = {

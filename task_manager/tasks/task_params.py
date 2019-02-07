@@ -1,7 +1,7 @@
 import logging
 import json
 from .workers.language_model_worker import LanguageModelWorker
-from .workers.tag_model_worker import TagModelWorker
+from .workers.text_tagger_worker import TagModelWorker
 from .workers.entity_extractor_worker import EntityExtractorWorker
 from .workers.preprocessor_worker import PreprocessorWorker
 from utils.es_manager import ES_Manager
@@ -36,7 +36,7 @@ task_params = [
         "allowed_actions": ["delete"]
     },
     {
-        "name":            "Apply Preprocessor",
+        "name":            "Apply Processor",
         "id":              "apply_preprocessor",
         "template":        "task_parameters/apply_preprocessor.html",
         "result_template": "task-results/apply-preprocessor-results.html",

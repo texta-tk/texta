@@ -73,7 +73,7 @@ function deleteDocuments (type) {
             task_ids.push($(this).attr('id'))
         }
     });
-    console.log(task_ids)
+
     swal({
         title: 'Are you sure?',
         text: 'This will remove the task and it\'s resources.',
@@ -104,14 +104,50 @@ function deleteDocuments (type) {
 
 }
 
+function downloadModel(model_id_to_download) {
+    window.location.href = `${LINK_TASK_MANAGER}/download_model?model_id=${model_id_to_download}`
+}
+
+function togglePanelCollapse(element) {
+    $(element).children('.glyphicon').toggleClass('glyphicon-plus')
+    $(element).children('.glyphicon').toggleClass('glyphicon-minus')
+}
 
 function uploadTask(task_form_id) {
     formElement = document.getElementById(task_form_id)
-
-    var request = new XMLHttpRequest()
-    request.onreadystatechange = function () {
-        // location.reload()
-    }
-    request.open('POST', PREFIX + '/upload_task_archive')
-    request.send(new FormData(formElement), true)
+    formData = new FormData(formElement);
+    
+    statusTextElem = $('#uploadStatus')
+    $.ajax({
+        url: PREFIX + '/upload_task_archive',
+        data: formData,
+        type: 'POST',
+        contentType: false,
+        processData: false,
+        beforeSend: function () {
+            statusTextElem.get(0).textContent = "Importing, please wait.."
+            statusTextElem.attr('class', 'taskUploadStatusTextDefault')
+        },
+        success: function (data) {
+            status = data.status
+            switch (status) {
+                case 'success':
+                    statusTextElem.get(0).textContent = data.text
+                    statusTextElem.attr('class', 'taskUploadStatusTextSuccess')
+                    break
+                case 'failed':
+                    statusTextElem.get(0).textContent = data.text
+                    statusTextElem.attr('class', 'taskUploadStatusTextFailed')
+                    break
+                default:
+                    statusTextElem.get(0).textContent = "An unknown error has occurred, make sure the exported Task data is valid and try again."
+                    statusTextElem.attr('class', 'taskUploadStatusTextFailed')
+                    break
+            }
+        },
+        error: function () {
+            statusTextElem.get(0).textContent = "An unknown error has occurred, make sure the exported Task data is valid and try again."
+            statusTextElem.attr('class', 'taskUploadStatusTextFailed')
+        }
+    });
 }

@@ -1,4 +1,4 @@
-from task_manager.tasks.workers.tag_model_worker import TagModelWorker
+from task_manager.tasks.workers.text_tagger_worker import TagModelWorker
 
 import numpy as np
 import json
@@ -13,6 +13,7 @@ class TextTaggerPreprocessor(object):
 
     def transform(self, documents, **kwargs):
         input_features = json.loads(kwargs['text_tagger_feature_names'])
+        input_path = json.loads(kwargs['text_tagger_path'])
         tagger_ids_to_apply = [int(_id) for _id in json.loads(kwargs['text_tagger_preprocessor_models'])]
         taggers_to_apply = []
 
@@ -41,36 +42,40 @@ class TextTaggerPreprocessor(object):
                     else:
                         decoded_text = ''
                         break
+                
+                # sanity check to filter out None values
+                if not decoded_text:
+                    decoded_text = ''
+
                 try:
                     text_map[field].append(decoded_text.strip().decode())
                 except AttributeError:
                     text_map[field].append(decoded_text.strip())
 
         # Apply tags to every input feature
-        for field in input_features:
-            results = []
-            tagger_descriptions = []
+        results = []
+        tagger_descriptions = []
 
-            for tagger in taggers_to_apply:
-                tagger_descriptions.append(tagger.description)
-                result_vector = tagger.tag(text_map)
-                results.append(result_vector)
-            results_transposed = np.array(results).transpose()
+        for tagger in taggers_to_apply:
+            tagger_descriptions.append(tagger.description)
+            result_vector = tagger.tag(text_map)
+            results.append(result_vector)
+        results_transposed = np.array(results).transpose()
 
-            for i, tagger_ids in enumerate(results_transposed):
-                positive_tag_ids = np.nonzero(tagger_ids)
-                positive_tags = [tagger_descriptions[positive_tag_id] for positive_tag_id in positive_tag_ids[0]]
-                texta_facts = []
+        for i, tagger_ids in enumerate(results_transposed):
+            positive_tag_ids = np.nonzero(tagger_ids)
+            positive_tags = [tagger_descriptions[positive_tag_id] for positive_tag_id in positive_tag_ids[0]]
+            texta_facts = []
 
-                if positive_tags:
-                    if 'texta_facts' not in documents[i]:
-                        documents[i]['texta_facts'] = []
-                    for tag in positive_tags:
-                        new_fact = {'fact': 'TEXTA_TAG', 'str_val': tag, 'doc_path': field, 'spans': json.dumps([[0, len(text_map[field][i])]])}
-                        texta_facts.append(new_fact)
-                    documents[i]['texta_facts'].extend(texta_facts)
+            if positive_tags:
+                if 'texta_facts' not in documents[i]:
+                    documents[i]['texta_facts'] = []
+                for tag in positive_tags:
+                    new_fact = {'fact': 'TEXTA_TAG', 'str_val': tag, 'doc_path': input_path, 'spans': json.dumps([0, 0])}
+                    texta_facts.append(new_fact)
+                documents[i]['texta_facts'].extend(texta_facts)
 
-            # Get total tagged documents, get np array of results
-            total_positives = np.count_nonzero(results)
+        # Get total tagged documents, get np array of results
+        total_positives = np.count_nonzero(results)
 
         return {"documents":documents, "meta": {'documents_tagged': total_positives}}

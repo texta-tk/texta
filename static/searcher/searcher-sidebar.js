@@ -113,6 +113,34 @@ function removeSearchCallback(responseText) {
     searchDiv.parentNode.removeChild(searchDiv)
 }
 
+function renderMultipleSavedSearches() {
+    var searchesContainer = document.getElementById('saved_searches')
+    let checkboxList = searchesContainer.getElementsByTagName('input')
+    let pkArray = []
+    for (let item of checkboxList) {
+        if (item.checked) {
+            pkArray.push(item.value)
+        }
+    }
+    if (pkArray.length > 0) {
+        $.ajax({
+            url: PREFIX + '/get_srch_query',
+            data: {'search_ids[]': pkArray},
+            type: 'POST',
+            success: function (result) {
+                let data = JSON.parse(result)
+                $('#constraints').empty()
+                for (var i = 0; i < data.length; i++) {
+                    renderSavedSearchField(data[i], '', '')
+                }
+            }
+        })
+    } else {
+        swalCustomTypeDisplay(SwalType.ERROR, 'Please select a saved search first.')
+    }
+
+}
+
 function removeSearches() {
     var searchesContainer = document.getElementById('saved_searches')
     let checkboxList = searchesContainer.getElementsByTagName('input')
@@ -229,14 +257,17 @@ function displaySearches(searches) {
 }
 
 function renderSavedSearch(searchID) {
-    $.get(PREFIX + '/get_srch_query', {
-        search_id: searchID
-    }, function (data) {
-        data = JSON.parse(data)
+    $.ajax({
+        url: PREFIX + '/get_srch_query',
+        data: {'search_ids[]': [searchID]},
+        type: 'POST',
+        success: function (data) {
+            data = JSON.parse(data)
 
-        $('#constraints').empty()
-        for (var i = 0; i < data.length; i++) {
-            renderSavedSearchField(data[i], '', '')
+            $('#constraints').empty()
+            for (var i = 0; i < data.length; i++) {
+                renderSavedSearchField(data[i], '', '')
+            }
         }
     })
 }
@@ -644,12 +675,14 @@ function addField(dateRangeMin, dateRangeMax, submittedFieldData) {
     $('#constraint_field').selectpicker('deselectAll')
 }
 
+var keyTimer
+
 function searchAsYouTypeQuery() {
     var selection = $('#search_as_you_type').prop('checked')
-    var keyTimer
+
     if (selection) {
-        clearTimeout(keyTimer)
-        keyTimer = setTimeout(function validate() {
+        clearTimeout(this.keyTimer)
+        this.keyTimer = setTimeout(function validate() {
             query()
         }, 500)
     }
@@ -696,34 +729,39 @@ function clusterQuery() {
     request.send(new FormData(formElement))
 }
 
+var keyTimerLookup
+
 function lookup(fieldFullId, fieldId, action, lookupTypes) {
-    var content = $('#' + fieldFullId).val()
-    let factName
-    if (fieldFullId.match('^fact_constraint_val_')) {
-        factName = $('#fact_txt_' + fieldId.slice(0, -4)).val()
-    } else {
-        factName = ''
-    }
-
-    var lookupData = {
-        content: content,
-        action: action,
-        lookup_types: lookupTypes,
-        key_constraints: factName
-    }
-    $.post(PREFIX + '/autocomplete', lookupData, function (data) {
-        if (data.length > 0) {
-            var suggestionsContainer = $('#suggestions_' + fieldId)
-            suggestionsContainer.empty()
-
-            processSuggestions(data, suggestionsContainer, fieldId, lookupTypes)
-            if (suggestionsContainer.html()) {
-                $('#suggestions_' + fieldId).show()
-            }
+    clearTimeout(this.keyTimerLookup)
+    this.keyTimerLookup = setTimeout(function validate() {
+        var content = $('#' + fieldFullId).val()
+        let factName
+        if (fieldFullId.match('^fact_constraint_val_')) {
+            factName = $('#fact_txt_' + fieldId.slice(0, -4)).val()
         } else {
-            $('#suggestions_' + fieldId).hide()
+            factName = ''
         }
-    })
+
+        var lookupData = {
+            content: content,
+            action: action,
+            lookup_types: lookupTypes,
+            key_constraints: factName
+        }
+        $.post(PREFIX + '/autocomplete', lookupData, function (data) {
+            if (data.length > 0) {
+                var suggestionsContainer = $('#suggestions_' + fieldId)
+                suggestionsContainer.empty()
+
+                processSuggestions(data, suggestionsContainer, fieldId, lookupTypes)
+                if (suggestionsContainer.html()) {
+                    $('#suggestions_' + fieldId).show()
+                }
+            } else {
+                $('#suggestions_' + fieldId).hide()
+            }
+        })
+    }, 150)
 }
 
 function processSuggestions(suggestions, suggestionsContainer, fieldID, lookupTypes) {

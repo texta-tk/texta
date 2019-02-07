@@ -12,6 +12,6 @@ class Run(models.Model):
     run_status        = models.CharField(max_length=MAX_STR_LEN)
     run_started       = models.DateTimeField()
     run_completed     = models.DateTimeField(null=True, blank=True)
-    user              = models.ForeignKey(User,on_delete=models.CASCADE) # NEW PY REQUIREMENT
+    user              = models.ForeignKey(User,on_delete=models.CASCADE)
     description       = models.CharField(max_length=MAX_STR_LEN)
     results           = models.TextField()

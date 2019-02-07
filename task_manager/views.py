@@ -1,7 +1,6 @@
 import os
 import json
 import logging
-import glob
 import zipfile
 from zipfile import ZipFile
 from tempfile import SpooledTemporaryFile
@@ -15,12 +14,13 @@ from searcher.models import Search
 from permission_admin.models import Dataset
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
+from utils.helper_functions import get_wildcard_files, create_file_path
 from texta.settings import STATIC_URL
 from texta.settings import MODELS_DIR
-from texta.settings import ERROR_LOGGER
 from texta.settings import PROTECTED_MEDIA
+from texta.settings import ERROR_LOGGER
 
-from dataset_importer.document_preprocessor import preprocessor_map
+from task_manager.document_preprocessor import preprocessor_map
 
 from task_manager.tasks.task_params import task_params, get_fact_names, fact_names
 from task_manager.tools import get_pipeline_builder
@@ -32,7 +32,7 @@ from .task_manager import filter_preprocessor_params
 from .task_manager import translate_parameters
 from .task_manager import collect_map_entries
 from .task_manager import get_fields
-
+from operator import itemgetter
 
 @login_required
 def index(request):
@@ -45,7 +45,7 @@ def index(request):
         
     preprocessors = collect_map_entries(preprocessor_map)
     enabled_preprocessors = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True]
-    
+    enabled_preprocessors = sorted(enabled_preprocessors, key=itemgetter('name'), reverse=False)
     tasks = []
 
     for task in Task.objects.all().order_by('-pk'):
@@ -138,37 +138,33 @@ def delete_task(request):
     :return:
     """
     task_ids = request.POST.getlist('task_ids[]')
-    if not task_ids:
-        json_response = {"error": "No tasks selected"}
-        return JsonResponse(json_response)
+
     for task_id in task_ids:
+        task_id = int(task_id)
         task = Task.objects.get(pk=task_id)
+
         if task.status == Task.STATUS_RUNNING:
             # If task is running, mark it to cancel
             task.status = Task.STATUS_CANCELED
             task.save()
         else:
-            if 'train' in task.task_type:
-                try:
-                    file_path = os.path.join(MODELS_DIR, "model_{}".format(task_id))
-                    if (os.path.exists(file_path)):
-                        os.remove(file_path)
-                except Exception as e:
-                    file_path = os.path.join(MODELS_DIR, "model_{}".format(task_id))
-                    logging.getLogger(ERROR_LOGGER).error('Could not delete model ({}).'.format(file_path), exc_info=True)
-            if 'entity_extractor' in task.task_type or 'train_tagger' in task.task_type :
-                try:
-                    plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/model_{}_cm.svg".format(task_id))
-                    meta_path = os.path.join(MODELS_DIR, "model_{}_meta".format(task_id))
+            try:
+                file_path = os.path.join(MODELS_DIR, task.task_type, "model_{}".format(task.unique_id))
+                media_path = os.path.join(PROTECTED_MEDIA, "task_manager/", task.task_type, "model_{}".format(task.unique_id))
 
-                    if (os.path.exists(plot_path)):
-                        os.remove(plot_path)
-                    if os.path.exists(meta_path):
-                        os.remove(meta_path)
-                except Exception as e:
-                    plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/model_{}_cm.svg".format(task_id))
-                    facts_path = os.path.join(MODELS_DIR, "model_" + str(task_id) + "_meta")
-                    logging.getLogger(ERROR_LOGGER).error('Could not delete Extractor/Tagger model meta ({}) or plot ({}).'.format(facts_path, plot_path), exc_info=True)
+                model_files = get_wildcard_files(file_path)
+                media_files = get_wildcard_files(media_path)
+
+                for path, filename in model_files:
+                    if os.path.exists(path):
+                        os.remove(path)
+
+                for path, filename in media_files:
+                    if os.path.exists(path):
+                        os.remove(path)
+
+            except Exception as e:
+                logging.getLogger(ERROR_LOGGER).error('Could not delete model, paths: ({}\n{}).'.format(model_files, media_files), exc_info=True)
             # Remove task
             task.delete()
 
@@ -184,89 +180,118 @@ def download_model(request):
     :param request:
     :return:
     """
-    model_id = request.GET['model_id']
-    task_object = Task.objects.get(pk=model_id)
-    task_xml_name = "task_{}.xml".format(model_id)
 
-    model_name = "model_" + str(model_id)
-    model_file_path = os.path.join(MODELS_DIR, model_name)
+    if 'model_id' in request.GET:
+        model_id = request.GET['model_id']
+        task_object = Task.objects.get(pk=model_id)
+        if task_object.status == "completed":
+            unique_id = task_object.unique_id
+            task_type = task_object.task_type
 
-    media_path = os.path.join(PROTECTED_MEDIA, "task_manager/{}".format(model_name))
+            task_xml_name = "task_{}.xml".format(unique_id)
+            model_name = "model_{}".format(unique_id)
 
-    model_files = []
-    for file in glob.glob(model_file_path + '*'):
-        # Add path and name
-        model_files.append((file, os.path.basename(file)))
+            model_file_path = os.path.join(MODELS_DIR, task_type, model_name)
+            media_path = os.path.join(PROTECTED_MEDIA, "task_manager/", task_type, model_name)
 
-    media_files = []
-    for file in glob.glob(media_path + '*'):
-        # Add path and name
-        media_files.append((file, os.path.basename(file)))
-    
-    zip_path = "zipped_model_{}.zip".format(model_id)
-    if os.path.exists(model_file_path):
-        # Make temporary Zip file
-        with SpooledTemporaryFile() as tmp:
-            with ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as archive:
-                # Write Task model object as xml
-                task_xml_data = serializers.serialize("xml", [task_object])
-                archive.writestr(task_xml_name, task_xml_data)
-                # Write model files
-                for path, name in model_files:
-                    archive.write(path, "model/"+name)
+            model_files = get_wildcard_files(model_file_path)
+            media_files = get_wildcard_files(media_path)
 
-                for path, name in media_files:
-                    archive.write(path, "media/"+name)
+            zip_path = "zipped_model_{}.zip".format(model_id)
+            # Make temporary Zip file
+            with SpooledTemporaryFile() as tmp:
+                with ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as archive:
+                    # Write Task model object as xml
+                    task_xml_data = serializers.serialize("xml", [task_object])
+                    archive.writestr(task_xml_name, task_xml_data)
+                    # Write model files
+                    for path, name in model_files:
+                        archive.write(path, "model/"+name)
 
-            # Reset file pointer
-            tmp.seek(0)
-            # Write file data to response
-            response = HttpResponse(tmp.read())
-            # Download file
-            response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(zip_path)
-            return response
+                    for path, name in media_files:
+                        archive.write(path, "media/"+name)
+
+                # Reset file pointer
+                tmp.seek(0)
+                # Write file data to response
+                response = HttpResponse(tmp.read())
+                # Download file
+                response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(zip_path)
+
+                return response
 
     return HttpResponse()
 
 @login_required
 def upload_task_archive(request):
-    task_archive = request.FILES['task_archive']
-    if (zipfile.is_zipfile(task_archive)):
-        with ZipFile(task_archive, 'r') as zf:
-            for file_name in zf.namelist():
-                dirname = os.path.dirname(file_name)
-                # Handle Task object xml
-                if dirname == '' and file_name.lower().endswith('.xml'):
-                    _load_xml_to_database(zf.read(file_name))
-                elif dirname == 'model':
-                    _load_media_file(zf.read(file_name), os.path.basename(file_name))
-                elif dirname == 'media':
-                    _load_media_file(zf.read(file_name), os.path.basename(file_name))
-                else:
-                    json_response = {"text": "Archive seem to not contain any required files"}
-    else:
-        json_response = {"text": "Archive contents malformed or not a .zip file"}
-        return JsonResponse(json_response)
-    return HttpResponse()
+    # Empty json response for unknown errors
+    json_response = {}
+    try:
+        # Check if file is added, else return failed JsonResponse
+        if 'task_archive' in request.FILES:
+            task_archive = request.FILES['task_archive']
+            # Check if file is zipfile, else return failed JsonResponse
+            if zipfile.is_zipfile(task_archive):
+                task_loaded = False
+                with ZipFile(task_archive, 'r') as zf:
+                    for file_name in zf.namelist():
+                        dirname = os.path.dirname(file_name)
+                        # Handle Task object xml
+                        if dirname == '' and file_name.lower().endswith('.xml'):
+                            task = _load_xml_to_database(zf.read(file_name))
+                            task_loaded = True
+                        # Check if task is loaded else return failed JsonResponse
+                        if task_loaded:
+                            if dirname == 'model':
+                                _load_model_file(task, zf.read(file_name), os.path.basename(file_name))
+                                model_loaded = True
+                            elif dirname == 'media':
+                                _load_media_file(task, zf.read(file_name), os.path.basename(file_name))
+
+                # Give successful response if task and model were loaded
+                if task_loaded and model_loaded:
+                    json_response = {"status": "success", "text": "Task successfully uploaded!"}   
+                else: 
+                    json_response = {"status": "failed", "text": "Archive seems to not contain a valid model or Task object"}
+            # If file is not zipfile
+            else:
+                json_response = {"status": "failed", "text": "Archive contents malformed or not a .zip file"}
+                return JsonResponse(json_response)
+        # If there is no file found in request.FILES
+        else:
+            json_response = {"status": "failed", "text": "No file provided"}
+    except:
+        logging.getLogger(ERROR_LOGGER).error(
+            'Exception in Task Manager views:upload_task_archive',
+            exc_info=True
+        )
+
+    return JsonResponse(json_response)
 
 
 def _load_xml_to_database(xml_model_object):
+    task = None
     # Decode bytes object
     xml_model_object = xml_model_object.decode('utf8')
-    for obj in serializers.deserialize("xml", xml_model_object):
+    for task in serializers.deserialize("xml", xml_model_object):
         # Save object to model dataset
-        obj.save()
+        task.save()
+    # Return the Task obj from the Deserialized object
+    return task.object
 
 
-def _load_model_file(file, file_name):
+def _load_model_file(task, file, file_name):
     '''For extracting the uploaded model in upload_task_archive'''
-    model_file_path = os.path.join(MODELS_DIR, file_name)
+    model_file_path = create_file_path(file_name, MODELS_DIR, task.task_type)#os.path.join(MODELS_DIR, task.task_type, file_name)
+
     with open(model_file_path, 'wb+') as f:
         f.write(file)
 
 
-def _load_media_file(file, file_name):
+def _load_media_file(task, file, file_name):
     '''For extracting the uploaded model mediadata in upload_task_archive'''
-    media_file_path = os.path.join(PROTECTED_MEDIA, "task_manager/{}".format(file_name))
+    # media_file_path = os.path.join(PROTECTED_MEDIA, "task_manager/", task.task_type, file_name)
+    media_file_path = create_file_path(file_name, PROTECTED_MEDIA, "task_manager/", task.task_type)
+    
     with open(media_file_path, 'wb+') as f:
         f.write(file)

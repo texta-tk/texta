@@ -13,12 +13,10 @@ class Highlighter(object):
             average_colors: boolean
                 If True, color codes of the overlapping highlights are averaged.
                 If False, the most common color code for the overlapping highlights is selected.
-
             derive_spans: boolean
                 If True, Highlighter will try to derive further highlight_data from the existing tagged_text.
                 Expects highlights to be represented as spans.
                 If False, Highlighter wont try to derive highlight_data.
-
             default_category: string
                 If derive_spans == True and derived highlight_data misses class attribute to use as a category,
                 its category will be set to default_dategory.

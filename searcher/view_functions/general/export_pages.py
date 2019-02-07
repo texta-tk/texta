@@ -5,28 +5,34 @@ from django.http import HttpResponse, StreamingHttpResponse
 from django.contrib.auth.decorators import login_required
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
+from utils.log_manager import LogManager
 
 try:
-    from io import StringIO  # NEW PY REQUIREMENT
+    from io import StringIO 
 except:
-    from io import BytesIO  # NEW PY REQUIREMENT
+    from io import BytesIO 
 
 ES_SCROLL_BATCH = 100
 
 
 @login_required
 def export_pages(request):
-    es_params = {entry['name']: entry['value'] for entry in json.loads(request.GET['args'], encoding='utf8')}
 
-    if es_params['num_examples'] == '*':
-        response = StreamingHttpResponse(get_all_rows(es_params, request), content_type='text/csv')
-    else:
-        response = StreamingHttpResponse(get_rows(es_params, request), content_type='text/csv')
+    es_params = request.session.get('export_args')
+    if es_params is not None:
+        if es_params['num_examples'] == '*':
+            response = StreamingHttpResponse(get_all_rows(es_params, request), content_type='text/csv')
+        else:
+            response = StreamingHttpResponse(get_rows(es_params, request), content_type='text/csv')
 
-    response['Content-Disposition'] = 'attachment; filename="%s"' % (es_params['filename'])
+        response['Content-Disposition'] = 'attachment; filename="%s"' % (es_params['filename'])
 
-    return response
+        return response
 
+    logger = LogManager(__name__, 'SEARCH CORPUS')
+    logger.set_context('user_name', request.user.username)
+    logger.error('export pages failed, parameters empty')
+    return HttpResponse()
 
 def get_rows(es_params, request):
     try:
@@ -37,7 +43,7 @@ def get_rows(es_params, request):
     writer = csv.writer(buffer_)
 
     try:
-        writer.writerow(es_params['features'])  # NEW PY REQUIREMENT
+        writer.writerow(es_params['features']) 
     except:
         writer.writerow([feature for feature in es_params['features']])
     ds = Datasets().activate_datasets(request.session)

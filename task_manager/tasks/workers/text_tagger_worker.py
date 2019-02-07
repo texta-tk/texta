@@ -28,7 +28,7 @@ from sklearn.model_selection import GridSearchCV
 from task_manager.tools import ShowSteps
 from task_manager.tools import TaskCanceledException
 from task_manager.tools import get_pipeline_builder
-from utils.helper_functions import plot_confusion_matrix
+from utils.helper_functions import plot_confusion_matrix, create_file_path
 
 from .base_worker import BaseWorker
 
@@ -40,35 +40,38 @@ class TagModelWorker(BaseWorker):
         self.model = None
         self.model_name = None
         self.description = None
-        self.task_model_obj = None
+        self.task_obj = None
+        self.task_params = None
+        self.task_type = None
         self.n_jobs = 1
 
     def run(self, task_id):
 
         self.task_id = task_id
-        self.task_model_obj = Task.objects.get(pk=self.task_id)
+        self.task_obj = Task.objects.get(pk=self.task_id)
+        self.task_type = self.task_obj.task_type
 
-        task_params = json.loads(self.task_model_obj.parameters)
+        self.task_params = json.loads(self.task_obj.parameters)
         steps = ["preparing data", "training", "saving", "done"]
         show_progress = ShowSteps(self.task_id, steps)
         show_progress.update_view()
-        
-        extractor_opt = int(task_params['extractor_opt'])
-        reductor_opt = int(task_params['reductor_opt'])
-        normalizer_opt = int(task_params['normalizer_opt'])
-        classifier_opt = int(task_params['classifier_opt'])
-        negative_set_multiplier = float(task_params['negative_multiplier_opt'])
-        max_sample_size_opt = int(task_params['max_sample_size_opt'])
-        score_threshold_opt = float(task_params['score_threshold_opt'])
 
-        if 'num_threads' in task_params:
-            self.n_jobs = int(task_params['num_threads'])
+        extractor_opt = int(self.task_params['extractor_opt'])
+        reductor_opt = int(self.task_params['reductor_opt'])
+        normalizer_opt = int(self.task_params['normalizer_opt'])
+        classifier_opt = int(self.task_params['classifier_opt'])
+        negative_set_multiplier = float(self.task_params['negative_multiplier_opt'])
+        max_sample_size_opt = int(self.task_params['max_sample_size_opt'])
+        score_threshold_opt = float(self.task_params['score_threshold_opt'])
+
+        if 'num_threads' in self.task_params:
+            self.n_jobs = int(self.task_params['num_threads'])
 
         try:
-            if 'fields' in task_params:
-                fields = task_params['fields']
+            if 'fields' in self.task_params:
+                fields = self.task_params['fields']
             else:
-                fields = [task_params['field']]
+                fields = [self.task_params['field']]
 
             show_progress.update(0)
             pipe_builder = get_pipeline_builder()
@@ -77,17 +80,17 @@ class TagModelWorker(BaseWorker):
             c_pipe, c_params = pipe_builder.build(fields=fields)
 
             # Check if query was explicitly set
-            if 'search_tag' in task_params:
+            if 'search_tag' in self.task_params:
                 # Use set query
-                param_query = task_params['search_tag']
+                param_query = self.task_params['search_tag']
             else:
                 # Otherwise, load query from saved search
-                param_query = json.loads(Search.objects.get(pk=int(task_params['search'])).query)
+                param_query = json.loads(Search.objects.get(pk=int(self.task_params['search'])).query)
 
             # Build Data sampler
-            ds = Datasets().activate_datasets_by_id(task_params['dataset'])
+            ds = Datasets().activate_datasets_by_id(self.task_params['dataset'])
             es_m = ds.build_manager(ES_Manager)
-            self.model_name = 'model_{0}'.format(self.task_id)
+            self.model_name = 'model_{0}'.format(self.task_obj.unique_id)
             es_data = EsDataSample(fields=fields, 
                                    query=param_query,
                                    es_m=es_m,
@@ -109,9 +112,8 @@ class TagModelWorker(BaseWorker):
             show_progress.update(3)
 
             # Declare the job as done
-            r = Task.objects.get(pk=self.task_id)
-            r.result = json.dumps(train_summary)
-            r.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+            self.task_obj.result = json.dumps(train_summary)
+            self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
             logging.getLogger(INFO_LOGGER).info(json.dumps({
                 'process': 'CREATE CLASSIFIER',
@@ -122,8 +124,7 @@ class TagModelWorker(BaseWorker):
         except TaskCanceledException as e:
             # If here, task was canceled while training
             # Delete task
-            task = Task.objects.get(pk=self.task_id)
-            task.delete()
+            self.task_obj.delete()
             logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE CLASSIFIER', 'event': 'model_training_canceled', 'data': {'task_id': self.task_id}}), exc_info=True)
             print("--- Task canceled")
 
@@ -131,9 +132,8 @@ class TagModelWorker(BaseWorker):
             logging.getLogger(ERROR_LOGGER).exception(json.dumps(
                 {'process': 'CREATE CLASSIFIER', 'event': 'model_training_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
             # declare the job as failed.
-            task = Task.objects.get(pk=self.task_id)
-            task.result = json.dumps({'error': repr(e)})
-            task.update_status(Task.STATUS_FAILED, set_time_completed=True)
+            self.task_obj.result = json.dumps({'error': repr(e)})
+            self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
         
         print('done')
 
@@ -159,7 +159,8 @@ class TagModelWorker(BaseWorker):
         Saves trained model as a pickle to the filesystem.
         :rtype: bool
         """
-        output_model_file = os.path.join(MODELS_DIR, self.model_name)
+        # create_file_path from helper_functions creates missing folders and returns a path
+        output_model_file = create_file_path(self.model_name, MODELS_DIR, self.task_type)
         try:
             joblib.dump(self.model, output_model_file)
             return True
@@ -176,13 +177,15 @@ class TagModelWorker(BaseWorker):
         :param task_id: id of task it was saved from.
         :return: serialized model pickle.
         """
-        model_name = 'model_{0}'.format(task_id)
-        file_path = os.path.join(MODELS_DIR, model_name)
+        self.task_obj = Task.objects.get(pk=task_id)
+        model_name = 'model_{}'.format(self.task_obj.unique_id)
+        self.task_type = self.task_obj.task_type
+        file_path = os.path.join(MODELS_DIR, self.task_type, model_name)
         try:
             model = joblib.load(file_path)
             self.model = model
             self.task_id = int(task_id)
-            self.description = Task.objects.get(pk=self.task_id).description
+            self.description = self.task_obj.description
             return model
 
         except Exception as e:
@@ -214,9 +217,11 @@ class TagModelWorker(BaseWorker):
         _f1 = f1_score(y_test, y_pred, average='micro')
         _confusion = confusion_matrix(y_test, y_pred)
 
+        # Plotting
         plt = plot_confusion_matrix(_confusion, classes=["negative", "positive"])
-        plot_path = os.path.join(PROTECTED_MEDIA, "task_manager/{}_cm.svg".format(self.model_name))
-        plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager/{}_cm.svg".format(self.model_name))
+        plot_name = "{}_cm.svg".format(self.model_name)
+        plot_path = create_file_path(plot_name, PROTECTED_MEDIA, "task_manager/", self.task_type)
+        plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager/", self.task_type, plot_name)
         plt.savefig(plot_path, format="svg", bbox_inches='tight')
 
         __precision = precision_score(y_test, y_pred)

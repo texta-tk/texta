@@ -18,9 +18,9 @@ import re
 from datetime import datetime, timedelta as td
 
 try:
-    from io import BytesIO  # NEW PY REQUIREMENT
+    from io import BytesIO
 except:
-    from io import StringIO  # NEW PY REQUIREMENT
+    from io import StringIO
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, StreamingHttpResponse, HttpResponseBadRequest, JsonResponse
@@ -33,7 +33,6 @@ from django.template import Template
 import collections
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER, es_url
 
-from dataset_importer.document_preprocessor.preprocessor import preprocessor_map
 from conceptualiser.models import Term, TermConcept
 from permission_admin.models import Dataset
 from lexicon_miner.models import Lexicon, Word
@@ -191,9 +190,6 @@ def index(request):
     datasets = Datasets().get_allowed_datasets(request.user)
     language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
 
-    preprocessors = collect_map_entries(preprocessor_map)
-    enabled_preprocessors = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True]
-
     # Hide fact graph if no facts_str_val is present in fields
     display_fact_graph = 'hidden'
     for i in fields:
@@ -207,9 +203,9 @@ def index(request):
                        'fields': fields,
                        'searches': Search.objects.filter(author=request.user),
                        'lexicons': Lexicon.objects.all().filter(author=request.user),
-                       'language_models': language_models,
-                       'allowed_datasets': datasets,
-                       'enabled_preprocessors': enabled_preprocessors}
+                       'language_models': language_models, 
+                       'allowed_datasets': datasets,                       
+                       }
 
     template = loader.get_template('searcher.html')
 
@@ -225,6 +221,12 @@ def get_query(request):
     # GET ONLY MAIN QUERY
     query = es_m.combined_query['main']
     return HttpResponse(json.dumps(query))
+
+@login_required
+def export_args(request):
+    es_params = {entry['name']: entry['value'] for entry in json.loads(request.POST['args'], encoding='utf8')}
+    request.session['export_args'] = es_params
+    return HttpResponse()
 
 
 @login_required
@@ -553,46 +555,50 @@ def fact_to_doc(request):
 
 @login_required
 def get_search_query(request):
-    search_id = request.GET.get('search_id', None)
+    search_ids = request.POST.getlist('search_ids[]')
 
-    if search_id == None:
+    if search_ids == []:
         return HttpResponse(status=400)
 
-    search = Search.objects.get(pk=search_id)
-
-    if not search:
+    if not search_ids:
         return HttpResponse(status=404)
 
-    query = json.loads(search.query)
-    query_constraints = extract_constraints(query)
-    search_content = json.loads(search.search_content)
+    queries = []
+    for search_id in search_ids:
 
-    # For original search content such as unpacked lexicons/concepts
-    matches = []
+        search = Search.objects.get(pk=search_id)
 
-    for i in range(len(query_constraints)):
-        if query_constraints[i]['constraint_type'] == 'string':
-            field_text = query_constraints[i]['content']
-            field_type = query_constraints[i]['field']
-            not_present = True
+        query = json.loads(search.query)
+        query_constraints = extract_constraints(query)
+        search_content = json.loads(search.search_content)
+
+        # For original search content such as unpacked lexicons/concepts
+        matches = []
+
+        for i in range(len(query_constraints)):
+            if query_constraints[i]['constraint_type'] == 'string':
+                field_text = query_constraints[i]['content']
+                field_type = query_constraints[i]['field']
+                not_present = True
+                for x in search_content[field_type]:
+                    # strings match with query and text field match_txt
+                    if field_text[0] == x:
+                        query_constraints[i]['content'] = [x]
+                        search_content[field_type].remove(x)
+                        not_present = False
+
+                if not_present:
+                    matches.append(i)
+
+        for k in matches:
+            field_type = query_constraints[k]['field']
             for x in search_content[field_type]:
                 # strings match with query and text field match_txt
-                if field_text[0] == x:
-                    query_constraints[i]['content'] = [x]
-                    search_content[field_type].remove(x)
-                    not_present = False
+                query_constraints[k]['content'] = [x]
+                search_content[field_type].remove(x)
+        queries = queries+query_constraints
 
-            if not_present:
-                matches.append(i)
-
-    for k in matches:
-        field_type = query_constraints[k]['field']
-        for x in search_content[field_type]:
-            # strings match with query and text field match_txt
-            query_constraints[k]['content'] = [x]
-            search_content[field_type].remove(x)
-
-    return HttpResponse(json.dumps(query_constraints))
+    return HttpResponse(json.dumps(queries))
 
 
 @login_required

@@ -83,7 +83,7 @@ class ModelManager(threading.Thread):
             for deleted_model,reason in self.to_be_deleted_models:
                 if reason == 'removed':
                     if deleted_model in self._models:
-                        model_path = os.path.join(MODELS_DIR,"model_%s"%deleted_model)
+                        model_path = os.path.join(MODELS_DIR, "train_moodel/", "model_%s"%deleted_model)
                         if os.path.exists(model_path):
                             os.remove(model_path)
 
@@ -104,17 +104,17 @@ class ModelManager(threading.Thread):
         with self._negatives_lock:
             self.to_be_deleted_models.append((str(model_name),'removed'))
 
-    def get_model(self,model_name):
+    def get_model(self,model_uuid):
         with self._models_lock:
-            if model_name not in self._models:
-                model_path = os.path.join(MODELS_DIR,"model_%s"%model_name)
+            if model_uuid not in self._models:
+                model_path = os.path.join(MODELS_DIR,"train_model", "model_%s"%model_uuid)
                 if os.path.exists(model_path):
-                    self._models[model_name] = ModelEntry(MaskedWord2Vec(gensim.models.Word2Vec.load(model_path)))
+                    self._models[model_uuid] = ModelEntry(MaskedWord2Vec(gensim.models.Word2Vec.load(model_path)))
                 else:
-                    logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'get_model','event':'model_path','args':{'model_name':model_name,'model_path':model_path}}),exc_info=True)
+                    logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'get_model','event':'model_path does not exist!','args':{'model_uuid':model_uuid,'model_path':model_path}}))
 
-            self._models[model_name].access_time = time()
-            return self._models[model_name].model
+            self._models[model_uuid].access_time = time()
+            return self._models[model_uuid].model
 
 
 

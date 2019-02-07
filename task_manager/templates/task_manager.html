@@ -18,48 +18,54 @@
                 </li>
             </ul>
         </div>
-            <div class="tab-content height-max">
-                {% for task_param in task_params %}
-                    <div id="{{ task_param.id }}" class="height-max tab-pane fade in ">
-                        <div class="grid-2-col-1-row-default">
-                            <div class="remove-col-padding grid-2-col-1-sidebar">
-                                <div class="tab-content">
-                                    {% include task_param.template %}
-                                </div>
-                            </div>
-
-                            <div class="grid-2-col-1-content">
-                                {% include task_param.result_template %}
+        <div class="tab-content height-max">
+            {% for task_param in task_params %}
+                <div id="{{ task_param.id }}" class="height-max tab-pane fade in ">
+                    <div class="grid-2-col-1-row-default">
+                        <div class="remove-col-padding grid-2-col-1-sidebar">
+                            <div class="tab-content">
+                                {% include task_param.template %}
                             </div>
                         </div>
+
+                        <div class="grid-2-col-1-content">
+                            {% include task_param.result_template %}
+                        </div>
                     </div>
-                {% endfor %}
-            </div>
+                </div>
+            {% endfor %}
+        </div>
 
         <!-- Modal -->
         <div class="modal fade" id="myModal" role="dialog">
             <div class="modal-dialog">
-            
-            <!-- Modal content-->
-            <div class="modal-content">
-                <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title">Upload exported Task archive </h4>
-                </div>
-                <form method="post" enctype="multipart/form-data" id="form_upload_task" action="javascript:uploadTask('form_upload_task');">
-                    <div class="modal-body">
-                        {% csrf_token %}
-                        <input title="Select exported task archive" type="file" name="task_archive" class="custom-file-input" id="customFile" accept=".zip">
-                    </div>
-                    <div class="modal-footer">
-                    <button type="submit" class="btn btn-default pull-left">Upload</button>
-                </form>
 
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <!-- Modal content-->
+                <div class="modal-content" style="border-right-width: 0px;">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Upload exported Task archive </h4>
+                    </div>
+                    <form method="post" enctype="multipart/form-data" id="form_upload_task"
+                          action="javascript:uploadTask('form_upload_task');">
+                        <div class="modal-body">
+                            {% csrf_token %}
+                            <input title="Select exported task archive" type="file" name="task_archive"
+                                   class="custom-file-input" id="customFile" accept=".zip">
+                            <h5 id="uploadStatus" class="taskUploadStatusTextDefault"></h5>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-default pull-left">Upload</button>
+                            <button type="button" class="btn btn-default pull-right" data-dismiss="modal">Close</button>
+                        </div>
+
+                    </form>
+
+
                 </div>
             </div>
-            
-            </div>
+
         </div>
     </div>
+
 {% endblock %}

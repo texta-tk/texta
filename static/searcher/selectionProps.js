@@ -1,3 +1,6 @@
+// Global for toggling the enabling of text selection fact creation menu
+SELECT_FACT_MENU_ENABLED = true;
+
 function createSelectionProps() {
     var spans = $(".\\[HL\\]").add($("span[title='\\[HL\\]']"));
     // Add hover effect
@@ -89,8 +92,9 @@ function createSelectionProps() {
     function tippyForSelect() {
         $("#examples").find('tbody').find('td').mouseup(function () {
             var selection = window.getSelection();
+            // Global SELECT_FACT_MENU_ENABLED for toggling tippyForSelect
             // Check if selection is bigger than 0
-            if (!selection.isCollapsed && selection.toString().trim().length > 1 && selection.toString().trim().length < 300) {
+            if (SELECT_FACT_MENU_ENABLED && !selection.isCollapsed && selection.toString().trim().length > 1 && selection.toString().trim().length < 300) {
                 // Limit selection to the selection start element
                 if (selection.anchorNode != selection.focusNode) {
                     selection.setBaseAndExtent(selection.anchorNode, selection.baseOffset, selection.anchorNode, selection.anchorNode.length);
@@ -347,3 +351,13 @@ async function deleteFactSwal(fact_name, fact_value, doc_id) {
           }
       }
 }
+
+
+function toggleTextSelection(checkbox) {
+    if($(checkbox).is(":checked")){
+        SELECT_FACT_MENU_ENABLED = true;
+    }else{
+        SELECT_FACT_MENU_ENABLED = false;
+      }
+}
+

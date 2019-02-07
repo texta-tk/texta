@@ -2,7 +2,6 @@
 {% block app %}
 
 
-    <script src="{{ STATIC_URL }}jquery.doubleScroll.js"></script>
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dataset_importer/dataset_importer.css">
     <div class='grid-2-col-1-row-default'>
         <div class="grid-2-col-1-sidebar">
@@ -15,8 +14,6 @@
                         {% include "parameters/data.html" %}
 
                         {% include "parameters/elastic.html" %}
-
-                        {% include "parameters/preprocessors.html" %}
 
                         <input type="submit" value="Import" id="import-dataset-btn" class="btn btn-success pull-right"
                                disabled></button>

@@ -20,6 +20,7 @@ urlpatterns = [
     url(r'table_content', views.get_table_content, name='get_table_content'),
     url(r'table_header$', views.get_table_header, name='get_table_header'),
     url(r'table_header_mlt$', views.table_header_mlt, name='table_header_mlt'),
+    url(r'export_args$', views.export_args, name='export_args'),
     url(r'export', views.export_pages, name='export_pages'),
     url(r'get_srch_query', views.get_search_query, name='get_search_query'),
     url(r'fact_graph$', views.fact_graph, name='fact_graph'),
