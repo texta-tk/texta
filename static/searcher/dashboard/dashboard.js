@@ -63,6 +63,9 @@ function makeTimelines(index) {
     let width = getHiddenDivMaxWidth(`timeline-agg-container-month-${index.index_name}`)
     makeMonthTimeline(index, width)
     makeYearTimeline(index, width)
+    if($(`#${index.index_name}-timelines`).children().length === 0){
+        removeIndexTab(index,'timelines')
+    }
 }
 
 function makeMonthTimeline(index, width) {
@@ -134,16 +137,21 @@ function makeFactsTables(index) {
 
         })
     } else {
+        removeIndexTab(index,'nested')
         console.log('No facts present: ' + index.index_name)
     }
 
 }
 
 function makeSignificantWordsTables(index) {
-    let t_id = 0;
-    let rootProperty = index.getSignificantWords()
     /*has to be a number field*/
     let colorRowIndex = 1
+    let t_id = 0;
+    let rootProperty = index.getSignificantWords()
+    if(!rootProperty){
+        removeIndexTab(index,'sigsterms')
+        return null
+    }
     for (let field in rootProperty) {
         let result = formatSignificantWords(index, rootProperty[field])
         if (result) {
@@ -159,10 +167,11 @@ function makeSignificantWordsTables(index) {
 }
 
 function makeFrequentItemsTables(index) {
-    let t_id = 0;
-    let rootProperty = index.getFrequentItems()
     /*has to be a number field*/
     let colorRowIndex = 1
+    let t_id = 0;
+    let rootProperty = index.getFrequentItems()
+
     for (let field in rootProperty) {
         let result = formatFrequentItems(index, rootProperty[field])
 
@@ -243,9 +252,13 @@ function formatFacts(index) {
     /* todo:this*/
     let root = index.getFacts()
     if (checkNested(root, 'texta_facts', 'sterms#fact_category', 'buckets')) {
-        return (root.texta_facts['sterms#fact_category'].buckets.map((e) => {
+        let facts =  (root.texta_facts['sterms#fact_category'].buckets.map((e) => {
             return {"key": e.key, "facts": e['sigsterms#significant_facts'].buckets}
         }));
+        if(facts.length === 0){
+            return undefined
+        }
+        return facts
     }
     return undefined
 }
@@ -285,7 +298,9 @@ function getHiddenDivMaxWidth(elementID) {
     clonedTimelineContainer.remove()
     return width
 }
-
+function removeIndexTab(index,type){
+    $(`#${index.index_name}-${type}-tab`).remove()
+}
 function drawSignificantWordsTable(index, result, color, colorRowIndex, columnTitle, t_id) {
     let tableID = `${index.AggregationTpes.SIGSTERMS}-generated-${index.index_name}${t_id}`
     $(`#${index.index_name}-sigsterms-table`).append(`<table id="${tableID}" style="width:100%"></table>`);

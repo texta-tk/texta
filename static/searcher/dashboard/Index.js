@@ -10,17 +10,14 @@ class Index {
             "DATE_HISTOGRAM": 'date_histogram',
             "NESTED": 'nested'
         };
-        this.minCountFilter = 0;
-        this.minAmountData = 0;
+        this.minCountFilter = 1;
+        this.minAmountData = 1;
         Object.freeze(this.AggregationTpes);
     }
 
     getDatesYear() {
 
         if (this.aggregations[this.AggregationTpes.DATE_HISTOGRAM]) {
-            console.error(`index ${this.index_name}, does not have date_histogram field!`);
-            return undefined
-        } else {
             let keys = Object.keys(this.aggregations[this.AggregationTpes.DATE_HISTOGRAM]);
             let key = keys.filter(function (key) {
                 return key.endsWith("_year")
@@ -32,16 +29,16 @@ class Index {
                 console.error(`index ${this.index_name}, date_histogram no buckets property!`);
                 return undefined
             }
+
+        } else {
+            console.error(`index ${this.index_name}, does not have date_histogram field!`);
+            return undefined
         }
     }
 
     getDatesMonth() {
 
         if (this.aggregations[this.AggregationTpes.DATE_HISTOGRAM]) {
-            console.error(`index ${this.index_name}, does not have date_histogram field!`);
-            return undefined
-
-        } else {
             let keys = Object.keys(this.aggregations[this.AggregationTpes.DATE_HISTOGRAM]);
             let key = keys.filter(function (key) {
                 return key.endsWith("_month")
@@ -53,6 +50,9 @@ class Index {
                 console.error(`index ${this.index_name}, date_histogram no buckets property!`);
                 return undefined
             }
+        } else {
+            console.error(`index ${this.index_name}, does not have date_histogram field!`);
+            return undefined
         }
     }
 
