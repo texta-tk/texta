@@ -28,6 +28,7 @@ class ManagementWorker(BaseWorker):
         self.params = None
         self.scroll_size = scroll_size
         self.scroll_time_out = time_out
+        self.task_obj = None
         # Map of sub-managers for ManagementWorker
         self.sub_manager_map = {
             'fact_deleter': FactDeleterSubWorker
@@ -36,9 +37,9 @@ class ManagementWorker(BaseWorker):
 
     def run(self, task_id):
         self.task_id = task_id
-        task = Task.objects.get(pk=self.task_id)
-        params = json.loads(task.parameters)
-        task.update_status(Task.STATUS_RUNNING)
+        self.task_obj = Task.objects.get(pk=self.task_id)
+        params = json.loads(self.task_obj.parameters)
+        self.task_obj.update_status(Task.STATUS_RUNNING)
 
         try:
             ds = Datasets().activate_datasets_by_id(params['dataset'])
@@ -47,13 +48,14 @@ class ManagementWorker(BaseWorker):
             self.es_m = es_m
             self.params = params
 
-            self._start_subworker()
+            result = self._start_subworker()
+            self.task_obj.result = result
+            self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
         except TaskCanceledException as e:
             # If here, task was canceled while processing
             # Delete task
-            task = Task.objects.get(pk=self.task_id)
-            task.delete()
+            self.task_obj.delete()
             logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'PROCESSOR WORK', 'event': 'management_worker_canceled', 'data': {'task_id': self.task_id}}))
             print("--- Task canceled")
 
@@ -61,13 +63,13 @@ class ManagementWorker(BaseWorker):
             logging.getLogger(ERROR_LOGGER).exception(json.dumps(
                 {'process': 'PROCESSOR WORK', 'event': 'manager_worker_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
             # declare the job as failed.
-            task = Task.objects.get(pk=self.task_id)
-            task.result = json.dumps({'error': repr(e)})
-            task.update_status(Task.STATUS_FAILED, set_time_completed=True)
+            self.task_obj.result = json.dumps({'error': repr(e)})
+            self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
 
 
     def _start_subworker(self):
         # Get sub-worker
         sub_worker = self.sub_manager_map[self.params['manager_key']](self.es_m, self.task_id, self.params,self.scroll_size, self.scroll_time_out)
         # Run sub-worker
-        sub_worker.run()
+        result = sub_worker.run()
+        return result

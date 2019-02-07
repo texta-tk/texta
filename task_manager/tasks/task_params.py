@@ -75,7 +75,7 @@ def get_fact_names(es_m):
             for fact in response_aggs:
                 fact_data[fact['key']] = []
                 for val in fact['fact_values']['buckets']:
-                    fact_data[fact['key']].append(val['key'])
+                    fact_data[fact['key']].append({'value': val['key'], 'count': val['doc_count']})
             fact_names.update(fact_data)
 
     except Exception as e:

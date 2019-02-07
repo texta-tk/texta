@@ -57,15 +57,13 @@ class LanguageModelWorker(BaseWorker):
             # declare the job done
             show_progress.update_view(100.0)
             logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_completed', 'data': {'task_id': self.id}}))
-            task = Task.objects.get(pk=self.id)
-            task.result = json.dumps({"model_type": "word2vec", "lexicon_size": len(self.model.wv.vocab)})
-            task.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+            self.task_obj.result = json.dumps({"model_type": "word2vec", "lexicon_size": len(self.model.wv.vocab)})
+            self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
         except TaskCanceledException as e:
             # If here, task was canceled while training
             # Delete task
-            task = Task.objects.get(pk=self.id)
-            task.delete()
+            self.task_obj.delete()
             logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_canceled', 'data': {'task_id': self.id}}), exc_info=True)
             print("--- Task canceled")
 
@@ -74,9 +72,8 @@ class LanguageModelWorker(BaseWorker):
             logging.getLogger(ERROR_LOGGER).exception(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_failed', 'data': {'task_id': self.id}}), exc_info=True)
             #print('--- Error: {0}'.format(e))
             # Declare the job as failed
-            task = Task.objects.get(pk=self.id)
-            task.result = json.dumps({"error": str(e)})
-            task.update_status(Task.STATUS_FAILED, set_time_completed=False)
+            self.task_obj.result = json.dumps({"error": str(e)})
+            self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=False)
 
         print('done')
 
