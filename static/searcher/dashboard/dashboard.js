@@ -60,7 +60,7 @@ function initDashBoard(indices) {
 }
 
 function makeTimelines(index) {
-    let width = getHiddenDivMaxWidth(`timeline-agg-container-month-${index.index_name}`)
+    let width = getHiddenDivMaxWidth(`timeline-agg-container-month-${index.index_name}`) - 20
     makeMonthTimeline(index, width)
     makeYearTimeline(index, width)
     if($(`#${index.index_name}-timelines`).children().length === 0){
@@ -83,7 +83,7 @@ function makeMonthTimeline(index, width) {
         Plotly.newPlot(div, [{
             x: xData,
             y: yData
-        }], layout);
+        }], layout,{displaylogo: false});
 
     } else {
         div.remove()
@@ -106,7 +106,7 @@ function makeYearTimeline(index, width) {
         Plotly.newPlot(div, [{
             x: xData,
             y: yData
-        }], layout);
+        }], layout,{displaylogo: false});
 
     } else {
         div.remove()

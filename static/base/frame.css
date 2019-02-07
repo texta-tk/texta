@@ -13,6 +13,9 @@ body {
 }
 
 /* global style */
+.bg-white{
+    background-color:white;
+}
 .no-margin{
     margin:0;
 }
