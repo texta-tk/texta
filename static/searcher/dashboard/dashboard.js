@@ -22,7 +22,6 @@ $(function () {
                 updateLoaderStatus('Drawing Dashboard')
                 let indicesArray = [];
                 createIndices(indicesArray, data)
-                console.table(indicesArray)
                 initDashBoard(indicesArray);
                 //no point showing upper navtab when you only have 1 index
                 if (indicesArray.length === 1) {
@@ -183,7 +182,7 @@ function makeStatistics(index) {
     let result = formatStatistics(index);
     /*has to be a number field*/
     let colorRowIndex = 2
-    if (result && result.length > 0) {
+    if (result) {
         let minMax = findMinMax(result, colorRowIndex, index)
 
         let color = d3.scale.linear()
@@ -234,7 +233,9 @@ function formatStatistics(index) {
     for (let f in data) {
         result.push([f, data[f].value, data[f].percentage])
     }
-
+    if (result.length === 0) {
+        return undefined
+    }
     return result;
 }
 
@@ -260,8 +261,8 @@ function findMinMax(arr, indexToParse) {
         }
 
         return [min, max];
-    }else{
-        return [0,0]
+    } else {
+        return [0, 0]
     }
 }
 

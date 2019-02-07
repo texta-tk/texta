@@ -17,7 +17,7 @@ class Index {
 
     getDatesYear() {
 
-        if (this.aggregations[this.AggregationTpes.DATE_HISTOGRAM] === undefined) {
+        if (this.aggregations[this.AggregationTpes.DATE_HISTOGRAM]) {
             console.error(`index ${this.index_name}, does not have date_histogram field!`);
             return undefined
         } else {
@@ -29,7 +29,7 @@ class Index {
             if (checkNested(this.aggregations, this.AggregationTpes.DATE_HISTOGRAM, key, 'buckets')) {
                 return this.aggregations[this.AggregationTpes.DATE_HISTOGRAM][key]['buckets'];
             } else {
-                console.error(`index ${this.index_name}, does not have date_histogram field!`);
+                console.error(`index ${this.index_name}, date_histogram no buckets property!`);
                 return undefined
             }
         }
@@ -37,7 +37,7 @@ class Index {
 
     getDatesMonth() {
 
-        if (this.aggregations[this.AggregationTpes.DATE_HISTOGRAM] === undefined) {
+        if (this.aggregations[this.AggregationTpes.DATE_HISTOGRAM]) {
             console.error(`index ${this.index_name}, does not have date_histogram field!`);
             return undefined
 
@@ -50,7 +50,7 @@ class Index {
             if (checkNested(this.aggregations, this.AggregationTpes.DATE_HISTOGRAM, key, 'buckets')) {
                 return this.aggregations[this.AggregationTpes.DATE_HISTOGRAM][key]['buckets'];
             } else {
-                console.error(`index ${this.index_name}, does not have date_histogram field!`);
+                console.error(`index ${this.index_name}, date_histogram no buckets property!`);
                 return undefined
             }
         }
