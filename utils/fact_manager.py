@@ -9,22 +9,28 @@ import itertools
 import traceback
 from utils.log_manager import LogManager
 from texta.settings import FACT_PROPERTIES, ERROR_LOGGER
+from task_manager.task_manager import create_task
+from task_manager.tasks.task_types import TaskTypes
+from task_manager.tasks.workers.management_workers.management_task_params import ManagerKeys
+from task_manager.models import Task
 
 class FactManager:
     """ Manage Searcher facts, like deleting/storing, adding facts.
     """
+    # Static fact field variable
     f_field = 'texta_facts'
 
     def __init__(self,request):
+        self.request = request
         self.es_params = request.POST
         self.ds = Datasets().activate_datasets(request.session)
         self.es_m = self.ds.build_manager(ES_Manager)
         # Maybe should come from some settings file
-        self.max_name_len = 15
+        self.max_name_len = 25
         self.bs = 7500
 
-    def remove_facts_from_document(self, rm_facts_dict, doc_id=None):
-        """Remove facts from documents.
+    def start_task_deleter_task(self, rm_facts_dict, doc_id=None):
+        """Remove facts from documents, by starting fact_deleter management task.
         
         Arguments:
             rm_facts_dict {Dict[str: List[str]]} -- Dict of fact values to remove
@@ -35,52 +41,20 @@ class FactManager:
         Keyword Arguments:
             doc_id {str} -- If present, deletes the facts only in a given document (default: {None})
         """
-        
-        try:
-            query = self._fact_deletion_query(rm_facts_dict, doc_id)
-            self.es_m.load_combined_query(query)
-            response = self.es_m.scroll(size=self.bs, field_scroll=f_field)
-            scroll_id = response['_scroll_id']
-            total_docs = response['hits']['total']
-            docs_left = total_docs # DEBUG
-            print('Starting.. Total docs - ', total_docs) # DEBUG
-            while total_docs > 0:
-                try:
-                    print('Docs left:', docs_left) # DEBUG
-                    data = ''
-                    for document in response['hits']['hits']:
-                        new_field = [] # The new facts field
-                        for fact in document['_source'][f_field]:
-                            # If the fact name is in rm_facts_dict keys
-                            if fact["fact"] in rm_facts_dict:
-                                # If the fact value is not in the delete key values
-                                if fact['str_val'] not in rm_facts_dict[fact["fact"]]:
-                                    new_field.append(fact)
-                            else:
-                                new_field.append(fact)
-                        # Update dataset
-                        data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
-                        document = {'doc': {f_field: new_field}}
-                        data += json.dumps(document)+'\n'
-                    response = self.es_m.scroll(scroll_id=scroll_id, size=self.bs, field_scroll=f_field)
-                    total_docs = len(response['hits']['hits'])
-                    docs_left -= self.bs # DEBUG
-                    scroll_id = response['_scroll_id']
-                    self.es_m.plain_post_bulk(self.es_m.es_url, data)
-                except:
-                    logging.getLogger(ERROR_LOGGER).error('A problem occurred during the fact deletion scrolling.', exc_info=True, extra={
-                        'total_docs': total_docs,
-                        'response': response,
-                        'rm_facts_dict': rm_facts_dict
-                    })
-            print('DONE') # DEBUG
-        except:
-            logging.getLogger(ERROR_LOGGER).error('A problem occurred when attempting to delete facts.', exc_info=True, extra={
-                'rm_facts_dict': rm_facts_dict,
-                'total_docs': total_docs,
-                'response': response,
-            })
+        task_type = TaskTypes.MANAGEMENT_TASK
+        description = 'fact_manager_fact_deletion'
+        params = {
+            'fact_deleter_fact_values': rm_facts_dict,
+            'fact_deleter_doc_id': doc_id,
+            'task_type': task_type,
+            'manager_key': ManagerKeys.FACT_DELETER,
+            'description': description,
+            'dataset': self.request.session['dataset']
+        }
 
+        task_id = create_task(task_type, description, params, self.request.user)
+        task = Task.objects.get(pk=task_id)
+        task.update_status(Task.STATUS_QUEUED)
 
     def _fact_deletion_query(self, rm_facts_dict, doc_id):
         '''Creates the query for fact deletion based on dict of facts {nampe: val}'''
@@ -103,14 +77,15 @@ class FactGraph(FactManager):
         super().__init__(request)
         self.es_params = es_params
         self.search_size = search_size
+        # D3 shapes
+        self.shapes = ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"]
 
 
     def fact_graph(self):
         facts, fact_combinations, unique_fact_names = self.facts_via_aggregation(size=self.search_size)
         # Get cooccurrences and remove values with 0
         fact_combinations = {k:v for k,v in dict(zip(fact_combinations, self.count_cooccurrences(fact_combinations))).items() if v != 0}
-        shapes = ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"]
-        types = dict(zip(unique_fact_names, itertools.cycle(shapes)))
+        types = dict(zip(unique_fact_names, itertools.cycle(self.shapes)))
 
         nodes = []
         max_node_size = 0

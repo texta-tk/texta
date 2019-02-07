@@ -22,6 +22,7 @@ from lexicon_miner.models import Lexicon,Word
 from mwe_miner.models import Run
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
+from task_manager.tasks.task_types import TaskTypes
 
 from texta.settings import URL_PREFIX, STATIC_URL, es_url, INFO_LOGGER, ERROR_LOGGER
 
@@ -54,7 +55,7 @@ def index(request):
     fields = es_m.get_column_names()
 
     datasets = Datasets().get_allowed_datasets(request.user)
-    language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
+    language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL).filter(status__iexact='completed').order_by('-pk')
 
     return HttpResponse(template.render({'lexicons':lexicons,'STATIC_URL':STATIC_URL,'runs':runs,'fields':fields, 'language_models': language_models, 'allowed_datasets': datasets},request))
 

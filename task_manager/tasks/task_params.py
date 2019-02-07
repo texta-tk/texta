@@ -1,19 +1,21 @@
 import logging
 import json
-from .workers.language_model_worker import LanguageModelWorker
-from .workers.text_tagger_worker import TagModelWorker
-from .workers.entity_extractor_worker import EntityExtractorWorker
-from .workers.preprocessor_worker import PreprocessorWorker
-from .workers.management_workers.management_worker import ManagementWorker
+from task_manager.tasks.workers.language_model_worker import LanguageModelWorker
+from task_manager.tasks.workers.text_tagger_worker import TagModelWorker
+from task_manager.tasks.workers.entity_extractor_worker import EntityExtractorWorker
+from task_manager.tasks.workers.preprocessor_worker import PreprocessorWorker
+from task_manager.tasks.workers.management_workers.management_worker import ManagementWorker
 from utils.es_manager import ES_Manager
 from texta.settings import ERROR_LOGGER
+from task_manager.tasks.workers.management_workers.management_task_params import ManagerKeys
+from task_manager.tasks.task_types import TaskTypes
 
 fact_names = {}
 
 task_params = [
     {
         "name":            "Train Language Model",
-        "id":              "train_model",
+        "id":              TaskTypes.TRAIN_MODEL.value,
         "template":        "task_parameters/train_model.html",
         "result_template": "task-results/train-model-results.html",
         "worker":           LanguageModelWorker,
@@ -21,7 +23,7 @@ task_params = [
     },
     {
         "name":            "Train Text Tagger",
-        "id":              "train_tagger",
+        "id":               TaskTypes.TRAIN_TAGGER.value,
         "template":        "task_parameters/train_tagger.html",
         "result_template": "task-results/train-tagger-results.html",
         "worker":           TagModelWorker,
@@ -29,7 +31,7 @@ task_params = [
     },
     {
         "name":            "Train Entity Extractor",
-        "id":              "train_entity_extractor",
+        "id":              TaskTypes.TRAIN_ENTITY_EXTRACTOR.value,
         "template":        "task_parameters/train_entity_extractor.html",
         "result_template": "task-results/train-entity-extractor-results.html",
         "worker":          EntityExtractorWorker,
@@ -38,7 +40,7 @@ task_params = [
     },
     {
         "name":            "Apply Preprocessor",
-        "id":              "apply_preprocessor",
+        "id":              TaskTypes.APPLY_PREPROCESSOR.value,
         "template":        "task_parameters/apply_preprocessor.html",
         "result_template": "task-results/apply-preprocessor-results.html",
         "worker":          PreprocessorWorker,
@@ -46,12 +48,12 @@ task_params = [
     },
     {
         "name":            "Management Task",
-        "id":              "management_task",
+        "id":              TaskTypes.MANAGEMENT_TASK.value,
         "template":        "task_parameters/management_task.html",
         "result_template": "task-results/management-task-results.html",
         "worker":          ManagementWorker,
         "enabled_sub_managers":[
-            {"key": "fact_deleter",
+            {"key": ManagerKeys.FACT_DELETER.value,
              "name": "Fact Deleter",
              "parameters_template": "management_parameters/fact_deleter.html",
              "facts": fact_names,

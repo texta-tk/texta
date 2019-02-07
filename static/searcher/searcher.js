@@ -528,24 +528,13 @@ function ajaxDeleteFacts (formData, factArray) {
         processData: false,
         beforeSend: function () {
             swal({
-                title: 'Starting fact remove job!',
-                text: 'Removing facts from documents, this might take a while.',
+                title: 'Started Fact Deleter task!',
+                text: 'Check Management Tasks under Task Manager, to see the progress and results.',
                 type: 'success'
             })
         },
-        success: function () {
-            uncheckDeletedFacts()
-            selectedFactCheckboxes = []
-            swal({
-                title: 'Deleted!',
-                text: factArray.length + ' facts have been removed.',
-                type: 'success',
-                showConfirmButton: false,
-                timer: 1000
-            })
-        },
         error: function () {
-            swal('Error!', 'There was a problem removing the facts!', 'error')
+            swal('Error!', 'There was a problem removing starting Fact Deleter task!', 'error')
         }
     })
 }

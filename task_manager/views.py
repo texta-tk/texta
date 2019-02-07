@@ -25,20 +25,21 @@ from task_manager.document_preprocessor import preprocessor_map
 from task_manager.tasks.task_params import task_params, get_fact_names, fact_names
 from task_manager.tools import get_pipeline_builder
 from task_manager.tools import MassHelper
+from task_manager.tasks.task_types import TaskTypes
 
-from .task_manager import filter_params
-from .task_manager import create_task
-from .task_manager import filter_preprocessor_params
-from .task_manager import translate_parameters
-from .task_manager import collect_map_entries
-from .task_manager import get_fields
+from task_manager.task_manager import filter_params
+from task_manager.task_manager import create_task
+from task_manager.task_manager import filter_preprocessor_params
+from task_manager.task_manager import translate_parameters
+from task_manager.task_manager import collect_map_entries
+from task_manager.task_manager import get_fields
 
 
 @login_required
 def index(request):
     ds = Datasets().activate_datasets(request.session)
     datasets = Datasets().get_allowed_datasets(request.user)
-    language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
+    language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL).filter(status__iexact='completed').order_by('-pk')
 
     es_m = ds.build_manager(ES_Manager)
     fields = get_fields(es_m)
@@ -90,9 +91,9 @@ def index(request):
 @login_required
 def start_task(request):
     user = request.user
-    task_type = request.POST['task_type']
+    task_type = TaskTypes(request.POST['task_type'])
     task_params = filter_params(request.POST)
-    
+
     description = task_params['description']
     if 'dataset' in request.session.keys():
         task_params['dataset'] = request.session['dataset']

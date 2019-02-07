@@ -2,7 +2,9 @@
 """
 import json
 from task_manager.models import Task
-from task_manager.task_manager import create_task
+# Causing import error when importing same thing in fact_manager ???? Circular dependency perhaps, but how?
+from task_manager.tasks.task_types import TaskTypes
+# from task_manager.task_manager import create_task
 
 # Data scroll
 MAX_DOCS_PAGE = 5000
@@ -98,7 +100,7 @@ class MassHelper:
         tag_frequency = self.get_tag_frequency(selected_tags)
         retrain_tasks = []
         # Get list of available models
-        task_tagger_list = [tagger for tagger in Task.objects.filter(task_type='train_tagger')]
+        task_tagger_list = [tagger for tagger in Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER)]
         task_tagger_tag_set = set([tagger.description for tagger in task_tagger_list])
 
         for task_tagger in task_tagger_list:
@@ -144,7 +146,7 @@ class MassHelper:
             task_param["dataset"] = dataset_id
             self._add_search_tag_query(task_param, tag_label)
             # Create execution task
-            task_type = "train_tagger"
+            task_type = TaskTypes.TRAIN_TAGGER
             task_id = create_task(task_type, tag_label, task_param, user)
             # Add task to queue
             task = Task.get_by_id(task_id)

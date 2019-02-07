@@ -24,6 +24,7 @@ from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
 from task_manager.models import Task
+from task_manager.tasks.task_types import TaskTypes
 
 from texta.settings import REQUIRE_EMAIL_CONFIRMATION, USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_DEFAULT, es_url, STATIC_URL
 
@@ -31,7 +32,7 @@ from texta.settings import REQUIRE_EMAIL_CONFIRMATION, USER_MODELS, URL_PREFIX, 
 def index(request):
 	template = loader.get_template('account.html')
 	datasets = Datasets().get_allowed_datasets(request.user)
-	language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
+	language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL).filter(status__iexact='completed').order_by('-pk')
 
 	return HttpResponse(
 			template.render({'STATIC_URL': STATIC_URL, 'allowed_datasets': datasets, 'language_models': language_models}, request))

@@ -1,23 +1,18 @@
-from datetime import datetime
 import json
 import logging
 from datetime import datetime
 
-
 from texta.settings import ERROR_LOGGER
 from texta.settings import INFO_LOGGER
-from searcher.models import Search
 from task_manager.models import Task
-from task_manager.tools import ShowProgress
 from task_manager.tools import TaskCanceledException
 from task_manager.tasks.workers.management_workers.fact_deleter_sub_worker import FactDeleterSubWorker
 
 from utils.datasets import Datasets
-from utils.helper_functions import add_dicts
 from utils.es_manager import ES_Manager
-from texta.settings import FACT_PROPERTIES
 
-from ..base_worker import BaseWorker
+from task_manager.tasks.workers.base_worker import BaseWorker
+from task_manager.tasks.workers.management_workers.management_task_params import ManagerKeys
 
 
 class ManagementWorker(BaseWorker):
@@ -30,8 +25,8 @@ class ManagementWorker(BaseWorker):
         self.scroll_time_out = time_out
         self.task_obj = None
         # Map of sub-managers for ManagementWorker
-        self.sub_manager_map = {
-            'fact_deleter': FactDeleterSubWorker
+        self.manager_map = {
+            ManagerKeys.FACT_DELETER: FactDeleterSubWorker
         }
 
 
@@ -70,7 +65,7 @@ class ManagementWorker(BaseWorker):
 
     def _start_subworker(self):
         # Get sub-worker
-        sub_worker = self.sub_manager_map[self.params['manager_key']](self.es_m, self.task_id, self.params,self.scroll_size, self.scroll_time_out)
+        sub_worker = self.manager_map[self.params['manager_key']](self.es_m, self.task_id, self.params,self.scroll_size, self.scroll_time_out)
         # Run sub-worker
         result = sub_worker.run()
         return result

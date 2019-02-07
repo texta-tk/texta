@@ -20,6 +20,8 @@ from utils.es_manager import ES_Manager
 
 from texta.settings import URL_PREFIX, STATIC_URL, INFO_LOGGER, ERROR_LOGGER
 from texta.settings import es_url, es_links
+from task_manager.tasks.task_types import TaskTypes
+
 
 
 model_manager = get_model_manager(expiration_time=300,refresh_time=30)
@@ -37,7 +39,7 @@ def uniq(l):
 @login_required
 def index(request):
     datasets = Datasets().get_allowed_datasets(request.user)
-    language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
+    language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL).filter(status__iexact='completed').order_by('-pk')
 
     template = loader.get_template('lm.html')
     lexicons = Lexicon.objects.all().filter(author=request.user)
@@ -173,7 +175,7 @@ def selectLexicon(request):
         lexicons = Lexicon.objects.filter(author=request.user)
 
         datasets = Datasets().get_allowed_datasets(request.user)
-        language_models = Task.objects.filter(task_type='train_model').filter(status=Task.STATUS_COMPLETED).order_by('-pk')
+        language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL).filter(status=Task.STATUS_COMPLETED).order_by('-pk')
 
         # Define selected mapping
         ds = Datasets().activate_datasets(request.session)

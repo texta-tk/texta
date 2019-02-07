@@ -53,6 +53,7 @@ from searcher.view_functions.general.export_pages import export_pages
 from searcher.view_functions.general.searcher_utils import collect_map_entries, get_fields_content, get_fields
 from collections import OrderedDict, defaultdict
 from searcher.view_functions.general.searcher_utils import improve_facts_readability
+from task_manager.tasks.task_types import TaskTypes
 
 
 class BuildSearchEsManager:
@@ -65,7 +66,7 @@ def index(request):
     fields = get_fields(es_m)
 
     datasets = Datasets().get_allowed_datasets(request.user)
-    language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
+    language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL).filter(status__iexact='completed').order_by('-pk')
 
     # Hide fact graph if no facts_str_val is present in fields
     display_fact_graph = 'hidden'
@@ -386,8 +387,8 @@ def delete_facts(request):
     if 'doc_id' in params:
         doc_id = params.pop('doc_id')[0]
     else:
-        doc_id = False
-    fact_m.remove_facts_from_document(params, doc_id)
+        doc_id = None
+    fact_m.start_task_deleter_task(params, doc_id)
     return HttpResponse()
 
 

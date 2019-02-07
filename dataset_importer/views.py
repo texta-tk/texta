@@ -17,6 +17,8 @@ from utils.datasets import Datasets
 from dataset_importer.importer.importer import DatasetImporter, entity_reader_map, collection_reader_map, database_reader_map, extractor_map
 from dataset_importer.syncer.syncer_process import Syncer
 from texta.settings import DATASET_IMPORTER as DATASET_IMPORTER_CONF, es_url
+from task_manager.tasks.task_types import TaskTypes
+
 # from .models import DatasetImport
 
 DATASET_IMPORTER = DatasetImporter(es_url=es_url, configuration=DATASET_IMPORTER_CONF, data_access_object=DatasetImport, file_system_storer=FileSystemStorage)
@@ -51,7 +53,7 @@ def index(request):
     # enabled_preprocessors = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True]
 
     datasets = Datasets().get_allowed_datasets(request.user)
-    language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
+    language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL).filter(status__iexact='completed').order_by('-pk')
 
     context = {
         # 'enabled_input_types': DATASET_IMPORTER_CONF['enabled_input_types'],

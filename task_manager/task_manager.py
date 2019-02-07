@@ -7,6 +7,8 @@ from task_manager.models import Task
 from utils.datasets import Datasets
 from task_manager.tools import get_pipeline_builder
 from lexicon_miner.models import Lexicon
+from task_manager.tasks.task_types import TaskTypes
+from task_manager.tasks.workers.management_workers.management_task_params import ManagerKeys
 
 
 def create_task(task_type: str, description: str, parameters: dict, user: User) -> int:
@@ -66,7 +68,7 @@ def filter_params(post: QueryDict):
     filtered_params = {}
 
     for param in post:
-        if prefix not in ['apply_preprocessor', 'management_task']:
+        if prefix not in [TaskTypes.APPLY_PREPROCESSOR, TaskTypes.MANAGEMENT_TASK]:
             param_name = param[len(prefix) + 1:]
         else:
             param_name = param
@@ -84,6 +86,8 @@ def filter_params(post: QueryDict):
         # For handling fact_deleter fact_values param
         if 'fact_values' in param_name:
             param_val = _format_raw_fact_values(post.getlist(param))
+        if 'manager_key' in param_name:
+            param_val = ManagerKeys(post[param])
 
         filtered_params[param_name] = param_val
 
@@ -97,10 +101,10 @@ def translate_parameters(params):
 
     datasets = Datasets().datasets
 
-    all_taggers = Task.objects.filter(task_type="train_tagger", status=Task.STATUS_COMPLETED)
+    all_taggers = Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER, status=Task.STATUS_COMPLETED)
     enabled_taggers = {tagger.pk: tagger.description for tagger in all_taggers}
 
-    all_extraction_models = Task.objects.filter(task_type="train_entity_extractor", status=Task.STATUS_COMPLETED)
+    all_extraction_models = Task.objects.filter(task_type=TaskTypes.TRAIN_ENTITY_EXTRACTOR, status=Task.STATUS_COMPLETED)
     enabled_extractors = {model.pk: model.description for model in all_extraction_models}
 
     extractor_options = {a['index']: a['label'] for a in pipe_builder.get_extractor_options()}
@@ -130,13 +134,13 @@ def collect_map_entries(map_):
     entries = []
     for key, value in map_.items():
         if key == 'text_tagger':
-            value['enabled_taggers'] = Task.objects.filter(task_type="train_tagger", status=Task.STATUS_COMPLETED)
+            value['enabled_taggers'] = Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER, status=Task.STATUS_COMPLETED)
         if key == 'entity_extractor':
-            value['enabled_extractors'] = Task.objects.filter(task_type="train_entity_extractor", status=Task.STATUS_COMPLETED)
+            value['enabled_extractors'] = Task.objects.filter(task_type=TaskTypes.TRAIN_ENTITY_EXTRACTOR, status=Task.STATUS_COMPLETED)
         if (key == 'lexicon_classifier' or key == 'scoro'):
             value['enabled_lexicons'] = Lexicon.objects.all()
         if (key == 'scoro'):
-            value['enabled_models'] = Task.objects.filter(task_type="train_tagger", status=Task.STATUS_COMPLETED)
+            value['enabled_models'] = Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER, status=Task.STATUS_COMPLETED)
         value['key'] = key
         entries.append(value)
     return entries

@@ -14,6 +14,7 @@ from utils.es_manager import ES_Manager
 from texta.settings import STATIC_URL, URL_PREFIX, es_url
 
 from task_manager.models import Task
+from task_manager.tasks.task_types import TaskTypes
 from permission_admin.models import Dataset
 from conceptualiser.models import Term, TermConcept, Concept
 from grammar_builder.models import GrammarComponent, GrammarPageMapping, Grammar
@@ -49,7 +50,7 @@ def index(request):
                 Search.objects.filter(author=request.user, dataset__index=dataset, dataset__mapping=mapping)]
 
     datasets = Datasets().get_allowed_datasets(request.user)
-    language_models = Task.objects.filter(task_type='train_model').filter(status=Task.STATUS_COMPLETED).order_by('-pk')
+    language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL).filter(status=Task.STATUS_COMPLETED).order_by('-pk')
 
     template = loader.get_template('grammar_builder.html')
     return HttpResponse(template.render({'STATIC_URL':STATIC_URL,

@@ -9,6 +9,7 @@ from conceptualiser.models import Concept, Term, TermConcept
 from lexicon_miner.models import Lexicon
 from task_manager.models import Task
 from utils.datasets import Datasets
+from task_manager.tasks.task_types import TaskTypes
 
 from texta.settings import STATIC_URL
 
@@ -19,7 +20,7 @@ def index(request):
                      ('Concepts commited',str(len(Concept.objects.filter(author=request.user))))]
 
     datasets = Datasets().get_allowed_datasets(request.user)
-    language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
+    language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL).filter(status__iexact='completed').order_by('-pk')
 
     return HttpResponse(template.render({'STATIC_URL':STATIC_URL,'overview_data':overview_data,'language_models': language_models, 
                                          'allowed_datasets': datasets},request))

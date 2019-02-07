@@ -12,6 +12,7 @@ from .gensim_wrapper.masked_word2vec import MaskedWord2Vec
 from texta.settings import USER_MODELS, MODELS_DIR
 import logging
 from texta.settings import ERROR_LOGGER
+from task_manager.tasks.task_types import TaskTypes
 
 try:
    import cPickle as pickle
@@ -107,7 +108,7 @@ class ModelManager(threading.Thread):
     def get_model(self,model_uuid):
         with self._models_lock:
             if model_uuid not in self._models:
-                model_path = os.path.join(MODELS_DIR,"train_model", "model_%s"%model_uuid)
+                model_path = os.path.join(MODELS_DIR,TaskTypes.TRAIN_MODEL, "model_%s"%model_uuid)
                 if os.path.exists(model_path):
                     self._models[model_uuid] = ModelEntry(MaskedWord2Vec(gensim.models.Word2Vec.load(model_path)))
                 else:
