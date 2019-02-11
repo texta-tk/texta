@@ -28,7 +28,7 @@ from django.utils.encoding import smart_str
 from django.template import Context
 from django.template import Template
 import collections
-from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER, es_url
+from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER, es_url, FACT_FIELD
 
 from conceptualiser.models import Term, TermConcept
 from permission_admin.models import Dataset
@@ -274,7 +274,7 @@ def mlt_query(request):
             field_path = col.split('.')
             # Get content for the fields and make facts human readable
             for p in field_path:
-                if col == u'texta_facts' and p in hit['_source']:
+                if col == FACT_FIELD and p in hit['_source']:
                     content = improve_facts_readability(hit['_source'][p])
                 else:
                     content = hit['_source'][p] if p in hit['_source'] else ''
@@ -388,7 +388,7 @@ def delete_facts(request):
         doc_id = params.pop('doc_id')[0]
     else:
         doc_id = None
-    fact_m.start_task_deleter_task(params, doc_id)
+    fact_m.start_fact_deleter_task(params, doc_id)
     return HttpResponse()
 
 
@@ -402,18 +402,14 @@ def fact_to_doc(request):
     match_type = request.POST['match_type'].strip()
     doc_id = request.POST['doc_id'].strip()
     case_sens = True if request.POST['case_sens'].strip() == "True" else False
-    es_params = request.POST
-
     # Validate that params aren't empty strings
     if len(fact_name)>0 and len(fact_value)>0 and len(fact_field)>0 and len(doc_id)>0 and len(method)>0:
-        fact_a = FactAdder(request, es_params, fact_name, fact_value, fact_field, doc_id, method, match_type, case_sens)
-        json_response = fact_a.add_facts()
+        fact_a = FactAdder(request)
+        fact_a.start_fact_adder_task(fact_name, fact_value, fact_field, doc_id, method, match_type, case_sens)
     else:
         return HttpResponseBadRequest()
-    if json_response:
-        return JsonResponse(json_response)
-    else:
-        return JsonResponse({'fact_count': 0, 'status': 'error'})
+
+    return HttpResponse()
 
 @login_required
 def get_search_query(request):

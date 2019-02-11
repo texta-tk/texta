@@ -498,6 +498,9 @@ FACT_PROPERTIES = {
 	}
 }
 
+FACT_FIELD = 'texta_facts'
+MAX_NAME_FACT_LENGTH = 30
+
 ############################ Boot scripts ###########################
 
 # Several scripts ran during the boot to set up files and directories.

@@ -199,36 +199,11 @@ function saveAsFact(method, match_type, case_sens, fact_name, fact_value, fact_f
                 showConfirmButton: false, timer: 5000
             });
 
-            factsAdded = data.fact_count
-            status = data.status
-            type = ''
-            title = ''
-            switch (status) {
-                case 'success':
-                    type = 'success';
-                    title = 'Adding fact successful!';
-                    text = `${factsAdded} facts like ${fact_name}: ${fact_value} have been added.`;
-                    break
-                case 'no_hits':
-                    type = 'warning';
-                    title = 'Could not find given facts';
-                    text = `Facts like ${fact_name}: ${fact_value} have not been added.`;
-                    break
-                case 'scrolling_error':
-                    type = 'warning'
-                    title = 'A problem occured whilst adding facts'
-                    text = `${factsAdded} facts like ${fact_name}: ${fact_value} were added.`;
-                    break;
-                default:
-                    type = 'warning'
-                    title = 'A problem occured whilst adding facts'
-                    text = `${factsAdded} facts like ${fact_name}: ${fact_value} were added.`;
-            }
 
             notification({
-                type: type,
-                title: title,
-                text: text
+                type: 'success',
+                title: 'Started Fact Adder task',
+                text: 'Check Task Manager Management Tasks to see progress'
             })
         },
         error: function () {
@@ -314,8 +289,8 @@ function validateWithFeedback(fact_name, fact_value, fact_field, doc_id) {
         swal('Warning!', 'Fact length shorter than 2 or longer than 300!', 'warning');
         return false;
     }
-    if (fact_name.length > 15 || fact_name == '' || fact_value == '') {
-        swal('Warning!', 'Fact name longer than 15 characters, or values are empty!', 'warning');
+    if (fact_name.length > 30 || fact_name == '' || fact_value == '') {
+        swal('Warning!', 'Fact name longer than 30 characters, or values are empty!', 'warning');
         return false;
     } else if (fact_field == '_es_id') {
         swal('Warning!', `Saving facts in ${fact_field} not allowed`, 'warning')

@@ -7,6 +7,7 @@ from texta.settings import INFO_LOGGER
 from task_manager.models import Task
 from task_manager.tools import TaskCanceledException
 from task_manager.tasks.workers.management_workers.fact_deleter_sub_worker import FactDeleterSubWorker
+from task_manager.tasks.workers.management_workers.fact_adder_sub_worker import FactAdderSubWorker
 
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
@@ -26,7 +27,8 @@ class ManagementWorker(BaseWorker):
         self.task_obj = None
         # Map of sub-managers for ManagementWorker
         self.manager_map = {
-            ManagerKeys.FACT_DELETER: FactDeleterSubWorker
+            ManagerKeys.FACT_DELETER: FactDeleterSubWorker,
+            ManagerKeys.FACT_ADDER: FactAdderSubWorker,
         }
 
 

@@ -6,7 +6,7 @@ from searcher.view_functions.general.searcher_utils import improve_facts_readabi
 from bs4 import BeautifulSoup
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module='bs4')
-
+from texta.settings import FACT_FIELD
 import time
 import json
 
@@ -48,7 +48,7 @@ def execute_search(es_m, es_params):
 
             # Get content for the fields and make facts human readable
             content = hit['_source']
-            if col == u'texta_facts' and col in hit['_source']:
+            if col == FACT_FIELD and col in hit['_source']:
                 content = improve_facts_readability(hit['_source'][col])
             else:
                 for p in field_path:

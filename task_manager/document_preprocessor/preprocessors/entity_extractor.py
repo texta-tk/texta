@@ -1,7 +1,7 @@
 from task_manager.tasks.workers.entity_extractor_worker import EntityExtractorWorker
 
 import logging
-from texta.settings import ERROR_LOGGER
+from texta.settings import ERROR_LOGGER, FACT_FIELD
 import numpy as np
 import json
 
@@ -61,10 +61,10 @@ class EntityExtractorPreprocessor(object):
                     new_facts, doc_num_facts = self._preds_to_doc(str(doc), result_doc, field)
                     facts_added += doc_num_facts
 
-                    if 'texta_facts' not in documents[i]:
-                        documents[i]['texta_facts'] = new_facts
+                    if FACT_FIELD not in documents[i]:
+                        documents[i][FACT_FIELD] = new_facts
                     else:
-                        documents[i]['texta_facts'].extend(new_facts)
+                        documents[i][FACT_FIELD].extend(new_facts)
 
         except Exception as e:
             logging.getLogger(ERROR_LOGGER).exception(json.dumps(

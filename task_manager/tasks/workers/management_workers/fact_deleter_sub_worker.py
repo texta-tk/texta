@@ -1,9 +1,8 @@
 import logging
 import json
-from ..base_worker import BaseWorker
+from task_manager.tasks.workers.base_worker import BaseWorker
 from task_manager.tools import ShowProgress
-from utils.fact_manager import FactManager
-from texta.settings import ERROR_LOGGER
+from texta.settings import ERROR_LOGGER, FACT_FIELD
 
 class FactDeleterSubWorker(BaseWorker):
 
@@ -13,7 +12,6 @@ class FactDeleterSubWorker(BaseWorker):
         self.params = params
         self.scroll_size = scroll_size
         self.scroll_time_out = time_out
-        self.f_field = FactManager.f_field
 
     def run(self):
         try:
@@ -45,7 +43,7 @@ class FactDeleterSubWorker(BaseWorker):
         """
 
         try:
-            response = self.es_m.scroll(size=self.scroll_size, field_scroll=self.f_field)
+            response = self.es_m.scroll(size=self.scroll_size, field_scroll=FACT_FIELD)
 
             scroll_id = response['_scroll_id']
             total_docs = response['hits']['total']
@@ -62,7 +60,7 @@ class FactDeleterSubWorker(BaseWorker):
                     data = ''
                     for document in response['hits']['hits']:
                         new_field = [] # The new facts field
-                        for fact in document['_source'][self.f_field]:
+                        for fact in document['_source'][FACT_FIELD]:
                             # If the fact name is in rm_facts_dict keys
                             if fact["fact"] in rm_facts_dict:
                                 # If the fact value is not in the delete key values
@@ -74,9 +72,9 @@ class FactDeleterSubWorker(BaseWorker):
                                 new_field.append(fact)
                         # Update dataset
                         data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
-                        document = {'doc': {self.f_field: new_field}}
+                        document = {'doc': {FACT_FIELD: new_field}}
                         data += json.dumps(document)+'\n'
-                    response = self.es_m.scroll(scroll_id=scroll_id, size=self.scroll_size, field_scroll=self.f_field)
+                    response = self.es_m.scroll(scroll_id=scroll_id, size=self.scroll_size, field_scroll=FACT_FIELD)
                     docs_left = len(response['hits']['hits'])
                     scroll_id = response['_scroll_id']
                     show_progress.update(docs_left)
@@ -105,13 +103,13 @@ class FactDeleterSubWorker(BaseWorker):
         fact_queries = []
         for key in rm_facts_dict:
             for val in rm_facts_dict[key]:
-                terms = [{"term": {self.f_field+".fact": key}},{"term": {self.f_field+".str_val": val}}]
+                terms = [{"term": {FACT_FIELD+".fact": key}},{"term": {FACT_FIELD+".str_val": val}}]
                 if doc_id:
                     terms.append({"term": {"_id": doc_id}})
                 fact_queries.append({"bool": {"must": terms}})
 
-        query = {"main": {"query": {"nested": {"path": self.f_field,"query":
-         {"bool":{"should":fact_queries}}}},"_source": [self.f_field]}}
+        query = {"main": {"query": {"nested": {"path": FACT_FIELD,"query":
+         {"bool":{"should":fact_queries}}}},"_source": [FACT_FIELD]}}
         return query
 
     def parse_params(self):
