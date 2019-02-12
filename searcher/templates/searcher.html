@@ -8,6 +8,10 @@
 <script type="application/javascript" src="{{STATIC_URL}}searcher/searcher.js"></script>
 <script type="application/javascript" src="{{STATIC_URL}}searcher/selectionProps.js"></script>
 
+<script>
+// Define global fields variable
+FIELDS = {{ fields | safe }}
+</script>
 <div class="grid-wrapper-searcher" id='grid-wrapper-searcher-id'>
 	<div class="grid-wrapper-sidebar">
 		{% include "searcher-sidebar/searcher-sidebar.html" %}
