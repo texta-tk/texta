@@ -24,7 +24,7 @@
 		<div class="row">
 		    <div class="col-sm-6">Preprocessor:</div>
 			<div class="col-sm-6">
-				<select id="{{task_param.id}}_preprocessor_key" name="{{task_param.id}}_preprocessor_key" class="form-control input-sm" onchange="select_preprocessor('{{task_param.id}}');">
+				<select id="{{task_param.id}}_preprocessor_key" autocomplete="off"  name="{{task_param.id}}_preprocessor_key" class="form-control input-sm" onchange="select_preprocessor('{{task_param.id}}');">
 					{% for preprocessor in enabled_preprocessors %}
 						<option value="{{preprocessor.key}}">{{preprocessor.name}}</option>
 					{% endfor %}
