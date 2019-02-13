@@ -1,3 +1,4 @@
+from picklefield.fields import PickledObjectField
 from datetime import datetime
 from django.db import models
 from django.contrib.auth.models import User
@@ -41,6 +42,7 @@ class Task(models.Model):
     time_started = models.DateTimeField()
     last_update = models.DateTimeField(null=True, blank=True, default=None)
     time_completed = models.DateTimeField(null=True, blank=True, default=None)
+    resources = PickledObjectField(null=True, default=None)
 
     @staticmethod
     def get_by_id(task_id):

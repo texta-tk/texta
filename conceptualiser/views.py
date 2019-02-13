@@ -47,7 +47,8 @@ def load_terms(request):
     lexicon_ids = json.loads(request.POST['lids'])
 
     try:
-        model = model_manager.get_model(request.session['model']['unique_id']).model
+        model_uuid = Task.objects.get(pk=request.session['model']['pk']).unique_id
+        model = model_manager.get_model(model_uuid).model
     except LookupError as e:
         return JsonResponse(status=400, data={'status':'false','message':'Please select a model first'})
 
@@ -55,8 +56,8 @@ def load_terms(request):
     if model.wv.syn0norm is None:
         model.init_sims()
 
-    words = [word for word in Word.objects.filter(lexicon__id__in = lexicon_ids) if word.wrd in model.wv.vocab]
-    feature_vectors = [model.wv.syn0norm[model.wv.vocab[word.wrd].index] for word in words]
+    words = [word for word in Word.objects.filter(lexicon__id__in = lexicon_ids) if word.wrd.replace(' ', '_') in model.wv.vocab]
+    feature_vectors = [model.wv.syn0norm[model.wv.vocab[word.wrd.replace(' ', '_')].index] for word in words]
     
     output = {'terms':[],'concepts':[]}
     
@@ -77,7 +78,7 @@ def load_terms(request):
         concepts = {}
         
         for i in range(len(words)):
-            term = {'id':words[i].id,'term':words[i].wrd,'count':model.wv.vocab[words[i].wrd].count,'x':transformed_feature_vectors[i][0] if len(feature_vectors) > 1 else 0,'y':transformed_feature_vectors[i][1] if len(feature_vectors) > 1 else 0}
+            term = {'id':words[i].id,'term':words[i].wrd,'count':model.wv.vocab[words[i].wrd.replace(' ', '_')].count,'x':transformed_feature_vectors[i][0] if len(feature_vectors) > 1 else 0,'y':transformed_feature_vectors[i][1] if len(feature_vectors) > 1 else 0}
             
             term_concepts = TermConcept.objects.filter(term__term = words[i].wrd).filter(concept__author = request.user)
             if term_concepts:

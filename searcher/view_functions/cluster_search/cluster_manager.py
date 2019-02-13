@@ -4,6 +4,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from itertools import combinations
 from time import time
 from utils.highlighter import Highlighter
+from utils.stop_words import StopWords
 from bs4 import BeautifulSoup
 import numpy as np
 import json
@@ -16,14 +17,14 @@ from searcher.view_functions.general.searcher_utils import additional_option_cut
 class ClusterManager:
     """ Manage Cluster Searches
     """
-    def __init__(self,es_m,params):
+    def __init__(self, es_m, params, phraser):
         self.es_m = es_m
+        self.phraser = phraser
         self.params = self._parse_params(params)
         self.documents,self.document_ids = self._scroll_documents(limit=int(self.params['cluster_n_samples']))
         self.document_vectors,self.feature_names = self._vectorize_documents(method=params['cluster_vectorizer'], max_features=int(params['cluster_n_features']))
         self.clusters = self._cluster_documents()
         self.cluster_keywords = self._get_cluster_top_keywords(int(params['cluster_n_keywords']))
-        #self.cluster_keywords = self._get_keywords(int(params['cluster_n_keywords']))
 
 
     @staticmethod
@@ -73,7 +74,7 @@ class ClusterManager:
 
 
     def _vectorize_documents(self,method='tfidf',max_features=1000):
-        stop_words = []
+        stop_words = list(StopWords().stop_words.keys())
 
         try:
             for lexicon_id in self.params['cluster_lexicons']:
@@ -88,17 +89,17 @@ class ClusterManager:
         if method == 'tfidf':
             vectorizer = TfidfVectorizer(analyzer='word', max_features=max_features, stop_words=stop_words)
 
-        document_vectors = vectorizer.fit_transform(self.documents)
+        docs_phrases = [' '.join(self.phraser[document.split(' ')]) for document in self.documents]
+
+        document_vectors = vectorizer.fit_transform(docs_phrases)
         document_vectors = document_vectors.toarray()
 
         return document_vectors,vectorizer.get_feature_names()
 
 
     def _cluster_documents(self):
-
         method = self.params['cluster_method']
         n_clusters = int(self.params['cluster_n_clusters'])
-
         n_samples = len(self.document_vectors)
 
         if n_clusters > n_samples:
@@ -111,10 +112,7 @@ class ClusterManager:
 
         clustering = clusterer.fit(self.document_vectors)
         cluster_labels = clustering.labels_
-
         clustering_dict = clustering.__dict__
-        # cluster_centers = clustering_dict['cluster_centers_']
-
         clusters = {}
 
         for document_id,cluster_label in enumerate(cluster_labels):
@@ -122,7 +120,7 @@ class ClusterManager:
                 clusters[cluster_label] = []
             clusters[cluster_label].append(document_id)
 
-        return clusters#,cluster_centers
+        return clusters
 
     def _get_cluster_top_keywords(self, keywords_per_cluster=10):
         """Shows the top k words for each cluster
@@ -154,6 +152,7 @@ class ClusterManager:
         for document in documents:
             to_highlighter = []
             for keyword in keywords:
+                keyword = keyword.replace('_', ' ')
                 pattern = re.compile(u'{0}{1}{2}'.format(u'(?<![A-z0-9])',re.escape(keyword.lower()),u'(?![A-z0-9])'))
                 for match in pattern.finditer(document.lower()):
                     span = [(match.start(),match.end())]
@@ -189,23 +188,3 @@ class ClusterManager:
                             'keywords':' '.join(keywords)}
             out.append(cluster_data)
         return out
-
-    # REPLACED BY _get_cluster_top_keywords()
-    # def _get_keywords(self,keywords_per_cluster=10):
-    #     out = {}
-
-    #     # loops over 10 clusters, 100 values, probs pointing to words
-    #     for cluster_id,cluster in enumerate(self.cluster_centers):
-    #         if len(cluster) > keywords_per_cluster:
-    #             # get index values of the keywords;
-    #             # np.argpartition seperates big and small numbers at some index location, ex: np.array([0, 9, 0, 1, 5, 2])[np.argpartition([0, 9, 0, ((1)), 5, 2], 3)[:3]] > [0, 0, 1]
-    #             # get top k biggest values, in random order
-    #             keyword_ids = np.argpartition(-cluster,keywords_per_cluster)
-    #             # crop the 100 words to some top 10 words
-    #             keyword_ids = keyword_ids[:keywords_per_cluster]
-    #         else:
-    #             keyword_ids = np.argpartition(-cluster,len(cluster)-1)
-
-    #         keywords = [self.feature_names[kw_id] for kw_id in keyword_ids]
-    #         out[cluster_id] = keywords
-    #     return out

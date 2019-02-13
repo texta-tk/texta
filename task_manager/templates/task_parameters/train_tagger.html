@@ -99,7 +99,7 @@
                         <div class="row">
                             <div class="col-sm-6">Negative set multiplier:</div>
                             <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_negative_multiplier_opt" class="form-control">
+                                <select name="{{ task_param.id }}_negative_multiplier_opt" class="selectpicker" data-width='100%'>
                                     <option title="0.5" value="0.5">0.5</option>
                                     <option title="0.75" value="0.75">0.75</option>
                                     <option title="1.0" value="1.0" selected="selected">1.0</option>
@@ -115,7 +115,7 @@
                         <div class="row">
                             <div class="col-sm-6">Maximum sample size per class:</div>
                             <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_max_sample_size_opt" class="form-control">
+                                <select name="{{ task_param.id }}_max_sample_size_opt" class="selectpicker" data-width='100%'>
                                     <option title="10000" value="10000">10000</option>
                                     <option title="25000" value="25000">25000</option>
                                     <option title="50000" value="50000">50000</option>
@@ -127,7 +127,7 @@
                         <div class="row">
                             <div class="col-sm-6">Training set score threshold:</div>
                             <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_score_threshold_opt" class="form-control">
+                                <select name="{{ task_param.id }}_score_threshold_opt" class="selectpicker" data-width='100%'>
                                     <option title="0.0 (use all)" value="0.0">0.0</option>
                                     <option title="0.1" value="0.1">0.1</option>
                                     <option title="0.2" value="0.2">0.2</option>
@@ -140,7 +140,22 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-sm-6">Description:</div>
+                            <div class="col-sm-6">Use language model to cluster words:</div>
+                            <div class="col-sm-6">
+                                <select class="selectpicker" data-width='100%' multiple
+                                        data-selected-text-format="count"
+                                        name="{{ task_param.id }}_word_cluster_fields">
+                                    <option data-hidden="true"></option>
+                                    {% for field in fields %}
+                                        <option title="{{ field.path }}"
+                                                value="{{ field.path }}">{{ field.label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-6">Tagger label:</div>
                             <div class="col-sm-6">
                                 <input required name="{{ task_param.id }}_description" class="form-control input-sm">
                             </div>

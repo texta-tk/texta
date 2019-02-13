@@ -194,20 +194,24 @@ def get_example_texts(request, field, value):
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     query = { "size":10, "highlight": {"fields": {field: {}}}, "query": {"match": {field: value}}}
-
     response = es_m.perform_query(query)
-
     matched_sentences = []
     for hit in response['hits']['hits']:
         for match in hit['highlight'].values():
             matched_sentences.append(match[0])
-
     return matched_sentences
+
+
+def prepare_suggestion(request, suggestion, tooltip_feature):
+    matched_sentences = get_example_texts(request, tooltip_feature, suggestion)
+    matched_sentences = '\n'.join(matched_sentences).replace('"','')
+    suggestion = suggestion.replace('_', ' ')
+    suggestion = '<div class=\'list_item\' id=\'suggestion_{0}\'>&bull; <a role="button" title="{1}" onclick="javascript:addWord(this,\'{0}\');">{0}</a></div>'.format(suggestion, matched_sentences)
+    return suggestion
 
 
 @login_required
 def query(request):
-    
     try:
         lexicon = Lexicon.objects.get(id=request.POST['lid'])
         suggestionset = SuggestionSet(lexicon=lexicon,method=request.POST['method'])
@@ -222,10 +226,10 @@ def query(request):
 
         #Add unselected previous suggestions as negative examples.
         if 'negatives' in request.POST and len(request.POST['negatives']) > 2 and 'sid' in request.POST and request.POST['sid'] != -1:
-            negatives = [model.vocab[negative].index for negative in json.loads(request.POST['negatives']) if negative in model.vocab]
+            negatives = [model.vocab[negative.replace(' ', '_')].index for negative in json.loads(request.POST['negatives']) if negative.replace(' ', '_') in model.vocab]
             ignored_idxes.extend(negatives)
 
-        positives = [elem.lower() for elem in request.POST['content'].split('\n') if elem != u'' and elem.lower() in model.vocab] # or ...AND elem in model.vocab]
+        positives = [elem.lower().replace(' ', '_') for elem in request.POST['content'].split('\n') if elem.lower() in model.vocab] # or ...AND elem in model.vocab]
 
         if not positives:
             return HttpResponse('<br><b style="color:red;">No suggestions available for the lexicon. Try adding more terms.</b>')
@@ -233,37 +237,27 @@ def query(request):
         suggestions = []
         
         model_run_obj = Task.objects.get(id=int(request.session['model']['pk']))
-        """ json.loads(json.loads(model_run_obj.parameters)['field'])['path'] """
         tooltip_feature = json.loads(model_run_obj.parameters)['field']
 
         if request.POST['method'][:12] == 'most_similar':
-            for a in getattr(model,request.POST['method'])(positive=positives,topn=40,ignored_idxes = ignored_idxes):
-                encoded_a = encode_for_id(a[0])
-                matched_sentences = get_example_texts(request, tooltip_feature, a[0])
-                suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded_a + '\'>&bull; <a role="button" title="' + '\n'.join(matched_sentences).replace('"','') + '" onclick="javascript:addWord(this,\''+encoded_a+'\');">'+a[0]+'</a></div>')
+            for a in getattr(model,request.POST['method'])(positive=positives, topn=40, ignored_idxes=ignored_idxes):
+                suggestion = prepare_suggestion(request, a[0], tooltip_feature)
+                suggestions.append(suggestion)
+
         elif request.POST['method'][:17] == 'simple_precluster':
             method = request.POST['method'][18:]
-
             preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
-
             labels, vectors = zip(*[zip(*cluster) for cluster in preclusters])
-
             selected_cluster = random.randint(0,len(labels)-1)
-
             new_positives = labels[selected_cluster]
-
             label_idxes = [[model.vocab[label].index for label in labels[cluster_idx]] for cluster_idx in range(len(labels))]
             ignored_idxes.extend([label_idxes[cluster_idx][inner_cluster_idx] for cluster_idx in range(len(label_idxes)) if cluster_idx != selected_cluster for inner_cluster_idx in range(len(label_idxes[cluster_idx]))])
-
             for a in getattr(model,method)(positive=new_positives,topn=40,ignored_idxes = ignored_idxes):
-                encoded_a = encode_for_id(a[0])
-                matched_sentences = get_example_texts(request, tooltip_feature, a[0])
-                suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded_a + '\'>&bull; <a role="button" title="' + '\n'.join(matched_sentences).replace('"','') + '" onclick="javascript:addWord(this,\''+encoded_a+'\');">'+a[0]+'</a></div>')
-
-
+                suggestion = prepare_suggestion(request, a[0], tooltip_feature)
+                suggestions.append(suggestion)
+                
         elif request.POST['method'][:10] == 'precluster':
             method = request.POST['method'][11:]
-
             if len(positives) > 0:
                 preclusters = PreclusterMaker(positives,[model.model.wv.syn0norm[model.vocab[positive].index] for positive in positives])()
                 labels, vectors = zip(*[zip(*cluster) for cluster in preclusters])
@@ -292,19 +286,12 @@ def query(request):
 
 def RRA_suggestions(suggestions_list, tooltip_feature, request):
     ranks = aggregate_ranks(suggestions_list)
-    encoded_suggestions = [(name, encode_for_id(name)) for (name, score) in ranks[:40]]
+    encoded_suggestions = [name for (name, score) in ranks[:40]]
     suggestions = []
-    for (name,encoded) in encoded_suggestions:
-        matched_sentences = get_example_texts(request, tooltip_feature, name)
-        suggestions.append('<div class=\'list_item\' id=\'suggestion_' + encoded + '\'>&bull; <a role="button" title="' + '\n'.join(matched_sentences).replace('"','') + '" onclick="javascript:addWord(this,\'' + encoded + '\');">' + name + '</a></div>')
+    for name in encoded_suggestions:
+        suggestion = prepare_suggestion(request, name, tooltip_feature)
+        suggestions.append(suggestion)
     return suggestions
-
-
-def encode_for_id(s):
-    # replacing punctuation with corresponding strings to avoid id value conflicts in browser
-    for punct in punct_to_name:
-        s = s.replace(punct,punct_to_name[punct])
-    return s
 
 
 @login_required
@@ -317,4 +304,3 @@ def reset_suggestions(request):
     except Exception as e:
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'suggestions_reset','args':{'user_name':request.user.username,'lexicon_id':lexicon_id}}),exc_info=True)
     return HttpResponseRedirect(URL_PREFIX + '/lexicon_miner/select?id='+lexicon_id)
-
