@@ -437,12 +437,7 @@ def cluster_query(request):
     es_m.build(params)
 
     model_data = request.session['model']
-    task_resources = Task.objects.get(pk=model_data['pk']).task_resources
-
-    if 'phraser' in task_resources:
-        phraser = Phraser(task_resources['phraser'])
-    else:
-        phraser = None
+    phraser = Phraser(model_data['pk'])
 
     cluster_m = ClusterManager(es_m, params, phraser)
     clustering_data = cluster_m.convert_clustering_data()

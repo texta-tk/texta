@@ -100,7 +100,7 @@ class EsIterator:
                             sentence = STOP_WORDS.remove(sentence)
                             
                             if self.phraser:
-                                sentence = self.phraser[sentence]
+                                sentence = self.phraser.phrase(sentence)
 
                             yield sentence
 

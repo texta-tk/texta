@@ -30,6 +30,7 @@ from task_manager.tools import TaskCanceledException
 from task_manager.tools import get_pipeline_builder
 from utils.helper_functions import plot_confusion_matrix, create_file_path
 from utils.stop_words import StopWords
+from utils.phraser import Phraser
 
 from .base_worker import BaseWorker
 
@@ -106,14 +107,17 @@ class TagModelWorker(BaseWorker):
                                    score_threshold=score_threshold_opt)
             data_sample_x_map, data_sample_y, statistics = es_data.get_data_samples()
 
-            resources = Task.objects.get(pk=int(language_model['pk'])).resources
+
+            task_obj = Task.objects.get(pk=int(language_model['pk']))
+            resources = task_obj.resources
             sw = StopWords()
 
             # detect phrases & remove stopwords
-            if 'phraser' in resources:
-                phraser = resources['phraser']
+            phraser = Phraser(int(language_model['pk']))
+            phraser.load()
+            if phraser:
                 for field_name, field_content in data_sample_x_map.items():
-                    field_content = [' '.join(phraser[sw.remove(text).split(' ')]) for text in field_content]
+                    field_content = [' '.join(phraser.phrase(sw.remove(text).split(' '))) for text in field_content]
                     data_sample_x_map[field_name] = field_content
 
             # cluster if asked

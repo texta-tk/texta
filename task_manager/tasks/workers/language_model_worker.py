@@ -3,7 +3,6 @@ import logging
 import os
 
 from gensim.models import word2vec
-from gensim.models.phrases import Phrases, Phraser
 
 from utils.helper_functions import create_file_path
 from task_manager.models import Task
@@ -12,6 +11,7 @@ from task_manager.tools import ShowProgress
 from task_manager.tools import TaskCanceledException
 from texta.settings import ERROR_LOGGER, INFO_LOGGER, MODELS_DIR
 from utils.word_cluster import WordCluster
+from utils.phraser import Phraser
 
 from .base_worker import BaseWorker
 
@@ -48,8 +48,8 @@ class LanguageModelWorker(BaseWorker):
             sentences = EsIterator(task_params, callback_progress=show_progress)
 
             # build phrase model
-            phrase_model = Phrases(sentences)
-            phraser = Phraser(phrase_model)
+            phraser = Phraser(task_id)
+            phraser.build(sentences)
 
             # update progress
             show_progress = ShowProgress(self.id, multiplier=total_passes)
