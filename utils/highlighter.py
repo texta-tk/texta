@@ -198,13 +198,15 @@ class Highlighter(object):
             category = highlight_data.get('category', self._default_category)
             name = highlight_data.get('name', '')
             value = highlight_data.get('value', '')
+            description = highlight_data.get('description', None)
 
             # Creating category_name_value[category][name] = [].
             # Important for cases when value is missing.
-            category_name_value[category][name]
-
+            category_name_value[category][name] = {"values": [], "descriptions": []}
             if value:
-                category_name_value[category][name].append(value)
+                category_name_value[category][name]['values'].append(value)
+            if description:
+                category_name_value[category][name]["descriptions"].append(description)
 
         title_lines = []
         fact_name = ''
@@ -217,9 +219,11 @@ class Highlighter(object):
                     fact_name = name
                     if category_name_value[category][name]:
                         # Get value of fact for fact_str_val searches 
-                        for value in category_name_value[category][name]:
+                        for value in category_name_value[category][name]['values']:
                             fact_value = value
                             title_line_tokens.append('%s=%s'%(name, value))
+                        for description in category_name_value[category][name]["descriptions"]:
+                            title_line_tokens.append('\n{0}'.format(description))
                 else:
                     title_line_tokens.append(name)
             title_lines.append(' '.join(title_line_tokens))

@@ -148,7 +148,7 @@ function query () {
                 // Append _DtCol to end to safe from naming conflicts
                 columns.push({ 'className': 'DtCol_' + $(this).text(), 'targets': index })
             })
-            console.log(columns)
+
             examplesTable = $('#examples').DataTable({
                 'autoWidth': false,
                 'deferRender': true,
