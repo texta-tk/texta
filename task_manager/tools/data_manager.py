@@ -6,9 +6,11 @@ from searcher.models import Search
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from texta.settings import ERROR_LOGGER
+from utils.stop_words import StopWords
 
 MAX_POSITIVE_SAMPLE_SIZE = 10000
 ES_SCROLL_SIZE = 500
+STOP_WORDS = StopWords()
 
 def get_fields(es_m):
     """ Crete field list from fields in the Elasticsearch mapping
@@ -46,7 +48,7 @@ class EsIterator:
     """  ElasticSearch Iterator
     """
 
-    def __init__(self, parameters, callback_progress=None):
+    def __init__(self, parameters, callback_progress=None, phraser=None):
         ds = Datasets().activate_datasets_by_id(parameters['dataset'])
         query = self._parse_query(parameters)
 
@@ -55,6 +57,7 @@ class EsIterator:
         self.es_m = ds.build_manager(ES_Manager)
         self.es_m.load_combined_query(query)
         self.callback_progress = callback_progress
+        self.phraser = phraser
 
         if self.callback_progress:
             total_elements = self.get_total_documents()
@@ -93,7 +96,13 @@ class EsIterator:
                     if decoded_text:
                         sentences = decoded_text.split('\n')
                         for sentence in sentences:
-                            yield [word.strip().lower() for word in sentence.split(' ')]
+                            sentence = [word.strip().lower() for word in sentence.split(' ')]
+                            sentence = STOP_WORDS.remove(sentence)
+                            
+                            if self.phraser:
+                                sentence = self.phraser[sentence]
+
+                            yield sentence
 
                 except KeyError:
                     # If the field is missing from the document
