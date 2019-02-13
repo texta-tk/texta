@@ -98,6 +98,9 @@ def start_task(request):
     if 'dataset' in request.session.keys():
         task_params['dataset'] = request.session['dataset']
 
+    if 'model' in request.session.keys():
+        task_params['language_model'] = request.session['model']
+
     # Create execution task
     task_id = create_task(task_type, description, task_params, user)
     # Add task to queue
