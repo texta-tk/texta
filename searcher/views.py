@@ -33,6 +33,7 @@ from django.template import Template
 import collections
 from texta.settings import STATIC_URL, URL_PREFIX, date_format, es_links, INFO_LOGGER, ERROR_LOGGER, es_url, FACT_FIELD
 
+from task_manager.models import Task
 from conceptualiser.models import Term, TermConcept
 from permission_admin.models import Dataset
 from lexicon_miner.models import Lexicon, Word
@@ -41,6 +42,7 @@ from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
 from utils.highlighter import Highlighter, ColorPicker
 from utils.autocomplete import Autocomplete
+from utils.phraser import Phraser
 
 from task_manager.models import Task
 
@@ -434,7 +436,15 @@ def cluster_query(request):
     es_m = ds.build_manager(ES_Manager)
     es_m.build(params)
 
-    cluster_m = ClusterManager(es_m, params)
+    model_data = request.session['model']
+    task_resources = Task.objects.get(pk=model_data['pk']).task_resources
+
+    if 'phraser' in task_resources:
+        phraser = Phraser(task_resources['phraser'])
+    else:
+        phraser = None
+
+    cluster_m = ClusterManager(es_m, params, phraser)
     clustering_data = cluster_m.convert_clustering_data()
 
     template_params = {'STATIC_URL': STATIC_URL,
