@@ -2,16 +2,13 @@
 {% block app %}
 
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}searcher/searcher.css">
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}searcher/dashboard/dashboard.css">
 <!-- For fact and text selections, tippy popover -->
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}searcher/selection.css">
 <script type="application/javascript" src="{{STATIC_URL}}local-cache.js"></script>
 <script type="application/javascript" src="{{STATIC_URL}}searcher/searcher.js"></script>
+<script type="application/javascript" src="{{STATIC_URL}}searcher/dashboard/Index.js"></script>
 <script type="application/javascript" src="{{STATIC_URL}}searcher/selectionProps.js"></script>
-
-<script>
-// Define global fields variable
-FIELDS = {{ fields | safe }}
-</script>
 <div class="grid-wrapper-searcher" id='grid-wrapper-searcher-id'>
 	<div class="grid-wrapper-sidebar">
 		{% include "searcher-sidebar/searcher-sidebar.html" %}

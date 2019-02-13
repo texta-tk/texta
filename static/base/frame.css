@@ -13,6 +13,9 @@ body {
 }
 
 /* global style */
+.bg-white{
+    background-color:white;
+}
 .no-margin{
     margin:0;
 }
@@ -173,15 +176,18 @@ html, body {
     margin-right: auto
 }
 
-.flex-item-grow-1 {
+.flex-1 {
+    display: flex;
     flex: 1;
 }
 
-.flex-item-grow-2 {
+.flex-2 {
+    display: flex;
     flex: 2;
 }
 
-.flex-item-grow-3 {
+.flex-3 {
+    display: flex;
     flex: 3
 }
 

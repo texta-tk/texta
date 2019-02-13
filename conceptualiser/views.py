@@ -47,7 +47,7 @@ def load_terms(request):
     lexicon_ids = json.loads(request.POST['lids'])
 
     try:
-        model = model_manager.get_model(request.session['model']['pk']).model
+        model = model_manager.get_model(request.session['model']['unique_id']).model
     except LookupError as e:
         return JsonResponse(status=400, data={'status':'false','message':'Please select a model first'})
 

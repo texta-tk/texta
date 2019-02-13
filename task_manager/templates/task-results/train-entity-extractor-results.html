@@ -8,7 +8,6 @@
                     <i role='button' onclick=javascript:deleteDocuments('entity') title="Delete selected"
                        class="glyphicon glyphicon glyphicon glyphicon-trash"></i>
                 </th>
-                <th>Type</th>
                 <th>User</th>
                 <th>Description</th>
                 <th>Task Status</th>
@@ -31,7 +30,6 @@
                                 class="glyphicon glyphicon-download-alt"></span></a>
                             {% endif %}
                         </td>
-                        <td>{{ task.task_type }}</td>
                         <td>{{ task.user }}</td>
                         <td>{{ task.description }}</td>
                         <td>{{ task.status }}</td>

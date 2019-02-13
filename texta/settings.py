@@ -310,7 +310,7 @@ es_ldap_user = os.getenv('TEXTA_LDAP_USER')
 es_ldap_password = os.getenv('TEXTA_LDAP_PASSWORD')
 
 # Get MLP URL from environment
-mlp_url = os.getenv('TEXTA_MLP_URL', 'http://localhost:5000/mlp/process')
+MLP_URL = os.getenv('TEXTA_MLP_URL', 'http://localhost:5000')
 
 # Dataset Importer global parameters
 
@@ -322,10 +322,6 @@ DATASET_IMPORTER = {
 		'enabled':             False,
 		'interval_in_seconds': 10,
 		'index_sqlite_path':   os.path.join(BASE_DIR, 'database', 'import_sync.db')
-	},
-
-	'urls':               {
-		'mlp': mlp_url
 	}
 }
 

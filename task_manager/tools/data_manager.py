@@ -72,16 +72,11 @@ class EsIterator:
 
     def __iter__(self):
         self.es_m.set_query_parameter('size', ES_SCROLL_SIZE)
-        response = self.es_m.scroll()
 
+        response = self.es_m.scroll()
         scroll_id = response['_scroll_id']
         total_hits = response['hits']['total']
-
         while total_hits > 0:
-            response = self.es_m.scroll(scroll_id=scroll_id)
-            total_hits = len(response['hits']['hits'])
-            scroll_id = response['_scroll_id']
-
             # Check errors in the database request
             if (response['_shards']['total'] > 0 and response['_shards']['successful'] == 0) or response['timed_out']:
                 msg = 'Elasticsearch failed to retrieve documents: ' \
@@ -110,6 +105,10 @@ class EsIterator:
             
             if self.callback_progress:
                 self.callback_progress.update(total_hits)
+            
+            response = self.es_m.scroll(scroll_id=scroll_id)
+            total_hits = len(response['hits']['hits'])
+            scroll_id = response['_scroll_id']
 
     def get_total_documents(self):
         return self.es_m.get_total_documents()

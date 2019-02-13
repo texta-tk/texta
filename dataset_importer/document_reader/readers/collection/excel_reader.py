@@ -1,6 +1,6 @@
 import xlrd
 from collection_reader import CollectionReader
-
+from datetime import datetime, timedelta, date
 from dataset_importer.utils import HandleDatasetImportException
 
 
@@ -9,7 +9,7 @@ class ExcelReader(CollectionReader):
 
 	converters = {
 		'text':    lambda string: string if string else '',
-		'date':    lambda date: date if date else None,
+		'date':    lambda date: ExcelReader.from_excel_ordinal(date) if date else None,
 		'bool':    lambda boolean_int: bool(boolean_int) if boolean_int in {0, 1} else None,
 		'float':   lambda float_: float_,
 		'int':     lambda float_: int(float_) if str(float_).isdigit() else None,
@@ -86,3 +86,12 @@ class ExcelReader(CollectionReader):
 				return ExcelReader.converters['default']
 		else:
 			return ExcelReader.converters['default']
+
+	@staticmethod
+	def from_excel_ordinal(ordinal, epoch=date(1900, 1, 1)):
+
+		if ordinal > 59:
+			ordinal -= 1  # Excel leap year bug, 1900 is not a leap year
+		inDays = int(ordinal)
+
+		return epoch + timedelta(days=inDays - 1) # epoch is day 1

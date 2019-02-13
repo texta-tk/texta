@@ -1,0 +1,110 @@
+<script>
+    var colorSetting = "{{color_setting}}";
+    var colorMinimum = "{{color_min}}";
+    var colorMaximum = "{{color_max}}";
+</script>
+
+<script type="application/javascript" src="{{ STATIC_URL }}searcher/dashboard/dashboard.js"></script>
+
+<div id='dashboard-page-wrapper' class="page-wrapper width-height-max">
+    <div class="loader-wrapper flex-column">
+        <div class="loader width-height-max">
+        </div>
+        <div class="loader-text-wrapper flex-row">
+            <p id="loader-text"></p>
+        </div>
+    </div>
+    <div class="flex-column hidden" id="outermost-wrapper-dashboard">
+
+        <div class="flex-column width-height-max">
+
+            <ul id="outermost-navtab" class="nav nav-tabs dashboard-nav-tabs flex-row">
+                {% for index in indices %}
+                    {% if forloop.first %}
+                        {% if indices|length == 1 %}
+                            <li class="flex-1 active hidden"><a data-toggle="tab"
+                                                                href="#datatables-container-{{ index }}">{{ index }}</a>
+                            </li>
+                        {% else %}
+                            <li class="flex-1 active"><a class="dashboard-nav-a-index" data-toggle="tab"
+                                                         href="#datatables-container-{{ index }}">{{ index }}</a>
+                            </li>
+                        {% endif %}
+
+                    {% else %}
+                        <li class="flex-1 "><a class="dashboard-nav-a-index" data-toggle="tab"
+                                              href="#datatables-container-{{ index }}">{{ index }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+
+            <div class="tab-content">
+                {% for index in indices %}
+                    <div class=" tab-pane fade in{% if forloop.first %} active{% endif %}"
+                         id="datatables-container-{{ index }}">
+
+                        <ul class="nav nav-tabs dashboard-nav-tabs flex-row">
+                            <li class="flex-1 active" id="{{ index }}-sterms-tab"><a class="dashboard-nav-a" data-toggle="tab"
+                                                         href="#{{ index }}-sterms"
+                                                         title="For building basic searches">Frequent
+                                items</a>
+                            </li>
+                            <li class="flex-1" id="{{ index }}-sigsterms-tab"><a class="dashboard-nav-a" data-toggle="tab"
+                                                  href="#{{ index }}-sigsterms"
+                                                  title="For expanding basic searches via similarity queries">Significant
+                                words</a>
+                            </li>
+                            <li class="flex-1" id="{{ index }}-nested-tab"><a class="dashboard-nav-a" data-toggle="tab" href="#{{ index }}-nested"
+                                                  title="For expanding basic searches via similarity queries">Facts</a>
+                            </li>
+                            <li class="flex-1" id="{{ index }}-value_count-tab"><a class="dashboard-nav-a" data-toggle="tab"
+                                                  href="#{{ index }}-value_count"
+                                                  title="For expanding basic searches via similarity queries">Statistics</a>
+                            </li>
+                            <li class="flex-1" id="{{ index }}-timelines-tab"><a class="dashboard-nav-a" data-toggle="tab"
+                                                  href="#{{ index }}-timelines"
+                                                  title="For expanding basic searches via similarity queries">Timelines</a>
+                            </li>
+
+                        </ul>
+                        <div class="tab-content">
+                            <div id='{{ index }}-sterms' class="tab-pane fade in active">
+                                <div id='{{ index }}-sterms-table' class=" index-tables-holder">
+
+                                </div>
+                            </div>
+                            <div id='{{ index }}-sigsterms' class="tab-pane fade in">
+                                <div id='{{ index }}-sigsterms-table' class="index-tables-holder">
+
+                                </div>
+                            </div>
+                            <div id='{{ index }}-nested' class="tab-pane fade in">
+                                <div id='{{ index }}-nested-table' class="index-tables-holder">
+
+                                </div>
+                            </div>
+                            <div id='{{ index }}-value_count' class="tab-pane fade in">
+                                <div id='{{ index }}-value_count-table' class="index-tables-holder">
+
+                                </div>
+                            </div>
+                            <div id='{{ index }}-timelines' class="tab-pane fade in bg-white">
+
+                                <div id="timeline-agg-container-month-{{ index }}">
+
+                                </div>
+                                <div id="timeline-agg-container-year-{{ index }}">
+
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
