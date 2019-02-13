@@ -33,7 +33,7 @@ from task_manager.task_manager import filter_preprocessor_params
 from task_manager.task_manager import translate_parameters
 from task_manager.task_manager import collect_map_entries
 from task_manager.task_manager import get_fields
-
+from operator import itemgetter
 
 @login_required
 def index(request):
