@@ -14,13 +14,14 @@ from utils.datasets import Datasets
 from utils.helper_functions import add_dicts
 from utils.es_manager import ES_Manager
 from texta.settings import FACT_PROPERTIES
-
 from .base_worker import BaseWorker
 
+from task_manager.document_preprocessor import preprocessor_map
+from task_manager.document_preprocessor import PREPROCESSOR_INSTANCES
 
 class PreprocessorWorker(BaseWorker):
 
-    def __init__(self, scroll_size=10000, time_out='10m'):
+    def __init__(self, scroll_size=1000, time_out='10m'):
         self.es_m = None
         self.task_id = None
         self.params = None
