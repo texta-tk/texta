@@ -131,7 +131,7 @@ class EsDataSample(object):
         for field in self.fields:
             positive_samples_map[field] = []
 
-        self.es_m.set_query_parameter('size', 5000)
+        self.es_m.set_query_parameter('size', 500)
         response = self.es_m.scroll()
         scroll_id = response['_scroll_id']
         total_hits = response['hits']['total']
