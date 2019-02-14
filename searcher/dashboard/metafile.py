@@ -11,5 +11,5 @@ class BaseDashboardConductor(metaclass=abc.ABCMeta):
 class BaseDashboardFormater(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
-    def format_result(self, response):
+    def format_result(self, response, field_count):
         pass

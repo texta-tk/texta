@@ -19,6 +19,7 @@ $(function () {
         },
         success: function (data) {
             if (checkNested(data, 'indices')) {
+                console.log(data);
                 updateLoaderStatus('Drawing Dashboard')
                 let indicesArray = [];
                 createIndices(indicesArray, data)
@@ -240,7 +241,7 @@ function formatStatistics(index) {
 
     let result = [];
     for (let f in data) {
-        result.push([f, data[f].value, data[f].percentage])
+        result.push([f, data[f].doc_count, data[f].percentage])
     }
     if (result.length === 0) {
         return undefined

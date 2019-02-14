@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from pprint import pprint
 
 import elasticsearch_dsl
 from elasticsearch_dsl import MultiSearch
@@ -8,6 +8,7 @@ from searcher.dashboard.es_helper import DashboardEsHelper
 
 class MultiSearchConductor:
     def __init__(self):
+        self.field_counts = {}
         self.multi_search = MultiSearch()
 
     def query_conductor(self, indices, query_body, elasticsearch, es_url, excluded_fields):
@@ -36,51 +37,52 @@ class MultiSearchConductor:
         for field_dict in list_of_normal_fields:
             field_type = field_dict['type']
             field_name = field_dict['full_path']
-            bucket_name = self._remove_dot_notation(field_name)
+            clean_field_name = self._remove_dot_notation(field_name)
+
+            search_gateway = elasticsearch_dsl.Search(index=index).using(elasticsearch)
+            self.field_counts[field_name] = search_gateway.query("exists", field=clean_field_name).count()
 
             # Do not play around with the #, they exist to avoid naming conflicts as awkward as they may be.
             # TODO Find a better solution for this.
             if field_type == "text":
                 if query_body is not None:
                     search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
-                    search_dsl.aggs.bucket("sigsterms#" + bucket_name + '#text_sigterms', 'significant_text', field=field_name, filter_duplicate_text=True)
+                    search_dsl.aggs.bucket("sigsterms#{0}#text_sigterms".format(field_name), 'significant_text', field=field_name, filter_duplicate_text=True)
                     self.multi_search = self.multi_search.add(search_dsl)
 
             elif field_type == "keyword":
                 search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
-                search_dsl.aggs.bucket("sterms#" + bucket_name + '#keyword_terms', 'terms', field=field_name)
-                search_dsl.aggs.bucket("value_count#" + bucket_name + '#keyword_count', 'value_count', field=field_name)
+                search_dsl.aggs.bucket("sterms#{0}#keyword_terms".format(field_name), 'terms', field=field_name)
                 self.multi_search = self.multi_search.add(search_dsl)
 
             elif field_type == "date":
                 search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
-                search_dsl.aggs.bucket("date_histogram#" + bucket_name + "_month" + "#date_month", 'date_histogram', field=field_name, interval='month')
-                search_dsl.aggs.bucket("date_histogram#" + bucket_name + "_year" + "#date_year", 'date_histogram', field=field_name, interval='year')
+                search_dsl.aggs.bucket("date_histogram#{0}_month#date_month".format(field_name), 'date_histogram', field=field_name, interval='month')
+                search_dsl.aggs.bucket("date_histogram#{0}_year#date_year".format(field_name), 'date_histogram', field=field_name, interval='year')
                 self.multi_search = self.multi_search.add(search_dsl)
 
             elif field_type == "integer":
                 search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
-                search_dsl.aggs.bucket("extended_stats#" + bucket_name + "#int_stats", 'extended_stats', field=field_name)
-                search_dsl.aggs.bucket("value_count#" + bucket_name + '#int_count', 'value_count', field=field_name)
+                search_dsl.aggs.bucket("extended_stats#{0}#int_stats".format(field_name), 'extended_stats', field=field_name)
                 self.multi_search = self.multi_search.add(search_dsl)
 
             elif field_type == "long":
                 search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
-                search_dsl.aggs.bucket("extended_stats#" + bucket_name + "#long_stats", 'extended_stats', field=field_name)
-                search_dsl.aggs.bucket("value_count#" + bucket_name + '#long_count', 'value_count', field=field_name)
+                search_dsl.aggs.bucket('extended_stats#{0}#long_stats'.format(field_name), 'extended_stats', field=field_name)
                 self.multi_search = self.multi_search.add(search_dsl)
 
             elif field_type == "float":
                 search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
-                search_dsl.aggs.bucket("extended_stats#" + bucket_name + "#float_stats", 'extended_stats', field=field_name)
-                search_dsl.aggs.bucket("value_count#" + bucket_name + '#float_count', 'value_count', field=field_name)
+                search_dsl.aggs.bucket("extended_stats#{0}#float_stats".format(field_name), 'extended_stats', field=field_name)
                 self.multi_search = self.multi_search.add(search_dsl)
 
     def _texta_facts_agg_handler(self, query_body, index, elasticsearch):
         search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
-        search_dsl.aggs.bucket("nested#" + 'texta_facts', 'nested', path='texta_facts') \
+
+        search_dsl.aggs.bucket("nested#texta_facts", 'nested', path='texta_facts') \
             .bucket('sterms#fact_category', 'terms', field='texta_facts.fact', collect_mode="breadth_first") \
-            .bucket("sigsterms#" + 'significant_facts', 'significant_terms', field='texta_facts.str_val')
+            .bucket("sigsterms#significant_facts", 'significant_terms', field='texta_facts.str_val')
+
         self.multi_search = self.multi_search.add(search_dsl)
 
     def _filter_excluded_fields(self, excluded_fields, normal_fields, nested_fields):
