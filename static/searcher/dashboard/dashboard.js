@@ -63,8 +63,8 @@ function makeTimelines(index) {
     let width = getHiddenDivMaxWidth(`timeline-agg-container-month-${index.index_name}`) - 20
     makeMonthTimeline(index, width)
     makeYearTimeline(index, width)
-    if($(`#${index.index_name}-timelines`).children().length === 0){
-        removeIndexTab(index,'timelines')
+    if ($(`#${index.index_name}-timelines`).children().length === 0) {
+        removeIndexTab(index, 'timelines')
     }
 }
 
@@ -83,7 +83,7 @@ function makeMonthTimeline(index, width) {
         Plotly.newPlot(div, [{
             x: xData,
             y: yData
-        }], layout,{displaylogo: false});
+        }], layout, {displaylogo: false});
 
     } else {
         div.remove()
@@ -106,7 +106,7 @@ function makeYearTimeline(index, width) {
         Plotly.newPlot(div, [{
             x: xData,
             y: yData
-        }], layout,{displaylogo: false});
+        }], layout, {displaylogo: false});
 
     } else {
         div.remove()
@@ -137,7 +137,7 @@ function makeFactsTables(index) {
 
         })
     } else {
-        removeIndexTab(index,'nested')
+        removeIndexTab(index, 'nested')
         console.log('No facts present: ' + index.index_name)
     }
 
@@ -148,8 +148,8 @@ function makeSignificantWordsTables(index) {
     let colorRowIndex = 1
     let t_id = 0;
     let rootProperty = index.getSignificantWords()
-    if(!rootProperty){
-        removeIndexTab(index,'sigsterms')
+    if (!rootProperty) {
+        removeIndexTab(index, 'sigsterms')
         return null
     }
     for (let field in rootProperty) {
@@ -252,10 +252,10 @@ function formatFacts(index) {
     /* todo:this*/
     let root = index.getFacts()
     if (checkNested(root, 'texta_facts', 'sterms#fact_category', 'buckets')) {
-        let facts =  (root.texta_facts['sterms#fact_category'].buckets.map((e) => {
+        let facts = (root.texta_facts['sterms#fact_category'].buckets.map((e) => {
             return {"key": e.key, "facts": e['sigsterms#significant_facts'].buckets}
         }));
-        if(facts.length === 0){
+        if (facts.length === 0) {
             return undefined
         }
         return facts
@@ -298,9 +298,11 @@ function getHiddenDivMaxWidth(elementID) {
     clonedTimelineContainer.remove()
     return width
 }
-function removeIndexTab(index,type){
+
+function removeIndexTab(index, type) {
     $(`#${index.index_name}-${type}-tab`).remove()
 }
+
 function drawSignificantWordsTable(index, result, color, colorRowIndex, columnTitle, t_id) {
     let tableID = `${index.AggregationTpes.SIGSTERMS}-generated-${index.index_name}${t_id}`
     $(`#${index.index_name}-sigsterms-table`).append(`<table id="${tableID}" style="width:100%"></table>`);
@@ -315,10 +317,17 @@ function drawSignificantWordsTable(index, result, color, colorRowIndex, columnTi
             {title: columnTitle},
             {title: "count"}
         ],
-        "rowCallback": function (row, data, index) {
-            $($(row).children()[colorRowIndex]).css('background-color', color(data[colorRowIndex]))
-        }
-    });
+        columnDefs: [{
+            "targets": '_all',
+            "render": $.fn.dataTable.render.text()
+        }],
+        "rowCallback":
+
+            function (row, data, index) {
+                $($(row).children()[colorRowIndex]).css('background-color', color(data[colorRowIndex]))
+            }
+    })
+    ;
 }
 
 function drawFrequentItemsTable(index, result, color, colorRowIndex, columnTitle, t_id) {
@@ -334,11 +343,17 @@ function drawFrequentItemsTable(index, result, color, colorRowIndex, columnTitle
         columns: [
             {title: columnTitle},
             {title: "count"}
-        ],
-        "rowCallback": function (row, data, index) {
-            $($(row).children()[colorRowIndex]).css('background-color', color(data[colorRowIndex]))
-        }
-    });
+        ], columnDefs: [{
+            "targets": '_all',
+            "render": $.fn.dataTable.render.text()
+        }],
+        "rowCallback":
+
+            function (row, data, index) {
+                $($(row).children()[colorRowIndex]).css('background-color', color(data[colorRowIndex]))
+            }
+    })
+    ;
 }
 
 function drawFactsTable(index, result, color, colorRowIndex, tableTitle, t_id) {
@@ -351,6 +366,10 @@ function drawFactsTable(index, result, color, colorRowIndex, tableTitle, t_id) {
         ordering: true,
         order: [1, 'desc'],
         paging: false,
+        columnDefs: [{
+            "targets": '_all',
+            "render": $.fn.dataTable.render.text()
+        }],
         columns: [
             {title: "facts"},
             {title: "count"}
@@ -370,6 +389,10 @@ function drawStatisticsTable(index, result, color, colorRowIndex) {
         ordering: true,
         order: [1, 'desc'],
         paging: false,
+        columnDefs: [{
+            "targets": '_all',
+            "render": $.fn.dataTable.render.text()
+        }],
         columns: [
             {title: "field"},
             {title: "count"},
