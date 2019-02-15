@@ -12,7 +12,7 @@ texta/log/*
 # Exclude files
 texta/files/*
 
-migrations
+#migrations
 
 # Exclude documentation build files but not the html, js etc
 texta/documentation/sphinx/build/doctrees/*
