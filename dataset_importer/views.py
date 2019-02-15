@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.shortcuts import render
 from django.template import loader
 
+from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse
@@ -40,6 +41,7 @@ def collect_map_entries(map_):
 
 
 @login_required
+@user_passes_test(lambda u: u.is_superuser)
 def index(request):
     template = loader.get_template('dataset_importer.html')
     jobs = DatasetImport.objects.all()
