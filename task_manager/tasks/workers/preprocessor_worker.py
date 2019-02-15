@@ -114,8 +114,8 @@ class PreprocessorWorker(BaseWorker):
             show_progress.update(100)
             # task.result = json.dumps({'documents_processed': show_progress.n_total, 'preprocessor_key': self.params['preprocessor_key']})
             task.result = json.dumps({'documents_processed': show_progress.n_total, **meta, 'preprocessor_key': self.params['preprocessor_key']})
-            task.update_status(Task.STATUS_UPDATING)
-            self.es_m.update_documents()
+            #task.update_status(Task.STATUS_UPDATING)
+            #self.es_m.update_documents()
             task.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
         # If runs into an exception, give feedback
         except Exception as e:
