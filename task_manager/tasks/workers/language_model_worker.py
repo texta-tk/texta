@@ -71,7 +71,7 @@ class LanguageModelWorker(BaseWorker):
             show_progress.update_view(100.0)
 
             # create cluster model
-            self.word_cluster = WordCluster(model, n_clusters=500)
+            self.word_cluster = WordCluster(model)
 
             # Save model
             self.model = model
