@@ -6,7 +6,7 @@ cython
 scipy
 scikit-learn==0.20.1
 gensim
-django==2.0.2
+django==2.1.5
 pathlib
 dateutils
 sympy
