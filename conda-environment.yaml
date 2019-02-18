@@ -9,7 +9,7 @@ dependencies:
     - cython
     - scipy
     - gensim
-    - django=2.0.2
+    - django=2.1.5
     - sympy
     - lxml
     - beautifulsoup4
