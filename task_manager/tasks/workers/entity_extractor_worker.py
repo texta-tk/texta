@@ -15,7 +15,7 @@ from utils.datasets import Datasets
 from texta.settings import ERROR_LOGGER, INFO_LOGGER, MODELS_DIR, URL_PREFIX, MEDIA_URL, PROTECTED_MEDIA
 from utils.helper_functions import plot_confusion_matrix, create_file_path
 import pandas as pd
-import matplotlib.pyplot as plt
+
 from pycrfsuite import Trainer, Tagger
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix

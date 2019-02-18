@@ -47,6 +47,36 @@ class TagModelWorker(BaseWorker):
         self.task_type = None
         self.n_jobs = 1
 
+    def _handle_language_model(self, data_sample_x_map):
+        if 'language_model' in self.task_params:
+            language_model = self.task_params['language_model']
+
+            if 'word_cluster_fields' in self.task_params:
+                word_cluster_fields = self.task_params['word_cluster_fields']
+            else:
+                word_cluster_fields = None
+
+
+            task_obj = Task.objects.get(pk=int(language_model['pk']))
+            resources = task_obj.resources
+            sw = StopWords()
+
+            # detect phrases & remove stopwords
+            phraser = Phraser(int(language_model['pk']))
+            phraser.load()
+            if phraser:
+                for field_name, field_content in data_sample_x_map.items():
+                    field_content = [' '.join(phraser.phrase(sw.remove(text).split(' '))) for text in field_content]
+                    data_sample_x_map[field_name] = field_content
+
+            # cluster if asked
+            if word_cluster_fields and 'word_cluster' in resources:
+                wc = resources['word_cluster']
+                for word_cluster_field in word_cluster_fields:
+                    if word_cluster_field in data_sample_x_map:
+                        data_sample_x_map[word_cluster_field] = [wc.text_to_clusters(text) for text in data_sample_x_map[word_cluster_field]]
+
+
     def run(self, task_id):
 
         self.task_id = task_id
@@ -65,12 +95,6 @@ class TagModelWorker(BaseWorker):
         negative_set_multiplier = float(self.task_params['negative_multiplier_opt'])
         max_sample_size_opt = int(self.task_params['max_sample_size_opt'])
         score_threshold_opt = float(self.task_params['score_threshold_opt'])
-        language_model = self.task_params['language_model']
-
-        if 'word_cluster_fields' in self.task_params:
-            word_cluster_fields = self.task_params['word_cluster_fields']
-        else:
-            word_cluster_fields = None
 
         if 'num_threads' in self.task_params:
             self.n_jobs = int(self.task_params['num_threads'])
@@ -93,7 +117,7 @@ class TagModelWorker(BaseWorker):
                 param_query = self.task_params['search_tag']
             else:
                 # Otherwise, load query from saved search
-                param_query = json.loads(Search.objects.get(pk=int(self.task_params['search'])).query)
+                param_query = self._parse_query(self.task_params)
 
             # Build Data sampler
             ds = Datasets().activate_datasets_by_id(self.task_params['dataset'])
@@ -106,26 +130,8 @@ class TagModelWorker(BaseWorker):
                                    max_positive_sample_size=max_sample_size_opt,
                                    score_threshold=score_threshold_opt)
             data_sample_x_map, data_sample_y, statistics = es_data.get_data_samples()
-
-
-            task_obj = Task.objects.get(pk=int(language_model['pk']))
-            resources = task_obj.resources
-            sw = StopWords()
-
-            # detect phrases & remove stopwords
-            phraser = Phraser(int(language_model['pk']))
-            phraser.load()
-            if phraser:
-                for field_name, field_content in data_sample_x_map.items():
-                    field_content = [' '.join(phraser.phrase(sw.remove(text).split(' '))) for text in field_content]
-                    data_sample_x_map[field_name] = field_content
-
-            # cluster if asked
-            if word_cluster_fields and 'word_cluster' in resources:
-                wc = resources['word_cluster']
-                for word_cluster_field in word_cluster_fields:
-                    if word_cluster_field in data_sample_x_map:
-                        data_sample_x_map[word_cluster_field] = [wc.text_to_clusters(text) for text in data_sample_x_map[word_cluster_field]]
+            # Pass data_sample_x_map as reference to be modified by self._handle_language_model
+            self._handle_language_model(data_sample_x_map)
 
             # Training the model.
             show_progress.update(1)
