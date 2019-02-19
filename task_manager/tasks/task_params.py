@@ -90,7 +90,7 @@ def activate_task_worker(task_type):
         logging.getLogger(INFO_LOGGER).info(json.dumps(
             {'process':'check_task_params',
             'args':
-            {'task_param':task_param,
+            {
             'task_param_id':task_param['id'],
             'task_type':task_type,
             'is_equal': task_param['id'] == task_type
