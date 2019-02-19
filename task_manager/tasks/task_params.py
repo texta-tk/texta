@@ -95,7 +95,7 @@ def activate_task_worker(task_type):
             'task_type':task_type,
             'is_equal': task_param['id'] == task_type
         }}))
-        if task_param['id'] == task_type.value:
+        if task_param['id'] == task_type:
             # Instantiate worker
             worker_instance = task_param['worker']()
             return worker_instance

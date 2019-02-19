@@ -11,7 +11,6 @@ class QueryBuilder:
 
     def __init__(self, es_params):
         self.query = self._build(es_params)
-        #print(self.query['main'])
 
     def _build(self, es_params):
 

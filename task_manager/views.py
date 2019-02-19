@@ -91,9 +91,7 @@ def index(request):
 @login_required
 def start_task(request):
     user = request.user
-    task_type = TaskTypes(request.POST['task_type'])
-    print(task_type)
-    print(type(task_type))
+    task_type = request.POST['task_type']
     task_params = filter_params(request.POST)
 
     description = task_params['description']
@@ -107,7 +105,13 @@ def start_task(request):
     task_id = create_task(task_type, description, task_params, user)
     # Add task to queue
     task = Task.get_by_id(task_id)
-    task.update_status(Task.STATUS_QUEUED)
+
+    if not TaskTypes.hasValue(task_type):    
+        task.result = json.dumps({'error': '{} is not a proper Task Type value'.format(task_type)})
+        task.update_status(Task.STATUS_FAILED, set_time_completed=True)
+    else:
+        task.update_status(Task.STATUS_QUEUED)
+
 
     return HttpResponse()
 
