@@ -57,7 +57,7 @@ class Command(BaseCommand):
         if worker is None:
             # Invalid task
             task.update_status(Task.STATUS_FAILED)
-            log_data = json.dumps({'process': 'Task Scheduler', 'event': 'invalid_task'})
+            log_data = json.dumps({'process': 'Task Scheduler', 'event': 'invalid_task', 'task_type': task_type, 'task_id': task_id})
             logging.getLogger(ERROR_LOGGER).error(log_data)
             return
         try:
@@ -66,7 +66,7 @@ class Command(BaseCommand):
         except Exception as e:
             # Capture generic task error
             task.update_status(Task.STATUS_FAILED)
-            log_data = json.dumps({'process': 'Task Scheduler', 'event': 'task_execution_error'})
+            log_data = json.dumps({'process': 'Task Scheduler', 'event': 'task_execution_error', 'task_type': task_type, 'task_id': task_id}})
 
             logging.getLogger(INFO_LOGGER).info(log_data)
             logging.getLogger(ERROR_LOGGER).exception(e)
