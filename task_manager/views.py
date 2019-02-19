@@ -92,6 +92,8 @@ def index(request):
 def start_task(request):
     user = request.user
     task_type = TaskTypes(request.POST['task_type'])
+    print(task_type)
+    print(type(task_type))
     task_params = filter_params(request.POST)
 
     description = task_params['description']
