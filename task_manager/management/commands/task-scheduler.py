@@ -66,7 +66,7 @@ class Command(BaseCommand):
         except Exception as e:
             # Capture generic task error
             task.update_status(Task.STATUS_FAILED)
-            log_data = json.dumps({'process': 'Task Scheduler', 'event': 'task_execution_error', 'task_type': task_type, 'task_id': task_id}})
+            log_data = json.dumps({'process': 'Task Scheduler', 'event': 'task_execution_error', 'task_type': task_type, 'task_id': task_id})
 
             logging.getLogger(INFO_LOGGER).info(log_data)
             logging.getLogger(ERROR_LOGGER).exception(e)
