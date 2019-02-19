@@ -6,7 +6,7 @@ from task_manager.tasks.workers.entity_extractor_worker import EntityExtractorWo
 from task_manager.tasks.workers.preprocessor_worker import PreprocessorWorker
 from task_manager.tasks.workers.management_workers.management_worker import ManagementWorker
 from utils.es_manager import ES_Manager
-from texta.settings import ERROR_LOGGER
+from texta.settings import ERROR_LOGGER, INFO_LOGGER
 from task_manager.tasks.workers.management_workers.management_task_params import ManagerKeys
 from task_manager.tasks.task_types import TaskTypes
 
@@ -87,6 +87,14 @@ def get_fact_names(es_m):
 
 def activate_task_worker(task_type):
     for task_param in task_params:
+        logging.getLogger(INFO_LOGGER).info(json.dumps(
+            {'process':'check_task_params',
+            'args':
+            {'task_param':task_param,
+            'task_param_id':task_param['id'],
+            'task_type':task_type,
+            'is_equal': task_param['id'] == task_type
+        }}))
         if task_param['id'] == task_type:
             # Instantiate worker
             worker_instance = task_param['worker']()
