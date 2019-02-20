@@ -24,8 +24,6 @@ class FactManager:
         self.es_params = request.POST
         self.ds = Datasets().activate_datasets(request.session)
         self.es_m = self.ds.build_manager(ES_Manager)
-        # Maybe should come from some settings file
-        self.max_name_len = 25
 
     def start_fact_deleter_task(self, rm_facts_dict, doc_id=None):
         """Remove facts from documents, by starting fact_deleter management task.

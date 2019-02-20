@@ -118,6 +118,8 @@ class FactAdderSubWorker(BaseWorker):
         response = self.es_m.scroll(size=self.scroll_size, field_scroll=self.fact_field)
         scroll_id = response['_scroll_id']
         total_docs = response['hits']['total']
+        # For partial update
+        doc_ids = [x['_id'] for x in response['hits']['hits'] if '_id' in x]
 
         total_docs = response['hits']['total']
         show_progress = ShowProgress(self.task_id, multiplier=total_docs/self.scroll_size)
@@ -134,12 +136,18 @@ class FactAdderSubWorker(BaseWorker):
                     self.es_m.update_mapping_structure(FACT_FIELD, FACT_PROPERTIES)
                 while docs_left > 0:
                     data, fact_count = self._derive_match_spans(hits, fact_count)
+                    self.es_m.plain_post_bulk(self.es_m.es_url, data)
+                    self.es_m.update_documents_by_id(doc_ids)
                     response = self.es_m.scroll(scroll_id=scroll_id, size=self.scroll_size, field_scroll=FACT_FIELD)
                     if response['hits']:
                         docs_left = len(response['hits']['hits'])
                         scroll_id = response['_scroll_id']
-                    self.es_m.plain_post_bulk(self.es_m.es_url, data)
+                        # For partial update
+                        doc_ids = [x['_id'] for x in response['hits']['hits'] if '_id' in x]
                     show_progress.update(docs_left)
+                # Update the last patch
+                update_response = self.es_m.update_documents_by_id(doc_ids)
+                
             except Exception as e:
                 logging.getLogger(ERROR_LOGGER).exception(e)
                 return {'fact_count': fact_count, 'status': 'scrolling_error'}

@@ -1,7 +1,6 @@
 # -*- coding: utf8 -*-
 import json
 import copy
-from pprint import pprint
 from typing import List, Dict, Any
 
 import requests
@@ -10,7 +9,7 @@ from utils.generic_helpers import find_key_recursivly
 import datetime
 
 from utils.query_builder import QueryBuilder
-from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, FACT_PROPERTIES, date_format, es_prefix
+from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, FACT_PROPERTIES, date_format, es_prefix, FACT_FIELD
 
 # Need to update index.max_inner_result_window to increase
 HEADERS = {'Content-Type': 'application/json'}
@@ -29,7 +28,7 @@ class ES_Manager:
     """
 
     HEADERS = HEADERS
-    TEXTA_RESERVED = ['texta_facts']
+    TEXTA_RESERVED = [FACT_FIELD]
     TEXTA_META_FIELDS = ['_es_id']
     build_search_query = None
     # Redefine requests if LDAP authentication is used
@@ -91,8 +90,8 @@ class ES_Manager:
                 if new_field not in properties:
                     properties[new_field] = new_field_properties
 
-                if 'texta_facts' not in properties:
-                    properties['texta_facts'] = FACT_PROPERTIES
+                if FACT_FIELD not in properties:
+                    properties[FACT_FIELD] = FACT_PROPERTIES
 
                 properties = {'properties': properties}
                 url = '{0}/{1}/_mapping/{2}'.format(self.es_url, index, mapping)
@@ -102,6 +101,11 @@ class ES_Manager:
 
     def update_documents(self):
         response = self.plain_post('{0}/{1}/_update_by_query?refresh&conflicts=proceed'.format(self.es_url, self.stringify_datasets()))
+        return response
+
+    def update_documents_by_id(self, ids: List[str]):
+        query = json.dumps({"query": {"terms": {"_id": ids }}})
+        response = self.plain_post('{0}/{1}/_update_by_query?conflicts=proceed'.format(self.es_url, self.stringify_datasets()), data=query)
         return response
 
     def _decode_mapping_structure(self, structure, root_path=list(), nested_layers=list()):
@@ -190,18 +194,18 @@ class ES_Manager:
 
         fact_types_with_queries = {
             'fact': {'match_all': {}},
-            'fact_str': {'nested': {'path': 'texta_facts', 'query': {'exists': {'field': 'texta_facts.str_val'}}, 'inner_hits': {}}},
-            'fact_num': {'nested': {'path': 'texta_facts', 'query': {'exists': {'field': 'texta_facts.num_val'}}, 'inner_hits': {}}}
+            'fact_str': {'nested': {'path': FACT_FIELD, 'query': {'exists': {'field': '{}.str_val'.format(FACT_FIELD)}}, 'inner_hits': {}}},
+            'fact_num': {'nested': {'path': FACT_FIELD, 'query': {'exists': {'field': '{}.num_val'.format(FACT_FIELD)}}, 'inner_hits': {}}}
         }
 
         for fact_type, query in fact_types_with_queries.items():
             for active_dataset in self.active_datasets:
                 aggs = {
                     fact_type: {
-                        "nested": {"path": "texta_facts"},
+                        "nested": {"path": FACT_FIELD},
                         "aggs": {
                             fact_type: {
-                                'terms': {"field": "texta_facts.doc_path", "size": 1, 'order': {'documents.doc_count': 'desc'}},
+                                'terms': {"field": "{}.doc_path".format(FACT_FIELD), "size": 1, 'order': {'documents.doc_count': 'desc'}},
                                 "aggs": {
                                     "documents": {"reverse_nested": {}}
                                 }

@@ -82,10 +82,11 @@ class PreprocessorWorker(BaseWorker):
         response = self.es_m.scroll(field_scroll=field_paths, size=self.scroll_size, time_out=self.scroll_time_out)
         scroll_id = response['_scroll_id']
         total_docs = response['hits']['total']
+        # For partial update
+        doc_ids = [x['_id'] for x in response['hits']['hits'] if '_id' in x]
 
         total_hits = len(response['hits']['hits'])
         show_progress.set_total(total_docs)
-
         try:
             # Metadata of preprocessor outputs
             meta = {}
@@ -95,28 +96,32 @@ class PreprocessorWorker(BaseWorker):
                 if documents:
                     if 'texta_facts' not in documents[0]:
                         self.es_m.update_mapping_structure('texta_facts', FACT_PROPERTIES)
-
                 # Apply all preprocessors
                 for preprocessor_code in parameter_dict['preprocessors']:
                     preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
                     result_map = preprocessor.transform(documents, **parameter_dict)
                     documents = result_map['documents']
                     add_dicts(meta, result_map['meta'])
+
                 self.es_m.bulk_post_documents(documents, ids, document_locations)
                 # Update progress is important to check task is alive
                 show_progress.update(total_hits)
+                self.es_m.update_documents_by_id(doc_ids)
                 # Get next page if any
                 response = self.es_m.scroll(scroll_id=scroll_id, time_out=self.scroll_time_out)
                 total_hits = len(response['hits']['hits'])
                 scroll_id = response['_scroll_id']
+                # For partial update
+                doc_ids = [x['_id'] for x in response['hits']['hits'] if '_id' in x]
 
             task = Task.objects.get(pk=self.task_id)
             show_progress.update(100)
-            # task.result = json.dumps({'documents_processed': show_progress.n_total, 'preprocessor_key': self.params['preprocessor_key']})
             task.result = json.dumps({'documents_processed': show_progress.n_total, **meta, 'preprocessor_key': self.params['preprocessor_key']})
             task.update_status(Task.STATUS_UPDATING)
-            self.es_m.update_documents()
+            # Update the last batch of documents
+            self.es_m.update_documents_by_id(doc_ids)
             task.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+
         # If runs into an exception, give feedback
         except Exception as e:
             logging.getLogger(ERROR_LOGGER).exception(json.dumps(
@@ -126,6 +131,7 @@ class PreprocessorWorker(BaseWorker):
             task.result = json.dumps({'documents_processed': show_progress.n_count, 'preprocessor_key': self.params['preprocessor_key'], 'error': str(e)})
             task.time_completed = datetime.now()
             task.save()
+
 
     def _prepare_preprocessor_data(self, response: dict):
         """

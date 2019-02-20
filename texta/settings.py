@@ -494,8 +494,8 @@ FACT_PROPERTIES = {
 	}
 }
 
+# Fact field name, use this instead of a magic string
 FACT_FIELD = 'texta_facts'
-MAX_NAME_FACT_LENGTH = 30
 
 ############################ Boot scripts ###########################
 

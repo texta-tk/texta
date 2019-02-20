@@ -47,6 +47,9 @@ class FactDeleterSubWorker(BaseWorker):
 
             scroll_id = response['_scroll_id']
             total_docs = response['hits']['total']
+            # For partial update
+            doc_ids = [x['_id'] for x in response['hits']['hits'] if '_id' in x]
+
             show_progress = ShowProgress(self.task_id, multiplier=total_docs/self.scroll_size)
             show_progress.set_total(total_docs)
             show_progress.update_view(0)
@@ -74,11 +77,14 @@ class FactDeleterSubWorker(BaseWorker):
                         data += json.dumps({"update": {"_id": document['_id'], "_type": document['_type'], "_index": document['_index']}})+'\n'
                         document = {'doc': {FACT_FIELD: new_field}}
                         data += json.dumps(document)+'\n'
+
+                    self.es_m.plain_post_bulk(self.es_m.es_url, data)
+                    self.es_m.update_documents_by_id(doc_ids)
                     response = self.es_m.scroll(scroll_id=scroll_id, size=self.scroll_size, field_scroll=FACT_FIELD)
                     docs_left = len(response['hits']['hits'])
                     scroll_id = response['_scroll_id']
+                    doc_ids = [x['_id'] for x in response['hits']['hits'] if '_id' in x]
                     show_progress.update(docs_left)
-                    self.es_m.plain_post_bulk(self.es_m.es_url, data)
                 except:
                     total_failed_batches += 1
                     logging.getLogger(ERROR_LOGGER).error('A problem occurred during scrolling of fact deletion.', exc_info=True, extra={
@@ -87,6 +93,9 @@ class FactDeleterSubWorker(BaseWorker):
                         'response': response,
                         'rm_facts_dict': rm_facts_dict
                     })
+
+            # Update the last batch of documents
+            self.es_m.update_documents_by_id(doc_ids)
             show_progress.update_view(100.0)
             result = json.dumps({ "Documents modified": total_docs, "Facts removed": total_facts_removed, "Failed batches": total_failed_batches })
             return result
