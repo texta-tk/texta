@@ -1,6 +1,8 @@
 # -*- coding: utf8 -*-
 import json
 import copy
+from typing import List, Dict, Any
+
 import requests
 from functools import reduce
 from utils.generic_helpers import find_key_recursivly
@@ -95,6 +97,11 @@ class ES_Manager:
 
     def update_documents(self):
         response = self.plain_post('{0}/{1}/_update_by_query?refresh&conflicts=proceed'.format(self.es_url, self.stringify_datasets()))
+        return response
+
+    def update_documents_by_id(self, ids: List[str]):
+        query = json.dumps({"query": {"terms": {"_id": ids }}})
+        response = self.plain_post('{0}/{1}/_update_by_query?conflicts=proceed'.format(self.es_url, self.stringify_datasets()), data=query)
         return response
 
 
