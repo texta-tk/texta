@@ -74,12 +74,10 @@ class EsIterator:
         return query
 
     def __iter__(self):
-        self.es_m.set_query_parameter('size', ES_SCROLL_SIZE)
-
-        response = self.es_m.scroll()
+        response = self.es_m.scroll(size=ES_SCROLL_SIZE)
         scroll_id = response['_scroll_id']
-        total_hits = response['hits']['total']
-        while total_hits > 0:
+        batch_hits = len(response['hits']['hits'])
+        while batch_hits > 0:
             # Check errors in the database request
             if (response['_shards']['total'] > 0 and response['_shards']['successful'] == 0) or response['timed_out']:
                 msg = 'Elasticsearch failed to retrieve documents: ' \
@@ -113,10 +111,10 @@ class EsIterator:
                     logging.getLogger(ERROR_LOGGER).error('Error splitting the text.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
             
             if self.callback_progress:
-                self.callback_progress.update(total_hits)
+                self.callback_progress.update(batch_hits)
             
-            response = self.es_m.scroll(scroll_id=scroll_id)
-            total_hits = len(response['hits']['hits'])
+            response = self.es_m.scroll(scroll_id=scroll_id, size=ES_SCROLL_SIZE)
+            batch_hits = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
 
     def get_total_documents(self):
