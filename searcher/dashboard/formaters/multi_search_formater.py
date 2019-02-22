@@ -1,4 +1,5 @@
 import logging
+from pprint import pprint
 
 from searcher.dashboard.metafile import BaseDashboardFormater
 from typing import Dict, List
@@ -8,15 +9,15 @@ from texta.settings import ERROR_LOGGER
 
 class MultiSearchFormater(BaseDashboardFormater):
 
-    def format_result(self, response) -> Dict[str, List[dict]]:
+    def format_result(self, response, field_counts) -> Dict[str, List[dict]]:
         """
         Main function to format the response of aggregations.
         Takes input in the form of {<index_name>: ES_agg_query_result}
+        :param field_counts:
         :param response:
         :return:
         """
         response = self._format_initial_response(response)
-
         final_result = {'indices': []}
 
         for index_name, search_dict in response.items():
@@ -32,8 +33,7 @@ class MultiSearchFormater(BaseDashboardFormater):
 
             # Manually insert percentages into the value_counts aggregation.
             grouped_aggregations = reformated_agg_dict['aggregations']
-            if grouped_aggregations.get('value_count', None):
-                grouped_aggregations['value_count'] = self._add_value_count_percentages(grouped_aggregations, total_documents)
+            self._add_value_count_percentages(grouped_aggregations, total_documents, field_counts)
 
             final_result['indices'].append(reformated_agg_dict)
 
@@ -41,7 +41,7 @@ class MultiSearchFormater(BaseDashboardFormater):
 
     def _format_initial_response(self, response):
         """
-        Becuase MultiSearch does not contain a single response, but many it was
+        Because MultiSearch does not contain a single response, but many it was
         needed to preformat it (to avoid more work from the existing solution) to
         add in the hits for value_count and percentage.
         :param response:
@@ -50,13 +50,15 @@ class MultiSearchFormater(BaseDashboardFormater):
         final_result = {}
         for index, list_of_hits in response.items():
             final_result[index] = {'aggregations': {}, 'hits': {}}
+
             for hit in list_of_hits:
+                # One of the hit values is a string for the index name.
                 final_result[index]['aggregations'].update(hit['aggregations'])
                 final_result[index]['hits'].update(hit['hits'])
 
         return final_result
 
-    def _add_value_count_percentages(self, aggregation_dict: dict, total_document_count: int):
+    def _add_value_count_percentages(self, aggregation_dict: dict, total_document_count: int, field_counts: dict):
         """
         Traverses the previously grouped dictionary of ES aggregations, loops through the value_count
         aggregations and adds a percentage of how much a field is filled, compared to all documents.
@@ -66,12 +68,12 @@ class MultiSearchFormater(BaseDashboardFormater):
         :return:
         """
         try:
-            value_count_fields = aggregation_dict['value_count']
-            for field_name, agg_dict in value_count_fields.items():
-                field_count = agg_dict['value']
-                agg_dict['percentage'] = round(field_count * 100 / total_document_count, 2)
+            aggregation_dict["value_count"] = {}
 
-            return value_count_fields
+            for field_name, doc_count in field_counts.items():
+                percentage = round( doc_count * 100 / total_document_count, 2)
+                aggregation_dict["value_count"][field_name] = {'doc_count' : doc_count, 'percentage': percentage}
+
 
         except ZeroDivisionError as e:
             logging.getLogger(ERROR_LOGGER).exception(e)
