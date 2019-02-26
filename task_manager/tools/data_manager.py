@@ -176,7 +176,6 @@ class EsDataSample(object):
                                 try:
                                     _temp_text = _temp_text[k]
                                 except Exception:
-                                    logging.getLogger(ERROR_LOGGER).error('Field not present in document.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
                                     _temp_text = ''
                                 # sanity check to remove None values
                                 if not _temp_text:
