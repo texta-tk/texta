@@ -89,7 +89,10 @@ class EsIterator:
                     decoded_text = hit['_source']
                     for k in self.field.split('.'):
                         # get nested fields encoded as: 'field.sub_field'
-                        decoded_text = decoded_text[k]
+                        try:
+                            decoded_text = decoded_text[k]
+                        except:
+                            deconded_text = ""
                     
                     if decoded_text:
                         sentences = decoded_text.split('\n')
@@ -103,8 +106,10 @@ class EsIterator:
                             yield sentence
 
                 except KeyError:
+                    pass
                     # If the field is missing from the document
-                    logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
+                    # Commented out logging to stop spam
+                    # logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
 
                 except TypeError:
                     # If split failed
@@ -189,7 +194,9 @@ class EsDataSample(object):
 
                     except KeyError as e:
                         # If the field is missing from the document
-                        logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
+                        pass
+                        # Commented out to reduce spam
+                        # logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
                 else:
                     break
 
@@ -250,7 +257,9 @@ class EsDataSample(object):
 
                 except KeyError as e:
                     # If the field is missing from the document
-                    logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
+                    pass
+                    # Commented out to reduce spam
+                    # logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
 
         return negative_samples_map, negative_set
 
