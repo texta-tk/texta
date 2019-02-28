@@ -24,6 +24,9 @@ import multiprocessing
 import os
 import shutil
 
+#remove 
+from texta.settings import STATIC_URL, URL_PREFIX, INFO_LOGGER
+import logging
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -114,6 +117,15 @@ def index(request):
 
     allowed_datasets = Datasets().get_allowed_datasets(request.user)
     language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL).filter(status__iexact='completed').order_by('-pk')
+    print(language_models)
+    for model in language_models:
+        data = """
+            pk: {}
+            status: {}
+            description: {}
+            type: {}
+        """.format(model.pk, model.status, model.description, model.task_type)
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DEBUG MODELS', 'data': data}))
 
     return HttpResponse(template.render({'users':users,'datasets':datasets,'indices':indices,'STATIC_URL':STATIC_URL,'URL_PREFIX':URL_PREFIX, 'allowed_datasets': allowed_datasets, 'language_models': language_models},request))
 
