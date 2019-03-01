@@ -1,6 +1,7 @@
 from time import sleep
 import requests
 import logging
+import json
 
 class MLPTaskAdapter(object):
 
@@ -21,7 +22,7 @@ class MLPTaskAdapter(object):
 
         if task_status_text == 'FAILURE':
             errors = {'task_failed': task_status}
-            logging.error('Failed to analyze text with MLP Lite', extra={'url':self.start_task_url, 'texts': json.dumps(texts, ensure_ascii=False)})
+            logging.error('Failed to analyze text with MLP', extra={'url':self.start_task_url, 'texts': json.dumps(texts, ensure_ascii=False)})
         elif task_status_text == 'SUCCESS':
             analyzation_data = task_status['result']
         
