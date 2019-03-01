@@ -6,7 +6,7 @@ import json
 class MLPTaskAdapter(object):
 
     def __init__(self, mlp_url, mlp_type='mlp'):
-        self.start_task_url = '{0}/task/start/{1}'.format(mlp_url, mlp_type)
+        self.start_task_url = '{0}/task/start/{1}'.format(mlp_url.strip('/'), mlp_type)
     
     def process(self, data):
         errors = {}
