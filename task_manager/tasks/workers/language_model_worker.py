@@ -71,7 +71,8 @@ class LanguageModelWorker(BaseWorker):
             show_progress.update_view(100.0)
 
             # create cluster model
-            self.word_cluster = WordCluster(model)
+            # Temporary comment out
+            # self.word_cluster = WordCluster(model)
 
             # Save model
             self.model = model
@@ -83,7 +84,7 @@ class LanguageModelWorker(BaseWorker):
             show_progress.update_view(100.0)
             logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_completed', 'data': {'task_id': self.id}}))
             self.task_obj.result = json.dumps({"model_type": "word2vec", "lexicon_size": len(self.model.wv.vocab)})
-            self.task_obj.resources = {"word_cluster": self.word_cluster}
+            # self.task_obj.resources = {"word_cluster": self.word_cluster}
             self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
         except TaskCanceledException as e:
