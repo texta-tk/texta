@@ -121,6 +121,7 @@ def index(request):
         print(language_models)
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DEBUG ALL MODELS COMPLETED', 'data': [str(x) for x in language_models]}))
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DEBUG ALL MODELS LM', 'data': [str(x) for x in Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL)]}))
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DEBUG ALL MODELS STATUS', 'data': [str(x.status) for x in Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL)]}))
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DEBUG SANITY CHECK', 'data': 'test'}))
         for model in language_models:
             data = """
