@@ -19,6 +19,16 @@ class Task(models.Model):
     STATUS_CANCELED = 'canceled'
     STATUS_FAILED = 'failed'
 
+    STATUS_DICT = {
+        'STATUS_CREATED': 'created',
+        'STATUS_QUEUED': 'queued',
+        'STATUS_RUNNING': 'running',
+        'STATUS_UPDATING': 'updating',
+        'STATUS_COMPLETED': 'completed',
+        'STATUS_CANCELED': 'canceled',
+        'STATUS_FAILED': 'failed',
+    }
+
     STATUS_CHOICES = (
         (STATUS_CREATED, 'Created'),
         (STATUS_QUEUED, 'Queued'),

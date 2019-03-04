@@ -24,7 +24,7 @@
                         <td>{{ task.id }}</td>
                         <td>
                             <input type="checkbox" id='{{ task.id }}' name="dt_entity_delete">
-                            {% if task.status == 'completed' %}
+                            {% if task.status == task_statuses.STATUS_COMPLETED %}
                                 <a href="javascript:void(0)"
                                 onclick="downloadModel({{task.id}})"><span
                                 class="glyphicon glyphicon-download-alt"></span></a>

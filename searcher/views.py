@@ -191,7 +191,7 @@ def index(request):
     fields = get_fields(es_m)
 
     datasets = Datasets().get_allowed_datasets(request.user)
-    language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL).filter(status__iexact='completed').order_by('-pk')
+    language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
 
     # Hide fact graph if no facts_str_val is present in fields
     display_fact_graph = 'hidden'

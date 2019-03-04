@@ -127,7 +127,7 @@ class PreprocessorWorker(BaseWorker):
             logging.getLogger(ERROR_LOGGER).exception(json.dumps(
                 {'process': '_preprocessor_worker', 'event': 'main_scroll_logic_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
             task = Task.objects.get(pk=self.task_id)
-            task.status = 'Failed'
+            task.status = Task.STATUS_FAILED
             task.result = json.dumps({'documents_processed': show_progress.n_count, 'preprocessor_key': self.params['preprocessor_key'], 'error': str(e)})
             task.time_completed = datetime.now()
             task.save()
