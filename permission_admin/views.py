@@ -119,8 +119,8 @@ def index(request):
         allowed_datasets = Datasets().get_allowed_datasets(request.user)
         language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL).filter(status__iexact='completed').order_by('-pk')
         print(language_models)
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DEBUG ALL MODELS COMPLETED', 'data': language_models}))
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DEBUG ALL MODELS LM', 'data': Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL)}))
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DEBUG ALL MODELS COMPLETED', 'data': [str(x) for x in language_models]}))
+        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DEBUG ALL MODELS LM', 'data': [str(x) for x in Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL)]}))
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DEBUG SANITY CHECK', 'data': 'test'}))
         for model in language_models:
             data = """
