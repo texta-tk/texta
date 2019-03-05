@@ -117,7 +117,7 @@ def index(request):
         template = loader.get_template('permission_admin.html')
 
         allowed_datasets = Datasets().get_allowed_datasets(request.user)
-        language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
+        language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
         print(language_models)
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DEBUG ALL MODELS COMPLETED', 'data': [str(x) for x in language_models]}))
         logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DEBUG ALL MODELS LM', 'data': [str(x) for x in Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL)]}))
