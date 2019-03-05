@@ -55,7 +55,7 @@ def index(request):
     # enabled_preprocessors = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True]
 
     datasets = Datasets().get_allowed_datasets(request.user)
-    language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
+    language_models =Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
 
     context = {
         # 'enabled_input_types': DATASET_IMPORTER_CONF['enabled_input_types'],

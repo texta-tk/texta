@@ -39,7 +39,7 @@ from operator import itemgetter
 def index(request):
     ds = Datasets().activate_datasets(request.session)
     datasets = Datasets().get_allowed_datasets(request.user)
-    language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
+    language_models =Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
 
     es_m = ds.build_manager(ES_Manager)
     fields = get_fields(es_m)

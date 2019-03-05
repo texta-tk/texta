@@ -106,34 +106,17 @@ def open_close_dataset(request):
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def index(request):
-    try:
-        indices = ES_Manager.get_indices()
-        indices = sorted(indices, key=lambda x: x['index'])  # sort alphabetically
-        datasets = get_datasets(indices=indices)
-        users = User.objects.all()
+    indices = ES_Manager.get_indices()
+    indices = sorted(indices, key=lambda x: x['index'])  # sort alphabetically
+    datasets = get_datasets(indices=indices)
 
-        users = annotate_users_with_permissions(users, datasets)
+    users = User.objects.all()
+    users = annotate_users_with_permissions(users, datasets)
+    template = loader.get_template('permission_admin.html')
+    allowed_datasets = Datasets().get_allowed_datasets(request.user)
 
-        template = loader.get_template('permission_admin.html')
+    language_models =Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
 
-        allowed_datasets = Datasets().get_allowed_datasets(request.user)
-        language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
-        print(language_models)
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DEBUG ALL MODELS COMPLETED', 'data': [str(x) for x in language_models]}))
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DEBUG ALL MODELS LM', 'data': [str(x) for x in Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL)]}))
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DEBUG ALL MODELS STATUS', 'data': [str(x.status) for x in Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL)]}))
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DEBUG SANITY CHECK', 'data': 'test'}))
-        for model in language_models:
-            data = """
-                pk: {}
-                status: {}
-                description: {}
-                type: {}
-            """.format(model.pk, model.status, model.description, model.task_type)
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DEBUG MODELS', 'data': data}))
-    except:
-        logging.getLogger(ERROR_LOGGER).error(
-            json.dumps({'process': 'PERMISSION ADMIN INDEX', 'event': 'permission_admin_index_exception'}), exc_info=True)
     return HttpResponse(template.render({'users':users,'datasets':datasets,'indices':indices,'STATIC_URL':STATIC_URL,'URL_PREFIX':URL_PREFIX, 'allowed_datasets': allowed_datasets, 'language_models': language_models},request))
 
 def annotate_users_with_permissions(users, datasets):

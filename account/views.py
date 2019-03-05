@@ -32,7 +32,7 @@ from texta.settings import REQUIRE_EMAIL_CONFIRMATION, USER_MODELS, URL_PREFIX, 
 def index(request):
 	template = loader.get_template('account.html')
 	datasets = Datasets().get_allowed_datasets(request.user)
-	language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
+	language_models =Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
 
 	return HttpResponse(
 			template.render({'STATIC_URL': STATIC_URL, 'allowed_datasets': datasets, 'language_models': language_models}, request))
