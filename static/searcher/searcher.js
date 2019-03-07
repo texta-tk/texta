@@ -603,7 +603,7 @@ function showStringChildren (data, childrenContainer, grandchildrenContainer, ro
             if (type === 'fact') {
                 searchKey = strip_html(rowKey, true)
                 searchVal = strip_html(this.key, true)
-                debugger
+                
                 var addToSearchIcon =  $('<i>', {
                     class: "glyphicon glyphicon-search pull-right",
                     'data-toggle': "tooltip",
