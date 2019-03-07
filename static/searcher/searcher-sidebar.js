@@ -476,7 +476,7 @@ function addFactValueFieldConstraint(counterStr) {
     var removeButton = $('<button/>')
         .attr('type', 'button')
         .attr('onclick', 'removeFactRule("' + idCombination + '")')
-        .addClass('btn btn-sm')
+        .addClass('btn btn-sm flex-item-justify-end fact-val-rule-deletion-button')
 
     var removeSpan = $('<span/>')
         .addClass('glyphicon glyphicon-remove')

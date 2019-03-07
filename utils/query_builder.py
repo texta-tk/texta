@@ -119,7 +119,7 @@ class QueryBuilder:
                     )
                     nested_query = fact_query[-1]['nested']['query']['bool']['must']
 
-                    nested_query.append({'term': {'texta_facts.doc_path': fact_field.lower()}})
+                    nested_query.append({'term': {'texta_facts.doc_path': fact_field}})
                     nested_query.append({'term': {'texta_facts.fact': query_string}})
 
         for field_id, fact_val_constraint in fact_val_constraints.items():
