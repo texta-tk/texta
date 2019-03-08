@@ -157,7 +157,7 @@ function query () {
                 'processing': true,
                 'filter': false,
                 'sAjaxSource': PREFIX + '/table_content',
-                'dom': '<"#top-part.flex-row"<"build-search-selectpicker margin-right flex-row align-center"<"flex-item-grow-1 flex-row align-center toggle-columns-select height-max"<"fullscreen-actions-div">><"margin-left selection-props-checkbox">><"flex-content-end flex-item-grow-3 align-center" <"flex-item-grow-2"i><"margin-left"l><"flex-item-grow-2 flex-content-end"p>>>t',
+                'dom': '<"#top-part.flex-row"<"build-search-selectpicker margin-right flex-row align-center"<"flex-item-grow-1 flex-row align-center toggle-columns-select height-max"<"fullscreen-actions-div">><"margin-left selection-props-checkbox">><"flex-row flex-item-grow-3 align-center flex-item-justify-end " <"flex-item-grow-2"i><"margin-left"l><"flex-item-grow-2 flex-content-end"p>>>t',
                 'sServerMethod': 'POST',
                 'fnServerParams': function (aoData) {
                     aoData.push({
@@ -222,7 +222,7 @@ function query () {
                 ],
                 'ordering': false
             })
-            $.fn.DataTable.ext.pager.numbers_length = 5
+            $.fn.DataTable.ext.pager.numbers_length = 6
             initColumnSelectVisiblity(examplesTable, $('#toggle-column-select'))
             var dataset = $('#dataset').val()
             var mapping = $('#mapping').val()
