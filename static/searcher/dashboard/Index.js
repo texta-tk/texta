@@ -20,7 +20,7 @@ class Index {
         if (this.aggregations[this.AggregationTpes.DATE_HISTOGRAM]) {
             let keys = Object.keys(this.aggregations[this.AggregationTpes.DATE_HISTOGRAM]);
             let key = keys.filter(function (key) {
-                return key.endsWith("_year")
+                return key.endsWith("_year") && !key.startsWith("@")
             })[0];
 
             if (checkNested(this.aggregations, this.AggregationTpes.DATE_HISTOGRAM, key, 'buckets')) {
@@ -41,7 +41,7 @@ class Index {
         if (this.aggregations[this.AggregationTpes.DATE_HISTOGRAM]) {
             let keys = Object.keys(this.aggregations[this.AggregationTpes.DATE_HISTOGRAM]);
             let key = keys.filter(function (key) {
-                return key.endsWith("_month")
+                return key.endsWith("_month") && !key.startsWith("@")
             })[0];
 
             if (checkNested(this.aggregations, this.AggregationTpes.DATE_HISTOGRAM, key, 'buckets')) {
