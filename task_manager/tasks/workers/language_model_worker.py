@@ -109,12 +109,23 @@ class LanguageModelWorker(BaseWorker):
 
     def save(self):
         try:
+            import time
+            start = time.time()
+            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'SAVE LANGUAGE MODEL', 'event': 'Starting to save language model', 'data': {'task_id': self.id}}))
             self.model_name = 'model_{}'.format(self.task_obj.unique_id)
             self.phraser_name = 'phraser_{}'.format(self.task_obj.unique_id)
             output_model_file = create_file_path(self.model_name, MODELS_DIR, self.task_type)
             output_phraser_file = create_file_path(self.phraser_name, MODELS_DIR, self.task_type)
+            end = time.time()
+            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'SAVE LANGUAGE MODEL', 'event': 'Created paths', 'data': {'output_model_file': output_model_file, 'output_phraser_file': output_phraser_file,  'task_id': self.id, 'took': end - start}}))
+            end = time.time()
+            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'SAVE LANGUAGE MODEL', 'event': 'Starting to save model file', 'data': {'output_model_file': output_model_file, 'output_phraser_file': output_phraser_file,  'task_id': self.id, 'took': end - start}}))
             self.model.save(output_model_file)
+            end = time.time()
+            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'SAVE LANGUAGE MODEL', 'event': 'Starting to save phraser file', 'data': {'output_model_file': output_model_file, 'output_phraser_file': output_phraser_file,  'task_id': self.id, 'took': end - start}}))
             self.phraser.save(output_phraser_file)
+            end = time.time()
+            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'SAVE LANGUAGE MODEL', 'event': 'Saving finished', 'data': {'output_model_file': output_model_file, 'output_phraser_file': output_phraser_file,  'task_id': self.id, 'took': end - start}}))
             return True
 
         except Exception as e:
