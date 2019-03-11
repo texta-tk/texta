@@ -28,6 +28,10 @@ def execute_search(es_m, es_params):
         out['iTotalDisplayRecords'] = '10000'
     out['column_names'] = es_m.get_column_names(facts=True) # get columns names from ES mapping
 
+    strip_html = True
+    if 'html_stripping' in es_params:
+        strip_html = False
+
     hits = response['hits']['hits']
     #hits = es_m.remove_html_from_hits(hits)
 
@@ -55,8 +59,9 @@ def execute_search(es_m, es_params):
                     content = content[p] if p in content else ''
             content = str(content)
 
-            soup = BeautifulSoup(content, "lxml")
-            content = soup.get_text()
+            if strip_html:
+                soup = BeautifulSoup(content, "lxml")
+                content = soup.get_text()
             # To strip fields with whitespace in front
             old_content = content.strip()
 
