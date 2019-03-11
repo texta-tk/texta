@@ -237,3 +237,9 @@ thead th { white-space: nowrap; }
 .slider-wrapper .slider {
   width: 100%;
 }
+.fact-wrapper{
+  width: 70%;
+}
+.fact-val-rule-deletion-button{
+  height: 30px;
+}
