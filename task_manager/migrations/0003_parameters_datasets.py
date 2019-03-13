@@ -18,7 +18,8 @@ def listify_dataset(apps, schema_editor):
     for task in Task.objects.all():
         try:
             params = json.loads(task.parameters)
-            params['dataset'] = list(params['dataset'])
+            if not type(params['dataset']) == list:
+                params['dataset'] = [params['dataset']]
             task.parameters = json.dumps(params)
             logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'listify_dataset', 'new_datasets_value': params['dataset'], 'task_id': task.id, 'task_type': task.task_type}))
             task.save()
