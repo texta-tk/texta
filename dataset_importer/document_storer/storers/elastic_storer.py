@@ -54,7 +54,6 @@ class ElasticStorer(object):
                         {"estonian": {
                             "match_mapping_type": "string",
                             "mapping": {
-                                "type": "text",
                                 "analyzer": self._es_analyzer
                             }
                         }

@@ -49,8 +49,7 @@ class ElasticsearchHandler:
                             {"analyzer": {
                                 "match_mapping_type": "string",
                                 "mapping": {
-                                    "type": "text",
-                                    "analyzer": analyzer
+                                    "analyzer": analyzer,
                                 }
                             }
                             }
