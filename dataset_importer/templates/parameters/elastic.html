@@ -11,6 +11,19 @@
         <input class="form-control" id="texta-elastic-dataset-name" placeholder="my_data_source" pattern="[a-zA-Z0-9!@#$%^*_-|]{3,50}" required autofocus title="Insert a name between 3-50 charaters containg only the following characters: a-zA-Z0-9!@#$%^*_-|">
         <!-- <script> document.getElementById("texta-elastic-dataset-name").setCustomValidity("Insert a name between 3-50 charaters with the following characters: a-zA-Z0-9!@#$%^*_-|"); </script>  -->
     </div>
+        <div class="form-group">
+        <label class="control-label">
+            Elasticsearch Analyzers::
+            <span data-toggle="tooltip" data-placement="bottom" title="Choose the analyzer you wish Elasticsearch to use." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+        </label>
+
+        <select id="elastic-analyzer" class="form-control">
+            {% for analyzer in analyzers %}
+                <option value="{{analyzer.analyzer}}">{{analyzer.display_name}}</option>
+            {% endfor %}
+        </select>
+    </div>
+
     <div class="form-group">
         <label class="control-label">
             List of not processed fields (optional):
@@ -23,6 +36,7 @@
         </label>
         <textarea class="form-control" rows="1" id="texta-elastic-not-analyzed"></textarea>
     </div>
+
     <div class="form-group">
         <label class="control-label">
             Keep synchronized if possible:
@@ -33,6 +47,7 @@
             <option value="false">No</option>
         </select>
     </div>
+
     <div class="form-group">
         <label class="control-label">
             Overwrite existing dataset:

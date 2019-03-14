@@ -10,6 +10,7 @@ from django.http import HttpResponse
 # from django.shortcuts import render
 
 from task_manager.models import Task
+from texta import settings
 from .models import DatasetImport
 from utils.datasets import Datasets
 
@@ -53,6 +54,8 @@ def index(request):
     datasets = Datasets().get_allowed_datasets(request.user)
     language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
 
+    analyzers = settings.ELASTICSEARCH_ANALYZERS
+
     context = {
         # 'enabled_input_types': DATASET_IMPORTER_CONF['enabled_input_types'],
         'archive_formats': archive_formats,
@@ -61,7 +64,8 @@ def index(request):
         'database_formats': database_formats,
         'language_models': language_models,
         'allowed_datasets': datasets,
-        'jobs': jobs
+        'jobs': jobs,
+        'analyzers': analyzers
         # 'enabled_preprocessors': enabled_preprocessors
     }
 
@@ -78,7 +82,6 @@ def reload_table(request):
 @login_required
 def import_dataset(request):
     DATASET_IMPORTER.import_dataset(request=request)
-
     return HttpResponse()
 
 

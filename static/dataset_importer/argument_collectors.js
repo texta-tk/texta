@@ -82,12 +82,14 @@ function collectTextaDatasetArguments(formData) {
 
     var keepSynchronized = $('#keep-synchronized').val();
     var removeExistingDataset = $('#remove-existing-dataset').val();
+    var elasticAnalyzer = $('#elastic-analyzer').val();
 
     formData.append('texta_elastic_index', datasetName);
     formData.append('texta_elastic_mapping', datasetName);
     formData.append('texta_elastic_not_analyzed', notAnalyzedFields);
     formData.append('keep_synchronized', keepSynchronized);
     formData.append('remove_existing_dataset', removeExistingDataset);
+    formData.append('elastic_analyzer', elasticAnalyzer);
 
     return formData;
 }
