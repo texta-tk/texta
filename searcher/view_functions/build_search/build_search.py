@@ -34,7 +34,7 @@ def execute_search(es_m, es_params):
 
     hits = response['hits']['hits']
     #hits = es_m.remove_html_from_hits(hits)
-
+    counter = 0
     for hit in hits:
         hit_id = str(hit['_id'])
         hit['_source']['_es_id'] = hit_id
@@ -79,13 +79,14 @@ def execute_search(es_m, es_params):
         # Transliterate between cols
         # TODO In the future possibly better for translit_cols params to be passed data from given request
         _transliterate(cols_data, row)
-    
+
         # Checks if user wants to see full text or short version
-        for col in row:
-            if 'show_short_version' in es_params.keys():
-                row[col] = additional_option_cut_text(row[col], es_params['short_version_n_char'])
+        if 'show_short_version' in es_params.keys():
+            for col in row:
+                row[col] = additional_option_cut_text(row[col], es_params['short_version_n_char'], count=counter)
         out['aaData'].append([hit_id] + list(row.values()))
         out['lag'] = time.time()-start_time
+        counter +=1
     return out
 
 
