@@ -20,6 +20,7 @@ class MLPTaskAdapter(object):
                 current_fail_count += 1
                 if current_fail_count > 3:
                     task_status_text = 'FAILURE'
+                    task_status = {'status': task_status_text}
                     status_code = 666
                     break
             else:
