@@ -9,13 +9,39 @@ class MLPTaskAdapter(object):
     
     def process(self, data):
         errors = {}
-        started_task = requests.post(self.start_task_url, data=data).json()
-        task_status_text = 'PENDING'
+        current_fail_count = 0
+        status_code = 500
+
+        while status_code == 500:
+            started_task = requests.post(self.start_task_url, data=data)
+            current_status_code = int(started_task.status_code)
+
+            if current_status_code == 500:
+                current_fail_count += 1
+                if current_fail_count > 3:
+                    task_status_text = 'FAILURE'
+                    task_status = {'status': task_status_text}
+                    status_code = 666
+                    break
+            else:
+                status_code = current_status_code
+                task_status_text = 'PENDING'
+                current_fail_count = 0
 
         while task_status_text == 'PENDING':
             sleep(10)
-            task_status = requests.get(started_task['url']).json()
-            task_status_text = task_status['status']
+            try:
+                task_status = requests.get(started_task['url']).json()
+                task_status_text = task_status['status']
+                current_fail_count = 0
+            except:
+                current_fail_count += 1
+                # if fail to fetch result 3 times, declare task failed
+                if current_fail_count > 3:
+                    task_status_text = 'FAILURE'
+                    logging.error('Task failed because correct response not sent from MLP')
+                else:
+                    logging.error('Failed to parse MLP response. Trying again ({})...'.format(current_fail_count))
 
         analyzation_data = []
 
