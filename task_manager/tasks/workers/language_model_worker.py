@@ -77,6 +77,7 @@ class LanguageModelWorker(BaseWorker):
             # Save model
             self.model = model
             self.phraser = phraser
+            show_progress.update_step('Saving')
             self.save()
 
             # declare the job done
