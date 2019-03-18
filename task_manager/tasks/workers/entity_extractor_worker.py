@@ -75,13 +75,14 @@ class EntityExtractorWorker(BaseWorker):
                 return False
 
             show_progress.update(0)
-            # Check if query was explicitly set
-            if 'search_tag' in task_params:
-                # Use set query
-                param_query = task_params['search_tag']
+
+            search = task_params['search']
+            # select search
+            if search == 'all_docs':
+                param_query = {"main": {"query": {"bool": {"minimum_should_match": 0, "must": [], "must_not": [], "should": []}}}}
             else:
                 # Otherwise, load query from saved search
-                param_query = json.loads(Search.objects.get(pk=int(task_params['search'])).query)
+                param_query = json.loads(Search.objects.get(pk=int(search)).query)
 
             # Get data
             ds = Datasets().activate_datasets_by_id(task_params['dataset'])
@@ -361,7 +362,11 @@ class EntityExtractorWorker(BaseWorker):
                 for field in fields:
                     content = source
                     for sub_f in field.split('.'):
-                        content = content[sub_f]
+                        # Check if field is missing, in case the content is empty
+                        if sub_f in content:
+                            content = content[sub_f]
+                        else:
+                            content = ''
                     hits.append(content)
             response = self.es_m.scroll(scroll_id=scroll_id)
             total_docs = len(response['hits']['hits'])
