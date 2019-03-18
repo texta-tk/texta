@@ -12,7 +12,7 @@ from searcher.models import Search
 from utils.es_manager import ES_Manager
 from utils.datasets import Datasets
 
-from texta.settings import ERROR_LOGGER, INFO_LOGGER, MODELS_DIR, URL_PREFIX, MEDIA_URL, PROTECTED_MEDIA
+from texta.settings import ERROR_LOGGER, INFO_LOGGER, MODELS_DIR, URL_PREFIX, MEDIA_URL, PROTECTED_MEDIA, FACT_FIELD
 from utils.helper_functions import plot_confusion_matrix, create_file_path
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -37,11 +37,13 @@ class EntityExtractorWorker(BaseWorker):
         self.description = None
         self.task_obj = None
         self.task_type = None
+        self.task_params = None
         self.n_jobs = 1
         
         self.tagger = None
         self.facts = None
         self.oob_val = "<TEXTA_O>"
+        self.fact_keyword_val = "<TEXTA_FACT>"
         self.eos_val = "<TEXTA_BOS>"
         self.bos_val = "<TEXTA_EOS>"
         self.train_summary = {}
@@ -54,29 +56,29 @@ class EntityExtractorWorker(BaseWorker):
         self.task_obj = Task.objects.get(pk=self.task_id)
         self.task_type = self.task_obj.task_type
 
-        task_params = json.loads(self.task_obj.parameters)
+        self.task_params = json.loads(self.task_obj.parameters)
         steps = ["preparing data", "training", "done"]
         show_progress = ShowSteps(self.task_id, steps)
         show_progress.update_view()
-        if 'num_threads' in task_params:
-            self.n_jobs = int(task_params['num_threads'])
+        if 'num_threads' in self.task_params:
+            self.n_jobs = int(self.task_params['num_threads'])
 
         try:
-            if 'fields' in task_params:
-                fields = task_params['fields']
+            if 'fields' in self.task_params:
+                fields = self.task_params['fields']
             else:
                 self._bad_params_result("No fields selected")
                 return False
 
-            if "facts" in task_params:
-                fact_names = task_params["facts"]
+            if "facts" in self.task_params:
+                fact_names = self.task_params["facts"]
             else:
                 self._bad_params_result("No fact names given")
                 return False
 
             show_progress.update(0)
 
-            search = task_params['search']
+            search = self.task_params['search']
             # select search
             if search == 'all_docs':
                 param_query = {"main": {"query": {"bool": {"minimum_should_match": 0, "must": [], "must_not": [], "should": []}}}}
@@ -85,7 +87,7 @@ class EntityExtractorWorker(BaseWorker):
                 param_query = json.loads(Search.objects.get(pk=int(search)).query)
 
             # Get data
-            ds = Datasets().activate_datasets_by_id(task_params['dataset'])
+            ds = Datasets().activate_datasets_by_id(self.task_params['dataset'])
             self.es_m = ds.build_manager(ES_Manager)
             self.model_name = 'model_{}'.format(self.task_obj.unique_id)
             facts = self._get_fact_values(fact_names)
@@ -155,6 +157,8 @@ class EntityExtractorWorker(BaseWorker):
         X_train = self._transform(X_train, facts)
         X_val = self._transform(X_val, facts)
 
+        import pdb; pdb.set_trace()
+
         # Create training data generators
         y_train = (self._sent2labels(s) for s in X_train)
         X_train = (self._sent2features(s) for s in X_train)
@@ -172,29 +176,29 @@ class EntityExtractorWorker(BaseWorker):
             pkl.dump(var, f)
 
 
-    def _extract_facts(self, facts):
-        # Create a dict of unique facts, with value as key and name as dict key value
-        extracted_facts = {}
-        for fact in facts:
-            for val in fact:
-                if val not in extracted_facts:
-                    extracted_facts[val] = fact[val]
-        return extracted_facts
+    # def _extract_facts(self, facts):
+    #     # Create a dict of unique facts, with value as key and name as dict key value
+    #     extracted_facts = {}
+    #     for fact in facts:
+    #         for val in fact:
+    #             if val not in extracted_facts:
+    #                 extracted_facts[val] = fact[val]
+    #     return extracted_facts
 
 
-    def _transform(self, data, facts):
-        marked_docs = []
-        for i, doc in enumerate(data):
-            marked = []
-            for word in doc.split(' '):
-                if word in facts:
-                    # If the word is a fact, mark it as so
-                    marked.append((word, facts[word]))
-                else:
-                    # Add no fact, with a special tag
-                    marked.append((word, self.oob_val))
-            marked_docs.append(marked)
-        return marked_docs
+    # def _transform(self, data, facts):
+    #     marked_docs = []
+    #     for i, doc in enumerate(data):
+    #         marked = []
+    #         for word in doc.split(' '):
+    #             if word in facts:
+    #                 # If the word is a fact, mark it as so
+    #                 marked.append((word, facts[word]))
+    #             else:
+    #                 # Add no fact, with a special tag
+    #                 marked.append((word, self.oob_val))
+    #         marked_docs.append(marked)
+    #     return marked_docs
 
 
     def _word2features(self, sent, i):
@@ -359,19 +363,51 @@ class EntityExtractorWorker(BaseWorker):
         while total_docs > 0:
             for hit in response['hits']['hits']:
                 source = hit['_source']
-                for field in fields:
-                    content = source
-                    for sub_f in field.split('.'):
-                        # Check if field is missing, in case the content is empty
-                        if sub_f in content:
-                            content = content[sub_f]
-                        else:
-                            content = ''
-                    hits.append(content)
+                # Check if any of the selected facts are present in the hit fields
+                fact_fields = self._get_facts_in_document(source)
+                # Get the hit data of the fields where facts are present
+                batch_hits = self._get_data_from_fields(source, fact_fields)
+
+                # Add batch hits to hits
+                hits += batch_hits
             response = self.es_m.scroll(scroll_id=scroll_id)
             total_docs = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
         return hits
+
+    def _get_facts_in_document(self, source):
+        fact_fields = []
+        if FACT_FIELD in source:
+            for fact in source[FACT_FIELD]:
+                if fact['fact'] in self.task_params['facts']:
+                    fact_path = fact['doc_path']
+                    if fact_path not in fact_fields:
+                        fact_fields.append(fact_path)
+        return fact_fields
+
+    def _get_data_from_fields(self, source, fields):
+        batch_hits = []
+        for field in fields:
+            content = source
+            for sub_f in field.split('.'):
+                # Check if field is missing, in case the content is empty
+                if sub_f in content:
+                    content = content[sub_f]
+                else:
+                    content = ''
+            batch_hits.append(content)
+        return batch_hits
+
+    def _transform(self, document, facts):
+        fact_keyword = ''
+        # TODO
+        # 1. Match spans in document, surround with self.fact_keyword_val
+        # 2. Create fact dict where the key value is fact_value surrounded by keyword val
+        # 3. Use that function to turn it into the training data format
+
+        # facts = { fact_keyword_val+fact+fact_keyword_val: 'span': fact['span'], 'name': fact['name'] }
+        result = [(''.join(x.split('<TEXTA_FACT>')), facts[x]) if x in facts else (x, 'O') for x in c.split(' ')]
+        return marked_docs
 
 
     def _get_fact_values(self, fact_names):
