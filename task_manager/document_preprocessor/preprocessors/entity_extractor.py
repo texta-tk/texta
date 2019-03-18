@@ -86,7 +86,7 @@ class EntityExtractorPreprocessor(object):
                 spans = [doc_spans[i], doc_spans[i] + len(word)]
                 new_fact = {'fact': pred, 'str_val': word, 'doc_path': field, 'spans': json.dumps([spans])}
                 new_facts.append(new_fact)
-                doc_num_facts += 1;
+                doc_num_facts += 1
             # Add +1 for account for whitespace
             doc_spans.append(doc_spans[i] + len(word) + 1)
         return new_facts, doc_num_facts
