@@ -89,7 +89,7 @@ class ClusterManager:
         if method == 'tfidf':
             vectorizer = TfidfVectorizer(analyzer='word', max_features=max_features, stop_words=stop_words)
 
-        docs_phrases = [' '.join(self.phraser[document.split(' ')]) for document in self.documents]
+        docs_phrases = [' '.join(self.phraser.phrase(document.split(' '))) for document in self.documents]
 
         document_vectors = vectorizer.fit_transform(docs_phrases)
         document_vectors = document_vectors.toarray()
