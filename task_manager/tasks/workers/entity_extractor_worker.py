@@ -64,12 +64,6 @@ class EntityExtractorWorker(BaseWorker):
             self.n_jobs = int(self.task_params['num_threads'])
 
         try:
-            if 'fields' in self.task_params:
-                fields = self.task_params['fields']
-            else:
-                self._bad_params_result("No fields selected")
-                return False
-
             if "facts" in self.task_params:
                 fact_names = self.task_params["facts"]
             else:
@@ -91,7 +85,7 @@ class EntityExtractorWorker(BaseWorker):
             self.es_m = ds.build_manager(ES_Manager)
             self.model_name = 'model_{}'.format(self.task_obj.unique_id)
             facts = self._get_fact_values(fact_names)
-            hits = self._scroll_query_response(param_query, fields)
+            hits = self._scroll_query_response(param_query)
 
             # Prepare data
             X_train, y_train, X_val, y_val = self._prepare_data(hits, facts)
@@ -156,8 +150,6 @@ class EntityExtractorWorker(BaseWorker):
         X_train, X_val = train_test_split(hits, test_size=0.1, random_state=42)
         X_train = self._transform(X_train, facts)
         X_val = self._transform(X_val, facts)
-
-        import pdb; pdb.set_trace()
 
         # Create training data generators
         y_train = (self._sent2labels(s) for s in X_train)
@@ -344,7 +336,7 @@ class EntityExtractorWorker(BaseWorker):
         return report, confusion, plot_url
 
 
-    def _scroll_query_response(self, query, fields):
+    def _scroll_query_response(self, query):
         # Scroll the search, extract hits
         hits = []
         self.es_m.load_combined_query(query)
@@ -375,6 +367,7 @@ class EntityExtractorWorker(BaseWorker):
                     if fact_path not in fact_fields:
                         fact_fields.append(fact_path)
         return fact_fields
+
 
     def _get_data_from_fields(self, source, fields):
         batch_hits = []
