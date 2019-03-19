@@ -10,6 +10,7 @@ from .date_converter import DatePreprocessor
 from .lexicon_classifier import LexTagger
 from .scoro import ScoroPreprocessor
 from .entity_extractor import EntityExtractorPreprocessor
+from .neuroclassifier import NeuroClassifierPreprocessor
 
 
 __all__ = ["MLPLitePreprocessor",
@@ -18,4 +19,5 @@ __all__ = ["MLPLitePreprocessor",
            "DatePreprocessor",
            "LexTagger",
            "ScoroPreprocessor",
-           "EntityExtractorPreprocessor"]
+           "EntityExtractorPreprocessor",
+           "NeuroClassifierPreprocessor"]

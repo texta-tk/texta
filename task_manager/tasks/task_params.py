@@ -2,6 +2,7 @@ import logging
 import json
 from task_manager.tasks.workers.language_model_worker import LanguageModelWorker
 from task_manager.tasks.workers.text_tagger_worker import TagModelWorker
+from task_manager.tasks.workers.neuroclassifier.neuroclassifier_worker import NeuroClassifierWorker
 from task_manager.tasks.workers.entity_extractor_worker import EntityExtractorWorker
 from task_manager.tasks.workers.preprocessor_worker import PreprocessorWorker
 from task_manager.tasks.workers.management_workers.management_worker import ManagementWorker
@@ -27,6 +28,14 @@ task_params = [
         "template":        "task_parameters/train_tagger.html",
         "result_template": "task-results/train-tagger-results.html",
         "worker":           TagModelWorker,
+        "allowed_actions": ["delete"]
+    },
+    {
+        "name":            "Train Neuroclassifier",
+        "id":               TaskTypes.NEUROCLASSIFIER.value,
+        "template":        "task_parameters/train_neuroclassifier.html",
+        "result_template": "task-results/train-neuroclassifier-results.html",
+        "worker":           NeuroClassifierWorker,
         "allowed_actions": ["delete"]
     },
     {

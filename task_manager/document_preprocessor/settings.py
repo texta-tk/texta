@@ -15,6 +15,7 @@ from task_manager.document_preprocessor.preprocessors import DatePreprocessor
 from task_manager.document_preprocessor.preprocessors import LexTagger
 from task_manager.document_preprocessor.preprocessors import ScoroPreprocessor
 from task_manager.document_preprocessor.preprocessors import EntityExtractorPreprocessor
+from task_manager.document_preprocessor.preprocessors import NeuroClassifierPreprocessor
 
 
 mlp_field_properties = {
@@ -166,6 +167,20 @@ try:
 except Exception as e:
     print(e)
     log_preprocessor_status(code='entity_extractor', status='disabled')
+
+try:
+    preprocessor_map['neuroclassifier'] = {
+        'name': 'NeuroClassifier',
+        'description': 'Tag documents with NeuroClassifier',
+        'class': NeuroClassifierPreprocessor,
+        'parameters_template': 'preprocessor_parameters/neuroclassifier.html',
+        'arguments': {},
+        'is_enabled': True
+    }
+    log_preprocessor_status(code='neuroclassifier', status='enabled')
+except Exception as e:
+    print(e)
+    log_preprocessor_status(code='neuroclassifier', status='disabled')
 
 
 PREPROCESSOR_INSTANCES = {

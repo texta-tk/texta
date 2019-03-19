@@ -8,6 +8,7 @@ from enum import Enum, unique
 class TaskTypes(str, Enum):
     TRAIN_MODEL = "train_model"
     TRAIN_TAGGER = "train_tagger"
+    NEUROCLASSIFIER = "neuroclassifier"
     TRAIN_ENTITY_EXTRACTOR = "train_entity_extractor"
     APPLY_PREPROCESSOR = "apply_preprocessor"
     MANAGEMENT_TASK = "management_task"
@@ -15,4 +16,3 @@ class TaskTypes(str, Enum):
     @classmethod
     def hasValue(cls, item):
         return item in cls._value2member_map_
-
