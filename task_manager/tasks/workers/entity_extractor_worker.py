@@ -176,29 +176,20 @@ class EntityExtractorWorker(BaseWorker):
             pkl.dump(var, f)
 
 
-    # def _extract_facts(self, facts):
-    #     # Create a dict of unique facts, with value as key and name as dict key value
-    #     extracted_facts = {}
-    #     for fact in facts:
-    #         for val in fact:
-    #             if val not in extracted_facts:
-    #                 extracted_facts[val] = fact[val]
-    #     return extracted_facts
-
-
-    # def _transform(self, data, facts):
-    #     marked_docs = []
-    #     for i, doc in enumerate(data):
-    #         marked = []
-    #         for word in doc.split(' '):
-    #             if word in facts:
-    #                 # If the word is a fact, mark it as so
-    #                 marked.append((word, facts[word]))
-    #             else:
-    #                 # Add no fact, with a special tag
-    #                 marked.append((word, self.oob_val))
-    #         marked_docs.append(marked)
-    #     return marked_docs
+    def _transform(self, data, facts):
+        # TODO instead of matching again in text, should 
+        marked_docs = []
+        for i, doc in enumerate(data):
+            marked = []
+            for word in doc.split(' '):
+                if word in facts:
+                    # If the word is a fact, mark it as so
+                    marked.append((word, facts[word]))
+                else:
+                    # Add no fact, with a special tag
+                    marked.append((word, self.oob_val))
+            marked_docs.append(marked)
+        return marked_docs
 
 
     def _word2features(self, sent, i):
@@ -397,17 +388,6 @@ class EntityExtractorWorker(BaseWorker):
                     content = ''
             batch_hits.append(content)
         return batch_hits
-
-    def _transform(self, document, facts):
-        fact_keyword = ''
-        # TODO
-        # 1. Match spans in document, surround with self.fact_keyword_val
-        # 2. Create fact dict where the key value is fact_value surrounded by keyword val
-        # 3. Use that function to turn it into the training data format
-
-        # facts = { fact_keyword_val+fact+fact_keyword_val: 'span': fact['span'], 'name': fact['name'] }
-        result = [(''.join(x.split('<TEXTA_FACT>')), facts[x]) if x in facts else (x, 'O') for x in c.split(' ')]
-        return marked_docs
 
 
     def _get_fact_values(self, fact_names):
