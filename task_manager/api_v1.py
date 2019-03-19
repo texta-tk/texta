@@ -282,7 +282,7 @@ def api_extractor_list(request, user, params):
 def api_tagger_list(request, user, params):
     """ Get list of available tagger for API user (via auth_token)
     """
-    all_taggers = Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER, status=Task.STATUS_COMPLETED)
+    all_taggers = Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER.value, status=Task.STATUS_COMPLETED)
     data = []
     for tagger in all_taggers:
         doc = {'tagger': tagger.id, 'description': tagger.description}
@@ -298,7 +298,7 @@ def api_tagger_info(request, user, params):
     """ Get tagger info for API user (via auth_token)
     """
     tagger_id = params['tagger']
-    tagger = list(Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER, id=tagger_id))[0]
+    tagger = list(Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER.value, id=tagger_id))[0]
 
     model_worker = TagModelWorker()
     model = model_worker.load(tagger_id)
@@ -336,7 +336,7 @@ def api_tag_list(request, user, params):
     mass_helper = MassHelper(es_m)
     tag_set = mass_helper.get_unique_tags()
     tag_frequency = mass_helper.get_tag_frequency(tag_set)
-    tag_models = set([tagger.description for tagger in Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER)])
+    tag_models = set([tagger.description for tagger in Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER.value)])
 
     data = []
     for tag in sorted(tag_frequency.keys()):
@@ -419,7 +419,7 @@ def api_mass_tagger(request, user, params):
     # Select taggers
     taggers = params.get('taggers', None)
     if taggers is None:
-        taggers = [tagger.id for tagger in Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER).filter(status=Task.STATUS_COMPLETED)]
+        taggers = [tagger.id for tagger in Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER.value).filter(status=Task.STATUS_COMPLETED)]
     params['text_tagger_taggers'] = taggers
     # Prepare description
     description = params['description']
@@ -500,7 +500,7 @@ def api_hybrid_tagger(request, user, params):
                                 'selected': selected, 
                                 'count': count })
     # Filter tags
-    tagger_search = Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER).filter(status=Task.STATUS_COMPLETED)
+    tagger_search = Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER.value).filter(status=Task.STATUS_COMPLETED)
     taggers = [tagger.id for tagger in tagger_search if tagger.description in candidate_tags]
     # Create Task if taggers is not zero
     if len(taggers) > 0:
@@ -559,7 +559,7 @@ def api_tag_text(request, user, params):
         text_dict = result_map['documents'][0]
 
     # Select taggers
-    tagger_ids_list = [tagger.id for tagger in Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER).filter(status=Task.STATUS_COMPLETED)]
+    tagger_ids_list = [tagger.id for tagger in Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER.value).filter(status=Task.STATUS_COMPLETED)]
     data = {'tags': [], 'explain': []}
 
     # Apply

@@ -101,7 +101,7 @@ def translate_parameters(params):
 
     datasets = Datasets().datasets
 
-    all_taggers = Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER, status=Task.STATUS_COMPLETED)
+    all_taggers = Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER.value, status=Task.STATUS_COMPLETED)
     enabled_taggers = {tagger.pk: tagger.description for tagger in all_taggers}
 
     all_extraction_models = Task.objects.filter(task_type=TaskTypes.TRAIN_ENTITY_EXTRACTOR, status=Task.STATUS_COMPLETED)
@@ -134,13 +134,13 @@ def collect_map_entries(map_):
     entries = []
     for key, value in map_.items():
         if key == 'text_tagger':
-            value['enabled_taggers'] = Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER, status=Task.STATUS_COMPLETED)
+            value['enabled_taggers'] = Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER.value, status=Task.STATUS_COMPLETED)
         if key == 'entity_extractor':
             value['enabled_extractors'] = Task.objects.filter(task_type=TaskTypes.TRAIN_ENTITY_EXTRACTOR, status=Task.STATUS_COMPLETED)
         if (key == 'lexicon_classifier' or key == 'scoro'):
             value['enabled_lexicons'] = Lexicon.objects.all()
         if (key == 'scoro'):
-            value['enabled_models'] = Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER, status=Task.STATUS_COMPLETED)
+            value['enabled_models'] = Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER.value, status=Task.STATUS_COMPLETED)
         value['key'] = key
         entries.append(value)
     return entries
@@ -177,4 +177,3 @@ def _format_raw_fact_values(facts):
                 formatted_facts[k].append(v)
 
     return formatted_facts
-

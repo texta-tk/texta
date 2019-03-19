@@ -100,7 +100,7 @@ class MassHelper:
         tag_frequency = self.get_tag_frequency(selected_tags)
         retrain_tasks = []
         # Get list of available models
-        task_tagger_list = [tagger for tagger in Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER)]
+        task_tagger_list = [tagger for tagger in Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER.value)]
         task_tagger_tag_set = set([tagger.description for tagger in task_tagger_list])
 
         for task_tagger in task_tagger_list:
