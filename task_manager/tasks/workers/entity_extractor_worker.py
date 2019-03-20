@@ -12,7 +12,7 @@ from searcher.models import Search
 from utils.es_manager import ES_Manager
 from utils.datasets import Datasets
 
-from texta.settings import ERROR_LOGGER, INFO_LOGGER, MODELS_DIR, URL_PREFIX, MEDIA_URL, PROTECTED_MEDIA, FACT_FIELD
+from texta.settings import ERROR_LOGGER, INFO_LOGGER, MODELS_DIR, URL_PREFIX, MEDIA_URL, PROTECTED_MEDIA
 from utils.helper_functions import plot_confusion_matrix, create_file_path
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -360,8 +360,8 @@ class EntityExtractorWorker(BaseWorker):
 
     def _get_facts_in_document(self, source):
         fact_fields = []
-        if FACT_FIELD in source:
-            for fact in source[FACT_FIELD]:
+        if 'texta_facts' in source:
+            for fact in source['texta_facts']:
                 if fact['fact'] in self.task_params['facts']:
                     fact_path = fact['doc_path']
                     if fact_path not in fact_fields:

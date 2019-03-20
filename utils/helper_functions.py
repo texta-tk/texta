@@ -2,7 +2,12 @@ import os
 import glob
 from itertools import product
 import numpy as np
+
+import matplotlib
+# For non-GUI rendering
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
+
 
 def add_dicts(dict1, dict2):
     '''
