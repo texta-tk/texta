@@ -1,7 +1,15 @@
 import csv
+import json
 import pickle
 import numpy as np
 from typing import List, Dict
+
+# Task imports
+from task_manager.tools import ShowSteps
+from task_manager.tools import TaskCanceledException
+from task_manager.tools import get_pipeline_builder
+from task_manager.tools import EsDataSample
+from task_manager.models import Task
 
 # Data imports
 from sklearn.model_selection import train_test_split
@@ -49,15 +57,23 @@ class NeuroClassifierWorker():
             grid_downsample_amount {float} -- The amount to downsample the grid search of the hyperparameters. Recommended less than 0.01 to avoid computation cost and time.
         """
 
+        # Task params
+        self.task_id = None
+        self.task_obj = None
+        self.task_type = None
+        self.task_params = json.loads(self.task_obj.parameters)
+
+        # Neuroclassifier params
         self.model_arch = model_arch
         self.validation_split = validation_split
         self.crop_amount = crop_amount
         self.grid_downsample_amount = grid_downsample_amount
 
+        # Neuroclassifier data
         self.samples = samples
         self.labels = labels
 
-        # Validated data
+        # Derived params
         self.vocab_size = max_vocab_size
         self.seq_len = max_seq_len
 
@@ -70,10 +86,49 @@ class NeuroClassifierWorker():
         self.model = None
 
 
-    def run(self):
+    def _set_up_task(self, task_id):
+        self.task_id = task_id
+        self.task_obj = Task.objects.get(pk=self.task_id)
+        self.task_type = self.task_obj.task_type
+        self.task_params = json.loads(self.task_obj.parameters)
+
+
+    def _build_data_sampler(self):
+        # Check if query was explicitly set
+        if 'search_tag' in self.task_params:
+            # Use set query
+            param_query = self.task_params['search_tag']
+        else:
+            # Otherwise, load query from saved search
+            param_query = self._parse_query(self.task_params)
+
+        # Build Data sampler
+        ds = Datasets().activate_datasets_by_id(self.task_params['dataset'])
+        es_m = ds.build_manager(ES_Manager)
+        self.model_name = 'model_{0}'.format(self.task_obj.unique_id)
+        es_data = EsDataSample(fields=fields, 
+                                query=param_query,
+                                es_m=es_m,
+                                negative_set_multiplier=negative_set_multiplier,
+                                max_positive_sample_size=max_sample_size_opt,
+                                score_threshold=score_threshold_opt)
+        data_sample_x_map, data_sample_y, statistics = es_data.get_data_samples()
+
+
+    def run(self, task_id):
+        self._set_up_task(task_id)
+
+        steps = ["preparing data", "training", "saving", "done"]
+        show_progress = ShowSteps(self.task_id, steps)
+        show_progress.update_view()
         self._validate_params()
+
+        show_progress.update(0)
+        # TODO Something to get data
+        self._build_data_sampler()
+
+
         self._process_data()
-        print(self.vocab_size)
         self._get_model()
         # self._train_model()
         if self.model_is_auto:
