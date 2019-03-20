@@ -245,25 +245,34 @@ def upload_task_archive(request):
             if zipfile.is_zipfile(task_archive):
                 task_loaded = False
                 with ZipFile(task_archive, 'r') as zf:
-                    for file_name in zf.namelist():
-                        dirname = os.path.dirname(file_name)
-                        # Handle Task object xml
-                        if dirname == '' and file_name.lower().endswith('.xml'):
-                            task = _load_xml_to_database(zf.read(file_name))
-                            task_loaded = True
-                        # Check if task is loaded else return failed JsonResponse
-                        if task_loaded:
+                    try:
+                        # Get the serialized model object xml file
+                        serialized_model_path = next(x for x in zf.namelist() if not os.path.dirname(x) and x.lower().endswith('.xml'))
+                        # Filter it out from the other files
+                        resource_files = [x for x in zf.namelist() if x != serialized_model_path]
+                        # Load the serialized model object into the database
+                        task = _load_xml_to_database(zf.read(serialized_model_path), request.user)
+                        task_loaded = True
+                    except:
+                        task_loaded = False
+                        logging.getLogger(ERROR_LOGGER).error('Exception in loading uploaded Task',exc_info=True)
+                    else: # When the try block was successful, so when it loaded the task object, continue with model imports
+                        for file_name in resource_files:
+                            dirname = os.path.dirname(file_name)
                             if dirname == 'model':
                                 _load_model_file(task, zf.read(file_name), os.path.basename(file_name))
                                 model_loaded = True
                             elif dirname == 'media':
                                 _load_media_file(task, zf.read(file_name), os.path.basename(file_name))
+                    finally: # Regardless of exception or sucess
+                        if task_loaded:
+                            if model_loaded:
+                                json_response = {"status": "success", "text": "Task successfully uploaded!"}   
+                            else: 
+                                json_response = {"status": "failed", "text": "Archive seems to not contain a valid model or Task object"}
+                        else:
+                            json_response = {"status": "failed", "text": "Archive seems to not contain a valid Task object"}
 
-                # Give successful response if task and model were loaded
-                if task_loaded and model_loaded:
-                    json_response = {"status": "success", "text": "Task successfully uploaded!"}   
-                else: 
-                    json_response = {"status": "failed", "text": "Archive seems to not contain a valid model or Task object"}
             # If file is not zipfile
             else:
                 json_response = {"status": "failed", "text": "Archive contents malformed or not a .zip file"}
@@ -280,11 +289,14 @@ def upload_task_archive(request):
     return JsonResponse(json_response)
 
 
-def _load_xml_to_database(xml_model_object):
+def _load_xml_to_database(xml_model_object, user):
     task = None
     # Decode bytes object
     xml_model_object = xml_model_object.decode('utf8')
     for task in serializers.deserialize("xml", xml_model_object):
+        # Access the Model Object within the DeserializedObject
+        # Change its user to the currently active user
+        task.object.user = user
         # Save object to model dataset
         task.save()
     # Return the Task obj from the Deserialized object

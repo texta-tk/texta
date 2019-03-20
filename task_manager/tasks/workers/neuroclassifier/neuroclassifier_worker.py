@@ -10,7 +10,6 @@ from keras.preprocessing.text import Tokenizer, text_to_word_sequence
 
 # Model imports
 from keras.optimizers import Adam
-from keras.models import Sequential
 from keras.activations import relu, elu, softmax, sigmoid
 
 # Talos imports
