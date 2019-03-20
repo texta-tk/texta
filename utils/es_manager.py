@@ -5,6 +5,8 @@ from typing import List, Dict, Any
 
 import requests
 from functools import reduce
+
+from utils.ds_importer_helper import check_for_analyzer
 from utils.generic_helpers import find_key_recursivly
 import datetime
 
@@ -50,6 +52,22 @@ class ES_Manager:
         indices = [dataset.index for dataset in self.active_datasets]
         index_string = ','.join(indices)
         return index_string
+
+    @staticmethod
+    def get_analyzers():
+        ELASTICSEARCH_ANALYZERS = [
+            {"display_name": "Standard Analyzer", "analyzer": "standard"},
+            {"display_name": "Whitespace Analyzer", "analyzer": "whitespace"},
+            {"display_name": "Pattern Analyzer", "analyzer": "pattern"},
+            {"display_name": "Simple Analyzer", "analyzer": "simple"},
+            {"display_name": "Stop Analyzer", "analyzer": "stop"},
+            {"display_name": "Keyword Analyzer", "analyzer": "keyword"},
+            {"display_name": "Fingerprint Analyzer", "analyzer": "fingerprint"},
+        ]
+
+        estonian_analyzer = check_for_analyzer(display_name="Estonian Analyzer", analyzer_name="estonian", es_url=es_url)
+        if estonian_analyzer: ELASTICSEARCH_ANALYZERS.append(estonian_analyzer)
+        return ELASTICSEARCH_ANALYZERS
 
     def bulk_post_update_documents(self, documents, ids):
         """Do both plain_post_bulk and update_documents()"""

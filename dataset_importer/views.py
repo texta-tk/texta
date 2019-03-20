@@ -11,6 +11,7 @@ from django.http import HttpResponse
 
 from task_manager.models import Task
 from texta import settings
+from utils.es_manager import ES_Manager
 from .models import DatasetImport
 from utils.datasets import Datasets
 
@@ -54,7 +55,7 @@ def index(request):
     datasets = Datasets().get_allowed_datasets(request.user)
     language_models = Task.objects.filter(task_type='train_model').filter(status__iexact='completed').order_by('-pk')
 
-    analyzers = settings.ELASTICSEARCH_ANALYZERS
+    analyzers = ES_Manager.get_analyzers()
 
     context = {
         # 'enabled_input_types': DATASET_IMPORTER_CONF['enabled_input_types'],

@@ -2,11 +2,13 @@ from django.http import JsonResponse
 from account.models import Profile
 from django.views import View
 from elasticsearch.helpers import streaming_bulk as elastic_parallelbulk
-from texta.settings import es_url, INFO_LOGGER, ELASTICSEARCH_ANALYZERS
+from texta.settings import es_url, INFO_LOGGER
 
 import json
 import logging
 import elasticsearch
+
+from utils.es_manager import ES_Manager
 
 
 class ElasticsearchHandler:
@@ -88,6 +90,7 @@ class ApiInputValidator:
                 raise ValueError("Mandatory field '{0}' can not be empty".format(mandatory_field))
 
     def check_if_analyzer_exists(self):
+        ELASTICSEARCH_ANALYZERS = ES_Manager.get_analyzers()
         user_sent_analyzer = self.post_dict["analyzer"]
         available_analyzer_names = list(map(lambda x: x["analyzer"], ELASTICSEARCH_ANALYZERS))
         if user_sent_analyzer not in available_analyzer_names:
@@ -166,5 +169,6 @@ class ImporterApiView(View):
 
 
 def get_analyzer_names(request):
+    ELASTICSEARCH_ANALYZERS = ES_Manager.get_analyzers()
     analyzer_names = list(map(lambda x: x["analyzer"], ELASTICSEARCH_ANALYZERS))
     return JsonResponse({"analyzers": analyzer_names})

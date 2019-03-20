@@ -23,8 +23,6 @@ import os
 # BASE_DIR = os.path.realpath(os.path.dirname(__file__)) tries to determine
 # the path programmatically but may occasionally fail.
 #
-from utils.ds_importer_helper import check_for_analyzer
-
 BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 
 # When this is true, the scoro_preprocessor is enabled
@@ -495,19 +493,6 @@ FACT_PROPERTIES = {
 		'str_val':  {'type': 'keyword'}
 	}
 }
-
-ELASTICSEARCH_ANALYZERS = [
-	{"display_name": "Standard Analyzer", "analyzer": "standard"},
-	{"display_name": "Whitespace Analyzer", "analyzer": "whitespace"},
-	{"display_name": "Pattern Analyzer", "analyzer": "pattern"},
-	{"display_name": "Simple Analyzer", "analyzer": "simple"},
-	{"display_name": "Stop Analyzer", "analyzer": "stop"},
-	{"display_name": "Keyword Analyzer", "analyzer": "keyword"},
-	{"display_name": "Fingerprint Analyzer", "analyzer": "fingerprint"},
-]
-
-estonian_analyzer = check_for_analyzer(display_name="Estonian Analyzer", analyzer_name="estonian", es_url=es_url)
-if estonian_analyzer: ELASTICSEARCH_ANALYZERS.append(estonian_analyzer)
 
 ############################ Boot scripts ###########################
 
