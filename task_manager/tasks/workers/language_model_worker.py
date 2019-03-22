@@ -4,7 +4,7 @@ import os
 
 from gensim.models import word2vec
 
-from utils.helper_functions import create_file_path
+from utils.helper_functions import create_file_path, write_task_xml
 from task_manager.models import Task
 from task_manager.tools import EsIterator
 from task_manager.tools import ShowProgress
@@ -71,8 +71,8 @@ class LanguageModelWorker(BaseWorker):
             show_progress.update_view(100.0)
 
             # create cluster model
-            # Temporary comment out
-            # self.word_cluster = WordCluster(model)
+            self.word_cluster = WordCluster()
+            self.word_cluster.cluster(model)
 
             # Save model
             self.model = model
@@ -103,30 +103,30 @@ class LanguageModelWorker(BaseWorker):
             self.task_obj.result = json.dumps({"error": str(e)})
             self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=False)
 
-        print('done')
-
     def delete(self):
         pass
 
     def save(self):
         try:
-            import time
-            start = time.time()
             logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'SAVE LANGUAGE MODEL', 'event': 'Starting to save language model', 'data': {'task_id': self.id}}))
-            self.model_name = 'model_{}'.format(self.task_obj.unique_id)
-            self.phraser_name = 'phraser_{}'.format(self.task_obj.unique_id)
-            output_model_file = create_file_path(self.model_name, MODELS_DIR, self.task_type)
-            output_phraser_file = create_file_path(self.phraser_name, MODELS_DIR, self.task_type)
-            end = time.time()
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'SAVE LANGUAGE MODEL', 'event': 'Created paths', 'data': {'output_model_file': output_model_file, 'output_phraser_file': output_phraser_file,  'task_id': self.id, 'took': end - start}}))
-            end = time.time()
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'SAVE LANGUAGE MODEL', 'event': 'Starting to save model file', 'data': {'output_model_file': output_model_file, 'output_phraser_file': output_phraser_file,  'task_id': self.id, 'took': end - start}}))
+            
+            model_name = 'model_{}'.format(self.task_obj.unique_id)
+            phraser_name = 'phraser_{}'.format(self.task_obj.unique_id)
+            cluster_name = 'cluster_{}'.format(self.task_obj.unique_id)
+            xml_name = 'xml_{}'.format(self.task_obj.unique_id)
+
+            output_model_file = create_file_path(model_name, MODELS_DIR, self.task_type)
+            output_phraser_file = create_file_path(phraser_name, MODELS_DIR, self.task_type)
+            output_cluster_file = create_file_path(cluster_name, MODELS_DIR, self.task_type)
+            output_xml_file = create_file_path(xml_name, MODELS_DIR, self.task_type)
+
             self.model.save(output_model_file)
-            end = time.time()
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'SAVE LANGUAGE MODEL', 'event': 'Starting to save phraser file', 'data': {'output_model_file': output_model_file, 'output_phraser_file': output_phraser_file,  'task_id': self.id, 'took': end - start}}))
             self.phraser.save(output_phraser_file)
-            end = time.time()
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'SAVE LANGUAGE MODEL', 'event': 'Saving finished', 'data': {'output_model_file': output_model_file, 'output_phraser_file': output_phraser_file,  'task_id': self.id, 'took': end - start}}))
+            self.word_cluster.save(output_cluster_file)
+
+            write_task_xml(self.task_obj, output_xml_file)
+
+            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'SAVE LANGUAGE MODEL', 'event': 'Saving finished', 'data': {'output_model_file': output_model_file, 'output_phraser_file': output_phraser_file,  'task_id': self.id}}))
             return True
 
         except Exception as e:

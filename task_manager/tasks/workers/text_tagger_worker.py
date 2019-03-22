@@ -10,6 +10,7 @@ from task_manager.tools import EsDataSample
 from searcher.models import Search
 from utils.es_manager import ES_Manager
 from utils.datasets import Datasets
+from utils.word_cluster import WordCluster
 
 from texta.settings import ERROR_LOGGER
 from texta.settings import INFO_LOGGER
@@ -28,7 +29,7 @@ from sklearn.model_selection import GridSearchCV
 from task_manager.tools import ShowSteps
 from task_manager.tools import TaskCanceledException
 from task_manager.tools import get_pipeline_builder
-from utils.helper_functions import plot_confusion_matrix, create_file_path
+from utils.helper_functions import plot_confusion_matrix, create_file_path, write_task_xml
 from utils.stop_words import StopWords
 from utils.phraser import Phraser
 
@@ -58,7 +59,6 @@ class TagModelWorker(BaseWorker):
 
 
             task_obj = Task.objects.get(pk=int(language_model['pk']))
-            resources = task_obj.resources
             sw = StopWords()
 
             # detect phrases & remove stopwords
@@ -70,11 +70,13 @@ class TagModelWorker(BaseWorker):
                     data_sample_x_map[field_name] = field_content
 
             # cluster if asked
-            if word_cluster_fields and 'word_cluster' in resources:
-                wc = resources['word_cluster']
-                for word_cluster_field in word_cluster_fields:
-                    if word_cluster_field in data_sample_x_map:
-                        data_sample_x_map[word_cluster_field] = [wc.text_to_clusters(text) for text in data_sample_x_map[word_cluster_field]]
+            if word_cluster_fields:
+                wc = WordCluster()
+                loaded = wc.load(task_obj.unique_id)
+                if loaded:
+                    for word_cluster_field in word_cluster_fields:
+                        if word_cluster_field in data_sample_x_map:
+                            data_sample_x_map[word_cluster_field] = [wc.text_to_clusters(text) for text in data_sample_x_map[word_cluster_field]]
 
 
     def run(self, task_id):
@@ -195,8 +197,12 @@ class TagModelWorker(BaseWorker):
         """
         # create_file_path from helper_functions creates missing folders and returns a path
         output_model_file = create_file_path(self.model_name, MODELS_DIR, self.task_type)
+        xml_name = self.model_name.replace('model_', 'xml_')
+        output_xml_file = create_file_path(xml_name, MODELS_DIR, self.task_type)
+
         try:
             joblib.dump(self.model, output_model_file)
+            write_task_xml(self.task_obj, output_xml_file)
             return True
 
         except Exception as e:
