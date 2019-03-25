@@ -28,7 +28,7 @@
                     <div class="row">
                         <div class="col-xs-5">Select fact names:</div>
                         <div class="col-xs-5">
-                            <select class="selectpicker" required data-width='100%' multiple data-selected-text-format="count"
+                            <select class="selectpicker" data-width='100%' multiple data-selected-text-format="count"
                                     data-live-search="true" name="{{ task_param.id }}_facts" autocomplete="off">
                                 {% for fact in task_param.facts %}
                                     <option title="{{ fact }}" value="{{ fact }}">{{ fact }}</option>
@@ -40,10 +40,45 @@
                                                     class="glyphicon glyphicon-question-sign texta-tooltip"></span>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-xs-5">Select Lexicon:</div>
+                        <div class="col-xs-5">
+                            <select class="selectpicker" data-width='100%' multiple data-selected-text-format="count"
+                                    data-live-search="true" name="{{ task_param.id }}_lexicons" autocomplete="off">
+                                {% for lex in lexicons %}
+                                    <option title="{{ lex.name }}" value="{{ lex.id }}">{{ lex.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-xs-1"><span data-toggle="tooltip" data-placement="bottom"
+                                                    title="Select the fact names, of which the values will be used for training"
+                                                    class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-xs-5">Fields for lexicon:</div>
+                        <div class="col-xs-5">
+                            <select class="selectpicker" data-width='100%' multiple
+                                    required
+                                    data-selected-text-format="count"
+                                    name="{{ task_param.id }}_lexicon_fields">
+                                <option data-hidden="true"></option>
+                                {% for field in fields %}
+                                    <option title="{{ field.path }}"
+                                            value="{{ field.path }}">{{ field.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-xs-1"><span data-toggle="tooltip" data-placement="bottom"
+                                                    title="Select the field where the lexicon terms will be matched in"
+                                                    class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+                        </div>
+                    </div>
 
                     <div class="row">
                         <div class="col-xs-5">Description:</div>
-                        <div class="col-xs-5">
+                        <div class="col-xs-6">
                             <input required name="{{ task_param.id }}_description" class="form-control input-sm"
                                    autocomplete="off">
                         </div>
