@@ -8,7 +8,7 @@ from utils.es_manager import ES_Manager
 from texta.settings import ERROR_LOGGER
 from utils.stop_words import StopWords
 
-MAX_POSITIVE_SAMPLE_SIZE = 10000
+# MAX_POSITIVE_SAMPLE_SIZE = 10000
 ES_SCROLL_SIZE = 500
 STOP_WORDS = StopWords()
 
@@ -128,7 +128,7 @@ class EsIterator:
 
 class EsDataSample(object):
 
-    def __init__(self, fields, query, es_m, negative_set_multiplier=1.0, max_positive_sample_size=MAX_POSITIVE_SAMPLE_SIZE, score_threshold=0.0):
+    def __init__(self, fields, query, es_m, negative_set_multiplier=1.0, max_positive_sample_size=None, score_threshold=0.0):
         """ Sample data - Positive and Negative samples from query
         negative_set_multiplier (float): length of positive set is multiplied by this to determine negative sample size (to over- or underfit models)
         max_positive_sample_size (int): maximum number of documents per class used to train the model
@@ -142,8 +142,6 @@ class EsDataSample(object):
         self.score_threshold = score_threshold
 
     def _get_positive_samples(self):
-        sample_size = self.max_positive_sample_size
-        
         positive_samples_map = {}
         positive_set = set()
         # Initialize sample map
@@ -154,8 +152,7 @@ class EsDataSample(object):
         response = self.es_m.scroll()
         scroll_id = response['_scroll_id']
         total_hits = response['hits']['total']
-        while total_hits > 0 and len(positive_set) <= sample_size:
-
+        while total_hits > 0 and (len(positive_set) <= self.max_positive_sample_size if self.max_positive_sample_size else True):
             response = self.es_m.scroll(scroll_id=scroll_id)
             total_hits = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']

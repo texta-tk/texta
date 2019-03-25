@@ -4,6 +4,10 @@ import pickle
 import numpy as np
 from typing import List, Dict
 
+from utils.datasets import Datasets
+from utils.es_manager import ES_Manager
+from ..base_worker import BaseWorker
+
 # Task imports
 from task_manager.tools import ShowSteps
 from task_manager.tools import TaskCanceledException
@@ -16,7 +20,7 @@ from sklearn.model_selection import train_test_split
 from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer, text_to_word_sequence
 
-# Model imports
+# Keras Model imports
 from keras.optimizers import Adam
 from keras.activations import relu, elu, softmax, sigmoid
 
@@ -33,17 +37,18 @@ from task_manager.tasks.workers.neuroclassifier.clr_callback import CyclicLR
 
 np.random.seed(1337)
 
-class NeuroClassifierWorker():
+class NeuroClassifierWorker(BaseWorker):
     def __init__(
             self,
-            samples: List[str],
-            labels: List[int],
-            max_vocab_size: int,
-            max_seq_len: int,
-            model_arch: str,
-            validation_split: float=0.2,
-            crop_amount: int=None,
-            grid_downsample_amount: float=0.001):
+            # samples: List[str],
+            # labels: List[int],
+            # max_vocab_size: int,
+            # max_seq_len: int,
+            # model_arch: str,
+            # validation_split: float=0.2,
+            # crop_amount: int=None,
+            # grid_downsample_amount: float=0.001
+            ):
 
         """
         Main class for training the NeuroClassifier
@@ -61,21 +66,22 @@ class NeuroClassifierWorker():
         self.task_id = None
         self.task_obj = None
         self.task_type = None
-        self.task_params = json.loads(self.task_obj.parameters)
+        self.task_params = None
+        self.show_progress = None
 
         # Neuroclassifier params
-        self.model_arch = model_arch
-        self.validation_split = validation_split
-        self.crop_amount = crop_amount
-        self.grid_downsample_amount = grid_downsample_amount
+        self.model_arch = None
+        self.validation_split = None
+        self.crop_amount = None
+        self.grid_downsample_amount = None
 
         # Neuroclassifier data
-        self.samples = samples
-        self.labels = labels
+        self.samples = None
+        self.labels = None
 
         # Derived params
-        self.vocab_size = max_vocab_size
-        self.seq_len = max_seq_len
+        self.vocab_size = None
+        self.seq_len = None
 
         # Processed data
         self.X_train = None
@@ -92,8 +98,22 @@ class NeuroClassifierWorker():
         self.task_type = self.task_obj.task_type
         self.task_params = json.loads(self.task_obj.parameters)
 
+        self.samples  = self.task_params['samples']
+        self.labels = self.task_params['labels']
+        self.max_vocab_size = self.task_params['max_vocab_size']
+        self.max_seq_len = self.task_params['max_seq_len']
+        self.model_arch = self.task_params['model_arch']
+        self.validation_split = self.task_params['validation_split']
+        self.crop_amount = self.task_params['crop_amount']
+        self.grid_downsample_amount = self.task_params['grid_downsample_amount']
+
+        steps = ["preparing data", "processing data", "training", "saving", "done"]
+        self.show_progress = ShowSteps(self.task_id, steps)
+        self.show_progress.update_view()
+
 
     def _build_data_sampler(self):
+        self.show_progress.update(0)
         # Check if query was explicitly set
         if 'search_tag' in self.task_params:
             # Use set query
@@ -101,6 +121,11 @@ class NeuroClassifierWorker():
         else:
             # Otherwise, load query from saved search
             param_query = self._parse_query(self.task_params)
+
+        negative_set_multiplier = float(self.task_params['negative_multiplier_opt'])
+        max_sample_size_opt = int(self.task_params['max_sample_size_opt'])
+        score_threshold_opt = float(self.task_params['score_threshold_opt'])
+        fields = self.task_params['fields']
 
         # Build Data sampler
         ds = Datasets().activate_datasets_by_id(self.task_params['dataset'])
@@ -114,34 +139,32 @@ class NeuroClassifierWorker():
                                 score_threshold=score_threshold_opt)
         data_sample_x_map, data_sample_y, statistics = es_data.get_data_samples()
 
+        return data_sample_x_map, data_sample_y, statistics
 
-    def run(self, task_id):
-        self._set_up_task(task_id)
-
-        steps = ["preparing data", "training", "saving", "done"]
-        show_progress = ShowSteps(self.task_id, steps)
-        show_progress.update_view()
-        self._validate_params()
-
-        show_progress.update(0)
-        # TODO Something to get data
-        self._build_data_sampler()
-
-
-        self._process_data()
-        self._get_model()
-        # self._train_model()
+    def _train_model(self):
+        self.show_progress.update(2)
         if self.model_is_auto:
             self._train_auto_model()
         else:
-            self._train_model()
+            self._train_generic_model()
 
+    def run(self, task_id):
+        self._set_up_task(task_id)
+        self._validate_params()
+
+        self._build_data_sampler()
+        self._process_data()
+        self._get_model()
+        self._train_model()
         self._save()
+
+        self.show_progress.update(4)
 
 
     def _save(self):
+        self.show_progress.update(3)
+        # TODO saving to disk
         self.model.save('MODELS/my_model.h5')
-
         # Save tokenizer for evaluation
         with open('MODELS/tokenizer.pkl', 'wb') as f:
             pickle.dump(self.tokenizer, f)
@@ -154,6 +177,7 @@ class NeuroClassifierWorker():
 
 
     def _process_data(self):
+        self.show_progress.update(1)
         # Declare Keras Tokenizer
         self.tokenizer = Tokenizer(
                     num_words=self.vocab_size, # If self.vocab_size is not None, limit vocab size
@@ -181,7 +205,7 @@ class NeuroClassifierWorker():
             self.vocab_size = final_vocab_size
 
 
-    def _train_model(self):
+    def _train_generic_model(self):
         bs = 64
         # Custom cyclical learning rate callback
         clr_triangular = CyclicLR(mode='triangular', step_size=6*(len(self.X_train)/bs))
