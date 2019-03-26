@@ -36,28 +36,33 @@ class EntityExtractorWorker(BaseWorker):
         self.es_m = None
         self.task_id = None
         self.model_name = None
-        self.description = None
         self.task_obj = None
         self.task_type = None
         self.task_params = None
         self.show_progress = None
-        self.n_jobs = 1
-        
+        self.description = None
+
+        self.facts = []
+        self.lexicons = []
+        self.lexicon_fields = []
         self.tagger = None
         self.keywords = None
         self.oob_val = "<TEXTA_O>"
-        self.fact_keyword_val = "<TEXTA_FACT>"
         self.eos_val = "<TEXTA_BOS>"
         self.bos_val = "<TEXTA_EOS>"
         self.train_summary = {}
         # If there is less than this amount of memory in Mb left in the machine, stop appending training data
         self.min_mb_available_memory = 1500
 
+
     def _set_up_task(self, task_id):
         self.task_id = task_id
         self.task_obj = Task.objects.get(pk=self.task_id)
         self.task_type = self.task_obj.task_type
         self.task_params = json.loads(self.task_obj.parameters)
+        # Validate and set up keyword params, don't continue if params invalid
+        if not self._check_keyword_params():
+            return False
 
         ds = Datasets().activate_datasets_by_id(self.task_params['dataset'])
         self.es_m = ds.build_manager(ES_Manager)
@@ -67,36 +72,24 @@ class EntityExtractorWorker(BaseWorker):
         self.show_progress = ShowSteps(self.task_id, steps)
         self.show_progress.update_view()
 
-        if 'num_threads' in self.task_params:
-            self.n_jobs = int(self.task_params['num_threads'])
-
-
-    def _get_lexicons_values(self):
-        lex_keywords = {}
-        for id in self.task_params["lexicons"]:
-            for lex in Lexicon.objects.filter(id=id):
-                for word in Word.objects.filter(lexicon=lex):
-                    lex_keywords[word] = lex.name
-        return lex_keywords
+        return True
 
 
     def run(self, task_id):
-        self._set_up_task(task_id)
+        # Set up attributes, check if params valid, if not, don't continue
+        if not self._set_up_task(task_id):
+            return False
         try:
-            if not ("facts" in self.task_params or "lexicons" in self.task_params):
-                self._bad_params_result("No fact names or lexicons given")
-                return False
 
             self.show_progress.update(0)
-            param_query = self._parse_query(self.task_params)
-
+            # Fill keywords for labeling
             keywords = {}
-            if self.task_params["facts"]:
-                keywords.update(self._get_fact_values(self.task_params["facts"]))
-            if self.task_params["lexicons"]:
+            if self.facts:
+                keywords.update(self._get_fact_values())
+            if self.lexicons:
                 keywords.update(self._get_lexicons_values())
 
-            print(keywords)
+            param_query = self._parse_query(self.task_params)
             hits = self._scroll_query_response(param_query)
             # Prepare data
             X_train, y_train, X_val, y_val = self._prepare_data(hits, keywords)
@@ -360,7 +353,7 @@ class EntityExtractorWorker(BaseWorker):
                 # Check if any of the selected facts are present in the hit fields
                 fact_fields = self._get_facts_in_document(source)
                 # Get the hit data of the fields where facts are present
-                batch_hits = self._get_data_from_fields(source, list(set(fact_fields + self.task_params['lexicon_fields'])))
+                batch_hits = self._get_data_from_fields(source, list(set(fact_fields + self.lexicon_fields)))
                 # Add batch hits to hits
                 hits += batch_hits
             response = self.es_m.scroll(scroll_id=scroll_id)
@@ -373,7 +366,7 @@ class EntityExtractorWorker(BaseWorker):
         fact_fields = []
         if FACT_FIELD in source:
             for fact in source[FACT_FIELD]:
-                if fact['fact'] in self.task_params['facts']:
+                if fact['fact'] in self.facts:
                     fact_path = fact['doc_path']
                     if fact_path not in fact_fields:
                         fact_fields.append(fact_path)
@@ -394,7 +387,7 @@ class EntityExtractorWorker(BaseWorker):
         return batch_hits
 
 
-    def _get_fact_values(self, fact_names):
+    def _get_fact_values(self):
         aggs = {'main': {'aggs': {"facts": {"nested": {"path": "texta_facts"}, "aggs": {"fact_names": {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val"}}}}}}}}}
         self.es_m.load_combined_query(aggs)
         response = self.es_m.search()
@@ -402,16 +395,45 @@ class EntityExtractorWorker(BaseWorker):
 
         fact_data = {}
         for fact in response_aggs:
-            if fact['key'] in fact_names:
+            if fact['key'] in self.facts:
                 for val in fact['fact_values']['buckets']:
                     for val_word in val["key"].split(' '):
                         fact_data[val_word] = fact["key"]
         return fact_data
 
 
+    def _get_lexicons_values(self):
+        lex_keywords = {}
+        for id in self.lexicons:
+            for lex in Lexicon.objects.filter(id=id):
+                for word in Word.objects.filter(lexicon=lex):
+                    lex_keywords[word.wrd] = lex.name
+        return lex_keywords
+
+
     def _bad_params_result(self, msg: str):
         self.task_obj.result = json.dumps({"error": msg})
         self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
+        raise UserWarning(msg)
+    
+    
+    def _check_keyword_params(self):
+        '''Validates keyword params and sets them up if valid'''
+        if not ("facts" in self.task_params or "lexicons" in self.task_params):
+            self._bad_params_result("No fact name or lexicons given")
+            return False
+        elif "lexicons" in self.task_params and "lexicon_fields" not in self.task_params:
+            self._bad_params_result("No fields for lexicons given")
+            return False
+
+        # If valid, set them up
+        if "lexicons" in self.task_params:
+            self.lexicons = self.task_params['lexicons']
+            self.lexicon_fields = self.task_params['lexicon_fields']
+        if "facts" in self.task_params:
+            self.facts = self.task_params['facts']
+
+        return True
 
     @staticmethod
     def _convert_dict_to_html_table(data_dict):
