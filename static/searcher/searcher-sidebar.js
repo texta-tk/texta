@@ -880,6 +880,10 @@ function mltQuery() {
                                     swalCustomTypeDisplay(SwalType.ERROR, 'Please perform a build search first')
                                     $('#right').html('No search data!')
                                 }
+                                if (xhr.status === 500) {
+                                    swalCustomTypeDisplay(SwalType.ERROR, 'An internal server error has occurred')
+                                    $('#right').html('Server error!')
+                                }
                             },
                         },
                         "columnDefs": [

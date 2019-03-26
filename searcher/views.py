@@ -364,65 +364,68 @@ def table_header_mlt(request):
 
 @login_required
 def mlt_query(request):
-    es_params = request.POST
-
-    if 'mlt_fields' not in es_params:
-        return HttpResponse(status=400, reason='field')
-    else:
-        if es_params['mlt_fields'] == '[]':
+    try:
+        es_params = request.POST
+        if 'mlt_fields' not in es_params:
             return HttpResponse(status=400, reason='field')
-    if BuildSearchEsManager.build_search_es_m is None:
-        return HttpResponse(status=400, reason='search')
+        else:
+            if es_params['mlt_fields'] == '[]':
+                return HttpResponse(status=400, reason='field')
+        if BuildSearchEsManager.build_search_es_m is None:
+            return HttpResponse(status=400, reason='search')
 
-    mlt_fields = [field for field in json.loads(es_params['mlt_fields'])]
-    handle_negatives = es_params['handle_negatives']
-    docs_accepted = [a.strip() for a in es_params['docs'].split('\n') if a]
-    docs_rejected = [a.strip() for a in es_params['docs_rejected'].split('\n') if a]
+        mlt_fields = [field for field in json.loads(es_params['mlt_fields'])]
+        handle_negatives = es_params['handle_negatives']
+        docs_accepted = [a.strip() for a in es_params['docs'].split('\n') if a]
+        docs_rejected = [a.strip() for a in es_params['docs_rejected'].split('\n') if a]
 
-    stopword_lexicon_ids = json.loads(es_params['mlt_stopword_lexicons'])
-    stopwords = []
-    for lexicon_id in stopword_lexicon_ids:
-        lexicon = Lexicon.objects.get(id=int(lexicon_id))
-        words = Word.objects.filter(lexicon=lexicon)
-        stopwords += [word.wrd for word in words]
+        stopword_lexicon_ids = json.loads(es_params['mlt_stopword_lexicons'])
+        stopwords = []
+        for lexicon_id in stopword_lexicon_ids:
+            lexicon = Lexicon.objects.get(id=int(lexicon_id))
+            words = Word.objects.filter(lexicon=lexicon)
+            stopwords += [word.wrd for word in words]
 
-    search_size = es_params['search_size']
-    draw = int(es_params['draw'])
+        search_size = es_params['search_size']
+        draw = int(es_params['draw'])
 
-    ds = Datasets().activate_datasets(request.session)
-    es_m = ds.build_manager(ES_Manager)
-    es_m.build(es_params)
-    es_m.set_query_parameter('from', es_params['start'])
-    es_m.set_query_parameter('size', search_size)
+        ds = Datasets().activate_datasets(request.session)
+        es_m = ds.build_manager(ES_Manager)
+        es_m.build(es_params)
+        es_m.set_query_parameter('from', es_params['start'])
+        es_m.set_query_parameter('size', search_size)
 
-    response = es_m.more_like_this_search(mlt_fields, docs_accepted=docs_accepted, docs_rejected=docs_rejected,
-                                          handle_negatives=handle_negatives, stopwords=stopwords,
-                                          search_size=search_size,
-                                          build_search_query=BuildSearchEsManager.build_search_es_m.build_search_query)
+        response = es_m.more_like_this_search(mlt_fields, docs_accepted=docs_accepted, docs_rejected=docs_rejected,
+                                            handle_negatives=handle_negatives, stopwords=stopwords,
+                                            search_size=search_size,
+                                            build_search_query=BuildSearchEsManager.build_search_es_m.build_search_query)
 
-    result = {'data': [], 'draw': draw, 'recordsTotal': len(response['hits']['hits'])}
-    column_names = es_m.get_column_names(facts=True)
+        result = {'data': [], 'draw': draw, 'recordsTotal': len(response['hits']['hits'])}
+        column_names = es_m.get_column_names(facts=True)
 
-    for hit in response['hits']['hits']:
-        hit_id = str(hit['_id'])
-        hit['_source']['_es_id'] = hit_id
-        row = OrderedDict([(x, '') for x in column_names])
+        for hit in response['hits']['hits']:
+            hit_id = str(hit['_id'])
+            hit['_source']['_es_id'] = hit_id
+            row = OrderedDict([(x, '') for x in column_names])
 
-        for col in column_names:
-            # If the content is nested, need to break the flat name in a path list
-            field_path = col.split('.')
-            # Get content for the fields and make facts human readable
-            for p in field_path:
-                if col == FACT_FIELD and p in hit['_source']:
-                    content = improve_facts_readability(hit['_source'][p])
-                else:
-                    content = hit['_source'][p] if p in hit['_source'] else ''
+            for col in column_names:
+                # If the content is nested, need to break the flat name in a path list
+                field_path = col.split('.')
+                # Get content for the fields and make facts human readable
+                for p in field_path:
+                    if col == FACT_FIELD and p in hit['_source']:
+                        content = improve_facts_readability(hit['_source'][p])
+                    else:
+                        content = hit['_source'][p] if p in hit['_source'] else ''
 
-            # Append the final content of this col to the row
-            if row[col] == '':
-                row[col] = content
+                # Append the final content of this col to the row
+                if row[col] == '':
+                    row[col] = content
 
-        result['data'].append([hit_id, hit_id] + list(row.values()))
+            result['data'].append([hit_id, hit_id] + list(row.values()))
+    except Exception as e:
+        logging.getLogger(ERROR_LOGGER).exception(json.dumps(
+                {'process': 'MLT QUERY', 'event': 'mlt_query_failed', 'data': {'es_params': es_params}}), exc_info=True)
 
     return HttpResponse(json.dumps(result, ensure_ascii=False))
 
