@@ -1,10 +1,14 @@
 from django.urls import include, path
 from rest_framework import routers
-from toolkit.core import views
+
+# import views
+from toolkit.core import views as core_views
+from toolkit.datasets import views as datasets_views
 
 router = routers.DefaultRouter()
-router.register(r'users', views.UserViewSet)
-router.register(r'projects', views.ProjectViewSet)
+router.register(r'users', core_views.UserViewSet)
+router.register(r'projects', core_views.ProjectViewSet)
+router.register(r'datasets', datasets_views.DatasetViewSet)
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
