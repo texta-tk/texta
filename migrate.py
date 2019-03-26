@@ -1,4 +1,6 @@
 import django # For making sure the correct Python environment is used.
+from django.db import connections
+from django.db.utils import OperationalError
 from texta.settings import INSTALLED_APPS
 import subprocess
 from time import sleep
@@ -25,6 +27,17 @@ def create_admin():
         return False
 
 
+def check_mysql_connection():
+    db_conn = connections['default']
+    try:
+        c = db_conn.cursor()
+    except OperationalError:
+        connected = False
+    else:
+        connected = True
+    return connected
+
+
 def migrate(custom_apps):
     print('Toolkit: Detecting database changes.')
     make_migrations_output = subprocess.check_output(['python', 'manage.py', 'makemigrations'] + custom_apps)
@@ -48,10 +61,15 @@ if len(sys.argv) > 1:
             if os.path.exists(migrations_dir):
                 shutil.rmtree(migrations_dir)
 
-try:
-    migrate(custom_apps)
-except Exception:
-    print('Migrations failed - MySQL possibly not ready yet. Sleeping for 10 sec & trying again.')
-    sleep(10)
-    migrate(custom_apps)
-    
+connected = False
+n_try = 0
+
+while connected == False and n_try <= 10:
+    connected = check_mysql_connection()
+    if connected:
+        migrate(custom_apps)
+    else:
+        n_try += 1
+        print('Toolkit migration attempt {}: No connection to database. Sleeping for 10 sec and trying again.'.format(n_try))
+        sleep(10)
+

@@ -198,8 +198,9 @@ DATABASES = {
 	}
 }
 
-if not os.path.exists(os.path.dirname(DATABASES['default']['NAME'])) and os.environ.get('DJANGO_DATABASE_NAME') is None:
-	os.makedirs(os.path.dirname(DATABASES['default']['NAME']))
+if SERVER_TYPE == 'development':
+	if not os.path.exists(os.path.dirname(DATABASES['default']['NAME'])) and os.environ.get('DJANGO_DATABASE_NAME') is None:
+		os.makedirs(os.path.dirname(DATABASES['default']['NAME']))
 
 TIME_ZONE = 'Europe/Tallinn'
 LANGUAGE_CODE = 'et'
