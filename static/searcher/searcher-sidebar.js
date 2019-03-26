@@ -881,8 +881,8 @@ function mltQuery() {
                                     $('#right').html('No search data!')
                                 }
                                 if (xhr.status === 500) {
-                                    swalCustomTypeDisplay(SwalType.ERROR, 'An internal server error has occurred')
-                                    $('#right').html('Server error!')
+                                    swalCustomTypeDisplay(SwalType.ERROR, 'An internal server error has occurred!')
+                                    $('#right').html(`An internal server error occurred: ${xhr.statusText}`)
                                 }
                             },
                         },

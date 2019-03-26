@@ -364,6 +364,7 @@ def table_header_mlt(request):
 
 @login_required
 def mlt_query(request):
+    response = None
     try:
         es_params = request.POST
         if 'mlt_fields' not in es_params:
@@ -373,7 +374,6 @@ def mlt_query(request):
                 return HttpResponse(status=400, reason='field')
         if BuildSearchEsManager.build_search_es_m is None:
             return HttpResponse(status=400, reason='search')
-
         mlt_fields = [field for field in json.loads(es_params['mlt_fields'])]
         handle_negatives = es_params['handle_negatives']
         docs_accepted = [a.strip() for a in es_params['docs'].split('\n') if a]
@@ -388,7 +388,6 @@ def mlt_query(request):
 
         search_size = es_params['search_size']
         draw = int(es_params['draw'])
-
         ds = Datasets().activate_datasets(request.session)
         es_m = ds.build_manager(ES_Manager)
         es_m.build(es_params)
@@ -423,11 +422,14 @@ def mlt_query(request):
                     row[col] = content
 
             result['data'].append([hit_id, hit_id] + list(row.values()))
+        return HttpResponse(json.dumps(result, ensure_ascii=False))
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(json.dumps(
-                {'process': 'MLT QUERY', 'event': 'mlt_query_failed', 'data': {'es_params': es_params}}), exc_info=True)
+        error = {'process': 'MLT QUERY', 'event': 'mlt_query_failed', 'data': {  }}
+        if response:
+            error['data']['response'] = response
+        logging.getLogger(ERROR_LOGGER).exception(json.dumps(error), exc_info=True)
 
-    return HttpResponse(json.dumps(result, ensure_ascii=False))
+        return HttpResponse(status=500, reason=str(e))
 
 
 @login_required
