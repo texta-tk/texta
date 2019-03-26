@@ -1,0 +1,3 @@
+*.pyc
+toolkit/*/migrations/*
+*.sqlite3
