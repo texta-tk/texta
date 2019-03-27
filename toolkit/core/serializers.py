@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from toolkit.core.models import Project, Dataset, Search, Lexicon, Phrase, Embedding, Tagger
+from toolkit.core.models import Project, Dataset, Search, Lexicon, Phrase
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -44,20 +44,3 @@ class LexiconSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Lexicon
         fields = ('url', 'id', 'project', 'author', 'description', 'phrases')
-
-
-class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
-    vocab_size = serializers.IntegerField(read_only=True)
-    location = serializers.CharField(read_only=True)
-    task = serializers.RelatedField(read_only=True)
-
-    class Meta:
-        model = Embedding
-        fields = ('url', 'id', 'description', 'num_dimensions', 'max_vocab', 'vocab_size', 'location', 'task')
-
-
-class TaggerSerializer(serializers.HyperlinkedModelSerializer):
-
-    class Meta:
-        model = Tagger
-        fields = ('url', 'id', 'description')
