@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from toolkit.core.models import Project, Dataset, Search, Model, Lexicon, Phrase
+from toolkit.core.models import Project, Dataset, Search, Lexicon, Phrase, Embedding, Tagger
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -32,13 +32,6 @@ class SearchSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('url', 'id', 'description', 'query', 'author', 'project')
 
 
-class ModelSerializer(serializers.HyperlinkedModelSerializer):
-
-    class Meta:
-        model = Model
-        fields = ('url', 'id', 'description', 'model_type', 'status', 'parameters', 'result')
-
-
 class PhraseSerializer(serializers.HyperlinkedModelSerializer):
     
     class Meta:
@@ -50,4 +43,21 @@ class LexiconSerializer(serializers.HyperlinkedModelSerializer):
     phrases = PhraseSerializer(read_only=True)
     class Meta:
         model = Lexicon
-        fields = ('url', 'id', 'description', 'author', 'phrases')
+        fields = ('url', 'id', 'project', 'author', 'description', 'phrases')
+
+
+class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
+    vocab_size = serializers.IntegerField(read_only=True)
+    location = serializers.CharField(read_only=True)
+    task = serializers.RelatedField(read_only=True)
+
+    class Meta:
+        model = Embedding
+        fields = ('url', 'id', 'description', 'num_dimensions', 'max_vocab', 'vocab_size', 'location', 'task')
+
+
+class TaggerSerializer(serializers.HyperlinkedModelSerializer):
+
+    class Meta:
+        model = Tagger
+        fields = ('url', 'id', 'description')

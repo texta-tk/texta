@@ -2,8 +2,8 @@ from django.shortcuts import render
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 
-from toolkit.core.models import Project, Search, Model, Dataset, Lexicon, Phrase
-from toolkit.core.serializers import UserSerializer, ProjectSerializer, DatasetSerializer, SearchSerializer, ModelSerializer, LexiconSerializer, PhraseSerializer
+from toolkit.core.models import Project, Search, Dataset, Lexicon, Phrase, Embedding, Tagger
+from toolkit.core.serializers import UserSerializer, ProjectSerializer, DatasetSerializer, SearchSerializer, LexiconSerializer, PhraseSerializer, EmbeddingSerializer, TaggerSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -38,14 +38,6 @@ class SearchViewSet(viewsets.ModelViewSet):
     serializer_class = SearchSerializer
 
 
-class ModelViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows TEXTA models to be viewed or edited.
-    """
-    queryset = Model.objects.all()
-    serializer_class = ModelSerializer
-
-
 class LexiconViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows TEXTA models to be viewed or edited.
@@ -60,3 +52,19 @@ class PhraseViewSet(viewsets.ModelViewSet):
     """
     queryset = Phrase.objects.all()
     serializer_class = PhraseSerializer
+
+
+class EmbeddingViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows TEXTA models to be viewed or edited.
+    """
+    queryset = Embedding.objects.all()
+    serializer_class = EmbeddingSerializer
+
+
+class TaggerViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows TEXTA models to be viewed or edited.
+    """
+    queryset = Tagger.objects.all()
+    serializer_class = TaggerSerializer

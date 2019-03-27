@@ -1,4 +1,5 @@
 from elasticsearch import Elasticsearch
+import json
 
 from toolkit.settings import ES_URL
 
@@ -7,6 +8,7 @@ class Elastic(object):
     
     def __init__(self):
         self.es = Elasticsearch([ES_URL])
+        self.empty_query = json.dumps({"query": {}})
     
     def check_connection(self):
         if self.es.ping():
