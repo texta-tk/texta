@@ -3,9 +3,12 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from toolkit.core.elastic import Elastic
+from toolkit.elastic.elastic import Elastic
 from toolkit.core.models import Project, Dataset
 #from toolkit.trainers.celery_tasks import train_embedding
+
+import json
+
 
 MAX_INT_LEN = 10
 MAX_STR_LEN = 100
@@ -53,7 +56,7 @@ class Embedding(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=Elastic().empty_query)
-    datasets = models.ManyToManyField(Dataset)
+    fields = models.CharField(choices=[('{0} - {1}'.format(a['index'], a['field']['path']), json.dumps(a)) for a in Elastic().get_fields()], max_length=MAX_STR_LEN)
 
     num_dimensions = models.IntegerField(choices=CHOICES['embedding']['num_dimensions'], default=100)
     max_vocab = models.IntegerField(choices=CHOICES['embedding']['max_vocab'], default=0)

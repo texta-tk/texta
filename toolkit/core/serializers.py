@@ -36,7 +36,7 @@ class PhraseSerializer(serializers.HyperlinkedModelSerializer):
     
     class Meta:
         model = Phrase
-        fields = ('url', 'id', 'lexicon', 'phrase')
+        fields = ('url', 'id', 'project', 'author', 'phrase')
 
 
 class LexiconSerializer(serializers.HyperlinkedModelSerializer):

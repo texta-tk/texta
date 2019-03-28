@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from toolkit.core.elastic import Elastic
+from toolkit.elastic.elastic import Elastic
 
 
 MAX_INT_LEN = 10
@@ -43,19 +43,23 @@ class Search(models.Model):
         return self.query
 
 
-class Lexicon(models.Model):
-    id = models.AutoField(primary_key=True)
-    description = models.CharField(max_length=MAX_STR_LEN)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.description
-
-
 class Phrase(models.Model):
     id = models.AutoField(primary_key=True)
-    lexicon = models.ForeignKey(Lexicon, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     phrase = models.CharField(max_length=MAX_STR_LEN)
    
     def __str__(self):
         return self.phrase
+
+
+class Lexicon(models.Model):
+    id = models.AutoField(primary_key=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    description = models.CharField(max_length=MAX_STR_LEN)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    phrases = models.ManyToManyField(Phrase)
+
+    def __str__(self):
+        return self.description
+
