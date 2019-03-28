@@ -379,7 +379,7 @@ def mlt_query(request):
         docs_accepted = [a.strip() for a in es_params['docs'].split('\n') if a]
         docs_rejected = [a.strip() for a in es_params['docs_rejected'].split('\n') if a]
 
-        stopword_lexicon_ids = json.loads(es_params['mlt_stopword_lexicons'])
+        stopword_lexicon_ids = json.loads(es_params['mlt_stopword_lexicons']) if 'mlt_stopwords_lexicons' in es_params else []
         stopwords = []
         for lexicon_id in stopword_lexicon_ids:
             lexicon = Lexicon.objects.get(id=int(lexicon_id))
