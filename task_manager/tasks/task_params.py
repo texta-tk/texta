@@ -10,6 +10,7 @@ from utils.es_manager import ES_Manager
 from texta.settings import ERROR_LOGGER, INFO_LOGGER
 from task_manager.tasks.workers.management_workers.management_task_params import ManagerKeys
 from task_manager.tasks.task_types import TaskTypes
+from task_manager.tasks.workers.neuroclassifier.neuro_models import NeuroModels
 
 fact_names = {}
 
@@ -36,6 +37,7 @@ task_params = [
         "template":        "task_parameters/train_neuroclassifier.html",
         "result_template": "task-results/train-neuroclassifier-results.html",
         "worker":           NeuroClassifierWorker,
+        "architectures":    NeuroModels.model_names,
         "allowed_actions": ["delete"]
     },
     {

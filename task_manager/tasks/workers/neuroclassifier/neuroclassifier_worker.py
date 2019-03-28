@@ -98,9 +98,7 @@ class NeuroClassifierWorker(BaseWorker):
         self.task_type = self.task_obj.task_type
         self.task_params = json.loads(self.task_obj.parameters)
 
-        self.samples  = self.task_params['samples']
-        self.labels = self.task_params['labels']
-        self.max_vocab_size = self.task_params['max_vocab_size']
+        self.labels = self.task_params['description']
         self.max_seq_len = self.task_params['max_seq_len']
         self.model_arch = self.task_params['model_arch']
         self.validation_split = self.task_params['validation_split']
@@ -153,10 +151,15 @@ class NeuroClassifierWorker(BaseWorker):
         self._validate_params()
 
         self._build_data_sampler()
+        import pdb; pdb.set_trace()
         self._process_data()
+        import pdb; pdb.set_trace()
         self._get_model()
+        import pdb; pdb.set_trace()
         self._train_model()
+        import pdb; pdb.set_trace()
         self._save()
+        import pdb; pdb.set_trace()
 
         self.show_progress.update(4)
 

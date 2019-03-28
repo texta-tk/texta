@@ -19,6 +19,19 @@ from talos.model.layers import hidden_layers
 from talos.model.normalizers import lr_normalizer
 
 class NeuroModels():
+    model_names = [
+        'simpleFNN',
+        'simpleCNN',
+        'simpleGRU',
+        'simpleLSTM',
+        'gruCNN',
+        'lstmCNN',
+        'autoFNN',
+        'autoGRU',
+        'autoLSTM',
+        'autoCNN',
+    ]
+
     def __init__(self):
         # Map models to string so they would be easy to call
         self.models_map = {
