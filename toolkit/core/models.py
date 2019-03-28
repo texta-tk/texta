@@ -2,23 +2,14 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+from multiselectfield import MultiSelectField
 
 from toolkit.elastic.elastic import Elastic
+from toolkit.elastic.utils import get_indices
 
 
 MAX_INT_LEN = 10
 MAX_STR_LEN = 100
-
-
-class Dataset(models.Model):
-    id = models.AutoField(primary_key=True)
-    index = models.CharField(choices=Elastic().get_indices(), max_length=MAX_STR_LEN, blank=False)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.index
 
 
 class Project(models.Model):
@@ -26,7 +17,7 @@ class Project(models.Model):
     title = models.CharField(max_length=MAX_STR_LEN)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     users = models.ManyToManyField(User, related_name="project_users")
-    datasets = models.ManyToManyField(Dataset, blank=True)
+    indices = MultiSelectField(default=None)
 
     def __str__(self):
         return self.title

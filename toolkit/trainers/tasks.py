@@ -7,9 +7,15 @@ from toolkit.settings import NUM_WORKERS
 @task(name="train_embedding")
 def train_embedding(embedding_id):
     embedding_object = Embedding.objects.get(pk=embedding_id)
+    task_object = embedding_object.task
+
+    print(embedding_id,embedding_object.pk)
+    print(list(embedding_object.fields))
+
     num_passes = 5
     # Number of word2vec passes + one pass to vocabulary building
     total_passes = num_passes + 1
+
     #task_params = json.loads(self.task_obj.parameters)
 
     #show_progress = ShowProgress(embedding_id, multiplier=1)
@@ -28,15 +34,15 @@ def train_embedding(embedding_id):
     #show_progress.update_view(0)
 
     # iterate again with built phrase model to include phrases in language model
-    sentences = EsIterator(task_params, callback_progress=show_progress, phraser=phraser)
+    #sentences = EsIterator(task_params, callback_progress=show_progress, phraser=phraser)
 
-    model = word2vec.Word2Vec(
-        sentences,
-        min_count=embedding_object.min_freq,
-        size=embedding.num_dimensions,
-        workers=NUM_WORKERS,
-        iter=int(num_passes)
-    )
+    #model = word2vec.Word2Vec(
+    #    sentences,
+    #    min_count=embedding_object.min_freq,
+    #    size=embedding.num_dimensions,
+    #    workers=NUM_WORKERS,
+    #    iter=int(num_passes)
+    #)
 
     #show_progress.update_step('Cluster')
     #show_progress.update_view(100.0)

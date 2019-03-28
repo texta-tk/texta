@@ -3,3 +3,5 @@ djangorestframework==3.9.2
 gensim==3.7.1
 celery==4.2.2
 elasticsearch==6.3.1
+redis==3.2.1
+django-multiselectfield

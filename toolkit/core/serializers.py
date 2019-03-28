@@ -1,7 +1,8 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from toolkit.core.models import Project, Dataset, Search, Lexicon, Phrase
+from toolkit.core.models import Project, Search, Lexicon, Phrase
+from toolkit.elastic.utils import get_indices
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -12,17 +13,10 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):
-
+    indices = serializers.MultipleChoiceField(choices=get_indices())
     class Meta:
         model = Project
-        fields = ('url', 'id', 'title', 'owner', 'users', 'datasets')
-
-
-class DatasetSerializer(serializers.HyperlinkedModelSerializer):
-
-    class Meta:
-        model = Dataset
-        fields = ('url', 'id', 'index', 'owner')
+        fields = ('url', 'id', 'title', 'owner', 'users', 'indices')
 
 
 class SearchSerializer(serializers.HyperlinkedModelSerializer):

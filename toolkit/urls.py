@@ -8,7 +8,6 @@ from toolkit.trainers import views as trainer_views
 router = routers.DefaultRouter()
 router.register(r'user', core_views.UserViewSet)
 router.register(r'project', core_views.ProjectViewSet)
-router.register(r'dataset', core_views.DatasetViewSet)
 router.register(r'search', core_views.SearchViewSet)
 router.register(r'lexicon', core_views.LexiconViewSet)
 router.register(r'phrase', core_views.PhraseViewSet)
