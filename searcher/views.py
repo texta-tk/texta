@@ -90,7 +90,6 @@ def collect_map_entries(map_):
 
 
 def get_fields(es_m):
-    texta_reserved = ['texta_facts']
     mapped_fields = es_m.get_mapped_fields()
     fields_with_facts = es_m.get_fields_with_facts()
 
@@ -101,7 +100,7 @@ def get_fields(es_m):
 
         path = data['path']
 
-        if path not in texta_reserved:
+        if path not in es_m.TEXTA_RESERVED:
 
             path_list = path.split('.')
 
@@ -191,7 +190,7 @@ def index(request):
     fields = get_fields(es_m)
 
     datasets = Datasets().get_allowed_datasets(request.user)
-    language_models =Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
+    language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
 
     # Hide fact graph if no facts_str_val is present in fields
     display_fact_graph = 'hidden'
