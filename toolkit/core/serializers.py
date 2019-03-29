@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 
 from toolkit.core.models import Project, Search, Lexicon, Phrase
-from toolkit.elastic.utils import get_indices
+from toolkit.core.choices import get_index_choices
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -13,7 +13,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):
-    indices = serializers.MultipleChoiceField(choices=get_indices())
+    indices = serializers.MultipleChoiceField(choices=get_index_choices())
     class Meta:
         model = Project
         fields = ('url', 'id', 'title', 'owner', 'users', 'indices')

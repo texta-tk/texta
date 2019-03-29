@@ -1,23 +1,19 @@
 from celery.decorators import task
 from gensim.models import word2vec
-import urllib
 import json
 
 from toolkit.trainers.models import Embedding
 from toolkit.settings import NUM_WORKERS
+
+from toolkit.elastic.utils import decode_urlencoded_str
+from toolkit.tools.show_progress import ShowProgress
 
 @task(name="train_embedding")
 def train_embedding(embedding_id):
     embedding_object = Embedding.objects.get(pk=embedding_id)
     task_object = embedding_object.task
 
-    print((embedding_object.fields))
-
-
-    #field_info = urllib.parse.urlparse(embedding_object.fields)
-    #print(field_info)
-
-    #print(embedding_id,embedding_object.pk)
+    field_data = [decode_urlencoded_str(field) for field in embedding_object.fields]
 
     num_passes = 5
     # Number of word2vec passes + one pass to vocabulary building
@@ -25,11 +21,11 @@ def train_embedding(embedding_id):
 
     #task_params = json.loads(self.task_obj.parameters)
 
-    #show_progress = ShowProgress(embedding_id, multiplier=1)
+    show_progress = ShowProgress(task_object.pk, multiplier=1)
     #show_progress.update_step('Phraser')
     #show_progress.update_view(0)
 
-    #sentences = EsIterator(task_params, callback_progress=show_progress)
+    sentences = EsIterator(field_data, callback_progress=show_progress)
 
     # build phrase model
     #phraser = Phraser(embedding_id)

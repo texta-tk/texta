@@ -5,7 +5,6 @@ from django.contrib.auth.models import User
 from multiselectfield import MultiSelectField
 
 from toolkit.elastic.elastic import Elastic
-from toolkit.elastic.utils import get_indices
 
 
 MAX_INT_LEN = 10

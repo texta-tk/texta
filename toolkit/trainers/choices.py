@@ -1,4 +1,10 @@
 # CHOICES FOR TRAINER APP
+from toolkit.elastic.elastic import Elastic
+
+def get_field_choices():
+   es = Elastic()
+   return [(es.encode_field_data(a), '{0} - {1}'.format(a['index'], a['field']['path'])) for a in es.get_fields()]
+
 
 MODEL_CHOICES = {"embedding": {"num_dimensions": [(100, 100), (200, 200), (300, 300)],
                          "max_vocab": [(0, 0), (50000, 50000), (100000, 100000), (500000, 500000), (1000000, 1000000)],
