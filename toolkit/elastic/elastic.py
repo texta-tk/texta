@@ -21,7 +21,7 @@ class Elastic(object):
 
     def get_indices(self):
         if self.connection:
-            return [(a, a) for i,a in enumerate(self.es.indices.get_alias('*').keys())]
+            return list(self.es.indices.get_alias('*').keys())
         else:
             return []
     

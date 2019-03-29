@@ -1,6 +1,7 @@
 from celery.decorators import task
 from gensim.models import word2vec
 import urllib
+import json
 
 from toolkit.trainers.models import Embedding
 from toolkit.settings import NUM_WORKERS
@@ -10,13 +11,13 @@ def train_embedding(embedding_id):
     embedding_object = Embedding.objects.get(pk=embedding_id)
     task_object = embedding_object.task
 
-    print(list(embedding_object.fields))
+    print((embedding_object.fields))
 
 
     #field_info = urllib.parse.urlparse(embedding_object.fields)
     #print(field_info)
 
-    print(embedding_id,embedding_object.pk)
+    #print(embedding_id,embedding_object.pk)
 
     num_passes = 5
     # Number of word2vec passes + one pass to vocabulary building

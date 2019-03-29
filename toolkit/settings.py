@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'toolkit.core',
     'toolkit.trainers',
     'rest_framework',
-    'multiselectfield'
+    'multiselectfield',
+    #'django_extensions'
 ]
 
 #REST_FRAMEWORK = {
