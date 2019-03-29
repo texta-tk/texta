@@ -29,8 +29,7 @@ class Embedding(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=Elastic().empty_query)
-    index = MultiSelectField()
-    fields = MultiSelectField()
+    fields = models.TextField()
 
     num_dimensions = models.IntegerField(default=100)
     max_vocab = models.IntegerField(default=0)
