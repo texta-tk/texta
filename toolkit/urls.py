@@ -3,7 +3,7 @@ from rest_framework import routers
 
 # import views
 from toolkit.core import views as core_views
-from toolkit.trainers import views as trainer_views
+from toolkit.trainer import views as trainer_views
 
 router = routers.DefaultRouter()
 router.register(r'user', core_views.UserViewSet)

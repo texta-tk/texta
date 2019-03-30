@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from multiselectfield import MultiSelectField
 
-from toolkit.elastic.elastic import Elastic
+from toolkit.elastic.searcher import ElasticSearcher
 
 
 MAX_INT_LEN = 10
@@ -27,7 +27,7 @@ class Search(models.Model):
     description = models.CharField(max_length=MAX_STR_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    query = models.TextField(default=Elastic().empty_query)
+    query = models.TextField(default=ElasticSearcher().query)
 
     def __str__(self):
         return self.query

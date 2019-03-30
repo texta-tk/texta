@@ -1,5 +1,4 @@
-from task_manager.models import Task
-from .data_manager import TaskCanceledException
+from toolkit.trainer.models import Task
 
 
 class ShowProgress(object):
@@ -29,12 +28,9 @@ class ShowProgress(object):
         self.update_view(percentage)
 
     def update_view(self, percentage):
-        r = Task.get_by_id(self.task_pk)
-        # Check if task was canceled
-        if r.status == Task.STATUS_CANCELED:
-            raise TaskCanceledException()
+        r = Task.objects.get(pk=self.task_pk)
         r.status = Task.STATUS_RUNNING
-        progress_message = '{0:3.0f} %'.format(percentage)
+        progress_message = '{0:3.0f}%'.format(percentage)
         if self.step:
             progress_message = '{1}: {0}'.format(progress_message, self.step)
         r.update_progress(percentage, progress_message)

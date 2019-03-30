@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'toolkit.core',
-    'toolkit.trainers',
+    'toolkit.trainer',
     'rest_framework',
     'multiselectfield',
     #'django_extensions'
@@ -144,3 +144,14 @@ CELERY_TIMEZONE = TIME_ZONE
 
 # this is for training embeddings & taggers
 NUM_WORKERS=4
+
+
+
+# create model dirs
+MODELS_DIR = os.path.join(BASE_DIR, 'toolkit', 'models')
+MODEL_TYPES = ['embedding', 'tagger', 'extractor']
+
+for model_type in MODEL_TYPES:
+    model_dir = os.path.join(MODELS_DIR, model_type)
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
