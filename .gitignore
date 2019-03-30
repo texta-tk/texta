@@ -1,3 +1,4 @@
 *.pyc
 toolkit/*/migrations/*
 *.sqlite3
+toolkit/models/*

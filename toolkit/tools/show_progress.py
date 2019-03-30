@@ -10,7 +10,7 @@ class ShowProgress(object):
         self.n_count = 0
         self.task_pk = task_pk
         self.multiplier = multiplier
-        self.step = None
+        self.step = ''
 
     def set_total(self, total):
         self.n_total = total
@@ -30,7 +30,4 @@ class ShowProgress(object):
     def update_view(self, percentage):
         r = Task.objects.get(pk=self.task_pk)
         r.status = Task.STATUS_RUNNING
-        progress_message = '{0:3.0f}%'.format(percentage)
-        if self.step:
-            progress_message = '{1}: {0}'.format(progress_message, self.step)
-        r.update_progress(percentage, progress_message)
+        r.update_progress(percentage, self.step)

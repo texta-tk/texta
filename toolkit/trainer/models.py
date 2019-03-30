@@ -26,7 +26,7 @@ class Task(models.Model):
     id = models.AutoField(primary_key=True)
     status = models.CharField(max_length=MAX_STR_LEN)
     progress = models.FloatField(default=0.0)
-    progress_message = models.CharField(max_length=MAX_STR_LEN, default='')
+    step = models.CharField(max_length=MAX_STR_LEN, default='')
     time_started = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(null=True, blank=True, default=None)
     time_completed = models.DateTimeField(null=True, blank=True, default=None)
@@ -40,9 +40,9 @@ class Task(models.Model):
         self.save()
 
 
-    def update_progress(self, progress, progress_message):
+    def update_progress(self, progress, step):
         self.progress = progress
-        self.progress_message = progress_message
+        self.step = step
         self.last_update = now()
         self.save()
 

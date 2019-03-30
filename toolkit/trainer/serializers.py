@@ -8,14 +8,14 @@ from toolkit.trainer.choices import MODEL_CHOICES, get_field_choices
 class TaskSerializer(serializers.HyperlinkedModelSerializer):
     status = serializers.CharField(read_only=True)
     progress = serializers.FloatField(read_only=True)
-    progress_message = serializers.CharField(read_only=True)
+    step = serializers.CharField(read_only=True)
     time_started = serializers.DateTimeField(read_only=True)
     last_update = serializers.DateTimeField(read_only=True)
     time_completed = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = Task
-        fields = ('id', 'status', 'progress', 'progress_message', 'time_started', 'last_update', 'time_completed')
+        fields = ('id', 'status', 'progress', 'step', 'time_started', 'last_update', 'time_completed')
 
 
 class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):

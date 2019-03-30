@@ -15,7 +15,7 @@ def train_embedding(embedding_id):
     embedding_object = Embedding.objects.get(pk=embedding_id)
     task_object = embedding_object.task
     show_progress = ShowProgress(task_object.id, multiplier=1)
-    show_progress.update_step('Phraser')
+    show_progress.update_step('phraser')
     show_progress.update_view(0)
 
     # parse field data
@@ -33,7 +33,7 @@ def train_embedding(embedding_id):
 
     # update progress
     show_progress = ShowProgress(task_object.id, multiplier=total_passes)
-    show_progress.update_step('W2V')
+    show_progress.update_step('word2vec')
     show_progress.update_view(0)
 
     # iterate again with built phrase model to include phrases in language model
@@ -41,7 +41,7 @@ def train_embedding(embedding_id):
     model = word2vec.Word2Vec(sentences, min_count=embedding_object.min_freq, size=embedding_object.num_dimensions, workers=NUM_WORKERS, iter=int(num_passes))
 
     # Save models
-    show_progress.update_step('Saving')
+    show_progress.update_step('saving')
     model_path = os.path.join(MODELS_DIR, 'embedding', 'embedding_'+str(embedding_id))
     phraser_path = os.path.join(MODELS_DIR, 'embedding', 'phraser_'+str(embedding_id))
     model.save(model_path)
@@ -49,10 +49,11 @@ def train_embedding(embedding_id):
 
     # save model locations
     embedding_object.location = json.dumps({'embedding': model_path, 'phraser': phraser_path})
+    embedding_object.vocab_size = len(model.wv.vocab)
     embedding_object.save()
 
     # declare the job done
-    show_progress.update_step(None)
+    show_progress.update_step('')
     show_progress.update_view(100.0)
     task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
