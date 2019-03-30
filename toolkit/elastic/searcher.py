@@ -11,8 +11,12 @@ class ElasticSearcher:
     """
     Everything related to performing searches in Elasticsearch
     """
+    OUT_RAW   = 'raw'
+    OUT_DOC   = 'document'
+    OUT_TEXT  = 'text'
+    OUT_SENTS = 'sentences'
 
-    def __init__(self, field_data=[], query={"query": {"match_all": {}}}, scroll_size=ES_SCROLL_SIZE, output='document', callback_progress=None, phraser=None):
+    def __init__(self, field_data=[], query={"query": {"match_all": {}}}, scroll_size=ES_SCROLL_SIZE, output=OUT_DOC, callback_progress=None, phraser=None):
         """
         Output options: document (default), text (lowered & stopwords removed), sentences (text + line splitting), raw (raw elastic output)
         """
@@ -94,7 +98,7 @@ class ElasticSearcher:
 
     def search(self):
         response = self.core.es.search(index=self.indices, body=self.query)
-        if self.output == 'document':
+        if self.output == self.OUT_DOC:
             return [self._parse_doc(doc) for doc in response['hits']['hits']]
         else:
             return response
@@ -109,13 +113,13 @@ class ElasticSearcher:
         page_size = len(page['hits']['hits'])
 
         while page_size > 0:
-            if self.output in ['document', 'text', 'sentences']:
+            if self.output in (self.OUT_DOC, self.OUT_TEXT, self.OUT_SENTS):
                 if self.callback_progress:
                     self.callback_progress.update(page_size)
                 for hit in page['hits']['hits']:
                     parsed_doc = self._parse_doc(hit)
-                    if self.output in ['text', 'sentences']:
-                        if self.output == 'sentences':
+                    if self.output in (self.OUT_TEXT, self.OUT_SENTS):
+                        if self.output == self.OUT_SENTS:
                             texts = self.doc_to_texts(parsed_doc, sentences=True)
                         else:
                             texts = self.doc_to_texts(parsed_doc)
@@ -125,7 +129,7 @@ class ElasticSearcher:
                             yield text
                         else:
                             yield parsed_doc
-            elif self.output == 'raw':
+            elif self.output == self.OUT_RAW:
                 yield page
 
             # get new page
