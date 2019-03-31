@@ -7,6 +7,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.model_selection import GridSearchCV
 import pandas as pd
+import json
 
 from toolkit.settings import NUM_WORKERS
 from toolkit.trainer.models import Tagger
