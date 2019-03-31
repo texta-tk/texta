@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 
 from toolkit.trainer.models import Embedding, Tagger, Task
-from toolkit.trainer.choices import MODEL_CHOICES, get_field_choices
+from toolkit.trainer.choices import MODEL_CHOICES, get_field_choices, get_classifier_choices, get_vectorizer_choices
 
 
 class TaskSerializer(serializers.HyperlinkedModelSerializer):
@@ -33,8 +33,15 @@ class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class TaggerSerializer(serializers.HyperlinkedModelSerializer):
+    fields = serializers.MultipleChoiceField(choices=get_field_choices())
+    vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices())
+    classifier = serializers.ChoiceField(choices=get_classifier_choices())
+    #negative_multiplier = serializers.ChoiceField(choices=MODEL_CHOICES['tagger']['negative_multiplier'])
+    maximum_sample_size = serializers.ChoiceField(choices=MODEL_CHOICES['tagger']['max_sample_size'])
+    task = TaskSerializer(read_only=True)
+    location = serializers.CharField(read_only=True)
 
     class Meta:
         model = Tagger
-        fields = ('url', 'id', 'description', 'project', 'author', 'query', 'datasets')
+        fields = ('url', 'id', 'description', 'project', 'author', 'query', 'fields', 'vectorizer', 'classifier', 'maximum_sample_size', 'location', 'task')
 
