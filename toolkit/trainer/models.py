@@ -55,8 +55,8 @@ class Embedding(models.Model):
     num_dimensions = models.IntegerField(default=100)
     max_vocab = models.IntegerField(default=0)
     min_freq = models.IntegerField(default=10)
-    vocab_size = models.IntegerField(default=0)
 
+    vocab_size = models.IntegerField(default=0)
     location = models.TextField(default=None, null=True)
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
@@ -83,6 +83,7 @@ class Tagger(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=json.dumps(ElasticSearcher().query))
     fields = MultiSelectField(choices=get_field_choices(), default=None)
+    embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
 
     vectorizer = models.IntegerField()
     classifier = models.IntegerField()

@@ -31,7 +31,10 @@ class TextTagger:
             for field in self.field_list:
                 if field not in data_map:
                     data_map[field] = []
-                data_map[field].append(document[field])
+                if field in document:
+                    data_map[field].append(document[field])
+                else:
+                    data_map[field].append('')
         return data_map
 
 

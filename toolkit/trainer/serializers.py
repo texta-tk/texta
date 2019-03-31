@@ -26,6 +26,7 @@ class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
     num_dimensions = serializers.ChoiceField(choices=MODEL_CHOICES['embedding']['num_dimensions'])
     max_vocab = serializers.ChoiceField(choices=MODEL_CHOICES['embedding']['max_vocab'])
     min_freq = serializers.ChoiceField(choices=MODEL_CHOICES['embedding']['min_freq'])
+    vocab_size = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Embedding
@@ -40,8 +41,9 @@ class TaggerSerializer(serializers.HyperlinkedModelSerializer):
     maximum_sample_size = serializers.ChoiceField(choices=MODEL_CHOICES['tagger']['max_sample_size'])
     task = TaskSerializer(read_only=True)
     location = serializers.CharField(read_only=True)
+    statistics = serializers.CharField(read_only=True)
 
     class Meta:
         model = Tagger
-        fields = ('url', 'id', 'description', 'project', 'author', 'query', 'fields', 'vectorizer', 'classifier', 'maximum_sample_size', 'location', 'task')
+        fields = ('url', 'id', 'description', 'project', 'author', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'maximum_sample_size', 'location', 'statistics', 'task')
 

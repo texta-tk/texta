@@ -80,7 +80,14 @@ def train_tagger(tagger_id):
     field_path_list = [field['field_path'] for field in field_data]
 
     # add phraser here
-    text_processor = TextProcessor(remove_stop_words=True)
+    if tagger_object.embedding:
+        phraser = Phraser(embedding_id=tagger_object.embedding.pk)
+        phraser.load()
+        text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
+    else:
+        text_processor = TextProcessor(remove_stop_words=True)
+
+
     positive_samples = ElasticSearcher(query=json.loads(tagger_object.query), 
                                        field_data=field_data,
                                        output='doc_with_id',
