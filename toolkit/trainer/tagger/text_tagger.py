@@ -95,3 +95,10 @@ class TextTagger:
         self.model = joblib.load(tagger_path)
         self.statistics = json.loads(tagger_object.statistics)
         return True
+
+
+    def predict_text(self, text):
+        pass
+    
+    def predict_document(self, document):
+        pass
