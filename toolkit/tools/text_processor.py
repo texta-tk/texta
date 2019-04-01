@@ -34,19 +34,28 @@ class TextProcessor:
     Processor for processing texts prior to modelling
     """
 
-    def __init__(self, phraser=None, remove_stop_words=True, sentences=False):
+    def __init__(self, phraser=None, remove_stop_words=True, sentences=False, tokenize=False):
         self.phraser = phraser
         self.remove_stop_words = remove_stop_words
         self.sentences = sentences
+        self.tokenize = tokenize
         self.stop_words = StopWords()
     
-    def process(self, text):
-        text = text.strip().lower()
-        if self.remove_stop_words:
-            text = self.stop_words.remove(text)
-        if self.phraser:
-            text = ' '.join(self.phraser.phrase(text))
-        if not self.sentences:
-            return text
+    def process(self, input_text):
+        stripped_text = input_text.strip().lower()
+        if self.sentences:
+            list_of_texts = stripped_text.split('\n')
         else:
-            return [word for word in text.split('\n') if word.strip()]
+            list_of_texts = [stripped_text]
+
+        for text in list_of_texts:
+            if text:
+                tokens = text.split(' ')
+                if self.remove_stop_words:
+                    tokens = self.stop_words.remove(tokens)
+                if self.phraser:
+                    tokens = self.phraser.phrase(tokens)
+                if not self.tokenize:
+                    yield ' '.join(tokens)
+                else:
+                    yield tokens

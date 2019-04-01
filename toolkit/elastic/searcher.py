@@ -115,7 +115,6 @@ class ElasticSearcher:
 
 
     def scroll(self):
-        print([self.query])
         page = self.core.es.search(index=self.indices, body=self.query, scroll='1m', size=self.scroll_size)
         scroll_id = page['_scroll_id']
         current_page = 1
@@ -138,13 +137,8 @@ class ElasticSearcher:
                         if self.output == self.OUT_TEXT:
                             for field in parsed_doc.values():
                                 processed_field = self.text_processor.process(field)
-                                # if processor returns list of texts, yield them all
-                                if isinstance(processed_field, list):
-                                    for text in processed_field:
-                                        yield text
-                                # otherwise yield the text
-                                else:
-                                    yield processed_field
+                                for text in processed_field:
+                                    yield text
                         elif self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID):
                             if self.text_processor:
                                 parsed_doc = {k: self.text_processor.process(v) for k, v in parsed_doc.items()}

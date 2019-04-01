@@ -23,7 +23,7 @@ def train_embedding(embedding_id):
     # parse field data
     field_data = [ElasticSearcher().core.decode_field_data(field) for field in embedding_object.fields]
     # create itrerator for phraser
-    text_processor = TextProcessor(sentences=True, remove_stop_words=True)
+    text_processor = TextProcessor(sentences=True, remove_stop_words=True, tokenize=True)
     sentences = ElasticSearcher(query=json.loads(embedding_object.query), field_data=field_data, output='text', callback_progress=show_progress, text_processor=text_processor)
 
     # build phrase model
@@ -40,7 +40,7 @@ def train_embedding(embedding_id):
     show_progress.update_view(0)
 
     # build new processor with phraser
-    text_processor = TextProcessor(phraser=phraser, sentences=True, remove_stop_words=True)
+    text_processor = TextProcessor(phraser=phraser, sentences=True, remove_stop_words=True, tokenize=True)
 
     # iterate again with built phrase model to include phrases in language model
     sentences = ElasticSearcher(query=json.loads(embedding_object.query), field_data=field_data, output='text', callback_progress=show_progress, text_processor=text_processor)
@@ -86,7 +86,6 @@ def train_tagger(tagger_id):
         text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
     else:
         text_processor = TextProcessor(remove_stop_words=True)
-
 
     positive_samples = ElasticSearcher(query=json.loads(tagger_object.query), 
                                        field_data=field_data,
