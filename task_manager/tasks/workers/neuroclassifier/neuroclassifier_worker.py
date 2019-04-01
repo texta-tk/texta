@@ -2,6 +2,7 @@ import csv
 import json
 import pickle
 import numpy as np
+import itertools
 from typing import List, Dict
 
 from utils.datasets import Datasets
@@ -99,11 +100,11 @@ class NeuroClassifierWorker(BaseWorker):
         self.task_params = json.loads(self.task_obj.parameters)
 
         self.labels = self.task_params['description']
-        self.max_seq_len = self.task_params['max_seq_len']
         self.model_arch = self.task_params['model_arch']
-        self.validation_split = self.task_params['validation_split']
-        self.crop_amount = self.task_params['crop_amount']
-        self.grid_downsample_amount = self.task_params['grid_downsample_amount']
+        self.max_seq_len = int(self.task_params['max_seq_len'])
+        self.crop_amount = int(self.task_params['crop_amount'])
+        self.validation_split = float(self.task_params['validation_split'])
+        self.grid_downsample_amount = float(self.task_params['grid_downsample_amount'])
 
         steps = ["preparing data", "processing data", "training", "saving", "done"]
         self.show_progress = ShowSteps(self.task_id, steps)
@@ -136,8 +137,15 @@ class NeuroClassifierWorker(BaseWorker):
                                 max_positive_sample_size=max_sample_size_opt,
                                 score_threshold=score_threshold_opt)
         data_sample_x_map, data_sample_y, statistics = es_data.get_data_samples()
+        # Currently all data is in a separate field: {field_1: [...], field_2: [...]}, even though they have the same label
+        # Unpack the data from fields
+        unpacked_x = list(itertools.chain.from_iterable(data_sample_x_map.values()))
+        # Multiply labels for each field 
+        multiplied_y = data_sample_y * len(fields)
 
-        return data_sample_x_map, data_sample_y, statistics
+        self.samples = unpacked_x
+        self.labels = multiplied_y
+
 
     def _train_model(self):
         self.show_progress.update(2)
