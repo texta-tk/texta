@@ -1,11 +1,10 @@
-from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.trainer.models import Embedding, Tagger, Task
-from toolkit.trainer.serializers import EmbeddingSerializer, TaggerSerializer, TaskSerializer
-from toolkit.trainer.embedding.embedding import W2VEmbedding
+from toolkit.embedding.models import Embedding
+from toolkit.embedding.serializers import EmbeddingSerializer
+from toolkit.embedding.embedding import W2VEmbedding
 
 import json
 
@@ -39,19 +38,3 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
             phrase = data['phrase']
             predictions = embedding.get_similar(phrase, n=10)
         return Response(predictions)
-
-
-class TaggerViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows TEXTA models to be viewed or edited.
-    """
-    queryset = Tagger.objects.all()
-    serializer_class = TaggerSerializer
-
-
-class TaskViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows TEXTA tasks to be viewed or edited.
-    """
-    queryset = Task.objects.all()
-    serializer_class = TaskSerializer

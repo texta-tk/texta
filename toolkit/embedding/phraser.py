@@ -2,7 +2,7 @@ from gensim.models.phrases import Phrases
 from gensim.models.phrases import Phraser as GSPhraser
 import json
 
-from toolkit.trainer.models import Embedding
+from toolkit.embedding.models import Embedding
 
 
 class Phraser:

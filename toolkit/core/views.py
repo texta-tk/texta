@@ -2,8 +2,8 @@ from django.shortcuts import render
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 
-from toolkit.core.models import Project, Search, Lexicon, Phrase
-from toolkit.core.serializers import UserSerializer, ProjectSerializer, SearchSerializer, LexiconSerializer, PhraseSerializer
+from toolkit.core.models import Project, Search, Lexicon, Phrase, Task
+from toolkit.core.serializers import UserSerializer, ProjectSerializer, SearchSerializer, LexiconSerializer, PhraseSerializer, TaskSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -44,3 +44,11 @@ class PhraseViewSet(viewsets.ModelViewSet):
     """
     queryset = Phrase.objects.all()
     serializer_class = PhraseSerializer
+
+
+class TaskViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows TEXTA tasks to be viewed or edited.
+    """
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer

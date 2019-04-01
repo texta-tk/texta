@@ -1,4 +1,4 @@
-from toolkit.trainer.models import Task
+from toolkit.core.models import Task
 
 
 class ShowProgress(object):

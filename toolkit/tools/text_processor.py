@@ -48,6 +48,8 @@ class TextProcessor:
         else:
             list_of_texts = [stripped_text]
 
+        out = []
+
         for text in list_of_texts:
             if text:
                 tokens = text.split(' ')
@@ -56,6 +58,8 @@ class TextProcessor:
                 if self.phraser:
                     tokens = self.phraser.phrase(tokens)
                 if not self.tokenize:
-                    yield ' '.join(tokens)
+                    out.append(' '.join(tokens))
                 else:
-                    yield tokens
+                    out.append(tokens)
+        
+        return out

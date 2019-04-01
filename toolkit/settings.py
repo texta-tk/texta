@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'toolkit.core',
-    'toolkit.trainer',
+    'toolkit.embedding',
+    'toolkit.tagger',
     'rest_framework',
     'multiselectfield',
     #'django_extensions'

@@ -1,4 +1,4 @@
-from toolkit.trainer.tagger.pipeline import get_pipeline_builder
+from toolkit.tagger.pipeline import get_pipeline_builder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.externals import joblib
@@ -10,7 +10,7 @@ import pandas as pd
 import json
 
 from toolkit.settings import NUM_WORKERS
-from toolkit.trainer.models import Tagger
+from toolkit.tagger.models import Tagger
 
 
 class TextTagger:
