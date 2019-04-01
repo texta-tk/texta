@@ -188,7 +188,7 @@
 
                         {% else %}
 
-                            <form class="navbar-form form-inline" id="login_form">
+                            <form class="navbar-form form-inline" id="login_form" onsubmit=login();>
                                 <div class="form-group">
                                     <label class="sr-only" for="loginUsername">Username</label>
                                     <input type="text" class="form-control input-sm" id="loginUsername" name="username"
@@ -199,7 +199,7 @@
                                     <input type="password" class="form-control input-sm" id="loginPassword"
                                            name="password" placeholder="Password">
                                 </div>
-                                <button class="btn btn-success btn-sm" type="button" onclick=login();>
+                                <button class="btn btn-success btn-sm" type="submit" >
                                     <span class="glyphicon glyphicon-log-in"></span></button>
                             </form>
 
