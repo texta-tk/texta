@@ -880,6 +880,10 @@ function mltQuery() {
                                     swalCustomTypeDisplay(SwalType.ERROR, 'Please perform a build search first')
                                     $('#right').html('No search data!')
                                 }
+                                if (xhr.status === 500) {
+                                    swalCustomTypeDisplay(SwalType.ERROR, 'An internal server error has occurred!')
+                                    $('#right').html(`An internal server error occurred: ${xhr.statusText}`)
+                                }
                             },
                         },
                         "columnDefs": [
@@ -889,7 +893,7 @@ function mltQuery() {
                                 'searchable': false,
                                 'className': 'dt-center',
                                 "render": function (data, type, row, meta) {
-                                    return '<a onclick=javascript:acceptDocument("' + data + '") role="button"><span class="glyphicon glyphicon-plus"></span></a>';
+                                    return `<a onclick=javascript:acceptDocument("${data}") role="button"><span class="glyphicon glyphicon-plus"></span></a>`
                                 }
 
                             },
@@ -898,7 +902,7 @@ function mltQuery() {
                                 'searchable': false,
                                 'className': 'dt-center',
                                 "render": function (data, type, row, meta) {
-                                    return '<a onclick=javascript:rejectDocument("' + data + '") role="button"><span class="glyphicon glyphicon-remove"></span></a>';
+                                    return `<a onclick=javascript:rejectDocument("${data}") role="button"><span class="glyphicon glyphicon-remove"></span></a>`;
                                 },
 
                             },
@@ -943,6 +947,10 @@ function mltQuery() {
                             // Initialize clicking HLs/selection text for properties
                             /* global createSelectionProps, selectionProps */
                         },
+                        "fnCreatedRow": function( nRow, aData, iDataIndex ) {
+                            // Assign ID to row with _es_id value for deleting/accepting
+                            $(nRow).attr('id', `row_${aData[0]}`);
+                        }
                     })
                     initColumnSelectVisiblity(mltTable, $('#mlt-column-select'))
                     if ($('.mlt-fullscreen-actions > i').length === 0) {

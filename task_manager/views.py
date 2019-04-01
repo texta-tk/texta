@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+from operator import itemgetter
 import zipfile
 from zipfile import ZipFile
 from tempfile import SpooledTemporaryFile
@@ -33,13 +34,14 @@ from task_manager.task_manager import filter_preprocessor_params
 from task_manager.task_manager import translate_parameters
 from task_manager.task_manager import collect_map_entries
 from task_manager.task_manager import get_fields
-from operator import itemgetter
+from lexicon_miner.models import Lexicon
+
 
 @login_required
 def index(request):
     ds = Datasets().activate_datasets(request.session)
     datasets = Datasets().get_allowed_datasets(request.user)
-    language_models =Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
+    language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
 
     es_m = ds.build_manager(ES_Manager)
     fields = get_fields(es_m)
@@ -73,7 +75,8 @@ def index(request):
             'enabled_preprocessors': enabled_preprocessors,
             'STATIC_URL':            STATIC_URL,
             'fields':                fields,
-            'text_tags':             tag_set
+            'text_tags':             tag_set,
+            'lexicons':              Lexicon.objects.all(),
         }
     else:
         messages.warning(request, "No dataset selected, please select a dataset before using Task Manager!")
