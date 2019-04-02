@@ -18,3 +18,10 @@ class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Embedding
         fields = ('url', 'id', 'description', 'project', 'author', 'query', 'fields', 'num_dimensions', 'max_vocab', 'min_freq', 'vocab_size', 'location', 'task')
+
+
+class PredictionSerializer(serializers.Serializer):
+    phrase = serializers.CharField()
+
+class PhraserSerializer(serializers.Serializer):
+    text = serializers.CharField()

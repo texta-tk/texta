@@ -33,6 +33,10 @@ class Phraser:
 
     def phrase(self, text):
         if self._phraser:
-            return self._phraser[text]
+            if isinstance(text, str):
+                text = text.split(' ')
+                return ' '.join(self._phraser[text])
+            else:
+                return self._phraser[text]
         else:
             return text

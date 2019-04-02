@@ -1,15 +1,23 @@
 from gensim.models import word2vec
+import json
+
+from toolkit.embedding.models import Embedding
 
 class W2VEmbedding:
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, embedding_id=None):
         self.model = None
         self.name = name
+        self.embedding_id = embedding_id
     
-    def load(self, file_path):
+    def load(self):
         """
         Load embedding from file system
         """
+        if not self.embedding_id:
+            return False
+        location = Embedding.objects.get(pk=self.embedding_id).location
+        file_path = json.loads(location)['embedding']
         model = word2vec.Word2Vec.load(file_path)
         self.model = model
         return True
