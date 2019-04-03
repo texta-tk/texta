@@ -7,9 +7,12 @@ from typing import List, Dict
 
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
-from ..base_worker import BaseWorker
+from utils.helper_functions import create_file_path
+from texta.settings import USER_MODELS, MODELS_DIR, ERROR_LOGGER
+import logging
 
 # Task imports
+from ..base_worker import BaseWorker
 from task_manager.tools import ShowSteps
 from task_manager.tools import TaskCanceledException
 from task_manager.tools import get_pipeline_builder
@@ -39,17 +42,7 @@ from task_manager.tasks.workers.neuroclassifier.clr_callback import CyclicLR
 np.random.seed(1337)
 
 class NeuroClassifierWorker(BaseWorker):
-    def __init__(
-            self,
-            # samples: List[str],
-            # labels: List[int],
-            # max_vocab_size: int,
-            # max_seq_len: int,
-            # model_arch: str,
-            # validation_split: float=0.2,
-            # crop_amount: int=None,
-            # grid_downsample_amount: float=0.001
-            ):
+    def __init__(self):
 
         """
         Main class for training the NeuroClassifier
@@ -61,6 +54,8 @@ class NeuroClassifierWorker(BaseWorker):
             validation_split {float} -- The percentage of data to use for validation
             crop_amount {int} -- If given, the amount to crop the training data. Useful for quick prototyping.
             grid_downsample_amount {float} -- The amount to downsample the grid search of the hyperparameters. Recommended less than 0.01 to avoid computation cost and time.
+            max_seq_len {int} -- The maximum sequence length given by the user. Used for deriving self.final_seq_len
+            num_epochs {int} -- In case of non-auto model, num_epochs will be the number of epochs to train the model for
         """
 
         # Task params
@@ -69,12 +64,15 @@ class NeuroClassifierWorker(BaseWorker):
         self.task_type = None
         self.task_params = None
         self.show_progress = None
+        self.model_name = None
 
         # Neuroclassifier params
         self.model_arch = None
         self.validation_split = None
         self.crop_amount = None
         self.grid_downsample_amount = None
+        self.max_seq_len = None
+        self.num_epochs = None
 
         # Neuroclassifier data
         self.samples = None
@@ -82,7 +80,7 @@ class NeuroClassifierWorker(BaseWorker):
 
         # Derived params
         self.vocab_size = None
-        self.seq_len = None
+        self.final_seq_len = None
 
         # Processed data
         self.X_train = None
@@ -98,10 +96,11 @@ class NeuroClassifierWorker(BaseWorker):
         self.task_obj = Task.objects.get(pk=self.task_id)
         self.task_type = self.task_obj.task_type
         self.task_params = json.loads(self.task_obj.parameters)
+        self.model_name = 'model_{0}'.format(self.task_obj.unique_id)
 
-        self.labels = self.task_params['description']
         self.model_arch = self.task_params['model_arch']
         self.max_seq_len = int(self.task_params['max_seq_len'])
+        self.num_epochs = int(self.task_params['num_epochs'])
         self.crop_amount = int(self.task_params['crop_amount'])
         self.validation_split = float(self.task_params['validation_split'])
         self.grid_downsample_amount = float(self.task_params['grid_downsample_amount'])
@@ -129,7 +128,6 @@ class NeuroClassifierWorker(BaseWorker):
         # Build Data sampler
         ds = Datasets().activate_datasets_by_id(self.task_params['dataset'])
         es_m = ds.build_manager(ES_Manager)
-        self.model_name = 'model_{0}'.format(self.task_obj.unique_id)
         es_data = EsDataSample(fields=fields, 
                                 query=param_query,
                                 es_m=es_m,
@@ -159,11 +157,11 @@ class NeuroClassifierWorker(BaseWorker):
         self._validate_params()
 
         self._build_data_sampler()
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         self._process_data()
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         self._get_model()
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         self._train_model()
         import pdb; pdb.set_trace()
         self._save()
@@ -171,14 +169,32 @@ class NeuroClassifierWorker(BaseWorker):
 
         self.show_progress.update(4)
 
+        # TODO num_epocs param
+        # TODO average/percentile seq len
+        # TODO pretrained embedding
+        # TODO validation result into results
+        # TODO final seq/vocab size into results
+        # TODO model summary to front
+        # TODO debug why val results are random
+        # TODO preprocessor
+        # TODO verbose overview
+        # TODO import speed overview
+
 
     def _save(self):
-        self.show_progress.update(3)
-        # TODO saving to disk
-        self.model.save('MODELS/my_model.h5')
-        # Save tokenizer for evaluation
-        with open('MODELS/tokenizer.pkl', 'wb') as f:
-            pickle.dump(self.tokenizer, f)
+        try:
+            self.show_progress.update(3)
+            # create_file_path from helper_functions creates missing folders and returns a path
+            output_model_file = create_file_path(self.model_name, MODELS_DIR, self.task_type)
+            output_tokenizer_file = create_file_path('{}_{}'.format(self.model_name, 'tokenizer'), MODELS_DIR, self.task_type)
+            self.model.save(output_model_file)
+            with open(output_tokenizer_file, 'wb') as handle:
+                pickle.dump(self.tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        except Exception as e:
+            logging.getLogger(ERROR_LOGGER).error('Failed to save NeuroClassifier model to the filesystem.', exc_info=True, extra={
+                'model_name': self.model_name,
+                'file_path':  output_model_file
+            })
 
 
     def _get_model(self):
@@ -198,8 +214,15 @@ class NeuroClassifierWorker(BaseWorker):
         self.tokenizer.fit_on_texts(self.samples)
         # Tokenize sequences from words to integers
         self.X_train = self.tokenizer.texts_to_sequences(self.samples)
+
+        # Get the max length of sequence of X_train values
+        uncropped_max_len = max((len(x) for x in self.X_train))
+        # Set the final seq_len to be either the max_seq_len or the max unpadded/cropped in present in the dataset
+        # TODO in the future, use values such as "average length" or "top X-th percentile length" for more optimal seq_len
+        self.final_seq_len = min(self.max_seq_len, uncropped_max_len)
+
         # Pad sequence to match MAX_SEQ_LEN
-        self.X_train = pad_sequences(self.X_train, maxlen=self.seq_len)
+        self.X_train = pad_sequences(self.X_train, maxlen=self.final_seq_len)
 
         # Split data, so it would be shuffeled before cropping
         self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X_train, self.labels, test_size=self.validation_split, random_state=42)
@@ -212,7 +235,7 @@ class NeuroClassifierWorker(BaseWorker):
 
         # Change self.vocab_size to the final vocab size, if it was less than the max
         final_vocab_size = len(self.tokenizer.word_index)
-        if final_vocab_size < self.vocab_size:
+        if not self.vocab_size or final_vocab_size < self.vocab_size:
             self.vocab_size = final_vocab_size
 
 
@@ -220,10 +243,10 @@ class NeuroClassifierWorker(BaseWorker):
         bs = 64
         # Custom cyclical learning rate callback
         clr_triangular = CyclicLR(mode='triangular', step_size=6*(len(self.X_train)/bs))
-        self.model = self.model(self.vocab_size, self.seq_len)
+        self.model = self.model(self.vocab_size, self.final_seq_len)
         self.model.fit(self.X_train, self.y_train,
                         batch_size=bs,
-                        epochs=5,
+                        epochs=self.num_epochs,
                         verbose=2,
                         # validation_split=self.validation_split,
                         validation_data=(self.X_val, self.y_val),
@@ -245,7 +268,7 @@ class NeuroClassifierWorker(BaseWorker):
             'epochs': [2, 5],
             'dropout': (0, 0.20, 10),
             'optimizer': [Adam],
-            'seq_len': [self.seq_len],
+            'seq_len': [self.final_seq_len],
             'vocab_size': [self.vocab_size],
             'last_activation': [sigmoid]
         }
@@ -273,66 +296,9 @@ class NeuroClassifierWorker(BaseWorker):
         # For svg of model
         # from keras.utils import plot_model
         # plot_model(self.model, to_file='model.png') # TODO proper file path
-
         # Also TODO https://keras.io/visualization/
 
     def _validate_params(self):
         # TODO validate params
         # If proper, set them
         pass
-
-
-if __name__ == '__main__':
-    CROP = 5000
-    def read_csv(path):
-        samples = []
-        with open(path, encoding='utf8') as csvfile:
-            spamreader = csv.reader(csvfile)
-            for row in spamreader:
-                samples.append(row[0])
-        return samples
-    pos_samples = read_csv('C:/Users/ranet/Documents/DATA/Datasets/farm_not_farm_text_tagging/farmstuff.csv')[:CROP]
-    neg_samples = read_csv('C:/Users/ranet/Documents/DATA/Datasets/farm_not_farm_text_tagging/notfarmstuff.csv')[:CROP]
-    
-    ## MAKE CLASSES
-    # Combine both, add classes
-    pos_y = [1 for x in range(len(pos_samples))]
-    neg_y = [0 for x in range(len(neg_samples))]
-    print(len(pos_y), len(neg_y))
-    X = pos_samples + neg_samples
-    y = pos_y + neg_y
-
-
-    ### TEST HERE
-    # neuro_classifier = NeuroClassifierWorker(['Hey this is the positive sample', 'and here is the negative one'], [1, 0], 100, 3, 'SimpleFNN')
-
-    # neuro_classifier = NeuroClassifierWorker(X, y, 50000, 150, 'simpleFNN', crop_amount=1000) # works
-    # neuro_classifier.run()
-    # neuro_classifier = NeuroClassifierWorker(X, y, 50000, 150, 'autoFNN', crop_amount=1000) # works
-    # neuro_classifier.run()
-    # TODO more dropout to certain models, the non auto ones
-    # neuro_classifier = NeuroClassifierWorker(X, y, 50000, 150, 'simpleCNN', crop_amount=1000) # works
-    # neuro_classifier.run()
-    # print('SIMPLE CNN DONE')
-    # neuro_classifier = NeuroClassifierWorker(X, y, 50000, 150, 'simpleGRU', crop_amount=1000) # works
-    # neuro_classifier.run()
-    # print('SIMPLE GRU DONE')
-    # neuro_classifier = NeuroClassifierWorker(X, y, 50000, 150, 'simpleLSTM', crop_amount=1000) # works
-    # neuro_classifier.run()
-    # # print('SIMPLE LSTM DONE')
-    # neuro_classifier = NeuroClassifierWorker(X, y, 50000, 150, 'gruCNN', crop_amount=1000) # works
-    # neuro_classifier.run()
-    # print('GRU CNN DONE')
-    # neuro_classifier = NeuroClassifierWorker(X, y, 50000, 150, 'lstmCNN', crop_amount=1000) # works
-    # neuro_classifier.run()
-    # print('LSTM CNN DONE')
-    # neuro_classifier = NeuroClassifierWorker(X, y, 50000, 150, 'autoCNN', crop_amount=1000) # works
-    # neuro_classifier.run()
-    # print('AUTO CNN DONE')
-    # neuro_classifier = NeuroClassifierWorker(X, y, 50000, 150, 'autoGRU', crop_amount=1000) # works
-    # neuro_classifier.run()
-    # print('AUTO GRU DONE')
-    # neuro_classifier = NeuroClassifierWorker(X, y, 50000, 150, 'autoLSTM', crop_amount=1000) # works
-    # neuro_classifier.run()
-    # print('AUTO LSTM DONE')
-    import pdb;pdb.set_trace()

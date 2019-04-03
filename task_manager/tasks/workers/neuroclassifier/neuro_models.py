@@ -58,6 +58,7 @@ class NeuroModels():
     @staticmethod
     def simpleFNN(vocab_size, seq_len):
         embed_dim = 300
+        print(vocab_size, seq_len)
         model = Sequential()
         model.add(Embedding(vocab_size, embed_dim, input_length=seq_len))
         model.add(Flatten())

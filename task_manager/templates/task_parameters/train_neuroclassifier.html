@@ -84,11 +84,26 @@
                         </div>
 
                         <div class="row">
-                                <div class="col-sm-6">Crop amount:</div>
+                                <div class="col-sm-6">Grid Search downsample amount:</div>
                             <div class="col-sm-6">
                                 <select name="{{ task_param.id }}_grid_downsample_amount" class="selectpicker"
                                         data-width='100%'>
                                     <option title="0.0001" value="0.0001">0.0001</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                                <div class="col-sm-6">Num epochs for manual model:</div>
+                            <div class="col-sm-6">
+                                <select name="{{ task_param.id }}_grid_downsample_amount" class="selectpicker"
+                                        data-width='100%'>
+                                    <option title="1" value="1">1</option>
+                                    <option title="2" value="2">2</option>
+                                    <option title="4" value="4">4</option>
+                                    <option title="5" value="5">5</option>
+                                    <option title="8" value="8">8</option>
+                                    <option title="10" value="10">10</option>
                                 </select>
                             </div>
                         </div>
