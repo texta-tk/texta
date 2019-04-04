@@ -1,17 +1,22 @@
 # -*- coding: utf8 -*-
 import json
 import copy
+import logging
 from typing import List, Dict, Any
 
 import requests
 from functools import reduce
+
+from elasticsearch import Elasticsearch, ElasticsearchException
+from elasticsearch_dsl import Search
+from elasticsearch_dsl.query import MoreLikeThis
 
 from utils.ds_importer_helper import check_for_analyzer
 from utils.generic_helpers import find_key_recursivly
 import datetime
 
 from utils.query_builder import QueryBuilder
-from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, FACT_PROPERTIES, date_format, es_prefix
+from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, FACT_PROPERTIES, date_format, es_prefix, ERROR_LOGGER
 
 # Need to update index.max_inner_result_window to increase
 HEADERS = {'Content-Type': 'application/json'}
@@ -246,7 +251,6 @@ class ES_Manager:
 
         return fields_with_facts
 
-
     @staticmethod
     def _parse_buckets(response, key):
         fact_count = response['aggregations'][key]
@@ -254,6 +258,23 @@ class ES_Manager:
             return [bucket['key'] for bucket in fact_count[key]['buckets']]
         return []
 
+    @staticmethod
+    def more_like_this(elastic_url, fields, like, size, return_fields=None):
+        search = Search(using=Elasticsearch(elastic_url))
+        mlt = MoreLikeThis(like=like, fields=fields, min_term_freq=1, max_query_terms=12, )
+
+        paginated_search = search[0:size]
+        limited_search = paginated_search.source(return_fields) if return_fields else paginated_search
+        finished_search = limited_search.query(mlt)
+
+        try:
+            response = finished_search.execute()
+            hits = {"hits": [hit.to_dict() for hit in response]}
+            return hits
+
+        except ElasticsearchException as e:
+            logging.getLogger(ERROR_LOGGER).exception(e)
+            return {"elasticsearch": [str(e)]}
 
     def get_mapped_fields(self):
         """ Get flat structure of fields from Elasticsearch mappings

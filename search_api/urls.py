@@ -9,4 +9,5 @@ urlpatterns = [
     url(r'^aggregate', views.aggregate, name='aggregate'),
     url(r'^list/datasets', views.list_datasets, name='list_datasets'),
     url(r'^list/dataset', views.list_fields, name='list_fields'),
+    url(r'^more_like_this', views.more_like_this, name='more_like_this'),
 ]

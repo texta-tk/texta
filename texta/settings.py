@@ -273,7 +273,8 @@ INSTALLED_APPS = (
 	'search_api',
 	'dataset_importer',
 	'importer_api',
-	'task_manager'
+	'task_manager',
+	'rest_framework',
 )
 
 ############################ Elasticsearch ###########################
@@ -494,6 +495,8 @@ FACT_PROPERTIES = {
 		'str_val':  {'type': 'keyword'}
 	}
 }
+
+LANGUAGE_CODE = "en"
 
 ############################ Boot scripts ###########################
 
