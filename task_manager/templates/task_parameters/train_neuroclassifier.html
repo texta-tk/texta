@@ -96,7 +96,7 @@
                         <div class="row">
                                 <div class="col-sm-6">Num epochs for manual model:</div>
                             <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_grid_downsample_amount" class="selectpicker"
+                                <select name="{{ task_param.id }}_num_epochs" class="selectpicker"
                                         data-width='100%'>
                                     <option title="1" value="1">1</option>
                                     <option title="2" value="2">2</option>
@@ -128,6 +128,7 @@
                             <div class="col-sm-6">Maximum sample size per class:</div>
                             <div class="col-sm-6">
                                 <select name="{{ task_param.id }}_max_sample_size_opt" class="selectpicker" data-width='100%'>
+                                    <option title="No limit" value="false">No limit</option>
                                     <option title="10000" value="10000">10000</option>
                                     <option title="25000" value="25000">25000</option>
                                     <option title="50000" value="50000">50000</option>

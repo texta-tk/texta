@@ -3,12 +3,14 @@ import json
 import pickle
 import numpy as np
 import itertools
+import matplotlib.pyplot as plt
+import os
 from typing import List, Dict
 
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.helper_functions import create_file_path
-from texta.settings import USER_MODELS, MODELS_DIR, ERROR_LOGGER
+from texta.settings import USER_MODELS, MODELS_DIR, ERROR_LOGGER, URL_PREFIX, MEDIA_URL, PROTECTED_MEDIA
 import logging
 
 # Task imports
@@ -27,6 +29,7 @@ from keras.preprocessing.text import Tokenizer, text_to_word_sequence
 # Keras Model imports
 from keras.optimizers import Adam
 from keras.activations import relu, elu, softmax, sigmoid
+from keras.utils import plot_model
 
 # Talos imports
 import talos as ta
@@ -73,6 +76,7 @@ class NeuroClassifierWorker(BaseWorker):
         self.grid_downsample_amount = None
         self.max_seq_len = None
         self.num_epochs = None
+        self.bs = 64
 
         # Neuroclassifier data
         self.samples = None
@@ -121,7 +125,7 @@ class NeuroClassifierWorker(BaseWorker):
             param_query = self._parse_query(self.task_params)
 
         negative_set_multiplier = float(self.task_params['negative_multiplier_opt'])
-        max_sample_size_opt = int(self.task_params['max_sample_size_opt'])
+        max_sample_size_opt = int(self.task_params['max_sample_size_opt']) if self.task_params['max_sample_size_opt'] != 'false' else False
         score_threshold_opt = float(self.task_params['score_threshold_opt'])
         fields = self.task_params['fields']
 
@@ -140,7 +144,7 @@ class NeuroClassifierWorker(BaseWorker):
         unpacked_x = list(itertools.chain.from_iterable(data_sample_x_map.values()))
         # Multiply labels for each field 
         multiplied_y = data_sample_y * len(fields)
-
+        import pdb;pdb.set_trace()
         self.samples = unpacked_x
         self.labels = multiplied_y
 
@@ -150,38 +154,68 @@ class NeuroClassifierWorker(BaseWorker):
         if self.model_is_auto:
             self._train_auto_model()
         else:
-            self._train_generic_model()
+            history = self._train_generic_model()
+        return history
 
     def run(self, task_id):
         self._set_up_task(task_id)
         self._validate_params()
 
         self._build_data_sampler()
-        # import pdb; pdb.set_trace()
         self._process_data()
-        # import pdb; pdb.set_trace()
         self._get_model()
-        # import pdb; pdb.set_trace()
-        self._train_model()
-        import pdb; pdb.set_trace()
-        self._save()
-        import pdb; pdb.set_trace()
+        training_history = self._train_model()
+        loss_plot_url, acc_plot_url, model_plot_url = self._plot_model_and_history(training_history)
+        val_eval, train_eval = self._cross_validation()
+        self._create_task_result(val_eval, train_eval, loss_plot_url, acc_plot_url, model_plot_url)
+        self._save_model()
 
         self.show_progress.update(4)
-
-        # TODO num_epocs param
+        self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+        # num_epocs param #DONE
         # TODO average/percentile seq len
         # TODO pretrained embedding
-        # TODO validation result into results
-        # TODO final seq/vocab size into results
-        # TODO model summary to front
+        # validation result into results #DONE
+        # final seq/vocab size into results #DONE
+        # TODO validate params
+        # model summary to front #DONE
         # TODO debug why val results are random
         # TODO preprocessor
         # TODO verbose overview
+        # TODO validate that auto models work
         # TODO import speed overview
+        # TODO fix max sample size per class 
+        # conda install graphviz
+        # conda install keras/cuda/etc
 
 
-    def _save(self):
+    def _create_task_result(self, val_eval, train_eval, loss_plot_url, acc_plot_url, model_plot_url):
+        train_summary = {
+            'X_train.shape': self.X_train.shape,
+            'y_train.shape': self.y_train.shape,
+            'X_val.shape': self.X_val.shape,
+            'y_val.shape': self.y_val.shape,
+            'final_seq_len': self.final_seq_len,
+            'vocab_size': self.vocab_size,
+            'val_acc': "{0:.4f}".format(val_eval[1]),
+            'val_loss': "{0:.4f}".format(val_eval[0]),
+            'train_acc': "{0:.4f}".format(train_eval[1]),
+            'train_loss': "{0:.4f}".format(train_eval[0]),
+            'tokenizer_num_words': len(self.tokenizer.word_index),
+            # NOTE Save plots as HTML images for now, whilst there is no better alternative
+            'acc_plot':  '<img src="{}" style="max-width: 80%">'.format(acc_plot_url),
+            'loss_plot':  '<img src="{}" style="max-width: 80%">'.format(loss_plot_url),
+            'model_plot':  '<img src="{}" style="max-width: 80%">'.format(model_plot_url),
+        }
+        self.task_obj.result = json.dumps(train_summary)
+
+    def _cross_validation(self):
+        # Evaluate model, get [loss, accuracy]
+        val_eval = self.model.evaluate(x=self.X_val, y=self.y_val, batch_size=self.bs, verbose=1)
+        train_eval = self.model.evaluate(x=self.X_train, y=self.y_train, batch_size=self.bs, verbose=1)
+        return val_eval, train_eval
+
+    def _save_model(self):
         try:
             self.show_progress.update(3)
             # create_file_path from helper_functions creates missing folders and returns a path
@@ -240,18 +274,22 @@ class NeuroClassifierWorker(BaseWorker):
 
 
     def _train_generic_model(self):
-        bs = 64
+        print(self.X_train.shape)
+        print(self.y_train.shape)
+        print(self.X_val.shape)
+        print(self.y_val.shape)
         # Custom cyclical learning rate callback
-        clr_triangular = CyclicLR(mode='triangular', step_size=6*(len(self.X_train)/bs))
+        clr_triangular = CyclicLR(mode='triangular', step_size=6*(len(self.X_train)/self.bs))
         self.model = self.model(self.vocab_size, self.final_seq_len)
-        self.model.fit(self.X_train, self.y_train,
-                        batch_size=bs,
+        history = self.model.fit(self.X_train, self.y_train,
+                        batch_size=self.bs,
                         epochs=self.num_epochs,
                         verbose=2,
                         # validation_split=self.validation_split,
                         validation_data=(self.X_val, self.y_val),
                         callbacks=[clr_triangular]
                         )
+        return history
 
 
     def _train_auto_model(self):
@@ -302,3 +340,39 @@ class NeuroClassifierWorker(BaseWorker):
         # TODO validate params
         # If proper, set them
         pass
+
+    
+    def _plot_model_and_history(self, history):
+        # Plot training & validation accuracy values
+        plt.plot(history.history['acc'])
+        plt.plot(history.history['val_acc'])
+        plt.title('Model accuracy')
+        plt.ylabel('Accuracy')
+        plt.xlabel('Epoch')
+        plt.legend(['Train', 'Test'], loc='upper left')
+        acc_plot_name = "{}_acc.svg".format(self.model_name)
+        acc_plot_path = create_file_path(acc_plot_name, PROTECTED_MEDIA, "task_manager/", self.task_type)
+        acc_plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager/", self.task_type, acc_plot_name)
+        plt.savefig(acc_plot_path, format="svg", bbox_inches='tight')
+        plt.clf()
+
+        # Plot training & validation loss values
+        plt.plot(history.history['loss'])
+        plt.plot(history.history['val_loss'])
+        plt.title('Model loss')
+        plt.ylabel('Loss')
+        plt.xlabel('Epoch')
+        plt.legend(['Train', 'Test'], loc='upper left')
+        loss_plot_name = "{}_loss.svg".format(self.model_name)
+        loss_plot_path = create_file_path(loss_plot_name, PROTECTED_MEDIA, "task_manager/", self.task_type)
+        loss_plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager/", self.task_type, loss_plot_name)
+        plt.savefig(loss_plot_path, format="svg", bbox_inches='tight')
+        plt.clf()
+
+        # Plot Keras model
+        model_plot_name = "{}_model.svg".format(self.model_name)
+        model_plot_path = create_file_path(model_plot_name, PROTECTED_MEDIA, "task_manager/", self.task_type)
+        model_plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager/", self.task_type, model_plot_name)
+        plot_model(self.model, to_file=model_plot_path, show_shapes=True)
+
+        return loss_plot_url, acc_plot_url, model_plot_url
