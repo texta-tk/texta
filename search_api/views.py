@@ -74,10 +74,18 @@ def more_like_this(request):
             size = post_data["size"] if post_data.get("size", None) else 10
             returned_fields = post_data["returned_fields"] if post_data.get("returned_fields", None) else None
 
+            like = []
+            for document in post_data["like"]:
+                dataset = Dataset.objects.get(pk=document["dataset_id"])
+                doc = {"_id": document["document_id"], "_index": dataset.index, "_type": dataset.mapping}
+                like.append(doc)
+
+            print(like)
+
             hits = ES_Manager.more_like_this(
                 elastic_url=es_url,
                 fields=fields,
-                like=post_data["like"],
+                like=like,
                 size=size,
                 return_fields=returned_fields
             )

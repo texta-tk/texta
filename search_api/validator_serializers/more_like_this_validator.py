@@ -10,9 +10,8 @@ def validate_auth_token(auth_token: str):
 
 
 class LikeThisItem(serializers.Serializer):
-    _id = serializers.CharField(required=True, min_length=0)
-    _type = serializers.CharField(required=True, min_length=0)
-    _index = serializers.CharField(required=True, min_length=0)
+    dataset_id = serializers.IntegerField(required=True, min_value=0)
+    document_id = serializers.CharField(required=True, min_length=0)
 
 
 class ValidateFormSerializer(serializers.Serializer):
