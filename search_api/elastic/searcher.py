@@ -1,3 +1,4 @@
+from elasticsearch_dsl import Search
 from query import Query
 import requests
 import json
@@ -25,13 +26,14 @@ class Searcher(object):
         mapping = processed_request['mapping']
 
         fields = processed_request.get('_source', None)
+        real_fields = processed_request.get("fields", None)
 
         query = json.dumps(self.create_search_query(processed_request).generate())
 
         if fields:
             return self._search_with_fields(index, mapping, query)
         else:
-            return self._search(index, mapping, query)
+            return self._search(index, mapping, query, real_fields)
 
     def scroll(self, processed_request):
         index = processed_request['index']
@@ -94,12 +96,18 @@ class Searcher(object):
 
         return differentiated_constraints
 
-    def _search(self, index, mapping, query):
+    def _search(self, index, mapping, query, real_fields):
         search_url = '{0}/{1}/{2}/_search?scroll=1m'.format(self._es_url, index, mapping)
         scroll_url = '{0}/_search/scroll?scroll=1m'.format(self._es_url)
+
+        fixerman = Search().from_dict(json.loads(query))
+        fixerman = fixerman.source(real_fields)
+        query = json.dumps(fixerman.to_dict())
+
         response = self._requests.post(search_url, data=query, headers=self._header).json()
         scroll_id = json.dumps({'scroll_id':response['_scroll_id']})
         hits_yielded = 0
+
         while 'hits' in response and 'hits' in response['hits'] and response['hits']['hits']:
             for hit in response['hits']['hits']:
                 if self._limit and hits_yielded == self._limit:

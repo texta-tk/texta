@@ -80,8 +80,6 @@ def more_like_this(request):
                 doc = {"_id": document["document_id"], "_index": dataset.index, "_type": dataset.mapping}
                 like.append(doc)
 
-            print(like)
-
             hits = ES_Manager.more_like_this(
                 elastic_url=es_url,
                 fields=fields,
