@@ -9,7 +9,7 @@ from functools import reduce
 
 from elasticsearch import Elasticsearch, ElasticsearchException
 from elasticsearch_dsl import Search
-from elasticsearch_dsl.query import MoreLikeThis
+from elasticsearch_dsl.query import MoreLikeThis, Q
 
 from utils.ds_importer_helper import check_for_analyzer
 from utils.generic_helpers import find_key_recursivly
@@ -259,18 +259,35 @@ class ES_Manager:
         return []
 
     @staticmethod
-    def more_like_this(elastic_url, fields, like, size, return_fields=None):
+    def more_like_this(elastic_url, fields: list, like: list, size: int, filters: list, aggregations: list, if_agg_only: bool, return_fields=None):
+        # Create the base query creator and unite with ES gateway.
         search = Search(using=Elasticsearch(elastic_url))
-        mlt = MoreLikeThis(like=like, fields=fields, min_term_freq=1, max_query_terms=12, )
+        mlt = MoreLikeThis(like=like, fields=fields, min_term_freq=1, max_query_terms=12, )  # Prepare the MLT part of the query.
 
-        paginated_search = search[0:size]
-        limited_search = paginated_search.source(return_fields) if return_fields else paginated_search
-        finished_search = limited_search.query(mlt)
+        paginated_search = search[0:size]  # Set how many documents to return.
+        limited_search = paginated_search.source(return_fields) if return_fields else paginated_search  # If added, choose which FIELDS to return.
+        finished_search = limited_search.query(mlt)  # Add the premade MLT into the query.
+
+        # Apply all the user-set filters, if they didn't add any this value will be [] and it quits.
+        for filter_dict in filters:
+            finished_search = finished_search.filter(Q(filter_dict))
+
+        # Apply all the user-set aggregations, if they didn't add any this value will be [] and it quits.
+        for aggregation_dict in aggregations:
+            # aggs.bucket() does not return a Search object but changes it instead.
+            finished_search.aggs.bucket(name=aggregation_dict["bucket_name"], agg_type=aggregation_dict["agg_type"], field=aggregation_dict["field"])
+
+        # Choose if you want to return only the aggregations in {"bucket_name": {results...}} format.
+        if if_agg_only:
+            finished_search = finished_search.params(size=0)
+            response = finished_search.execute()
+            return response.aggs.to_dict()
 
         try:
             response = finished_search.execute()
-            hits = {"hits": [hit.to_dict() for hit in response]}
-            return hits
+            result = {"hits": [hit.to_dict() for hit in response]}  # Throw out all metadata and keep only the documents.
+            if response.aggs: result.update({"aggregations": response.aggs.to_dict()})  # IF the aggregation query returned anything, THEN add the "aggregatons" key with results.
+            return result
 
         except ElasticsearchException as e:
             logging.getLogger(ERROR_LOGGER).exception(e)

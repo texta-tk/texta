@@ -65,14 +65,19 @@ def list_datasets(request):
 
 def more_like_this(request):
     if request.method == "POST":
-        utf8_post_payload = json.loads(request.body.decode("utf-8"))
+        try:
+            utf8_post_payload = json.loads(request.body.decode("utf-8"))
+        except json.JSONDecodeError as e:
+            return JsonResponse({"json": str(e)}, status=400)
+
         valid_request = ValidateFormSerializer(data=utf8_post_payload)
 
         if valid_request.is_valid():
             post_data = valid_request.validated_data
             fields = ["{}.keyword".format(field) for field in post_data["fields"]]
-            size = post_data["size"] if post_data.get("size", None) else 10
-            returned_fields = post_data["returned_fields"] if post_data.get("returned_fields", None) else None
+            size = post_data.get("size", 10)
+            returned_fields = post_data.get("returned_fields", None)
+            if_agg_only = post_data.get("if_agg_only", False)
 
             like = []
             for document in post_data["like"]:
@@ -85,7 +90,10 @@ def more_like_this(request):
                 fields=fields,
                 like=like,
                 size=size,
-                return_fields=returned_fields
+                return_fields=returned_fields,
+                filters=post_data.get("filters", []),
+                aggregations=post_data.get("aggregations", []),
+                if_agg_only=if_agg_only
             )
 
             return JsonResponse(hits, status=200) if "elasticsearch" not in hits else JsonResponse(hits, status=400)
