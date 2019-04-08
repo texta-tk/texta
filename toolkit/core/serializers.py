@@ -19,6 +19,32 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('url', 'id', 'title', 'owner', 'users', 'indices')
 
 
+from rest_framework_nested.relations import NestedHyperlinkedRelatedField
+
+class ProjectSerializer(serializers.HyperlinkedModelSerializer):
+    indices = serializers.MultipleChoiceField(choices=get_index_choices())
+    class Meta:
+        model = Project
+        fields = ('url', 'id', 'title', 'owner', 'users', 'indices', 'embedding')
+
+    embedding = serializers.HyperlinkedIdentityField(
+            read_only=True,
+            view_name='project-embedding-list',
+            lookup_url_kwarg='project_pk'
+    )
+    #embedding = NestedHyperlinkedRelatedField(
+    #    many=True,
+    #    read_only=True,   # Or add a queryset
+    #    view_name='embedding',
+    #    parent_lookup_kwargs={'project_pk': 'project_pk'}
+    #)
+
+    #tagger = serializers.HyperlinkedIdentityField(
+    #        read_only=True,
+    #        view_name='project-tagger-list',
+    #        lookup_url_kwarg='project_pk'
+    #)
+
 class SearchSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:

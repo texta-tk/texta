@@ -93,3 +93,16 @@ class ElasticCore:
         parsed_dict = urllib.parse.parse_qs(urllib.parse.urlparse(field).path)
         parsed_dict = {a:b[0] for a,b in parsed_dict.items()}
         return parsed_dict
+
+
+    @staticmethod
+    def parse_field_data(field_data):
+        """
+        Parses field data list into dict with index names as keys and field paths as list of strings
+        """
+        parsed_data = {}
+        for field in field_data:
+            if field['index'] not in parsed_data:
+                parsed_data[field['index']] = []
+            parsed_data[field['index']].append(field['field_path'])
+        return parsed_data

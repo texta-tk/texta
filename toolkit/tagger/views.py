@@ -12,3 +12,6 @@ class TaggerViewSet(viewsets.ModelViewSet):
     """
     queryset = Tagger.objects.all()
     serializer_class = TaggerSerializer
+
+    def get_queryset(self):
+        return Tagger.objects.filter(project=self.kwargs['project_pk'])

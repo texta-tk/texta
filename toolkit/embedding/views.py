@@ -16,6 +16,10 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
     queryset = Embedding.objects.all()
     serializer_class = EmbeddingSerializer
 
+    def get_queryset(self):
+        return Embedding.objects.filter(project=self.kwargs['project_pk'])
+
+
     @staticmethod
     def get_payload(request):
         if request.GET:
@@ -27,7 +31,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
         return data        
 
     @action(detail=True, methods=['get', 'post'])
-    def predict(self, request, pk=None):
+    def predict(self, request, pk=None, project_pk=None):
         data = self.get_payload(request)
         serializer = PredictionSerializer(data=data)
         if serializer.is_valid():
@@ -43,7 +47,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['get', 'post'])
-    def phrase(self, request, pk=None):
+    def phrase(self, request, pk=None, project_pk=None):
         data = self.get_payload(request)
         serializer = PhraserSerializer(data=data)
         if serializer.is_valid():

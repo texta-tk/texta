@@ -1,4 +1,3 @@
-from elasticsearch import Elasticsearch
 import urllib
 import json
 
@@ -28,7 +27,8 @@ class ElasticSearcher:
         """
         Output options: document (default), text (lowered & stopwords removed), sentences (text + line splitting), raw (raw elastic output)
         """
-        self.field_data = self._parse_field_data(field_data)
+        self.core = ElasticCore()
+        self.field_data = self.core.parse_field_data(field_data)
         self.indices = ','.join([field['index'] for field in field_data])
         self.query = query
         self.scroll_size = scroll_size
@@ -36,7 +36,6 @@ class ElasticSearcher:
         self.ignore_ids = ignore_ids
         self.output = output
         self.callback_progress = callback_progress
-        self.core = ElasticCore()
         self.text_processor = text_processor
 
         if self.callback_progress:
@@ -49,19 +48,6 @@ class ElasticSearcher:
         Iterator for iterating through scroll
         """
         return self.scroll()
-
-
-    @staticmethod
-    def _parse_field_data(field_data):
-        """
-        Parses field data list into dict with index names as keys and field paths as list of strings
-        """
-        parsed_data = {}
-        for field in field_data:
-            if field['index'] not in parsed_data:
-                parsed_data[field['index']] = []
-            parsed_data[field['index']].append(field['field_path'])
-        return parsed_data
 
 
     @staticmethod

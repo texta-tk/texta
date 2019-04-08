@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'toolkit.core',
     'toolkit.embedding',
     'toolkit.tagger',
+    'toolkit.nexus',
     'rest_framework',
     'multiselectfield',
     #'django_extensions'
