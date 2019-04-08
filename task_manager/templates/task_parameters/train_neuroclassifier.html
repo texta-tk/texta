@@ -63,64 +63,86 @@
 
                         <div class="row">
                             <div class="col-sm-6">Validation amount:</div>
-                            <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_validation_split" class="selectpicker"
-                                        data-width='100%'>
-                                    <option title="0.20" value="0.20">0.20</option>
-
-                                </select>
+                            <div class="col-sm-5 slider-wrapper">
+                                <input id="neuroclassifier_validation_split" name="{{ task_param.id }}_validation_split" class="form-control"
+                                       data-slider-id='neuroclassifier_validation_split' data
+                                       type="text" data-slider-min="0.01" data-slider-max="0.95"
+                                       data-slider-step="0.01"
+                                       data-slider-value="0.20"
+                                />
                             </div>
                         </div>
 
                         <div class="row">
-                                <div class="col-sm-6">Crop amount:</div>
-                            <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_crop_amount" class="selectpicker"
-                                        data-width='100%'>
-                                    <option title="0.2" value="1000">1000</option>
-
-                                </select>
+                            <div class="col-sm-6">Crop amount:</div>
+                            <div class="col-sm-5 slider-wrapper">
+                                <input id="neuroclassifier_crop_amount" name="{{ task_param.id }}_crop_amount" class="form-control"
+                                       data-slider-id='neuroclassifier_crop_amount' data
+                                       type="text" data-slider-min="100" data-slider-max="100000"
+                                       data-slider-step="500"
+                                       data-slider-value="10000"
+                                />
                             </div>
                         </div>
 
                         <div class="row">
-                                <div class="col-sm-6">Grid Search downsample amount:</div>
-                            <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_grid_downsample_amount" class="selectpicker"
-                                        data-width='100%'>
-                                    <option title="0.0001" value="0.0001">0.0001</option>
-                                </select>
+                            <div class="col-sm-6">Grid Search downsample amount:</div>
+                            <div class="col-sm-5 slider-wrapper">
+                                <input id="neuroclassifier_grid_downsample_amount" name="{{ task_param.id }}_grid_downsample_amount" class="form-control"
+                                       data-slider-id='neuroclassifier_grid_downsample_amount' data
+                                       type="text" data-slider-min="0.00001" data-slider-max="0.1"
+                                       data-slider-step="0.00001"
+                                       data-slider-value="0.001"
+                                />
                             </div>
                         </div>
 
                         <div class="row">
                                 <div class="col-sm-6">Num epochs for manual model:</div>
-                            <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_num_epochs" class="selectpicker"
-                                        data-width='100%'>
-                                    <option title="1" value="1">1</option>
-                                    <option title="2" value="2">2</option>
-                                    <option title="4" value="4">4</option>
-                                    <option title="5" value="5">5</option>
-                                    <option title="8" value="8">8</option>
-                                    <option title="10" value="10">10</option>
-                                </select>
+                            <div class="col-sm-5 slider-wrapper">
+
+                                <input id="neuroclassifier_num_epochs" name="{{ task_param.id }}_num_epochs" class="form-control"
+                                       data-slider-id='neuroclassifier_num_epochs' data
+                                       type="text" data-slider-min="1" data-slider-max="25"
+                                       data-slider-step="1"
+                                       data-slider-value="3"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-6">Max sequence length:</div>
+                            <div class="col-sm-5 slider-wrapper">
+                                <input id="neuroclassifier_max_seq_len" name="{{ task_param.id }}_max_seq_len" class="form-control"
+                                       data-slider-id='neuroclassifier_max_seq_len' data
+                                       type="text" data-slider-min="20" data-slider-max="500"
+                                       data-slider-step="1"
+                                       data-slider-value="50"
+                                />
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-sm-6">Negative set multiplier:</div>
-                            <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_negative_multiplier_opt" class="selectpicker" data-width='100%'>
-                                    <option title="0.5" value="0.5">0.5</option>
-                                    <option title="0.75" value="0.75">0.75</option>
-                                    <option title="1.0" value="1.0" selected="selected">1.0</option>
-                                    <option title="1.5" value="1.5">1.5</option>
-                                    <option title="2.0" value="2.0">2.0</option>
-                                    <option title="3.0" value="3.0">3.0</option>
-                                    <option title="4.0" value="4.0">4.0</option>
-                                    <option title="5.0" value="5.0">5.0</option>
-                                </select>
+                            <div class="col-sm-5 slider-wrapper">
+                                <input id="neuroclassifier_negative_multiplier_opt" name="{{ task_param.id }}_negative_multiplier_opt" class="form-control"
+                                       data-slider-id='neuroclassifier_negative_multiplier_opt' data
+                                       type="text" data-slider-min="0.25" data-slider-max="5.0"
+                                       data-slider-step="0.1"
+                                       data-slider-value="1.0"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-6">Training set score threshold:</div>
+                            <div class="col-sm-5 slider-wrapper">
+                                <input id="neuroclassifier_score_threshold_opt" name="{{ task_param.id }}_score_threshold_opt" class="form-control"
+                                       data-slider-id='neuroclassifier_score_threshold_opt' data
+                                       type="text" data-slider-min="0.0" data-slider-max="0.5"
+                                       data-slider-step="0.01"
+                                       data-slider-value="0.0"
+                                />
                             </div>
                         </div>
 
@@ -137,34 +159,7 @@
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-sm-6">Training set score threshold:</div>
-                            <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_score_threshold_opt" class="selectpicker" data-width='100%'>
-                                    <option title="0.0 (use all)" value="0.0">0.0</option>
-                                    <option title="0.1" value="0.1">0.1</option>
-                                    <option title="0.2" value="0.2">0.2</option>
-                                    <option title="0.3" value="0.3">0.3</option>
-                                    <option title="0.4" value="0.4">0.4</option>
-                                    <option title="0.5" value="0.5">0.5</option>
 
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-sm-6">Max sequence length:</div>
-                            <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_max_seq_len" class="selectpicker" data-width='100%'>
-                                    <option title="50" value="50">50</option>
-                                    <option title="70" value="70">70</option>
-                                    <option title="100" value="100">100</option>
-                                    <option title="150" value="150">150</option>
-                                    <option title="200" value="200">200</option>
-
-                                </select>
-                            </div>
-                        </div>
 
                         <div class="row">
                             <div class="col-sm-6">Label:</div>

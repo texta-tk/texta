@@ -1,5 +1,42 @@
 /* global LINK_TASK_MANAGER */
 var PREFIX = LINK_TASK_MANAGER
+$(document).ready(function () {
+    $('#neuroclassifier_crop_amount').bootstrapSlider({
+        formatter: function (value) {
+            return 'Value: ' + value
+        }
+    })
+    $('#neuroclassifier_num_epochs').bootstrapSlider({
+        formatter: function (value) {
+            return 'Value: ' + value
+        }
+    })
+    $('#neuroclassifier_validation_split').bootstrapSlider({
+        formatter: function (value) {
+            return 'Value: ' + value
+        }
+    })
+    $('#neuroclassifier_grid_downsample_amount').bootstrapSlider({
+        formatter: function (value) {
+            return 'Value: ' + value
+        }
+    })
+    $('#neuroclassifier_max_seq_len').bootstrapSlider({
+        formatter: function (value) {
+            return 'Value: ' + value
+        }
+    })
+    $('#neuroclassifier_negative_multiplier_opt').bootstrapSlider({
+        formatter: function (value) {
+            return 'Value: ' + value
+        }
+    })
+    $('#neuroclassifier_score_threshold_opt').bootstrapSlider({
+        formatter: function (value) {
+            return 'Value: ' + value
+        }
+    })
+})
 
 $(function () {
     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
@@ -72,7 +109,7 @@ function start_task (task_id, formElement) {
 
     var request = new XMLHttpRequest()
     request.onreadystatechange = function () {
-        location.reload()
+        // location.reload()
     }
 
     request.open('POST', PREFIX + '/start_task')
