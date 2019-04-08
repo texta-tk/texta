@@ -75,28 +75,28 @@ $('#registrationForm > .form-group > .form-control').on('focus', function () {
 
 function login() {
 
-    var usernameInput = $('#loginUsername')
-    var passwordInput = $('#loginPassword')
+    var usernameInput = $('#loginUsername').val()
+    var passwordInput = $('#loginPassword').val()
 
-    $.post(LINK_ACCOUNT + '/login', {
-        username: usernameInput.val(),
-        password: passwordInput.val()
-    }, function (data) {
-        if (data.event === 'login_process_failed') {
-            invalidateInput('login_form', 'has-error', 'Failed to login')
-        } else if (data.event === 'login_process_succeeded') {
-            go_to(LINK_ROOT)
+    $.ajax({
+        url: LINK_ACCOUNT + '/login',
+        data: {
+            'username': usernameInput,
+            'password': passwordInput
+        },
+        type: 'POST',
+    }).then((data) => {
+
+            data = JSON.parse(data)
+            if (data.event === 'login_process_failed') {
+                invalidateInput('login_form', 'has-error', 'Failed to login')
+            } else if (data.event === 'login_process_succeeded') {
+                go_to(LINK_ROOT)
+            }
         }
-    }, 'json')
-    //     .then((data) => {
-    //     debugger
-    //     data = JSON.parse(data)
-    //     if (data.event === 'login_process_failed') {
-    //         invalidateInput('login_form', 'has-error', 'Failed to login')
-    //     } else if (data.event === 'login_process_succeeded') {
-    //         go_to(LINK_ROOT)
-    //     }
-    // })
+    )
+    return false
+
 }
 
 function registerAccount() {
