@@ -141,7 +141,7 @@ class EsDataSample(object):
         self.max_positive_sample_size = max_positive_sample_size
         self.score_threshold = score_threshold
 
-    def _get_positive_samples(self):
+    def _get_positive_samples(self, keep_empty=False):
         positive_samples_map = {}
         positive_set = set()
         # Initialize sample map
@@ -169,37 +169,35 @@ class EsDataSample(object):
             # Iterate over all docs
             for hit in response['hits']['hits']:
                 if hit['_score'] >= lowest_allowed_score:
-                    try:
-                        for field in self.fields:
-                            # Extract text content for every field
-                            _temp_text = hit['_source']
+                    for field in self.fields:
+                        # Extract text content for every field
+                        _temp_text = hit['_source']
+                        try:
                             for k in field.split('.'):
                                 # Get nested fields encoded as: 'field.sub_field'
-                                try:
-                                    _temp_text = _temp_text[k]
-                                except Exception:
-                                    _temp_text = ''
-                                # sanity check to remove None values
-                                if not _temp_text:
-                                    _temp_text = ''
-                            # Save decoded text into positive sample map
+                                _temp_text = _temp_text[k]
+                                # Check that the string is not None nor empty, otherwise raise exception
+                                assert _temp_text is not None and _temp_text
+                        except (KeyError, AssertionError):
+                            # In case the field is not present in the document/empty,
+                            # add empty text or pass if not keep_empty
+                            if keep_empty:
+                                _temp_text = ''
+                                positive_samples_map[field].append(_temp_text)
+                        else:
+                            # If no exception occurred,
+                            # save decoded text into sample map
                             positive_samples_map[field].append(_temp_text)
-                        
-                        # Save sampled doc id
-                        doc_id = str(hit['_id'])
-                        positive_set.add(doc_id)
 
-                    except KeyError as e:
-                        # If the field is missing from the document
-                        pass
-                        # Commented out to reduce spam
-                        # logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
+                    # Save sampled doc id
+                    doc_id = str(hit['_id'])
+                    positive_set.add(doc_id)
                 else:
                     break
 
         return positive_samples_map, positive_set
 
-    def _get_negative_samples(self, positive_set):
+    def _get_negative_samples(self, positive_set, keep_empty=False):
 
         negative_samples_map = {}
         negative_set = set()
@@ -227,52 +225,64 @@ class EsDataSample(object):
                 raise EsIteratorError(msg)
 
             for hit in response['hits']['hits']:
-                try:
-                    # Get doc id
-                    doc_id = str(hit['_id'])
-                    if doc_id in positive_set:
-                        # If used already, continue
-                        continue
-                    # Otherwise, consider as negative sample
-                    negative_set.add(doc_id)
+                # Get doc id
+                doc_id = str(hit['_id'])
+                if doc_id in positive_set:
+                    # If used already, continue
+                    continue
+                # Otherwise, consider as negative sample
+                negative_set.add(doc_id)
 
-                    for field in self.fields:
-                        # Extract text content for every field
-                        _temp_text = hit['_source']
+                for field in self.fields:
+                    # Extract text content for every field
+                    _temp_text = hit['_source']
+                    try:
                         for k in field.split('.'):
                             # Get nested fields encoded as: 'field.sub_field'
-                            try:
-                                _temp_text = _temp_text[k]
-                            except Exception:
-                                logging.getLogger(ERROR_LOGGER).error('Field not present in document.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
-                                _temp_text = ''
-                            # sanity check to remove None values
-                            if not _temp_text:
-                                _temp_text = ''
-                        # Save decoded text into positive sample map
+                            _temp_text = _temp_text[k]
+                            # Check that the string is not None nor empty, otherwise raise exception
+                            assert _temp_text is not None and _temp_text
+                    except (KeyError, AssertionError):
+                        # In case the field is not present in the document/empty,
+                        # add empty text or pass if not keep_empty
+                        if keep_empty:
+                            _temp_text = ''
+                            negative_samples_map[field].append(_temp_text)
+                    else:
+                        # If no exception occurred,
+                        # save decoded text into sample map
                         negative_samples_map[field].append(_temp_text)
-
-                except KeyError as e:
-                    # If the field is missing from the document
-                    pass
-                    # Commented out to reduce spam
-                    # logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
 
         return negative_samples_map, negative_set
 
-    def get_data_samples(self):
-        positive_samples, positive_set = self._get_positive_samples()
-        negative_samples, negative_set = self._get_negative_samples(positive_set)
-
-        # Build X feature map
-        data_sample_x_map = {}
-        for field in self.fields:
-            data_sample_x_map[field] = positive_samples[field] + negative_samples[field]
-
-        # Build target (positive + negative samples) for binary classifier
-        data_sample_y = [1] * len(positive_set) + [0] * len(negative_set)
+    def get_data_samples(self, with_fields=True):
+        '''Get the data samples for the positive/negative sets
+        Keyword Arguments:
+            with_fields {bool} -- If True, return x as {field_n: [values]},
+                                           and y as [values_only_for_longest_len_field].
+                                  If False, return x as [values_from_all_fields],
+                                           and y as [all_labels_from_all_fields 
+                                  (default: {True})
+        '''
+        positive_samples, positive_set = self._get_positive_samples(keep_empty=with_fields)
+        negative_samples, negative_set = self._get_negative_samples(positive_set, keep_empty=with_fields)
 
         statistics = {}
         statistics['total_positive'] = len(positive_set)
         statistics['total_negative'] = len(negative_set)
-        return data_sample_x_map, data_sample_y, statistics
+
+        if with_fields:
+            # Build X feature map
+            data_sample_y = [1] * len(positive_set) + [0] * len(negative_set)
+            data_sample_x = {}
+            for field in self.fields:
+                data_sample_x[field] = positive_samples[field] + negative_samples[field]
+            # Build target (positive + negative samples) for binary classifier
+        elif not with_fields:
+            data_sample_x = []
+            data_sample_y = []
+            for field in self.fields:
+                data_sample_x += positive_samples[field] + negative_samples[field]
+                data_sample_y += [1] * len(positive_samples[field]) + [0] * len(negative_samples[field])
+
+        return data_sample_x, data_sample_y, statistics

@@ -2,7 +2,6 @@ import csv
 import json
 import pickle
 import numpy as np
-import itertools
 import matplotlib.pyplot as plt
 import os
 from typing import List, Dict
@@ -138,15 +137,9 @@ class NeuroClassifierWorker(BaseWorker):
                                 negative_set_multiplier=negative_set_multiplier,
                                 max_positive_sample_size=max_sample_size_opt,
                                 score_threshold=score_threshold_opt)
-        data_sample_x_map, data_sample_y, statistics = es_data.get_data_samples()
-        # Currently all data is in a separate field: {field_1: [...], field_2: [...]}, even though they have the same label
-        # Unpack the data from fields
-        unpacked_x = list(itertools.chain.from_iterable(data_sample_x_map.values()))
-        # Multiply labels for each field 
-        multiplied_y = data_sample_y * len(fields)
-        import pdb;pdb.set_trace()
-        self.samples = unpacked_x
-        self.labels = multiplied_y
+        data_sample_x, data_sample_y, statistics = es_data.get_data_samples(with_fields=False)
+        self.samples = data_sample_x
+        self.labels = data_sample_y
 
 
     def _train_model(self):
@@ -156,6 +149,7 @@ class NeuroClassifierWorker(BaseWorker):
         else:
             history = self._train_generic_model()
         return history
+
 
     def run(self, task_id):
         self._set_up_task(task_id)
@@ -172,19 +166,19 @@ class NeuroClassifierWorker(BaseWorker):
 
         self.show_progress.update(4)
         self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
-        # num_epocs param #DONE
-        # TODO average/percentile seq len
-        # TODO pretrained embedding
-        # validation result into results #DONE
-        # final seq/vocab size into results #DONE
         # TODO validate params
-        # model summary to front #DONE
-        # TODO debug why val results are random
+        # TODO average/percentile seq len
         # TODO preprocessor
         # TODO verbose overview
         # TODO validate that auto models work
         # TODO import speed overview
-        # TODO fix max sample size per class 
+        # TODO pretrained embedding
+        # validation result into results #DONE
+        # final seq/vocab size into results #DONE
+        # num_epocs param #DONE
+        # model summary to front #DONE
+        # debug why val results are random
+        # fix max sample size per class 
         # conda install graphviz
         # conda install keras/cuda/etc
 
@@ -209,11 +203,13 @@ class NeuroClassifierWorker(BaseWorker):
         }
         self.task_obj.result = json.dumps(train_summary)
 
+
     def _cross_validation(self):
         # Evaluate model, get [loss, accuracy]
         val_eval = self.model.evaluate(x=self.X_val, y=self.y_val, batch_size=self.bs, verbose=1)
         train_eval = self.model.evaluate(x=self.X_train, y=self.y_train, batch_size=self.bs, verbose=1)
         return val_eval, train_eval
+
 
     def _save_model(self):
         try:
@@ -274,10 +270,6 @@ class NeuroClassifierWorker(BaseWorker):
 
 
     def _train_generic_model(self):
-        print(self.X_train.shape)
-        print(self.y_train.shape)
-        print(self.X_val.shape)
-        print(self.y_val.shape)
         # Custom cyclical learning rate callback
         clr_triangular = CyclicLR(mode='triangular', step_size=6*(len(self.X_train)/self.bs))
         self.model = self.model(self.vocab_size, self.final_seq_len)
@@ -335,6 +327,7 @@ class NeuroClassifierWorker(BaseWorker):
         # from keras.utils import plot_model
         # plot_model(self.model, to_file='model.png') # TODO proper file path
         # Also TODO https://keras.io/visualization/
+
 
     def _validate_params(self):
         # TODO validate params
