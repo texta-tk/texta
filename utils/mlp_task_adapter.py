@@ -1,6 +1,7 @@
 from time import sleep
 import requests
 import logging
+import json
 
 class MLPTaskAdapter(object):
 
@@ -38,6 +39,7 @@ class MLPTaskAdapter(object):
                 current_fail_count += 1
                 # if fail to fetch result 3 times, declare task failed
                 if current_fail_count > 3:
+                    task_status = 'failed to parse response'
                     task_status_text = 'FAILURE'
                     logging.error('Task failed because correct response not sent from MLP')
                 else:
@@ -47,7 +49,7 @@ class MLPTaskAdapter(object):
 
         if task_status_text == 'FAILURE':
             errors = {'task_failed': task_status}
-            logging.error('Failed to analyze text with MLP Lite', extra={'url':self.start_task_url, 'texts': json.dumps(texts, ensure_ascii=False)})
+            logging.error('Failed to analyze text with MLP Lite', extra={'url':self.start_task_url, 'texts': json.dumps(data, ensure_ascii=False)})
         elif task_status_text == 'SUCCESS':
             analyzation_data = task_status['result']
         
