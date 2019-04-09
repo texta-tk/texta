@@ -18,6 +18,7 @@ router.register(r'project', core_views.ProjectViewSet, base_name='project')
 
 project_router = routers.NestedDefaultRouter(router, r'project', lookup='project')
 project_router.register(r'embedding', embedding_views.EmbeddingViewSet, base_name='project-embedding')
+project_router.register(r'nexus', nexus_views.EntityViewSet, base_name='nexus')
 #project_router.register(r'tagger', tagger_views.TaggerViewSet, base_name='project-tagger')
 
 
