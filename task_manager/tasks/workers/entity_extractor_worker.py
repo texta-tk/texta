@@ -24,8 +24,10 @@ from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
 from task_manager.tools import ShowSteps
 from task_manager.tools import TaskCanceledException
 from task_manager.tools import get_pipeline_builder
-
 from .base_worker import BaseWorker
+
+from lexicon_miner.models import Lexicon
+from lexicon_miner.models import Word
 
 
 class EntityExtractorWorker(BaseWorker):
@@ -34,63 +36,65 @@ class EntityExtractorWorker(BaseWorker):
         self.es_m = None
         self.task_id = None
         self.model_name = None
-        self.description = None
         self.task_obj = None
         self.task_type = None
         self.task_params = None
-        self.n_jobs = 1
-        
+        self.show_progress = None
+        self.description = None
+
+        self.facts = []
+        self.lexicons = []
+        self.lexicon_fields = []
         self.tagger = None
-        self.facts = None
+        self.keywords = None
         self.oob_val = "<TEXTA_O>"
-        self.fact_keyword_val = "<TEXTA_FACT>"
         self.eos_val = "<TEXTA_BOS>"
         self.bos_val = "<TEXTA_EOS>"
         self.train_summary = {}
         # If there is less than this amount of memory in Mb left in the machine, stop appending training data
         self.min_mb_available_memory = 1500
 
-    def run(self, task_id):
 
+    def _set_up_task(self, task_id):
         self.task_id = task_id
         self.task_obj = Task.objects.get(pk=self.task_id)
         self.task_type = self.task_obj.task_type
-
         self.task_params = json.loads(self.task_obj.parameters)
+        # Validate and set up keyword params, don't continue if params invalid
+        if not self._check_keyword_params():
+            return False
+
+        ds = Datasets().activate_datasets_by_id(self.task_params['dataset'])
+        self.es_m = ds.build_manager(ES_Manager)
+        self.model_name = 'model_{}'.format(self.task_obj.unique_id)
+
         steps = ["preparing data", "training", "done"]
-        show_progress = ShowSteps(self.task_id, steps)
-        show_progress.update_view()
-        if 'num_threads' in self.task_params:
-            self.n_jobs = int(self.task_params['num_threads'])
+        self.show_progress = ShowSteps(self.task_id, steps)
+        self.show_progress.update_view()
 
+        return True
+
+
+    def run(self, task_id):
+        # Set up attributes, check if params valid, if not, don't continue
+        if not self._set_up_task(task_id):
+            return False
         try:
-            if "facts" in self.task_params:
-                fact_names = self.task_params["facts"]
-            else:
-                self._bad_params_result("No fact names given")
-                return False
 
-            show_progress.update(0)
+            self.show_progress.update(0)
+            # Fill keywords for labeling
+            keywords = {}
+            if self.facts:
+                keywords.update(self._get_fact_values())
+            if self.lexicons:
+                keywords.update(self._get_lexicons_values())
 
-            search = self.task_params['search']
-            # select search
-            if search == 'all_docs':
-                param_query = {"main": {"query": {"bool": {"minimum_should_match": 0, "must": [], "must_not": [], "should": []}}}}
-            else:
-                # Otherwise, load query from saved search
-                param_query = json.loads(Search.objects.get(pk=int(search)).query)
-
-            # Get data
-            ds = Datasets().activate_datasets_by_id(self.task_params['dataset'])
-            self.es_m = ds.build_manager(ES_Manager)
-            self.model_name = 'model_{}'.format(self.task_obj.unique_id)
-            facts = self._get_fact_values(fact_names)
+            param_query = self._parse_query(self.task_params)
             hits = self._scroll_query_response(param_query)
-
             # Prepare data
-            X_train, y_train, X_val, y_val = self._prepare_data(hits, facts)
+            X_train, y_train, X_val, y_val = self._prepare_data(hits, keywords)
             # Training the model.
-            show_progress.update(1)
+            self.show_progress.update(1)
             # Train and report validation
             model, report, confusion, plot_url = self._train_and_validate(X_train, y_train, X_val, y_val)
 
@@ -99,7 +103,7 @@ class EntityExtractorWorker(BaseWorker):
             report_table = self._convert_dict_to_html_table(report)
             self.train_summary['report'] = report_table
             self.train_summary['confusion_matrix'] = '<img src="{}" style="max-width: 80%">'.format(plot_url)
-            show_progress.update(2)
+            self.show_progress.update(2)
 
             # Declare the job as done
             self.task_obj.result = json.dumps(self.train_summary)
@@ -133,23 +137,23 @@ class EntityExtractorWorker(BaseWorker):
         self.task_type = self.task_obj.task_type
         # Recover features from model to check map
         self._load_tagger()
-        self._load_facts()
-        data = self._transform(data, self.facts)
+        self._load_keywords()
+        data = self._transform(data, self.keywords)
         processed_data = (self._sent2features(s) for s in data)
         preds = [self.tagger.tag(x) for x in processed_data]
         return preds
 
 
-    def _prepare_data(self, hits, facts):
+    def _prepare_data(self, hits, keywords):
         X_train = []
         X_val = []
         # Save all facts for later tagging
-        self._save_as_pkl(facts, "meta")
+        self._save_as_pkl(keywords, "meta")
 
         # Transform data 
         X_train, X_val = train_test_split(hits, test_size=0.1, random_state=42)
-        X_train = self._transform(X_train, facts)
-        X_val = self._transform(X_val, facts)
+        X_train = self._transform(X_train, keywords)
+        X_val = self._transform(X_val, keywords)
 
         # Create training data generators
         y_train = (self._sent2labels(s) for s in X_train)
@@ -168,15 +172,15 @@ class EntityExtractorWorker(BaseWorker):
             pkl.dump(var, f)
 
 
-    def _transform(self, data, facts):
+    def _transform(self, data, keywords):
         # TODO instead of matching again in text, should 
         marked_docs = []
         for i, doc in enumerate(data):
             marked = []
             for word in doc.split(' '):
-                if word in facts:
+                if word in keywords:
                     # If the word is a fact, mark it as so
-                    marked.append((word, facts[word]))
+                    marked.append((word, keywords[word]))
                 else:
                     # Add no fact, with a special tag
                     marked.append((word, self.oob_val))
@@ -239,10 +243,10 @@ class EntityExtractorWorker(BaseWorker):
         return model, report, confusion, plot_url
 
 
-    def _load_facts(self):
+    def _load_keywords(self):
         file_path = os.path.join(MODELS_DIR, self.task_type, "{}_meta".format(self.model_name))
         with open(file_path, "rb") as f:
-            self.facts = pkl.load(f)
+            self.keywords = pkl.load(f)
 
 
     def _load_tagger(self):
@@ -349,8 +353,7 @@ class EntityExtractorWorker(BaseWorker):
                 # Check if any of the selected facts are present in the hit fields
                 fact_fields = self._get_facts_in_document(source)
                 # Get the hit data of the fields where facts are present
-                batch_hits = self._get_data_from_fields(source, fact_fields)
-
+                batch_hits = self._get_data_from_fields(source, list(set(fact_fields + self.lexicon_fields)))
                 # Add batch hits to hits
                 hits += batch_hits
             response = self.es_m.scroll(scroll_id=scroll_id)
@@ -358,11 +361,12 @@ class EntityExtractorWorker(BaseWorker):
             scroll_id = response['_scroll_id']
         return hits
 
+
     def _get_facts_in_document(self, source):
         fact_fields = []
         if FACT_FIELD in source:
             for fact in source[FACT_FIELD]:
-                if fact['fact'] in self.task_params['facts']:
+                if fact['fact'] in self.facts:
                     fact_path = fact['doc_path']
                     if fact_path not in fact_fields:
                         fact_fields.append(fact_path)
@@ -383,7 +387,7 @@ class EntityExtractorWorker(BaseWorker):
         return batch_hits
 
 
-    def _get_fact_values(self, fact_names):
+    def _get_fact_values(self):
         aggs = {'main': {'aggs': {"facts": {"nested": {"path": "texta_facts"}, "aggs": {"fact_names": {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val"}}}}}}}}}
         self.es_m.load_combined_query(aggs)
         response = self.es_m.search()
@@ -391,16 +395,45 @@ class EntityExtractorWorker(BaseWorker):
 
         fact_data = {}
         for fact in response_aggs:
-            if fact['key'] in fact_names:
+            if fact['key'] in self.facts:
                 for val in fact['fact_values']['buckets']:
                     for val_word in val["key"].split(' '):
                         fact_data[val_word] = fact["key"]
         return fact_data
 
 
+    def _get_lexicons_values(self):
+        lex_keywords = {}
+        for id in self.lexicons:
+            for lex in Lexicon.objects.filter(id=id):
+                for word in Word.objects.filter(lexicon=lex):
+                    lex_keywords[word.wrd] = lex.name
+        return lex_keywords
+
+
     def _bad_params_result(self, msg: str):
         self.task_obj.result = json.dumps({"error": msg})
         self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
+        raise UserWarning(msg)
+    
+    
+    def _check_keyword_params(self):
+        '''Validates keyword params and sets them up if valid'''
+        if not ("facts" in self.task_params or "lexicons" in self.task_params):
+            self._bad_params_result("No fact name or lexicons given")
+            return False
+        elif "lexicons" in self.task_params and "lexicon_fields" not in self.task_params:
+            self._bad_params_result("No fields for lexicons given")
+            return False
+
+        # If valid, set them up
+        if "lexicons" in self.task_params:
+            self.lexicons = self.task_params['lexicons']
+            self.lexicon_fields = self.task_params['lexicon_fields']
+        if "facts" in self.task_params:
+            self.facts = self.task_params['facts']
+
+        return True
 
     @staticmethod
     def _convert_dict_to_html_table(data_dict):

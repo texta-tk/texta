@@ -73,7 +73,7 @@ def filter_params(post: QueryDict):
         else:
             param_name = param
 
-        if param_name == 'word_cluster_fields' or param_name == 'fields' or param_name == 'facts' or 'feature_names' in param_name or 'preprocessor_models' in param_name or 'lexicons' in param_name:
+        if param_name == 'word_cluster_fields' or 'fields' in param_name or 'facts' in param_name  or 'feature_names' in param_name or 'preprocessor_models' in param_name or 'lexicons' in param_name:
             param_val = post.getlist(param)
         else:
             param_val = post[param]

@@ -41,7 +41,8 @@ class ShowShortVersion extends HTMLElement {
 
     constructor() {
         super();
-        // no shadow dom because bootstrap, hundreds of instances per page, no point to make my own dropdown, no static template rendering bonuses because have to change template
+        // no shadow dom because bootstrap, hundreds of instances per page, no point to make my own dropdown,
+        // no static template rendering bonuses because have to change template
 
         this.setAttribute('role', 'button')
         this.setAttribute('class', 'btn-group dropdown')
