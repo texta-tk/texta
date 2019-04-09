@@ -74,7 +74,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-sm-6">Crop amount:</div>
+                            <div class="col-sm-6">Crop to:</div>
                             <div class="col-sm-5 slider-wrapper">
                                 <input id="neuroclassifier_crop_amount" name="{{ task_param.id }}_crop_amount" class="form-control"
                                        data-slider-id='neuroclassifier_crop_amount' data
@@ -118,6 +118,18 @@
                                        type="text" data-slider-min="20" data-slider-max="500"
                                        data-slider-step="1"
                                        data-slider-value="50"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-6">Max vocab size:</div>
+                            <div class="col-sm-5 slider-wrapper">
+                                <input id="neuroclassifier_max_vocab_size" name="{{ task_param.id }}_max_vocab_size" class="form-control"
+                                       data-slider-id='neuroclassifier_max_vocab_size' data
+                                       type="text" data-slider-min="1000" data-slider-max="2000000"
+                                       data-slider-step="500"
+                                       data-slider-value="50000"
                                 />
                             </div>
                         </div>

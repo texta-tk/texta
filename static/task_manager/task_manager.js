@@ -36,6 +36,11 @@ $(document).ready(function () {
             return 'Value: ' + value
         }
     })
+    $('#neuroclassifier_max_vocab_size').bootstrapSlider({
+        formatter: function (value) {
+            return 'Value: ' + value
+        }
+    })
 })
 
 $(function () {

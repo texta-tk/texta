@@ -36,6 +36,7 @@ from talos import Deploy
 from talos.model.layers import hidden_layers
 from talos.model.normalizers import lr_normalizer
 from talos.utils.best_model import activate_model, best_model
+from talos.commands.reporting import Reporting
 
 # Import clr callback and model architectures
 from task_manager.tasks.workers.neuroclassifier.neuro_models import NeuroModels
@@ -45,7 +46,6 @@ np.random.seed(1337)
 
 class NeuroClassifierWorker(BaseWorker):
     def __init__(self):
-
         """
         Main class for training the NeuroClassifier
         
@@ -67,6 +67,7 @@ class NeuroClassifierWorker(BaseWorker):
         self.task_params = None
         self.show_progress = None
         self.model_name = None
+        self.task_result = {}
 
         # Neuroclassifier params
         self.model_arch = None
@@ -103,6 +104,7 @@ class NeuroClassifierWorker(BaseWorker):
 
         self.model_arch = self.task_params['model_arch']
         self.max_seq_len = int(self.task_params['max_seq_len'])
+        self.vocab_size = int(self.task_params['max_vocab_size'])
         self.num_epochs = int(self.task_params['num_epochs'])
         self.crop_amount = int(self.task_params['crop_amount'])
         self.validation_split = float(self.task_params['validation_split'])
@@ -153,7 +155,6 @@ class NeuroClassifierWorker(BaseWorker):
 
     def run(self, task_id):
         self._set_up_task(task_id)
-        self._validate_params()
 
         self._build_data_sampler()
         self._process_data()
@@ -166,13 +167,16 @@ class NeuroClassifierWorker(BaseWorker):
 
         self.show_progress.update(4)
         self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
-        # TODO validate params
-        # TODO average/percentile seq len
         # TODO preprocessor
         # TODO verbose overview
         # TODO validate that auto models work
-        # TODO import speed overview
-        # TODO pretrained embedding
+
+        # TODO handle history of auto model
+        # TODO uncessessary passing of params now that task result is in self
+
+        # ?TODO import speed overview
+        # ?TODO average/percentile seq len
+        # ?TODO pretrained embedding
         # validation result into results #DONE
         # final seq/vocab size into results #DONE
         # num_epocs param #DONE
@@ -201,7 +205,9 @@ class NeuroClassifierWorker(BaseWorker):
             'loss_plot':  '<img src="{}" style="max-width: 80%">'.format(loss_plot_url),
             'model_plot':  '<img src="{}" style="max-width: 80%">'.format(model_plot_url),
         }
-        self.task_obj.result = json.dumps(train_summary)
+
+        self.task_result.update(train_summary)
+        self.task_obj.result = json.dumps(self.task_result)
 
 
     def _cross_validation(self):
@@ -300,41 +306,44 @@ class NeuroClassifierWorker(BaseWorker):
             'optimizer': [Adam],
             'seq_len': [self.final_seq_len],
             'vocab_size': [self.vocab_size],
-            'last_activation': [sigmoid]
+            'last_activation': [sigmoid],
+            'shapes': ['brick', 'triangle', 'funnel']
         }
 
+        scan_filename = "{}_scan.csv".format(self.model_name)
+        scan_filepath = create_file_path(scan_filename, PROTECTED_MEDIA, "task_manager", self.task_type)
+
         # Talos scan that will find the best model with the parameters above
-        h = ta.Scan(self.X_train, self.y_train,
+        scan = ta.Scan(self.X_train, self.y_train,
             params=p,
             model=self.model,
             grid_downsample=self.grid_downsample_amount,
             val_split=0, # Zerofy val_split in Talos, because we pass in our own val data
             x_val=self.X_val,
-            y_val=self.y_val
+            y_val=self.y_val,
+            experiment_name=scan_filepath
         )
 
+        # Set results
+        report = Reporting(scan)
+        self.task_result['The number of rounds in the experiment'] = report.rounds()
+        self.task_result['The number of rounds it took to get highest result'] = report.rounds2high()
+        self.task_result['The lowest val_acc'] = report.low()
+        self.task_result['The highest val_acc'] = report.high()
+
+        # Plot
+        scan_plot_name = "{}_auto_acc.svg".format(self.model_name)
+        scan_plot_path = create_file_path(scan_plot_name, PROTECTED_MEDIA, "task_manager", self.task_type)
+        scan_plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager", self.task_type, acc_plot_name)
+        report.plot_line()
+        plt.savefig(scan_plot_path, format="svg", bbox_inches='tight')
+        self.task_result['Auto model val_acc per round plot'] = '<img src="{}" style="max-width: 80%">'.format(scan_plot_url)
+
         # Get only the model from the Talos experiment
-        best_model_index = best_model(h, 'val_acc', False)
-        self.model = activate_model(h, best_model_index)
-
-        # For summary
-        # model_summary = self.model.summary()
-        # For model json object
-        # model_json = self.model.to_json()
-        # print(model_summary)
-        # print(model_json)
-        # For svg of model
-        # from keras.utils import plot_model
-        # plot_model(self.model, to_file='model.png') # TODO proper file path
-        # Also TODO https://keras.io/visualization/
+        best_model_index = best_model(scan, 'val_acc', False)
+        self.model = activate_model(scan, best_model_index)
 
 
-    def _validate_params(self):
-        # TODO validate params
-        # If proper, set them
-        pass
-
-    
     def _plot_model_and_history(self, history):
         # Plot training & validation accuracy values
         plt.plot(history.history['acc'])
@@ -344,8 +353,8 @@ class NeuroClassifierWorker(BaseWorker):
         plt.xlabel('Epoch')
         plt.legend(['Train', 'Test'], loc='upper left')
         acc_plot_name = "{}_acc.svg".format(self.model_name)
-        acc_plot_path = create_file_path(acc_plot_name, PROTECTED_MEDIA, "task_manager/", self.task_type)
-        acc_plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager/", self.task_type, acc_plot_name)
+        acc_plot_path = create_file_path(acc_plot_name, PROTECTED_MEDIA, "task_manager", self.task_type)
+        acc_plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager", self.task_type, acc_plot_name)
         plt.savefig(acc_plot_path, format="svg", bbox_inches='tight')
         plt.clf()
 
@@ -357,15 +366,15 @@ class NeuroClassifierWorker(BaseWorker):
         plt.xlabel('Epoch')
         plt.legend(['Train', 'Test'], loc='upper left')
         loss_plot_name = "{}_loss.svg".format(self.model_name)
-        loss_plot_path = create_file_path(loss_plot_name, PROTECTED_MEDIA, "task_manager/", self.task_type)
-        loss_plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager/", self.task_type, loss_plot_name)
+        loss_plot_path = create_file_path(loss_plot_name, PROTECTED_MEDIA, "task_manager", self.task_type)
+        loss_plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager", self.task_type, loss_plot_name)
         plt.savefig(loss_plot_path, format="svg", bbox_inches='tight')
         plt.clf()
 
         # Plot Keras model
         model_plot_name = "{}_model.svg".format(self.model_name)
-        model_plot_path = create_file_path(model_plot_name, PROTECTED_MEDIA, "task_manager/", self.task_type)
-        model_plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager/", self.task_type, model_plot_name)
+        model_plot_path = create_file_path(model_plot_name, PROTECTED_MEDIA, "task_manager", self.task_type)
+        model_plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager", self.task_type, model_plot_name)
         plot_model(self.model, to_file=model_plot_path, show_shapes=True)
 
         return loss_plot_url, acc_plot_url, model_plot_url
