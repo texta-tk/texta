@@ -23,6 +23,9 @@ class ElasticAggregator:
     
 
     def entities(self, size=30, include_values=True):
+        """
+        For retrieving entities (facts) from ES
+        """
         agg_query = {"facts": {
                             "nested": {"path": "texta_facts"},
                             "aggs": {
@@ -38,7 +41,6 @@ class ElasticAggregator:
         response = self._aggregate(agg_query)
         fact_names = response["aggregations"]["facts"]["facts"]["buckets"]
         entities = {}
-        print(fact_names)
         for fact_type in fact_names:
             fact_name = fact_type["key"]
             entities[fact_name] = []
