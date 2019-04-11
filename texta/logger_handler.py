@@ -2,6 +2,6 @@ import logging
 from django.conf import settings
 
 
-class RequireLogstashInstance(logging.Filter):
+class RequireGraylogInstance(logging.Filter):
 	def filter(self, record):
-		return bool(settings.USING_LOGSTASH)
+		return True if settings.USING_GRAYLOG == "True" else False

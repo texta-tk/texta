@@ -27,5 +27,6 @@ dependencies:
         - pathlib
         - dateutils
         - elasticsearch
+        - graypy
 
 
