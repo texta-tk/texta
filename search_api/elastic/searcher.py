@@ -105,7 +105,7 @@ class Searcher(object):
         query_dict = json.loads(query)
 
         e = Elasticsearch(es_url)
-        search = Search(index=index, type=mapping).update_from_dict(query_dict).using(e)
+        search = Search(index=index, doc_type=mapping).update_from_dict(query_dict).using(e)
         search = search.source(real_fields)  # Select fields to return.
         search = search[0:query_dict.get("size", 10)]  # Select how many documents to return.
 

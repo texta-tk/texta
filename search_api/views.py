@@ -24,7 +24,7 @@ def search(request):
     except Exception as processing_error:
         return StreamingHttpResponse([json.dumps({'error': str(processing_error)})])
 
-    if "scroll" or "scroll_id" in processed_request:
+    if "scroll" in processed_request or "scroll_id" in processed_request:
         return scroll(request)
 
     results = Searcher(es_url).search(processed_request)
