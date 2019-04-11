@@ -22,7 +22,7 @@ from task_manager.document_preprocessor import PREPROCESSOR_INSTANCES
 
 class PreprocessorWorker(BaseWorker):
 
-    def __init__(self, scroll_size=1000, time_out='10m'):
+    def __init__(self, scroll_size=200, time_out='10m'):
         self.es_m = None
         self.task_id = None
         self.params = None

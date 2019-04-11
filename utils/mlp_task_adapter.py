@@ -15,6 +15,7 @@ class MLPTaskAdapter(object):
 
         while status_code == 500:
             started_task = requests.post(self.start_task_url, data=data)
+            started_task_json = started_task.json()
             current_status_code = int(started_task.status_code)
 
             if current_status_code == 500:
@@ -22,7 +23,7 @@ class MLPTaskAdapter(object):
                 if current_fail_count > 3:
                     task_status_text = 'FAILURE'
                     task_status = {'status': task_status_text}
-                    status_code = 666
+                    status_code = 404
                     break
             else:
                 status_code = current_status_code
@@ -31,15 +32,17 @@ class MLPTaskAdapter(object):
 
         while task_status_text == 'PENDING':
             sleep(10)
+            pending_task = requests.get(started_task_json['url'])
             try:
-                task_status = requests.get(started_task['url']).json()
-                task_status_text = task_status['status']
+                pending_task_json = pending_task.json()
+                task_status_text = pending_task_json['status']
+                task_status = pending_task_json
                 current_fail_count = 0
             except:
                 current_fail_count += 1
                 # if fail to fetch result 3 times, declare task failed
                 if current_fail_count > 3:
-                    task_status = 'failed to parse response'
+                    task_status = {'status': 'failed to parse response'}
                     task_status_text = 'FAILURE'
                     logging.error('Task failed because correct response not sent from MLP')
                 else:
