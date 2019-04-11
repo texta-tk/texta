@@ -24,6 +24,9 @@ def search(request):
     except Exception as processing_error:
         return StreamingHttpResponse([json.dumps({'error': str(processing_error)})])
 
+    if "scroll" or "scroll_id" in processed_request:
+        return scroll(request)
+
     results = Searcher(es_url).search(processed_request)
     return StreamingHttpResponse(process_stream(results), content_type='application/json')
 
@@ -131,9 +134,6 @@ def list_fields(request):
 
 def process_stream(generator):
     for entry in generator:
-        new_entry = {}
-        for key in entry:
-            new_entry[key] = entry[key]
-
+        new_entry = {**entry}
         yield json.dumps(new_entry, ensure_ascii=False)
         yield '\n'

@@ -1,8 +1,11 @@
+from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
 from query import Query
 import requests
 import json
 from collections import defaultdict
+
+from texta.settings import es_url
 
 
 class Searcher(object):
@@ -42,12 +45,14 @@ class Searcher(object):
         scroll = processed_request.get('scroll', False)
         scroll_id = processed_request.get('scroll_id', None)
 
+        fields = processed_request.get("fields", None)
+
         query = json.dumps(self.create_search_query(processed_request).generate())
 
         if scroll_id:
             return self._continue_scrolling(scroll_id)
         elif scroll:
-            return self._start_scrolling(index, mapping, query)
+            return self._start_scrolling(index, mapping, query, fields)
 
     def create_search_query(self, processed_request):
         parameters = processed_request.get('parameters', None)  # fields, size, from
@@ -97,28 +102,16 @@ class Searcher(object):
         return differentiated_constraints
 
     def _search(self, index, mapping, query, real_fields):
-        search_url = '{0}/{1}/{2}/_search?scroll=1m'.format(self._es_url, index, mapping)
-        scroll_url = '{0}/_search/scroll?scroll=1m'.format(self._es_url)
+        query_dict = json.loads(query)
 
-        fixerman = Search().from_dict(json.loads(query))
-        fixerman = fixerman.source(real_fields)
-        query = json.dumps(fixerman.to_dict())
+        e = Elasticsearch(es_url)
+        search = Search(index=index, type=mapping).update_from_dict(query_dict).using(e)
+        search = search.source(real_fields)  # Select fields to return.
+        search = search[0:query_dict.get("size", 10)]  # Select how many documents to return.
 
-        response = self._requests.post(search_url, data=query, headers=self._header).json()
-        scroll_id = json.dumps({'scroll_id':response['_scroll_id']})
-        hits_yielded = 0
-
-        while 'hits' in response and 'hits' in response['hits'] and response['hits']['hits']:
-            for hit in response['hits']['hits']:
-                if self._limit and hits_yielded == self._limit:
-                    break
-                yield hit['_source']
-                hits_yielded += 1
-            else:
-                response = self._requests.post(scroll_url, data=scroll_id, headers=self._header).json()
-                continue
-
-            response = {}
+        response = search.execute()
+        for hit in response:
+            yield hit.to_dict()
 
     def _search_with_fields(self, index, mapping, query):
         search_url = '{0}/{1}/{2}/_search?scroll=1m'.format(self._es_url, index, mapping)
@@ -143,21 +136,13 @@ class Searcher(object):
 
             response = {}
 
-    def _start_scrolling(self, index, mapping, query):
+    def _start_scrolling(self, index, mapping, query, fields):
         search_url = '{0}/{1}/{2}/_search?scroll=1m'.format(self._es_url, index, mapping)
+        query = json.dumps(Search().from_dict(json.loads(query)).source(fields).to_dict())  # Add field limits to the query.
         response = self._requests.post(search_url, data=query, headers=self._header).json()
 
-        hits = []
-        if 'hits' in response and 'hits' in response['hits'] and response['hits']['hits']:
-            for hit in response['hits']['hits']:
-                if '_source' in hit:
-                    for field_name in hit['_source']:
-                        if field_name != 'texta_facts':
-                            hit['_source'][field_name] = hit['_source'][field_name][0]
-                    hits.append(hit['_source'])
-                elif '_source' in hit:
-                    hits.append(hit['_source'])
-
+        hits = response.get("hits", []).get("hits", [])
+        hits = [hit["_source"] for hit in hits if hits]
         return {'hits': hits, 'scroll_id': response['_scroll_id'], 'total': response['hits']['total']}
 
     def _continue_scrolling(self, scroll_id):
@@ -167,12 +152,6 @@ class Searcher(object):
         hits = []
         if 'hits' in response and 'hits' in response['hits'] and response['hits']['hits']:
             for hit in response['hits']['hits']:
-                if '_source' in hit:
-                    for field_name in hit['_source']:
-                        if field_name != 'texta_facts':
-                            hit['_source'][field_name] = hit['_source'][field_name][0]
-                    hits.append(hit['_source'])
-                elif '_source' in hit:
                     hits.append(hit['_source'])
 
         return {'hits': hits, 'scroll_id': scroll_id, 'total': response['hits']['total']}
