@@ -7,6 +7,7 @@ import logging
 from texta.settings import ERROR_LOGGER
 from texta.settings import MLP_URL
 from texta.settings import SCORO_PREPROCESSOR_ENABLED
+from texta.settings import PAASTEAMET_PREPROCESSOR_ENABLED
 from task_manager.document_preprocessor.preprocessors import DatePreprocessor
 from task_manager.document_preprocessor.preprocessors import MlpPreprocessor
 from task_manager.document_preprocessor.preprocessors import TextTaggerPreprocessor
@@ -15,6 +16,7 @@ from task_manager.document_preprocessor.preprocessors import DatePreprocessor
 from task_manager.document_preprocessor.preprocessors import LexTagger
 from task_manager.document_preprocessor.preprocessors import ScoroPreprocessor
 from task_manager.document_preprocessor.preprocessors import EntityExtractorPreprocessor
+from task_manager.document_preprocessor.preprocessors import PaasteametPreprocessor
 
 
 mlp_field_properties = {
@@ -167,6 +169,20 @@ except Exception as e:
     print(e)
     log_preprocessor_status(code='entity_extractor', status='disabled')
 
+try:
+    preprocessor_map['paasteamet'] = {
+        'name': 'Paasteamet',
+        'description': 'Extracts information from PA regulations',
+        'class': PaasteametPreprocessor,
+        'parameters_template': 'preprocessor_parameters/paasteamet.html',
+        'arguments': {},
+        'is_enabled': PAASTEAMET_PREPROCESSOR_ENABLED
+    }
+    log_preprocessor_status(code='paasteamet', status='enabled')
+
+except Exception as e:
+    logging.getLogger(ERROR_LOGGER).exception(e)
+    log_preprocessor_status(code='paasteamet', status='disabled')
 
 PREPROCESSOR_INSTANCES = {
     preprocessor_code: preprocessor['class'](**preprocessor['arguments'])

@@ -100,6 +100,7 @@ class PreprocessorWorker(BaseWorker):
                 # Apply all preprocessors
                 for preprocessor_code in parameter_dict['preprocessors']:
                     preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
+                    parameter_dict.update({'document_locations':document_locations})
                     result_map = preprocessor.transform(documents, **parameter_dict)
                     documents = result_map['documents']
                     add_dicts(meta, result_map['meta'])
