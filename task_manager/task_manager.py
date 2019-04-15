@@ -107,6 +107,9 @@ def translate_parameters(params):
     all_extraction_models = Task.objects.filter(task_type=TaskTypes.TRAIN_ENTITY_EXTRACTOR, status=Task.STATUS_COMPLETED)
     enabled_extractors = {model.pk: model.description for model in all_extraction_models}
 
+    all_neuroclassifier_models = Task.objects.filter(task_type=TaskTypes.TRAIN_NEUROCLASSIFIER, status=Task.STATUS_COMPLETED)
+    enabled_neuroclassifiers = {model.pk: model.description for model in all_neuroclassifier_models}
+    print(enabled_neuroclassifiers)
     extractor_options = {a['index']: a['label'] for a in pipe_builder.get_extractor_options()}
     reductor_options = {a['index']: a['label'] for a in pipe_builder.get_reductor_options()}
     normalizer_options = {a['index']: a['label'] for a in pipe_builder.get_normalizer_options()}
@@ -119,7 +122,8 @@ def translate_parameters(params):
                     'classifier_opt': {'type': 'dict', 'pattern': classifier_options},
                     'dataset': {'type': 'list', 'pattern': datasets},
                     'text_tagger_taggers': {'type': 'list', 'pattern': enabled_taggers},
-                    'entity_extractor_extractors': {'type': 'list', 'pattern': enabled_extractors}}
+                    'entity_extractor_extractors': {'type': 'list', 'pattern': enabled_extractors},
+                    'neuroclassifier_neuroclassifiers': {'type': 'list', 'pattern': enabled_neuroclassifiers}}
 
     params = json.loads(params)
 
@@ -137,6 +141,8 @@ def collect_map_entries(map_):
             value['enabled_taggers'] = Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER.value, status=Task.STATUS_COMPLETED)
         if key == 'entity_extractor':
             value['enabled_extractors'] = Task.objects.filter(task_type=TaskTypes.TRAIN_ENTITY_EXTRACTOR, status=Task.STATUS_COMPLETED)
+        if key == 'neuroclassifier':
+            value['enabled_neuroclassifiers'] = Task.objects.filter(task_type=TaskTypes.TRAIN_NEUROCLASSIFIER, status=Task.STATUS_COMPLETED)
         if (key == 'lexicon_classifier' or key == 'scoro'):
             value['enabled_lexicons'] = Lexicon.objects.all()
         if (key == 'scoro'):

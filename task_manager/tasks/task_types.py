@@ -8,7 +8,7 @@ from enum import Enum, unique
 class TaskTypes(str, Enum):
     TRAIN_MODEL = "train_model"
     TRAIN_TAGGER = "train_tagger"
-    NEUROCLASSIFIER = "neuroclassifier"
+    TRAIN_NEUROCLASSIFIER = "neuroclassifier"
     TRAIN_ENTITY_EXTRACTOR = "train_entity_extractor"
     APPLY_PREPROCESSOR = "apply_preprocessor"
     MANAGEMENT_TASK = "management_task"

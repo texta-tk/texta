@@ -1,0 +1,72 @@
+{% load tags %}
+<div class="task-manager-grid-wrapper bg-grey preprocessor-padding width-max">
+    <div class="grid-i">
+        <label class="control-label" for="neuroclassifier-processor-models">Neuroclassifiers:</label>
+        <div class="select-wrapper">
+            <select id="neuroclassifier-processor-models" data-width="100%" name="neuroclassifier_preprocessor_models"
+                    class="selectpicker"
+                    multiple="multiple" data-style="btn-sm btn-default">
+                {% for neuroclassifier in preprocessor.enabled_neuroclassifiers %}
+                    {{neuroclassifier}}
+                    {% get_field neuroclassifier.parameters as field %}
+                    <option value="{{ neuroclassifier.id }}" data-fields="{{ field }}"
+                    >{{ neuroclassifier.description }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="grid-i">
+        <label class="control-label" for="neuroclassifier-processor-feature-name">Fields:</label>
+        <div class="select-wrapper">
+            {% if fields %}
+                <select class="selectpicker" multiple data-selected-text-format="count"
+                        id="neuroclassifier-processor-feature-names"
+                        data-width="100%"
+                        required
+                        name="neuroclassifier_feature_names"
+                        data-style="btn-sm btn-default">
+                    {% for field in fields %}
+                        <option value="{{ field.path }}"
+                        >{{ field.label }}</option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <textarea class="form-control" rows="2" id="neuroclassifier-processor-feature-names"
+                          name="neuroclassifier_feature_names"></textarea>
+            {% endif %}
+        </div>
+
+        {% if not fields %}
+            <span data-toggle="tooltip" data-placement="bottom" title="List of feature names one below another.
+
+		Example:
+
+		    my_field1
+		    my_field2"
+                  class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+                  
+                  {% endif %}
+                </div>
+                
+                <div class="grid-i">
+                    <label class="control-label" for="neuroclassifier-processor-path">Neuroclassifier path:</label>
+                    <div class="select-wrapper">
+                        {% if fields %}
+                <select class="selectpicker" data-selected-text-format="count"
+                        id="neuroclassifier-processor-path"
+                        data-width="100%"
+                        required
+                        name="neuroclassifier_path"
+                        data-style="btn-sm btn-default">
+                    {% for field in fields %}
+                        <option value="{{ field.path }}"
+                        >{{ field.label }}</option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <textarea class="form-control" rows="2" id="neuroclassifier-processor-path"
+                          name="neuroclassifier_path"></textarea>
+            {% endif %}
+        </div>
+    </div>
+</div>

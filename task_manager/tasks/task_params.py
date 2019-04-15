@@ -33,7 +33,7 @@ task_params = [
     },
     {
         "name":            "Train Neuroclassifier",
-        "id":               TaskTypes.NEUROCLASSIFIER.value,
+        "id":               TaskTypes.TRAIN_NEUROCLASSIFIER.value,
         "template":        "task_parameters/train_neuroclassifier.html",
         "result_template": "task-results/train-neuroclassifier-results.html",
         "worker":           NeuroClassifierWorker,
