@@ -26,6 +26,7 @@ from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer, text_to_word_sequence
 
 # Keras Model imports
+from keras.models import load_model
 from keras.optimizers import Adam
 from keras.activations import relu, elu, softmax, sigmoid
 from keras.utils import plot_model
@@ -42,7 +43,6 @@ from talos.commands.reporting import Reporting
 from task_manager.tasks.workers.neuroclassifier.neuro_models import NeuroModels
 from task_manager.tasks.workers.neuroclassifier.clr_callback import CyclicLR
 
-np.random.seed(1337)
 
 class NeuroClassifierWorker(BaseWorker):
     def __init__(self):
@@ -108,8 +108,6 @@ class NeuroClassifierWorker(BaseWorker):
 
         self.show_progress.update(4)
         self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
-        # TODO get model weights/compile model
-        # TODO validate that auto models work
         # TODO preprocessor
 
         # conda install graphviz
@@ -252,7 +250,7 @@ class NeuroClassifierWorker(BaseWorker):
             'last_activation': [sigmoid],
             'shapes': ['brick', 'triangle', 'funnel']
         }
-        scan_filename = "{}_scan.csv".format(self.model_name)
+        scan_filename = "{}_scan".format(self.model_name)
         scan_filepath = create_file_path(scan_filename, PROTECTED_MEDIA, "task_manager", self.task_type)
 
         # Talos scan that will find the best model with the parameters above
@@ -269,10 +267,7 @@ class NeuroClassifierWorker(BaseWorker):
         # Get only the model from the Talos experiment
         best_model_index = best_model(scan, 'val_acc', False)
         self.model = activate_model(scan, best_model_index)
-        # TODO get model weights/compile model
-        # Then use it to predict
-        # Then done with worker, move on to preprocessor
-        import pdb;pdb.set_trace()
+        self.model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
         return scan
 
@@ -284,8 +279,9 @@ class NeuroClassifierWorker(BaseWorker):
             'y_val.shape': self.y_val.shape,
             'seq_len': self.seq_len,
             'vocab_size': self.vocab_size,
-            'tokenizer_num_words': len(self.tokenizer.word_index),
+            'model_json': self.model.to_json(),
         }
+
         self.task_result.update(train_summary)
         self.task_obj.result = json.dumps(self.task_result)
 
@@ -320,16 +316,16 @@ class NeuroClassifierWorker(BaseWorker):
     def _plot_auto_model(self, scan):
         # Set results
         report = Reporting(scan)
-        self.task_result['The number of rounds in the experiment'] = report.rounds()
-        self.task_result['The number of rounds it took to get highest result'] = report.rounds2high()
-        self.task_result['Highest val_acc'] = report.high()
-        self.task_result['The lowest val_acc'] = report.low()
-        self.task_result['Highest train_acc'] = report.high('acc')
-        self.task_result['Lowest train_acc'] = report.low('acc')
-        self.task_result['Highest val_loss'] = report.high('val_loss')
-        self.task_result['Lowest val_loss'] = report.low('val_loss')
-        self.task_result['Highest train_loss'] = report.high('loss')
-        self.task_result['Lowest train_loss'] = report.low('loss')
+        self.task_result['Number of rounds in the experiment'] = int(report.rounds())
+        self.task_result['Number of rounds it took to get highest result'] = int(report.rounds2high())
+        self.task_result['Highest train_acc'] = "{0:.4f}".format(report.high('acc'))
+        self.task_result['Highest val_acc'] = "{0:.4f}".format(report.high())
+        self.task_result['Highest train_loss'] = "{0:.4f}".format(report.high('loss'))
+        self.task_result['Highest val_loss'] = "{0:.4f}".format(report.high('val_loss'))
+        self.task_result['Lowest train_acc'] = "{0:.4f}".format(report.low('acc'))
+        self.task_result['Lowest val_acc'] = "{0:.4f}".format(report.low())
+        self.task_result['Lowest train_loss'] = "{0:.4f}".format(report.low('loss'))
+        self.task_result['Lowest val_loss'] = "{0:.4f}".format(report.low('val_loss'))
 
 
         # Plot
@@ -375,6 +371,29 @@ class NeuroClassifierWorker(BaseWorker):
         plot_model(self.model, to_file=model_plot_path, show_shapes=True)
 
         # NOTE Save plots as HTML images for now, whilst there is no better alternative
-        self.task_result['acc_plot'] = '<img src="{}" style="max-width: 80%">'.format(acc_plot_url),
-        self.task_result['loss_plot'] = '<img src="{}" style="max-width: 80%">'.format(loss_plot_url),
-        self.task_result['model_plot'] = '<img src="{}" style="max-width: 80%">'.format(model_plot_url),
+        self.task_result['acc_plot'] = '<img src="{}" style="max-width: 80%">'.format(acc_plot_url)
+        self.task_result['loss_plot'] = '<img src="{}" style="max-width: 80%">'.format(loss_plot_url)
+        self.task_result['model_plot'] = '<img src="{}" style="max-width: 80%">'.format(model_plot_url)
+
+
+    def load(self, task_id):
+        '''Load model/tokenizer for preprocessor'''
+        self.task_id = task_id
+        self.task_obj = Task.objects.get(pk=self.task_id)
+        self.model_name = 'model_{}'.format(self.task_obj.unique_id)
+        self.task_type = self.task_obj.task_type
+        model_path = os.path.join(MODELS_DIR, self.task_type, self.model_name)
+
+        tokenizer_name = '{}_tokenizer'.format(self.model_name)
+        tokenizer_path = os.path.join(MODELS_DIR, self.task_type, tokenizer_name)
+
+        try:
+            self.model = load_model(model_path)
+            self.tokenizer = pickle.load(tokenizer_path)
+        except Exception as e:
+            logging.getLogger(ERROR_LOGGER).error('Failed to load model from the filesystem.', exc_info=True, extra={
+                'model_name': self.model_name,
+                'file_path':  model_path,
+                'tokenizer_name': tokenizer_name,
+                'tokenizer_path': tokenizer_path,
+            })

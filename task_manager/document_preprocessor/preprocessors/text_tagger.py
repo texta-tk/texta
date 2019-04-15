@@ -2,7 +2,7 @@ from task_manager.tasks.workers.text_tagger_worker import TagModelWorker
 
 import numpy as np
 import json
-
+from texta.settings import FACT_FIELD
 
 class TextTaggerPreprocessor(object):
     """Preprocessor implementation for running TEXTA Text Taggers on the selected documents.
@@ -68,14 +68,13 @@ class TextTaggerPreprocessor(object):
             texta_facts = []
 
             if positive_tags:
-                if 'texta_facts' not in documents[i]:
-                    documents[i]['texta_facts'] = []
+                if FACT_FIELD not in documents[i]:
+                    documents[i][FACT_FIELD] = []
                 for tag in positive_tags:
                     new_fact = {'fact': 'TEXTA_TAG', 'str_val': tag, 'doc_path': input_path, 'spans': json.dumps([0, 0])}
                     texta_facts.append(new_fact)
-                documents[i]['texta_facts'].extend(texta_facts)
+                documents[i][FACT_FIELD].extend(texta_facts)
 
         # Get total tagged documents, get np array of results
         total_positives = np.count_nonzero(results)
-
         return {"documents":documents, "meta": {'documents_tagged': total_positives}}
