@@ -82,7 +82,7 @@ function start_task_preprocessor(task_id ,formElement,preprocessorKey){
 
     var request = new XMLHttpRequest()
     request.onreadystatechange = function () {
-        location.reload()
+        // location.reload()
     }
 
     request.open('POST', PREFIX + '/start_task')

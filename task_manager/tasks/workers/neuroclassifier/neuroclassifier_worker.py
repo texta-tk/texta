@@ -383,17 +383,24 @@ class NeuroClassifierWorker(BaseWorker):
         self.model_name = 'model_{}'.format(self.task_obj.unique_id)
         self.task_type = self.task_obj.task_type
         model_path = os.path.join(MODELS_DIR, self.task_type, self.model_name)
-
+        self.seq_len = json.loads(self.task_obj.result)['seq_len']
         tokenizer_name = '{}_tokenizer'.format(self.model_name)
         tokenizer_path = os.path.join(MODELS_DIR, self.task_type, tokenizer_name)
 
         try:
             self.model = load_model(model_path)
-            self.tokenizer = pickle.load(tokenizer_path)
-        except Exception as e:
+            with open(tokenizer_path, 'rb') as f:
+                self.tokenizer = pickle.load(f)
+        except:
             logging.getLogger(ERROR_LOGGER).error('Failed to load model from the filesystem.', exc_info=True, extra={
                 'model_name': self.model_name,
                 'file_path':  model_path,
                 'tokenizer_name': tokenizer_name,
                 'tokenizer_path': tokenizer_path,
             })
+
+
+    def convert_and_predict(self, text):
+        to_predict = self.tokenizer.texts_to_sequences(text)
+        to_predict = pad_sequences(to_predict, maxlen=self.seq_len)
+        return self.model.predict_classes(to_predict)

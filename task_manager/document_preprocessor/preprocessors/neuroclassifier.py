@@ -84,15 +84,16 @@ class NeuroClassifierPreprocessor():
 
         for tagger in models:
             tagger_descriptions.append(tagger.task_obj.description)
-            result_vector = tagger.tag(text_map)
-            results.append(result_vector)
+            for field in text_map:
+                result_vector = tagger.convert_and_predict(text_map[field])
+                results.append(result_vector)
         results_transposed = np.array(results).transpose()
-
+        import pdb; pdb.set_trace()
         for i, tagger_ids in enumerate(results_transposed):
             positive_tag_ids = np.nonzero(tagger_ids)
             positive_tags = [tagger_descriptions[positive_tag_id] for positive_tag_id in positive_tag_ids[0]]
             texta_facts = []
-
+            import pdb; pdb.set_trace()
             if positive_tags:
                 if FACT_FIELD not in documents[i]:
                     documents[i][FACT_FIELD] = []
