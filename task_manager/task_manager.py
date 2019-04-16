@@ -136,7 +136,7 @@ def collect_map_entries(map_):
         if key == 'text_tagger':
             value['enabled_taggers'] = Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER.value, status=Task.STATUS_COMPLETED)
         if key == 'entity_extractor':
-            value['enabled_extractors'] = Task.objects.filter(task_type=TaskTypes.TRAIN_ENTITY_EXTRACTOR, status=Task.STATUS_COMPLETED)
+            value['enabled_extractors'] = Task.objects.filter(task_type=TaskTypes.TRAIN_ENTITY_EXTRACTOR.value, status=Task.STATUS_COMPLETED)
         if (key == 'lexicon_classifier' or key == 'scoro'):
             value['enabled_lexicons'] = Lexicon.objects.all()
         if (key == 'scoro'):
