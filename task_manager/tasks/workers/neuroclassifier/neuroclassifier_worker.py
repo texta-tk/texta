@@ -26,6 +26,7 @@ from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer, text_to_word_sequence
 
 # Keras Model imports
+from keras import backend as K
 from keras.models import load_model
 from keras.optimizers import Adam
 from keras.activations import relu, elu, softmax, sigmoid
@@ -378,6 +379,14 @@ class NeuroClassifierWorker(BaseWorker):
 
     def load(self, task_id):
         '''Load model/tokenizer for preprocessor'''
+        K.clear_session()
+        # Clear Keras session, because currently this function
+        # is called in every elastic scroll batch, because
+        # preprocessor worker just calls the .transform() function
+        # on Task preprocessors, reloading the models on every bad (bad).
+        # This also causes a memory leak in Tensorflow, to prevent it,
+        # clear the session, or rework the entire preprocessor system
+
         self.task_id = task_id
         self.task_obj = Task.objects.get(pk=self.task_id)
         self.model_name = 'model_{}'.format(self.task_obj.unique_id)
@@ -403,4 +412,4 @@ class NeuroClassifierWorker(BaseWorker):
     def convert_and_predict(self, text):
         to_predict = self.tokenizer.texts_to_sequences(text)
         to_predict = pad_sequences(to_predict, maxlen=self.seq_len)
-        return self.model.predict_classes(to_predict)
+        return self.model.predict_classes(to_predict, batch_size=self.bs)
