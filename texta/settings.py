@@ -30,6 +30,11 @@ BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 SCORO_PREPROCESSOR_ENABLED = os.getenv('TEXTA_SCORO_PREPROCESSOR_ENABLED', False)
 SCORO_PREPROCESSOR_ENABLED = ast.literal_eval(str(SCORO_PREPROCESSOR_ENABLED))
 
+# When this is true, the paasteamet_preprocessor is enabled
+PAASTEAMET_PREPROCESSOR_ENABLED = os.getenv('TEXTA_PAASTEAMET_PREPROCESSOR_ENABLED', False)
+PAASTEAMET_PREPROCESSOR_ENABLED = ast.literal_eval(str(PAASTEAMET_PREPROCESSOR_ENABLED))
+
+
 # When this is true, email confirmation is enabled
 #
 REQUIRE_EMAIL_CONFIRMATION = False
@@ -94,12 +99,12 @@ elif SERVER_TYPE == 'docker':
 	DOMAIN = os.getenv('TEXTA_HOST', 'localhost')
 	PORT = os.getenv('TEXTA_PORT', None)
 	URL_PREFIX_RESOURCE = os.getenv('TEXTA_PREFIX_RESOURCE', '')
-	
+
 	if PORT:
 		URL_PREFIX_DOMAIN = '{0}{1}:{2}'.format(PROTOCOL, DOMAIN, PORT)
 	else:
 		URL_PREFIX_DOMAIN = '{0}{1}'.format(PROTOCOL, DOMAIN)
-	
+
 	ROOT_URLCONF = 'texta.urls'
 	STATIC_URL = '/static/'
 	DEBUG = True

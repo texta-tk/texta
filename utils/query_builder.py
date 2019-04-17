@@ -51,9 +51,10 @@ class QueryBuilder:
                 synonyms = self._get_list_synonyms(query_string)
                 # construct synonym queries
                 synonym_queries = []
+
                 for synonym in synonyms:
                     synonym_query = {'multi_match': {}}
-                    
+                        
                     if match_type == 'best_fields':
                         # match query
                         synonym_query['multi_match'] = {'query': synonym, 'type': 'best_fields', 'fields': match_field, 'operator': 'and', 'slop': 0}
@@ -63,11 +64,18 @@ class QueryBuilder:
                     if match_type == 'phrase_prefix':
                         # match phrase prefix query
                         synonym_query['multi_match'] = {'query': synonym, 'type': 'phrase_prefix', 'fields': match_field, 'slop': match_slop}
-                    
+                        
                     # requires field data to work. disabled at the moment
                     #synonym_query = self._transform_to_layered_query(synonym_query, field_data, match_layer)
-                                            
-                    synonym_queries.append(synonym_query)
+                    if synonym_query['multi_match']:
+                         synonym_queries.append(synonym_query)
+                    
+                    # deal with regex queries separately as they cannot be used in multimatch queries
+                    if match_type == 'regexp':
+                        # match regexp query
+                        regexp_query = {'regexp': {field: synonym for field in match_field}}
+                        synonym_queries.append(regexp_query)
+
                 sub_queries.append({'bool': {'minimum_should_match': 1,'should': synonym_queries}})
             _combined_query["main"]["query"]["bool"]["should"].append({"bool": {match_operator: sub_queries}})
         _combined_query["main"]["query"]["bool"]["minimum_should_match"] = len(string_constraints)

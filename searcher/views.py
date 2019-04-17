@@ -90,7 +90,6 @@ def collect_map_entries(map_):
 
 
 def get_fields(es_m):
-    texta_reserved = ['texta_facts']
     mapped_fields = es_m.get_mapped_fields()
     fields_with_facts = es_m.get_fields_with_facts()
 
@@ -101,7 +100,7 @@ def get_fields(es_m):
 
         path = data['path']
 
-        if path not in texta_reserved:
+        if path not in es_m.TEXTA_RESERVED:
 
             path_list = path.split('.')
 
@@ -191,7 +190,7 @@ def index(request):
     fields = get_fields(es_m)
 
     datasets = Datasets().get_allowed_datasets(request.user)
-    language_models =Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
+    language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
 
     # Hide fact graph if no facts_str_val is present in fields
     display_fact_graph = 'hidden'
@@ -364,67 +363,72 @@ def table_header_mlt(request):
 
 @login_required
 def mlt_query(request):
-    es_params = request.POST
-
-    if 'mlt_fields' not in es_params:
-        return HttpResponse(status=400, reason='field')
-    else:
-        if es_params['mlt_fields'] == '[]':
+    response = None
+    try:
+        es_params = request.POST
+        if 'mlt_fields' not in es_params:
             return HttpResponse(status=400, reason='field')
-    if BuildSearchEsManager.build_search_es_m is None:
-        return HttpResponse(status=400, reason='search')
+        else:
+            if es_params['mlt_fields'] == '[]':
+                return HttpResponse(status=400, reason='field')
+        if BuildSearchEsManager.build_search_es_m is None:
+            return HttpResponse(status=400, reason='search')
+        mlt_fields = [field for field in json.loads(es_params['mlt_fields'])]
+        handle_negatives = es_params['handle_negatives']
+        docs_accepted = [a.strip() for a in es_params['docs'].split('\n') if a]
+        docs_rejected = [a.strip() for a in es_params['docs_rejected'].split('\n') if a]
 
-    mlt_fields = [field for field in json.loads(es_params['mlt_fields'])]
-    handle_negatives = es_params['handle_negatives']
-    docs_accepted = [a.strip() for a in es_params['docs'].split('\n') if a]
-    docs_rejected = [a.strip() for a in es_params['docs_rejected'].split('\n') if a]
+        stopword_lexicon_ids = json.loads(es_params['mlt_stopword_lexicons']) if 'mlt_stopwords_lexicons' in es_params else []
+        stopwords = []
+        for lexicon_id in stopword_lexicon_ids:
+            lexicon = Lexicon.objects.get(id=int(lexicon_id))
+            words = Word.objects.filter(lexicon=lexicon)
+            stopwords += [word.wrd for word in words]
 
-    stopword_lexicon_ids = json.loads(es_params['mlt_stopword_lexicons'])
-    stopwords = []
-    for lexicon_id in stopword_lexicon_ids:
-        lexicon = Lexicon.objects.get(id=int(lexicon_id))
-        words = Word.objects.filter(lexicon=lexicon)
-        stopwords += [word.wrd for word in words]
+        search_size = es_params['search_size']
+        draw = int(es_params['draw'])
+        ds = Datasets().activate_datasets(request.session)
+        es_m = ds.build_manager(ES_Manager)
+        es_m.build(es_params)
+        es_m.set_query_parameter('from', es_params['start'])
+        es_m.set_query_parameter('size', search_size)
 
-    search_size = es_params['search_size']
-    draw = int(es_params['draw'])
+        response = es_m.more_like_this_search(mlt_fields, docs_accepted=docs_accepted, docs_rejected=docs_rejected,
+                                            handle_negatives=handle_negatives, stopwords=stopwords,
+                                            search_size=search_size,
+                                            build_search_query=BuildSearchEsManager.build_search_es_m.build_search_query)
 
-    ds = Datasets().activate_datasets(request.session)
-    es_m = ds.build_manager(ES_Manager)
-    es_m.build(es_params)
-    es_m.set_query_parameter('from', es_params['start'])
-    es_m.set_query_parameter('size', search_size)
+        result = {'data': [], 'draw': draw, 'recordsTotal': len(response['hits']['hits'])}
+        column_names = es_m.get_column_names(facts=True)
 
-    response = es_m.more_like_this_search(mlt_fields, docs_accepted=docs_accepted, docs_rejected=docs_rejected,
-                                          handle_negatives=handle_negatives, stopwords=stopwords,
-                                          search_size=search_size,
-                                          build_search_query=BuildSearchEsManager.build_search_es_m.build_search_query)
+        for hit in response['hits']['hits']:
+            hit_id = str(hit['_id'])
+            hit['_source']['_es_id'] = hit_id
+            row = OrderedDict([(x, '') for x in column_names])
 
-    result = {'data': [], 'draw': draw, 'recordsTotal': len(response['hits']['hits'])}
-    column_names = es_m.get_column_names(facts=True)
+            for col in column_names:
+                # If the content is nested, need to break the flat name in a path list
+                field_path = col.split('.')
+                # Get content for the fields and make facts human readable
+                for p in field_path:
+                    if col == FACT_FIELD and p in hit['_source']:
+                        content = improve_facts_readability(hit['_source'][p])
+                    else:
+                        content = hit['_source'][p] if p in hit['_source'] else ''
 
-    for hit in response['hits']['hits']:
-        hit_id = str(hit['_id'])
-        hit['_source']['_es_id'] = hit_id
-        row = OrderedDict([(x, '') for x in column_names])
+                # Append the final content of this col to the row
+                if row[col] == '':
+                    row[col] = content
 
-        for col in column_names:
-            # If the content is nested, need to break the flat name in a path list
-            field_path = col.split('.')
-            # Get content for the fields and make facts human readable
-            for p in field_path:
-                if col == FACT_FIELD and p in hit['_source']:
-                    content = improve_facts_readability(hit['_source'][p])
-                else:
-                    content = hit['_source'][p] if p in hit['_source'] else ''
+            result['data'].append([hit_id, hit_id] + list(row.values()))
+        return HttpResponse(json.dumps(result, ensure_ascii=False))
+    except Exception as e:
+        error = {'process': 'MLT QUERY', 'event': 'mlt_query_failed', 'data': {  }}
+        if response:
+            error['data']['response'] = response
+        logging.getLogger(ERROR_LOGGER).exception(json.dumps(error), exc_info=True)
 
-            # Append the final content of this col to the row
-            if row[col] == '':
-                row[col] = content
-
-        result['data'].append([hit_id, hit_id] + list(row.values()))
-
-    return HttpResponse(json.dumps(result, ensure_ascii=False))
+        return HttpResponse(status=500, reason=str(e))
 
 
 @login_required

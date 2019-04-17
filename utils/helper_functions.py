@@ -2,6 +2,7 @@ import os
 import glob
 from itertools import product
 import numpy as np
+from django.core import serializers
 
 import matplotlib
 # For non-GUI rendering
@@ -79,3 +80,9 @@ def create_file_path(filename, *args):
     full_path = os.path.join(dir_path, filename)
 
     return full_path
+
+def write_task_xml(task_object, file_path):
+    task_xml = serializers.serialize("xml", [task_object])
+    with open(file_path, 'w') as fh:
+        fh.write(task_xml)
+    return True

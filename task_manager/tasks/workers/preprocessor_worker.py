@@ -5,6 +5,8 @@ from datetime import datetime
 
 from texta.settings import ERROR_LOGGER
 from texta.settings import INFO_LOGGER
+from texta.settings import FACT_PROPERTIES
+from texta.settings import FACT_FIELD
 from searcher.models import Search
 from task_manager.models import Task
 from task_manager.tools import ShowProgress
@@ -13,7 +15,6 @@ from task_manager.tools import TaskCanceledException
 from utils.datasets import Datasets
 from utils.helper_functions import add_dicts
 from utils.es_manager import ES_Manager
-from texta.settings import FACT_PROPERTIES
 from .base_worker import BaseWorker
 
 from task_manager.document_preprocessor import preprocessor_map
@@ -21,7 +22,7 @@ from task_manager.document_preprocessor import PREPROCESSOR_INSTANCES
 
 class PreprocessorWorker(BaseWorker):
 
-    def __init__(self, scroll_size=1000, time_out='10m'):
+    def __init__(self, scroll_size=200, time_out='10m'):
         self.es_m = None
         self.task_id = None
         self.params = None
@@ -94,11 +95,12 @@ class PreprocessorWorker(BaseWorker):
                 documents, parameter_dict, ids, document_locations = self._prepare_preprocessor_data(response)
                 # Add facts field if necessary
                 if documents:
-                    if 'texta_facts' not in documents[0]:
-                        self.es_m.update_mapping_structure('texta_facts', FACT_PROPERTIES)
+                    if FACT_FIELD not in documents[0]:
+                        self.es_m.update_mapping_structure(FACT_FIELD, FACT_PROPERTIES)
                 # Apply all preprocessors
                 for preprocessor_code in parameter_dict['preprocessors']:
                     preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
+                    parameter_dict.update({'document_locations':document_locations})
                     result_map = preprocessor.transform(documents, **parameter_dict)
                     documents = result_map['documents']
                     add_dicts(meta, result_map['meta'])

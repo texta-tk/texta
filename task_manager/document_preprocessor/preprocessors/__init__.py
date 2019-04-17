@@ -11,6 +11,7 @@ from .lexicon_classifier import LexTagger
 from .scoro import ScoroPreprocessor
 from .entity_extractor import EntityExtractorPreprocessor
 from .neuroclassifier import NeuroClassifierPreprocessor
+from .paasteamet import PaasteametPreprocessor
 
 
 __all__ = ["MLPLitePreprocessor",
@@ -20,4 +21,5 @@ __all__ = ["MLPLitePreprocessor",
            "LexTagger",
            "ScoroPreprocessor",
            "EntityExtractorPreprocessor",
-           "NeuroClassifierPreprocessor"]
+           "NeuroClassifierPreprocessor",
+           "PaasteametPreprocessor"]
