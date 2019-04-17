@@ -8,7 +8,7 @@ import requests
 from functools import reduce
 
 from elasticsearch import Elasticsearch, ElasticsearchException
-from elasticsearch_dsl import Search
+from elasticsearch_dsl import Search, A
 from elasticsearch_dsl.query import MoreLikeThis, Q
 
 from utils.ds_importer_helper import check_for_analyzer
@@ -20,15 +20,6 @@ from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, 
 
 # Need to update index.max_inner_result_window to increase
 HEADERS = {'Content-Type': 'application/json'}
-
-class Singleton(type):
-
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
 
 
 class ES_Manager:
@@ -90,9 +81,9 @@ class ES_Manager:
         """Do just plain_post_bulk"""
         data = ''
 
-        for i,_id in enumerate(ids):
-            data += json.dumps({"update": {"_id": _id, "_index": document_locations[i]['_index'], "_type": document_locations[i]['_type']}})+'\n'
-            data += json.dumps({"doc": documents[i]})+'\n'
+        for i, _id in enumerate(ids):
+            data += json.dumps({"update": {"_id": _id, "_index": document_locations[i]['_index'], "_type": document_locations[i]['_type']}}) + '\n'
+            data += json.dumps({"doc": documents[i]}) + '\n'
 
         response = self.plain_post_bulk(self.es_url, data)
 
@@ -117,23 +108,21 @@ class ES_Manager:
                 response = self.plain_put(url, json.dumps(properties))
                 return response
 
-
     def update_documents(self):
         response = self.plain_post('{0}/{1}/_update_by_query?refresh&conflicts=proceed'.format(self.es_url, self.stringify_datasets()))
         return response
 
     def update_documents_by_id(self, ids: List[str]):
-        query = json.dumps({"query": {"terms": {"_id": ids }}})
+        query = json.dumps({"query": {"terms": {"_id": ids}}})
         response = self.plain_post('{0}/{1}/_update_by_query?conflicts=proceed'.format(self.es_url, self.stringify_datasets()), data=query)
         return response
-
 
     def _decode_mapping_structure(self, structure, root_path=list(), nested_layers=list()):
         """ Decode mapping structure (nested dictionary) to a flat structure
         """
         mapping_data = []
 
-        for k,v in structure.items():
+        for k, v in structure.items():
             # deal with fact field
             if 'properties' in v and k in self.TEXTA_RESERVED:
                 sub_structure = v['properties']
@@ -167,32 +156,32 @@ class ES_Manager:
         return mapping_data
 
     @staticmethod
-    def plain_get(url)-> dict:
+    def plain_get(url) -> dict:
         return ES_Manager.requests.get(url, headers=HEADERS).json()
 
     @staticmethod
-    def plain_post(url, data=None)-> dict:
+    def plain_post(url, data=None) -> dict:
         return ES_Manager.requests.post(url, data=data, headers=HEADERS).json()
 
     @staticmethod
-    def plain_post_bulk(url, data)-> dict:
+    def plain_post_bulk(url, data) -> dict:
         return ES_Manager.requests.post('{0}/_bulk'.format(url), data=data, headers=HEADERS).json()
 
     @staticmethod
-    def plain_put(url, data=None)-> dict:
+    def plain_put(url, data=None) -> dict:
         return ES_Manager.requests.put(url, data=data, headers=HEADERS).json()
 
     @staticmethod
-    def plain_delete(url, data=None)-> dict:
+    def plain_delete(url, data=None) -> dict:
         return ES_Manager.requests.delete(url, data=data, headers=HEADERS).json()
 
     @staticmethod
-    def plain_search(es_url, datasets, query)-> dict:
-        return ES_Manager.requests.post(es_url+'/'+datasets+'/_search',data=json.dumps(query), headers=HEADERS).json()
+    def plain_search(es_url, datasets, query) -> dict:
+        return ES_Manager.requests.post(es_url + '/' + datasets + '/_search', data=json.dumps(query), headers=HEADERS).json()
 
     @staticmethod
     def plain_multisearch(es_url, data):
-        responses = ES_Manager.requests.post(es_url+'/_msearch',data='\n'.join(data)+'\n', headers=HEADERS).json()
+        responses = ES_Manager.requests.post(es_url + '/_msearch', data='\n'.join(data) + '\n', headers=HEADERS).json()
         if 'responses' in responses:
             return responses['responses']
         else:
@@ -216,19 +205,18 @@ class ES_Manager:
                                    'fact_str': {'nested': {'path': 'texta_facts', 'query': {'exists': {'field': 'texta_facts.str_val'}}, 'inner_hits': {}}},
                                    'fact_num': {'nested': {'path': 'texta_facts', 'query': {'exists': {'field': 'texta_facts.num_val'}}, 'inner_hits': {}}}}
 
-        for fact_type,query in fact_types_with_queries.items():
+        for fact_type, query in fact_types_with_queries.items():
             for active_dataset in self.active_datasets:
-
                 aggs = {fact_type: {
                     "nested": {"path": "texta_facts"},
                     "aggs": {
                         fact_type: {
                             'terms': {"field": "texta_facts.doc_path", "size": 1, 'order': {'documents.doc_count': 'desc'}},
                             "aggs": {"documents": {"reverse_nested": {}}
-                                }
-                            }
+                                     }
                         }
                     }
+                }
                 }
 
                 query_header = {'index': active_dataset.index, 'mapping': active_dataset.mapping}
@@ -259,6 +247,20 @@ class ES_Manager:
         return []
 
     @staticmethod
+    def handle_composition_aggregation(search: Search, aggregation_dict: dict, after: dict):
+        s = Search().from_dict(search).using(Elasticsearch(es_url))
+        sources = aggregation_dict["sources"]
+        size = aggregation_dict.get("size", 10)
+
+        aggregations = [{source["bucket_name"]: A(source["agg_type"], field="{}.keyword".format(source["field"]))} for source in sources]
+        if after:
+            s.aggs.bucket(aggregation_dict["bucket_name"], "composite", size=size, sources=aggregations, after=after)
+            return s
+        else:
+            s.aggs.bucket(aggregation_dict["bucket_name"], "composite", size=size, sources=aggregations)
+            return s
+
+    @staticmethod
     def more_like_this(elastic_url, fields: list, like: list, size: int, filters: list, aggregations: list, if_agg_only: bool, return_fields=None):
         # Create the base query creator and unite with ES gateway.
         search = Search(using=Elasticsearch(elastic_url))
@@ -275,7 +277,14 @@ class ES_Manager:
         # Apply all the user-set aggregations, if they didn't add any this value will be [] and it quits.
         for aggregation_dict in aggregations:
             # aggs.bucket() does not return a Search object but changes it instead.
-            finished_search.aggs.bucket(name=aggregation_dict["bucket_name"], agg_type=aggregation_dict["agg_type"], field=aggregation_dict["field"])
+            if aggregation_dict["agg_type"] == "composite":
+                after = aggregation_dict.get("after_key", None)
+                finished_search = ES_Manager.handle_composition_aggregation(finished_search.to_dict(), aggregation_dict, after)
+            else:
+                field_name = aggregation_dict["field"]
+                index = like[0]["_index"]
+                field = "{}.keyword".format(field_name) if ES_Manager.is_field_text_field(field_name=field_name, index_name=index) else field_name
+                finished_search.aggs.bucket(name=aggregation_dict["bucket_name"], agg_type=aggregation_dict["agg_type"], field=field)
 
         # Choose if you want to return only the aggregations in {"bucket_name": {results...}} format.
         if if_agg_only:
@@ -300,9 +309,9 @@ class ES_Manager:
 
         if self.active_datasets:
             index_string = self.stringify_datasets()
-            url = '{0}/{1}'.format(es_url,index_string)
+            url = '{0}/{1}'.format(es_url, index_string)
 
-            for index_name,index_properties in self.plain_get(url).items():
+            for index_name, index_properties in self.plain_get(url).items():
                 for mapping in index_properties['mappings']:
                     mapping_structure = index_properties['mappings'][mapping]['properties']
                     decoded_mapping_structure = self._decode_mapping_structure(mapping_structure)
@@ -311,13 +320,13 @@ class ES_Manager:
                         if field_mapping_json not in mapping_data:
                             mapping_data[field_mapping_json] = []
 
-                        dataset_info = {'index': index_name,'mapping': mapping}
+                        dataset_info = {'index': index_name, 'mapping': mapping}
                         if dataset_info not in mapping_data[field_mapping_json]:
-                            mapping_data[field_mapping_json].append({'index': index_name,'mapping': mapping})
+                            mapping_data[field_mapping_json].append({'index': index_name, 'mapping': mapping})
 
         return mapping_data
 
-    def get_column_names(self, facts=False)-> list:
+    def get_column_names(self, facts=False) -> list:
         """ Get Column names from flat mapping structure
             Returns: sorted list of names
         """
@@ -402,7 +411,7 @@ class ES_Manager:
     def process_bulk(self, hits):
         data = ''
         for hit in hits:
-            data += json.dumps({"delete":{"_index":self.stringify_datasets(),"_id":hit['_id']}})+'\n'
+            data += json.dumps({"delete": {"_index": self.stringify_datasets(), "_id": hit['_id']}}) + '\n'
         return data
 
     def delete(self, time_out='1m'):
@@ -429,7 +438,7 @@ class ES_Manager:
             delete_url = '{0}/{1}/_bulk'.format(es_url, self.stringify_datasets())
             deleted = requests.post(delete_url, data=data, headers=HEADERS)
         return True
-    
+
     def add_document(self, document):
         """ Indexes given json document
         """
@@ -471,7 +480,7 @@ class ES_Manager:
     def get_indices():
         url = '{0}/_cat/indices?format=json'.format(es_url)
         response = ES_Manager.requests.get(url, headers=HEADERS).json()
-        indices = sorted([{'index':i['index'],'status':i['status'],'docs_count':i['docs.count'],'store_size':i['store.size']} for i in response], key=lambda k: k['index'])
+        indices = sorted([{'index': i['index'], 'status': i['status'], 'docs_count': i['docs.count'], 'store_size': i['store.size']} for i in response], key=lambda k: k['index'])
 
         # Filter according to prefix
         if es_prefix:
@@ -513,7 +522,7 @@ class ES_Manager:
         if 'should' in query_dict['main']['query']['bool'] and query_dict['main']['query']['bool']['should']:
             if len(query_dict['main']['query']['bool']['should']) > 1:
                 target_list = []
-                self.combined_query['main']['query']['bool']['must'].append({'or':target_list})
+                self.combined_query['main']['query']['bool']['must'].append({'or': target_list})
             else:
                 target_list = self.combined_query['main']['query']['bool']['must']
             for constraint in query_dict['main']['query']['bool']['should']:
@@ -527,7 +536,7 @@ class ES_Manager:
         # Get ids from basic search
 
         self.combined_query = build_search_query
-        docs_search =  self._scroll_doc_ids()
+        docs_search = self._scroll_doc_ids()
         # Combine ids from basic search and mlt search
 
         docs_search = [json.dumps(d) for d in docs_search]
@@ -539,10 +548,10 @@ class ES_Manager:
 
         mlt = {
             "more_like_this": {
-                "fields" : fields,
-                "like" : docs_combined,
-                "min_term_freq" : 1,
-                "max_query_terms" : 12,
+                "fields": fields,
+                "like": docs_combined,
+                "min_term_freq": 1,
+                "max_query_terms": 12,
             }
         }
 
@@ -594,19 +603,16 @@ class ES_Manager:
 
         return ids
 
-
     def perform_queries(self, queries):
         response = ES_Manager.plain_multisearch(self.es_url, queries)
         return response
 
-
     def perform_query(self, query):
-       response = ES_Manager.plain_search(self.es_url, self.stringify_datasets(), query)
-       return response
-
+        response = ES_Manager.plain_search(self.es_url, self.stringify_datasets(), query)
+        return response
 
     def get_extreme_dates(self, field):
-        query = {"aggs":{"max_date":{"max":{"field":field}},"min_date":{"min":{"field":field, 'format': 'yyyy-MM-dd'}}}}
+        query = {"aggs": {"max_date": {"max": {"field": field}}, "min_date": {"min": {"field": field, 'format': 'yyyy-MM-dd'}}}}
         url = "{0}/{1}/_search".format(self.es_url, self.stringify_datasets())
         response = requests.post(url, data=json.dumps(query), headers=HEADERS).json()
         aggs = response["aggregations"]
@@ -616,26 +622,24 @@ class ES_Manager:
 
         return _min, _max
 
-
     @staticmethod
     def _timestamp_to_str(timestamp):
-        date_object = datetime.date.fromtimestamp(timestamp/1000)
+        date_object = datetime.date.fromtimestamp(timestamp / 1000)
         return datetime.date.strftime(date_object, date_format)
-
 
     def clear_readonly_block(self):
         '''changes the property read_only_allow_delete of an index to False'''
-        data = {"index":{"blocks":{"read_only_allow_delete":"false"}}}
+        data = {"index": {"blocks": {"read_only_allow_delete": "false"}}}
         url = "{0}/{1}/_settings".format(self.es_url, self.stringify_datasets())
         response = self.plain_put(url, json.dumps(data))
         return response
 
-    def get_mapping_schema(self)-> dict:
+    def get_mapping_schema(self) -> dict:
         endpoint_url = '{0}/{1}/_mapping'.format(es_url, self.stringify_datasets())
         response = self.plain_get(endpoint_url)
         return response
 
-    def get_document_count(self, query: dict)-> int:
+    def get_document_count(self, query: dict) -> int:
         """
         Returns how many documents are returned from a query using Elasticsearch's
         _count API.
@@ -646,7 +650,7 @@ class ES_Manager:
         response = ES_Manager.requests.get(url=endpoint_url, json=query).json()
         return response['count']
 
-    def get_fields_and_schemas(self, remove_duplicate_keys=False)-> list:
+    def get_fields_and_schemas(self, remove_duplicate_keys=False) -> list:
         """
         Given an index or multiple ones, fetches ALL of the fields in those
         indices and their respective schema types.
@@ -671,3 +675,11 @@ class ES_Manager:
             return unique_fields_with_schemas
         else:
             return fields_with_schemas
+
+    @staticmethod
+    def is_field_text_field(field_name, index_name):
+        text_types = ["text", "keyword"]
+        es = Elasticsearch(es_url)
+        mapping = es.indices.get_field_mapping(fields=[field_name], index=[index_name])
+        field_type = mapping[index_name]["mappings"][index_name][field_name]["mapping"][field_name]["type"]
+        return True if field_type in text_types else False

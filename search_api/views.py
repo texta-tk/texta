@@ -96,7 +96,7 @@ def more_like_this(request):
                 return_fields=returned_fields,
                 filters=post_data.get("filters", []),
                 aggregations=post_data.get("aggregations", []),
-                if_agg_only=if_agg_only
+                if_agg_only=if_agg_only,
             )
 
             return JsonResponse(hits, status=200) if "elasticsearch" not in hits else JsonResponse(hits, status=400)
