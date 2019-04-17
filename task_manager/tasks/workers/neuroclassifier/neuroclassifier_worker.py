@@ -51,7 +51,10 @@ class NeuroClassifierWorker(BaseWorker):
     def __init__(self):
         """
         Main class for training the NeuroClassifier
-        
+
+        # conda install graphviz
+        # conda install keras/cuda/etc
+        # pip install git+https://github.com/autonomio/talos.git@daily-dev --upgrade
         Arguments:
             samples {List[str]} -- List of str for the training data
             labels {List[str]} -- List of int for the labels
@@ -132,11 +135,6 @@ class NeuroClassifierWorker(BaseWorker):
             # declare the job as failed.
             self.task_obj.result = json.dumps({'error': repr(e)})
             self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
-
-
-        # conda install graphviz
-        # conda install keras/cuda/etc
-        # pip install git+https://github.com/autonomio/talos.git@daily-dev --upgrade
 
 
     def _set_up_task(self, task_id):
@@ -301,6 +299,7 @@ class NeuroClassifierWorker(BaseWorker):
 
         return scan
 
+
     def _create_task_result(self):
         train_summary = {
             'X_train.shape': self.X_train.shape,
@@ -356,7 +355,6 @@ class NeuroClassifierWorker(BaseWorker):
         self.task_result['Lowest val_acc'] = "{0:.4f}".format(report.low())
         self.task_result['Lowest train_loss'] = "{0:.4f}".format(report.low('loss'))
         self.task_result['Lowest val_loss'] = "{0:.4f}".format(report.low('val_loss'))
-
 
         # Plot
         scan_plot_name = "{}_auto_acc.svg".format(self.model_name)
