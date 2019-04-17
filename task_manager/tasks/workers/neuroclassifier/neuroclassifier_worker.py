@@ -9,7 +9,8 @@ from typing import List, Dict
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.helper_functions import create_file_path
-from texta.settings import USER_MODELS, MODELS_DIR, ERROR_LOGGER, URL_PREFIX, MEDIA_URL, PROTECTED_MEDIA
+from texta.settings import USER_MODELS, MODELS_DIR, URL_PREFIX, MEDIA_URL, PROTECTED_MEDIA
+from texta.settings import ERROR_LOGGER, INFO_LOGGER
 import logging
 
 # Task imports
@@ -27,6 +28,7 @@ from keras.preprocessing.text import Tokenizer, text_to_word_sequence
 
 # Keras Model imports
 from keras import backend as K
+from keras.callbacks import Callback
 from keras.models import load_model
 from keras.optimizers import Adam
 from keras.activations import relu, elu, softmax, sigmoid
@@ -67,8 +69,8 @@ class NeuroClassifierWorker(BaseWorker):
         self.task_obj = None
         self.task_type = None
         self.task_params = None
-        self.show_progress = None
         self.model_name = None
+        self.show_steps = None
         self.task_result = {}
 
         # Neuroclassifier params
@@ -97,19 +99,40 @@ class NeuroClassifierWorker(BaseWorker):
 
 
     def run(self, task_id):
-        self._set_up_task(task_id)
+        try:
+            self._set_up_task(task_id)
 
-        self._build_data_sampler()
-        self._process_data()
-        self._get_model()
-        self._train_model()
-        self._cross_validation()
-        self._create_task_result()
-        self._save_model()
+            self._build_data_sampler()
+            self._process_data()
+            self._get_model()
+            self._train_model()
+            self._cross_validation()
+            self._create_task_result()
+            self._save_model()
 
-        self.show_progress.update(4)
-        self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
-        # TODO preprocessor
+            self.show_steps.update(4)
+            self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+
+        except TaskCanceledException as e:
+            self.task_obj.delete()
+            logging.getLogger(INFO_LOGGER).info(json.dumps({
+                'process': 'TRAIN NEUROCLASSIFIER', 
+                'event': 'neuroclassifier_training_canceled',
+                'data': {'task_id': self.task_id}
+                }), exc_info=True)
+
+            print("--- Task canceled")
+
+        except Exception as e:
+            logging.getLogger(ERROR_LOGGER).exception(json.dumps({
+                'process': 'CREATE CLASSIFIER', 
+                'event': 'model_training_failed', 
+                'data': {'task_id': self.task_id}
+                }), exc_info=True)
+            # declare the job as failed.
+            self.task_obj.result = json.dumps({'error': repr(e)})
+            self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
+
 
         # conda install graphviz
         # conda install keras/cuda/etc
@@ -132,12 +155,12 @@ class NeuroClassifierWorker(BaseWorker):
         self.grid_downsample_amount = float(self.task_params['grid_downsample_amount'])
 
         steps = ["preparing data", "processing data", "training", "saving", "done"]
-        self.show_progress = ShowSteps(self.task_id, steps)
-        self.show_progress.update_view()
+        self.show_steps = ShowSteps(self.task_id, steps)
+        self.show_steps.update_view()
 
 
     def _build_data_sampler(self):
-        self.show_progress.update(0)
+        self.show_steps.update(0)
         # Check if query was explicitly set
         if 'search_tag' in self.task_params:
             # Use set query
@@ -166,7 +189,7 @@ class NeuroClassifierWorker(BaseWorker):
 
 
     def _process_data(self):
-        self.show_progress.update(1)
+        self.show_steps.update(1)
         # Declare Keras Tokenizer
         self.tokenizer = Tokenizer(
                     num_words=self.vocab_size, # If self.vocab_size is not None, limit vocab size
@@ -202,7 +225,7 @@ class NeuroClassifierWorker(BaseWorker):
 
 
     def _train_model(self):
-        self.show_progress.update(2)
+        self.show_steps.update(2)
         if self.model_is_auto:
             scan = self._train_auto_model()
             self._plot_auto_model(scan)
@@ -216,8 +239,14 @@ class NeuroClassifierWorker(BaseWorker):
         self.model_is_auto = model_obj['auto']
         self.model = model_obj['model']
 
-
+    
     def _train_generic_model(self):
+        # Create a new ShowSteps updater for training
+        epoch_steps = ['Training: Epoch' for i in range(self.num_epochs)]
+        show_epochs = ShowSteps(self.task_id, epoch_steps)
+        show_epochs.update_view()
+        # Training callback which shows progress to the user
+        trainingProgress = TrainingProgressCallback(show_epochs=show_epochs)
         # Custom cyclical learning rate callback
         clr_triangular = CyclicLR(mode='triangular', step_size=6*(len(self.X_train)/self.bs))
         self.model = self.model(self.vocab_size, self.seq_len)
@@ -227,7 +256,7 @@ class NeuroClassifierWorker(BaseWorker):
                         verbose=2,
                         # validation_split=self.validation_split,
                         validation_data=(self.X_val, self.y_val),
-                        callbacks=[clr_triangular]
+                        callbacks=[clr_triangular, trainingProgress]
                         )
         return history
 
@@ -300,7 +329,7 @@ class NeuroClassifierWorker(BaseWorker):
 
     def _save_model(self):
         try:
-            self.show_progress.update(3)
+            self.show_steps.update(3)
             # create_file_path from helper_functions creates missing folders and returns a path
             output_model_file = create_file_path(self.model_name, MODELS_DIR, self.task_type)
             output_tokenizer_file = create_file_path('{}_{}'.format(self.model_name, 'tokenizer'), MODELS_DIR, self.task_type)
@@ -413,3 +442,23 @@ class NeuroClassifierWorker(BaseWorker):
         to_predict = self.tokenizer.texts_to_sequences(text)
         to_predict = pad_sequences(to_predict, maxlen=self.seq_len)
         return self.model.predict_classes(to_predict, batch_size=self.bs)
+
+
+class TrainingProgressCallback(Callback):
+    """Callback for updating the Task Progress every epoch
+    
+    Arguments:
+        show_epochs {ShowSteps} -- ShowSteps callback to be called in on_epoch_end
+    """
+    def __init__(self, show_epochs):
+        self.show_epochs = show_epochs
+
+    def on_epoch_end(self, epoch, logs={}):
+        # Use on_epoch_end because on_epoch_begin logs are empty
+        eval_info = '[acc {:.2f}%, loss {:.2f}] [val_acc {:.2f}%, val_loss {:.2f}]'.format(
+                                                                logs['acc'] * 100,
+                                                                logs['loss'],
+                                                                logs['val_acc'] * 100,
+                                                                logs['val_loss'])
+
+        self.show_epochs.update(epoch, extra_string=eval_info)

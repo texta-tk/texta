@@ -13,11 +13,11 @@ class ShowSteps(object):
         self.n_step = 0
         self.model_pk = model_pk
 
-    def update(self, step):
+    def update(self, step, extra_string=''):
         self.n_step = step
-        self.update_view()
+        self.update_view(extra_string=extra_string)
 
-    def update_view(self):
+    def update_view(self, extra_string=''):
         i = self.n_step
         percentage = (100.0 * i) / self.n_total
         r = Task.get_by_id(self.model_pk)
@@ -26,4 +26,6 @@ class ShowSteps(object):
             raise TaskCanceledException()
         r.status = Task.STATUS_RUNNING
         progress_message = '{0} [{1}/{2}]'.format(self.step_messages[i], i + 1, self.n_total)
+        if extra_string:
+            progress_message = '{} {}'.format(progress_message, extra_string)
         r.update_progress(percentage, progress_message)
