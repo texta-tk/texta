@@ -32,7 +32,6 @@ class ES_Manager:
     HEADERS = HEADERS
     TEXTA_RESERVED = [FACT_FIELD]
     TEXTA_META_FIELDS = ['_es_id']
-    build_search_query = None
     # Redefine requests if LDAP authentication is used
     if es_use_ldap:
         requests = requests.Session()
@@ -356,7 +355,6 @@ class ES_Manager:
         q = json.dumps(self.combined_query['main'])
         search_url = '{0}/{1}/_search'.format(es_url, self.stringify_datasets())
         response = self.plain_post(search_url, q)
-        self.build_search_query = self.combined_query
         return response
 
     def process_bulk(self, hits):
@@ -489,7 +487,7 @@ class ES_Manager:
 
         # Get ids from basic search
 
-        self.combined_query = build_search_query
+        self.combined_query['main'] = build_search_query
         docs_search = self._scroll_doc_ids()
         # Combine ids from basic search and mlt search
 

@@ -68,10 +68,6 @@ from searcher.view_functions.general.searcher_utils import improve_facts_readabi
 from task_manager.tasks.task_types import TaskTypes
 
 
-class BuildSearchEsManager:
-    build_search_es_m = None
-
-
 def ngrams(input_list, n):
     return zip(*[input_list[i:] for i in range(n)])
 
@@ -371,8 +367,6 @@ def mlt_query(request):
         else:
             if es_params['mlt_fields'] == '[]':
                 return HttpResponse(status=400, reason='field')
-        if BuildSearchEsManager.build_search_es_m is None:
-            return HttpResponse(status=400, reason='search')
         mlt_fields = [field for field in json.loads(es_params['mlt_fields'])]
         handle_negatives = es_params['handle_negatives']
         docs_accepted = [a.strip() for a in es_params['docs'].split('\n') if a]
@@ -393,10 +387,12 @@ def mlt_query(request):
         es_m.set_query_parameter('from', es_params['start'])
         es_m.set_query_parameter('size', search_size)
 
+        build_search_query = json.loads(es_params['build_search'])
+        if build_search_query is None:
+            return HttpResponse(status=400, reason='search')
         response = es_m.more_like_this_search(mlt_fields, docs_accepted=docs_accepted, docs_rejected=docs_rejected,
                                             handle_negatives=handle_negatives, stopwords=stopwords,
-                                            search_size=search_size,
-                                            build_search_query=BuildSearchEsManager.build_search_es_m.build_search_query)
+                                            search_size=search_size, build_search_query=build_search_query)
 
         result = {'data': [], 'draw': draw, 'recordsTotal': len(response['hits']['hits'])}
         column_names = es_m.get_column_names(facts=True)
@@ -460,7 +456,6 @@ def search(es_params, request):
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
-    BuildSearchEsManager.build_search_es_m = es_m
     try:
         out = execute_search(es_m, es_params)
     except Exception as e:
