@@ -112,7 +112,7 @@ $(document).ready(function () {
     })
 })
 
-function hide (id) {
+function hide(id) {
     var separatorIdx = id.indexOf('_')
     let fieldID
     if (separatorIdx > -1) {
@@ -134,7 +134,8 @@ function hide (id) {
     //     }, 1000);
     // });
 }
-function query () {
+
+function query() {
     var formElement = document.getElementById('filters')
     var request = new XMLHttpRequest()
     request.onreadystatechange = function () {
@@ -146,7 +147,25 @@ function query () {
             var columns = []
             $('#columnsRow').find('th').each(function (index) {
                 // Append _DtCol to end to safe from naming conflicts
-                columns.push({ 'className': 'DtCol_' + $(this).text(), 'targets': index })
+                if (index !== 0) {
+                    columns.push({
+                        'className': 'DtCol_' + $(this).text(),
+                        'targets': index,
+                        'render': function (data, type, row) {
+                            return data.split("\\n").join("<br/>");
+                        }
+                    })
+                } else {
+                    columns.push({
+                        "targets": 0,
+                        'searchable': false,
+                        'className': 'dt-center',
+                        "render": function (data, type, row, meta) {
+                            return '<input type="checkbox" id=' + data + ' name=dt_delete_doc_checkbox>';
+                        }
+
+                    })
+                }
             })
 
             examplesTable = $('#examples').DataTable({
@@ -165,7 +184,7 @@ function query () {
                         'value': JSON.stringify($('#filters').serializeArray())
                     })
                 },
-                "fnDrawCallback": function( oSettings ) {
+                "fnDrawCallback": function (oSettings) {
                     createSelectionProps()
                 },
                 'oLanguage': {
@@ -177,7 +196,10 @@ function query () {
                     $('.dataTables_scrollHead').on('scroll', function () {
                         $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft())
                     })
-
+                    $('.selection-props-checkbox').append(
+                        $(`<input type="checkbox" id="scales" name="toggleTextSelectionCheckbox" onchange="toggleTextSelection(this)" checked title="Toggle fact adding menu in text selecting">`),
+                        $(`<label for="toggleTextSelectionCheckbox" title="Toggle fact adding menu in text selecting"> <span class="glyphicon glyphicon-hand-up"></span></label>`)
+                    );
                     // Initialize clicking HLs/selection text for properties
                     /* global createSelectionProps, selectionProps */
                     //createSelectionProps()
@@ -198,7 +220,7 @@ function query () {
                         for (var i = 0, ien = data.columns.length; i < ien; i++) {
                             if (data.columns[i].visible) {
                                 /* sync select with the table */
-                                updateSelectColumnFilter(i,'#toggle-column-select')
+                                updateSelectColumnFilter(i, '#toggle-column-select')
                             }
                         }
                     }
@@ -247,25 +269,25 @@ function query () {
     request.send(new FormData(formElement))
 }
 
-function deleteDocument () {
+function deleteDocument() {
     let doc_ids = []
-    $('input[name="dt_delete_doc_checkbox"]').each(function() {
-        if ($( this ).is(":checked")) {
+    $('input[name="dt_delete_doc_checkbox"]').each(function () {
+        if ($(this).is(":checked")) {
             doc_ids.push($(this).attr('id'))
         }
     });
     $.ajax({
-        url: PREFIX+'/delete_document',
+        url: PREFIX + '/delete_document',
         data: {'document_id[]': doc_ids},
         type: 'POST',
-        success: function(result) {
+        success: function (result) {
             //refresh dt, so deleted row isnt visible
             examplesTable.draw('page')
         }
     })
 }
 
-function recalcDatatablesHeight () {
+function recalcDatatablesHeight() {
     if (examplesTable) {
         let datatablesNavHeight = $('#top-part').height()
         let navbarHeight = $('.grid-item-navbar').height()
@@ -274,7 +296,8 @@ function recalcDatatablesHeight () {
         $('div.dataTables_scrollBody').height(datatablesScrollBody - datatablesColumHeight - navbarHeight - datatablesNavHeight - 20)
     }
 }
-function initColumnSelectVisiblity (examplesTable, selectPicker) {
+
+function initColumnSelectVisiblity(examplesTable, selectPicker) {
     var $select = selectPicker
     $select.selectpicker({
         style: 'btn btn-default'
@@ -300,16 +323,17 @@ function initColumnSelectVisiblity (examplesTable, selectPicker) {
     $select.selectpicker('refresh')
 }
 
-function updateSelectColumnFilter (idx, selectPicker) {
+function updateSelectColumnFilter(idx, selectPicker) {
     /* selects content is layed out the same order as the columns list, child starts at 1 instead of 0, so just add 1 */
     $(`${selectPicker} :nth-child(${idx + 1})`).prop('selected', true)
 }
-function acceptDocument (id) {
+
+function acceptDocument(id) {
     $('#docs').val($('#docs').val() + id + '\n')
     $('#row_' + id).remove()
 }
 
-function rejectDocument (id) {
+function rejectDocument(id) {
     $('#docs_rejected').val($('#docs_rejected').val() + id + '\n')
     $('#row_' + id).remove()
 }
@@ -329,8 +353,7 @@ function dashboard () {
     request.open('POST', PREFIX + '/dashboard_visualize')
     request.send(new FormData(formElement), true)
 
-}
-function aggregate () {
+function aggregate() {
     var container = $('#right')
     container.empty()
     container.append('Loading...')
@@ -351,7 +374,7 @@ function aggregate () {
     request.send(new FormData(formElement), true)
 }
 
-function factGraph () {
+function factGraph() {
     var container = $('#right')
     container.empty()
     container.append('Loading...')
@@ -368,7 +391,7 @@ function factGraph () {
     request.send(new FormData(formElement), true)
 }
 
-function displayAgg (response) {
+function displayAgg(response) {
     var data = response
     var container = $('#right')
     container.empty()
@@ -396,7 +419,7 @@ function displayAgg (response) {
     }
 }
 
-function drawTimeline (data) {
+function drawTimeline(data) {
     var timelineChildrenContainer = $('<div></div>')
     /* global Morris  */
     new Morris.Line({
@@ -419,7 +442,7 @@ function drawTimeline (data) {
     $('#right').append(timelineChildrenContainer)
 }
 
-function showChildren (data, date, timelineChildrenContainer) {
+function showChildren(data, date, timelineChildrenContainer) {
     timelineChildrenContainer.empty()
     $.each(data, function (i, dataList) {
         var responseContainers = [$("<div style='float: left; padding-left: 20px;'></div>")]
@@ -472,7 +495,7 @@ function showChildren (data, date, timelineChildrenContainer) {
     })
 }
 
-function drawStringAggs (data, type = null) {
+function drawStringAggs(data, type = null) {
     var responseContainer = $("<div style='float: left; padding-left: 20px;'></div>")
     var tableContainer = $("<div style='float: left'></div>")
     var childrenContainer = $("<div style='background-color: white; float: left; min-width: 200px;' class='hidden'></div>")
@@ -509,7 +532,7 @@ function drawStringAggs (data, type = null) {
 }
 
 
-function factDeleteCheckbox (checkbox) {
+function factDeleteCheckbox(checkbox) {
     if (checkbox.checked) {
         if (!selectedFactCheckboxes.includes(checkbox)) {
             selectedFactCheckboxes.push(checkbox);
@@ -521,7 +544,7 @@ function factDeleteCheckbox (checkbox) {
     }
 }
 
-function deleteFactsViaCheckboxes (checkboxes) {
+function deleteFactsViaCheckboxes(checkboxes) {
     let factArray = []
     for (var i = 0; i < checkboxes.length; i++) {
         let fact = JSON.parse(checkboxes[i].name.replace(/'/g, '"'))
@@ -536,7 +559,7 @@ function uncheckDeletedFacts() {
     });
 }
 
-function ajaxDeleteFacts (formData, factArray) {
+function ajaxDeleteFacts(formData, factArray) {
     $.ajax({
         url: PREFIX + '/delete_facts',
         data: formData,
@@ -556,7 +579,7 @@ function ajaxDeleteFacts (formData, factArray) {
     })
 }
 
-function deleteFactArray (factArray, source) {
+function deleteFactArray(factArray, source) {
     if (factArray.length >= 1) {
         var formData = new FormData()
         for (var i = 0; i < factArray.length; i++) {
@@ -588,7 +611,7 @@ function deleteFactArray (factArray, source) {
     }
 }
 
-function showStringChildren (data, childrenContainer, grandchildrenContainer, rowKey, type) {
+function showStringChildren(data, childrenContainer, grandchildrenContainer, rowKey, type) {
     childrenContainer.empty()
     grandchildrenContainer.empty()
 
@@ -603,33 +626,33 @@ function showStringChildren (data, childrenContainer, grandchildrenContainer, ro
             if (type === 'fact') {
                 searchKey = strip_html(rowKey, true)
                 searchVal = strip_html(this.key, true)
-                
-                var addToSearchIcon =  $('<i>', {
+
+                var addToSearchIcon = $('<i>', {
                     class: "glyphicon glyphicon-search pull-right",
                     'data-toggle': "tooltip",
-                    title:"Add to search",
-                    style:"cursor: pointer",
+                    title: "Add to search",
+                    style: "cursor: pointer",
                     onclick: `addFactToSearch("${searchKey}","${searchVal}")`
                 });
-                
+
                 // keep track of checkboxes using their name as {NAME: VALUE}, otherwise when clicking on another fact name, they get overwritten
                 var factData = {}
                 factData[searchKey] = searchVal
                 let checkboxName = JSON.stringify(factData).replace(/"/g, "'")
 
-                var checkbox =  $('<input>', {
+                var checkbox = $('<input>', {
                     id: `checkBox_${searchKey}_${searchVal}`,
                     type: "checkbox",
                     name: checkboxName,
                     onchange: "factDeleteCheckbox(this)"
                 });
 
-                selectedFactCheckboxes.filter((e)=>{
-                    if(e.id===checkbox.get(0).id) {
+                selectedFactCheckboxes.filter((e) => {
+                    if (e.id === checkbox.get(0).id) {
                         checkbox.get(0).checked = true
                     }
                 })
-                
+
                 rowContainer = $('<tr>').append(
                     $(`<td> ${this.val} </td><td> ${this.key} </td>`)
                         .add($('<td>').append(addToSearchIcon))
@@ -638,7 +661,8 @@ function showStringChildren (data, childrenContainer, grandchildrenContainer, ro
             } else {
                 rowContainer = $(`<tr><td> ${this.val} </td><td> ${this.key} </td><td></td></tr>`)
             }
-        };
+        }
+        ;
 
         rowContainer.click(function () {
             grandchildrenContainer.empty()
@@ -676,7 +700,7 @@ function showStringChildren (data, childrenContainer, grandchildrenContainer, ro
     childrenContainer.removeClass('hidden')
 }
 
-function loadUserPreference (dataset, mapping) {
+function loadUserPreference(dataset, mapping) {
     var hiddenFeatures = localStorage.getCacheItem('hiddenFeatures_' + dataset + '_' + mapping)
     if (hiddenFeatures) {
         for (var featureIdx in hiddenFeatures) {
@@ -687,7 +711,7 @@ function loadUserPreference (dataset, mapping) {
     }
 }
 
-function clusterToLex (id) {
+function clusterToLex(id) {
     var clusterForm = document.getElementById('save_as_lexicon_' + id)
     var fd = new FormData(clusterForm)
     fd.set('lexiconname', fd.get('lexiconname').split(' ').slice(0, -1).join(' '))
@@ -707,7 +731,7 @@ function clusterToLex (id) {
     })
 }
 
-function addFactToSearch (factName, factVal) {
+function addFactToSearch(factName, factVal) {
     $('#constraint_field option').each(function () {
         if ($(this).val() !== '') {
             if (JSON.parse($(this).val())['type'] === 'fact_str_val') {
@@ -742,7 +766,7 @@ function addFactToSearch (factName, factVal) {
     $('#fact_constraint_val_' + suggestionID).val(factVal)
 }
 
-function deleteFactFromDoc (fact_name, fact_value, doc_id) {
+function deleteFactFromDoc(fact_name, fact_value, doc_id) {
     var request = new XMLHttpRequest()
     var form_data = new FormData()
     form_data.append(fact_name, fact_value)
@@ -758,18 +782,18 @@ function deleteFactFromDoc (fact_name, fact_value, doc_id) {
         confirmButtonText: 'Yes, remove!'
     }).then((result) => {
         if (result.value) {
-            ajaxDeleteFacts(form_data, [{ [fact_name]: fact_value }])
+            ajaxDeleteFacts(form_data, [{[fact_name]: fact_value}])
         }
     })
 }
 
-function strip_html(html, removeNewlines){
+function strip_html(html, removeNewlines) {
     // Strip html from string, optionally remove newlines
     var doc = new DOMParser().parseFromString(html, 'text/html');
     newContent = doc.body.textContent
 
     if (removeNewlines) {
-        newContent = newContent.replace(/(\r\n\t|\n|\r\t)/gm," ");
+        newContent = newContent.replace(/(\r\n\t|\n|\r\t)/gm, " ");
     }
 
     return newContent || "";
