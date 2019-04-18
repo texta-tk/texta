@@ -351,7 +351,7 @@ MIGRATION_LOGGER = 'migration_logger'
 
 USING_GRAYLOG = os.getenv("USING_GRAYLOG", False)
 GRAYLOG_HOST_NAME = os.getenv("GRAYLOG_HOST_NAME", "localhost")
-GRAYLOG_PORT = os.getenv("GRAYLOG_PORT", 12201)
+GRAYLOG_PORT = int(os.getenv("GRAYLOG_PORT", 12201))
 
 # Most of the following logging settings can be changed.
 # Especially format, logging levels, logging class and filenames.
