@@ -42,10 +42,12 @@ def get_rows(es_params, request):
 
     writer = csv.writer(buffer_)
 
+    features = es_params['features']
     try:
-        writer.writerow(es_params['features']) 
+        writer.writerow(features) 
     except:
-        writer.writerow([feature for feature in es_params['features']])
+        writer.writerow([feature for feature in features])
+
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(es_params)
@@ -54,10 +56,7 @@ def get_rows(es_params, request):
     q_size = es_params['num_examples'] if es_params['num_examples'] <= ES_SCROLL_BATCH else ES_SCROLL_BATCH
     es_m.set_query_parameter('size', q_size)
 
-    features = sorted(es_params['features'])
-
     response = es_m.scroll()
-
     scroll_id = response['_scroll_id']
     left = es_params['num_examples']
     hits = response['hits']['hits']
@@ -102,14 +101,14 @@ def get_rows(es_params, request):
 
 
 def get_all_rows(es_params, request):
-    features = sorted(es_params['features'])
+    features = es_params['features']
 
     # Prepare in-memory csv writer.
     buffer_ = StringIO()
     writer = csv.writer(buffer_)
 
     # Write the first headers.
-    writer.writerow([feature for feature in es_params['features']])
+    writer.writerow(features)
 
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
@@ -174,12 +173,13 @@ def process_hits(hits, features, write=True, writer=None):
             else:
                 # stringify just in case value is something like a bool
                 document_content = str(document_content)
-                content = document_content.replace('\n', '\\n').replace('"', '\"') if isinstance(document_content, str) else document_content
+                # Escape newlines and double quotes that break the csv
+                content = document_content.replace('\n', ' \\n').replace('"', '\"') if isinstance(document_content, str) else document_content
             row.append(content)
         if not write:
             rows.append(row)
         elif write:
-            writer.writerow([element if isinstance(element, str) else element for element in row])
+            writer.writerow(row)
 
     # If write, no need to return the writer
     if not write:
