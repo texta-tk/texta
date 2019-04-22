@@ -147,6 +147,25 @@ function query () {
             $('#columnsRow').find('th').each(function (index) {
                 // Append _DtCol to end to safe from naming conflicts
                 columns.push({ 'className': 'DtCol_' + $(this).text(), 'targets': index })
+                if (index !== 0) {
+                    columns.push({
+                        'className': 'DtCol_' + $(this).text(),
+                        'targets': index,
+                        'render': function (data, type, row) {
+                            return data.split("\\n").join("<br/>");
+                        }
+                    })
+                } else {
+                    columns.push({
+                        "targets": 0,
+                        'searchable': false,
+                        'className': 'dt-center',
+                        "render": function (data, type, row, meta) {
+                            return '<input type="checkbox" id=' + data + ' name=dt_delete_doc_checkbox>';
+                        }
+ 
+                    })
+                }
             })
 
             examplesTable = $('#examples').DataTable({
@@ -207,19 +226,7 @@ function query () {
                 'scrollX': true,
                 // Add title with the corresponding column name to each element in column
 
-                "columnDefs": [
-                    ...columns,
-                    {
-                        "targets": 0,
-                        'searchable': false,
-                        'className': 'dt-center',
-                        "render": function (data, type, row, meta) {
-                            return '<input type="checkbox" id='+data+' name=dt_delete_doc_checkbox>';
-                        }
-
-                    },
-
-                ],
+                "columnDefs": columns,
                 'ordering': false
             })
             $.fn.DataTable.ext.pager.numbers_length = 6
