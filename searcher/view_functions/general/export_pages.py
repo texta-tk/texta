@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from utils.datasets import Datasets
 from utils.es_manager import ES_Manager
 from utils.log_manager import LogManager
+from searcher.view_functions.general.searcher_utils import improve_facts_readability
 
 try:
     from io import StringIO 
@@ -43,10 +44,7 @@ def get_rows(es_params, request):
     writer = csv.writer(buffer_)
 
     features = es_params['features']
-    try:
-        writer.writerow(features) 
-    except:
-        writer.writerow([feature for feature in features])
+    writer.writerow(features) 
 
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
@@ -66,12 +64,8 @@ def get_rows(es_params, request):
 
         if left > len(rows):
             for row in rows:
-                writer.writerow([element if isinstance(element, str) else element for element in row])
-            buffer_.seek(0)
-            data = buffer_.read()
-            buffer_.seek(0)
-            buffer_.truncate()
-            yield data
+                writer.writerow(row)
+            yield _get_buffer_data(buffer_)
 
             left -= len(rows)
             response = es_m.scroll(scroll_id=scroll_id)
@@ -80,23 +74,13 @@ def get_rows(es_params, request):
 
         elif left == len(rows):
             for row in rows:
-                writer.writerow([element if isinstance(element, str) else element for element in row])
-            buffer_.seek(0)
-            data = buffer_.read()
-            buffer_.seek(0)
-            buffer_.truncate()
-            yield data
-
+                writer.writerow(row)
+            yield _get_buffer_data(buffer_)
             break
         else:
             for row in rows[:left]:
-                writer.writerow([element if isinstance(element, str) else element for element in row])
-            buffer_.seek(0)
-            data = buffer_.read()
-            buffer_.seek(0)
-            buffer_.truncate()
-            yield data
-
+                writer.writerow(row)
+            yield _get_buffer_data(buffer_)
             break
 
 
@@ -122,12 +106,8 @@ def get_all_rows(es_params, request):
 
     while hits:
         process_hits(hits, features, write=True, writer=writer)
-
-        buffer_.seek(0)
-        data = buffer_.read()
-        buffer_.seek(0)
-        buffer_.truncate()
-        yield data  # Return some data with the StreamingResponce
+        # Return some data with the StreamingResponce
+        yield _get_buffer_data(buffer_)
 
         # Continue with the scroll.
         response = es_m.scroll(scroll_id=scroll_id)
@@ -157,24 +137,14 @@ def process_hits(hits, features, write=True, writer=None):
                     break
 
             if feature_name == 'texta_facts':
-                content = []
-
-                facts = [(x["fact"], x["str_val"]) for x in sorted(document_content, key=lambda k: k['fact'])]
-                fact_counts = Counter(facts)
-                facts = sorted(list(set(facts)))
-
-                for ind, (name, val) in enumerate(facts):
-                    if name not in content:
-                        content.append(name)
-                    content.append('{}: {}'.format(val, fact_counts[facts[ind]]))
-                content = ' - '.join(content)
-                content = '{}; {}'.format(content, document_content)  # Append JSON format
-
+                content = improve_facts_readability(document_content, join_with=' - ', indent_with='')
+                # Append JSON format
+                content = '{}     {}'.format(content, document_content) 
             else:
                 # stringify just in case value is something like a bool
                 document_content = str(document_content)
                 # Escape newlines and double quotes that break the csv
-                content = document_content.replace('\n', ' \\n').replace('"', '\"') if isinstance(document_content, str) else document_content
+                content = document_content.replace('\n', ' \\n').replace('"', '\"')
             row.append(content)
         if not write:
             rows.append(row)
@@ -184,3 +154,11 @@ def process_hits(hits, features, write=True, writer=None):
     # If write, no need to return the writer
     if not write:
         return rows
+
+
+def _get_buffer_data(buffer_):
+    buffer_.seek(0)
+    data = buffer_.read()
+    buffer_.seek(0)
+    buffer_.truncate()
+    return data
