@@ -127,8 +127,9 @@
                                             class="btn-sm btn btn-default hidden width-max"
                                             onclick="dataset_update_resources()">Apply changes
                                     </button>
-                                    <select id="dataset_to_activate" name="dataset_to_activate" multiple
-                                            data-actions-box="true" class="selectpicker dataset-select-dropdown">
+                                    <select id="dataset_to_activate" name="dataset_to_activate"
+                                            data-actions-box="true" multiple data-live-search="true"
+                                            class="selectpicker dataset-select-dropdown">
                                         {% for dataset in allowed_datasets %}
                                             {% if dataset.id|stringformat:"i" in request.session.dataset %}
                                                 <option class="datasetOption" value="{{ dataset.id }}"
