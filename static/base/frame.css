@@ -402,3 +402,7 @@ html, body {
 .navbar-collapse.in {
     overflow-y: visible;
 }
+
+.bs-searchbox input {
+    width: 100% !important;
+}

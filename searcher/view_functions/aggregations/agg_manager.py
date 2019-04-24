@@ -243,7 +243,12 @@ class AggManager:
                 elif agg_name == 'fact_str_val' or agg_name == 'fact_num_val':
                     response_out.extend(self._parse_fact_buckets(agg_results[agg_name]['buckets']))
 
-            agg_data.append({"data":response_out,"type":output_type,"label":response["label"]})
+            agg_data.append({"data": response_out,
+                            "type":output_type,
+                            "label":response["label"],
+                            "agg_field_1": json.loads(self.es_params['agg_field_1'])['path'],
+                            "agg_field_2": json.loads(self.es_params['agg_field_2'])['path']
+                            })
 
         return agg_data
         
@@ -381,5 +386,5 @@ class AggManager:
 
         if daterange_data["data"]:
             data_out.append(daterange_data)
-
+        
         return data_out
