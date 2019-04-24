@@ -122,6 +122,10 @@ class EsIterator:
             batch_hits = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
 
+            response = self.es_m.scroll(scroll_id=scroll_id)
+            total_hits = len(response['hits']['hits'])
+            scroll_id = response['_scroll_id']
+
     def get_total_documents(self):
         return self.es_m.get_total_documents()
 

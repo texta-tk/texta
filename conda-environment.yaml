@@ -28,5 +28,4 @@ dependencies:
         - dateutils
         - elasticsearch
         - elasticsearch_dsl
-
-
+        - graypy

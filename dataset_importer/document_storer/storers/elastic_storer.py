@@ -13,6 +13,7 @@ class ElasticStorer(object):
         self._es_url = connection_parameters['texta_elastic_url']
         self._es_index = self._correct_name(connection_parameters['texta_elastic_index'])
         self._es_mapping = self._correct_name(connection_parameters['texta_elastic_mapping'])
+        self._es_analyzer = connection_parameters.get("elastic_analyzer")
 
         self._headers = {'Content-Type': 'application/json; charset=utf-8'}
         self._request = requests.Session()
@@ -27,7 +28,7 @@ class ElasticStorer(object):
         name = name.lower().replace(' ', '_')
         # add prefix if necessary
         if es_prefix:
-            name = es_prefix+name
+            name = es_prefix + name
         return name
 
     def _create_index_if_not_exists(self, url, index, mapping, not_analyzed_fields):
@@ -43,11 +44,28 @@ class ElasticStorer(object):
         :type not_analyzed_fields: list of strings
         """
 
-        index_creation_query = {"mappings": {mapping: {"properties": {"texta_facts": FACT_PROPERTIES}}}}
+        index_creation_query = {
+            "mappings": {
+                mapping: {
+                    "properties": {
+                        "texta_facts": FACT_PROPERTIES
+                    },
+                    "dynamic_templates": [
+                        {"estonian": {
+                            "match_mapping_type": "string",
+                            "mapping": {
+                                "analyzer": self._es_analyzer
+                            }
+                        }
+                        }
+                    ]
+                }
+            }
+        }
 
         # self._add_not_analyzed_declarations(index_creation_query['mappings'][mapping], not_analyzed_fields)
         self._request.put("{url}/{index}".format(**{
-            'url':   url,
+            'url': url,
             'index': index,
         }), data=json.dumps(index_creation_query), headers=self._headers)
 
@@ -117,6 +135,6 @@ class ElasticStorer(object):
         """Removes the Elasticsearch index.
         """
         self._request.delete("{url}/{index}".format(**{
-            'url':   self._es_url,
+            'url': self._es_url,
             'index': self._es_index
         }), headers=self._headers)

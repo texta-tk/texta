@@ -1,28 +1,26 @@
 # -*- coding: utf8 -*-
 import json
 import copy
+import logging
 from typing import List, Dict, Any
 
 import requests
 from functools import reduce
+
+from elasticsearch import Elasticsearch, ElasticsearchException
+from elasticsearch_dsl import Search, A
+from elasticsearch_dsl.query import MoreLikeThis, Q
+
+from utils.ds_importer_helper import check_for_analyzer
 from utils.generic_helpers import find_key_recursivly
 import datetime
 
 from utils.query_builder import QueryBuilder
 from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, FACT_PROPERTIES, date_format, es_prefix, \
-    FACT_FIELD
+    FACT_FIELD, ERROR_LOGGER
 
 # Need to update index.max_inner_result_window to increase
 HEADERS = {'Content-Type': 'application/json'}
-
-
-class Singleton(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
 
 
 class ES_Manager:
@@ -56,6 +54,22 @@ class ES_Manager:
         index_string = ','.join(indices)
         return index_string
 
+    @staticmethod
+    def get_analyzers():
+        ELASTICSEARCH_ANALYZERS = [
+            {"display_name": "Standard Analyzer", "analyzer": "standard"},
+            {"display_name": "Whitespace Analyzer", "analyzer": "whitespace"},
+            {"display_name": "Pattern Analyzer", "analyzer": "pattern"},
+            {"display_name": "Simple Analyzer", "analyzer": "simple"},
+            {"display_name": "Stop Analyzer", "analyzer": "stop"},
+            {"display_name": "Keyword Analyzer", "analyzer": "keyword"},
+            {"display_name": "Fingerprint Analyzer", "analyzer": "fingerprint"},
+        ]
+
+        estonian_analyzer = check_for_analyzer(display_name="Estonian Analyzer", analyzer_name="estonian", es_url=es_url)
+        if estonian_analyzer: ELASTICSEARCH_ANALYZERS.append(estonian_analyzer)
+        return ELASTICSEARCH_ANALYZERS
+
     def bulk_post_update_documents(self, documents, ids):
         """Do both plain_post_bulk and update_documents()"""
         data = ''
@@ -73,8 +87,7 @@ class ES_Manager:
         data = ''
 
         for i, _id in enumerate(ids):
-            data += json.dumps({"update": {"_id": _id, "_index": document_locations[i]['_index'],
-                                           "_type": document_locations[i]['_type']}}) + '\n'
+            data += json.dumps({"update": {"_id": _id, "_index": document_locations[i]['_index'], "_type": document_locations[i]['_type']}}) + '\n'
             data += json.dumps({"doc": documents[i]}) + '\n'
 
         response = self.plain_post_bulk(self.es_url, data)
@@ -95,7 +108,6 @@ class ES_Manager:
                 properties = {'properties': properties}
                 url = '{0}/{1}/_mapping/{2}'.format(self.es_url, index, mapping)
                 response = self.plain_put(url, json.dumps(properties))
-
 
     def update_documents(self):
         response = self.plain_post(
@@ -251,6 +263,62 @@ class ES_Manager:
         if key in fact_count:
             return [bucket['key'] for bucket in fact_count[key]['buckets']]
         return []
+
+    @staticmethod
+    def handle_composition_aggregation(search: Search, aggregation_dict: dict, after: dict):
+        s = Search().from_dict(search).using(Elasticsearch(es_url))
+        sources = aggregation_dict["sources"]
+        size = aggregation_dict.get("size", 10)
+
+        aggregations = [{source["bucket_name"]: A(source["agg_type"], field="{}.keyword".format(source["field"]))} for source in sources]
+        if after:
+            s.aggs.bucket(aggregation_dict["bucket_name"], "composite", size=size, sources=aggregations, after=after)
+            return s
+        else:
+            s.aggs.bucket(aggregation_dict["bucket_name"], "composite", size=size, sources=aggregations)
+            return s
+
+    @staticmethod
+    def more_like_this(elastic_url, fields: list, like: list, size: int, filters: list, aggregations: list, if_agg_only: bool, return_fields=None):
+        # Create the base query creator and unite with ES gateway.
+        search = Search(using=Elasticsearch(elastic_url))
+        mlt = MoreLikeThis(like=like, fields=fields, min_term_freq=1, max_query_terms=12, )  # Prepare the MLT part of the query.
+
+        paginated_search = search[0:size]  # Set how many documents to return.
+        limited_search = paginated_search.source(return_fields) if return_fields else paginated_search  # If added, choose which FIELDS to return.
+        finished_search = limited_search.query(mlt)  # Add the premade MLT into the query.
+
+        # Apply all the user-set filters, if they didn't add any this value will be [] and it quits.
+        for filter_dict in filters:
+            finished_search = finished_search.filter(Q(filter_dict))
+
+        # Apply all the user-set aggregations, if they didn't add any this value will be [] and it quits.
+        for aggregation_dict in aggregations:
+            # aggs.bucket() does not return a Search object but changes it instead.
+            if aggregation_dict["agg_type"] == "composite":
+                after = aggregation_dict.get("after_key", None)
+                finished_search = ES_Manager.handle_composition_aggregation(finished_search.to_dict(), aggregation_dict, after)
+            else:
+                field_name = aggregation_dict["field"]
+                index = like[0]["_index"]
+                field = "{}.keyword".format(field_name) if ES_Manager.is_field_text_field(field_name=field_name, index_name=index) else field_name
+                finished_search.aggs.bucket(name=aggregation_dict["bucket_name"], agg_type=aggregation_dict["agg_type"], field=field)
+
+        # Choose if you want to return only the aggregations in {"bucket_name": {results...}} format.
+        if if_agg_only:
+            finished_search = finished_search.params(size=0)
+            response = finished_search.execute()
+            return response.aggs.to_dict()
+
+        try:
+            response = finished_search.execute()
+            result = {"hits": [hit.to_dict() for hit in response]}  # Throw out all metadata and keep only the documents.
+            if response.aggs: result.update({"aggregations": response.aggs.to_dict()})  # IF the aggregation query returned anything, THEN add the "aggregatons" key with results.
+            return result
+
+        except ElasticsearchException as e:
+            logging.getLogger(ERROR_LOGGER).exception(e)
+            return {"elasticsearch": [str(e)]}
 
     def get_mapped_fields(self):
         """ Get flat structure of fields from Elasticsearch mappings
@@ -640,7 +708,7 @@ class ES_Manager:
 
         return new_list
 
-    def get_nested_field_names(self):
+    def get_nested_field_names(self, remove_duplicate_keys=False) -> list:
         """
         Traverses the doc_type's mapping schema to return
         a list with unique field names of fields that are of the nested datatype.
@@ -733,3 +801,10 @@ class ES_Manager:
             nested_field['parent'] = nested_field['full_path'].split('.')[0]  # By ES dot notation, "field.data"
 
         return normal_fields, nested_fields
+    @staticmethod
+    def is_field_text_field(field_name, index_name):
+        text_types = ["text", "keyword"]
+        es = Elasticsearch(es_url)
+        mapping = es.indices.get_field_mapping(fields=[field_name], index=[index_name])
+        field_type = mapping[index_name]["mappings"][index_name][field_name]["mapping"][field_name]["type"]
+        return True if field_type in text_types else False

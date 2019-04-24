@@ -203,8 +203,9 @@ DATABASES = {
 	}
 }
 
-if not os.path.exists(os.path.dirname(DATABASES['default']['NAME'])) and os.environ.get('DJANGO_DATABASE_NAME') is None:
-	os.makedirs(os.path.dirname(DATABASES['default']['NAME']))
+if SERVER_TYPE == 'development':
+	if not os.path.exists(os.path.dirname(DATABASES['default']['NAME'])) and os.environ.get('DJANGO_DATABASE_NAME') is None:
+		os.makedirs(os.path.dirname(DATABASES['default']['NAME']))
 
 TIME_ZONE = 'Europe/Tallinn'
 LANGUAGE_CODE = 'et'
@@ -277,7 +278,8 @@ INSTALLED_APPS = (
 	'search_api',
 	'dataset_importer',
 	'importer_api',
-	'task_manager'
+	'task_manager',
+	'rest_framework',
 )
 
 ############################ Elasticsearch ###########################
@@ -336,72 +338,63 @@ if not os.path.exists(DATASET_IMPORTER['directory']):
 
 ############################### Logging ##############################
 
-# TEXTA stores errors and query info in two different log files.
-USING_LOGSTASH = os.getenv('USING_LOGSTASH', False)
-LOGSTASH_HOST = os.getenv('LOGSTASH_HOST', 'localhost')
-LOGSTASH_PORT = int(os.getenv('LOGSTASH_PORT', 5000))
-
 # Path to the log directory. Default is /log
 LOG_PATH = os.path.join(BASE_DIR, 'log')
 
 # Separator used to join different logged features.
-logging_separator = ' - '
+LOGGING_SEPARATOR = ' - '
 
 # Paths to info and error log files.
-info_log_file_name = os.path.join(LOG_PATH, "info.log")
-error_log_file_name = os.path.join(LOG_PATH, "error.log")
-migration_log_file_name = os.path.join(LOG_PATH, "migration.log")
+INFO_LOG_FILE_NAME = os.path.join(LOG_PATH, "info.log")
+ERROR_LOG_FILE_NAME = os.path.join(LOG_PATH, "error.log")
+MIGRATION_LOG_FILE_NAME = os.path.join(LOG_PATH, "migration.log")
 
 # Logger IDs, used in apps. Do not change.
 INFO_LOGGER = 'info_logger'
 ERROR_LOGGER = 'error_logger'
 MIGRATION_LOGGER = 'migration_logger'
 
+USING_GRAYLOG = os.getenv("USING_GRAYLOG", False)
+GRAYLOG_HOST_NAME = os.getenv("GRAYLOG_HOST_NAME", "localhost")
+GRAYLOG_PORT = int(os.getenv("GRAYLOG_PORT", 12201))
+
 # Most of the following logging settings can be changed.
 # Especially format, logging levels, logging class and filenames.
 LOGGING = {
 	'version':                  1,
 	'disable_existing_loggers': False,
-	'filters':                  {
-		'require_debug_false':      {
-			'()': 'django.utils.log.RequireDebugFalse'
-		},
-		'require_debug_true':       {
-			'()': 'django.utils.log.RequireDebugTrue'
-		},
-
-		'require_logstash_instance': {
-			'()': 'texta.logger_handler.RequireLogstashInstance'
-		},
-
+	'filters': {
+		'require_graylog_instance': {
+			'()': 'texta.logger_handler.RequireGraylogInstance'
+		}
 	},
 
 	'formatters':               {
 		'detailed':       {
-			'format': logging_separator.join(['%(levelname)s', '%(module)s', 'function: %(funcName)s', 'line: %(lineno)s', '%(name)s', 'PID: %(process)d', 'TID: %(thread)d', '%(message)s', '%(asctime)-15s'])
+			'format': LOGGING_SEPARATOR.join(['%(levelname)s', '%(module)s', 'function: %(funcName)s', 'line: %(lineno)s', '%(name)s', 'PID: %(process)d', 'TID: %(thread)d', '%(message)s', '%(asctime)-15s'])
 		},
 		'normal':         {
-			'format': logging_separator.join(['%(levelname)s', '%(module)s', '%(message)s', '%(asctime)s'])
+			'format': LOGGING_SEPARATOR.join(['%(levelname)s', '%(module)s', '%(message)s', '%(asctime)s'])
 		},
 		'detailed_error': {
-			'format': '\n' + logging_separator.join( ['%(levelname)s', '%(module)s', '%(name)s', 'PID: %(process)d', 'TID: %(thread)d', '%(funcName)s', '%(message)s', '%(asctime)-15s'])
-		},
-		'logstash':       {
-			'()':           'logstash_async.formatter.DjangoLogstashFormatter',
-			'message_type': 'python-logstash',
-			'fqdn':         False,
-			'extra_prefix': '',
-			'ensure_ascii': False
-
+			'format': '\n' + LOGGING_SEPARATOR.join(['%(levelname)s', '%(module)s', '%(name)s', 'PID: %(process)d', 'TID: %(thread)d', '%(funcName)s', '%(message)s', '%(asctime)-15s'])
 		},
 	},
 
 	'handlers':                 {
+		'graypy': {
+			'level': 'DEBUG',
+			'class': 'graypy.GELFUDPHandler',
+			'host': GRAYLOG_HOST_NAME,
+			'port': GRAYLOG_PORT,
+			'filters': ['require_graylog_instance']
+		},
+
 		'info_file':             {
 			'level':     'INFO',
 			'class':     'logging.FileHandler',
 			'formatter': 'detailed',
-			'filename':  info_log_file_name,
+			'filename':  INFO_LOG_FILE_NAME,
 			'encoding':  'utf8',
 			'mode':      'a'
 		},
@@ -409,7 +402,7 @@ LOGGING = {
 			'level':     'ERROR',
 			'class':     'logging.FileHandler',
 			'formatter': 'detailed_error',
-			'filename':  error_log_file_name,
+			'filename':  ERROR_LOG_FILE_NAME,
 			'encoding':  'utf8',
 			'mode':      'a',
 		},
@@ -417,13 +410,9 @@ LOGGING = {
 			'level':     'INFO',
 			'class':     'logging.FileHandler',
 			'formatter': 'detailed',
-			'filename':  migration_log_file_name,
+			'filename':  MIGRATION_LOG_FILE_NAME,
 			'encoding':  'utf8',
 			'mode':      'a',
-		},
-
-		'null':                  {
-			"class": 'logging.NullHandler',
 		},
 
 		'console':    {
@@ -431,38 +420,26 @@ LOGGING = {
 			'class':     'logging.StreamHandler',
 			'formatter': 'detailed',
 		},
-
-
-		'logstash':              {
-			'level':         'INFO',
-			'class':         'logstash_async.handler.AsynchronousLogstashHandler',
-			'formatter':     'logstash',
-			'transport':     'logstash_async.transport.TcpTransport',
-			'host':          LOGSTASH_HOST,
-			'port':          LOGSTASH_PORT,
-			'database_path': None,
-			'filters': ['require_logstash_instance']
-		},
-
 	},
+
 	'loggers':                  {
 		INFO_LOGGER:     {
 			'level':    'INFO',
-			'handlers': ['info_file', 'logstash']
+			'handlers': ['info_file', 'graypy']
 		},
 		ERROR_LOGGER:    {
 			'level':    'ERROR',
-			'handlers': ['console', 'error_file', 'logstash']
+			'handlers': ['console', 'error_file', 'graypy']
 		},
 		MIGRATION_LOGGER:    {
 			'level':    'INFO',
-			'handlers': ['console', 'migration_file', 'logstash']
+			'handlers': ['console', 'migration_file', 'graypy']
 		},
 
 		# Big parent of all the Django loggers, MOST (not all) of this will get overwritten.
 		# https://docs.djangoproject.com/en/2.1/topics/logging/#topic-logging-parts-loggers
 		'django':        {
-			'handlers':  ['console', 'error_file', 'logstash'],
+			'handlers':  ['console', 'error_file', 'graypy'],
 			'level':     'ERROR',
 			'propagate': False
 		},
@@ -470,7 +447,7 @@ LOGGING = {
 		# Log messages related to the handling of requests.
 		# 5XX responses are raised as ERROR messages; 4XX responses are raised as WARNING messages
 		'django.request': {
-			'handlers':  ['error_file', 'error_file', 'logstash'],
+			'handlers':  ['error_file', 'error_file', 'graypy'],
 			'level':     'ERROR',
 			'propagate': False,
 		},
@@ -479,7 +456,7 @@ LOGGING = {
 		# HTTP 5XX responses are logged as ERROR messages, 4XX responses are logged as WARNING messages,
 		# everything else is logged as INFO.
 		'django.server': {
-			'handlers':  ['console', 'logstash'],
+			'handlers':  ['console', 'graypy'],
 			'level':     'ERROR',
 			'propagate': False,
 		}
@@ -501,6 +478,7 @@ FACT_PROPERTIES = {
 
 # Fact field name, use this instead of a magic string
 FACT_FIELD = 'texta_facts'
+LANGUAGE_CODE = "en"
 
 ############################ Boot scripts ###########################
 

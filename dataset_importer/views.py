@@ -11,6 +11,8 @@ from django.http import HttpResponse
 # from django.shortcuts import render
 
 from task_manager.models import Task
+from texta import settings
+from utils.es_manager import ES_Manager
 from .models import DatasetImport
 from utils.datasets import Datasets
 
@@ -57,6 +59,8 @@ def index(request):
     datasets = Datasets().get_allowed_datasets(request.user)
     language_models =Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
 
+    analyzers = ES_Manager.get_analyzers()
+
     context = {
         # 'enabled_input_types': DATASET_IMPORTER_CONF['enabled_input_types'],
         'archive_formats': archive_formats,
@@ -65,7 +69,8 @@ def index(request):
         'database_formats': database_formats,
         'language_models': language_models,
         'allowed_datasets': datasets,
-        'jobs': jobs
+        'jobs': jobs,
+        'analyzers': analyzers
         # 'enabled_preprocessors': enabled_preprocessors
     }
 
@@ -82,7 +87,6 @@ def reload_table(request):
 @login_required
 def import_dataset(request):
     DATASET_IMPORTER.import_dataset(request=request)
-
     return HttpResponse()
 
 

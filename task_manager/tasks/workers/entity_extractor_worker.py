@@ -48,6 +48,7 @@ class EntityExtractorWorker(BaseWorker):
         self.tagger = None
         self.keywords = None
         self.oob_val = "<TEXTA_O>"
+        self.fact_keyword_val = "<TEXTA_FACT>"
         self.eos_val = "<TEXTA_BOS>"
         self.bos_val = "<TEXTA_EOS>"
         self.train_summary = {}
@@ -360,6 +361,30 @@ class EntityExtractorWorker(BaseWorker):
             total_docs = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
         return hits
+
+    def _get_facts_in_document(self, source):
+        fact_fields = []
+        if 'texta_facts' in source:
+            for fact in source['texta_facts']:
+                if fact['fact'] in self.task_params['facts']:
+                    fact_path = fact['doc_path']
+                    if fact_path not in fact_fields:
+                        fact_fields.append(fact_path)
+        return fact_fields
+
+
+    def _get_data_from_fields(self, source, fields):
+        batch_hits = []
+        for field in fields:
+            content = source
+            for sub_f in field.split('.'):
+                # Check if field is missing, in case the content is empty
+                if sub_f in content:
+                    content = content[sub_f]
+                else:
+                    content = ''
+            batch_hits.append(content)
+        return batch_hits
 
 
     def _get_facts_in_document(self, source):

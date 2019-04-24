@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
+
 def add_dicts(dict1, dict2):
     '''
     Helper function to += values of keys from two dicts with a single level nesting
