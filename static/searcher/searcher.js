@@ -492,7 +492,7 @@ function drawStringAggs (data, type = null) {
         if (row.children.length > 0) {
             rowContainer = $('<tr><td>' + row.val + '</td><td>' + row.key + "</td><td><span class='glyphicon glyphicon-menu-right'></span></td></tr>")
             rowContainer.click(function () {
-                showStringChildren(row.children, childrenContainer, grandchildrenContainer, row.key, type)
+                showStringChildren(row.children, childrenContainer, grandchildrenContainer, row.key, type, data.agg_field_1)
             })
             rowContainer.addClass('pointer')
         } else {
@@ -595,7 +595,7 @@ function deleteFactArray (factArray, source) {
     }
 }
 
-function showStringChildren (data, childrenContainer, grandchildrenContainer, rowKey, type) {
+function showStringChildren (data, childrenContainer, grandchildrenContainer, rowKey, type, field) {
     childrenContainer.empty()
     grandchildrenContainer.empty()
 
@@ -616,7 +616,7 @@ function showStringChildren (data, childrenContainer, grandchildrenContainer, ro
                     'data-toggle': "tooltip",
                     title:"Add to search",
                     style:"cursor: pointer",
-                    onclick: `addFactToSearch("${searchKey}","${searchVal}")`
+                    onclick: `addFactToSearch("${searchKey}","${searchVal}", "${field}")`
                 });
                 
                 // keep track of checkboxes using their name as {NAME: VALUE}, otherwise when clicking on another fact name, they get overwritten
@@ -714,43 +714,48 @@ function clusterToLex (id) {
     })
 }
 
-function addFactToSearch (factName, factVal) {
-    $('#constraint_field option').each(function () {
-        if ($(this).val() !== '') {
-            if (JSON.parse($(this).val())['type'] === 'fact_str_val') {
-                $('#constraint_field').val($(this).val())
-                return false // break out of loop
+function addFactToSearch (factName, factVal, field) {
+    // Creates a fact_str_val search with the factName, factVal, and field
+
+    const fields_filtered = $('#constraint_field option').toArray().filter((obj) => {
+        const val = $(obj).val()
+        if (val) {
+            return JSON.parse($(obj).val())['path'] === field && JSON.parse($(obj).val())['type'] === 'fact_str_val'
+        } else {
+            return false
+        }
+    })
+    
+    if (fields_filtered.length > 0) {
+        $('#constraint_field').val($(fields_filtered[0]).val())
+        
+        var hasField = false
+        $('span[id^=selected_field_]').each(function (index) {
+            if ($(this).text().includes(['[fact_text_values]'])) {
+                hasField = true
             }
+        })
+        if (!hasField) {
+            /* global addField, sidebar */
+            addField('', '', false)
         }
-    })
-
-    var hasField = false
-    $('span[id^=selected_field_]').each(function (index) {
-        if ($(this).text().includes(['[fact_text_values]'])) {
-            hasField = true
+        
+        var splitID = $('input[name^=fact_txt_]').last().attr('id').split('_')
+        var suggestionID = splitID[splitID.length - 2] + '_' + splitID[splitID.length - 1]
+        if (hasField) {
+            /* global addFactValueFieldConstraint, searcher-sidebar */
+            addFactValueFieldConstraint(splitID[splitID.length - 2], $('#fact_field_' + splitID[splitID.length - 2]).val())
+            splitID = $('input[name^=fact_txt_]').last().attr('id').split('_')
+            suggestionID = splitID[splitID.length - 2] + '_' + splitID[splitID.length - 1]
         }
-    })
-    if (!hasField) {
-        /* global addField, sidebar */
-        addField('', '', false)
+        
+        $('#field_' + splitID[splitID.length - 2] + ' #fact_txt_' + suggestionID).val(factName)
+        $('#fact_constraint_op_' + suggestionID).val('=')
+        $('#fact_constraint_val_' + suggestionID).val(factVal)
     }
-
-    var splitID = $('input[name^=fact_txt_]').last().attr('id').split('_')
-    var suggestionID = splitID[splitID.length - 2] + '_' + splitID[splitID.length - 1]
-    if (hasField) {
-        /* global addFactValueFieldConstraint, searcher-sidebar */
-        addFactValueFieldConstraint(splitID[splitID.length - 2], $('#fact_field_' + splitID[splitID.length - 2]).val())
-        splitID = $('input[name^=fact_txt_]').last().attr('id').split('_')
-        suggestionID = splitID[splitID.length - 2] + '_' + splitID[splitID.length - 1]
-    }
-
-    $('#field_' + splitID[splitID.length - 2] + ' #fact_txt_' + suggestionID).val(factName)
-    $('#fact_constraint_op_' + suggestionID).val('=')
-    $('#fact_constraint_val_' + suggestionID).val(factVal)
 }
 
 function deleteFactFromDoc (fact_name, fact_value, doc_id) {
-    var request = new XMLHttpRequest()
     var form_data = new FormData()
     form_data.append(fact_name, fact_value)
     form_data.append('doc_id', doc_id)

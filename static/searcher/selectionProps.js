@@ -47,13 +47,15 @@ function createSelectionProps() {
             var val = span.innerText
             temp.find('.factName').html(name)
             temp.find('.factValue').html(val)
+            // Get field 
+            var fact_path = parent.className.trim().replace('DtCol_', '')
             // Fact delete button
             var btn_delete = temp.find('.factPopoverDeleteBtn');
             // Attr because click events don't seem to work
             var doc_id = $(examplesTable.row(parent.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
             btn_delete.attr('onclick', `deleteFactSwal("${name}", "${val}", "${doc_id}")`);
             var btn_search = temp.find('.factPopoverSearchBtn');
-            btn_search.attr('onclick', `addFactToSearch("${name}","${val}")`);
+            btn_search.attr('onclick', `addFactToSearch("${name}","${val}", "${fact_path}")`);
             // Update span tippy content
             span._tippy.setContent(temp.prop('outerHTML'))
         });
@@ -335,4 +337,3 @@ function toggleTextSelection(checkbox) {
         SELECT_FACT_MENU_ENABLED = false;
       }
 }
-
