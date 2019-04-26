@@ -112,10 +112,10 @@ function add_dataset() {
                <td>${data.docs_count}</td>
                <td>${data.access}</td>
                <td>
-                    <input type="checkbox" id='${data.pk}' name="toolkit_dataset_delete">
+                    <input type="checkbox" id='${data.id}' name="toolkit_dataset_delete">
                 </td>
                 <td>
-                    <input type="checkbox" id='${ data.pk}' name="toolkit_elasticsearch_delete">
+                    <input type="checkbox" id='${ data.id}' name="toolkit_elasticsearch_delete">
                 </td>
                </tr>`),
         );
