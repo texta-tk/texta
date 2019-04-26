@@ -47,6 +47,10 @@
     background-color: white;
 }
 
+.more-options{
+    padding-left: 0;
+}
+
 .nav > li > a:focus, .nav > li > a:hover {
     color: black;
 }
@@ -62,5 +66,4 @@
 .taskUploadStatusTextFailed {
     font-weight: bold;
     color: red;
-    
 }

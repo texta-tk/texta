@@ -41,8 +41,10 @@
                     <th>Size</th>
                     <th>Doc count</th>
                     <th>Access</th>
-                    <th>Remove link</th>
-                    <th>Delete</th>
+                    <th><a href="#" onclick="remove_indexes();" title="Click to remove index from Toolkit"><span
+                            class="glyphicon glyphicon-remove"></span></a></th>
+                    <th><a href="#" onclick="delete_index();" title="Click to delete the index from Elasticsearch"><span
+                            class="glyphicon glyphicon-floppy-remove"></span></a></th>
                 </thead>
                 {% for dataset in datasets %}
                 <tr>
@@ -75,12 +77,10 @@
                         {{ dataset.access }}
                     </td>
                     <td>
-                        <a href="#" onclick="remove_index('{{dataset.pk}}');" title="Click to remove index from Toolkit"><span
-                                class="glyphicon glyphicon-remove"></span></a>
+                        <input type="checkbox" id='{{ dataset.pk }}' name="toolkit_dataset_delete">
                     </td>
                     <td>
-                        <a href="#" onclick="delete_index('{{dataset.pk}}');" title="Click to delete the index from Elasticsearch"><span
-                                class="glyphicon glyphicon-floppy-remove"></span></a>
+                        <input type="checkbox" id='{{ dataset.pk }}' name="toolkit_elasticsearch_delete">
                     </td>
                 </tr>
                 {% endfor %}
