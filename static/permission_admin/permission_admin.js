@@ -100,8 +100,26 @@ function add_dataset() {
         daterange_from: daterange_from,
         daterange_to: daterange_to,
         access: access
-    }, function () {
-        location.reload();
+    }, function (data) {
+        $('tbody').append(
+            $(`<tr>
+               <td>${data.id}</td>
+               <td>${data.index}</td>
+               <td>${data.mapping}</td>
+               <td>${data.author}</td>
+               <td><a href="#" onclick="open_close_dataset('${data.id}','`+((data.status === 'open') ? 'close' : 'open')+`');" title="Click to `+((data.status === 'open' )? 'close' : 'open')+` the index">`+((data.status === 'open') ? 'open' : 'closed') +`</a></td>
+               <td>${data.store_size}</td>
+               <td>${data.docs_count}</td>
+               <td>${data.access}</td>
+               <td>
+                    <input type="checkbox" id='${data.pk}' name="toolkit_dataset_delete">
+                </td>
+                <td>
+                    <input type="checkbox" id='${ data.pk}' name="toolkit_elasticsearch_delete">
+                </td>
+               </tr>`),
+        );
+
     });
 }
 

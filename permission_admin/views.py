@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse 
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.template import loader
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
@@ -37,8 +37,21 @@ def add_dataset(request):
     dataset.save()
 
     create_dataset_access_permission_and_propagate(dataset, request.POST['access'])
-
-    return HttpResponseRedirect(URL_PREFIX + '/permission_admin/')
+    indices = ES_Manager.get_indices()
+    ds_out = dataset.__dict__
+    for index in indices:
+        if index['index'] == ds_out['index']:
+            ds_out['status'] = index['status']
+            ds_out['docs_count'] = index['docs_count']
+            ds_out['store_size'] = index['store_size']
+            break
+        elif '*' in ds_out['index']:
+            ds_out['status'] = 'open'
+            ds_out['docs_count'] = 'multiindex'
+            ds_out['store_size'] = 'multiindex'
+    ds_out['_state'] = ''
+    ds_out['author'] = request.user.get_username()
+    return JsonResponse(ds_out)
 
 
 def create_dataset_access_permission_and_propagate(dataset, access):
