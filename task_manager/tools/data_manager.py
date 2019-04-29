@@ -12,6 +12,7 @@ MAX_POSITIVE_SAMPLE_SIZE = 10000
 ES_SCROLL_SIZE = 500
 STOP_WORDS = StopWords()
 
+
 def get_fields(es_m):
     """ Crete field list from fields in the Elasticsearch mapping
     """
@@ -73,6 +74,7 @@ class EsIterator:
             query = json.loads(Search.objects.get(pk=int(search)).query)
         return query
 
+
     def __iter__(self):
         response = self.es_m.scroll(size=ES_SCROLL_SIZE)
         scroll_id = response['_scroll_id']
@@ -126,12 +128,12 @@ class EsIterator:
             total_hits = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
 
+
     def get_total_documents(self):
         return self.es_m.get_total_documents()
 
 
 class EsDataSample(object):
-
     def __init__(self, fields, query, es_m, negative_set_multiplier=1.0, max_positive_sample_size=MAX_POSITIVE_SAMPLE_SIZE, score_threshold=0.0):
         """ Sample data - Positive and Negative samples from query
         negative_set_multiplier (float): length of positive set is multiplied by this to determine negative sample size (to over- or underfit models)
@@ -144,6 +146,7 @@ class EsDataSample(object):
         self.negative_set_multiplier = negative_set_multiplier
         self.max_positive_sample_size = max_positive_sample_size
         self.score_threshold = score_threshold
+
 
     def _get_positive_samples(self):
         sample_size = self.max_positive_sample_size
@@ -177,6 +180,9 @@ class EsDataSample(object):
             for hit in response['hits']['hits']:
                 if hit['_score'] >= lowest_allowed_score:
                     try:
+                        # Save sampled doc id
+                        doc_id = str(hit['_id'])
+                        positive_set.add(doc_id)
                         for field in self.fields:
                             # Extract text content for every field
                             _temp_text = hit['_source']
@@ -192,9 +198,6 @@ class EsDataSample(object):
                             # Save decoded text into positive sample map
                             positive_samples_map[field].append(_temp_text)
                         
-                        # Save sampled doc id
-                        doc_id = str(hit['_id'])
-                        positive_set.add(doc_id)
 
                     except KeyError as e:
                         # If the field is missing from the document
@@ -206,8 +209,8 @@ class EsDataSample(object):
 
         return positive_samples_map, positive_set
 
-    def _get_negative_samples(self, positive_set):
 
+    def _get_negative_samples(self, positive_set):
         negative_samples_map = {}
         negative_set = set()
         # Initialize sample map
@@ -266,6 +269,7 @@ class EsDataSample(object):
                     # logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
 
         return negative_samples_map, negative_set
+
 
     def get_data_samples(self):
         positive_samples, positive_set = self._get_positive_samples()
