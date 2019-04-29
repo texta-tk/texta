@@ -11,6 +11,7 @@ from elasticsearch import Elasticsearch, ElasticsearchException
 from elasticsearch_dsl import Search, A
 from elasticsearch_dsl.query import MoreLikeThis, Q
 
+from permission_admin.models import Dataset
 from utils.ds_importer_helper import check_for_analyzer
 from utils.generic_helpers import find_key_recursivly
 import datetime
@@ -279,9 +280,9 @@ class ES_Manager:
             return s
 
     @staticmethod
-    def more_like_this(elastic_url, fields: list, like: list, size: int, filters: list, aggregations: list, if_agg_only: bool, return_fields=None):
+    def more_like_this(elastic_url, fields: list, like: list, size: int, filters: list, aggregations: list, if_agg_only: bool, dataset: Dataset, return_fields=None):
         # Create the base query creator and unite with ES gateway.
-        search = Search(using=Elasticsearch(elastic_url))
+        search = Search(using=Elasticsearch(elastic_url)).index(dataset.index).doc_type(dataset.mapping)
         mlt = MoreLikeThis(like=like, fields=fields, min_term_freq=1, max_query_terms=12, )  # Prepare the MLT part of the query.
 
         paginated_search = search[0:size]  # Set how many documents to return.

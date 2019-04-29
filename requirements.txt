@@ -28,3 +28,4 @@ django-picklefield
 djangorestframework
 xlrd
 graypy
+django-picklefield
