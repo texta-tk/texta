@@ -143,19 +143,22 @@ def improve_facts_readability(content):
 
 
 def get_fields(es_m):
-    texta_reserved = ['texta_facts']
     mapped_fields = es_m.get_mapped_fields()
     fields_with_facts = es_m.get_fields_with_facts()
 
     fields = []
 
-    for mapped_field in mapped_fields.keys():
+    for mapped_field, dataset_info in mapped_fields.items():
         data = json.loads(mapped_field)
 
         path = data['path']
 
-        if path not in texta_reserved:
-            label = path.replace('.', '→')
+        if path not in es_m.TEXTA_RESERVED:
+
+            path_list = path.split('.')
+
+            label = '{0} --> {1}'.format(path_list[0], path_list[-1]) if len(path_list) > 1 else path_list[0]
+            label = label.replace('-->', u'→')
 
             if data['type'] == 'date':
                 data['range'] = get_daterange(es_m, path)

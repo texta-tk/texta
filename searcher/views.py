@@ -80,62 +80,6 @@ def convert_date(date_string, frmt):
     return datetime.strptime(date_string, frmt).date()
 
 
-def collect_map_entries(map_):
-    entries = []
-    for key, value in map_.items():
-        value['key'] = key
-        entries.append(value)
-
-    return entries
-
-
-def get_fields(es_m):
-    mapped_fields = es_m.get_mapped_fields()
-    fields_with_facts = es_m.get_fields_with_facts()
-
-    fields = []
-
-    for mapped_field, dataset_info in mapped_fields.items():
-        data = json.loads(mapped_field)
-
-        path = data['path']
-
-        if path not in es_m.TEXTA_RESERVED:
-
-            path_list = path.split('.')
-
-            label = '{0} --> {1}'.format(path_list[0], path_list[-1]) if len(path_list) > 1 else path_list[0]
-            label = label.replace('-->', u'→')
-
-            if data['type'] == 'date':
-                data['range'] = get_daterange(es_m, path)
-
-            data['label'] = label
-
-            field = {'data': json.dumps(data), 'label': label, 'type': data['type']}
-            fields.append(field)
-
-            if path in fields_with_facts['fact']:
-                data['type'] = 'facts'
-                field = {'data': json.dumps(data), 'label': label + ' [fact_names]', 'type': 'facts'}
-                fields.append(field)
-
-            if path in fields_with_facts['fact_str']:
-                data['type'] = 'fact_str_val'
-                field = {'data': json.dumps(data), 'label': label + ' [fact_text_values]', 'type': 'facts'}
-                fields.append(field)
-
-            if path in fields_with_facts['fact_num']:
-                data['type'] = 'fact_num_val'
-                field = {'data': json.dumps(data), 'label': label + ' [fact_num_values]', 'type': 'facts'}
-                fields.append(field)
-
-    # Sort fields by label
-    fields = sorted(fields, key=lambda l: l['label'])
-
-    return fields
-
-
 def get_daterange(es_m, field):
     min_val, max_val = es_m.get_extreme_dates(field)
     return {'min': min_val, 'max': max_val}
