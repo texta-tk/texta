@@ -8,7 +8,6 @@ MAX_STR_LEN = 100
 
 
 class Search(models.Model):
-    id = models.AutoField(primary_key=True)
     search_content = models.TextField(default='') # JSON string
     description = models.CharField(max_length=MAX_STR_LEN)
     datasets = models.ManyToManyField(Dataset)
@@ -17,4 +16,3 @@ class Search(models.Model):
 
     def __str__(self):
         return self.query
-

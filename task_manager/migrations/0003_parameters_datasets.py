@@ -38,4 +38,3 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(listify_dataset),
     ]
-
