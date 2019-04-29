@@ -98,7 +98,7 @@ except:
 
 try:
     collection_reader_map['json'] = {
-        'name': 'JSON-Lines',
+        'name': 'JSON-Lines (.jl)',
         'parameter_tags': 'file',
         'class': readers.collection.json.JSONReader
     }
