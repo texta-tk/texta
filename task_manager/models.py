@@ -28,7 +28,6 @@ class Task(models.Model):
         (STATUS_FAILED, 'Failed'),
     )
 
-    id = models.AutoField(primary_key=True)
     unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     description = models.CharField(max_length=MAX_STR_LEN, default=None)
