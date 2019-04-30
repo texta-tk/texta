@@ -202,10 +202,10 @@ class LexTagger(object):
         lex_ids         = json.loads(kwargs['lexicon_classifier_lexicons'])
         match_type      = json.loads(kwargs['lexicon_classifier_match_types'])
         operation       = json.loads(kwargs['lexicon_classifier_operations'])
-        slop            = json.loads(kwargs['lexicon_classifier_slops'])[0]
-        words_required  = json.loads(kwargs['lexicon_classifier_words_required'])[0]
+        slop            = json.loads(kwargs['lexicon_classifier_slops'])
+        words_required  = json.loads(kwargs['lexicon_classifier_words_required'])
         counter_lex_id  = json.loads(kwargs['lexicon_classifier_counterlexicons'])[0]
-        cl_slop         = json.loads(kwargs['lexicon_classifier_cl_slops'])[0]
+        cl_slop         = json.loads(kwargs['lexicon_classifier_cl_slops'])
 
         add_counter_lex = False
 
@@ -282,7 +282,7 @@ class LexTagger(object):
             return documents
 
         args = self._load_arguments(kwargs)
-
+    
         lex_ids = args['lex_ids']
         counter_lex_ids = args['counter_lex_id']
         input_features = args['input_features']
