@@ -154,7 +154,7 @@ class FactAdder(FactManager):
 
     def start_fact_adder_task(self, fact_name: str, fact_value: str, fact_field: str, doc_id: str, method: str, match_type: str, case_sens: bool):
         """Adds custom facts to documents, by starting fact_adder management task."""
-        task_type = TaskTypes.MANAGEMENT_TASK
+        task_type = TaskTypes.MANAGEMENT_TASK.value
         description = 'fact_manager_fact_adding'
         params = {
             'fact_name': fact_name,
