@@ -256,6 +256,7 @@ def save(request):
 
         search = Search(author=request.user, search_content=json.dumps(s_content), description=desc,
                         query=json.dumps(q))
+        logger.info('Saving search for datasets: {}'.format(request.session['dataset']))
         search.save()
         for dataset_id in request.session['dataset']:
             dataset = Dataset.objects.get(pk=int(dataset_id))

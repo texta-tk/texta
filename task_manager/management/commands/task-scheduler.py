@@ -53,7 +53,7 @@ class Command(BaseCommand):
         """
         task_type = task.task_type
         task_id = task.id
-        worker = activate_task_worker(task_type)
+        worker = activate_task_worker(task_type.value)
         if worker is None:
             # Invalid task
             task.update_status(Task.STATUS_FAILED)
