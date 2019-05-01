@@ -94,7 +94,7 @@ class EsIterator:
                         try:
                             decoded_text = decoded_text[k]
                         except:
-                            deconded_text = ""
+                            decoded_text = ""
                     
                     if decoded_text:
                         sentences = decoded_text.split('\n')
@@ -104,9 +104,7 @@ class EsIterator:
                             
                             if self.phraser:
                                 sentence = self.phraser.phrase(sentence)
-
                             yield sentence
-
                 except KeyError:
                     pass
                     # If the field is missing from the document
@@ -122,10 +120,6 @@ class EsIterator:
             
             response = self.es_m.scroll(scroll_id=scroll_id, size=ES_SCROLL_SIZE)
             batch_hits = len(response['hits']['hits'])
-            scroll_id = response['_scroll_id']
-
-            response = self.es_m.scroll(scroll_id=scroll_id)
-            total_hits = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
 
 
@@ -162,11 +156,6 @@ class EsDataSample(object):
         scroll_id = response['_scroll_id']
         total_hits = response['hits']['total']
         while total_hits > 0 and len(positive_set) <= sample_size:
-
-            response = self.es_m.scroll(scroll_id=scroll_id)
-            total_hits = len(response['hits']['hits'])
-            scroll_id = response['_scroll_id']
-
             # Check errors in the database request
             if (response['_shards']['total'] > 0 and response['_shards']['successful'] == 0) or response['timed_out']:
                 msg = 'Elasticsearch failed to retrieve documents: ' \
@@ -207,6 +196,10 @@ class EsDataSample(object):
                 else:
                     break
 
+            response = self.es_m.scroll(scroll_id=scroll_id)
+            total_hits = len(response['hits']['hits'])
+            scroll_id = response['_scroll_id']
+
         return positive_samples_map, positive_set
 
 
@@ -224,11 +217,6 @@ class EsDataSample(object):
         sample_size = len(positive_set) * self.negative_set_multiplier
 
         while hit_length > 0 and len(negative_set) <= sample_size:
-
-            response = self.es_m.scroll(scroll_id=scroll_id)
-            hit_length = len(response['hits']['hits'])
-            scroll_id = response['_scroll_id']
-
             # Check errors in the database request
             if (response['_shards']['total'] > 0 and response['_shards']['successful'] == 0) or response['timed_out']:
                 msg = 'Elasticsearch failed to retrieve documents: ' \
@@ -267,6 +255,10 @@ class EsDataSample(object):
                     pass
                     # Commented out to reduce spam
                     # logging.getLogger(ERROR_LOGGER).error('Key does not exist.', exc_info=True, extra={'hit': hit, 'scroll_response': response})
+
+            response = self.es_m.scroll(scroll_id=scroll_id)
+            hit_length = len(response['hits']['hits'])
+            scroll_id = response['_scroll_id']
 
         return negative_samples_map, negative_set
 
