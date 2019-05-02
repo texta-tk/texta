@@ -125,9 +125,10 @@
                                     <!-- button to clone to put into selectpicker after its initialized -->
                                     <button id="dataset-select-apply-button"
                                             class="btn-sm btn btn-default hidden width-max"
+                                            role="button"
                                             onclick="dataset_update_resources()">Apply changes
                                     </button>
-                                    <form>
+                                    <form onsubmit=“return false;" >
                                         <select id="dataset_to_activate" name="dataset_to_activate"
                                                 data-actions-box="true" autocomplete="sadsadas" multiple
                                                 data-live-search="true"
