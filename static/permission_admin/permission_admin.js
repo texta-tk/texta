@@ -18,6 +18,13 @@ $(document).ready(function () {
         format: "yyyy-mm-dd",
         startView: 2
     });
+    $('#index-table').DataTable({
+        "paging": false,
+        "ordering": false,
+        "info": false,
+        "searching": false,
+        fixedHeader: true,
+    });
 });
 
 $('#index').on('change', function () {
@@ -107,7 +114,7 @@ function add_dataset() {
                <td>${data.index}</td>
                <td>${data.mapping}</td>
                <td>${data.author}</td>
-               <td><a href="#" onclick="open_close_dataset('${data.id}','`+((data.status === 'open') ? 'close' : 'open')+`');" title="Click to `+((data.status === 'open' )? 'close' : 'open')+` the index">`+((data.status === 'open') ? 'open' : 'closed') +`</a></td>
+               <td><a href="#" onclick="open_close_dataset('${data.id}','` + ((data.status === 'open') ? 'close' : 'open') + `');" title="Click to ` + ((data.status === 'open') ? 'close' : 'open') + ` the index">` + ((data.status === 'open') ? 'open' : 'closed') + `</a></td>
                <td>${data.store_size}</td>
                <td>${data.docs_count}</td>
                <td>${data.access}</td>

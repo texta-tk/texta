@@ -31,24 +31,24 @@
         </form>
 
         <div class="table-responsive">
-            <table class="table table-striped">
+            <table class="table table-striped" id="index-table">
                 <thead>
-                    <th>ID</th>
+                    <th class="center-td">ID</th>
                     <th>Index</th>
                     <th>Mapping</th>
                     <th>Author</th>
                     <th>Status</th>
                     <th>Size</th>
-                    <th>Doc count</th>
-                    <th>Access</th>
-                    <th><a href="#" onclick="remove_indexes();" title="Click to remove index from Toolkit"><span
+                    <th class="center-td">Doc count</th>
+                    <th class="center-td">Access</th>
+                    <th class="center-td"><a href="#" onclick="remove_indexes();" title="Click to remove index from Toolkit"><span
                             class="glyphicon glyphicon-remove"></span></a></th>
-                    <th><a href="#" onclick="delete_index();" title="Click to delete the index from Elasticsearch"><span
+                    <th class="center-td"><a href="#" onclick="delete_index();" title="Click to delete the index from Elasticsearch"><span
                             class="glyphicon glyphicon-floppy-remove"></span></a></th>
                 </thead>
                 {% for dataset in datasets %}
                 <tr>
-                    <td>
+                    <td class="center-td">
                         {{dataset.pk}}
                     </td>
                     <td>
@@ -70,16 +70,16 @@
                     <td>
                         {{dataset.store_size}}
                     </td>
-                    <td>
+                    <td class="center-td">
                         {{dataset.docs_count}}
                     </td>
-                    <td>
+                    <td class="center-td">
                         {{ dataset.access }}
                     </td>
-                    <td>
+                    <td class="center-td">
                         <input type="checkbox" id='{{ dataset.pk }}' name="toolkit_dataset_delete">
                     </td>
-                    <td>
+                    <td class="center-td">
                         <input type="checkbox" id='{{ dataset.pk }}' name="toolkit_elasticsearch_delete">
                     </td>
                 </tr>
