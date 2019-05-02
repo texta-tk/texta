@@ -105,13 +105,13 @@
                                 </ul>
                             </li>
                             <li id="task_manager"><a href="#"><span
-                                class='glyphicon glyphicon-menu-hamburger'></span> Task
-                            Manager </a></li>
+                                    class='glyphicon glyphicon-menu-hamburger'></span> Task
+                                Manager </a></li>
                             {% if request.user.is_superuser %}
                                 <li id="dataset_importer"><a href="#"><span
-                                    class='glyphicon glyphicon-share'></span> Importer </a></li>
-                                 <li id="permission_admin"><a href="#"><span
-                                    class='glyphicon glyphicon-wrench'></span> Admin </a></li>
+                                        class='glyphicon glyphicon-share'></span> Importer </a></li>
+                                <li id="permission_admin"><a href="#"><span
+                                        class='glyphicon glyphicon-wrench'></span> Admin </a></li>
                             {% endif %}
                         {% endif %}
                     </ul>
@@ -127,22 +127,25 @@
                                             class="btn-sm btn btn-default hidden width-max"
                                             onclick="dataset_update_resources()">Apply changes
                                     </button>
-                                    <select id="dataset_to_activate" name="dataset_to_activate"
-                                            data-actions-box="true" multiple data-live-search="true"
-                                            class="selectpicker dataset-select-dropdown">
-                                        {% for dataset in allowed_datasets %}
-                                            {% if dataset.id|stringformat:"i" in request.session.dataset %}
-                                                <option class="datasetOption" value="{{ dataset.id }}"
-                                                        selected="selected">Dataset {{ dataset.id }}:
-                                                    {{ dataset.index }}
-                                                    - {{ dataset.mapping }}</option>
-                                            {% else %}
-                                                <option class="datasetOption" value="{{ dataset.id }}">
-                                                    Dataset {{ dataset.id }}: {{ dataset.index }} -
-                                                    {{ dataset.mapping }}</option>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </select>
+                                    <form>
+                                        <select id="dataset_to_activate" name="dataset_to_activate"
+                                                data-actions-box="true" autocomplete="sadsadas" multiple
+                                                data-live-search="true"
+                                                class="selectpicker dataset-select-dropdown">
+                                            {% for dataset in allowed_datasets %}
+                                                {% if dataset.id|stringformat:"i" in request.session.dataset %}
+                                                    <option class="datasetOption" value="{{ dataset.id }}"
+                                                            selected="selected">Dataset {{ dataset.id }}:
+                                                        {{ dataset.index }}
+                                                        - {{ dataset.mapping }}</option>
+                                                {% else %}
+                                                    <option class="datasetOption" value="{{ dataset.id }}">
+                                                        Dataset {{ dataset.id }}: {{ dataset.index }} -
+                                                        {{ dataset.mapping }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </form>
                                 </div>
                                 <div class="dropdown">
                                     <button class="btn btn-default dropdown-toggle btn-sm " id="model-dropdown"
