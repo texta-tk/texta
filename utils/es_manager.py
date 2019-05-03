@@ -283,7 +283,7 @@ class ES_Manager:
     def more_like_this(elastic_url, fields: list, like: list, size: int, filters: list, aggregations: list, if_agg_only: bool, dataset: Dataset, return_fields=None):
         # Create the base query creator and unite with ES gateway.
         search = Search(using=Elasticsearch(elastic_url)).index(dataset.index).doc_type(dataset.mapping)
-        mlt = MoreLikeThis(like=like, fields=fields, min_term_freq=1, max_query_terms=12, )  # Prepare the MLT part of the query.
+        mlt = MoreLikeThis(like=like, fields=fields, min_term_freq=1, max_query_terms=12)  # Prepare the MLT part of the query.
 
         paginated_search = search[0:size]  # Set how many documents to return.
         limited_search = paginated_search.source(return_fields) if return_fields else paginated_search  # If added, choose which FIELDS to return.
