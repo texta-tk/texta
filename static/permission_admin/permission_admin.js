@@ -18,6 +18,13 @@ $(document).ready(function () {
         format: "yyyy-mm-dd",
         startView: 2
     });
+    $('#index-table').DataTable({
+        "paging": false,
+        "ordering": false,
+        "info": false,
+        "searching": false,
+        fixedHeader: true,
+    });
 });
 
 $('#index').on('change', function () {
@@ -100,16 +107,34 @@ function add_dataset() {
         daterange_from: daterange_from,
         daterange_to: daterange_to,
         access: access
-    }, function () {
-        location.reload();
+    }, function (data) {
+        $('tbody').append(
+            $(`<tr>
+               <td  class="center-td">${data.id}</td>
+               <td>${data.index}</td>
+               <td>${data.mapping}</td>
+               <td>${data.author}</td>
+               <td><a href="#" onclick="open_close_dataset('${data.id}','` + ((data.status === 'open') ? 'close' : 'open') + `');" title="Click to ` + ((data.status === 'open') ? 'close' : 'open') + ` the index">` + ((data.status === 'open') ? 'open' : 'closed') + `</a></td>
+               <td>${data.store_size}</td>
+               <td class="center-td">${data.docs_count}</td>
+               <td class="center-td">${data.access}</td>
+               <td class="center-td">
+                    <input type="checkbox" autocomplete="off" id='${data.id}' name="toolkit_dataset_delete">
+                </td>
+                <td class="center-td">
+                    <input type="checkbox" autocomplete="off" id='${ data.id}' name="toolkit_elasticsearch_delete">
+                </td>
+               </tr>`),
+        );
+
     });
 }
 
 function toggle_wildcard_dataset() {
-    $(".grid-i-dataset>.index-input").toggleClass("index"); 
+    $(".grid-i-dataset>.index-input").toggleClass("index");
     $(".grid-i-dataset>.wildcard-index-input").toggleClass("index");
 
-    $(".grid-i-mapping>.mapping-input").toggleClass("mapping"); 
+    $(".grid-i-mapping>.mapping-input").toggleClass("mapping");
     $(".grid-i-mapping>.wildcard-mapping-input").toggleClass("mapping");
 
     $(".grid-i-mapping>.mapping-input").toggleClass("hidden");
@@ -119,70 +144,80 @@ function toggle_wildcard_dataset() {
     $(".grid-i-dataset>.wildcard-index-input").toggleClass("hidden");
 }
 
-function remove_index(index) {
+function remove_indexes() {
+
     swal({
         title: 'Are you sure?',
         text: 'Remove?',
         type: 'warning',
+        heightAuto: false,
         showCancelButton: true,
         confirmButtonColor: '#73AD21',
         cancelButtonColor: '#d33',
         confirmButtonText: 'Yes'
     }).then((result) => {
         if (result.value) {
-            swal({
-                title: 'Removed!',
-                text: 'Dataset removed!',
-                type: 'success'
-            }).then((result) => {
-                if (result.value) {
-                    $.post(LINK_ROOT + 'permission_admin/delete_dataset', {
-                        index: index
-                    }, function () {
-                        location.reload();
-                    });
-                } else {
-                    $.post(LINK_ROOT + 'permission_admin/delete_dataset', {
-                        index: index
-                    }, function () {
-                        location.reload();
-                    });
+            let dataset_ids = [];
+            $('input[name="toolkit_dataset_delete"]').each(function () {
+                if ($(this).is(":checked")) {
+                    dataset_ids.push($(this).attr('id'))
                 }
-            })
+            });
+            if (dataset_ids.length === 0) {
+                swalCustomTypeDisplay(SwalType.ERROR, 'Please select one or more indexes')
+            } else {
+                $.ajax({
+                    url: LINK_ROOT + 'permission_admin/delete_dataset',
+                    data: {'dataset_ids[]': dataset_ids},
+                    type: 'POST',
+                    success: function (result) {
+                        if (result.error) {
+                            swalCustomTypeDisplay(SwalType.ERROR, result.error)
+                        } else {
+                            location.reload()
+                        }
+                    }
+                })
+            }
         }
     })
+
 }
 
-function delete_index(index) {
+function delete_index() {
     swal({
         title: 'Are you sure?',
-        text: 'Delete index?',
+        text: 'Remove?',
         type: 'warning',
+        heightAuto: false,
         showCancelButton: true,
         confirmButtonColor: '#73AD21',
         cancelButtonColor: '#d33',
         confirmButtonText: 'Yes'
     }).then((result) => {
         if (result.value) {
-            swal({
-                title: 'Deleted!',
-                text: 'Index deleted!',
-                type: 'success'
-            }).then((result) => {
-                if (result.value) {
-                    $.post(LINK_ROOT + 'permission_admin/delete_index', {
-                        index: index
-                    }, function () {
-                        location.reload();
-                    });
-                } else {
-                    $.post(LINK_ROOT + 'permission_admin/delete_index', {
-                        index: index
-                    }, function () {
-                        location.reload();
-                    });
+            let dataset_ids = [];
+            $('input[name="toolkit_elasticsearch_delete"]').each(function () {
+                if ($(this).is(":checked")) {
+                    dataset_ids.push($(this).attr('id'))
                 }
-            })
+            });
+            if (dataset_ids.length === 0) {
+                swalCustomTypeDisplay(SwalType.ERROR, 'Please select one or more indexes')
+            } else {
+                $.ajax({
+                    url: LINK_ROOT + 'permission_admin/delete_index',
+                    data: {'dataset_ids[]': dataset_ids},
+                    type: 'POST',
+                    success: function (result) {
+                        if (result.error) {
+                            swalCustomTypeDisplay(SwalType.ERROR, result.error)
+                        } else {
+                            location.reload()
+                        }
+                    }
+                })
+            }
         }
     })
 }
@@ -202,12 +237,12 @@ function moveItems(origin, destination) {
     $(origin).find(':selected').appendTo(destination)
 }
 
-$('.allow-btn').on('click',(function (obj) {
+$('.allow-btn').on('click', (function (obj) {
     var userid = $(this).data('userid');
     moveItems('#' + userid + '-disallowed-datasets', '#' + userid + '-allowed-datasets')
 }));
 
-$('.disallow-btn').on('click',(function () {
+$('.disallow-btn').on('click', (function () {
     var userid = $(this).data('userid');
     moveItems('#' + userid + '-allowed-datasets', '#' + userid + '-disallowed-datasets')
 }));

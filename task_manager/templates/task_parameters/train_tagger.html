@@ -20,7 +20,6 @@
                             <div class="col-sm-6">
                                 <select name="{{ task_param.id }}_search" class="selectpicker" required
                                         data-width='100%'>
-                                    <option value="all_docs">Empty (all documents)</option>
                                     {% for search in searches %}
                                         <option title="{{ search.description }}"
                                                 value="{{ search.id }}">{{ search.description }}</option>
@@ -46,121 +45,135 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-sm-6">Feature Extraction:</div>
-                            <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_extractor_opt" class="selectpicker" data-width='100%'>
-                                    {% for extractor_opt in train_tagger_extractor_opt_list %}
-                                        <option title="{{ extractor_opt.label }}"
-                                                value="{{ extractor_opt.index }}">{{ extractor_opt.label }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-sm-6">Dimension Reduction:</div>
-                            <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_reductor_opt" class="selectpicker" data-width='100%'>
-                                    {% for reductor_opt in train_tagger_reductor_opt_list %}
-                                        <option title="{{ reductor_opt.label }}"
-                                                value="{{ reductor_opt.index }}">{{ reductor_opt.label }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-sm-6">Normalization:</div>
-                            <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_normalizer_opt" class="selectpicker"
-                                        data-width='100%'>
-                                    {% for normalizer_opt in train_tagger_normalizer_opt_list %}
-                                        <option title="{{ normalizer_opt.label }}"
-                                                value="{{ normalizer_opt.index }}">{{ normalizer_opt.label }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-sm-6">Classifier:</div>
-                            <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_classifier_opt" class="selectpicker"
-                                        data-width='100%'>
-                                    {% for classifier_opt in train_tagger_classifier_opt_list %}
-                                        <option title="{{ classifier_opt.label }}"
-                                                value="{{ classifier_opt.index }}">{{ classifier_opt.label }}</option>
-                                    {% endfor %}
-                                </select>
-
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-sm-6">Negative set multiplier:</div>
-                            <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_negative_multiplier_opt" class="selectpicker" data-width='100%'>
-                                    <option title="0.5" value="0.5">0.5</option>
-                                    <option title="0.75" value="0.75">0.75</option>
-                                    <option title="1.0" value="1.0" selected="selected">1.0</option>
-                                    <option title="1.5" value="1.5">1.5</option>
-                                    <option title="2.0" value="2.0">2.0</option>
-                                    <option title="3.0" value="3.0">3.0</option>
-                                    <option title="4.0" value="4.0">4.0</option>
-                                    <option title="5.0" value="5.0">5.0</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-sm-6">Maximum sample size per class:</div>
-                            <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_max_sample_size_opt" class="selectpicker" data-width='100%'>
-                                    <option title="10000" value="10000">10000</option>
-                                    <option title="25000" value="25000">25000</option>
-                                    <option title="50000" value="50000">50000</option>
-                                    <option title="100000" value="100000">100000</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-sm-6">Training set score threshold:</div>
-                            <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_score_threshold_opt" class="selectpicker" data-width='100%'>
-                                    <option title="0.0 (use all)" value="0.0">0.0</option>
-                                    <option title="0.1" value="0.1">0.1</option>
-                                    <option title="0.2" value="0.2">0.2</option>
-                                    <option title="0.3" value="0.3">0.3</option>
-                                    <option title="0.4" value="0.4">0.4</option>
-                                    <option title="0.5" value="0.5">0.5</option>
-
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-sm-6">Use language model to cluster words:</div>
-                            <div class="col-sm-6">
-                                <select class="selectpicker" data-width='100%' multiple
-                                        data-selected-text-format="count"
-                                        name="{{ task_param.id }}_word_cluster_fields">
-                                    <option data-hidden="true"></option>
-                                    {% for field in fields %}
-                                        <option title="{{ field.path }}"
-                                                value="{{ field.path }}">{{ field.label }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="row">
                             <div class="col-sm-6">Tagger label:</div>
                             <div class="col-sm-6">
                                 <input required name="{{ task_param.id }}_description" class="form-control input-sm">
                             </div>
                         </div>
+                        <div class="panel-heading more-options" role='button'
+                             data-toggle="collapse"
+                             aria-expanded="false"
+                             aria-controls="optional-options"
+                             data-target="#optional-options"
+                             title="Show optional options"
+                             onclick=togglePanelCollapse(this)><i class="margin-right glyphicon glyphicon-plus"></i>More
+                            options
+                        </div>
+                        <div class="collapse" id='optional-options'>
+                            <div class="row">
+                                <div class="col-sm-6">Feature Extraction:</div>
+                                <div class="col-sm-6">
+                                    <select name="{{ task_param.id }}_extractor_opt" class="selectpicker"
+                                            data-width='100%'>
+                                        {% for extractor_opt in train_tagger_extractor_opt_list %}
+                                            <option title="{{ extractor_opt.label }}"
+                                                    value="{{ extractor_opt.index }}">{{ extractor_opt.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
 
+                            <div class="row">
+                                <div class="col-sm-6">Dimension Reduction:</div>
+                                <div class="col-sm-6">
+                                    <select name="{{ task_param.id }}_reductor_opt" class="selectpicker"
+                                            data-width='100%'>
+                                        {% for reductor_opt in train_tagger_reductor_opt_list %}
+                                            <option title="{{ reductor_opt.label }}"
+                                                    value="{{ reductor_opt.index }}">{{ reductor_opt.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-sm-6">Normalization:</div>
+                                <div class="col-sm-6">
+                                    <select name="{{ task_param.id }}_normalizer_opt" class="selectpicker"
+                                            data-width='100%'>
+                                        {% for normalizer_opt in train_tagger_normalizer_opt_list %}
+                                            <option title="{{ normalizer_opt.label }}"
+                                                    value="{{ normalizer_opt.index }}">{{ normalizer_opt.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-sm-6">Classifier:</div>
+                                <div class="col-sm-6">
+                                    <select name="{{ task_param.id }}_classifier_opt" class="selectpicker"
+                                            data-width='100%'>
+                                        {% for classifier_opt in train_tagger_classifier_opt_list %}
+                                            <option title="{{ classifier_opt.label }}"
+                                                    value="{{ classifier_opt.index }}">{{ classifier_opt.label }}</option>
+                                        {% endfor %}
+                                    </select>
+
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-sm-6">Negative set multiplier:</div>
+                                <div class="col-sm-6">
+                                    <select name="{{ task_param.id }}_negative_multiplier_opt" class="selectpicker"
+                                            data-width='100%'>
+                                        <option title="0.5" value="0.5">0.5</option>
+                                        <option title="0.75" value="0.75">0.75</option>
+                                        <option title="1.0" value="1.0" selected="selected">1.0</option>
+                                        <option title="1.5" value="1.5">1.5</option>
+                                        <option title="2.0" value="2.0">2.0</option>
+                                        <option title="3.0" value="3.0">3.0</option>
+                                        <option title="4.0" value="4.0">4.0</option>
+                                        <option title="5.0" value="5.0">5.0</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-sm-6">Maximum sample size per class:</div>
+                                <div class="col-sm-6">
+                                    <select name="{{ task_param.id }}_max_sample_size_opt" class="selectpicker"
+                                            data-width='100%'>
+                                        <option title="10000" value="10000">10000</option>
+                                        <option title="25000" value="25000">25000</option>
+                                        <option title="50000" value="50000">50000</option>
+                                        <option title="100000" value="100000">100000</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-sm-6">Training set score threshold:</div>
+                                <div class="col-sm-6">
+                                    <select name="{{ task_param.id }}_score_threshold_opt" class="selectpicker"
+                                            data-width='100%'>
+                                        <option title="0.0 (use all)" value="0.0">0.0</option>
+                                        <option title="0.1" value="0.1">0.1</option>
+                                        <option title="0.2" value="0.2">0.2</option>
+                                        <option title="0.3" value="0.3">0.3</option>
+                                        <option title="0.4" value="0.4">0.4</option>
+                                        <option title="0.5" value="0.5">0.5</option>
+
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-sm-6">Use language model to cluster words:</div>
+                                <div class="col-sm-6">
+                                    <select class="selectpicker" data-width='100%' multiple
+                                            data-selected-text-format="count"
+                                            name="{{ task_param.id }}_word_cluster_fields">
+                                        <option data-hidden="true"></option>
+                                        {% for field in fields %}
+                                            <option title="{{ field.path }}"
+                                                    value="{{ field.path }}">{{ field.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="col-sm-12">
                                 <button type="submit"
@@ -184,7 +197,6 @@
          aria-expanded="false"
          aria-controls="new-mass-trainer-collapse"
          data-target="#new-mass-trainer-collapse"
-         title="Collapse the panel"
          onclick=togglePanelCollapse(this)><i class="margin-right glyphicon glyphicon-plus"></i>Mass Trainer
     </div>
     <div class="collapse" id='new-mass-trainer-collapse'>

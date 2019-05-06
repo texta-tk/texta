@@ -36,6 +36,9 @@ class Aggregator(object):
         return response.json()['aggregations']
 
     def _prepare_aggregation_subquery(self, aggregation_steps):
+        for agg in aggregation_steps:
+            agg["field"] = "{}.keyword".format(agg["field"])
+
         final_aggregation_subquery = {}
         aggregation_subquery = final_aggregation_subquery
 

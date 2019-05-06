@@ -12,6 +12,7 @@ from utils.stop_words import StopWords
 ES_SCROLL_SIZE = 500
 STOP_WORDS = StopWords()
 
+
 def get_fields(es_m):
     """ Crete field list from fields in the Elasticsearch mapping
     """
@@ -73,6 +74,7 @@ class EsIterator:
             query = json.loads(Search.objects.get(pk=int(search)).query)
         return query
 
+
     def __iter__(self):
         response = self.es_m.scroll(size=ES_SCROLL_SIZE)
         scroll_id = response['_scroll_id']
@@ -92,7 +94,7 @@ class EsIterator:
                         try:
                             decoded_text = decoded_text[k]
                         except:
-                            deconded_text = ""
+                            decoded_text = ""
                     
                     if decoded_text:
                         sentences = decoded_text.split('\n')
@@ -102,9 +104,7 @@ class EsIterator:
                             
                             if self.phraser:
                                 sentence = self.phraser.phrase(sentence)
-
                             yield sentence
-
                 except KeyError:
                     pass
                     # If the field is missing from the document
@@ -121,6 +121,7 @@ class EsIterator:
             response = self.es_m.scroll(scroll_id=scroll_id, size=ES_SCROLL_SIZE)
             batch_hits = len(response['hits']['hits'])
             scroll_id = response['_scroll_id']
+
 
     def get_total_documents(self):
         return self.es_m.get_total_documents()
@@ -141,6 +142,7 @@ class EsDataSample(object):
         self.max_positive_sample_size = max_positive_sample_size
         self.score_threshold = score_threshold
 
+
     def _get_positive_samples(self, keep_empty=False):
         positive_samples_map = {}
         positive_set = set()
@@ -153,10 +155,6 @@ class EsDataSample(object):
         scroll_id = response['_scroll_id']
         total_hits = response['hits']['total']
         while total_hits > 0 and (len(positive_set) <= self.max_positive_sample_size if self.max_positive_sample_size else True):
-            response = self.es_m.scroll(scroll_id=scroll_id)
-            total_hits = len(response['hits']['hits'])
-            scroll_id = response['_scroll_id']
-
             # Check errors in the database request
             if (response['_shards']['total'] > 0 and response['_shards']['successful'] == 0) or response['timed_out']:
                 msg = 'Elasticsearch failed to retrieve documents: ' \
@@ -169,36 +167,39 @@ class EsDataSample(object):
             # Iterate over all docs
             for hit in response['hits']['hits']:
                 if hit['_score'] >= lowest_allowed_score:
-                    for field in self.fields:
-                        # Extract text content for every field
-                        _temp_text = hit['_source']
-                        try:
-                            for k in field.split('.'):
-                                # Get nested fields encoded as: 'field.sub_field'
-                                _temp_text = _temp_text[k]
-                                # Check that the string is not None nor empty, otherwise raise exception
-                                assert _temp_text is not None and _temp_text
-                        except (KeyError, AssertionError):
-                            # In case the field is not present in the document/empty,
-                            # add empty text or pass if not keep_empty
-                            if keep_empty:
-                                _temp_text = ''
+                        # Save sampled doc id
+                        doc_id = str(hit['_id'])
+                        positive_set.add(doc_id)
+                        for field in self.fields:
+                            # Extract text content for every field
+                            _temp_text = hit['_source']
+                            try:
+                                for k in field.split('.'):
+                                    # Get nested fields encoded as: 'field.sub_field'
+                                    _temp_text = _temp_text[k]
+                                    # Check that the string is not None nor empty, otherwise raise exception
+                                    assert _temp_text is not None and _temp_text
+                            except (KeyError, AssertionError):
+                                # In case the field is not present in the document/empty,
+                                # add empty text or pass if not keep_empty
+                                if keep_empty:
+                                    _temp_text = ''
+                                    positive_samples_map[field].append(_temp_text)
+                            else:
+                                # If no exception occurred,
+                                # save decoded text into sample map
                                 positive_samples_map[field].append(_temp_text)
-                        else:
-                            # If no exception occurred,
-                            # save decoded text into sample map
-                            positive_samples_map[field].append(_temp_text)
-
-                    # Save sampled doc id
-                    doc_id = str(hit['_id'])
-                    positive_set.add(doc_id)
                 else:
                     break
 
+            response = self.es_m.scroll(scroll_id=scroll_id)
+            total_hits = len(response['hits']['hits'])
+            scroll_id = response['_scroll_id']
+
         return positive_samples_map, positive_set
 
-    def _get_negative_samples(self, positive_set, keep_empty=False):
 
+    def _get_negative_samples(self, positive_set, keep_empty=False):
         negative_samples_map = {}
         negative_set = set()
         # Initialize sample map
@@ -212,11 +213,6 @@ class EsDataSample(object):
         sample_size = len(positive_set) * self.negative_set_multiplier
 
         while hit_length > 0 and len(negative_set) <= sample_size:
-
-            response = self.es_m.scroll(scroll_id=scroll_id)
-            hit_length = len(response['hits']['hits'])
-            scroll_id = response['_scroll_id']
-
             # Check errors in the database request
             if (response['_shards']['total'] > 0 and response['_shards']['successful'] == 0) or response['timed_out']:
                 msg = 'Elasticsearch failed to retrieve documents: ' \
@@ -253,7 +249,12 @@ class EsDataSample(object):
                         # save decoded text into sample map
                         negative_samples_map[field].append(_temp_text)
 
+            response = self.es_m.scroll(scroll_id=scroll_id)
+            hit_length = len(response['hits']['hits'])
+            scroll_id = response['_scroll_id']
+
         return negative_samples_map, negative_set
+
 
     def get_data_samples(self, with_fields=True):
         '''Get the data samples for the positive/negative sets
@@ -284,5 +285,6 @@ class EsDataSample(object):
             for field in self.fields:
                 data_sample_x += positive_samples[field] + negative_samples[field]
                 data_sample_y += [1] * len(positive_samples[field]) + [0] * len(negative_samples[field])
-
+        
+        import pdb; pdb.set_trace()
         return data_sample_x, data_sample_y, statistics

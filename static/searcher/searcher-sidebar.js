@@ -834,142 +834,159 @@ function insert(resourceID, suggestionID, descriptiveTerm, lookupType) {
 
 function mltQuery() {
     var formElement = document.getElementById('filters')
-    var mltField = $("select[id='mlt_fields']")
-    var request = new XMLHttpRequest()
-    var formData = new FormData(formElement)
-    var docSliderValue = $('#mlt_doc_slider').slider('getValue')
-    var mltFieldData = mltField.val().map((e) => {
-        return JSON.parse(e).path;
-    })
-    if (mltField.val().length !== 0) {
-        request.onreadystatechange = function () {
-            if (request.readyState === 4) {
-                $('#right').html('')
-                if (request.status === 200) {
-                    $('#right').html(request.responseText)
-                    var columns = []
-                    $('#mlt_table > thead > tr').find('th').each(function (index) {
-                        // Append _DtCol to end to safe from naming conflicts
-                        columns.push({'className': 'DtCol_' + $(this).text(), 'targets': index})
-                    })
-                    let mltTable = $('#mlt_table').DataTable({
-                        'autoWidth': false,
-                        'processing': true,
-                        'serverSide': true,
-                        'scrollY': "100vh",
-                        'ordering': false,
-                        'scrollX': true,
-                        'dom': 'rt',
-                        'ajax': {
-                            "url": PREFIX + '/mlt_query',
-                            "type": "POST",
-                            data: {
-                                'docs': docs.value,
-                                'docs_rejected': docs_rejected.value,
-                                'mlt_stopword_lexicons': JSON.stringify($('#mlt_stopword_lexicons').val()),
-                                'search_size': docSliderValue,
-                                'mlt_fields': JSON.stringify(mltFieldData),
-                                'handle_negatives': $('#handle_negatives').val()
-                            },
-                            error: function (xhr, error, thrown) {
-                                if (xhr.status === 400 && xhr.statusText === 'field') {
-                                    swalCustomTypeDisplay(SwalType.ERROR, 'Please select a field first')
-                                    $('#right').html('No fields selected!')
-                                }
-                                if (xhr.status === 400 && xhr.statusText === 'search') {
-                                    swalCustomTypeDisplay(SwalType.ERROR, 'Please perform a build search first')
-                                    $('#right').html('No search data!')
-                                }
-                                if (xhr.status === 500) {
-                                    swalCustomTypeDisplay(SwalType.ERROR, 'An internal server error has occurred!')
-                                    $('#right').html(`An internal server error occurred: ${xhr.statusText}`)
-                                }
-                            },
-                        },
-                        "columnDefs": [
-                            columns,
-                            {
-                                "targets": 0,
-                                'searchable': false,
-                                'className': 'dt-center',
-                                "render": function (data, type, row, meta) {
-                                    return `<a onclick=javascript:acceptDocument("${data}") role="button"><span class="glyphicon glyphicon-plus"></span></a>`
-                                }
+    var build_search = "";
+    var queryRequest = new XMLHttpRequest()
 
-                            },
-                            {
-                                "targets": 1,
-                                'searchable': false,
-                                'className': 'dt-center',
-                                "render": function (data, type, row, meta) {
-                                    return `<a onclick=javascript:rejectDocument("${data}") role="button"><span class="glyphicon glyphicon-remove"></span></a>`;
-                                },
-
-                            },
-
-                        ],
-                        'stateSave': true,
-                        'stateSaveParams': function (settings, data) {
-                            data.start = 0
-                        },
-                        'stateLoadParams': function (settings, data) {
-                            /*  because state has the last saved state of the table, not the current one then we can check
-                            if the selected datasets were changed and if extra columns were added, removed,
-                            if they were then select all (also did this in previous version, with buttons) */
-                            let selectPicker = $('#mlt-column-select')
-                            if ($('#mlt_table').DataTable().columns().nodes().length !== data.columns.length) {
-                                selectPicker.selectpicker('selectAll')
-                            } else {
-                                selectPicker.selectpicker('deselectAll')
-                                for (var i = 0, ien = data.columns.length; i < ien; i++) {
-                                    if (data.columns[i].visible) {
-                                        /* sync select with the table */
-                                        updateSelectColumnFilter(i, '#mlt-column-select')
-                                    }
-                                }
-                            }
-                            selectPicker.selectpicker('refresh')
-                        },
-                        'fnInitComplete': function () {
-                            let scrollhead = $('.dataTables_scrollHead');
-                            scrollhead.css('overflow-x', 'auto')
-                            // Sync THEAD scrolling with TBODY
-                            scrollhead.on('scroll', function () {
-                                $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft())
-                            })
-
-                            let datatablesNavHeight = $('.mlt-column-select-wrapper').height()
-                            let navbarHeight = $('.grid-item-navbar').height()
-                            let datatablesColumHeight = $('div.dataTables_scrollHead').height()
-                            let datatablesScrollBody = $(window).height()
-                            $('div.dataTables_scrollBody').height(datatablesScrollBody - datatablesColumHeight - navbarHeight - datatablesNavHeight - 25)
-
-                            // Initialize clicking HLs/selection text for properties
-                            /* global createSelectionProps, selectionProps */
-                        },
-                        "fnCreatedRow": function( nRow, aData, iDataIndex ) {
-                            // Assign ID to row with _es_id value for deleting/accepting
-                            $(nRow).attr('id', `row_${aData[0]}`);
-                        }
-                    })
-                    initColumnSelectVisiblity(mltTable, $('#mlt-column-select'))
-                    if ($('.mlt-fullscreen-actions > i').length === 0) {
-                        $('.glyphicon-fullscreen-content-searcher').clone().addClass('new-toggle').appendTo($('.mlt-fullscreen-actions'))
-                    }
-                }
-                else {
-                    $('#right').html('Error Code=' + request.status + ' state = ' + request.readyState + ' response =' + request.statusText)
-                }
-
+    queryRequest.onreadystatechange = function () {
+        if (queryRequest.readyState === 4 && queryRequest.status === 200) {
+            if (queryRequest.responseText.length > 0) {
+                build_search = JSON.parse(queryRequest.responseText)
+                mlt_table(build_search);
             }
         }
-        request.open('POST', PREFIX + '/table_header_mlt')
-        request.send(formData)
-    } else {
-        swalCustomTypeDisplay(SwalType.ERROR, 'Please select a field first')
-        $('#right').html('No fields selected!')
+    }
+    queryRequest.open('POST', PREFIX + '/get_query')
+    queryRequest.send(new FormData(formElement), true)
+
+    function mlt_table(build_search) {
+        var mltField = $("select[id='mlt_fields']")
+        var formData = new FormData(formElement)
+        var request = new XMLHttpRequest()
+        var docSliderValue = $('#mlt_doc_slider').slider('getValue')
+        var mltFieldData = mltField.val().map((e) => {
+            return JSON.parse(e).path;
+        })
+        if (mltField.val().length !== 0) {
+            request.onreadystatechange = function () {
+                if (request.readyState === 4) {
+                    $('#right').html('')
+                    if (request.status === 200) {
+                        $('#right').html(request.responseText)
+                        var columns = []
+                        $('#mlt_table > thead > tr').find('th').each(function (index) {
+                            // Append _DtCol to end to safe from naming conflicts
+                            columns.push({'className': 'DtCol_' + $(this).text(), 'targets': index})
+                        })
+                        let mltTable = $('#mlt_table').DataTable({
+                            'autoWidth': false,
+                            'processing': true,
+                            'serverSide': true,
+                            'scrollY': "100vh",
+                            'ordering': false,
+                            'scrollX': true,
+                            'dom': 'rt',
+                            'ajax': {
+                                "url": PREFIX + '/mlt_query',
+                                "type": "POST",
+                                data: {
+                                    'docs': docs.value,
+                                    'docs_rejected': docs_rejected.value,
+                                    'mlt_stopword_lexicons': JSON.stringify($('#mlt_stopword_lexicons').val()),
+                                    'search_size': docSliderValue,
+                                    'build_search': JSON.stringify(build_search),
+                                    'mlt_fields': JSON.stringify(mltFieldData),
+                                    'handle_negatives': $('#handle_negatives').val()
+                                },
+                                error: function (xhr, error, thrown) {
+                                    if (xhr.status === 400 && xhr.statusText === 'field') {
+                                        swalCustomTypeDisplay(SwalType.ERROR, 'Please select a field first')
+                                        $('#right').html('No fields selected!')
+                                    }
+                                    if (xhr.status === 400 && xhr.statusText === 'search') {
+                                        swalCustomTypeDisplay(SwalType.ERROR, 'Please perform a build search first')
+                                        $('#right').html('No search data!')
+                                    }
+                                    if (xhr.status === 500) {
+                                        swalCustomTypeDisplay(SwalType.ERROR, 'An internal server error has occurred!')
+                                        $('#right').html(`An internal server error occurred: ${xhr.statusText}`)
+                                    }
+                                },
+                            },
+                            "columnDefs": [
+                                columns,
+                                {
+                                    "targets": 0,
+                                    'searchable': false,
+                                    'className': 'dt-center',
+                                    "render": function (data, type, row, meta) {
+                                        return `<a onclick=javascript:acceptDocument("${data}") role="button"><span class="glyphicon glyphicon-plus"></span></a>`
+                                    }
+
+                                },
+                                {
+                                    "targets": 1,
+                                    'searchable': false,
+                                    'className': 'dt-center',
+                                    "render": function (data, type, row, meta) {
+                                        return `<a onclick=javascript:rejectDocument("${data}") role="button"><span class="glyphicon glyphicon-remove"></span></a>`;
+                                    },
+
+                                },
+
+                            ],
+                            'stateSave': true,
+                            'stateSaveParams': function (settings, data) {
+                                data.start = 0
+                            },
+                            'stateLoadParams': function (settings, data) {
+                                /*  because state has the last saved state of the table, not the current one then we can check
+                                if the selected datasets were changed and if extra columns were added, removed,
+                                if they were then select all (also did this in previous version, with buttons) */
+                                let selectPicker = $('#mlt-column-select')
+                                if ($('#mlt_table').DataTable().columns().nodes().length !== data.columns.length) {
+                                    selectPicker.selectpicker('selectAll')
+                                } else {
+                                    selectPicker.selectpicker('deselectAll')
+                                    for (var i = 0, ien = data.columns.length; i < ien; i++) {
+                                        if (data.columns[i].visible) {
+                                            /* sync select with the table */
+                                            updateSelectColumnFilter(i, '#mlt-column-select')
+                                        }
+                                    }
+                                }
+                                selectPicker.selectpicker('refresh')
+                            },
+                            'fnInitComplete': function () {
+                                let scrollhead = $('.dataTables_scrollHead');
+                                scrollhead.css('overflow-x', 'auto')
+                                // Sync THEAD scrolling with TBODY
+                                scrollhead.on('scroll', function () {
+                                    $('.dataTables_scrollBody').scrollLeft($(this).scrollLeft())
+                                })
+
+                                let datatablesNavHeight = $('.mlt-column-select-wrapper').height()
+                                let navbarHeight = $('.grid-item-navbar').height()
+                                let datatablesColumHeight = $('div.dataTables_scrollHead').height()
+                                let datatablesScrollBody = $(window).height()
+                                $('div.dataTables_scrollBody').height(datatablesScrollBody - datatablesColumHeight - navbarHeight - datatablesNavHeight - 25)
+
+                                // Initialize clicking HLs/selection text for properties
+                                /* global createSelectionProps, selectionProps */
+                            },
+                            "fnCreatedRow": function (nRow, aData, iDataIndex) {
+                                // Assign ID to row with _es_id value for deleting/accepting
+                                $(nRow).attr('id', `row_${aData[0]}`);
+                            }
+                        })
+                        initColumnSelectVisiblity(mltTable, $('#mlt-column-select'))
+                        if ($('.mlt-fullscreen-actions > i').length === 0) {
+                            $('.glyphicon-fullscreen-content-searcher').clone().addClass('new-toggle').appendTo($('.mlt-fullscreen-actions'))
+                        }
+                    }
+                    else {
+                        $('#right').html('Error Code=' + request.status + ' state = ' + request.readyState + ' response =' + request.statusText)
+                    }
+
+                }
+            }
+            request.open('POST', PREFIX + '/table_header_mlt')
+            request.send(formData)
+        } else {
+            swalCustomTypeDisplay(SwalType.ERROR, 'Please select a field first')
+            $('#right').html('No fields selected!')
 
 
+        }
     }
 }
 

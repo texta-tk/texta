@@ -71,7 +71,7 @@ class TextTaggerPreprocessor(object):
                 if FACT_FIELD not in documents[i]:
                     documents[i][FACT_FIELD] = []
                 for tag in positive_tags:
-                    new_fact = {'fact': 'TEXTA_TAG', 'str_val': tag, 'doc_path': input_path, 'spans': json.dumps([0, 0])}
+                    new_fact = {'fact': 'TEXTA_TAG', 'str_val': tag, 'doc_path': input_path, 'spans': json.dumps([[0, 0]])}
                     texta_facts.append(new_fact)
                 documents[i][FACT_FIELD].extend(texta_facts)
 

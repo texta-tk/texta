@@ -109,7 +109,6 @@ def translate_parameters(params):
 
     all_neuroclassifier_models = Task.objects.filter(task_type=TaskTypes.TRAIN_NEUROCLASSIFIER, status=Task.STATUS_COMPLETED)
     enabled_neuroclassifiers = {model.pk: model.description for model in all_neuroclassifier_models}
-    print(enabled_neuroclassifiers)
     extractor_options = {a['index']: a['label'] for a in pipe_builder.get_extractor_options()}
     reductor_options = {a['index']: a['label'] for a in pipe_builder.get_reductor_options()}
     normalizer_options = {a['index']: a['label'] for a in pipe_builder.get_normalizer_options()}

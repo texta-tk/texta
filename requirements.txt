@@ -13,8 +13,8 @@ sympy
 lxml
 textract==1.5.0
 beautifulsoup4
-elasticsearch
-elasticsearch_dsl
+elasticsearch==6.3.1
+elasticsearch_dsl==6.3.1
 psycopg2-binary
 dateparser
 json2table
@@ -24,4 +24,8 @@ pandas
 psutil
 python-crfsuite
 matplotlib
+django-picklefield
+djangorestframework
+xlrd
+graypy
 django-picklefield

@@ -4,7 +4,6 @@ from permission_admin.models import Dataset
 from django.utils import timezone
 
 class GrammarComponent(models.Model):
-    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=256)
     type = models.CharField(max_length=64)
     content = models.CharField(max_length=512,null=True, blank=True)
@@ -21,7 +20,6 @@ class GrammarComponent(models.Model):
 # Maps grammar tool's session data (search_id, inclusive_grammar, exclusive_grammar) and pagination step to
 # specific cursor location ('from') in Elastic Search.
 class GrammarPageMapping(models.Model):
-    id = models.AutoField(primary_key=True)
     search_id = models.IntegerField()
     inclusive_grammar = models.IntegerField()
     exclusive_grammar = models.IntegerField()
@@ -32,7 +30,6 @@ class GrammarPageMapping(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     
 class Grammar(models.Model):
-    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=64)
     json = models.CharField(max_length=2048)
     last_modified = models.DateTimeField()

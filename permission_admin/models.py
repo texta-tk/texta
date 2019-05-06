@@ -8,7 +8,6 @@ MAX_STR_LEN = 100
 
 
 class Dataset(models.Model):
-    id = models.AutoField(primary_key=True)
     index = models.CharField(max_length=MAX_STR_LEN)
     mapping = models.CharField(max_length=MAX_STR_LEN)
     author = models.ForeignKey(User, on_delete=models.CASCADE) 
@@ -20,7 +19,6 @@ class Dataset(models.Model):
 
 
 class ScriptProject(models.Model):
-    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=MAX_STR_LEN)
     desc = models.TextField()
     entrance_point = models.CharField(max_length=MAX_STR_LEN)

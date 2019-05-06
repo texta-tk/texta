@@ -219,7 +219,8 @@ class NeuroClassifierWorker(BaseWorker):
         # Change self.vocab_size to the final vocab size, if it was less than the max
         final_vocab_size = len(self.tokenizer.word_index)
         if not self.vocab_size or final_vocab_size < self.vocab_size:
-            self.vocab_size = final_vocab_size
+            # Add 1 to vocab to avoid OOV error because of the last value
+            self.vocab_size = final_vocab_size + 1
 
 
     def _train_model(self):

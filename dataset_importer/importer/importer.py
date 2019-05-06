@@ -101,7 +101,7 @@ class DatasetImporter(object):
                 import_process.terminate()
 
             if import_dict['is_local'] is False:
-                shutil.rmtree(import_dict['directory'])
+                tear_down_import_directory(import_dict['directory'])
 
         try:
             dataset_import = self._dao.objects.get(pk=import_id)
@@ -306,6 +306,10 @@ def _import_dataset(parameter_dict, n_processes, process_batch_size):
     _set_total_documents(parameter_dict=parameter_dict, reader=reader)
     _run_processing_jobs(parameter_dict=parameter_dict, reader=reader, n_processes=n_processes, process_batch_size=process_batch_size)
 
+    # After import is done, remove files from disk
+    tear_down_import_directory(parameter_dict['directory'])
+
+
 
 def _extract_archives(parameter_dict):
     """Extracts archives based on the information from the parameters.
@@ -470,6 +474,7 @@ def download(url, target_directory, chunk_size=1024):
 
 
 def tear_down_import_directory(import_directory_path):
+    '''Remove the imported files from disk for a specific directory'''
     shutil.rmtree(import_directory_path)
 
 
