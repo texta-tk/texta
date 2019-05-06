@@ -110,19 +110,19 @@ function add_dataset() {
     }, function (data) {
         $('tbody').append(
             $(`<tr>
-               <td>${data.id}</td>
+               <td  class="center-td">${data.id}</td>
                <td>${data.index}</td>
                <td>${data.mapping}</td>
                <td>${data.author}</td>
                <td><a href="#" onclick="open_close_dataset('${data.id}','` + ((data.status === 'open') ? 'close' : 'open') + `');" title="Click to ` + ((data.status === 'open') ? 'close' : 'open') + ` the index">` + ((data.status === 'open') ? 'open' : 'closed') + `</a></td>
                <td>${data.store_size}</td>
-               <td>${data.docs_count}</td>
-               <td>${data.access}</td>
-               <td>
-                    <input type="checkbox" id='${data.id}' name="toolkit_dataset_delete">
+               <td class="center-td">${data.docs_count}</td>
+               <td class="center-td">${data.access}</td>
+               <td class="center-td">
+                    <input type="checkbox" autocomplete="off" id='${data.id}' name="toolkit_dataset_delete">
                 </td>
-                <td>
-                    <input type="checkbox" id='${ data.id}' name="toolkit_elasticsearch_delete">
+                <td class="center-td">
+                    <input type="checkbox" autocomplete="off" id='${ data.id}' name="toolkit_elasticsearch_delete">
                 </td>
                </tr>`),
         );
