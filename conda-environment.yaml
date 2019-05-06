@@ -15,6 +15,8 @@ dependencies:
     - beautifulsoup4
     - mysqlclient
     - psycopg2
+    - graphviz
+    - keras
     - pip:
         - python-logstash-async
         - sklearn
@@ -29,3 +31,4 @@ dependencies:
         - elasticsearch
         - elasticsearch_dsl
         - graypy
+        - git+https://github.com/autonomio/talos.git@daily-dev

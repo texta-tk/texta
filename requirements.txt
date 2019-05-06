@@ -29,3 +29,5 @@ djangorestframework
 xlrd
 graypy
 django-picklefield
+keras
+git+git://github.com/autonomio/talos.git@daily-dev
