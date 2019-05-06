@@ -1,21 +1,34 @@
-<div class="form-horizontal">
-    <div class="form-group">
-        <label class="control-label col-sm-3" for="text-cleaner-feature-names">Fields:</label>
-        <div class="col-sm-7">
-		    {% if fields %}
-		        <select class="form-control input-sm" multiple="multiple" id="text-cleaner-feature-names" name="mlp_lite_feature_names">
-				{% for field in fields %}
-					<option value="{{field.data}}" {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{field.label}}</option>
-				{% endfor %}
-				</select>
-		    {% else %}
-		    	<textarea class="form-control" rows="2" id="text-cleaner-feature-names" name="mlp_lite_feature_names"></textarea>
-		    {% endif %}
-        </div>
-        <span data-toggle="tooltip" data-placement="bottom" title="List of feature names one below another.
-    Example:
-        my_field1
-        my_field2" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
-    </div>
+<div class="task-manager-grid-wrapper bg-grey preprocessor-padding width-max">
+    <div class="grid-i">
+        <label class="control-label" for="text-cleaner-feature-names">Fields:</label>
+        <div class="select-wrapper">
+            {% if fields %}
 
+                <select class="selectpicker" data-width="100%"  multiple="multiple" id="text-cleaner-feature-names"
+                        name="mlp_lite_feature_names" data-style="btn-sm btn-default">
+                    {% for field in fields %}
+                        <option value="{{ field.data }}"
+                                {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{ field.label }}</option>
+                    {% endfor %}
+                </select>
+
+            {% else %}
+                <textarea class="form-control" rows="2" id="text-cleaner-feature-names"
+                          name="mlp_lite_feature_names"></textarea>
+            {% endif %}
+        </div>
+
+    </div>
+    <div class="grid-i">
+        <label class="control-label" for="text-cleaner-output-type">Output:</label>
+        <div class="select-wrapper">
+            <select class="selectpicker" data-width="100%"  id="text-cleaner-output-type"
+                    name="mlp_lite_output_type" data-style="btn-sm btn-default">
+                {% for output_type in preprocessor.output_type %}
+                    <option value="{{ output_type }}"
+                            {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{ output_type }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
 </div>

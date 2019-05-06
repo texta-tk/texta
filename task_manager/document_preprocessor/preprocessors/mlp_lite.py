@@ -52,6 +52,11 @@ class MLPLitePreprocessor(object):
         else:
             input_features = json.loads(kwargs['text_cleaner_preprocessor_feature_names'])
 
+        if not kwargs.get('mlp_lite_output_type', None):
+            output_type = 'full'
+        else:
+            output_type = json.loads(kwargs['mlp_lite_output_type'])
+
         for input_feature in input_features:
             try:
                 input_feature = json.loads(input_feature)["path"]
@@ -66,6 +71,7 @@ class MLPLitePreprocessor(object):
             for analyzation_idx, analyzation_datum in enumerate(analyzation_data):
                 documents[analyzation_idx][input_feature+'_mlp-lite'] = {}
                 documents[analyzation_idx][input_feature+'_mlp-lite']['text'] = analyzation_datum['text']
-                documents[analyzation_idx][input_feature+'_mlp-lite']['stats'] = self._process_stats(analyzation_datum['stats'])
+                if output_type == 'full':
+                    documents[analyzation_idx][input_feature+'_mlp-lite']['stats'] = self._process_stats(analyzation_datum['stats'])
 
         return {'documents': documents, 'meta': {}, 'erros': errors}

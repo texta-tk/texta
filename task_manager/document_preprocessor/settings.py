@@ -80,6 +80,7 @@ try:
         'arguments': {
             'mlp_url': MLP_URL,
         },
+        'output_type': ['lemmas', 'full'],
         'field_properties': mlp_field_properties,
         'is_enabled': True
     }
