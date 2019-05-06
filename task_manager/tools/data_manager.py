@@ -286,5 +286,4 @@ class EsDataSample(object):
                 data_sample_x += positive_samples[field] + negative_samples[field]
                 data_sample_y += [1] * len(positive_samples[field]) + [0] * len(negative_samples[field])
         
-        import pdb; pdb.set_trace()
         return data_sample_x, data_sample_y, statistics
