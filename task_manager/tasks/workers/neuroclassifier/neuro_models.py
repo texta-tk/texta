@@ -52,7 +52,7 @@ class NeuroModels():
         if model_arch in self.models_map:
             return self.models_map[model_arch]
         else:
-            raise ValueError(f'"{model_arch}" is not a valid model architecture!')
+            raise ValueError('"{}" is not a valid model architecture!'.format(model_arch))
 
     # Simplier models
     @staticmethod
