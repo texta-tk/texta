@@ -31,4 +31,5 @@ dependencies:
         - elasticsearch
         - elasticsearch_dsl
         - graypy
+        - tensorflow-gpu
         - git+https://github.com/autonomio/talos.git@daily-dev

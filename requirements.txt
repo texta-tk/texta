@@ -30,4 +30,5 @@ xlrd
 graypy
 django-picklefield
 keras
+tensorflow-gpu
 git+git://github.com/autonomio/talos.git@daily-dev
