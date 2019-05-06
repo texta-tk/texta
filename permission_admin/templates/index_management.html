@@ -77,10 +77,10 @@
                         {{ dataset.access }}
                     </td>
                     <td class="center-td">
-                        <input type="checkbox" id='{{ dataset.pk }}' name="toolkit_dataset_delete">
+                        <input autocomplete="off" type="checkbox" id='{{ dataset.pk }}' name="toolkit_dataset_delete">
                     </td>
                     <td class="center-td">
-                        <input type="checkbox" id='{{ dataset.pk }}' name="toolkit_elasticsearch_delete">
+                        <input autocomplete="off" type="checkbox" id='{{ dataset.pk }}' name="toolkit_elasticsearch_delete">
                     </td>
                 </tr>
                 {% endfor %}
