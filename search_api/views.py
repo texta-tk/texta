@@ -77,7 +77,7 @@ def more_like_this(request):
 
         if valid_request.is_valid():
             post_data = valid_request.validated_data
-            fields = ["{}.keyword".format(field) for field in post_data["fields"]]
+            fields = [field for field in post_data["fields"]]
             size = post_data.get("size", 10)
             returned_fields = post_data.get("returned_fields", None)
             if_agg_only = post_data.get("if_agg_only", False)
