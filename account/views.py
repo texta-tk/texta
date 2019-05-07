@@ -166,7 +166,7 @@ def login(request):
 		logging.getLogger(INFO_LOGGER).info(
 				json.dumps({'process': '*', 'event': 'login_process_failed', 'args': {'user_name': username}}))
 
-	return HttpResponse(json.dumps({'process': '*', 'event': 'login_process_failed', 'args': {'user_name': username}}))
+	return HttpResponse(json.dumps({'process': '*', 'event': 'login_process_failed', 'args': {'user_name': username}}), status=401)
 
 
 @login_required

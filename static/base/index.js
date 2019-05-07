@@ -84,13 +84,15 @@ function login() {
             'username': usernameInput,
             'password': passwordInput
         },
+        statusCode: {
+            401: function () {
+                invalidateInput('login_form', 'has-error', 'Failed to login')
+            }
+        },
         type: 'POST',
     }).then((data) => {
-
             data = JSON.parse(data)
-            if (data.event === 'login_process_failed') {
-                invalidateInput('login_form', 'has-error', 'Failed to login')
-            } else if (data.event === 'login_process_succeeded') {
+            if (data.event === 'login_process_succeeded') {
                 go_to(LINK_ROOT)
             }
         }
