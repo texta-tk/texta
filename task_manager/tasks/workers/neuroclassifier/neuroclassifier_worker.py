@@ -148,7 +148,8 @@ class NeuroClassifierWorker(BaseWorker):
         self.seq_len = int(self.task_params['max_seq_len'])
         self.vocab_size = int(self.task_params['max_vocab_size'])
         self.num_epochs = int(self.task_params['num_epochs'])
-        self.crop_amount = int(self.task_params['crop_amount'])
+        self.crop_amount = int(self.task_params['crop_amount']) 
+        self.crop_amount = self.crop_amount if self.crop_amount > 0 else None
         self.validation_split = float(self.task_params['validation_split'])
         self.grid_downsample_amount = float(self.task_params['grid_downsample_amount'])
 
@@ -212,9 +213,13 @@ class NeuroClassifierWorker(BaseWorker):
         # Crop the training data if crop_amount is given
         if self.crop_amount:
             self.X_train = self.X_train[:self.crop_amount]
-            self.y_train = np.array(self.y_train[:self.crop_amount])
+            self.y_train = self.y_train[:self.crop_amount]
             self.X_val = self.X_val[:self.crop_amount]
-            self.y_val = np.array(self.y_val[:self.crop_amount])
+            self.y_val = self.y_val[:self.crop_amount]
+
+        # Convert labels to numpy arrays
+        self.y_train = np.array(self.y_train)
+        self.y_val = np.array(self.y_val)
 
         # Change self.vocab_size to the final vocab size, if it was less than the max
         final_vocab_size = len(self.tokenizer.word_index)
@@ -307,8 +312,8 @@ class NeuroClassifierWorker(BaseWorker):
             'y_train.shape': self.y_train.shape,
             'X_val.shape': self.X_val.shape,
             'y_val.shape': self.y_val.shape,
-            'seq_len': self.seq_len,
-            'vocab_size': self.vocab_size,
+            'max_sequence_len': self.seq_len,
+            'vocabulary_size': self.vocab_size,
             'model_json': self.model.to_json(),
         }
 
@@ -320,11 +325,10 @@ class NeuroClassifierWorker(BaseWorker):
         # Evaluate model, get [loss, accuracy]
         val_eval = self.model.evaluate(x=self.X_val, y=self.y_val, batch_size=self.bs, verbose=1)
         train_eval = self.model.evaluate(x=self.X_train, y=self.y_train, batch_size=self.bs, verbose=1)
-
-        self.task_result['val_acc'] = "{0:.4f}".format(val_eval[1]),
-        self.task_result['val_loss'] = "{0:.4f}".format(val_eval[0]),
-        self.task_result['train_acc'] = "{0:.4f}".format(train_eval[1]),
-        self.task_result['train_loss'] = "{0:.4f}".format(train_eval[0]),
+        self.task_result['Validation accuracy'] = "{0:.4f}".format(val_eval[1])
+        self.task_result['Validation loss'] = "{0:.4f}".format(val_eval[0])
+        self.task_result['Training accuracy'] = "{0:.4f}".format(train_eval[1])
+        self.task_result['Training loss'] = "{0:.4f}".format(train_eval[0])
 
 
     def _save_model(self):
@@ -367,30 +371,26 @@ class NeuroClassifierWorker(BaseWorker):
 
 
     def _plot_generic_model(self, history):
+        fig, ax = plt.subplots(1, 2, figsize=(16,8))
         # Plot training & validation accuracy values
-        plt.plot(history.history['acc'])
-        plt.plot(history.history['val_acc'])
-        plt.title('Model accuracy')
-        plt.ylabel('Accuracy')
-        plt.xlabel('Epoch')
-        plt.legend(['Train', 'Test'], loc='upper left')
-        acc_plot_name = "{}_acc.svg".format(self.model_name)
-        acc_plot_path = create_file_path(acc_plot_name, PROTECTED_MEDIA, "task_manager", self.task_type)
-        acc_plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager", self.task_type, acc_plot_name)
-        plt.savefig(acc_plot_path, format="svg", bbox_inches='tight')
-        plt.clf()
+        ax[0].plot(history.history['acc'])
+        ax[0].plot(history.history['val_acc'])
+        ax[0].set_title('Model accuracy')
+        ax[0].set_ylabel('Accuracy')
+        ax[0].set_xlabel('Epoch')
+        ax[0].legend(['Train', 'Test'], loc='upper left')
 
         # Plot training & validation loss values
-        plt.plot(history.history['loss'])
-        plt.plot(history.history['val_loss'])
-        plt.title('Model loss')
-        plt.ylabel('Loss')
-        plt.xlabel('Epoch')
-        plt.legend(['Train', 'Test'], loc='upper left')
-        loss_plot_name = "{}_loss.svg".format(self.model_name)
-        loss_plot_path = create_file_path(loss_plot_name, PROTECTED_MEDIA, "task_manager", self.task_type)
-        loss_plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager", self.task_type, loss_plot_name)
-        plt.savefig(loss_plot_path, format="svg", bbox_inches='tight')
+        ax[1].plot(history.history['loss'])
+        ax[1].plot(history.history['val_loss'])
+        ax[1].set_title('Model loss')
+        ax[1].set_ylabel('Loss')
+        ax[1].set_xlabel('Epoch')
+        ax[1].legend(['Train', 'Test'], loc='upper left')
+        acc_loss_plot_name = "{}_acc_loss.svg".format(self.model_name)
+        acc_loss_plot_path = create_file_path(acc_loss_plot_name, PROTECTED_MEDIA, "task_manager", self.task_type)
+        acc_loss_plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager", self.task_type, acc_loss_plot_name)
+        plt.savefig(acc_loss_plot_path, format="svg", bbox_inches='tight')
         plt.clf()
 
         # Plot Keras model
@@ -400,9 +400,8 @@ class NeuroClassifierWorker(BaseWorker):
         plot_model(self.model, to_file=model_plot_path, show_shapes=True)
 
         # NOTE Save plots as HTML images for now, whilst there is no better alternative
-        self.task_result['acc_plot'] = '<img src="{}" style="max-width: 80%">'.format(acc_plot_url)
-        self.task_result['loss_plot'] = '<img src="{}" style="max-width: 80%">'.format(loss_plot_url)
-        self.task_result['model_plot'] = '<img src="{}" style="max-width: 80%">'.format(model_plot_url)
+        self.task_result['acc_loss_plot'] = '<img src="{}" style="max-width: 800px">'.format(acc_loss_plot_url)
+        self.task_result['model_plot'] = '<img src="{}" style="max-width: 400px">'.format(model_plot_url)
 
 
     def load(self, task_id):
@@ -420,7 +419,7 @@ class NeuroClassifierWorker(BaseWorker):
         self.model_name = 'model_{}'.format(self.task_obj.unique_id)
         self.task_type = self.task_obj.task_type
         model_path = os.path.join(MODELS_DIR, self.task_type, self.model_name)
-        self.seq_len = json.loads(self.task_obj.result)['seq_len']
+        self.seq_len = json.loads(self.task_obj.result)['max_sequence_len']
         tokenizer_name = '{}_tokenizer'.format(self.model_name)
         tokenizer_path = os.path.join(MODELS_DIR, self.task_type, tokenizer_name)
 

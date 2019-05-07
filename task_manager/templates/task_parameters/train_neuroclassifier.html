@@ -88,13 +88,13 @@
                             <input id="neuroclassifier_crop_amount" name="{{ task_param.id }}_crop_amount"
                                    class="form-control"
                                    data-slider-id='neuroclassifier_crop_amount' data
-                                   type="text" data-slider-min="100" data-slider-max="100000"
+                                   type="text" data-slider-min="0" data-slider-max="100000"
                                    data-slider-step="500"
-                                   data-slider-value="10000"
+                                   data-slider-value="0"
                             />
                         </div>
                         <div><span data-toggle="tooltip" data-placement="bottom"
-                                   title="Crops the training data to that amount. Useful for quick prototyping without creating a smaller search."
+                                   title="Crops the training data to that amount. Useful for quick prototyping without creating a smaller search. Set value to 0 for no cropping."
                                    class="glyphicon glyphicon-question-sign texta-tooltip"></span>
                         </div>
                     </div>
