@@ -5,233 +5,241 @@
          aria-controls="new-classification-collapse"
          data-target="#new-classification-collapse"
          title="Collapse the panel"
-         >Train a New Neuroclassifier Model
+    >Train a New Neuroclassifier Model
     </div>
     <div class="collapse in">
         <div class="panel-body">
 
-            <div class="form-group">
-                <form action="javascript:start_task('{{ task_param.id }}','form_{{ task_param.id }}');"
-                      id="form_{{ task_param.id }}" autocomplete="off">
-                    <div class="col-sm-12">
-                        <div class="row">
-                            <div class="col-sm-6">Select a search:</div>
-                            <div class="col-sm-6">
-                                <select name="{{ task_param.id }}_search" class="selectpicker" required
-                                        data-width='100%'>
-                                    <option value="all_docs">Empty (all documents)</option>
-                                    {% for search in searches %}
-                                        <option title="{{ search.description }}"
-                                                value="{{ search.id }}">{{ search.description }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+
+            <form action="javascript:start_task('{{ task_param.id }}','form_{{ task_param.id }}');"
+                  id="form_{{ task_param.id }}" autocomplete="off">
+                <div class="task-manager-grid-wrapper neuroclassifier-grid">
+                    <div class="grid-i">
+                        <div>Select a search:</div>
+                        <div class="select-wrapper">
+                            <select name="{{ task_param.id }}_search" class="selectpicker" required
+                                    data-width='100%'>
+                                <option value="all_docs">Empty (all documents)</option>
+                                {% for search in searches %}
+                                    <option title="{{ search.description }}"
+                                            value="{{ search.id }}">{{ search.description }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-sm-6">Select fields:</div>
-                            <div class="col-sm-6">
-                                <select class="selectpicker" data-width='100%' multiple
-                                        required
-                                        data-selected-text-format="count"
-                                        name="{{ task_param.id }}_fields">
-                                    <option data-hidden="true"></option>
-                                    {% for field in fields %}
-                                        <option title="{{ field.path }}"
-                                                value="{{ field.path }}">{{ field.label }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+                    <div class="grid-i">
+                        <div>Select fields:</div>
+                        <div class="select-wrapper">
+                            <select class="selectpicker" data-width='100%' multiple
+                                    required
+                                    data-selected-text-format="count"
+                                    name="{{ task_param.id }}_fields">
+                                <option data-hidden="true"></option>
+                                {% for field in fields %}
+                                    <option title="{{ field.path }}"
+                                            value="{{ field.path }}">{{ field.label }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
+                    </div>
 
 
-                        <div class="row">
-                            <div class="col-sm-5">Model architecture:</div>
-                            <div class="col-sm-5">
-                                <select name="{{ task_param.id }}_model_arch" class="selectpicker"
-                                        data-width='100%'>
-                                    {% for arch in task_param.architectures %}
-                                        <option title="{{ arch }}"
-                                                value="{{ arch }}">{{ arch }}</option>
-                                                {% comment %} TODO {% endcomment %}
-                                    {% endfor %}
-                                </select>
+                    <div class="grid-i">
+                        <div>Model architecture:</div>
+                        <div class="select-wrapper">
+                            <select name="{{ task_param.id }}_model_arch" class="selectpicker"
+                                    data-width='100%'>
+                                {% for arch in task_param.architectures %}
+                                    <option title="{{ arch }}"
+                                            value="{{ arch }}">{{ arch }}</option>
+                                    {% comment %} TODO {% endcomment %}
+                                {% endfor %}
+                            </select>
 
-                            </div>
-                        <div class="col-xs-1"><span data-toggle="tooltip" data-placement="bottom"
-                                title="Select the model architecture used for training. For automatic hyperparameter search (slower), use auto models. For models with preset hyperparameters, choose simple (manual) models."
-                            class="glyphicon glyphicon-question-sign texta-tooltip"></span>
                         </div>
+                        <div><span data-toggle="tooltip" data-placement="bottom"
+                                   title="Select the model architecture used for training. For automatic hyperparameter search (slower), use auto models. For models with preset hyperparameters, choose simple (manual) models."
+                                   class="glyphicon glyphicon-question-sign texta-tooltip"></span>
                         </div>
+                    </div>
 
 
-                        <div class="row">
-                            <div class="col-sm-5">Validation amount:</div>
-                            <div class="col-sm-5 slider-wrapper">
-                                <input id="neuroclassifier_validation_split" name="{{ task_param.id }}_validation_split" class="form-control"
-                                       data-slider-id='neuroclassifier_validation_split' data
-                                       type="text" data-slider-min="0.01" data-slider-max="0.95"
-                                       data-slider-step="0.01"
-                                       data-slider-value="0.20"
-                                />
-                            </div>
-                            <div class="col-xs-1"><span data-toggle="tooltip" data-placement="bottom"
-                                title="Validation data percentage for manual models"
-                                class="glyphicon glyphicon-question-sign texta-tooltip"></span>
-                            </div>
+                    <div class="grid-i">
+                        <div>Validation amount:</div>
+                        <div class=" slider-wrapper">
+                            <input id="neuroclassifier_validation_split" name="{{ task_param.id }}_validation_split"
+                                   class="form-control"
+                                   data-slider-id='neuroclassifier_validation_split' data
+                                   type="text" data-slider-min="0.01" data-slider-max="0.95"
+                                   data-slider-step="0.01"
+                                   data-slider-value="0.20"
+                            />
                         </div>
-
-                        <div class="row">
-                            <div class="col-sm-5">Crop to:</div>
-                            <div class="col-sm-5 slider-wrapper">
-                                <input id="neuroclassifier_crop_amount" name="{{ task_param.id }}_crop_amount" class="form-control"
-                                       data-slider-id='neuroclassifier_crop_amount' data
-                                       type="text" data-slider-min="100" data-slider-max="100000"
-                                       data-slider-step="500"
-                                       data-slider-value="10000"
-                                />
-                            </div>
-                            <div class="col-xs-1"><span data-toggle="tooltip" data-placement="bottom"
-                                title="Crops the training data to that amount. Useful for quick prototyping without creating a smaller search."
-                                class="glyphicon glyphicon-question-sign texta-tooltip"></span>
-                            </div>
+                        <div><span data-toggle="tooltip" data-placement="bottom"
+                                   title="Validation data percentage for manual models"
+                                   class="glyphicon glyphicon-question-sign texta-tooltip"></span>
                         </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-sm-5">Grid Search downsample amount:</div>
-                            <div class="col-sm-5 slider-wrapper">
-                                <input id="neuroclassifier_grid_downsample_amount" name="{{ task_param.id }}_grid_downsample_amount" class="form-control"
-                                       data-slider-id='neuroclassifier_grid_downsample_amount' data
-                                       type="text" data-slider-min="0.00001" data-slider-max="0.1"
-                                       data-slider-step="0.00001"
-                                       data-slider-value="0.001"
-                                />
-                            </div>
-                            <div class="col-xs-1"><span data-toggle="tooltip" data-placement="bottom"
-                                title="Hyperparameter smart grid search downsample amount for auto models, low amounts are recommended, the higher the amount, the longer it will take."
-                                class="glyphicon glyphicon-question-sign texta-tooltip"></span>
-                            </div>
+                    <div class="grid-i">
+                        <div>Crop to:</div>
+                        <div class=" slider-wrapper">
+                            <input id="neuroclassifier_crop_amount" name="{{ task_param.id }}_crop_amount"
+                                   class="form-control"
+                                   data-slider-id='neuroclassifier_crop_amount' data
+                                   type="text" data-slider-min="100" data-slider-max="100000"
+                                   data-slider-step="500"
+                                   data-slider-value="10000"
+                            />
                         </div>
-
-                        <div class="row">
-                                <div class="col-sm-5">Num epochs for manual model:</div>
-                            <div class="col-sm-5 slider-wrapper">
-
-                                <input id="neuroclassifier_num_epochs" name="{{ task_param.id }}_num_epochs" class="form-control"
-                                       data-slider-id='neuroclassifier_num_epochs' data
-                                       type="text" data-slider-min="1" data-slider-max="25"
-                                       data-slider-step="1"
-                                       data-slider-value="3"
-                                />
-                            </div>
-                            <div class="col-xs-1"><span data-toggle="tooltip" data-placement="bottom"
-                                title="Number of training passes for manual models"
-                                class="glyphicon glyphicon-question-sign texta-tooltip"></span>
-                            </div>
+                        <div><span data-toggle="tooltip" data-placement="bottom"
+                                   title="Crops the training data to that amount. Useful for quick prototyping without creating a smaller search."
+                                   class="glyphicon glyphicon-question-sign texta-tooltip"></span>
                         </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-sm-5">Max sequence length:</div>
-                            <div class="col-sm-5 slider-wrapper">
-                                <input id="neuroclassifier_max_seq_len" name="{{ task_param.id }}_max_seq_len" class="form-control"
-                                       data-slider-id='neuroclassifier_max_seq_len' data
-                                       type="text" data-slider-min="20" data-slider-max="500"
-                                       data-slider-step="1"
-                                       data-slider-value="50"
-                                />
-                            </div>
-                            <div class="col-xs-1"><span data-toggle="tooltip" data-placement="bottom"
-                                title="Max length for a document. Increasing may improve accuracy, but decreased training performance, and might run out of memory"
-                                class="glyphicon glyphicon-question-sign texta-tooltip"></span>
-                            </div>
+                    <div class="grid-i">
+                        <div>Grid Search downsample amount:</div>
+                        <div class="slider-wrapper">
+                            <input id="neuroclassifier_grid_downsample_amount"
+                                   name="{{ task_param.id }}_grid_downsample_amount" class="form-control"
+                                   data-slider-id='neuroclassifier_grid_downsample_amount' data
+                                   type="text" data-slider-min="0.00001" data-slider-max="0.1"
+                                   data-slider-step="0.00001"
+                                   data-slider-value="0.001"
+                            />
                         </div>
-
-                        <div class="row">
-                            <div class="col-sm-5">Max vocab size:</div>
-                            <div class="col-sm-5 slider-wrapper">
-                                <input id="neuroclassifier_max_vocab_size" name="{{ task_param.id }}_max_vocab_size" class="form-control"
-                                       data-slider-id='neuroclassifier_max_vocab_size' data
-                                       type="text" data-slider-min="1000" data-slider-max="2000000"
-                                       data-slider-step="500"
-                                       data-slider-value="50000"
-                                />
-                            </div>
-                            <div class="col-xs-1"><span data-toggle="tooltip" data-placement="bottom"
-                                title="Max number of words present in the dataset. Increasing may improve accuracy, but decreases training performance, and might run out of memory"
-                                class="glyphicon glyphicon-question-sign texta-tooltip"></span>
-                            </div>
+                        <div><span data-toggle="tooltip" data-placement="bottom"
+                                   title="Hyperparameter smart grid search downsample amount for auto models, low amounts are recommended, the higher the amount, the longer it will take."
+                                   class="glyphicon glyphicon-question-sign texta-tooltip"></span>
                         </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-sm-5">Negative set multiplier:</div>
-                            <div class="col-sm-5 slider-wrapper">
-                                <input id="neuroclassifier_negative_multiplier_opt" name="{{ task_param.id }}_negative_multiplier_opt" class="form-control"
-                                       data-slider-id='neuroclassifier_negative_multiplier_opt' data
-                                       type="text" data-slider-min="0.25" data-slider-max="5.0"
-                                       data-slider-step="0.1"
-                                       data-slider-value="1.0"
-                                />
-                            </div>
-                            <div class="col-xs-1"><span data-toggle="tooltip" data-placement="bottom"
-                                title="The multiplier for the negative class training sample set. Useful for over/underfitting."
-                                class="glyphicon glyphicon-question-sign texta-tooltip"></span>
-                            </div>
+                    <div class="grid-i">
+                        <div>Num epochs for manual model:</div>
+                        <div class="slider-wrapper">
+
+                            <input id="neuroclassifier_num_epochs" name="{{ task_param.id }}_num_epochs"
+                                   class="form-control"
+                                   data-slider-id='neuroclassifier_num_epochs' data
+                                   type="text" data-slider-min="1" data-slider-max="25"
+                                   data-slider-step="1"
+                                   data-slider-value="3"
+                            />
                         </div>
-
-                        <div class="row">
-                            <div class="col-sm-5">Training set score threshold:</div>
-                            <div class="col-sm-5 slider-wrapper">
-                                <input id="neuroclassifier_score_threshold_opt" name="{{ task_param.id }}_score_threshold_opt" class="form-control"
-                                       data-slider-id='neuroclassifier_score_threshold_opt' data
-                                       type="text" data-slider-min="0.0" data-slider-max="0.5"
-                                       data-slider-step="0.01"
-                                       data-slider-value="0.0"
-                                />
-                            </div>
-                            <div class="col-xs-1"><span data-toggle="tooltip" data-placement="bottom"
-                                title="Search results score threshold. Gets rid of results with low relevancy scores if set."
-                                class="glyphicon glyphicon-question-sign texta-tooltip"></span>
-                            </div>
+                        <div><span data-toggle="tooltip" data-placement="bottom"
+                                   title="Number of training passes for manual models"
+                                   class="glyphicon glyphicon-question-sign texta-tooltip"></span>
                         </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-sm-5">Maximum sample size per class:</div>
-                            <div class="col-sm-5">
-                                <select name="{{ task_param.id }}_max_sample_size_opt" class="selectpicker" data-width='100%'>
-                                    <option title="No limit" value="false">No limit</option>
-                                    <option title="10000" value="10000">10000</option>
-                                    <option title="25000" value="25000">25000</option>
-                                    <option title="50000" value="50000">50000</option>
-                                    <option title="100000" value="100000">100000</option>
-                                </select>
-                            </div>
-                            <div class="col-xs-1"><span data-toggle="tooltip" data-placement="bottom"
-                                title="Maxiumum positive samples. Useful for under/overfitting."
-                                class="glyphicon glyphicon-question-sign texta-tooltip"></span>
-                            </div>
+                    <div class="grid-i">
+                        <div>Max sequence length:</div>
+                        <div class="slider-wrapper">
+                            <input id="neuroclassifier_max_seq_len" name="{{ task_param.id }}_max_seq_len"
+                                   class="form-control"
+                                   data-slider-id='neuroclassifier_max_seq_len' data
+                                   type="text" data-slider-min="20" data-slider-max="500"
+                                   data-slider-step="1"
+                                   data-slider-value="50"
+                            />
                         </div>
-
-
-
-                        <div class="row">
-                            <div class="col-sm-6">Label:</div>
-                            <div class="col-sm-6">
-                                <input required name="{{ task_param.id }}_description" class="form-control input-sm">
-                            </div>
+                        <div><span data-toggle="tooltip" data-placement="bottom"
+                                   title="Max length for a document. Increasing may improve accuracy, but decreased training performance, and might run out of memory"
+                                   class="glyphicon glyphicon-question-sign texta-tooltip"></span>
                         </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <button type="submit"
-                                        class="btn btn-default form-control"><span
-                                        class="glyphicon glyphicon-ok"></span> Start task
-                                </button>
-                            </div>
+                    <div class="grid-i">
+                        <div>Max vocab size:</div>
+                        <div class="slider-wrapper">
+                            <input id="neuroclassifier_max_vocab_size" name="{{ task_param.id }}_max_vocab_size"
+                                   class="form-control"
+                                   data-slider-id='neuroclassifier_max_vocab_size' data
+                                   type="text" data-slider-min="1000" data-slider-max="2000000"
+                                   data-slider-step="500"
+                                   data-slider-value="50000"
+                            />
                         </div>
+                        <div><span data-toggle="tooltip" data-placement="bottom"
+                                   title="Max number of words present in the dataset. Increasing may improve accuracy, but decreases training performance, and might run out of memory"
+                                   class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+                        </div>
+                    </div>
+
+                    <div class="grid-i">
+                        <div>Negative set multiplier:</div>
+                        <div class="slider-wrapper">
+                            <input id="neuroclassifier_negative_multiplier_opt"
+                                   name="{{ task_param.id }}_negative_multiplier_opt" class="form-control"
+                                   data-slider-id='neuroclassifier_negative_multiplier_opt' data
+                                   type="text" data-slider-min="0.25" data-slider-max="5.0"
+                                   data-slider-step="0.1"
+                                   data-slider-value="1.0"
+                            />
+                        </div>
+                        <div><span data-toggle="tooltip" data-placement="bottom"
+                                   title="The multiplier for the negative class training sample set. Useful for over/underfitting."
+                                   class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+                        </div>
+                    </div>
+
+                    <div class="grid-i">
+                        <div>Training set score threshold:</div>
+                        <div class=" slider-wrapper">
+                            <input id="neuroclassifier_score_threshold_opt"
+                                   name="{{ task_param.id }}_score_threshold_opt" class="form-control"
+                                   data-slider-id='neuroclassifier_score_threshold_opt' data
+                                   type="text" data-slider-min="0.0" data-slider-max="0.5"
+                                   data-slider-step="0.01"
+                                   data-slider-value="0.0"
+                            />
+                        </div>
+                        <div><span data-toggle="tooltip" data-placement="bottom"
+                                   title="Search results score threshold. Gets rid of results with low relevancy scores if set."
+                                   class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+                        </div>
+                    </div>
+
+                    <div class="grid-i">
+                        <div>Maximum sample size per class:</div>
+                        <div class="select-wrapper">
+                            <select name="{{ task_param.id }}_max_sample_size_opt" class="selectpicker"
+                                    data-width='100%'>
+                                <option title="No limit" value="false">No limit</option>
+                                <option title="10000" value="10000">10000</option>
+                                <option title="25000" value="25000">25000</option>
+                                <option title="50000" value="50000">50000</option>
+                                <option title="100000" value="100000">100000</option>
+                            </select>
+                        </div>
+                        <div><span data-toggle="tooltip" data-placement="bottom"
+                                   title="Maxiumum positive samples. Useful for under/overfitting."
+                                   class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+                        </div>
+                    </div>
+
+
+                    <div class="grid-i">
+                        <div>Label:</div>
+                        <div class="grid-1-2 select-wrapper">
+                            <input required name="{{ task_param.id }}_description" class="form-control input-sm width-max">
+                        </div>
+                    </div>
+
+                    <div class="width-max">
+
+                        <button type="submit"
+                                class="btn btn-default form-control"><span
+                                class="glyphicon glyphicon-ok"></span> Start task
+                        </button>
 
                     </div>
-                </form>
-            </div>
+
+                </div>
+            </form>
+
         </div>
     </div>
 </div>
