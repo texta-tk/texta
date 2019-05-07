@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('description', models.CharField(max_length=100)),
                 ('query', models.TextField(default='')),
                 ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
-                ('dataset', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='permission_admin.Dataset')),
+                ('datasets', models.ManyToManyField(blank=True, to='permission_admin.Dataset')),
             ],
         ),
     ]

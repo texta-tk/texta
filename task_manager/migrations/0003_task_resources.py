@@ -7,7 +7,7 @@ import picklefield.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('task_manager', '0002_task_unique_id'),
+        ('task_manager', '0002_unique_id'),
     ]
 
     operations = [
