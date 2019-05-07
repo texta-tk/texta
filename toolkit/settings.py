@@ -37,14 +37,27 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'toolkit.core',
     'toolkit.embedding',
     'toolkit.tagger',
     'toolkit.nexus',
     'rest_framework',
+    'rest_framework.authtoken',
+    # THIRD PARTY
+    # https://github.com/goinnn/django-multiselectfield
     'multiselectfield',
+    # 'rest_auth' https://github.com/Tivix/django-rest-auth
+    'rest_auth',
+    'allauth',
+    'allauth.account',
+    'rest_auth.registration',
     #'django_extensions'
 ]
+
+# For registration (see: https://django-rest-auth.readthedocs.io/en/latest/installation.html#registration-optional)
+SITE_ID = 1
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' 
 
 #REST_FRAMEWORK = {
 #    'DEFAULT_PERMISSION_CLASSES': (
