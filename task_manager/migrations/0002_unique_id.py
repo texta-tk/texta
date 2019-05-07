@@ -75,12 +75,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='task',
-            name='unique_id',
-            field=models.UUIDField(default=uuid.uuid4),
-        ),
-
         migrations.RunPython(combine_names),
 
         migrations.AlterField(
