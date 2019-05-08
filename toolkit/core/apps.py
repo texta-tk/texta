@@ -2,4 +2,8 @@ from django.apps import AppConfig
 
 
 class CoreConfig(AppConfig):
-    name = 'core'
+    name = 'toolkit.core'
+
+    def ready(self):
+        '''When app is loaded, load signals'''
+        import toolkit.core.signals

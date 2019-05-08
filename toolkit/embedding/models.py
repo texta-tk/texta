@@ -3,7 +3,7 @@ from django.db.models import signals
 from django.db import models
 from multiselectfield import MultiSelectField
 
-from toolkit.core.models import Project, Task
+from toolkit.core.models import Project, Task, UserProfile
 from toolkit.elastic.searcher import ElasticSearcher
 
 import json
@@ -15,7 +15,7 @@ class Embedding(models.Model):
     id = models.AutoField(primary_key=True)
     description = models.CharField(max_length=MAX_STR_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     query = models.TextField(default=json.dumps(ElasticSearcher().query))
     fields = MultiSelectField(max_length=MAX_STR_LEN*100)
 

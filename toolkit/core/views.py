@@ -1,8 +1,7 @@
 from django.shortcuts import render
-from django.contrib.auth.models import User
 from rest_framework import viewsets
 
-from toolkit.core.models import Project, Search, Lexicon, Phrase, Task
+from toolkit.core.models import Project, Search, Lexicon, Phrase, Task, UserProfile
 from toolkit.core.serializers import UserSerializer, ProjectSerializer, SearchSerializer, LexiconSerializer, PhraseSerializer, TaskSerializer
 
 
@@ -10,7 +9,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
-    queryset = User.objects.all().order_by('-date_joined')
+    queryset = UserProfile.objects.all().order_by('-user__date_joined')
     serializer_class = UserSerializer
 
 

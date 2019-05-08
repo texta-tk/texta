@@ -1,15 +1,18 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from toolkit.core.models import Project, Search, Lexicon, Phrase, Task
+from toolkit.core.models import Project, Search, Lexicon, Phrase, Task, UserProfile
 from toolkit.core.choices import get_index_choices
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
+    username = serializers.ReadOnlyField(source='user.username')
+    email = serializers.EmailField(source='user.email')
+    date_joined = serializers.ReadOnlyField(source='user.date_joined')
 
     class Meta:
-        model = User
-        fields = ('url', 'id', 'username', 'email')
+        model = UserProfile
+        fields = ('url', 'id', 'username', 'email', 'active_project', 'date_joined') #'__all__'
 
 
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):

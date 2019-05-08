@@ -4,7 +4,6 @@ from django.utils.timezone import now
 from django.db import models
 from django.contrib.auth.models import User
 from multiselectfield import MultiSelectField
-
 from toolkit.elastic.searcher import ElasticSearcher
 
 
@@ -12,11 +11,20 @@ MAX_INT_LEN = 10
 MAX_STR_LEN = 100
 
 
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    # String 'Project', because otherwise Python won't know what Project is (TODO just separate the models in separate files)
+    active_project = models.ForeignKey('Project', on_delete=models.SET_NULL, blank=True, null=True, related_name='activated_by')
+
+    def __str__(self):
+        return f'Profile - {self.user.username}'
+
+
 class Project(models.Model):
     id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=MAX_STR_LEN)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    users = models.ManyToManyField(User, related_name="project_users")
+    owner = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    users = models.ManyToManyField(UserProfile, related_name="project_users")
     indices = MultiSelectField(default=None)
 
     def __str__(self):
@@ -27,7 +35,7 @@ class Search(models.Model):
     id = models.AutoField(primary_key=True)
     description = models.CharField(max_length=MAX_STR_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     query = models.TextField(default=ElasticSearcher().query)
 
     def __str__(self):
@@ -37,7 +45,7 @@ class Search(models.Model):
 class Phrase(models.Model):
     id = models.AutoField(primary_key=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     phrase = models.CharField(max_length=MAX_STR_LEN)
    
     def __str__(self):
@@ -48,7 +56,7 @@ class Lexicon(models.Model):
     id = models.AutoField(primary_key=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     description = models.CharField(max_length=MAX_STR_LEN)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     phrases = models.ManyToManyField(Phrase)
 
     def __str__(self):

@@ -12,12 +12,13 @@ import json
 class EmbeddingViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows TEXTA models to be viewed or edited.
+    Only include the embeddings that are related to the request UserProfile's active_project
     """
     queryset = Embedding.objects.all()
     serializer_class = EmbeddingSerializer
 
     def get_queryset(self):
-        return Embedding.objects.filter(project=self.kwargs['project_pk'])
+        return Embedding.objects.filter(project=self.request.user.profile.active_project)
 
 
     @staticmethod
