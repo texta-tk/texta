@@ -1,12 +1,22 @@
 from django.urls import include, path
 from django.conf.urls import url
+from rest_framework import routers
+
+from toolkit.core.urls import router as core_router
+from toolkit.embedding.urls import router as embedding_router
+from toolkit.tagger.urls import router as tagger_router
+#from toolkit.nexus.urls import router as nexus_router
+
+router = routers.DefaultRouter()
+router.registry.extend(core_router.registry)
+router.registry.extend(embedding_router.registry)
+router.registry.extend(tagger_router.registry)
+#router.registry.extend(nexus_router.registry)
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
-    path('', include('toolkit.core.urls')),
-    path('', include('toolkit.nexus.urls')),
-    path('', include('toolkit.embedding.urls')),
+    path('', include(router.urls)),
     path('rest-auth/', include('rest_auth.urls')),
     path('rest-auth/registration/', include('rest_auth.registration.urls'))
 ]

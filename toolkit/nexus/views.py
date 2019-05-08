@@ -13,12 +13,12 @@ class EntityViewSet(viewsets.ViewSet):
     """
     serializer_class = EntitySerializer
 
-    def list(self, request, project_pk=None):
+    def list(self, request):
         es_a = ElasticAggregator()
         entities = es_a.entities(include_values=False)
         return Response(entities)
 
-    def retrieve(self, request, pk=None, project_pk=None):
+    def retrieve(self, request, pk=None):
         es_a = ElasticAggregator()
         entities = es_a.entities(include_values=True)
         if pk not in entities:
@@ -27,7 +27,7 @@ class EntityViewSet(viewsets.ViewSet):
 
 
     @action(detail=True, methods=['get', 'post'])
-    def related(self, request, pk=None, project_pk=None):
+    def related(self, request, pk=None):
         es_a = ElasticAggregator()
         entities = es_a.related_entities(include_values=True)
 

@@ -2,5 +2,5 @@ from rest_framework import routers
 from . import views
 
 router = routers.DefaultRouter()
-router.register('embedding', views.EmbeddingViewSet)
+router.register('tagger', views.TaggerViewSet)
 
