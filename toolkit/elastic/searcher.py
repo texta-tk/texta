@@ -5,6 +5,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.settings import ES_URL
 
 ES_SCROLL_SIZE = 500
+EMPTY_QUERY     = {"query": {"match_all": {}}}
 
 class ElasticSearcher:
     """
@@ -14,7 +15,6 @@ class ElasticSearcher:
     OUT_DOC         = 'doc'
     OUT_DOC_WITH_ID = 'doc_with_id'
     OUT_TEXT        = 'text'
-    EMPTY_QUERY     = {"query": {"match_all": {}}}
 
     def __init__(self, field_data=[],
                        query=EMPTY_QUERY,
