@@ -66,7 +66,7 @@ if len(sys.argv) > 1:
     if sys.argv[1] == 'purge_migrations':
         print('Deleting migrations...')
         for custom_app in custom_apps:
-            migrations_dir = os.path.join(cwd,custom_app,'migrations')
+            migrations_dir = os.path.join(cwd, BASE_APP_NAME, custom_app, 'migrations')
             if os.path.exists(migrations_dir):
                 shutil.rmtree(migrations_dir)
 
