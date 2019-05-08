@@ -6,9 +6,9 @@ from django.contrib.auth.models import User
 from multiselectfield import MultiSelectField
 
 from toolkit.embedding.choices import get_field_choices
-from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.core.models import Project, Task
 from toolkit.embedding.models import Embedding
+from toolkit.elastic.searcher import EMPTY_QUERY
 
 MAX_STR_LEN = 100
 
@@ -18,7 +18,7 @@ class Tagger(models.Model):
     description = models.CharField(max_length=MAX_STR_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    query = models.TextField(default=json.dumps(ElasticSearcher().query))
+    query = models.TextField(default=json.dumps(EMPTY_QUERY))
     fields = MultiSelectField(choices=get_field_choices(), default=None)
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
 

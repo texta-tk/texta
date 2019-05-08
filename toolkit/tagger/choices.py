@@ -4,7 +4,10 @@ from toolkit.tagger.pipeline import get_pipeline_builder
 
 def get_field_choices():
    es = ElasticCore()
-   return [(es.encode_field_data(a), '{0} - {1}'.format(a['index'], a['field']['path'])) for a in es.get_fields()]
+   if es.connection:
+      return [(es.encode_field_data(a), '{0} - {1}'.format(a['index'], a['field']['path'])) for a in es.get_fields()]
+   else:
+      return []
 
 
 def get_classifier_choices():

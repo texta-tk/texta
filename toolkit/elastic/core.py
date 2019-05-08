@@ -1,6 +1,6 @@
 from elasticsearch import Elasticsearch
 import urllib
-
+import requests
 from toolkit.settings import ES_URL
 
 class ElasticCore:
@@ -15,9 +15,10 @@ class ElasticCore:
 
 
     def _check_connection(self):
-        if self.es.ping():
+        try:
+            requests.get(ES_URL)
             return True
-        else:
+        except:
             return False
 
 

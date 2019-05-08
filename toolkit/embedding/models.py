@@ -4,8 +4,7 @@ from django.db import models
 from multiselectfield import MultiSelectField
 
 from toolkit.core.models import Project, Task
-from toolkit.elastic.searcher import ElasticSearcher
-
+from toolkit.elastic.searcher import EMPTY_QUERY
 import json
 
 
@@ -16,7 +15,7 @@ class Embedding(models.Model):
     description = models.CharField(max_length=MAX_STR_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    query = models.TextField(default=json.dumps(ElasticSearcher().query))
+    query = models.TextField(default=json.dumps(EMPTY_QUERY))
     fields = MultiSelectField(max_length=MAX_STR_LEN*100)
 
     num_dimensions = models.IntegerField(default=100)
