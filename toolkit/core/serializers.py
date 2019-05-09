@@ -18,14 +18,17 @@ class TaskSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'status', 'progress', 'step', 'time_started', 'last_update', 'time_completed')
 
 
+
+
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     username = serializers.ReadOnlyField(source='user.username')
-    email = serializers.EmailField(source='user.email')
+    email = serializers.EmailField(read_only=True, source='user.email')
     date_joined = serializers.ReadOnlyField(source='user.date_joined')
+    active_project = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = UserProfile
-        fields = ('url', 'id', 'username', 'email', 'active_project', 'date_joined') #'__all__'
+        fields = ('url', 'id', 'username', 'email', 'active_project', 'date_joined')
 
 
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):
