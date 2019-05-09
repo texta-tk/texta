@@ -53,3 +53,4 @@ class ValidateFormSerializer(serializers.Serializer):
     filters = serializers.ListField(required=False, child=serializers.DictField(validators=[validate_filter]))
     aggregations = serializers.ListField(required=False, child=AggregationsItem())
     if_agg_only = serializers.BooleanField(default=False)
+    include = serializers.BooleanField(default=False, required=False)
