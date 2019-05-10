@@ -14,50 +14,50 @@ fact_names = {}
 
 task_params = [
     {
-        "name":            "Train Language Model",
-        "id":              TaskTypes.TRAIN_MODEL.value,
-        "template":        "task_parameters/train_model.html",
+        "name": "Train Language Model",
+        "id": TaskTypes.TRAIN_MODEL.value,
+        "template": "task_parameters/train_model.html",
         "result_template": "task-results/train-model-results.html",
-        "worker":           LanguageModelWorker,
+        "worker": LanguageModelWorker,
         "allowed_actions": ["delete", "save"]
     },
     {
-        "name":            "Train Text Tagger",
-        "id":               TaskTypes.TRAIN_TAGGER.value,
-        "template":        "task_parameters/train_tagger.html",
+        "name": "Train Text Tagger",
+        "id": TaskTypes.TRAIN_TAGGER.value,
+        "template": "task_parameters/train_tagger.html",
         "result_template": "task-results/train-tagger-results.html",
-        "worker":           TagModelWorker,
+        "worker": TagModelWorker,
         "allowed_actions": ["delete"]
     },
     {
-        "name":            "Train Entity Extractor",
-        "id":              TaskTypes.TRAIN_ENTITY_EXTRACTOR.value,
-        "template":        "task_parameters/train_entity_extractor.html",
+        "name": "Train Entity Extractor",
+        "id": TaskTypes.TRAIN_ENTITY_EXTRACTOR.value,
+        "template": "task_parameters/train_entity_extractor.html",
         "result_template": "task-results/train-entity-extractor-results.html",
-        "worker":          EntityExtractorWorker,
-        "facts":           fact_names,
+        "worker": EntityExtractorWorker,
+        "facts": fact_names,
         "allowed_actions": ["delete"]
     },
     {
-        "name":            "Apply Preprocessor",
-        "id":              TaskTypes.APPLY_PREPROCESSOR.value,
-        "template":        "task_parameters/apply_preprocessor.html",
+        "name": "Apply Preprocessor",
+        "id": TaskTypes.APPLY_PREPROCESSOR.value,
+        "template": "task_parameters/apply_preprocessor.html",
         "result_template": "task-results/apply-preprocessor-results.html",
-        "worker":          PreprocessorWorker,
+        "worker": PreprocessorWorker,
         "allowed_actions": []
     },
     {
-        "name":            "Management Task",
-        "id":              TaskTypes.MANAGEMENT_TASK.value,
-        "template":        "task_parameters/management_task.html",
+        "name": "Management Task",
+        "id": TaskTypes.MANAGEMENT_TASK.value,
+        "template": "task_parameters/management_task.html",
         "result_template": "task-results/management-task-results.html",
-        "worker":          ManagementWorker,
-        "enabled_sub_managers":[
+        "worker": ManagementWorker,
+        "enabled_sub_managers": [
             {"key": ManagerKeys.FACT_DELETER.value,
              "name": "Fact Deleter",
              "parameters_template": "management_parameters/fact_deleter.html",
              "facts": fact_names,
-            },
+             },
         ],
         "allowed_actions": []
     }
@@ -81,22 +81,17 @@ def get_fact_names(es_m):
             fact_names.update(fact_data)
 
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(json.dumps(
-            {'process': 'GET TASK PARAMS', 'event': 'get_fact_names', 'data': {'active_datasets_ids_and_names': [(ds.id, ds.index) for ds in es_m.active_datasets], 'response_keys': list(response.keys())}}), exc_info=True)
+        active_datasets = [(ds.id, ds.index) for ds in es_m.active_datasets]
+        log_dict = {'task': 'GET TASK PARAMS', 'event': 'get_fact_names', 'data': {'active_datasets_ids_and_names': active_datasets, 'response_keys': list(response.keys())}}
+        logging.getLogger(ERROR_LOGGER).exception(log_dict, exc_info=True)
 
 
 def activate_task_worker(task_type):
     for task_param in task_params:
-        logging.getLogger(INFO_LOGGER).info(json.dumps(
-            {'process':'check_task_params',
-            'args':
-            {
-            'task_param_id':task_param['id'],
-            'task_type':task_type,
-            'is_equal': task_param['id'] == task_type
-        }}))
-        if task_param['id'] == task_type:
-            # Instantiate worker
-            worker_instance = task_param['worker']()
-            return worker_instance
+        log_dict = {'task': 'check_task_params', 'data': {'task_param_id': task_param['id'], 'task_type': task_type, 'is_equal': task_param['id'] == task_type}}
+        logging.getLogger(INFO_LOGGER).info("Activates task worker", extra=log_dict)
+        # Instantiate worker
+        worker_instance = task_param['worker']()
+        return worker_instance
+
     return None

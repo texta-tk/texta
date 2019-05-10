@@ -53,12 +53,11 @@ class PreprocessorWorker(BaseWorker):
             # Delete task
             task = Task.objects.get(pk=self.task_id)
             task.delete()
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'PROCESSOR WORK', 'event': 'processor_worker_canceled', 'data': {'task_id': self.task_id}}), exc_info=True)
+            logging.getLogger(INFO_LOGGER).info("Canceled preprocessor", extra={'task': 'PROCESSOR WORK', 'event': 'processor_worker_canceled', 'data': {'task_id': self.task_id}}, exc_info=True)
             print("--- Task canceled")
 
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).exception(json.dumps(
-                {'process': 'PROCESSOR WORK', 'event': 'processor_worker_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
+            logging.getLogger(ERROR_LOGGER).exception("Preprocessor failed", extra={'task': 'PROCESSOR WORK', 'event': 'processor_worker_failed'}, exc_info=True)
             # declare the job as failed.
             task = Task.objects.get(pk=self.task_id)
             task.result = json.dumps({'error': repr(e)})
@@ -126,8 +125,8 @@ class PreprocessorWorker(BaseWorker):
 
         # If runs into an exception, give feedback
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).exception(json.dumps(
-                {'process': '_preprocessor_worker', 'event': 'main_scroll_logic_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
+            log_dict = {'task': '_preprocessor_worker', 'event': 'main_scroll_logic_failed', 'data': {'task_id': self.task_id}}
+            logging.getLogger(ERROR_LOGGER).exception("Main scroll logic failed", extra=log_dict, exc_info=True)
             task = Task.objects.get(pk=self.task_id)
             task.status = Task.STATUS_FAILED
             task.result = json.dumps({'documents_processed': show_progress.n_count, 'preprocessor_key': self.params['preprocessor_key'], 'error': str(e)})

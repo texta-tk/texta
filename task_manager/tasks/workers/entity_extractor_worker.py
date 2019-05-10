@@ -110,22 +110,25 @@ class EntityExtractorWorker(BaseWorker):
             self.task_obj.result = json.dumps(self.train_summary)
             self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
-            logging.getLogger(INFO_LOGGER).info(json.dumps({
-                'process': 'CREATE CRF MODEL',
-                'event':   'crf_training_completed',
-                'data':    {'task_id': self.task_id}
-            }))
+            log_dict = {
+                'task': 'CREATE CRF MODEL',
+                'event': 'crf_training_completed',
+                'arguments': {'task_id': self.task_id}
+            }
+            logging.getLogger(INFO_LOGGER).info("CRF training completed", extra=log_dict)
 
         except TaskCanceledException as e:
             # If here, task was canceled while training
             # Delete task
             self.task_obj.delete()
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE CLASSIFIER', 'event': 'crf_training_canceled', 'data': {'task_id': self.task_id}}), exc_info=True)
+            log_dict = {'task': 'CREATE CLASSIFIER', 'event': 'crf_training_canceled', 'data': {'task_id': self.task_id}}
+            logging.getLogger(INFO_LOGGER).info("Crf training canceled", extra=log_dict, exc_info=True)
             print("--- Task canceled")
 
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).exception(json.dumps(
-                {'process': 'CREATE CLASSIFIER', 'event': 'crf_training_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
+            log_dict = {'task': 'CREATE CLASSIFIER', 'event': 'crf_training_failed', 'data': {'task_id': self.task_id}}
+            logging.getLogger(ERROR_LOGGER).exception("CRF training failed", extra=log_dict, exc_info=True)
+
             # declare the job as failed.
             self.task_obj.result = json.dumps({'error': repr(e)})
             self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
@@ -275,11 +278,13 @@ class EntityExtractorWorker(BaseWorker):
                 if (psutil.virtual_memory().available / 1000000) < self.min_mb_available_memory:
                     print('EntityExtractorWorker:_get_memory_safe_features - Less than {} Mb of memory remaining, breaking adding more data.'.format(self.min_mb_available_memory))
                     self.train_summary["warning"] = "Trained on {} documents, because more documents don't fit into memory".format(i)
-                    logging.getLogger(INFO_LOGGER).info(json.dumps({
-                        'process': 'EntityExtractorWorker:_train_and_save',
-                        'event':   'Less than {}Mb of memory available, stopping adding more training data. Iteration {}.'.format(self.min_mb_available_memory, i),
-                        'data':    {'task_id': self.task_id}
-                    }))
+
+                    log_dict = {
+                        'task': 'EntityExtractorWorker:_train_and_save',
+                        'event': 'Less than {}Mb of memory available, stopping adding more training data. Iteration {}.'.format(self.min_mb_available_memory, i),
+                        'data': {'task_id': self.task_id}
+                    }
+                    logging.getLogger(INFO_LOGGER).info("Memory", extra=log_dict)
                     break
             trainer.append(xseq, yseq)
 

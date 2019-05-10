@@ -31,7 +31,6 @@ class ManagementWorker(BaseWorker):
             ManagerKeys.FACT_ADDER: FactAdderSubWorker,
         }
 
-
     def run(self, task_id):
         self.task_id = task_id
         self.task_obj = Task.objects.get(pk=self.task_id)
@@ -53,21 +52,21 @@ class ManagementWorker(BaseWorker):
             # If here, task was canceled while processing
             # Delete task
             self.task_obj.delete()
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'PROCESSOR WORK', 'event': 'management_worker_canceled', 'data': {'task_id': self.task_id}}))
+            log_dict = {'task': 'PROCESSOR WORK', 'event': 'management_worker_canceled', 'data': {'task_id': self.task_id}}
+            logging.getLogger(INFO_LOGGER).info("Management worker canceled", extra=log_dict)
             print("--- Task canceled")
 
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).exception(json.dumps(
-                {'process': 'PROCESSOR WORK', 'event': 'manager_worker_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
+            log_dict = {'task': 'PROCESSOR WORK', 'event': 'manager_worker_failed', 'data': {'task_id': self.task_id}}
+            logging.getLogger(ERROR_LOGGER).exception("Manager worker failed", extra=log_dict, exc_info=True)
             # declare the job as failed.
             self.task_obj.result = json.dumps({'error': repr(e)})
             self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
-        print('Done with management task')
-
+            print('Done with management task')
 
     def _start_subworker(self):
         # Get sub-worker
-        sub_worker = self.manager_map[self.params['manager_key']](self.es_m, self.task_id, self.params,self.scroll_size, self.scroll_time_out)
+        sub_worker = self.manager_map[self.params['manager_key']](self.es_m, self.task_id, self.params, self.scroll_size, self.scroll_time_out)
         # Run sub-worker
         result = sub_worker.run()
         return result

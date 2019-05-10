@@ -80,12 +80,12 @@ def delete_result(request):
         run_id  = request.GET['run_id']
         run = Run.objects.get(pk=run_id)
         run.delete()
-        
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'DELETE MWE RESULT','event':'mwe_result_deleted','args':{'user_name':request.user.username,'run_id':run_id}}))
-    except Exception as e:
-        info_string = json.dumps({'process':'DELETE MWE RESULT','event':'mwe_result_deletion_failed','args':{'user_name':request.user.username,'run_id':run_id}})
 
-        logging.getLogger(INFO_LOGGER).info(info_string)
+        log_dict = {'task': 'DELETE MWE RESULT', 'event': 'mwe_result_deleted', 'data': {'user_name': request.user.username, 'run_id': run_id}}
+        logging.getLogger(INFO_LOGGER).info("MWE result deleted", extra=log_dict)
+    except Exception as e:
+        log_dict = {'task': 'DELETE MWE RESULT', 'event': 'mwe_result_deletion_failed', 'data': {'user_name': request.user.username, 'run_id': run_id}}
+        logging.getLogger(INFO_LOGGER).info("MWE result deletion failed", extra=log_dict)
         logging.getLogger(ERROR_LOGGER).exception(e)
         
     return HttpResponseRedirect(URL_PREFIX + '/mwe_miner')
@@ -188,11 +188,13 @@ def approve(request):
         r = Run.objects.get(pk=run_id)
         r.results = json.dumps(results)
         r.save()
-        
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'APPROVE MWE RESULT','event':'mwe_result_items_approved','args':{'user_name':request.user.username,'operator':operator,'run_id':run_id}}))
+
+        log_dict = {'task': 'APPROVE MWE RESULT', 'event': 'mwe_result_items_approved', 'data': {'user_name': request.user.username, 'operator': operator, 'run_id': run_id}}
+        logging.getLogger(INFO_LOGGER).info("MWE result items approved", extra=log_dict)
+
     except Exception as e:
-        info_string = json.dumps({'process':'APPROVE MWE RESULT','event':'mwe_result_item_approval_failed','args':{'user_name':request.user.username,'operator':operator,'run_id':run_id}})
-        logging.getLogger(INFO_LOGGER).info(info_string)
+        log_dict = {'task': 'APPROVE MWE RESULT', 'event': 'mwe_result_item_approval_failed', 'data': {'user_name': request.user.username, 'operator': operator, 'run_id': run_id}}
+        logging.getLogger(INFO_LOGGER).info("MWE result item approval failed", extra=log_dict)
         logging.getLogger(ERROR_LOGGER).exception(e)
 
     return HttpResponse()
@@ -270,7 +272,10 @@ def find_mappings(request):
         data = []
         new_run = Run(minimum_frequency=min_freq,maximum_length=max_len,minimum_length=min_len,run_status='running',run_started=datetime.now(),run_completed=None,user=request.user,description=description)
         new_run.save()
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'MINE MWEs','event':'mwe_mining_started','args':{'user_name':request.user.username,'run_id':new_run.id,'slop':slop,'min_len':min_len,'max_len':max_len,'min_freq':min_freq,'match_field':match_field,'desc':description}}))
+
+        log_dict = {'task': 'MINE MWEs', 'event': 'mwe_mining_started', 'arguments': {'user_name': request.user.username, 'run_id': new_run.id, 'slop': slop, 'min_len': min_len, 'max_len': max_len, 'min_freq': min_freq, 'match_field': match_field, 'desc': description}}
+        logging.getLogger(INFO_LOGGER).info("MWE mining started", extra=log_dict)
+
         for i in range(min_len,max_len+1):
             print('Permutation len:',i)
             for permutation in itertools.permutations(lexicon,i):
@@ -307,7 +312,9 @@ def find_mappings(request):
                                 raise e
                         data = []
                         phrases = []
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'MINE MWEs','event':'mwe_mining_progress','args':{'user_name':request.user.username,'run_id':new_run.id},'data':{'permutations_processed':i+1-min_len,'total_permutations':max_len-min_len+1}}))
+
+            log_dict = {'task': 'MINE MWEs', 'event': 'mwe_mining_progress', 'arguments': {'user_name': request.user.username, 'run_id': new_run.id}, 'data': {'permutations_processed': i + 1 - min_len, 'total_permutations': max_len - min_len + 1}}
+            logging.getLogger(INFO_LOGGER).info("MWE mining progress", extra=log_dict)
 
         m_response = es_m.perform_queries(data)
 
@@ -335,9 +342,11 @@ def find_mappings(request):
         r.run_status = 'completed'
         r.results =json.dumps(final)
         r.save()
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'MINE MWEs','event':'mwe_mining_completed','args':{'user_name':request.user.username,'run_id':new_run.id}}))
+
+        log_dict = {'task': 'MINE MWEs', 'event': 'mwe_mining_completed', 'arguments': {'user_name': request.user.username, 'run_id': new_run.id}}
+        logging.getLogger(INFO_LOGGER).info("MWE mining complete", extra=log_dict)
 
     except Exception as e:
-        info_string = json.dumps({'process':'MINE MWEs','event':'mwe_mining_failed', 'args':{'user_name':request.user.username, 'run_id':new_run.id}})
-        logging.getLogger(INFO_LOGGER).info(info_string)
+        log_dict = {'task': 'MINE MWEs', 'event': 'mwe_mining_failed', 'arguments': {'user_name': request.user.username, 'run_id': new_run.id}}
+        logging.getLogger(INFO_LOGGER).info("MWE mining failed", extra=log_dict)
         logging.getLogger(ERROR_LOGGER).exception(e)

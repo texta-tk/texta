@@ -151,22 +151,24 @@ class TagModelWorker(BaseWorker):
             self.task_obj.result = json.dumps(train_summary)
             self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
-            logging.getLogger(INFO_LOGGER).info(json.dumps({
-                'process': 'CREATE CLASSIFIER',
-                'event':   'model_training_completed',
-                'data':    {'task_id': self.task_id}
-            }))
+            log_dict = {
+                'task': 'CREATE CLASSIFIER',
+                'event': 'model_training_completed',
+                'data': {'task_id': self.task_id}
+            }
+            logging.getLogger(INFO_LOGGER).info("Model training complete", extra=log_dict)
 
         except TaskCanceledException as e:
             # If here, task was canceled while training
             # Delete task
             self.task_obj.delete()
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE CLASSIFIER', 'event': 'model_training_canceled', 'data': {'task_id': self.task_id}}), exc_info=True)
+            log_dict = {'task': 'CREATE CLASSIFIER', 'event': 'model_training_canceled', 'data': {'task_id': self.task_id}}
+            logging.getLogger(INFO_LOGGER).info("Model training canceled", extra=log_dict, exc_info=True)
             print("--- Task canceled")
 
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).exception(json.dumps(
-                {'process': 'CREATE CLASSIFIER', 'event': 'model_training_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
+            log_dict = {'task': 'CREATE CLASSIFIER', 'event': 'model_training_failed', 'data': {'task_id': self.task_id}}
+            logging.getLogger(ERROR_LOGGER).exception("Model training failed", extra=log_dict, exc_info=True)
             # declare the job as failed.
             self.task_obj.result = json.dumps({'error': repr(e)})
             self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)

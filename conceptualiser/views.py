@@ -96,9 +96,11 @@ def load_terms(request):
         output['terms'].extend(terms)
         output['concepts'].extend([concepts[concept_id] for concept_id in concepts])
 
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE CONCEPTS','event':'terms_loaded','args':{'user_name':request.user.username,'lexicon_ids':lexicon_ids,'dim_red_method':request.POST['method']}}))
+        log_dict = {'task':'CREATE CONCEPTS','event':'terms_loaded','arguments':{'user_name':request.user.username,'lexicon_ids':lexicon_ids,'dim_red_method':request.POST['method']}}
+        logging.getLogger(INFO_LOGGER).info("Loaded terms", extra=log_dict)
     else:
-        logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'CREATE CONCEPTS','event':'term_loading_failed','args':{'user_name':request.user.username,'lexicon_ids':lexicon_ids,'dim_red_method':request.POST['method']},'reason':'No terms to load.'}))
+        log_dict = {'task':'CREATE CONCEPTS','event':'term_loading_failed', 'arguments':{'user_name':request.user.username,'lexicon_ids':lexicon_ids,'dim_red_method':request.POST['method']},'reason':'No terms to load.'}
+        logging.getLogger(INFO_LOGGER).warning("Failed to load terms", extra=log_dict)
 
 
     return HttpResponse(json.dumps(output), content_type='application/json')
@@ -120,8 +122,9 @@ def get_ontologies(request):
 def get_lexicons(request):
     lexicons = Lexicon.objects.filter(author=request.user)
     output = [{'id':lex.id,'name':lex.name,'desc':lex.description} for lex in lexicons]
-    
-    logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE CONCEPTS','event':'lexicons_queried','args':{'user_name':request.user.username}}))
+
+    log_dict = {'task': 'CREATE CONCEPTS', 'event': 'lexicons_queried', 'arguments': {'user_name': request.user.username}}
+    logging.getLogger(INFO_LOGGER).info("Queried the lexicons", extra=log_dict)
     
     return HttpResponse(json.dumps(output), content_type='application/json')
 
@@ -178,6 +181,7 @@ def save_concepts(request):
     
     Term.objects.filter(term__in = term_labels).delete()
 
-    logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE CONCEPTS','event':'concepts_saved','args':{'user_name':request.user.username},'data':{'new_terms':len(termconcepts_to_create) ,'new_concepts':new_concepts}}))
+    log_dict = {'task':'CREATE CONCEPTS','event':'concepts_saved','arguments':{'user_name':request.user.username},'data':{'new_terms':len(termconcepts_to_create) ,'new_concepts':new_concepts}}
+    logging.getLogger(INFO_LOGGER).info("Saved concepts", extra=log_dict)
 
     return HttpResponse()

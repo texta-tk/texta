@@ -491,7 +491,8 @@ class ES_Manager:
 
     def get_total_documents(self):
         q = self.combined_query['main']
-        total = self.plain_search(self.es_url, self.stringify_datasets(), q)['hits']['total']
+        response = self.plain_search(es_url=es_url, datasets=self.stringify_datasets(), query=q)
+        total = response['hits']['total']
         return int(total)
 
     @staticmethod
