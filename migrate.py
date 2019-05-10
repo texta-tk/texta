@@ -1,12 +1,14 @@
 import django # For making sure the correct Python environment is used.
 from django.db import connections
 from django.db.utils import OperationalError
-from texta.settings import INSTALLED_APPS
+from texta.settings import INSTALLED_APPS, MIGRATION_LOGGER
 import subprocess
 from time import sleep
 import sys
 import os
 import shutil
+import logging
+import json
 
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "texta.settings")
@@ -39,14 +41,25 @@ def check_mysql_connection():
 
 
 def migrate(custom_apps):
-    print('Toolkit: Detecting database changes.')
+    log_message = 'Toolkit: Detecting database changes.'
+    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'makemigrations', 'info': log_message}))
+    print(log_message)
     make_migrations_output = subprocess.check_output(['python', 'manage.py', 'makemigrations'] + custom_apps)
-    print('Toolkit: Making database changes.')
+    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'makemigrations', 'info': str(make_migrations_output)}))
+    log_message = 'Toolkit: Making database changes.'
+    print(log_message)
+    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'migrate', 'info': log_message}))
     sleep(2)
     migrate_output = subprocess.check_output(['python', 'manage.py', 'migrate'])
-    print('Toolkit: Creating Admin user if necessary.')
+    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'migrate', 'info': str(migrate_output)}))
+    log_message = 'Toolkit: Creating Admin user if necessary.'
+    print(log_message)
+    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'make_admin', 'info': log_message}))
     sleep(2)
-    create_admin()
+    result = create_admin()
+    log_message = 'New admin created: {}'.format(result)
+    print(log_message)
+    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'make_admin', 'info': log_message}))
     return True
 
 
@@ -72,4 +85,3 @@ while connected == False and n_try <= 10:
         n_try += 1
         print('Toolkit migration attempt {}: No connection to database. Sleeping for 10 sec and trying again.'.format(n_try))
         sleep(10)
-
