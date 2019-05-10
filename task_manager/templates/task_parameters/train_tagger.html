@@ -20,10 +20,14 @@
                             <div class="col-sm-6">
                                 <select name="{{ task_param.id }}_search" class="selectpicker" required
                                         data-width='100%'>
-                                    {% for search in searches %}
-                                        <option title="{{ search.description }}"
-                                                value="{{ search.id }}">{{ search.description }}</option>
-                                    {% endfor %}
+                                    {% if searches %}
+                                        {% for search in searches %}
+                                            <option title="{{ search.description }}"
+                                                    value="{{ search.id }}">{{ search.description }}</option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <option disabled>No searches</option>
+                                    {% endif %}
                                 </select>
                             </div>
                         </div>
