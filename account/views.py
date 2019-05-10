@@ -66,7 +66,7 @@ def update(request):
 		ds = Datasets().activate_datasets(request.session)
 		#es_m = ds.build_manager(ES_Manager)
 
-	return HttpResponseRedirect(URL_PREFIX + '/')
+	return HttpResponse(json.dumps({'status': 'success'}))
 
 ### MANAGING ACCOUNTS ###
 

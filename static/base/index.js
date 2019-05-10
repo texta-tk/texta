@@ -179,20 +179,22 @@ function dataset_update_resources() {
     update_resources(data)
 }
 
+function propagate_form() {
+    return false;
+}
+
 function update_resources(data) {
-    $.post(LINK_ROOT + '/update', data, function (data) {
-        if (data.length > 0) {
-            const notification = swal.mixin({
+    $.post(LINK_ROOT + '/update', data).done(function (response) {
+        let resp = JSON.parse(response);
+        if (resp.status === "success") {
+            swal({
                 toast: true,
                 position: 'top',
                 showConfirmButton: false,
-                timer: 1000
-            })
-
-            notification({
+                timer: 1000,
                 type: 'success',
                 title: 'Resources updated!'
-            }).then((result) => {
+            }).then(() => {
                 location.reload()
             })
         } else {
@@ -200,10 +202,10 @@ function update_resources(data) {
                 title: 'Failed!',
                 text: 'Resource update failed!',
                 type: 'warning'
-            }).then((result) => {
             })
         }
-    })
+    });
+
 }
 
 var SwalType = {
