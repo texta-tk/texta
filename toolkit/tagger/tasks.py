@@ -1,4 +1,4 @@
-from toolkit.core.models import Task
+from toolkit.core.task.models import Task
 from toolkit.tagger.models import Tagger
 from toolkit.settings import NUM_WORKERS, MODELS_DIR
 from toolkit.embedding.phraser import Phraser

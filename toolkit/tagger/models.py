@@ -5,7 +5,9 @@ from django.db import models
 from multiselectfield import MultiSelectField
 
 from toolkit.embedding.choices import get_field_choices
-from toolkit.core.models import Project, Task, UserProfile
+from toolkit.core.project.models import Project
+from toolkit.core.task.models import Task
+from toolkit.core.user_profile.models import UserProfile
 from toolkit.embedding.models import Embedding
 from toolkit.elastic.searcher import EMPTY_QUERY
 
@@ -13,7 +15,6 @@ MAX_STR_LEN = 100
 
 
 class Tagger(models.Model):
-    id = models.AutoField(primary_key=True)
     description = models.CharField(max_length=MAX_STR_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(UserProfile, on_delete=models.CASCADE)

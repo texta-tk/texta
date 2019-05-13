@@ -6,4 +6,4 @@ class CoreConfig(AppConfig):
 
     def ready(self):
         '''When app is loaded, load signals'''
-        import toolkit.core.signals
+        import toolkit.core.user_profile.signals

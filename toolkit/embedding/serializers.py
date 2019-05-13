@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from toolkit.embedding.models import Embedding, Task
 from toolkit.embedding.choices import EMBEDDING_CHOICES, get_field_choices
-from toolkit.core.serializers import TaskSerializer
+from toolkit.core.task.serializers import TaskSerializer
 
 
 class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
