@@ -129,8 +129,6 @@ class TextTagger:
                 text_map[field] = [doc[field]]
             else:
                 text_map[field] = [""]
-        
-        print(text_map)
 
         df_text = pd.DataFrame(text_map)
         return self.model.predict(df_text)[0], self.model.decision_function(df_text)[0]
