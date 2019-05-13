@@ -18,3 +18,11 @@ class TaggerSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Tagger
         fields = ('url', 'id', 'description', 'project', 'author', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'maximum_sample_size', 'location', 'statistics', 'task')
+
+
+class TextSerializer(serializers.Serializer):
+    text = serializers.CharField()
+
+
+class DocSerializer(serializers.Serializer):
+    doc = serializers.JSONField()
