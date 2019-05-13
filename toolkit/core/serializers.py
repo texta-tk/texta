@@ -24,7 +24,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
     username = serializers.ReadOnlyField(source='user.username')
     email = serializers.EmailField(read_only=True, source='user.email')
     date_joined = serializers.ReadOnlyField(source='user.date_joined')
-    active_project = serializers.PrimaryKeyRelatedField(read_only=True)
+    #active_project = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = UserProfile
@@ -32,13 +32,11 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):
-    from toolkit.embedding.serializers import EmbeddingSerializer
     indices = serializers.MultipleChoiceField(choices=get_index_choices())
-    embeddings = EmbeddingSerializer(read_only=True, many=True)
 
     class Meta:
         model = Project
-        fields = ('url', 'id', 'title', 'owner', 'users', 'indices', 'embeddings')
+        fields = ('url', 'id', 'title', 'owner', 'users', 'indices')
 
 
 class SearchSerializer(serializers.HyperlinkedModelSerializer):
