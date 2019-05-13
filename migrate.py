@@ -59,7 +59,9 @@ def migrate(custom_apps):
 
 # CREATE LIST OF CUSTOM APPS
 cwd = os.path.realpath(os.path.dirname(__file__))
-custom_apps = [app.replace('toolkit.', '') for app in INSTALLED_APPS if app.startswith(BASE_APP_NAME)] # Migration works for custom apps only. Manage.py can't detect relevant built-in django apps.
+custom_apps = [app.split('.')[-1] for app in INSTALLED_APPS if app.startswith(BASE_APP_NAME)] # Migration works for custom apps only. Manage.py can't detect relevant built-in django apps.
+print(INSTALLED_APPS)
+print(custom_apps)
 
 # DELETE MIGRATIONS IF ASKED
 if len(sys.argv) > 1:

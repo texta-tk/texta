@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from toolkit.tagger.models import Tagger, Task
 from toolkit.tagger.choices import TAGGER_CHOICES, get_field_choices, get_classifier_choices, get_vectorizer_choices
-from toolkit.core.serializers import TaskSerializer
+from toolkit.core.task.serializers import TaskSerializer
 
 
 class TaggerSerializer(serializers.HyperlinkedModelSerializer):

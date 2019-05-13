@@ -38,12 +38,19 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'rest_framework',
+    'rest_framework.authtoken',
+    # Apps
     'toolkit.core',
+    'toolkit.core.user_profile',
+    'toolkit.core.lexicon',
+    'toolkit.core.phrase',
+    'toolkit.core.project',
+    'toolkit.core.search',
+    'toolkit.core.task',
     'toolkit.embedding',
     'toolkit.tagger',
     'toolkit.nexus',
-    'rest_framework',
-    'rest_framework.authtoken',
     # THIRD PARTY
     # https://github.com/goinnn/django-multiselectfield
     'multiselectfield',
