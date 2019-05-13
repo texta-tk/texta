@@ -42,12 +42,6 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     # Apps
     'toolkit.core',
-    'toolkit.core.user_profile',
-    'toolkit.core.lexicon',
-    'toolkit.core.phrase',
-    'toolkit.core.project',
-    'toolkit.core.search',
-    'toolkit.core.task',
     'toolkit.embedding',
     'toolkit.tagger',
     'toolkit.nexus',
