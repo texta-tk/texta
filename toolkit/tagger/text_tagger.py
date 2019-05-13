@@ -20,6 +20,7 @@ class TextTagger:
         self.statistics = None
         self.tagger_id = int(tagger_id)
         self.workers = workers
+        self.description = None
 
 
     def _create_data_map(self, data, field_list):
@@ -94,6 +95,7 @@ class TextTagger:
         tagger_path = json.loads(tagger_object.location)['tagger']
         self.model = joblib.load(tagger_path)
         self.statistics = json.loads(tagger_object.statistics)
+        self.description = tagger_object.description
         return True
 
 

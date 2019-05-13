@@ -33,7 +33,7 @@ class Tagger(models.Model):
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
-        return self.description
+        return '{0} - {1}'.format(self.pk, self.description)
 
     @classmethod
     def train_tagger_model(cls, sender, instance, created, **kwargs):
