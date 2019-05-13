@@ -91,15 +91,3 @@ class TaggerViewSet(viewsets.ModelViewSet):
         tagger_response = {"result": bool(tagger_result[0]), "confidence": tagger_result[1]}
 
         return Response(tagger_response, status=status.HTTP_200_OK)
-
-
-class MultiTaggerView(GenericAPIView):
-    """
-    API endpoint for ...
-    """
-    queryset = Tagger.objects.all()
-    serializer_class = TaggerSerializer
-
-    def get_queryset(self, methods=['get','post']):
-        return Tagger.objects.filter(project=self.request.user.profile.active_project)
-    
