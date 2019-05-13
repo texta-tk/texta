@@ -2,7 +2,7 @@ from celery.decorators import task
 from gensim.models import word2vec
 
 from toolkit.embedding.models import Embedding
-from toolkit.core.models import Task
+from toolkit.core.task.models import Task
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.phraser import Phraser

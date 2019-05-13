@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from toolkit.tagger.models import Tagger, Task
 from toolkit.tagger.choices import TAGGER_CHOICES, get_field_choices, get_classifier_choices, get_vectorizer_choices
-from toolkit.core.serializers import TaskSerializer
+from toolkit.core.task.serializers import TaskSerializer
 
 
 class TaggerSerializer(serializers.HyperlinkedModelSerializer):
@@ -18,3 +18,11 @@ class TaggerSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Tagger
         fields = ('url', 'id', 'description', 'project', 'author', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'maximum_sample_size', 'location', 'statistics', 'task')
+
+
+class TextSerializer(serializers.Serializer):
+    text = serializers.CharField()
+
+
+class DocSerializer(serializers.Serializer):
+    doc = serializers.JSONField()

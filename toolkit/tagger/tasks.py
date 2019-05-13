@@ -1,4 +1,4 @@
-from toolkit.core.models import Task
+from toolkit.core.task.models import Task
 from toolkit.tagger.models import Tagger
 from toolkit.settings import NUM_WORKERS, MODELS_DIR
 from toolkit.embedding.phraser import Phraser
@@ -60,8 +60,8 @@ def train_tagger(tagger_id):
     show_progress.update_step('training')
     show_progress.update_view(0)
 
-    tagger = TextTagger(tagger_id, field_list=field_path_list, classifier=tagger_object.classifier, vectorizer=tagger_object.vectorizer)
-    tagger.train(positive_samples, negative_samples)
+    tagger = TextTagger(tagger_id)
+    tagger.train(positive_samples, negative_samples, field_list=field_path_list, classifier=tagger_object.classifier, vectorizer=tagger_object.vectorizer)
 
     show_progress.update_step('saving')
     show_progress.update_view(0)
