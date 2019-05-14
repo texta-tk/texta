@@ -195,9 +195,10 @@ class EntityExtractorWorker(BaseWorker):
         features = [
             # Bias
             'b',
-            word.lower(),
-            word[-3:],
-            word[-2:],
+            # Some features commented out to test under/overfitting
+            # word.lower(),
+            # word[-3:],
+            # word[-2:],
             '1' if word.isupper() else '0',
             '1' if word.istitle() else '0',
             '1' if word.isdigit() else '0']
