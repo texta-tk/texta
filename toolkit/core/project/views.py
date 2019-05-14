@@ -17,7 +17,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     # TODO permission_classes is just overwriting the viewset permission_classes here for tests
     # Something like IsOwnerOrIncludedUser would be useful
-    @action(detail=True, methods=['put'], permission_classes=[])
+    @action(detail=True, methods=['get'], permission_classes=[])
     def activate_project(self, request, pk=None):
         obj = self.get_object()
         request.user.profile.activate_project(obj)
