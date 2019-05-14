@@ -1,25 +1,20 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
-from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework import permissions
 from rest_framework.decorators import action
 
 from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import ProjectSerializer
-
 from toolkit.core.user_profile.serializers import UserProfileSerializer
 
-# Create your views here.
+# TODO custom permission for project owner - >
+
 class ProjectViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows projects to be viewed or edited.
-    """
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
+    permission_classes = (permissions.IsAdminUser,)
 
-    # TODO custom permission for activating dataset thats listed to you?
     @action(detail=True, methods=['put'])
     def activate_project(self, request, pk=None):
         obj = self.get_object()
