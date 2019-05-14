@@ -33,4 +33,5 @@ dependencies:
         - graypy
         - tensorflow
         - pydot
+        - python-json-logger
         - git+https://github.com/autonomio/talos.git@daily-dev
