@@ -26,6 +26,7 @@ dependencies:
         - requests
         - pathlib
         - dateutils
+        - python-json-logger
         - elasticsearch
         - elasticsearch_dsl
         - graypy
