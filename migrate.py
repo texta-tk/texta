@@ -42,24 +42,24 @@ def check_mysql_connection():
 
 def migrate(custom_apps):
     log_message = 'Toolkit: Detecting database changes.'
-    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'makemigrations', 'info': log_message}))
+    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'task':'makemigrations', 'info': log_message}))
     print(log_message)
     make_migrations_output = subprocess.check_output(['python', 'manage.py', 'makemigrations'] + custom_apps)
-    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'makemigrations', 'info': str(make_migrations_output)}))
+    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'task':'makemigrations', 'info': str(make_migrations_output)}))
     log_message = 'Toolkit: Making database changes.'
     print(log_message)
-    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'migrate', 'info': log_message}))
+    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'task':'migrate', 'info': log_message}))
     sleep(2)
     migrate_output = subprocess.check_output(['python', 'manage.py', 'migrate'])
-    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'migrate', 'info': str(migrate_output)}))
+    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'task':'migrate', 'info': str(migrate_output)}))
     log_message = 'Toolkit: Creating Admin user if necessary.'
     print(log_message)
-    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'make_admin', 'info': log_message}))
+    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'task':'make_admin', 'info': log_message}))
     sleep(2)
     result = create_admin()
     log_message = 'New admin created: {}'.format(result)
     print(log_message)
-    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'process':'make_admin', 'info': log_message}))
+    logging.getLogger(MIGRATION_LOGGER).info(json.dumps({'task':'make_admin', 'info': log_message}))
     return True
 
 

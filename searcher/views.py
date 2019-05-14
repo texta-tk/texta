@@ -364,10 +364,10 @@ def mlt_query(request):
             result['data'].append([hit_id, hit_id] + list(row.values()))
         return HttpResponse(json.dumps(result, ensure_ascii=False))
     except Exception as e:
-        error = {'process': 'MLT QUERY', 'event': 'mlt_query_failed', 'data': {  }}
+        log_dict = {'task': 'MLT QUERY', 'event': 'mlt_query_failed', 'data': {  }}
         if response:
-            error['data']['response'] = response
-        logging.getLogger(ERROR_LOGGER).exception(json.dumps(error), exc_info=True)
+            log_dict['data']['response'] = response
+        logging.getLogger(ERROR_LOGGER).exception("MLT query failed", extra=log_dict, exc_info=True)
 
         return HttpResponse(status=500, reason=str(e))
 
@@ -404,8 +404,8 @@ def search(es_params, request):
     try:
         out = execute_search(es_m, es_params)
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).error(
-            json.dumps({'process': 'SEARCH DOCUMENTS', 'event': 'documents_queried_failed'}), exc_info=True)
+        log_dict = {'task': 'SEARCH DOCUMENTS', 'event': 'documents_queried_failed'}
+        logging.getLogger(ERROR_LOGGER).error("Documents queried failed", extra=log_dict, exc_info=True)
         print('-- Exception[{0}] {1}'.format(__name__, e))
         logger.set_context('user_name', request.user.username)
         logger.error('documents_queried_failed')

@@ -1,6 +1,6 @@
 from django.http import HttpResponseRedirect
 
-from settings import SERVER_TYPE
+from texta.settings import SERVER_TYPE
 
 
 def HTTPS_ResponseRedirect(request, url):

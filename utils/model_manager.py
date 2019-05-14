@@ -112,7 +112,8 @@ class ModelManager(threading.Thread):
                 if os.path.exists(model_path):
                     self._models[model_uuid] = ModelEntry(MaskedWord2Vec(gensim.models.Word2Vec.load(model_path)))
                 else:
-                    logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'get_model','event':'model_path does not exist!','args':{'model_uuid':model_uuid,'model_path':model_path}}))
+                    log_dict = {'task': 'get_model', 'event': 'model_path does not exist!', 'arguments': {'model_uuid': model_uuid, 'model_path': model_path}}
+                    logging.getLogger(ERROR_LOGGER).error("Model path does not exist", extra=log_dict)
 
             self._models[model_uuid].access_time = time()
             return self._models[model_uuid].model

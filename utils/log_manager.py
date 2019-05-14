@@ -13,24 +13,24 @@ class LogManager:
         self.log_context = {}
 
     def info(self, event, msg=None):
-        records_str = self._get_records_str(event, msg)
+        records = self._get_records_str(event, msg)
         logger = logging.getLogger(INFO_LOGGER)
-        logger.info(records_str)
+        logger.info(json.dumps(records), extra=records)
 
     def error(self, event, msg=None):
-        records_str = self._get_records_str(event, msg)
+        records = self._get_records_str(event, msg)
         logger = logging.getLogger(ERROR_LOGGER)
-        logger.error(records_str)
+        logger.error(json.dumps(records), extra=records)
 
     def exception(self, event, msg=None):
-        records_str = self._get_records_str(event, msg)
+        records = self._get_records_str(event, msg)
         logger = logging.getLogger(ERROR_LOGGER)
-        logger.exception(records_str)
+        logger.exception(json.dumps(records), extra=records)
 
     def _build_header(self, event):
         msg = dict()
-        msg['module'] = self.module_name
-        msg['process'] = self.process
+        msg['module_name'] = self.module_name
+        msg['task'] = self.process
         msg['event'] = event
         return msg
 
@@ -39,8 +39,7 @@ class LogManager:
         records['context'] = self.log_context
         if msg:
             records['msg'] = msg
-        records_str = json.dumps(records)
-        return records_str
+        return records
 
     def clean_context(self):
         self.log_context = {}

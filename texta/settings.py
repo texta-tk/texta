@@ -372,7 +372,9 @@ LOGGING = {
 
 	'formatters':               {
 		'detailed':       {
-			'format': LOGGING_SEPARATOR.join(['%(levelname)s', '%(module)s', 'function: %(funcName)s', 'line: %(lineno)s', '%(name)s', 'PID: %(process)d', 'TID: %(thread)d', '%(message)s', '%(asctime)-15s'])
+			'format': LOGGING_SEPARATOR.join(['%(levelname)s', '%(module)s', 'function: %(funcName)s', 'line: %(lineno)s', '%(name)s', 'PID: %(process)d', 'TID: %(thread)d', '%(message)s', '%(asctime)-15s']),
+			'()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
+
 		},
 		'normal':         {
 			'format': LOGGING_SEPARATOR.join(['%(levelname)s', '%(module)s', '%(message)s', '%(asctime)s'])
@@ -426,7 +428,8 @@ LOGGING = {
 	'loggers':                  {
 		INFO_LOGGER:     {
 			'level':    'INFO',
-			'handlers': ['info_file', 'graypy']
+			'handlers': ['info_file', 'graypy'],
+			'propagate': True
 		},
 		ERROR_LOGGER:    {
 			'level':    'ERROR',
@@ -442,7 +445,6 @@ LOGGING = {
 		'django':        {
 			'handlers':  ['console', 'error_file', 'graypy'],
 			'level':     'ERROR',
-			'propagate': False
 		},
 
 		# Log messages related to the handling of requests.
