@@ -5,7 +5,8 @@ from django.contrib.auth.views import PasswordResetConfirmView, PasswordResetVie
 
 urlpatterns = [
     url(r'^$', views.index,name="home"),
-    url(r'update$', views.update, name='update'),
+    url(r'update_dataset$', views.update_dataset, name='update_dataset'),
+    url(r'update_model$', views.update_model, name='update_model'),
     url(r'^confirm/(?P<email_auth_token>([a-z]|[0-9]){14})/$', views.confirm_email, name='confirm_email'),
     url(r'create$', views.create, name="create"),
     url(r'login$', views.login, name="login"),
