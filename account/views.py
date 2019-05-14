@@ -41,8 +41,9 @@ def index(request):
 @login_required
 def update_dataset(request):
     logger = LogManager(__name__, 'CHANGE_SETTINGS')
-	parameters = request.POST
-	try:
+    parameters = request.POST
+
+    try:
         # TODO: check if is a valid mapping_id before change session[dataset]
         new_datasets = parameters.getlist('dataset[]')
         new_datasets = [new_dataset for new_dataset in new_datasets if request.user.has_perm('permission_admin.can_access_dataset_' + str(new_dataset))]
@@ -54,25 +55,25 @@ def update_dataset(request):
         logger.info('datasets_updated')
 
         ds = Datasets().activate_datasets(request.session)
-		return HttpResponse(json.dumps({'status': 'success'}))
-	except:
-		return HttpResponse(json.dumps({'status': 'error'}))
+        return HttpResponse(json.dumps({'status': 'success'}))
+    except:
+        return HttpResponse(json.dumps({'status': 'error'}))
 
 
 @login_required
 def update_model(request):
-	logger = LogManager(__name__, 'CHANGE_SETTINGS')
-	parameters = request.POST
-	try:
-		model = {"pk": parameters["model_pk"], "description": parameters["model_description"], "unique_id": parameters["model_uuid"]}
-		request.session['model'] = model
-		logger.clean_context()
-		logger.set_context('user_name', request.user.username)
-		logger.set_context('new_model', model)
-		logger.info('model_updated')
-		return HttpResponse(json.dumps({'status': 'success'}))
-	except:
-		return HttpResponse(json.dumps({'status': 'error'}))
+    logger = LogManager(__name__, 'CHANGE_SETTINGS')
+    parameters = request.POST
+    try:
+        model = {"pk": parameters["model_pk"], "description": parameters["model_description"], "unique_id": parameters["model_uuid"]}
+        request.session['model'] = model
+        logger.clean_context()
+        logger.set_context('user_name', request.user.username)
+        logger.set_context('new_model', model)
+        logger.info('model_updated')
+        return HttpResponse(json.dumps({'status': 'success'}))
+    except:
+        return HttpResponse(json.dumps({'status': 'error'}))
 
 
 
