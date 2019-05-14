@@ -65,7 +65,6 @@ def login(self, request, extra_context=None):
         index_path = reverse('admin:index', current_app=self.name)
         return HttpResponseRedirect(URL_PREFIX_RESOURCE+index_path)
 
-    from django.contrib.auth.views import login
     # Since this module gets imported in the application's root package,
     # it cannot import models from other applications at the module level,
     # and django.contrib.admin.forms eventually imports User.

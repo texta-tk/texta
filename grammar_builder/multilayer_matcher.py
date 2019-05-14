@@ -175,7 +175,7 @@ class Intersection(object):
 
         for component in sorted_components:
             if not visited_tokens & set(match.token_idxs for match in component):
-                filtered_matches.append(component)
+                filtered_components.append(component)
 
         return filtered_components
 

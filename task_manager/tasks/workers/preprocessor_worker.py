@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import os
 import logging
 from datetime import datetime
 
@@ -20,6 +21,7 @@ from .base_worker import BaseWorker
 from task_manager.document_preprocessor import preprocessor_map
 from task_manager.document_preprocessor import PREPROCESSOR_INSTANCES
 
+
 class PreprocessorWorker(BaseWorker):
 
     def __init__(self, scroll_size=200, time_out='10m'):
@@ -28,6 +30,27 @@ class PreprocessorWorker(BaseWorker):
         self.params = None
         self.scroll_size = scroll_size
         self.scroll_time_out = time_out
+
+        self._reload_env()
+        self.info_logger, self.error_logger = self._generate_loggers()
+
+    def _reload_env(self):
+        from dotenv import load_dotenv
+        from pathlib import Path
+        env_path = Path('.env')
+        load_dotenv(dotenv_path=env_path)
+
+    def _generate_loggers(self):
+        import graypy
+        import os
+        info_logger = logging.getLogger(INFO_LOGGER)
+        error_logger = logging.getLogger(ERROR_LOGGER)
+        handler = graypy.GELFUDPHandler(os.getenv("GRAYLOG_HOST_NAME", None), int(os.getenv("GRAYLOG_PORT", None)))
+
+        info_logger.addHandler(handler)
+        error_logger.addHandler(handler)
+
+        return info_logger, error_logger
 
     def run(self, task_id):
         self.task_id = task_id
@@ -53,16 +76,15 @@ class PreprocessorWorker(BaseWorker):
             # Delete task
             task = Task.objects.get(pk=self.task_id)
             task.delete()
-            logging.getLogger(INFO_LOGGER).info("Canceled preprocessor", extra={'task': 'PROCESSOR WORK', 'event': 'processor_worker_canceled', 'data': {'task_id': self.task_id}}, exc_info=True)
+            self.info_logger.info("Canceled preprocessor", extra={'task': 'PROCESSOR WORK', 'event': 'processor_worker_canceled', 'data': {'task_id': self.task_id}}, exc_info=True)
             print("--- Task canceled")
 
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).exception("Preprocessor failed", extra={'task': 'PROCESSOR WORK', 'event': 'processor_worker_failed'}, exc_info=True)
+            self.error_logger.exception("Preprocessor failed", extra={'task': 'PROCESSOR WORK', 'event': 'processor_worker_failed'}, exc_info=True)
             # declare the job as failed.
             task = Task.objects.get(pk=self.task_id)
             task.result = json.dumps({'error': repr(e)})
             task.update_status(Task.STATUS_FAILED, set_time_completed=True)
-
 
     def _preprocessor_worker(self):
         field_paths = []
@@ -99,7 +121,7 @@ class PreprocessorWorker(BaseWorker):
                 # Apply all preprocessors
                 for preprocessor_code in parameter_dict['preprocessors']:
                     preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
-                    parameter_dict.update({'document_locations':document_locations})
+                    parameter_dict.update({'document_locations': document_locations})
                     result_map = preprocessor.transform(documents, **parameter_dict)
                     documents = result_map['documents']
                     add_dicts(meta, result_map['meta'])
@@ -126,13 +148,12 @@ class PreprocessorWorker(BaseWorker):
         # If runs into an exception, give feedback
         except Exception as e:
             log_dict = {'task': '_preprocessor_worker', 'event': 'main_scroll_logic_failed', 'data': {'task_id': self.task_id}}
-            logging.getLogger(ERROR_LOGGER).exception("Main scroll logic failed", extra=log_dict, exc_info=True)
+            self.error_logger.exception("Main scroll logic failed", extra=log_dict, exc_info=True)
             task = Task.objects.get(pk=self.task_id)
             task.status = Task.STATUS_FAILED
             task.result = json.dumps({'documents_processed': show_progress.n_count, 'preprocessor_key': self.params['preprocessor_key'], 'error': str(e)})
             task.time_completed = datetime.now()
             task.save()
-
 
     def _prepare_preprocessor_data(self, response: dict):
         """

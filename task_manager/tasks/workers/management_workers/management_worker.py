@@ -31,6 +31,27 @@ class ManagementWorker(BaseWorker):
             ManagerKeys.FACT_ADDER: FactAdderSubWorker,
         }
 
+        self._reload_env()
+        self.info_logger, self.error_logger = self._generate_loggers()
+
+    def _reload_env(self):
+        from dotenv import load_dotenv
+        from pathlib import Path
+        env_path = Path('.env')
+        load_dotenv(dotenv_path=env_path)
+
+    def _generate_loggers(self):
+        import graypy
+        import os
+        info_logger = logging.getLogger(INFO_LOGGER)
+        error_logger = logging.getLogger(ERROR_LOGGER)
+        handler = graypy.GELFUDPHandler(os.getenv("GRAYLOG_HOST_NAME", None), int(os.getenv("GRAYLOG_PORT", None)))
+
+        info_logger.addHandler(handler)
+        error_logger.addHandler(handler)
+
+        return info_logger, error_logger
+
     def run(self, task_id):
         self.task_id = task_id
         self.task_obj = Task.objects.get(pk=self.task_id)
@@ -53,12 +74,12 @@ class ManagementWorker(BaseWorker):
             # Delete task
             self.task_obj.delete()
             log_dict = {'task': 'PROCESSOR WORK', 'event': 'management_worker_canceled', 'data': {'task_id': self.task_id}}
-            logging.getLogger(INFO_LOGGER).info("Management worker canceled", extra=log_dict)
+            self.info_logger.info("Management worker canceled", extra=log_dict)
             print("--- Task canceled")
 
         except Exception as e:
             log_dict = {'task': 'PROCESSOR WORK', 'event': 'manager_worker_failed', 'data': {'task_id': self.task_id}}
-            logging.getLogger(ERROR_LOGGER).exception("Manager worker failed", extra=log_dict, exc_info=True)
+            self.error_logger.exception("Manager worker failed", extra=log_dict, exc_info=True)
             # declare the job as failed.
             self.task_obj.result = json.dumps({'error': repr(e)})
             self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
