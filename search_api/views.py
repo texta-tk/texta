@@ -97,6 +97,7 @@ def more_like_this(request):
                 return_fields=returned_fields,
                 filters=post_data.get("filters", []),
                 aggregations=post_data.get("aggregations", []),
+                include=post_data.get("include", False),
                 if_agg_only=if_agg_only,
             )
 

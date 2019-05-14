@@ -280,10 +280,10 @@ class ES_Manager:
             return s
 
     @staticmethod
-    def more_like_this(elastic_url, fields: list, like: list, size: int, filters: list, aggregations: list, if_agg_only: bool, dataset: Dataset, return_fields=None):
+    def more_like_this(elastic_url, fields: list, like: list, size: int, filters: list, aggregations: list, include: bool, if_agg_only: bool, dataset: Dataset, return_fields=None):
         # Create the base query creator and unite with ES gateway.
         search = Search(using=Elasticsearch(elastic_url)).index(dataset.index).doc_type(dataset.mapping)
-        mlt = MoreLikeThis(like=like, fields=fields, min_term_freq=1, max_query_terms=12)  # Prepare the MLT part of the query.
+        mlt = MoreLikeThis(like=like, fields=fields, min_term_freq=1, max_query_terms=12, include=include)  # Prepare the MLT part of the query.
 
         paginated_search = search[0:size]  # Set how many documents to return.
         limited_search = paginated_search.source(return_fields) if return_fields else paginated_search  # If added, choose which FIELDS to return.
@@ -551,11 +551,9 @@ class ES_Manager:
             for constraint in query_dict['main']['query']['bool']['must_not']:
                 self.combined_query['main']['query']['bool']['must_not'].append(constraint)
 
-    def more_like_this_search(self, fields, stopwords=[], docs_accepted=[], docs_rejected=[], handle_negatives='ignore',
-                              search_size=10, build_search_query=None):
+    def more_like_this_search(self, fields, stopwords=[], docs_accepted=[], docs_rejected=[], handle_negatives='ignore', search_size=10, build_search_query=None):
 
         # Get ids from basic search
-
         self.combined_query['main'] = build_search_query
         docs_search = self._scroll_doc_ids()
         # Combine ids from basic search and mlt search
@@ -747,8 +745,7 @@ class ES_Manager:
                 all_fields.append(full_path_and_types)
 
         if remove_duplicate_keys:
-            unique_fields_with_schemas = [i for n, i in enumerate(fields_with_schemas) if
-                                          i not in fields_with_schemas[n + 1:]]
+            unique_fields_with_schemas = [i for n, i in enumerate(fields_with_schemas) if i not in fields_with_schemas[n + 1:]]
             return unique_fields_with_schemas
         else:
             return fields_with_schemas
@@ -786,7 +783,7 @@ class ES_Manager:
     def get_aggregation_field_data(self):
         """
         Implements the helper functions to give the necessary data
-        about fields which is needed for the aggregations.
+        about fields which are needed for the aggregations.
         :return:
         """
         names_of_nested_fields = self.get_nested_field_names()
@@ -802,6 +799,8 @@ class ES_Manager:
             nested_field['parent'] = nested_field['full_path'].split('.')[0]  # By ES dot notation, "field.data"
 
         return normal_fields, nested_fields
+
+
     @staticmethod
     def is_field_text_field(field_name, index_name):
         text_types = ["text", "keyword"]

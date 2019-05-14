@@ -166,17 +166,62 @@ function clearRegistrationForm() {
     }
 }
 
+
 function model_update_resources(self) {
     var model_data = $(self).data()
-    update_resources(model_data)
+    $.post(LINK_ROOT + '/update_model', model_data).done(function (response) {
+        let resp = JSON.parse(response);
+        if (resp.status === "success") {
+            swal({
+                toast: true,
+                position: 'top',
+                showConfirmButton: false,
+                timer: 1000,
+                type: 'success',
+                title: 'Model updated!'
+            }).then(() => {
+                location.reload()
+            })
+        } else {
+            swal({
+                title: 'An error occured!',
+                text: 'An error occured during Model update!',
+                type: 'warning'
+            })
+        }
+    });
 }
+
 
 function dataset_update_resources() {
     var dataset_id = $('#dataset_to_activate').val()
-    var data = {
-        dataset: dataset_id
-    }
-    update_resources(data)
+    var data = { dataset: dataset_id }
+    $.post(LINK_ROOT + '/update_dataset', data).done(function (response) {
+        let resp = JSON.parse(response);
+        if (resp.status === "success") {
+            swal({
+                toast: true,
+                position: 'top',
+                showConfirmButton: false,
+                timer: 1000,
+                type: 'success',
+                title: 'Datasets updated!'
+            }).then(() => {
+                location.reload()
+            })
+        } else {
+            swal({
+                title: 'An error occured!',
+                text: 'An error occured during Dataset update!',
+                type: 'warning'
+            })
+        }
+    });
+    
+}
+
+function propagate_form() {
+    return false;
 }
 
 function propagate_form() {
@@ -199,13 +244,12 @@ function update_resources(data) {
             })
         } else {
             swal({
-                title: 'Failed!',
-                text: 'Resource update failed!',
+                title: 'An error occured!',
+                text: 'An error occured during resource update!',
                 type: 'warning'
             })
         }
     });
-
 }
 
 var SwalType = {
