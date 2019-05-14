@@ -553,7 +553,7 @@ def api_tag_text(request, user, params):
             result_map = preprocessor.transform([text_dict], **preprocessor_params)
         except Exception as e:
             result_map = {"error": "preprocessor internal error: {}".format(repr(e))}
-            data_json = json.dumps(error)
+            data_json = json.dumps(result_map)
             return HttpResponse(data_json, status=400, content_type='application/json')
 
         text_dict = result_map['documents'][0]

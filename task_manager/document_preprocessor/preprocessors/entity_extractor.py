@@ -67,11 +67,11 @@ class EntityExtractorPreprocessor(object):
                         documents[i][FACT_FIELD].extend(new_facts)
 
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).exception(json.dumps(
-                {'process': 'APPLY PREPROCESSOR',
-                'event': 'EntityExtractorPreprocessor:transform',
-                'data': {'entity_extractor_preprocessor_models': json.loads(kwargs['entity_extractor_preprocessor_models'])}}
-                ), exc_info=True)
+            log_dict = {'task': 'APPLY PREPROCESSOR',
+                       'event': 'EntityExtractorPreprocessor:transform',
+                       'data': {'entity_extractor_preprocessor_models': json.loads(kwargs['entity_extractor_preprocessor_models'])}}
+
+            logging.getLogger(ERROR_LOGGER).exception("Entity Extractor transform", extra=log_dict, exc_info=True)
             return {"documents":documents, "meta": {'facts_added': facts_added}}
         return {"documents":documents, "meta": {'facts_added': facts_added}}
 
