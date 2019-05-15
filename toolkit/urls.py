@@ -3,13 +3,11 @@ from django.conf.urls import url
 from rest_framework import routers
 
 from toolkit.core.health.views import HealthView
-from toolkit.core.urls import router as core_router
+from toolkit.core.urls import router as core_router, urls as core_urls
 from toolkit.embedding.urls import router as embedding_router
 from toolkit.tagger.urls import router as tagger_router
 from toolkit.hybrid.urls import router as hybrid_router
 #from toolkit.nexus.urls import router as nexus_router
-
-from toolkit.core.urls import urls as core_urls
 
 router = routers.DefaultRouter()
 router.registry.extend(core_router.registry)
