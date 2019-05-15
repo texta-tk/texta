@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from rest_framework.test import APITestCase, URLPatternsTestCase
 from rest_framework import status
 
+from toolkit.utils.utils_for_tests import create_test_user
+
 
 class AuthTests(APITestCase, URLPatternsTestCase):
     urlpatterns = [
@@ -13,9 +15,7 @@ class AuthTests(APITestCase, URLPatternsTestCase):
 
 
     def setUp(self):
-        self.test_user = User(username='logInTester', email='my@email.com')
-        self.test_user.set_password('safepass')
-        self.test_user.save()
+        self.test_user = create_test_user()
 
 
     def test_create_account(self):
@@ -32,7 +32,6 @@ class AuthTests(APITestCase, URLPatternsTestCase):
         })
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(len(response.data), 1)
 
 
     def test_login(self):
@@ -42,12 +41,11 @@ class AuthTests(APITestCase, URLPatternsTestCase):
         url = '/rest-auth/login/'
 
         response = self.client.post(url, {
-            'username': 'logInTester',
-            'password': 'safepass',
+            'username': 'tester',
+            'password': 'password',
         })
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
 
 
     def test_logout(self):
@@ -60,4 +58,3 @@ class AuthTests(APITestCase, URLPatternsTestCase):
         response = self.client.post(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)

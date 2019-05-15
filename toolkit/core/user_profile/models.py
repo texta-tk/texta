@@ -9,3 +9,7 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f'Profile - {self.user.username}'
+
+    def activate_project(self, project):
+        self.active_project = project
+        self.save()

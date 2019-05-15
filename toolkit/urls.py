@@ -2,7 +2,8 @@ from django.urls import include, path
 from django.conf.urls import url
 from rest_framework import routers
 
-from toolkit.core.urls import router as core_router
+from toolkit.core.health.views import HealthView
+from toolkit.core.urls import router as core_router, urls as core_urls
 from toolkit.embedding.urls import router as embedding_router
 from toolkit.tagger.urls import router as tagger_router
 from toolkit.hybrid.urls import router as hybrid_router
@@ -20,6 +21,6 @@ router.registry.extend(tagger_router.registry)
 urlpatterns = [
     path('rest-auth/', include('rest_auth.urls')),
     path('rest-auth/registration/', include('rest_auth.registration.urls')),
-    path('', include(router.urls)),
+    path('', include(core_urls))
 ]
 
