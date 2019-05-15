@@ -9,6 +9,8 @@ from toolkit.tagger.urls import router as tagger_router
 from toolkit.hybrid.urls import router as hybrid_router
 #from toolkit.nexus.urls import router as nexus_router
 
+from toolkit.core.urls import urls as core_urls
+
 router = routers.DefaultRouter()
 router.registry.extend(core_router.registry)
 router.registry.extend(embedding_router.registry)
@@ -21,7 +23,6 @@ router.registry.extend(tagger_router.registry)
 urlpatterns = [
     path('rest-auth/', include('rest_auth.urls')),
     path('rest-auth/registration/', include('rest_auth.registration.urls')),
-    path('', include(router.urls)),
-    path('health', HealthView.as_view())
+    path('', include(core_urls))
 ]
 
