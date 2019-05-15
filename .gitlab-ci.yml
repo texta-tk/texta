@@ -14,6 +14,6 @@ stages:
 Test:
   stage: test
   tags:
-  - test-ci
+  - ci-test
   script:
   - python manage.py test
