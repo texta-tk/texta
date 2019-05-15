@@ -11,6 +11,12 @@ before_script:
   - python -V
   - pip install -r requirements.txt
 
-test:
+stages:
+  - test
+
+Test:
+  stage: test
+  tags:
+  - test-ci
   script:
   - python manage.py test
