@@ -5,7 +5,7 @@ from toolkit.tagger.choices import TAGGER_CHOICES, get_field_choices, get_classi
 from toolkit.core.task.serializers import TaskSerializer
 
 
-class TaggerSerializer(serializers.HyperlinkedModelSerializer):
+class TaggerSerializer(serializers.ModelSerializer):
     fields = serializers.MultipleChoiceField(choices=get_field_choices())
     vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices())
     classifier = serializers.ChoiceField(choices=get_classifier_choices())
@@ -18,6 +18,14 @@ class TaggerSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Tagger
         fields = ('url', 'id', 'description', 'project', 'author', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'maximum_sample_size', 'location', 'statistics', 'task')
+        read_only_fields = ('author', 'project')
+
+
+class SimpleTaggerSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Tagger
+        fields = ('id', 'description')
 
 
 class TextSerializer(serializers.Serializer):

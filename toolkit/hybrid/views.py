@@ -7,6 +7,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.tagger.models import Tagger
 from toolkit.hybrid.serializers import HybridTaggerTextSerializer
 from toolkit.hybrid.hybrid_tagger import HybridTagger
+from toolkit.tagger.serializers import SimpleTaggerSerializer
 
 
 class HybridTaggerViewSet(viewsets.ViewSet):
@@ -16,8 +17,20 @@ class HybridTaggerViewSet(viewsets.ViewSet):
 
     serializer_class = HybridTaggerTextSerializer
 
+
+    def list(self, request):
+        """
+        Lists available taggers for activated project.
+        """
+        queryset = Tagger.objects.all()
+        serializer = SimpleTaggerSerializer(queryset, many=True, context={'request': request})
+        return Response({'available_taggers': serializer.data})
+
     
     def create(self, request):
+        """
+        Run selected taggers.
+        """
         serializer = HybridTaggerTextSerializer(data=request.data)
 
         # check if valid request
