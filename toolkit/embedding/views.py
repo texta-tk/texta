@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from toolkit.core import permissions
 from toolkit.embedding.models import Embedding
 from toolkit.embedding.serializers import EmbeddingSerializer, PredictionSerializer, PhraserSerializer
 from toolkit.embedding.embedding import W2VEmbedding
@@ -16,9 +17,18 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
     """
     queryset = Embedding.objects.all()
     serializer_class = EmbeddingSerializer
+    permission_classes = (permissions.TaggerEmbeddingsPermissions,)
 
     def get_queryset(self):
-        return Embedding.objects.filter(project=self.request.user.profile.active_project)
+        assert self.queryset is not None, (
+            "'%s' should either include a `queryset` attribute, "
+            "or override the `get_queryset()` method."
+            % self.__class__.__name__
+        )
+        queryset = self.queryset
+        if not self.request.user.is_superuser:
+            queryset = Embedding.objects.filter(project=self.request.user.profile.active_project)
+        return queryset
 
 
     @staticmethod
@@ -29,7 +39,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
             data = request.POST
         else:
             data = {}
-        return data        
+        return data
 
     @action(detail=True, methods=['get', 'post'])
     def predict(self, request, pk=None, project_pk=None):

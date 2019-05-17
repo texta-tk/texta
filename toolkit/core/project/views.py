@@ -40,3 +40,5 @@ class ProjectViewSet(viewsets.ModelViewSet):
         request.user.profile.activate_project(obj)
         return Response({'status': f'Project {pk} successfully activated.'}, status=status.HTTP_200_OK)
 
+    # TODO add deactivate action, also for owner or
+
