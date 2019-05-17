@@ -22,21 +22,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
             "or override the `get_queryset()` method."
             % self.__class__.__name__
         )
-        current_user = self.get_current_user_id(self.request)
-        user_obj = self.get_current_user_obj(self.request)
+        current_user = self.request.user.id
         queryset = self.queryset
         if isinstance(queryset, QuerySet):
             # re-evaluate queryset on each request.
             queryset = queryset.all()
-        if not user_obj.is_superuser:
+        if not self.request.user.is_superuser:
             queryset = queryset[:].filter(owner=current_user) | queryset[:].filter(users=current_user)
         return queryset
 
-    def get_current_user_id(self, request):
-        return request.user.id
-
-    def get_current_user_obj(self, request):
-        return request.user
 
     # TODO permission_classes is just overwriting the viewset permission_classes here for tests
     # Something like IsOwnerOrIncludedUser would be useful
