@@ -17,18 +17,11 @@ class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
             "or override the `get_queryset()` method."
             % self.__class__.__name__
         )
-        current_user = self.get_current_user_id(self.request)
-        user_obj = self.get_current_user_obj(self.request)
+        current_user = self.request.user.id
         queryset = self.queryset
         if isinstance(queryset, QuerySet):
             # re-evaluate queryset on each request.
             queryset = queryset.all()
-        if not user_obj.is_superuser:
+        if not self.request.user.is_superuser:
             queryset = queryset[:].filter(user_id=current_user)
         return queryset
-
-    def get_current_user_id(self, request):
-        return request.user.id
-
-    def get_current_user_obj(self, request):
-        return request.user
