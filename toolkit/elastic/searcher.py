@@ -29,7 +29,7 @@ class ElasticSearcher:
         """
         self.core = ElasticCore()
         self.field_data = self.core.parse_field_data(field_data)
-        self.indices = ','.join([field['index'] for field in field_data])
+        self.indices = ','.join(list(set([field['index'] for field in field_data])))
         self.query = query
         self.scroll_size = scroll_size
         self.scroll_limit = scroll_limit
@@ -48,6 +48,10 @@ class ElasticSearcher:
         Iterator for iterating through scroll
         """
         return self.scroll()
+
+
+    def update_query(self, query):
+        self.query = query
 
 
     @staticmethod
@@ -92,8 +96,8 @@ class ElasticSearcher:
         return response['hits']['total']
 
 
-    def search(self):
-        response = self.core.es.search(index=self.indices, body=self.query)
+    def search(self, size=10):
+        response = self.core.es.search(index=self.indices, body=self.query, size=size)
         if self.output == self.OUT_DOC:
             return [self._parse_doc(doc) for doc in response['hits']['hits']]
         else:

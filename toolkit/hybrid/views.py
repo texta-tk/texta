@@ -12,17 +12,22 @@ from toolkit.tagger.serializers import SimpleTaggerSerializer
 
 class HybridTaggerViewSet(viewsets.ViewSet):
     """
-    API endpoint for using tagging models.
+    Hybrid Tagger for using multiple tagger instances.
     """
-
     serializer_class = HybridTaggerTextSerializer
+
+    def _get_tagger_objects(self):
+        """
+        Returns available Tagger objects for the active project.
+        """
+        return Tagger.objects.filter(project=self.request.user.profile.active_project).filter(task__status='completed')
 
 
     def list(self, request):
         """
         Lists available taggers for activated project.
         """
-        queryset = Tagger.objects.all()
+        queryset = self._get_tagger_objects()
         serializer = SimpleTaggerSerializer(queryset, many=True, context={'request': request})
         return Response({'available_taggers': serializer.data})
 
@@ -33,15 +38,14 @@ class HybridTaggerViewSet(viewsets.ViewSet):
         """
         serializer = HybridTaggerTextSerializer(data=request.data)
 
-        # check if valid request
-        if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
-        print(request.data['taggers'])
+        serializer.is_valid(raise_exception=True)
+        #print(request.data['taggers'])
+
+        tagger_ids = [1,2,6]
 
         # apply hybrid tagger
-        hybrid_tagger = HybridTagger()
-        hybrid_tagger.load(request.data['taggers'])
+        hybrid_tagger = HybridTagger(tagger_ids=tagger_ids)
+        #hybrid_tagger.load(request.data['taggers'])
         hybrid_tagger_response = hybrid_tagger.tag_text(request.data['text'])
 
 
