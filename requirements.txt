@@ -35,3 +35,4 @@ pydot
 git+git://github.com/autonomio/talos.git@daily-dev
 graphviz
 python-json-logger
+python-dotenv
