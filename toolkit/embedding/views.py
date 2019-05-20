@@ -2,7 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.core import permissions
+from toolkit.core import permissions as core_permissions
 from toolkit.embedding.models import Embedding
 from toolkit.embedding.serializers import EmbeddingSerializer, PredictionSerializer, PhraserSerializer
 from toolkit.embedding.embedding import W2VEmbedding
@@ -17,7 +17,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
     """
     queryset = Embedding.objects.all()
     serializer_class = EmbeddingSerializer
-    permission_classes = (permissions.TaggerEmbeddingsPermissions,)
+    permission_classes = (core_permissions.TaggerEmbeddingsPermissions,)
 
     def get_queryset(self):
         queryset = self.queryset

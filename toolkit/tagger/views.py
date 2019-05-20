@@ -3,7 +3,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.core import permissions
+from toolkit.core import permissions as core_permissions
 from toolkit.elastic.core import ElasticCore
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.serializers import TaggerSerializer, TextSerializer, DocSerializer
@@ -13,7 +13,7 @@ from toolkit.tagger.text_tagger import TextTagger
 class TaggerViewSet(viewsets.ModelViewSet):
     queryset = Tagger.objects.all()
     serializer_class = TaggerSerializer
-    permission_classes = (permissions.TaggerEmbeddingsPermissions,)
+    permission_classes = (core_permissions.TaggerEmbeddingsPermissions,)
 
     def get_queryset(self):
         queryset = self.queryset

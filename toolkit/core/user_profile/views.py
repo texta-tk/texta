@@ -5,7 +5,6 @@ from rest_framework import viewsets
 
 from toolkit.core.user_profile.models import UserProfile
 from toolkit.core.user_profile.serializers import UserSerializer
-from toolkit.core import permissions
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
