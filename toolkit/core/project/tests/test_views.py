@@ -14,8 +14,8 @@ class ProjectViewTests(APITestCase):
         # Random user, that doesn't have permissions to the project
         self.random_user = create_test_user('random', 'my3@email.com', 'pw')
 
-        self.test_project = Project.objects.create(title='testproj', owner=self.owner.profile)
-        self.test_project.users.set([self.included_user.profile])
+        self.test_project = Project.objects.create(title='testproj', owner=self.owner)
+        self.test_project.users.set([self.included_user])
 
         self.client = APIClient()
 
