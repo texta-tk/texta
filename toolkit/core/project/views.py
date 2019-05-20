@@ -1,5 +1,4 @@
 from django.db.models.query import QuerySet
-from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -31,14 +30,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
             queryset = queryset[:].filter(owner=current_user) | queryset[:].filter(users=current_user)
         return queryset
 
-
-    # TODO permission_classes is just overwriting the viewset permission_classes here for tests
-    # Something like IsOwnerOrIncludedUser would be useful
-    @action(detail=True, methods=['get'], permission_classes=[])
+    @action(detail=True, methods=['get'])
     def activate_project(self, request, pk=None):
         obj = self.get_object()
         request.user.profile.activate_project(obj)
         return Response({'status': f'Project {pk} successfully activated.'}, status=status.HTTP_200_OK)
-
-    # TODO add deactivate action, also for owner or
-
