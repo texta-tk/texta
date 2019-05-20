@@ -16,14 +16,10 @@ class TaggerViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.TaggerEmbeddingsPermissions,)
 
     def get_queryset(self):
-        assert self.queryset is not None, (
-            "'%s' should either include a `queryset` attribute, "
-            "or override the `get_queryset()` method."
-            % self.__class__.__name__
-        )
         queryset = self.queryset
-        if not self.request.user.is_superuser:
-            queryset = Tagger.objects.filter(project=self.request.user.profile.active_project)
+        current_user = self.request.user
+        if not current_user.is_superuser:
+            queryset = Tagger.objects.filter(project=current_user.profile.active_project)
         return queryset
 
 

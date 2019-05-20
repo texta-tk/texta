@@ -7,7 +7,6 @@ from rest_framework.decorators import action
 from toolkit.core import permissions
 from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import ProjectSerializer
-from toolkit.core.user_profile.serializers import UserProfileSerializer
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
@@ -16,18 +15,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.ProjectPermissions,)
 
     def get_queryset(self):
-        assert self.queryset is not None, (
-            "'%s' should either include a `queryset` attribute, "
-            "or override the `get_queryset()` method."
-            % self.__class__.__name__
-        )
-        current_user = self.request.user.id
         queryset = self.queryset
-        if isinstance(queryset, QuerySet):
-            # re-evaluate queryset on each request.
-            queryset = queryset.all()
-        if not self.request.user.is_superuser:
-            queryset = queryset[:].filter(owner=current_user) | queryset[:].filter(users=current_user)
+        current_user = self.request.user
+        if not current_user.is_superuser:
+            queryset = queryset.filter(owner=current_user) | queryset.filter(users=current_user)
         return queryset
 
     @action(detail=True, methods=['get'])

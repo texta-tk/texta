@@ -38,4 +38,3 @@ class EmbeddingFiltering(permissions.BasePermission):
     pass
 
     # def has_permission(self, request, view):
-
