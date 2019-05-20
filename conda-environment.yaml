@@ -30,3 +30,4 @@ dependencies:
         - elasticsearch
         - elasticsearch_dsl
         - graypy
+        - python-dotenv

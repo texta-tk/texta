@@ -30,7 +30,7 @@ class FactAdderSubWorker(BaseWorker):
     def _reload_env(self):
         from dotenv import load_dotenv
         from pathlib import Path
-        env_path = Path('.env')
+        env_path = str(Path('.env'))
         load_dotenv(dotenv_path=env_path)
 
     def _generate_loggers(self):
@@ -38,7 +38,7 @@ class FactAdderSubWorker(BaseWorker):
         import os
         info_logger = logging.getLogger(INFO_LOGGER)
         error_logger = logging.getLogger(ERROR_LOGGER)
-        handler = graypy.GELFUDPHandler(os.getenv("GRAYLOG_HOST_NAME", None), int(os.getenv("GRAYLOG_PORT", None)))
+        handler = graypy.GELFUDPHandler(os.getenv("GRAYLOG_HOST_NAME", "localhost"), int(os.getenv("GRAYLOG_PORT", 12201)))
 
         info_logger.addHandler(handler)
         error_logger.addHandler(handler)

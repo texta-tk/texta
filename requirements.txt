@@ -30,3 +30,4 @@ xlrd
 graypy
 django-picklefield
 python-json-logger
+python-dotenv
