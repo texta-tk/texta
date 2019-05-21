@@ -101,8 +101,9 @@ def activate_task_worker(task_type):
     for task_param in task_params:
         log_dict = {'task': 'check_task_params', 'data': {'task_param_id': task_param['id'], 'task_type': task_type, 'is_equal': task_param['id'] == task_type}}
         logging.getLogger(INFO_LOGGER).info("Activates task worker", extra=log_dict)
-        # Instantiate worker
-        worker_instance = task_param['worker']()
-        return worker_instance
+        if task_param['id'] == task_type:
+            # Instantiate worker
+            worker_instance = task_param['worker']()
+            return worker_instance
 
     return None
