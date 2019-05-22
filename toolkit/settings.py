@@ -70,6 +70,9 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        # For DRF API browser pages
+       'rest_framework.authentication.SessionAuthentication',
+       # For authenticating requests with the Token
        'rest_framework.authentication.TokenAuthentication',
     ),
 }
