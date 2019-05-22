@@ -147,13 +147,15 @@ function query() {
             var columns = []
             $('#columnsRow').find('th').each(function (index) {
                 // Append _DtCol to end to safe from naming conflicts
-                columns.push({ 'className': 'DtCol_' + $(this).text(), 'targets': index })
                 if (index !== 0) {
                     columns.push({
                         'className': 'DtCol_' + $(this).text(),
                         'targets': index,
                         'render': function (data, type, row) {
-                            return data.split("\\n").join("<br/>");
+                            if(data){
+                                return data.split("\\n").join("<br>");
+                            }
+                            return data;
                         }
                     })
                 } else {
@@ -168,6 +170,7 @@ function query() {
                     })
                 }
             })
+            console.log(columns);
 
             examplesTable = $('#examples').DataTable({
                 'autoWidth': false,
