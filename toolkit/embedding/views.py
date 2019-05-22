@@ -25,6 +25,10 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
         if not current_user.is_superuser:
             queryset = Embedding.objects.filter(project=current_user.profile.active_project)
         return queryset
+    
+    
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
 
     @staticmethod

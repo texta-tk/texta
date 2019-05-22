@@ -15,6 +15,9 @@ class TaggerViewSet(viewsets.ModelViewSet):
     serializer_class = TaggerSerializer
     permission_classes = (core_permissions.TaggerEmbeddingsPermissions,)
 
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
     def get_queryset(self):
         queryset = self.queryset
         current_user = self.request.user

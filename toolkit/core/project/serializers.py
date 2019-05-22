@@ -9,3 +9,4 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Project
         fields = ('url', 'id', 'title', 'owner', 'users', 'indices')
+        read_only_fields = ('owner', )
