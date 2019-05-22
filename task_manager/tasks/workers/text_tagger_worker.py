@@ -58,8 +58,8 @@ class TagModelWorker(BaseWorker):
 
     def _generate_loggers(self):
         import graypy
-        info_logger = self.info_logger
-        error_logger = self.error_logger
+        info_logger = logging.getLogger(INFO_LOGGER)
+        error_logger = logging.getLogger(ERROR_LOGGER)
         handler = graypy.GELFUDPHandler(os.getenv("GRAYLOG_HOST_NAME", "localhost"), int(os.getenv("GRAYLOG_PORT", 12201)))
 
         info_logger.addHandler(handler)
