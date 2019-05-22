@@ -9,9 +9,10 @@ from task_manager.models import Task
 from task_manager.tools import EsIterator
 from task_manager.tools import ShowProgress
 from task_manager.tools import TaskCanceledException
-from texta.settings import ERROR_LOGGER, INFO_LOGGER, MODELS_DIR
+from texta.settings import MODELS_DIR, ERROR_LOGGER, INFO_LOGGER
 from utils.word_cluster import WordCluster
 from utils.phraser import Phraser
+import graypy
 
 from .base_worker import BaseWorker
 
@@ -19,6 +20,9 @@ from .base_worker import BaseWorker
 class LanguageModelWorker(BaseWorker):
 
     def __init__(self):
+        self._reload_env()
+        self.info_logger, self.error_logger = self._generate_loggers()
+
         self.id = None
         self.model = None
         self.model_name = None
@@ -28,12 +32,29 @@ class LanguageModelWorker(BaseWorker):
         self.word_cluster = None
         self.phraser = None
 
+    def _reload_env(self):
+        from dotenv import load_dotenv
+        from pathlib import Path
+        env_path = str(Path('.env'))
+        load_dotenv(dotenv_path=env_path)
+
+    def _generate_loggers(self):
+        info_logger = logging.getLogger(INFO_LOGGER)
+        error_logger = logging.getLogger(ERROR_LOGGER)
+        handler = graypy.GELFUDPHandler(os.getenv("GRAYLOG_HOST_NAME", "localhost"), int(os.getenv("GRAYLOG_PORT", 12201)))
+
+        info_logger.addHandler(handler)
+        error_logger.addHandler(handler)
+
+        return info_logger, error_logger
+
     def run(self, task_id):
         self.id = task_id
         self.task_obj = Task.objects.get(pk=self.id)
         self.task_type = self.task_obj.task_type
 
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_started', 'data': {'task_id': self.id}}))
+        log_dict = {'task': 'CREATE MODEL', 'event': 'model_training_started', 'data': {'task_id': self.id}}
+        self.info_logger.info("Created model", extra=log_dict)
 
         num_passes = 5
         # Number of word2vec passes + one pass to vocabulary building
@@ -83,7 +104,10 @@ class LanguageModelWorker(BaseWorker):
             # declare the job done
             show_progress.update_step(None)
             show_progress.update_view(100.0)
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_completed', 'data': {'task_id': self.id}}))
+
+            log_dict = {'task': 'CREATE MODEL', 'event': 'model_training_completed', 'data': {'task_id': self.id}}
+            self.info_logger.info("Finished model training", extra=log_dict)
+
             self.task_obj.result = json.dumps({"model_type": "word2vec", "lexicon_size": len(self.model.wv.vocab)})
             # self.task_obj.resources = {"word_cluster": self.word_cluster}
             self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
@@ -92,13 +116,15 @@ class LanguageModelWorker(BaseWorker):
             # If here, task was canceled while training
             # Delete task
             self.task_obj.delete()
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_canceled', 'data': {'task_id': self.id}}), exc_info=True)
+            log_dict = {'task': 'CREATE MODEL', 'event': 'model_training_canceled', 'data': {'task_id': self.id}}
+            self.info_logger.info("Model training canceled", extra=log_dict, exc_info=True)
             print("--- Task canceled")
 
         except Exception as e:
             # If here, internal error happened
-            logging.getLogger(ERROR_LOGGER).exception(json.dumps({'process': 'CREATE MODEL', 'event': 'model_training_failed', 'data': {'task_id': self.id}}), exc_info=True)
-            #print('--- Error: {0}'.format(e))
+            log_dict = {'task': 'CREATE MODEL', 'event': 'model_training_failed', 'data': {'task_id': self.id}}
+            self.error_logger.exception("Model training failed", extra=log_dict, exc_info=True)
+            # print('--- Error: {0}'.format(e))
             # Declare the job as failed
             self.task_obj.result = json.dumps({"error": str(e)})
             self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=False)
@@ -108,8 +134,9 @@ class LanguageModelWorker(BaseWorker):
 
     def save(self):
         try:
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'SAVE LANGUAGE MODEL', 'event': 'Starting to save language model', 'data': {'task_id': self.id}}))
-            
+            log_dict = {'task': 'SAVE LANGUAGE MODEL', 'event': 'Starting to save language model', 'data': {'task_id': self.id}}
+            self.info_logger.info("Saving language model", extra=log_dict)
+
             model_name = 'model_{}'.format(self.task_obj.unique_id)
             phraser_name = 'phraser_{}'.format(self.task_obj.unique_id)
             cluster_name = 'cluster_{}'.format(self.task_obj.unique_id)
@@ -126,9 +153,10 @@ class LanguageModelWorker(BaseWorker):
 
             write_task_xml(self.task_obj, output_xml_file)
 
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'SAVE LANGUAGE MODEL', 'event': 'Saving finished', 'data': {'output_model_file': output_model_file, 'output_phraser_file': output_phraser_file,  'task_id': self.id}}))
+            log_dict = {'task': 'SAVE LANGUAGE MODEL', 'event': 'Saving finished', 'data': {'output_model_file': output_model_file, 'output_phraser_file': output_phraser_file, 'task_id': self.id}}
+            self.info_logger.info("Finished saving language model", extra=log_dict)
             return True
 
         except Exception as e:
             filepath = os.path.join(MODELS_DIR, self.model_name)
-            logging.getLogger(ERROR_LOGGER).error('Failed to save model pickle to filesystem.', exc_info=True, extra={'filepath': filepath, 'modelname': self.model_name, 'task_id': self.id})
+            self.error_logger.error('Failed to save model pickle to filesystem.', exc_info=True, extra={'filepath': filepath, 'modelname': self.model_name, 'task_id': self.id})

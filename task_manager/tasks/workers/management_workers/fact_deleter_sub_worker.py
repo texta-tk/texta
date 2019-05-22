@@ -2,7 +2,8 @@ import logging
 import json
 from task_manager.tasks.workers.base_worker import BaseWorker
 from task_manager.tools import ShowProgress
-from texta.settings import ERROR_LOGGER, FACT_FIELD
+from texta.settings import ERROR_LOGGER, FACT_FIELD, INFO_LOGGER
+
 
 class FactDeleterSubWorker(BaseWorker):
 
@@ -13,6 +14,27 @@ class FactDeleterSubWorker(BaseWorker):
         self.scroll_size = scroll_size
         self.scroll_time_out = time_out
 
+        self._reload_env()
+        self.info_logger, self.error_logger = self._generate_loggers()
+
+    def _reload_env(self):
+        from dotenv import load_dotenv
+        from pathlib import Path
+        env_path = str(Path('.env'))
+        load_dotenv(dotenv_path=env_path)
+
+    def _generate_loggers(self):
+        import graypy
+        import os
+        info_logger = logging.getLogger(INFO_LOGGER)
+        error_logger = logging.getLogger(ERROR_LOGGER)
+        handler = graypy.GELFUDPHandler(os.getenv("GRAYLOG_HOST_NAME", "localhost"), int(os.getenv("GRAYLOG_PORT", 12201)))
+
+        info_logger.addHandler(handler)
+        error_logger.addHandler(handler)
+
+        return info_logger, error_logger
+
     def run(self):
         try:
             rm_facts_dict, doc_id = self.parse_params()
@@ -21,7 +43,7 @@ class FactDeleterSubWorker(BaseWorker):
             result = self.remove_facts_from_document(rm_facts_dict, doc_id)
             return result
         except:
-            logging.getLogger(ERROR_LOGGER).error('A problem occurred when attempted to run fact_deleter_worker.', exc_info=True, extra={
+            self.error_logger.error('A problem occurred when attempted to run fact_deleter_worker.', exc_info=True, extra={
                 'params': self.params,
                 'task_id': self.task_id
             })
@@ -87,7 +109,7 @@ class FactDeleterSubWorker(BaseWorker):
                     show_progress.update(docs_left)
                 except:
                     total_failed_batches += 1
-                    logging.getLogger(ERROR_LOGGER).error('A problem occurred during scrolling of fact deletion.', exc_info=True, extra={
+                    self.error_logger.error('A problem occurred during scrolling of fact deletion.', exc_info=True, extra={
                         'total_docs': total_docs,
                         'docs_left': docs_left,
                         'response': response,
@@ -101,7 +123,7 @@ class FactDeleterSubWorker(BaseWorker):
             return result
 
         except:
-            logging.getLogger(ERROR_LOGGER).error('A problem occurred when attempting to delete facts.', exc_info=True, extra={
+            self.error_logger.error('A problem occurred when attempting to delete facts.', exc_info=True, extra={
                 'rm_facts_dict': rm_facts_dict,
                 'response': response,
             })

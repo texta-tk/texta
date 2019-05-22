@@ -275,10 +275,7 @@ def upload_task_archive(request):
         else:
             json_response = {"status": "failed", "text": "No file provided"}
     except:
-        logging.getLogger(ERROR_LOGGER).error(
-            'Exception in Task Manager views:upload_task_archive',
-            exc_info=True
-        )
+        logging.getLogger(ERROR_LOGGER).error('Exception in Task Manager views:upload_task_archive', exc_info=True)
 
     return JsonResponse(json_response)
 

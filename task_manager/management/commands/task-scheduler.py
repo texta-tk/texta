@@ -45,8 +45,9 @@ class Command(BaseCommand):
                 print("-> Task timeout: ", task.id)
                 task.update_status(Task.STATUS_FAILED, set_time_completed=True)
                 task.update_progress(0, "timeout")
-                log_data = json.dumps({'process': 'Task Scheduler', 'event': 'time_out_task'})
-                logging.getLogger(ERROR_LOGGER).error(log_data, extra={'task_id': task.id})
+
+                log_dict = {'task': 'Task Scheduler', 'event': 'time_out_task', 'task_id': task.id}
+                logging.getLogger(ERROR_LOGGER).error("Task timed out", extra=log_dict)
 
     def _execute_task(self, task):
         """ Execute task
@@ -57,8 +58,8 @@ class Command(BaseCommand):
         if worker is None:
             # Invalid task
             task.update_status(Task.STATUS_FAILED)
-            log_data = json.dumps({'process': 'Task Scheduler', 'event': 'invalid_task', 'task_type': task_type, 'task_id': task_id})
-            logging.getLogger(ERROR_LOGGER).error(log_data)
+            log_dict = {'task': 'Task Scheduler', 'event': 'invalid_task', 'task_type': task_type, 'task_id': task_id}
+            logging.getLogger(ERROR_LOGGER).error("Invalid task", extra=log_dict)
             return
         try:
             # Run worker
@@ -66,9 +67,9 @@ class Command(BaseCommand):
         except Exception as e:
             # Capture generic task error
             task.update_status(Task.STATUS_FAILED)
-            log_data = json.dumps({'process': 'Task Scheduler', 'event': 'task_execution_error', 'task_type': task_type, 'task_id': task_id})
+            log_dict = {'task': 'Task Scheduler', 'event': 'task_execution_error', 'task_type': task_type, 'task_id': task_id}
 
-            logging.getLogger(INFO_LOGGER).info(log_data)
+            logging.getLogger(INFO_LOGGER).info("Task execution error", extra=log_dict)
             logging.getLogger(ERROR_LOGGER).exception(e)
 
             print(e)
@@ -93,8 +94,8 @@ class Command(BaseCommand):
 
         # Check if max running tasks in progress
         if capacity <= 0:
-            log_data = json.dumps({'process': 'Task Scheduler', 'event': 'max_running_tasks'})
-            logging.getLogger(INFO_LOGGER).info(log_data)
+            log_dict = {'task': 'Task Scheduler', 'event': 'max_running_tasks'}
+            logging.getLogger(INFO_LOGGER).info("Running max tasks", extra=log_dict)
             return
 
         # Execute one task from queue

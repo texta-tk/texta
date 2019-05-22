@@ -1,4 +1,3 @@
-
 import os
 import json
 import logging
@@ -48,6 +47,26 @@ class TagModelWorker(BaseWorker):
         self.task_type = None
         self.n_jobs = 1
 
+        self._reload_env()
+        self.info_logger, self.error_logger = self._generate_loggers()
+
+    def _reload_env(self):
+        from dotenv import load_dotenv
+        from pathlib import Path
+        env_path = str(Path('.env'))
+        load_dotenv(dotenv_path=env_path)
+
+    def _generate_loggers(self):
+        import graypy
+        info_logger = self.info_logger
+        error_logger = self.error_logger
+        handler = graypy.GELFUDPHandler(os.getenv("GRAYLOG_HOST_NAME", "localhost"), int(os.getenv("GRAYLOG_PORT", 12201)))
+
+        info_logger.addHandler(handler)
+        error_logger.addHandler(handler)
+
+        return info_logger, error_logger
+
     def _handle_language_model(self, data_sample_x_map):
         if 'language_model' in self.task_params:
             language_model = self.task_params['language_model']
@@ -56,7 +75,6 @@ class TagModelWorker(BaseWorker):
                 word_cluster_fields = self.task_params['word_cluster_fields']
             else:
                 word_cluster_fields = None
-
 
             task_obj = Task.objects.get(pk=int(language_model['pk']))
             sw = StopWords()
@@ -77,7 +95,6 @@ class TagModelWorker(BaseWorker):
                     for word_cluster_field in word_cluster_fields:
                         if word_cluster_field in data_sample_x_map:
                             data_sample_x_map[word_cluster_field] = [wc.text_to_clusters(text) for text in data_sample_x_map[word_cluster_field]]
-
 
     def run(self, task_id):
 
@@ -125,7 +142,7 @@ class TagModelWorker(BaseWorker):
             ds = Datasets().activate_datasets_by_id(self.task_params['dataset'])
             es_m = ds.build_manager(ES_Manager)
             self.model_name = 'model_{0}'.format(self.task_obj.unique_id)
-            es_data = EsDataSample(fields=fields, 
+            es_data = EsDataSample(fields=fields,
                                    query=param_query,
                                    es_m=es_m,
                                    negative_set_multiplier=negative_set_multiplier,
@@ -151,26 +168,28 @@ class TagModelWorker(BaseWorker):
             self.task_obj.result = json.dumps(train_summary)
             self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
-            logging.getLogger(INFO_LOGGER).info(json.dumps({
-                'process': 'CREATE CLASSIFIER',
-                'event':   'model_training_completed',
-                'data':    {'task_id': self.task_id}
-            }))
+            log_dict = {
+                'task': 'CREATE CLASSIFIER',
+                'event': 'model_training_completed',
+                'data': {'task_id': self.task_id}
+            }
+            self.info_logger.info("Model training complete", extra=log_dict)
 
         except TaskCanceledException as e:
             # If here, task was canceled while training
             # Delete task
             self.task_obj.delete()
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE CLASSIFIER', 'event': 'model_training_canceled', 'data': {'task_id': self.task_id}}), exc_info=True)
+            log_dict = {'task': 'CREATE CLASSIFIER', 'event': 'model_training_canceled', 'data': {'task_id': self.task_id}}
+            self.info_logger.info("Model training canceled", extra=log_dict, exc_info=True)
             print("--- Task canceled")
 
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).exception(json.dumps(
-                {'process': 'CREATE CLASSIFIER', 'event': 'model_training_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
+            log_dict = {'task': 'CREATE CLASSIFIER', 'event': 'model_training_failed', 'data': {'task_id': self.task_id}}
+            self.error_logger.exception("Model training failed", extra=log_dict, exc_info=True)
             # declare the job as failed.
             self.task_obj.result = json.dumps({'error': repr(e)})
             self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
-        
+
         print('done')
 
     def tag(self, text_map, check_map_consistency=True):
@@ -206,9 +225,9 @@ class TagModelWorker(BaseWorker):
             return True
 
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).error('Failed to save model to filesystem.', exc_info=True, extra={
+            self.error_logger.error('Failed to save model to filesystem.', exc_info=True, extra={
                 'model_name': self.model_name,
-                'file_path':  output_model_file
+                'file_path': output_model_file
             })
 
     def load(self, task_id):
@@ -229,9 +248,9 @@ class TagModelWorker(BaseWorker):
             return model
 
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).error('Failed to load model from the filesystem.', exc_info=True, extra={
+            self.error_logger.error('Failed to load model from the filesystem.', exc_info=True, extra={
                 'model_name': model_name,
-                'file_path':  file_path
+                'file_path': file_path
             })
 
     def _training_process(self):
@@ -267,10 +286,10 @@ class TagModelWorker(BaseWorker):
         __precision = precision_score(y_test, y_pred)
         _recall = recall_score(y_test, y_pred)
         _statistics = {
-            'f1_score':         round(_f1, 3),
+            'f1_score': round(_f1, 3),
             'confusion_matrix': _confusion.tolist(),
-            'precision':        round(__precision, 3),
-            'recall':           round(_recall, 3)
+            'precision': round(__precision, 3),
+            'recall': round(_recall, 3)
         }
 
         return model, _statistics, plot_url

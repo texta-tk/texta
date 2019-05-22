@@ -55,6 +55,26 @@ class EntityExtractorWorker(BaseWorker):
         # If there is less than this amount of memory in Mb left in the machine, stop appending training data
         self.min_mb_available_memory = 1500
 
+        self._reload_env()
+        self.info_logger, self.error_logger = self._generate_loggers()
+
+    def _reload_env(self):
+        from dotenv import load_dotenv
+        from pathlib import Path
+        env_path = str(Path('.env'))
+        load_dotenv(dotenv_path=env_path)
+
+    def _generate_loggers(self):
+        import graypy
+        import os
+        info_logger = logging.getLogger(INFO_LOGGER)
+        error_logger = logging.getLogger(ERROR_LOGGER)
+        handler = graypy.GELFUDPHandler(os.getenv("GRAYLOG_HOST_NAME", "localhost"), int(os.getenv("GRAYLOG_PORT", 12201)))
+
+        info_logger.addHandler(handler)
+        error_logger.addHandler(handler)
+
+        return info_logger, error_logger
 
     def _set_up_task(self, task_id):
         self.task_id = task_id
@@ -74,7 +94,6 @@ class EntityExtractorWorker(BaseWorker):
         self.show_progress.update_view()
 
         return True
-
 
     def run(self, task_id):
         # Set up attributes, check if params valid, if not, don't continue
@@ -110,27 +129,29 @@ class EntityExtractorWorker(BaseWorker):
             self.task_obj.result = json.dumps(self.train_summary)
             self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
-            logging.getLogger(INFO_LOGGER).info(json.dumps({
-                'process': 'CREATE CRF MODEL',
-                'event':   'crf_training_completed',
-                'data':    {'task_id': self.task_id}
-            }))
+            log_dict = {
+                'task': 'CREATE CRF MODEL',
+                'event': 'crf_training_completed',
+                'arguments': {'task_id': self.task_id}
+            }
+            self.info_logger.info("CRF training completed", extra=log_dict)
 
         except TaskCanceledException as e:
             # If here, task was canceled while training
             # Delete task
             self.task_obj.delete()
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process': 'CREATE CLASSIFIER', 'event': 'crf_training_canceled', 'data': {'task_id': self.task_id}}), exc_info=True)
+            log_dict = {'task': 'CREATE CLASSIFIER', 'event': 'crf_training_canceled', 'data': {'task_id': self.task_id}}
+            self.info_logger.info("Crf training canceled", extra=log_dict, exc_info=True)
             print("--- Task canceled")
 
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).exception(json.dumps(
-                {'process': 'CREATE CLASSIFIER', 'event': 'crf_training_failed', 'data': {'task_id': self.task_id}}), exc_info=True)
+            log_dict = {'task': 'CREATE CLASSIFIER', 'event': 'crf_training_failed', 'data': {'task_id': self.task_id}}
+            self.error_logger.exception("CRF training failed", extra=log_dict, exc_info=True)
+
             # declare the job as failed.
             self.task_obj.result = json.dumps({'error': repr(e)})
             self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
         print('Done with crf task')
-
 
     def convert_and_predict(self, data, task_id):
         self.task_id = task_id
@@ -143,7 +164,6 @@ class EntityExtractorWorker(BaseWorker):
         processed_data = (self._sent2features(s) for s in data)
         preds = [self.tagger.tag(x) for x in processed_data]
         return preds
-
 
     def _prepare_data(self, hits, keywords):
         X_train = []
@@ -162,8 +182,7 @@ class EntityExtractorWorker(BaseWorker):
         y_val = [self._sent2labels(s) for s in X_val]
         X_val = (self._sent2features(s) for s in X_val)
 
-        return X_train, y_train, X_val, y_val 
-
+        return X_train, y_train, X_val, y_val
 
     def _save_as_pkl(self, var, suffix):
         # Save facts as metadata for tagging, to covert new data into training data using facts
@@ -171,7 +190,6 @@ class EntityExtractorWorker(BaseWorker):
         output_model_file = create_file_path(filename, MODELS_DIR, self.task_type)
         with open(output_model_file, "wb") as f:
             pkl.dump(var, f)
-
 
     def _transform(self, data, keywords):
         # TODO instead of matching again in text, should 
@@ -188,7 +206,6 @@ class EntityExtractorWorker(BaseWorker):
             marked_docs.append(marked)
         return marked_docs
 
-
     def _word2features(self, sent, i):
         word = sent[i][0]
         # Using strings instead of bool/int to satisfy pycrfsuite
@@ -203,7 +220,7 @@ class EntityExtractorWorker(BaseWorker):
             '1' if word.isdigit() else '0']
 
         if i > 0:
-            word1 = sent[i-1][0]
+            word1 = sent[i - 1][0]
             features.extend([
                 word1.lower(),
                 '1' if word1.istitle() else '0',
@@ -211,9 +228,9 @@ class EntityExtractorWorker(BaseWorker):
             ])
         else:
             features.append(self.bos_val)
-            
-        if i < len(sent)-1:
-            word1 = sent[i+1][0]
+
+        if i < len(sent) - 1:
+            word1 = sent[i + 1][0]
             features.extend([
                 word1.lower(),
                 '1' if word1.istitle() else '0',
@@ -222,18 +239,14 @@ class EntityExtractorWorker(BaseWorker):
             features.append(self.eos_val)
         return features
 
-
     def _sent2features(self, sent):
         return (self._word2features(sent, i) for i in range(len(sent)))
-
 
     def _sent2labels(self, sent):
         return [label for token, label in sent]
 
-
     def _sent2tokens(self, sent):
         return (token for token, label in sent)
-
 
     def _train_and_validate(self, X_train, y_train, X_val, y_val):
         model = self._train_and_save(X_train, y_train)
@@ -243,12 +256,10 @@ class EntityExtractorWorker(BaseWorker):
         report, confusion, plot_url = self._validate(self.tagger, X_val, y_val)
         return model, report, confusion, plot_url
 
-
     def _load_keywords(self):
         file_path = os.path.join(MODELS_DIR, self.task_type, "{}_meta".format(self.model_name))
         with open(file_path, "rb") as f:
             self.keywords = pkl.load(f)
-
 
     def _load_tagger(self):
         # In pycrfsuite, you have to save the model first, then load it as a tagger
@@ -259,13 +270,12 @@ class EntityExtractorWorker(BaseWorker):
             tagger.open(file_path)
         except Exception as e:
             print(e)
-            logging.getLogger(ERROR_LOGGER).error('Failed to load crf model from the filesystem.', exc_info=True, extra={
+            self.error_logger.error('Failed to load crf model from the filesystem.', exc_info=True, extra={
                 'model_name': self.model_name,
-                'file_path':  file_path})
+                'file_path': file_path})
 
         self.tagger = tagger
         return self.tagger
-
 
     def _train_and_save(self, X_train, y_train):
         trainer = Trainer(verbose=False)
@@ -275,16 +285,18 @@ class EntityExtractorWorker(BaseWorker):
                 if (psutil.virtual_memory().available / 1000000) < self.min_mb_available_memory:
                     print('EntityExtractorWorker:_get_memory_safe_features - Less than {} Mb of memory remaining, breaking adding more data.'.format(self.min_mb_available_memory))
                     self.train_summary["warning"] = "Trained on {} documents, because more documents don't fit into memory".format(i)
-                    logging.getLogger(INFO_LOGGER).info(json.dumps({
-                        'process': 'EntityExtractorWorker:_train_and_save',
-                        'event':   'Less than {}Mb of memory available, stopping adding more training data. Iteration {}.'.format(self.min_mb_available_memory, i),
-                        'data':    {'task_id': self.task_id}
-                    }))
+
+                    log_dict = {
+                        'task': 'EntityExtractorWorker:_train_and_save',
+                        'event': 'Less than {}Mb of memory available, stopping adding more training data. Iteration {}.'.format(self.min_mb_available_memory, i),
+                        'data': {'task_id': self.task_id}
+                    }
+                    self.info_logger.info("Memory", extra=log_dict)
                     break
             trainer.append(xseq, yseq)
 
         trainer.set_params({
-            'c1': 0.5,   # coefficient for L1 penalty
+            'c1': 0.5,  # coefficient for L1 penalty
             'c2': 1e-4,  # coefficient for L2 penalty
             'max_iterations': 50,  # stop earlier
             # transitions that are possible, but not observed
@@ -294,7 +306,6 @@ class EntityExtractorWorker(BaseWorker):
         # Train and save
         trainer.train(output_model_path)
         return trainer
-
 
     def _classification_reports(self, y_true, y_pred):
         """
@@ -334,12 +345,10 @@ class EntityExtractorWorker(BaseWorker):
         # Return sklearn classification_report, return report as dict
         return report, confusion, plot_url
 
-
     def _validate(self, model, X_val, y_val):
         y_pred = [model.tag(xseq) for xseq in X_val]
         report, confusion, plot_url = self._classification_reports(y_val, y_pred)
         return report, confusion, plot_url
-
 
     def _scroll_query_response(self, query):
         # Scroll the search, extract hits
@@ -372,7 +381,6 @@ class EntityExtractorWorker(BaseWorker):
                         fact_fields.append(fact_path)
         return fact_fields
 
-
     def _get_data_from_fields(self, source, fields):
         batch_hits = []
         for field in fields:
@@ -385,7 +393,6 @@ class EntityExtractorWorker(BaseWorker):
                     content = ''
             batch_hits.append(content)
         return batch_hits
-
 
     def _get_facts_in_document(self, source):
         fact_fields = []
@@ -397,7 +404,6 @@ class EntityExtractorWorker(BaseWorker):
                         fact_fields.append(fact_path)
         return fact_fields
 
-
     def _get_data_from_fields(self, source, fields):
         batch_hits = []
         for field in fields:
@@ -410,7 +416,6 @@ class EntityExtractorWorker(BaseWorker):
                     content = ''
             batch_hits.append(content)
         return batch_hits
-
 
     def _get_fact_values(self):
         aggs = {'main': {'aggs': {"facts": {"nested": {"path": "texta_facts"}, "aggs": {"fact_names": {"terms": {"field": "texta_facts.fact"}, "aggs": {"fact_values": {"terms": {"field": "texta_facts.str_val"}}}}}}}}}
@@ -426,7 +431,6 @@ class EntityExtractorWorker(BaseWorker):
                         fact_data[val_word] = fact["key"]
         return fact_data
 
-
     def _get_lexicons_values(self):
         lex_keywords = {}
         for id in self.lexicons:
@@ -435,13 +439,11 @@ class EntityExtractorWorker(BaseWorker):
                     lex_keywords[word.wrd] = lex.name
         return lex_keywords
 
-
     def _bad_params_result(self, msg: str):
         self.task_obj.result = json.dumps({"error": msg})
         self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
         raise UserWarning(msg)
-    
-    
+
     def _check_keyword_params(self):
         '''Validates keyword params and sets them up if valid'''
         if not ("facts" in self.task_params or "lexicons" in self.task_params):

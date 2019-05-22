@@ -68,9 +68,11 @@ def newLexicon(request):
     try:
         Lexicon(name=lexiconName,description='na',author=request.user).save()
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_creation_failed','args':{'user_name':request.user.username,'lexicon_name':lexiconName}}),exc_info=True)
+        log_dict = {'task': 'CREATE LEXICON', 'event': 'lexicon_creation_failed', 'arguments': {'user_name': request.user.username, 'lexicon_name': lexiconName}}
+        logging.getLogger(ERROR_LOGGER).error("Lexicon creation failed", extra=log_dict, exc_info=True)
 
-    logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_created','args':{'user_name':request.user.username,'lexicon_name':lexiconName}}))
+    log_dict = {'task': 'CREATE LEXICON', 'event': 'lexicon_created', 'arguments': {'user_name': request.user.username, 'lexicon_name': lexiconName}}
+    logging.getLogger(INFO_LOGGER).info("Lexicon created", extra=log_dict)
 
     if 'ajax_lexicon_miner' in request.POST:
         return returnAjaxResult('success', URL_PREFIX + '/lexicon_miner/select?id='+str(Lexicon.objects.filter(name=lexiconName).last().id))
@@ -103,9 +105,12 @@ def deleteLexicon(request):
         Word.objects.filter(lexicon=lexicon).delete()
         lexicon.delete()
 
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_deleted','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}))
+        log_dict = {'task': 'CREATE LEXICON', 'event': 'lexicon_deleted', 'arguments': {'user_name': request.user.username, 'lexicon_id': request.GET['id']}}
+        logging.getLogger(INFO_LOGGER).info("Lexicon deleted", extra=log_dict)
+
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_deletion_failed','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}),exc_info=True)
+        log_dict = {'task': 'CREATE LEXICON', 'event': 'lexicon_deletion_failed', 'arguments': {'user_name': request.user.username, 'lexicon_id': request.GET['id']}}
+        logging.getLogger(ERROR_LOGGER).error("Lexicon deletion failed", extra=log_dict, exc_info=True)
 
     return HttpResponseRedirect(URL_PREFIX + '/lexicon_miner')
 
@@ -135,7 +140,8 @@ def saveLexicon(request, local_request=False):
             try:
                 model_manager.save_negatives(request.session['model']['pk'],request.user.username,lexicon.id)
             except KeyError:
-                logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'SAVE LEXICON','event':'negatives_saving_failed','args':{'user_name':request.user.username,'lexicon_id':lexId},'reason':'no negatives to save'}))
+                log_dict = {'task': 'SAVE LEXICON', 'event': 'negatives_saving_failed', 'arguments': {'user_name': request.user.username, 'lexicon_id': lexId}, 'reason': 'no negatives to save'}
+                logging.getLogger(INFO_LOGGER).warning("Saving negatices failed", extra=log_dict)
 
 
             # Fix problems with '' and ""
@@ -154,11 +160,16 @@ def saveLexicon(request, local_request=False):
             while i < len(word_objects):
                 Word.objects.bulk_create(word_objects[i:i+step])
                 i += step
-            logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_saved','args':{'user_name':request.user.username,'lexicon_id':lexId,'lexicon_terms':len(lexicon_words)}}))
+            log_dict = {'task': 'CREATE LEXICON', 'event': 'lexicon_saved', 'arguments': {'user_name': request.user.username, 'lexicon_id': lexId, 'lexicon_terms': len(lexicon_words)}}
+            logging.getLogger(INFO_LOGGER).info("Lexicon saved", extra=log_dict)
+
         else:
-            logging.getLogger(INFO_LOGGER).warning(json.dumps({'process':'CREATE LEXICON','event':'lexicon_saving_failed','args':{'user_name':request.user.username,'lexicon_id':lexId},'reason':'No lexicon ID provided.'}))
+            log_dict = {'task': 'CREATE LEXICON', 'event': 'lexicon_saving_failed', 'arguments': {'user_name': request.user.username, 'lexicon_id': lexId}, 'reason': 'No lexicon ID provided.'}
+            logging.getLogger(INFO_LOGGER).warning("Lexicon saving failed", extra=log_dict)
+
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_saving_failed','args':{'user_name':request.user.username,'lexicon_id':lexId}}),exc_info=True)
+        log_dict = {'task': 'CREATE LEXICON', 'event': 'lexicon_saving_failed', 'arguments': {'user_name': request.user.username, 'lexicon_id': lexId}}
+        logging.getLogger(ERROR_LOGGER).error("Lexicon saving failed", extra=log_dict, exc_info=True)
 
     if not local_request:
         return HttpResponseRedirect(URL_PREFIX + '/lexicon_miner/select?id='+lexId)
@@ -182,11 +193,14 @@ def selectLexicon(request):
         es_m = ds.build_manager(ES_Manager)
         fields = es_m.get_column_names()
 
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'lexicon_selected','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']},'data':{'lexicon_terms':words}}))
+        log_dict = {'task': 'CREATE LEXICON', 'event': 'lexicon_selected', 'arguments': {'user_name': request.user.username, 'lexicon_id': request.GET['id']}, 'data': {'lexicon_terms': words}}
+        logging.getLogger(INFO_LOGGER).info("Lexicon selected", extra=log_dict)
+        
         return HttpResponse(template.render({'words':words,'selected':request.GET['id'], 'selected_name':lexicon,'lexicons':lexicons,'STATIC_URL':STATIC_URL,'features':fields, 'language_models': language_models, 'allowed_datasets': datasets}, request))
+    
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'CREATE LEXICON','event':'lexicon_selection_failed','args':{'user_name':request.user.username,'lexicon_id':request.GET['id']}}),exc_info=True)
-
+        log_dict = {'task': 'CREATE LEXICON', 'event': 'lexicon_selection_failed', 'arguments': {'user_name': request.user.username, 'lexicon_id': request.GET['id']}}
+        logging.getLogger(ERROR_LOGGER).error("Lexicon selection failed", extra=log_dict, exc_info=True)
         return HttpResponseRedirect(URL_PREFIX + '/lexicon_miner')
 
 
@@ -276,11 +290,14 @@ def query(request):
 
         suggestions.append('<input type=\'hidden\' id=\'sid\' value=\'' + str(suggestionset_id) + '\'/>') # hidden field to store previous suggestionset's id
 
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'TERM SUGGESTION','event':'terms_suggested','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'suggestion_method':request.POST['method']}}))
+        log_dict = {'task': 'TERM SUGGESTION', 'event': 'terms_suggested', 'arguments': {'user_name': request.user.username, 'lexicon_id': request.POST['lid'], 'suggestion_method': request.POST['method']}}
+        logging.getLogger(INFO_LOGGER).info("Suggested terms", extra=log_dict)
 
         return HttpResponse(['<table class="width-max"><tr class="flex-content-space-around"><td id=\'suggestion_cell_1\'>'] + suggestions[:20] + ['</td><td id=\'suggestion_cell_2\'>'] + suggestions[20:] + ['</td></tr></table>'])
+
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).error(json.dumps({'process':'TERM SUGGESTION','event':'term_suggestion_failed','args':{'user_name':request.user.username,'lexicon_id':request.POST['lid'],'suggestion_method':request.POST['method']}}),exc_info=True)
+        log_dict = {'task': 'TERM SUGGESTION', 'event': 'term_suggestion_failed', 'arguments': {'user_name': request.user.username, 'lexicon_id': request.POST['lid'], 'suggestion_method': request.POST['method']}}
+        logging.getLogger(ERROR_LOGGER).error("Term suggestion failed", extra=log_dict, exc_info=True)
         return HttpResponse()
 
 
@@ -297,10 +314,13 @@ def RRA_suggestions(suggestions_list, tooltip_feature, request):
 @login_required
 def reset_suggestions(request):
     lexicon_id = request.POST['lid']
-
     try:
         model_manager.reset_negatives(request.session['model']['pk'],request.user.username,int(lexicon_id))
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'suggestions_reset','args':{'user_name':request.user.username,'lexicon_id':lexicon_id}}))
+        log_dict = {'task': 'CREATE LEXICON', 'event': 'suggestions_reset', 'arguments': {'user_name': request.user.username, 'lexicon_id': lexicon_id}}
+        logging.getLogger(INFO_LOGGER).info("Reset suggestions", extra=log_dict)
+
     except Exception as e:
-        logging.getLogger(INFO_LOGGER).info(json.dumps({'process':'CREATE LEXICON','event':'suggestions_reset','args':{'user_name':request.user.username,'lexicon_id':lexicon_id}}),exc_info=True)
+        log_dict = {'task': 'CREATE LEXICON', 'event': 'suggestions_reset', 'arguments': {'user_name': request.user.username, 'lexicon_id': lexicon_id}}
+        logging.getLogger(INFO_LOGGER).info("Reset suggestions", extra=log_dict, exc_info=True)
+
     return HttpResponseRedirect(URL_PREFIX + '/lexicon_miner/select?id='+lexicon_id)
