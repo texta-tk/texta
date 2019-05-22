@@ -145,7 +145,9 @@ class EsDataSample(object):
 
     def _get_positive_samples(self, keep_empty=False):
         positive_samples_map = {}
-        positive_set = set()
+        # List instead of a set, because in multiindex, documents with the same id repeat
+        # if they are in a set, it will cause an inconsistency error
+        positive_set = []
         # Initialize sample map
         for field in self.fields:
             positive_samples_map[field] = []
@@ -169,7 +171,7 @@ class EsDataSample(object):
                 if hit['_score'] >= lowest_allowed_score:
                         # Save sampled doc id
                         doc_id = str(hit['_id'])
-                        positive_set.add(doc_id)
+                        positive_set.append(doc_id)
                         for field in self.fields:
                             # Extract text content for every field
                             _temp_text = hit['_source']
@@ -201,7 +203,9 @@ class EsDataSample(object):
 
     def _get_negative_samples(self, positive_set, keep_empty=False):
         negative_samples_map = {}
-        negative_set = set()
+        # List instead of a set, because in multiindex, documents with the same id repeat
+        # if they are in a set, it will cause an inconsistency error
+        negative_set = []
         # Initialize sample map
         for field in self.fields:
             negative_samples_map[field] = []
@@ -227,7 +231,7 @@ class EsDataSample(object):
                     # If used already, continue
                     continue
                 # Otherwise, consider as negative sample
-                negative_set.add(doc_id)
+                negative_set.append(doc_id)
 
                 for field in self.fields:
                     # Extract text content for every field
