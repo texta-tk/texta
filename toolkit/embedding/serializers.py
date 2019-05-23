@@ -15,7 +15,7 @@ class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Embedding
         fields = ('url', 'id', 'description', 'project', 'author', 'query', 'fields', 'num_dimensions', 'max_vocab', 'min_freq', 'vocab_size', 'location', 'task')
-        read_only_fields = ('vocab_size', 'location', 'author')
+        read_only_fields = ('vocab_size', 'location', 'author', 'project')
 
 
 class PredictionSerializer(serializers.Serializer):

@@ -8,6 +8,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.serializers import TaggerSerializer, TextSerializer, DocSerializer
 from toolkit.tagger.text_tagger import TextTagger
+from toolkit.core.project.models import Project
 
 
 class TaggerViewSet(viewsets.ModelViewSet):
@@ -16,7 +17,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
     permission_classes = (core_permissions.TaggerEmbeddingsPermissions,)
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        serializer.save(author=self.request.user, project=self.request.user.profile.active_project)
 
     def get_queryset(self):
         queryset = self.queryset
@@ -27,16 +28,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
 
     def create(self, request, *args, **kwargs):
-        #request.data['author'] = [str(request.user.id)]
-        #request.data['project'] = [str(request.user.profile.active_project)]
-
         serializer = TaggerSerializer(data=request.data, context={'request': request})
-        #serializer = self.get_serializer(data=request.data)
-
-        #print(serializer)
-
-        # serializer.__setitem__('author', str(request.user.id))
-        #serializer['author'] = str(request.user.id)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)

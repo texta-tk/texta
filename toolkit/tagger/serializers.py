@@ -16,7 +16,7 @@ class TaggerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tagger
         fields = ('url', 'id', 'description', 'project', 'author', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'maximum_sample_size', 'location', 'statistics', 'task')
-        read_only_fields = ('author', 'location', 'statistics')
+        read_only_fields = ('author', 'project', 'location', 'statistics')
 
 
 class SimpleTaggerSerializer(serializers.ModelSerializer):
