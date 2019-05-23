@@ -19,19 +19,17 @@ class HybridTaggerSerializer(serializers.HyperlinkedModelSerializer):
 
     minimum_sample_size = serializers.ChoiceField(choices=HYBRID_TAGGER_CHOICES['min_freq'])
     fact_name = serializers.ChoiceField(choices=get_fact_names())
-    #taggers = serializers.PrimaryKeyRelatedField(read_only=True)
+    taggers = serializers.StringRelatedField(read_only=True)
 
     tagger = TaggerSerializer(write_only=True)
 
     class Meta:
         model = HybridTagger
         fields = ('project', 'author', 'description', 'fact_name', 'minimum_sample_size', 'taggers', 'tagger')
-        read_only_fields = ('author', 'project', 'taggers', 'tagger')
+        read_only_fields = ('author', 'project', 'taggers')
 
     def create(self, validated_data):
         tagger_data = validated_data.pop('tagger')
-
-        print(tagger_data)
 
         hybrid_tagger = HybridTagger.objects.create(**validated_data)
         #for tagger_data in taggers_data:

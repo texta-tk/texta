@@ -16,8 +16,5 @@ class HybridTagger(models.Model):
 
     taggers = models.ManyToManyField(Tagger, default=None)
 
-    #location = models.TextField(default=None, null=True)
-    #task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
-
     def __str__(self):
-        return self.description
+        return self.fact_name
