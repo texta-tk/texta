@@ -4,7 +4,7 @@ from toolkit.tagger.serializers import SimpleTaggerSerializer
 
 
 class HybridTaggerTextSerializer(serializers.Serializer):
-    taggers = serializers.PrimaryKeyRelatedField(queryset=Tagger.objects.all(), many=True)
+    taggers = serializers.PrimaryKeyRelatedField(queryset=Tagger.objects.filter(task__status='completed'), many=True)
     text = serializers.CharField()
     hybrid_mode = serializers.BooleanField()
 
