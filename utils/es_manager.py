@@ -727,30 +727,6 @@ class ES_Manager:
         without_duplicates = list(set(nested_field_names))
         return without_duplicates
 
-    def get_field_types(self, filtered_field_mapping) -> List[Dict[str, str]]:
-        """
-        Parses the results of the _mapping endpoint for fields to extract only the
-        full path name of the field and its type. Nested fields are not included,
-        multi-fields are by dot notation.
-        :return:
-        """
-        all_fields = []
-
-        for field_name, field_dict in filtered_field_mapping.items():
-            if field_dict['mapping']:  # Empty dicts evaluate to False.
-                full_path_and_types = dict()
-                mapping_key = list(field_dict['mapping'].keys())[0]
-
-                full_path_and_types['full_path'] = field_dict['full_name']
-                full_path_and_types['type'] = field_dict['mapping'][mapping_key]['type']
-                all_fields.append(full_path_and_types)
-
-        if remove_duplicate_keys:
-            unique_fields_with_schemas = [i for n, i in enumerate(fields_with_schemas) if i not in fields_with_schemas[n + 1:]]
-            return unique_fields_with_schemas
-        else:
-            return fields_with_schemas
-
     def get_filtered_field_mappings(self, es_field_mappings: dict) -> dict:
         """
         Given the results of the _mapping endpoint for fields,
@@ -780,27 +756,6 @@ class ES_Manager:
                 normal_fields.append(field)
 
         return normal_fields, nested_fields
-
-    def get_aggregation_field_data(self):
-        """
-        Implements the helper functions to give the necessary data
-        about fields which are needed for the aggregations.
-        :return:
-        """
-        names_of_nested_fields = self.get_nested_field_names()
-
-        field_mappings = self.get_field_mappings()
-        filtered_field_mappings = self.get_filtered_field_mappings(field_mappings)
-        fieldnames_and_types = self.get_field_types(filtered_field_mappings)
-        with_is_nested = self.add_is_nested_to_fields(names_of_nested_fields, fieldnames_and_types)
-
-        normal_fields, nested_fields = self.split_nested_fields(with_is_nested)
-
-        for nested_field in nested_fields:
-            nested_field['parent'] = nested_field['full_path'].split('.')[0]  # By ES dot notation, "field.data"
-
-        return normal_fields, nested_fields
-
 
     @staticmethod
     def is_field_text_field(field_name, index_name):

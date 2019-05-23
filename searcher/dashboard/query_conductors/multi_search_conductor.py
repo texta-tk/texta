@@ -1,9 +1,11 @@
-from pprint import pprint
+import logging
 
 import elasticsearch_dsl
+import elasticsearch
 from elasticsearch_dsl import MultiSearch
 
 from searcher.dashboard.es_helper import DashboardEsHelper
+from texta.settings import ERROR_LOGGER
 
 
 class MultiSearchConductor:
@@ -11,7 +13,7 @@ class MultiSearchConductor:
         self.field_counts = {}
         self.multi_search = MultiSearch()
 
-    def query_conductor(self, indices, query_body, elasticsearch, es_url, excluded_fields):
+    def query_conductor(self, indices, query_body, es, es_url, excluded_fields):
         result = {}
 
         list_of_indices = indices.split(',')
@@ -23,13 +25,18 @@ class MultiSearchConductor:
 
             # Attach all the aggregations to Elasticsearch, depending on the fields.
             # Text, keywords get term aggs etc.
-            self._normal_fields_handler(normal_fields, index=index, query_body=query_body, elasticsearch=elasticsearch)
-            self._texta_facts_agg_handler(index=index, query_body=query_body, elasticsearch=elasticsearch)
+            self._normal_fields_handler(normal_fields, index=index, query_body=query_body, elasticsearch=es)
+            self._texta_facts_agg_handler(index=index, query_body=query_body, elasticsearch=es)
 
             # Send the query towards Elasticsearch and then save it into the result
             # dict under its index's name.
-            responses = self.multi_search.using(elasticsearch).execute()
-            result[index] = [response.to_dict() for response in responses]
+            try:
+                responses = self.multi_search.using(es).execute()
+                result[index] = [response.to_dict() for response in responses]
+
+            except elasticsearch.exceptions.TransportError as e:
+                logging.getLogger(ERROR_LOGGER).exception(e.info)
+                raise elasticsearch.exceptions.TransportError
 
         return result
 
@@ -46,38 +53,38 @@ class MultiSearchConductor:
             # TODO Find a better solution for this.
             if field_type == "text":
                 if query_body is not None:
-                    search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
+                    search_dsl = self._create_search_object(query_body=query_body, index=index, es=elasticsearch)
                     search_dsl.aggs.bucket("sigsterms#{0}#text_sigterms".format(field_name), 'significant_text', field=field_name, filter_duplicate_text=True)
                     self.multi_search = self.multi_search.add(search_dsl)
 
             elif field_type == "keyword":
-                search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
+                search_dsl = self._create_search_object(query_body=query_body, index=index, es=elasticsearch)
                 search_dsl.aggs.bucket("sterms#{0}#keyword_terms".format(field_name), 'terms', field=field_name)
                 self.multi_search = self.multi_search.add(search_dsl)
 
             elif field_type == "date":
-                search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
+                search_dsl = self._create_search_object(query_body=query_body, index=index, es=elasticsearch)
                 search_dsl.aggs.bucket("date_histogram#{0}_month#date_month".format(field_name), 'date_histogram', field=field_name, interval='month')
                 search_dsl.aggs.bucket("date_histogram#{0}_year#date_year".format(field_name), 'date_histogram', field=field_name, interval='year')
                 self.multi_search = self.multi_search.add(search_dsl)
 
             elif field_type == "integer":
-                search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
+                search_dsl = self._create_search_object(query_body=query_body, index=index, es=elasticsearch)
                 search_dsl.aggs.bucket("extended_stats#{0}#int_stats".format(field_name), 'extended_stats', field=field_name)
                 self.multi_search = self.multi_search.add(search_dsl)
 
             elif field_type == "long":
-                search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
+                search_dsl = self._create_search_object(query_body=query_body, index=index, es=elasticsearch)
                 search_dsl.aggs.bucket('extended_stats#{0}#long_stats'.format(field_name), 'extended_stats', field=field_name)
                 self.multi_search = self.multi_search.add(search_dsl)
 
             elif field_type == "float":
-                search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
+                search_dsl = self._create_search_object(query_body=query_body, index=index, es=elasticsearch)
                 search_dsl.aggs.bucket("extended_stats#{0}#float_stats".format(field_name), 'extended_stats', field=field_name)
                 self.multi_search = self.multi_search.add(search_dsl)
 
     def _texta_facts_agg_handler(self, query_body, index, elasticsearch):
-        search_dsl = self._create_search_object(query_body=query_body, index=index, elasticsearch=elasticsearch)
+        search_dsl = self._create_search_object(query_body=query_body, index=index, es=elasticsearch)
 
         search_dsl.aggs.bucket("nested#texta_facts", 'nested', path='texta_facts') \
             .bucket('sterms#fact_category', 'terms', field='texta_facts.fact', collect_mode="breadth_first") \
@@ -104,9 +111,9 @@ class MultiSearchConductor:
         else:
             return field_name
 
-    def _create_search_object(self, query_body, index, elasticsearch):
+    def _create_search_object(self, query_body, index, es):
         if query_body:
-            search = elasticsearch_dsl.Search.from_dict(query_body).index(index).using(elasticsearch).extra(size=0).source(False)
+            search = elasticsearch_dsl.Search.from_dict(query_body).index(index).using(es).extra(size=0).source(False)
             return search
         else:
             search = elasticsearch_dsl.Search().index(index).extra(size=0).source(False)

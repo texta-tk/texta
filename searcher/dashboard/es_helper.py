@@ -39,14 +39,13 @@ class DashboardEsHelper:
         :return:
         """
         new_list = []
-
-        for field_dict in fields_and_types:
-            for nested_field_name in nested_fields:
-                if nested_field_name in field_dict[field_name_key]:
-                    field_dict['is_nested'] = True
-                else:
-                    field_dict['is_nested'] = False
-                new_list.append(field_dict)
+        for field in fields_and_types:
+            if field[field_name_key] in nested_fields:
+                field["is_nested"] = True
+                new_list.append(field)
+            else:
+                field["is_nested"] = False
+                new_list.append(field)
 
         return new_list
 

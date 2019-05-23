@@ -18,7 +18,7 @@ class MultiSearcherDashboard:
 
     def conduct_query(self):
         conductor = MultiSearchConductor()
-        result = conductor.query_conductor(self.indices, query_body=self.query_body, elasticsearch=self.elasticsearch, es_url=self.es_url, excluded_fields=self.excluded_fields)
+        result = conductor.query_conductor(self.indices, query_body=self.query_body, es=self.elasticsearch, es_url=self.es_url, excluded_fields=self.excluded_fields)
         self.field_counts = conductor.field_counts
         return result
 
