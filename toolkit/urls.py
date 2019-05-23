@@ -1,7 +1,6 @@
 from django.urls import include, path
 from django.conf.urls import url
 from rest_framework import routers
-from rest_framework_swagger.views import get_swagger_view
 
 
 from toolkit.core.urls import router as core_router, urls as core_urls
