@@ -1,7 +1,7 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 from toolkit.core.project.models import Project
-from toolkit.core.user_profile.models import UserProfile
 from toolkit.core.phrase.models import Phrase
 from toolkit.core.constants import MAX_STR_LEN
 
@@ -9,7 +9,7 @@ from toolkit.core.constants import MAX_STR_LEN
 class Lexicon(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     description = models.CharField(max_length=MAX_STR_LEN)
-    author = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     phrases = models.ManyToManyField(Phrase)
 
     def __str__(self):

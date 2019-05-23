@@ -5,7 +5,7 @@ from toolkit.core.project import views as project_views
 from toolkit.core.health.views import HealthView
 
 router = routers.DefaultRouter()
-router.register('users', profile_views.UserProfileViewSet)
+router.register('users', profile_views.UserViewSet)
 router.register('projects', project_views.ProjectViewSet, base_name='project')
 
 urls = [

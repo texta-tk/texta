@@ -1,42 +1,31 @@
 from django.db.models.query import QuerySet
-from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 
-from toolkit.core import permissions
+from toolkit.core.project import permissions as project_permissions
 from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import ProjectSerializer
-from toolkit.core.user_profile.serializers import UserProfileSerializer
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    permission_classes = (permissions.ProjectPermissions,)
+    permission_classes = (project_permissions.ProjectPermissions,)
+    
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
     def get_queryset(self):
-        assert self.queryset is not None, (
-            "'%s' should either include a `queryset` attribute, "
-            "or override the `get_queryset()` method."
-            % self.__class__.__name__
-        )
-        current_user = self.request.user.id
         queryset = self.queryset
-        if isinstance(queryset, QuerySet):
-            # re-evaluate queryset on each request.
-            queryset = queryset.all()
-        if not self.request.user.is_superuser:
-            queryset = queryset[:].filter(owner=current_user) | queryset[:].filter(users=current_user)
+        current_user = self.request.user
+        if not current_user.is_superuser:
+            queryset = queryset.filter(owner=current_user) | queryset.filter(users=current_user)
         return queryset
 
-
-    # TODO permission_classes is just overwriting the viewset permission_classes here for tests
-    # Something like IsOwnerOrIncludedUser would be useful
-    @action(detail=True, methods=['get'], permission_classes=[])
+    @action(detail=True, methods=['get'])
     def activate_project(self, request, pk=None):
         obj = self.get_object()
         request.user.profile.activate_project(obj)
         return Response({'status': f'Project {pk} successfully activated.'}, status=status.HTTP_200_OK)
-

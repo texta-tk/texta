@@ -3,6 +3,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from toolkit.core import permissions as core_permissions
 from toolkit.elastic.core import ElasticCore
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.serializers import TaggerSerializer, TextSerializer, DocSerializer
@@ -10,14 +11,19 @@ from toolkit.tagger.text_tagger import TextTagger
 
 
 class TaggerViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows tagger models to be viewed or edited.
-    """
     queryset = Tagger.objects.all()
     serializer_class = TaggerSerializer
+    permission_classes = (core_permissions.TaggerEmbeddingsPermissions,)
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
     def get_queryset(self):
-        return Tagger.objects.filter(project=self.request.user.profile.active_project)
+        queryset = self.queryset
+        current_user = self.request.user
+        if not current_user.is_superuser:
+            queryset = Tagger.objects.filter(project=current_user.profile.active_project)
+        return queryset
 
 
     def create(self, request, *args, **kwargs):
@@ -45,7 +51,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
             data = request.POST
         else:
             data = {}
-        return data 
+        return data
 
 
     @action(detail=True, methods=['get','post'])
@@ -66,7 +72,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         # check if tagger exists
         if not tagger_object.location:
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # apply tagger
         tagger = TextTagger(tagger_object.pk)
         tagger.load()
