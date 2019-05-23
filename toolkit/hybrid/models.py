@@ -8,14 +8,13 @@ MAX_STR_LEN = 100
 
 class HybridTagger(models.Model):
     description = models.CharField(max_length=MAX_STR_LEN)
-    #project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    #author = models.ForeignKey(User, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    #num_dimensions = models.IntegerField(default=100)
-    #max_vocab = models.IntegerField(default=0)
-    #min_freq = models.IntegerField(default=10)
+    fact_name = models.CharField(max_length=MAX_STR_LEN)
+    minimum_sample_size = models.IntegerField(default=50)
 
-    taggers = models.ManyToManyField(Tagger)
+    taggers = models.ManyToManyField(Tagger, default=None)
 
     #location = models.TextField(default=None, null=True)
     #task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)

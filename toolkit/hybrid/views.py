@@ -6,14 +6,27 @@ from rest_framework.response import Response
 from toolkit.elastic.core import ElasticCore
 from toolkit.tagger.models import Tagger
 from toolkit.hybrid.serializers import HybridTaggerSerializer
-from toolkit.hybrid.hybrid_tagger import HybridTagger
+from toolkit.hybrid.models import HybridTagger
 #from toolkit.tagger.serializers import SimpleTaggerSerializer
 
 
 
 class HybridTaggerViewSet(viewsets.ModelViewSet):
-    queryset = Tagger.objects.all()
+    queryset = HybridTagger.objects.all()
     serializer_class = HybridTaggerSerializer
+
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user, project=self.request.user.profile.active_project)
+
+
+    def create(self, request, *args, **kwargs):
+        serializer = HybridTaggerSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        #headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 """
 class HybridTaggerViewSet(viewsets.ViewSet):

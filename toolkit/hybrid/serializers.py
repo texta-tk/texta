@@ -1,7 +1,11 @@
 from rest_framework import serializers
 from toolkit.tagger.models import Tagger
-from toolkit.tagger.serializers import SimpleTaggerSerializer
+from toolkit.tagger.serializers import TaggerSerializer
 from toolkit.hybrid.models import HybridTagger
+from toolkit.hybrid.choices import get_fact_names, HYBRID_TAGGER_CHOICES
+from toolkit.tagger.choices import get_classifier_choices, get_vectorizer_choices, TAGGER_CHOICES
+
+from toolkit.embedding.models import Embedding
 
 
 class HybridTaggerTextSerializer(serializers.Serializer):
@@ -10,20 +14,26 @@ class HybridTaggerTextSerializer(serializers.Serializer):
     hybrid_mode = serializers.BooleanField()
 
 
-class HybridTaggerDocSerializer(serializers.Serializer):
-    taggers = serializers.PrimaryKeyRelatedField(queryset=Tagger.objects.all(), many=True)
-    doc = serializers.JSONField()
-
-
 class HybridTaggerSerializer(serializers.HyperlinkedModelSerializer):
-    taggers = serializers.PrimaryKeyRelatedField(read_only=True)
-    #task = TaskSerializer(read_only=True)
-    #fields = serializers.MultipleChoiceField(choices=get_field_choices())
-    #num_dimensions = serializers.ChoiceField(choices=EMBEDDING_CHOICES['num_dimensions'])
-    #max_vocab = serializers.ChoiceField(choices=EMBEDDING_CHOICES['max_vocab'])
-    #min_freq = serializers.ChoiceField(choices=EMBEDDING_CHOICES['min_freq'])
-    
+    description = serializers.CharField()
+
+    minimum_sample_size = serializers.ChoiceField(choices=HYBRID_TAGGER_CHOICES['min_freq'])
+    fact_name = serializers.ChoiceField(choices=get_fact_names())
+    #taggers = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    tagger = TaggerSerializer(write_only=True)
+
     class Meta:
         model = HybridTagger
-        fields = ('taggers',)
-        #read_only_fields = ('vocab_size')
+        fields = ('project', 'author', 'description', 'fact_name', 'minimum_sample_size', 'taggers', 'tagger')
+        read_only_fields = ('author', 'project', 'taggers', 'tagger')
+
+    def create(self, validated_data):
+        tagger_data = validated_data.pop('tagger')
+
+        print(tagger_data)
+
+        hybrid_tagger = HybridTagger.objects.create(**validated_data)
+        #for tagger_data in taggers_data:
+        #    Tagger.objects.create(**tagger_data)
+        return hybrid_tagger
