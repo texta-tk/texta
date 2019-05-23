@@ -8,6 +8,6 @@ router = routers.DefaultRouter()
 router.register('users', profile_views.UserViewSet)
 router.register('projects', project_views.ProjectViewSet, base_name='project')
 
-# urls = [
-#     path('health', HealthView.as_view())
-# ]
+urls = [
+    path('health', HealthView.as_view())
+]

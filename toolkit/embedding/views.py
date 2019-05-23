@@ -28,7 +28,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
     
     
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        serializer.save(author=self.request.user, project=self.request.user.profile.active_project)
 
 
     @staticmethod
