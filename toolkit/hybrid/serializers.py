@@ -5,6 +5,7 @@ from toolkit.hybrid.models import HybridTagger
 from toolkit.hybrid.choices import get_fact_names, HYBRID_TAGGER_CHOICES
 from toolkit.tagger.choices import get_classifier_choices, get_vectorizer_choices, TAGGER_CHOICES
 
+from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.embedding.models import Embedding
 
 
@@ -25,16 +26,20 @@ class HybridTaggerSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = HybridTagger
-        fields = ('project', 'author', 'description', 'fact_name', 'minimum_sample_size', 'taggers', 'tagger')
+        fields = ('id', 'project', 'author', 'description', 'fact_name', 'minimum_sample_size', 'taggers', 'tagger')
         read_only_fields = ('author', 'project', 'taggers')
 
+    
     def create(self, validated_data):
         tagger_data = validated_data.pop('tagger')
 
         #print(self.context['request'].data)
-        print(tagger_data)
+        #print(validated_data)
+
+        print(validated_data)
 
         hybrid_tagger = HybridTagger.objects.create(**validated_data)
         #for tagger_data in taggers_data:
         #    Tagger.objects.create(**tagger_data)
         return hybrid_tagger
+

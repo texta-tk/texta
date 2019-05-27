@@ -1,29 +1,41 @@
+import json
 
-class QueryFilter:
-
-    def __init__(self, filter_field, filter_type, filter_content):
-        self.field = filter_field
-        self.type = filter_type
-        self.content = filter_content
+INNER_HITS_MAX_SIZE = 1000
 
 
 class Query:
 
     def __init__(self):
-        self.query = {"query": {}}
+        self.query = {"query": {"bool": {"should": [], "must": [], "must_not": []}}}
 
     def __str__(self):
+        return json.dumps(self.query)
+    
+    def __dict__(self):
         return self.query
 
-    def add_filter(self, query_filter):
+    def add_fact_filter(self, fact_name, fact_value, filter_id=1):
         """
-        Add filter to existing query.
+        Add fact filter to existing query.
         """
-        # add bool object if not present
-        if "bool" not in self.query["query"]:
-            self.query["query"]["bool"] = {"should": [], "must": [], "must_not": []}
+        query = {"nested": {
+                    "path": "texta_facts",
+                    "inner_hits": {
+                        "name": "fact_filter_{}".format(filter_id),
+                        "size": INNER_HITS_MAX_SIZE
+                    },
+                    "query": {
+                        "bool": {
+                            "must": [
+                                {"match": {"texta_facts.fact": fact_name}},
+                                {"match": {"texta_facts.str_val": fact_value}}
+                            ]
+                        }
+                    }
+                }
+            }
         
-        #add filters here
+        self.query["query"]["bool"]["must"].append(query)
 
 
     def add_mlt(self, mlt_fields, text):

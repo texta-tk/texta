@@ -4,10 +4,13 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.aggregator import ElasticAggregator
+from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.elastic.query import Query
+
 from toolkit.tagger.models import Tagger
 from toolkit.hybrid.serializers import HybridTaggerSerializer
 from toolkit.hybrid.models import HybridTagger
-#from toolkit.tagger.serializers import SimpleTaggerSerializer
 
 
 
@@ -17,38 +20,44 @@ class HybridTaggerViewSet(viewsets.ModelViewSet):
 
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, project=self.request.user.profile.active_project)
+        serializer.save(author=self.request.user, 
+                        project=self.request.user.profile.active_project)
 
 
     def create(self, request, *args, **kwargs):
-
-        # 1. aggregate for available tags
-        # 2. select fields
-        # 3. build queries
-
-        print(list(self.request.user.profile.active_project.indices))
-
-        #Facts().get_facts()
-
-        # update tagger data
+        # add dummy value to tagger so serializer is happy
         request_data = request.data.copy()
-        request_data.update({'tagger.description': '{0}_{1}'.format(request_data['description'], request_data['fact_name'])})
-        #request_data.update({'tagger.description': request_data['description']})
-        # fields & query too
+        request_data.update({'tagger.description': 'dummy value'})
 
-
+        # validate serializer again with updated values
         serializer = HybridTaggerSerializer(data=request_data, context={'request': request})
-        
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        #headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        tags = self.get_tags(serializer.data['fact_name'], min_count=serializer.data['minimum_sample_size'])
+
+        self.create_queries(serializer.data['fact_name'], tags)
+        
+        #self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-    def list(self, request):
-        queryset = HybridTagger.objects.all()
-        serializer = HybridTaggerSerializer(queryset, many=True, context={'request': request})
-        return Response({})
+    def get_tags(self, fact_name, min_count=1000):
+        """
+        Finds possible tags for training by aggregating active project's indices
+        """
+        active_indices = list(self.request.user.profile.active_project.indices)
+        es_a = ElasticAggregator(indices=active_indices)
+        # limit size to 10000 unique tags
+        tag_values = es_a.facts(fact_name=fact_name, min_count=min_count, size=10000)
+        return tag_values
+    
+
+    def create_queries(self, fact_name, tags):
+        for tag in tags:
+            query = Query()
+            query.add_fact_filter(fact_name, tag)
+            
 
 
 

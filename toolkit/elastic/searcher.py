@@ -17,6 +17,7 @@ class ElasticSearcher:
     OUT_TEXT        = 'text'
 
     def __init__(self, field_data=[],
+                       indices=[],
                        query=EMPTY_QUERY,
                        scroll_size=ES_SCROLL_SIZE,
                        output=OUT_DOC,
@@ -29,7 +30,7 @@ class ElasticSearcher:
         """
         self.core = ElasticCore()
         self.field_data = self.core.parse_field_data(field_data)
-        self.indices = ','.join(list(set([field['index'] for field in field_data])))
+        self.indices = self._load_indices(indices)
         self.query = query
         self.scroll_size = scroll_size
         self.scroll_limit = scroll_limit
@@ -48,6 +49,14 @@ class ElasticSearcher:
         Iterator for iterating through scroll
         """
         return self.scroll()
+
+
+    def _load_indices(self, indices):
+        # load from field data or indices list
+        if not indices:
+            return ",".join([field["index"] for field in self.field_data])
+        else:
+            return indices
 
 
     def update_query(self, query):
