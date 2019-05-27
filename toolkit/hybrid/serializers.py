@@ -31,6 +31,9 @@ class HybridTaggerSerializer(serializers.HyperlinkedModelSerializer):
     def create(self, validated_data):
         tagger_data = validated_data.pop('tagger')
 
+        #print(self.context['request'].data)
+        print(tagger_data)
+
         hybrid_tagger = HybridTagger.objects.create(**validated_data)
         #for tagger_data in taggers_data:
         #    Tagger.objects.create(**tagger_data)

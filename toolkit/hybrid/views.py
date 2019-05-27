@@ -21,11 +21,35 @@ class HybridTaggerViewSet(viewsets.ModelViewSet):
 
 
     def create(self, request, *args, **kwargs):
-        serializer = HybridTaggerSerializer(data=request.data, context={'request': request})
+
+        # 1. aggregate for available tags
+        # 2. select fields
+        # 3. build queries
+
+        print(list(self.request.user.profile.active_project.indices))
+
+        #Facts().get_facts()
+
+        # update tagger data
+        request_data = request.data.copy()
+        request_data.update({'tagger.description': '{0}_{1}'.format(request_data['description'], request_data['fact_name'])})
+        #request_data.update({'tagger.description': request_data['description']})
+        # fields & query too
+
+
+        serializer = HybridTaggerSerializer(data=request_data, context={'request': request})
+        
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         #headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+    def list(self, request):
+        queryset = HybridTagger.objects.all()
+        serializer = HybridTaggerSerializer(queryset, many=True, context={'request': request})
+        return Response({})
+
 
 
 """

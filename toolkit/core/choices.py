@@ -3,7 +3,7 @@ from toolkit.elastic.core import ElasticCore
 
 
 def get_index_choices():
-   return [(a, a) for a in ElasticCore().get_indices()]
+   return sorted([(a, a) for a in ElasticCore().get_indices()])
 
 STATUS_CREATED = 'created'
 STATUS_QUEUED = 'queued'
