@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -17,7 +17,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
     """
     queryset = Embedding.objects.all()
     serializer_class = EmbeddingSerializer
-    permission_classes = (core_permissions.TaggerEmbeddingsPermissions,)
+    permission_classes = (core_permissions.TaggerEmbeddingsPermissions, permissions.IsAuthenticated)
 
     def get_queryset(self):
         queryset = self.queryset

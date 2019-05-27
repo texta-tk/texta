@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
 from rest_framework.generics import GenericAPIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -14,7 +14,7 @@ from toolkit.core.project.models import Project
 class TaggerViewSet(viewsets.ModelViewSet):
     queryset = Tagger.objects.all()
     serializer_class = TaggerSerializer
-    permission_classes = (core_permissions.TaggerEmbeddingsPermissions,)
+    permission_classes = (core_permissions.TaggerEmbeddingsPermissions, permissions.IsAuthenticated)
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user, project=self.request.user.profile.active_project)
