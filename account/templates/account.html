@@ -86,8 +86,8 @@
 				</div>
 				{% if messages %}
 				{% for message in messages %}
-					<script>
-						swalCustomTypeDisplay('{{message.tags}}','{{message.tags}}!','{{message}}');
+					<script type="text/javascript">
+						swalCustomTypeDisplay('{{message.tags}}','{{message.tags|upper}}!','{{message}}');
 					</script>
 					{% endfor %}
 				{% endif %}

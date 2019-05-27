@@ -5,6 +5,8 @@ import os
 from collections import defaultdict
 import random
 
+import requests
+from django.contrib import messages
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -18,6 +20,8 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.core.mail import EmailMessage
+
+import elasticsearch
 from .models import Profile
 from permission_admin.models import Dataset
 from utils.datasets import Datasets
@@ -26,16 +30,31 @@ from utils.log_manager import LogManager
 from task_manager.models import Task
 from task_manager.tasks.task_types import TaskTypes
 
-from texta.settings import REQUIRE_EMAIL_CONFIRMATION, USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_DEFAULT, es_url, STATIC_URL
+from texta.settings import REQUIRE_EMAIL_CONFIRMATION, USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_DEFAULT, es_url, STATIC_URL, ERROR_LOGGER
 
 
 def index(request):
-    template = loader.get_template('account.html')
-    datasets = Datasets().get_allowed_datasets(request.user)
-    language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
+    try:
+        template = loader.get_template('account.html')
+        datasets = Datasets().get_allowed_datasets(request.user)
+        language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
 
-    return HttpResponse(
-        template.render({'STATIC_URL': STATIC_URL, 'allowed_datasets': datasets, 'language_models': language_models}, request))
+        template_data = {'STATIC_URL': STATIC_URL, 'allowed_datasets': datasets, 'language_models': language_models}
+        return HttpResponse(template.render(template_data, request))
+
+    except requests.exceptions.ConnectionError as e:
+        logging.getLogger(ERROR_LOGGER).exception(e)
+        template = loader.get_template('account.html')
+        messages.error(request, "Could not connect to resource: {}. Please check if all the resources (Elasticsearch) are available!".format(e.request.url))
+        template_data = {'STATIC_URL': STATIC_URL, 'allowed_datasets': None, 'language_models': None}
+        return HttpResponse(template.render(template_data, request), status=401)
+
+    except Exception as e:
+        logging.getLogger(ERROR_LOGGER).exception(e)
+        template = loader.get_template('account.html')
+        messages.error(request, "Error, please try again or contact the developers: {}!".format(e))
+        template_data = {'STATIC_URL': STATIC_URL, 'allowed_datasets': None, 'language_models': None}
+        return HttpResponse(template.render(template_data, request), status=500)
 
 
 @login_required

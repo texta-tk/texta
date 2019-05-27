@@ -93,7 +93,7 @@ class MultiSearchFormater(BaseDashboardFormater):
         # Categorize all the aggregations into groups, depending on their agg-type (ex sterms, value_counts, extended_stats etc)
         for field_name, aggregation_dict in agg_dict.items():
 
-            if 'texta_facts' not in field_name:
+            if 'nested' not in field_name:
                 agg_type, field_name, bucket_suffix = field_name.split('#')
             else:
                 agg_type, field_name, bucket_suffix = ('nested', 'texta_facts', '')

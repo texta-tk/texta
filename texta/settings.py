@@ -254,6 +254,7 @@ MIDDLEWARE = (
 	'django.contrib.sessions.middleware.SessionMiddleware',
 	'django.contrib.auth.middleware.AuthenticationMiddleware',
 	'django.contrib.messages.middleware.MessageMiddleware',
+	'texta.ExceptionHandlerMiddleware.ExceptionHandlerMiddleware'
 )
 
 # List of built-in and custom apps in use.
@@ -320,7 +321,6 @@ es_ldap_password = os.getenv('TEXTA_LDAP_PASSWORD')
 MLP_URL = os.getenv('TEXTA_MLP_URL', 'http://localhost:5000')
 
 # Dataset Importer global parameters
-
 DATASET_IMPORTER = {
 	'directory':          os.path.join(BASE_DIR, 'files', 'dataset_importer'),
 	'import_processes':   2,
