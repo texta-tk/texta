@@ -19,7 +19,7 @@ from utils.helper_functions import get_wildcard_files, create_file_path
 from texta.settings import STATIC_URL
 from texta.settings import MODELS_DIR
 from texta.settings import PROTECTED_MEDIA
-from texta.settings import ERROR_LOGGER
+from texta.settings import ERROR_LOGGER, INFO_LOGGER
 
 from task_manager.document_preprocessor import preprocessor_map
 
@@ -39,6 +39,8 @@ from lexicon_miner.models import Lexicon
 
 @login_required
 def index(request):
+    import time
+    time1 = time.time()
     ds = Datasets().activate_datasets(request.session)
     datasets = Datasets().get_allowed_datasets(request.user)
     language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
@@ -46,10 +48,17 @@ def index(request):
     es_m = ds.build_manager(ES_Manager)
     fields = get_fields(es_m)
         
+    time2 = time.time()
+    debug_log('Get Task Manager initial headers', extra={'took': time2 - time1})
+
     preprocessors = collect_map_entries(preprocessor_map)
     enabled_preprocessors = [preprocessor for preprocessor in preprocessors if preprocessor['is_enabled'] is True]
     enabled_preprocessors = sorted(enabled_preprocessors, key=itemgetter('name'), reverse=False)
     tasks = []
+
+
+    time3 = time.time()
+    debug_log('Get Task Manager enabled preprocessors', extra={'took': time3 - time2})
 
     for task in Task.objects.all().order_by('-pk'):
         task_dict = task.__dict__
@@ -60,6 +69,9 @@ def index(request):
             task_dict['result'] = json.loads(task_dict['result'])
 
         tasks.append(task_dict)
+
+    time4 = time.time()
+    debug_log('Get Task Manager task dicts', extra={'took': time4 - time3})
 
     if 'dataset' in request.session.keys():
         get_fact_names(es_m)
@@ -82,6 +94,9 @@ def index(request):
         messages.warning(request, "No dataset selected, please select a dataset before using Task Manager!")
         return HttpResponseRedirect('/')
 
+    time5 = time.time()
+    debug_log('Get Task Manager context', extra={'took': time5 - time4})
+
     pipe_builder = get_pipeline_builder()
     context['train_tagger_extractor_opt_list'] = pipe_builder.get_extractor_options()
     context['train_tagger_reductor_opt_list'] = pipe_builder.get_reductor_options()
@@ -89,6 +104,9 @@ def index(request):
     context['train_tagger_classifier_opt_list'] = pipe_builder.get_classifier_options()
 
     template = loader.get_template('task_manager.html')
+    time6 = time.time()
+    debug_log('Get Task Manager pipeline', extra={'took': time6 - time5})
+
     return HttpResponse(template.render(context, request))
 
 
@@ -140,6 +158,10 @@ def start_mass_task(request):
     mass_helper = MassHelper(es_m)
     data = mass_helper.schedule_tasks(selected_tags, normalizer_opt, classifier_opt, reductor_opt, extractor_opt, field, dataset_id, user)
     return HttpResponse()
+
+
+def debug_log(text: str, extra: dict={}):
+    logging.getLogger(INFO_LOGGER).info(text, extra=extra)
 
 
 @login_required
