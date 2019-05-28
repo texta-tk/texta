@@ -2,7 +2,6 @@ from django.db import models
 from django.utils.timezone import now
 from toolkit.core.constants import MAX_STR_LEN
 
-# Create your models here.
 class Task(models.Model):
     STATUS_CREATED = 'created'
     STATUS_QUEUED = 'queued'

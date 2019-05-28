@@ -1,23 +1,42 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
 from rest_framework.generics import GenericAPIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from toolkit.core import permissions as core_permissions
 from toolkit.elastic.core import ElasticCore
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.serializers import TaggerSerializer, TextSerializer, DocSerializer
 from toolkit.tagger.text_tagger import TextTagger
-
+from toolkit.core.project.models import Project
+from toolkit import permissions as toolkit_permissions
 
 class TaggerViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows tagger models to be viewed or edited.
-    """
     queryset = Tagger.objects.all()
     serializer_class = TaggerSerializer
+    permission_classes = (
+        core_permissions.TaggerEmbeddingsPermissions,
+        permissions.IsAuthenticated,
+        toolkit_permissions.HasActiveProject
+        )
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user, project=self.request.user.profile.active_project)
 
     def get_queryset(self):
-        return Tagger.objects.filter(project=self.request.user.profile.active_project)
+        queryset = self.queryset
+        current_user = self.request.user
+        if not current_user.is_superuser:
+            queryset = Tagger.objects.filter(project=current_user.profile.active_project)
+        return queryset
+
+
+    def create(self, request, *args, **kwargs):
+        serializer = TaggerSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
     @staticmethod
@@ -28,7 +47,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
             data = request.POST
         else:
             data = {}
-        return data 
+        return data
 
 
     @action(detail=True, methods=['get','post'])
@@ -49,7 +68,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         # check if tagger exists
         if not tagger_object.location:
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # apply tagger
         tagger = TextTagger(tagger_object.pk)
         tagger.load()

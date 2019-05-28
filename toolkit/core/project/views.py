@@ -1,23 +1,30 @@
-from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, permissions, status
+from django.db.models.query import QuerySet
+from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 
+from toolkit.core.project import permissions as project_permissions
 from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import ProjectSerializer
-from toolkit.core.user_profile.serializers import UserProfileSerializer
 
-# TODO custom permission for project owner - >
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (project_permissions.ProjectPermissions, permissions.IsAuthenticated)
+    
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
-    # TODO permission_classes is just overwriting the viewset permission_classes here for tests
-    # Something like IsOwnerOrIncludedUser would be useful
-    @action(detail=True, methods=['get'], permission_classes=[])
+    def get_queryset(self):
+        queryset = self.queryset
+        current_user = self.request.user
+        if not current_user.is_superuser:
+            queryset = queryset.filter(owner=current_user) | queryset.filter(users=current_user)
+        return queryset
+
+    @action(detail=True, methods=['get'])
     def activate_project(self, request, pk=None):
         obj = self.get_object()
         request.user.profile.activate_project(obj)

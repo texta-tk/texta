@@ -1,11 +1,11 @@
 from django.contrib.auth.models import User
 from django.db.models import signals
 from django.db import models
+from django.contrib.auth.models import User
 from multiselectfield import MultiSelectField
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
-from toolkit.core.user_profile.models import UserProfile
 from toolkit.elastic.searcher import EMPTY_QUERY
 import json
 
@@ -15,7 +15,7 @@ MAX_STR_LEN = 100
 class Embedding(models.Model):
     description = models.CharField(max_length=MAX_STR_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     fields = MultiSelectField(max_length=MAX_STR_LEN*100)
 

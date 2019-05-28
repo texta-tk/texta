@@ -67,7 +67,14 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.BrowsableAPIRenderer',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated', ),
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        # For DRF API browser pages
+       'rest_framework.authentication.SessionAuthentication',
+       # For authenticating requests with the Token
+       'rest_framework.authentication.TokenAuthentication',
+    ),
 }
 
 MIDDLEWARE = [
