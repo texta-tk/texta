@@ -9,3 +9,4 @@ drf-nested-routers
 pandas
 scikit-learn
 django-rest-auth[with_social]
+psutil
