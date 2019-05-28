@@ -12,8 +12,7 @@ class SharedPermissionsTests(APITestCase):
     def setUp(self):
         # Create a new User
         self.user = create_test_user(name='user', password='pw')
-        self.test_project = Project.objects.create(title='testproj', owner=self.user)
-        self.user.active_dataset = self.test_project
+        self.project = Project.objects.create(title='testproj', owner=self.user)
 
         self.client = APIClient()
         self.client.login(username='user', password='pw')
@@ -23,7 +22,7 @@ class SharedPermissionsTests(APITestCase):
 
     def test_has_active_project_allow(self):
         '''Test if HasActiveProject returns True if a project is active'''
-        self.user.profile.active_project = self.test_project
+        self.user.profile.activate_project(self.project)
         self.user.save()
         response = self.client.get(self.basic_test_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
