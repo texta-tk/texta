@@ -15,5 +15,8 @@ Test:
   stage: test
   tags:
   - ci-test
+  variables:
+    TEXTA_ES_URL: http://elasticsearch:9200
+    TEXTA_REDIS_URL: redis://redis:6379
   script:
   - python manage.py test

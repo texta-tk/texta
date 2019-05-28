@@ -159,12 +159,12 @@ STATIC_URL = '/static/'
 
 
 # ELASTICSEARCH
-ES_URL = 'http://localhost:9200'
+ES_URL = os.getenv('TEXTA_ES_URL', 'http://localhost:9200')
 
 
 # CELERY
-BROKER_URL = 'redis://localhost:6379'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+BROKER_URL = os.getenv('TEXTA_REDIS_URL', 'redis://localhost:6379')
+CELERY_RESULT_BACKEND = BROKER_URL
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -172,7 +172,6 @@ CELERY_TIMEZONE = TIME_ZONE
 
 # this is for training embeddings & taggers
 NUM_WORKERS=4
-
 
 
 # create model dirs
