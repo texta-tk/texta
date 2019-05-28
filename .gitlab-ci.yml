@@ -2,6 +2,7 @@ image: python:3.6
 
 services:
   - docker.elastic.co/elasticsearch/elasticsearch-oss:6.7.2
+  - redis:latest
 
 before_script:
   - python -V
