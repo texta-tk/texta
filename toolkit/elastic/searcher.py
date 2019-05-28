@@ -54,7 +54,7 @@ class ElasticSearcher:
     def _load_indices(self, indices):
         # load from field data or indices list
         if not indices:
-            return ",".join([field["index"] for field in self.field_data])
+            return ",".join(list(self.field_data.keys()))
         else:
             return indices
 

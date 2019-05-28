@@ -1,6 +1,6 @@
 import json
 
-INNER_HITS_MAX_SIZE = 1000
+INNER_HITS_MAX_SIZE = 100
 
 
 class Query:

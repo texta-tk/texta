@@ -19,7 +19,7 @@ class Tagger(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
-    fields = MultiSelectField(choices=get_field_choices(), default=None)
+    fields = MultiSelectField(choices=get_field_choices())
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
 
     vectorizer = models.IntegerField()

@@ -6,7 +6,7 @@ from toolkit.core.task.serializers import TaskSerializer
 
 
 class TaggerSerializer(serializers.ModelSerializer):
-    fields = serializers.MultipleChoiceField(choices=get_field_choices())
+    fields = serializers.MultipleChoiceField(choices=get_field_choices(), required=True)
     vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices())
     classifier = serializers.ChoiceField(choices=get_classifier_choices())
     #negative_multiplier = serializers.ChoiceField(choices=MODEL_CHOICES['tagger']['negative_multiplier'])

@@ -12,6 +12,8 @@ from toolkit.tagger.models import Tagger
 from toolkit.hybrid.serializers import HybridTaggerSerializer
 from toolkit.hybrid.models import HybridTagger
 
+import json
+
 
 
 class HybridTaggerViewSet(viewsets.ModelViewSet):
@@ -19,9 +21,10 @@ class HybridTaggerViewSet(viewsets.ModelViewSet):
     serializer_class = HybridTaggerSerializer
 
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer, tagger_set):
         serializer.save(author=self.request.user, 
-                        project=self.request.user.profile.active_project)
+                        project=self.request.user.profile.active_project,
+                        taggers=tagger_set)
 
 
     def create(self, request, *args, **kwargs):
@@ -33,18 +36,35 @@ class HybridTaggerViewSet(viewsets.ModelViewSet):
         serializer = HybridTaggerSerializer(data=request_data, context={'request': request})
         serializer.is_valid(raise_exception=True)
 
-        tags = self.get_tags(serializer.data['fact_name'], min_count=serializer.data['minimum_sample_size'])
-
-        self.create_queries(serializer.data['fact_name'], tags)
+        # retrieve tags with sufficient counts & create queries to build models
+        tags = self.get_tags(serializer.validated_data['fact_name'], min_count=serializer.validated_data['minimum_sample_size'])
+        tag_queries = self.create_queries(serializer.validated_data['fact_name'], tags)
         
-        #self.perform_create(serializer)
+        # retrive tagger options from hybrid tagger serializer
+        validated_tagger_data = serializer.validated_data.pop('tagger')
+        validated_tagger_data.update('')
+
+        # create tagger objects
+        tagger_set = set()
+        for i,tag in enumerate(tags):
+            tagger_data = validated_tagger_data.copy()
+            tagger_data.update({'query': json.dumps(tag_queries[i])})
+            tagger_data.update({'description': tag})
+            created_tagger = Tagger.objects.create(**tagger_data,
+                                      author=request.user,
+                                      project=self.request.user.profile.active_project)
+            tagger_set.add(created_tagger)
+
+        # create hybrid tagger object
+        self.perform_create(serializer, tagger_set)
+
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
     def get_tags(self, fact_name, min_count=1000):
         """
-        Finds possible tags for training by aggregating active project's indices
+        Finds possible tags for training by aggregating active project's indices.
         """
         active_indices = list(self.request.user.profile.active_project.indices)
         es_a = ElasticAggregator(indices=active_indices)
@@ -54,36 +74,20 @@ class HybridTaggerViewSet(viewsets.ModelViewSet):
     
 
     def create_queries(self, fact_name, tags):
+        """
+        Creates queries for finding documents for each tag.
+        """
+        queries = []
         for tag in tags:
             query = Query()
             query.add_fact_filter(fact_name, tag)
+            queries.append(query.query)
+        return queries
             
 
 
 
-"""
-class HybridTaggerViewSet(viewsets.ViewSet):
-    ""
-    Hybrid Tagger for using multiple tagger instances.
-    ""
-    serializer_class = HybridTaggerTextSerializer
-
-    def _get_tagger_objects(self):
-        ""
-        Returns available Tagger objects for the active project.
-        ""
-        return Tagger.objects.filter(project=self.request.user.profile.active_project).filter(task__status='completed')
-
-
-    def list(self, request):
-        ""
-        Lists available taggers for activated project.
-        ""
-        queryset = self._get_tagger_objects()
-        serializer = SimpleTaggerSerializer(queryset, many=True, context={'request': request})
-        return Response({'available_taggers': serializer.data})
-
-    
+"""  
     def create(self, request):
         ""
         Run selected taggers.
