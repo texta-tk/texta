@@ -9,12 +9,16 @@ from toolkit.tagger.models import Tagger
 from toolkit.tagger.serializers import TaggerSerializer, TextSerializer, DocSerializer
 from toolkit.tagger.text_tagger import TextTagger
 from toolkit.core.project.models import Project
-
+from toolkit import permissions as toolkit_permissions
 
 class TaggerViewSet(viewsets.ModelViewSet):
     queryset = Tagger.objects.all()
     serializer_class = TaggerSerializer
-    permission_classes = (core_permissions.TaggerEmbeddingsPermissions, permissions.IsAuthenticated)
+    permission_classes = (
+        core_permissions.TaggerEmbeddingsPermissions,
+        permissions.IsAuthenticated,
+        toolkit_permissions.HasActiveProject
+        )
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user, project=self.request.user.profile.active_project)

@@ -7,6 +7,7 @@ from toolkit.embedding.models import Embedding
 from toolkit.embedding.serializers import EmbeddingSerializer, PredictionSerializer, PhraserSerializer
 from toolkit.embedding.embedding import W2VEmbedding
 from toolkit.embedding.phraser import Phraser
+from toolkit import permissions as toolkit_permissions
 
 import json
 
@@ -17,7 +18,11 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
     """
     queryset = Embedding.objects.all()
     serializer_class = EmbeddingSerializer
-    permission_classes = (core_permissions.TaggerEmbeddingsPermissions, permissions.IsAuthenticated)
+    permission_classes = (
+        core_permissions.TaggerEmbeddingsPermissions, 
+        permissions.IsAuthenticated,
+        toolkit_permissions.HasActiveProject
+    )
 
     def get_queryset(self):
         queryset = self.queryset
