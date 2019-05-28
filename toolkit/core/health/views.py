@@ -24,5 +24,8 @@ class HealthView(views.APIView):
                                     'total': memory.total / (2**30),
                                     'used': memory.used / (2**30),
                                     'unit': 'GB'}
+        
+        cpu = psutil.cpu_percent()
+        toolkit_status['cpu'] = {'percent': cpu}
 
         return Response(toolkit_status, status=status.HTTP_200_OK)
