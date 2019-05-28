@@ -20,6 +20,16 @@ class TaggerSerializer(serializers.ModelSerializer):
         read_only_fields = ('author', 'project', 'location', 'precision', 'recall', 'f1_score', 'confusion_matrix')
 
 
+    def __init__(self, *args, **kwargs):
+        remove_fields = kwargs.pop('remove_fields', None)
+        super(TaggerSerializer, self).__init__(*args, **kwargs)
+
+        if remove_fields:
+            # for multiple fields in a list
+            for field_name in remove_fields:
+                self.fields.pop(field_name)
+
+
 class SimpleTaggerSerializer(serializers.ModelSerializer):
 
     class Meta:

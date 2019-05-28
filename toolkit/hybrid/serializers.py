@@ -21,7 +21,7 @@ class HybridTaggerSerializer(serializers.HyperlinkedModelSerializer):
     minimum_sample_size = serializers.ChoiceField(choices=HYBRID_TAGGER_CHOICES['min_freq'])
     fact_name = serializers.ChoiceField(choices=get_fact_names())
     taggers = serializers.HyperlinkedRelatedField(read_only=True, many=True, view_name='tagger-detail')
-    tagger = TaggerSerializer(write_only=True)
+    tagger = TaggerSerializer(write_only=True, remove_fields=['description', 'query'])
     tagger_status = serializers.SerializerMethodField()
     tagger_statistics = serializers.SerializerMethodField()
 
