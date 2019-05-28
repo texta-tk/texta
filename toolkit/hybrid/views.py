@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
 from rest_framework.generics import GenericAPIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -11,7 +11,8 @@ from toolkit.elastic.query import Query
 from toolkit.tagger.models import Tagger
 from toolkit.hybrid.serializers import HybridTaggerSerializer
 from toolkit.hybrid.models import HybridTagger
-
+from toolkit.core import permissions as core_permissions
+from toolkit import permissions as toolkit_permissions
 import json
 
 
@@ -19,7 +20,11 @@ import json
 class HybridTaggerViewSet(viewsets.ModelViewSet):
     queryset = HybridTagger.objects.all()
     serializer_class = HybridTaggerSerializer
-
+    permission_classes = (
+        core_permissions.TaggerEmbeddingsPermissions,
+        permissions.IsAuthenticated,
+        toolkit_permissions.HasActiveProject
+        )
 
     def perform_create(self, serializer, tagger_set):
         serializer.save(author=self.request.user, 
