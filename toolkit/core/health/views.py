@@ -22,6 +22,7 @@ class HealthView(views.APIView):
         memory = psutil.virtual_memory()
         toolkit_status['memory'] = {'free': memory.available / (2**30),
                                     'total': memory.total / (2**30),
-                                    'used': memory.used / (2**30)}
+                                    'used': memory.used / (2**30),
+                                    'unit': 'GB'}
 
         return Response(toolkit_status, status=status.HTTP_200_OK)
