@@ -8,7 +8,7 @@ class Task(models.Model):
     STATUS_RUNNING = 'running'
     STATUS_UPDATING = 'updating'
     STATUS_COMPLETED = 'completed'
-    STATUS_CANCELED = 'canceled'
+    STATUS_CANCELLED = 'cancelled'
     STATUS_FAILED = 'failed'
 
     status = models.CharField(max_length=MAX_STR_LEN)

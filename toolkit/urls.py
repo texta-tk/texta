@@ -1,7 +1,6 @@
 from django.urls import include, path
 from django.conf.urls import url
 from rest_framework import routers
-from rest_framework_swagger.views import get_swagger_view
 
 
 from toolkit.core.urls import router as core_router, urls as core_urls
@@ -17,12 +16,9 @@ router.registry.extend(hybrid_router.registry)
 router.registry.extend(tagger_router.registry)
 #router.registry.extend(nexus_router.registry)
 
-schema_view = get_swagger_view(title='TEXTA API')
-
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
-#    url(r'^$', schema_view),
     path('rest-auth/', include('rest_auth.urls')),
     path('rest-auth/registration/', include('rest_auth.registration.urls')),
     path('', include(router.urls)),

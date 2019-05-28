@@ -19,7 +19,7 @@ class Tagger(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
-    fields = MultiSelectField(choices=get_field_choices(), default=None)
+    fields = MultiSelectField(choices=get_field_choices())
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
 
     vectorizer = models.IntegerField()
@@ -28,8 +28,12 @@ class Tagger(models.Model):
     maximum_sample_size = models.IntegerField(default=10000)
     score_threshold = models.FloatField(default=0.0)
 
+    precision = models.FloatField(default=None, null=True)
+    recall = models.FloatField(default=None, null=True)
+    f1_score = models.FloatField(default=None, null=True)
     location = models.TextField()
-    statistics = models.TextField()
+    confusion_matrix = models.TextField()
+    
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
