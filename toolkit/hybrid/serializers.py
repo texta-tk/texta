@@ -17,20 +17,23 @@ class HybridTaggerTextSerializer(serializers.Serializer):
 
 class HybridTaggerSerializer(serializers.HyperlinkedModelSerializer):
     description = serializers.CharField()
-
     minimum_sample_size = serializers.ChoiceField(choices=HYBRID_TAGGER_CHOICES['min_freq'])
     fact_name = serializers.ChoiceField(choices=get_fact_names())
     taggers = serializers.HyperlinkedRelatedField(read_only=True, many=True, view_name='tagger-detail')
     tagger = TaggerSerializer(write_only=True)
-
-    completed_taggers = serializers.SerializerMethodField()
+    tagger_status = serializers.SerializerMethodField()
 
     class Meta:
         model = HybridTagger
-        fields = ('id', 'project', 'author', 'description', 'fact_name', 'minimum_sample_size', 'taggers', 'completed_taggers', 'tagger')
-        read_only_fields = ('author', 'project', 'taggers', 'completed_taggers')
-    
-    def get_completed_taggers(self, obj):
-        total_taggers = HybridTagger.objects.get(id=obj.id).taggers
-        completed_taggers = total_taggers.filter(task__status='completed')
-        return '{0}/{1}'.format(len(completed_taggers), len(total_taggers.all()))
+        fields = ('id', 'project', 'author', 'description', 'fact_name', 'minimum_sample_size', 'taggers', 'tagger_status', 'tagger')
+        read_only_fields = ('author', 'project', 'taggers', 'tagger_status')
+
+
+    def get_tagger_status(self, obj):
+        tagger_objects = HybridTagger.objects.get(id=obj.id).taggers
+        tagger_status = {'total': len(tagger_objects.all()),
+                        'completed': len(tagger_objects.filter(task__status='completed')),
+                        'training': len(tagger_objects.filter(task__status='running')),
+                        'queued': len(tagger_objects.filter(task__status='created')),
+                        'failed': len(tagger_objects.filter(task__status='failed'))}
+        return tagger_status
