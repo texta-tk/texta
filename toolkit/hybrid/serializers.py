@@ -43,8 +43,8 @@ class HybridTaggerSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_tagger_statistics(self, obj):
         tagger_objects = HybridTagger.objects.get(id=obj.id).taggers
-        tagger_stats = {'avg_precision': round(tagger_objects.aggregate(Avg('precision'))['precision__avg'], 3),
-                        'avg_recall': round(tagger_objects.aggregate(Avg('recall'))['recall__avg'], 3),
-                        'avg_f1_score': round(tagger_objects.aggregate(Avg('f1_score'))['f1_score__avg'], 3)}
+        tagger_stats = {'avg_precision': tagger_objects.aggregate(Avg('precision'))['precision__avg'],
+                        'avg_recall': tagger_objects.aggregate(Avg('recall'))['recall__avg'],
+                        'avg_f1_score': tagger_objects.aggregate(Avg('f1_score'))['f1_score__avg']}
         return tagger_stats
        
