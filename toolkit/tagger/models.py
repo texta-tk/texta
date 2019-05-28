@@ -28,8 +28,12 @@ class Tagger(models.Model):
     maximum_sample_size = models.IntegerField(default=10000)
     score_threshold = models.FloatField(default=0.0)
 
+    precision = models.FloatField(default=None, null=True)
+    recall = models.FloatField(default=None, null=True)
+    f1_score = models.FloatField(default=None, null=True)
     location = models.TextField()
-    statistics = models.TextField()
+    confusion_matrix = models.TextField()
+    
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):

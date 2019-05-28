@@ -11,12 +11,13 @@ class TaggerSerializer(serializers.ModelSerializer):
     classifier = serializers.ChoiceField(choices=get_classifier_choices())
     #negative_multiplier = serializers.ChoiceField(choices=MODEL_CHOICES['tagger']['negative_multiplier'])
     maximum_sample_size = serializers.ChoiceField(choices=TAGGER_CHOICES['max_sample_size'])
+
     task = TaskSerializer(read_only=True)
 
     class Meta:
         model = Tagger
-        fields = ('url', 'id', 'description', 'project', 'author', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'maximum_sample_size', 'location', 'statistics', 'task')
-        read_only_fields = ('author', 'project', 'location', 'statistics')
+        fields = ('url', 'id', 'description', 'project', 'author', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'maximum_sample_size', 'location', 'precision', 'recall', 'f1_score', 'confusion_matrix', 'task')
+        read_only_fields = ('author', 'project', 'location', 'precision', 'recall', 'f1_score', 'confusion_matrix')
 
 
 class SimpleTaggerSerializer(serializers.ModelSerializer):

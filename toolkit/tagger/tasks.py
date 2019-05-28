@@ -71,7 +71,10 @@ def train_tagger(tagger_id):
 
     # save model locations
     tagger_object.location = json.dumps({'tagger': tagger_path})
-    tagger_object.statistics = json.dumps(tagger.statistics)
+    tagger_object.precision = float(tagger.statistics['precision'])
+    tagger_object.recall = float(tagger.statistics['recall'])
+    tagger_object.f1_score = float(tagger.statistics['f1_score'])
+    tagger_object.confusion_matrix = json.dumps(tagger.statistics['confusion_matrix'])
     tagger_object.save()
 
     # declare the job done
