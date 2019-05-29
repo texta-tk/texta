@@ -61,6 +61,10 @@ class ElasticSearcher:
 
     def update_query(self, query):
         self.query = query
+    
+
+    def update_field_data(self, field_data):
+        self.field_data = self.core.parse_field_data(field_data)
 
 
     @staticmethod

@@ -42,7 +42,5 @@ class Query:
         """
         Add More Like This query.
         """
-        mlt_query = {"fields": mlt_fields, "like": text, "min_term_freq": 1, "max_query_terms": 12}
-        self.query["query"]["more_like_this"] = mlt_query
-
-
+        mlt_query = {"more_like_this": {"fields": mlt_fields, "like": text, "min_term_freq": 1, "max_query_terms": 12}}
+        self.query["query"] = mlt_query
