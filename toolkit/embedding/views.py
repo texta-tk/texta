@@ -16,7 +16,6 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
     API endpoint that allows TEXTA models to be viewed or edited.
     Only include the embeddings that are related to the request UserProfile's active_project
     """
-    queryset = Embedding.objects.all()
     serializer_class = EmbeddingSerializer
     permission_classes = (
         core_permissions.TaggerEmbeddingsPermissions, 
@@ -25,7 +24,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
     )
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = Embedding.objects.all()
         current_user = self.request.user
         if not current_user.is_superuser:
             queryset = Embedding.objects.filter(project=current_user.profile.active_project)

@@ -8,11 +8,10 @@ from toolkit.core.user_profile.serializers import UserSerializer
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = User.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = User.objects.all().order_by('-date_joined')
         current_user = self.request.user
         if not current_user.is_superuser:
             queryset = queryset.filter(id=self.request.user.id)

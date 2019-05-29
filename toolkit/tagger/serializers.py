@@ -21,6 +21,10 @@ class TaggerSerializer(serializers.ModelSerializer):
 
 
     def __init__(self, *args, **kwargs):
+        '''
+        Add the ability to pass extra arguments such as "remove_fields".
+        Useful for the Serializer eg in another Serializer, without making a new one.
+        '''
         remove_fields = kwargs.pop('remove_fields', None)
         super(TaggerSerializer, self).__init__(*args, **kwargs)
 
