@@ -10,7 +10,6 @@ from toolkit.core.project.serializers import ProjectSerializer
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
-    queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     permission_classes = (project_permissions.ProjectPermissions, permissions.IsAuthenticated)
     
@@ -18,7 +17,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         serializer.save(owner=self.request.user)
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = Project.objects.all()
         current_user = self.request.user
         if not current_user.is_superuser:
             queryset = queryset.filter(owner=current_user) | queryset.filter(users=current_user)

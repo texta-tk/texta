@@ -12,7 +12,6 @@ from toolkit.core.project.models import Project
 from toolkit import permissions as toolkit_permissions
 
 class TaggerViewSet(viewsets.ModelViewSet):
-    queryset = Tagger.objects.all()
     serializer_class = TaggerSerializer
     permission_classes = (
         core_permissions.TaggerEmbeddingsPermissions,
@@ -24,7 +23,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user, project=self.request.user.profile.active_project)
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = Tagger.objects.all()
         current_user = self.request.user
         if not current_user.is_superuser:
             queryset = Tagger.objects.filter(project=current_user.profile.active_project)
