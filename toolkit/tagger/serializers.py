@@ -4,7 +4,8 @@ from django.db.models import Avg
 from toolkit.core.task.models import Task
 from toolkit.tagger.models import Tagger, TaggerGroup
 
-from toolkit.tagger.choices import TAGGER_CHOICES, TAGGER_GROUP_CHOICES, get_fact_names, get_field_choices, get_classifier_choices, get_vectorizer_choices
+from toolkit.tagger.choices import TAGGER_CHOICES, TAGGER_GROUP_CHOICES, get_fact_names, \
+                                   get_field_choices, get_classifier_choices, get_vectorizer_choices
 from toolkit.core.task.serializers import TaskSerializer
 
 
@@ -27,8 +28,12 @@ class TaggerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tagger
-        fields = ('url', 'id', 'description', 'project', 'author', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'maximum_sample_size', 'location', 'precision', 'recall', 'f1_score', 'confusion_matrix', 'task')
-        read_only_fields = ('author', 'project', 'location', 'precision', 'recall', 'f1_score', 'confusion_matrix')
+        fields = ('url', 'id', 'description', 'project', 'author', 'query',
+                  'fields', 'embedding', 'vectorizer', 'classifier', 'maximum_sample_size', 
+                  'location', 'precision', 'recall', 'f1_score', 'confusion_matrix', 'task')
+
+        read_only_fields = ('author', 'project', 'location', 
+                            'precision', 'recall', 'f1_score', 'confusion_matrix')
 
     def __init__(self, *args, **kwargs):
         '''
@@ -55,7 +60,9 @@ class TaggerGroupSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = TaggerGroup
-        fields = ('id', 'project', 'author', 'description', 'fact_name', 'minimum_sample_size', 'taggers', 'tagger_status', 'tagger', 'tagger_statistics')
+        fields = ('id', 'project', 'author', 'description', 'fact_name', 'minimum_sample_size', 
+                  'taggers', 'tagger_status', 'tagger', 'tagger_statistics')
+                  
         read_only_fields = ('author', 'project', 'taggers')
 
     def get_tagger_status(self, obj):

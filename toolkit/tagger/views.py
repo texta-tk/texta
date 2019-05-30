@@ -8,12 +8,23 @@ from toolkit.elastic.query import Query
 
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.core.project.models import Project
-from toolkit.tagger.serializers import TaggerSerializer, TaggerGroupSerializer, TextSerializer, DocSerializer
+from toolkit.tagger.serializers import TaggerSerializer, TaggerGroupSerializer, \
+                                       TextSerializer, DocSerializer
 from toolkit.tagger.text_tagger import TextTagger
 from toolkit import permissions as toolkit_permissions
 from toolkit.core import permissions as core_permissions
 
 import json
+
+
+def get_payload(request):
+    if request.GET:
+        data = request.GET
+    elif request.POST:
+        data = request.POST
+    else:
+        data = {}
+    return data
 
 
 class TaggerViewSet(viewsets.ModelViewSet):
@@ -43,23 +54,12 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-    @staticmethod
-    def get_payload(request):
-        if request.GET:
-            data = request.GET
-        elif request.POST:
-            data = request.POST
-        else:
-            data = {}
-        return data
-
-
     @action(detail=True, methods=['get','post'])
     def tag_text(self, request, pk=None):
         """
         API endpoint for tagging raw text.
         """
-        data = self.get_payload(request)
+        data = get_payload(request)
         serializer = TextSerializer(data=data)
 
         # check if valid request
@@ -87,7 +87,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         """
         API endpoint for tagging JSON documents.
         """
-        data = self.get_payload(request)
+        data = get_payload(request)
         serializer = DocSerializer(data=data)
 
         # check if valid request
@@ -116,9 +116,9 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
-#################
-# HYBRID TAGGER #
-#################
+################
+# TAGGER GROUP #
+################
 
 
 class TaggerGroupViewSet(viewsets.ModelViewSet):
@@ -134,6 +134,14 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user, 
                         project=self.request.user.profile.active_project,
                         taggers=tagger_set)
+
+
+    def get_queryset(self):
+        queryset = TaggerGroup.objects.all()
+        current_user = self.request.user
+        if not current_user.is_superuser:
+            queryset = TaggerGroup.objects.filter(project=current_user.profile.active_project)
+        return queryset
 
 
     def create(self, request, *args, **kwargs):
@@ -194,17 +202,6 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         return queries
 
 
-    @staticmethod
-    def get_payload(request):
-        if request.GET:
-            data = request.GET
-        elif request.POST:
-            data = request.POST
-        else:
-            data = {}
-        return data
-
-
     def get_tag_candidates(self, field_data, text):
         """
         Finds frequent tags from documents similar to input document.
@@ -230,7 +227,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         """
         API endpoint for tagging raw text.
         """
-        data = self.get_payload(request)
+        data = get_payload(request)
         serializer = TextSerializer(data=data)
 
         # check if valid request
