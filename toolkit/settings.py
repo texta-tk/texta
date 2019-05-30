@@ -44,8 +44,6 @@ INSTALLED_APPS = [
     'toolkit.core',
     'toolkit.embedding',
     'toolkit.tagger',
-    'toolkit.hybrid',
-    'toolkit.nexus',
     # THIRD PARTY
     # https://github.com/goinnn/django-multiselectfield
     'multiselectfield',
