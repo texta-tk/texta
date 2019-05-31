@@ -5,9 +5,10 @@ class ModelCache:
     """
     Cache to hold recently used Tagger & Embedding objects in memory.
     """
-    def __init__(self, object_class):
+    def __init__(self, object_class, cache_duration=3600):
         self.models = {}
         self.object_class = object_class
+        self.cache_duration = cache_duration
 
 
     def get_model(self, model_id):
@@ -26,5 +27,5 @@ class ModelCache:
     
 
     def clean_cache(self):
-        # removes models not accessed in last 60 minutes
-        self.models = {k:v for k,v in self.models.items() if v['last_access'] >= time()-3600}
+        # removes models not accessed in last 60 minutes (default)
+        self.models = {k:v for k,v in self.models.items() if v['last_access'] >= time()-self.cache_duration}
