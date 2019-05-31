@@ -257,8 +257,6 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         # hybrid tagger instance are trained on same fields
         hybrid_tagger_field_data = hybrid_tagger_object.taggers.first().fields
 
-        print(serializer.validated_data)
-
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data, serializer.validated_data['text'], hybrid=serializer.validated_data['hybrid'])
 
