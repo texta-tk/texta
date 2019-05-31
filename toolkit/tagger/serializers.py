@@ -11,17 +11,19 @@ from toolkit.core.task.serializers import TaskSerializer
 
 class TextSerializer(serializers.Serializer):
     text = serializers.CharField()
+    hybrid = serializers.BooleanField(default=True)
 
 
 class DocSerializer(serializers.Serializer):
     doc = serializers.JSONField()
+    hybrid = serializers.BooleanField(default=True)
 
 
 class TaggerSerializer(serializers.ModelSerializer):
     fields = serializers.MultipleChoiceField(choices=get_field_choices(), required=True)
     vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices())
     classifier = serializers.ChoiceField(choices=get_classifier_choices())
-    #negative_multiplier = serializers.ChoiceField(choices=MODEL_CHOICES['tagger']['negative_multiplier'])
+    negative_multiplier = serializers.ChoiceField(choices=TAGGER_CHOICES['negative_multiplier'])
     maximum_sample_size = serializers.ChoiceField(choices=TAGGER_CHOICES['max_sample_size'])
 
     task = TaskSerializer(read_only=True)
@@ -29,10 +31,10 @@ class TaggerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tagger
         fields = ('url', 'id', 'description', 'project', 'author', 'query',
-                  'fields', 'embedding', 'vectorizer', 'classifier', 'maximum_sample_size', 
+                  'fields', 'embedding', 'vectorizer', 'classifier', 'maximum_sample_size', 'negative_multiplier',
                   'location', 'precision', 'recall', 'f1_score', 'confusion_matrix', 'task')
 
-        read_only_fields = ('author', 'project', 'location', 
+        read_only_fields = ('author', 'project', 'location', 'negative_multiplier',
                             'precision', 'recall', 'f1_score', 'confusion_matrix')
 
     def __init__(self, *args, **kwargs):

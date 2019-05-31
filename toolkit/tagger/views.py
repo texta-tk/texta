@@ -209,10 +209,14 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         return queries
 
 
-    def get_tag_candidates(self, field_data, text):
+    def get_tag_candidates(self, field_data, text, hybrid=True):
         """
         Finds frequent tags from documents similar to input document.
+        Returns empty list if hybrid option false.
         """
+        if not hybrid:
+            return []
+
         es_a = ElasticAggregator()
         field_data = [es_a.core.decode_field_data(a) for a in field_data]
         es_a.update_field_data(field_data)
@@ -253,7 +257,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         hybrid_tagger_field_data = hybrid_tagger_object.taggers.first().fields
 
         # retrieve tag candidates
-        tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data, serializer.validated_data['text'])
+        tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data, serializer.validated_data['text'], hybrid=serializer.validated_data['hybrid'])
 
         # get tags
         tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, serializer.validated_data['text'], input_type='text') 
@@ -299,8 +303,12 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
 
 
     def apply_taggers(self, hybrid_tagger_object, tag_candidates, tagger_input, input_type='text'):
-        # retrieve tagger id-s from active project
-        tagger_ids = [tagger.pk for tagger in hybrid_tagger_object.taggers.filter(description__in=tag_candidates)]
+        # filter if tag candidates. use all if no candidates.
+        if tag_candidates:
+            tagger_objects = hybrid_tagger_object.taggers.filter(description__in=tag_candidates)
+        else:
+            tagger_objects = hybrid_tagger_object.taggers.all()
+        tagger_ids = [tagger.pk for tagger in tagger_objects]
         tags = []
         for tagger_id in tagger_ids:
             # apply tagger
@@ -314,4 +322,4 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
             if decision:
                 tagger_response = {'tag': tagger.description, 'probability': tagger_result[1], 'tagger_id': tagger_id}
                 tags.append(tagger_response)
-        return tags
+        return sorted(tags, key=lambda k: k['probability'], reverse=True) 
