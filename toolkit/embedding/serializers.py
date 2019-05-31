@@ -18,8 +18,10 @@ class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
         read_only_fields = ('vocab_size', 'location', 'author', 'project')
 
 
-class PredictionSerializer(serializers.Serializer):
-    phrase = serializers.CharField()
-
-class PhraserSerializer(serializers.Serializer):
+class EmbeddingPrecictionSerializer(serializers.Serializer):
     text = serializers.CharField()
+    output_size = serializers.ChoiceField(choices=EMBEDDING_CHOICES['output_size'])
+
+class PhrasePrecictionSerializer(serializers.Serializer):
+    text = serializers.CharField()
+

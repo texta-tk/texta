@@ -4,7 +4,7 @@ from rest_framework.response import Response
 
 from toolkit.core import permissions as core_permissions
 from toolkit.embedding.models import Embedding
-from toolkit.embedding.serializers import EmbeddingSerializer, PredictionSerializer, PhraserSerializer
+from toolkit.embedding.serializers import EmbeddingSerializer, EmbeddingPrecictionSerializer, PhrasePrecictionSerializer
 from toolkit.embedding.embedding import W2VEmbedding
 from toolkit.embedding.phraser import Phraser
 from toolkit.utils.model_cache import ModelCache
@@ -49,35 +49,33 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
             data = {}
         return data
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['get', 'post'],serializer_class=EmbeddingPrecictionSerializer)
     def predict(self, request, pk=None, project_pk=None):
         data = self.get_payload(request)
-        serializer = PredictionSerializer(data=data)
+        serializer = EmbeddingPrecictionSerializer(data=data)
         if serializer.is_valid():
-            data = serializer.data
             embedding_object = self.get_object()
             if not embedding_object.location:
                 return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
             
             embedding = w2v_cache.get_model(embedding_object.pk)
 
-            predictions = embedding.get_similar(data['text'], n=10)
+            predictions = embedding.get_similar(serializer.validated_data['text'], n=serializer.validated_data['output_size'])
             return Response(predictions, status=status.HTTP_200_OK)
         else:
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['get', 'post'], serializer_class=PhrasePrecictionSerializer)
     def phrase(self, request, pk=None, project_pk=None):
         data = self.get_payload(request)
-        serializer = PhraserSerializer(data=data)
+        serializer = PhrasePrecictionSerializer(data=data)
         if serializer.is_valid():
-            data = serializer.data
             embedding_object = self.get_object()
             if not embedding_object.location:
                 return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
             phraser = phraser_cache.get_model(embedding_object.pk)
-            phrased_text = phraser.phrase(data['text'])
+            phrased_text = phraser.phrase(serializer.validated_data['text'])
             return Response(phrased_text, status=status.HTTP_200_OK)
         else:
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
