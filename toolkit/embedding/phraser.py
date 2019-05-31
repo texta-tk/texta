@@ -7,7 +7,7 @@ from toolkit.embedding.models import Embedding
 
 class Phraser:
 
-    def __init__(self, embedding_id=None):
+    def __init__(self, embedding_id):
         self.embedding_id = embedding_id
         self._phraser = None 
     

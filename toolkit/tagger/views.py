@@ -11,10 +11,14 @@ from toolkit.core.project.models import Project
 from toolkit.tagger.serializers import TaggerSerializer, TaggerGroupSerializer, \
                                        TextSerializer, DocSerializer
 from toolkit.tagger.text_tagger import TextTagger
+from toolkit.utils.model_cache import ModelCache
 from toolkit import permissions as toolkit_permissions
 from toolkit.core import permissions as core_permissions
 
 import json
+
+
+model_cache = ModelCache(TextTagger)
 
 
 def get_payload(request):
@@ -74,8 +78,9 @@ class TaggerViewSet(viewsets.ModelViewSet):
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # apply tagger
-        tagger = TextTagger(tagger_object.pk)
-        tagger.load()
+        tagger_id = tagger_object.pk
+        tagger = model_cache.get_model(tagger_id)
+
         tagger_result = tagger.tag_text(serializer.data['text'])
         tagger_response = {"result": bool(tagger_result[0]), "confidence": tagger_result[1]}
 
@@ -104,12 +109,13 @@ class TaggerViewSet(viewsets.ModelViewSet):
         # check if fields match
         field_data = [ElasticCore().decode_field_data(field) for field in tagger_object.fields]
         field_path_list = [field['field_path'] for field in field_data]
-        if field_path_list != list(serializer.data['doc'].keys()):
+        if field_path_list != list(serializer.validated_data['doc'].keys()):
             return Response({'error': 'document fields do not match. Required keys: {}'.format(field_path_list)}, status=status.HTTP_400_BAD_REQUEST)
 
         # apply tagger
-        tagger = TextTagger(tagger_object.pk)
-        tagger.load()
+        tagger_id = tagger_object.pk
+        tagger = model_cache.get_model(tagger_id)
+
         tagger_result = tagger.tag_doc(serializer.data['doc'])
         tagger_response = {"result": bool(tagger_result[0]), "confidence": tagger_result[1]}
 
@@ -225,7 +231,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get','post'])
     def tag_text(self, request, pk=None):
         """
-        API endpoint for tagging raw text.
+        API endpoint for tagging raw text with tagger group.
         """
         data = get_payload(request)
         serializer = TextSerializer(data=data)
@@ -255,8 +261,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
 
         for tagger_id in tagger_ids:
             # apply tagger
-            tagger = TextTagger(tagger_id)
-            tagger.load()
+            tagger = model_cache.get_model(tagger_id)
             tagger_result = tagger.tag_text(serializer.validated_data['text'])
             decision = bool(tagger_result[0])
 
@@ -265,4 +270,44 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
                 tagger_response = {"tag": tagger.description, "confidence": tagger_result[1]}
                 tags.append(tagger_response)
 
+        return Response(tags, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['get','post'])
+    def tag_doc(self, request, pk=None):
+        """
+        API endpoint for tagging JSON documents with tagger group.
+        """
+        data = get_payload(request)
+        serializer = DocSerializer(data=data)
+
+        # check if valid request
+        if not serializer.is_valid():
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
+        hybrid_tagger_object = self.get_object()
+
+        # check if any of the models ready
+        if not hybrid_tagger_object.taggers.filter(task__status='completed'):
+            return Response({'error': 'models doe not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # retrieve field data from the first element
+        # we can do that safely because all taggers inside
+        # hybrid tagger instance are trained on same fields
+        hybrid_tagger_field_data = [ElasticCore().decode_field_data(field) for field in hybrid_tagger_object.taggers.first().fields]
+        field_path_list = [field['field_path'] for field in hybrid_tagger_field_data]
+
+        # check if fields match
+        if field_path_list != list(serializer.validated_data['doc'].keys()):
+            return Response({'error': 'document fields do not match. Required keys: {}'.format(field_path_list)}, status=status.HTTP_400_BAD_REQUEST)
+
+        print(serializer.validated_data['doc'])
+
+        # retrieve tag candidates
+        #tag_candidates = self.get_tag_candidates(hybrid_tagger_object.taggers.first().fields, serializer.validated_data['doc'])
+
+
+
+        # TODO: Implement this!!
+        tags = []
         return Response(tags, status=status.HTTP_200_OK)

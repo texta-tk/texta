@@ -7,9 +7,13 @@ from toolkit.embedding.models import Embedding
 from toolkit.embedding.serializers import EmbeddingSerializer, PredictionSerializer, PhraserSerializer
 from toolkit.embedding.embedding import W2VEmbedding
 from toolkit.embedding.phraser import Phraser
+from toolkit.utils.model_cache import ModelCache
 from toolkit import permissions as toolkit_permissions
 
 import json
+
+w2v_cache = ModelCache(W2VEmbedding)
+phraser_cache = ModelCache(Phraser)
 
 class EmbeddingViewSet(viewsets.ModelViewSet):
     """
@@ -54,8 +58,9 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
             embedding_object = self.get_object()
             if not embedding_object.location:
                 return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
-            embedding = W2VEmbedding(embedding_id=embedding_object.pk)
-            embedding.load()
+            
+            embedding = w2v_cache.get_model(embedding_object.pk)
+
             predictions = embedding.get_similar(data['phrase'], n=10)
             return Response(predictions, status=status.HTTP_200_OK)
         else:
@@ -70,8 +75,8 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
             embedding_object = self.get_object()
             if not embedding_object.location:
                 return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
-            phraser = Phraser(embedding_id=embedding_object.pk)
-            phraser.load()
+
+            phraser = phraser_cache.get_model(embedding_object.pk)
             phrased_text = phraser.phrase(data['text'])
             print(data['text'])
             return Response(phrased_text, status=status.HTTP_200_OK)
