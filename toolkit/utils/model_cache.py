@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from time import time
 
 class ModelCache:
@@ -16,7 +17,14 @@ class ModelCache:
             model.load()
             self.models[model_id] = {'model': model, 'last_access': time()}
         
-        # update last access timestamp
+        # update last access timestamp & remove old models
         self.models[model_id]['last_access'] = time()
+        self.clean_cache()
 
+        # return model
         return self.models[model_id]['model']
+    
+
+    def clean_cache(self):
+        # removes models not accessed in last 60 minutes
+        self.models = {k:v for k,v in self.models.items() if v['last_access'] >= time()-3600}
