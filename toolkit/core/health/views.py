@@ -2,7 +2,7 @@ from rest_framework import views, status
 from rest_framework.response import Response
 
 from toolkit.elastic.core import ElasticCore
-from toolkit.core.health.utils import get_version
+from toolkit.core.health.utils import get_version, get_cache_status
 import shutil
 import psutil
 
@@ -25,7 +25,7 @@ class HealthView(views.APIView):
                                     'used': memory.used / (2**30),
                                     'unit': 'GB'}
         
-        cpu = psutil.cpu_percent()
-        toolkit_status['cpu'] = {'percent': cpu}
+        toolkit_status['cpu'] = {'percent': psutil.cpu_percent()}
+        toolkit_status['model_cache'] = get_cache_status()
 
         return Response(toolkit_status, status=status.HTTP_200_OK)
