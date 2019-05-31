@@ -256,7 +256,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data, serializer.validated_data['text'])
 
         # get tags
-        tags = self.apply_taggers(tag_candidates, serializer.validated_data['text'], input_type='text') 
+        tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, serializer.validated_data['text'], input_type='text') 
 
         return Response(tags, status=status.HTTP_200_OK)
 
@@ -294,13 +294,13 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         tag_candidates = self.get_tag_candidates(hybrid_tagger_object.taggers.first().fields, combined_texts)
 
         # get tags
-        tags = self.apply_taggers(tag_candidates, serializer.validated_data['doc'], input_type='doc')        
+        tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, serializer.validated_data['doc'], input_type='doc')        
         return Response(tags, status=status.HTTP_200_OK)
 
 
-    def apply_taggers(self, tag_candidates, tagger_input, input_type='text'):
+    def apply_taggers(self, hybrid_tagger_object, tag_candidates, tagger_input, input_type='text'):
         # retrieve tagger id-s from active project
-        tagger_ids = [tagger.pk for tagger in Tagger.objects.filter(project=self.request.user.profile.active_project).filter(description__in=tag_candidates)]
+        tagger_ids = [tagger.pk for tagger in hybrid_tagger_object.taggers.filter(description__in=tag_candidates)]
         tags = []
         for tagger_id in tagger_ids:
             # apply tagger
@@ -312,6 +312,6 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
             decision = bool(tagger_result[0])
             # if tag is omitted
             if decision:
-                tagger_response = {"tag": tagger.description, "confidence": tagger_result[1]}
+                tagger_response = {'tag': tagger.description, 'confidence': tagger_result[1], 'tagger_id': tagger_id}
                 tags.append(tagger_response)
         return tags
