@@ -17,7 +17,7 @@ from toolkit.core import permissions as core_permissions
 
 import json
 
-
+# initialize model cache for taggers
 model_cache = ModelCache(TextTagger)
 
 
@@ -79,11 +79,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
         # apply tagger
         tagger_id = tagger_object.pk
-        tagger = model_cache.get_model(tagger_id)
-
-        tagger_result = tagger.tag_text(serializer.data['text'])
-        tagger_response = {"result": bool(tagger_result[0]), "confidence": tagger_result[1]}
-
+        tagger_response = self.apply_tagger(tagger_id, serializer.data['text'], input_type='text')
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
@@ -114,12 +110,17 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
         # apply tagger
         tagger_id = tagger_object.pk
-        tagger = model_cache.get_model(tagger_id)
-
-        tagger_result = tagger.tag_doc(serializer.data['doc'])
-        tagger_response = {"result": bool(tagger_result[0]), "confidence": tagger_result[1]}
-
+        tagger_response = self.apply_tagger(tagger_id, serializer.data['doc'], input_type='doc')
         return Response(tagger_response, status=status.HTTP_200_OK)
+
+
+    def apply_tagger(self, tagger_id, tagger_input, input_type='text'):
+        tagger = model_cache.get_model(tagger_id)
+        if input_type == 'doc':
+            tagger_result = tagger.tag_doc(tagger_input)
+        else:
+            tagger_result = tagger.tag_text(tagger_input)
+        return {'result': bool(tagger_result[0]), 'confidence': tagger_result[1]}
 
 
 ################
@@ -254,21 +255,8 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data, serializer.validated_data['text'])
 
-        # retrieve tagger id-s from active project
-        tagger_ids = [tagger.pk for tagger in Tagger.objects.filter(project=self.request.user.profile.active_project).filter(description__in=tag_candidates)]
-
-        tags = []
-
-        for tagger_id in tagger_ids:
-            # apply tagger
-            tagger = model_cache.get_model(tagger_id)
-            tagger_result = tagger.tag_text(serializer.validated_data['text'])
-            decision = bool(tagger_result[0])
-
-            # if tag is omitted
-            if decision:
-                tagger_response = {"tag": tagger.description, "confidence": tagger_result[1]}
-                tags.append(tagger_response)
+        # get tags
+        tags = self.apply_taggers(tag_candidates, serializer.validated_data['text'], input_type='text') 
 
         return Response(tags, status=status.HTTP_200_OK)
 
@@ -301,13 +289,29 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         if field_path_list != list(serializer.validated_data['doc'].keys()):
             return Response({'error': 'document fields do not match. Required keys: {}'.format(field_path_list)}, status=status.HTTP_400_BAD_REQUEST)
 
-        print(serializer.validated_data['doc'])
-
         # retrieve tag candidates
-        #tag_candidates = self.get_tag_candidates(hybrid_tagger_object.taggers.first().fields, serializer.validated_data['doc'])
+        combined_texts = ' '.join(serializer.validated_data['doc'].values())
+        tag_candidates = self.get_tag_candidates(hybrid_tagger_object.taggers.first().fields, combined_texts)
 
-
-
-        # TODO: Implement this!!
-        tags = []
+        # get tags
+        tags = self.apply_taggers(tag_candidates, serializer.validated_data['doc'], input_type='doc')        
         return Response(tags, status=status.HTTP_200_OK)
+
+
+    def apply_taggers(self, tag_candidates, tagger_input, input_type='text'):
+        # retrieve tagger id-s from active project
+        tagger_ids = [tagger.pk for tagger in Tagger.objects.filter(project=self.request.user.profile.active_project).filter(description__in=tag_candidates)]
+        tags = []
+        for tagger_id in tagger_ids:
+            # apply tagger
+            tagger = model_cache.get_model(tagger_id)
+            if input_type == 'doc':
+                tagger_result = tagger.tag_doc(tagger_input)
+            else:
+                tagger_result = tagger.tag_text(tagger_input)
+            decision = bool(tagger_result[0])
+            # if tag is omitted
+            if decision:
+                tagger_response = {"tag": tagger.description, "confidence": tagger_result[1]}
+                tags.append(tagger_response)
+        return tags
