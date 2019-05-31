@@ -11,10 +11,18 @@ from toolkit.core.task.serializers import TaskSerializer
 
 class TextSerializer(serializers.Serializer):
     text = serializers.CharField()
-    hybrid = serializers.BooleanField(default=True)
 
 
 class DocSerializer(serializers.Serializer):
+    doc = serializers.JSONField()
+
+
+class TextGroupSerializer(serializers.Serializer):
+    text = serializers.CharField()
+    hybrid = serializers.BooleanField(default=True)
+
+
+class DocGroupSerializer(serializers.Serializer):
     doc = serializers.JSONField()
     hybrid = serializers.BooleanField(default=True)
 

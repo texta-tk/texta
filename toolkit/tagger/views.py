@@ -9,7 +9,8 @@ from toolkit.elastic.query import Query
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.core.project.models import Project
 from toolkit.tagger.serializers import TaggerSerializer, TaggerGroupSerializer, \
-                                       TextSerializer, DocSerializer
+                                       TextSerializer, DocSerializer, \
+                                       TextGroupSerializer, DocGroupSerializer
 from toolkit.tagger.text_tagger import TextTagger
 from toolkit.utils.model_cache import ModelCache
 from toolkit import permissions as toolkit_permissions
@@ -58,7 +59,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-    @action(detail=True, methods=['get','post'])
+    @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
     def tag_text(self, request, pk=None):
         """
         API endpoint for tagging raw text.
@@ -83,7 +84,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get','post'])
+    @action(detail=True, methods=['get','post'], serializer_class=DocSerializer)
     def tag_doc(self, request, pk=None):
         """
         API endpoint for tagging JSON documents.
@@ -105,7 +106,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         # check if fields match
         field_data = [ElasticCore().decode_field_data(field) for field in tagger_object.fields]
         field_path_list = [field['field_path'] for field in field_data]
-        if field_path_list != list(serializer.validated_data['doc'].keys()):
+        if set(field_path_list) != set(serializer.validated_data['doc'].keys()):
             return Response({'error': 'document fields do not match. Required keys: {}'.format(field_path_list)}, status=status.HTTP_400_BAD_REQUEST)
 
         # apply tagger
@@ -233,13 +234,13 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         return tag_candidates
 
 
-    @action(detail=True, methods=['get','post'])
+    @action(detail=True, methods=['get','post'], serializer_class=TextGroupSerializer)
     def tag_text(self, request, pk=None):
         """
         API endpoint for tagging raw text with tagger group.
         """
         data = get_payload(request)
-        serializer = TextSerializer(data=data)
+        serializer = TextGroupSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -256,6 +257,8 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         # hybrid tagger instance are trained on same fields
         hybrid_tagger_field_data = hybrid_tagger_object.taggers.first().fields
 
+        print(serializer.validated_data)
+
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data, serializer.validated_data['text'], hybrid=serializer.validated_data['hybrid'])
 
@@ -265,13 +268,13 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         return Response(tags, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get','post'])
+    @action(detail=True, methods=['get','post'], serializer_class=DocGroupSerializer)
     def tag_doc(self, request, pk=None):
         """
         API endpoint for tagging JSON documents with tagger group.
         """
         data = get_payload(request)
-        serializer = DocSerializer(data=data)
+        serializer = DocGroupSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -290,7 +293,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         field_path_list = [field['field_path'] for field in hybrid_tagger_field_data]
 
         # check if fields match
-        if field_path_list != list(serializer.validated_data['doc'].keys()):
+        if set(field_path_list) != set(serializer.validated_data['doc'].keys()):
             return Response({'error': 'document fields do not match. Required keys: {}'.format(field_path_list)}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve tag candidates
