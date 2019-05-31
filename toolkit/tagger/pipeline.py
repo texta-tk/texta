@@ -4,7 +4,7 @@ from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import Normalizer
-from sklearn.svm import LinearSVC
+from sklearn.svm import SVC
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import RadiusNeighborsClassifier
@@ -167,7 +167,8 @@ def get_pipeline_builder():
     pipe_builder.add_classifier('LogisticRegressionClassifier', LogisticRegression, 'Logistic Regression', params)
 
     params = {}
-    pipe_builder.add_classifier('LinearSVC', LinearSVC, 'LinearSVC', params)
+    params = {'probability': [True], 'kernel': ['linear']}
+    pipe_builder.add_classifier('LinearSVC', SVC, 'LinearSVC', params)
 
     return pipe_builder
     

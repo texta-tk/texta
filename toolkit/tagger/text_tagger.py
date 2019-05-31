@@ -111,7 +111,7 @@ class TextTagger:
         text_map = {feature_name:[text] for feature_name in field_features}
         df_text = pd.DataFrame(text_map)
 
-        return self.model.predict(df_text)[0], self.model.decision_function(df_text)[0]
+        return self.model.predict(df_text)[0], max(self.model.predict_proba(df_text)[0])
 
 
     def tag_doc(self, doc):
@@ -132,4 +132,4 @@ class TextTagger:
                 text_map[field] = [""]
 
         df_text = pd.DataFrame(text_map)
-        return self.model.predict(df_text)[0], self.model.decision_function(df_text)[0]
+        return self.model.predict(df_text)[0], max(self.model.predict_proba(df_text)[0])

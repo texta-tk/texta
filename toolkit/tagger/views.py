@@ -120,7 +120,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
             tagger_result = tagger.tag_doc(tagger_input)
         else:
             tagger_result = tagger.tag_text(tagger_input)
-        return {'result': bool(tagger_result[0]), 'confidence': tagger_result[1]}
+        return {'result': bool(tagger_result[0]), 'probability': tagger_result[1]}
 
 
 ################
@@ -312,6 +312,6 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
             decision = bool(tagger_result[0])
             # if tag is omitted
             if decision:
-                tagger_response = {'tag': tagger.description, 'confidence': tagger_result[1], 'tagger_id': tagger_id}
+                tagger_response = {'tag': tagger.description, 'probability': tagger_result[1], 'tagger_id': tagger_id}
                 tags.append(tagger_response)
         return tags
