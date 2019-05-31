@@ -61,7 +61,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
             
             embedding = w2v_cache.get_model(embedding_object.pk)
 
-            predictions = embedding.get_similar(data['phrase'], n=10)
+            predictions = embedding.get_similar(data['text'], n=10)
             return Response(predictions, status=status.HTTP_200_OK)
         else:
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -78,7 +78,6 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
 
             phraser = phraser_cache.get_model(embedding_object.pk)
             phrased_text = phraser.phrase(data['text'])
-            print(data['text'])
             return Response(phrased_text, status=status.HTTP_200_OK)
         else:
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
