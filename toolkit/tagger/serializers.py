@@ -4,8 +4,10 @@ from django.db.models import Avg
 from toolkit.core.task.models import Task
 from toolkit.tagger.models import Tagger, TaggerGroup
 
-from toolkit.tagger.choices import TAGGER_CHOICES, TAGGER_GROUP_CHOICES, get_fact_names, \
-                                   get_field_choices, get_classifier_choices, get_vectorizer_choices
+from toolkit.tagger.choices import (get_fact_names, 
+                                    get_field_choices, get_classifier_choices, get_vectorizer_choices,
+                                    DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE)
+
 from toolkit.core.task.serializers import TaskSerializer
 
 
@@ -31,8 +33,10 @@ class TaggerSerializer(serializers.ModelSerializer):
     fields = serializers.MultipleChoiceField(choices=get_field_choices(), required=True)
     vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices())
     classifier = serializers.ChoiceField(choices=get_classifier_choices())
-    negative_multiplier = serializers.ChoiceField(choices=TAGGER_CHOICES['negative_multiplier'])
-    maximum_sample_size = serializers.ChoiceField(choices=TAGGER_CHOICES['max_sample_size'])
+    negative_multiplier = serializers.IntegerField(default=DEFAULT_NEGATIVE_MULTIPLIER,
+                                                   help_text=f'Default: {DEFAULT_NEGATIVE_MULTIPLIER}')
+    maximum_sample_size = serializers.IntegerField(default=DEFAULT_MAX_SAMPLE_SIZE,
+                                                   help_text=f'Default: {DEFAULT_MAX_SAMPLE_SIZE}')
 
     task = TaskSerializer(read_only=True)
 
@@ -42,7 +46,7 @@ class TaggerSerializer(serializers.ModelSerializer):
                   'fields', 'embedding', 'vectorizer', 'classifier', 'maximum_sample_size', 'negative_multiplier',
                   'location', 'precision', 'recall', 'f1_score', 'confusion_matrix', 'task')
 
-        read_only_fields = ('author', 'project', 'location', 'negative_multiplier',
+        read_only_fields = ('author', 'project', 'location',
                             'precision', 'recall', 'f1_score', 'confusion_matrix')
 
     def __init__(self, *args, **kwargs):
@@ -61,7 +65,7 @@ class TaggerSerializer(serializers.ModelSerializer):
 
 class TaggerGroupSerializer(serializers.HyperlinkedModelSerializer):
     description = serializers.CharField()
-    minimum_sample_size = serializers.ChoiceField(choices=TAGGER_GROUP_CHOICES['min_freq'])
+    minimum_sample_size = serializers.IntegerField(default=DEFAULT_MIN_SAMPLE_SIZE, help_text=f'Default: {DEFAULT_MIN_SAMPLE_SIZE}')
     fact_name = serializers.ChoiceField(choices=get_fact_names())
     taggers = serializers.HyperlinkedRelatedField(read_only=True, many=True, view_name='tagger-detail')
     tagger = TaggerSerializer(write_only=True, remove_fields=['description', 'query'])

@@ -25,10 +25,6 @@ def get_vectorizer_choices():
     return [(a['index'], a['label']) for a in pipeline.get_extractor_options()]
 
 
-TAGGER_GROUP_CHOICES = {"min_freq": [(50,50), (100, 100), (250, 250), (500, 500), (1000, 1000), (3000, 3000), (5000, 5000), (10000, 10000)]}
-
-
-TAGGER_CHOICES = {
-                    "negative_multiplier": [(1.0, 1.0), (0.5, 0.5), (0.75, 0.75), (1.5, 1.5), (2.0, 2.0)],
-                    "max_sample_size": [(10000, 10000), (25000, 25000), (50000, 50000), (100000, 100000)]
-                }
+DEFAULT_MAX_SAMPLE_SIZE = 10000
+DEFAULT_NEGATIVE_MULTIPLIER = 1.0
+DEFAULT_MIN_SAMPLE_SIZE = 50

@@ -1,3 +1,4 @@
+import sys
 import json
 from django.db.models import signals
 from django.dispatch import receiver
@@ -10,6 +11,7 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.embedding.models import Embedding
 from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.tagger.choices import DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE
 
 MAX_STR_LEN = 100
 
@@ -24,9 +26,9 @@ class Tagger(models.Model):
 
     vectorizer = models.IntegerField()
     classifier = models.IntegerField()
-    negative_multiplier = models.FloatField(default=1.0)
-    maximum_sample_size = models.IntegerField(default=10000)
-    score_threshold = models.FloatField(default=0.0)
+    negative_multiplier = models.FloatField(default=DEFAULT_NEGATIVE_MULTIPLIER, blank=True)
+    maximum_sample_size = models.IntegerField(default=DEFAULT_MAX_SAMPLE_SIZE, blank=True)
+    score_threshold = models.FloatField(default=0.0, blank=True)
 
     precision = models.FloatField(default=None, null=True)
     recall = models.FloatField(default=None, null=True)
@@ -46,8 +48,11 @@ class Tagger(models.Model):
             instance.task = new_task
             instance.save()
             from toolkit.tagger.tasks import train_tagger
-            train_tagger.apply_async(args=(instance.pk,))
-
+            
+            if not 'test' in sys.argv:
+                train_tagger.apply_async(args=(instance.pk,))
+            else: 
+                train_tagger(instance.pk)
 
 signals.post_save.connect(Tagger.train_tagger_model, sender=Tagger)
 
@@ -58,7 +63,7 @@ class TaggerGroup(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
 
     fact_name = models.CharField(max_length=MAX_STR_LEN)
-    minimum_sample_size = models.IntegerField(default=50)
+    minimum_sample_size = models.IntegerField(default=DEFAULT_MIN_SAMPLE_SIZE)
 
     taggers = models.ManyToManyField(Tagger, default=None)
 

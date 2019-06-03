@@ -23,7 +23,7 @@ class ElasticSearcher:
                        output=OUT_DOC,
                        callback_progress=None,
                        scroll_limit=None,
-                       ignore_ids=(), 
+                       ignore_ids=[], 
                        text_processor=None):
         """
         Output options: document (default), text (lowered & stopwords removed), sentences (text + line splitting), raw (raw elastic output)
@@ -120,13 +120,11 @@ class ElasticSearcher:
     def scroll(self):
         page = self.core.es.search(index=self.indices, body=self.query, scroll='1m', size=self.scroll_size)
         scroll_id = page['_scroll_id']
-        current_page = 1
+        current_page = 0
 
         page_size = len(page['hits']['hits'])
-        num_scrolled = page_size
-
+        num_scrolled = 0
         while page_size > 0:
-            # limit scroll output if needed
             if self.scroll_limit and num_scrolled >= self.scroll_limit:
                 break
             # process output

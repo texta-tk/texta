@@ -24,11 +24,10 @@ class TextTagger:
 
 
     def _create_data_map(self, data, field_list):
-        data_map = {}
+        data_map = {field: [] for field in field_list}
+
         for document in data:
             for field in field_list:
-                if field not in data_map:
-                    data_map[field] = []
                 if field in document:
                     data_map[field].append(document[field])
                 else:

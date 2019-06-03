@@ -42,11 +42,10 @@ def train_tagger(tagger_id):
                                        )
 
     positive_samples = list(positive_samples)
-    positive_ids = set([doc['_id'] for doc in positive_samples])
+    positive_ids = list([doc['_id'] for doc in positive_samples])
 
     show_progress.update_step('scrolling negatives')
     show_progress.update_view(0)
-
     negative_samples = ElasticSearcher(field_data=field_data,
                                        output='doc_with_id',
                                        callback_progress=show_progress,
