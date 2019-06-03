@@ -1,5 +1,6 @@
 *.pyc
 toolkit/*/migrations/*
 *.sqlite3
-toolkit/models/*
+data/models/*
+media/*
 .vscode/*
