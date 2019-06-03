@@ -2,9 +2,10 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_selection import SelectFromModel
 from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import Normalizer
-from sklearn.svm import SVC
+from sklearn.svm import SVC, LinearSVC
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import RadiusNeighborsClassifier
@@ -141,10 +142,14 @@ class PipelineBuilder:
         # Classifier pipeline + params
         steps = []
         steps.append(tuple(['union', FeatureUnion(transformer_list=transformer_list)]))
+        
+        # feature selection using linear svc
+        steps.append(('feature_selection', SelectFromModel(LinearSVC(penalty='l1', dual=False))))
+
         steps.append(self.classifier_list[self.classifier_op].get_step())
         pipe = Pipeline(steps)
         params.update(self.classifier_list[self.classifier_op].get_param())
-        
+
         return pipe, params
 
 
@@ -153,22 +158,22 @@ def get_pipeline_builder():
 
     # Feature Extraction
     params = {}
-    pipe_builder.add_extractor('HashingVectorizer', HashingVectorizer, 'Hashing Vectorizer', params)
+    pipe_builder.add_extractor('vectorizer', HashingVectorizer, 'Hashing Vectorizer', params)
 
     params = {'ngram_range': [(1, 1), (1, 2)], 'min_df': [5]}
-    pipe_builder.add_extractor('CountVectorizer', CountVectorizer, 'Count Vectorizer', params)
+    pipe_builder.add_extractor('vectorizer', CountVectorizer, 'Count Vectorizer', params)
 
     params = {'ngram_range': [(1, 1), (1, 2)], 'min_df': [5]}
-    pipe_builder.add_extractor('TfidfVectorizer', TfidfVectorizer, 'TfIdf Vectorizer', params)
+    pipe_builder.add_extractor('vectorizer', TfidfVectorizer, 'TfIdf Vectorizer', params)
 
     # Classification Models
 
     params = {}
-    pipe_builder.add_classifier('LogisticRegressionClassifier', LogisticRegression, 'Logistic Regression', params)
+    pipe_builder.add_classifier('classifier', LogisticRegression, 'Logistic Regression', params)
 
     params = {}
     params = {'probability': [True], 'kernel': ['linear']}
-    pipe_builder.add_classifier('LinearSVC', SVC, 'LinearSVC', params)
+    pipe_builder.add_classifier('classifier', SVC, 'LinearSVC', params)
 
     return pipe_builder
     

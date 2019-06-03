@@ -15,6 +15,7 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+URL_PREFIX = 'http://localhost:8000'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
@@ -26,7 +27,6 @@ SECRET_KEY = 'eqr9sjz-&baah&c%ejkaorp)a1$q63y0%*a^&fv=y$(bbe5+(b'
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
 
 # Application definition
 
@@ -139,7 +139,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
 
-LANGUAGE_CODE = 'et'
+LANGUAGE_CODE = 'en'
 
 TIME_ZONE = 'Europe/Tallinn'
 
@@ -173,10 +173,18 @@ NUM_WORKERS=4
 
 
 # create model dirs
-MODELS_DIR = os.path.join(BASE_DIR, 'toolkit', 'models')
+MODELS_DIR = os.path.join(BASE_DIR, 'data', 'models')
 MODEL_TYPES = ['embedding', 'tagger', 'extractor']
 
 for model_type in MODEL_TYPES:
     model_dir = os.path.join(MODELS_DIR, model_type)
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
+
+# create protected media dirs
+MEDIA_DIR = os.path.join(BASE_DIR, 'media')
+
+if not os.path.exists(MEDIA_DIR):
+    os.makedirs(MEDIA_DIR)
+
+MEDIA_URL = 'media/'

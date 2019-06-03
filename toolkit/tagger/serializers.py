@@ -9,6 +9,7 @@ from toolkit.tagger.choices import (get_fact_names,
                                     DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE)
 
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.settings import URL_PREFIX
 
 
 class TextSerializer(serializers.Serializer):
@@ -44,7 +45,7 @@ class TaggerSerializer(serializers.ModelSerializer):
         model = Tagger
         fields = ('url', 'id', 'description', 'project', 'author', 'query',
                   'fields', 'embedding', 'vectorizer', 'classifier', 'maximum_sample_size', 'negative_multiplier',
-                  'location', 'precision', 'recall', 'f1_score', 'confusion_matrix', 'task')
+                  'location', 'precision', 'recall', 'f1_score', 'confusion_matrix', 'plot', 'task')
 
         read_only_fields = ('author', 'project', 'location',
                             'precision', 'recall', 'f1_score', 'confusion_matrix')
@@ -61,6 +62,10 @@ class TaggerSerializer(serializers.ModelSerializer):
             # for multiple fields in a list
             for field_name in remove_fields:
                 self.fields.pop(field_name)
+    
+
+    def get_plot(self, obj):
+        return '{0}/{1}'.format(URL_PREFIX, obj.plot)
 
 
 class TaggerGroupSerializer(serializers.HyperlinkedModelSerializer):

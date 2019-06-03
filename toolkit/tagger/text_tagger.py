@@ -106,11 +106,14 @@ class TextTagger:
         union_features = [x[0] for x in self.model.named_steps['union'].transformer_list if x[0].startswith('pipe_')]
         field_features = [x[5:] for x in union_features]
         
+        # TODO: use phraser & embedding
+
         # generate text map for dataframe
         text_map = {feature_name:[text] for feature_name in field_features}
         df_text = pd.DataFrame(text_map)
 
         return self.model.predict(df_text)[0], max(self.model.predict_proba(df_text)[0])
+
 
 
     def tag_doc(self, doc):
@@ -121,6 +124,8 @@ class TextTagger:
         """
         union_features = [x[0] for x in self.model.named_steps['union'].transformer_list if x[0].startswith('pipe_')]
         field_features = [x[5:] for x in union_features]
+
+        # TODO: use phraser & embedding
         
         # generate text map for dataframe
         text_map = {}

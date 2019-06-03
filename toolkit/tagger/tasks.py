@@ -7,9 +7,25 @@ from toolkit.tools.show_progress import ShowProgress
 from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tools.text_processor import TextProcessor
 
+from django.core.files.base import ContentFile
 from celery.decorators import task
+import matplotlib.pyplot as plt
+from io import BytesIO
+import secrets
 import json
 import os
+
+
+def create_tagger_plot(model):
+    feature_coefs = sorted(model.named_steps['classifier'].coef_[0])
+
+    plt.plot(feature_coefs)
+    plt.ylabel('Coefficient')
+    plt.xlabel('Features')
+
+    f = BytesIO()
+    plt.savefig(f)
+    return ContentFile(f.getvalue())
 
 
 @task(name="train_tagger")
@@ -32,6 +48,8 @@ def train_tagger(tagger_id):
         text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
     else:
         text_processor = TextProcessor(remove_stop_words=True)
+    
+    # TODO: use embedding to group together features
 
     positive_samples = ElasticSearcher(query=json.loads(tagger_object.query), 
                                        field_data=field_data,
@@ -74,6 +92,7 @@ def train_tagger(tagger_id):
     tagger_object.recall = float(tagger.statistics['recall'])
     tagger_object.f1_score = float(tagger.statistics['f1_score'])
     tagger_object.confusion_matrix = json.dumps(tagger.statistics['confusion_matrix'])
+    tagger_object.plot.save('{}.png'.format(secrets.token_hex(15)), create_tagger_plot(tagger.model))
     tagger_object.save()
 
     # declare the job done
