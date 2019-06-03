@@ -40,6 +40,7 @@ class TaggerSerializer(serializers.ModelSerializer):
                                                    help_text=f'Default: {DEFAULT_MAX_SAMPLE_SIZE}')
 
     task = TaskSerializer(read_only=True)
+    plot = serializers.SerializerMethodField()
 
     class Meta:
         model = Tagger
