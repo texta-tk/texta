@@ -11,3 +11,4 @@ scikit-learn
 django-rest-auth[with_social]
 psutil
 matplotlib
+termcolor
