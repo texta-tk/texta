@@ -66,7 +66,10 @@ class TaggerSerializer(serializers.ModelSerializer):
     
 
     def get_plot(self, obj):
-        return '{0}/{1}'.format(URL_PREFIX, obj.plot)
+        if obj.plot:
+            return '{0}/{1}'.format(URL_PREFIX, obj.plot)
+        else:
+            return None
 
 
 class TaggerGroupSerializer(serializers.HyperlinkedModelSerializer):

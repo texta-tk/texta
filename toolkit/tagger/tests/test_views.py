@@ -1,15 +1,15 @@
+import json
 from django.db.models import signals
 
 from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE
 from toolkit.core.project.models import Project
 from toolkit.tagger.models import Tagger
 from toolkit.core.task.models import Task
-from toolkit.utils.utils_for_tests import create_test_user
-# Third party Factory Boy for testing
-# import factory
+from toolkit.utils.utils_for_tests import create_test_user, print_output
 
 class TaggerViewTests(APITestCase):
     def setUp(self):
@@ -18,21 +18,23 @@ class TaggerViewTests(APITestCase):
         self.project = Project.objects.create(
             title='testproj',
             owner=self.user,
-            indices="delfi_comments_for_tests"
+            indices=TEST_INDEX
         )
 
         self.user.profile.activate_project(self.project)
         self.client = APIClient()
         self.client.login(username='owner', password='pw')
 
-        # self.test_tagger = Tagger.objects.create(
-        #     description='TaggerForTesting',
-        #     project=self.project,
-        #     author=self.user,
-        #     vectorizer = 0,
-        #     classifier = 0,
-        #     # fields='kysimus_ja_vastus',
-        # )
+        self.test_tagger = Tagger.objects.create(
+            description='TaggerForTesting',
+            project=self.project,
+            author=self.user,
+            vectorizer=0,
+            classifier=0,
+            fields=TEST_FIELD_CHOICE,
+            maximum_sample_size=500,
+            negative_multiplier=1.0,
+        )
 
         self.url = f'/taggers/'
     
@@ -43,16 +45,15 @@ class TaggerViewTests(APITestCase):
         payload = {
             "description": "TestTagger",
             "query": "",
-            "fields": "index=delfi_comments_for_tests&mapping=data&field_path=comment_content_lemmas&field_type=text",
-            #"embedding": None,
+            "fields": TEST_FIELD_CHOICE,
             "vectorizer": 0,
             "classifier": 0,
             "maximum_sample_size": 500,
-            "negative_multiplier": "1.0",
+            "negative_multiplier": 1.0,
         }
         
         response = self.client.post(self.url, payload)
-        print(response.data)
+        print_output('test_create_tagger_training_and_task_signal:response.data', response.data)
         # Check if Tagger gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created_tagger = Tagger.objects.get(id=response.data['id'])
@@ -62,11 +63,27 @@ class TaggerViewTests(APITestCase):
         self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
 
 
-    # def test_tag_text(self):
-    #     '''Tests the endpoint for the tag_text action'''
-    #     payload = { "text": "This is some test text for the Tagger Test" }
-    #     tag_text_url = f'{self.url}{self.test_tagger.id}/tag_text/'
-    #     response = self.client.post(tag_text_url, payload)
-    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
-    #     # Check if response data is not empty, but a result instead
-    #     self.assertTrue(response.data)
+    def test_tag_text(self):
+        '''Tests the endpoint for the tag_text action'''
+        payload = { "text": "This is some test text for the Tagger Test" }
+        tag_text_url = f'{self.url}{self.test_tagger.id}/tag_text/'
+        response = self.client.post(tag_text_url, payload)
+        print_output('test_tag_text:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response data is not empty, but a result instead
+        self.assertTrue(response.data)
+        self.assertTrue('result' in response.data)
+        self.assertTrue('probability' in response.data)
+
+
+    def test_tag_doc(self):
+        '''Tests the endpoint for the tag_doc action'''
+        payload = { "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" })}
+        tag_text_url = f'{self.url}{self.test_tagger.id}/tag_doc/'
+        response = self.client.post(tag_text_url, payload)
+        print_output('test_tag_doc:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response data is not empty, but a result instead
+        self.assertTrue(response.data)
+        self.assertTrue('result' in response.data)
+        self.assertTrue('probability' in response.data)

@@ -9,6 +9,9 @@ from toolkit.tools.text_processor import TextProcessor
 
 from django.core.files.base import ContentFile
 from celery.decorators import task
+import matplotlib
+# For non-GUI rendering
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from io import BytesIO
 import secrets
