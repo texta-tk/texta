@@ -19,12 +19,28 @@ import json
 import os
 
 
-def create_tagger_plot(model):
-    feature_coefs = sorted(model.named_steps['classifier'].coef_[0])
+def create_tagger_plot(model, statistics):
 
+    plt.figure(figsize=(8,4))
+
+    # calculate roc curve
+    plt.subplot(1, 2, 1)
+    lw = 2
+    plt.plot(statistics['false_positive_rate'], statistics['true_positive_rate'], color='darkorange',
+                lw=lw, label='ROC curve (area = %0.2f)' % statistics['area_under_curve'])
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver operating characteristic')
+    plt.legend(loc="lower right")
+
+    # calculate feature coefficients
+    feature_coefs = sorted(model.named_steps['classifier'].coef_[0])
+    plt.subplot(1, 2, 2)
     plt.plot(feature_coefs)
     plt.ylabel('Coefficient')
     plt.xlabel('Features')
+    plt.title('Feature coefficient distribution')
 
     f = BytesIO()
     plt.savefig(f)
@@ -95,8 +111,9 @@ def train_tagger(tagger_id):
     tagger_object.recall = float(tagger.statistics['recall'])
     tagger_object.f1_score = float(tagger.statistics['f1_score'])
     tagger_object.confusion_matrix = json.dumps(tagger.statistics['confusion_matrix'])
-    tagger_object.plot.save('{}.png'.format(secrets.token_hex(15)), create_tagger_plot(tagger.model))
+    tagger_object.plot.save('{}.png'.format(secrets.token_hex(15)), create_tagger_plot(tagger.model, tagger.statistics))
     tagger_object.save()
+
 
     # declare the job done
     show_progress.update_step('')

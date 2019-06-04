@@ -2,9 +2,7 @@ from toolkit.tagger.pipeline import get_pipeline_builder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.externals import joblib
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import precision_score
-from sklearn.metrics import recall_score
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, roc_curve, auc
 from sklearn.model_selection import GridSearchCV
 import pandas as pd
 import json
@@ -72,12 +70,19 @@ class TextTagger:
         precision = precision_score(y_test, y_pred)
         recall = recall_score(y_test, y_pred)
 
+        y_scores = model.decision_function(df_test)
+        fpr, tpr, _ = roc_curve(y_test, y_scores)
+        roc_auc = auc(fpr, tpr)     
+
         statistics = {
-            'f1_score':         round(f1, 3),
-            'confusion_matrix': confusion.tolist(),
-            'precision':        round(precision, 3),
-            'recall':           round(recall, 3)
-        }
+            'f1_score':             f1,
+            'confusion_matrix':     confusion.tolist(),
+            'precision':            precision,
+            'recall':               recall,
+            'true_positive_rate':   tpr,
+            'false_positive_rate':  fpr,
+            'area_under_curve':     roc_auc
+        }       
 
         self.model = model
         self.statistics = statistics
