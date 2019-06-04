@@ -17,7 +17,7 @@ file_name = args.f
 host = args.es
 index = args.i
 
-es = Elasticsearch()
+es = Elasticsearch(host)
 
 def import_docs():
     try:
