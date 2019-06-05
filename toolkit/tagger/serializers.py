@@ -46,10 +46,10 @@ class TaggerSerializer(serializers.ModelSerializer):
         model = Tagger
         fields = ('url', 'id', 'description', 'project', 'author', 'query',
                   'fields', 'embedding', 'vectorizer', 'classifier', 'maximum_sample_size', 'negative_multiplier',
-                  'location', 'precision', 'recall', 'f1_score', 'confusion_matrix', 'plot', 'task')
+                  'location', 'precision', 'recall', 'f1_score', 'plot', 'task')
 
         read_only_fields = ('author', 'project', 'location',
-                            'precision', 'recall', 'f1_score', 'confusion_matrix', 'plot')
+                            'precision', 'recall', 'f1_score', 'plot')
 
     def __init__(self, *args, **kwargs):
         '''

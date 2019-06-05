@@ -76,7 +76,7 @@ class TextTagger:
 
         statistics = {
             'f1_score':             f1,
-            'confusion_matrix':     confusion.tolist(),
+            'confusion_matrix':     confusion,
             'precision':            precision,
             'recall':               recall,
             'true_positive_rate':   tpr,
