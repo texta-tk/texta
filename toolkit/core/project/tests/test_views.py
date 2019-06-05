@@ -5,21 +5,19 @@ from toolkit.core.project.models import Project
 from toolkit.utils.utils_for_tests import create_test_user
 
 class ProjectViewTests(APITestCase):
-
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         # Owner of the project
-        self.owner = create_test_user('owner', 'my@email.com', 'pw')
+        cls.owner = create_test_user('owner', 'my@email.com', 'pw')
         # User that has been included in the project
-        self.included_user = create_test_user('included', 'my2@email.com', 'pw')
+        cls.included_user = create_test_user('included', 'my2@email.com', 'pw')
         # Random user, that doesn't have permissions to the project
-        self.random_user = create_test_user('random', 'my3@email.com', 'pw')
+        cls.random_user = create_test_user('random', 'my3@email.com', 'pw')
 
-        self.project = Project.objects.create(title='testproj', owner=self.owner)
-        self.project.users.set([self.included_user])
+        cls.project = Project.objects.create(title='testproj', owner=cls.owner)
+        cls.project.users.set([cls.included_user])
 
-        self.client = APIClient()
-
-        self.activate_project_url = f'/projects/{self.project.pk}/activate_project/'
+        cls.activate_project_url = f'/projects/{cls.project.pk}/activate_project/'
 
 
     def test_owner_activate_project(self):
@@ -39,6 +37,7 @@ class ProjectViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if the project includes the activated user
         self.assertTrue(self.included_user.profile in self.project.activated_by.all())
+
 
     def test_random_activate_project(self):
         '''Test project activation'''

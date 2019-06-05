@@ -1,4 +1,5 @@
 import json
+import os
 from django.db.models import signals
 
 from rest_framework.test import APITestCase
@@ -9,36 +10,42 @@ from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE
 from toolkit.core.project.models import Project
 from toolkit.tagger.models import Tagger
 from toolkit.core.task.models import Task
-from toolkit.utils.utils_for_tests import create_test_user, print_output
+from toolkit.utils.utils_for_tests import create_test_user, print_output, remove_file
 
 class TaggerViewTests(APITestCase):
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         # Owner of the project
-        self.user = create_test_user('owner', 'my@email.com', 'pw')
-        self.project = Project.objects.create(
+        cls.url = f'/taggers/'
+        cls.user = create_test_user('owner', 'my@email.com', 'pw')
+
+        cls.project = Project.objects.create(
             title='testproj',
-            owner=self.user,
+            owner=cls.user,
             indices=TEST_INDEX
         )
 
-        self.user.profile.activate_project(self.project)
-        self.client = APIClient()
-        self.client.login(username='owner', password='pw')
+        cls.user.profile.activate_project(cls.project)
 
-        self.test_tagger = Tagger.objects.create(
+        cls.test_tagger = Tagger.objects.create(
             description='TaggerForTesting',
-            project=self.project,
-            author=self.user,
+            project=cls.project,
+            author=cls.user,
             vectorizer=0,
             classifier=0,
             fields=TEST_FIELD_CHOICE,
             maximum_sample_size=500,
             negative_multiplier=1.0,
         )
+        # Get the object, since .create does not update on changes
+        cls.test_tagger = Tagger.objects.get(id=cls.test_tagger.id)
 
-        self.url = f'/taggers/'
+
+    def setUp(self):
+        self.client.login(username='owner', password='pw')
     
-    # @factory.django.mute_signals(signals.post_save)
+
+
     def test_create_tagger_training_and_task_signal(self):
         '''Tests the endpoint for a new Tagger, and if a new Task gets created via the signal'''
         # TODO Move the testing configuration, like fields/index to a separate file, test_settings or something
@@ -51,12 +58,15 @@ class TaggerViewTests(APITestCase):
             "maximum_sample_size": 500,
             "negative_multiplier": 1.0,
         }
-        
+
         response = self.client.post(self.url, payload)
         print_output('test_create_tagger_training_and_task_signal:response.data', response.data)
         # Check if Tagger gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created_tagger = Tagger.objects.get(id=response.data['id'])
+        # Remove tagger files after test is done
+        self.addCleanup(remove_file, json.loads(created_tagger.location)['tagger'])
+        self.addCleanup(remove_file, created_tagger.plot.path)
         # Check if Task gets created via a signal
         self.assertTrue(created_tagger.task is not None)
         # Check the Tagger gets trained and completed
@@ -87,3 +97,12 @@ class TaggerViewTests(APITestCase):
         self.assertTrue(response.data)
         self.assertTrue('result' in response.data)
         self.assertTrue('probability' in response.data)
+
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls.test_tagger.location:
+            remove_file(json.loads(Tagger.objects.get(id=cls.test_tagger.id).location)['tagger'])
+
+        if cls.test_tagger.plot.file:
+            remove_file(cls.test_tagger.plot.path)
