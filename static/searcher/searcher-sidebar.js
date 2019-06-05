@@ -722,6 +722,10 @@ function clusterQuery() {
             if (request.status === 400 && request.statusText === 'field') {
                 swalCustomTypeDisplay(SwalType.ERROR, 'Please select a field first')
             }
+
+            if (request.status === 400 && request.statusText === 'model') {
+                swalCustomTypeDisplay(SwalType.ERROR, 'Please select a model first')
+            }
         }
     }
 

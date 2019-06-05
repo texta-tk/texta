@@ -375,8 +375,12 @@ def mlt_query(request):
 @login_required
 def cluster_query(request):
     params = request.POST
-    if ('cluster_field' not in params):
+    if 'cluster_field' not in params:
         return HttpResponse(status=400, reason='field')
+
+    if 'model' not in request.session:
+        return HttpResponse(status=400, reason='model')
+
     ds = Datasets().activate_datasets(request.session)
     es_m = ds.build_manager(ES_Manager)
     es_m.build(params)
