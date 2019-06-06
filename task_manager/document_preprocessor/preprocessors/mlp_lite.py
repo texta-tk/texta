@@ -1,18 +1,20 @@
-from dateutil import parser
-from time import sleep
-import requests
-import logging
 import json
 
 from utils.mlp_task_adapter import MLPTaskAdapter
+
 
 class MLPLitePreprocessor(object):
     """
     Cleans texts for classification. Lemmatizes text.
     """
 
+    def _reload_env(self):
+        import dotenv
+        dotenv.load_dotenv(".env")
+
     def __init__(self, mlp_url=None):
         self.mlp_url = mlp_url
+        self._reload_env()
 
     @staticmethod
     def _process_stats(stats):
@@ -34,7 +36,7 @@ class MLPLitePreprocessor(object):
                     processed_stats[stat_key] = str(len(str(stat_val)))
                 else:
                     processed_stats[stat_key] = stat_val
-        
+
         return processed_stats
 
     def transform(self, documents, **kwargs):
@@ -69,9 +71,9 @@ class MLPLitePreprocessor(object):
             analyzation_data, errors = MLPTaskAdapter(self.mlp_url, mlp_type='mlp_lite').process(data)
 
             for analyzation_idx, analyzation_datum in enumerate(analyzation_data):
-                documents[analyzation_idx][input_feature+'_mlp-lite'] = {}
-                documents[analyzation_idx][input_feature+'_mlp-lite']['text'] = analyzation_datum['text']
+                documents[analyzation_idx][input_feature + '_mlp-lite'] = {}
+                documents[analyzation_idx][input_feature + '_mlp-lite']['text'] = analyzation_datum['text']
                 if output_type == 'full':
-                    documents[analyzation_idx][input_feature+'_mlp-lite']['stats'] = self._process_stats(analyzation_datum['stats'])
+                    documents[analyzation_idx][input_feature + '_mlp-lite']['stats'] = self._process_stats(analyzation_datum['stats'])
 
         return {'documents': documents, 'meta': {}, 'erros': errors}

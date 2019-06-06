@@ -118,6 +118,7 @@ class PreprocessorWorker(BaseWorker):
                 if documents:
                     if FACT_FIELD not in documents[0]:
                         self.es_m.update_mapping_structure(FACT_FIELD, FACT_PROPERTIES)
+
                 # Apply all preprocessors
                 for preprocessor_code in parameter_dict['preprocessors']:
                     preprocessor = PREPROCESSOR_INSTANCES[preprocessor_code]
