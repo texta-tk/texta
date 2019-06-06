@@ -13,6 +13,10 @@ class MlpPreprocessor(object):
     """Preprocessor implementation for running TEXTA Multilingual Processor (MLP) on the selected documents.
     """
 
+    def _reload_env(self):
+        import dotenv
+        dotenv.load_dotenv(".env")
+
     def __init__(self, mlp_url=None, enabled_features=['text', 'lang', 'texta_facts']):
         """
         :param mlp_url: full URL to the MLP instance. Must be accessible.
@@ -22,6 +26,7 @@ class MlpPreprocessor(object):
         """
         self._mlp_url = mlp_url
         self._enabled_features = set(enabled_features)
+        self._reload_env()
 
     def transform(self, documents, **kwargs):
         """Takes input documents and enhances them with MLP output.
