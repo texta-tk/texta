@@ -216,65 +216,50 @@ function saveAsFact(method, match_type, case_sens, fact_name, fact_value, fact_f
 
 async function saveOptionsSwal(fact_name, fact_value, fact_field, doc_id) {
     if (validateWithFeedback(fact_name, fact_value, fact_field, doc_id)) {
-        (async function backAndForth() {
-            const steps = ['1', '2', '3'];
-            const question = [`SAVING ${fact_name}: ${fact_value} AS FACT`, 'Select matching method', 'Case sensitive?'];
-            const originalValues = [
-                {
-                    'select_only': 'Only the selected text in this document',
-                    'all_in_doc': 'All matches in this document',
-                    'all_in_dataset': 'All matches in dataset'
-                },
-                {
-                    'phrase': 'Match as a separate word',
-                    'phrase_prefix': 'Match as phrase prefix',
-                    'string': 'Match anywhere in text'
-                },
-                {
-                    'True': 'Case sensitive',
-                    'False': 'Case insensitive'
-                }];
-            values = [...originalValues];
-            let currentStep;
-            swal.setDefaults({
-                confirmButtonText: 'Forward',
-                cancelButtonText: 'Back',
-                progressSteps: steps,
-                input: 'radio'
+        (async function getFormValues() {
+            const { value: formValues } = await swal({
+                title: `SAVING ${fact_name}: ${fact_value} AS FACT`,
+                html:
+                    '<form id="saveFactForm">' +
+                    '<input type="radio" value="select_only" name="method"> Only the selected text in this document <br>' +
+                    '<input type="radio" value="all_in_doc" name="method"> All matches in this document <br>' +
+                    '<input type="radio" value="all_in_dataset" name="method"  checked="checked"> All matches in dataset <br>' +
+                    '<h5> Select matching method </h5>' +
+                    '<input type="radio" value="phrase" name="match_type"> Match as a separate word <br>' +
+                    '<input type="radio" value="phrase_prefix" name="match_type"> Match as phrase prefix <br>' +
+                    '<input type="radio" value="string" name="match_type"  checked="checked"> Match anywhere in text <br>' +
+                    '<h5> Case sensitive? </h5>' +
+                    '<input type="radio" value="True" name="case_sens"> Case sensitive <br>' +
+                    '<input type="radio" value="False" name="case_sens"  checked="checked"> Case insensitive <br>' +
+                    '</form>',
+                focusConfirm: true,
+                preConfirm: () => {
+                    return $('#saveFactForm').serializeArray()
+                }
             })
 
-            for (currentStep = 0; currentStep < steps.length;) {
-                const result = await swal({
-                    title: question[currentStep],
-                    inputOptions: originalValues[currentStep],
-                    showCancelButton: currentStep > 0,
-                    currentProgressStep: currentStep,
-                    showCloseButton: true
-                });
+            if (formValues) {
+                formValues.forEach(val => {
+                    switch (val.name) {
+                        case 'method':
+                            method = val.value
+                            break;
+                        case 'match_type':
+                            match_type = val.value
+                            break;
+                        case 'case_sens':
+                            case_sens = val.value
+                            break;
 
-                if (result.value) {
-                    values[currentStep] = result.value
-                    currentStep++;
-                    if (currentStep == steps.length) {
-                        swal.resetDefaults();
-                        method = values[0]
-                        match_type = values[1]
-                        case_sens = values[2]
-                        if (method && match_type && case_sens) {
-                            saveAsFact(method, match_type, case_sens, fact_name, fact_value, fact_field, doc_id);
-                        }
-                        else {
-                            swal('Warning!', 'Method or match type not selected!', 'warning');
-                        }
-                        break
+                        default:
+                            break;
                     }
-                } else if (result.dismiss == 'cancel') {
-                    currentStep--;
+                });
+                if (method && match_type && case_sens) {
+                    saveAsFact(method, match_type, case_sens, fact_name, fact_value, fact_field, doc_id);
                 }
-                else if (result.dismiss == 'overlay' || result.dismiss == 'close') {
-                    swal.resetDefaults();
-                    swal.close();
-                    break;
+                else {
+                    swal('Warning!', 'Method or match type not selected!', 'warning');
                 }
             }
         })()
@@ -301,39 +286,39 @@ function validateWithFeedback(fact_name, fact_value, fact_field, doc_id) {
     return true;
 }
 
-async function deleteFactSwal(fact_name, fact_value, doc_id) { 
+async function deleteFactSwal(fact_name, fact_value, doc_id) {
     const inputOptions = new Promise((resolve) => {
-          resolve({
+        resolve({
             'this_doc': `Delete just in this document (${doc_id})`,
             'all': 'Delete all occurances of this fact in the dataset',
-          })
-      })
-      
-      const {value: method} = await swal({
+        })
+    })
+
+    const { value: method } = await swal({
         title: `Delete fact ${fact_name}:${fact_value}`,
         input: 'radio',
         inputOptions: inputOptions,
         inputValidator: (value) => {
-          return !value && 'You need to choose something!'
+            return !value && 'You need to choose something!'
         }
-      })
-      
-      if (method) {
-          if (method == 'this_doc') {
+    })
+
+    if (method) {
+        if (method == 'this_doc') {
             deleteFactFromDoc(fact_name, fact_value, doc_id)
-          }
-          else if (method == 'all') {
-            
-            deleteFactArray([{[fact_name]: fact_value}], source='aggs')
-          }
-      }
+        }
+        else if (method == 'all') {
+
+            deleteFactArray([{ [fact_name]: fact_value }], source = 'aggs')
+        }
+    }
 }
 
 
 function toggleTextSelection(checkbox) {
-    if($(checkbox).is(":checked")){
+    if ($(checkbox).is(":checked")) {
         SELECT_FACT_MENU_ENABLED = true;
-    }else{
+    } else {
         SELECT_FACT_MENU_ENABLED = false;
-      }
+    }
 }
