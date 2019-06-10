@@ -130,15 +130,3 @@ class MLPTaskAdapter(object):
             sleep(3)  # Wait a small amount of time until checking wheter the task has finished.
 
         return self.analyzation_data, self.errors
-
-
-if __name__ == '__main__':
-    data_for_processing = [
-        "Hello there", "general kenobi", "are you interested", "in some free real estate?",
-        "Hello there", "general kenobi", "are you interested", "in some free real estate?",
-        "Hello there", "general kenobi", "are you interested", "in some free real estate?",
-        "Hello there", "general kenobi", "are you interested", "in some free real estate?"
-    ]
-
-    mlp = MLPTaskAdapter("http://localhost:12000")
-    result_data, errors = mlp.process({"texts": json.dumps(data_for_processing)})
