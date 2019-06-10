@@ -82,7 +82,7 @@ function createSelectionProps() {
             // get doc_id by taking datatables row data last column(_es_id) value
             var doc_id = $(examplesTable.row(parent.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
             var btn = temp.find('.textPopoverSaveBtn');
-            btn.attr('onclick', `saveFactFromSelect("${fact_value}", "${fact_path}", "${doc_id}")`);
+            btn.attr('onclick', `saveFactFromSelect("${fact_value.replace(/\r?\n|\r/g, '')}", "${fact_path}", "${doc_id}")`);
 
             // Update span tippy content
             temp.find('.textValue').html(fact_value);
@@ -120,7 +120,7 @@ function createSelectionProps() {
                 // id of the document where fact was derived from, and the document where it will be marked in
                 var doc_id = $(examplesTable.row(this.parentElement).data()[examplesTable.columns()[0].length - 1]).text()
                 var btn = select_temp.find('.textPopoverSaveBtn');
-                btn.attr('onclick', `saveFactFromSelect("${fact_value}", "${fact_path}", "${doc_id}")`);
+                btn.attr('onclick', `saveFactFromSelect("${fact_value.replace(/\r?\n|\r/g, '')}", "${fact_path}", "${doc_id}")`);
 
                 // Update span tippy content
                 textSpan._tippy.setContent(select_temp.prop('outerHTML'))
