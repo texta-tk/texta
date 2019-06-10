@@ -54,8 +54,10 @@ class MlpPreprocessor(object):
 
             for analyzation_idx, analyzation_datum in enumerate(analyzation_data):
                 analyzation_datum = analyzation_datum[0]
+
                 documents[analyzation_idx][input_feature+'_mlp'] = analyzation_datum['text']
                 documents[analyzation_idx][input_feature+'_mlp']['lang'] = analyzation_datum['text']['lang']
+
                 if 'texta_facts' not in documents[analyzation_idx]:
                     documents[analyzation_idx]['texta_facts'] = []
                 documents[analyzation_idx]['texta_facts'].extend(analyzation_datum['texta_facts'])
