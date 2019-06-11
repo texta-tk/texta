@@ -4,16 +4,19 @@ channels:
     - defaults
     - bioconda
 dependencies:
-    - python=3.5
+    - python=3.6
     - numpy
     - cython
     - scipy
     - gensim
-    - django=2.1.5
+    - django>2
     - sympy
     - lxml
     - beautifulsoup4
+    - jupyter
+    - psutil
     - mysqlclient
+    - regex
     - psycopg2
     - graphviz
     - keras
@@ -28,9 +31,12 @@ dependencies:
         - requests
         - pathlib
         - dateutils
-        - elasticsearch
-        - elasticsearch_dsl
+        - elasticsearch==6.3.1
+        - elasticsearch_dsl==6.3.1
         - graypy
+        - python-crfsuite
+        - djangorestframework
+        - django-picklefield
         - tensorflow
         - pydot
         - python-json-logger
