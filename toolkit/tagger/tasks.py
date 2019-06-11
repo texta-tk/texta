@@ -21,7 +21,7 @@ def train_tagger(tagger_id):
     tagger_object = Tagger.objects.get(pk=tagger_id)
     task_object = tagger_object.task
 
-    show_progress = ShowProgress(task_object.id, multiplier=1)
+    show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('scrolling positives')
     show_progress.update_view(0)
 

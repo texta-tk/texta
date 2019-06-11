@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from django.db.models import Avg
 
-from toolkit.core.task.models import Task
 from toolkit.tagger.models import Tagger, TaggerGroup
 
 from toolkit.tagger.choices import (get_fact_names, 

@@ -3,6 +3,7 @@ from toolkit.core.project.models import Project
 from toolkit.tagger.models import Tagger
 
 class TaggerEmbeddingsPermissions(permissions.BasePermission):
+    message = 'Insufficient permissions for this object.'
     # TODO appears to be a problem with rights for 'user'
 
     def has_object_permission(self, request, view, obj):

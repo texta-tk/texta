@@ -18,7 +18,7 @@ def train_embedding(embedding_id):
     # retrieve embedding & task objects
     embedding_object = Embedding.objects.get(pk=embedding_id)
     task_object = embedding_object.task
-    show_progress = ShowProgress(task_object.id, multiplier=1)
+    show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('phraser')
     show_progress.update_view(0)
 
@@ -27,7 +27,6 @@ def train_embedding(embedding_id):
     # create itrerator for phraser
     text_processor = TextProcessor(sentences=True, remove_stop_words=True, tokenize=True)
     sentences = ElasticSearcher(query=json.loads(embedding_object.query), field_data=field_data, output='text', callback_progress=show_progress, text_processor=text_processor)
-
     # build phrase model
     phraser = Phraser(embedding_id)
     phraser.build(sentences)
@@ -37,7 +36,7 @@ def train_embedding(embedding_id):
     total_passes = num_passes + 1
 
     # update progress
-    show_progress = ShowProgress(task_object.id, multiplier=total_passes)
+    show_progress = ShowProgress(task_object, multiplier=total_passes)
     show_progress.update_step('word2vec')
     show_progress.update_view(0)
 
