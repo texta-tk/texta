@@ -74,7 +74,7 @@ class MLPTaskAdapter(object):
         Get the state of the celery task using MLP's status endpoint.
         This will be good for reporting any retries, errors and successful tasks.
         """
-        url = self.task_status_url.format(self.mlp_url, task_id)
+        url = self.task_status_url.format(self.mlp_url.strip('/'), task_id)
         response = requests.get(url).json()
         return response
 
