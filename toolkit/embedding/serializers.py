@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from toolkit.embedding.models import Embedding, Task
-from toolkit.embedding.choices import get_field_choices, EMBEDDING_CHOICES, DEFAULT_NUM_DIMENSIONS, DEFAULT_MAX_VOCAB, DEFAULT_MIN_FREQ, DEFAULT_OUTPUT_SIZE
+from toolkit.embedding.choices import get_field_choices, DEFAULT_NUM_DIMENSIONS, DEFAULT_MAX_VOCAB, DEFAULT_MIN_FREQ, DEFAULT_OUTPUT_SIZE
 from toolkit.core.task.serializers import TaskSerializer
 
 
@@ -23,7 +23,7 @@ class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
 
 class EmbeddingPrecictionSerializer(serializers.Serializer):
     text = serializers.CharField()
-    output_size = serializers.ChoiceField(default=DEFAULT_OUTPUT_SIZE,
+    output_size = serializers.IntegerField(default=DEFAULT_OUTPUT_SIZE,
                                     help_text=f'Default: {DEFAULT_OUTPUT_SIZE}')
 
 class PhrasePrecictionSerializer(serializers.Serializer):
