@@ -43,7 +43,6 @@ class TaggerViewTests(APITestCase):
 
     def setUp(self):
         self.client.login(username='taggerOwner', password='pw')
-    
 
 
     def test_create_tagger_training_and_task_signal(self):

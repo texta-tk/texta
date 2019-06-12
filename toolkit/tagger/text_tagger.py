@@ -59,7 +59,7 @@ class TextTagger:
         df_test = pd.DataFrame(X_test)
 
         # Use Train data to parameter selection in a Grid Search
-        gs_clf = GridSearchCV(c_pipe, c_params, n_jobs=self.workers, cv=5, verbose=1)
+        gs_clf = GridSearchCV(c_pipe, c_params, n_jobs=self.workers, cv=5, verbose=False)
         gs_clf = gs_clf.fit(df_train, y_train)
         model = gs_clf.best_estimator_
         # Use best model and test data for final evaluation

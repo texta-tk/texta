@@ -36,6 +36,7 @@ class EmbeddingViewTests(APITestCase):
             max_vocab=10000,
             num_dimensions=100,
         )
+
         # Get the object, since .create does not update on changes
         cls.test_embedding = Embedding.objects.get(id=cls.test_embedding.id)
 
@@ -43,7 +44,6 @@ class EmbeddingViewTests(APITestCase):
     def setUp(self):
         self.client.login(username='embeddingOwner', password='pw')
     
-
 
     def test_create_embedding_training_and_task_signal(self):
         '''Tests the endpoint for a new Embedding, and if a new Task gets created via the signal'''
@@ -70,30 +70,27 @@ class EmbeddingViewTests(APITestCase):
         self.assertEqual(created_embedding.task.status, Task.STATUS_COMPLETED)
 
 
-    # def test_tag_text(self):
-    #     '''Tests the endpoint for the tag_text action'''
-    #     payload = { "text": "This is some test text for the Tagger Test" }
-    #     tag_text_url = f'{self.url}{self.test_tagger.id}/tag_text/'
-    #     response = self.client.post(tag_text_url, payload)
-    #     print_output('test_tag_text:response.data', response.data)
-    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
-    #     # Check if response data is not empty, but a result instead
-    #     self.assertTrue(response.data)
-    #     self.assertTrue('result' in response.data)
-    #     self.assertTrue('probability' in response.data)
+    def test_predict(self):
+        '''Tests the endpoint for the predict action'''
+        # Send only "text" in payload, because "output_size" should be 10 by default
+        payload = { "text": "eesti" }
+        predict_url = f'{self.url}{self.test_embedding.id}/predict/'
+        response = self.client.post(predict_url, payload)
+        print_output('predict:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response data is not empty, but a result instead
+        self.assertTrue(response.data)
 
 
-    # def test_tag_doc(self):
-    #     '''Tests the endpoint for the tag_doc action'''
-    #     payload = { "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" })}
-    #     tag_text_url = f'{self.url}{self.test_tagger.id}/tag_doc/'
-    #     response = self.client.post(tag_text_url, payload)
-    #     print_output('test_tag_doc:response.data', response.data)
-    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
-    #     # Check if response data is not empty, but a result instead
-    #     self.assertTrue(response.data)
-    #     self.assertTrue('result' in response.data)
-    #     self.assertTrue('probability' in response.data)
+    def test_phrase(self):
+        '''Tests the endpoint for the predict action'''
+        payload = { "text": "See on mingi eesti keelne tekst testimiseks" }
+        predict_url = f'{self.url}{self.test_embedding.id}/phrase/'
+        response = self.client.post(predict_url, payload)
+        print_output('predict:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response data is not empty, but a result instead
+        self.assertTrue(response.data)
 
 
     @classmethod

@@ -10,11 +10,9 @@ class TaggerEmbeddingsPermissions(permissions.BasePermission):
         # always allow (GET, HEAD or OPTIONS)
         if request.method in permissions.SAFE_METHODS:
             return True
+
         owned_projects = Project.objects.filter(owner=request.user.id)
-        owned = []
-        for item in owned_projects:
-            owned.append(item.id)
-        if obj.id in owned or request.user.is_superuser:
+        if obj.project in owned_projects or request.user.is_superuser:
             return True
         else:
             return False
