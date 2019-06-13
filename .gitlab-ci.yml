@@ -25,9 +25,9 @@ Test:
   script:
   - python manage.py test
 
-Build:
-  stage: build
-  tags:
-  - ci-test
-  script:
-  - docker build -t docker.texta.ee/texta/texta-rest:latest .
+#Build:
+#  stage: build
+#  tags:
+#  - ci-test
+#  script:
+#  - docker build -t docker.texta.ee/texta/texta-rest:latest .
