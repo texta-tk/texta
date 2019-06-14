@@ -5,8 +5,14 @@
             <tr>
                 <th>ID</th>
                 <th>
-                    <i role='button' onclick=javascript:deleteDocuments('management') title="Delete selected"
-                       class="glyphicon glyphicon glyphicon glyphicon-trash"></i>
+                    <div class="dropdown">
+                    <i role='button'   id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Delete selected"
+                       class="glyphicon glyphicon glyphicon glyphicon-trash  dropdown-toggle"></i>
+                    <ul class="dropdown-menu padding-default" aria-labelledby="dropdownMenu1">
+                        <li><button class="btn btn-default width-max margin-bottom" onclick="javascript:deleteDocuments('management')">Delete selected</button></li>
+                        <li><button class="btn btn-default width-max" onclick="javascript:selectAllDocuments('management')">Toggle Select All</button></li>
+                    </ul>
+                    </div>
                 </th>
                 <th>Type</th>
                 <th>User</th>
@@ -24,7 +30,7 @@
                     <tr>
                         <td>{{ task.id }}</td>
                         <td>
-                            <input type="checkbox" id='{{ task.id }}' name="dt_management_delete">
+                            <input type="checkbox" id='{{ task.id }}' autocomplete="off" name="dt_management_delete">
                         </td>
                         <td>{{ task.task_type }}</td>
                         <td>{{ task.user }}</td>
