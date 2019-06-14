@@ -128,7 +128,11 @@ function deleteDocuments (type) {
     })
 
 }
-
+function selectAllDocuments (type){
+    $('input[name="dt_'+type+'_delete"]').each(function() {
+        this.checked = !this.checked;
+    });
+}
 function downloadModel(model_id_to_download) {
     window.location.href = `${LINK_TASK_MANAGER}/download_model?model_id=${model_id_to_download}`
 }
