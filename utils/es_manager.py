@@ -95,20 +95,31 @@ class ES_Manager:
 
         return response
 
+    def _get_wildcard_index_names(self, wildcarded_string: str) -> List[str]:
+        """
+        Takes in a wildcarded string and returns a list of indices that matches
+        the pattern. The alias endpoint was chosen because it returns the least amount of data
+        for the network traffic.
+        :return: List of indices that matches pattern
+        """
+        url = "{}/{}/_alias".format(self.es_url, wildcarded_string)
+        response = requests.get(url=url).json()
+        return response.keys()
+
     def update_mapping_structure(self, new_field, new_field_properties):
         url = '{0}/{1}/_mappings/'.format(self.es_url, self.stringify_datasets())
-        response = self.plain_get(url)
-        
-        for index in self.stringify_datasets().split(','):
-            for mapping in response[index]['mappings'].keys():
-                properties = response[index]['mappings'][mapping]['properties']
+        get_response = self.plain_get(url)
+
+        for index in self._get_wildcard_index_names(self.stringify_datasets()):
+            for mapping in get_response[index]['mappings'].keys():
+                properties = get_response[index]['mappings'][mapping]['properties']
 
                 if new_field not in properties:
                     properties[new_field] = new_field_properties
 
                 properties = {'properties': properties}
                 url = '{0}/{1}/_mapping/{2}'.format(self.es_url, index, mapping)
-                response = self.plain_put(url, json.dumps(properties))
+                put_response = self.plain_put(url, json.dumps(properties))
 
     def update_documents(self):
         response = self.plain_post(

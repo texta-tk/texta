@@ -1,25 +1,16 @@
-from datetime import datetime
 import json
-import os
 import logging
 from datetime import datetime
 
-from texta.settings import ERROR_LOGGER
-from texta.settings import INFO_LOGGER
-from texta.settings import FACT_PROPERTIES
-from texta.settings import FACT_FIELD
 from searcher.models import Search
+from task_manager.document_preprocessor import PREPROCESSOR_INSTANCES, preprocessor_map
 from task_manager.models import Task
-from task_manager.tools import ShowProgress
-from task_manager.tools import TaskCanceledException
-
+from task_manager.tools import ShowProgress, TaskCanceledException
+from texta.settings import ERROR_LOGGER, FACT_FIELD, FACT_PROPERTIES, INFO_LOGGER
 from utils.datasets import Datasets
-from utils.helper_functions import add_dicts
 from utils.es_manager import ES_Manager
+from utils.helper_functions import add_dicts
 from .base_worker import BaseWorker
-
-from task_manager.document_preprocessor import preprocessor_map
-from task_manager.document_preprocessor import PREPROCESSOR_INSTANCES
 
 
 class PreprocessorWorker(BaseWorker):
@@ -158,7 +149,7 @@ class PreprocessorWorker(BaseWorker):
 
     def _prepare_preprocessor_data(self, response: dict):
         """
-        Seperates document dicts and id strings from the pure ES response and changes
+        Separates document dicts and id strings from the pure ES response and changes
         the suffixes of the necessary parameters for routing purposes.
 
         :param response:
@@ -198,7 +189,7 @@ class PreprocessorWorker(BaseWorker):
 
     @staticmethod
     def _check_if_request_bad(args):
-        '''Check if models/fields are selected'''
+        """Check if models/fields are selected"""
         if not any(['feature_names' in k for k in args]):
             return False, "No field selected"
 
