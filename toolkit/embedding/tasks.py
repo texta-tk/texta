@@ -1,3 +1,7 @@
+import os
+import json
+import secrets
+
 from celery.decorators import task
 from gensim.models import word2vec
 
@@ -8,9 +12,6 @@ from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.phraser import Phraser
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.settings import MODELS_DIR, NUM_WORKERS
-
-import json
-import os
 
 
 @task(name="train_embedding")
@@ -49,8 +50,8 @@ def train_embedding(embedding_id):
 
     # Save models
     show_progress.update_step('saving')
-    model_path = os.path.join(MODELS_DIR, 'embedding', 'embedding_'+str(embedding_id))
-    phraser_path = os.path.join(MODELS_DIR, 'embedding', 'phraser_'+str(embedding_id))
+    model_path = os.path.join(MODELS_DIR, 'embedding', f'embedding_{str(embedding_id)}_{secrets.token_hex(10)}')
+    phraser_path = os.path.join(MODELS_DIR, 'embedding', f'phraser_{str(embedding_id)}_{secrets.token_hex(10)}')
     model.save(model_path)
     phraser.save(phraser_path)
 

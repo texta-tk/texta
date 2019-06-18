@@ -45,7 +45,13 @@ class TaggerViewTests(APITestCase):
         self.client.login(username='taggerOwner', password='pw')
 
 
-    def test_create_tagger_training_and_task_signal(self):
+    def test_run(self):
+        self.run_create_tagger_training_and_task_signal()
+        self.run_tag_text()
+        self.run_tag_doc()
+
+
+    def run_create_tagger_training_and_task_signal(self):
         '''Tests the endpoint for a new Tagger, and if a new Task gets created via the signal'''
         payload = {
             "description": "TestTagger",
@@ -71,7 +77,7 @@ class TaggerViewTests(APITestCase):
         self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
 
 
-    def test_tag_text(self):
+    def run_tag_text(self):
         '''Tests the endpoint for the tag_text action'''
         payload = { "text": "This is some test text for the Tagger Test" }
         tag_text_url = f'{self.url}{self.test_tagger.id}/tag_text/'
@@ -84,7 +90,7 @@ class TaggerViewTests(APITestCase):
         self.assertTrue('probability' in response.data)
 
 
-    def test_tag_doc(self):
+    def run_tag_doc(self):
         '''Tests the endpoint for the tag_doc action'''
         payload = { "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" })}
         tag_text_url = f'{self.url}{self.test_tagger.id}/tag_doc/'

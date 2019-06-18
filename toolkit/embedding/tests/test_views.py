@@ -13,6 +13,7 @@ from toolkit.core.task.models import Task
 from toolkit.utils.utils_for_tests import create_test_user, print_output, remove_file
 
 class EmbeddingViewTests(APITestCase):
+
     @classmethod
     def setUpTestData(cls):
         # Owner of the project
@@ -43,9 +44,15 @@ class EmbeddingViewTests(APITestCase):
 
     def setUp(self):
         self.client.login(username='embeddingOwner', password='pw')
-    
 
-    def test_create_embedding_training_and_task_signal(self):
+
+    def test_run(self):
+        self.run_create_embedding_training_and_task_signal()
+        self.run_predict()
+        self.run_phrase()
+
+
+    def run_create_embedding_training_and_task_signal(self):
         '''Tests the endpoint for a new Embedding, and if a new Task gets created via the signal'''
         payload = {
             "description": "TestEmbedding",
@@ -70,7 +77,7 @@ class EmbeddingViewTests(APITestCase):
         self.assertEqual(created_embedding.task.status, Task.STATUS_COMPLETED)
 
 
-    def test_predict(self):
+    def run_predict(self):
         '''Tests the endpoint for the predict action'''
         # Send only "text" in payload, because "output_size" should be 10 by default
         payload = { "text": "eesti" }
@@ -82,7 +89,7 @@ class EmbeddingViewTests(APITestCase):
         self.assertTrue(response.data)
 
 
-    def test_phrase(self):
+    def run_phrase(self):
         '''Tests the endpoint for the predict action'''
         payload = { "text": "See on mingi eesti keelne tekst testimiseks" }
         predict_url = f'{self.url}{self.test_embedding.id}/phrase/'
