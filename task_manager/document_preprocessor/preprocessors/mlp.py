@@ -1,21 +1,19 @@
 # -*- coding: utf-8 -*-
 
-import logging
-import requests
-from requests.exceptions import ConnectionError, Timeout
-import logging
 import json
 
-from utils.mlp_task_adapter import MLPTaskAdapter
+from utils.mlp_task_adapter import MLPTaskAdapter, Helpers
 
 
 class MlpPreprocessor(object):
     """Preprocessor implementation for running TEXTA Multilingual Processor (MLP) on the selected documents.
     """
 
+
     def _reload_env(self):
         import dotenv
         dotenv.load_dotenv(".env")
+
 
     def __init__(self, mlp_url=None, enabled_features=['text', 'lang', 'texta_facts']):
         """
@@ -27,6 +25,7 @@ class MlpPreprocessor(object):
         self._mlp_url = mlp_url
         self._enabled_features = set(enabled_features)
         self._reload_env()
+
 
     def transform(self, documents, **kwargs):
         """Takes input documents and enhances them with MLP output.
@@ -47,19 +46,37 @@ class MlpPreprocessor(object):
 
         for input_feature in input_features:
 
-            texts = [document[input_feature] for document in documents if input_feature in document]
-            data = {'texts': json.dumps(texts, ensure_ascii=False), 'doc_path': input_feature+'_mlp'}
+            feature_path = input_feature.split(".")
+            if len(feature_path) > 1:
+                texts = [Helpers.traverse_nested_dict_by_keys(document, feature_path) for document in documents]
+            else:
+                texts = [document[input_feature] for document in documents if input_feature in document]
 
+            data = {'texts': json.dumps(texts, ensure_ascii=False), 'doc_path': input_feature + '_mlp'}
             analyzation_data, errors = MLPTaskAdapter(self._mlp_url, mlp_type='mlp').process(data)
 
             for analyzation_idx, analyzation_datum in enumerate(analyzation_data):
                 analyzation_datum = analyzation_datum[0]
 
-                documents[analyzation_idx][input_feature+'_mlp'] = analyzation_datum['text']
-                documents[analyzation_idx][input_feature+'_mlp']['lang'] = analyzation_datum['text']['lang']
+                input_feature_path = input_feature.split(".")
+                if len(input_feature) == 1:
+                    documents[analyzation_idx][input_feature + '_mlp'] = analyzation_datum['text']
+                    documents[analyzation_idx][input_feature + '_mlp']['lang'] = analyzation_datum['text']['lang']
+                    if 'texta_facts' not in documents[analyzation_idx]:
+                        documents[analyzation_idx]['texta_facts'] = []
+                    documents[analyzation_idx]['texta_facts'].extend(analyzation_datum['texta_facts'])
 
-                if 'texta_facts' not in documents[analyzation_idx]:
-                    documents[analyzation_idx]['texta_facts'] = []
-                documents[analyzation_idx]['texta_facts'].extend(analyzation_datum['texta_facts'])
+                else:
+                    # Make sure the last field is used as the path.
+                    mlp_field_path = input_feature_path[:-1] + [input_feature_path[-1] + "_mlp"]
+                    Helpers.set_in_dict(documents[analyzation_idx], mlp_field_path, analyzation_datum['text'])
+
+                    lang_path = mlp_field_path + ["lang"]
+                    Helpers.set_in_dict(documents[analyzation_idx], lang_path, analyzation_datum['text']['lang'])
+
+                    if 'texta_facts' not in documents[analyzation_idx]:
+                        documents[analyzation_idx]["texta_facts"] = []
+
+                    documents[analyzation_idx]["texta_facts"].extend(analyzation_datum["texta_facts"])
 
         return {'documents': documents, 'meta': {}, 'errors': errors}
