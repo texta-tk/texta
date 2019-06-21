@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import json
+import logging
 
+from texta.settings import ERROR_LOGGER
 from utils.mlp_task_adapter import MLPTaskAdapter, Helpers
 
 
@@ -50,13 +52,17 @@ class MlpPreprocessor(object):
             if len(feature_path) > 1:
                 texts = [Helpers.traverse_nested_dict_by_keys(document, feature_path) for document in documents]
             else:
-                texts = [document[input_feature] for document in documents if input_feature in document]
+                texts = [document[input_feature] if input_feature in document else "" for document in documents]
 
             data = {'texts': json.dumps(texts, ensure_ascii=False), 'doc_path': input_feature + '_mlp'}
             analyzation_data, errors = MLPTaskAdapter(self._mlp_url, mlp_type='mlp').process(data)
 
             for analyzation_idx, analyzation_datum in enumerate(analyzation_data):
-                analyzation_datum = analyzation_datum[0]
+                # This part is under a try catch because it's an notorious trouble maker.
+                try:
+                    analyzation_datum = analyzation_datum[0]
+                except Exception as e:
+                    logging.getLogger(ERROR_LOGGER).exception(analyzation_datum)
 
                 input_feature_path = input_feature.split(".")
                 if len(input_feature) == 1:
