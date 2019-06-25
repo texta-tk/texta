@@ -25,7 +25,7 @@ function change_pwd () {
                 text: 'Password updated!',
                 type: 'success',
                 heightAuto: false
-		        }).then((result) => { location.reload() })
+		        }).then((result) => {})
         })
     } else {
         swal({
