@@ -58,9 +58,11 @@
     <link rel="shortcut icon" type="image/png" href="{{ STATIC_URL }}/img/favicon.ico"/>
     <link rel="stylesheet" href="{{ STATIC_URL }}bootstrap/css/bootstrap-multiselect.css" type="text/css">
     <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/js/bootstrap-multiselect.js"></script>
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/fixedheader/3.1.4/css/fixedHeader.dataTables.css"/>
+    <link rel="stylesheet" type="text/css"
+          href="https://cdn.datatables.net/fixedheader/3.1.4/css/fixedHeader.dataTables.css"/>
 
-    <script type="text/javascript" src="https://cdn.datatables.net/fixedheader/3.1.4/js/dataTables.fixedHeader.js"></script>
+    <script type="text/javascript"
+            src="https://cdn.datatables.net/fixedheader/3.1.4/js/dataTables.fixedHeader.js"></script>
     <title>TEXTA Toolkit {{ texta_version }}</title>
 </head>
 
@@ -190,9 +192,12 @@
                                             <li onclick="go_to(LINK_ACCOUNT + '/account/log_out')"
                                                 role="button"><a class="account-dropdown-item">
                                                 <span class="glyphicon glyphicon-log-out low-opacity margin-right"></span>
+
                                                 Log out</a>
                                             </li>
 
+                                            <li onclick="go_to(LINK_ACCOUNT+ '/change_pwd')" role="button">
+                                                <a class="account-dropdown-item"><span class="glyphicon glyphicon-lock low-opacity margin-right"></span>Change Password</a></li>
                                         </ul>
                                     </div>
                                 </div>
