@@ -12,12 +12,11 @@ from toolkit.core.task.models import Task
 from toolkit.embedding.models import Embedding
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.tagger.choices import DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE
-
-MAX_STR_LEN = 100
+from toolkit.constants import MAX_DESC_LEN
 
 
 class Tagger(models.Model):
-    description = models.CharField(max_length=MAX_STR_LEN)
+    description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
@@ -59,11 +58,11 @@ signals.post_save.connect(Tagger.train_tagger_model, sender=Tagger)
 
 
 class TaggerGroup(models.Model):
-    description = models.CharField(max_length=MAX_STR_LEN)
+    description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    fact_name = models.CharField(max_length=MAX_STR_LEN)
+    fact_name = models.CharField(max_length=MAX_DESC_LEN)
     minimum_sample_size = models.IntegerField(default=DEFAULT_MIN_SAMPLE_SIZE)
 
     taggers = models.ManyToManyField(Tagger, default=None)

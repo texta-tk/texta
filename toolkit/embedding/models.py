@@ -9,16 +9,15 @@ from multiselectfield import MultiSelectField
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.constants import MAX_DESC_LEN
 
-
-MAX_STR_LEN = 100
 
 class Embedding(models.Model):
-    description = models.CharField(max_length=MAX_STR_LEN)
+    description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
-    fields = MultiSelectField(max_length=MAX_STR_LEN*100)
+    fields = MultiSelectField(max_length=MAX_DESC_LEN*100)
 
     num_dimensions = models.IntegerField(default=100)
     max_vocab = models.IntegerField(default=0)

@@ -6,20 +6,9 @@ import matplotlib.pyplot as plt
 import os
 from typing import List, Dict
 
-from utils.datasets import Datasets
-from utils.es_manager import ES_Manager
-from utils.helper_functions import create_file_path
-from texta.settings import USER_MODELS, MODELS_DIR, URL_PREFIX, MEDIA_URL, PROTECTED_MEDIA
-from texta.settings import ERROR_LOGGER, INFO_LOGGER
+from toolkit.settings import MODELS_DIR, MEDIA_URL
 
-# Task imports
-from task_manager.tools import ShowSteps
-from task_manager.tools import TaskCanceledException
-from task_manager.tools import get_pipeline_builder
-from task_manager.tools import EsDataSample
-from task_manager.models import Task
-
-# Data imports
+# Data management imports
 from sklearn.model_selection import train_test_split
 from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer, text_to_word_sequence
@@ -37,7 +26,7 @@ from toolkit.neurotagger.neuro_models import NeuroModels
 
 
 class NeuroClassifierWorker():
-    def __init__(self):
+    def __init__(self, model_architecture, seq_len, vocab_size, num_epochs, validation_split):
         """
         Main class for training the NeuroClassifier
 
@@ -48,7 +37,6 @@ class NeuroClassifierWorker():
             labels {List[str]} -- List of int for the labels
             model_arch {str} -- The model architecture
             validation_split {float} -- The percentage of data to use for validation
-            grid_downsample_amount {float} -- The amount to downsample the grid search of the hyperparameters. Recommended less than 0.01 to avoid computation cost and time.
             seq_len {int} -- The sequence length for the model, can be limited by the given as max_seq_len param
             vocab_size {int} -- The vocabulary size for the model, can be limited by the user as a max_vocab_size param
             num_epochs {int} -- The number of epochs to train the model for
@@ -64,19 +52,18 @@ class NeuroClassifierWorker():
         self.task_result = {}
 
         # Neuroclassifier params
-        self.model_arch = None
-        self.validation_split = None
-        self.grid_downsample_amount = None
-        self.num_epochs = None
+        self.model_arch = model_architecture
+        self.validation_split = validation_split
+        self.num_epochs = num_epochs
         self.bs = 64
+
+        # Derived params
+        self.vocab_size = vocab_size
+        self.seq_len = seq_len
 
         # Neuroclassifier data
         self.samples = None
         self.labels = None
-
-        # Derived params
-        self.vocab_size = None
-        self.seq_len = None
 
         # Processed data
         self.X_train = None
@@ -87,72 +74,14 @@ class NeuroClassifierWorker():
         self.model = None
 
 
-    def run(self, task_id):
-        try:
-            self._set_up_task(task_id)
-
-            self._build_data_sampler()
-            self._process_data()
-            self._get_model()
-            self._train_model()
-            self._cross_validation()
-            self._create_task_result()
-            self._save_model()
-
-            self.show_steps.update(4)
-            self.task_obj.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
-
-        except Exception as e:
-            self.task_obj.result = json.dumps({'error': repr(e)})
-            self.task_obj.update_status(Task.STATUS_FAILED, set_time_completed=True)
-
-
-    def _set_up_task(self, task_id):
-        self.task_id = task_id
-        self.task_obj = Task.objects.get(pk=self.task_id)
-        self.task_type = self.task_obj.task_type
-        self.task_params = json.loads(self.task_obj.parameters)
-        self.model_name = 'model_{0}'.format(self.task_obj.unique_id)
-
-        self.model_arch = self.task_params['model_arch']
-        self.seq_len = int(self.task_params['max_seq_len'])
-        self.vocab_size = int(self.task_params['max_vocab_size'])
-        self.num_epochs = int(self.task_params['num_epochs'])
-        self.validation_split = float(self.task_params['validation_split'])
-        self.grid_downsample_amount = float(self.task_params['grid_downsample_amount'])
-
-        steps = ["preparing data", "processing data", "training", "saving", "done"]
-        self.show_steps = ShowSteps(self.task_id, steps)
-        self.show_steps.update_view()
-
-
-    def _build_data_sampler(self):
-        self.show_steps.update(0)
-        # Check if query was explicitly set
-        if 'search_tag' in self.task_params:
-            # Use set query
-            param_query = self.task_params['search_tag']
-        else:
-            # Otherwise, load query from saved search
-            param_query = self._parse_query(self.task_params)
-
-        negative_set_multiplier = float(self.task_params['negative_multiplier_opt'])
-        max_sample_size_opt = int(self.task_params['max_sample_size_opt']) if self.task_params['max_sample_size_opt'] != 'false' else False
-        score_threshold_opt = float(self.task_params['score_threshold_opt'])
-        fields = self.task_params['fields']
-
-        # Build Data sampler
-        ds = Datasets().activate_datasets_by_id(self.task_params['dataset'])
-        es_m = ds.build_manager(ES_Manager)
-        es_data = EsDataSample(fields=fields, 
-                                query=param_query,
-                                es_m=es_m,
-                                negative_set_multiplier=negative_set_multiplier,
-                                max_positive_sample_size=max_sample_size_opt,
-                                score_threshold=score_threshold_opt)
-        data_sample_x, data_sample_y, statistics = es_data.get_data_samples(with_fields=False)
-        self.samples = data_sample_x
-        self.labels = data_sample_y
+    def run(self, samples, labels):
+        self._set_up_data()
+        self._process_data()
+        self.model = NeuroModels().get_model(self.model_arch)
+        self._train_model()
+        self._cross_validation()
+        self._create_task_result()
+        self._save_model()
 
 
     def _process_data(self):
@@ -192,16 +121,11 @@ class NeuroClassifierWorker():
 
     def _train_model(self):
         self.show_steps.update(2)
-        history = self._train_generic_model()
-        self._plot_generic_model(history)
-
-
-    def _get_model(self):
-        model_obj = NeuroModels().get_model(self.model_arch)
-        self.model = model_obj['model']
+        history = self._train_model()
+        self._plot_model(history)
 
     
-    def _train_generic_model(self):
+    def _train_model(self):
         # Create a new ShowSteps updater for training
         epoch_steps = ['Training: Epoch' for i in range(self.num_epochs)]
         show_epochs = ShowSteps(self.task_id, epoch_steps)
@@ -256,7 +180,7 @@ class NeuroClassifierWorker():
             pickle.dump(self.tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-    def _plot_generic_model(self, history):
+    def _plot_model(self, history):
         fig, ax = plt.subplots(1, 2, figsize=(16,8))
         # Plot training & validation accuracy values
         ax[0].plot(history.history['acc'])

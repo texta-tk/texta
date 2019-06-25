@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils.timezone import now
-from toolkit.core.constants import MAX_STR_LEN
+from toolkit.constants import MAX_DESC_LEN
 
 class Task(models.Model):
     STATUS_CREATED = 'created'
@@ -11,9 +11,9 @@ class Task(models.Model):
     STATUS_CANCELLED = 'cancelled'
     STATUS_FAILED = 'failed'
 
-    status = models.CharField(max_length=MAX_STR_LEN)
+    status = models.CharField(max_length=MAX_DESC_LEN)
     progress = models.FloatField(default=0.0)
-    step = models.CharField(max_length=MAX_STR_LEN, default='')
+    step = models.CharField(max_length=MAX_DESC_LEN, default='')
     time_started = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(null=True, blank=True, default=None)
     time_completed = models.DateTimeField(null=True, blank=True, default=None)
