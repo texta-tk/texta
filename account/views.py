@@ -26,16 +26,19 @@ from utils.log_manager import LogManager
 from task_manager.models import Task
 from task_manager.tasks.task_types import TaskTypes
 
-from texta.settings import REQUIRE_EMAIL_CONFIRMATION, USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_DEFAULT, es_url, STATIC_URL
+from texta.settings import REQUIRE_EMAIL_CONFIRMATION, USER_MODELS, URL_PREFIX, INFO_LOGGER, USER_ISACTIVE_DEFAULT, \
+    es_url, STATIC_URL
 
 
 def index(request):
     template = loader.get_template('account.html')
     datasets = Datasets().get_allowed_datasets(request.user)
-    language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
+    language_models = Task.objects.filter(task_type=TaskTypes.TRAIN_MODEL.value).filter(
+        status__iexact=Task.STATUS_COMPLETED).order_by('-pk')
 
     return HttpResponse(
-        template.render({'STATIC_URL': STATIC_URL, 'allowed_datasets': datasets, 'language_models': language_models}, request))
+        template.render({'STATIC_URL': STATIC_URL, 'allowed_datasets': datasets, 'language_models': language_models},
+                        request))
 
 
 @login_required
@@ -45,7 +48,8 @@ def update_dataset(request):
     try:
         # TODO: check if is a valid mapping_id before change session[dataset]
         new_datasets = parameters.getlist('dataset[]')
-        new_datasets = [new_dataset for new_dataset in new_datasets if request.user.has_perm('permission_admin.can_access_dataset_' + str(new_dataset))]
+        new_datasets = [new_dataset for new_dataset in new_datasets if
+                        request.user.has_perm('permission_admin.can_access_dataset_' + str(new_dataset))]
         request.session['dataset'] = new_datasets
 
         logger.clean_context()
@@ -64,7 +68,8 @@ def update_model(request):
     logger = LogManager(__name__, 'CHANGE_SETTINGS')
     parameters = request.POST
     try:
-        model = {"pk": parameters["model_pk"], "description": parameters["model_description"], "unique_id": parameters["model_uuid"]}
+        model = {"pk": parameters["model_pk"], "description": parameters["model_description"],
+                 "unique_id": parameters["model_uuid"]}
         request.session['model'] = model
         logger.clean_context()
         logger.set_context('user_name', request.user.username)
@@ -75,12 +80,13 @@ def update_model(request):
         return HttpResponse(json.dumps({'status': 'error'}))
 
 
-
 ### MANAGING ACCOUNTS ###
 def _send_confirmation_email(user, email):
     if (REQUIRE_EMAIL_CONFIRMATION):
         token = _generate_random_token()
-        email = EmailMessage('Email Confirmation', 'Please confirm your email by clicking this link:' + URL_PREFIX + '/confirm/' + token, to=[email])
+        email = EmailMessage('Email Confirmation',
+                             'Please confirm your email by clicking this link:' + URL_PREFIX + '/confirm/' + token,
+                             to=[email])
 
         try:
             user.profile
@@ -115,7 +121,8 @@ def create(request):
     if not os.path.exists(user_path):
         os.makedirs(user_path)
 
-    logging.getLogger(INFO_LOGGER).info("User created", extra={'event': 'create_user', 'user_name': username, 'email': email})
+    logging.getLogger(INFO_LOGGER).info("User created",
+                                        extra={'event': 'create_user', 'user_name': username, 'email': email})
 
     if USER_ISACTIVE_DEFAULT == True:
         user = authenticate(username=username, password=password)
@@ -147,6 +154,13 @@ def validate_form(username, password, email):
 
 
 @login_required
+def navigate_change_pwd(request):
+    template = loader.get_template('reset_password_form.html')
+    return HttpResponse(
+        template.render({'STATIC_URL': STATIC_URL}, request))
+
+
+@login_required
 def change_password(request):
     user = User.objects.get(username__exact=request.user)
     user.set_password(request.POST['new_password'])
@@ -166,12 +180,15 @@ def login(request):
         django_login(request, user)
         log_content = {'event': 'login_process_succeeded', 'user_name': username}
         logging.getLogger(INFO_LOGGER).info("Login success", extra=log_content)
-        return HttpResponse(json.dumps({'task': '*', 'event': 'login_process_succeeded', 'arguments': {'user_name': username}}))
+        return HttpResponse(
+            json.dumps({'task': '*', 'event': 'login_process_succeeded', 'arguments': {'user_name': username}}))
 
     else:
         log_content = {'event': 'login_process_failed', 'user_name': username}
         logging.getLogger(INFO_LOGGER).info("Login failed", extra=log_content)
-        return HttpResponse(json.dumps({'task': '*', 'event': 'login_process_failed', 'arguments': {'user_name': username}}), status=401)
+        return HttpResponse(
+            json.dumps({'task': '*', 'event': 'login_process_failed', 'arguments': {'user_name': username}}),
+            status=401)
 
 
 @login_required
