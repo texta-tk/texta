@@ -5,7 +5,7 @@
             {% if fields %}
 
                 <select class="selectpicker" data-width="100%"  multiple="multiple" id="text-cleaner-feature-names"
-                        name="mlp_lite_feature_names" data-style="btn-sm btn-default">
+                        name="mlp-lite_feature_names" data-style="btn-sm btn-default">
                     {% for field in fields %}
                         <option value="{{ field.data }}"
                                 {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{ field.label }}</option>
@@ -14,7 +14,7 @@
 
             {% else %}
                 <textarea class="form-control" rows="2" id="text-cleaner-feature-names"
-                          name="mlp_lite_feature_names"></textarea>
+                          name="mlp-lite_feature_names"></textarea>
             {% endif %}
         </div>
 
@@ -23,7 +23,7 @@
         <label class="control-label" for="text-cleaner-output-type">Output:</label>
         <div class="select-wrapper">
             <select class="selectpicker" data-width="100%"  id="text-cleaner-output-type"
-                    name="mlp_lite_output_type" data-style="btn-sm btn-default">
+                    name="mlp-lite_output_type" data-style="btn-sm btn-default">
                 {% for output_type in preprocessor.output_type %}
                     <option value="{{ output_type }}"
                             {% if forloop.counter < 2 %}selected="selected"{% endif %}>{{ output_type }}</option>

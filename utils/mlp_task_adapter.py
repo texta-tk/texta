@@ -53,7 +53,7 @@ class Helpers:
         chunks = Helpers.chunks(list_of_texts, chunk_size=chunk_size)
 
         for chunk in chunks:
-            input_data = {"texts": json.dumps(chunk, ensure_ascii=False), "doc_path": data["doc_path"]}
+            input_data = {"texts": json.dumps(chunk, ensure_ascii=False), "doc_path": data.get("doc_path", None)}
             tasks_data.append(input_data)
 
         return tasks_data

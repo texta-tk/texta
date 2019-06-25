@@ -30,19 +30,6 @@ mlp_field_properties = {
                 }
             }
         },
-        'lemmas': {
-            'type': 'text',
-            'fields': {
-                'keyword': {
-                    'type': 'keyword',
-                    'ignore_above': 256
-                }
-            }
-        },
-        'lang': {
-            'type': 'keyword',
-            'ignore_above': 256
-        }
     }
 }
 
@@ -72,7 +59,7 @@ except Exception as e:
     log_preprocessor_status(code='mlp_lite', status='disabled')
 
 try:
-    preprocessor_map['mlp_lite'] = {
+    preprocessor_map['mlp-lite'] = {
         'name': 'MLP Lite',
         'description': 'Extracts lemmas and calculates statistics for classifiers.',
         'class': MLPLitePreprocessor,
