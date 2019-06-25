@@ -29,7 +29,6 @@ class Phraser:
 
     def phrase(self, text):
         if self._phraser:
-            print('asd')
             if isinstance(text, str):
                 text = text.split(' ')
                 return ' '.join(self._phraser[text])
