@@ -9,6 +9,7 @@ from toolkit.embedding.embedding import W2VEmbedding
 from toolkit.embedding.phraser import Phraser
 from toolkit.utils.model_cache import ModelCache
 from toolkit import permissions as toolkit_permissions
+from toolkit.tools.text_processor import TextProcessor
 
 import json
 
@@ -75,7 +76,9 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
                 return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
             phraser = phraser_cache.get_model(embedding_object.pk)
-            phrased_text = phraser.phrase(serializer.validated_data['text'])
+            text_processor = TextProcessor(phraser=phraser, sentences=False, remove_stop_words=False, tokenize=False)
+            phrased_text = text_processor.process(serializer.validated_data['text'])[0]
+            
             return Response(phrased_text, status=status.HTTP_200_OK)
         else:
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

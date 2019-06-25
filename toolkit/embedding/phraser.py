@@ -25,14 +25,11 @@ class Phraser:
     def load(self):
         embedding_object = Embedding.objects.get(pk=self.embedding_id)
         phraser_location = json.loads(embedding_object.location)['phraser']
-        try:
-            self._phraser = Phraser.load(phraser_location)
-            return True
-        except:
-            return False
+        self._phraser = GSPhraser.load(phraser_location)
 
     def phrase(self, text):
         if self._phraser:
+            print('asd')
             if isinstance(text, str):
                 text = text.split(' ')
                 return ' '.join(self._phraser[text])
