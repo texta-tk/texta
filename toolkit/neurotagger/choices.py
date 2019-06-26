@@ -1,3 +1,5 @@
+from .neuro_models import NeuroModels
+
 DEFAULT_SEQ_LEN = 50
 DEFAULT_VOCAB_SIZE = 50000
 DEFAULT_NUM_EPOCHS = 5

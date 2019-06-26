@@ -25,7 +25,7 @@ from keras.utils import plot_model
 from toolkit.neurotagger.neuro_models import NeuroModels
 
 
-class NeuroClassifierWorker():
+class NeurotaggerWorker():
     def __init__(self, model_architecture, seq_len, vocab_size, num_epochs, validation_split):
         """
         Main class for training the NeuroClassifier

@@ -17,28 +17,32 @@ from keras.losses import categorical_crossentropy, logcosh
 
 
 class NeuroModels():
-    model_names = [
-        'simpleFNN',
-        'simpleCNN',
-        'simpleGRU',
-        'simpleLSTM',
-        'gruCNN',
-        'lstmCNN',
-    ]
+    FNN = "fnn"
+    CNN = "cnn"
+    GRU = "gru"
+    LSTM = "lstm"
+    GRUCNN = "gruCNN"
+    LSTMCNN = "lstmCNN"
+
+    # For choicefield
+    choices = (
+        (0, FNN),
+        (1, CNN),
+        (2, GRU),
+        (3, LSTM),
+        (4, GRUCNN),
+        (5, LSTMCNN)
+    )
 
     def __init__(self):
         # Map models to string so they would be easy to call
         self.models_map = {
-            'simpleFNN': self.simpleFNN,
-            'simpleCNN': self.simpleCNN,
-            'simpleGRU': self.simpleGRU,
-            'simpleLSTM': self.simpleLSTM,
-            'gruCNN': self.gruCNN,
-            'lstmCNN': self.lstmCNN,
-            'autoFNN': self.autoFNN,
-            'autoGRU': self.autoGRU,
-            'autoLSTM': self.autoLSTM,
-            'autoCNN': self.autoCNN,
+            FNN: self.fnn,
+            CNN: self.cnn,
+            GRU: self.gru,
+            LSTM: self.lstm,
+            GRUCNN: self.gruCNN,
+            LSTMCNN: self.lstmCNN,
         }
 
 
@@ -50,9 +54,8 @@ class NeuroModels():
 
     # Simplier models
     @staticmethod
-    def simpleFNN(vocab_size, seq_len):
+    def fnn(vocab_size, seq_len):
         embed_dim = 300
-        print(vocab_size, seq_len)
         model = Sequential()
         model.add(Embedding(vocab_size, embed_dim, input_length=seq_len))
         model.add(Flatten())
@@ -67,7 +70,7 @@ class NeuroModels():
 
 
     @staticmethod
-    def simpleCNN(vocab_size, seq_len):
+    def cnn(vocab_size, seq_len):
         embed_dim = 200
         model = Sequential()
         model.add(Embedding(vocab_size, embed_dim, input_length=seq_len))
@@ -84,7 +87,7 @@ class NeuroModels():
 
 
     @staticmethod
-    def simpleGRU(vocab_size, seq_len):
+    def gru(vocab_size, seq_len):
         embed_dim = 200
         n_hidden = 32
         model = Sequential()
@@ -100,7 +103,7 @@ class NeuroModels():
 
 
     @staticmethod
-    def simpleLSTM(vocab_size, seq_len):
+    def lstm(vocab_size, seq_len):
         embed_dim = 200
         n_hidden = 32
         model = Sequential()

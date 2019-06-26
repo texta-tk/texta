@@ -1,7 +1,8 @@
 from rest_framework import serializers
 
+from toolkit.constants import get_field_choices
 from toolkit.embedding.models import Embedding, Task
-from toolkit.embedding.choices import get_field_choices, DEFAULT_NUM_DIMENSIONS, DEFAULT_MAX_VOCAB, DEFAULT_MIN_FREQ, DEFAULT_OUTPUT_SIZE
+from toolkit.embedding.choices import DEFAULT_NUM_DIMENSIONS, DEFAULT_MAX_VOCAB, DEFAULT_MIN_FREQ, DEFAULT_OUTPUT_SIZE
 from toolkit.core.task.serializers import TaskSerializer
 
 

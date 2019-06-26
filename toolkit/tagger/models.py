@@ -6,7 +6,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from multiselectfield import MultiSelectField
 
-from toolkit.embedding.choices import get_field_choices
+from toolkit.constants import get_field_choices
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.embedding.models import Embedding

@@ -37,8 +37,8 @@ def train_neurotagger(neurotagger_id):
     else:
         text_processor = TextProcessor(remove_stop_words=True)
 
-    samples, labels = _scroll_multiclass_data(json.loads(neurotagger_object.queries))
-
+    samples, labels = _scroll_multiclass_data(json.loads(neurotagger_object.queries), show_progress)
+    import pdb; pdb.set_trace()
     show_progress.update_step('training')
     show_progress.update_view(0)
 
@@ -73,7 +73,7 @@ def train_neurotagger(neurotagger_id):
     return True
 
 
-def _scroll_multiclass_data(queries):
+def _scroll_multiclass_data(queries, show_progress):
     samples = []
     labels = []
 
