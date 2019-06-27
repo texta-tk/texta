@@ -57,8 +57,9 @@ class TextProcessor:
                     tokens = self.stop_words.remove(tokens)
                 if self.phraser:
                     tokens = self.phraser.phrase(tokens)
+
                 if not self.tokenize:
-                    out.append(' '.join(tokens))
+                    out.append(' '.join([token.replace(' ', '_') for token in tokens]))
                 else:
                     out.append(tokens)
         

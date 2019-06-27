@@ -48,7 +48,8 @@ class Tagger(models.Model):
             instance.task = new_task
             instance.save()
             from toolkit.tagger.tasks import train_tagger
-            
+
+            # If not running tests via python manage.py test
             if not 'test' in sys.argv:
                 train_tagger.apply_async(args=(instance.pk,))
             else: 

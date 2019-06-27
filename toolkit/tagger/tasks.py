@@ -1,3 +1,9 @@
+import os
+import json
+import secrets
+
+from celery.decorators import task
+
 from toolkit.core.task.models import Task
 from toolkit.tagger.models import Tagger
 from toolkit.settings import NUM_WORKERS, MODELS_DIR
@@ -8,12 +14,6 @@ from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.tagger.plots import create_tagger_plot
 
-from celery.decorators import task
-import secrets
-import json
-import os
-
-
 
 @task(name="train_tagger")
 def train_tagger(tagger_id):
@@ -21,7 +21,7 @@ def train_tagger(tagger_id):
     tagger_object = Tagger.objects.get(pk=tagger_id)
     task_object = tagger_object.task
 
-    show_progress = ShowProgress(task_object.id, multiplier=1)
+    show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('scrolling positives')
     show_progress.update_view(0)
 
@@ -70,7 +70,7 @@ def train_tagger(tagger_id):
     show_progress.update_step('saving')
     show_progress.update_view(0)
 
-    tagger_path = os.path.join(MODELS_DIR, 'tagger', 'tagger_'+str(tagger_id))
+    tagger_path = os.path.join(MODELS_DIR, 'tagger', f'tagger_{tagger_id}_{secrets.token_hex(10)}')
     tagger.save(tagger_path)
 
     # save model locations
@@ -78,7 +78,7 @@ def train_tagger(tagger_id):
     tagger_object.precision = float(tagger.statistics['precision'])
     tagger_object.recall = float(tagger.statistics['recall'])
     tagger_object.f1_score = float(tagger.statistics['f1_score'])
-    tagger_object.plot.save('{}.png'.format(secrets.token_hex(15)), create_tagger_plot(tagger.model, tagger.statistics))
+    tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_tagger_plot(tagger.model, tagger.statistics))
     tagger_object.save()
 
 

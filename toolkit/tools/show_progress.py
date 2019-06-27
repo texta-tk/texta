@@ -5,10 +5,10 @@ class ShowProgress(object):
     """ Show model training progress
     """
 
-    def __init__(self, task_pk, multiplier=None):
+    def __init__(self, task, multiplier=None):
         self.n_total = None
         self.n_count = 0
-        self.task_pk = task_pk
+        self.task = task
         self.multiplier = multiplier
         self.step = ''
 
@@ -25,9 +25,10 @@ class ShowProgress(object):
             return
         self.n_count += amount
         percentage = (100.0 * self.n_count) / self.n_total
+
         self.update_view(percentage)
 
     def update_view(self, percentage):
-        r = Task.objects.get(pk=self.task_pk)
-        r.status = Task.STATUS_RUNNING
-        r.update_progress(percentage, self.step)
+        if self.task.status != self.task.STATUS_RUNNING:
+            self.task.update_status(self.task.STATUS_RUNNING)
+        self.task.update_progress(percentage, self.step)

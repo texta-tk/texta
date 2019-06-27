@@ -17,10 +17,10 @@ class TaggerViewTests(APITestCase):
     def setUpTestData(cls):
         # Owner of the project
         cls.url = f'/taggers/'
-        cls.user = create_test_user('owner', 'my@email.com', 'pw')
+        cls.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
 
         cls.project = Project.objects.create(
-            title='testproj',
+            title='taggerTestProject',
             owner=cls.user,
             indices=TEST_INDEX
         )
@@ -42,13 +42,17 @@ class TaggerViewTests(APITestCase):
 
 
     def setUp(self):
-        self.client.login(username='owner', password='pw')
-    
+        self.client.login(username='taggerOwner', password='pw')
 
 
-    def test_create_tagger_training_and_task_signal(self):
+    def test_run(self):
+        self.run_create_tagger_training_and_task_signal()
+        self.run_tag_text()
+        self.run_tag_doc()
+
+
+    def run_create_tagger_training_and_task_signal(self):
         '''Tests the endpoint for a new Tagger, and if a new Task gets created via the signal'''
-        # TODO Move the testing configuration, like fields/index to a separate file, test_settings or something
         payload = {
             "description": "TestTagger",
             "query": "",
@@ -69,11 +73,11 @@ class TaggerViewTests(APITestCase):
         self.addCleanup(remove_file, created_tagger.plot.path)
         # Check if Task gets created via a signal
         self.assertTrue(created_tagger.task is not None)
-        # Check the Tagger gets trained and completed
+        # Check if Tagger gets trained and completed
         self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
 
 
-    def test_tag_text(self):
+    def run_tag_text(self):
         '''Tests the endpoint for the tag_text action'''
         payload = { "text": "This is some test text for the Tagger Test" }
         tag_text_url = f'{self.url}{self.test_tagger.id}/tag_text/'
@@ -86,7 +90,7 @@ class TaggerViewTests(APITestCase):
         self.assertTrue('probability' in response.data)
 
 
-    def test_tag_doc(self):
+    def run_tag_doc(self):
         '''Tests the endpoint for the tag_doc action'''
         payload = { "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" })}
         tag_text_url = f'{self.url}{self.test_tagger.id}/tag_doc/'
@@ -101,8 +105,5 @@ class TaggerViewTests(APITestCase):
 
     @classmethod
     def tearDownClass(cls):
-        if cls.test_tagger.location:
-            remove_file(json.loads(Tagger.objects.get(id=cls.test_tagger.id).location)['tagger'])
-
-        if cls.test_tagger.plot.file:
-            remove_file(cls.test_tagger.plot.path)
+        remove_file(json.loads(cls.test_tagger.location)['tagger'])
+        remove_file(cls.test_tagger.plot.path)

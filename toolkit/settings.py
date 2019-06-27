@@ -114,6 +114,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    },
+    # SQLite write lock timeout in seconds https://docs.djangoproject.com/en/dev/ref/databases/#database-is-locked-errors
+    'OPTIONS': {
+        'timeout': 5,
     }
 }
 

@@ -1,3 +1,5 @@
+import sys
+import json
 from django.contrib.auth.models import User
 from django.db.models import signals
 from django.db import models
@@ -6,7 +8,6 @@ from multiselectfield import MultiSelectField
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import EMPTY_QUERY
-import json
 
 
 MAX_STR_LEN = 100
@@ -36,7 +37,10 @@ class Embedding(models.Model):
             instance.task = new_task
             instance.save()
             from toolkit.embedding.tasks import train_embedding
-            train_embedding.apply_async(args=(instance.pk,))
+            if not 'test' in sys.argv:
+                train_embedding.apply_async(args=(instance.pk,))
+            else:
+                train_embedding(instance.pk)
 
 
 signals.post_save.connect(Embedding.train_embedding_model, sender=Embedding)
