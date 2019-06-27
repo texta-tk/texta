@@ -3,11 +3,11 @@ import json
 from utils.mlp_task_adapter import MLPTaskAdapter
 from utils.mlp_task_adapter import Helpers
 
+
 class MLPLitePreprocessor(object):
     """
     Cleans texts for classification. Lemmatizes text.
     """
-
 
     def _reload_env(self):
         import dotenv

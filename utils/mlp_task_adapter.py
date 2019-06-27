@@ -95,6 +95,7 @@ class MLPTaskAdapter(object):
             self.tasks.append(task_info)
 
         except Exception as e:
+            logging.getLogger(ERROR_LOGGER).exception(mlp_input)
             logging.getLogger(ERROR_LOGGER).exception("Response Status: {} and Response Content: {}".format(response.status_code, response.text))
 
 
@@ -109,6 +110,7 @@ class MLPTaskAdapter(object):
             result = response.json()
             return result
         except Exception as e:
+            logging.getLogger(ERROR_LOGGER).exception(task_id)
             logging.getLogger(ERROR_LOGGER).exception("Response Status: {} and Response Content: {}".format(response.status_code, response.text))
 
 
