@@ -2,7 +2,7 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.word_cluster.serializers import WordClusterSerializer, TextSerializer
+from toolkit.word_cluster.serializers import WordClusterSerializer, TextSerializer, ClusterBrowserSerializer
 from toolkit.word_cluster.models import WordCluster
 from toolkit.word_cluster.word_cluster import WordCluster as WordClusterObject
 from toolkit.core import permissions as core_permissions
@@ -48,10 +48,40 @@ class WordClusterViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user, project=self.request.user.profile.active_project)
 
 
+    @action(detail=True, methods=['get', 'post'], serializer_class=ClusterBrowserSerializer)
+    def browse(self, request, pk=None):
+        """
+        API endpoint for browsing clustering results.
+        """
+        data = get_payload(request)
+        serializer = ClusterBrowserSerializer(data=data)
+
+        # check if valid request
+        if not serializer.is_valid():
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
+        clustering_object = self.get_object()
+        # check if clustering ready
+        if not clustering_object.location:
+            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # load cluster model
+        clusterer = cluster_cache.get_model(clustering_object.pk)
+
+
+        clusterer.browse(examples_per_cluster=serializer.validated_data['examples_per_cluster'],
+                         number_of_clusters=serializer.validated_data['number_of_clusters'])
+
+
+        clustering_result = {k:v[:3] for k,v in clusterer.cluster_dict.items()}
+
+        return Response(clustering_result, status=status.HTTP_200_OK)
+
+
     @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
     def cluster_text(self, request, pk=None):
         """
-        API endpoint for tagging raw text with tagger group.
+        API endpoint for clustering raw text.
         """
         data = get_payload(request)
         serializer = TextSerializer(data=data)
@@ -61,7 +91,6 @@ class WordClusterViewSet(viewsets.ModelViewSet):
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         
         clustering_object = self.get_object()
-
         # check if clustering ready
         if not clustering_object.location:
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
@@ -70,5 +99,4 @@ class WordClusterViewSet(viewsets.ModelViewSet):
         clusterer = cluster_cache.get_model(clustering_object.pk)
 
         clustered_text = clusterer.text_to_clusters(serializer.validated_data['text'])
-
         return Response(clustered_text, status=status.HTTP_200_OK)

@@ -5,6 +5,7 @@ import os
 
 from toolkit.word_cluster.models import WordCluster as WordClusterInstance
 from toolkit.settings import MODELS_DIR
+from toolkit.word_cluster.choices import DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER, DEFAULT_BROWSER_NUM_CLUSTERS
 
 class WordCluster(object):
     """
@@ -17,6 +18,7 @@ class WordCluster(object):
         self.cluster_dict = {}
         self.clustering_id = clustering_id
     
+
     def cluster(self, embedding, n_clusters):
         embedding = embedding.model
         vocab = list(embedding.wv.vocab.keys())
@@ -40,15 +42,18 @@ class WordCluster(object):
         
         return True
     
+
     def query(self, word):
         try:
             return self.cluster_dict[self.word_to_cluster_dict[word]]
         except:
             return []
     
+
     def text_to_clusters(self, text):
         text = [str(self.word_to_cluster_dict[word]) for word in text.split(' ') if word in self.word_to_cluster_dict]
         return ' '.join(text)
+
 
     def save(self, file_path):
         try:
@@ -59,6 +64,7 @@ class WordCluster(object):
         except:
             return False
     
+
     def load(self):
         """
         Load word cluster from file system
@@ -73,3 +79,16 @@ class WordCluster(object):
             self.cluster_dict = loaded_json['cluster_dict']
             self.word_to_cluster_dict = loaded_json['word_to_cluster_dict']
         return True
+
+
+    def browse(self, number_of_clusters=DEFAULT_BROWSER_NUM_CLUSTERS, examples_per_cluster=DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER):
+        result = []
+        for i, cluster in enumerate(self.cluster_dict.items()):
+            if i >= number_of_clusters:
+                break
+            
+            # CONTINUE HERE
+            
+            result.append(cluster[0][:examples_per_cluster])
+
+        return result

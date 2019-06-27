@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from toolkit.word_cluster.models import WordCluster
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.word_cluster.choices import DEFAULT_NUM_CLUSTERS
+from toolkit.word_cluster.choices import DEFAULT_NUM_CLUSTERS, DEFAULT_BROWSER_NUM_CLUSTERS, DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER
 
 
 class WordClusterSerializer(serializers.ModelSerializer):
@@ -24,4 +24,8 @@ class WordClusterSerializer(serializers.ModelSerializer):
 
 class TextSerializer(serializers.Serializer):
     text = serializers.CharField()
-    
+
+
+class ClusterBrowserSerializer(serializers.Serializer):
+    number_of_clusters = serializers.IntegerField(default=DEFAULT_BROWSER_NUM_CLUSTERS, help_text=f'Default: {DEFAULT_BROWSER_NUM_CLUSTERS}')
+    examples_per_cluster = serializers.IntegerField(default=DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER, help_text=f'Default: {DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER}')
