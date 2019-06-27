@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'toolkit.core',
     'toolkit.embedding',
     'toolkit.tagger',
+    'toolkit.word_cluster',
     # THIRD PARTY
     # https://github.com/goinnn/django-multiselectfield
     'multiselectfield',
@@ -52,7 +53,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'rest_auth.registration',
-    #'django_extensions'
+    'django_extensions'
 ]
 
 # For registration (see: https://django-rest-auth.readthedocs.io/en/latest/installation.html#registration-optional)

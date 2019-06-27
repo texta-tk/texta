@@ -1,7 +1,6 @@
 from django.contrib.auth.models import User
 from django.db.models import signals
 from django.db import models
-from django.contrib.auth.models import User
 from multiselectfield import MultiSelectField
 
 from toolkit.core.project.models import Project
