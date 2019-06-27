@@ -13,12 +13,13 @@ from toolkit.tagger.models import Tagger
 
 class TextTagger:
 
-    def __init__(self, tagger_id, workers=NUM_WORKERS):
+    def __init__(self, tagger_id, workers=NUM_WORKERS, text_processor=None):
         self.model = None
         self.statistics = None
         self.tagger_id = int(tagger_id)
         self.workers = workers
         self.description = None
+        self.text_processor = None
 
 
     def _create_data_map(self, data, field_list):
@@ -31,6 +32,10 @@ class TextTagger:
                 else:
                     data_map[field].append('')
         return data_map
+
+
+    def add_text_processor(self, text_processor):
+        self.text_processor = text_processor
 
 
     def train(self, positive_samples, negative_samples, field_list=[], classifier=0, vectorizer=0):
@@ -110,8 +115,10 @@ class TextTagger:
         """
         union_features = [x[0] for x in self.model.named_steps['union'].transformer_list if x[0].startswith('pipe_')]
         field_features = [x[5:] for x in union_features]
-        
-        # TODO: use phraser & embedding
+
+        # process text if asked
+        if self.text_processor:
+            text = self.text_processor.process(text)[0]
 
         # generate text map for dataframe
         text_map = {feature_name:[text] for feature_name in field_features}
@@ -129,14 +136,17 @@ class TextTagger:
         """
         union_features = [x[0] for x in self.model.named_steps['union'].transformer_list if x[0].startswith('pipe_')]
         field_features = [x[5:] for x in union_features]
-
-        # TODO: use phraser & embedding
         
         # generate text map for dataframe
         text_map = {}
         for field in field_features:
             if field in doc:
-                text_map[field] = [doc[field]]
+                # process text if asked
+                if self.text_processor:
+                    doc_field = self.text_processor.process(doc[field])[0]
+                else:
+                    doc_field = doc[field]
+                text_map[field] = [doc_field]
             else:
                 text_map[field] = [""]
 

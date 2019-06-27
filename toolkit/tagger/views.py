@@ -13,13 +13,16 @@ from toolkit.tagger.serializers import TaggerSerializer, TaggerGroupSerializer, 
                                        TextGroupSerializer, DocGroupSerializer
 from toolkit.tagger.text_tagger import TextTagger
 from toolkit.utils.model_cache import ModelCache
+from toolkit.embedding.phraser import Phraser
+from toolkit.tools.text_processor import TextProcessor
 from toolkit import permissions as toolkit_permissions
 from toolkit.core import permissions as core_permissions
 
 import json
 
-# initialize model cache for taggers
+# initialize model cache for taggers & phrasers
 model_cache = ModelCache(TextTagger)
+phraser_cache = ModelCache(Phraser)
 
 
 def get_payload(request):
@@ -77,10 +80,18 @@ class TaggerViewSet(viewsets.ModelViewSet):
         # check if tagger exists
         if not tagger_object.location:
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # create text processor object for tagger
+        if tagger_object.embedding:
+            phraser = Phraser(embedding_id=tagger_object.embedding.pk)
+            phraser.load()
+            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
+        else:
+            text_processor = TextProcessor(remove_stop_words=True)
 
         # apply tagger
         tagger_id = tagger_object.pk
-        tagger_response = self.apply_tagger(tagger_id, serializer.data['text'], input_type='text')
+        tagger_response = self.apply_tagger(tagger_id, serializer.data['text'], input_type='text', text_processor=text_processor)
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
@@ -115,8 +126,10 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
-    def apply_tagger(self, tagger_id, tagger_input, input_type='text'):
+    def apply_tagger(self, tagger_id, tagger_input, input_type='text', text_processor=None):
         tagger = model_cache.get_model(tagger_id)
+        tagger.add_text_processor(text_processor)
+
         if input_type == 'doc':
             tagger_result = tagger.tag_doc(tagger_input)
         else:
