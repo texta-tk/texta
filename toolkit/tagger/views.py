@@ -83,8 +83,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         
         # create text processor object for tagger
         if tagger_object.embedding:
-            phraser = Phraser(embedding_id=tagger_object.embedding.pk)
-            phraser.load()
+            phraser = phraser_cache.get_model(tagger_object.embedding.pk)
             text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
         else:
             text_processor = TextProcessor(remove_stop_words=True)
@@ -120,9 +119,16 @@ class TaggerViewSet(viewsets.ModelViewSet):
         if set(field_path_list) != set(serializer.validated_data['doc'].keys()):
             return Response({'error': 'document fields do not match. Required keys: {}'.format(field_path_list)}, status=status.HTTP_400_BAD_REQUEST)
 
+        # create text processor object for tagger
+        if tagger_object.embedding:
+            phraser = phraser_cache.get_model(tagger_object.embedding.pk)
+            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
+        else:
+            text_processor = TextProcessor(remove_stop_words=True)
+
         # apply tagger
         tagger_id = tagger_object.pk
-        tagger_response = self.apply_tagger(tagger_id, serializer.data['doc'], input_type='doc')
+        tagger_response = self.apply_tagger(tagger_id, serializer.data['doc'], input_type='doc', text_processor=text_processor)
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
@@ -237,6 +243,9 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
 
         field_paths = [field['field_path'] for field in field_data]
 
+        # process text
+        text = TextProcessor(remove_stop_words=True).process(text)[0]
+
         # create & update query
         query = Query()
         query.add_mlt(field_paths, text)
@@ -322,11 +331,22 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
             tagger_objects = hybrid_tagger_object.taggers.filter(description__in=tag_candidates)
         else:
             tagger_objects = hybrid_tagger_object.taggers.all()
-        tagger_ids = [tagger.pk for tagger in tagger_objects]
         tags = []
-        for tagger_id in tagger_ids:
-            # apply tagger
+
+        for tagger in tagger_objects:
+            tagger_id = tagger.pk
+
+            # create text processor object for tagger
+            if tagger.embedding:
+                phraser = phraser_cache.get_model(tagger.embedding.pk)
+                text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
+            else:
+                text_processor = TextProcessor(remove_stop_words=True)
+
+            # load tagger model
             tagger = model_cache.get_model(tagger_id)
+            tagger.add_text_processor(text_processor)
+
             if input_type == 'doc':
                 tagger_result = tagger.tag_doc(tagger_input)
             else:
