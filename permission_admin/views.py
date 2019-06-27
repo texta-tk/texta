@@ -1,32 +1,25 @@
-import datetime
 import json
-
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.models import User, Group, Permission
-from django.contrib.contenttypes.models import ContentType
-from django.urls import reverse 
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from django.template import loader
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-
-from utils.datasets import Datasets
-from task_manager.models import Task
-from permission_admin.models import Dataset, ScriptProject
-from utils.es_manager import ES_Manager
-from texta.settings import STATIC_URL, URL_PREFIX, SCRIPT_MANAGER_DIR
-from task_manager.tasks.task_types import TaskTypes
-
-from permission_admin.script_runner import ScriptRunner
 import multiprocessing
-
 import os
 import shutil
 
-#remove 
-from texta.settings import STATIC_URL, URL_PREFIX, INFO_LOGGER, ERROR_LOGGER
-import logging
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import Permission, User
+from django.contrib.contenttypes.models import ContentType
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.template import loader
+
+from permission_admin.models import Dataset, ScriptProject
+from permission_admin.script_runner import ScriptRunner
+from task_manager.models import Task
+from task_manager.tasks.task_types import TaskTypes
+# remove
+from texta.settings import SCRIPT_MANAGER_DIR, STATIC_URL, URL_PREFIX
+from utils.datasets import Datasets
+from utils.es_manager import ES_Manager
+
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -182,12 +175,14 @@ def get_datasets(indices=None):
     datasets_out = []
     for dataset in datasets:
         ds_out = dataset.__dict__
+
         if indices:
             for index in indices:
                 if index['index'] == ds_out['index']:
                     ds_out['status'] = index['status']
-                    ds_out['docs_count'] = index['docs_count']
+                    ds_out['docs_count'] = ES_Manager.single_index_count(index["index"])  # Passed value from indices is wrong.
                     ds_out['store_size'] = index['store_size']
+
                 elif '*' in ds_out['index']:
                     ds_out['status'] = 'open'
                     ds_out['docs_count'] = 'multiindex'
@@ -365,7 +360,7 @@ def _unpickle_method(func_name, obj, cls):
     return func.__get__(obj, cls)
 
 
-import copyreg 
+import copyreg
 import types
 
-copyreg.pickle(types.MethodType, _pickle_method, _unpickle_method) 
+copyreg.pickle(types.MethodType, _pickle_method, _unpickle_method)

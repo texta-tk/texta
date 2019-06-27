@@ -1,24 +1,20 @@
 # -*- coding: utf8 -*-
+import datetime
 import json
-import copy
 import logging
-from typing import List, Dict, Any
-
-import requests
 from functools import reduce
+from typing import Dict, List
 
+import elasticsearch
+import requests
 from elasticsearch import Elasticsearch, ElasticsearchException
-from elasticsearch_dsl import Search, A
+from elasticsearch_dsl import A, Search
 from elasticsearch_dsl.query import MoreLikeThis, Q
 
 from permission_admin.models import Dataset
+from texta.settings import ERROR_LOGGER, FACT_FIELD, date_format, es_ldap_password, es_ldap_user, es_prefix, es_url, es_use_ldap
 from utils.ds_importer_helper import check_for_analyzer
-from utils.generic_helpers import find_key_recursivly
-import datetime
-
 from utils.query_builder import QueryBuilder
-from texta.settings import es_url, es_use_ldap, es_ldap_user, es_ldap_password, FACT_PROPERTIES, date_format, es_prefix, \
-    FACT_FIELD, ERROR_LOGGER
 
 # Need to update index.max_inner_result_window to increase
 HEADERS = {'Content-Type': 'application/json'}
@@ -686,6 +682,11 @@ class ES_Manager:
         endpoint_url = '{0}/{1}/_count'.format(es_url, self.stringify_datasets())
         response = ES_Manager.requests.get(url=endpoint_url, json=query).json()
         return response['count']
+
+    @staticmethod
+    def single_index_count(index_name: str) -> int:
+        count = Search(using=Elasticsearch(es_url), index=index_name).count()
+        return count
 
     def get_field_mappings(self) -> dict:
         """
