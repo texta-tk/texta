@@ -229,7 +229,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         return queries
 
 
-    def get_tag_candidates(self, field_data, text, hybrid=True):
+    def get_tag_candidates(self, field_data, text, hybrid=True, n_candidates=30):
         """
         Finds frequent tags from documents similar to input document.
         Returns empty list if hybrid option false.
@@ -252,7 +252,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         es_a.update_query(query.query)
 
         # perform aggregation to find frequent tags
-        tag_candidates = es_a.facts(filter_by_fact_name=self.get_object().fact_name)
+        tag_candidates = es_a.facts(filter_by_fact_name=self.get_object().fact_name, size=n_candidates)
         return tag_candidates
 
 
@@ -280,7 +280,10 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         hybrid_tagger_field_data = hybrid_tagger_object.taggers.first().fields
 
         # retrieve tag candidates
-        tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data, serializer.validated_data['text'], hybrid=serializer.validated_data['hybrid'])
+        tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data, 
+                                                 serializer.validated_data['text'],
+                                                 hybrid=serializer.validated_data['hybrid'],
+                                                 n_candidates=serializer.validated_data['n_candidates'])
 
         # get tags
         tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, serializer.validated_data['text'], input_type='text') 
@@ -318,7 +321,9 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
 
         # retrieve tag candidates
         combined_texts = ' '.join(serializer.validated_data['doc'].values())
-        tag_candidates = self.get_tag_candidates(hybrid_tagger_object.taggers.first().fields, combined_texts)
+        tag_candidates = self.get_tag_candidates(hybrid_tagger_object.taggers.first().fields,
+                                                 combined_texts,
+                                                 n_candidates=serializer.validated_data['n_candidates'])
 
         # get tags
         tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, serializer.validated_data['doc'], input_type='doc')        

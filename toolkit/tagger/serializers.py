@@ -5,7 +5,8 @@ from toolkit.tagger.models import Tagger, TaggerGroup
 
 from toolkit.tagger.choices import (get_fact_names, 
                                     get_field_choices, get_classifier_choices, get_vectorizer_choices,
-                                    DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE)
+                                    DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE,
+                                    DEFAULT_NUM_CANDIDATES)
 
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.settings import URL_PREFIX
@@ -22,11 +23,13 @@ class DocSerializer(serializers.Serializer):
 class TextGroupSerializer(serializers.Serializer):
     text = serializers.CharField()
     hybrid = serializers.BooleanField(default=True)
+    n_candidates = serializers.IntegerField(default=DEFAULT_NUM_CANDIDATES, help_text=f'Default: {DEFAULT_NUM_CANDIDATES}')
 
 
 class DocGroupSerializer(serializers.Serializer):
     doc = serializers.JSONField()
     hybrid = serializers.BooleanField(default=True)
+    n_candidates = serializers.IntegerField(default=DEFAULT_NUM_CANDIDATES, help_text=f'Default: {DEFAULT_NUM_CANDIDATES}')
 
 
 class TaggerSerializer(serializers.ModelSerializer):
