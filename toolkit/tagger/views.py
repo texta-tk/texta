@@ -13,13 +13,16 @@ from toolkit.tagger.serializers import TaggerSerializer, TaggerGroupSerializer, 
                                        TextGroupSerializer, DocGroupSerializer
 from toolkit.tagger.text_tagger import TextTagger
 from toolkit.utils.model_cache import ModelCache
+from toolkit.embedding.phraser import Phraser
+from toolkit.tools.text_processor import TextProcessor
 from toolkit import permissions as toolkit_permissions
 from toolkit.core import permissions as core_permissions
 
 import json
 
-# initialize model cache for taggers
+# initialize model cache for taggers & phrasers
 model_cache = ModelCache(TextTagger)
+phraser_cache = ModelCache(Phraser)
 
 
 def get_payload(request):
@@ -77,10 +80,17 @@ class TaggerViewSet(viewsets.ModelViewSet):
         # check if tagger exists
         if not tagger_object.location:
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # create text processor object for tagger
+        if tagger_object.embedding:
+            phraser = phraser_cache.get_model(tagger_object.embedding.pk)
+            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
+        else:
+            text_processor = TextProcessor(remove_stop_words=True)
 
         # apply tagger
         tagger_id = tagger_object.pk
-        tagger_response = self.apply_tagger(tagger_id, serializer.data['text'], input_type='text')
+        tagger_response = self.apply_tagger(tagger_id, serializer.data['text'], input_type='text', text_processor=text_processor)
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
@@ -109,14 +119,23 @@ class TaggerViewSet(viewsets.ModelViewSet):
         if set(field_path_list) != set(serializer.validated_data['doc'].keys()):
             return Response({'error': 'document fields do not match. Required keys: {}'.format(field_path_list)}, status=status.HTTP_400_BAD_REQUEST)
 
+        # create text processor object for tagger
+        if tagger_object.embedding:
+            phraser = phraser_cache.get_model(tagger_object.embedding.pk)
+            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
+        else:
+            text_processor = TextProcessor(remove_stop_words=True)
+
         # apply tagger
         tagger_id = tagger_object.pk
-        tagger_response = self.apply_tagger(tagger_id, serializer.data['doc'], input_type='doc')
+        tagger_response = self.apply_tagger(tagger_id, serializer.data['doc'], input_type='doc', text_processor=text_processor)
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
-    def apply_tagger(self, tagger_id, tagger_input, input_type='text'):
+    def apply_tagger(self, tagger_id, tagger_input, input_type='text', text_processor=None):
         tagger = model_cache.get_model(tagger_id)
+        tagger.add_text_processor(text_processor)
+
         if input_type == 'doc':
             tagger_result = tagger.tag_doc(tagger_input)
         else:
@@ -210,7 +229,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         return queries
 
 
-    def get_tag_candidates(self, field_data, text, hybrid=True):
+    def get_tag_candidates(self, field_data, text, hybrid=True, n_candidates=30):
         """
         Finds frequent tags from documents similar to input document.
         Returns empty list if hybrid option false.
@@ -224,13 +243,16 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
 
         field_paths = [field['field_path'] for field in field_data]
 
+        # process text
+        text = TextProcessor(remove_stop_words=True).process(text)[0]
+
         # create & update query
         query = Query()
         query.add_mlt(field_paths, text)
         es_a.update_query(query.query)
 
         # perform aggregation to find frequent tags
-        tag_candidates = es_a.facts(filter_by_fact_name=self.get_object().fact_name)
+        tag_candidates = es_a.facts(filter_by_fact_name=self.get_object().fact_name, size=n_candidates)
         return tag_candidates
 
 
@@ -258,7 +280,10 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         hybrid_tagger_field_data = hybrid_tagger_object.taggers.first().fields
 
         # retrieve tag candidates
-        tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data, serializer.validated_data['text'], hybrid=serializer.validated_data['hybrid'])
+        tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data, 
+                                                 serializer.validated_data['text'],
+                                                 hybrid=serializer.validated_data['hybrid'],
+                                                 n_candidates=serializer.validated_data['n_candidates'])
 
         # get tags
         tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, serializer.validated_data['text'], input_type='text') 
@@ -296,7 +321,9 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
 
         # retrieve tag candidates
         combined_texts = ' '.join(serializer.validated_data['doc'].values())
-        tag_candidates = self.get_tag_candidates(hybrid_tagger_object.taggers.first().fields, combined_texts)
+        tag_candidates = self.get_tag_candidates(hybrid_tagger_object.taggers.first().fields,
+                                                 combined_texts,
+                                                 n_candidates=serializer.validated_data['n_candidates'])
 
         # get tags
         tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, serializer.validated_data['doc'], input_type='doc')        
@@ -309,11 +336,22 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
             tagger_objects = hybrid_tagger_object.taggers.filter(description__in=tag_candidates)
         else:
             tagger_objects = hybrid_tagger_object.taggers.all()
-        tagger_ids = [tagger.pk for tagger in tagger_objects]
         tags = []
-        for tagger_id in tagger_ids:
-            # apply tagger
+
+        for tagger in tagger_objects:
+            tagger_id = tagger.pk
+
+            # create text processor object for tagger
+            if tagger.embedding:
+                phraser = phraser_cache.get_model(tagger.embedding.pk)
+                text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
+            else:
+                text_processor = TextProcessor(remove_stop_words=True)
+
+            # load tagger model
             tagger = model_cache.get_model(tagger_id)
+            tagger.add_text_processor(text_processor)
+
             if input_type == 'doc':
                 tagger_result = tagger.tag_doc(tagger_input)
             else:
