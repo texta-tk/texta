@@ -3,7 +3,8 @@ import numpy as np
 import json
 import os
 
-from texta.settings import MODELS_DIR
+from toolkit.word_cluster.models import WordCluster as WordClusterInstance
+from toolkit.settings import MODELS_DIR
 
 class WordCluster(object):
     """
@@ -11,31 +12,29 @@ class WordCluster(object):
     : param embedding : Word2Vec object
     : param n_clusters, int, number of clusters in output
     """
-    def __init__(self):
+    def __init__(self, clustering_id):
         self.word_to_cluster_dict = {}
         self.cluster_dict = {}
+        self.clustering_id = clustering_id
     
-    def cluster(self, embedding, n_clusters=None):
+    def cluster(self, embedding, n_clusters):
+        embedding = embedding.model
         vocab = list(embedding.wv.vocab.keys())
         vocab_vectors = np.array([embedding[word] for word in vocab])
-        
-        if not n_clusters:
-            # number of clusters = 10% of embedding vocabulary
-            # if larger than 1000, limit to 1000
-            n_clusters = int(len(vocab) * 0.1)
-            if n_clusters > 1000:
-                n_clusters = 1000
 
         clustering = MiniBatchKMeans(n_clusters=n_clusters).fit(vocab_vectors)
         cluster_labels = clustering.labels_
         
+        print('computing etalons')
+        etalons = {cluster_label: embedding.wv.most_similar(positive=[clustering.cluster_centers_[cluster_label]])[0][0] for cluster_label in set(cluster_labels)}
+
+        print('finishing toutches...')
+
         for i,cluster_label in enumerate(cluster_labels):
             word = vocab[i]
-            etalon = embedding.wv.most_similar(positive=[clustering.cluster_centers_[cluster_label]])[0][0]
-            
+            etalon = etalons[cluster_label]
             if etalon not in self.cluster_dict:
                 self.cluster_dict[etalon] = []
-                
             self.cluster_dict[etalon].append(word)
             self.word_to_cluster_dict[word] = etalon
         
@@ -48,7 +47,7 @@ class WordCluster(object):
             return []
     
     def text_to_clusters(self, text):
-        text = [str(self.word_to_cluster_dict[word]) for word in text if word in self.word_to_cluster_dict]
+        text = [str(self.word_to_cluster_dict[word]) for word in text.split(' ') if word in self.word_to_cluster_dict]
         return ' '.join(text)
 
     def save(self, file_path):
@@ -60,12 +59,17 @@ class WordCluster(object):
         except:
             return False
     
-    def load(self, unique_id, task_type='train_tagger'):
-        file_path = os.path.join(MODELS_DIR, task_type, 'cluster_{}'.format(unique_id))
-        try:
-            with open(file_path) as fh:
-                data = json.loads(fh.read())
-            self.cluster_dict = data["cluster_dict"]
-            self.word_to_cluster_dict = data["word_to_cluster_dict"]
-        except:
+    def load(self):
+        """
+        Load word cluster from file system
+        """
+        if not self.clustering_id:
             return False
+
+        clustering_object = WordClusterInstance.objects.get(pk=self.clustering_id)
+        file_path = json.loads(clustering_object.location)['cluster']
+        with open(file_path) as fh:
+            loaded_json = json.loads(fh.read())
+            self.cluster_dict = loaded_json['cluster_dict']
+            self.word_to_cluster_dict = loaded_json['word_to_cluster_dict']
+        return True

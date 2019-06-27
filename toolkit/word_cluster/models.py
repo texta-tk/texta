@@ -25,12 +25,11 @@ class WordCluster(models.Model):
     @classmethod
     def cluster_embedding_vocabulary(cls, sender, instance, created, **kwargs):
         if created:
-            print('sadf')
-            #new_task = Task.objects.create(word_cluster=instance, status='created')
-            #instance.task = new_task
-            #instance.save()
-            #from toolkit.embedding.tasks import train_embedding
-            #train_embedding.apply_async(args=(instance.pk,))
+            new_task = Task.objects.create(wordcluster=instance, status='created')
+            instance.task = new_task
+            instance.save()
+            from toolkit.word_cluster.tasks import cluster_embedding
+            cluster_embedding.apply_async(args=(instance.pk,))
 
 
 signals.post_save.connect(WordCluster.cluster_embedding_vocabulary, sender=WordCluster)

@@ -49,8 +49,14 @@ class W2VEmbedding:
         else:
             return []
     
-    def get_vector(self):
+    def get_vector(self, word):
         """
         Get vector for given embedding entry
         """
-        pass
+        return self.model[word]
+    
+    def get_vocabulary(self):
+        """
+        Get embedding vocabulary
+        """
+        return self.model.wv.index2word
