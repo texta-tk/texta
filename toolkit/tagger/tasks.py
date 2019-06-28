@@ -64,26 +64,36 @@ def train_tagger(tagger_id):
     show_progress.update_step('training')
     show_progress.update_view(0)
 
-    tagger = TextTagger(tagger_id)
-    tagger.train(positive_samples, negative_samples, field_list=field_path_list, classifier=tagger_object.classifier, vectorizer=tagger_object.vectorizer)
+    try:
+        # try training
+        tagger = TextTagger(tagger_id)
+        tagger.train(positive_samples, negative_samples, field_list=field_path_list, classifier=tagger_object.classifier, vectorizer=tagger_object.vectorizer)
 
-    show_progress.update_step('saving')
-    show_progress.update_view(0)
+        show_progress.update_step('saving')
+        show_progress.update_view(0)
 
-    tagger_path = os.path.join(MODELS_DIR, 'tagger', f'tagger_{tagger_id}_{secrets.token_hex(10)}')
-    tagger.save(tagger_path)
+        tagger_path = os.path.join(MODELS_DIR, 'tagger', f'tagger_{tagger_id}_{secrets.token_hex(10)}')
+        tagger.save(tagger_path)
 
-    # save model locations
-    tagger_object.location = json.dumps({'tagger': tagger_path})
-    tagger_object.precision = float(tagger.statistics['precision'])
-    tagger_object.recall = float(tagger.statistics['recall'])
-    tagger_object.f1_score = float(tagger.statistics['f1_score'])
-    tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_tagger_plot(tagger.model, tagger.statistics))
-    tagger_object.save()
+        # save model locations
+        tagger_object.location = json.dumps({'tagger': tagger_path})
+        tagger_object.precision = float(tagger.statistics['precision'])
+        tagger_object.recall = float(tagger.statistics['recall'])
+        tagger_object.f1_score = float(tagger.statistics['f1_score'])
+        tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_tagger_plot(tagger.model, tagger.statistics))
+        tagger_object.save()
 
 
-    # declare the job done
-    show_progress.update_step('')
-    show_progress.update_view(100.0)
-    task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
-    return True
+        # declare the job done
+        show_progress.update_step('')
+        show_progress.update_view(100.0)
+        task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+        return True
+
+    except Exception as e:
+        # declare the job failed
+        show_progress.update_step('')
+        show_progress.update_view(0)
+        show_progress.update_errors(e)
+        task_object.update_status(Task.STATUS_FAILED)
+        return False

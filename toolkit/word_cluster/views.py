@@ -76,6 +76,30 @@ class WordClusterViewSet(viewsets.ModelViewSet):
         return Response(clustering_result, status=status.HTTP_200_OK)
 
 
+    @action(detail=True, methods=['get', 'post'], serializer_class=TextSerializer)
+    def find_word(self, request, pk=None):
+        """
+        API endpoint for finding a cluster for any word in model.
+        """
+        data = get_payload(request)
+        serializer = TextSerializer(data=data)
+
+        # check if valid request
+        if not serializer.is_valid():
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
+        clustering_object = self.get_object()
+        # check if clustering ready
+        if not clustering_object.location:
+            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # load cluster model
+        clusterer = cluster_cache.get_model(clustering_object.pk)
+
+        clustering_result = clusterer.query(serializer.validated_data['text'])
+        return Response(clustering_result, status=status.HTTP_200_OK)
+
+
     @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
     def cluster_text(self, request, pk=None):
         """
