@@ -77,7 +77,9 @@ class TextTagger:
 
         y_scores = model.decision_function(df_test)
         fpr, tpr, _ = roc_curve(y_test, y_scores)
-        roc_auc = auc(fpr, tpr)     
+        roc_auc = auc(fpr, tpr)
+
+        num_features = len(model.named_steps['classifier'].coef_[0])
 
         statistics = {
             'f1_score':             f1,
@@ -86,7 +88,8 @@ class TextTagger:
             'recall':               recall,
             'true_positive_rate':   tpr,
             'false_positive_rate':  fpr,
-            'area_under_curve':     roc_auc
+            'area_under_curve':     roc_auc,
+            'num_features':         num_features
         }       
 
         self.model = model
