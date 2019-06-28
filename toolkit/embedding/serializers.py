@@ -28,9 +28,6 @@ class EmbeddingPrecictionSerializer(serializers.Serializer):
     output_size = serializers.IntegerField(default=DEFAULT_OUTPUT_SIZE,
                                     help_text=f'Default: {DEFAULT_OUTPUT_SIZE}')
 
-class PhrasePrecictionSerializer(serializers.Serializer):
-    text = serializers.CharField()
-
 
 class TextSerializer(serializers.Serializer):
     text = serializers.CharField()

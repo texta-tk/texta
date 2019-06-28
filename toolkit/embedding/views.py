@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from toolkit.core import permissions as core_permissions
 from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.embedding.serializers import (EmbeddingSerializer, EmbeddingPrecictionSerializer, TextSerializer,
-                                           PhrasePrecictionSerializer, EmbeddingClusterSerializer, ClusterBrowserSerializer)
+                                           EmbeddingClusterSerializer, ClusterBrowserSerializer)
 from toolkit.embedding.embedding import W2VEmbedding
 from toolkit.embedding.phraser import Phraser
 from toolkit.embedding.word_cluster import WordCluster
@@ -70,10 +70,10 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
         else:
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['get', 'post'], serializer_class=PhrasePrecictionSerializer)
+    @action(detail=True, methods=['get', 'post'], serializer_class=TextSerializer)
     def phrase(self, request, pk=None, project_pk=None):
         data = get_payload(request)
-        serializer = PhrasePrecictionSerializer(data=data)
+        serializer = TextSerializer(data=data)
         if serializer.is_valid():
             embedding_object = self.get_object()
             if not embedding_object.location:
