@@ -25,10 +25,11 @@ def train_tagger(tagger_id):
     show_progress.update_step('scrolling positives')
     show_progress.update_view(0)
 
-    field_data = [ElasticSearcher().core.decode_field_data(field) for field in tagger_object.fields]
-    field_path_list = [field['field_path'] for field in field_data]
-
     try:
+        # decode field data
+        field_data = [ElasticSearcher().core.decode_field_data(field) for field in tagger_object.fields]
+        field_path_list = [field['field_path'] for field in field_data]
+
         # add phraser
         if tagger_object.embedding:
             phraser = Phraser(embedding_id=tagger_object.embedding.pk)
@@ -36,42 +37,34 @@ def train_tagger(tagger_id):
             text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
         else:
             text_processor = TextProcessor(remove_stop_words=True)
-    except Exception as e:
-        # declare the job failed
-        show_progress.update_step('')
+
+        positive_samples = ElasticSearcher(query=json.loads(tagger_object.query), 
+                                        field_data=field_data,
+                                        output='doc_with_id',
+                                        callback_progress=show_progress,
+                                        scroll_limit=int(tagger_object.maximum_sample_size),
+                                        text_processor=text_processor
+                                        )
+
+        positive_samples = list(positive_samples)
+        positive_ids = list([doc['_id'] for doc in positive_samples])
+
+        show_progress.update_step('scrolling negatives')
         show_progress.update_view(0)
-        show_progress.update_errors('error loading phraser: {}'.format(e))
-        task_object.update_status(Task.STATUS_FAILED)
-        return False
+        negative_samples = ElasticSearcher(field_data=field_data,
+                                        output='doc_with_id',
+                                        callback_progress=show_progress,
+                                        scroll_limit=int(tagger_object.maximum_sample_size)*int(tagger_object.negative_multiplier),
+                                        ignore_ids=positive_ids,
+                                        text_processor=text_processor
+                                        )
 
-    positive_samples = ElasticSearcher(query=json.loads(tagger_object.query), 
-                                       field_data=field_data,
-                                       output='doc_with_id',
-                                       callback_progress=show_progress,
-                                       scroll_limit=int(tagger_object.maximum_sample_size),
-                                       text_processor=text_processor
-                                       )
+        negative_samples = list(negative_samples)
 
-    positive_samples = list(positive_samples)
-    positive_ids = list([doc['_id'] for doc in positive_samples])
+        show_progress.update_step('training')
+        show_progress.update_view(0)
 
-    show_progress.update_step('scrolling negatives')
-    show_progress.update_view(0)
-    negative_samples = ElasticSearcher(field_data=field_data,
-                                       output='doc_with_id',
-                                       callback_progress=show_progress,
-                                       scroll_limit=int(tagger_object.maximum_sample_size)*int(tagger_object.negative_multiplier),
-                                       ignore_ids=positive_ids,
-                                       text_processor=text_processor
-                                       )
-
-    negative_samples = list(negative_samples)
-
-    show_progress.update_step('training')
-    show_progress.update_view(0)
-
-    try:
-        # try training
+        # train model
         tagger = TextTagger(tagger_id)
         tagger.train(positive_samples, negative_samples, field_list=field_path_list, classifier=tagger_object.classifier, vectorizer=tagger_object.vectorizer)
 
@@ -90,7 +83,6 @@ def train_tagger(tagger_id):
         tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_tagger_plot(tagger.model, tagger.statistics))
         tagger_object.save()
 
-
         # declare the job done
         show_progress.update_step('')
         show_progress.update_view(100.0)
@@ -99,8 +91,6 @@ def train_tagger(tagger_id):
 
     except Exception as e:
         # declare the job failed
-        show_progress.update_step('')
-        show_progress.update_view(0)
-        show_progress.update_errors('error training classifier: {}'.format(e))
+        show_progress.update_errors(e)
         task_object.update_status(Task.STATUS_FAILED)
         return False

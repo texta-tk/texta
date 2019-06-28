@@ -22,43 +22,34 @@ def train_embedding(embedding_id):
     embedding_object = Embedding.objects.get(pk=embedding_id)
     task_object = embedding_object.task
     show_progress = ShowProgress(task_object, multiplier=1)
-    show_progress.update_step('phraser')
+    show_progress.update_step('building phraser')
     show_progress.update_view(0)
 
-    # parse field data
-    field_data = [ElasticSearcher().core.decode_field_data(field) for field in embedding_object.fields]
-    # create itrerator for phraser
-    text_processor = TextProcessor(sentences=True, remove_stop_words=True, tokenize=True)
-    sentences = ElasticSearcher(query=json.loads(embedding_object.query), field_data=field_data, output='text', callback_progress=show_progress, text_processor=text_processor)
-    
     try:
+        # parse field data
+        field_data = [ElasticSearcher().core.decode_field_data(field) for field in embedding_object.fields]
+        # create itrerator for phraser
+        text_processor = TextProcessor(sentences=True, remove_stop_words=True, tokenize=True)
+        sentences = ElasticSearcher(query=json.loads(embedding_object.query), field_data=field_data, output='text', callback_progress=show_progress, text_processor=text_processor)
+        
         # build phrase model
         phraser = Phraser(embedding_id)
         phraser.build(sentences)
-    except Exception as e:
-        # declare the job failed
-        show_progress.update_step('')
+
+        # Number of word2vec passes + one pass to vocabulary building
+        num_passes = 5
+        total_passes = num_passes + 1
+
+        # update progress
+        show_progress = ShowProgress(task_object, multiplier=total_passes)
+        show_progress.update_step('building embedding')
         show_progress.update_view(0)
-        show_progress.update_errors('error building phraser: {}'.format(e))
-        task_object.update_status(Task.STATUS_FAILED)
-        return False
 
-    # Number of word2vec passes + one pass to vocabulary building
-    num_passes = 5
-    total_passes = num_passes + 1
+        # build new processor with phraser
+        text_processor = TextProcessor(phraser=phraser, sentences=True, remove_stop_words=True, tokenize=True)
 
-    # update progress
-    show_progress = ShowProgress(task_object, multiplier=total_passes)
-    show_progress.update_step('word2vec')
-    show_progress.update_view(0)
-
-    # build new processor with phraser
-    text_processor = TextProcessor(phraser=phraser, sentences=True, remove_stop_words=True, tokenize=True)
-
-    # iterate again with built phrase model to include phrases in language model
-    sentences = ElasticSearcher(query=json.loads(embedding_object.query), field_data=field_data, output='text', callback_progress=show_progress, text_processor=text_processor)
-
-    try:
+        # iterate again with built phrase model to include phrases in language model
+        sentences = ElasticSearcher(query=json.loads(embedding_object.query), field_data=field_data, output='text', callback_progress=show_progress, text_processor=text_processor)
         model = word2vec.Word2Vec(sentences, min_count=embedding_object.min_freq, size=embedding_object.num_dimensions, workers=NUM_WORKERS, iter=int(num_passes))
 
         # Save models
@@ -77,14 +68,11 @@ def train_embedding(embedding_id):
         show_progress.update_step('')
         show_progress.update_view(100.0)
         task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
-
         return True
 
     except Exception as e:
         # declare the job failed
-        show_progress.update_step('')
-        show_progress.update_view(0)
-        show_progress.update_errors('error training embedding: {}'.format(e))
+        show_progress.update_errors(e)
         task_object.update_status(Task.STATUS_FAILED)
         return False
 
@@ -106,15 +94,6 @@ def cluster_embedding(clustering_id):
         embedding = W2VEmbedding(embedding_id)
         embedding.load()
 
-    except Exception as e:
-        # declare the job failed
-        show_progress.update_step('')
-        show_progress.update_view(0)
-        show_progress.update_errors('error loading embedding: {}'.format(e))
-        task_object.update_status(Task.STATUS_FAILED)
-        return False
-    
-    try:
         show_progress.update_step('clustering')
         show_progress.update_view(0)
 
@@ -139,8 +118,6 @@ def cluster_embedding(clustering_id):
 
     except Exception as e:
         # declare the job failed
-        show_progress.update_step('')
-        show_progress.update_view(0)
-        show_progress.update_errors('error clustering: {}'.format(e))
+        show_progress.update_errors(e)
         task_object.update_status(Task.STATUS_FAILED)
         return False
