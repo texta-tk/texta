@@ -69,11 +69,9 @@ class WordClusterViewSet(viewsets.ModelViewSet):
         clusterer = cluster_cache.get_model(clustering_object.pk)
 
 
-        clusterer.browse(examples_per_cluster=serializer.validated_data['examples_per_cluster'],
-                         number_of_clusters=serializer.validated_data['number_of_clusters'])
-
-
-        clustering_result = {k:v[:3] for k,v in clusterer.cluster_dict.items()}
+        clustering_result = clusterer.browse(max_examples_per_cluster=serializer.validated_data['max_examples_per_cluster'],
+                                             number_of_clusters=serializer.validated_data['number_of_clusters'],
+                                             sort_reverse=serializer.validated_data['cluster_order'])
 
         return Response(clustering_result, status=status.HTTP_200_OK)
 

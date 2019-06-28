@@ -20,6 +20,9 @@ class WordCluster(object):
     
 
     def cluster(self, embedding, n_clusters):
+        """
+        Perform clustering.
+        """
         embedding = embedding.model
         vocab = list(embedding.wv.vocab.keys())
         vocab_vectors = np.array([embedding[word] for word in vocab])
@@ -44,6 +47,9 @@ class WordCluster(object):
     
 
     def query(self, word):
+        """
+        Query word cluster.
+        """
         try:
             return self.cluster_dict[self.word_to_cluster_dict[word]]
         except:
@@ -51,11 +57,17 @@ class WordCluster(object):
     
 
     def text_to_clusters(self, text):
+        """
+        Converts text to etalons (cluster names).
+        """
         text = [str(self.word_to_cluster_dict[word]) for word in text.split(' ') if word in self.word_to_cluster_dict]
         return ' '.join(text)
 
 
     def save(self, file_path):
+        """
+        Save word cluster to file system.
+        """
         try:
             data = {"word_to_cluster_dict": self.word_to_cluster_dict, "cluster_dict": self.cluster_dict}
             with open(file_path, 'w') as fh:
@@ -67,7 +79,7 @@ class WordCluster(object):
 
     def load(self):
         """
-        Load word cluster from file system
+        Load word cluster from file system.
         """
         if not self.clustering_id:
             return False
@@ -81,14 +93,19 @@ class WordCluster(object):
         return True
 
 
-    def browse(self, number_of_clusters=DEFAULT_BROWSER_NUM_CLUSTERS, examples_per_cluster=DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER):
+    def browse(self, number_of_clusters=DEFAULT_BROWSER_NUM_CLUSTERS, max_examples_per_cluster=DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER, sort_reverse=True):
+        """
+        Retrive cluster info.
+        """
+        cluster_items = sorted(self.cluster_dict.items(), key=lambda k: len(k[1]), reverse=sort_reverse)
         result = []
-        for i, cluster in enumerate(self.cluster_dict.items()):
+        for i, (etalon, cluster) in enumerate(cluster_items):
             if i >= number_of_clusters:
                 break
-            
-            # CONTINUE HERE
-            
-            result.append(cluster[0][:examples_per_cluster])
 
+            cluster_info = {'items': cluster[:max_examples_per_cluster],
+                            'size': len(cluster),
+                            'etalon': etalon}
+            
+            result.append(cluster_info)
         return result
