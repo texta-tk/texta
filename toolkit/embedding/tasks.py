@@ -28,9 +28,18 @@ def train_embedding(embedding_id):
     # create itrerator for phraser
     text_processor = TextProcessor(sentences=True, remove_stop_words=True, tokenize=True)
     sentences = ElasticSearcher(query=json.loads(embedding_object.query), field_data=field_data, output='text', callback_progress=show_progress, text_processor=text_processor)
-    # build phrase model
-    phraser = Phraser(embedding_id)
-    phraser.build(sentences)
+    
+    try:
+        # build phrase model
+        phraser = Phraser(embedding_id)
+        phraser.build(sentences)
+    except Exception as e:
+        # declare the job failed
+        show_progress.update_step('')
+        show_progress.update_view(0)
+        show_progress.update_errors(e)
+        task_object.update_status(Task.STATUS_FAILED)
+        return False
 
     # Number of word2vec passes + one pass to vocabulary building
     num_passes = 5
@@ -46,23 +55,33 @@ def train_embedding(embedding_id):
 
     # iterate again with built phrase model to include phrases in language model
     sentences = ElasticSearcher(query=json.loads(embedding_object.query), field_data=field_data, output='text', callback_progress=show_progress, text_processor=text_processor)
-    model = word2vec.Word2Vec(sentences, min_count=embedding_object.min_freq, size=embedding_object.num_dimensions, workers=NUM_WORKERS, iter=int(num_passes))
 
-    # Save models
-    show_progress.update_step('saving')
-    model_path = os.path.join(MODELS_DIR, 'embedding', f'embedding_{str(embedding_id)}_{secrets.token_hex(10)}')
-    phraser_path = os.path.join(MODELS_DIR, 'embedding', f'phraser_{str(embedding_id)}_{secrets.token_hex(10)}')
-    model.save(model_path)
-    phraser.save(phraser_path)
+    try:
+        model = word2vec.Word2Vec(sentences, min_count=embedding_object.min_freq, size=embedding_object.num_dimensions, workers=NUM_WORKERS, iter=int(num_passes))
 
-    # save model locations
-    embedding_object.location = json.dumps({'embedding': model_path, 'phraser': phraser_path})
-    embedding_object.vocab_size = len(model.wv.vocab)
-    embedding_object.save()
+        # Save models
+        show_progress.update_step('saving')
+        model_path = os.path.join(MODELS_DIR, 'embedding', f'embedding_{str(embedding_id)}_{secrets.token_hex(10)}')
+        phraser_path = os.path.join(MODELS_DIR, 'embedding', f'phraser_{str(embedding_id)}_{secrets.token_hex(10)}')
+        model.save(model_path)
+        phraser.save(phraser_path)
 
-    # declare the job done
-    show_progress.update_step('')
-    show_progress.update_view(100.0)
-    task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+        # save model locations
+        embedding_object.location = json.dumps({'embedding': model_path, 'phraser': phraser_path})
+        embedding_object.vocab_size = len(model.wv.vocab)
+        embedding_object.save()
 
-    return True
+        # declare the job done
+        show_progress.update_step('')
+        show_progress.update_view(100.0)
+        task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+
+        return True
+
+    except Exception as e:
+        # declare the job failed
+        show_progress.update_step('')
+        show_progress.update_view(0)
+        show_progress.update_errors(e)
+        task_object.update_status(Task.STATUS_FAILED)
+        return False

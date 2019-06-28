@@ -32,3 +32,6 @@ class ShowProgress(object):
         if self.task.status != self.task.STATUS_RUNNING:
             self.task.update_status(self.task.STATUS_RUNNING)
         self.task.update_progress(percentage, self.step)
+
+    def update_errors(self, errors):
+        self.task.errors = errors
