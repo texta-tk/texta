@@ -3,9 +3,9 @@ import numpy as np
 import json
 import os
 
-from toolkit.word_cluster.models import WordCluster as WordClusterInstance
+from toolkit.embedding.models import EmbeddingCluster
 from toolkit.settings import MODELS_DIR
-from toolkit.word_cluster.choices import DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER, DEFAULT_BROWSER_NUM_CLUSTERS
+from toolkit.embedding.choices import DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER, DEFAULT_BROWSER_NUM_CLUSTERS
 
 class WordCluster(object):
     """
@@ -84,7 +84,7 @@ class WordCluster(object):
         if not self.clustering_id:
             return False
 
-        clustering_object = WordClusterInstance.objects.get(pk=self.clustering_id)
+        clustering_object = EmbeddingCluster.objects.get(pk=self.clustering_id)
         file_path = json.loads(clustering_object.location)['cluster']
         with open(file_path) as fh:
             loaded_json = json.loads(fh.read())

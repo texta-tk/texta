@@ -44,3 +44,28 @@ class Embedding(models.Model):
 
 
 signals.post_save.connect(Embedding.train_embedding_model, sender=Embedding)
+
+
+class EmbeddingCluster(models.Model):
+    description = models.CharField(max_length=MAX_STR_LEN)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE)
+    num_clusters = models.IntegerField(default=100)
+    location = models.TextField(default=None, null=True)
+    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return self.description
+    
+    @classmethod
+    def cluster_embedding_vocabulary(cls, sender, instance, created, **kwargs):
+        if created:
+            new_task = Task.objects.create(embeddingcluster=instance, status='created')
+            instance.task = new_task
+            instance.save()
+            from toolkit.embedding.tasks import cluster_embedding
+            cluster_embedding.apply_async(args=(instance.pk,))
+
+
+signals.post_save.connect(EmbeddingCluster.cluster_embedding_vocabulary, sender=EmbeddingCluster)
