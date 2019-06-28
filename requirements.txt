@@ -12,3 +12,4 @@ django-rest-auth[with_social]
 psutil
 matplotlib
 termcolor
+django-extensions

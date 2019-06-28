@@ -34,7 +34,7 @@ class EmbeddingViewTests(APITestCase):
             author=cls.user,
             fields=TEST_FIELD_CHOICE,
             min_freq=5,
-            max_vocab=10000,
+            #max_vocab=10000,
             num_dimensions=100,
         )
 

@@ -5,7 +5,9 @@ import secrets
 from celery.decorators import task
 from gensim.models import word2vec
 
-from toolkit.embedding.models import Embedding
+from toolkit.embedding.embedding import W2VEmbedding
+from toolkit.embedding.word_cluster import WordCluster
+from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.core.task.models import Task
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.elastic.searcher import ElasticSearcher
@@ -28,9 +30,18 @@ def train_embedding(embedding_id):
     # create itrerator for phraser
     text_processor = TextProcessor(sentences=True, remove_stop_words=True, tokenize=True)
     sentences = ElasticSearcher(query=json.loads(embedding_object.query), field_data=field_data, output='text', callback_progress=show_progress, text_processor=text_processor)
-    # build phrase model
-    phraser = Phraser(embedding_id)
-    phraser.build(sentences)
+    
+    try:
+        # build phrase model
+        phraser = Phraser(embedding_id)
+        phraser.build(sentences)
+    except Exception as e:
+        # declare the job failed
+        show_progress.update_step('')
+        show_progress.update_view(0)
+        show_progress.update_errors('error building phraser: {}'.format(e))
+        task_object.update_status(Task.STATUS_FAILED)
+        return False
 
     # Number of word2vec passes + one pass to vocabulary building
     num_passes = 5
@@ -46,23 +57,90 @@ def train_embedding(embedding_id):
 
     # iterate again with built phrase model to include phrases in language model
     sentences = ElasticSearcher(query=json.loads(embedding_object.query), field_data=field_data, output='text', callback_progress=show_progress, text_processor=text_processor)
-    model = word2vec.Word2Vec(sentences, min_count=embedding_object.min_freq, size=embedding_object.num_dimensions, workers=NUM_WORKERS, iter=int(num_passes))
 
-    # Save models
-    show_progress.update_step('saving')
-    model_path = os.path.join(MODELS_DIR, 'embedding', f'embedding_{str(embedding_id)}_{secrets.token_hex(10)}')
-    phraser_path = os.path.join(MODELS_DIR, 'embedding', f'phraser_{str(embedding_id)}_{secrets.token_hex(10)}')
-    model.save(model_path)
-    phraser.save(phraser_path)
+    try:
+        model = word2vec.Word2Vec(sentences, min_count=embedding_object.min_freq, size=embedding_object.num_dimensions, workers=NUM_WORKERS, iter=int(num_passes))
 
-    # save model locations
-    embedding_object.location = json.dumps({'embedding': model_path, 'phraser': phraser_path})
-    embedding_object.vocab_size = len(model.wv.vocab)
-    embedding_object.save()
+        # Save models
+        show_progress.update_step('saving')
+        model_path = os.path.join(MODELS_DIR, 'embedding', f'embedding_{str(embedding_id)}_{secrets.token_hex(10)}')
+        phraser_path = os.path.join(MODELS_DIR, 'embedding', f'phraser_{str(embedding_id)}_{secrets.token_hex(10)}')
+        model.save(model_path)
+        phraser.save(phraser_path)
 
-    # declare the job done
-    show_progress.update_step('')
-    show_progress.update_view(100.0)
-    task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+        # save model locations
+        embedding_object.location = json.dumps({'embedding': model_path, 'phraser': phraser_path})
+        embedding_object.vocab_size = len(model.wv.vocab)
+        embedding_object.save()
 
-    return True
+        # declare the job done
+        show_progress.update_step('')
+        show_progress.update_view(100.0)
+        task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+
+        return True
+
+    except Exception as e:
+        # declare the job failed
+        show_progress.update_step('')
+        show_progress.update_view(0)
+        show_progress.update_errors('error training embedding: {}'.format(e))
+        task_object.update_status(Task.STATUS_FAILED)
+        return False
+
+
+@task(name="cluster_embedding")
+def cluster_embedding(clustering_id):
+    # retrieve clustering object
+    clustering_object = EmbeddingCluster.objects.get(pk=clustering_id)
+    num_clusters = clustering_object.num_clusters
+    
+    task_object = clustering_object.task
+    show_progress = ShowProgress(task_object, multiplier=1)
+
+    show_progress.update_step('loading embedding')
+    show_progress.update_view(0)
+
+    try:
+        embedding_id = clustering_object.embedding.pk
+        embedding = W2VEmbedding(embedding_id)
+        embedding.load()
+
+    except Exception as e:
+        # declare the job failed
+        show_progress.update_step('')
+        show_progress.update_view(0)
+        show_progress.update_errors('error loading embedding: {}'.format(e))
+        task_object.update_status(Task.STATUS_FAILED)
+        return False
+    
+    try:
+        show_progress.update_step('clustering')
+        show_progress.update_view(0)
+
+        clustering = WordCluster(clustering_object.pk)
+        clustering.cluster(embedding, num_clusters)
+
+        show_progress.update_step('saving')
+        show_progress.update_view(0)
+
+        clustering_path = os.path.join(MODELS_DIR, 'cluster', f'cluster_{clustering_id}_{secrets.token_hex(10)}')
+        clustering.save(clustering_path)
+
+        # save clustering
+        clustering_object.location = json.dumps({'cluster': clustering_path})
+        clustering_object.save()
+
+        # finish task
+        show_progress.update_step('')
+        show_progress.update_view(100.0)
+        task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+        return True
+
+    except Exception as e:
+        # declare the job failed
+        show_progress.update_step('')
+        show_progress.update_view(0)
+        show_progress.update_errors('error clustering: {}'.format(e))
+        task_object.update_status(Task.STATUS_FAILED)
+        return False

@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'rest_auth.registration',
-    #'django_extensions'
+    'django_extensions'
 ]
 
 # For registration (see: https://django-rest-auth.readthedocs.io/en/latest/installation.html#registration-optional)
@@ -178,7 +178,7 @@ NUM_WORKERS=4
 
 # create model dirs
 MODELS_DIR = os.path.join(BASE_DIR, 'data', 'models')
-MODEL_TYPES = ['embedding', 'tagger', 'extractor']
+MODEL_TYPES = ['embedding', 'tagger', 'extractor', 'cluster']
 
 for model_type in MODEL_TYPES:
     model_dir = os.path.join(MODELS_DIR, model_type)

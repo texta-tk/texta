@@ -90,7 +90,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
         # apply tagger
         tagger_id = tagger_object.pk
-        tagger_response = self.apply_tagger(tagger_id, serializer.data['text'], input_type='text', text_processor=text_processor)
+        tagger_response = self.apply_tagger(tagger_id, serializer.validated_data['text'], input_type='text', text_processor=text_processor)
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
@@ -128,7 +128,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
         # apply tagger
         tagger_id = tagger_object.pk
-        tagger_response = self.apply_tagger(tagger_id, serializer.data['doc'], input_type='doc', text_processor=text_processor)
+        tagger_response = self.apply_tagger(tagger_id, serializer.validated_data['doc'], input_type='doc', text_processor=text_processor)
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
