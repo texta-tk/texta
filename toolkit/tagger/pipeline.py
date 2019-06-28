@@ -107,7 +107,7 @@ class PipelineBuilder:
         self.classifier_list.append(ModelStep(name, model, label, params))
 
     def add_feature_selector(self, name, model, label, params, estimator=None):
-        self.feature_selector_list.append(ModelStep(name, model, label, params))
+        self.feature_selector_list.append(ModelStep(name, model, label, params, estimator=estimator))
 
     def get_extractor_options(self):
         options = []
@@ -196,7 +196,7 @@ def get_pipeline_builder():
     params = {}
     pipe_builder.add_feature_selector('feature_selector', SelectFromModel, 'SVMFeatureSelector', params, estimator=LinearSVC(penalty='l1', dual=False))
 
-    params = {'k': [500]}
+    params = {'k': [500, 1000, 2000, 3000, 5000, 7000, 10000]}
     pipe_builder.add_feature_selector('feature_selector', SelectKBest, 'KBestFeatureSelector', params, estimator=chi2)
 
     return pipe_builder
