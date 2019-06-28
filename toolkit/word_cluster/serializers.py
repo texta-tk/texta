@@ -9,7 +9,7 @@ class WordClusterSerializer(serializers.ModelSerializer):
     task = TaskSerializer(read_only=True)
     #embedding = serializers.HyperlinkedRelatedField(view_name='embedding-detail')
     num_clusters = serializers.IntegerField(default=DEFAULT_NUM_CLUSTERS, help_text=f'Default: {DEFAULT_NUM_CLUSTERS}')
-    description = serializers.CharField()
+    description = serializers.CharField(default='', help_text=f'Default: EMPTY')
     vocab_size = serializers.SerializerMethodField()
 
     class Meta:

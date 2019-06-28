@@ -25,6 +25,11 @@ def get_vectorizer_choices():
     return [(a['index'], a['label']) for a in pipeline.get_extractor_options()]
 
 
+def get_feature_selector_choices():
+    pipeline = get_pipeline_builder()
+    return [(a['index'], a['label']) for a in pipeline.get_feature_selector_options()]
+
+
 DEFAULT_MAX_SAMPLE_SIZE = 10000
 DEFAULT_NEGATIVE_MULTIPLIER = 1.0
 DEFAULT_MIN_SAMPLE_SIZE = 50

@@ -24,8 +24,9 @@ class Tagger(models.Model):
     fields = MultiSelectField(choices=get_field_choices())
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
 
-    vectorizer = models.IntegerField()
-    classifier = models.IntegerField()
+    vectorizer = models.IntegerField(default=0)
+    classifier = models.IntegerField(default=0)
+    feature_selector = models.IntegerField(default=0)
     negative_multiplier = models.FloatField(default=DEFAULT_NEGATIVE_MULTIPLIER, blank=True)
     maximum_sample_size = models.IntegerField(default=DEFAULT_MAX_SAMPLE_SIZE, blank=True)
     score_threshold = models.FloatField(default=0.0, blank=True)

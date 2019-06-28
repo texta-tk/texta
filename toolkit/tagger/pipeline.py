@@ -3,6 +3,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectFromModel
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import chi2
 from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import Normalizer
 from sklearn.svm import SVC, LinearSVC
@@ -27,11 +29,12 @@ class ModelNull(BaseEstimator):
 
 class ModelStep:
 
-    def __init__(self, name, model, label, params):
+    def __init__(self, name, model, label, params, estimator=None):
         self.name = name
         self.model = model
         self.label = label
         self.params = params
+        self.estimator = estimator
 
     def __str__(self):
         return self.name
@@ -40,7 +43,10 @@ class ModelStep:
         return self.name
 
     def get_step(self):
-        return (self.name, self.model())
+        if self.estimator:
+            return (self.name, self.model(self.estimator))
+        else:
+            return (self.name, self.model())
 
     def get_param(self):
         param_dict = {}
@@ -89,14 +95,19 @@ class PipelineBuilder:
     def __init__(self):
         self.extractor_list = []
         self.classifier_list = []
+        self.feature_selector_list = []
         self.extractor_op = 0
         self.classifier_op = 0
+        self.feature_selector_op = 0
 
     def add_extractor(self, name, model, label, params):
         self.extractor_list.append(ModelStep(name, model, label, params))
 
     def add_classifier(self, name, model, label, params):
         self.classifier_list.append(ModelStep(name, model, label, params))
+
+    def add_feature_selector(self, name, model, label, params, estimator=None):
+        self.feature_selector_list.append(ModelStep(name, model, label, params))
 
     def get_extractor_options(self):
         options = []
@@ -107,6 +118,12 @@ class PipelineBuilder:
     def get_classifier_options(self):
         options = []
         for i, x in enumerate(self.classifier_list):
+            options.append({'index': i, 'label': x.label})
+        return options
+
+    def get_feature_selector_options(self):
+        options = []
+        for i, x in enumerate(self.feature_selector_list):
             options.append({'index': i, 'label': x.label})
         return options
 
@@ -143,8 +160,8 @@ class PipelineBuilder:
         steps = []
         steps.append(tuple(['union', FeatureUnion(transformer_list=transformer_list)]))
         
-        # feature selection using linear svc
-        steps.append(('feature_selection', SelectFromModel(LinearSVC(penalty='l1', dual=False))))
+        # Feature selector
+        steps.append(self.feature_selector_list[self.feature_selector_op].get_step())
 
         steps.append(self.classifier_list[self.classifier_op].get_step())
         pipe = Pipeline(steps)
@@ -171,9 +188,16 @@ def get_pipeline_builder():
     params = {}
     pipe_builder.add_classifier('classifier', LogisticRegression, 'Logistic Regression', params)
 
-    params = {}
     params = {'probability': [True], 'kernel': ['linear']}
     pipe_builder.add_classifier('classifier', SVC, 'LinearSVC', params)
+
+    # Feature selectors
+
+    params = {}
+    pipe_builder.add_feature_selector('feature_selector', SelectFromModel, 'SVMFeatureSelector', params, estimator=LinearSVC(penalty='l1', dual=False))
+
+    params = {'k': [500]}
+    pipe_builder.add_feature_selector('feature_selector', SelectKBest, 'KBestFeatureSelector', params, estimator=chi2)
 
     return pipe_builder
     

@@ -4,7 +4,7 @@ from django.db.models import Avg
 from toolkit.tagger.models import Tagger, TaggerGroup
 
 from toolkit.tagger.choices import (get_fact_names, 
-                                    get_field_choices, get_classifier_choices, get_vectorizer_choices,
+                                    get_field_choices, get_classifier_choices, get_vectorizer_choices, get_feature_selector_choices,
                                     DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE,
                                     DEFAULT_NUM_CANDIDATES)
 
@@ -40,6 +40,7 @@ class TaggerSerializer(serializers.ModelSerializer):
                                                    help_text=f'Default: {DEFAULT_NEGATIVE_MULTIPLIER}')
     maximum_sample_size = serializers.IntegerField(default=DEFAULT_MAX_SAMPLE_SIZE,
                                                    help_text=f'Default: {DEFAULT_MAX_SAMPLE_SIZE}')
+    feature_selector = serializers.ChoiceField(choices=get_feature_selector_choices())
 
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
@@ -47,7 +48,7 @@ class TaggerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tagger
         fields = ('url', 'id', 'description', 'project', 'author', 'query',
-                  'fields', 'embedding', 'vectorizer', 'classifier', 'maximum_sample_size', 'negative_multiplier',
+                  'fields', 'embedding', 'vectorizer', 'classifier', 'feature_selector', 'maximum_sample_size', 'negative_multiplier',
                   'location', 'precision', 'recall', 'f1_score', 'plot', 'task')
 
         read_only_fields = ('author', 'project', 'location',
