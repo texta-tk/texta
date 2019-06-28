@@ -37,7 +37,7 @@ def train_embedding(embedding_id):
         # declare the job failed
         show_progress.update_step('')
         show_progress.update_view(0)
-        show_progress.update_errors(e)
+        show_progress.update_errors('error building phraser: {}'.format(e))
         task_object.update_status(Task.STATUS_FAILED)
         return False
 
@@ -82,6 +82,6 @@ def train_embedding(embedding_id):
         # declare the job failed
         show_progress.update_step('')
         show_progress.update_view(0)
-        show_progress.update_errors(e)
+        show_progress.update_errors('error training embedding: {}'.format(e))
         task_object.update_status(Task.STATUS_FAILED)
         return False

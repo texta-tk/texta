@@ -26,29 +26,46 @@ def cluster_embedding(clustering_id):
     show_progress.update_step('loading embedding')
     show_progress.update_view(0)
 
-    embedding_id = clustering_object.embedding.pk
-    embedding = W2VEmbedding(embedding_id)
-    embedding.load()
+    try:
+        embedding_id = clustering_object.embedding.pk
+        embedding = W2VEmbedding(embedding_id)
+        embedding.load()
 
-    show_progress.update_step('clustering')
-    show_progress.update_view(0)
+    except Exception as e:
+        # declare the job failed
+        show_progress.update_step('')
+        show_progress.update_view(0)
+        show_progress.update_errors('error loading embedding: {}'.format(e))
+        task_object.update_status(Task.STATUS_FAILED)
+        return False
+    
+    try:
+        show_progress.update_step('clustering')
+        show_progress.update_view(0)
 
-    clustering = WordClusterObject(clustering_object.pk)
-    clustering.cluster(embedding, num_clusters)
+        clustering = WordClusterObject(clustering_object.pk)
+        clustering.cluster(embedding, num_clusters)
 
-    show_progress.update_step('saving')
-    show_progress.update_view(0)
+        show_progress.update_step('saving')
+        show_progress.update_view(0)
 
-    clustering_path = os.path.join(MODELS_DIR, 'cluster', f'cluster_{clustering_id}_{secrets.token_hex(10)}')
-    clustering.save(clustering_path)
+        clustering_path = os.path.join(MODELS_DIR, 'cluster', f'cluster_{clustering_id}_{secrets.token_hex(10)}')
+        clustering.save(clustering_path)
 
-    # save clustering
-    clustering_object.location = json.dumps({'cluster': clustering_path})
-    clustering_object.save()
+        # save clustering
+        clustering_object.location = json.dumps({'cluster': clustering_path})
+        clustering_object.save()
 
-    # finish task
-    show_progress.update_step('')
-    show_progress.update_view(100.0)
-    task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+        # finish task
+        show_progress.update_step('')
+        show_progress.update_view(100.0)
+        task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+        return True
 
-    return True
+    except Exception as e:
+        # declare the job failed
+        show_progress.update_step('')
+        show_progress.update_view(0)
+        show_progress.update_errors('error clustering: {}'.format(e))
+        task_object.update_status(Task.STATUS_FAILED)
+        return False

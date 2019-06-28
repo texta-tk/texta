@@ -1,4 +1,5 @@
 from toolkit.core.task.models import Task
+import json
 
 
 class ShowProgress(object):
@@ -33,5 +34,10 @@ class ShowProgress(object):
             self.task.update_status(self.task.STATUS_RUNNING)
         self.task.update_progress(percentage, self.step)
 
-    def update_errors(self, errors):
-        self.task.errors = errors
+    def update_errors(self, error):
+        try:
+            errors_json = json.loads(self.task.errors)
+        except:
+            errors_json = []
+        errors_json.append(error)
+        self.task.errors = json.dumps(errors_json)

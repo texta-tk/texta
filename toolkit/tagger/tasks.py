@@ -28,15 +28,21 @@ def train_tagger(tagger_id):
     field_data = [ElasticSearcher().core.decode_field_data(field) for field in tagger_object.fields]
     field_path_list = [field['field_path'] for field in field_data]
 
-    # add phraser here
-    if tagger_object.embedding:
-        phraser = Phraser(embedding_id=tagger_object.embedding.pk)
-        phraser.load()
-        text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
-    else:
-        text_processor = TextProcessor(remove_stop_words=True)
-    
-    # TODO: use embedding to group together features
+    try:
+        # add phraser
+        if tagger_object.embedding:
+            phraser = Phraser(embedding_id=tagger_object.embedding.pk)
+            phraser.load()
+            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
+        else:
+            text_processor = TextProcessor(remove_stop_words=True)
+    except Exception as e:
+        # declare the job failed
+        show_progress.update_step('')
+        show_progress.update_view(0)
+        show_progress.update_errors('error loading phraser: {}'.format(e))
+        task_object.update_status(Task.STATUS_FAILED)
+        return False
 
     positive_samples = ElasticSearcher(query=json.loads(tagger_object.query), 
                                        field_data=field_data,
@@ -94,6 +100,6 @@ def train_tagger(tagger_id):
         # declare the job failed
         show_progress.update_step('')
         show_progress.update_view(0)
-        show_progress.update_errors(e)
+        show_progress.update_errors('error training classifier: {}'.format(e))
         task_object.update_status(Task.STATUS_FAILED)
         return False
