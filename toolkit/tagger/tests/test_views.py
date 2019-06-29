@@ -84,9 +84,12 @@ class TaggerViewTests(APITestCase):
         payload = { "text": "This is some test text for the Tagger Test" }
         tag_text_url = f'{self.url}{self.test_tagger.id}/tag_text/'
         response = self.client.post(tag_text_url, payload)
+        print_output('test_tag_text:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
+        self.assertTrue('result' in response.data)
+        self.assertTrue('probability' in response.data)
 
 
     def run_tag_doc(self):
@@ -106,13 +109,10 @@ class TaggerViewTests(APITestCase):
         '''Tests the endpoint for the list_features action'''
         tag_text_url = f'{self.url}{self.test_tagger.id}/list_features/'
         response = self.client.get(tag_text_url)
-        print(response)
-        print_output('test_list_features:response.data', response.data[0])
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
-        self.assertTrue('feature' in response.data[0])
-        self.assertTrue('coefficient' in response.data[0])
+        self.assertTrue('error' not in response.data)
 
 
     @classmethod
