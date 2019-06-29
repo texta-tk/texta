@@ -107,8 +107,9 @@ class TaggerViewTests(APITestCase):
 
     def run_list_features(self):
         '''Tests the endpoint for the list_features action'''
-        tag_text_url = f'{self.url}{self.test_tagger.id}/list_features/'
-        response = self.client.get(tag_text_url)
+        list_features_url = f'{self.url}{self.test_tagger.id}/list_features/'
+        response = self.client.get(list_features_url)
+        print_output('test_list_features:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
