@@ -58,7 +58,7 @@ class TaggerViewTests(APITestCase):
             "description": "TestTagger",
             "query": "",
             "fields": TEST_FIELD_CHOICE,
-            "vectorizer": 1,
+            "vectorizer": 2,
             "classifier": 0,
             "feature_selector": 0,
             "maximum_sample_size": 500,
