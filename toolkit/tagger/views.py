@@ -111,13 +111,14 @@ class TaggerViewSet(viewsets.ModelViewSet):
         # check if tagger exists
         if not tagger_object.location:
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # create text processor object for tagger
+        stop_lexicon_ids = [lexicon.id for lexicon in tagger_object.stop_word_lexicons.all()]
         if tagger_object.embedding:
             phraser = phraser_cache.get_model(tagger_object.embedding.pk)
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
+            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, stop_word_lexicons=stop_lexicon_ids)
         else:
-            text_processor = TextProcessor(remove_stop_words=True)
+            text_processor = TextProcessor(remove_stop_words=True, stop_word_lexicons=stop_lexicon_ids)
 
         # apply tagger
         tagger_id = tagger_object.pk
@@ -151,11 +152,12 @@ class TaggerViewSet(viewsets.ModelViewSet):
             return Response({'error': 'document fields do not match. Required keys: {}'.format(field_path_list)}, status=status.HTTP_400_BAD_REQUEST)
 
         # create text processor object for tagger
+        stop_lexicon_ids = [lexicon.id for lexicon in tagger_object.stop_word_lexicons.all()]
         if tagger_object.embedding:
             phraser = phraser_cache.get_model(tagger_object.embedding.pk)
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
+            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, stop_word_lexicons=stop_lexicon_ids)
         else:
-            text_processor = TextProcessor(remove_stop_words=True)
+            text_processor = TextProcessor(remove_stop_words=True, stop_word_lexicons=stop_lexicon_ids)
 
         # apply tagger
         tagger_id = tagger_object.pk
@@ -373,11 +375,12 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
             tagger_id = tagger.pk
 
             # create text processor object for tagger
+            stop_lexicon_ids = [lexicon.id for lexicon in tagger.stop_word_lexicons.all()]
             if tagger.embedding:
                 phraser = phraser_cache.get_model(tagger.embedding.pk)
-                text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
+                text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, stop_word_lexicons=stop_lexicon_ids)
             else:
-                text_processor = TextProcessor(remove_stop_words=True)
+                text_processor = TextProcessor(remove_stop_words=True, stop_word_lexicons=stop_lexicon_ids)
 
             # load tagger model
             tagger = model_cache.get_model(tagger_id)

@@ -8,6 +8,7 @@ from multiselectfield import MultiSelectField
 
 from toolkit.embedding.choices import get_field_choices
 from toolkit.core.project.models import Project
+from toolkit.core.lexicon.models import Lexicon
 from toolkit.core.task.models import Task
 from toolkit.embedding.models import Embedding
 from toolkit.elastic.searcher import EMPTY_QUERY
@@ -23,6 +24,7 @@ class Tagger(models.Model):
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     fields = MultiSelectField(choices=get_field_choices())
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
+    stop_word_lexicons = models.ManyToManyField(Lexicon, related_name="tagger_lexicons")
 
     vectorizer = models.IntegerField(default=0)
     classifier = models.IntegerField(default=0)
