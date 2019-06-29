@@ -62,6 +62,37 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
+    @action(detail=True, methods=['get','post'])
+    def list_features(self, request, pk=None):
+        """
+        API endpoint for listing tagger features.
+        """
+        # retrieve tagger object
+        tagger_object = self.get_object()
+
+        # check if tagger exists
+        if not tagger_object.location:
+            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # retrieve model
+        tagger = model_cache.get_model(tagger_object.pk)
+
+        try:
+            # get feature names and supports
+            features = tagger.model.named_steps['union'].transformer_list[0][1].named_steps['vectorizer'].get_feature_names()
+            feature_coefs = tagger.model.named_steps['classifier'].coef_[0]
+            supports = tagger.model.named_steps['feature_selector'].get_support()
+        except:
+            return Response({'error': 'Error loading feature names. Are you using HashingVectorizer? It does not support feature names!'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # filter features
+        selected_features = [feature for i, feature in enumerate(features) if supports[i]]
+        selected_features = [{'feature': feature, 'coefficient': feature_coefs[i]} for i, feature in enumerate(selected_features) if feature_coefs[i] > 0]
+        selected_features = sorted(selected_features, key=lambda k: k['coefficient'], reverse=True)
+
+        return Response(selected_features, status=status.HTTP_200_OK)
+
+
     @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
     def tag_text(self, request, pk=None):
         """
