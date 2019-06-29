@@ -7,11 +7,11 @@ class StopWords:
     """
     Stop word remover using existing lists.
     """
-    def __init__(self, lexicon_ids=[]):
-        self.stop_words = self._get_stop_words(lexicon_ids)
+    def __init__(self, custom_stop_words=[]):
+        self.stop_words = self._get_stop_words(custom_stop_words)
     
     @staticmethod
-    def _get_stop_words(lexicon_ids):
+    def _get_stop_words(custom_stop_words):
         stop_words = {}
         stop_word_dir = os.path.join(BASE_DIR, 'toolkit', 'tools', 'stop_words')
         for f in os.listdir(stop_word_dir):
@@ -19,12 +19,8 @@ class StopWords:
                 for stop_word in fh.read().strip().split('\n'):
                     stop_words[stop_word] = True
 
-        # load lexicons
-        lexicons = Lexicon.objects.filter(id__in=lexicon_ids)
-        for lexicon in lexicons:
-            for phrase in lexicon.phrases.split('\n'):
-                phrase = phrase.strip()
-                stop_words[phrase] = True       
+        for custom_stop_word in custom_stop_words:
+            stop_words[custom_stop_word] = True     
 
         return stop_words
 
@@ -42,13 +38,13 @@ class TextProcessor:
     Processor for processing texts prior to modelling
     """
 
-    def __init__(self, phraser=None, remove_stop_words=True, sentences=False, tokenize=False, stop_word_lexicons=[]):
+    def __init__(self, phraser=None, remove_stop_words=True, sentences=False, tokenize=False, custom_stop_words=[]):
         self.phraser = phraser
         self.remove_stop_words = remove_stop_words
         self.sentences = sentences
         self.tokenize = tokenize
 
-        self.stop_words = StopWords(lexicon_ids=stop_word_lexicons)
+        self.stop_words = StopWords(custom_stop_words=custom_stop_words)
     
     def process(self, input_text):
         stripped_text = input_text.strip().lower()

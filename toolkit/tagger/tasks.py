@@ -30,13 +30,14 @@ def train_tagger(tagger_id):
         field_data = [ElasticSearcher().core.decode_field_data(field) for field in tagger_object.fields]
         field_path_list = [field['field_path'] for field in field_data]
 
-        # add phraser
+        # add phraser and stop words
+        stop_words = json.loads(tagger_object.stop_words)
         if tagger_object.embedding:
             phraser = Phraser(embedding_id=tagger_object.embedding.pk)
             phraser.load()
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
+            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words)
         else:
-            text_processor = TextProcessor(remove_stop_words=True)
+            text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
 
         positive_samples = ElasticSearcher(query=json.loads(tagger_object.query), 
                                         field_data=field_data,

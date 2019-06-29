@@ -49,6 +49,9 @@ class TaggerViewTests(APITestCase):
         self.run_create_tagger_training_and_task_signal()
         self.run_tag_text()
         self.run_tag_doc()
+        self.run_stop_word_list()
+        self.run_stop_word_add()
+        self.run_stop_word_remove()
         self.run_list_features()
 
 
@@ -114,6 +117,39 @@ class TaggerViewTests(APITestCase):
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
         self.assertTrue('error' not in response.data)
+    
+
+    def run_stop_word_list(self):
+        '''Tests the endpoint for the stop_word_list action'''
+        url = f'{self.url}{self.test_tagger.id}/stop_word_list/'
+        response = self.client.get(url)
+        print_output('test_stop_word_list:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response data is not empty, but a result instead
+        self.assertTrue(response.data)
+        self.assertTrue('stop_words' in response.data)  
+
+
+    def run_stop_word_add(self):
+        '''Tests the endpoint for the stop_word_add action'''
+        url = f'{self.url}{self.test_tagger.id}/stop_word_add/?text=stopsõna'
+        response = self.client.get(url)
+        print_output('test_stop_word_add:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response data is not empty, but a result instead
+        self.assertTrue(response.data)
+        self.assertTrue('added' in response.data)
+
+
+    def run_stop_word_remove(self):
+        '''Tests the endpoint for the stop_word_remove action'''
+        url = f'{self.url}{self.test_tagger.id}/stop_word_remove/?text=stopsõna'
+        response = self.client.get(url)
+        print_output('test_stop_word_remove:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response data is not empty, but a result instead
+        self.assertTrue(response.data)
+        self.assertTrue('removed' in response.data)
 
 
     @classmethod

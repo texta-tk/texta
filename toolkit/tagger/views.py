@@ -62,7 +62,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-    @action(detail=True, methods=['get','post'])
+    @action(detail=True, methods=['get'])
     def list_features(self, request, pk=None):
         """
         API endpoint for listing tagger features.
@@ -93,6 +93,86 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(selected_features, status=status.HTTP_200_OK)
 
 
+    @action(detail=True, methods=['get'])
+    def stop_word_list(self, request, pk=None):
+        """
+        API endpoint for listing tagger object stop words.
+        """
+        # retrieve tagger object and load stop words
+        tagger_object = self.get_object()
+        success = {'stop_words': json.loads(tagger_object.stop_words)}
+        return Response(success, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
+    def stop_word_add(self, request, pk=None):
+        """
+        API endpoint for adding a new stop word to tagger
+        """
+        data = get_payload(request)
+        serializer = TextSerializer(data=data)
+
+        # check if valid request
+        if not serializer.is_valid():
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
+        new_stop_word = serializer.validated_data['text']
+
+        # retrieve tagger object and update stop word list
+        tagger_object = self.get_object()
+        stop_words = json.loads(tagger_object.stop_words)
+        if new_stop_word not in stop_words:
+            stop_words.append(new_stop_word)
+        
+        # save tagger object
+        tagger_object.stop_words = json.dumps(stop_words)
+        tagger_object.save()
+
+        success = {'added': new_stop_word, 'stop_words': stop_words}
+        return Response(success, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
+    def stop_word_remove(self, request, pk=None):
+        """
+        API endpoint for removing tagger stop word.
+        """
+        data = get_payload(request)
+        serializer = TextSerializer(data=data)
+
+        # check if valid request
+        if not serializer.is_valid():
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
+        remove_stop_word = serializer.validated_data['text']
+
+        # retrieve tagger object and update stop word list
+        tagger_object = self.get_object()
+        stop_words = json.loads(tagger_object.stop_words)
+
+        # check is word in list
+        if remove_stop_word not in stop_words:
+            return Response({'error': 'word not present among stop words'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # remove stop word
+        stop_words.remove(remove_stop_word)
+        
+        # save tagger object
+        tagger_object.stop_words = json.dumps(stop_words)
+        tagger_object.save()
+
+        success = {'removed': remove_stop_word, 'stop_words': stop_words}
+        return Response(success, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['get','post'])
+    def retrain_tagger(self, request, pk=None):
+        """
+        API endpoint for retraining tagger model.
+        """
+        return Response('to be implemented', status=status.HTTP_200_OK)
+
+
     @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
     def tag_text(self, request, pk=None):
         """
@@ -113,12 +193,12 @@ class TaggerViewSet(viewsets.ModelViewSet):
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # create text processor object for tagger
-        stop_lexicon_ids = [lexicon.id for lexicon in tagger_object.stop_word_lexicons.all()]
+        stop_words = json.loads(tagger_object.stop_words)
         if tagger_object.embedding:
             phraser = phraser_cache.get_model(tagger_object.embedding.pk)
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, stop_word_lexicons=stop_lexicon_ids)
+            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words)
         else:
-            text_processor = TextProcessor(remove_stop_words=True, stop_word_lexicons=stop_lexicon_ids)
+            text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
 
         # apply tagger
         tagger_id = tagger_object.pk
@@ -152,12 +232,12 @@ class TaggerViewSet(viewsets.ModelViewSet):
             return Response({'error': 'document fields do not match. Required keys: {}'.format(field_path_list)}, status=status.HTTP_400_BAD_REQUEST)
 
         # create text processor object for tagger
-        stop_lexicon_ids = [lexicon.id for lexicon in tagger_object.stop_word_lexicons.all()]
+        stop_words = json.loads(tagger_object.stop_words)
         if tagger_object.embedding:
             phraser = phraser_cache.get_model(tagger_object.embedding.pk)
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, stop_word_lexicons=stop_lexicon_ids)
+            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words)
         else:
-            text_processor = TextProcessor(remove_stop_words=True, stop_word_lexicons=stop_lexicon_ids)
+            text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
 
         # apply tagger
         tagger_id = tagger_object.pk
@@ -375,12 +455,12 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
             tagger_id = tagger.pk
 
             # create text processor object for tagger
-            stop_lexicon_ids = [lexicon.id for lexicon in tagger.stop_word_lexicons.all()]
+            stop_words = json.loads(tagger.stop_words)
             if tagger.embedding:
                 phraser = phraser_cache.get_model(tagger.embedding.pk)
-                text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, stop_word_lexicons=stop_lexicon_ids)
+                text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words)
             else:
-                text_processor = TextProcessor(remove_stop_words=True, stop_word_lexicons=stop_lexicon_ids)
+                text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
 
             # load tagger model
             tagger = model_cache.get_model(tagger_id)

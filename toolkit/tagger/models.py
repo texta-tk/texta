@@ -24,7 +24,7 @@ class Tagger(models.Model):
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     fields = MultiSelectField(choices=get_field_choices())
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
-    stop_word_lexicons = models.ManyToManyField(Lexicon, related_name="tagger_lexicons")
+    stop_words = models.TextField(default='[]')
 
     vectorizer = models.IntegerField(default=0)
     classifier = models.IntegerField(default=0)
