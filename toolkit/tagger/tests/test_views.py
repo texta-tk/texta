@@ -49,6 +49,7 @@ class TaggerViewTests(APITestCase):
         self.run_create_tagger_training_and_task_signal()
         self.run_tag_text()
         self.run_tag_doc()
+        self.run_list_features()
 
 
     def run_create_tagger_training_and_task_signal(self):
@@ -57,7 +58,7 @@ class TaggerViewTests(APITestCase):
             "description": "TestTagger",
             "query": "",
             "fields": TEST_FIELD_CHOICE,
-            "vectorizer": 0,
+            "vectorizer": 1,
             "classifier": 0,
             "feature_selector": 0,
             "maximum_sample_size": 500,
@@ -102,6 +103,18 @@ class TaggerViewTests(APITestCase):
         self.assertTrue(response.data)
         self.assertTrue('result' in response.data)
         self.assertTrue('probability' in response.data)
+
+
+    def run_list_features(self):
+        '''Tests the endpoint for the list_features action'''
+        tag_text_url = f'{self.url}{self.test_tagger.id}/list_features/'
+        response = self.client.get(tag_text_url)
+        print_output('test_list_features:response.data', response.data[0])
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response data is not empty, but a result instead
+        self.assertTrue(response.data)
+        self.assertTrue('feature' in response.data[0])
+        self.assertTrue('coefficient' in response.data[0])
 
 
     @classmethod
