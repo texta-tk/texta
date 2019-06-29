@@ -10,7 +10,8 @@ from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.core.project.models import Project
 from toolkit.tagger.serializers import TaggerSerializer, TaggerGroupSerializer, \
                                        TextSerializer, DocSerializer, \
-                                       TextGroupSerializer, DocGroupSerializer
+                                       TextGroupSerializer, DocGroupSerializer, \
+                                       FeatureListSerializer
 from toolkit.tagger.text_tagger import TextTagger
 from toolkit.utils.model_cache import ModelCache
 from toolkit.embedding.phraser import Phraser
@@ -62,11 +63,18 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=['get', 'post'], serializer_class=FeatureListSerializer)
     def list_features(self, request, pk=None):
         """
         API endpoint for listing tagger features.
         """
+        data = get_payload(request)
+        serializer = FeatureListSerializer(data=data)
+
+        # check if valid request
+        if not serializer.is_valid():
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
         # retrieve tagger object
         tagger_object = self.get_object()
 
@@ -90,7 +98,11 @@ class TaggerViewSet(viewsets.ModelViewSet):
         selected_features = [{'feature': feature, 'coefficient': feature_coefs[i]} for i, feature in enumerate(selected_features) if feature_coefs[i] > 0]
         selected_features = sorted(selected_features, key=lambda k: k['coefficient'], reverse=True)
 
-        return Response(selected_features, status=status.HTTP_200_OK)
+        features_to_show = selected_features[:serializer.validated_data['size']]
+        feature_info = {'features': features_to_show, 
+                        'total_features': len(selected_features),
+                        'showing_features': len(features_to_show)}
+        return Response(feature_info, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['get'])

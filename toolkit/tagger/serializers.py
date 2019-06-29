@@ -20,6 +20,10 @@ class DocSerializer(serializers.Serializer):
     doc = serializers.JSONField()
 
 
+class FeatureListSerializer(serializers.Serializer):
+    size = serializers.IntegerField(default=100, help_text='Default: 100')
+
+
 class TextGroupSerializer(serializers.Serializer):
     text = serializers.CharField()
     hybrid = serializers.BooleanField(default=True)
