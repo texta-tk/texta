@@ -7,6 +7,7 @@ from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.query import Query
 
 from toolkit.tagger.models import Tagger, TaggerGroup
+from toolkit.tagger.tasks import train_tagger
 from toolkit.core.project.models import Project
 from toolkit.tagger.serializers import TaggerSerializer, TaggerGroupSerializer, \
                                        TextSerializer, DocSerializer, \
@@ -105,7 +106,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(feature_info, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=['get', 'post'])
     def stop_word_list(self, request, pk=None):
         """
         API endpoint for listing tagger object stop words.
@@ -116,7 +117,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(success, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
+    @action(detail=True, methods=['get', 'post'], serializer_class=TextSerializer)
     def stop_word_add(self, request, pk=None):
         """
         API endpoint for adding a new stop word to tagger
@@ -144,7 +145,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(success, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
+    @action(detail=True, methods=['get', 'post'], serializer_class=TextSerializer)
     def stop_word_remove(self, request, pk=None):
         """
         API endpoint for removing tagger stop word.
@@ -177,12 +178,14 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(success, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get','post'])
+    @action(detail=True, methods=['get', 'post'])
     def retrain_tagger(self, request, pk=None):
         """
         API endpoint for retraining tagger model.
         """
-        return Response('to be implemented', status=status.HTTP_200_OK)
+        instance = self.get_object()
+        train_tagger.apply_async(args=(instance.pk,))
+        return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
@@ -379,6 +382,18 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         # perform aggregation to find frequent tags
         tag_candidates = es_a.facts(filter_by_fact_name=self.get_object().fact_name, size=n_candidates)
         return tag_candidates
+
+
+    @action(detail=True, methods=['get', 'post'])
+    def retrain_taggers(self, request, pk=None):
+        """
+        API endpoint for retraining tagger model.
+        """
+        instance = self.get_object()
+        # start retraining tasks
+        for tagger in instance.taggers.all():
+            train_tagger.apply_async(args=(tagger.pk,))
+        return Response({'success': 'retraining tasks created'}, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['get','post'], serializer_class=TextGroupSerializer)
