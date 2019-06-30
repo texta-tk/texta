@@ -34,7 +34,9 @@ COPY docker-conf/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Ownership to www-data and entrypoint
 RUN chown -R www-data:www-data /var/texta-rest \
     && chmod 775 -R /var/texta-rest \
-    && chmod +x /var/texta-rest/docker-conf/entrypoint.sh
+    && chmod +x /var/texta-rest/docker-conf/entrypoint.sh \
+# Final cleanup
+    && rm -rf /root/.cache
 
 WORKDIR /var/texta-rest
 

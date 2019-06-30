@@ -1,6 +1,6 @@
 #!/bin/bash
 
-su -c ". /var/miniconda3/bin/activate texta-rest && python migrate.py" -m -s /bin/bash www-data
+su -c ". /var/miniconda3/bin/activate texta-rest && python migrate.py && python manage.py collectstatic" -m -s /bin/bash www-data
 
 # Get the maximum upload file size for Nginx, default to 0: unlimited
 USE_NGINX_MAX_UPLOAD=${NGINX_MAX_UPLOAD:-0}
@@ -22,9 +22,6 @@ fi
 if [[ -v NGINX_WORKER_OPEN_FILES ]] ; then
     echo "worker_rlimit_nofile ${NGINX_WORKER_OPEN_FILES};" >> /etc/nginx/nginx.conf
 fi
-
-# HACK: fix cron (sometimes pam_loginuid causes problems)
-sed -i -e 's/\(session.*pam_loginuid.so\)/#\1/' /etc/pam.d/cron
 
 set | egrep "^(DJANGO|TEXTA|PYTHON|LC_|LANG)" | sed -e 's/^/export /' > .env
 

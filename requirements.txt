@@ -13,3 +13,4 @@ psutil
 matplotlib
 termcolor
 django-extensions
+joblib

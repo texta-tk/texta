@@ -24,3 +24,4 @@ dependencies:
     - matplotlib
     - termcolor
     - django-extensions
+    - joblib

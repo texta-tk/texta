@@ -112,7 +112,7 @@ WSGI_APPLICATION = 'toolkit.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': os.path.join(BASE_DIR, 'data', 'db.sqlite3'),
     },
     # SQLite write lock timeout in seconds https://docs.djangoproject.com/en/dev/ref/databases/#database-is-locked-errors
     'OPTIONS': {
@@ -158,7 +158,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
-
+STATIC_ROOT =  os.path.join(BASE_DIR, 'static')
 
 # ELASTICSEARCH
 ES_URL = os.getenv('TEXTA_ES_URL', 'http://localhost:9200')

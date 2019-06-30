@@ -24,6 +24,7 @@ router.registry.extend(tagger_router.registry)
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
     url(r'^%s(?P<path>.*)$' % MEDIA_URL, protected_serve, {'document_root': MEDIA_DIR}),
+    url(r'static/(?P<path>.*)$',serve,{'document_root': 'static'}),
     path('rest-auth/', include('rest_auth.urls')),
     path('rest-auth/registration/', include('rest_auth.registration.urls')),
     path('', include(router.urls)),
