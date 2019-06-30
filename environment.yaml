@@ -1,0 +1,26 @@
+name: texta-rest
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.6
+  - anaconda
+  - pip
+  - gensim==3.7.1
+  - pandas
+  - scikit-learn
+  - uwsgi
+  - pip:
+    - django==2.1.7
+    - djangorestframework==3.9.2
+    - celery==4.2.2
+    - elasticsearch==6.3.1
+    - redis==3.2.1
+    - django-multiselectfield
+    - drf-nested-routers
+    - django-rest-auth[with_social]
+    - psutil
+    - matplotlib
+    - termcolor
+    - django-extensions
