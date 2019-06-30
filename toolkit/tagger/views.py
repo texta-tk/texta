@@ -386,7 +386,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
 
 
     @action(detail=True, methods=['get', 'post'])
-    def retrain_taggers(self, request, pk=None):
+    def models_retrain(self, request, pk=None):
         """
         API endpoint for retraining tagger model.
         """
@@ -398,6 +398,25 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
             tagger.save()
             train_tagger.apply_async(args=(tagger.pk,))
         return Response({'success': 'retraining tasks created'}, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['get', 'post'])
+    def models_load(self, request, pk=None):
+        """
+        API endpoint for loading all relevant tagger models.
+        """
+        num_phrasers = 0
+        num_taggers = 0
+        instance = self.get_object()
+        for tagger in instance.taggers.all():
+            # load tagger model
+            model_cache.get_model(tagger.pk)
+            num_taggers += 1
+            if tagger.embedding:
+                # load phraser model
+                phraser_cache.get_model(tagger.embedding.pk)
+                num_phrasers += 1
+        return Response({'loaded': {'phraser': num_phrasers, 'tagger': num_taggers}}, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['get','post'], serializer_class=TextGroupSerializer)
