@@ -19,6 +19,7 @@ from toolkit.embedding.phraser import Phraser
 from toolkit.tools.text_processor import TextProcessor
 from toolkit import permissions as toolkit_permissions
 from toolkit.core import permissions as core_permissions
+from toolkit.core.task.models import Task
 
 import json
 
@@ -392,6 +393,9 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         # start retraining tasks
         for tagger in instance.taggers.all():
+            # update task status so statistics are correct during retraining
+            tagger.status = Task.STATUS_CREATED
+            tagger.save()
             train_tagger.apply_async(args=(tagger.pk,))
         return Response({'success': 'retraining tasks created'}, status=status.HTTP_200_OK)
 
@@ -411,7 +415,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         hybrid_tagger_object = self.get_object()
 
         # check if any of the models ready
-        if not hybrid_tagger_object.taggers.filter(task__status='completed'):
+        if not hybrid_tagger_object.taggers.filter(Task.STATUS_COMPLETED):
             return Response({'error': 'models doe not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve field data from the first element
@@ -446,7 +450,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         hybrid_tagger_object = self.get_object()
 
         # check if any of the models ready
-        if not hybrid_tagger_object.taggers.filter(task__status='completed'):
+        if not hybrid_tagger_object.taggers.filter(Task.STATUS_COMPLETED):
             return Response({'error': 'models doe not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve field data from the first element
