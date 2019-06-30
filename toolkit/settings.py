@@ -186,7 +186,7 @@ for model_type in MODEL_TYPES:
         os.makedirs(model_dir)
 
 # create protected media dirs
-MEDIA_DIR = os.path.join(BASE_DIR, 'media')
+MEDIA_DIR = os.path.join(BASE_DIR, 'data', 'media')
 
 if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
