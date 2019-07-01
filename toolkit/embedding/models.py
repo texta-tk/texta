@@ -65,7 +65,10 @@ class EmbeddingCluster(models.Model):
             instance.task = new_task
             instance.save()
             from toolkit.embedding.tasks import cluster_embedding
-            cluster_embedding.apply_async(args=(instance.pk,))
+            if not 'test' in sys.argv:
+                cluster_embedding.apply_async(args=(instance.pk,))
+            else:
+                cluster_embedding(instance.pk)
 
 
 signals.post_save.connect(EmbeddingCluster.cluster_embedding_vocabulary, sender=EmbeddingCluster)
