@@ -165,6 +165,8 @@ def dashboard_visualize(request):
     es_m.build(es_params)
 
     indices = es_params.get("chosen_index", None).split(',')
+    for i in range(len(indices)):
+        indices[i] = indices[i].replace('.', '-')
 
     color_setting = request.POST['dashboard-color']
     color_max = request.POST['dashboard-color-maximum']
@@ -201,8 +203,8 @@ def index(request):
                        'fields': fields,
                        'searches': Search.objects.filter(author=request.user),
                        'lexicons': Lexicon.objects.all().filter(author=request.user),
-                       'language_models': language_models, 
-                       'allowed_datasets': datasets,                       
+                       'language_models': language_models,
+                       'allowed_datasets': datasets,
                        }
 
     template = loader.get_template('searcher.html')
