@@ -30,10 +30,7 @@ class WordCluster(object):
         clustering = MiniBatchKMeans(n_clusters=n_clusters).fit(vocab_vectors)
         cluster_labels = clustering.labels_
         
-        print('computing etalons')
         etalons = {cluster_label: embedding.wv.most_similar(positive=[clustering.cluster_centers_[cluster_label]])[0][0] for cluster_label in set(cluster_labels)}
-
-        print('finishing toutches...')
 
         for i,cluster_label in enumerate(cluster_labels):
             word = vocab[i]
