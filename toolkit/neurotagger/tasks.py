@@ -10,9 +10,9 @@ from toolkit.settings import NUM_WORKERS, MODELS_DIR
 from toolkit.embedding.phraser import Phraser
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.tools.show_progress import ShowProgress
-from toolkit.neurotagger.text_neurotagger import TextNeurotagger
+from toolkit.neurotagger.neurotagger import NeurotaggerWorker
 from toolkit.tools.text_processor import TextProcessor
-from toolkit.neurotagger.plots import create_neurotagger_plot
+# from toolkit.neurotagger.plots import create_neurotagger_plot
 
 
 @task(name="train_neurotagger")
@@ -37,19 +37,19 @@ def train_neurotagger(neurotagger_id):
     else:
         text_processor = TextProcessor(remove_stop_words=True)
 
-    samples, labels = _scroll_multiclass_data(json.loads(neurotagger_object.queries), show_progress)
+    samples, labels = _scroll_multiclass_data(json.loads(neurotagger_object.queries), show_progress, neurotagger_object, field_data, text_processor)
     import pdb; pdb.set_trace()
     show_progress.update_step('training')
     show_progress.update_view(0)
 
-    neurotagger = Neurotagger(
+    neurotagger = NeurotaggerWorker(
         neurotagger_object.model_architecture,
         neurotagger_object.seq_len,
         neurotagger_object.vocab_size,
         neurotagger_object.num_epochs,
         neurotagger_object.validation_split,
     )
-    neurotagger.run(samples, labels)
+    NeurotaggerWorker.run(samples, labels)
 
     show_progress.update_step('saving')
     show_progress.update_view(0)
@@ -73,24 +73,24 @@ def train_neurotagger(neurotagger_id):
     return True
 
 
-def _scroll_multiclass_data(queries, show_progress):
+def _scroll_multiclass_data(queries, show_progress, neurotagger_object, field_data, text_processor):
     samples = []
     labels = []
 
     if len(queries) == 1:
-        positive_samples, positive_ids = _scroll_positives(query=queries[0])
+        positive_samples, positive_ids = _scroll_positives(queries[0], neurotagger_object, field_data, show_progress, text_processor)
         samples += positive_samples
         labels += [1 for x in range(len(positive_samples))]
 
         show_progress.update_step('scrolling negatives')
         show_progress.update_view(0)
-        negative_samples = _scroll_negatives()
+        negative_samples = _scroll_negatives(neurotagger_object, field_data, show_progress, positive_ids, text_processor)
         samples += negative_samples
         labels += [0 for x in range(len(negative_samples))]
         
     elif len(queries) > 1:
         for i, query in enumerate(queries):
-            positive_samples, _ = _scroll_positives(query=query)
+            positive_samples, _ = _scroll_positives(query, neurotagger_object, field_data, show_progress, text_processor)
             samples += positive_samples
             labels += [i for x in range(len(positive_samples))]
     
@@ -99,8 +99,8 @@ def _scroll_multiclass_data(queries, show_progress):
 
 
 
-def _scroll_positives(query):
-    positive_samples = ElasticSearcher(query=json.loads(neurotagger_object.query), 
+def _scroll_positives(query, neurotagger_object, field_data, show_progress, text_processor):
+    positive_samples = ElasticSearcher(query=query, 
                                        field_data=field_data,
                                        output='doc_with_id',
                                        callback_progress=show_progress,
@@ -113,7 +113,7 @@ def _scroll_positives(query):
     return positive_samples, positive_ids
 
 
-def _scroll_negatives():
+def _scroll_negatives(neurotagger_object, field_data, show_progress, positive_ids, text_processor):
     negative_samples = ElasticSearcher(field_data=field_data,
                                        output='doc_with_id',
                                        callback_progress=show_progress,

@@ -1,4 +1,5 @@
 import json
+import sys
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import signals
@@ -58,4 +59,4 @@ class Neurotagger(models.Model):
             else: 
                 train_neurotagger(instance.pk)
 
-# signals.post_save.connect(Neurotagger.train_neurotagger_model, sender=Neurotagger)
+signals.post_save.connect(Neurotagger.train_neurotagger_model, sender=Neurotagger)
