@@ -71,3 +71,7 @@
         transform: rotate(360deg);
     }
 }
+
+table tbody tr td {
+    word-break: break-word;
+}

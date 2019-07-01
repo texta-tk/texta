@@ -45,7 +45,7 @@ function removeLoader() {
 
 function createIndices(indicesArray, data) {
     data.indices.forEach((element) => {
-        indicesArray.push(new Index(element.aggregations, element.index_name, element.total_documents))
+        indicesArray.push(new Index(element.aggregations, element.index_name.replace('.', '-'), element.total_documents))
     });
     return indicesArray
 }
@@ -169,21 +169,22 @@ function makeSignificantWordsTables(index) {
 
 function makeFrequentItemsTables(index) {
     /*has to be a number field*/
-    let colorRowIndex = 1
+    let colorRowIndex = 1;
     let t_id = 0;
-    let rootProperty = index.getFrequentItems()
-
+    let rootProperty = index.getFrequentItems();
+    
     for (let field in rootProperty) {
-        let result = formatFrequentItems(index, rootProperty[field])
+        if (rootProperty.hasOwnProperty(field)) {
+            let result = formatFrequentItems(index, rootProperty[field]);
+            if (result) {
+                let minMax = getColorRange(result, colorRowIndex, index);
+                let color = d3.scale.linear()
+                    .domain([minMax[0], minMax[1]])
+                    .range([d3.rgb(Colors.COLOR_MIN), d3.rgb(Colors.COLOR_MAX)]);
+                drawFrequentItemsTable(index, result, color, colorRowIndex, field, t_id);
 
-        if (result) {
-            let minMax = getColorRange(result, colorRowIndex, index)
-            let color = d3.scale.linear()
-                .domain([minMax[0], minMax[1]])
-                .range([d3.rgb(Colors.COLOR_MIN), d3.rgb(Colors.COLOR_MAX)]);
-            drawFrequentItemsTable(index, result, color, colorRowIndex, field, t_id)
-
-            t_id += 1;
+                t_id += 1;
+            }
         }
     }
 }
@@ -332,9 +333,9 @@ function drawSignificantWordsTable(index, result, color, colorRowIndex, columnTi
 }
 
 function drawFrequentItemsTable(index, result, color, colorRowIndex, columnTitle, t_id) {
-    let tableID = `${index.AggregationTpes.STERMS}-generated-${index.index_name}${t_id}`
-    $(`#${index.index_name}-sterms-table`).append(`<table id="${tableID}" style="width:100%"></table>`);
+    let tableID = `${index.AggregationTpes.STERMS}-generated-${index.index_name}${t_id}`;
 
+    $(`#${index.index_name}-sterms-table`).append(`<table id="${tableID}" style="width:100%"></table>`);
     $(`#${tableID}`).DataTable({
         data: result,
         dom: 't',
@@ -353,8 +354,7 @@ function drawFrequentItemsTable(index, result, color, colorRowIndex, columnTitle
             function (row, data, index) {
                 $($(row).children()[colorRowIndex]).css('background-color', color(data[colorRowIndex]))
             }
-    })
-    ;
+    });
 }
 
 function drawFactsTable(index, result, color, colorRowIndex, tableTitle, t_id) {
