@@ -88,14 +88,13 @@ class TaggerViewSet(viewsets.ModelViewSet):
         tagger = model_cache.get_model(tagger_object.pk)
 
         try:
-            # get feature names and supports
-            features = tagger.model.named_steps['union'].transformer_list[0][1].named_steps['vectorizer'].get_feature_names()
-            feature_coefs = tagger.model.named_steps['classifier'].coef_[0]
-            supports = tagger.model.named_steps['feature_selector'].get_support()
+            # get feature names
+            features = tagger.get_feature_names()
         except:
             return Response({'error': 'Error loading feature names. Are you using HashingVectorizer? It does not support feature names!'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # filter features
+        feature_coefs = tagger.get_feature_coefs()
+        supports = tagger.get_supports()
         selected_features = [feature for i, feature in enumerate(features) if supports[i]]
         selected_features = [{'feature': feature, 'coefficient': feature_coefs[i]} for i, feature in enumerate(selected_features) if feature_coefs[i] > 0]
         selected_features = sorted(selected_features, key=lambda k: k['coefficient'], reverse=True)

@@ -8,7 +8,7 @@ from io import BytesIO
 import numpy as np
 
 
-def create_tagger_plot(model, statistics):
+def create_tagger_plot(statistics):
     """
     This function is for plotting tagger statistics.
     """
@@ -45,7 +45,7 @@ def create_tagger_plot(model, statistics):
     plt.tight_layout()
 
     # calculate & plot feature coefficients
-    feature_coefs = sorted(model.named_steps['classifier'].coef_[0])
+    feature_coefs = statistics['feature_coefs']
     plt.subplot(1, 3, 3)
     plt.plot(feature_coefs)
     plt.ylabel('Coefficient')

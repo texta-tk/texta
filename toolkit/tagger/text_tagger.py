@@ -4,6 +4,7 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import confusion_matrix, precision_score, recall_score, roc_curve, auc
 from sklearn.model_selection import GridSearchCV
 import pandas as pd
+import numpy as np
 import joblib
 import json
 
@@ -67,6 +68,7 @@ class TextTagger:
         gs_clf = GridSearchCV(c_pipe, c_params, n_jobs=self.workers, cv=5, verbose=False)
         gs_clf = gs_clf.fit(df_train, y_train)
         model = gs_clf.best_estimator_
+        self.model = model
         # Use best model and test data for final evaluation
         y_pred = model.predict(df_test)
         # Report
@@ -79,7 +81,8 @@ class TextTagger:
         fpr, tpr, _ = roc_curve(y_test, y_scores)
         roc_auc = auc(fpr, tpr)
 
-        num_features = len(model.named_steps['classifier'].coef_[0])
+        feature_coefs = self.get_feature_coefs()
+        num_features = len(feature_coefs)
 
         statistics = {
             'f1_score':             f1,
@@ -89,13 +92,40 @@ class TextTagger:
             'true_positive_rate':   tpr,
             'false_positive_rate':  fpr,
             'area_under_curve':     roc_auc,
-            'num_features':         num_features
+            'num_features':         num_features,
+            'feature_coefs':        feature_coefs
         }       
 
-        self.model = model
         self.statistics = statistics
         return model
     
+
+    def get_feature_coefs(self):
+        """
+        Return feature coefficients for a given model.
+        """
+        coef_matrix = self.model.named_steps['classifier'].coef_
+        # transform matrix if needed
+        if type(coef_matrix) == np.ndarray:
+            feature_coefs = coef_matrix[0]
+        else:
+            feature_coefs = coef_matrix.todense().tolist()[0]
+        return feature_coefs
+
+
+    def get_feature_names(self):
+        """
+        Returns feature names for a given model.
+        """
+        return self.model.named_steps['union'].transformer_list[0][1].named_steps['vectorizer'].get_feature_names()
+
+
+    def get_supports(self):
+        """
+        Returns supports for a given model.
+        """
+        return self.model.named_steps['feature_selector'].get_support()
+
 
     def save(self, file_path):
         joblib.dump(self.model, file_path)
