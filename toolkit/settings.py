@@ -191,4 +191,4 @@ MEDIA_DIR = os.path.join(BASE_DIR, 'data', 'media')
 if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
 
-MEDIA_URL = 'media/'
+MEDIA_URL = 'data/media/'
