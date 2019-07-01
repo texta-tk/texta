@@ -185,7 +185,7 @@ def get_pipeline_builder():
 
     # Classification Models
 
-    params = {}
+    params = {'solver': ['lbfgs']}
     pipe_builder.add_classifier('classifier', LogisticRegression, 'Logistic Regression', params)
 
     params = {'probability': [True], 'kernel': ['linear']}
