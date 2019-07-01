@@ -30,9 +30,10 @@ class TaggerViewTests(APITestCase):
         # set vectorizer & classifier options
         cls.vectorizer_opts = range(0, 3)
         cls.classifier_opts = range(0, 1)
+        cls.feature_selector_opts = range(0, 1)
 
         # list tagger_ids for testing, +1 for starting from 1
-        cls.test_tagger_ids = range(1, len(cls.vectorizer_opts)*len(cls.classifier_opts)+1)
+        cls.test_tagger_ids = range(1, len(cls.vectorizer_opts)*len(cls.classifier_opts)*len(cls.feature_selector_opts)+1)
 
 
     def setUp(self):
@@ -54,30 +55,31 @@ class TaggerViewTests(APITestCase):
         # run test for each vectorizer & classifier option
         for vectorizer_opt in self.vectorizer_opts:
             for classifier_opt in self.classifier_opts:
-                payload = {
-                    "description": "TestTagger",
-                    "query": "",
-                    "fields": TEST_FIELD_CHOICE,
-                    "vectorizer": vectorizer_opt,
-                    "classifier": classifier_opt,
-                    "feature_selector": 0,
-                    "maximum_sample_size": 500,
-                    "negative_multiplier": 1.0,
-                }
-                response = self.client.post(self.url, payload)
-                print_output('test_create_tagger_training_and_task_signal:response.data', response.data)
-                # Check if Tagger gets created
-                self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-                created_tagger = Tagger.objects.get(id=response.data['id'])
-                # Check if not errors
-                self.assertEqual(created_tagger.task.errors, '')
-                # Remove tagger files after test is done
-                self.addCleanup(remove_file, json.loads(created_tagger.location)['tagger'])
-                self.addCleanup(remove_file, created_tagger.plot.path)
-                # Check if Task gets created via a signal
-                self.assertTrue(created_tagger.task is not None)
-                # Check if Tagger gets trained and completed
-                self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
+                for feature_selector_opt in self.feature_selector_opts:
+                    payload = {
+                        "description": "TestTagger",
+                        "query": "",
+                        "fields": TEST_FIELD_CHOICE,
+                        "vectorizer": vectorizer_opt,
+                        "classifier": classifier_opt,
+                        "feature_selector": feature_selector_opt,
+                        "maximum_sample_size": 500,
+                        "negative_multiplier": 1.0,
+                    }
+                    response = self.client.post(self.url, payload)
+                    print_output('test_create_tagger_training_and_task_signal:response.data', response.data)
+                    # Check if Tagger gets created
+                    self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+                    created_tagger = Tagger.objects.get(id=response.data['id'])
+                    # Check if not errors
+                    self.assertEqual(created_tagger.task.errors, '')
+                    # Remove tagger files after test is done
+                    self.addCleanup(remove_file, json.loads(created_tagger.location)['tagger'])
+                    self.addCleanup(remove_file, created_tagger.plot.path)
+                    # Check if Task gets created via a signal
+                    self.assertTrue(created_tagger.task is not None)
+                    # Check if Tagger gets trained and completed
+                    self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
 
 
     def run_tag_text(self):
