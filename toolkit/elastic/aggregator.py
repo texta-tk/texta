@@ -60,16 +60,18 @@ class ElasticAggregator:
             agg_query["facts"]["aggs"]["facts"]["aggs"] = {"fact_values": {"terms": {"field": "texta_facts.str_val", "size": size}}}
 
         response = self._aggregate(agg_query)
-        
-        fact_names = response["aggregations"]["facts"]["facts"]["buckets"]
+        aggregations = response["aggregations"]
         entities = {}
-        for fact_type in fact_names:
-            fact_name = fact_type["key"]
-            entities[fact_name] = []
-            if "fact_values" in fact_type:
-                for fact_value in fact_type["fact_values"]["buckets"]:
-                    if fact_value["key"] and fact_value["doc_count"] > min_count:
-                        entities[fact_name].append(fact_value["key"])
+
+        if aggregations["facts"]["doc_count"] > 0:
+            fact_names = aggregations["facts"]["facts"]["buckets"]
+            for fact_type in fact_names:
+                fact_name = fact_type["key"]
+                entities[fact_name] = []
+                if "fact_values" in fact_type:
+                    for fact_value in fact_type["fact_values"]["buckets"]:
+                        if fact_value["key"] and fact_value["doc_count"] > min_count:
+                            entities[fact_name].append(fact_value["key"])
         
         # filter by name if fact name present
         if filter_by_fact_name:
