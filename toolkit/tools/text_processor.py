@@ -63,6 +63,9 @@ class TextProcessor:
                 if self.phraser:
                     tokens = self.phraser.phrase(tokens)
 
+                # remove empty tokens
+                tokens = [token for token in tokens if token]
+
                 if not self.tokenize:
                     out.append(' '.join([token.replace(' ', '_') for token in tokens]))
                 else:
