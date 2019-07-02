@@ -67,8 +67,7 @@ def train_tagger(tagger_id):
 
         # train model
         tagger = TextTagger(tagger_id)
-        tagger.train(positive_samples, negative_samples, field_list=field_path_list, classifier=tagger_object.classifier, 
-                     vectorizer=tagger_object.vectorizer, feature_selector=tagger_object.feature_selector)
+        tagger.train(positive_samples, negative_samples, field_list=field_path_list, classifier=tagger_object.classifier, vectorizer=tagger_object.vectorizer)
 
         show_progress.update_step('saving')
         show_progress.update_view(0)

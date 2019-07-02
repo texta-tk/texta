@@ -87,7 +87,6 @@ class TaggerViewTests(APITestCase):
     def run_tag_text(self):
         '''Tests the endpoint for the tag_text action'''
         payload = { "text": "This is some test text for the Tagger Test" }
-        print(self.test_tagger_ids)
         for test_tagger_id in self.test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
             response = self.client.post(tag_text_url, payload)

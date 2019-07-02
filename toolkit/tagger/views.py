@@ -441,7 +441,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         hybrid_tagger_object = self.get_object()
 
         # check if any of the models ready
-        if not hybrid_tagger_object.taggers.filter(Task.STATUS_COMPLETED):
+        if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
             return Response({'error': 'models doe not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve field data from the first element
@@ -453,10 +453,10 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data, 
                                                  serializer.validated_data['text'],
                                                  hybrid=serializer.validated_data['hybrid'],
-                                                 n_candidates=serializer.validated_data['n_candidates'])
+                                                 n_candidates=serializer.validated_data['num_candidates'])
 
         # get tags
-        tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, serializer.validated_data['text'], input_type='text') 
+        tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, serializer.validated_data['text'], input_type='text', show_candidates=serializer.validated_data['show_candidates']) 
 
         return Response(tags, status=status.HTTP_200_OK)
 
@@ -476,7 +476,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         hybrid_tagger_object = self.get_object()
 
         # check if any of the models ready
-        if not hybrid_tagger_object.taggers.filter(Task.STATUS_COMPLETED):
+        if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
             return Response({'error': 'models doe not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve field data from the first element
@@ -493,14 +493,14 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         combined_texts = ' '.join(serializer.validated_data['doc'].values())
         tag_candidates = self.get_tag_candidates(hybrid_tagger_object.taggers.first().fields,
                                                  combined_texts,
-                                                 n_candidates=serializer.validated_data['n_candidates'])
+                                                 n_candidates=serializer.validated_data['num_candidates'])
 
         # get tags
-        tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, serializer.validated_data['doc'], input_type='doc')        
+        tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, serializer.validated_data['doc'], input_type='doc', show_candidates=serializer.validated_data['show_candidates'])    
         return Response(tags, status=status.HTTP_200_OK)
 
 
-    def apply_taggers(self, hybrid_tagger_object, tag_candidates, tagger_input, input_type='text'):
+    def apply_taggers(self, hybrid_tagger_object, tag_candidates, tagger_input, input_type='text', show_candidates=False):
         # filter if tag candidates. use all if no candidates.
         if tag_candidates:
             tagger_objects = hybrid_tagger_object.taggers.filter(description__in=tag_candidates)
@@ -528,8 +528,14 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
             else:
                 tagger_result = tagger.tag_text(tagger_input)
             decision = bool(tagger_result[0])
-            # if tag is omitted
-            if decision:
-                tagger_response = {'tag': tagger.description, 'probability': tagger_result[1], 'tagger_id': tagger_id}
+            tagger_response = {'tag': tagger.description, 'probability': tagger_result[1], 'tagger_id': tagger_id}
+
+            if not show_candidates and decision:
+                # filter tags if omitted
                 tags.append(tagger_response)
+            elif show_candidates:
+                # show tag candidates if asked
+                tagger_response['decision'] = decision
+                tags.append(tagger_response)
+            
         return sorted(tags, key=lambda k: k['probability'], reverse=True) 

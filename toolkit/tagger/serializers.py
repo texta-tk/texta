@@ -27,7 +27,9 @@ class TextGroupSerializer(serializers.Serializer):
     text = serializers.CharField(help_text=f'Raw text input.')
     hybrid = serializers.BooleanField(default=True, 
                                       help_text=f'Use hybrid tagging. Default: True')
-    n_candidates = serializers.IntegerField(default=DEFAULT_NUM_CANDIDATES, 
+    show_candidates = serializers.BooleanField(default=False, 
+                                      help_text=f'Show tagger candidates prior to supervised filtering. Default: False')
+    num_candidates = serializers.IntegerField(default=DEFAULT_NUM_CANDIDATES, 
                                             help_text=f'Number of candidates used in unsupervised prefiltering. Default: {DEFAULT_NUM_CANDIDATES}')
 
 
@@ -35,7 +37,9 @@ class DocGroupSerializer(serializers.Serializer):
     doc = serializers.JSONField(help_text=f'Document in JSON format.')
     hybrid = serializers.BooleanField(default=True, 
                                       help_text=f'Use hybrid tagging. Default: True')
-    n_candidates = serializers.IntegerField(default=DEFAULT_NUM_CANDIDATES, 
+    show_candidates = serializers.BooleanField(default=False, 
+                                      help_text=f'Show tagger candidates prior to supervised filtering. Default: False')
+    num_candidates = serializers.IntegerField(default=DEFAULT_NUM_CANDIDATES, 
                                             help_text=f'Number of candidates used in unsupervised prefiltering. Default: {DEFAULT_NUM_CANDIDATES}')
 
 
