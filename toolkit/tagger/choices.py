@@ -14,13 +14,13 @@ def get_field_choices():
       return []
 
 
-def get_fact_names(indices=[]):
-   """
-   Retrieves fact names based on specific index.
-   """
-   es_a = ElasticAggregator(indices=indices)
-   fact_names = es_a.facts(include_values=False)
-   return [(a, a) for a in fact_names]
+#def get_fact_names(indices=[]):
+#   """
+#   Retrieves fact names based on specific index.
+#   """
+#   es_a = ElasticAggregator(indices=indices)
+#   fact_names = es_a.facts(include_values=False)
+#   return [(a, a) for a in fact_names]
 
 
 def get_classifier_choices():
@@ -51,3 +51,4 @@ DEFAULT_MAX_SAMPLE_SIZE = 10000
 DEFAULT_NEGATIVE_MULTIPLIER = 1.0
 DEFAULT_MIN_SAMPLE_SIZE = 50
 DEFAULT_NUM_CANDIDATES = 25
+DEFAULT_TAGGER_GROUP_FACT_NAME = 'TEEMA'
