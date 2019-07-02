@@ -2,9 +2,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_selection import SelectFromModel
-from sklearn.feature_selection import SelectKBest
-from sklearn.feature_selection import chi2
+from sklearn.feature_selection import SelectFromModel, SelectKBest, mutual_info_classif
 from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import Normalizer
 from sklearn.svm import SVC, LinearSVC
@@ -189,8 +187,8 @@ def get_pipeline_builder():
     params = {}
     pipe_builder.add_feature_selector('feature_selector', SelectFromModel, 'SVM Feature Selector', params, estimator=LinearSVC(penalty='l1', dual=False))
 
-    params = {'k': [500]}
-    pipe_builder.add_feature_selector('feature_selector', SelectKBest, 'KBest Feature Selector', params, estimator=chi2)
+    #params = {'k': [50, 100, 500, 1000]}
+    #pipe_builder.add_feature_selector('feature_selector', SelectKBest, 'KBest Feature Selector', params, estimator=mutual_info_classif)
 
     return pipe_builder
     
