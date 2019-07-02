@@ -38,7 +38,6 @@ def train_neurotagger(neurotagger_id):
         text_processor = TextProcessor(remove_stop_words=True)
 
     samples, labels = _scroll_multiclass_data(json.loads(neurotagger_object.queries), show_progress, neurotagger_object, field_data, text_processor)
-    import pdb; pdb.set_trace()
     show_progress.update_step('training')
     show_progress.update_view(0)
 
@@ -48,11 +47,13 @@ def train_neurotagger(neurotagger_id):
         neurotagger_object.vocab_size,
         neurotagger_object.num_epochs,
         neurotagger_object.validation_split,
+        show_progress
     )
-    NeurotaggerWorker.run(samples, labels)
+    neurotagger.run(samples, labels)
 
     show_progress.update_step('saving')
     show_progress.update_view(0)
+    import pdb; pdb.set_trace()
 
     neurotagger_path = os.path.join(MODELS_DIR, 'neurotagger', f'neurotagger_{neurotagger_id}_{secrets.token_hex(10)}')
     neurotagger.save(neurotagger_path)

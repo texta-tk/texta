@@ -26,7 +26,7 @@ from toolkit.neurotagger.neuro_models import NeuroModels
 
 
 class NeurotaggerWorker():
-    def __init__(self, model_architecture, seq_len, vocab_size, num_epochs, validation_split):
+    def __init__(self, model_architecture, seq_len, vocab_size, num_epochs, validation_split, show_progress):
         """
         Main class for training the NeuroClassifier
 
@@ -46,9 +46,8 @@ class NeurotaggerWorker():
         self.task_id = None
         self.task_obj = None
         self.task_type = None
-        self.task_params = None
         self.model_name = None
-        self.show_steps = None
+        self.show_progress = show_progress
         self.task_result = {}
 
         # Neuroclassifier params
@@ -75,7 +74,9 @@ class NeurotaggerWorker():
 
 
     def run(self, samples, labels):
-        self._set_up_data()
+        self.samples = samples
+        self.labels = labels
+
         self._process_data()
         self.model = NeuroModels().get_model(self.model_arch)
         self._train_model()
@@ -85,7 +86,7 @@ class NeurotaggerWorker():
 
 
     def _process_data(self):
-        self.show_steps.update(1)
+        self.show_progress.update_step(1)
         # Declare Keras Tokenizer
         self.tokenizer = Tokenizer(
                     num_words=self.vocab_size, # If self.vocab_size is not None, limit vocab size
@@ -120,7 +121,7 @@ class NeurotaggerWorker():
 
 
     def _train_model(self):
-        self.show_steps.update(2)
+        self.show_progress.update_step(2)
         history = self._train_model()
         self._plot_model(history)
 
@@ -171,7 +172,7 @@ class NeurotaggerWorker():
 
 
     def _save_model(self):
-        self.show_steps.update(3)
+        self.show_progress.update_step(3)
         # create_file_path from helper_functions creates missing folders and returns a path
         output_model_file = create_file_path(self.model_name, MODELS_DIR, self.task_type)
         output_tokenizer_file = create_file_path('{}_{}'.format(self.model_name, 'tokenizer'), MODELS_DIR, self.task_type)
