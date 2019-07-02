@@ -308,9 +308,17 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         serializer = TaggerGroupSerializer(data=request_data, context={'request': request})
         serializer.is_valid(raise_exception=True)
 
+        fact_name = serializer.validated_data['fact_name']
+
         # retrieve tags with sufficient counts & create queries to build models
-        tags = self.get_tags(serializer.validated_data['fact_name'], min_count=serializer.validated_data['minimum_sample_size'])
-        tag_queries = self.create_queries(serializer.validated_data['fact_name'], tags)
+        tags = self.get_tags(fact_name, min_count=serializer.validated_data['minimum_sample_size'])
+        
+        # check if found any tags to build models on
+        if not tags:
+            return Response({'error': f'found no tags for fact name: {fact_name}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        
+        tag_queries = self.create_queries(fact_name, tags)
         
         # retrive tagger options from hybrid tagger serializer
         validated_tagger_data = serializer.validated_data.pop('tagger')

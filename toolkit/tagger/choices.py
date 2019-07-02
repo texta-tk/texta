@@ -1,5 +1,6 @@
 # CHOICES FOR TAGGER APP
 from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.tagger.pipeline import get_pipeline_builder
 
 def get_field_choices():
@@ -12,7 +13,9 @@ def get_field_choices():
 
 # TODO: implement this!
 def get_fact_names():
-    return [('TEEMA', 'TEEMA')]
+   es_a = ElasticAggregator()
+   fact_names = es_a.facts(include_values=False)
+   return [(a, a) for a in fact_names]
 
 
 def get_classifier_choices():
