@@ -9,7 +9,7 @@ parser.add_argument('-es', type=str, default='localhost:9200',
 parser.add_argument('-f', type=str, default='texta_test_index',
                    help='The JSON-lines (.jl) file, name, and also the .zip container containing it, from where to import the data. Zipfile must be in the "data/test_data/" folder. default: texta_test_index')
 parser.add_argument('-i', type=str, default='texta_test_index',
-                   help='The final index name of the testing index, that will be added to Elasticsearch')
+                   help='The final index name of the testing index, that will be added to Elasticsearch. If an old index exists, IT WILL BE DELETED!')
 
 args = parser.parse_args()
 
@@ -41,6 +41,7 @@ def import_docs():
         with zipfile.ZipFile(f'data/test_data/{file_name}.zip', 'r') as z:
             with z.open(f'{file_name}.jl') as f:
                 lines = f.readlines()
+                es.indices.delete(index=index, ignore=[400, 404])
                 es.indices.create(index=index, body={'mappings': fact_mapping})
                 for line in lines:
                     doc = json.dumps(json.loads(line))
