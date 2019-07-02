@@ -22,8 +22,7 @@ class Neurotagger(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     queries = models.TextField(default=json.dumps([EMPTY_QUERY]))
     fields = MultiSelectField(choices=get_field_choices())
-
-    model_architecture = models.IntegerField()
+    model_architecture = models.CharField(choices=choices.model_arch_choices, max_length=10)
     seq_len = models.IntegerField(default=choices.DEFAULT_SEQ_LEN)
     vocab_size = models.IntegerField(default=choices.DEFAULT_VOCAB_SIZE)
     num_epochs = models.IntegerField(default=choices.DEFAULT_NUM_EPOCHS)
@@ -39,6 +38,7 @@ class Neurotagger(models.Model):
     f1_score = models.FloatField(default=None, null=True)
     location = models.TextField()
     plot = models.FileField(upload_to='media', null=True, verbose_name='')
+    result = models.TextField(blank=True)
     
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 

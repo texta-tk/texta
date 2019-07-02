@@ -11,7 +11,8 @@ from toolkit.core.project.models import Project
 from toolkit.neurotagger.models import Neurotagger
 from toolkit.core.task.models import Task
 from toolkit.utils.utils_for_tests import create_test_user, print_output, remove_file
-from toolkit.neurotagger.neuro_models import NeuroModels
+from toolkit.neurotagger import choices
+
 
 class NeurotaggerViewTests(APITestCase):
     @classmethod
@@ -30,10 +31,11 @@ class NeurotaggerViewTests(APITestCase):
 
         cls.test_neurotagger = Neurotagger.objects.create(
             description='NeurotaggerForTesting',
-            model_architecture=NeuroModels.choices[0][0],
+            model_architecture=choices.model_arch_choices[0][0],
             project=cls.project,
             author=cls.user,
             fields=TEST_FIELD_CHOICE,
+            maximum_sample_size=500,
         )
         # Get the object, since .create does not update on changes
         cls.test_neurotagger = Neurotagger.objects.get(id=cls.test_neurotagger.id)
@@ -52,8 +54,9 @@ class NeurotaggerViewTests(APITestCase):
         payload = {
             "description": "TestNeurotagger",
             "query": "",
-            "model_architecture": NeuroModels.choices[0][0],
+            "model_architecture": choices.model_arch_choices[0][0],
             "fields": TEST_FIELD_CHOICE,
+            'maximum_sample_size': 500,
         }
 
         response = self.client.post(self.url, payload)

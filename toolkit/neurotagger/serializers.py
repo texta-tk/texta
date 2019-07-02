@@ -1,9 +1,8 @@
 from rest_framework import serializers
 from django.db.models import Avg
 
-from toolkit.neurotagger.models import Neurotagger
-from toolkit.neurotagger import choices
-from .neuro_models import NeuroModels
+from . import choices
+from .models import Neurotagger
 from toolkit.constants import get_field_choices
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.settings import URL_PREFIX
@@ -12,7 +11,7 @@ from toolkit.settings import URL_PREFIX
 
 class NeurotaggerSerializer(serializers.ModelSerializer):
     fields = serializers.MultipleChoiceField(choices=get_field_choices(), required=True)
-    model_architecture = serializers.ChoiceField(choices=NeuroModels.choices)
+    model_architecture = serializers.ChoiceField(choices=choices.model_arch_choices)
     seq_len = serializers.IntegerField(default=choices.DEFAULT_SEQ_LEN, help_text=f'Default: {choices.DEFAULT_SEQ_LEN}')
     vocab_size = serializers.IntegerField(default=choices.DEFAULT_VOCAB_SIZE, help_text=f'Default: {choices.DEFAULT_VOCAB_SIZE}')
     num_epochs = serializers.IntegerField(default=choices.DEFAULT_NUM_EPOCHS, help_text=f'Default: {choices.DEFAULT_NUM_EPOCHS}')

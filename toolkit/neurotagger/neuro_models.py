@@ -24,25 +24,15 @@ class NeuroModels():
     GRUCNN = "gruCNN"
     LSTMCNN = "lstmCNN"
 
-    # For choicefield
-    choices = (
-        (0, FNN),
-        (1, CNN),
-        (2, GRU),
-        (3, LSTM),
-        (4, GRUCNN),
-        (5, LSTMCNN)
-    )
-
     def __init__(self):
         # Map models to string so they would be easy to call
         self.models_map = {
-            FNN: self.fnn,
-            CNN: self.cnn,
-            GRU: self.gru,
-            LSTM: self.lstm,
-            GRUCNN: self.gruCNN,
-            LSTMCNN: self.lstmCNN,
+            NeuroModels.FNN: self.fnn,
+            NeuroModels.CNN: self.cnn,
+            NeuroModels.GRU: self.gru,
+            NeuroModels.LSTM: self.lstm,
+            NeuroModels.GRUCNN: self.gruCNN,
+            NeuroModels.LSTMCNN: self.lstmCNN,
         }
 
 

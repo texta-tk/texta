@@ -1,10 +1,11 @@
+import os
 import csv
 import json
 import pickle
+import secrets
 import numpy as np
-import matplotlib.pyplot as plt
-import os
 from typing import List, Dict
+import matplotlib.pyplot as plt
 
 from toolkit.settings import MODELS_DIR, MEDIA_URL
 
@@ -26,7 +27,7 @@ from toolkit.neurotagger.neuro_models import NeuroModels
 
 
 class NeurotaggerWorker():
-    def __init__(self, model_architecture, seq_len, vocab_size, num_epochs, validation_split, show_progress):
+    def __init__(self, model_architecture, seq_len, vocab_size, num_epochs, validation_split, show_progress, neurotagger_obj):
         """
         Main class for training the NeuroClassifier
 
@@ -40,11 +41,12 @@ class NeurotaggerWorker():
             seq_len {int} -- The sequence length for the model, can be limited by the given as max_seq_len param
             vocab_size {int} -- The vocabulary size for the model, can be limited by the user as a max_vocab_size param
             num_epochs {int} -- The number of epochs to train the model for
+            show_progress {ShowProgress} -- ShowProgress for info callbacks
+            neurotagger_obj {Neurotagger} -- The associated Neurotagger object, where to save results, etc
         """
 
         # Task params
-        self.task_id = None
-        self.task_obj = None
+        self.neurotagger_obj = neurotagger_obj
         self.task_type = None
         self.model_name = None
         self.show_progress = show_progress
@@ -127,13 +129,9 @@ class NeurotaggerWorker():
 
     
     def _train_model(self):
-        # Create a new ShowSteps updater for training
-        epoch_steps = ['Training: Epoch' for i in range(self.num_epochs)]
-        show_epochs = ShowSteps(self.task_id, epoch_steps)
-        show_epochs.update_view()
         # Training callback which shows progress to the user
-        trainingProgress = TrainingProgressCallback(show_epochs=show_epochs)
-        # Custom cyclical learning rate callback
+        trainingProgress = TrainingProgressCallback(show_progress=self.show_progress)
+
         self.model = self.model(self.vocab_size, self.seq_len)
         history = self.model.fit(self.X_train, self.y_train,
                         batch_size=self.bs,
@@ -152,13 +150,11 @@ class NeurotaggerWorker():
             'y_train.shape': self.y_train.shape,
             'X_val.shape': self.X_val.shape,
             'y_val.shape': self.y_val.shape,
-            'max_sequence_len': self.seq_len,
-            'vocabulary_size': self.vocab_size,
             'model_json': self.model.to_json(),
         }
 
         self.task_result.update(train_summary)
-        self.task_obj.result = json.dumps(self.task_result)
+        self.neurotagger_obj.result = json.dumps(self.task_result)
 
 
     def _cross_validation(self):
@@ -174,9 +170,10 @@ class NeurotaggerWorker():
     def _save_model(self):
         self.show_progress.update_step(3)
         # create_file_path from helper_functions creates missing folders and returns a path
-        output_model_file = create_file_path(self.model_name, MODELS_DIR, self.task_type)
-        output_tokenizer_file = create_file_path('{}_{}'.format(self.model_name, 'tokenizer'), MODELS_DIR, self.task_type)
+        output_model_file = os.path.join(MODELS_DIR, 'neurotagger', f'neurotagger_{self.neurotagger_obj.id}_{secrets.token_hex(10)}')
         self.model.save(output_model_file)
+
+        output_tokenizer_file = os.path.join(MODELS_DIR, 'neurotagger', f'neurotagger_tokenizer_{self.neurotagger_obj.id}_{secrets.token_hex(10)}')
         with open(output_tokenizer_file, 'wb') as handle:
             pickle.dump(self.tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -225,12 +222,12 @@ class NeurotaggerWorker():
         # This also causes a memory leak in Tensorflow, to prevent it,
         # clear the session, or rework the entire preprocessor system
 
-        self.task_id = task_id
-        self.task_obj = Task.objects.get(pk=self.task_id)
-        self.model_name = 'model_{}'.format(self.task_obj.unique_id)
-        self.task_type = self.task_obj.task_type
+        self.neurotagger_id = neurotagger_id
+        self.neurotagger_obj = Neurotagger.objects.get(pk=self.neurotagger_id)
+        self.model_name = 'model_{}'.format(self.neurotagger_obj.unique_id)
+        self.task_type = self.neurotagger_obj.task_type
         model_path = os.path.join(MODELS_DIR, self.task_type, self.model_name)
-        self.seq_len = json.loads(self.task_obj.result)['max_sequence_len']
+        self.seq_len = json.loads(self.neurotagger_obj.result)['max_sequence_len']
         tokenizer_name = '{}_tokenizer'.format(self.model_name)
         tokenizer_path = os.path.join(MODELS_DIR, self.task_type, tokenizer_name)
 
@@ -251,15 +248,16 @@ class TrainingProgressCallback(Callback):
     Arguments:
         show_epochs {ShowSteps} -- ShowSteps callback to be called in on_epoch_end
     """
-    def __init__(self, show_epochs):
-        self.show_epochs = show_epochs
+    def __init__(self, show_progress):
+        self.show_progress = show_progress
 
     def on_epoch_end(self, epoch, logs={}):
         # Use on_epoch_end because on_epoch_begin logs are empty
-        eval_info = '[acc {:.2f}%, loss {:.2f}] [val_acc {:.2f}%, val_loss {:.2f}]'.format(
+        eval_info = 'epoch - {}; [acc {:.2f}%, loss {:.2f}] [val_acc {:.2f}%, val_loss {:.2f}]'.format(
+                                                                epoch,
                                                                 logs['acc'] * 100,
                                                                 logs['loss'],
                                                                 logs['val_acc'] * 100,
                                                                 logs['val_loss'])
 
-        self.show_epochs.update(epoch, extra_string=eval_info)
+        self.show_progress.update_step(f'Training: {eval_info}')
