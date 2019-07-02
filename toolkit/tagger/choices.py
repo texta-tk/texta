@@ -4,6 +4,9 @@ from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.tagger.pipeline import get_pipeline_builder
 
 def get_field_choices():
+   """
+   Retrieves field options from ES.
+   """
    es = ElasticCore()
    if es.connection:
       return sorted([(es.encode_field_data(a), '{0} - {1}'.format(a['index'], a['field']['path'])) for a in es.get_fields()])
@@ -11,26 +14,37 @@ def get_field_choices():
       return []
 
 
-# TODO: implement this!
-def get_fact_names():
-   es_a = ElasticAggregator()
+def get_fact_names(indices=[]):
+   """
+   Retrieves fact names based on specific index.
+   """
+   es_a = ElasticAggregator(indices=indices)
    fact_names = es_a.facts(include_values=False)
    return [(a, a) for a in fact_names]
 
 
 def get_classifier_choices():
-    pipeline = get_pipeline_builder()
-    return [(a['index'], a['label']) for a in pipeline.get_classifier_options()]
+   """
+   Retrieves classifier choices.
+   """
+   pipeline = get_pipeline_builder()
+   return [(a['index'], a['label']) for a in pipeline.get_classifier_options()]
 
 
 def get_vectorizer_choices():
-    pipeline = get_pipeline_builder()
-    return [(a['index'], a['label']) for a in pipeline.get_extractor_options()]
+   """
+   Retrieves vectorizer choices.
+   """
+   pipeline = get_pipeline_builder()
+   return [(a['index'], a['label']) for a in pipeline.get_extractor_options()]
 
 
 def get_feature_selector_choices():
-    pipeline = get_pipeline_builder()
-    return [(a['index'], a['label']) for a in pipeline.get_feature_selector_options()]
+   """
+   Retrieves feature selector choices.
+   """
+   pipeline = get_pipeline_builder()
+   return [(a['index'], a['label']) for a in pipeline.get_feature_selector_options()]
 
 
 DEFAULT_MAX_SAMPLE_SIZE = 10000
