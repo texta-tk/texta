@@ -29,8 +29,8 @@ class EmbeddingViewTests(APITestCase):
 
         cls.user.profile.activate_project(cls.project)
 
-        cls.test_embedding_id = 1
-        cls.test_embedding_clustering_id = 1
+        cls.test_embedding_id = None
+        cls.test_embedding_clustering_id = None
 
 
     def setUp(self):
@@ -63,6 +63,7 @@ class EmbeddingViewTests(APITestCase):
         # Check if Embedding gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created_embedding = Embedding.objects.get(id=response.data['id'])
+        self.test_embedding_id = created_embedding.id
         # Remove Embedding files after test is done
         self.addCleanup(remove_file, json.loads(created_embedding.location)['embedding'])
         self.addCleanup(remove_file, json.loads(created_embedding.location)['phraser'])
@@ -107,6 +108,7 @@ class EmbeddingViewTests(APITestCase):
         # Check if Embedding gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created_embedding_cluster = EmbeddingCluster.objects.get(id=response.data['id'])
+        self.test_embedding_clustering_id = created_embedding_cluster.id
         # Check if not errors
         self.assertEqual(created_embedding_cluster.task.errors, '')
         # Check if Task gets created via a signal

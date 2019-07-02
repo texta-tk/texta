@@ -28,12 +28,12 @@ class TaggerViewTests(APITestCase):
         cls.user.profile.activate_project(cls.project)
 
         # set vectorizer & classifier options
-        cls.vectorizer_opts = range(0, 3)
-        cls.classifier_opts = range(0, 1)
-        cls.feature_selector_opts = range(0, 1)
+        cls.vectorizer_opts = (0, 2)
+        cls.classifier_opts = (0, 1)
+        cls.feature_selector_opts = (0, 1)
 
-        # list tagger_ids for testing, +1 for starting from 1
-        cls.test_tagger_ids = range(1, len(cls.vectorizer_opts)*len(cls.classifier_opts)*len(cls.feature_selector_opts)+1)
+        # list tagger_ids for testing. is populatated duriong training test
+        cls.test_tagger_ids = []
 
 
     def setUp(self):
@@ -71,6 +71,8 @@ class TaggerViewTests(APITestCase):
                     # Check if Tagger gets created
                     self.assertEqual(response.status_code, status.HTTP_201_CREATED)
                     created_tagger = Tagger.objects.get(id=response.data['id'])
+                    # add tagger to be tested
+                    self.test_tagger_ids.append(created_tagger.pk)
                     # Check if not errors
                     self.assertEqual(created_tagger.task.errors, '')
                     # Remove tagger files after test is done
@@ -85,7 +87,7 @@ class TaggerViewTests(APITestCase):
     def run_tag_text(self):
         '''Tests the endpoint for the tag_text action'''
         payload = { "text": "This is some test text for the Tagger Test" }
-
+        print(self.test_tagger_ids)
         for test_tagger_id in self.test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
             response = self.client.post(tag_text_url, payload)
