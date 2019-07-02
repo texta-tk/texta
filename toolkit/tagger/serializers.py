@@ -40,7 +40,8 @@ class DocGroupSerializer(serializers.Serializer):
 
 
 class TaggerSerializer(serializers.ModelSerializer):
-    description = serializers.CharField(help_text=f'Description for the Tagger. Will be used tag.')
+    description = serializers.CharField(help_text=f'Description for the Tagger. Will be used as tag.')
+    query = serializers.CharField(help_text=f'Elasticsearch query used to determine the set of positive samples.')
     fields = serializers.MultipleChoiceField(choices=get_field_choices(), required=True, help_text=f'Fields used to build the model.')
     vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices(), help_text=f'Vectorizer algorithm to create document vectors. NB! HashingVectorizer does not support feature name extraction!')
     classifier = serializers.ChoiceField(choices=get_classifier_choices(),help_text=f'Classification algorithm used in the model.')
