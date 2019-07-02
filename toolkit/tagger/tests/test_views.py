@@ -28,9 +28,9 @@ class TaggerViewTests(APITestCase):
         cls.user.profile.activate_project(cls.project)
 
         # set vectorizer & classifier options
-        cls.vectorizer_opts = (0, 2)
-        cls.classifier_opts = (0, 1)
-        cls.feature_selector_opts = (0, 1)
+        cls.vectorizer_opts = ('Hashing Vectorizer', 'Count Vectorizer', 'TfIdf Vectorizer')
+        cls.classifier_opts = ('Logistic Regression', 'LinearSVC')
+        cls.feature_selector_opts = ('SVM Feature Selector',)
 
         # list tagger_ids for testing. is populatated duriong training test
         cls.test_tagger_ids = []
@@ -118,7 +118,7 @@ class TaggerViewTests(APITestCase):
         for test_tagger_id in self.test_tagger_ids:
             test_tagger_object = Tagger.objects.get(pk=test_tagger_id)
             # pass if using HashingVectorizer as it does not support feature listing
-            if test_tagger_object.vectorizer != 0:
+            if test_tagger_object.vectorizer != 'Hashing Vectorizer':
                 list_features_url = f'{self.url}{test_tagger_id}/list_features/?size=10'
                 response = self.client.get(list_features_url)
                 print_output('test_list_features:response.data', response.data)

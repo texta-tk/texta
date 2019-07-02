@@ -39,12 +39,12 @@ class TextTagger:
         self.text_processor = text_processor
 
 
-    def train(self, positive_samples, negative_samples, field_list=[], classifier=0, vectorizer=0):
+    def train(self, positive_samples, negative_samples, field_list=[], classifier='Logistic Regression', vectorizer='Hashing Vectorizer', feature_selector='SVM Feature Selector'):
         positive_samples_map = self._create_data_map(positive_samples, field_list)
         negative_samples_map = self._create_data_map(negative_samples, field_list)
 
         pipe_builder = get_pipeline_builder()
-        pipe_builder.set_pipeline_options(vectorizer, classifier)
+        pipe_builder.set_pipeline_options(vectorizer, classifier, feature_selector)
         c_pipe, c_params = pipe_builder.build(fields=field_list)
 
         # Build X feature map

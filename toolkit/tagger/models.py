@@ -12,7 +12,8 @@ from toolkit.core.lexicon.models import Lexicon
 from toolkit.core.task.models import Task
 from toolkit.embedding.models import Embedding
 from toolkit.elastic.searcher import EMPTY_QUERY
-from toolkit.tagger.choices import DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE
+from toolkit.tagger.choices import (DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE,
+                                    DEFAULT_CLASSIFIER, DEFAULT_FEATURE_SELECTOR, DEFAULT_VECTORIZER)
 
 MAX_STR_LEN = 100
 
@@ -25,10 +26,9 @@ class Tagger(models.Model):
     fields = MultiSelectField(choices=get_field_choices())
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
     stop_words = models.TextField(default='[]')
-
-    vectorizer = models.IntegerField(default=0)
-    classifier = models.IntegerField(default=0)
-    feature_selector = models.IntegerField(default=0)
+    vectorizer = models.CharField(default=DEFAULT_VECTORIZER, max_length=MAX_STR_LEN)
+    classifier = models.CharField(default=DEFAULT_CLASSIFIER, max_length=MAX_STR_LEN)
+    feature_selector = models.CharField(default=DEFAULT_FEATURE_SELECTOR, max_length=MAX_STR_LEN)
     negative_multiplier = models.FloatField(default=DEFAULT_NEGATIVE_MULTIPLIER, blank=True)
     maximum_sample_size = models.IntegerField(default=DEFAULT_MAX_SAMPLE_SIZE, blank=True)
     score_threshold = models.FloatField(default=0.0, blank=True)
