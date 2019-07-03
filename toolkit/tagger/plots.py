@@ -1,10 +1,10 @@
-from django.core.files.base import ContentFile
+
 from itertools import product
 import matplotlib
 # For non-GUI rendering
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
-from io import BytesIO
+from toolkit.utils.plot_utils import save_plot
 import numpy as np
 
 
@@ -52,6 +52,4 @@ def create_tagger_plot(model, statistics):
     plt.xlabel('Features')
     plt.title('Feature coefficient distribution')
 
-    f = BytesIO()
-    plt.savefig(f)
-    return ContentFile(f.getvalue())
+    return save_plot(plt)

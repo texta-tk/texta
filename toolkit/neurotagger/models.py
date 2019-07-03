@@ -33,10 +33,13 @@ class Neurotagger(models.Model):
     score_threshold = models.FloatField(default=choices.DEFAULT_SCORE_THRESHOLD, blank=True)
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
     
-    accuracy = models.FloatField(default=None, null=True)
-    loss = models.FloatField(default=None, null=True)
-    f1_score = models.FloatField(default=None, null=True)
+    validation_accuracy = models.FloatField(default=None, null=True)
+    training_accuracy = models.FloatField(default=None, null=True)
+    training_loss = models.FloatField(default=None, null=True)
+    validation_loss = models.FloatField(default=None, null=True)
+
     location = models.TextField()
+    model_plot = models.FileField(upload_to='media', null=True, verbose_name='')
     plot = models.FileField(upload_to='media', null=True, verbose_name='')
     result = models.TextField(blank=True)
     

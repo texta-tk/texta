@@ -28,10 +28,13 @@ class NeurotaggerSerializer(serializers.ModelSerializer):
         model = Neurotagger
         fields = ('url', 'id', 'description', 'project', 'author', 'queries', 'validation_split', 'score_threshold',
                   'fields', 'embedding', 'model_architecture', 'seq_len', 'maximum_sample_size', 'negative_multiplier',
-                  'location', 'num_epochs', 'vocab_size', 'f1_score', 'plot', 'task')
+                  'location', 'num_epochs', 'vocab_size', 'plot', 'task', 'validation_accuracy', 'training_accuracy',
+                  'training_loss', 'validation_loss', 'model_plot', 'result')
 
-        read_only_fields = ('author', 'project', 'location',
-                            'accuracy', 'loss', 'f1_score', 'plot')
+        read_only_fields = ('author', 'project', 'location', 'accuracy', 'loss', 'plot',
+                            'model_plot', 'result', 'validation_accuracy', 'training_accuracy',
+                            'training_loss', 'validation_loss',
+                            )
 
     def __init__(self, *args, **kwargs):
         '''

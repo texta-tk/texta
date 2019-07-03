@@ -4,11 +4,18 @@ import json
 import pickle
 import secrets
 import numpy as np
+from io import BytesIO
 from typing import List, Dict
+
+# For non-GUI rendering
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
-from toolkit.settings import MODELS_DIR, MEDIA_URL
 
+from django.core.files.base import ContentFile
+from toolkit.settings import MODELS_DIR, MEDIA_URL
+from toolkit.utils.plot_utils import save_plot
 # Data management imports
 from sklearn.model_selection import train_test_split
 from keras.preprocessing.sequence import pad_sequences
@@ -21,9 +28,12 @@ from keras.models import load_model
 from keras.optimizers import Adam
 from keras.activations import relu, elu, softmax, sigmoid
 from keras.utils import plot_model
+from keras.utils.vis_utils import model_to_dot
 
 # Import model architectures
 from toolkit.neurotagger.neuro_models import NeuroModels
+
+
 
 
 class NeurotaggerWorker():
@@ -81,7 +91,8 @@ class NeurotaggerWorker():
 
         self._process_data()
         self.model = NeuroModels().get_model(self.model_arch)
-        self._train_model()
+        history = self._train_model()
+        self._plot_model(history)
         self._cross_validation()
         self._create_task_result()
         self._save_model()
@@ -122,18 +133,13 @@ class NeurotaggerWorker():
             self.vocab_size = final_vocab_size + 1
 
 
-    def _train_model(self):
-        self.show_progress.update_step(2)
-        history = self._train_model()
-        self._plot_model(history)
-
     
     def _train_model(self):
         # Training callback which shows progress to the user
         trainingProgress = TrainingProgressCallback(show_progress=self.show_progress)
 
         self.model = self.model(self.vocab_size, self.seq_len)
-        history = self.model.fit(self.X_train, self.y_train,
+        return self.model.fit(self.X_train, self.y_train,
                         batch_size=self.bs,
                         epochs=self.num_epochs,
                         verbose=2,
@@ -141,7 +147,6 @@ class NeurotaggerWorker():
                         validation_data=(self.X_val, self.y_val),
                         callbacks=[trainingProgress]
                         )
-        return history
 
 
     def _create_task_result(self):
@@ -161,21 +166,26 @@ class NeurotaggerWorker():
         # Evaluate model, get [loss, accuracy]
         val_eval = self.model.evaluate(x=self.X_val, y=self.y_val, batch_size=self.bs, verbose=1)
         train_eval = self.model.evaluate(x=self.X_train, y=self.y_train, batch_size=self.bs, verbose=1)
-        self.task_result['Validation accuracy'] = "{0:.4f}".format(val_eval[1])
-        self.task_result['Validation loss'] = "{0:.4f}".format(val_eval[0])
-        self.task_result['Training accuracy'] = "{0:.4f}".format(train_eval[1])
-        self.task_result['Training loss'] = "{0:.4f}".format(train_eval[0])
+        self.validation_accuracy = val_eval[1]
+        self.training_accuracy =  train_eval[1]
+        self.validation_loss = val_eval[0]
+        self.training_loss = train_eval[0]
 
 
     def _save_model(self):
         self.show_progress.update_step(3)
         # create_file_path from helper_functions creates missing folders and returns a path
-        output_model_file = os.path.join(MODELS_DIR, 'neurotagger', f'neurotagger_{self.neurotagger_obj.id}_{secrets.token_hex(10)}')
+        model_path = f'neurotagger_{self.neurotagger_obj.id}_{secrets.token_hex(10)}'
+        output_model_file = os.path.join(MODELS_DIR, 'neurotagger', model_path)
         self.model.save(output_model_file)
 
-        output_tokenizer_file = os.path.join(MODELS_DIR, 'neurotagger', f'neurotagger_tokenizer_{self.neurotagger_obj.id}_{secrets.token_hex(10)}')
+        output_tokenizer_file = os.path.join(MODELS_DIR,
+            'neurotagger', f'neurotagger_tokenizer_{self.neurotagger_obj.id}_{secrets.token_hex(10)}'
+        )
         with open(output_tokenizer_file, 'wb') as handle:
             pickle.dump(self.tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        
+        self.neurotagger_obj.location = json.dumps({'model': output_model_file, 'tokenizer': output_tokenizer_file})
 
 
     def _plot_model(self, history):
@@ -195,21 +205,17 @@ class NeurotaggerWorker():
         ax[1].set_ylabel('Loss')
         ax[1].set_xlabel('Epoch')
         ax[1].legend(['Train', 'Test'], loc='upper left')
-        acc_loss_plot_name = "{}_acc_loss.svg".format(self.model_name)
-        acc_loss_plot_path = create_file_path(acc_loss_plot_name, PROTECTED_MEDIA, "task_manager", self.task_type)
-        acc_loss_plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager", self.task_type, acc_loss_plot_name)
-        plt.savefig(acc_loss_plot_path, format="svg", bbox_inches='tight')
+        acc_loss_plot_path = f'{secrets.token_hex(15)}.png'
+        self.neurotagger_obj.plot.save(acc_loss_plot_path, save_plot(plt))
         plt.clf()
 
         # Plot Keras model
-        model_plot_name = "{}_model.svg".format(self.model_name)
-        model_plot_path = create_file_path(model_plot_name, PROTECTED_MEDIA, "task_manager", self.task_type)
-        model_plot_url = os.path.join(URL_PREFIX, MEDIA_URL, "task_manager", self.task_type, model_plot_name)
-        plot_model(self.model, to_file=model_plot_path, show_shapes=True)
-
-        # NOTE Save plots as HTML images for now, whilst there is no better alternative
-        self.task_result['acc_loss_plot'] = '<img src="{}" style="max-width: 800px">'.format(acc_loss_plot_url)
-        self.task_result['model_plot'] = '<img src="{}" style="max-width: 400px">'.format(model_plot_url)
+        model_plot_path = f'{secrets.token_hex(15)}.png'
+        # Get byte representation of the plot
+        model_plot = model_to_dot(self.model).create(prog='dot', format='png')
+        # Wrap it as a Django ContentFile, and save to model
+        c_f = ContentFile(model_plot)
+        self.neurotagger_obj.model_plot.save(model_plot_path, c_f)
 
 
     def load(self, task_id):

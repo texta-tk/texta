@@ -14,7 +14,6 @@ from toolkit.neurotagger.neurotagger import NeurotaggerWorker
 from toolkit.tools.text_processor import TextProcessor
 # from toolkit.neurotagger.plots import create_neurotagger_plot
 
-
 @task(name="train_neurotagger")
 def train_neurotagger(neurotagger_id):
     # retrieve neurotagger & task objects
@@ -29,6 +28,7 @@ def train_neurotagger(neurotagger_id):
     field_path_list = [field['field_path'] for field in field_data]
 
     # add phraser here
+    import pdb; pdb.set_trace()
     # TODO: use embedding to group together features
     if neurotagger_obj.embedding:
         phraser = Phraser(embedding_id=neurotagger_obj.embedding.pk)
@@ -52,19 +52,6 @@ def train_neurotagger(neurotagger_id):
         neurotagger_obj
     )
     neurotagger.run(samples, labels)
-
-    show_progress.update_step('saving')
-    show_progress.update_view(0)
-    import pdb; pdb.set_trace()
-
-    # save model locations
-    neurotagger_obj.location = json.dumps({'neurotagger': neurotagger_path})
-    neurotagger_obj.precision = float(neurotagger.statistics['precision'])
-    neurotagger_obj.recall = float(neurotagger.statistics['recall'])
-    neurotagger_obj.f1_score = float(neurotagger.statistics['f1_score'])
-    neurotagger_obj.plot.save(f'{secrets.token_hex(15)}.png', create_neurotagger_plot(neurotagger.model, neurotagger.statistics))
-    neurotagger_obj.save()
-
 
     # declare the job done
     show_progress.update_step('')
