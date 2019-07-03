@@ -14,7 +14,7 @@ from toolkit.tagger.serializers import TaggerSerializer, TaggerGroupSerializer, 
                                        TextGroupSerializer, DocGroupSerializer, \
                                        FeatureListSerializer
 from toolkit.tagger.text_tagger import TextTagger
-from toolkit.utils.model_cache import ModelCache
+from toolkit.tools.model_cache import ModelCache
 from toolkit.embedding.phraser import Phraser
 from toolkit.tools.text_processor import TextProcessor
 from toolkit import permissions as toolkit_permissions

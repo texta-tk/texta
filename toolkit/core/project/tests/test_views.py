@@ -2,7 +2,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 from toolkit.core.project.models import Project
-from toolkit.utils.utils_for_tests import create_test_user
+from toolkit.tools.utils_for_tests import create_test_user
 
 class ProjectViewTests(APITestCase):
     @classmethod

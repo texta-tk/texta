@@ -9,7 +9,7 @@ from toolkit.embedding.serializers import (EmbeddingSerializer, EmbeddingPrecict
 from toolkit.embedding.embedding import W2VEmbedding
 from toolkit.embedding.phraser import Phraser
 from toolkit.embedding.word_cluster import WordCluster
-from toolkit.utils.model_cache import ModelCache
+from toolkit.tools.model_cache import ModelCache
 from toolkit import permissions as toolkit_permissions
 from toolkit.tools.text_processor import TextProcessor
 

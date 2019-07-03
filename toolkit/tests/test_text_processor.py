@@ -4,7 +4,7 @@ from toolkit.embedding.phraser import Phraser
 from toolkit.core.project.models import Project
 from toolkit.embedding.models import Embedding
 from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE
-from toolkit.utils.utils_for_tests import create_test_user, print_output, remove_file
+from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
 class TextProcessorTests(TestCase):

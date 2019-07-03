@@ -10,7 +10,7 @@ from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TES
 from toolkit.core.project.models import Project
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.core.task.models import Task
-from toolkit.utils.utils_for_tests import create_test_user, print_output, remove_file
+from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
 class TaggerGroupViewTests(APITestCase):

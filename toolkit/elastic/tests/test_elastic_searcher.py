@@ -1,7 +1,7 @@
 from django.test import TestCase
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE
-from toolkit.utils.utils_for_tests import create_test_user, print_output, remove_file
+from toolkit.tools.utils_for_tests import print_output
 
 
 class TestElasticSearcher(TestCase):
