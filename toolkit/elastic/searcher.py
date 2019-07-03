@@ -66,23 +66,6 @@ class ElasticSearcher:
         self.field_data = self.core.parse_field_data(field_data)
 
 
-    @staticmethod
-    def doc_to_texts(doc, sentences=False):
-        texts = []
-        for text in doc.values():
-            text = text.strip().lower()
-            # remove stopwords
-
-            if sentences == True:
-                lines = text.split('\n')
-                for line in lines:
-                    if line:
-                        texts.append(line.strip())
-            else:
-                texts.append(text)
-        return texts
-
-
     def _parse_doc(self, doc):
         """
         Parses Elasticsearch hit into something nicer
