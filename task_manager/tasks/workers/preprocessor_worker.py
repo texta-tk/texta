@@ -1,21 +1,31 @@
+import sys
+from datetime import datetime
 import json
+import os
 import logging
 from datetime import datetime
 
+from texta.settings import ERROR_LOGGER
+from texta.settings import INFO_LOGGER
+from texta.settings import FACT_PROPERTIES
+from texta.settings import FACT_FIELD
 from searcher.models import Search
-from task_manager.document_preprocessor import PREPROCESSOR_INSTANCES, preprocessor_map
 from task_manager.models import Task
-from task_manager.tools import ShowProgress, TaskCanceledException
-from texta.settings import ERROR_LOGGER, FACT_FIELD, FACT_PROPERTIES, INFO_LOGGER
+from task_manager.tools import ShowProgress
+from task_manager.tools import TaskCanceledException
+
 from utils.datasets import Datasets
-from utils.es_manager import ES_Manager
 from utils.helper_functions import add_dicts
+from utils.es_manager import ES_Manager
 from .base_worker import BaseWorker
+
+from task_manager.document_preprocessor import preprocessor_map
+from task_manager.document_preprocessor import PREPROCESSOR_INSTANCES
 
 
 class PreprocessorWorker(BaseWorker):
 
-    def __init__(self, scroll_size=200, time_out='10m'):
+    def __init__(self, scroll_size=100, time_out='50m'):
         self.es_m = None
         self.task_id = None
         self.params = None
@@ -25,11 +35,13 @@ class PreprocessorWorker(BaseWorker):
         self._reload_env()
         self.info_logger, self.error_logger = self._generate_loggers()
 
+
     def _reload_env(self):
         from dotenv import load_dotenv
         from pathlib import Path
         env_path = str(Path('.env'))
         load_dotenv(dotenv_path=env_path)
+
 
     def _generate_loggers(self):
         import graypy
@@ -42,6 +54,7 @@ class PreprocessorWorker(BaseWorker):
         error_logger.addHandler(handler)
 
         return info_logger, error_logger
+
 
     def run(self, task_id):
         self.task_id = task_id
@@ -76,6 +89,7 @@ class PreprocessorWorker(BaseWorker):
             task = Task.objects.get(pk=self.task_id)
             task.result = json.dumps({'error': repr(e)})
             task.update_status(Task.STATUS_FAILED, set_time_completed=True)
+
 
     def _preprocessor_worker(self):
         field_paths = []
@@ -123,11 +137,21 @@ class PreprocessorWorker(BaseWorker):
                 show_progress.update(total_hits)
                 self.es_m.update_documents_by_id(doc_ids)
                 # Get next page if any
-                response = self.es_m.scroll(scroll_id=scroll_id, time_out=self.scroll_time_out)
-                total_hits = len(response['hits']['hits'])
-                scroll_id = response['_scroll_id']
-                # For partial update
-                doc_ids = [x['_id'] for x in response['hits']['hits'] if '_id' in x]
+
+                try:
+                    response = self.es_m.scroll(scroll_id=scroll_id, time_out=self.scroll_time_out)
+                    total_hits = len(response['hits']['hits'])
+                    scroll_id = response['_scroll_id']
+                    # For partial update
+                    doc_ids = [x['_id'] for x in response['hits']['hits'] if '_id' in x]
+                except KeyError as e:
+                    t, v, tb = sys.exc_info()
+                    self.error_logger.exception(t)
+                    self.error_logger.exception(v)
+                    self.error_logger.exception(tb)
+
+                    self.error_logger.exception(response)
+                    raise e
 
             task = Task.objects.get(pk=self.task_id)
             show_progress.update(100)
@@ -147,9 +171,10 @@ class PreprocessorWorker(BaseWorker):
             task.time_completed = datetime.now()
             task.save()
 
+
     def _prepare_preprocessor_data(self, response: dict):
         """
-        Separates document dicts and id strings from the pure ES response and changes
+        Seperates document dicts and id strings from the pure ES response and changes
         the suffixes of the necessary parameters for routing purposes.
 
         :param response:
@@ -169,6 +194,7 @@ class PreprocessorWorker(BaseWorker):
 
         return documents, parameter_dict, ids, document_locations
 
+
     @staticmethod
     def _parse_query(parameters):
         """
@@ -187,9 +213,10 @@ class PreprocessorWorker(BaseWorker):
             query = json.loads(Search.objects.get(pk=int(search)).query)
         return query
 
+
     @staticmethod
     def _check_if_request_bad(args):
-        """Check if models/fields are selected"""
+        '''Check if models/fields are selected'''
         if not any(['feature_names' in k for k in args]):
             return False, "No field selected"
 
