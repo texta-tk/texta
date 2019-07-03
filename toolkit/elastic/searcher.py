@@ -54,9 +54,8 @@ class ElasticSearcher:
     def _load_indices(self, indices):
         # load from field data or indices list
         if not indices:
-            return ",".join(list(self.field_data.keys()))
-        else:
-            return indices
+            indices = ",".join(list(self.field_data.keys()))
+        return indices
 
 
     def update_query(self, query):
@@ -89,19 +88,57 @@ class ElasticSearcher:
         Parses Elasticsearch hit into something nicer
         """
         parsed_doc = {}
-        for index, field_paths in self.field_data.items():
-            if doc['_index'] == index:
-                for field_path in field_paths:
-                    decoded_text = doc['_source']
-                    for k in field_path.split('.'):
-                        # get nested fields encoded as: 'field.sub_field'
-                        try:
-                            decoded_text = decoded_text[k]
-                        except:
-                            decoded_text = ""
-                    if decoded_text:
-                        parsed_doc[field_path] = decoded_text
+        if self.field_data:
+            for index, field_paths in self.field_data.items():
+                if doc['_index'] == index:
+                    for field_path in field_paths:
+                        decoded_text = self._decode_doc(doc, field_path=field_path)
+                        if decoded_text:
+                            parsed_doc[field_path] = decoded_text
+        else:
+            parsed_doc = self._flatten_doc(doc)
         return parsed_doc
+
+
+    def _flatten_doc(self, doc):
+        """
+        Flattens a document.
+        """
+        doc = doc['_source']
+        new_doc = {}
+        for field_name, field_content in doc.items():
+            new_field_name, new_content = self._flatten_field(field_name, field_content)
+            new_doc[new_field_name] = new_content
+        return new_doc
+
+
+    def _flatten_field(self, field_name, field_content):
+        """
+        Flattens a field.
+        """
+        if isinstance(field_content, dict):
+            # go deeper
+            for subfield_name, subfield_content in field_content.items():
+                current_field_name = f'{field_name}.{subfield_name}'
+                return self._flatten_field(current_field_name, subfield_content) 
+        else:
+            # this is the end
+            return field_name, field_content
+
+
+    def _decode_doc(self, doc, field_path=None):
+        decoded_text = doc['_source']
+        if field_path:
+            # decode if field path known
+            for k in field_path.split('.'):
+                # get nested fields encoded as: 'field.sub_field'
+                try:
+                    decoded_text = decoded_text[k]
+                except:
+                    decoded_text = ""
+        else:
+            pass
+        return decoded_text
 
 
     def count(self):
@@ -158,3 +195,4 @@ class ElasticSearcher:
             scroll_id = page['_scroll_id']
             page_size = len(page['hits']['hits'])
             current_page += 1
+
