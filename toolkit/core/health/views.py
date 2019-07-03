@@ -11,7 +11,7 @@ class HealthView(views.APIView):
     def get(self, request):
         toolkit_status = {}
         toolkit_status['elastic_alive'] = ElasticCore().connection
-        toolkit_status['api_version'] = get_version()
+        toolkit_status['version'] = get_version()
 
         disk_total, disk_used, disk_free = shutil.disk_usage("/")
         toolkit_status['disk'] = {'free': disk_free / (2**30), 
