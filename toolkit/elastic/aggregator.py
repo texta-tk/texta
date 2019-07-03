@@ -10,6 +10,10 @@ class ElasticAggregator:
     EMPTY_QUERY = {"query": {"match_all": {}}}
 
     def __init__(self, field_data=[], indices=[], query=EMPTY_QUERY):
+        """
+        field_data: list of decoded fields
+        indices: list of index names (strings)
+        """
         self.core = ElasticCore()
         self.field_data = self.core.parse_field_data(field_data)
         self.indices = self._load_indices(indices)
@@ -19,7 +23,7 @@ class ElasticAggregator:
     def _load_indices(self, indices):
         # load from field data or indices list
         if not indices:
-            return ",".join([field["index"] for field in self.field_data])
+            return ",".join(list(self.field_data.keys()))
         else:
             return indices
 
@@ -29,6 +33,9 @@ class ElasticAggregator:
 
 
     def update_field_data(self, field_data):
+        """
+        Updates field data. Expects list of decoded fields.
+        """
         self.field_data = self.core.parse_field_data(field_data)
 
 

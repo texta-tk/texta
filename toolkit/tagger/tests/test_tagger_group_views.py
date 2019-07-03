@@ -6,7 +6,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE
+from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_FACT_NAME
 from toolkit.core.project.models import Project
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.core.task.models import Task
@@ -48,7 +48,7 @@ class TaggerGroupViewTests(APITestCase):
         payload = {
             "description": "TestTaggerGroup",
             "minimum_sample_size": 50,
-            "fact_name": "TEEMA",
+            "fact_name": TEST_FACT_NAME,
             "tagger": {
                 "query": "",
                 "fields": [TEST_FIELD_CHOICE],
