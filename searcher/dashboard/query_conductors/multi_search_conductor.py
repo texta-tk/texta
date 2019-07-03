@@ -47,40 +47,40 @@ class MultiSearchConductor:
             clean_field_name = self._remove_dot_notation(field_name)
 
             search_gateway = elasticsearch_dsl.Search(index=index).using(es)
-            self.field_counts[field_name] = search_gateway.query("exists", field=clean_field_name).count()
+            self.field_counts[clean_field_name] = search_gateway.query("exists", field=clean_field_name).count()
 
             # Do not play around with the #, they exist to avoid naming conflicts as awkward as they may be.
             # TODO Find a better solution for this.
             if field_type == "text":
                 if query_body is not None:
                     search_dsl = self._create_search_object(query_body=query_body, index=index, es=es)
-                    search_dsl.aggs.bucket("sigsterms#{0}#text_sigterms".format(field_name), 'significant_text', field=field_name, filter_duplicate_text=True)
+                    search_dsl.aggs.bucket("sigsterms#{0}#text_sigterms".format(clean_field_name), 'significant_text', field=field_name, filter_duplicate_text=True)
                     self.multi_search = self.multi_search.add(search_dsl)
 
             elif field_type == "keyword":
                 search_dsl = self._create_search_object(query_body=query_body, index=index, es=es)
-                search_dsl.aggs.bucket("sterms#{0}#keyword_terms".format(field_name), 'terms', field=field_name)
+                search_dsl.aggs.bucket("sterms#{0}#keyword_terms".format(clean_field_name), 'terms', field=field_name)
                 self.multi_search = self.multi_search.add(search_dsl)
 
             elif field_type == "date":
                 search_dsl = self._create_search_object(query_body=query_body, index=index, es=es)
-                search_dsl.aggs.bucket("date_histogram#{0}_month#date_month".format(field_name), 'date_histogram', field=field_name, interval='month')
-                search_dsl.aggs.bucket("date_histogram#{0}_year#date_year".format(field_name), 'date_histogram', field=field_name, interval='year')
+                search_dsl.aggs.bucket("date_histogram#{0}_month#date_month".format(clean_field_name), 'date_histogram', field=field_name, interval='month')
+                search_dsl.aggs.bucket("date_histogram#{0}_year#date_year".format(clean_field_name), 'date_histogram', field=field_name, interval='year')
                 self.multi_search = self.multi_search.add(search_dsl)
 
             elif field_type == "integer":
                 search_dsl = self._create_search_object(query_body=query_body, index=index, es=es)
-                search_dsl.aggs.bucket("extended_stats#{0}#int_stats".format(field_name), 'extended_stats', field=field_name)
+                search_dsl.aggs.bucket("extended_stats#{0}#int_stats".format(clean_field_name), 'extended_stats', field=field_name)
                 self.multi_search = self.multi_search.add(search_dsl)
 
             elif field_type == "long":
                 search_dsl = self._create_search_object(query_body=query_body, index=index, es=es)
-                search_dsl.aggs.bucket('extended_stats#{0}#long_stats'.format(field_name), 'extended_stats', field=field_name)
+                search_dsl.aggs.bucket('extended_stats#{0}#long_stats'.format(clean_field_name), 'extended_stats', field=field_name)
                 self.multi_search = self.multi_search.add(search_dsl)
 
             elif field_type == "float":
                 search_dsl = self._create_search_object(query_body=query_body, index=index, es=es)
-                search_dsl.aggs.bucket("extended_stats#{0}#float_stats".format(field_name), 'extended_stats', field=field_name)
+                search_dsl.aggs.bucket("extended_stats#{0}#float_stats".format(clean_field_name), 'extended_stats', field=field_name)
                 self.multi_search = self.multi_search.add(search_dsl)
 
     def _texta_facts_agg_handler(self, query_body, index, es):
@@ -106,7 +106,7 @@ class MultiSearchConductor:
         :return: Name of the field but the comma removed. ex article_lead
         """
         if '.' in field_name:
-            field_name = field_name.split('.')[0]
+            field_name = field_name.replace(".keyword", "")
             return field_name
         else:
             return field_name

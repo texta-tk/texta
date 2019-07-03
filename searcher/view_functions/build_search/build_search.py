@@ -1,4 +1,7 @@
 from collections import OrderedDict, defaultdict
+
+import dictor
+
 from utils.highlighter import Highlighter, ColorPicker
 from searcher.view_functions.general.searcher_utils import additional_option_cut_text
 from searcher.view_functions.build_search.translit_highlighting import hl_transliterately
@@ -51,12 +54,35 @@ def execute_search(es_m, es_params):
             field_path = col.split('.')
 
             # Get content for the fields and make facts human readable
+            # Possible outcomes for a field:
+            #   Normal field value - covered by dictor.
+            #   Object field value - covered by dictor
+            #   List of normal values - check for list and element type
+            #   List of objects - check for list and dict element, get the key values.
+
             content = hit['_source']
             if col == FACT_FIELD and col in hit['_source']:
                 content = improve_facts_readability(hit['_source'][col])
             else:
-                for p in field_path:
-                    content = content[p] if p in content else ''
+
+                # When the value of the field is a normal field or object field.
+                if dictor.dictor(content, col, default=""):
+                    content = dictor.dictor(content, col, default="")
+                else:
+
+                    possible_list = dictor.dictor(content, ".".join(field_path[:-2]), default="")
+                    if isinstance(possible_list, list) and not isinstance(possible_list[0], dict, default=""):  # It's a normal list field
+                        content = possible_list
+
+                    elif isinstance(possible_list, list) and isinstance(possible_list[0], dict):  # It's an array of objects.
+                        list_of_items = dictor.dictor(content, ".".join(field_path[:-1]), default="")
+                        dictionary_key = field_path[-1]
+                        values = [item[dictionary_key] for item in list_of_items]
+                        content = "\n".join(values)
+
+                    else:  # Field is missing
+                        content = None
+
             content = str(content)
 
             if strip_html:
@@ -119,7 +145,7 @@ def _prettify_standardize_hls(name_to_inner_hits, col, content, old_content):
     return content, hl_data
 
 
-def _transliterate(cols_data, row, translit_cols=['text', 'translit', 'lemmas']):    
+def _transliterate(cols_data, row, translit_cols=['text', 'translit', 'lemmas']):
     # To get nested col value before '.'
     hl_cols = [x for x in cols_data if len(x.split('.')) > 1 and x.split('.')[-1] in translit_cols]
     # Transliterate the highlighting between hl_cols

@@ -261,6 +261,6 @@ function swalCustomTypeDisplay(swalType, title, text) {
         title: title,
         text: text,
         heightAuto: false,
-        type: swalType
+        type: swalType,
     })
 }
