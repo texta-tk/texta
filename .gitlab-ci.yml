@@ -28,6 +28,6 @@ Test:
 Build:
   stage: build
   tags:
-  - docker
+  - ci-test
   script:
   - docker build -t docker.texta.ee/texta/texta-rest:latest .
