@@ -54,18 +54,14 @@ class TaggerSerializer(serializers.ModelSerializer):
                                                    help_text=f'Maximum number of documents used to build a model. Default: {DEFAULT_MAX_SAMPLE_SIZE}')
     feature_selector = serializers.ChoiceField(choices=get_feature_selector_choices(),
                                                help_text=f'Feature selection algorithm to decrease the number of features.')
-
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
 
     class Meta:
         model = Tagger
-        fields = ('url', 'id', 'description', 'project', 'author', 'query',
-                  'fields', 'embedding', 'vectorizer', 'classifier', 'feature_selector', 'stop_words',
+        fields = ('url', 'id', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'feature_selector', 'stop_words',
                   'maximum_sample_size', 'negative_multiplier', 'location', 'precision', 'recall', 'f1_score', 'num_features', 'plot', 'task')
-
-        read_only_fields = ('author', 'project', 'location', 'stop_words',
-                            'precision', 'recall', 'f1_score', 'num_features', 'plot')
+        read_only_fields = ('location', 'stop_words', 'precision', 'recall', 'f1_score', 'num_features', 'plot')
 
     def __init__(self, *args, **kwargs):
         '''
@@ -99,10 +95,10 @@ class TaggerGroupSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = TaggerGroup
-        fields = ('id', 'project', 'author', 'description', 'fact_name', 'minimum_sample_size', 
+        fields = ('id', 'description', 'fact_name', 'minimum_sample_size', 
                   'taggers', 'tagger_status', 'tagger', 'tagger_statistics')
                   
-        read_only_fields = ('author', 'project', 'taggers')
+        read_only_fields = ('taggers',)
 
     def get_tagger_status(self, obj):
         tagger_objects = TaggerGroup.objects.get(id=obj.id).taggers
