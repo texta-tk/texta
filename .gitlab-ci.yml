@@ -6,10 +6,12 @@ services:
   - redis:latest
 
 before_script:
-  - python -V
-  - pip install -r requirements.txt
-  - python import_test_index.py -es http://elasticsearch:9200
-  - python migrate.py
+  stage: test
+  script:
+    - python -V
+    - pip install -r requirements.txt
+    - python import_test_index.py -es http://elasticsearch:9200
+    - python migrate.py
 
 stages:
   - test
