@@ -165,7 +165,7 @@ def dashboard_visualize(request):
 
     indices = es_params.get("chosen_index", None).split(',')
     for i in range(len(indices)):
-        indices[i] = indices[i].replace('.', '-')
+        indices[i] = indices[i].replace('.', '-').replace("*", "WILDCARD")
 
     color_setting = request.POST['dashboard-color']
     color_max = request.POST['dashboard-color-maximum']
