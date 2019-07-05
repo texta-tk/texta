@@ -1,6 +1,9 @@
 import json
+import logging
 
+from texta.settings import ERROR_LOGGER
 from utils.mlp_task_adapter import MLPTaskAdapter
+from utils.mlp_task_adapter import Helpers
 
 
 class MLPLitePreprocessor(object):
@@ -12,9 +15,11 @@ class MLPLitePreprocessor(object):
         import dotenv
         dotenv.load_dotenv(".env")
 
+
     def __init__(self, mlp_url=None):
         self.mlp_url = mlp_url
         self._reload_env()
+
 
     @staticmethod
     def _process_stats(stats):
@@ -39,6 +44,7 @@ class MLPLitePreprocessor(object):
 
         return processed_stats
 
+
     def transform(self, documents, **kwargs):
         """Takes input documents and creates new fields for further commentary analysis.
         :param documents: collection of dictionaries to enhance
@@ -48,32 +54,55 @@ class MLPLitePreprocessor(object):
         :rtype: list of dicts
         """
 
-        if not kwargs.get('text_cleaner_preprocessor_feature_names', None):
-            # this is mostly for API requests as they might not have field data - apply to all in this case
-            input_features = list(documents[0].keys())
-        else:
-            input_features = json.loads(kwargs['text_cleaner_preprocessor_feature_names'])
+        # this is mostly for API requests as they might not have field data - apply to all in this case
+        feature_names = kwargs.get('mlp-lite_feature_names', None)
+        output_type = kwargs.get('mlp-lite_output_type', None)
 
-        if not kwargs.get('mlp_lite_output_type', None):
-            output_type = 'full'
-        else:
-            output_type = json.loads(kwargs['mlp_lite_output_type'])
+        input_features = json.loads(feature_names) if feature_names else list(documents[0].keys())
+        output_type = json.loads(kwargs['mlp-lite_output_type']) if output_type else 'full'
 
         for input_feature in input_features:
+
             try:
-                input_feature = json.loads(input_feature)["path"]
+                input_feature = json.loads(input_features)["path"]
             except:
                 pass
 
-            texts = [document[input_feature] for document in documents if input_feature in document]
-            data = {'texts': json.dumps(texts, ensure_ascii=False)}
+            input_feature_path = input_feature.split(".")
 
+            # Nested field or a normal field?
+            if len(input_feature_path) > 1:
+                texts = [Helpers.traverse_nested_dict_by_keys(document, input_feature_path) for document in documents]
+            else:
+                texts = [document[input_feature] if input_feature in document else "" for document in documents]
+
+            data = {'texts': json.dumps(texts, ensure_ascii=False)}
             analyzation_data, errors = MLPTaskAdapter(self.mlp_url, mlp_type='mlp_lite').process(data)
 
             for analyzation_idx, analyzation_datum in enumerate(analyzation_data):
-                documents[analyzation_idx][input_feature + '_mlp-lite'] = {}
-                documents[analyzation_idx][input_feature + '_mlp-lite']['text'] = analyzation_datum['text']
-                if output_type == 'full':
-                    documents[analyzation_idx][input_feature + '_mlp-lite']['stats'] = self._process_stats(analyzation_datum['stats'])
+                # Because for some whatever reason, at times this will be None
+                # If it happens, ignore it, log it, and move on with life.
+                try:
+                    # Is it a nested field or a normal field?
+                    if len(input_feature_path) > 1:
+                        # Make sure the last field is used as the path.
+                        mlp_field_path = input_feature_path[:-1] + [input_feature_path[-1] + "_mlp-lite"]
+                        Helpers.set_in_dict(documents[analyzation_idx], mlp_field_path, {})
+
+                        mlp_text_path = mlp_field_path + ["text"]
+                        Helpers.set_in_dict(documents[analyzation_idx], mlp_text_path, analyzation_datum['text'])
+
+                        if output_type == 'full':
+                            mlp_stats_path = mlp_field_path + ["stats"]
+                            Helpers.set_in_dict(documents[analyzation_idx], mlp_stats_path, self._process_stats(analyzation_datum["stats"]))
+
+                    else:
+                        documents[analyzation_idx][input_feature + '_mlp-lite'] = {}
+                        documents[analyzation_idx][input_feature + '_mlp-lite']['text'] = analyzation_datum['text']
+                        if output_type == 'full':
+                            documents[analyzation_idx][input_feature + '_mlp-lite']['stats'] = self._process_stats(analyzation_datum['stats'])
+                except Exception as e:
+                    logging.getLogger(ERROR_LOGGER).exception("Error Message: {}, Document: {}".format(e, documents[analyzation_idx]))
+                    continue
 
         return {'documents': documents, 'meta': {}, 'erros': errors}

@@ -47,7 +47,7 @@ function removeLoader() {
 
 function createIndices(indicesArray, data) {
     data.indices.forEach((element) => {
-        indicesArray.push(new Index(element.aggregations, element.index_name.replace('.', '-'), element.total_documents))
+        indicesArray.push(new Index(element.aggregations, element.index_name.replace('.', '-').replace("*", "WILDCARD"), element.total_documents))
     });
     return indicesArray
 }

@@ -62,7 +62,7 @@ class Helpers:
 class MLPTaskAdapter(object):
     CELERY_CHUNK_SIZE = 10
     MAX_NETWORK_RETRY_COUNT = 5
-    MAX_TASK_RETRY_COUNT = 1000
+    MAX_TASK_RETRY_COUNT = 200
 
     def __init__(self, mlp_url, mlp_type='mlp'):
         self.mlp_url = mlp_url
@@ -169,6 +169,8 @@ class MLPTaskAdapter(object):
             # Remove all the tasks that have finished their jobs or failed turning it.
             self.tasks = [task for task in self.tasks if task["task"] not in self.finished_task_ids and task["task"] not in self.failed_task_ids]
             self.tasks = [task for task in self.tasks if task["retry_count"] < MLPTaskAdapter.MAX_TASK_RETRY_COUNT]
-            sleep(5)  # Wait a small amount of time until checking wheter the task has finished.
+
+            if not self.tasks:  # Avoid waiting without reason if the next batch is up.
+                sleep(5)  # Wait a small amount of time until checking wheter the task has finished.
 
         return self.analyzation_data, self.errors
