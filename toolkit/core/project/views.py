@@ -26,9 +26,3 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if not current_user.is_superuser:
             queryset = queryset.filter(owner=current_user) | queryset.filter(users=current_user)
         return queryset
-
-    @action(detail=True, methods=['get'])
-    def activate_project(self, request, pk=None):
-        obj = self.get_object()
-        request.user.profile.activate_project(obj)
-        return Response({'status': f'Project {pk} successfully activated.'}, status=status.HTTP_200_OK)
