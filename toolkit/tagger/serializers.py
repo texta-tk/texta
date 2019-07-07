@@ -59,7 +59,7 @@ class TaggerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tagger
-        fields = ('url', 'id', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'feature_selector', 'stop_words',
+        fields = ('id', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'feature_selector', 'stop_words',
                   'maximum_sample_size', 'negative_multiplier', 'location', 'precision', 'recall', 'f1_score', 'num_features', 'plot', 'task')
         read_only_fields = ('location', 'stop_words', 'precision', 'recall', 'f1_score', 'num_features', 'plot')
 
@@ -84,11 +84,11 @@ class TaggerSerializer(serializers.ModelSerializer):
             return None
 
 
-class TaggerGroupSerializer(serializers.HyperlinkedModelSerializer):
+class TaggerGroupSerializer(serializers.ModelSerializer):
     description = serializers.CharField(help_text=f'Description for the Tagger Group.')
     minimum_sample_size = serializers.IntegerField(default=DEFAULT_MIN_SAMPLE_SIZE, help_text=f'Minimum number of documents required to train a model. Default: {DEFAULT_MIN_SAMPLE_SIZE}')
     fact_name = serializers.CharField(default=DEFAULT_TAGGER_GROUP_FACT_NAME, help_text=f'Fact name used to filter tags (fact values). Default: {DEFAULT_TAGGER_GROUP_FACT_NAME}')
-    taggers = serializers.HyperlinkedRelatedField(read_only=True, many=True, view_name='tagger-detail')
+    taggers = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
     tagger = TaggerSerializer(write_only=True, remove_fields=['description', 'query'])
     tagger_status = serializers.SerializerMethodField()
     tagger_statistics = serializers.SerializerMethodField()

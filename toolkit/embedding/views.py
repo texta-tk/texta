@@ -9,6 +9,7 @@ from toolkit.embedding.serializers import (EmbeddingSerializer, EmbeddingPrecict
 from toolkit.embedding.embedding import W2VEmbedding
 from toolkit.embedding.phraser import Phraser
 from toolkit.embedding.word_cluster import WordCluster
+from toolkit.core.project.models import Project
 from toolkit.tools.model_cache import ModelCache
 from toolkit import permissions as toolkit_permissions
 from toolkit.tools.text_processor import TextProcessor
@@ -35,23 +36,20 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
     API endpoint that allows TEXTA models to be viewed or edited.
     Only include the embeddings that are related to the request UserProfile's active_project
     """
+    queryset = Embedding.objects.all()
     serializer_class = EmbeddingSerializer
     permission_classes = (
         core_permissions.TaggerEmbeddingsPermissions, 
-        permissions.IsAuthenticated,
-        toolkit_permissions.HasActiveProject
+        permissions.IsAuthenticated
     )
 
     def get_queryset(self):
-        queryset = Embedding.objects.all()
-        current_user = self.request.user
-        if not current_user.is_superuser:
-            queryset = Embedding.objects.filter(project=current_user.profile.active_project)
-        return queryset
+        return Embedding.objects.filter(project=self.kwargs['project_pk'])
+
     
     
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, project=self.request.user.profile.active_project)
+        serializer.save(author=self.request.user, project=Project.objects.get(id=self.kwargs['project_pk']))
 
 
     @action(detail=True, methods=['get', 'post'],serializer_class=EmbeddingPrecictionSerializer)
@@ -97,23 +95,18 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
     permission_classes = (
         core_permissions.TaggerEmbeddingsPermissions, 
         permissions.IsAuthenticated,
-        toolkit_permissions.HasActiveProject
     )
 
     def get_queryset(self):
-        queryset = EmbeddingCluster.objects.all()
-        current_user = self.request.user
-        if not current_user.is_superuser:
-            queryset = EmbeddingCluster.objects.filter(project=current_user.profile.active_project)
-        return queryset
+        return EmbeddingCluster.objects.filter(project=self.kwargs['project_pk'])
     
     
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, project=self.request.user.profile.active_project)
+        serializer.save(author=self.request.user,  project=Project.objects.get(id=self.kwargs['project_pk']))
 
 
     @action(detail=True, methods=['get', 'post'], serializer_class=ClusterBrowserSerializer)
-    def browse(self, request, pk=None):
+    def browse(self, request, pk=None, project_pk=None):
         """
         API endpoint for browsing clustering results.
         """
@@ -141,7 +134,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
 
 
     @action(detail=True, methods=['get', 'post'], serializer_class=TextSerializer)
-    def find_word(self, request, pk=None):
+    def find_word(self, request, pk=None, project_pk=None):
         """
         API endpoint for finding a cluster for any word in model.
         """
@@ -165,7 +158,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
 
 
     @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
-    def cluster_text(self, request, pk=None):
+    def cluster_text(self, request, pk=None, project_pk=None):
         """
         API endpoint for clustering raw text.
         """
