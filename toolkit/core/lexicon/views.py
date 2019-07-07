@@ -12,7 +12,7 @@ from toolkit.core import permissions as core_permissions
 class LexiconViewSet(viewsets.ModelViewSet):
     serializer_class = LexiconSerializer
     permission_classes = (
-        core_permissions.TaggerEmbeddingsPermissions,
+        core_permissions.ProjectResourceAllowed,
         permissions.IsAuthenticated,
         )
 

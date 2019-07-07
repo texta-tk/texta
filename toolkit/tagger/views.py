@@ -41,7 +41,7 @@ def get_payload(request):
 class TaggerViewSet(viewsets.ModelViewSet):
     serializer_class = TaggerSerializer
     permission_classes = (
-        core_permissions.TaggerEmbeddingsPermissions,
+        core_permissions.ProjectResourceAllowed,
         permissions.IsAuthenticated,
         )
 
@@ -276,7 +276,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
     queryset = TaggerGroup.objects.all()
     serializer_class = TaggerGroupSerializer
     permission_classes = (
-        core_permissions.TaggerEmbeddingsPermissions,
+        core_permissions.ProjectResourceAllowed,
         permissions.IsAuthenticated,
         )
 

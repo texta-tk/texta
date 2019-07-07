@@ -17,25 +17,26 @@ class ProjectPermissionsTests(APITestCase):
         self.project = Project.objects.create(title='testproj', owner=self.user_1)
         self.project.users.add(self.user_2)
         self.project.users.add(self.user_1)
-        print(self.project.users.all())
         self.client = APIClient()
-        # Test on the core.taggers ModelViewSet url
-        self.basic_test_url = f'/projects/{self.project.id}/lexicons/'
 
-    def test_project_with_user_listed(self):
+    def test_all(self):
+        for resource in ('lexicons', 'taggers', 'embeddings', 'embedding_clusters', 'tagger_groups'):
+            self.run_project_with_user_listed(resource)
+            self.run_project_with_user_not_listed(resource)
+
+    def run_project_with_user_listed(self, resource):
+        url = f'/projects/{self.project.id}/{resource}/'
         '''Test if listed users allowed to see content'''
         self.client.login(username='user_1', password='pw')
-        response = self.client.get(self.basic_test_url)
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
         self.client.login(username='user_2', password='pw')
-        response = self.client.get(self.basic_test_url)
-        print(response.data)
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_project_with_user_not_listed(self):
+    def run_project_with_user_not_listed(self, resource):
         '''Test if unlisted users rejected'''
+        url = f'/projects/{self.project.id}/{resource}/'
         self.client.login(username='user_3', password='pw')
-        response = self.client.get(self.basic_test_url)
-        print(response.data)
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

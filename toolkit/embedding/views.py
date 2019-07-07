@@ -39,14 +39,13 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
     queryset = Embedding.objects.all()
     serializer_class = EmbeddingSerializer
     permission_classes = (
-        core_permissions.TaggerEmbeddingsPermissions, 
-        permissions.IsAuthenticated
+        core_permissions.ProjectResourceAllowed, 
+        permissions.IsAuthenticated,
     )
 
     def get_queryset(self):
         return Embedding.objects.filter(project=self.kwargs['project_pk'])
 
-    
     
     def perform_create(self, serializer):
         serializer.save(author=self.request.user, project=Project.objects.get(id=self.kwargs['project_pk']))
@@ -93,7 +92,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
     """
     serializer_class = EmbeddingClusterSerializer
     permission_classes = (
-        core_permissions.TaggerEmbeddingsPermissions, 
+        core_permissions.ProjectResourceAllowed, 
         permissions.IsAuthenticated,
     )
 

@@ -12,7 +12,10 @@ from toolkit.core.project.serializers import ProjectSerializer
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    permission_classes = (project_permissions.ProjectPermissions, permissions.IsAuthenticated)
+    permission_classes = (
+        project_permissions.ProjectAllowed, 
+        permissions.IsAuthenticated
+    )
     
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
