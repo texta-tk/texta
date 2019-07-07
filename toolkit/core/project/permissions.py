@@ -4,13 +4,7 @@ from toolkit.core.project.models import Project
 class ProjectAllowed(permissions.BasePermission):
     message = 'Insufficient permissions for this project.'
 
-    def has_permission(self, request, view):
-        return self._permission_check(request, view)
-
     def has_object_permission(self, request, view, obj):
-        return self._permission_check(request, view)
-
-    def _permission_check(self, request, view):
         # retrieve project object
         project_object = Project.objects.get(id=view.kwargs['pk'])
         # check if user is owner or listed in project users
