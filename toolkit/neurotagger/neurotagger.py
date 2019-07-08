@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 
 from django.core.files.base import ContentFile
 from toolkit.settings import MODELS_DIR, MEDIA_URL
+from toolkit.neurotagger.models import Neurotagger
 from toolkit.utils.plot_utils import save_plot
 # Data management imports
 from sklearn.model_selection import train_test_split
@@ -37,7 +38,7 @@ from toolkit.neurotagger.neuro_models import NeuroModels
 
 
 class NeurotaggerWorker():
-    def __init__(self, model_architecture, seq_len, vocab_size, num_epochs, validation_split, show_progress, neurotagger_obj):
+    def __init__(self, neurotagger_id):
         """
         Main class for training the NeuroClassifier
 
@@ -56,21 +57,22 @@ class NeurotaggerWorker():
         """
 
         # Task params
-        self.neurotagger_obj = neurotagger_obj
+        self.neurotagger_id = neurotagger_id
+        self.neurotagger_obj = None
         self.task_type = None
         self.model_name = None
-        self.show_progress = show_progress
+        self.show_progress = None
         self.task_result = {}
 
         # Neuroclassifier params
-        self.model_arch = model_architecture
-        self.validation_split = validation_split
-        self.num_epochs = num_epochs
+        self.model_arch = None
+        self.validation_split = None
+        self.num_epochs = None
         self.bs = 64
 
         # Derived params
-        self.vocab_size = vocab_size
-        self.seq_len = seq_len
+        self.vocab_size = None
+        self.seq_len = None
 
         # Neuroclassifier data
         self.samples = None
@@ -85,15 +87,35 @@ class NeurotaggerWorker():
         self.model = None
 
 
-    def run(self, samples, labels):
+    def _set_up_data(self, samples, labels, show_progress):
+        self.neurotagger_obj = Neurotagger.objects.get(pk=self.neurotagger_id)
+        self.show_progress = show_progress
+
+        self.model_arch = self.neurotagger_obj.model_architecture
+        self.validation_split = self.neurotagger_obj.validation_split
+        self.num_epochs = self.neurotagger_obj.num_epochs
+
+        # Derived params
+        self.vocab_size = self.neurotagger_obj.vocab_size
+        self.seq_len = self.neurotagger_obj.seq_len
+
+        # Data
         self.samples = samples
         self.labels = labels
+        self.show_progress = show_progress
 
+        
+
+
+    def run(self, samples, labels, show_progress):
+        self._set_up_data(samples, labels, show_progress)
         self._process_data()
         self.model = NeuroModels().get_model(self.model_arch)
+
         history = self._train_model()
         self._plot_model(history)
         self._cross_validation()
+
         self._create_task_result()
         self._save_model()
 
@@ -159,17 +181,17 @@ class NeurotaggerWorker():
         }
 
         self.task_result.update(train_summary)
-        self.neurotagger_obj.result = json.dumps(self.task_result)
+        self.neurotagger_obj.result_json = json.dumps(self.task_result)
 
 
     def _cross_validation(self):
         # Evaluate model, get [loss, accuracy]
         val_eval = self.model.evaluate(x=self.X_val, y=self.y_val, batch_size=self.bs, verbose=1)
         train_eval = self.model.evaluate(x=self.X_train, y=self.y_train, batch_size=self.bs, verbose=1)
-        self.validation_accuracy = val_eval[1]
-        self.training_accuracy =  train_eval[1]
-        self.validation_loss = val_eval[0]
-        self.training_loss = train_eval[0]
+        self.neurotagger_obj.validation_accuracy = val_eval[1]
+        self.neurotagger_obj.training_accuracy =  train_eval[1]
+        self.neurotagger_obj.validation_loss = val_eval[0]
+        self.neurotagger_obj.training_loss = train_eval[0]
 
 
     def _save_model(self):
@@ -219,7 +241,7 @@ class NeurotaggerWorker():
         self.neurotagger_obj.model_plot.save(model_plot_path, c_f)
 
 
-    def load(self, task_id):
+    def load(self):
         '''Load model/tokenizer for preprocessor'''
         K.clear_session()
         # Clear Keras session, because currently this function
@@ -229,12 +251,11 @@ class NeurotaggerWorker():
         # This also causes a memory leak in Tensorflow, to prevent it,
         # clear the session, or rework the entire preprocessor system
 
-        self.neurotagger_id = neurotagger_id
         self.neurotagger_obj = Neurotagger.objects.get(pk=self.neurotagger_id)
         self.model_name = 'model_{}'.format(self.neurotagger_obj.unique_id)
         self.task_type = self.neurotagger_obj.task_type
         model_path = os.path.join(MODELS_DIR, self.task_type, self.model_name)
-        self.seq_len = json.loads(self.neurotagger_obj.result)['max_sequence_len']
+        self.seq_len = json.loads(self.neurotagger_obj.result_json)['max_sequence_len']
         tokenizer_name = '{}_tokenizer'.format(self.model_name)
         tokenizer_path = os.path.join(MODELS_DIR, self.task_type, tokenizer_name)
 
@@ -243,7 +264,12 @@ class NeurotaggerWorker():
             self.tokenizer = pickle.load(f)
 
 
-    def convert_and_predict(self, text):
+    def convert_and_predict_text(self, text):
+        """
+        Predicts on raw text
+        :param text: input text as string
+        :return: class names of decision
+        """
         to_predict = self.tokenizer.texts_to_sequences(text)
         to_predict = pad_sequences(to_predict, maxlen=self.seq_len)
         return self.model.predict_classes(to_predict, batch_size=self.bs)

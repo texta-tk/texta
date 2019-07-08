@@ -23,16 +23,17 @@ class NeurotaggerSerializer(serializers.ModelSerializer):
 
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
+    model_plot = serializers.SerializerMethodField()
 
     class Meta:
         model = Neurotagger
         fields = ('url', 'id', 'description', 'project', 'author', 'queries', 'validation_split', 'score_threshold',
                   'fields', 'embedding', 'model_architecture', 'seq_len', 'maximum_sample_size', 'negative_multiplier',
                   'location', 'num_epochs', 'vocab_size', 'plot', 'task', 'validation_accuracy', 'training_accuracy',
-                  'training_loss', 'validation_loss', 'model_plot', 'result')
+                  'training_loss', 'validation_loss', 'model_plot', 'result_json')
 
         read_only_fields = ('author', 'project', 'location', 'accuracy', 'loss', 'plot',
-                            'model_plot', 'result', 'validation_accuracy', 'training_accuracy',
+                            'model_plot', 'result_json', 'validation_accuracy', 'training_accuracy',
                             'training_loss', 'validation_loss',
                             )
 
@@ -53,5 +54,11 @@ class NeurotaggerSerializer(serializers.ModelSerializer):
     def get_plot(self, obj):
         if obj.plot:
             return '{0}/{1}'.format(URL_PREFIX, obj.plot)
+        else:
+            return None
+
+    def get_model_plot(self, obj):
+        if obj.model_plot:
+            return '{0}/{1}'.format(URL_PREFIX, obj.model_plot)
         else:
             return None

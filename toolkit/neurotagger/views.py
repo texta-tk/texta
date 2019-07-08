@@ -13,6 +13,7 @@ from toolkit.neurotagger.neurotagger import NeurotaggerWorker
 from toolkit.utils.model_cache import ModelCache
 from toolkit import permissions as toolkit_permissions
 from toolkit.core import permissions as core_permissions
+from toolkit.tagger.serializers import TextSerializer
 
 import json
 
@@ -55,3 +56,38 @@ class NeurotaggerViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
+
+    @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
+    def tag_text(self, request, pk=None):
+        """
+        API endpoint for tagging raw text.
+        """
+        data = get_payload(request)
+        serializer = TextSerializer(data=data)
+
+        # check if valid request
+        if not serializer.is_valid():
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        # retrieve tagger object
+        tagger_object = self.get_object()
+
+        # check if tagger exists
+        if not tagger_object.location:
+            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # apply tagger
+        tagger_id = tagger_object.pk
+        tagger_response = self.apply_tagger(tagger_id, serializer.data['text'], input_type='text')
+        return Response(tagger_response, status=status.HTTP_200_OK)
+
+
+
+    def apply_tagger(self, tagger_id, tagger_input, input_type='text'):
+        tagger = model_cache.get_model(tagger_id)
+        if input_type == 'doc':
+            tagger_result = tagger.tag_doc(tagger_input)
+        else:
+            tagger_result = tagger.tag_text(tagger_input)
+        return {'result': bool(tagger_result[0]), 'probability': tagger_result[1]}

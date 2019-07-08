@@ -65,10 +65,14 @@ class NeurotaggerViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created_neurotagger = Neurotagger.objects.get(id=response.data['id'])
 
-        if created_neurotagger.location:
-            # Remove neurotagger files after test is done
+        # Remove neurotagger files after test is done
+        if 'model' in created_neurotagger.location:
             self.addCleanup(remove_file, json.loads(created_neurotagger.location)['model'])
+        if 'tokenizer' in created_neurotagger.location:
             self.addCleanup(remove_file, json.loads(created_neurotagger.location)['tokenizer'])
+
+        remove_file(created_neurotagger.plot.path)
+        remove_file(created_neurotagger.model_plot.path)
 
         # Check if Task gets created via a signal
         self.assertTrue(created_neurotagger.task is not None)

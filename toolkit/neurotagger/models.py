@@ -41,7 +41,7 @@ class Neurotagger(models.Model):
     location = models.TextField()
     model_plot = models.FileField(upload_to='media', null=True, verbose_name='')
     plot = models.FileField(upload_to='media', null=True, verbose_name='')
-    result = models.TextField(blank=True)
+    result_json = models.TextField(blank=True)
     
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
@@ -57,7 +57,7 @@ class Neurotagger(models.Model):
             from toolkit.neurotagger.tasks import train_neurotagger
 
             # If not running tests via python manage.py test
-            if not 'test' in sys.argv:
+            if not True:#'test' in sys.argv:
                 train_neurotagger.apply_async(args=(instance.pk,))
             else: 
                 train_neurotagger(instance.pk)

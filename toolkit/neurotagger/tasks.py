@@ -41,16 +41,8 @@ def train_neurotagger(neurotagger_id):
     show_progress.update_step('training')
     show_progress.update_view(0)
 
-    neurotagger = NeurotaggerWorker(
-        neurotagger_obj.model_architecture,
-        neurotagger_obj.seq_len,
-        neurotagger_obj.vocab_size,
-        neurotagger_obj.num_epochs,
-        neurotagger_obj.validation_split,
-        show_progress,
-        neurotagger_obj
-    )
-    neurotagger.run(samples, labels)
+    neurotagger = NeurotaggerWorker(neurotagger_obj.id)
+    neurotagger.run(samples, labels, show_progress)
 
     # declare the job done
     show_progress.update_step('')
