@@ -105,16 +105,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'toolkit.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/2.1/ref/settings/#databases
-
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'data', 'db.sqlite3'),
-    },
-    # SQLite write lock timeout in seconds https://docs.djangoproject.com/en/dev/ref/databases/#database-is-locked-errors
+	'default': {
+		'ENGINE':       os.getenv('DJANGO_DATABASE_ENGINE', 'django.db.backends.sqlite3'),
+		'NAME':         os.getenv('DJANGO_DATABASE_NAME', os.path.join(BASE_DIR, 'data', 'db.sqlite3')),
+		'USER':         os.getenv('DJANGO_DATABASE_USER', ''),  # Not used with sqlite3.
+		'PASSWORD':     os.getenv('DJANGO_DATABASE_PASSWORD', ''),  # Not used with sqlite3.
+		'HOST':         os.getenv('DJANGO_DATABASE_HOST', ''),
+		# Set to empty string for localhost. Not used with sqlite3.
+		'PORT':         os.getenv('DJANGO_DATABASE_PORT', ''),
+		# Set to empty string for default. Not used with sqlite3.
+		'BACKUP_COUNT': 5,
+		'CONN_MAX_AGE': None
+	},
     'OPTIONS': {
         'timeout': 5,
     }

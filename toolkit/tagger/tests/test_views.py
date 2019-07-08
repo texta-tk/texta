@@ -16,16 +16,13 @@ class TaggerViewTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         # Owner of the project
-        cls.url = f'/taggers/'
         cls.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
-
         cls.project = Project.objects.create(
             title='taggerTestProject',
             owner=cls.user,
             indices=TEST_INDEX
         )
-        # activate project
-        cls.user.profile.activate_project(cls.project)
+        cls.url = f'/projects/{cls.project.id}/taggers/'
 
         # set vectorizer & classifier options
         cls.vectorizer_opts = ('Hashing Vectorizer', 'Count Vectorizer', 'TfIdf Vectorizer')

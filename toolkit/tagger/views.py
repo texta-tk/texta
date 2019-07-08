@@ -41,20 +41,16 @@ def get_payload(request):
 class TaggerViewSet(viewsets.ModelViewSet):
     serializer_class = TaggerSerializer
     permission_classes = (
-        core_permissions.TaggerEmbeddingsPermissions,
+        core_permissions.ProjectResourceAllowed,
         permissions.IsAuthenticated,
-        toolkit_permissions.HasActiveProject
         )
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, project=self.request.user.profile.active_project)
+        serializer.save(author=self.request.user,  project=Project.objects.get(id=self.kwargs['project_pk']))
+
 
     def get_queryset(self):
-        queryset = Tagger.objects.all()
-        current_user = self.request.user
-        if not current_user.is_superuser:
-            queryset = Tagger.objects.filter(project=current_user.profile.active_project)
-        return queryset
+        return Tagger.objects.filter(project=self.kwargs['project_pk'])
 
 
     def create(self, request, *args, **kwargs):
@@ -66,7 +62,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
 
     @action(detail=True, methods=['get', 'post'], serializer_class=FeatureListSerializer)
-    def list_features(self, request, pk=None):
+    def list_features(self, request, pk=None, project_pk=None):
         """
         API endpoint for listing tagger features.
         """
@@ -107,7 +103,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
 
     @action(detail=True, methods=['get', 'post'])
-    def stop_word_list(self, request, pk=None):
+    def stop_word_list(self, request, pk=None, project_pk=None):
         """
         API endpoint for listing tagger object stop words.
         """
@@ -118,7 +114,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
 
     @action(detail=True, methods=['get', 'post'], serializer_class=TextSerializer)
-    def stop_word_add(self, request, pk=None):
+    def stop_word_add(self, request, pk=None, project_pk=None):
         """
         API endpoint for adding a new stop word to tagger
         """
@@ -146,7 +142,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
 
     @action(detail=True, methods=['get', 'post'], serializer_class=TextSerializer)
-    def stop_word_remove(self, request, pk=None):
+    def stop_word_remove(self, request, pk=None, project_pk=None):
         """
         API endpoint for removing tagger stop word.
         """
@@ -179,7 +175,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
 
     @action(detail=True, methods=['get', 'post'])
-    def retrain_tagger(self, request, pk=None):
+    def retrain_tagger(self, request, pk=None, project_pk=None):
         """
         API endpoint for retraining tagger model.
         """
@@ -189,7 +185,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
 
     @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
-    def tag_text(self, request, pk=None):
+    def tag_text(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging raw text.
         """
@@ -222,7 +218,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
 
     @action(detail=True, methods=['get','post'], serializer_class=DocSerializer)
-    def tag_doc(self, request, pk=None):
+    def tag_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging JSON documents.
         """
@@ -280,23 +276,18 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
     queryset = TaggerGroup.objects.all()
     serializer_class = TaggerGroupSerializer
     permission_classes = (
-        core_permissions.TaggerEmbeddingsPermissions,
+        core_permissions.ProjectResourceAllowed,
         permissions.IsAuthenticated,
-        toolkit_permissions.HasActiveProject
         )
 
     def perform_create(self, serializer, tagger_set):
         serializer.save(author=self.request.user, 
-                        project=self.request.user.profile.active_project,
+                        project=Project.objects.get(id=self.kwargs['project_pk']), 
                         taggers=tagger_set)
 
 
     def get_queryset(self):
-        queryset = TaggerGroup.objects.all()
-        current_user = self.request.user
-        if not current_user.is_superuser:
-            queryset = TaggerGroup.objects.filter(project=current_user.profile.active_project)
-        return queryset
+        return TaggerGroup.objects.filter(project=self.kwargs['project_pk'])
 
 
     def create(self, request, *args, **kwargs):
@@ -309,9 +300,10 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         fact_name = serializer.validated_data['fact_name']
+        active_project = Project.objects.get(id=self.kwargs['project_pk'])
 
         # retrieve tags with sufficient counts & create queries to build models
-        tags = self.get_tags(fact_name, min_count=serializer.validated_data['minimum_sample_size'])
+        tags = self.get_tags(fact_name, active_project, min_count=serializer.validated_data['minimum_sample_size'])
         
         # check if found any tags to build models on
         if not tags:
@@ -332,7 +324,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
             tagger_data.update({'description': tag})
             created_tagger = Tagger.objects.create(**tagger_data,
                                       author=request.user,
-                                      project=self.request.user.profile.active_project)
+                                      project=active_project)
             tagger_set.add(created_tagger)
 
         # create hybrid tagger object
@@ -342,11 +334,11 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-    def get_tags(self, fact_name, min_count=1000):
+    def get_tags(self, fact_name, active_project, min_count=1000):
         """
         Finds possible tags for training by aggregating active project's indices.
         """
-        active_indices = list(self.request.user.profile.active_project.indices)
+        active_indices = list(active_project.indices)
         es_a = ElasticAggregator(indices=active_indices)
         # limit size to 10000 unique tags
         tag_values = es_a.facts(filter_by_fact_name=fact_name, min_count=min_count, size=10000)
@@ -393,7 +385,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
 
 
     @action(detail=True, methods=['get', 'post'])
-    def models_retrain(self, request, pk=None):
+    def models_retrain(self, request, pk=None, project_pk=None):
         """
         API endpoint for retraining tagger model.
         """
@@ -408,7 +400,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
 
 
     @action(detail=True, methods=['get', 'post'])
-    def models_load(self, request, pk=None):
+    def models_load(self, request, pk=None, project_pk=None):
         """
         API endpoint for loading all relevant tagger models.
         """
@@ -427,7 +419,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
 
 
     @action(detail=True, methods=['get','post'], serializer_class=TextGroupSerializer)
-    def tag_text(self, request, pk=None):
+    def tag_text(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging raw text with tagger group.
         """
@@ -462,7 +454,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
 
 
     @action(detail=True, methods=['get','post'], serializer_class=DocGroupSerializer)
-    def tag_doc(self, request, pk=None):
+    def tag_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging JSON documents with tagger group.
         """

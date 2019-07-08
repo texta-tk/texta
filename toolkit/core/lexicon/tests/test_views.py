@@ -18,8 +18,7 @@ class LexiconViewsTests(APITestCase):
             owner=cls.user,
             indices=TEST_INDEX
         )
-        cls.user.profile.activate_project(cls.project)
-
+        cls.url = f'/projects/{cls.project.id}/lexicons/'
 
 
     def setUp(self):
@@ -32,7 +31,7 @@ class LexiconViewsTests(APITestCase):
             "description": "TestLexicon",
             "phrases": json.dumps(["esimene fraas", "teine fraas"]),
         }
-        response = self.client.post('/lexicons/', payload)
+        response = self.client.post(self.url, payload)
         print_output('test_lexicon_create:response.data', response.data)
         created_id = response.data['id']
         # Check if lexicon gets created
@@ -40,7 +39,7 @@ class LexiconViewsTests(APITestCase):
         self.assertTrue('esimene fraas' in json.loads(response.data['phrases']))
 
         # Check if created lexicon is accessible via API
-        response = self.client.get(f'/lexicons/{created_id}/')
+        response = self.client.get(f'{self.url}{created_id}/')
         print_output('test_lexicon_retrieval:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue('esimene fraas' in json.loads(response.data['phrases']))
@@ -52,7 +51,7 @@ class LexiconViewsTests(APITestCase):
             "description": "TestLexicon",
             "phrases": json.dumps(["esimene fraas", "teine fraas"]),
         }
-        response = self.client.post('/lexicons/', payload)
+        response = self.client.post(self.url, payload)
         print_output('test_lexicon_create:response.data', response.data)
         created_id = response.data['id']
 
@@ -61,13 +60,13 @@ class LexiconViewsTests(APITestCase):
             "description": "TestLexicon",
             "phrases": json.dumps(["esimene fraas", "teine fraas", "kolmas fraas"]),
         }
-        response = self.client.put(f'/lexicons/{created_id}/', payload)
+        response = self.client.put(f'{self.url}{created_id}/', payload)
         print_output('test_lexicon_update:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue('esimene fraas' in json.loads(response.data['phrases']))
 
         # Check if updated lexicon is accessible via API
-        response = self.client.get(f'/lexicons/{created_id}/')
+        response = self.client.get(f'{self.url}{created_id}/')
         print_output('test_lexicon_updated_retrieval:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue('kolmas fraas' in json.loads(response.data['phrases']))

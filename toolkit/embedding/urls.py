@@ -1,6 +1,6 @@
-from rest_framework import routers
+from rest_framework_nested import routers
 from . import views
 
-router = routers.DefaultRouter()
-router.register('embeddings', views.EmbeddingViewSet, base_name='embedding')
-router.register('embedding_clusters', views.EmbeddingClusterViewSet, base_name='embedding_cluster')
+embedding_router = routers.DefaultRouter()
+embedding_router.register('embeddings', views.EmbeddingViewSet, base_name='embedding')
+embedding_router.register('embedding_clusters', views.EmbeddingClusterViewSet, base_name='cluster')

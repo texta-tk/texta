@@ -17,8 +17,6 @@ class EmbeddingViewTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         # Owner of the project
-        cls.url = f'/embeddings/'
-        cls.cluster_url = f'/embedding_clusters/'
         cls.user = create_test_user('embeddingOwner', 'my@email.com', 'pw')
 
         cls.project = Project.objects.create(
@@ -27,7 +25,10 @@ class EmbeddingViewTests(APITestCase):
             indices=TEST_INDEX
         )
 
-        cls.user.profile.activate_project(cls.project)
+        cls.url = f'/projects/{cls.project.id}/embeddings/'
+        cls.cluster_url = f'/projects/{cls.project.id}/embedding_clusters/'
+        
+        #cls.user.profile.activate_project(cls.project)
 
         cls.test_embedding_id = None
         cls.test_embedding_clustering_id = None

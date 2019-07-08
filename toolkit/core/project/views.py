@@ -10,8 +10,12 @@ from toolkit.core.project.serializers import ProjectSerializer
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
+    queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    permission_classes = (project_permissions.ProjectPermissions, permissions.IsAuthenticated)
+    permission_classes = (
+        project_permissions.ProjectAllowed, 
+        permissions.IsAuthenticated
+    )
     
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
@@ -22,9 +26,3 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if not current_user.is_superuser:
             queryset = queryset.filter(owner=current_user) | queryset.filter(users=current_user)
         return queryset
-
-    @action(detail=True, methods=['get'])
-    def activate_project(self, request, pk=None):
-        obj = self.get_object()
-        request.user.profile.activate_project(obj)
-        return Response({'status': f'Project {pk} successfully activated.'}, status=status.HTTP_200_OK)
