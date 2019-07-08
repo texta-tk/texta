@@ -31,3 +31,4 @@ dependencies:
         - elasticsearch_dsl
         - graypy
         - python-dotenv
+        - dictor
