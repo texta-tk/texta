@@ -17,7 +17,7 @@ class Embedding(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
-    fields = MultiSelectField(max_length=MAX_STR_LEN*100)
+    fields = models.TextField(default=json.dumps([]))
 
     num_dimensions = models.IntegerField(default=100)
     #max_vocab = models.IntegerField(default=0)

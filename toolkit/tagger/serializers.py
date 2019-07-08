@@ -58,6 +58,7 @@ class TaggerSerializer(serializers.ModelSerializer):
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
     stop_words = serializers.SerializerMethodField()
+    location = serializers.SerializerMethodField()
 
 
     class Meta:
@@ -85,10 +86,12 @@ class TaggerSerializer(serializers.ModelSerializer):
             return '{0}/{1}'.format(URL_PREFIX, obj.plot)
         else:
             return None
-    
+
     def get_stop_words(self, obj):
         return json.loads(obj.stop_words)
 
+    def get_location(self, obj):
+        return json.loads(obj.location)
 
 
 class TaggerGroupSerializer(serializers.ModelSerializer):

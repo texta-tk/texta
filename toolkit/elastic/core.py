@@ -29,10 +29,14 @@ class ElasticCore:
             return []
 
 
-    def get_fields(self):
+    def get_fields(self, indices=[]):
         out = []
+        if indices:
+            lookup = ','.join(indices)
+        else:
+            lookup = '*'
         if self.connection:
-            for index, mappings in self.es.indices.get_mapping('*').items():
+            for index, mappings in self.es.indices.get_mapping(lookup).items():
                 for mapping, properties in mappings['mappings'].items():
                     properties = properties['properties']
                     for field in self._decode_mapping_structure(properties):

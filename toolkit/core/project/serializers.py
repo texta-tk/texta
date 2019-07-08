@@ -7,16 +7,9 @@ from toolkit.core.choices import get_index_choices
 from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.tagger.models import Tagger
 
-
-class ProjectResourcesSerializer(serializers.Serializer):
-    embeddings = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
-    embedding_clusters = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
-    taggers = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
-
-
-class ProjectSerializer(serializers.ModelSerializer):
+class ProjectSerializer(serializers.HyperlinkedModelSerializer):
     indices = serializers.MultipleChoiceField(choices=get_index_choices())
-    users = UserSerializer(many=True)
+    users = serializers.HyperlinkedRelatedField(many=True, view_name='user-detail', queryset=User.objects.all())
     resources = serializers.SerializerMethodField()
 
     class Meta:
@@ -25,8 +18,9 @@ class ProjectSerializer(serializers.ModelSerializer):
         read_only_fields = ('owner', 'resources')
 
     def get_resources(self, obj):
-        embeddings = Embedding.objects.filter(project=obj)
-        embedding_clusters = EmbeddingCluster.objects.filter(project=obj)
-        taggers = Tagger.objects.filter(project=obj)
-        asd = {'taggers': taggers, 'embeddings': embeddings, 'embedding_clusters': embedding_clusters}
-        return ProjectResourcesSerializer(instance=asd).data
+        request = self.context.get('request')
+        base_url = request.build_absolute_uri(f'/projects/{obj.id}/')
+        resource_dict = {}
+        for resource_name in ('embeddings', 'embedding_clusters', 'taggers', 'tagger_groups'):
+            resource_dict[resource_name] = f'{base_url}{resource_name}/'
+        return resource_dict

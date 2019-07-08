@@ -1,4 +1,5 @@
 from rest_framework import serializers
+import json
 
 from toolkit.embedding.models import Embedding, Task, EmbeddingCluster
 from toolkit.embedding.choices import (get_field_choices, DEFAULT_NUM_DIMENSIONS, DEFAULT_MAX_VOCAB, DEFAULT_MIN_FREQ, DEFAULT_OUTPUT_SIZE,
@@ -7,18 +8,22 @@ from toolkit.core.task.serializers import TaskSerializer
 
 
 
-class EmbeddingSerializer(serializers.ModelSerializer):
+class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
     task = TaskSerializer(read_only=True)
-    fields = serializers.MultipleChoiceField(choices=get_field_choices())
+    fields = serializers.CharField()
     num_dimensions = serializers.IntegerField(default=DEFAULT_NUM_DIMENSIONS,
                                     help_text=f'Default: {DEFAULT_NUM_DIMENSIONS}')
     min_freq = serializers.IntegerField(default=DEFAULT_MIN_FREQ,
                                     help_text=f'Default: {DEFAULT_MIN_FREQ}')
+    location = serializers.SerializerMethodField()
     
     class Meta:
         model = Embedding
         fields = ('id', 'description', 'query', 'fields', 'num_dimensions', 'min_freq', 'vocab_size', 'location', 'task')
         read_only_fields = ('vocab_size', 'location')
+    
+    def get_location(self, obj):
+        return json.loads(obj.location)
 
 
 class EmbeddingPrecictionSerializer(serializers.Serializer):
@@ -36,6 +41,7 @@ class EmbeddingClusterSerializer(serializers.ModelSerializer):
     num_clusters = serializers.IntegerField(default=DEFAULT_NUM_CLUSTERS, help_text=f'Default: {DEFAULT_NUM_CLUSTERS}')
     description = serializers.CharField(default='', help_text=f'Default: EMPTY')
     vocab_size = serializers.SerializerMethodField()
+    location = serializers.SerializerMethodField()
 
     class Meta:
         model = EmbeddingCluster
@@ -45,6 +51,9 @@ class EmbeddingClusterSerializer(serializers.ModelSerializer):
     
     def get_vocab_size(self, obj):
         return obj.embedding.vocab_size
+
+    def get_location(self, obj):
+        return json.loads(obj.location)
 
 
 class ClusterBrowserSerializer(serializers.Serializer):
