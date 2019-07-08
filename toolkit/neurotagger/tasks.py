@@ -28,7 +28,6 @@ def train_neurotagger(neurotagger_id):
     field_path_list = [field['field_path'] for field in field_data]
 
     # add phraser here
-    import pdb; pdb.set_trace()
     # TODO: use embedding to group together features
     if neurotagger_obj.embedding:
         phraser = Phraser(embedding_id=neurotagger_obj.embedding.pk)

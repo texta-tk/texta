@@ -4,3 +4,4 @@ toolkit/*/migrations/*
 data/models/*
 media/*
 .vscode/*
+*.rdb

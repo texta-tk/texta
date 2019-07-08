@@ -65,19 +65,23 @@ class NeurotaggerViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created_neurotagger = Neurotagger.objects.get(id=response.data['id'])
 
-        # if created_neurotagger.location:
-        #     # Remove neurotagger files after test is done
-        #     self.addCleanup(remove_file, json.loads(created_neurotagger.location)['neurotagger'])
+        if created_neurotagger.location:
+            # Remove neurotagger files after test is done
+            self.addCleanup(remove_file, json.loads(created_neurotagger.location)['model'])
+            self.addCleanup(remove_file, json.loads(created_neurotagger.location)['tokenizer'])
 
         # Check if Task gets created via a signal
         self.assertTrue(created_neurotagger.task is not None)
         # Check if Neurotagger gets trained and completed
-        # self.assertEqual(created_neurotagger.task.status, Task.STATUS_COMPLETED)
+        self.assertEqual(created_neurotagger.task.status, Task.STATUS_COMPLETED)
 
 
     @classmethod
     def tearDownClass(cls):
-        # TODO
-        pass
-        # remove_file(json.loads(cls.test_neurotagger.location)['neurotagger'])
-        # remove_file(cls.test_neurotagger.plot.path)
+        if 'model' in cls.test_neurotagger.location:
+            remove_file(json.loads(cls.test_neurotagger.location)['model'])
+        if 'tokenizer' in cls.test_neurotagger.location:
+            remove_file(json.loads(cls.test_neurotagger.location)['tokenizer'])
+
+        remove_file(cls.test_neurotagger.plot.path)
+        remove_file(cls.test_neurotagger.model_plot.path)

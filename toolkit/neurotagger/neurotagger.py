@@ -186,6 +186,7 @@ class NeurotaggerWorker():
             pickle.dump(self.tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
         
         self.neurotagger_obj.location = json.dumps({'model': output_model_file, 'tokenizer': output_tokenizer_file})
+        self.neurotagger_obj.save()
 
 
     def _plot_model(self, history):
