@@ -12,7 +12,10 @@ class ProjectResourceAllowed(permissions.BasePermission):
 
     def _permission_check(self, request, view):
         # retrieve project object
-        project_object = Project.objects.get(id=view.kwargs['project_pk'])
+        try:
+            project_object = Project.objects.get(id=view.kwargs['project_pk'])
+        except:
+            return False
         # check if user is owner or listed in project users
         if request.user in project_object.users.all() or request.user == project_object.owner:
             return True
