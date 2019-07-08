@@ -1,3 +1,4 @@
+import json
 from rest_framework import serializers
 from django.db.models import Avg
 
@@ -56,6 +57,8 @@ class TaggerSerializer(serializers.ModelSerializer):
                                                help_text=f'Feature selection algorithm to decrease the number of features.')
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
+    stop_words = serializers.SerializerMethodField()
+
 
     class Meta:
         model = Tagger
@@ -82,6 +85,10 @@ class TaggerSerializer(serializers.ModelSerializer):
             return '{0}/{1}'.format(URL_PREFIX, obj.plot)
         else:
             return None
+    
+    def get_stop_words(self, obj):
+        return json.loads(obj.stop_words)
+
 
 
 class TaggerGroupSerializer(serializers.ModelSerializer):
