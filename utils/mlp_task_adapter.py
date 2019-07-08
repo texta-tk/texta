@@ -170,7 +170,7 @@ class MLPTaskAdapter(object):
             self.tasks = [task for task in self.tasks if task["task"] not in self.finished_task_ids and task["task"] not in self.failed_task_ids]
             self.tasks = [task for task in self.tasks if task["retry_count"] < MLPTaskAdapter.MAX_TASK_RETRY_COUNT]
 
-            if not self.tasks:  # Avoid waiting without reason if the next batch is up.
+            if self.tasks:  # Avoid waiting without reason if the next batch is up.
                 sleep(5)  # Wait a small amount of time until checking wheter the task has finished.
 
         return self.analyzation_data, self.errors
