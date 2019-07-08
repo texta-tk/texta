@@ -100,7 +100,8 @@ def get_fields(es_m):
 
             path_list = path.split('.')
 
-            label = u'→'.join(path_list)
+            label = '{0} --> {1}'.format(path_list[0], path_list[-1]) if len(path_list) > 1 else path_list[0]
+            label = label.replace('-->', u'→')
 
             if data['type'] == 'date':
                 data['range'] = get_daterange(es_m, path)
