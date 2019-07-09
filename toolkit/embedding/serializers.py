@@ -1,5 +1,6 @@
 from rest_framework import serializers
 import json
+import re
 
 from toolkit.embedding.models import Embedding, Task, EmbeddingCluster
 from toolkit.embedding.choices import (get_field_choices, DEFAULT_NUM_DIMENSIONS, DEFAULT_MAX_VOCAB, DEFAULT_MIN_FREQ, DEFAULT_OUTPUT_SIZE,
@@ -41,7 +42,8 @@ class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_url(self, obj):
         request = self.context['request']
-        resource_url = request.build_absolute_uri(f'{request.path}{obj.id}/')
+        path = re.sub(r'\d+\/*$', '', request.path)
+        resource_url = request.build_absolute_uri(f'{path}{obj.id}/')
         return resource_url 
 
 
@@ -77,7 +79,8 @@ class EmbeddingClusterSerializer(serializers.ModelSerializer):
 
     def get_url(self, obj):
         request = self.context['request']
-        resource_url = request.build_absolute_uri(f'{request.path}{obj.id}/')
+        path = re.sub(r'\d+\/*$', '', request.path)
+        resource_url = request.build_absolute_uri(f'{path}{obj.id}/')
         return resource_url 
 
 class ClusterBrowserSerializer(serializers.Serializer):

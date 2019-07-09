@@ -111,7 +111,8 @@ class TaggerSerializer(serializers.ModelSerializer):
     
     def get_url(self, obj):
         request = self.context['request']
-        resource_url = request.build_absolute_uri(f'{request.path}{obj.id}/')
+        path = re.sub(r'\d+\/*$', '', request.path)
+        resource_url = request.build_absolute_uri(f'{path}{obj.id}/')
         return resource_url 
 
 
@@ -150,5 +151,6 @@ class TaggerGroupSerializer(serializers.ModelSerializer):
 
     def get_url(self, obj):
         request = self.context['request']
-        resource_url = request.build_absolute_uri(f'{request.path}{obj.id}/')
-        return resource_url
+        path = re.sub(r'\d+\/*$', '', request.path)
+        resource_url = request.build_absolute_uri(f'{path}{obj.id}/')
+        return resource_url 
