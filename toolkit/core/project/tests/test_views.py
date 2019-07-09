@@ -22,5 +22,5 @@ class ProjectViewTests(APITestCase):
         response = self.client.get(url)
         print_output('get_fields:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(isinstance(response.data, dict))
-        self.assertTrue(TEST_INDEX in response.data)
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue(TEST_INDEX in [field['index'] for field in response.data])
