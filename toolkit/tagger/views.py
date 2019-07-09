@@ -240,7 +240,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # check if fields match
-        field_path_list = [field['path'] for field in json.loads(tagger_object.fields)]
+        field_path_list = json.loads(tagger_object.fields)
         if set(field_path_list) != set(serializer.validated_data['doc'].keys()):
             return Response({'error': 'document fields do not match. Required keys: {}'.format(field_path_list)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -360,7 +360,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         return queries
 
 
-    def get_tag_candidates(self, field_data, text, hybrid=True, n_candidates=30):
+    def get_tag_candidates(self, field_paths, text, hybrid=True, n_candidates=30):
         """
         Finds frequent tags from documents similar to input document.
         Returns empty list if hybrid option false.
@@ -369,9 +369,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
             return []
 
         es_a = ElasticAggregator()
-        es_a.update_field_data(field_data)
-
-        field_paths = [field['path'] for field in field_data]
+        es_a.update_field_data(field_paths)
 
         # process text
         text = TextProcessor(remove_stop_words=True).process(text)[0]
@@ -477,11 +475,10 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         # we can do that safely because all taggers inside
         # hybrid tagger instance are trained on same fields
         hybrid_tagger_field_data = json.loads(hybrid_tagger_object.taggers.first().fields)
-        field_path_list = [field['path'] for field in hybrid_tagger_field_data]
 
         # check if fields match
-        if set(field_path_list) != set(serializer.validated_data['doc'].keys()):
-            return Response({'error': 'document fields do not match. Required keys: {}'.format(field_path_list)}, status=status.HTTP_400_BAD_REQUEST)
+        if set(hybrid_tagger_field_data) != set(serializer.validated_data['doc'].keys()):
+            return Response({'error': 'document fields do not match. Required keys: {}'.format(hybrid_tagger_field_data)}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve tag candidates
         combined_texts = ' '.join(serializer.validated_data['doc'].values())

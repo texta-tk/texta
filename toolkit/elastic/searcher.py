@@ -30,7 +30,7 @@ class ElasticSearcher:
         """
         self.core = ElasticCore()
         self.field_data = field_data
-        self.indices = self.core.load_indices_from_field_data(field_data, indices)
+        self.indices = indices
         self.query = query
         self.scroll_size = scroll_size
         self.scroll_limit = scroll_limit
@@ -65,8 +65,7 @@ class ElasticSearcher:
         """
         parsed_doc, index = self._flatten_doc(doc)
         if self.field_data:
-            path_list = [f['path'] for f in self.field_data]
-            parsed_doc = {k:v for k,v in parsed_doc.items() if k in path_list}
+            parsed_doc = {k:v for k,v in parsed_doc.items() if self.field_data.count(k)}
         else:
             parsed_doc, _ = self._flatten_doc(doc)
         return parsed_doc

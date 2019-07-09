@@ -8,11 +8,6 @@ from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.tagger.models import Tagger
 
 
-class ElasticFieldSerializer(serializers.Serializer):
-    index = serializers.CharField(required=False)
-    path = serializers.CharField(required=True)
-
-
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):
     indices = serializers.MultipleChoiceField(choices=get_index_choices())
     users = serializers.HyperlinkedRelatedField(many=True, view_name='user-detail', queryset=User.objects.all())

@@ -47,14 +47,15 @@ class TextProcessor:
         self.stop_words = StopWords(custom_stop_words=custom_stop_words)
     
     def process(self, input_text):
-        stripped_text = input_text.strip().lower()
-        if self.sentences:
-            list_of_texts = stripped_text.split('\n')
+        if isinstance(input_text, str):
+            stripped_text = input_text.strip().lower()
+            if self.sentences:
+                list_of_texts = stripped_text.split('\n')
+            else:
+                list_of_texts = [stripped_text]
         else:
-            list_of_texts = [stripped_text]
-
+            list_of_texts = []
         out = []
-
         for text in list_of_texts:
             if text:
                 tokens = text.split(' ')
@@ -70,5 +71,4 @@ class TextProcessor:
                     out.append(' '.join([token.replace(' ', '_') for token in tokens]))
                 else:
                     out.append(tokens)
-        
         return out

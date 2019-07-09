@@ -73,7 +73,7 @@ def train_tagger(tagger_id):
         tagger = TextTagger(tagger_id)
         tagger.train(positive_samples,
                      negative_samples,
-                     field_list=list(set([field['path'] for field in json.loads(tagger_object.fields)])),
+                     field_list=json.loads(tagger_object.fields),
                      classifier=tagger_object.classifier,
                      vectorizer=tagger_object.vectorizer)
 

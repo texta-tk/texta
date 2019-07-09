@@ -9,7 +9,6 @@ from toolkit.tagger.choices import (get_field_choices, get_classifier_choices, g
                                     DEFAULT_NUM_CANDIDATES, DEFAULT_TAGGER_GROUP_FACT_NAME)
 
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.core.project.serializers import ElasticFieldSerializer
 from toolkit.settings import URL_PREFIX
 
 
@@ -47,7 +46,7 @@ class DocGroupSerializer(serializers.Serializer):
 
 class TaggerSerializer(serializers.ModelSerializer):
     description = serializers.CharField(help_text=f'Description for the Tagger. Will be used as tag.')
-    fields = ElasticFieldSerializer(write_only=True, many=True, help_text=f'Fields used to build the model.')
+    fields = serializers.ListField(child=serializers.CharField())
     vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices(),
                                          help_text=f'Vectorizer algorithm to create document vectors. NB! HashingVectorizer does not support feature name extraction!')
     classifier = serializers.ChoiceField(choices=get_classifier_choices(), 

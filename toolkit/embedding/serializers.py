@@ -5,24 +5,23 @@ from toolkit.embedding.models import Embedding, Task, EmbeddingCluster
 from toolkit.embedding.choices import (get_field_choices, DEFAULT_NUM_DIMENSIONS, DEFAULT_MAX_VOCAB, DEFAULT_MIN_FREQ, DEFAULT_OUTPUT_SIZE,
                                        DEFAULT_NUM_CLUSTERS, DEFAULT_BROWSER_NUM_CLUSTERS, DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER)
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.core.project.serializers import ElasticFieldSerializer
-
 
 
 class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
     task = TaskSerializer(read_only=True)
-    fields = ElasticFieldSerializer(write_only=True, many=True, help_text=f'Fields used to build the model.')
+    #fields = ElasticFieldSerializer(write_only=True, many=True, help_text=f'Fields used to build the model.')
+    fields = serializers.ListField(child=serializers.CharField())
     num_dimensions = serializers.IntegerField(default=DEFAULT_NUM_DIMENSIONS,
                                     help_text=f'Default: {DEFAULT_NUM_DIMENSIONS}')
     min_freq = serializers.IntegerField(default=DEFAULT_MIN_FREQ,
                                     help_text=f'Default: {DEFAULT_MIN_FREQ}')
     location = serializers.SerializerMethodField()
-    fields_parsed = serializers.SerializerMethodField()
+    #fields_parsed = serializers.SerializerMethodField()
     query = serializers.SerializerMethodField()
     
     class Meta:
         model = Embedding
-        fields = ('id', 'description', 'fields', 'fields_parsed', 'query', 'num_dimensions', 'min_freq', 'vocab_size', 'location', 'task')
+        fields = ('id', 'description', 'fields', 'query', 'num_dimensions', 'min_freq', 'vocab_size', 'location', 'task')
         read_only_fields = ('vocab_size', 'location', 'fields_parsed')
     
     def get_location(self, obj):
