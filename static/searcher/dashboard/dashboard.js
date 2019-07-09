@@ -18,7 +18,9 @@ $(function () {
             $('#right').empty()
         },
         success: function (data) {
+
             if (checkNested(data, 'indices')) {
+                document.getElementById('dashboardButton').removeAttribute('disabled');
                 console.log(data);
                 updateLoaderStatus('Drawing Dashboard')
                 let indicesArray = [];
@@ -172,7 +174,7 @@ function makeFrequentItemsTables(index) {
     let colorRowIndex = 1;
     let t_id = 0;
     let rootProperty = index.getFrequentItems();
-    
+
     for (let field in rootProperty) {
         if (rootProperty.hasOwnProperty(field)) {
             let result = formatFrequentItems(index, rootProperty[field]);
