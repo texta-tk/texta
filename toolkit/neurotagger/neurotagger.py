@@ -137,6 +137,9 @@ class NeurotaggerWorker():
         # Set the final seq_len to be either the user set seq_len or the max unpadded/cropped in present in the dataset
         # TODO in the future, use values such as "average length" or "top X-th percentile length" for more optimal seq_len
         self.seq_len = min(self.seq_len, uncropped_max_len)
+        # Update the seq_len of the obj
+        self.neurotagger_obj.seq_len = self.seq_len
+        self.neurotagger_obj.save()
 
         # Pad sequence to match max seq_len
         self.X_train = pad_sequences(self.X_train, maxlen=self.seq_len)
@@ -252,27 +255,36 @@ class NeurotaggerWorker():
         # clear the session, or rework the entire preprocessor system
 
         self.neurotagger_obj = Neurotagger.objects.get(pk=self.neurotagger_id)
-        self.model_name = 'model_{}'.format(self.neurotagger_obj.unique_id)
-        self.task_type = self.neurotagger_obj.task_type
-        model_path = os.path.join(MODELS_DIR, self.task_type, self.model_name)
-        self.seq_len = json.loads(self.neurotagger_obj.result_json)['max_sequence_len']
-        tokenizer_name = '{}_tokenizer'.format(self.model_name)
-        tokenizer_path = os.path.join(MODELS_DIR, self.task_type, tokenizer_name)
-
-        self.model = load_model(model_path)
-        with open(tokenizer_path, 'rb') as f:
+        self.seq_len = self.neurotagger_obj.seq_len
+        self.model = load_model(json.loads(self.neurotagger_obj.location)['model'])
+        with open(json.loads(self.neurotagger_obj.location)['tokenizer'], 'rb') as f:
             self.tokenizer = pickle.load(f)
 
+    def _convert_texts(self, texts: List[str]):
+        texts = self.tokenizer.texts_to_sequences(texts)
+        texts = pad_sequences(texts, maxlen=self.seq_len)
+        return texts
 
-    def convert_and_predict_text(self, text):
+
+    def tag_text(self, text):
         """
         Predicts on raw text
         :param text: input text as string
         :return: class names of decision
         """
-        to_predict = self.tokenizer.texts_to_sequences(text)
-        to_predict = pad_sequences(to_predict, maxlen=self.seq_len)
-        return self.model.predict_classes(to_predict, batch_size=self.bs)
+        to_predict = self._convert_texts([text])
+        return self.model.predict_classes(to_predict, batch_size=self.bs), self.model.predict_proba(to_predict, batch_size=self.bs)
+
+
+    def tag_doc(self, doc):
+        """
+        Predicts on json document
+        :param text: input doc as json string
+        :return: binary decision (1 is positive)
+        """
+        texts = [doc[field] for field in doc]
+        to_predict = self._convert_texts(texts)
+        return self.model.predict_classes(to_predict, batch_size=self.bs), self.model.predict_proba(to_predict, batch_size=self.bs)
 
 
 class TrainingProgressCallback(Callback):

@@ -47,6 +47,8 @@ class NeurotaggerViewTests(APITestCase):
 
     def test_run(self):
         self.run_create_neurotagger_training_and_task_signal()
+        self.run_tag_doc()
+        self.run_tag_text()
 
 
     def run_create_neurotagger_training_and_task_signal(self):
@@ -78,6 +80,32 @@ class NeurotaggerViewTests(APITestCase):
         self.assertTrue(created_neurotagger.task is not None)
         # Check if Neurotagger gets trained and completed
         self.assertEqual(created_neurotagger.task.status, Task.STATUS_COMPLETED)
+
+
+    def run_tag_text(self):
+        '''Tests the endpoint for the tag_text action'''
+        payload = { "text": "This is some test text for the Tagger Test" }
+        tag_text_url = f'{self.url}{self.test_neurotagger.id}/tag_text/'
+        response = self.client.post(tag_text_url, payload)
+        print_output('test_tag_text:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response data is not empty, but a result instead
+        self.assertTrue(response.data)
+        self.assertTrue('result' in response.data)
+        self.assertTrue('probability' in response.data)
+
+
+    def run_tag_doc(self):
+        '''Tests the endpoint for the tag_doc action'''
+        payload = { "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" })}
+        tag_text_url = f'{self.url}{self.test_neurotagger.id}/tag_doc/'
+        response = self.client.post(tag_text_url, payload)
+        print_output('test_tag_doc:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response data is not empty, but a result instead
+        self.assertTrue(response.data)
+        self.assertTrue('result' in response.data)
+        self.assertTrue('probability' in response.data)
 
 
     @classmethod

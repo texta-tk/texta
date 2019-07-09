@@ -13,7 +13,7 @@ from toolkit.neurotagger.neurotagger import NeurotaggerWorker
 from toolkit.utils.model_cache import ModelCache
 from toolkit import permissions as toolkit_permissions
 from toolkit.core import permissions as core_permissions
-from toolkit.tagger.serializers import TextSerializer
+from toolkit.tagger.serializers import TextSerializer, DocSerializer
 
 import json
 
@@ -82,6 +82,36 @@ class NeurotaggerViewSet(viewsets.ModelViewSet):
         tagger_response = self.apply_tagger(tagger_id, serializer.data['text'], input_type='text')
         return Response(tagger_response, status=status.HTTP_200_OK)
 
+
+    @action(detail=True, methods=['get','post'], serializer_class=DocSerializer)
+    def tag_doc(self, request, pk=None):
+        """
+        API endpoint for tagging JSON documents.
+        """
+        data = get_payload(request)
+        serializer = DocSerializer(data=data)
+
+        # check if valid request
+        if not serializer.is_valid():
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        # retrieve tagger object
+        tagger_object = self.get_object()
+
+        # check if tagger exists
+        if not tagger_object.location:
+            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # check if fields match
+        field_data = [ElasticCore().decode_field_data(field) for field in tagger_object.fields]
+        field_path_list = [field['field_path'] for field in field_data]
+        if set(field_path_list) != set(serializer.validated_data['doc'].keys()):
+            return Response({'error': 'document fields do not match. Required keys: {}'.format(field_path_list)}, status=status.HTTP_400_BAD_REQUEST)
+
+        # apply tagger
+        tagger_id = tagger_object.pk
+        tagger_response = self.apply_tagger(tagger_id, serializer.data['doc'], input_type='doc')
+        return Response(tagger_response, status=status.HTTP_200_OK)
 
 
     def apply_tagger(self, tagger_id, tagger_input, input_type='text'):
