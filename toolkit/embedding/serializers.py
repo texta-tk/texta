@@ -9,19 +9,18 @@ from toolkit.core.task.serializers import TaskSerializer
 
 class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
     task = TaskSerializer(read_only=True)
-    #fields = ElasticFieldSerializer(write_only=True, many=True, help_text=f'Fields used to build the model.')
-    fields = serializers.ListField(child=serializers.CharField())
+    fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
     num_dimensions = serializers.IntegerField(default=DEFAULT_NUM_DIMENSIONS,
                                     help_text=f'Default: {DEFAULT_NUM_DIMENSIONS}')
     min_freq = serializers.IntegerField(default=DEFAULT_MIN_FREQ,
                                     help_text=f'Default: {DEFAULT_MIN_FREQ}')
     location = serializers.SerializerMethodField()
-    #fields_parsed = serializers.SerializerMethodField()
+    fields_parsed = serializers.SerializerMethodField()
     query = serializers.SerializerMethodField()
     
     class Meta:
         model = Embedding
-        fields = ('id', 'description', 'fields', 'query', 'num_dimensions', 'min_freq', 'vocab_size', 'location', 'task')
+        fields = ('id', 'description', 'fields', 'query', 'num_dimensions', 'min_freq', 'vocab_size', 'location', 'task', 'fields_parsed')
         read_only_fields = ('vocab_size', 'location', 'fields_parsed')
     
     def get_location(self, obj):
