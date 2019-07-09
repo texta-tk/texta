@@ -147,7 +147,7 @@ function query() {
             var columns = []
             $('#columnsRow').find('th').each(function (index) {
                 // Append _DtCol to end to safe from naming conflicts
-                columns.push({ 'className': 'DtCol_' + $(this).text(), 'targets': index })
+                columns.push({'className': 'DtCol_' + $(this).text(), 'targets': index})
                 if (index !== 0) {
                     columns.push({
                         'className': 'DtCol_' + $(this).text(),
@@ -164,7 +164,7 @@ function query() {
                         "render": function (data, type, row, meta) {
                             return '<input type="checkbox" id=' + data + ' name=dt_delete_doc_checkbox>';
                         }
- 
+
                     })
                 }
             })
@@ -322,16 +322,20 @@ function rejectDocument(id) {
     $('#docs_rejected').val($('#docs_rejected').val() + id + '\n')
     $('#row_' + id).remove()
 }
-function dashboard () {
+
+function dashboard() {
     var container = $('#right')
     container.empty()
-
+    document.getElementById('dashboardButton').setAttribute('disabled', 'disabled');
     var formElement = document.getElementById('filters')
     var request = new XMLHttpRequest()
 
     request.onreadystatechange = function () {
         if (request.readyState === 4 && request.status === 200) {
+            console.log(request);
             container.html(request.response)
+        } else if (request.readyState === 4) {
+            document.getElementById('dashboardButton').removeAttribute('disabled');
         }
     }
 
@@ -339,7 +343,8 @@ function dashboard () {
     request.send(new FormData(formElement), true)
 
 }
-function aggregate () {
+
+function aggregate() {
     var container = $('#right')
     container.empty()
     container.append('Loading...')
@@ -597,7 +602,7 @@ function deleteFactArray(factArray, source) {
     }
 }
 
-function showStringChildren (data, childrenContainer, grandchildrenContainer, rowKey, type, field) {
+function showStringChildren(data, childrenContainer, grandchildrenContainer, rowKey, type, field) {
     childrenContainer.empty()
     grandchildrenContainer.empty()
 
@@ -612,12 +617,12 @@ function showStringChildren (data, childrenContainer, grandchildrenContainer, ro
             if (type === 'fact') {
                 searchKey = strip_html(rowKey, true)
                 searchVal = strip_html(this.key, true)
-                
-                var addToSearchIcon =  $('<i>', {
+
+                var addToSearchIcon = $('<i>', {
                     class: "glyphicon glyphicon-search pull-right",
                     'data-toggle': "tooltip",
-                    title:"Add to search",
-                    style:"cursor: pointer",
+                    title: "Add to search",
+                    style: "cursor: pointer",
                     onclick: `addFactToSearch("${searchKey}","${searchVal}", "${field}")`
                 });
 
@@ -717,7 +722,7 @@ function clusterToLex(id) {
     })
 }
 
-function addFactToSearch (factName, factVal, field) {
+function addFactToSearch(factName, factVal, field) {
     // Creates a fact_str_val search with the factName, factVal, and field
 
     const fields_filtered = $('#constraint_field option').toArray().filter((obj) => {
@@ -728,10 +733,10 @@ function addFactToSearch (factName, factVal, field) {
             return false
         }
     })
-    
+
     if (fields_filtered.length > 0) {
         $('#constraint_field').val($(fields_filtered[0]).val())
-        
+
         var hasField = false
         $('span[id^=selected_field_]').each(function (index) {
             if ($(this).text().includes(['[fact_text_values]'])) {
@@ -742,7 +747,7 @@ function addFactToSearch (factName, factVal, field) {
             /* global addField, sidebar */
             addField('', '', false)
         }
-        
+
         var splitID = $('input[name^=fact_txt_]').last().attr('id').split('_')
         var suggestionID = splitID[splitID.length - 2] + '_' + splitID[splitID.length - 1]
         if (hasField) {
@@ -751,14 +756,14 @@ function addFactToSearch (factName, factVal, field) {
             splitID = $('input[name^=fact_txt_]').last().attr('id').split('_')
             suggestionID = splitID[splitID.length - 2] + '_' + splitID[splitID.length - 1]
         }
-        
+
         $('#field_' + splitID[splitID.length - 2] + ' #fact_txt_' + suggestionID).val(factName)
         $('#fact_constraint_op_' + suggestionID).val('=')
         $('#fact_constraint_val_' + suggestionID).val(factVal)
     }
 }
 
-function deleteFactFromDoc (fact_name, fact_value, doc_id) {
+function deleteFactFromDoc(fact_name, fact_value, doc_id) {
     var form_data = new FormData()
     form_data.append(fact_name, fact_value)
     form_data.append('doc_id', doc_id)
