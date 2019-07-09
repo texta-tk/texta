@@ -147,10 +147,6 @@ function query() {
             var columns = []
             $('#columnsRow').find('th').each(function (index) {
                 // Append _DtCol to end to safe from naming conflicts
-<<<<<<< HEAD
-=======
-                columns.push({'className': 'DtCol_' + $(this).text(), 'targets': index})
->>>>>>> ab47fd1e... fix dashboard
                 if (index !== 0) {
                     columns.push({
                         'className': 'DtCol_' + $(this).text(),
