@@ -37,4 +37,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if not project_indices:
             return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST)
         fields = ElasticCore().get_fields(indices=project_indices)
-        return Response(fields, status=status.HTTP_200_OK)
+        field_map = {}
+        for field in fields:
+            if field['index'] not in field_map:
+                field_map[field['index']] = []
+                field_info = dict(field)
+                del field_info['index']
+            field_map[field['index']].append(field_info)
+        return Response(field_map, status=status.HTTP_200_OK)
