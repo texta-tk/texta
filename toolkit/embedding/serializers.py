@@ -41,7 +41,7 @@ class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_url(self, obj):
         request = self.context['request']
-        resource_url = request.build_absolute_uri(f'/projects/{obj.project.id}/embeddings/{obj.id}/')
+        resource_url = request.build_absolute_uri(f'{request.path}{obj.id}/')
         return resource_url 
 
 
@@ -77,7 +77,7 @@ class EmbeddingClusterSerializer(serializers.ModelSerializer):
 
     def get_url(self, obj):
         request = self.context['request']
-        resource_url = request.build_absolute_uri(f'/projects/{obj.project.id}/embedding_clusters/{obj.id}/')
+        resource_url = request.build_absolute_uri(f'{request.path}{obj.id}/')
         return resource_url 
 
 class ClusterBrowserSerializer(serializers.Serializer):
