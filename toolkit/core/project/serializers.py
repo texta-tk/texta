@@ -7,6 +7,12 @@ from toolkit.core.choices import get_index_choices
 from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.tagger.models import Tagger
 
+
+class ElasticFieldSerializer(serializers.Serializer):
+    index = serializers.CharField()
+    path = serializers.CharField()
+
+
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):
     indices = serializers.MultipleChoiceField(choices=get_index_choices())
     users = serializers.HyperlinkedRelatedField(many=True, view_name='user-detail', queryset=User.objects.all())

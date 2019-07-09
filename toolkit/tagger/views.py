@@ -46,7 +46,9 @@ class TaggerViewSet(viewsets.ModelViewSet):
         )
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user,  project=Project.objects.get(id=self.kwargs['project_pk']))
+        serializer.save(author=self.request.user, 
+                        project=Project.objects.get(id=self.kwargs['project_pk']),
+                        fields=json.dumps(serializer.validated_data['fields']))
 
 
     def get_queryset(self):
@@ -59,6 +61,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 
 
     @action(detail=True, methods=['get', 'post'], serializer_class=FeatureListSerializer)
@@ -237,8 +240,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # check if fields match
-        field_data = [ElasticCore().decode_field_data(field) for field in tagger_object.fields]
-        field_path_list = [field['field_path'] for field in field_data]
+        field_path_list = [field['path'] for field in json.loads(tagger_object.fields)]
         if set(field_path_list) != set(serializer.validated_data['doc'].keys()):
             return Response({'error': 'document fields do not match. Required keys: {}'.format(field_path_list)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -282,7 +284,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer, tagger_set):
         serializer.save(author=self.request.user, 
-                        project=Project.objects.get(id=self.kwargs['project_pk']), 
+                        project=Project.objects.get(id=self.kwargs['project_pk']),
                         taggers=tagger_set)
 
 
@@ -322,6 +324,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
             tagger_data = validated_tagger_data.copy()
             tagger_data.update({'query': json.dumps(tag_queries[i])})
             tagger_data.update({'description': tag})
+            tagger_data.update({'fields': json.dumps(tagger_data['fields'])})
             created_tagger = Tagger.objects.create(**tagger_data,
                                       author=request.user,
                                       project=active_project)
@@ -366,10 +369,9 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
             return []
 
         es_a = ElasticAggregator()
-        field_data = [es_a.core.decode_field_data(a) for a in field_data]
         es_a.update_field_data(field_data)
 
-        field_paths = [field['field_path'] for field in field_data]
+        field_paths = [field['path'] for field in field_data]
 
         # process text
         text = TextProcessor(remove_stop_words=True).process(text)[0]
@@ -439,7 +441,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         # retrieve field data from the first element
         # we can do that safely because all taggers inside
         # hybrid tagger instance are trained on same fields
-        hybrid_tagger_field_data = hybrid_tagger_object.taggers.first().fields
+        hybrid_tagger_field_data = json.loads(hybrid_tagger_object.taggers.first().fields)
 
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data, 
@@ -474,8 +476,8 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
         # retrieve field data from the first element
         # we can do that safely because all taggers inside
         # hybrid tagger instance are trained on same fields
-        hybrid_tagger_field_data = [ElasticCore().decode_field_data(field) for field in hybrid_tagger_object.taggers.first().fields]
-        field_path_list = [field['field_path'] for field in hybrid_tagger_field_data]
+        hybrid_tagger_field_data = json.loads(hybrid_tagger_object.taggers.first().fields)
+        field_path_list = [field['path'] for field in hybrid_tagger_field_data]
 
         # check if fields match
         if set(field_path_list) != set(serializer.validated_data['doc'].keys()):
@@ -483,7 +485,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
 
         # retrieve tag candidates
         combined_texts = ' '.join(serializer.validated_data['doc'].values())
-        tag_candidates = self.get_tag_candidates(hybrid_tagger_object.taggers.first().fields,
+        tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data,
                                                  combined_texts,
                                                  n_candidates=serializer.validated_data['num_candidates'])
 

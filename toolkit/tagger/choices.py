@@ -9,19 +9,9 @@ def get_field_choices():
    """
    es = ElasticCore()
    if es.connection:
-      return sorted([(es.encode_field_data(a), '{0} - {1}'.format(a['index'], a['field']['path'])) for a in es.get_fields()])
+      return [(a, '{0} - {1}'.format(a['index'], a['path'])) for a in es.get_fields()]
    else:
       return []
-
-
-#def get_fact_names(indices=[]):
-#   """
-#   Retrieves fact names based on specific index.
-#   """
-#   es_a = ElasticAggregator(indices=indices)
-#   fact_names = es_a.facts(include_values=False)
-#   return [(a, a) for a in fact_names]
-
 
 def get_classifier_choices():
    """

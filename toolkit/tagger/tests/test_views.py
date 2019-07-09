@@ -55,7 +55,6 @@ class TaggerViewTests(APITestCase):
                 for feature_selector_opt in self.feature_selector_opts:
                     payload = {
                         "description": "TestTagger",
-                        "query": "",
                         "fields": TEST_FIELD_CHOICE,
                         "vectorizer": vectorizer_opt,
                         "classifier": classifier_opt,
@@ -63,7 +62,8 @@ class TaggerViewTests(APITestCase):
                         "maximum_sample_size": 500,
                         "negative_multiplier": 1.0,
                     }
-                    response = self.client.post(self.url, payload)
+
+                    response = self.client.post(self.url, payload, format='json')
                     print_output('test_create_tagger_training_and_task_signal:response.data', response.data)
                     # Check if Tagger gets created
                     self.assertEqual(response.status_code, status.HTTP_201_CREATED)

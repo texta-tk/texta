@@ -29,7 +29,7 @@ class ElasticSearcher:
         Output options: document (default), text (lowered & stopwords removed), sentences (text + line splitting), raw (raw elastic output)
         """
         self.core = ElasticCore()
-        self.field_data = self.core.parse_field_data(field_data)
+        self.field_data = field_data
         self.indices = self._load_indices(indices)
         self.query = query
         self.scroll_size = scroll_size
@@ -54,7 +54,7 @@ class ElasticSearcher:
     def _load_indices(self, indices):
         # load from field data or indices list
         if not indices:
-            indices = ",".join(list(self.field_data.keys()))
+            indices = ",".join(list(set([field['index'] for field in self.field_data])))
         return indices
 
 
@@ -63,23 +63,19 @@ class ElasticSearcher:
     
 
     def update_field_data(self, field_data):
-        self.field_data = self.core.parse_field_data(field_data)
+        self.field_data = field_data
 
 
     def _parse_doc(self, doc):
         """
         Parses Elasticsearch hit into something nicer
         """
-        parsed_doc = {}
+        parsed_doc, index = self._flatten_doc(doc)
         if self.field_data:
-            for index, field_paths in self.field_data.items():
-                if doc['_index'] == index:
-                    for field_path in field_paths:
-                        decoded_text = self._decode_doc(doc, field_path=field_path)
-                        if decoded_text:
-                            parsed_doc[field_path] = decoded_text
+            path_list = [f['path'] for f in self.field_data]
+            parsed_doc = {k:v for k,v in parsed_doc.items() if k in path_list}
         else:
-            parsed_doc = self._flatten_doc(doc)
+            parsed_doc, _ = self._flatten_doc(doc)
         return parsed_doc
 
 
@@ -87,12 +83,13 @@ class ElasticSearcher:
         """
         Flattens a document.
         """
+        index = doc['_index']
         doc = doc['_source']
         new_doc = {}
         for field_name, field_content in doc.items():
             new_field_name, new_content = self._flatten_field(field_name, field_content)
             new_doc[new_field_name] = new_content
-        return new_doc
+        return new_doc, index
 
 
     def _flatten_field(self, field_name, field_content):

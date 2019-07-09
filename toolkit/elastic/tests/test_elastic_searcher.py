@@ -16,9 +16,8 @@ class TestElasticSearcher(TestCase):
     def run_update_field_data(self):
         '''Tests ElasticSearcher field data update.'''
         elastic_searcher = ElasticSearcher()
-        decoded_field_data = elastic_searcher.core.decode_field_data(TEST_FIELD_CHOICE)
-        elastic_searcher.update_field_data([decoded_field_data])
-        self.assertTrue(elastic_searcher.field_data)    
+        elastic_searcher.update_field_data(TEST_FIELD_CHOICE)
+        self.assertTrue(elastic_searcher.field_data)
 
 
     def run_count(self):
@@ -32,7 +31,6 @@ class TestElasticSearcher(TestCase):
 
     def run_search(self):
         '''Tests ElasticSearcher search method.'''
-        field_data = [ElasticSearcher().core.decode_field_data(TEST_FIELD_CHOICE)]
         # test without field data & indices
         elastic_searcher = ElasticSearcher()
         result = elastic_searcher.search(size=1)
@@ -40,7 +38,7 @@ class TestElasticSearcher(TestCase):
         self.assertTrue(isinstance(result, list))
         self.assertTrue(result[0])     
         # test with field data
-        elastic_searcher = ElasticSearcher(field_data=field_data)
+        elastic_searcher = ElasticSearcher(field_data=TEST_FIELD_CHOICE)
         result = elastic_searcher.search(size=1)
         print_output('test_run_search_with_field_data:result', result)
         self.assertTrue(isinstance(result, list))
@@ -55,7 +53,6 @@ class TestElasticSearcher(TestCase):
 
     def run_iterator(self):
         '''Tests ElasticSearcher scrolling as iterator.'''
-        field_data = [ElasticSearcher().core.decode_field_data(TEST_FIELD_CHOICE)]
         # test without field data
         elastic_searcher = ElasticSearcher()
         i = 0
@@ -69,7 +66,7 @@ class TestElasticSearcher(TestCase):
         self.assertTrue(isinstance(last_hit, dict))
         self.assertTrue(last_hit)
         # test with field data
-        elastic_searcher = ElasticSearcher(field_data=field_data)
+        elastic_searcher = ElasticSearcher(field_data=TEST_FIELD_CHOICE)
         i = 0
         last_hit = None
         for hit in elastic_searcher:

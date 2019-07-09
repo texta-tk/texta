@@ -26,11 +26,13 @@ def train_embedding(embedding_id):
     show_progress.update_view(0)
 
     try:
-        # parse field data
-        field_data = [ElasticSearcher().core.decode_field_data(field) for field in embedding_object.fields]
         # create itrerator for phraser
         text_processor = TextProcessor(sentences=True, remove_stop_words=True, tokenize=True)
-        sentences = ElasticSearcher(query=json.loads(embedding_object.query), field_data=field_data, output='text', callback_progress=show_progress, text_processor=text_processor)
+        sentences = ElasticSearcher(query=json.loads(embedding_object.query),
+                                    field_data=json.loads(embedding_object.fields),
+                                    output='text',
+                                    callback_progress=show_progress,
+                                    text_processor=text_processor)
         
         # build phrase model
         phraser = Phraser(embedding_id)
@@ -49,8 +51,17 @@ def train_embedding(embedding_id):
         text_processor = TextProcessor(phraser=phraser, sentences=True, remove_stop_words=True, tokenize=True)
 
         # iterate again with built phrase model to include phrases in language model
-        sentences = ElasticSearcher(query=json.loads(embedding_object.query), field_data=field_data, output='text', callback_progress=show_progress, text_processor=text_processor)
-        model = word2vec.Word2Vec(sentences, min_count=embedding_object.min_freq, size=embedding_object.num_dimensions, workers=NUM_WORKERS, iter=int(num_passes))
+        sentences = ElasticSearcher(query=json.loads(embedding_object.query),
+                                    field_data=json.loads(embedding_object.fields),
+                                    output='text',
+                                    callback_progress=show_progress,
+                                    text_processor=text_processor)
+        # word2vec model
+        model = word2vec.Word2Vec(sentences,
+                                  min_count=embedding_object.min_freq,
+                                  size=embedding_object.num_dimensions,
+                                  workers=NUM_WORKERS,
+                                  iter=int(num_passes))
 
         # Save models
         show_progress.update_step('saving')

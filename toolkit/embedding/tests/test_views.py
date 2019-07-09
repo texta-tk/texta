@@ -59,13 +59,14 @@ class EmbeddingViewTests(APITestCase):
             "num_dimensions": 100,
         }
 
-        response = self.client.post(self.url, payload)
+        response = self.client.post(self.url, payload, format='json')
         print_output('test_create_embedding_training_and_task_signal:response.data', response.data)
         # Check if Embedding gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created_embedding = Embedding.objects.get(id=response.data['id'])
         self.test_embedding_id = created_embedding.id
         # Remove Embedding files after test is done
+        print(created_embedding.task.status)
         self.addCleanup(remove_file, json.loads(created_embedding.location)['embedding'])
         self.addCleanup(remove_file, json.loads(created_embedding.location)['phraser'])
         # Check if Task gets created via a signal

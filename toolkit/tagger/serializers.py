@@ -9,6 +9,7 @@ from toolkit.tagger.choices import (get_field_choices, get_classifier_choices, g
                                     DEFAULT_NUM_CANDIDATES, DEFAULT_TAGGER_GROUP_FACT_NAME)
 
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.core.project.serializers import ElasticFieldSerializer
 from toolkit.settings import URL_PREFIX
 
 
@@ -46,9 +47,11 @@ class DocGroupSerializer(serializers.Serializer):
 
 class TaggerSerializer(serializers.ModelSerializer):
     description = serializers.CharField(help_text=f'Description for the Tagger. Will be used as tag.')
-    fields = serializers.MultipleChoiceField(choices=get_field_choices(), required=True, help_text=f'Fields used to build the model.')
-    vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices(), help_text=f'Vectorizer algorithm to create document vectors. NB! HashingVectorizer does not support feature name extraction!')
-    classifier = serializers.ChoiceField(choices=get_classifier_choices(),help_text=f'Classification algorithm used in the model.')
+    fields = ElasticFieldSerializer(write_only=True, many=True, help_text=f'Fields used to build the model.')
+    vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices(),
+                                         help_text=f'Vectorizer algorithm to create document vectors. NB! HashingVectorizer does not support feature name extraction!')
+    classifier = serializers.ChoiceField(choices=get_classifier_choices(), 
+                                         help_text=f'Classification algorithm used in the model.')
     negative_multiplier = serializers.IntegerField(default=DEFAULT_NEGATIVE_MULTIPLIER,
                                                    help_text=f'Multiplies the size of positive samples to determine negative example set size. Default: {DEFAULT_NEGATIVE_MULTIPLIER}')
     maximum_sample_size = serializers.IntegerField(default=DEFAULT_MAX_SAMPLE_SIZE,
@@ -59,13 +62,14 @@ class TaggerSerializer(serializers.ModelSerializer):
     plot = serializers.SerializerMethodField()
     stop_words = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
-
+    fields_parsed = serializers.SerializerMethodField()
+    query = serializers.SerializerMethodField()
 
     class Meta:
         model = Tagger
-        fields = ('id', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'feature_selector', 'stop_words',
+        fields = ('id', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'feature_selector', 'stop_words', 'fields_parsed',
                   'maximum_sample_size', 'negative_multiplier', 'location', 'precision', 'recall', 'f1_score', 'num_features', 'plot', 'task')
-        read_only_fields = ('location', 'stop_words', 'precision', 'recall', 'f1_score', 'num_features', 'plot')
+        read_only_fields = ('location', 'stop_words', 'precision', 'recall', 'f1_score', 'num_features', 'plot', 'fields_parsed')
 
     def __init__(self, *args, **kwargs):
         '''
@@ -84,14 +88,27 @@ class TaggerSerializer(serializers.ModelSerializer):
     def get_plot(self, obj):
         if obj.plot:
             return '{0}/{1}'.format(URL_PREFIX, obj.plot)
-        else:
-            return None
+        return None
 
     def get_stop_words(self, obj):
-        return json.loads(obj.stop_words)
+        if obj.stop_words:
+            return json.loads(obj.stop_words)
+        return None
 
     def get_location(self, obj):
-        return json.loads(obj.location)
+        if obj.location:
+            return json.loads(obj.location)
+        return None
+
+    def get_fields_parsed(self, obj):
+        if obj.fields:
+            return json.loads(obj.fields)
+        return None
+    
+    def get_query(self, obj):
+        if obj.query:
+            return json.loads(obj.query)
+        return None
 
 
 class TaggerGroupSerializer(serializers.ModelSerializer):

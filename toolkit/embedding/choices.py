@@ -4,7 +4,7 @@ from toolkit.elastic.core import ElasticCore
 def get_field_choices():
    es = ElasticCore()
    if es.connection:
-      return [(es.encode_field_data(a), '{0} - {1}'.format(a['index'], a['field']['path'])) for a in es.get_fields()]
+      return [(a, '{0} - {1}'.format(a['index'], a['path'])) for a in es.get_fields()]
    else:
       return []
 

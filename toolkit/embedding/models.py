@@ -24,7 +24,7 @@ class Embedding(models.Model):
     min_freq = models.IntegerField(default=10)
 
     vocab_size = models.IntegerField(default=0)
-    location = models.TextField(default=None, null=True)
+    location = models.TextField(default=json.dumps({}))
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
@@ -52,7 +52,7 @@ class EmbeddingCluster(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE)
     num_clusters = models.IntegerField(default=100)
-    location = models.TextField(default=None, null=True)
+    location = models.TextField(default=json.dumps({}))
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):

@@ -15,7 +15,7 @@ class ElasticAggregator:
         indices: list of index names (strings)
         """
         self.core = ElasticCore()
-        self.field_data = self.core.parse_field_data(field_data)
+        self.field_data = field_data
         self.indices = self._load_indices(indices)
         self.query = query
     
@@ -23,7 +23,7 @@ class ElasticAggregator:
     def _load_indices(self, indices):
         # load from field data or indices list
         if not indices:
-            return ",".join(list(self.field_data.keys()))
+            return ",".join(list(set([field['index'] for field in self.field_data])))
         else:
             return indices
 
@@ -36,7 +36,7 @@ class ElasticAggregator:
         """
         Updates field data. Expects list of decoded fields.
         """
-        self.field_data = self.core.parse_field_data(field_data)
+        self.field_data = field_data
 
 
     def _aggregate(self, agg_query):

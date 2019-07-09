@@ -40,7 +40,7 @@ class ElasticCore:
                 for mapping, properties in mappings['mappings'].items():
                     properties = properties['properties']
                     for field in self._decode_mapping_structure(properties):
-                        index_with_field = {'index': index, 'mapping': mapping, 'field': field}
+                        index_with_field = {'index': index, 'path': field['path'], 'type': field['type']}
                         out.append(index_with_field)
         return out
     
@@ -72,42 +72,3 @@ class ElasticCore:
                 data = {'path': path, 'type': v['type']}
                 mapping_data.append(data)
         return mapping_data
-
-
-    @staticmethod
-    def encode_field_data(field):
-        """
-        Encodes field data into url (so it can be stored safely in Django data model)
-        :result: urlencoded string
-        """
-        field_path = field['field']['path']
-        field_type = field['field']['type']
-        index = field['index']
-        mapping = field['mapping']
-        flat_field = {"index": index, "mapping": mapping, 
-                    "field_path": field_path, "field_type": field_type}
-        return urllib.parse.urlencode(flat_field)
-
-
-    @staticmethod
-    def decode_field_data(field):
-        """
-        Decodes urlencoded field data string into dict
-        :result: field data in dict
-        """
-        parsed_dict = urllib.parse.parse_qs(urllib.parse.urlparse(field).path)
-        parsed_dict = {a:b[0] for a,b in parsed_dict.items()}
-        return parsed_dict
-
-
-    @staticmethod
-    def parse_field_data(field_data):
-        """
-        Parses field data list into dict with index names as keys and field paths as list of strings
-        """
-        parsed_data = {}
-        for field in field_data:
-            if field['index'] not in parsed_data:
-                parsed_data[field['index']] = []
-            parsed_data[field['index']].append(field['field_path'])
-        return parsed_data

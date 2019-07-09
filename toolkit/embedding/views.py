@@ -48,7 +48,9 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
 
     
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, project=Project.objects.get(id=self.kwargs['project_pk']))
+        serializer.save(author=self.request.user, 
+                        project=Project.objects.get(id=self.kwargs['project_pk']), 
+                        fields=json.dumps(serializer.validated_data['fields']))
 
 
     @action(detail=True, methods=['get', 'post'],serializer_class=EmbeddingPrecictionSerializer)

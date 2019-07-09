@@ -27,8 +27,8 @@ def train_tagger(tagger_id):
 
     try:
         # decode field data
-        field_data = [ElasticSearcher().core.decode_field_data(field) for field in tagger_object.fields]
-        field_path_list = [field['field_path'] for field in field_data]
+        #field_data = [ElasticSearcher().core.decode_field_data(field) for field in tagger_object.fields]
+        #field_path_list = [field['field_path'] for field in field_data]
 
         # add phraser and stop words
         stop_words = json.loads(tagger_object.stop_words)
@@ -40,7 +40,7 @@ def train_tagger(tagger_id):
             text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
 
         positive_samples = ElasticSearcher(query=json.loads(tagger_object.query), 
-                                        field_data=field_data,
+                                        field_data=json.loads(tagger_object.fields),
                                         output='doc_with_id',
                                         callback_progress=show_progress,
                                         scroll_limit=int(tagger_object.maximum_sample_size),
@@ -52,7 +52,7 @@ def train_tagger(tagger_id):
 
         show_progress.update_step('scrolling negatives')
         show_progress.update_view(0)
-        negative_samples = ElasticSearcher(field_data=field_data,
+        negative_samples = ElasticSearcher(field_data=json.loads(tagger_object.fields),
                                         output='doc_with_id',
                                         callback_progress=show_progress,
                                         scroll_limit=int(tagger_object.maximum_sample_size)*int(tagger_object.negative_multiplier),
@@ -67,7 +67,11 @@ def train_tagger(tagger_id):
 
         # train model
         tagger = TextTagger(tagger_id)
-        tagger.train(positive_samples, negative_samples, field_list=field_path_list, classifier=tagger_object.classifier, vectorizer=tagger_object.vectorizer)
+        tagger.train(positive_samples,
+                     negative_samples,
+                     field_list=list(set([field['path'] for field in json.loads(tagger_object.fields)])),
+                     classifier=tagger_object.classifier,
+                     vectorizer=tagger_object.vectorizer)
 
         show_progress.update_step('saving')
         show_progress.update_view(0)
