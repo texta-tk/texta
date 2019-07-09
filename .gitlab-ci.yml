@@ -30,3 +30,4 @@ Build:
   - docker
   script:
   - docker build -t docker.texta.ee/texta/texta-rest:latest .
+  - docker push docker.texta.ee/texta/texta-rest:latest
