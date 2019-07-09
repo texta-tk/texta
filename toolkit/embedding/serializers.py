@@ -17,11 +17,12 @@ class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
     location = serializers.SerializerMethodField()
     fields_parsed = serializers.SerializerMethodField()
     query = serializers.SerializerMethodField()
+    url = serializers.SerializerMethodField()
     
     class Meta:
         model = Embedding
-        fields = ('id', 'description', 'fields', 'query', 'num_dimensions', 'min_freq', 'vocab_size', 'location', 'task', 'fields_parsed')
-        read_only_fields = ('vocab_size', 'location', 'fields_parsed')
+        fields = ('id', 'url', 'description', 'fields', 'query', 'num_dimensions', 'min_freq', 'vocab_size', 'location', 'task', 'fields_parsed')
+        read_only_fields = ('vocab_size',)
     
     def get_location(self, obj):
         if obj.location:
@@ -37,7 +38,11 @@ class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
         if obj.query:
             return json.loads(obj.query)
         return None
-    
+
+    def get_url(self, obj):
+        request = self.context['request']
+        resource_url = request.build_absolute_uri(f'/projects/{obj.project.id}/embeddings/{obj.id}/')
+        return resource_url 
 
 
 class EmbeddingPrecictionSerializer(serializers.Serializer):
@@ -56,12 +61,13 @@ class EmbeddingClusterSerializer(serializers.ModelSerializer):
     description = serializers.CharField(default='', help_text=f'Default: EMPTY')
     vocab_size = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
+    url = serializers.SerializerMethodField()
 
     class Meta:
         model = EmbeddingCluster
-        fields = ('id', 'description', 'embedding', 'vocab_size', 'num_clusters', 'location', 'task')
+        fields = ('id', 'url', 'description', 'embedding', 'vocab_size', 'num_clusters', 'location', 'task')
 
-        read_only_fields = ('author', 'project', 'location', 'task')
+        read_only_fields = ('task',)
     
     def get_vocab_size(self, obj):
         return obj.embedding.vocab_size
@@ -69,6 +75,10 @@ class EmbeddingClusterSerializer(serializers.ModelSerializer):
     def get_location(self, obj):
         return json.loads(obj.location)
 
+    def get_url(self, obj):
+        request = self.context['request']
+        resource_url = request.build_absolute_uri(f'/projects/{obj.project.id}/embedding_clusters/{obj.id}/')
+        return resource_url 
 
 class ClusterBrowserSerializer(serializers.Serializer):
     number_of_clusters = serializers.IntegerField(default=DEFAULT_BROWSER_NUM_CLUSTERS, help_text=f'Default: {DEFAULT_BROWSER_NUM_CLUSTERS}')

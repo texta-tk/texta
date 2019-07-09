@@ -63,12 +63,13 @@ class TaggerSerializer(serializers.ModelSerializer):
     location = serializers.SerializerMethodField()
     fields_parsed = serializers.SerializerMethodField()
     query = serializers.SerializerMethodField()
+    url = serializers.SerializerMethodField()
 
     class Meta:
         model = Tagger
-        fields = ('id', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'feature_selector', 'stop_words', 'fields_parsed',
+        fields = ('id', 'url', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'feature_selector', 'stop_words', 'fields_parsed',
                   'maximum_sample_size', 'negative_multiplier', 'location', 'precision', 'recall', 'f1_score', 'num_features', 'plot', 'task')
-        read_only_fields = ('location', 'stop_words', 'precision', 'recall', 'f1_score', 'num_features', 'plot', 'fields_parsed')
+        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features')
 
     def __init__(self, *args, **kwargs):
         '''
@@ -83,7 +84,6 @@ class TaggerSerializer(serializers.ModelSerializer):
             for field_name in remove_fields:
                 self.fields.pop(field_name)
     
-
     def get_plot(self, obj):
         if obj.plot:
             return '{0}/{1}'.format(URL_PREFIX, obj.plot)
@@ -108,6 +108,11 @@ class TaggerSerializer(serializers.ModelSerializer):
         if obj.query:
             return json.loads(obj.query)
         return None
+    
+    def get_url(self, obj):
+        request = self.context['request']
+        resource_url = request.build_absolute_uri(f'/projects/{obj.project.id}/taggers/{obj.id}/')
+        return resource_url
 
 
 class TaggerGroupSerializer(serializers.ModelSerializer):
@@ -118,10 +123,11 @@ class TaggerGroupSerializer(serializers.ModelSerializer):
     tagger = TaggerSerializer(write_only=True, remove_fields=['description', 'query'])
     tagger_status = serializers.SerializerMethodField()
     tagger_statistics = serializers.SerializerMethodField()
+    url = serializers.SerializerMethodField()
 
     class Meta:
         model = TaggerGroup
-        fields = ('id', 'description', 'fact_name', 'minimum_sample_size', 
+        fields = ('id', 'url', 'description', 'fact_name', 'minimum_sample_size', 
                   'taggers', 'tagger_status', 'tagger', 'tagger_statistics')
                   
         read_only_fields = ('taggers',)
@@ -141,3 +147,8 @@ class TaggerGroupSerializer(serializers.ModelSerializer):
                         'avg_recall': tagger_objects.aggregate(Avg('recall'))['recall__avg'],
                         'avg_f1_score': tagger_objects.aggregate(Avg('f1_score'))['f1_score__avg']}
         return tagger_stats
+
+    def get_url(self, obj):
+        request = self.context['request']
+        resource_url = request.build_absolute_uri(f'/projects/{obj.project.id}/tagger_groups/{obj.id}/')
+        return resource_url
