@@ -9,8 +9,8 @@ from toolkit.tagger.models import Tagger
 
 
 class ElasticFieldSerializer(serializers.Serializer):
-    index = serializers.CharField()
-    path = serializers.CharField()
+    index = serializers.CharField(required=False)
+    path = serializers.CharField(required=True)
 
 
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):

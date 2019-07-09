@@ -22,6 +22,18 @@ class ElasticCore:
             return False
 
 
+    @staticmethod
+    def load_indices_from_field_data(field_data, indices):
+        # try loading indices from field data. if not present, use list.
+        try:
+            parsed_indices = list(set([field['index'] for field in field_data]))
+            parsed_indices = ','.join(parsed_indices)
+            return parsed_indices
+        except:
+            KeyError
+        return indices
+
+
     def get_indices(self):
         if self.connection:
             return list(self.es.indices.get_alias('*').keys())

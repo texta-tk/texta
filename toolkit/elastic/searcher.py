@@ -30,7 +30,7 @@ class ElasticSearcher:
         """
         self.core = ElasticCore()
         self.field_data = field_data
-        self.indices = self._load_indices(indices)
+        self.indices = self.core.load_indices_from_field_data(field_data, indices)
         self.query = query
         self.scroll_size = scroll_size
         self.scroll_limit = scroll_limit
@@ -49,13 +49,6 @@ class ElasticSearcher:
         Iterator for iterating through scroll
         """
         return self.scroll()
-
-
-    def _load_indices(self, indices):
-        # load from field data or indices list
-        if not indices:
-            indices = ",".join(list(set([field['index'] for field in self.field_data])))
-        return indices
 
 
     def update_query(self, query):

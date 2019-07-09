@@ -16,16 +16,8 @@ class ElasticAggregator:
         """
         self.core = ElasticCore()
         self.field_data = field_data
-        self.indices = self._load_indices(indices)
+        self.indices = self.core.load_indices_from_field_data(field_data, indices)
         self.query = query
-    
-
-    def _load_indices(self, indices):
-        # load from field data or indices list
-        if not indices:
-            return ",".join(list(set([field['index'] for field in self.field_data])))
-        else:
-            return indices
 
 
     def update_query(self, query):

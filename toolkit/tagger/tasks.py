@@ -26,10 +26,10 @@ def train_tagger(tagger_id):
     show_progress.update_view(0)
 
     try:
-        # decode field data
-        #field_data = [ElasticSearcher().core.decode_field_data(field) for field in tagger_object.fields]
-        #field_path_list = [field['field_path'] for field in field_data]
-
+        # retrieve indices & field data from project 
+        indices = tagger_object.project.indices
+        field_data = json.loads(tagger_object.fields)
+        
         # add phraser and stop words
         stop_words = json.loads(tagger_object.stop_words)
         if tagger_object.embedding:
@@ -39,26 +39,30 @@ def train_tagger(tagger_id):
         else:
             text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
 
-        positive_samples = ElasticSearcher(query=json.loads(tagger_object.query), 
-                                        field_data=json.loads(tagger_object.fields),
-                                        output='doc_with_id',
-                                        callback_progress=show_progress,
-                                        scroll_limit=int(tagger_object.maximum_sample_size),
-                                        text_processor=text_processor
-                                        )
+        positive_samples = ElasticSearcher(
+            query=json.loads(tagger_object.query),
+            indices=indices,
+            field_data=field_data,
+            output='doc_with_id',
+            callback_progress=show_progress,
+            scroll_limit=int(tagger_object.maximum_sample_size),
+            text_processor=text_processor
+        )
 
         positive_samples = list(positive_samples)
         positive_ids = list([doc['_id'] for doc in positive_samples])
 
         show_progress.update_step('scrolling negatives')
         show_progress.update_view(0)
-        negative_samples = ElasticSearcher(field_data=json.loads(tagger_object.fields),
-                                        output='doc_with_id',
-                                        callback_progress=show_progress,
-                                        scroll_limit=int(tagger_object.maximum_sample_size)*int(tagger_object.negative_multiplier),
-                                        ignore_ids=positive_ids,
-                                        text_processor=text_processor
-                                        )
+        negative_samples = ElasticSearcher(
+            indices=indices,
+            field_data=field_data,
+            output='doc_with_id',
+            callback_progress=show_progress,
+            scroll_limit=int(tagger_object.maximum_sample_size)*int(tagger_object.negative_multiplier),
+            ignore_ids=positive_ids,
+            text_processor=text_processor
+        )
 
         negative_samples = list(negative_samples)
 

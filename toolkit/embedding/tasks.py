@@ -26,10 +26,15 @@ def train_embedding(embedding_id):
     show_progress.update_view(0)
 
     try:
+        # retrieve indices from project 
+        indices = embedding_object.project.indices
+        field_data = json.loads(embedding_object.fields)
+
         # create itrerator for phraser
         text_processor = TextProcessor(sentences=True, remove_stop_words=True, tokenize=True)
         sentences = ElasticSearcher(query=json.loads(embedding_object.query),
-                                    field_data=json.loads(embedding_object.fields),
+                                    indices=indices,
+                                    field_data=field_data,
                                     output='text',
                                     callback_progress=show_progress,
                                     text_processor=text_processor)
@@ -52,7 +57,8 @@ def train_embedding(embedding_id):
 
         # iterate again with built phrase model to include phrases in language model
         sentences = ElasticSearcher(query=json.loads(embedding_object.query),
-                                    field_data=json.loads(embedding_object.fields),
+                                    indices=indices,
+                                    field_data=field_data,
                                     output='text',
                                     callback_progress=show_progress,
                                     text_processor=text_processor)
