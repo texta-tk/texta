@@ -73,6 +73,10 @@ REST_FRAMEWORK = {
        # For authenticating requests with the Token
        'rest_framework.authentication.TokenAuthentication',
     ),
+    'DEFAULT_PAGINATION_CLASS': 'toolkit.pagination.PageNumberPaginationDataOnly',
+    'PAGE_SIZE': 30,
+
+
 }
 
 MIDDLEWARE = [
