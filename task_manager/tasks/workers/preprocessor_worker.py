@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime
 import json
 import os
@@ -24,7 +25,7 @@ from task_manager.document_preprocessor import PREPROCESSOR_INSTANCES
 
 class PreprocessorWorker(BaseWorker):
 
-    def __init__(self, scroll_size=200, time_out='10m'):
+    def __init__(self, scroll_size=100, time_out='50m'):
         self.es_m = None
         self.task_id = None
         self.params = None
@@ -34,11 +35,13 @@ class PreprocessorWorker(BaseWorker):
         self._reload_env()
         self.info_logger, self.error_logger = self._generate_loggers()
 
+
     def _reload_env(self):
         from dotenv import load_dotenv
         from pathlib import Path
         env_path = str(Path('.env'))
         load_dotenv(dotenv_path=env_path)
+
 
     def _generate_loggers(self):
         import graypy
@@ -51,6 +54,7 @@ class PreprocessorWorker(BaseWorker):
         error_logger.addHandler(handler)
 
         return info_logger, error_logger
+
 
     def run(self, task_id):
         self.task_id = task_id
@@ -85,6 +89,7 @@ class PreprocessorWorker(BaseWorker):
             task = Task.objects.get(pk=self.task_id)
             task.result = json.dumps({'error': repr(e)})
             task.update_status(Task.STATUS_FAILED, set_time_completed=True)
+
 
     def _preprocessor_worker(self):
         field_paths = []
@@ -132,11 +137,21 @@ class PreprocessorWorker(BaseWorker):
                 show_progress.update(total_hits)
                 self.es_m.update_documents_by_id(doc_ids)
                 # Get next page if any
-                response = self.es_m.scroll(scroll_id=scroll_id, time_out=self.scroll_time_out)
-                total_hits = len(response['hits']['hits'])
-                scroll_id = response['_scroll_id']
-                # For partial update
-                doc_ids = [x['_id'] for x in response['hits']['hits'] if '_id' in x]
+
+                try:
+                    response = self.es_m.scroll(scroll_id=scroll_id, time_out=self.scroll_time_out)
+                    total_hits = len(response['hits']['hits'])
+                    scroll_id = response['_scroll_id']
+                    # For partial update
+                    doc_ids = [x['_id'] for x in response['hits']['hits'] if '_id' in x]
+                except KeyError as e:
+                    t, v, tb = sys.exc_info()
+                    self.error_logger.exception(t)
+                    self.error_logger.exception(v)
+                    self.error_logger.exception(tb)
+
+                    self.error_logger.exception(response)
+                    raise e
 
             task = Task.objects.get(pk=self.task_id)
             show_progress.update(100)
@@ -155,6 +170,7 @@ class PreprocessorWorker(BaseWorker):
             task.result = json.dumps({'documents_processed': show_progress.n_count, 'preprocessor_key': self.params['preprocessor_key'], 'error': str(e)})
             task.time_completed = datetime.now()
             task.save()
+
 
     def _prepare_preprocessor_data(self, response: dict):
         """
@@ -178,6 +194,7 @@ class PreprocessorWorker(BaseWorker):
 
         return documents, parameter_dict, ids, document_locations
 
+
     @staticmethod
     def _parse_query(parameters):
         """
@@ -195,6 +212,7 @@ class PreprocessorWorker(BaseWorker):
         else:
             query = json.loads(Search.objects.get(pk=int(search)).query)
         return query
+
 
     @staticmethod
     def _check_if_request_bad(args):

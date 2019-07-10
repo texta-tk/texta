@@ -30,3 +30,4 @@ xlrd
 graypy
 python-json-logger
 python-dotenv
+dictor

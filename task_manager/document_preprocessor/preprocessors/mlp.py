@@ -61,28 +61,30 @@ class MlpPreprocessor(object):
                 # This part is under a try catch because it's an notorious trouble maker.
                 try:
                     analyzation_datum = analyzation_datum[0]
+
+                    input_feature_path = input_feature.split(".")
+                    if len(input_feature) == 1:
+                        documents[analyzation_idx][input_feature + '_mlp'] = analyzation_datum['text']
+                        documents[analyzation_idx][input_feature + '_mlp']['lang'] = analyzation_datum['text']['lang']
+                        if 'texta_facts' not in documents[analyzation_idx]:
+                            documents[analyzation_idx]['texta_facts'] = []
+                        documents[analyzation_idx]['texta_facts'].extend(analyzation_datum['texta_facts'])
+
+                    else:
+                        # Make sure the last field is used as the path.
+                        mlp_field_path = input_feature_path[:-1] + [input_feature_path[-1] + "_mlp"]
+                        Helpers.set_in_dict(documents[analyzation_idx], mlp_field_path, analyzation_datum['text'])
+
+                        lang_path = mlp_field_path + ["lang"]
+                        Helpers.set_in_dict(documents[analyzation_idx], lang_path, analyzation_datum['text']['lang'])
+
+                        if 'texta_facts' not in documents[analyzation_idx]:
+                            documents[analyzation_idx]["texta_facts"] = []
+
+                        documents[analyzation_idx]["texta_facts"].extend(analyzation_datum["texta_facts"])
+
                 except Exception as e:
-                    logging.getLogger(ERROR_LOGGER).exception(analyzation_datum)
-
-                input_feature_path = input_feature.split(".")
-                if len(input_feature) == 1:
-                    documents[analyzation_idx][input_feature + '_mlp'] = analyzation_datum['text']
-                    documents[analyzation_idx][input_feature + '_mlp']['lang'] = analyzation_datum['text']['lang']
-                    if 'texta_facts' not in documents[analyzation_idx]:
-                        documents[analyzation_idx]['texta_facts'] = []
-                    documents[analyzation_idx]['texta_facts'].extend(analyzation_datum['texta_facts'])
-
-                else:
-                    # Make sure the last field is used as the path.
-                    mlp_field_path = input_feature_path[:-1] + [input_feature_path[-1] + "_mlp"]
-                    Helpers.set_in_dict(documents[analyzation_idx], mlp_field_path, analyzation_datum['text'])
-
-                    lang_path = mlp_field_path + ["lang"]
-                    Helpers.set_in_dict(documents[analyzation_idx], lang_path, analyzation_datum['text']['lang'])
-
-                    if 'texta_facts' not in documents[analyzation_idx]:
-                        documents[analyzation_idx]["texta_facts"] = []
-
-                    documents[analyzation_idx]["texta_facts"].extend(analyzation_datum["texta_facts"])
+                    logging.getLogger(ERROR_LOGGER).exception("Error: {}, Document ID: {}".format(e, documents[analyzation_idx]))
+                    continue
 
         return {'documents': documents, 'meta': {}, 'errors': errors}

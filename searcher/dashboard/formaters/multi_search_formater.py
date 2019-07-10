@@ -1,9 +1,7 @@
 import logging
-from pprint import pprint
-
-from searcher.dashboard.metafile import BaseDashboardFormater
 from typing import Dict, List
 
+from searcher.dashboard.metafile import BaseDashboardFormater
 from texta.settings import ERROR_LOGGER
 
 
@@ -39,6 +37,7 @@ class MultiSearchFormater(BaseDashboardFormater):
 
         return final_result
 
+
     def _format_initial_response(self, response):
         """
         Because MultiSearch does not contain a single response, but many it was
@@ -58,6 +57,7 @@ class MultiSearchFormater(BaseDashboardFormater):
 
         return final_result
 
+
     def _add_value_count_percentages(self, aggregation_dict: dict, total_document_count: int, field_counts: dict):
         """
         Traverses the previously grouped dictionary of ES aggregations, loops through the value_count
@@ -71,12 +71,13 @@ class MultiSearchFormater(BaseDashboardFormater):
             aggregation_dict["value_count"] = {}
 
             for field_name, doc_count in field_counts.items():
-                percentage = round( doc_count * 100 / total_document_count, 2)
-                aggregation_dict["value_count"][field_name] = {'doc_count' : doc_count, 'percentage': percentage}
+                percentage = round(doc_count * 100 / total_document_count, 2)
+                aggregation_dict["value_count"][field_name] = {'doc_count': doc_count, 'percentage': percentage}
 
 
         except ZeroDivisionError as e:
             logging.getLogger(ERROR_LOGGER).exception(e)
+
 
     def _format_aggregation_dict(self, agg_dict: dict):
         """
@@ -95,6 +96,7 @@ class MultiSearchFormater(BaseDashboardFormater):
 
             if 'nested' not in field_name:
                 agg_type, field_name, bucket_suffix = field_name.split('#')
+
             else:
                 agg_type, field_name, bucket_suffix = ('nested', 'texta_facts', '')
 

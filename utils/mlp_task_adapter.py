@@ -1,7 +1,7 @@
 import json
 import logging
 from time import sleep
-
+from utils.decorators import retry
 import requests
 
 from texta.settings import ERROR_LOGGER
@@ -60,8 +60,9 @@ class Helpers:
 
 
 class MLPTaskAdapter(object):
-    CELERY_CHUNK_SIZE = 6
-
+    CELERY_CHUNK_SIZE = 10
+    MAX_NETWORK_RETRY_COUNT = 5
+    MAX_TASK_RETRY_COUNT = 200
 
     def __init__(self, mlp_url, mlp_type='mlp'):
         self.mlp_url = mlp_url
@@ -82,36 +83,45 @@ class MLPTaskAdapter(object):
         self.errors = {}
 
 
+    @retry(Exception, tries=10, delay=10, backoff=5, logger=logging.getLogger(ERROR_LOGGER))
     def _start_mlp_celery_task(self, mlp_input):
         """
         Uses the MLP endpoint to trigger a Celery task inside the MLP server.
         'url': 'http://localhost:5000/task/status/c2b1119e...', 'task': 'c2b1119e...'}
         """
-        try:
-            response = requests.post(self.start_task_url, data=mlp_input)
-            task_info = response.json()
+        response = requests.post(self.start_task_url, data=mlp_input, )
+        response.raise_for_status()
 
+        try:
+            task_info = response.json()
             task_info["position_index"] = len(self.tasks)
+            task_info["retry_count"] = 0
             self.tasks.append(task_info)
 
         except Exception as e:
             logging.getLogger(ERROR_LOGGER).exception(mlp_input)
             logging.getLogger(ERROR_LOGGER).exception("Response Status: {} and Response Content: {}".format(response.status_code, response.text))
+            raise Exception(e)  # Raise it again.
 
 
+    @retry(Exception, tries=10, delay=10, backoff=5, logger=logging.getLogger(ERROR_LOGGER))
     def _poll_task_status(self, task_id: str):
         """
         Get the state of the celery task using MLP's status endpoint.
         This will be good for reporting any retries, errors and successful tasks.
         """
+        url = self.task_status_url.format(self.mlp_url.strip("/"), task_id)
+        response = requests.get(url)
+        response.raise_for_status()
+
         try:
-            url = self.task_status_url.format(self.mlp_url.strip("/"), task_id)
-            response = requests.get(url)
             result = response.json()
             return result
+
         except Exception as e:
             logging.getLogger(ERROR_LOGGER).exception(task_id)
             logging.getLogger(ERROR_LOGGER).exception("Response Status: {} and Response Content: {}".format(response.status_code, response.text))
+            raise Exception(e)
 
 
     def _handle_error_status(self, task_status: dict):
@@ -154,8 +164,13 @@ class MLPTaskAdapter(object):
                 elif task_status == "SUCCESS":
                     self._handle_success_status(task_state, task_state["position_index"])
 
+                self.tasks[index]["retry_count"] += 1
+
             # Remove all the tasks that have finished their jobs or failed turning it.
             self.tasks = [task for task in self.tasks if task["task"] not in self.finished_task_ids and task["task"] not in self.failed_task_ids]
-            sleep(3)  # Wait a small amount of time until checking wheter the task has finished.
+            self.tasks = [task for task in self.tasks if task["retry_count"] < MLPTaskAdapter.MAX_TASK_RETRY_COUNT]
+
+            if self.tasks:  # Avoid waiting without reason if the next batch is up.
+                sleep(5)  # Wait a small amount of time until checking wheter the task has finished.
 
         return self.analyzation_data, self.errors

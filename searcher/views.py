@@ -100,8 +100,7 @@ def get_fields(es_m):
 
             path_list = path.split('.')
 
-            label = '{0} --> {1}'.format(path_list[0], path_list[-1]) if len(path_list) > 1 else path_list[0]
-            label = label.replace('-->', u'→')
+            label = u'→'.join(path_list)
 
             if data['type'] == 'date':
                 data['range'] = get_daterange(es_m, path)
@@ -166,7 +165,7 @@ def dashboard_visualize(request):
 
     indices = es_params.get("chosen_index", None).split(',')
     for i in range(len(indices)):
-        indices[i] = indices[i].replace('.', '-')
+        indices[i] = indices[i].replace('.', '-').replace("*", "WILDCARD")
 
     color_setting = request.POST['dashboard-color']
     color_max = request.POST['dashboard-color-maximum']
