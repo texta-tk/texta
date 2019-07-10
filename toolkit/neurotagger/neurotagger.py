@@ -71,6 +71,7 @@ class NeurotaggerWorker():
         self.bs = 64
 
         # Derived params
+        self.num_classes = None
         self.vocab_size = None
         self.seq_len = None
 
@@ -104,14 +105,12 @@ class NeurotaggerWorker():
         self.labels = labels
         self.show_progress = show_progress
 
-        
-
 
     def run(self, samples, labels, show_progress):
         self._set_up_data(samples, labels, show_progress)
         self._process_data()
         self.model = NeuroModels().get_model(self.model_arch)
-
+        import pdb; pdb.set_trace()
         history = self._train_model()
         self._plot_model(history)
         self._cross_validation()
@@ -147,9 +146,14 @@ class NeurotaggerWorker():
         # Split data, so it would be shuffeled before cropping
         self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X_train, self.labels, test_size=self.validation_split, random_state=42)
 
-        # Convert labels to numpy arrays
-        self.y_train = np.array(self.y_train)
-        self.y_val = np.array(self.y_val)
+        # Convert labels to numpy arrays, use np.expand_dims to include the last dimension shape
+        # Eg shape == (800,) becomes shape == (800, 1); shape == (num_of_training_examples, num_classes)
+        import pdb; pdb.set_trace()
+        self.y_train = np.expand_dims(np.array(self.y_train), 1)
+        self.y_val = np.expand_dims(np.array(self.y_val), 1)
+
+        # Set up num_classes for the neural net last layer output size. Get the last shape size of y.
+        self.num_classes = self.y_train.shape[-1]
 
         # Change self.vocab_size to the final vocab size, if it was less than the max
         final_vocab_size = len(self.tokenizer.word_index)
@@ -163,7 +167,7 @@ class NeurotaggerWorker():
         # Training callback which shows progress to the user
         trainingProgress = TrainingProgressCallback(show_progress=self.show_progress)
 
-        self.model = self.model(self.vocab_size, self.seq_len)
+        self.model = self.model(self.vocab_size, self.seq_len, self.num_classes)
         return self.model.fit(self.X_train, self.y_train,
                         batch_size=self.bs,
                         epochs=self.num_epochs,
@@ -171,7 +175,7 @@ class NeurotaggerWorker():
                         # validation_split=self.validation_split,
                         validation_data=(self.X_val, self.y_val),
                         callbacks=[trainingProgress]
-                        )
+                    )
 
 
     def _create_task_result(self):
@@ -181,6 +185,7 @@ class NeurotaggerWorker():
             'X_val.shape': self.X_val.shape,
             'y_val.shape': self.y_val.shape,
             'model_json': self.model.to_json(),
+            'num_classes': self.num_classes,
         }
 
         self.task_result.update(train_summary)
@@ -285,6 +290,10 @@ class NeurotaggerWorker():
         texts = [doc[field] for field in doc]
         to_predict = self._convert_texts(texts)
         return self.model.predict_classes(to_predict, batch_size=self.bs), self.model.predict_proba(to_predict, batch_size=self.bs)
+
+    
+    def _convert_labels_to_multiple_hot(labels, num_classes):
+        pass
 
 
 class TrainingProgressCallback(Callback):

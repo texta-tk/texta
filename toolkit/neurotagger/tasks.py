@@ -54,7 +54,7 @@ def train_neurotagger(neurotagger_id):
 def _scroll_multiclass_data(queries, show_progress, neurotagger_obj, field_data, text_processor, field_path_list):
     samples = []
     labels = []
-
+    # If there is only 1 query, scroll negative training examples as well
     if len(queries) == 1:
         positive_samples, positive_ids = _scroll_positives(queries[0], neurotagger_obj, field_data, show_progress, text_processor, field_path_list)
         samples += positive_samples

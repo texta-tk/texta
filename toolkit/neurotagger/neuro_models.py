@@ -44,7 +44,7 @@ class NeuroModels():
 
     # Simplier models
     @staticmethod
-    def fnn(vocab_size, seq_len):
+    def fnn(vocab_size, seq_len, num_classes):
         embed_dim = 300
         model = Sequential()
         model.add(Embedding(vocab_size, embed_dim, input_length=seq_len))
@@ -52,7 +52,7 @@ class NeuroModels():
         model.add(Dropout(0.5))
         model.add(Dense(32, activation='relu'))
         model.add(Dropout(0.5))
-        model.add(Dense(1,activation='sigmoid'))
+        model.add(Dense(num_classes,activation='sigmoid'))
         model.compile(loss='binary_crossentropy',
                     optimizer='adam',
                     metrics=['accuracy'])
@@ -60,7 +60,7 @@ class NeuroModels():
 
 
     @staticmethod
-    def cnn(vocab_size, seq_len):
+    def cnn(vocab_size, seq_len, num_classes):
         embed_dim = 200
         model = Sequential()
         model.add(Embedding(vocab_size, embed_dim, input_length=seq_len))
@@ -68,7 +68,7 @@ class NeuroModels():
         model.add(Dropout(0.5))
         model.add(GlobalAveragePooling1D())
         model.add(Dense(20, activation='relu'))
-        model.add(Dense(1, activation='sigmoid'))
+        model.add(Dense(num_classes, activation='sigmoid'))
 
         model.compile(loss='binary_crossentropy',
                     optimizer='adam',
@@ -77,14 +77,14 @@ class NeuroModels():
 
 
     @staticmethod
-    def gru(vocab_size, seq_len):
+    def gru(vocab_size, seq_len, num_classes):
         embed_dim = 200
         n_hidden = 32
         model = Sequential()
         model.add(Embedding(vocab_size, embed_dim, input_length=seq_len))
         model.add(CuDNNGRU(n_hidden,))
         model.add(Dropout(0.5))
-        model.add(Dense(1,activation='sigmoid'))
+        model.add(Dense(num_classes,activation='sigmoid'))
 
         model.compile(loss='binary_crossentropy',
                     optimizer='adam',
@@ -93,14 +93,14 @@ class NeuroModels():
 
 
     @staticmethod
-    def lstm(vocab_size, seq_len):
+    def lstm(vocab_size, seq_len, num_classes):
         embed_dim = 200
         n_hidden = 32
         model = Sequential()
         model.add(Embedding(vocab_size, embed_dim, input_length=seq_len))
         model.add(CuDNNLSTM(n_hidden))
         model.add(Dropout(0.5))
-        model.add(Dense(1,activation='sigmoid'))
+        model.add(Dense(num_classes,activation='sigmoid'))
 
         model.compile(loss='binary_crossentropy',
                     optimizer='adam',
@@ -110,7 +110,7 @@ class NeuroModels():
 
     # Combined models
     @staticmethod
-    def gruCNN(vocab_size, seq_len):
+    def gruCNN(vocab_size, seq_len, num_classes):
         embed_dim = 200
         model = Sequential()
         model.add(Embedding(vocab_size, embed_dim, input_length=seq_len))
@@ -118,7 +118,7 @@ class NeuroModels():
         model.add(Dropout(0.5))
         model.add(CuDNNGRU(32))
         model.add(Dropout(0.5))
-        model.add(Dense(1, activation='sigmoid'))
+        model.add(Dense(num_classes, activation='sigmoid'))
 
         model.compile(loss='binary_crossentropy',
                     optimizer='adam',
@@ -127,7 +127,7 @@ class NeuroModels():
 
 
     @staticmethod
-    def lstmCNN(vocab_size, seq_len):
+    def lstmCNN(vocab_size, seq_len, num_classes):
         embed_dim = 200
         model = Sequential()
         model.add(Embedding(vocab_size, embed_dim, input_length=seq_len))
@@ -135,7 +135,7 @@ class NeuroModels():
         model.add(Dropout(0.5))
         model.add(CuDNNLSTM(32))
         model.add(Dropout(0.5))
-        model.add(Dense(1, activation='sigmoid'))
+        model.add(Dense(num_classes, activation='sigmoid'))
 
         model.compile(loss='binary_crossentropy',
                     optimizer='adam',
