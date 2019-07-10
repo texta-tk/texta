@@ -243,3 +243,6 @@ thead th { white-space: nowrap; }
 .fact-val-rule-deletion-button{
   height: 30px;
 }
+.field_title_break {
+    word-break: break-word;
+}

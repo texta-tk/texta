@@ -336,7 +336,7 @@ function makeDateField(dateRangeMin, dateRangeMax, fieldData) {
 
     changeFieldElementIdAndName(fieldWithID, 'daterange_field_', `daterange_field_${counter.toString()}`).val(fieldData.field)
     changeFieldElementIdAndName(fieldWithID, 'selected_field_', `selected_field_${counter.toString()}`).html(fieldData.field)
-
+    $(`#selected_field_${counter.toString()}`).addClass('field_title_break');
     $(`${fieldWithID} #remove_link`).attr('onclick', "javascript:removeField('" + newID + "');")
 
     $(`${fieldWithID} #daterange_from_`).attr('id', 'daterange_from_' + counter.toString())
@@ -359,13 +359,14 @@ function makeDateField(dateRangeMin, dateRangeMax, fieldData) {
 }
 
 function makeFactField(fieldData) {
-    counter++
-    let newID = 'field_' + counter.toString()
-    var fieldFullId = 'fact_txt_' + counter.toString()
-    let fieldWithID = '#field_' + counter.toString()
-    $('#field_hidden_fact').clone().attr('id', newID).appendTo('#constraints')
-    changeFieldElementIdAndName(fieldWithID, 'fact_operator_', `fact_operator_${counter.toString()}`)
-    $(fieldWithID + ' #selected_field_').attr('id', 'selected_field_' + counter.toString()).html(fieldData.field + ' [fact_names]')
+    counter++;
+    let newID = 'field_' + counter.toString();
+    var fieldFullId = 'fact_txt_' + counter.toString();
+    let fieldWithID = '#field_' + counter.toString();
+    $('#field_hidden_fact').clone().attr('id', newID).appendTo('#constraints');
+    changeFieldElementIdAndName(fieldWithID, 'fact_operator_', `fact_operator_${counter.toString()}`);
+    $(fieldWithID + ' #selected_field_').attr('id', 'selected_field_' + counter.toString()).html(fieldData.field + ' [fact_names]');
+    $(`#selected_field_${counter.toString()}`).addClass('field_title_break');
     changeFieldElementIdAndName(fieldWithID, 'fact_field_', `fact_field_${counter.toString()}`).val(fieldData.field)
     $(fieldWithID + ' #remove_link').attr('onclick', "javascript:removeField('" + newID + "');")
     changeFieldElementIdAndName(fieldWithID, 'suggestions_', `suggestions_${counter.toString()}`)
@@ -384,6 +385,7 @@ function makeTextField(fieldData) {
     $('#field_hidden').clone().attr('id', newID).appendTo('#constraints')
     changeFieldElementIdAndName(fieldWithID, 'match_operator_', `match_operator_${counter.toString()}`)
     changeFieldElementIdAndName(fieldWithID, 'selected_field_', `selected_field_${counter.toString()}`).html(fieldData.field)
+    $(`#selected_field_${counter.toString()}`).addClass('field_title_break');
     changeFieldElementIdAndName(fieldWithID, 'match_field_', `match_field_${counter.toString()}`).val(fieldData.field)
     changeFieldElementIdAndName(fieldWithID, 'match_type_', `match_type_${counter.toString()}`)
     changeFieldElementIdAndName(fieldWithID, 'match_slop_', `match_slop_${counter.toString()}`)
@@ -505,6 +507,7 @@ function addFactValueField(counterStr, subCounterStr, fieldPath, fieldName, valu
 
     changeFieldElementIdAndName(fieldWithID, 'fact_operator_', `fact_operator_${counterStr}`)
     $('#field_' + counterStr + ' #selected_field_').attr('id', 'selected_field_' + counterStr).html(fieldName + headingSuffix)
+    $(`#selected_field_${counter.toString()}`).addClass('field_title_break');
     $('#field_' + counterStr + ' #remove_link').attr('onclick', "javascript:removeField('field_" + counterStr + "');")
     changeFieldElementIdAndName(fieldWithID, 'fact_field_', `fact_field_${counterStr}`).val(fieldPath)
     $('#field_' + counterStr + " input[name='fact_constraint_type_']")
@@ -589,6 +592,7 @@ function addField(dateRangeMin, dateRangeMax, submittedFieldData) {
         let fieldWithID = '#field_' + counter.toString()
         changeFieldElementIdAndName(fieldWithID, 'daterange_field_', `daterange_field_${counter.toString()}`).val(fieldPath)
         changeFieldElementIdAndName(fieldWithID, 'selected_field_', `selected_field_${counter.toString()}`).val(fieldPath).html(fieldName)
+        $(`#selected_field_${counter.toString()}`).addClass('field_title_break');
         $('#field_' + counter.toString() + ' #remove_link').attr('onclick', "javascript:removeField('" + newID + "');")
 
         $('#field_' + counter.toString() + ' #daterange_from_').attr('id', 'daterange_from_' + counter.toString())
@@ -614,6 +618,7 @@ function addField(dateRangeMin, dateRangeMax, submittedFieldData) {
         let fieldWithID = '#field_' + counter.toString()
         changeFieldElementIdAndName(fieldWithID, 'fact_operator_', `fact_operator_${counter.toString()}`)
         $('#field_' + counter.toString() + ' #selected_field_').attr('id', 'selected_field_' + counter.toString()).html(fieldName + ' [fact_names]')
+        $(`#selected_field_${counter.toString()}`).addClass('field_title_break');
         changeFieldElementIdAndName(fieldWithID, 'fact_field_', `fact_field_${counter.toString()}`).val(fieldPath)
         $('#field_' + counter.toString() + ' #remove_link').attr('onclick', "javascript:removeField('" + newID + "');")
         changeFieldElementIdAndName(fieldWithID, 'suggestions_', `suggestions_${counter.toString()}`)
@@ -648,6 +653,7 @@ function addField(dateRangeMin, dateRangeMax, submittedFieldData) {
         let fieldWithID = '#field_' + counter.toString()
         changeFieldElementIdAndName(fieldWithID, 'match_operator_', `match_operator_${counter.toString()}`)
         $('#field_' + counter.toString() + ' #selected_field_').attr('id', 'selected_field_' + counter.toString()).html(fieldName)
+        $(`#selected_field_${counter.toString()}`).addClass('field_title_break');
         changeFieldElementIdAndName(fieldWithID, 'match_field_', `match_field_${counter.toString()}`).val(fieldPath)
         changeFieldElementIdAndName(fieldWithID, 'match_type_', `match_type_${counter.toString()}`)
         changeFieldElementIdAndName(fieldWithID, 'match_slop_', `match_slop_${counter.toString()}`)
