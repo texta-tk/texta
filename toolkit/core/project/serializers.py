@@ -7,6 +7,14 @@ from toolkit.core.choices import get_index_choices
 from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.tagger.models import Tagger
 
+DEFAULT_VALUES_PER_NAME = 10
+
+class GetFactsSerializer(serializers.Serializer):
+    values_per_name = serializers.IntegerField(default=DEFAULT_VALUES_PER_NAME,
+        help_text=f'Number of fact values per fact name. Default: 10.')
+    output_type = serializers.ChoiceField(choices=((True, 'fact names with values'), (False, 'fact names without values')),
+        help_text=f'Include fact values in output. Default: True', default=True)
+
 
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):
     indices = serializers.MultipleChoiceField(choices=get_index_choices())

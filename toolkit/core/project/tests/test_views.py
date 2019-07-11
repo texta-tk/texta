@@ -5,7 +5,7 @@ from rest_framework.test import APIClient
 from toolkit.core.project.models import Project
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 from toolkit import permissions as toolkit_permissions
-from toolkit.test_settings import TEST_INDEX
+from toolkit.test_settings import TEST_INDEX, TEST_FACT_NAME
 
 
 class ProjectViewTests(APITestCase):
@@ -24,3 +24,11 @@ class ProjectViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue(TEST_INDEX in [field['index'] for field in response.data])
+
+    def test_get_facts(self):
+        url = f'/projects/{self.project.id}/get_facts/'
+        response = self.client.get(url)
+        print_output('get_facts:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue(TEST_FACT_NAME in [field['name'] for field in response.data])
