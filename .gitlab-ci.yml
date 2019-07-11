@@ -31,4 +31,4 @@ Build:
   script:
   - docker build -t docker.texta.ee/texta/texta-rest:latest .
   - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee
-  - docker push docker.texta.ee/texta/texta-rest:latest
+#  - docker push docker.texta.ee/texta/texta-rest:latest
