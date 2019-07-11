@@ -15,26 +15,21 @@ class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
                                     help_text=f'Default: {DEFAULT_NUM_DIMENSIONS}')
     min_freq = serializers.IntegerField(default=DEFAULT_MIN_FREQ,
                                     help_text=f'Default: {DEFAULT_MIN_FREQ}')
-    location = serializers.SerializerMethodField()
     fields_parsed = serializers.SerializerMethodField()
     query = serializers.SerializerMethodField()
     url = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Embedding
-        fields = ('id', 'url', 'description', 'fields', 'query', 'num_dimensions', 'min_freq', 'vocab_size', 'location', 'task', 'fields_parsed')
+        fields = ('id', 'url', 'description', 'fields', 'query', 'num_dimensions', 'min_freq', 'vocab_size', 'task', 'fields_parsed')
         read_only_fields = ('vocab_size',)
-    
-    def get_location(self, obj):
-        if obj.location:
-            return json.loads(obj.location)
-        return None
-    
+
+
     def get_fields_parsed(self, obj):
         if obj.fields:
             return json.loads(obj.fields)
         return None
-    
+
     def get_query(self, obj):
         if obj.query:
             return json.loads(obj.query)
@@ -44,7 +39,7 @@ class EmbeddingSerializer(serializers.HyperlinkedModelSerializer):
         request = self.context['request']
         path = re.sub(r'\d+\/*$', '', request.path)
         resource_url = request.build_absolute_uri(f'{path}{obj.id}/')
-        return resource_url 
+        return resource_url
 
 
 class EmbeddingPrecictionSerializer(serializers.Serializer):
@@ -70,7 +65,7 @@ class EmbeddingClusterSerializer(serializers.ModelSerializer):
         fields = ('id', 'url', 'description', 'embedding', 'vocab_size', 'num_clusters', 'location', 'task')
 
         read_only_fields = ('task',)
-    
+
     def get_vocab_size(self, obj):
         return obj.embedding.vocab_size
 
@@ -81,7 +76,7 @@ class EmbeddingClusterSerializer(serializers.ModelSerializer):
         request = self.context['request']
         path = re.sub(r'\d+\/*$', '', request.path)
         resource_url = request.build_absolute_uri(f'{path}{obj.id}/')
-        return resource_url 
+        return resource_url
 
 class ClusterBrowserSerializer(serializers.Serializer):
     number_of_clusters = serializers.IntegerField(default=DEFAULT_BROWSER_NUM_CLUSTERS, help_text=f'Default: {DEFAULT_BROWSER_NUM_CLUSTERS}')

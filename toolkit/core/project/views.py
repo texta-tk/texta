@@ -25,10 +25,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     permission_classes = (
-        project_permissions.ProjectAllowed, 
+        project_permissions.ProjectAllowed,
         permissions.IsAuthenticated
     )
-    
+
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
@@ -37,7 +37,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         queryset = Project.objects.all()
         current_user = self.request.user
         if not current_user.is_superuser:
-            queryset = queryset.filter(owner=current_user) | queryset.filter(users=current_user)
+            queryset = (queryset.filter(owner=current_user) | queryset.filter(users=current_user)).distinct()
         return queryset
 
 
