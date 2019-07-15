@@ -12,6 +12,7 @@ django-rest-auth[with_social]
 psutil
 matplotlib
 termcolor
+tensorflow
 keras
 django-extensions
 joblib
