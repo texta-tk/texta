@@ -41,3 +41,4 @@ class ShowProgress(object):
             errors_json = []
         errors_json.append('Error at {0}: {1}'.format(self.step, error))
         self.task.errors = json.dumps(errors_json)
+        self.task.save()

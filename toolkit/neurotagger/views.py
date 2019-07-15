@@ -10,7 +10,7 @@ from toolkit.neurotagger.models import Neurotagger
 from toolkit.core.project.models import Project
 from toolkit.neurotagger.serializers import NeurotaggerSerializer
 from toolkit.neurotagger.neurotagger import NeurotaggerWorker
-from toolkit.utils.model_cache import ModelCache
+from toolkit.tools.model_cache import ModelCache
 from toolkit import permissions as toolkit_permissions
 from toolkit.core import permissions as core_permissions
 from toolkit.tagger.serializers import TextSerializer, DocSerializer
@@ -25,29 +25,23 @@ def get_payload(request):
     if request.GET:
         data = request.GET
     elif request.POST:
+
         data = request.POST
     else:
         data = {}
     return data
 
-
 class NeurotaggerViewSet(viewsets.ModelViewSet):
     serializer_class = NeurotaggerSerializer
-    permission_classes = (
-        core_permissions.TaggerEmbeddingsPermissions,
-        permissions.IsAuthenticated,
-        toolkit_permissions.HasActiveProject
-        )
+    permission_classes = (core_permissions.ProjectResourceAllowed, permissions.IsAuthenticated)
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, project=self.request.user.profile.active_project)
+        serializer.save(author=self.request.user, 
+                        project=Project.objects.get(id=self.kwargs['project_pk']),
+                        fields=json.dumps(serializer.validated_data['fields']))
 
     def get_queryset(self):
-        queryset = Neurotagger.objects.all()
-        current_user = self.request.user
-        if not current_user.is_superuser:
-            queryset = Neurotagger.objects.filter(project=current_user.profile.active_project)
-        return queryset
+        return Neurotagger.objects.filter(project=self.kwargs['project_pk'])
 
 
     def create(self, request, *args, **kwargs):

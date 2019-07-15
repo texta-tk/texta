@@ -46,7 +46,7 @@ signals.post_save.connect(Embedding.train_embedding_model, sender=Embedding)
 
 
 class EmbeddingCluster(models.Model):
-    description = models.CharField(max_length=MAX_STR_LEN)
+    description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE)

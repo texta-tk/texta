@@ -12,8 +12,6 @@ from toolkit.core.task.models import Task
 from toolkit.core.project.models import Project
 from toolkit.embedding.models import Embedding
 
-from multiselectfield import MultiSelectField
-
 
 # Create your models here.
 class Neurotagger(models.Model):
@@ -21,7 +19,7 @@ class Neurotagger(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     queries = models.TextField(default=json.dumps([EMPTY_QUERY]))
-    fields = MultiSelectField(choices=get_field_choices())
+    fields = models.TextField(default=json.dumps([]))
     model_architecture = models.CharField(choices=choices.model_arch_choices, max_length=10)
     seq_len = models.IntegerField(default=choices.DEFAULT_SEQ_LEN)
     vocab_size = models.IntegerField(default=choices.DEFAULT_VOCAB_SIZE)
@@ -32,7 +30,7 @@ class Neurotagger(models.Model):
     maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, blank=True)
     score_threshold = models.FloatField(default=choices.DEFAULT_SCORE_THRESHOLD, blank=True)
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
-    
+
     validation_accuracy = models.FloatField(default=None, null=True)
     training_accuracy = models.FloatField(default=None, null=True)
     training_loss = models.FloatField(default=None, null=True)

@@ -30,6 +30,6 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         request = self.context.get('request')
         base_url = request.build_absolute_uri(f'/projects/{obj.id}/')
         resource_dict = {}
-        for resource_name in ('embeddings', 'embedding_clusters', 'taggers', 'tagger_groups'):
+        for resource_name in ('embeddings', 'embedding_clusters', 'taggers', 'tagger_groups', 'neurotaggers'):
             resource_dict[resource_name] = f'{base_url}{resource_name}/'
         return resource_dict

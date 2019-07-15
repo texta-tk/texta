@@ -110,7 +110,6 @@ class NeurotaggerWorker():
         self._set_up_data(samples, labels, show_progress)
         self._process_data()
         self.model = NeuroModels().get_model(self.model_arch)
-        import pdb; pdb.set_trace()
         history = self._train_model()
         self._plot_model(history)
         self._cross_validation()
@@ -148,7 +147,6 @@ class NeurotaggerWorker():
 
         # Convert labels to numpy arrays, use np.expand_dims to include the last dimension shape
         # Eg shape == (800,) becomes shape == (800, 1); shape == (num_of_training_examples, num_classes)
-        import pdb; pdb.set_trace()
         self.y_train = np.expand_dims(np.array(self.y_train), 1)
         self.y_val = np.expand_dims(np.array(self.y_val), 1)
 

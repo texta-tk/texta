@@ -1,3 +1,6 @@
+import json
+import re
+
 from rest_framework import serializers
 from django.db.models import Avg
 
@@ -9,8 +12,9 @@ from toolkit.settings import URL_PREFIX
 
 
 
-class NeurotaggerSerializer(serializers.ModelSerializer):
-    fields = serializers.MultipleChoiceField(choices=get_field_choices(), required=True)
+class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer):
+    fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
+    fields_parsed = serializers.SerializerMethodField()
     model_architecture = serializers.ChoiceField(choices=choices.model_arch_choices)
     seq_len = serializers.IntegerField(default=choices.DEFAULT_SEQ_LEN, help_text=f'Default: {choices.DEFAULT_SEQ_LEN}')
     vocab_size = serializers.IntegerField(default=choices.DEFAULT_VOCAB_SIZE, help_text=f'Default: {choices.DEFAULT_VOCAB_SIZE}')
@@ -24,11 +28,13 @@ class NeurotaggerSerializer(serializers.ModelSerializer):
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
     model_plot = serializers.SerializerMethodField()
+    url = serializers.SerializerMethodField()
+
 
     class Meta:
         model = Neurotagger
         fields = ('url', 'id', 'description', 'project', 'author', 'queries', 'validation_split', 'score_threshold',
-                  'fields', 'embedding', 'model_architecture', 'seq_len', 'maximum_sample_size', 'negative_multiplier',
+                  'fields', 'fields_parsed', 'embedding', 'model_architecture', 'seq_len', 'maximum_sample_size', 'negative_multiplier',
                   'location', 'num_epochs', 'vocab_size', 'plot', 'task', 'validation_accuracy', 'training_accuracy',
                   'training_loss', 'validation_loss', 'model_plot', 'result_json')
 
@@ -62,3 +68,14 @@ class NeurotaggerSerializer(serializers.ModelSerializer):
             return '{0}/{1}'.format(URL_PREFIX, obj.model_plot)
         else:
             return None
+
+    def get_fields_parsed(self, obj):
+        if obj.fields:
+            return json.loads(obj.fields)
+        return None
+
+    def get_url(self, obj):
+        request = self.context['request']
+        path = re.sub(r'\d+\/*$', '', request.path)
+        resource_url = request.build_absolute_uri(f'{path}{obj.id}/')
+        return resource_url 
