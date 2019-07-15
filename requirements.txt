@@ -16,3 +16,4 @@ tensorflow
 keras
 django-extensions
 joblib
+pydot
