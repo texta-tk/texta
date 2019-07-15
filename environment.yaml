@@ -10,6 +10,8 @@ dependencies:
   - pandas
   - scikit-learn
   - uwsgi
+  - tensorflow
+  - keras
   - pip:
     - gensim==3.7.1
     - django==2.1.7
