@@ -2,6 +2,7 @@
 toolkit/*/migrations/*
 *.sqlite3
 data/models/*
-media/*
-.vscode/*
 *.rdb
+data/media/*
+.vscode/*
+*.png

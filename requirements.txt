@@ -13,3 +13,5 @@ psutil
 matplotlib
 termcolor
 keras
+django-extensions
+joblib

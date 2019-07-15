@@ -1,25 +1,26 @@
 from rest_framework import viewsets, permissions
 from toolkit.core.project.models import Project
-from toolkit.tagger.models import Tagger
 
-class TaggerEmbeddingsPermissions(permissions.BasePermission):
-    message = 'Insufficient permissions for this object.'
-    # TODO appears to be a problem with rights for 'user'
+class ProjectResourceAllowed(permissions.BasePermission):
+    message = 'Insufficient permissions for this resource.'
+
+    def has_permission(self, request, view):
+        return self._permission_check(request, view)
 
     def has_object_permission(self, request, view, obj):
-        # always allow (GET, HEAD or OPTIONS)
-        if request.method in permissions.SAFE_METHODS:
-            return True
+        return self._permission_check(request, view)
 
-        owned_projects = Project.objects.filter(owner=request.user.id)
-        if obj.project in owned_projects or request.user.is_superuser:
-            return True
-        else:
+    def _permission_check(self, request, view):
+        # retrieve project object
+        try:
+            project_object = Project.objects.get(id=view.kwargs['project_pk'])
+        except:
             return False
-
-
-class EmbeddingFiltering(permissions.BasePermission):
-    # TODO
-    pass
-
-    # def has_permission(self, request, view):
+        # check if user is owner or listed in project users
+        if request.user in project_object.users.all() or request.user == project_object.owner:
+            return True
+        # check if user is superuser
+        if request.user.is_superuser:
+            return True
+        # nah, not gonna see anything!
+        return False

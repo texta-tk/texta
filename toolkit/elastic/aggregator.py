@@ -10,18 +10,14 @@ class ElasticAggregator:
     EMPTY_QUERY = {"query": {"match_all": {}}}
 
     def __init__(self, field_data=[], indices=[], query=EMPTY_QUERY):
+        """
+        field_data: list of decoded fields
+        indices: list of index names (strings)
+        """
         self.core = ElasticCore()
-        self.field_data = self.core.parse_field_data(field_data)
-        self.indices = self._load_indices(indices)
+        self.field_data = field_data
+        self.indices = self.core.load_indices_from_field_data(field_data, indices)
         self.query = query
-    
-
-    def _load_indices(self, indices):
-        # load from field data or indices list
-        if not indices:
-            return ",".join([field["index"] for field in self.field_data])
-        else:
-            return indices
 
 
     def update_query(self, query):
@@ -29,7 +25,10 @@ class ElasticAggregator:
 
 
     def update_field_data(self, field_data):
-        self.field_data = self.core.parse_field_data(field_data)
+        """
+        Updates field data. Expects list of decoded fields.
+        """
+        self.field_data = field_data
 
 
     def _aggregate(self, agg_query):
@@ -60,16 +59,18 @@ class ElasticAggregator:
             agg_query["facts"]["aggs"]["facts"]["aggs"] = {"fact_values": {"terms": {"field": "texta_facts.str_val", "size": size}}}
 
         response = self._aggregate(agg_query)
-        
-        fact_names = response["aggregations"]["facts"]["facts"]["buckets"]
+        aggregations = response["aggregations"]
         entities = {}
-        for fact_type in fact_names:
-            fact_name = fact_type["key"]
-            entities[fact_name] = []
-            if "fact_values" in fact_type:
-                for fact_value in fact_type["fact_values"]["buckets"]:
-                    if fact_value["key"] and fact_value["doc_count"] > min_count:
-                        entities[fact_name].append(fact_value["key"])
+
+        if aggregations["facts"]["doc_count"] > 0:
+            fact_names = aggregations["facts"]["facts"]["buckets"]
+            for fact_type in fact_names:
+                fact_name = fact_type["key"]
+                entities[fact_name] = []
+                if "fact_values" in fact_type:
+                    for fact_value in fact_type["fact_values"]["buckets"]:
+                        if fact_value["key"] and fact_value["doc_count"] > min_count:
+                            entities[fact_name].append(fact_value["key"])
         
         # filter by name if fact name present
         if filter_by_fact_name:

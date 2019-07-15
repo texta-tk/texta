@@ -5,17 +5,16 @@ services:
     alias: elasticsearch
   - redis:latest
 
-before_script:
-  - python -V
-  - pip install -r requirements.txt
-  - python import_test_index.py -es http://elasticsearch:9200
-  - python migrate.py
-
 stages:
   - test
 #  - build
 
 Test:
+  before_script:
+    - python -V
+    - pip install -r requirements.txt
+    - python import_test_index.py -es http://elasticsearch:9200
+    - python migrate.py
   stage: test
   tags:
   - ci-test
@@ -28,6 +27,8 @@ Test:
 #Build:
 #  stage: build
 #  tags:
-#  - ci-test
+#  - docker
 #  script:
 #  - docker build -t docker.texta.ee/texta/texta-rest:latest .
+#  - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee
+#  - docker push docker.texta.ee/texta/texta-rest:latest

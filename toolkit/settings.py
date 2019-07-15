@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'rest_auth.registration',
-    #'django_extensions'
+    'django_extensions'
 ]
 
 # For registration (see: https://django-rest-auth.readthedocs.io/en/latest/installation.html#registration-optional)
@@ -74,6 +74,10 @@ REST_FRAMEWORK = {
        # For authenticating requests with the Token
        'rest_framework.authentication.TokenAuthentication',
     ),
+    'DEFAULT_PAGINATION_CLASS': 'toolkit.pagination.PageNumberPaginationDataOnly',
+    'PAGE_SIZE': 30,
+
+
 }
 
 MIDDLEWARE = [
@@ -106,16 +110,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'toolkit.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/2.1/ref/settings/#databases
-
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    },
-    # SQLite write lock timeout in seconds https://docs.djangoproject.com/en/dev/ref/databases/#database-is-locked-errors
+	'default': {
+		'ENGINE':       os.getenv('DJANGO_DATABASE_ENGINE', 'django.db.backends.sqlite3'),
+		'NAME':         os.getenv('DJANGO_DATABASE_NAME', os.path.join(BASE_DIR, 'data', 'db.sqlite3')),
+		'USER':         os.getenv('DJANGO_DATABASE_USER', ''),  # Not used with sqlite3.
+		'PASSWORD':     os.getenv('DJANGO_DATABASE_PASSWORD', ''),  # Not used with sqlite3.
+		'HOST':         os.getenv('DJANGO_DATABASE_HOST', ''),
+		# Set to empty string for localhost. Not used with sqlite3.
+		'PORT':         os.getenv('DJANGO_DATABASE_PORT', ''),
+		# Set to empty string for default. Not used with sqlite3.
+		'BACKUP_COUNT': 5,
+		'CONN_MAX_AGE': None
+	},
     'OPTIONS': {
         'timeout': 5,
     }
@@ -159,7 +166,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
-
+STATIC_ROOT =  os.path.join(BASE_DIR, 'static')
 
 # ELASTICSEARCH
 ES_URL = os.getenv('TEXTA_ES_URL', 'http://localhost:9200')
@@ -179,7 +186,7 @@ NUM_WORKERS=4
 
 # create model dirs
 MODELS_DIR = os.path.join(BASE_DIR, 'data', 'models')
-MODEL_TYPES = ['embedding', 'tagger', 'extractor']
+MODEL_TYPES = ['embedding', 'tagger', 'extractor', 'cluster']
 
 for model_type in MODEL_TYPES:
     model_dir = os.path.join(MODELS_DIR, model_type)
@@ -187,9 +194,9 @@ for model_type in MODEL_TYPES:
         os.makedirs(model_dir)
 
 # create protected media dirs
-MEDIA_DIR = os.path.join(BASE_DIR, 'media')
+MEDIA_DIR = os.path.join(BASE_DIR, 'data', 'media')
 
 if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
 
-MEDIA_URL = 'media/'
+MEDIA_URL = 'data/media/'

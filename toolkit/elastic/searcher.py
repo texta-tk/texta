@@ -29,8 +29,8 @@ class ElasticSearcher:
         Output options: document (default), text (lowered & stopwords removed), sentences (text + line splitting), raw (raw elastic output)
         """
         self.core = ElasticCore()
-        self.field_data = self.core.parse_field_data(field_data)
-        self.indices = self._load_indices(indices)
+        self.field_data = field_data
+        self.indices = indices
         self.query = query
         self.scroll_size = scroll_size
         self.scroll_limit = scroll_limit
@@ -51,57 +51,66 @@ class ElasticSearcher:
         return self.scroll()
 
 
-    def _load_indices(self, indices):
-        # load from field data or indices list
-        if not indices:
-            return ",".join(list(self.field_data.keys()))
-        else:
-            return indices
-
-
     def update_query(self, query):
         self.query = query
     
 
     def update_field_data(self, field_data):
-        self.field_data = self.core.parse_field_data(field_data)
-
-
-    @staticmethod
-    def doc_to_texts(doc, sentences=False):
-        texts = []
-        for text in doc.values():
-            text = text.strip().lower()
-            # remove stopwords
-
-            if sentences == True:
-                lines = text.split('\n')
-                for line in lines:
-                    if line:
-                        texts.append(line.strip())
-            else:
-                texts.append(text)
-        return texts
+        self.field_data = field_data
 
 
     def _parse_doc(self, doc):
         """
         Parses Elasticsearch hit into something nicer
         """
-        parsed_doc = {}
-        for index, field_paths in self.field_data.items():
-            if doc['_index'] == index:
-                for field_path in field_paths:
-                    decoded_text = doc['_source']
-                    for k in field_path.split('.'):
-                        # get nested fields encoded as: 'field.sub_field'
-                        try:
-                            decoded_text = decoded_text[k]
-                        except:
-                            decoded_text = ""
-                    if decoded_text:
-                        parsed_doc[field_path] = decoded_text
+        parsed_doc, index = self._flatten_doc(doc)
+        if self.field_data:
+            parsed_doc = {k:v for k,v in parsed_doc.items() if self.field_data.count(k)}
+        else:
+            parsed_doc, _ = self._flatten_doc(doc)
         return parsed_doc
+
+
+    def _flatten_doc(self, doc):
+        """
+        Flattens a document.
+        """
+        index = doc['_index']
+        doc = doc['_source']
+        new_doc = {}
+        for field_name, field_content in doc.items():
+            new_field_name, new_content = self._flatten_field(field_name, field_content)
+            new_doc[new_field_name] = new_content
+        return new_doc, index
+
+
+    def _flatten_field(self, field_name, field_content):
+        """
+        Flattens a field.
+        """
+        if isinstance(field_content, dict):
+            # go deeper
+            for subfield_name, subfield_content in field_content.items():
+                current_field_name = f'{field_name}.{subfield_name}'
+                return self._flatten_field(current_field_name, subfield_content) 
+        else:
+            # this is the end
+            return field_name, field_content
+
+
+    def _decode_doc(self, doc, field_path=None):
+        decoded_text = doc['_source']
+        if field_path:
+            # decode if field path known
+            for k in field_path.split('.'):
+                # get nested fields encoded as: 'field.sub_field'
+                try:
+                    decoded_text = decoded_text[k]
+                except:
+                    decoded_text = ""
+        else:
+            pass
+        return decoded_text
 
 
     def count(self):
@@ -158,3 +167,4 @@ class ElasticSearcher:
             scroll_id = page['_scroll_id']
             page_size = len(page['hits']['hits'])
             current_page += 1
+

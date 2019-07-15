@@ -14,6 +14,7 @@ class Task(models.Model):
     status = models.CharField(max_length=MAX_DESC_LEN)
     progress = models.FloatField(default=0.0)
     step = models.CharField(max_length=MAX_DESC_LEN, default='')
+    errors = models.CharField(max_length=MAX_DESC_LEN*100, default='')
     time_started = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(null=True, blank=True, default=None)
     time_completed = models.DateTimeField(null=True, blank=True, default=None)

@@ -2,7 +2,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_selection import SelectFromModel
+from sklearn.feature_selection import SelectFromModel, SelectKBest, mutual_info_classif
 from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import Normalizer
 from sklearn.svm import SVC, LinearSVC
@@ -27,11 +27,12 @@ class ModelNull(BaseEstimator):
 
 class ModelStep:
 
-    def __init__(self, name, model, label, params):
+    def __init__(self, name, model, label, params, estimator=None):
         self.name = name
         self.model = model
         self.label = label
         self.params = params
+        self.estimator = estimator
 
     def __str__(self):
         return self.name
@@ -40,7 +41,10 @@ class ModelStep:
         return self.name
 
     def get_step(self):
-        return (self.name, self.model())
+        if self.estimator:
+            return (self.name, self.model(self.estimator))
+        else:
+            return (self.name, self.model())
 
     def get_param(self):
         param_dict = {}
@@ -87,37 +91,41 @@ class ItemSelector(BaseEstimator, TransformerMixin):
 class PipelineBuilder:
 
     def __init__(self):
-        self.extractor_list = []
-        self.classifier_list = []
-        self.extractor_op = 0
-        self.classifier_op = 0
+        self.extractor_dict = {}
+        self.classifier_dict = {}
+        self.feature_selector_dict = {}
+        self.extractor_op = None
+        self.classifier_op = None
+        self.feature_selector_op = None
 
     def add_extractor(self, name, model, label, params):
-        self.extractor_list.append(ModelStep(name, model, label, params))
+        self.extractor_dict[label] = ModelStep(name, model, label, params)
 
     def add_classifier(self, name, model, label, params):
-        self.classifier_list.append(ModelStep(name, model, label, params))
+        self.classifier_dict[label] = ModelStep(name, model, label, params)
+
+    def add_feature_selector(self, name, model, label, params, estimator=None):
+        self.feature_selector_dict[label] = ModelStep(name, model, label, params, estimator=estimator)
 
     def get_extractor_options(self):
-        options = []
-        for i, x in enumerate(self.extractor_list):
-            options.append({'index': i, 'label': x.label})
-        return options
+        return list(self.extractor_dict.keys())
 
     def get_classifier_options(self):
-        options = []
-        for i, x in enumerate(self.classifier_list):
-            options.append({'index': i, 'label': x.label})
-        return options
+        return list(self.classifier_dict.keys())
 
-    def set_pipeline_options(self, extractor_op, classifier_op):
+    def get_feature_selector_options(self):
+        return list(self.feature_selector_dict.keys())
+
+    def set_pipeline_options(self, extractor_op, classifier_op, feature_selector_op):
         self.extractor_op = extractor_op
         self.classifier_op = classifier_op
+        self.feature_selector_op = feature_selector_op
 
     def pipeline_representation(self):
-        e = self.extractor_list[self.extractor_op].name
-        c = self.classifier_list[self.classifier_op].name
-        rep = "{0} | {3}".format(e, c)
+        e = self.extractor_dict[self.extractor_op]
+        c = self.classifier_dict[self.classifier_op]
+        s = self.feature_selector_dict[self.classifier_op]
+        rep = "{0} | {1} | {2}".format(e, c, s)
         return rep
 
     def build(self, fields):
@@ -131,10 +139,10 @@ class PipelineBuilder:
             pipe_key = 'pipe_{}'.format(field)
             steps = []    
             steps.append(tuple(['selector', ItemSelector(key=field)]))
-            steps.append(self.extractor_list[self.extractor_op].get_step())
+            steps.append(self.extractor_dict[self.extractor_op].get_step())
             transformer_list.append(tuple([pipe_key, Pipeline(steps)]))
             # Nest params inside the union field - Extractor
-            p_dict = self.extractor_list[self.extractor_op].get_param()
+            p_dict = self.extractor_dict[self.extractor_op].get_param()
             for k in p_dict:
                 new_k = '{}__{}__{}'.format('union', pipe_key, k)
                 params[new_k] = p_dict[k]
@@ -143,12 +151,12 @@ class PipelineBuilder:
         steps = []
         steps.append(tuple(['union', FeatureUnion(transformer_list=transformer_list)]))
         
-        # feature selection using linear svc
-        steps.append(('feature_selection', SelectFromModel(LinearSVC(penalty='l1', dual=False))))
+        # Feature selector
+        steps.append(self.feature_selector_dict[self.feature_selector_op].get_step())
 
-        steps.append(self.classifier_list[self.classifier_op].get_step())
+        steps.append(self.classifier_dict[self.classifier_op].get_step())
         pipe = Pipeline(steps)
-        params.update(self.classifier_list[self.classifier_op].get_param())
+        params.update(self.classifier_dict[self.classifier_op].get_param())
 
         return pipe, params
 
@@ -168,12 +176,19 @@ def get_pipeline_builder():
 
     # Classification Models
 
-    params = {}
+    params = {'solver': ['lbfgs']}
     pipe_builder.add_classifier('classifier', LogisticRegression, 'Logistic Regression', params)
 
-    params = {}
     params = {'probability': [True], 'kernel': ['linear']}
     pipe_builder.add_classifier('classifier', SVC, 'LinearSVC', params)
+
+    # Feature selectors
+
+    params = {}
+    pipe_builder.add_feature_selector('feature_selector', SelectFromModel, 'SVM Feature Selector', params, estimator=LinearSVC(penalty='l1', dual=False))
+
+    #params = {'k': [50, 100, 500, 1000]}
+    #pipe_builder.add_feature_selector('feature_selector', SelectKBest, 'KBest Feature Selector', params, estimator=mutual_info_classif)
 
     return pipe_builder
     
