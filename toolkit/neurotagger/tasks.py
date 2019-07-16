@@ -116,6 +116,6 @@ def _scroll_negatives(neurotagger_obj, field_data, show_progress, positive_ids, 
     negative_samples = list(negative_samples)
     combined_samples = []
     for field in field_data:
-        combined_samples += [doc[field] for doc in negative_samples]
+        combined_samples += [doc[field] for doc in negative_samples if field in doc]
 
     return combined_samples
