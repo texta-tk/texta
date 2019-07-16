@@ -18,6 +18,7 @@ from toolkit.tools.model_cache import ModelCache
 from toolkit.embedding.phraser import Phraser
 from toolkit.tools.text_processor import TextProcessor
 from toolkit import permissions as toolkit_permissions
+from toolkit.view_constants import TagLogicViews
 from toolkit.core import permissions as core_permissions
 from toolkit.core.task.models import Task
 
@@ -274,7 +275,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 ################
 
 
-class TaggerGroupViewSet(viewsets.ModelViewSet):
+class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
     queryset = TaggerGroup.objects.all()
     serializer_class = TaggerGroupSerializer
     permission_classes = (
@@ -335,29 +336,6 @@ class TaggerGroupViewSet(viewsets.ModelViewSet):
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
-
-    def get_tags(self, fact_name, active_project, min_count=1000):
-        """
-        Finds possible tags for training by aggregating active project's indices.
-        """
-        active_indices = list(active_project.indices)
-        es_a = ElasticAggregator(indices=active_indices)
-        # limit size to 10000 unique tags
-        tag_values = es_a.facts(filter_by_fact_name=fact_name, min_count=min_count, size=10000)
-        return tag_values
-    
-
-    def create_queries(self, fact_name, tags):
-        """
-        Creates queries for finding documents for each tag.
-        """
-        queries = []
-        for tag in tags:
-            query = Query()
-            query.add_fact_filter(fact_name, tag)
-            queries.append(query.query)
-        return queries
 
 
     def get_tag_candidates(self, field_paths, text, hybrid=True, n_candidates=30):

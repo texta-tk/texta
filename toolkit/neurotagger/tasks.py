@@ -38,9 +38,20 @@ def train_neurotagger(neurotagger_id):
             phraser.load()
             text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
         else:
-            text_processor = TextProcessor(remove_stop_words=True)
+            text_processor = None
 
-        samples, labels = _scroll_multiclass_data(json.loads(neurotagger_obj.queries), show_progress, neurotagger_obj, field_data, text_processor)
+
+        show_progress.update_step('scrolling data')
+        show_progress.update_view(0)
+
+        # If the obj has fact_values, get data for a multilabel classifier, else get data for a binary/multiclass classifier
+        if neurotagger_obj.fact_values:
+            samples, labels = _scroll_multilabel_data(json.loads(neurotagger_obj.queries), json.loads(neurotagger_obj.fact_values), field_data, text_processor, neurotagger_obj.maximum_sample_size, show_progress)
+        else:
+            samples, labels = _scroll_multiclass_data(json.loads(neurotagger_obj.queries), show_progress, neurotagger_obj, field_data, text_processor)
+
+        assert len(labels) == len(samples), f'X/y are inconsistent lengths: {len(samples)} != {len(labels)}'
+
         show_progress.update_step('training')
         show_progress.update_view(0)
 
@@ -62,6 +73,42 @@ def train_neurotagger(neurotagger_id):
         return False
 
 
+def _scroll_multilabel_data(queries, fact_values, field_data, text_processor, maximum_sample_size, show_progress):
+    samples = []
+    labels = []
+    for query in queries:
+        query_samples, query_labels = _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_progress, text_processor, fact_values)
+        samples += query_samples
+        labels += query_labels
+
+    return samples, labels
+
+
+
+def _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_progress, text_processor, fact_values):
+    positive_samples = ElasticSearcher(query=query, 
+                                       field_data=field_data + ['texta_facts'],
+                                       callback_progress=show_progress,
+                                       scroll_limit=maximum_sample_size,
+                                       text_processor=text_processor
+                                       )
+
+    positive_samples = list(positive_samples)
+    
+    combined_samples = []
+    labels = []
+    for doc in positive_samples:
+        # Features
+        for field in field_data:
+            if field in doc:
+                combined_samples.append(doc[field])
+
+        # Labels
+        doc_facts = set([fact['str_val'] for fact in doc['texta_facts']])
+        labels.append([1 if x in doc_facts else 0 for x in fact_values])
+
+    return combined_samples, labels
+
 
 def _scroll_multiclass_data(queries, show_progress, neurotagger_obj, field_data, text_processor):
     samples = []
@@ -70,19 +117,20 @@ def _scroll_multiclass_data(queries, show_progress, neurotagger_obj, field_data,
     if len(queries) == 1:
         positive_samples, positive_ids = _scroll_positives(queries[0], neurotagger_obj, field_data, show_progress, text_processor)
         samples += positive_samples
-        labels += [1 for x in range(len(positive_samples))]
+        # WRAP LABELS IN A LIST, so np.array would automatically turn the shape into (n_samples, n_classes) instead of (n_samples,)
+        labels += [[1] for x in range(len(positive_samples))]
 
         show_progress.update_step('scrolling negatives')
         show_progress.update_view(0)
         negative_samples = _scroll_negatives(neurotagger_obj, field_data, show_progress, positive_ids, text_processor)
         samples += negative_samples
-        labels += [0 for x in range(len(negative_samples))]
+        labels += [[0] for x in range(len(negative_samples))]
 
     elif len(queries) > 1:
         for i, query in enumerate(queries):
             positive_samples, _ = _scroll_positives(query, neurotagger_obj, field_data, show_progress, text_processor)
             samples += positive_samples
-            labels += [i for x in range(len(positive_samples))]
+            labels += [[i] for x in range(len(positive_samples))]
     
     return samples, labels
 

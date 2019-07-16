@@ -145,10 +145,8 @@ class NeurotaggerWorker():
         # Split data, so it would be shuffeled before cropping
         self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X_train, self.labels, test_size=self.validation_split, random_state=42)
 
-        # Convert labels to numpy arrays, use np.expand_dims to include the last dimension shape
-        # Eg shape == (800,) becomes shape == (800, 1); shape == (num_of_training_examples, num_classes)
-        self.y_train = np.expand_dims(np.array(self.y_train), 1)
-        self.y_val = np.expand_dims(np.array(self.y_val), 1)
+        self.y_train = np.array(self.y_train)
+        self.y_val = np.array(self.y_val)
 
         # Set up num_classes for the neural net last layer output size. Get the last shape size of y.
         self.num_classes = self.y_train.shape[-1]

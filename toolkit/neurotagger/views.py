@@ -12,6 +12,7 @@ from toolkit.neurotagger.serializers import NeurotaggerSerializer
 from toolkit.neurotagger.neurotagger import NeurotaggerWorker
 from toolkit.tools.model_cache import ModelCache
 from toolkit import permissions as toolkit_permissions
+from toolkit.view_constants import TagLogicViews
 from toolkit.core import permissions as core_permissions
 from toolkit.tagger.serializers import TextSerializer, DocSerializer
 
@@ -31,14 +32,15 @@ def get_payload(request):
         data = {}
     return data
 
-class NeurotaggerViewSet(viewsets.ModelViewSet):
+class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
     serializer_class = NeurotaggerSerializer
     permission_classes = (core_permissions.ProjectResourceAllowed, permissions.IsAuthenticated)
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer, **kwargs):
         serializer.save(author=self.request.user, 
                         project=Project.objects.get(id=self.kwargs['project_pk']),
-                        fields=json.dumps(serializer.validated_data['fields']))
+                        fields=json.dumps(serializer.validated_data['fields']),
+                        **kwargs)
 
     def get_queryset(self):
         return Neurotagger.objects.filter(project=self.kwargs['project_pk'])
@@ -47,8 +49,19 @@ class NeurotaggerViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = NeurotaggerSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+
+        if 'fact_name' in serializer.validated_data:
+            fact_name = serializer.validated_data['fact_name']
+            active_project = Project.objects.get(id=self.kwargs['project_pk'])
+            # retrieve tags with sufficient counts & create queries to build models
+            tags = self.get_tags(fact_name, active_project, min_count=serializer.validated_data['minimum_sample_size'])
+            # check if found any tags to build models on
+            if not tags:
+                return Response({'error': f'found no tags for fact name: {fact_name}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_create(serializer, fact_values=json.dumps(tags), queries=json.dumps(self.create_queries(fact_name, tags)))
         headers = self.get_success_headers(serializer.data)
+
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
 

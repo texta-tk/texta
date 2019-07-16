@@ -15,6 +15,11 @@ from toolkit.settings import URL_PREFIX
 class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer):
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
     fields_parsed = serializers.SerializerMethodField()
+    fact_name = serializers.CharField(help_text=
+        'Fact name used to train a multilabel model, with fact values as classes. If given, the "queries" field will be ignored.'
+    )
+
+
     model_architecture = serializers.ChoiceField(choices=choices.model_arch_choices)
     seq_len = serializers.IntegerField(default=choices.DEFAULT_SEQ_LEN, help_text=f'Default: {choices.DEFAULT_SEQ_LEN}')
     vocab_size = serializers.IntegerField(default=choices.DEFAULT_VOCAB_SIZE, help_text=f'Default: {choices.DEFAULT_VOCAB_SIZE}')
@@ -24,6 +29,8 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer):
 
     negative_multiplier = serializers.IntegerField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER, help_text=f'Default: {choices.DEFAULT_NEGATIVE_MULTIPLIER}')
     maximum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE,help_text=f'Default: {choices.DEFAULT_MAX_SAMPLE_SIZE}')
+    minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, help_text=
+    f'Minimum number of documents required to train a multilabel model. If no fact name is chosen this option is ignored. Default: {choices.DEFAULT_MIN_SAMPLE_SIZE}')
 
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
@@ -35,13 +42,15 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer):
         model = Neurotagger
         fields = ('url', 'id', 'description', 'project', 'author', 'queries', 'validation_split', 'score_threshold',
                   'fields', 'fields_parsed', 'embedding', 'model_architecture', 'seq_len', 'maximum_sample_size', 'negative_multiplier',
-                  'location', 'num_epochs', 'vocab_size', 'plot', 'task', 'validation_accuracy', 'training_accuracy',
-                  'training_loss', 'validation_loss', 'model_plot', 'result_json')
+                  'location', 'num_epochs', 'vocab_size', 'plot', 'task', 'validation_accuracy', 'training_accuracy', 'fact_values',
+                  'training_loss', 'validation_loss', 'model_plot', 'result_json', 'fact_name', 'minimum_sample_size')
 
         read_only_fields = ('author', 'project', 'location', 'accuracy', 'loss', 'plot',
                             'model_plot', 'result_json', 'validation_accuracy', 'training_accuracy',
-                            'training_loss', 'validation_loss',
+                            'training_loss', 'validation_loss'
                             )
+        
+        write_only_fields = ('fact_values',)
 
     def __init__(self, *args, **kwargs):
         '''

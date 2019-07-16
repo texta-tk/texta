@@ -6,7 +6,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE
+from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_FACT_NAME
 from toolkit.core.project.models import Project
 from toolkit.neurotagger.models import Neurotagger
 from toolkit.core.task.models import Task
@@ -45,7 +45,8 @@ class NeurotaggerViewTests(APITestCase):
 
 
     def test_run(self):
-        self.run_create_neurotagger_training_and_task_signal()
+        # self.run_create_neurotagger_training_and_task_signal()
+        self.run_create_multilabel_neurotagger()
         # self.run_tag_doc()
         # self.run_tag_text()
 
@@ -54,6 +55,42 @@ class NeurotaggerViewTests(APITestCase):
         '''Tests the endpoint for a new Neurotagger, and if a new Task gets created via the signal'''
         payload = {
             "description": "TestNeurotagger",
+            "query": "",
+            "model_architecture": choices.model_arch_choices[0][0],
+            "fields": TEST_FIELD_CHOICE,
+            'maximum_sample_size': 500,
+        }
+        response = self.client.post(self.url, payload, format='json')
+        print_output('test_create_neurotagger_training_and_task_signal:response.data', response.data)
+        # Check if Neurotagger gets created
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created_neurotagger = Neurotagger.objects.get(id=response.data['id'])
+
+        # Remove neurotagger files after test is done
+        if 'model' in created_neurotagger.location:
+            self.addCleanup(remove_file, json.loads(created_neurotagger.location)['model'])
+        if 'tokenizer' in created_neurotagger.location:
+            self.addCleanup(remove_file, json.loads(created_neurotagger.location)['tokenizer'])
+
+        if created_neurotagger.plot:
+            remove_file(created_neurotagger.plot.path)
+        if created_neurotagger.model_plot:
+            remove_file(created_neurotagger.model_plot.path)
+
+        # Check if Task gets created via a signal
+        self.assertTrue(created_neurotagger.task is not None)
+        if created_neurotagger.task.errors:
+            print_output('test_create_neurotagger_training_and_task_signal:task.errors', created_neurotagger.task.errors)
+            
+        # Check if Neurotagger gets trained and completed
+        self.assertEqual(created_neurotagger.task.status, Task.STATUS_COMPLETED)
+
+
+    def run_create_multilabel_neurotagger(self):
+        '''Tests the endpoint for a new multilabel Neurotagger with facts, and if a new Task gets created via the signal'''
+        payload = {
+            "description": "TestNeurotagger",
+            "fact_name": TEST_FACT_NAME,
             "query": "",
             "model_architecture": choices.model_arch_choices[0][0],
             "fields": TEST_FIELD_CHOICE,
