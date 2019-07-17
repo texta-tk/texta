@@ -45,17 +45,16 @@ class NeurotaggerViewTests(APITestCase):
 
 
     def test_run(self):
-        # self.run_create_neurotagger_training_and_task_signal()
-        self.run_create_multilabel_neurotagger()
-        # self.run_tag_doc()
-        # self.run_tag_text()
+        self.run_create_neurotagger_training_and_task_signal()
+        self.run_create_and_tag_multilabel()
+        self.run_tag_doc()
+        self.run_tag_text()
 
 
     def run_create_neurotagger_training_and_task_signal(self):
         '''Tests the endpoint for a new Neurotagger, and if a new Task gets created via the signal'''
         payload = {
             "description": "TestNeurotagger",
-            "query": "",
             "model_architecture": choices.model_arch_choices[0][0],
             "fields": TEST_FIELD_CHOICE,
             'maximum_sample_size': 500,
@@ -86,12 +85,11 @@ class NeurotaggerViewTests(APITestCase):
         self.assertEqual(created_neurotagger.task.status, Task.STATUS_COMPLETED)
 
 
-    def run_create_multilabel_neurotagger(self):
+    def run_create_and_tag_multilabel(self):
         '''Tests the endpoint for a new multilabel Neurotagger with facts, and if a new Task gets created via the signal'''
         payload = {
             "description": "TestNeurotagger",
             "fact_name": TEST_FACT_NAME,
-            "query": "",
             "model_architecture": choices.model_arch_choices[0][0],
             "fields": TEST_FIELD_CHOICE,
             'maximum_sample_size': 500,
@@ -102,6 +100,10 @@ class NeurotaggerViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created_neurotagger = Neurotagger.objects.get(id=response.data['id'])
 
+        # Test the tagging endpoints 
+        self.run_tag_text(tagger_id=created_neurotagger.id)
+        self.run_tag_doc(tagger_id=created_neurotagger.id)
+        
         # Remove neurotagger files after test is done
         if 'model' in created_neurotagger.location:
             self.addCleanup(remove_file, json.loads(created_neurotagger.location)['model'])
@@ -122,29 +124,34 @@ class NeurotaggerViewTests(APITestCase):
         self.assertEqual(created_neurotagger.task.status, Task.STATUS_COMPLETED)
 
 
-    def run_tag_text(self):
+    def run_tag_text(self, tagger_id=None):
         '''Tests the endpoint for the tag_text action'''
+        if not tagger_id:
+            tagger_id = self.test_neurotagger.id
         payload = { "text": "This is some test text for the Tagger Test" }
-        tag_text_url = f'{self.url}{self.test_neurotagger.id}/tag_text/'
+        tag_text_url = f'{self.url}{tagger_id}/tag_text/'
         response = self.client.post(tag_text_url, payload)
         print_output('test_tag_text:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
-        self.assertTrue('result' in response.data)
+        self.assertTrue('classes' in response.data)
         self.assertTrue('probability' in response.data)
 
 
-    def run_tag_doc(self):
+    def run_tag_doc(self, tagger_id=None):
         '''Tests the endpoint for the tag_doc action'''
+        if not tagger_id:
+            tagger_id = self.test_neurotagger.id
+
         payload = { "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" })}
-        tag_text_url = f'{self.url}{self.test_neurotagger.id}/tag_doc/'
+        tag_text_url = f'{self.url}{tagger_id}/tag_doc/'
         response = self.client.post(tag_text_url, payload)
         print_output('test_tag_doc:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
-        self.assertTrue('result' in response.data)
+        self.assertTrue('classes' in response.data)
         self.assertTrue('probability' in response.data)
 
 

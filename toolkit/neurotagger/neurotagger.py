@@ -274,7 +274,7 @@ class NeurotaggerWorker():
         :return: class names of decision
         """
         to_predict = self._convert_texts([text])
-        return self.model.predict_classes(to_predict, batch_size=self.bs), self.model.predict_proba(to_predict, batch_size=self.bs)
+        return self.model.predict_proba(to_predict, batch_size=self.bs)
 
 
     def tag_doc(self, doc):
@@ -285,7 +285,7 @@ class NeurotaggerWorker():
         """
         texts = [doc[field] for field in doc]
         to_predict = self._convert_texts(texts)
-        return self.model.predict_classes(to_predict, batch_size=self.bs), self.model.predict_proba(to_predict, batch_size=self.bs)
+        return self.model.predict_proba(to_predict, batch_size=self.bs)
 
     
     def _convert_labels_to_multiple_hot(labels, num_classes):

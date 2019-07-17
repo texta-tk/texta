@@ -11,7 +11,6 @@ from toolkit.embedding.phraser import Phraser
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.neurotagger.neurotagger import NeurotaggerWorker
-from toolkit.tools.text_processor import TextProcessor
 # from toolkit.neurotagger.plots import create_neurotagger_plot
 
 @task(name="train_neurotagger")
@@ -30,25 +29,14 @@ def train_neurotagger(neurotagger_id):
         indices = neurotagger_obj.project.indices
         field_data = json.loads(neurotagger_obj.fields)
 
-
-        # add phraser here
-        # TODO: use embedding to group together features
-        if neurotagger_obj.embedding:
-            phraser = Phraser(embedding_id=neurotagger_obj.embedding.pk)
-            phraser.load()
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
-        else:
-            text_processor = None
-
-
         show_progress.update_step('scrolling data')
         show_progress.update_view(0)
 
         # If the obj has fact_values, get data for a multilabel classifier, else get data for a binary/multiclass classifier
         if neurotagger_obj.fact_values:
-            samples, labels = _scroll_multilabel_data(json.loads(neurotagger_obj.queries), json.loads(neurotagger_obj.fact_values), field_data, text_processor, neurotagger_obj.maximum_sample_size, show_progress)
+            samples, labels = _scroll_multilabel_data(json.loads(neurotagger_obj.queries), json.loads(neurotagger_obj.fact_values), field_data, neurotagger_obj.maximum_sample_size, show_progress)
         else:
-            samples, labels = _scroll_multiclass_data(json.loads(neurotagger_obj.queries), show_progress, neurotagger_obj, field_data, text_processor)
+            samples, labels = _scroll_multiclass_data(json.loads(neurotagger_obj.queries), show_progress, neurotagger_obj, field_data)
 
         assert len(labels) == len(samples), f'X/y are inconsistent lengths: {len(samples)} != {len(labels)}'
 
@@ -73,11 +61,11 @@ def train_neurotagger(neurotagger_id):
         return False
 
 
-def _scroll_multilabel_data(queries, fact_values, field_data, text_processor, maximum_sample_size, show_progress):
+def _scroll_multilabel_data(queries, fact_values, field_data, maximum_sample_size, show_progress):
     samples = []
     labels = []
     for query in queries:
-        query_samples, query_labels = _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_progress, text_processor, fact_values)
+        query_samples, query_labels = _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_progress, fact_values)
         samples += query_samples
         labels += query_labels
 
@@ -85,12 +73,11 @@ def _scroll_multilabel_data(queries, fact_values, field_data, text_processor, ma
 
 
 
-def _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_progress, text_processor, fact_values):
+def _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_progress, fact_values):
     positive_samples = ElasticSearcher(query=query, 
                                        field_data=field_data + ['texta_facts'],
                                        callback_progress=show_progress,
                                        scroll_limit=maximum_sample_size,
-                                       text_processor=text_processor
                                        )
 
     positive_samples = list(positive_samples)
@@ -110,38 +97,37 @@ def _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_pr
     return combined_samples, labels
 
 
-def _scroll_multiclass_data(queries, show_progress, neurotagger_obj, field_data, text_processor):
+def _scroll_multiclass_data(queries, show_progress, neurotagger_obj, field_data):
     samples = []
     labels = []
     # If there is only 1 query, scroll negative training examples as well
     if len(queries) == 1:
-        positive_samples, positive_ids = _scroll_positives(queries[0], neurotagger_obj, field_data, show_progress, text_processor)
+        positive_samples, positive_ids = _scroll_positives(queries[0], neurotagger_obj, field_data, show_progress)
         samples += positive_samples
         # WRAP LABELS IN A LIST, so np.array would automatically turn the shape into (n_samples, n_classes) instead of (n_samples,)
         labels += [[1] for x in range(len(positive_samples))]
 
         show_progress.update_step('scrolling negatives')
         show_progress.update_view(0)
-        negative_samples = _scroll_negatives(neurotagger_obj, field_data, show_progress, positive_ids, text_processor)
+        negative_samples = _scroll_negatives(neurotagger_obj, field_data, show_progress, positive_ids)
         samples += negative_samples
         labels += [[0] for x in range(len(negative_samples))]
 
     elif len(queries) > 1:
         for i, query in enumerate(queries):
-            positive_samples, _ = _scroll_positives(query, neurotagger_obj, field_data, show_progress, text_processor)
+            positive_samples, _ = _scroll_positives(query, neurotagger_obj, field_data, show_progress)
             samples += positive_samples
             labels += [[i] for x in range(len(positive_samples))]
     
     return samples, labels
 
 
-def _scroll_positives(query, neurotagger_obj, field_data, show_progress, text_processor):
+def _scroll_positives(query, neurotagger_obj, field_data, show_progress):
     positive_samples = ElasticSearcher(query=query, 
                                        field_data=field_data,
                                        output='doc_with_id',
                                        callback_progress=show_progress,
                                        scroll_limit=int(neurotagger_obj.maximum_sample_size),
-                                       text_processor=text_processor
                                        )
 
     positive_samples = list(positive_samples)
@@ -149,17 +135,16 @@ def _scroll_positives(query, neurotagger_obj, field_data, show_progress, text_pr
 
     combined_samples = []
     for field in field_data:
-        combined_samples += [doc[field] for doc in positive_samples]
+        combined_samples += [doc[field] for doc in positive_samples if field in doc]
     return combined_samples, positive_ids
 
 
-def _scroll_negatives(neurotagger_obj, field_data, show_progress, positive_ids, text_processor):
+def _scroll_negatives(neurotagger_obj, field_data, show_progress, positive_ids):
     negative_samples = ElasticSearcher(field_data=field_data,
                                        output='doc_with_id',
                                        callback_progress=show_progress,
                                        scroll_limit=int(neurotagger_obj.maximum_sample_size)*int(neurotagger_obj.negative_multiplier),
                                        ignore_ids=positive_ids,
-                                       text_processor=text_processor
                                        )
     negative_samples = list(negative_samples)
     combined_samples = []
