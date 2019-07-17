@@ -11,6 +11,7 @@ from toolkit.tagger.choices import (get_field_choices, get_classifier_choices, g
 
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.settings import URL_PREFIX
+from toolkit.serializer_constants import ProjectResourceUrlSerializer
 
 
 class TextSerializer(serializers.Serializer):
@@ -45,7 +46,7 @@ class DocGroupSerializer(serializers.Serializer):
                                             help_text=f'Number of candidates used in unsupervised prefiltering. Default: {DEFAULT_NUM_CANDIDATES}')
 
 
-class TaggerSerializer(serializers.ModelSerializer):
+class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
     description = serializers.CharField(help_text=f'Description for the Tagger. Will be used as tag.')
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
     vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices(),
@@ -109,15 +110,10 @@ class TaggerSerializer(serializers.ModelSerializer):
         if obj.query:
             return json.loads(obj.query)
         return None
-    
-    def get_url(self, obj):
-        request = self.context['request']
-        path = re.sub(r'\d+\/*$', '', request.path)
-        resource_url = request.build_absolute_uri(f'{path}{obj.id}/')
-        return resource_url 
 
 
-class TaggerGroupSerializer(serializers.ModelSerializer):
+
+class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
     description = serializers.CharField(help_text=f'Description for the Tagger Group.')
     minimum_sample_size = serializers.IntegerField(default=DEFAULT_MIN_SAMPLE_SIZE, help_text=f'Minimum number of documents required to train a model. Default: {DEFAULT_MIN_SAMPLE_SIZE}')
     fact_name = serializers.CharField(default=DEFAULT_TAGGER_GROUP_FACT_NAME, help_text=f'Fact name used to filter tags (fact values). Default: {DEFAULT_TAGGER_GROUP_FACT_NAME}')
@@ -149,9 +145,3 @@ class TaggerGroupSerializer(serializers.ModelSerializer):
                         'avg_recall': tagger_objects.aggregate(Avg('recall'))['recall__avg'],
                         'avg_f1_score': tagger_objects.aggregate(Avg('f1_score'))['f1_score__avg']}
         return tagger_stats
-
-    def get_url(self, obj):
-        request = self.context['request']
-        path = re.sub(r'\d+\/*$', '', request.path)
-        resource_url = request.build_absolute_uri(f'{path}{obj.id}/')
-        return resource_url 

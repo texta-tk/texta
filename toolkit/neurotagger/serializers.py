@@ -9,10 +9,11 @@ from .models import Neurotagger
 from toolkit.constants import get_field_choices
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.settings import URL_PREFIX
+from toolkit.serializer_constants import ProjectResourceUrlSerializer
 
 
 
-class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer):
+class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
     fields_parsed = serializers.SerializerMethodField()
     fact_name = serializers.CharField(help_text=
@@ -83,9 +84,3 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer):
         if obj.fields:
             return json.loads(obj.fields)
         return None
-
-    def get_url(self, obj):
-        request = self.context['request']
-        path = re.sub(r'\d+\/*$', '', request.path)
-        resource_url = request.build_absolute_uri(f'{path}{obj.id}/')
-        return resource_url 
