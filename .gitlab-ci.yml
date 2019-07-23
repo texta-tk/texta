@@ -1,4 +1,4 @@
-image: python:3.6
+image: continuumio/miniconda3:latest
 
 services:
   - name: docker.elastic.co/elasticsearch/elasticsearch:6.7.2
@@ -11,9 +11,8 @@ stages:
 
 Test:
   before_script:
-    - apt-get update && apt-get install graphviz -y
-    - python -V
-    - pip install -r requirements.txt
+    - conda env create -f environment.yml
+    - conda activate texta-rest
     - python import_test_index.py -es http://elasticsearch:9200
     - python migrate.py
   stage: test
