@@ -11,7 +11,7 @@ stages:
 
 Test:
   before_script:
-    - apt-get update && apt-get install graphviz
+    - apt-get update && apt-get install graphviz -y
     - python -V
     - pip install -r requirements.txt
     - python import_test_index.py -es http://elasticsearch:9200
