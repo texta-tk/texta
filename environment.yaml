@@ -15,6 +15,7 @@ dependencies:
   - graphviz
   - gensim==3.7.1
   - pydot
+  - psutil
   - pip:
     - django==2.1.7
     - djangorestframework==3.9.2
@@ -24,7 +25,6 @@ dependencies:
     - django-multiselectfield
     - drf-nested-routers
     - django-rest-auth[with_social]
-    - psutil
     - matplotlib
     - termcolor
     - django-extensions
