@@ -11,7 +11,7 @@ stages:
 
 Test:
   before_script:
-    - conda env create -f environment.yml
+    - conda env create -f environment.yaml
     - conda activate texta-rest
     - python import_test_index.py -es http://elasticsearch:9200
     - python migrate.py
