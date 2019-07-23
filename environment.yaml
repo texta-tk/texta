@@ -9,6 +9,7 @@ dependencies:
   - mkl
   - pandas
   - scikit-learn
+  - matplotlib
   - uwsgi
   - tensorflow
   - keras
@@ -25,7 +26,6 @@ dependencies:
     - django-multiselectfield
     - drf-nested-routers
     - django-rest-auth[with_social]
-    - matplotlib
     - termcolor
     - django-extensions
     - joblib

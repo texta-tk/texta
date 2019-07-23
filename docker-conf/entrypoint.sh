@@ -1,6 +1,8 @@
 #!/bin/bash
 
-su -c ". /var/miniconda3/bin/activate texta-rest && python migrate.py && python manage.py collectstatic" -m -s /bin/bash www-data
+python migrate.py && python manage.py collectstatic
+chown www-data:www-data -R /var/texta-rest/static/ && chmod 777 -R /var/texta-rest/static/
+chown www-data:www-data -R /var/texta-rest/data/ && chmod 777 -R /var/texta-rest/data/
 
 # Get the maximum upload file size for Nginx, default to 0: unlimited
 USE_NGINX_MAX_UPLOAD=${NGINX_MAX_UPLOAD:-0}

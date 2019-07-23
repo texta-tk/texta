@@ -1,4 +1,4 @@
-FROM debian:stretch
+FROM continuumio/miniconda3:latest
 ENV PYTHONUNBUFFERED 1
 
 RUN set -x \
@@ -6,7 +6,7 @@ RUN set -x \
     && apt-get upgrade -y \
     && apt-get autoremove --purge \
     && apt-get autoclean \
-    && apt-get install -y --no-install-recommends locales supervisor ssh ca-certificates wget bzip2 redis-server nginx-light curl nano gcc python-dev \
+    && apt-get install -y --no-install-recommends locales supervisor redis-server nginx-light nano \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
 # Generate locale
@@ -15,21 +15,12 @@ RUN set -x \
 
 WORKDIR /var
 
-# Download and install Miniconda
-RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-    && sh Miniconda3-latest-Linux-x86_64.sh -b -p /var/miniconda3 \
-    && rm Miniconda3-latest-Linux-x86_64.sh
-
 # Create and activate Conda env
 COPY environment.yaml /var/environment.yaml
-RUN /var/miniconda3/bin/conda env create -f /var/environment.yaml
+RUN conda env create -f /var/environment.yaml
+ENV PATH /opt/conda/envs/texta-rest/bin:$PATH
 
 COPY . /var/texta-rest
-
-# System configuration files
-COPY docker-conf/uwsgi.ini /etc/uwsgi/uwsgi.ini
-COPY docker-conf/nginx.conf /etc/nginx/conf.d/nginx.conf
-COPY docker-conf/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Ownership to www-data and entrypoint
 RUN chown -R www-data:www-data /var/texta-rest \
@@ -37,6 +28,11 @@ RUN chown -R www-data:www-data /var/texta-rest \
     && chmod +x /var/texta-rest/docker-conf/entrypoint.sh \
 # Final cleanup
     && rm -rf /root/.cache
+
+# System configuration files
+COPY docker-conf/uwsgi.ini /etc/uwsgi/uwsgi.ini
+COPY docker-conf/nginx.conf /etc/nginx/conf.d/nginx.conf
+COPY docker-conf/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 WORKDIR /var/texta-rest
 
@@ -53,6 +49,8 @@ ENV NGINX_MAX_UPLOAD 0
 # By default, Nginx will run a single worker process, setting it to auto
 # will create a worker for each CPU core
 ENV NGINX_WORKER_PROCESSES auto
+
+ENV JOBLIB_MULTIPROCESSING 0
 
 EXPOSE 80
 EXPOSE 8000
