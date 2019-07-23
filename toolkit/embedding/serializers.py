@@ -37,7 +37,8 @@ class EmbeddingSerializer(serializers.HyperlinkedModelSerializer, ProjectResourc
 
 
 class EmbeddingPrecictionSerializer(serializers.Serializer):
-    text = serializers.CharField()
+    positives = serializers.ListField(child=serializers.CharField(), help_text=f'Positive words for the model.')
+    negatives = serializers.ListField(child=serializers.CharField(), help_text=f'Negative words for the model. Default: EMPTY', required=False, default=[])
     output_size = serializers.IntegerField(default=DEFAULT_OUTPUT_SIZE,
                                     help_text=f'Default: {DEFAULT_OUTPUT_SIZE}')
 

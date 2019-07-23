@@ -64,7 +64,11 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
             
             embedding = w2v_cache.get_model(embedding_object.pk)
 
-            predictions = embedding.get_similar(serializer.validated_data['text'], n=serializer.validated_data['output_size'])
+            predictions = embedding.get_similar(serializer.validated_data['positives'],
+                negatives=serializer.validated_data['negatives'],
+                n=serializer.validated_data['output_size']
+            )
+            
             return Response(predictions, status=status.HTTP_200_OK)
         else:
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

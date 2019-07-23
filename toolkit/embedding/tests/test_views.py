@@ -41,6 +41,7 @@ class EmbeddingViewTests(APITestCase):
     def test_run(self):
         self.run_create_embedding_training_and_task_signal()
         self.run_predict()
+        self.run_predict_with_negatives()
         self.run_phrase()
         self.run_create_embedding_cluster_training_and_task_signal()
         self.run_embedding_cluster_browse()
@@ -78,10 +79,22 @@ class EmbeddingViewTests(APITestCase):
     def run_predict(self):
         '''Tests the endpoint for the predict action'''
         # Send only "text" in payload, because "output_size" should be 10 by default
-        payload = { "text": "eesti" }
+        payload = { "positives": ["eesti", "läti"] }
         predict_url = f'{self.url}{self.test_embedding_id}/predict/'
         response = self.client.post(predict_url, payload)
         print_output('predict:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response data is not empty, but a result instead
+        self.assertTrue(response.data)
+
+
+    def run_predict_with_negatives(self):
+        '''Tests the endpoint for the predict action'''
+        # Send only "text" in payload, because "output_size" should be 10 by default
+        payload = { "positives": ["eesti", "läti"], "negatives": ["juhtuma"] }
+        predict_url = f'{self.url}{self.test_embedding_id}/predict/'
+        response = self.client.post(predict_url, payload)
+        print_output('predict_with_negatives:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)

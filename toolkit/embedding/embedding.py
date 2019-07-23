@@ -30,20 +30,21 @@ class W2VEmbedding:
         """
         pass
 
-    def get_similar(self, text_input, n=20):
+    def get_similar(self, positives, negatives=[], n=20):
         """
-        Find similar objects to the input from the embedding
+        Find similar words & phraser for input list of strings.
         """
 
-        if isinstance(text_input, list):
-            positives = [text.replace(' ', '_') for text in text_input]
+        if isinstance(positives, list):
+            positives = [positive.replace(' ', '_') for positive in positives]
         else:
-            positives = [text_input.replace(' ', '_')]
+            positives = [positives.replace(' ', '_')]
         
         positives = [positive for positive in positives if positive in self.model.wv.vocab]
+        negatives = [negative for negative in negatives if negative in self.model.wv.vocab]
         
         if positives:
-            similar_items = self.model.wv.most_similar(positive=positives, topn=n)
+            similar_items = self.model.wv.most_similar(positive=positives, negative=negatives, topn=n)
             similar_items = [{'phrase':s[0].replace('_', ' '), 'score':s[1], 'model': self.name} for s in similar_items]
             return similar_items
         else:
