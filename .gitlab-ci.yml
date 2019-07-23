@@ -1,4 +1,4 @@
-image: python:3.6
+image: python:3.6-stretch
 
 services:
   - name: docker.elastic.co/elasticsearch/elasticsearch:6.7.2
