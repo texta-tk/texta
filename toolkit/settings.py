@@ -24,7 +24,7 @@ URL_PREFIX = 'http://localhost:8000'
 SECRET_KEY = 'eqr9sjz-&baah&c%ejkaorp)a1$q63y0%*a^&fv=y$(bbe5+(b'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('TEXTA_DEBUG', True)
 
 ALLOWED_HOSTS = []
 

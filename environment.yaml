@@ -17,6 +17,9 @@ dependencies:
   - gensim==3.7.1
   - pydot
   - psutil
+  - redis
+  - nginx
+  - supervisor
   - pip:
     - django==2.1.7
     - djangorestframework==3.9.2
