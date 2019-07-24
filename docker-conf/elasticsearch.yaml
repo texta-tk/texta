@@ -1,0 +1,7 @@
+cluster.name: TEXTA
+node.name: TEXTA-1
+path.logs: /usr/share/elasticsearch/logs
+path.data: /usr/share/elasticsearch/data
+network.host: 0.0.0.0
+
+cluster.routing.allocation.disk.threshold_enabled: false

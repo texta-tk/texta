@@ -1,0 +1,47 @@
+version: '2'
+
+services:
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.7.2
+    ports:
+      - 9200
+    environment:
+     - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./docker-conf/elasticsearch.yaml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - elastic-data-volume:/usr/share/elasticsearch/data
+      - elastic-logs-volume:/usr/share/elasticsearch/logs
+
+  postgres:
+    container_name: postgres
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DATABASE: docker
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+
+  toolkit:
+    container_name: toolkit
+    image: texta-rest
+    ports:
+      - 80:8000
+    env_file:
+      - ./docker-conf/.env
+    volumes:
+      - toolkit-data-volume:/var/texta-rest/data
+    depends_on:
+      - postgres
+      - elasticsearch
+
+
+volumes:
+  toolkit-data-volume:
+  elastic-data-volume:
+  elastic-logs-volume:
