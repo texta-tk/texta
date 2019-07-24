@@ -1,6 +1,7 @@
 from django.conf.urls import url
 
 from . import views
+from search_api.update_endpoint import update_views
 
 
 urlpatterns = [
@@ -10,4 +11,5 @@ urlpatterns = [
     url(r'^list/datasets', views.list_datasets, name='list_datasets'),
     url(r'^list/dataset', views.list_fields, name='list_fields'),
     url(r'^more_like_this', views.more_like_this, name='more_like_this'),
+    url(r'^update', update_views.UpdateView.as_view(), name="update")
 ]

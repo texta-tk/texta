@@ -3,7 +3,7 @@ version: "3"
 services:
 
   elastic:
-    restart: always
+    restart: unless-stopped
     container_name: texta-elastic
     image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.4
     ports:
@@ -21,7 +21,7 @@ services:
       - texta-data-volume:/usr/share/elasticsearch/data
 
   texta:
-    restart: always
+    restart: unless-stopped
     container_name: texta-toolkit
     env_file:
       - docker/texta/docker-toolkit.env
