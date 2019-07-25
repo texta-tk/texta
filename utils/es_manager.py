@@ -685,8 +685,12 @@ class ES_Manager:
 
     @staticmethod
     def single_index_count(index_name: str) -> int:
-        count = Search(using=Elasticsearch(es_url), index=index_name).count()
-        return count
+        try:
+            count = Search(using=Elasticsearch(es_url), index=index_name).count()
+            return count
+        except elasticsearch.RequestError as e:
+            return None
+
 
     def get_field_mappings(self) -> dict:
         """
