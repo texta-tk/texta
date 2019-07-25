@@ -684,11 +684,13 @@ class ES_Manager:
         return response['count']
 
     @staticmethod
-    def single_index_count(index_name: str) -> int:
-        try:
-            count = Search(using=Elasticsearch(es_url), index=index_name).count()
+    def single_index_count(index_name: str):
+        es = Elasticsearch(es_url)
+        status = es.cat.indices(index=index_name, h="status").strip()
+        if status == "open":
+            count = Search(using=es, index=index_name).count()
             return count
-        except elasticsearch.RequestError as e:
+        else:
             return None
 
 
