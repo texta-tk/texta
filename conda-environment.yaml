@@ -13,7 +13,6 @@ dependencies:
     - sympy
     - lxml
     - beautifulsoup4
-    - jupyter
     - psutil
     - mysqlclient
     - regex
