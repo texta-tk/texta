@@ -45,7 +45,7 @@ def create_tagger_plot(statistics):
     plt.tight_layout()
 
     # calculate & plot feature coefficients
-    feature_coefs = statistics['feature_coefs']
+    feature_coefs = sorted(statistics['feature_coefs'])
     plt.subplot(1, 3, 3)
     plt.plot(feature_coefs)
     plt.ylabel('Coefficient')
