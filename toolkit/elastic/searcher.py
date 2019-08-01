@@ -1,3 +1,4 @@
+import collections
 import urllib
 import json
 
@@ -5,7 +6,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.settings import ES_URL
 
 ES_SCROLL_SIZE = 500
-EMPTY_QUERY     = {"query": {"match_all": {}}}
+EMPTY_QUERY = {"query": {"match_all": {}}}
 
 class ElasticSearcher:
     """
@@ -77,25 +78,22 @@ class ElasticSearcher:
         """
         index = doc['_index']
         doc = doc['_source']
-        new_doc = {}
-        for field_name, field_content in doc.items():
-            new_field_name, new_content = self._flatten_field(field_name, field_content)
-            new_doc[new_field_name] = new_content
+        new_doc = self._flatten(doc)
         return new_doc, index
 
 
-    def _flatten_field(self, field_name, field_content):
+    def _flatten(self, d, parent_key='', sep='.'):
         """
-        Flattens a field.
+        From: https://stackoverflow.com/questions/6027558/flatten-nested-dictionaries-compressing-keys
         """
-        if isinstance(field_content, dict):
-            # go deeper
-            for subfield_name, subfield_content in field_content.items():
-                current_field_name = f'{field_name}.{subfield_name}'
-                return self._flatten_field(current_field_name, subfield_content) 
-        else:
-            # this is the end
-            return field_name, field_content
+        items = []
+        for k, v in d.items():
+            new_key = parent_key + sep + k if parent_key else k
+            if isinstance(v, collections.MutableMapping):
+                items.extend(self._flatten(v, new_key, sep=sep).items())
+            else:
+                items.append((new_key, v))
+        return dict(items)
 
 
     def _decode_doc(self, doc, field_path=None):
@@ -134,8 +132,6 @@ class ElasticSearcher:
         page_size = len(page['hits']['hits'])
         num_scrolled = 0
         while page_size > 0:
-            if self.scroll_limit and num_scrolled >= self.scroll_limit:
-                break
             # process output
             if self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID, self.OUT_TEXT):
                 if self.callback_progress:
@@ -143,6 +139,10 @@ class ElasticSearcher:
                 for hit in page['hits']['hits']:
                     if hit['_id'] not in self.ignore_ids:
                         num_scrolled += 1
+
+                        if self.scroll_limit and num_scrolled >= self.scroll_limit:
+                            break
+
                         parsed_doc = self._parse_doc(hit)
                         if self.output == self.OUT_TEXT:
                             for field in parsed_doc.values():
@@ -167,4 +167,3 @@ class ElasticSearcher:
             scroll_id = page['_scroll_id']
             page_size = len(page['hits']['hits'])
             current_page += 1
-
