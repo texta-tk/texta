@@ -132,6 +132,8 @@ class ElasticSearcher:
         page_size = len(page['hits']['hits'])
         num_scrolled = 0
         while page_size > 0:
+            if self.scroll_limit and num_scrolled >= self.scroll_limit:
+                break
             # process output
             if self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID, self.OUT_TEXT):
                 if self.callback_progress:
@@ -139,10 +141,6 @@ class ElasticSearcher:
                 for hit in page['hits']['hits']:
                     if hit['_id'] not in self.ignore_ids:
                         num_scrolled += 1
-
-                        if self.scroll_limit and num_scrolled >= self.scroll_limit:
-                            break
-
                         parsed_doc = self._parse_doc(hit)
                         if self.output == self.OUT_TEXT:
                             for field in parsed_doc.values():

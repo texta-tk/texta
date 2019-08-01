@@ -44,3 +44,12 @@ class Query:
         """
         mlt_query = {"more_like_this": {"fields": mlt_fields, "like": text, "min_term_freq": 1, "max_query_terms": 12}}
         self.query["query"] = mlt_query
+
+
+    def add_query_string(self, query_string):
+        qs_query = {
+            "query_string" : {
+                "query" : query_string
+            }
+        }
+        self.query["query"] = qs_query

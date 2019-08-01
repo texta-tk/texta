@@ -9,6 +9,11 @@ from toolkit.tagger.models import Tagger
 
 DEFAULT_VALUES_PER_NAME = 10
 
+
+class SearchSerializer(serializers.Serializer):
+    text = serializers.CharField()
+
+
 class GetFactsSerializer(serializers.Serializer):
     values_per_name = serializers.IntegerField(default=DEFAULT_VALUES_PER_NAME,
         help_text=f'Number of fact values per fact name. Default: 10.')

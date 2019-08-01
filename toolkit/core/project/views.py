@@ -6,9 +6,11 @@ from rest_framework.decorators import action
 
 from toolkit.core.project import permissions as project_permissions
 from toolkit.core.project.models import Project
-from toolkit.core.project.serializers import ProjectSerializer, GetFactsSerializer
+from toolkit.core.project.serializers import ProjectSerializer, GetFactsSerializer, SearchSerializer
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.aggregator import ElasticAggregator
+from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.elastic.query import Query
 
 
 def get_payload(request):
@@ -74,3 +76,28 @@ class ProjectViewSet(viewsets.ModelViewSet):
         fact_map = ElasticAggregator(indices=project_indices).facts(size=vals_per_name, include_values=include_values)
         fact_map_list = [{'name': k, 'values': v} for k,v in fact_map.items()]
         return Response(fact_map_list, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['get', 'post'], serializer_class=SearchSerializer)
+    def search(self, request, pk=None, project_pk=None):
+        data = get_payload(request)
+        serializer = SearchSerializer(data=data)
+        if not serializer.is_valid():
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        project_object = self.get_object()
+        project_indices = list(project_object.indices)
+        if not project_indices:
+            return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST)
+
+        es = ElasticSearcher(indices=project_indices, output='raw')
+
+        query_string = serializer.validated_data['text']
+
+        q = Query()
+        q.add_query_string(query_string)
+
+        es.update_query(q.query)
+
+        results = es.search()
+
+        return Response(results, status=status.HTTP_200_OK)
