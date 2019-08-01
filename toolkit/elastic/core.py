@@ -25,12 +25,13 @@ class ElasticCore:
     @staticmethod
     def load_indices_from_field_data(field_data, indices):
         # try loading indices from field data. if not present, use list.
-        try:
-            parsed_indices = list(set([field['index'] for field in field_data]))
-            parsed_indices = ','.join(parsed_indices)
-            return parsed_indices
-        except:
-            KeyError
+        if field_data:
+            try:
+                parsed_indices = list(set([field['index'] for field in field_data]))
+                parsed_indices = ','.join(parsed_indices)
+                return parsed_indices
+            except:
+                KeyError
         return indices
 
 
