@@ -2,6 +2,7 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from toolkit import pagination
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.query import Query
@@ -47,7 +48,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         )
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, 
+        serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         fields=json.dumps(serializer.validated_data['fields']))
 
@@ -76,14 +77,14 @@ class TaggerViewSet(viewsets.ModelViewSet):
         # check if valid request
         if not serializer.is_valid():
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # retrieve tagger object
         tagger_object = self.get_object()
 
         # check if tagger exists
         if not tagger_object.location:
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # retrieve model
         tagger = model_cache.get_model(tagger_object.pk)
 
@@ -100,7 +101,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         selected_features = sorted(selected_features, key=lambda k: k['coefficient'], reverse=True)
 
         features_to_show = selected_features[:serializer.validated_data['size']]
-        feature_info = {'features': features_to_show, 
+        feature_info = {'features': features_to_show,
                         'total_features': len(selected_features),
                         'showing_features': len(features_to_show)}
         return Response(feature_info, status=status.HTTP_200_OK)
@@ -128,7 +129,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         # check if valid request
         if not serializer.is_valid():
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         new_stop_word = serializer.validated_data['text']
 
         # retrieve tagger object and update stop word list
@@ -136,7 +137,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         stop_words = json.loads(tagger_object.stop_words)
         if new_stop_word not in stop_words:
             stop_words.append(new_stop_word)
-        
+
         # save tagger object
         tagger_object.stop_words = json.dumps(stop_words)
         tagger_object.save()
@@ -156,7 +157,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         # check if valid request
         if not serializer.is_valid():
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         remove_stop_word = serializer.validated_data['text']
 
         # retrieve tagger object and update stop word list
@@ -169,7 +170,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
         # remove stop word
         stop_words.remove(remove_stop_word)
-        
+
         # save tagger object
         tagger_object.stop_words = json.dumps(stop_words)
         tagger_object.save()
@@ -278,13 +279,14 @@ class TaggerViewSet(viewsets.ModelViewSet):
 class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
     queryset = TaggerGroup.objects.all()
     serializer_class = TaggerGroupSerializer
+    pagination_class = pagination.TaggerGroupsPagination
     permission_classes = (
         core_permissions.ProjectResourceAllowed,
         permissions.IsAuthenticated,
         )
 
     def perform_create(self, serializer, tagger_set):
-        serializer.save(author=self.request.user, 
+        serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         taggers=tagger_set)
 
@@ -307,14 +309,14 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
 
         # retrieve tags with sufficient counts & create queries to build models
         tags = self.get_tags(fact_name, active_project, min_count=serializer.validated_data['minimum_sample_size'])
-        
+
         # check if found any tags to build models on
         if not tags:
             return Response({'error': f'found no tags for fact name: {fact_name}'}, status=status.HTTP_400_BAD_REQUEST)
 
-        
+
         tag_queries = self.create_queries(fact_name, tags)
-        
+
         # retrive tagger options from hybrid tagger serializer
         validated_tagger_data = serializer.validated_data.pop('tagger')
         validated_tagger_data.update('')
@@ -407,7 +409,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         # check if valid request
         if not serializer.is_valid():
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         hybrid_tagger_object = self.get_object()
 
         # check if any of the models ready
@@ -420,13 +422,13 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         hybrid_tagger_field_data = json.loads(hybrid_tagger_object.taggers.first().fields)
 
         # retrieve tag candidates
-        tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data, 
+        tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data,
                                                  serializer.validated_data['text'],
                                                  hybrid=serializer.validated_data['hybrid'],
                                                  n_candidates=serializer.validated_data['num_candidates'])
 
         # get tags
-        tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, serializer.validated_data['text'], input_type='text', show_candidates=serializer.validated_data['show_candidates']) 
+        tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, serializer.validated_data['text'], input_type='text', show_candidates=serializer.validated_data['show_candidates'])
 
         return Response(tags, status=status.HTTP_200_OK)
 
@@ -442,7 +444,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         # check if valid request
         if not serializer.is_valid():
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         hybrid_tagger_object = self.get_object()
 
         # check if any of the models ready
@@ -465,7 +467,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
                                                  n_candidates=serializer.validated_data['num_candidates'])
 
         # get tags
-        tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, serializer.validated_data['doc'], input_type='doc', show_candidates=serializer.validated_data['show_candidates'])    
+        tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, serializer.validated_data['doc'], input_type='doc', show_candidates=serializer.validated_data['show_candidates'])
         return Response(tags, status=status.HTTP_200_OK)
 
 
@@ -506,5 +508,5 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
                 # show tag candidates if asked
                 tagger_response['decision'] = decision
                 tags.append(tagger_response)
-            
-        return sorted(tags, key=lambda k: k['probability'], reverse=True) 
+
+        return sorted(tags, key=lambda k: k['probability'], reverse=True)
