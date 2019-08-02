@@ -132,7 +132,7 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
 
     def get_taggers(self, obj):
         request = self.context['request']
-        path = re.sub(r'tagger_groups/\d+\/*$', 'taggers/', request.path)
+        path = re.sub(r'tagger_groups/(\d+)*\/*$', 'taggers/', request.path)
         tagger_url_prefix = request.build_absolute_uri(path)
         tagger_objects = TaggerGroup.objects.get(id=obj.id).taggers.all()
         return [{'tag': tagger.description, 'id': tagger.id, 'url': f'{tagger_url_prefix}{tagger.id}/'} for tagger in tagger_objects]
