@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
+import json
 
 from toolkit.core.project.models import Project
 from toolkit.core.lexicon.models import Lexicon
@@ -17,7 +18,14 @@ class LexiconViewSet(viewsets.ModelViewSet):
         )
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, project=Project.objects.get(id=self.kwargs['project_pk']))
+        try:
+            discarded_phrases = serializer.validated_data['discarded_phrases']
+        except KeyError:
+            discarded_phrases = []
+        serializer.save(author = self.request.user,
+            project = Project.objects.get(id=self.kwargs['project_pk']),
+            phrases = json.dumps(serializer.validated_data['phrases']),
+            discarded_phrases = json.dumps(discarded_phrases))
 
     def get_queryset(self):
         return Lexicon.objects.filter(project=self.kwargs['project_pk'])
