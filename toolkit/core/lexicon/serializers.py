@@ -3,17 +3,18 @@ import json
 
 from toolkit.core.lexicon.models import Lexicon
 
+
 class LexiconSerializer(serializers.ModelSerializer):
 
+    # If we want to enable PUT here, we can't have it write_only
     phrases = serializers.ListField(child=serializers.CharField(),
-        help_text=f'Phrases as list of strings.',
-        write_only=True)
+                                    help_text=f'Phrases as list of strings.',
+                                    required=False)
     discarded_phrases = serializers.ListField(child=serializers.CharField(),
-        help_text=f'Discarded phrases as list of strings.',
-        required=False,
-        write_only=True)
+                                              help_text=f'Discarded phrases as list of strings.',
+                                              required=False)
     phrases_parsed = serializers.SerializerMethodField()
-    discarded_phrases_parsed = serializers.SerializerMethodField()
+    discarded_phrases_parsed = serializers.SerializerMethodField(required=False)
 
     class Meta:
         model = Lexicon
