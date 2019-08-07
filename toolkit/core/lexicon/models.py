@@ -7,7 +7,6 @@ from toolkit.constants import MAX_DESC_LEN
 
 import json
 
-# Create your models here.
 class Lexicon(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     description = models.CharField(max_length=MAX_DESC_LEN)
