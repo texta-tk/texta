@@ -26,7 +26,7 @@ class LexiconViewSet(viewsets.ModelViewSet):
         print(serializer.validated_data['phrases'])
         serializer.save(author = self.request.user,
             project = Project.objects.get(id=self.kwargs['project_pk']),
-            phrases = serializer.validated_data['phrases'],
+            phrases = json.dumps(serializer.validated_data['phrases']),
             discarded_phrases = discarded_phrases)
 
     def get_queryset(self):
