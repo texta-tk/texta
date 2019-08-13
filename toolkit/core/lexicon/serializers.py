@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from drf_compound_fields.fields import ListField
 import json
 
 from toolkit.core.lexicon.models import Lexicon
