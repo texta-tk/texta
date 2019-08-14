@@ -2,7 +2,6 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.core import permissions as core_permissions
 from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.embedding.serializers import (EmbeddingSerializer, EmbeddingPrecictionSerializer, TextSerializer,
                                            EmbeddingClusterSerializer, ClusterBrowserSerializer)
@@ -11,7 +10,7 @@ from toolkit.embedding.phraser import Phraser
 from toolkit.embedding.word_cluster import WordCluster
 from toolkit.core.project.models import Project
 from toolkit.tools.model_cache import ModelCache
-from toolkit import permissions as toolkit_permissions
+from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.tools.text_processor import TextProcessor
 
 import json
@@ -39,17 +38,17 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
     queryset = Embedding.objects.all()
     serializer_class = EmbeddingSerializer
     permission_classes = (
-        core_permissions.ProjectResourceAllowed, 
+        ProjectResourceAllowed,
         permissions.IsAuthenticated,
-    )
+        )
 
     def get_queryset(self):
         return Embedding.objects.filter(project=self.kwargs['project_pk'])
 
-    
+
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, 
-                        project=Project.objects.get(id=self.kwargs['project_pk']), 
+        serializer.save(author=self.request.user,
+                        project=Project.objects.get(id=self.kwargs['project_pk']),
                         fields=json.dumps(serializer.validated_data['fields']))
 
 
@@ -61,14 +60,14 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
             embedding_object = self.get_object()
             if not embedding_object.location:
                 return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
             embedding = w2v_cache.get_model(embedding_object.pk)
 
             predictions = embedding.get_similar(serializer.validated_data['positives'],
                 negatives=serializer.validated_data['negatives'],
                 n=serializer.validated_data['output_size']
             )
-            
+
             return Response(predictions, status=status.HTTP_200_OK)
         else:
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -85,7 +84,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
             phraser = phraser_cache.get_model(embedding_object.pk)
             text_processor = TextProcessor(phraser=phraser, sentences=False, remove_stop_words=False, tokenize=False)
             phrased_text = text_processor.process(serializer.validated_data['text'])[0]
-            
+
             return Response(phrased_text, status=status.HTTP_200_OK)
         else:
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -98,14 +97,14 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
     """
     serializer_class = EmbeddingClusterSerializer
     permission_classes = (
-        core_permissions.ProjectResourceAllowed, 
+        ProjectResourceAllowed,
         permissions.IsAuthenticated,
-    )
+        )
 
     def get_queryset(self):
         return EmbeddingCluster.objects.filter(project=self.kwargs['project_pk'])
-    
-    
+
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user,  project=Project.objects.get(id=self.kwargs['project_pk']))
 
@@ -121,7 +120,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
         # check if valid request
         if not serializer.is_valid():
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         clustering_object = self.get_object()
         # check if clustering ready
         if not clustering_object.location:
@@ -149,7 +148,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
         # check if valid request
         if not serializer.is_valid():
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         clustering_object = self.get_object()
         # check if clustering ready
         if not clustering_object.location:
@@ -173,7 +172,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
         # check if valid request
         if not serializer.is_valid():
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         clustering_object = self.get_object()
         # check if clustering ready
         if not clustering_object.location:

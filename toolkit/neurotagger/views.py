@@ -13,7 +13,7 @@ from toolkit.neurotagger.neurotagger import NeurotaggerWorker
 from toolkit.tools.model_cache import ModelCache
 from toolkit import permissions as toolkit_permissions
 from toolkit.view_constants import TagLogicViews
-from toolkit.core import permissions as core_permissions
+from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.tagger.serializers import TextSerializer, DocSerializer
 
 import json
@@ -34,10 +34,13 @@ def get_payload(request):
 
 class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
     serializer_class = NeurotaggerSerializer
-    permission_classes = (core_permissions.ProjectResourceAllowed, permissions.IsAuthenticated)
+    permission_classes = (
+        permissions.IsAuthenticated,
+        ProjectResourceAllowed,
+        )
 
     def perform_create(self, serializer, **kwargs):
-        serializer.save(author=self.request.user, 
+        serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         fields=json.dumps(serializer.validated_data['fields']),
                         **kwargs)
@@ -67,7 +70,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
         headers = self.get_success_headers(serializer.data)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-    
+
 
     @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):

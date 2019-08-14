@@ -6,14 +6,14 @@ import json
 from toolkit.core.project.models import Project
 from toolkit.core.lexicon.models import Lexicon
 from toolkit.core.lexicon.serializers import LexiconSerializer
-from toolkit import permissions as toolkit_permissions
-from toolkit.core import permissions as core_permissions
+from toolkit.permissions.project_permissions import ProjectResourceAllowed
+
 
 
 class LexiconViewSet(viewsets.ModelViewSet):
     serializer_class = LexiconSerializer
     permission_classes = (
-        core_permissions.ProjectResourceAllowed,
+        ProjectResourceAllowed,
         permissions.IsAuthenticated,
         )
 

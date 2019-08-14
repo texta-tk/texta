@@ -20,7 +20,7 @@ from toolkit.embedding.phraser import Phraser
 from toolkit.tools.text_processor import TextProcessor
 from toolkit import permissions as toolkit_permissions
 from toolkit.view_constants import TagLogicViews
-from toolkit.core import permissions as core_permissions
+from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.core.task.models import Task
 
 import json
@@ -43,7 +43,7 @@ def get_payload(request):
 class TaggerViewSet(viewsets.ModelViewSet):
     serializer_class = TaggerSerializer
     permission_classes = (
-        core_permissions.ProjectResourceAllowed,
+        ProjectResourceAllowed,
         permissions.IsAuthenticated,
         )
 
@@ -281,8 +281,8 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
     serializer_class = TaggerGroupSerializer
     pagination_class = pagination.TaggerGroupsPagination
     permission_classes = (
-        core_permissions.ProjectResourceAllowed,
         permissions.IsAuthenticated,
+        ProjectResourceAllowed,
         )
 
     def perform_create(self, serializer, tagger_set):

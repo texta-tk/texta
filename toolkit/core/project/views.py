@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 
-from toolkit.core.project import permissions as project_permissions
+from toolkit.permissions.project_permissions import ProjectAllowed
 from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import ProjectSerializer, GetFactsSerializer, SearchSerializer
 from toolkit.elastic.core import ElasticCore
@@ -27,8 +27,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     permission_classes = (
-        project_permissions.ProjectAllowed,
-        permissions.IsAuthenticated
+        permissions.IsAuthenticated,
+        ProjectAllowed,
     )
 
     def perform_create(self, serializer):

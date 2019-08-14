@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 from toolkit.core.user_profile.models import UserProfile
 from toolkit.core.user_profile.serializers import UserSerializer
-from toolkit.core import permissions as core_permissions
+
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
