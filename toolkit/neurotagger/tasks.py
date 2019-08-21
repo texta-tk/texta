@@ -18,11 +18,7 @@ def train_neurotagger(neurotagger_id):
     # retrieve neurotagger & task objects
     neurotagger_obj = Neurotagger.objects.get(pk=neurotagger_id)
     task_object = neurotagger_obj.task
-
     show_progress = ShowProgress(task_object, multiplier=1)
-    show_progress.update_step('scrolling positives')
-    show_progress.update_view(0)
-    
 
     try:
         # retrieve indices & field data from project 
@@ -62,9 +58,13 @@ def train_neurotagger(neurotagger_id):
 
 
 def _scroll_multilabel_data(queries, fact_values, field_data, maximum_sample_size, show_progress):
+    num_queries = len(queries)
+
     samples = []
     labels = []
-    for query in queries:
+    for i, query in enumerate(queries):
+        show_progress.update_step(f'Scrolling data for facts ({i}/{num_queries})')
+        show_progress.update_view(0)
         query_samples, query_labels = _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_progress, fact_values)
         samples += query_samples
         labels += query_labels
@@ -85,19 +85,27 @@ def _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_pr
     combined_samples = []
     labels = []
     for doc in positive_samples:
+        combined_doc = ''
         # Features
         for field in field_data:
             if field in doc:
-                combined_samples.append(doc[field])
+                # Combine data from multiple fields into one doc
+                # separate by newlines and 'xxTEXTA_DOC_END' token
+                combined_doc += doc[field] + ' \n xxTEXTA_DOC_END \n '
 
-        # Labels
-        doc_facts = set([fact['str_val'] for fact in doc['texta_facts']])
-        labels.append([1 if x in doc_facts else 0 for x in fact_values])
+        if combined_doc:
+            combined_samples.append(combined_doc)
+            # Add labels only if document included
+            doc_facts = set([fact['str_val'] for fact in doc['texta_facts']])
+            labels.append([1 if x in doc_facts else 0 for x in fact_values])
+
 
     return combined_samples, labels
 
 
 def _scroll_multiclass_data(queries, show_progress, neurotagger_obj, field_data):
+    num_queries = len(queries)
+
     samples = []
     labels = []
     # If there is only 1 query, scroll negative training examples as well
@@ -115,6 +123,8 @@ def _scroll_multiclass_data(queries, show_progress, neurotagger_obj, field_data)
 
     elif len(queries) > 1:
         for i, query in enumerate(queries):
+            show_progress.update_step(f'Scrolling queries ({i}/{num_queries})')
+            show_progress.update_view(0)
             positive_samples, _ = _scroll_positives(query, neurotagger_obj, field_data, show_progress)
             samples += positive_samples
             labels += [[i] for x in range(len(positive_samples))]

@@ -64,7 +64,7 @@ class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer
     stop_words = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
     fields_parsed = serializers.SerializerMethodField()
-    query = serializers.SerializerMethodField()
+    query = serializers.JSONField('Query in JSON format')
     url = serializers.SerializerMethodField()
 
     class Meta:
@@ -106,10 +106,6 @@ class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer
             return json.loads(obj.fields)
         return None
     
-    def get_query(self, obj):
-        if obj.query:
-            return json.loads(obj.query)
-        return None
 
 
 

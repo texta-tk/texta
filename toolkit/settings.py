@@ -60,6 +60,11 @@ INSTALLED_APPS = [
 SITE_ID = 1
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
+# For corsheaders/external frontend
+CORS_ORIGIN_WHITELIST = (
+    'localhost:4200',
+)
+
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
@@ -76,11 +81,10 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'toolkit.pagination.PageNumberPaginationDataOnly',
     'PAGE_SIZE': 30,
-
-
 }
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -169,7 +173,8 @@ STATIC_URL = '/static/'
 STATIC_ROOT =  os.path.join(BASE_DIR, 'static')
 
 # ELASTICSEARCH
-ES_URL = os.getenv('TEXTA_ES_URL', 'http://localhost:9200')
+# ES_URL = os.getenv('TEXTA_ES_URL', 'http://localhost:9200')
+ES_URL = os.getenv('TEXTA_ES_URL', 'http://elastic-dev.texta.ee:9200')
 
 
 # CELERY
