@@ -8,6 +8,7 @@ dependencies:
   - pip
   - mkl
   - pandas
+  - numpy==1.14.5
   - scikit-learn
   - matplotlib
   - uwsgi
@@ -33,3 +34,5 @@ dependencies:
     - termcolor
     - django-extensions
     - joblib
+    - django-rest-serializer-field-permissions
+    - django-cors-headers
