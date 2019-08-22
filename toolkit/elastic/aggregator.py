@@ -37,7 +37,7 @@ class ElasticAggregator:
         return response
 
 
-    def facts(self, size=30, filter_by_fact_name=None, min_count=0, include_values=True):
+    def facts(self, size=30, filter_by_fact_name=None, min_count=0, max_count=1000000, include_values=True):
         """
         For retrieving entities (facts) from ES
         """
@@ -69,7 +69,7 @@ class ElasticAggregator:
                 entities[fact_name] = []
                 if "fact_values" in fact_type:
                     for fact_value in fact_type["fact_values"]["buckets"]:
-                        if fact_value["key"] and fact_value["doc_count"] > min_count:
+                        if fact_value["key"] and fact_value["doc_count"] > min_count  and fact_value["doc_count"] < max_count:
                             entities[fact_name].append(fact_value["key"])
         
         # filter by name if fact name present

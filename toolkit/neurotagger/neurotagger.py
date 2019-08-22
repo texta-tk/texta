@@ -18,6 +18,7 @@ from toolkit.settings import MODELS_DIR, MEDIA_URL
 from toolkit.neurotagger.models import Neurotagger
 from toolkit.utils.plot_utils import save_plot
 # Data management imports
+from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer, text_to_word_sequence
@@ -46,7 +47,8 @@ class NeurotaggerWorker():
         # conda install keras/cuda/etc
         Arguments:
             samples {List[str]} -- List of str for the training data
-            labels {List[str]} -- List of int for the labels
+            labels {List[int]} -- List of int for the labels
+            label_names {List[str]} -- List of label names
             model_arch {str} -- The model architecture
             validation_split {float} -- The percentage of data to use for validation
             seq_len {int} -- The sequence length for the model, can be limited by the given as max_seq_len param
@@ -68,7 +70,7 @@ class NeurotaggerWorker():
         self.model_arch = None
         self.validation_split = None
         self.num_epochs = None
-        self.bs = 64
+        self.bs = 32
 
         # Derived params
         self.num_classes = None
@@ -78,6 +80,7 @@ class NeurotaggerWorker():
         # Neuroclassifier data
         self.samples = None
         self.labels = None
+        self.label_names = None
 
         # Processed data
         self.X_train = None
@@ -88,9 +91,10 @@ class NeurotaggerWorker():
         self.model = None
 
 
-    def _set_up_data(self, samples, labels, show_progress):
+    def _set_up_data(self, samples, labels, label_names, show_progress):
         self.neurotagger_obj = Neurotagger.objects.get(pk=self.neurotagger_id)
         self.show_progress = show_progress
+        
 
         self.model_arch = self.neurotagger_obj.model_architecture
         self.validation_split = self.neurotagger_obj.validation_split
@@ -101,13 +105,14 @@ class NeurotaggerWorker():
         self.seq_len = self.neurotagger_obj.seq_len
 
         # Data
+        self.label_names = label_names
         self.samples = samples
         self.labels = labels
         self.show_progress = show_progress
 
 
-    def run(self, samples, labels, show_progress):
-        self._set_up_data(samples, labels, show_progress)
+    def run(self, samples, labels, show_progress, label_names):
+        self._set_up_data(samples, labels, label_names, show_progress)
         self._process_data()
         self.model = NeuroModels().get_model(self.model_arch)
         history = self._train_model()
@@ -116,6 +121,7 @@ class NeurotaggerWorker():
 
         self._create_task_result()
         self._save_model()
+        # import pdb; pdb.set_trace()
 
 
     def _process_data(self):
@@ -149,6 +155,7 @@ class NeurotaggerWorker():
         self.y_val = np.array(self.y_val)
 
         # Set up num_classes for the neural net last layer output size. Get the last shape size of y.
+        # import pdb; pdb.set_trace()
         self.num_classes = self.y_train.shape[-1]
 
         # Change self.vocab_size to the final vocab size, if it was less than the max
@@ -156,7 +163,6 @@ class NeurotaggerWorker():
         if not self.vocab_size or final_vocab_size < self.vocab_size:
             # Add 1 to vocab to avoid OOV error because of the last value
             self.vocab_size = final_vocab_size + 1
-
 
     
     def _train_model(self):
@@ -196,6 +202,12 @@ class NeurotaggerWorker():
         self.neurotagger_obj.training_accuracy =  train_eval[1]
         self.neurotagger_obj.validation_loss = val_eval[0]
         self.neurotagger_obj.training_loss = train_eval[0]
+        
+        rounded_preds = np.round(self.model.predict(self.X_val))
+        metrics = classification_report(self.y_val, rounded_preds, target_names=self.label_names)
+        print(metrics)
+        metrics = classification_report(self.y_val, rounded_preds, target_names=self.label_names, output_dict=True)
+        self.neurotagger_obj.classification_report = json.dumps(metrics)
 
 
     def _save_model(self):
@@ -274,6 +286,8 @@ class NeurotaggerWorker():
         :return: class names of decision
         """
         to_predict = self._convert_texts([text])
+        result = self.model.predict_proba(to_predict, batch_size=self.bs)
+        import pdb; pdb.set_trace()
         return self.model.predict_proba(to_predict, batch_size=self.bs)
 
 
@@ -286,11 +300,7 @@ class NeurotaggerWorker():
         texts = [doc[field] for field in doc]
         to_predict = self._convert_texts(texts)
         return self.model.predict_proba(to_predict, batch_size=self.bs)
-
     
-    def _convert_labels_to_multiple_hot(labels, num_classes):
-        pass
-
 
 class TrainingProgressCallback(Callback):
     """Callback for updating the Task Progress every epoch

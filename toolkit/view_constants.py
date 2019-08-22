@@ -12,7 +12,7 @@ class TagLogicViews():
         active_indices = list(active_project.indices)
         es_a = ElasticAggregator(indices=active_indices)
         # limit size to 10000 unique tags
-        tag_values = es_a.facts(filter_by_fact_name=fact_name, min_count=min_count, size=10000)
+        tag_values = es_a.facts(filter_by_fact_name=fact_name, min_count=min_count, max_count=15000, size=10000)
         return tag_values
 
 

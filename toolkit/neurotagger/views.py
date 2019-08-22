@@ -57,7 +57,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
             fact_name = serializer.validated_data['fact_name']
             active_project = Project.objects.get(id=self.kwargs['project_pk'])
             # retrieve tags with sufficient counts & create queries to build models
-            tags = self.get_tags(fact_name, active_project, min_count=serializer.validated_data['minimum_sample_size'])
+            tags = self.get_tags(fact_name, active_project, min_count=serializer.validated_data['minimum_fact_document_count'])
             # check if found any tags to build models on
             if not tags:
                 return Response({'error': f'found no tags for fact name: {fact_name}'}, status=status.HTTP_400_BAD_REQUEST)
@@ -65,7 +65,17 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
             queries = json.dumps(self.create_queries(fact_name, tags))
             self.perform_create(serializer, fact_values=json.dumps(tags), queries=queries)
         else:
-            self.perform_create(serializer)
+            if 'queries' in serializer.validated_data:
+                return Response({"Warning": "If no fact_name given, at least one query must be included!"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # If no fact_names given, train on queries
+            # if query_names aren't given, autogenerate
+            if not serializer.validated_data['query_names']:
+                query_names = [f'query_{i}' for i in range(len(serializer.validated_data['queries']))]  
+            else: 
+                query_names = serializer.validated_data['query_names']
+
+            self.perform_create(serializer, query_names=query_names)
 
         headers = self.get_success_headers(serializer.data)
 

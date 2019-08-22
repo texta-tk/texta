@@ -21,6 +21,8 @@ class Neurotagger(models.Model):
 
     fields = models.TextField(default=json.dumps([]))
     queries = models.TextField(default=json.dumps([EMPTY_QUERY]))
+    # To give names to labels when training on queries, if not given, autogenerate
+    query_names = models.TextField(blank=True)
     fact_name = models.CharField(max_length=MAX_DESC_LEN, blank=True)
     fact_values = models.TextField(blank=True)
 
@@ -32,14 +34,16 @@ class Neurotagger(models.Model):
 
     negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER, blank=True)
     maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, blank=True)
-    minimum_sample_size = models.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, blank=True)
+    minimum_fact_document_count = models.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, blank=True)
     score_threshold = models.FloatField(default=choices.DEFAULT_SCORE_THRESHOLD, blank=True)
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
 
+    # RESULTS
     validation_accuracy = models.FloatField(default=None, null=True)
     training_accuracy = models.FloatField(default=None, null=True)
     training_loss = models.FloatField(default=None, null=True)
     validation_loss = models.FloatField(default=None, null=True)
+    classification_report = models.TextField(blank=True)
 
     location = models.TextField()
     model_plot = models.FileField(upload_to='media', null=True, verbose_name='')

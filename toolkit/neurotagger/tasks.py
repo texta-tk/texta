@@ -39,8 +39,9 @@ def train_neurotagger(neurotagger_id):
         show_progress.update_step('training')
         show_progress.update_view(0)
 
+        label_names = get_label_names(neurotagger_obj)
         neurotagger = NeurotaggerWorker(neurotagger_obj.id)
-        neurotagger.run(samples, labels, show_progress)
+        neurotagger.run(samples, labels, show_progress, label_names)
 
         # declare the job done
         show_progress.update_step('')
@@ -63,6 +64,7 @@ def _scroll_multilabel_data(queries, fact_values, field_data, maximum_sample_siz
     samples = []
     labels = []
     for i, query in enumerate(queries):
+        print(f'{i}/{num_queries} tick')        
         show_progress.update_step(f'Scrolling data for facts ({i}/{num_queries})')
         show_progress.update_view(0)
         query_samples, query_labels = _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_progress, fact_values)
@@ -90,8 +92,8 @@ def _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_pr
         for field in field_data:
             if field in doc:
                 # Combine data from multiple fields into one doc
-                # separate by newlines and 'xxTEXTA_DOC_END' token
-                combined_doc += doc[field] + ' \n xxTEXTA_DOC_END \n '
+                # separate by newlines and 'xxtextadocend' token
+                combined_doc += doc[field] + ' xxtextadocend '
 
         if combined_doc:
             combined_samples.append(combined_doc)
@@ -124,6 +126,7 @@ def _scroll_multiclass_data(queries, show_progress, neurotagger_obj, field_data)
     elif len(queries) > 1:
         for i, query in enumerate(queries):
             show_progress.update_step(f'Scrolling queries ({i}/{num_queries})')
+            print(f'{i}/{num_queries} tick')
             show_progress.update_view(0)
             positive_samples, _ = _scroll_positives(query, neurotagger_obj, field_data, show_progress)
             samples += positive_samples
@@ -162,3 +165,10 @@ def _scroll_negatives(neurotagger_obj, field_data, show_progress, positive_ids):
         combined_samples += [doc[field] for doc in negative_samples if field in doc]
 
     return combined_samples
+
+
+def get_label_names(neurotagger_obj):
+    if neurotagger_obj.fact_values:
+        return json.loads(neurotagger_obj.fact_values)
+    if neurotagger_obj.query_names:
+        return json.loads(neurotagger_obj.query_names)

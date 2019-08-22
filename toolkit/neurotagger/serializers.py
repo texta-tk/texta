@@ -22,6 +22,13 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResou
         allow_blank=True
     )
 
+    queries = serializers.JSONField(help_text='JSON list of strings of Elasticsearch queries to train on', required=False)
+
+    query_names = serializers.JSONField(help_text=
+        "Label names for queries, if training on queries. If not given, in that case defaults to ['query_N']",
+        required=False,
+    )
+
 
     model_architecture = serializers.ChoiceField(choices=choices.model_arch_choices)
     seq_len = serializers.IntegerField(default=choices.DEFAULT_SEQ_LEN, help_text=f'Default: {choices.DEFAULT_SEQ_LEN}')
@@ -32,8 +39,8 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResou
 
     negative_multiplier = serializers.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER, help_text=f'Default: {choices.DEFAULT_NEGATIVE_MULTIPLIER}')
     maximum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE,help_text=f'Default: {choices.DEFAULT_MAX_SAMPLE_SIZE}')
-    minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, help_text=
-    f'Minimum number of documents required to train a multilabel model. If no fact name is chosen this option is ignored. Default: {choices.DEFAULT_MIN_SAMPLE_SIZE}')
+    minimum_fact_document_count = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, help_text=
+    f'Minimum number of documents required per fact to train a multilabel model. If no fact name is chosen this option is ignored. Default: {choices.DEFAULT_MIN_SAMPLE_SIZE}')
 
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
@@ -43,14 +50,14 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResou
 
     class Meta:
         model = Neurotagger
-        fields = ('url', 'id', 'description', 'project', 'author', 'queries', 'validation_split', 'score_threshold',
+        fields = ('url', 'id', 'description', 'project', 'author', 'queries', 'query_names', 'validation_split', 'score_threshold',
                   'fields', 'fields_parsed', 'model_architecture', 'seq_len', 'maximum_sample_size', 'negative_multiplier',
                   'location', 'num_epochs', 'vocab_size', 'plot', 'task', 'validation_accuracy', 'training_accuracy', 'fact_values',
-                  'training_loss', 'validation_loss', 'model_plot', 'result_json', 'fact_name', 'minimum_sample_size')
+                  'training_loss', 'validation_loss', 'model_plot', 'result_json', 'fact_name', 'minimum_fact_document_count',)
 
         read_only_fields = ('author', 'project', 'location', 'accuracy', 'loss', 'plot',
                             'model_plot', 'result_json', 'validation_accuracy', 'training_accuracy',
-                            'training_loss', 'validation_loss', 'fact_values'
+                            'training_loss', 'validation_loss', 'fact_values', 'classification_report'
                             )
         
 
