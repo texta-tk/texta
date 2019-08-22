@@ -8,6 +8,7 @@ dependencies:
   - pip
   - mkl
   - pandas
+  - numpy==1.14.5
   - scikit-learn
   - matplotlib
   - uwsgi
