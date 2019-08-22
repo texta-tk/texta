@@ -1,11 +1,17 @@
-from rest_framework import serializers
+from rest_framework import serializers, permissions
 from django.contrib.auth.models import User
+from django import forms
 
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.core.project.models import Project
 from toolkit.core.choices import get_index_choices
 from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.tagger.models import Tagger
+from toolkit.permissions.field_permissions import IsAdminUser
+
+from rest_framework_serializer_field_permissions import fields
+from rest_framework_serializer_field_permissions.serializers import FieldPermissionSerializerMixin
+
 
 DEFAULT_VALUES_PER_NAME = 10
 
@@ -21,15 +27,19 @@ class GetFactsSerializer(serializers.Serializer):
         help_text=f'Include fact values in output. Default: True', default=True)
 
 
-class ProjectSerializer(serializers.HyperlinkedModelSerializer):
+class ProjectSerializer(FieldPermissionSerializerMixin, serializers.HyperlinkedModelSerializer):
     indices = serializers.MultipleChoiceField(choices=get_index_choices())
-    users = serializers.HyperlinkedRelatedField(many=True, view_name='user-detail', queryset=User.objects.all())
+    users = serializers.HyperlinkedRelatedField(many=True, view_name='user-detail', queryset=User.objects.all(),)
     resources = serializers.SerializerMethodField()
+    owner = fields.ChoiceField(choices=User.objects.values_list('username', flat=True).distinct(),
+            permission_classes=(IsAdminUser(),))
+
 
     class Meta:
         model = Project
         fields = ('url', 'id', 'title', 'owner', 'users', 'indices', 'resources')
-        read_only_fields = ('owner', 'resources')
+        read_only_fields = ('resources',)
+
 
     def get_resources(self, obj):
         request = self.context.get('request')

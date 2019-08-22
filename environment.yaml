@@ -33,3 +33,5 @@ dependencies:
     - termcolor
     - django-extensions
     - joblib
+    - django-rest-serializer-field-permissions
+    - django-cors-headers

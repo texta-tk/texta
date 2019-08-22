@@ -7,7 +7,8 @@ from toolkit.constants import MAX_DESC_LEN
 # Create your models here.
 class Project(models.Model):
     title = models.CharField(max_length=MAX_DESC_LEN)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    # owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.TextField()
     users = models.ManyToManyField(User, related_name="project_users")
     indices = MultiSelectField(default=None)
 
