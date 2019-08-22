@@ -26,7 +26,7 @@ class NeuroClassifierPreprocessor():
         text_map = self._generate_text_map(documents, input_features)
         result = self._tag_documents(models, text_map, ids_to_apply, documents, input_path)
         return result
-    
+
 
     def _set_up_params(self, **kwargs):
         input_features = json.loads(kwargs['neuroclassifier_feature_names'])
@@ -46,7 +46,7 @@ class NeuroClassifierPreprocessor():
             models.append(worker)
 
         return models
-    
+
 
     def _generate_text_map(self, documents, input_features):
         # Starts text map
@@ -65,7 +65,7 @@ class NeuroClassifierPreprocessor():
                     else:
                         decoded_text = ''
                         break
-                
+
                 # sanity check to filter out None values
                 if not decoded_text:
                     decoded_text = ''
@@ -97,7 +97,7 @@ class NeuroClassifierPreprocessor():
                 if FACT_FIELD not in documents[i]:
                     documents[i][FACT_FIELD] = []
                 for tag in positive_tags:
-                    new_fact = {'fact': 'TEXTA_TAG', 'str_val': tag, 'doc_path': input_path, 'spans': json.dumps([0, 0])}
+                    new_fact = {'fact': 'TEXTA_TAG', 'str_val': tag, 'doc_path': input_path, 'spans': json.dumps([[0, 0]])}
                     texta_facts.append(new_fact)
                 documents[i][FACT_FIELD].extend(texta_facts)
 
