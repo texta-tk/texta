@@ -22,24 +22,20 @@ class SearchSerializer(serializers.Serializer):
 
 class GetFactsSerializer(serializers.Serializer):
     values_per_name = serializers.IntegerField(default=DEFAULT_VALUES_PER_NAME,
-        help_text=f'Number of fact values per fact name. Default: 10.')
+                                               help_text=f'Number of fact values per fact name. Default: 10.')
     output_type = serializers.ChoiceField(choices=((True, 'fact names with values'), (False, 'fact names without values')),
-        help_text=f'Include fact values in output. Default: True', default=True)
+                                          help_text=f'Include fact values in output. Default: True', default=True)
 
 
 class ProjectSerializer(FieldPermissionSerializerMixin, serializers.HyperlinkedModelSerializer):
     indices = serializers.MultipleChoiceField(choices=get_index_choices())
     users = serializers.HyperlinkedRelatedField(many=True, view_name='user-detail', queryset=User.objects.all(),)
     resources = serializers.SerializerMethodField()
-    owner = fields.ChoiceField(choices=User.objects.values_list('username', flat=True).distinct(),
-            permission_classes=(IsAdminUser(),))
-
 
     class Meta:
         model = Project
         fields = ('url', 'id', 'title', 'owner', 'users', 'indices', 'resources')
-        read_only_fields = ('resources',)
-
+        read_only_fields = ('resources', 'owner')
 
     def get_resources(self, obj):
         request = self.context.get('request')

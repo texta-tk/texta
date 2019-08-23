@@ -10,6 +10,7 @@ from toolkit.core.project.models import Project
 
 """
 
+
 class ProjectResourceAllowed(permissions.BasePermission):
     message = 'Insufficient permissions for this resource.'
 
@@ -26,7 +27,7 @@ class ProjectResourceAllowed(permissions.BasePermission):
         except:
             return False
         # check if user is owner or listed in project users
-        if request.user in project_object.users.all() or str(request.user) == project_object.owner:
+        if request.user in project_object.users.all() or request.user == project_object.owner:
             return True
         # check if user is superuser
         if request.user.is_superuser:
@@ -54,8 +55,4 @@ class ProjectAllowed(permissions.BasePermission):
         if request.user in project_object.users.all() and request.method in permissions.SAFE_METHODS:
             return True
         # if user is owner, allow UNSAFE_METHODS; conversion necessary because of SimpleLazyObject
-        return project_object.owner == str(request.user)
-
-
-
-
+        return project_object.owner == request.user
