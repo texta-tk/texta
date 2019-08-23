@@ -126,6 +126,7 @@ class NeurotaggerWorker():
 
     def _process_data(self):
         self.show_progress.update_step(1)
+        '''
         # Declare Keras Tokenizer
         self.tokenizer = Tokenizer(
                     num_words=self.vocab_size, # If self.vocab_size is not None, limit vocab size
@@ -135,7 +136,28 @@ class NeurotaggerWorker():
         self.tokenizer.fit_on_texts(self.samples)
         # Tokenize sequences from words to integers
         self.X_train = self.tokenizer.texts_to_sequences(self.samples)
+        '''
+        ######################################################
+        import sentencepiece as spm
+        import tempfile
+        import os
+        fd, path = tempfile.mkstemp()
+        self.vocab_size = 5000 # !!!!!!!!!!!!!!!!!!!!
+        try:
+            with os.fdopen(fd, 'w', encoding="utf8") as tmp:
+                # do stuff with temp file
+                tmp.write(' \n\n '.join(self.samples))
+                print(path)
+                spm.SentencePieceTrainer.train(f'--input={path} --model_prefix=mtest --vocab_size={self.vocab_size}')
+        finally:
+            os.remove(path)
 
+        sp = spm.SentencePieceProcessor()
+        sp.load('mtest.model')
+        
+        self.X_train = [sp.encode_as_ids(x) for x in self.samples]
+        import pdb; pdb.set_trace()
+        ######################################################
         # Get the max length of sequence of X_train values
         uncropped_max_len = max((len(x) for x in self.X_train))
         # Set the final seq_len to be either the user set seq_len or the max unpadded/cropped in present in the dataset
@@ -159,12 +181,13 @@ class NeurotaggerWorker():
         self.num_classes = self.y_train.shape[-1]
 
         # Change self.vocab_size to the final vocab size, if it was less than the max
+        '''
         final_vocab_size = len(self.tokenizer.word_index)
         print(final_vocab_size)
         if not self.vocab_size or final_vocab_size < self.vocab_size:
             # Add 1 to vocab to avoid OOV error because of the last value
             self.vocab_size = final_vocab_size + 1
-
+        '''
     
     def _train_model(self):
         # Training callback which shows progress to the user
