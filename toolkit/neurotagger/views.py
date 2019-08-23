@@ -57,7 +57,10 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
             fact_name = serializer.validated_data['fact_name']
             active_project = Project.objects.get(id=self.kwargs['project_pk'])
             # retrieve tags with sufficient counts & create queries to build models
-            tags = self.get_tags(fact_name, active_project, min_count=serializer.validated_data['minimum_fact_document_count'])
+            tags = self.get_tags(fact_name,
+                                 active_project,
+                                 min_count=serializer.validated_data['min_fact_doc_count'], 
+                                 max_count=serializer.validated_data['max_fact_doc_count'])
             # check if found any tags to build models on
             if not tags:
                 return Response({'error': f'found no tags for fact name: {fact_name}'}, status=status.HTTP_400_BAD_REQUEST)

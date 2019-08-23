@@ -39,8 +39,10 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResou
 
     negative_multiplier = serializers.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER, help_text=f'Default: {choices.DEFAULT_NEGATIVE_MULTIPLIER}')
     maximum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE,help_text=f'Default: {choices.DEFAULT_MAX_SAMPLE_SIZE}')
-    minimum_fact_document_count = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, help_text=
-    f'Minimum number of documents required per fact to train a multilabel model. If no fact name is chosen this option is ignored. Default: {choices.DEFAULT_MIN_SAMPLE_SIZE}')
+    max_fact_doc_count = serializers.IntegerField(default=None, help_text=
+    f'Maximum number of documents required per fact to train a multilabel model. If no fact name is chosen this option is ignored.')
+    min_fact_doc_count = serializers.IntegerField(default=choices.DEFAULT_MIN_FACT_DOC_COUNT, help_text=
+    f'Minimum number of documents required per fact to train a multilabel model. If no fact name is chosen this option is ignored. Default: {choices.DEFAULT_MIN_FACT_DOC_COUNT}')
 
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
@@ -53,7 +55,7 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResou
         fields = ('url', 'id', 'description', 'project', 'author', 'queries', 'query_names', 'validation_split', 'score_threshold',
                   'fields', 'fields_parsed', 'model_architecture', 'seq_len', 'maximum_sample_size', 'negative_multiplier',
                   'location', 'num_epochs', 'vocab_size', 'plot', 'task', 'validation_accuracy', 'training_accuracy', 'fact_values',
-                  'training_loss', 'validation_loss', 'model_plot', 'result_json', 'fact_name', 'minimum_fact_document_count',)
+                  'training_loss', 'validation_loss', 'model_plot', 'result_json', 'fact_name', 'min_fact_doc_count', 'max_fact_doc_count')
 
         read_only_fields = ('author', 'project', 'location', 'accuracy', 'loss', 'plot',
                             'model_plot', 'result_json', 'validation_accuracy', 'training_accuracy',

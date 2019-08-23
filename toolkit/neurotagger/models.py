@@ -34,7 +34,8 @@ class Neurotagger(models.Model):
 
     negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER, blank=True)
     maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, blank=True)
-    minimum_fact_document_count = models.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, blank=True)
+    min_fact_doc_count = models.IntegerField(default=choices.DEFAULT_MIN_FACT_DOC_COUNT, blank=True)
+    max_fact_doc_count = models.IntegerField(blank=True, null=True)
     score_threshold = models.FloatField(default=choices.DEFAULT_SCORE_THRESHOLD, blank=True)
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
 
