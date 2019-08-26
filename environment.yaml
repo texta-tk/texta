@@ -22,6 +22,7 @@ dependencies:
   - nginx
   - supervisor
   - psycopg2
+  - cudatoolkit
   - pip:
     - django==2.1.7
     - djangorestframework==3.9.2
