@@ -7,10 +7,6 @@ from toolkit.core.project.models import Project
 from toolkit.core.choices import get_index_choices
 from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.tagger.models import Tagger
-from toolkit.permissions.field_permissions import IsAdminUser
-
-from rest_framework_serializer_field_permissions import fields
-from rest_framework_serializer_field_permissions.serializers import FieldPermissionSerializerMixin
 
 
 DEFAULT_VALUES_PER_NAME = 10
@@ -27,7 +23,7 @@ class GetFactsSerializer(serializers.Serializer):
                                           help_text=f'Include fact values in output. Default: True', default=True)
 
 
-class ProjectSerializer(FieldPermissionSerializerMixin, serializers.HyperlinkedModelSerializer):
+class ProjectSerializer(serializers.HyperlinkedModelSerializer):
     indices = serializers.MultipleChoiceField(choices=get_index_choices())
     users = serializers.HyperlinkedRelatedField(many=True, view_name='user-detail', queryset=User.objects.all(),)
     resources = serializers.SerializerMethodField()
@@ -44,3 +40,11 @@ class ProjectSerializer(FieldPermissionSerializerMixin, serializers.HyperlinkedM
         for resource_name in ('lexicons', 'embeddings', 'embedding_clusters', 'taggers', 'tagger_groups', 'neurotaggers'):
             resource_dict[resource_name] = f'{base_url}{resource_name}/'
         return resource_dict
+
+
+class ProjectAdminSerializer(ProjectSerializer):
+
+    class Meta:
+        model = Project
+        fields = ('url', 'id', 'title', 'owner', 'users', 'indices', 'resources')
+        read_only_fields = ('resources',)
