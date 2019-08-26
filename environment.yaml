@@ -18,7 +18,7 @@ dependencies:
   - psutil
   - redis
   - nginx
-  - uẃsgi
+  - uwsgi
   - supervisor
   - psycopg2
   - pip:
