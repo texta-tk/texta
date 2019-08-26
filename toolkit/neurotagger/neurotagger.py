@@ -137,7 +137,7 @@ class NeurotaggerWorker():
                 spm.SentencePieceTrainer.train(' '.join([
                     f'--input={temp_path}',
                     f'--max_sentence_length=20480',
-                    f'--model_prefix={output_tokenizer_file}',
+                    f'--model_prefix={self.output_tokenizer_file}',
                     f'--vocab_size={self.vocab_size}',
                     f'--model_type=unigram'
                 ]))
@@ -179,7 +179,7 @@ class NeurotaggerWorker():
         # Training callback which shows progress to the user
         print(self.show_progress, 'SHOW PROGRESS!@#!@#!@#!@#!@#')
         trainingProgress = TrainingProgressCallback(self.num_epochs, self.show_progress)
-
+        import pdb; pdb.set_trace()
         self.model = self.model(self.vocab_size, self.seq_len, self.num_classes)
         return self.model.fit(self.X_train, self.y_train,
                         batch_size=self.bs,
@@ -280,12 +280,14 @@ class NeurotaggerWorker():
         self.neurotagger_obj = Neurotagger.objects.get(pk=self.neurotagger_id)
         self.seq_len = self.neurotagger_obj.seq_len
         self.model = load_model(json.loads(self.neurotagger_obj.location)['model'])
-        with open(json.loads(self.neurotagger_obj.location)['tokenizer'], 'rb') as f:
-            self.tokenizer = pickle.load(f)
 
     def _convert_texts(self, texts: List[str]):
-        texts = self.tokenizer.texts_to_sequences(texts)
+        sp = spm.SentencePieceProcessor()
+        sp.load(json.loads(self.neurotagger_obj.location)['tokenizer_model'])
+        texts = [sp.encode_as_ids(x) for x in texts]
         texts = pad_sequences(texts, maxlen=self.seq_len)
+        
+        
         return texts
 
 
@@ -296,8 +298,6 @@ class NeurotaggerWorker():
         :return: class names of decision
         """
         to_predict = self._convert_texts([text])
-        result = self.model.predict_proba(to_predict, batch_size=self.bs)
-        import pdb; pdb.set_trace()
         return self.model.predict_proba(to_predict, batch_size=self.bs)
 
 
@@ -332,4 +332,4 @@ class TrainingProgressCallback(Callback):
                                                                 logs['val_loss'])
 
         self.show_progress.update_step(f'Training: {eval_info}')
-        self.show_progress.update_view(round(100 / (self.num_epochs / epoch), 2))
+        self.show_progress.update_view(round(100 / (self.num_epochs + 1 / (epoch + 1)), 2))

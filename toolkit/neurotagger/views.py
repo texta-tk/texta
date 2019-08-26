@@ -1,3 +1,6 @@
+import json
+import numpy as np
+
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -16,7 +19,6 @@ from toolkit.view_constants import TagLogicViews
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.tagger.serializers import TextSerializer, DocSerializer
 
-import json
 
 # initialize model cache for neurotaggers
 model_cache = ModelCache(NeurotaggerWorker)
@@ -68,12 +70,12 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
             queries = json.dumps(self.create_queries(fact_name, tags))
             self.perform_create(serializer, fact_values=json.dumps(tags), queries=queries)
         else:
-            if 'queries' in serializer.validated_data:
+            if 'queries' not in serializer.validated_data:
                 return Response({"Warning": "If no fact_name given, at least one query must be included!"}, status=status.HTTP_400_BAD_REQUEST)
 
             # If no fact_names given, train on queries
             # if query_names aren't given, autogenerate
-            if not serializer.validated_data['query_names']:
+            if 'query_names' not in serializer.validated_data or not serializer.validated_data['query_names']:
                 query_names = [f'query_{i}' for i in range(len(serializer.validated_data['queries']))]  
             else: 
                 query_names = serializer.validated_data['query_names']
@@ -154,4 +156,4 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
         if self.get_object().fact_values:
             classes = json.loads(self.get_object().fact_values)
 
-        return { 'classes': classes, 'probability': tagger_result }
+        return { 'classes': classes, 'probability': np.around(tagger_result, 3) }

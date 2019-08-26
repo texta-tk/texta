@@ -68,8 +68,9 @@ class NeurotaggerViewTests(APITestCase):
         # Remove neurotagger files after test is done
         if 'model' in created_neurotagger.location:
             self.addCleanup(remove_file, json.loads(created_neurotagger.location)['model'])
-        if 'tokenizer' in created_neurotagger.location:
-            self.addCleanup(remove_file, json.loads(created_neurotagger.location)['tokenizer'])
+        if 'tokenizer_model' in created_neurotagger.location:
+            self.addCleanup(remove_file, json.loads(created_neurotagger.location)['tokenizer_model'])
+            self.addCleanup(remove_file, json.loads(created_neurotagger.location)['tokenizer_vocab'])
 
         if created_neurotagger.plot:
             remove_file(created_neurotagger.plot.path)
@@ -107,8 +108,10 @@ class NeurotaggerViewTests(APITestCase):
         # Remove neurotagger files after test is done
         if 'model' in created_neurotagger.location:
             self.addCleanup(remove_file, json.loads(created_neurotagger.location)['model'])
-        if 'tokenizer' in created_neurotagger.location:
-            self.addCleanup(remove_file, json.loads(created_neurotagger.location)['tokenizer'])
+        if 'tokenizer_model' in created_neurotagger.location:
+            self.addCleanup(remove_file, json.loads(created_neurotagger.location)['tokenizer_model'])
+            self.addCleanup(remove_file, json.loads(created_neurotagger.location)['tokenizer_vocab'])
+            
 
         if created_neurotagger.plot:
             remove_file(created_neurotagger.plot.path)
