@@ -159,8 +159,10 @@ class NeurotaggerViewTests(APITestCase):
     def tearDownClass(cls):
         if 'model' in cls.test_neurotagger.location:
             remove_file(json.loads(cls.test_neurotagger.location)['model'])
-        if 'tokenizer' in cls.test_neurotagger.location:
-            remove_file(json.loads(cls.test_neurotagger.location)['tokenizer'])
+        if 'tokenizer_model' in cls.test_neurotagger.location:
+            remove_file(json.loads(cls.test_neurotagger.location)['tokenizer_model'])
+        if 'tokenizer_vocab' in cls.test_neurotagger.location:
+            remove_file(json.loads(cls.test_neurotagger.location)['tokenizer_vocab'])
 
         if cls.test_neurotagger.plot:
             remove_file(cls.test_neurotagger.plot.path)
