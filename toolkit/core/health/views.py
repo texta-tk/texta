@@ -1,10 +1,11 @@
+import psutil
+import shutil
+from keras import backend as K
 from rest_framework import views, status
 from rest_framework.response import Response
 
 from toolkit.elastic.core import ElasticCore
 from toolkit.core.health.utils import get_version, get_cache_status
-import shutil
-import psutil
 
 class HealthView(views.APIView):
 
@@ -27,5 +28,8 @@ class HealthView(views.APIView):
         
         toolkit_status['cpu'] = {'percent': psutil.cpu_percent()}
         toolkit_status['model_cache'] = get_cache_status()
+        
+        gpus = K.tensorflow_backend._get_available_gpus()
+        toolkit_status['gpu'] = {'count': len(gpus), 'devices': gpus}
 
         return Response(toolkit_status, status=status.HTTP_200_OK)
