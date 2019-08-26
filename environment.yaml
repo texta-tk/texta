@@ -6,23 +6,21 @@ channels:
 dependencies:
   - python=3.6
   - pip
+  - tensorflow-gpu
+  - keras
   - mkl
   - pandas
-  - numpy==1.14.5
   - scikit-learn
   - matplotlib
-  - uwsgi
-  - tensorflow
-  - keras
   - graphviz
   - gensim==3.7.1
   - pydot
   - psutil
   - redis
   - nginx
+  - uẃsgi
   - supervisor
   - psycopg2
-  - cudatoolkit
   - pip:
     - django==2.1.7
     - djangorestframework==3.9.2
