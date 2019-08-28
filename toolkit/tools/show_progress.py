@@ -14,12 +14,14 @@ class ShowProgress(object):
         self.step = ''
 
     def set_total(self, total):
+        self.n_count = 0
         self.n_total = total
         if self.multiplier:
             self.n_total = self.multiplier * total
 
     def update_step(self, step):
         self.step = step
+
 
     def update(self, amount):
         if amount == 0:

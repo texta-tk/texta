@@ -3,6 +3,7 @@ import csv
 import json
 import pickle
 import secrets
+import tempfile
 import numpy as np
 from io import BytesIO
 from typing import List, Dict
@@ -21,7 +22,6 @@ from toolkit.utils.plot_utils import save_plot
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from keras.preprocessing.sequence import pad_sequences
-from keras.preprocessing.text import Tokenizer, text_to_word_sequence
 
 # Keras Model imports
 from keras import backend as K
@@ -34,8 +34,7 @@ from keras.utils.vis_utils import model_to_dot
 
 # Import model architectures
 from toolkit.neurotagger.neuro_models import NeuroModels
-
-
+import sentencepiece as spm
 
 
 class NeurotaggerWorker():
@@ -43,8 +42,6 @@ class NeurotaggerWorker():
         """
         Main class for training the NeuroClassifier
 
-        # conda install graphviz
-        # conda install keras/cuda/etc
         Arguments:
             samples {List[str]} -- List of str for the training data
             labels {List[int]} -- List of int for the labels
@@ -124,22 +121,42 @@ class NeurotaggerWorker():
         # import pdb; pdb.set_trace()
 
 
-    def _process_data(self):
-        self.show_progress.update_step(1)
-        # Declare Keras Tokenizer
-        self.tokenizer = Tokenizer(
-                    num_words=self.vocab_size, # If self.vocab_size is not None, limit vocab size
-                    filters='!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n\'')
+    
+    def _train_tokenizer(self):
+        self.output_tokenizer_file = os.path.join(MODELS_DIR,
+            'neurotagger', f'neurotagger_tokenizer_{self.neurotagger_obj.id}_{secrets.token_hex(10)}'
+        )
 
-        # Build Tokenizer on training vocab
-        self.tokenizer.fit_on_texts(self.samples)
-        # Tokenize sequences from words to integers
-        self.X_train = self.tokenizer.texts_to_sequences(self.samples)
+        # As Sentencepiece requires a file as input, a tempfile will be created
+        fd, temp_path = tempfile.mkstemp()
+        try:
+            with os.fdopen(fd, 'w', encoding="utf8") as tmp:
+                # Dump the training samples to the file
+                tmp.write(' \n\n '.join(self.samples))
+
+                spm.SentencePieceTrainer.train(' '.join([
+                    f'--input={temp_path}',
+                    f'--max_sentence_length=20480',
+                    f'--model_prefix={self.output_tokenizer_file}',
+                    f'--vocab_size={self.vocab_size}',
+                    f'--model_type=unigram'
+                ]))
+        finally:
+            os.remove(temp_path)
+
+    def _process_data(self):
+        self.show_progress.update_step('Processing data')
+
+        # Tokenize
+        self._train_tokenizer()
+        sp = spm.SentencePieceProcessor()
+        sp.load(f'{self.output_tokenizer_file}.model')
+        self.X_train = [sp.encode_as_ids(x) for x in self.samples]
 
         # Get the max length of sequence of X_train values
         uncropped_max_len = max((len(x) for x in self.X_train))
         # Set the final seq_len to be either the user set seq_len or the max unpadded/cropped in present in the dataset
-        # TODO in the future, use values such as "average length" or "top X-th percentile length" for more optimal seq_len
+        # Possible TODO in the future, use values such as "average length" or "top X-th percentile length" for more optimal seq_len
         self.seq_len = min(self.seq_len, uncropped_max_len)
         # Update the seq_len of the obj
         self.neurotagger_obj.seq_len = self.seq_len
@@ -155,21 +172,12 @@ class NeurotaggerWorker():
         self.y_val = np.array(self.y_val)
 
         # Set up num_classes for the neural net last layer output size. Get the last shape size of y.
-        # import pdb; pdb.set_trace()
         self.num_classes = self.y_train.shape[-1]
-
-        # Change self.vocab_size to the final vocab size, if it was less than the max
-        final_vocab_size = len(self.tokenizer.word_index)
-        print(final_vocab_size)
-        if not self.vocab_size or final_vocab_size < self.vocab_size:
-            # Add 1 to vocab to avoid OOV error because of the last value
-            self.vocab_size = final_vocab_size + 1
 
     
     def _train_model(self):
         # Training callback which shows progress to the user
-        trainingProgress = TrainingProgressCallback(show_progress=self.show_progress)
-
+        trainingProgress = TrainingProgressCallback(self.num_epochs, self.show_progress)
         self.model = self.model(self.vocab_size, self.seq_len, self.num_classes)
         return self.model.fit(self.X_train, self.y_train,
                         batch_size=self.bs,
@@ -212,19 +220,18 @@ class NeurotaggerWorker():
 
 
     def _save_model(self):
-        self.show_progress.update_step(3)
+        self.show_progress.update_step('Saving model')
         # create_file_path from helper_functions creates missing folders and returns a path
         model_path = f'neurotagger_{self.neurotagger_obj.id}_{secrets.token_hex(10)}'
         output_model_file = os.path.join(MODELS_DIR, 'neurotagger', model_path)
         self.model.save(output_model_file)
-
-        output_tokenizer_file = os.path.join(MODELS_DIR,
-            'neurotagger', f'neurotagger_tokenizer_{self.neurotagger_obj.id}_{secrets.token_hex(10)}'
-        )
-        with open(output_tokenizer_file, 'wb') as handle:
-            pickle.dump(self.tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
         
-        self.neurotagger_obj.location = json.dumps({'model': output_model_file, 'tokenizer': output_tokenizer_file})
+        self.neurotagger_obj.location = json.dumps({
+            'model': output_model_file,
+            'tokenizer_model': f'{self.output_tokenizer_file}.model',
+            'tokenizer_vocab': f'{self.output_tokenizer_file}.vocab'
+        })
+
         self.neurotagger_obj.save()
 
 
@@ -271,12 +278,14 @@ class NeurotaggerWorker():
         self.neurotagger_obj = Neurotagger.objects.get(pk=self.neurotagger_id)
         self.seq_len = self.neurotagger_obj.seq_len
         self.model = load_model(json.loads(self.neurotagger_obj.location)['model'])
-        with open(json.loads(self.neurotagger_obj.location)['tokenizer'], 'rb') as f:
-            self.tokenizer = pickle.load(f)
 
     def _convert_texts(self, texts: List[str]):
-        texts = self.tokenizer.texts_to_sequences(texts)
+        sp = spm.SentencePieceProcessor()
+        sp.load(json.loads(self.neurotagger_obj.location)['tokenizer_model'])
+        texts = [sp.encode_as_ids(x) for x in texts]
         texts = pad_sequences(texts, maxlen=self.seq_len)
+        
+        
         return texts
 
 
@@ -287,8 +296,6 @@ class NeurotaggerWorker():
         :return: class names of decision
         """
         to_predict = self._convert_texts([text])
-        result = self.model.predict_proba(to_predict, batch_size=self.bs)
-        import pdb; pdb.set_trace()
         return self.model.predict_proba(to_predict, batch_size=self.bs)
 
 
@@ -309,8 +316,9 @@ class TrainingProgressCallback(Callback):
     Arguments:
         show_epochs {ShowSteps} -- ShowSteps callback to be called in on_epoch_end
     """
-    def __init__(self, show_progress):
+    def __init__(self, num_epochs, show_progress):
         self.show_progress = show_progress
+        self.num_epochs = num_epochs
 
     def on_epoch_end(self, epoch, logs={}):
         # Use on_epoch_end because on_epoch_begin logs are empty
@@ -322,3 +330,4 @@ class TrainingProgressCallback(Callback):
                                                                 logs['val_loss'])
 
         self.show_progress.update_step(f'Training: {eval_info}')
+        self.show_progress.update_view(round(100 / (self.num_epochs + 1 / (epoch + 1)), 2))
