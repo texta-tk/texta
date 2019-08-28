@@ -67,6 +67,7 @@ class NeurotaggerWorker():
         self.model_arch = None
         self.validation_split = None
         self.num_epochs = None
+        self.multilabel = None
         self.bs = 32
 
         # Derived params
@@ -88,10 +89,11 @@ class NeurotaggerWorker():
         self.model = None
 
 
-    def _set_up_data(self, samples, labels, label_names, show_progress):
+    def _set_up_data(self, samples, labels, label_names, show_progress, multilabel):
         self.neurotagger_obj = Neurotagger.objects.get(pk=self.neurotagger_id)
         self.show_progress = show_progress
-        
+        self.multilabel = multilabel
+
 
         self.model_arch = self.neurotagger_obj.model_architecture
         self.validation_split = self.neurotagger_obj.validation_split
@@ -108,20 +110,17 @@ class NeurotaggerWorker():
         self.show_progress = show_progress
 
 
-    def run(self, samples, labels, show_progress, label_names):
-        self._set_up_data(samples, labels, label_names, show_progress)
+    def run(self, samples, labels, show_progress, label_names, multilabel):
+        self._set_up_data(samples, labels, label_names, show_progress, multilabel)
         self._process_data()
-        self.model = NeuroModels().get_model(self.model_arch)
         history = self._train_model()
         self._plot_model(history)
         self._cross_validation()
 
         self._create_task_result()
         self._save_model()
-        # import pdb; pdb.set_trace()
 
 
-    
     def _train_tokenizer(self):
         self.output_tokenizer_file = os.path.join(MODELS_DIR,
             'neurotagger', f'neurotagger_tokenizer_{self.neurotagger_obj.id}_{secrets.token_hex(10)}'
@@ -133,19 +132,24 @@ class NeurotaggerWorker():
             with os.fdopen(fd, 'w', encoding="utf8") as tmp:
                 # Dump the training samples to the file
                 tmp.write(' \n\n '.join(self.samples))
-
                 spm.SentencePieceTrainer.train(' '.join([
                     f'--input={temp_path}',
                     f'--max_sentence_length=20480',
                     f'--model_prefix={self.output_tokenizer_file}',
                     f'--vocab_size={self.vocab_size}',
-                    f'--model_type=unigram'
+                    f'--model_type=unigram',
+                    # Model might fail when it can't reach the given vocab size
+                    # Turning hard_vocab_limit to false, will treat vocab_size as a soft vocab size
+                    # (True vocab size might differ, but given vocab_size persists in model)
+                    f'--hard_vocab_limit=false',
                 ]))
         finally:
             os.remove(temp_path)
 
+
     def _process_data(self):
-        self.show_progress.update_step('Processing data')
+        self.show_progress.update_step('processing data')
+        self.show_progress.update_view(0)
 
         # Tokenize
         self._train_tokenizer()
@@ -176,9 +180,16 @@ class NeurotaggerWorker():
 
     
     def _train_model(self):
+        # Get and compile model
+        loss = 'binary_crossentropy' if self.multilabel else 'sparse_categorical_crossentropy'
+        activation = 'sigmoid' if self.multilabel else 'softmax'
+        self.model = NeuroModels().get_model(self.model_arch,
+                                             self.vocab_size, self.seq_len, self.num_classes, activation,
+                                             loss=loss)
+        
         # Training callback which shows progress to the user
         trainingProgress = TrainingProgressCallback(self.num_epochs, self.show_progress)
-        self.model = self.model(self.vocab_size, self.seq_len, self.num_classes)
+
         return self.model.fit(self.X_train, self.y_train,
                         batch_size=self.bs,
                         epochs=self.num_epochs,
@@ -213,19 +224,26 @@ class NeurotaggerWorker():
         self.neurotagger_obj.training_loss = train_eval[0]
         
         rounded_preds = np.round(self.model.predict(self.X_val))
+
+        # If binary classification, add a negative class name
+        if len(self.label_names) == 1:
+            self.label_names.insert(0, 'negative')
         metrics = classification_report(self.y_val, rounded_preds, target_names=self.label_names)
         print(metrics)
         metrics = classification_report(self.y_val, rounded_preds, target_names=self.label_names, output_dict=True)
+
         self.neurotagger_obj.classification_report = json.dumps(metrics)
 
 
     def _save_model(self):
-        self.show_progress.update_step('Saving model')
+        self.show_progress.update_step('saving')
+        self.show_progress.update_view(0)
+
         # create_file_path from helper_functions creates missing folders and returns a path
         model_path = f'neurotagger_{self.neurotagger_obj.id}_{secrets.token_hex(10)}'
         output_model_file = os.path.join(MODELS_DIR, 'neurotagger', model_path)
         self.model.save(output_model_file)
-        
+
         self.neurotagger_obj.location = json.dumps({
             'model': output_model_file,
             'tokenizer_model': f'{self.output_tokenizer_file}.model',
@@ -329,5 +347,5 @@ class TrainingProgressCallback(Callback):
                                                                 logs['val_acc'] * 100,
                                                                 logs['val_loss'])
 
-        self.show_progress.update_step(f'Training: {eval_info}')
+        self.show_progress.update_step(f'training: {eval_info}')
         self.show_progress.update_view(round(100 / (self.num_epochs + 1 / (epoch + 1)), 2))

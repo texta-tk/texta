@@ -12,6 +12,8 @@ from toolkit.neurotagger.models import Neurotagger
 from toolkit.core.task.models import Task
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 from toolkit.neurotagger import choices
+from toolkit.elastic.searcher import EMPTY_QUERY
+
 
 
 class NeurotaggerViewTests(APITestCase):
@@ -27,8 +29,9 @@ class NeurotaggerViewTests(APITestCase):
         )
 
         cls.url = f'/projects/{cls.project.id}/neurotaggers/'
-
         cls.test_neurotagger = Neurotagger.objects.create(
+            queries=json.dumps([EMPTY_QUERY]),
+            query_names=json.dumps(["First query"]),
             description='NeurotaggerForTesting',
             model_architecture=choices.model_arch_choices[0][0],
             project=cls.project,
@@ -54,10 +57,11 @@ class NeurotaggerViewTests(APITestCase):
     def run_create_neurotagger_training_and_task_signal(self):
         '''Tests the endpoint for a new Neurotagger, and if a new Task gets created via the signal'''
         payload = {
+            "queries": json.dumps([EMPTY_QUERY]),
             "description": "TestNeurotagger",
             "model_architecture": choices.model_arch_choices[0][0],
             "fields": TEST_FIELD_CHOICE,
-            'maximum_sample_size': 500,
+            "maximum_sample_size": 500,
         }
         response = self.client.post(self.url, payload, format='json')
         print_output('test_create_neurotagger_training_and_task_signal:response.data', response.data)
@@ -93,7 +97,7 @@ class NeurotaggerViewTests(APITestCase):
             "fact_name": TEST_FACT_NAME,
             "model_architecture": choices.model_arch_choices[0][0],
             "fields": TEST_FIELD_CHOICE,
-            'maximum_sample_size': 500,
+            "maximum_sample_size": 500,
         }
         response = self.client.post(self.url, payload, format='json')
         print_output('test_create_neurotagger_training_and_task_signal:response.data', response.data)

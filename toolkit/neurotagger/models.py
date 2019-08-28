@@ -65,7 +65,7 @@ class Neurotagger(models.Model):
             from toolkit.neurotagger.tasks import train_neurotagger
 
             # If not running tests via python manage.py test
-            if not 'test' in sys.argv:
+            if not True:#'test' in sys.argv:
                 train_neurotagger.apply_async(args=(instance.pk,))
             else: 
                 train_neurotagger(instance.pk)

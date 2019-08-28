@@ -3,6 +3,7 @@ import json
 import secrets
 
 from celery.decorators import task
+from keras import backend as K
 
 from toolkit.core.task.models import Task
 from toolkit.neurotagger.models import Neurotagger
@@ -31,8 +32,10 @@ def train_neurotagger(neurotagger_id):
         # If the obj has fact_values, get data for a multilabel classifier, else get data for a binary/multiclass classifier
         if neurotagger_obj.fact_values:
             samples, labels = _scroll_multilabel_data(json.loads(neurotagger_obj.queries), json.loads(neurotagger_obj.fact_values), field_data, neurotagger_obj.maximum_sample_size, show_progress)
+            multilabel = True
         else:
             samples, labels = _scroll_multiclass_data(json.loads(neurotagger_obj.queries), show_progress, neurotagger_obj, field_data)
+            multilabel = False
 
         assert len(labels) == len(samples), f'X/y are inconsistent lengths: {len(samples)} != {len(labels)}'
 
@@ -41,7 +44,7 @@ def train_neurotagger(neurotagger_id):
 
         label_names = get_label_names(neurotagger_obj)
         neurotagger = NeurotaggerWorker(neurotagger_obj.id)
-        neurotagger.run(samples, labels, show_progress, label_names)
+        neurotagger.run(samples, labels, show_progress, label_names, multilabel)
 
         # declare the job done
         show_progress.update_step('')
@@ -56,7 +59,9 @@ def train_neurotagger(neurotagger_id):
         show_progress.update_errors(e)
         task_object.update_status(Task.STATUS_FAILED)
         return False
-
+    finally:
+        # Clear session/release memory after training and saving
+        K.clear_session()
 
 def _scroll_multilabel_data(queries, fact_values, field_data, maximum_sample_size, show_progress):
     num_queries = len(queries)

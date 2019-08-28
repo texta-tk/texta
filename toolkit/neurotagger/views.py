@@ -76,11 +76,11 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
             # If no fact_names given, train on queries
             # if query_names aren't given, autogenerate
             if 'query_names' not in serializer.validated_data or not serializer.validated_data['query_names']:
-                query_names = [f'query_{i}' for i in range(len(serializer.validated_data['queries']))]  
+                query_names = [f'query_{i}' for i in range(len(json.loads(serializer.validated_data['queries'])))]
             else: 
                 query_names = serializer.validated_data['query_names']
 
-            self.perform_create(serializer, query_names=query_names)
+            self.perform_create(serializer, query_names=json.dumps(query_names))
 
         headers = self.get_success_headers(serializer.data)
 
@@ -155,5 +155,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
         classes = ""
         if self.get_object().fact_values:
             classes = json.loads(self.get_object().fact_values)
+        elif self.get_object().query_names:
+            classes = json.loads(self.get_object().query_names)
 
         return { 'classes': classes, 'probability': np.around(tagger_result, 3) }
