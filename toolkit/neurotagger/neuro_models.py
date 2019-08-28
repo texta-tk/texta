@@ -43,7 +43,7 @@ class NeuroModels():
 
         if model_arch in self.models_map:
             model = self.models_map[model_arch](vocab_sz, seq_len, num_cls, activation)
-            self._compile_model(model, loss=loss, optimizer=optimizer, metrics=metrics)
+            model = self._compile_model(model, loss=loss, optimizer=optimizer, metrics=metrics)
             return model
         else:
             raise ValueError('"{}" is not a valid model architecture!'.format(model_arch))
@@ -137,8 +137,10 @@ class NeuroModels():
         # Activate multi_gpu_model if more than 1 gpu found
         gpus = K.tensorflow_backend._get_available_gpus()
         if len(gpus) > 1:
-            multi_gpu_model(model)
+            model = multi_gpu_model(model)
 
         model.compile(loss=loss,
                     optimizer=optimizer,
                     metrics=metrics)
+
+        return model
