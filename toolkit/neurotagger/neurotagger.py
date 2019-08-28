@@ -177,9 +177,7 @@ class NeurotaggerWorker():
     
     def _train_model(self):
         # Training callback which shows progress to the user
-        print(self.show_progress, 'SHOW PROGRESS!@#!@#!@#!@#!@#')
         trainingProgress = TrainingProgressCallback(self.num_epochs, self.show_progress)
-        import pdb; pdb.set_trace()
         self.model = self.model(self.vocab_size, self.seq_len, self.num_classes)
         return self.model.fit(self.X_train, self.y_train,
                         batch_size=self.bs,
