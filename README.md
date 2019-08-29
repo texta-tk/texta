@@ -18,7 +18,7 @@ Running application:
 
 Building Docker:
 
-`docker build -t texta-rest -f docker/cpu.Dockerfile .`
+`docker build -t texta-rest -f docker/Dockerfile .`
 
 Building Docker with GPU support:
 
