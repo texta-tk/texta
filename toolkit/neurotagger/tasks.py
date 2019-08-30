@@ -68,27 +68,32 @@ def _scroll_multilabel_data(queries, fact_values, field_data, maximum_sample_siz
 
     samples = []
     labels = []
+    doc_ids = []
     for i, query in enumerate(queries):
+        # To not ignore documents already parsed
         print(f'{i}/{num_queries} tick')        
         show_progress.update_step(f'Scrolling data for facts ({i}/{num_queries})')
         show_progress.update_view(0)
-        query_samples, query_labels = _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_progress, fact_values)
+        query_samples, query_labels, query_ids = _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_progress, fact_values, doc_ids)
         samples += query_samples
         labels += query_labels
+        doc_ids += query_ids
 
     return samples, labels
 
 
 
-def _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_progress, fact_values):
+def _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_progress, fact_values, already_processed_ids):
     positive_samples = ElasticSearcher(query=query, 
                                        field_data=field_data + ['texta_facts'],
                                        callback_progress=show_progress,
                                        scroll_limit=maximum_sample_size,
+                                       ignore_ids=already_processed_ids,
                                        )
 
     positive_samples = list(positive_samples)
-    
+    query_ids = [doc['_id'] for doc in positive_samples]
+
     combined_samples = []
     labels = []
     for doc in positive_samples:
@@ -106,8 +111,7 @@ def _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_pr
             doc_facts = set([fact['str_val'] for fact in doc['texta_facts']])
             labels.append([1 if x in doc_facts else 0 for x in fact_values])
 
-
-    return combined_samples, labels
+    return combined_samples, labels, query_ids
 
 
 def _scroll_multiclass_data(queries, show_progress, neurotagger_obj, field_data):
