@@ -49,7 +49,7 @@ RUN conda env create -f /var/environment.yaml
 ENV PATH /var/miniconda3/envs/texta-rest/bin:$PATH
 
 # clean conda
-RUN conda clean --all
+RUN conda clean --all -y
 
 # Copy project files
 COPY . /var/texta-rest
