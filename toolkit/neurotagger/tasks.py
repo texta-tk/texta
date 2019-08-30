@@ -31,7 +31,7 @@ def train_neurotagger(neurotagger_id):
 
         # If the obj has fact_values, get data for a multilabel classifier, else get data for a binary/multiclass classifier
         if neurotagger_obj.fact_values:
-            samples, labels = _scroll_multilabel_data(json.loads(neurotagger_obj.queries), json.loads(neurotagger_obj.fact_values), field_data, neurotagger_obj.maximum_sample_size, show_progress)
+            samples, labels = _scroll_multilabel_data(neurotagger_obj, field_data, show_progress)
             multilabel = True
         else:
             samples, labels = _scroll_multiclass_data(json.loads(neurotagger_obj.queries), show_progress, neurotagger_obj, field_data)
@@ -63,7 +63,11 @@ def train_neurotagger(neurotagger_id):
         # Clear session/release memory after training and saving
         K.clear_session()
 
-def _scroll_multilabel_data(queries, fact_values, field_data, maximum_sample_size, show_progress):
+def _scroll_multilabel_data(neurotagger_obj, field_data, show_progress):
+    queries = json.loads(neurotagger_obj.queries)
+    fact_values =  json.loads(neurotagger_obj.fact_values)
+    maximum_sample_size = neurotagger_obj.maximum_sample_size
+    max_seq_len = neurotagger_obj.seq_len
     num_queries = len(queries)
 
     samples = []
@@ -74,7 +78,7 @@ def _scroll_multilabel_data(queries, fact_values, field_data, maximum_sample_siz
         print(f'{i}/{num_queries} tick')        
         show_progress.update_step(f'Scrolling data for facts ({i}/{num_queries})')
         show_progress.update_view(0)
-        query_samples, query_labels, query_ids = _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_progress, fact_values, doc_ids)
+        query_samples, query_labels, query_ids = _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_progress, fact_values, max_seq_len, doc_ids)
         samples += query_samples
         labels += query_labels
         doc_ids += query_ids
@@ -83,7 +87,7 @@ def _scroll_multilabel_data(queries, fact_values, field_data, maximum_sample_siz
 
 
 
-def _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_progress, fact_values, already_processed_ids):
+def _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_progress, fact_values, max_seq_len, already_processed_ids):
     positive_samples = ElasticSearcher(query=query, 
                                        field_data=field_data + ['texta_facts'],
                                        callback_progress=show_progress,
@@ -97,6 +101,8 @@ def _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_pr
     combined_samples = []
     labels = []
     for doc in positive_samples:
+        # Crop document as there is no need for the post-crop data
+        doc = doc[0:max_seq_len]
         combined_doc = ''
         # Features
         for field in field_data:
