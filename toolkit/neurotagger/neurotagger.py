@@ -131,7 +131,9 @@ class NeurotaggerWorker():
         try:
             with os.fdopen(fd, 'w', encoding="utf8") as tmp:
                 # Dump the training samples to the file
-                tmp.write(' \n\n '.join(self.samples))
+                for line in self.samples:
+                    tmp.write(f' \n\n {line}')
+
                 spm.SentencePieceTrainer.train(' '.join([
                     f'--input={temp_path}',
                     f'--max_sentence_length=20480',
