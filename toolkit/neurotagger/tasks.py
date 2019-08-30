@@ -101,8 +101,6 @@ def _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_pr
     combined_samples = []
     labels = []
     for doc in positive_samples:
-        # Crop document as there is no need for the post-crop data
-        doc = doc[0:max_seq_len]
         combined_doc = ''
         # Features
         for field in field_data:
@@ -112,6 +110,8 @@ def _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_pr
                 combined_doc += doc[field] + ' xxtextadocend '
 
         if combined_doc:
+            # Crop document as there is no need for the post-crop data
+            combined_doc = combined_doc[0:max_seq_len]
             combined_samples.append(combined_doc)
             # Add labels only if document included
             doc_facts = set([fact['str_val'] for fact in doc['texta_facts']])
