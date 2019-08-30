@@ -30,4 +30,4 @@ Building Docker with GPU support:
 
 Running Docker with GPU support:
 
-`docker run --gpus all -p 8000:8000 texta-rest:latest`
+`docker run --gpus all -p 8000:8000 texta-rest:gpu-latest`
