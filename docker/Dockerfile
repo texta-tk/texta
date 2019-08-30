@@ -5,6 +5,9 @@ COPY environment.yaml /var/environment.yaml
 RUN conda env create -f /var/environment.yaml
 ENV PATH /opt/conda/envs/texta-rest/bin:$PATH
 
+# Clean conda
+RUN conda clean --all
+
 # Copy project files
 COPY . /var/texta-rest
 
