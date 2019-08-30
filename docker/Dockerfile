@@ -1,4 +1,19 @@
-FROM continuumio/miniconda3:latest
+FROM debian:stretch
+
+RUN set -x \
+    && apt-get update \
+    && apt-get autoremove --purge \
+    && apt-get autoclean \
+    && apt-get install -y --no-install-recommends ca-certificates wget \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and install Miniconda
+RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+RUN sh Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && rm Miniconda3-latest-Linux-x86_64.sh
+
+# Add conda binaries to path
+ENV PATH /opt/conda/bin:$PATH
 
 # Create and activate Conda env
 COPY environment.yaml /var/environment.yaml

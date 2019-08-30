@@ -6,3 +6,4 @@ data/models/*
 data/media/*
 .vscode/*
 *.png
+data-volumes/*
