@@ -62,12 +62,12 @@ class Neurotagger(models.Model):
             new_task = Task.objects.create(neurotagger=instance, status='created')
             instance.task = new_task
             instance.save()
-            from toolkit.neurotagger.tasks import train_neurotagger
+            from toolkit.neurotagger.tasks import neurotagger_train_handler
 
             # If not running tests via python manage.py test
             if not 'test' in sys.argv:
-                train_neurotagger.apply_async(args=(instance.pk,))
+                neurotagger_train_handler.apply_async(args=(instance.pk,))
             else: 
-                train_neurotagger(instance.pk)
+                neurotagger_train_handler(instance.pk)
 
 signals.post_save.connect(Neurotagger.train_neurotagger_model, sender=Neurotagger)
