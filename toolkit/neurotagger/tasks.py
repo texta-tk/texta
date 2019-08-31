@@ -44,7 +44,6 @@ def scroll_data(query, kwargs={}):
     max_seq_len = neurotagger_obj.seq_len
 
     show_progress = None
-    fact_values = neurotagger_obj.fact_values
     doc_ids = []
 
     query_samples, query_labels, query_ids = _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_progress, fact_values, max_seq_len, doc_ids)
@@ -77,8 +76,9 @@ def train_model(scrolled_samples_by_query, kwargs={}):
     multilabel = True
 
     try:
-        label_names = get_label_names(neurotagger_obj)
+        assert len(labels) == len(samples), f'X/y are inconsistent lengths: {len(samples)} != {len(labels)}'
 
+        label_names = get_label_names(neurotagger_obj)
         neurotagger = NeurotaggerWorker(neurotagger_obj.id)
         neurotagger.run(samples, labels, show_progress, label_names, multilabel)
 
