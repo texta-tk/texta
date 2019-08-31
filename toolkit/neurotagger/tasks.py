@@ -66,11 +66,20 @@ def train_model(scrolled_samples_by_query, kwargs={}):
     samples = []
     labels  = []
 
+    # dict to track duplicates
+    seen_doc_ids = {}
+
     for scrolled_samples in scrolled_samples_by_query:
-        # TODO: remove duplicates here
-        # Are we sure that's the correct thing to to anyway?
-        samples += scrolled_samples["query_samples"]
-        labels  += scrolled_samples["query_labels"]
+
+        ###TODO: Why is the doc id list 2x longer?
+        print("#########",len(scrolled_samples["query_samples"]), len(scrolled_samples["query_labels"]), len(scrolled_samples["query_ids"]))
+
+        for i, _ in enumerate(scrolled_samples["query_samples"]):
+            doc_id = scrolled_samples["query_ids"][i]
+            if doc_id not in seen_doc_ids:
+                samples.append(scrolled_samples["query_samples"][i])
+                labels.append(scrolled_samples["query_labels"][i])
+                seen_doc_ids[doc_id] = True
 
     # this temporary i guess?
     multilabel = True
