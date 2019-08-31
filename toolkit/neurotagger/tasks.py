@@ -70,12 +70,7 @@ def train_model(scrolled_samples_by_query, kwargs={}):
     seen_doc_ids = {}
 
     for scrolled_samples in scrolled_samples_by_query:
-
-        ###TODO: Why is the doc id list 2x longer?
-        print("#########",len(scrolled_samples["query_samples"]), len(scrolled_samples["query_labels"]), len(scrolled_samples["query_ids"]))
-
-        for i, _ in enumerate(scrolled_samples["query_samples"]):
-            doc_id = scrolled_samples["query_ids"][i]
+        for i, doc_id in enumerate(scrolled_samples["query_ids"]):
             if doc_id not in seen_doc_ids:
                 samples.append(scrolled_samples["query_samples"][i])
                 labels.append(scrolled_samples["query_labels"][i])
@@ -115,10 +110,7 @@ def _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_pr
                                        scroll_limit=maximum_sample_size,
                                        ignore_ids=already_processed_ids,
                                        )
-
-    positive_samples = list(positive_samples)
-    query_ids = [doc['_id'] for doc in positive_samples]
-
+    query_ids = []
     combined_samples = []
     labels = []
     for doc in positive_samples:
@@ -129,7 +121,6 @@ def _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_pr
                 # Combine data from multiple fields into one doc
                 # separate by newlines and 'xxtextadocend' token
                 combined_doc += doc[field] + ' xxtextadocend '
-
         if combined_doc:
             # Crop document as there is no need for the post-crop data
             combined_doc = combined_doc[0:max_seq_len]
@@ -137,8 +128,8 @@ def _scroll_multilabel_positives(query, maximum_sample_size, field_data, show_pr
             # Add labels only if document included
             doc_facts = set([fact['str_val'] for fact in doc['texta_facts']])
             labels.append([1 if x in doc_facts else 0 for x in fact_values])
-
-
+            # Add doc id
+            query_ids.append(doc['_id'])
     return combined_samples, labels, query_ids
 
 
