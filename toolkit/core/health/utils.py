@@ -1,6 +1,7 @@
 import os
 import requests
-from toolkit.settings import BASE_DIR, MLP_URL
+from toolkit.settings import BASE_DIR, MLP_URL, ES_URL
+from toolkit.elastic.core import ElasticCore
 
 def get_version():
     """
@@ -39,4 +40,19 @@ def get_mlp_status():
             return response.json()['version']
     except:
         return None
+
+
+def get_elastic_status():
+    """
+    Checks Elasticsearch connection status and version.
+    """
+    es_info = {"url": ES_URL, "alive": False}
+    es_core = ElasticCore()
+
+    if es_core.connection:
+        es_info["alive"] = True
+        es_info["cluster_info"] = es_core.es.info()
+
+    return es_info
+
 

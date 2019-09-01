@@ -4,14 +4,15 @@ from keras import backend as K
 from rest_framework import views, status
 from rest_framework.response import Response
 
-from toolkit.elastic.core import ElasticCore
-from toolkit.core.health.utils import get_version, get_cache_status, get_mlp_status
+from toolkit.core.health.utils import get_version, get_cache_status, get_mlp_status, get_elastic_status
 
 class HealthView(views.APIView):
 
     def get(self, request):
         toolkit_status = {}
-        toolkit_status['elastic_alive'] = ElasticCore().connection
+
+        toolkit_status['elastic'] = get_elastic_status()
+
         toolkit_status['mlp_version'] = get_mlp_status()
         toolkit_status['version'] = get_version()
 
