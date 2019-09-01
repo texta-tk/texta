@@ -4,7 +4,7 @@ import matplotlib
 # For non-GUI rendering
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
-from toolkit.utils.plot_utils import save_plot
+from toolkit.tools.plot_utils import save_plot
 import numpy as np
 
 
