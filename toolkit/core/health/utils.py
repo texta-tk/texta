@@ -34,13 +34,17 @@ def get_mlp_status():
     """
     Checks if MLP is available.
     """
+    mlp_info = {"url": MLP_URL, "alive": False}
+
     try:
         response = requests.get(MLP_URL)
         if response.status_code == 200:
-            return response.json()['version']
+            mlp_info["status"] = response.json()
+            mlp_info["alive"] = True
     except:
-        return None
-
+        pass
+    
+    return mlp_info
 
 def get_elastic_status():
     """
@@ -51,7 +55,7 @@ def get_elastic_status():
 
     if es_core.connection:
         es_info["alive"] = True
-        es_info["cluster_info"] = es_core.es.info()
+        es_info["status"] = es_core.es.info()
 
     return es_info
 

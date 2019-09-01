@@ -13,7 +13,7 @@ class HealthView(views.APIView):
 
         toolkit_status['elastic'] = get_elastic_status()
 
-        toolkit_status['mlp_version'] = get_mlp_status()
+        toolkit_status['mlp'] = get_mlp_status()
         toolkit_status['version'] = get_version()
 
         disk_total, disk_used, disk_free = shutil.disk_usage("/")
