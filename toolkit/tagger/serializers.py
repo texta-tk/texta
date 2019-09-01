@@ -131,14 +131,14 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
         path = re.sub(r'tagger_groups/(\d+)*\/*$', 'taggers/', request.path)
         tagger_url_prefix = request.build_absolute_uri(path)
         tagger_objects = TaggerGroup.objects.get(id=obj.id).taggers.all()
-        return [{'tag': tagger.description, 'id': tagger.id, 'url': f'{tagger_url_prefix}{tagger.id}/'} for tagger in tagger_objects]
+        return [{'tag': tagger.description, 'id': tagger.id, 'url': f'{tagger_url_prefix}{tagger.id}/', 'status': tagger.task.status} for tagger in tagger_objects]
 
     def get_tagger_status(self, obj):
         tagger_objects = TaggerGroup.objects.get(id=obj.id).taggers
         tagger_status = {'total': len(tagger_objects.all()),
                          'completed': len(tagger_objects.filter(task__status='completed')),
                          'training': len(tagger_objects.filter(task__status='running')),
-                         'queued': len(tagger_objects.filter(task__status='created')),
+                         'created': len(tagger_objects.filter(task__status='created')),
                          'failed': len(tagger_objects.filter(task__status='failed'))}
         return tagger_status
 
