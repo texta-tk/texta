@@ -1,6 +1,6 @@
 import os
-
-from toolkit.settings import BASE_DIR
+import requests
+from toolkit.settings import BASE_DIR, MLP_URL
 
 def get_version():
     """
@@ -27,3 +27,16 @@ def get_cache_status():
             'embedding_cluster': len(cluster_cache.models.keys()),
             'phraser': len(phraser_cache.models.keys()),
             'tagger': len(tagger_cache.models.keys())}
+
+
+def get_mlp_status():
+    """
+    Checks if MLP is available.
+    """
+    try:
+        response = requests.get(MLP_URL)
+        if response.status_code == 200:
+            return response.json()['version']
+    except:
+        return None
+

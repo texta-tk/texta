@@ -176,6 +176,8 @@ STATIC_ROOT =  os.path.join(BASE_DIR, 'static')
 # ELASTICSEARCH
 ES_URL = os.getenv('TEXTA_ES_URL', 'http://localhost:9200')
 
+# MLP
+MLP_URL = os.getenv('TEXTA_MLP_URL', 'http://mlp-dev.texta.ee:5000')
 
 # CELERY
 BROKER_URL = os.getenv('TEXTA_REDIS_URL', 'redis://localhost:6379')

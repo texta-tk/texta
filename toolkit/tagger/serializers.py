@@ -16,10 +16,14 @@ from toolkit.serializer_constants import ProjectResourceUrlSerializer
 
 class TextSerializer(serializers.Serializer):
     text = serializers.CharField()
+    lemmatize = serializers.BooleanField(default=False,
+        help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
 
 
 class DocSerializer(serializers.Serializer):
     doc = serializers.JSONField()
+    lemmatize = serializers.BooleanField(default=False,
+        help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
 
 
 class FeatureListSerializer(serializers.Serializer):
@@ -28,37 +32,41 @@ class FeatureListSerializer(serializers.Serializer):
 
 class TextGroupSerializer(serializers.Serializer):
     text = serializers.CharField(help_text=f'Raw text input.')
+    lemmatize = serializers.BooleanField(default=False,
+        help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
     hybrid = serializers.BooleanField(default=True, 
-                                      help_text=f'Use hybrid tagging. Default: True')
+        help_text=f'Use hybrid tagging. Default: True')
     show_candidates = serializers.BooleanField(default=False, 
-                                      help_text=f'Show tagger candidates prior to supervised filtering. Default: False')
+        help_text=f'Show tagger candidates prior to supervised filtering. Default: False')
     num_candidates = serializers.IntegerField(default=DEFAULT_NUM_CANDIDATES, 
-                                            help_text=f'Number of candidates used in unsupervised prefiltering. Default: {DEFAULT_NUM_CANDIDATES}')
+        help_text=f'Number of candidates used in unsupervised prefiltering. Default: {DEFAULT_NUM_CANDIDATES}')
 
 
 class DocGroupSerializer(serializers.Serializer):
     doc = serializers.JSONField(help_text=f'Document in JSON format.')
+    lemmatize = serializers.BooleanField(default=False,
+        help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
     hybrid = serializers.BooleanField(default=True, 
-                                      help_text=f'Use hybrid tagging. Default: True')
+        help_text=f'Use hybrid tagging. Default: True')
     show_candidates = serializers.BooleanField(default=False, 
-                                      help_text=f'Show tagger candidates prior to supervised filtering. Default: False')
+        help_text=f'Show tagger candidates prior to supervised filtering. Default: False')
     num_candidates = serializers.IntegerField(default=DEFAULT_NUM_CANDIDATES, 
-                                            help_text=f'Number of candidates used in unsupervised prefiltering. Default: {DEFAULT_NUM_CANDIDATES}')
+        help_text=f'Number of candidates used in unsupervised prefiltering. Default: {DEFAULT_NUM_CANDIDATES}')
 
 
 class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
     description = serializers.CharField(help_text=f'Description for the Tagger. Will be used as tag.')
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
     vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices(),
-                                         help_text=f'Vectorizer algorithm to create document vectors. NB! HashingVectorizer does not support feature name extraction!')
+        help_text=f'Vectorizer algorithm to create document vectors. NB! HashingVectorizer does not support feature name extraction!')
     classifier = serializers.ChoiceField(choices=get_classifier_choices(), 
-                                         help_text=f'Classification algorithm used in the model.')
+        help_text=f'Classification algorithm used in the model.')
     negative_multiplier = serializers.IntegerField(default=DEFAULT_NEGATIVE_MULTIPLIER,
-                                                   help_text=f'Multiplies the size of positive samples to determine negative example set size. Default: {DEFAULT_NEGATIVE_MULTIPLIER}')
+        help_text=f'Multiplies the size of positive samples to determine negative example set size. Default: {DEFAULT_NEGATIVE_MULTIPLIER}')
     maximum_sample_size = serializers.IntegerField(default=DEFAULT_MAX_SAMPLE_SIZE,
-                                                   help_text=f'Maximum number of documents used to build a model. Default: {DEFAULT_MAX_SAMPLE_SIZE}')
+        help_text=f'Maximum number of documents used to build a model. Default: {DEFAULT_MAX_SAMPLE_SIZE}')
     feature_selector = serializers.ChoiceField(choices=get_feature_selector_choices(),
-                                               help_text=f'Feature selection algorithm to decrease the number of features.')
+        help_text=f'Feature selection algorithm to decrease the number of features.')
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
     stop_words = serializers.SerializerMethodField()
