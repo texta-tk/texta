@@ -25,5 +25,5 @@ class UserProfileSignalsAndViewsTests(APITestCase):
         self.assertTrue('memory' in response.data)
         self.assertTrue('disk' in response.data)
         self.assertTrue('cpu' in response.data)
-        self.assertTrue('elastic_alive' in response.data)
+        self.assertTrue('elastic' in response.data)
         self.assertTrue('version' in response.data)
