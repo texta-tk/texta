@@ -7,7 +7,7 @@ from keras import backend as K
 
 from toolkit.core.task.models import Task
 from toolkit.neurotagger.models import Neurotagger
-from toolkit.settings import NUM_WORKERS, MODELS_DIR
+from toolkit.settings import MODELS_DIR
 from toolkit.embedding.phraser import Phraser
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.tools.show_progress import ShowProgress
