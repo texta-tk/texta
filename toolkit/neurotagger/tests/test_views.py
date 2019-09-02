@@ -13,6 +13,7 @@ from toolkit.core.task.models import Task
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 from toolkit.neurotagger import choices
 from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.neurotagger.tasks import neurotagger_train_handler
 
 
 
@@ -54,6 +55,8 @@ class NeurotaggerViewTests(APITestCase):
         # Check if Neurotagger gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created_neurotagger = Neurotagger.objects.get(id=response.data['id'])
+        # Apply Celery task for tests
+        neurotagger_train_handler(response.data['id'], testing=True).apply()
 
         # Test the tagging endpoints 
         self.run_tag_text(tagger_id=created_neurotagger.id)
@@ -66,7 +69,6 @@ class NeurotaggerViewTests(APITestCase):
             self.addCleanup(remove_file, json.loads(created_neurotagger.location)['tokenizer_model'])
             self.addCleanup(remove_file, json.loads(created_neurotagger.location)['tokenizer_vocab'])
             
-
         if created_neurotagger.plot:
             remove_file(created_neurotagger.plot.path)
         if created_neurotagger.model_plot:

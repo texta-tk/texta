@@ -13,6 +13,7 @@ class Task(models.Model):
 
     status = models.CharField(max_length=MAX_DESC_LEN)
     progress = models.FloatField(default=0.0)
+    num_processed = models.IntegerField(default=0)
     step = models.CharField(max_length=MAX_DESC_LEN, default='')
     errors = models.CharField(max_length=MAX_DESC_LEN*100, default='')
     time_started = models.DateTimeField(auto_now_add=True)
@@ -30,4 +31,15 @@ class Task(models.Model):
         self.progress = progress
         self.step = step
         self.last_update = now()
+        self.save()
+
+    def update_process_iteration(self, total, step_prefix, num_processed=False):
+        '''Step based process reporting'''
+        # # Optionally override current num_processed
+        # self.num_processed = num_processed if num_processed else self.num_processed
+        # Update step
+        self.num_processed += 1
+        # Calculate percentage
+        self.progress = (self.num_processed / total) * 100
+        self.step = f'{step_prefix} (progress: {self.num_processed}/{total})'
         self.save()
