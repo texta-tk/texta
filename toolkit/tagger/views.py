@@ -2,7 +2,6 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit import pagination
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.query import Query
@@ -54,7 +53,7 @@ def validate_input_document(input_document, field_data):
     # check if any values present in the document
     if not [v for v in input_document.values() if v]:
         return None, Response({'error': 'no values in the input document.'}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     return input_document, None
 
 
@@ -314,7 +313,6 @@ class TaggerViewSet(viewsets.ModelViewSet):
 class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
     queryset = TaggerGroup.objects.all()
     serializer_class = TaggerGroupSerializer
-    pagination_class = pagination.TaggerGroupsPagination
     permission_classes = (
         permissions.IsAuthenticated,
         ProjectResourceAllowed,
@@ -449,7 +447,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
                     else:
                         num_phrasers_errors += 1
             else:
-                num_taggers_errors += 1  
+                num_taggers_errors += 1
         return Response({'loaded': {'phraser': num_phrasers, 'tagger': num_taggers}, 'error_loading': {'tagger': num_taggers_errors, 'phraser': num_phrasers_errors}}, status=status.HTTP_200_OK)
 
 
