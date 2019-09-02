@@ -25,6 +25,7 @@ from toolkit.core.task.models import Task
 from toolkit.tools.mlp_lemmatizer import MLPLemmatizer
 
 import json
+import re
 
 # initialize model cache for taggers & phrasers
 model_cache = ModelCache(TextTagger)
@@ -397,6 +398,20 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
 
 
     @action(detail=True, methods=['get', 'post'])
+    def models_list(self, request, pk=None, project_pk=None):
+        """
+        API endpoint for listing tagger objects connected to tagger group instance.
+        """
+
+        path = re.sub(r'tagger_groups/(\d+)*\/*$', 'taggers/', request.path)
+        tagger_url_prefix = request.build_absolute_uri(path)
+        tagger_objects = TaggerGroup.objects.get(id=pk).taggers.all()
+        response = [{'tag': tagger.description, 'id': tagger.id, 'url': f'{tagger_url_prefix}{tagger.id}/', 'status': tagger.task.status} for tagger in tagger_objects]
+
+        return Response(response, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['get', 'post'])
     def models_retrain(self, request, pk=None, project_pk=None):
         """
         API endpoint for retraining tagger model.
@@ -416,18 +431,26 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         """
         API endpoint for loading all relevant tagger models.
         """
+        num_taggers_errors = 0
+        num_phrasers_errors = 0
         num_phrasers = 0
         num_taggers = 0
         instance = self.get_object()
         for tagger in instance.taggers.all():
             # load tagger model
-            model_cache.get_model(tagger.pk)
-            num_taggers += 1
-            if tagger.embedding:
-                # load phraser model
-                phraser_cache.get_model(tagger.embedding.pk)
-                num_phrasers += 1
-        return Response({'loaded': {'phraser': num_phrasers, 'tagger': num_taggers}}, status=status.HTTP_200_OK)
+            loaded = model_cache.get_model(tagger.pk)
+            if loaded:
+                num_taggers += 1
+                if tagger.embedding:
+                    # load phraser model
+                    phraser_loaded = phraser_cache.get_model(tagger.embedding.pk)
+                    if phraser_loaded:
+                        num_phrasers += 1
+                    else:
+                        num_phrasers_errors += 1
+            else:
+                num_taggers_errors += 1  
+        return Response({'loaded': {'phraser': num_phrasers, 'tagger': num_taggers}, 'error_loading': {'tagger': num_taggers_errors, 'phraser': num_phrasers_errors}}, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['get','post'], serializer_class=TextGroupSerializer)
@@ -567,21 +590,21 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
 
             # load tagger model
             tagger = model_cache.get_model(tagger_id)
-            tagger.add_text_processor(text_processor)
+            if tagger:
+                tagger.add_text_processor(text_processor)
+                if input_type == 'doc':
+                    tagger_result = tagger.tag_doc(tagger_input)
+                else:
+                    tagger_result = tagger.tag_text(tagger_input)
+                decision = bool(tagger_result[0])
+                tagger_response = {'tag': tagger.description, 'probability': tagger_result[1], 'tagger_id': tagger_id}
 
-            if input_type == 'doc':
-                tagger_result = tagger.tag_doc(tagger_input)
-            else:
-                tagger_result = tagger.tag_text(tagger_input)
-            decision = bool(tagger_result[0])
-            tagger_response = {'tag': tagger.description, 'probability': tagger_result[1], 'tagger_id': tagger_id}
-
-            if not show_candidates and decision:
-                # filter tags if omitted
-                tags.append(tagger_response)
-            elif show_candidates:
-                # show tag candidates if asked
-                tagger_response['decision'] = decision
-                tags.append(tagger_response)
+                if not show_candidates and decision:
+                    # filter tags if omitted
+                    tags.append(tagger_response)
+                elif show_candidates:
+                    # show tag candidates if asked
+                    tagger_response['decision'] = decision
+                    tags.append(tagger_response)
 
         return sorted(tags, key=lambda k: k['probability'], reverse=True)

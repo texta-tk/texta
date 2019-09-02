@@ -123,21 +123,19 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     tagger_status = serializers.SerializerMethodField()
     tagger_statistics = serializers.SerializerMethodField()
     url = serializers.SerializerMethodField()
-    taggers = serializers.SerializerMethodField()
 
     class Meta:
         model = TaggerGroup
         fields = ('id', 'url', 'description', 'fact_name', 'minimum_sample_size', 
-                  'taggers', 'tagger_status', 'tagger', 'tagger_statistics')
+                  'tagger_status', 'tagger', 'tagger_statistics')
                   
-        read_only_fields = ('taggers',)
 
-    def get_taggers(self, obj):
-        request = self.context['request']
-        path = re.sub(r'tagger_groups/(\d+)*\/*$', 'taggers/', request.path)
-        tagger_url_prefix = request.build_absolute_uri(path)
-        tagger_objects = TaggerGroup.objects.get(id=obj.id).taggers.all()
-        return [{'tag': tagger.description, 'id': tagger.id, 'url': f'{tagger_url_prefix}{tagger.id}/', 'status': tagger.task.status} for tagger in tagger_objects]
+    #def get_taggers(self, obj):
+    #    request = self.context['request']
+    #    path = re.sub(r'tagger_groups/(\d+)*\/*$', 'taggers/', request.path)
+    #    tagger_url_prefix = request.build_absolute_uri(path)
+    #    tagger_objects = TaggerGroup.objects.get(id=obj.id).taggers.all()
+    #    return [{'tag': tagger.description, 'id': tagger.id, 'url': f'{tagger_url_prefix}{tagger.id}/', 'status': tagger.task.status} for tagger in tagger_objects]
 
     def get_tagger_status(self, obj):
         tagger_objects = TaggerGroup.objects.get(id=obj.id).taggers
