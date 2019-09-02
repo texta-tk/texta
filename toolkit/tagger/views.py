@@ -374,14 +374,12 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-    def get_tag_candidates(self, field_paths, text, hybrid=True, n_candidates=30):
+    def get_tag_candidates(self, field_paths, text, n_candidates=30):
         """
         Finds frequent tags from documents similar to input document.
         Returns empty list if hybrid option false.
         """
-        if not hybrid:
-            return []
-
+        # create es aggregator object
         es_a = ElasticAggregator()
         es_a.update_field_data(field_paths)
 
@@ -476,7 +474,6 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data,
                                                  text,
-                                                 hybrid=serializer.validated_data['hybrid'],
                                                  n_candidates=serializer.validated_data['num_candidates'])
 
         # get tags

@@ -34,8 +34,6 @@ class TextGroupSerializer(serializers.Serializer):
     text = serializers.CharField(help_text=f'Raw text input.')
     lemmatize = serializers.BooleanField(default=False,
         help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
-    hybrid = serializers.BooleanField(default=True, 
-        help_text=f'Use hybrid tagging. Default: True')
     show_candidates = serializers.BooleanField(default=False, 
         help_text=f'Show tagger candidates prior to supervised filtering. Default: False')
     num_candidates = serializers.IntegerField(default=DEFAULT_NUM_CANDIDATES, 
