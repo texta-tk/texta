@@ -67,7 +67,6 @@ class NeurotaggerWorker():
         self.model_arch = None
         self.validation_split = None
         self.num_epochs = None
-        self.multilabel = None
         self.bs = 32
 
         # Derived params
@@ -89,11 +88,9 @@ class NeurotaggerWorker():
         self.model = None
 
 
-    def _set_up_data(self, samples, labels, label_names, show_progress, multilabel):
+    def _set_up_data(self, samples, labels, label_names, show_progress):
         self.neurotagger_obj = Neurotagger.objects.get(pk=self.neurotagger_id)
         self.show_progress = show_progress
-        self.multilabel = multilabel
-
 
         self.model_arch = self.neurotagger_obj.model_architecture
         self.validation_split = self.neurotagger_obj.validation_split
@@ -110,8 +107,8 @@ class NeurotaggerWorker():
         self.show_progress = show_progress
 
 
-    def run(self, samples, labels, show_progress, label_names, multilabel):
-        self._set_up_data(samples, labels, label_names, show_progress, multilabel)
+    def run(self, samples, labels, show_progress, label_names):
+        self._set_up_data(samples, labels, label_names, show_progress)
         self._process_data()
         history = self._train_model()
         self._plot_model(history)
@@ -183,11 +180,7 @@ class NeurotaggerWorker():
     
     def _train_model(self):
         # Get and compile model
-        loss = 'binary_crossentropy' if self.multilabel else 'sparse_categorical_crossentropy'
-        activation = 'sigmoid' if self.multilabel else 'softmax'
-        self.model = NeuroModels().get_model(self.model_arch,
-                                             self.vocab_size, self.seq_len, self.num_classes, activation,
-                                             loss=loss)
+        self.model = NeuroModels().get_model(self.model_arch, self.vocab_size, self.seq_len, self.num_classes)
         
         # Training callback which shows progress to the user
         trainingProgress = TrainingProgressCallback(self.num_epochs, self.show_progress)

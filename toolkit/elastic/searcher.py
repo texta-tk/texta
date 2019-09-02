@@ -24,7 +24,7 @@ class ElasticSearcher:
                        output=OUT_DOC,
                        callback_progress=None,
                        scroll_limit=None,
-                       ignore_ids=[], 
+                       ignore_ids=set(), 
                        text_processor=None):
         """
         Output options: document (default), text (lowered & stopwords removed), sentences (text + line splitting), raw (raw elastic output)

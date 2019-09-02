@@ -20,9 +20,7 @@ class Neurotagger(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
 
     fields = models.TextField(default=json.dumps([]))
-    queries = models.TextField(default=json.dumps([EMPTY_QUERY]))
-    # To give names to labels when training on queries, if not given, autogenerate
-    query_names = models.TextField(blank=True)
+    queries = models.TextField(default=json.dumps([]))
     fact_name = models.CharField(max_length=MAX_DESC_LEN, blank=True)
     fact_values = models.TextField(blank=True)
 
@@ -65,7 +63,7 @@ class Neurotagger(models.Model):
             from toolkit.neurotagger.tasks import train_neurotagger
 
             # If not running tests via python manage.py test
-            if not 'test' in sys.argv:
+            if not True:#'test' in sys.argv:
                 train_neurotagger.apply_async(args=(instance.pk,))
             else: 
                 train_neurotagger(instance.pk)

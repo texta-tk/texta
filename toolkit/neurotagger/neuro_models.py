@@ -38,19 +38,18 @@ class NeuroModels():
         }
 
 
-    def get_model(self, model_arch, vocab_sz, seq_len, num_cls, activation,
-                  loss='binary_crossentropy', optimizer='adam', metrics=['accuracy']):
+    def get_model(self, model_arch, vocab_sz, seq_len, num_cls):
 
         if model_arch in self.models_map:
-            model = self.models_map[model_arch](vocab_sz, seq_len, num_cls, activation)
-            model = self._compile_model(model, loss=loss, optimizer=optimizer, metrics=metrics)
+            model = self.models_map[model_arch](vocab_sz, num_cls, seq_len)
+            model = self._compile_model(model)
             return model
         else:
             raise ValueError('"{}" is not a valid model architecture!'.format(model_arch))
 
     # Simplier models
     @staticmethod
-    def fnn(vocab_sz, seq_len, num_cls, activation):
+    def fnn(vocab_sz, num_cls, seq_len):
         embed_dim = 300
         model = Sequential()
         model.add(Embedding(vocab_sz, embed_dim, input_length=seq_len))
@@ -58,13 +57,13 @@ class NeuroModels():
         model.add(Dropout(0.5))
         model.add(Dense(32, activation='relu'))
         model.add(Dropout(0.5))
-        model.add(Dense(num_cls, activation=activation))
+        model.add(Dense(num_cls, activation='sigmoid'))
 
         return model
 
 
     @staticmethod
-    def cnn(vocab_sz, seq_len, num_cls, activation):
+    def cnn(vocab_sz, num_cls, seq_len):
         embed_dim = 200
         model = Sequential()
         model.add(Embedding(vocab_sz, embed_dim, input_length=seq_len))
@@ -72,40 +71,40 @@ class NeuroModels():
         model.add(Dropout(0.5))
         model.add(GlobalAveragePooling1D())
         model.add(Dense(20, activation='relu'))
-        model.add(Dense(num_cls, activation=activation))
+        model.add(Dense(num_cls, activation='sigmoid'))
 
         return model
 
 
     @staticmethod
-    def gru(vocab_sz, seq_len, num_cls, activation):
+    def gru(vocab_sz, num_cls, seq_len):
         embed_dim = 200
         n_hidden = 32
         model = Sequential()
         model.add(Embedding(vocab_sz, embed_dim, input_length=seq_len))
         model.add(CuDNNGRU(n_hidden,))
         model.add(Dropout(0.5))
-        model.add(Dense(num_cls, activation=activation))
+        model.add(Dense(num_cls, activation='sigmoid'))
 
         return model
 
 
     @staticmethod
-    def lstm(vocab_sz, seq_len, num_cls, activation):
+    def lstm(vocab_sz, num_cls, seq_len):
         embed_dim = 200
         n_hidden = 32
         model = Sequential()
         model.add(Embedding(vocab_sz, embed_dim, input_length=seq_len))
         model.add(CuDNNLSTM(n_hidden))
         model.add(Dropout(0.5))
-        model.add(Dense(num_cls, activation=activation))
+        model.add(Dense(num_cls, activation='sigmoid'))
 
         return model
 
 
     # Combined models
     @staticmethod
-    def gruCNN(vocab_sz, seq_len, num_cls, activation):
+    def gruCNN(vocab_sz, num_cls, seq_len):
         embed_dim = 200
         model = Sequential()
         model.add(Embedding(vocab_sz, embed_dim, input_length=seq_len))
@@ -113,13 +112,13 @@ class NeuroModels():
         model.add(Dropout(0.5))
         model.add(CuDNNGRU(32))
         model.add(Dropout(0.5))
-        model.add(Dense(num_cls, activation=activation))
+        model.add(Dense(num_cls, activation='sigmoid'))
 
         return model
 
 
     @staticmethod
-    def lstmCNN(vocab_sz, seq_len, num_cls, activation):
+    def lstmCNN(vocab_sz, num_cls, seq_len):
         embed_dim = 200
         model = Sequential()
         model.add(Embedding(vocab_sz, embed_dim, input_length=seq_len))
@@ -127,13 +126,13 @@ class NeuroModels():
         model.add(Dropout(0.5))
         model.add(CuDNNLSTM(32))
         model.add(Dropout(0.5))
-        model.add(Dense(num_cls, activation=activation))
+        model.add(Dense(num_cls, activation='sigmoid'))
 
         return model
 
 
     @staticmethod
-    def _compile_model(model, loss, optimizer, metrics):
+    def _compile_model(model, loss='binary_crossentropy', optimizer='adam', metrics=['accuracy']):
         # Activate multi_gpu_model if more than 1 gpu found
         gpus = K.tensorflow_backend._get_available_gpus()
         if len(gpus) > 1:

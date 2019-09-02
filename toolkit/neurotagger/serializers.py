@@ -22,13 +22,7 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResou
         allow_blank=True
     )
 
-    queries = serializers.JSONField(help_text='JSON list of strings of Elasticsearch queries to train on', required=False)
-
-    query_names = serializers.JSONField(help_text=
-        "Label names for queries, if training on queries. If not given, in that case defaults to ['query_N']",
-        required=False,
-    )
-
+    queries = serializers.JSONField(help_text='JSON list of strings of Elasticsearch queries to train on', read_only=True)
 
     model_architecture = serializers.ChoiceField(choices=choices.model_arch_choices)
     seq_len = serializers.IntegerField(default=choices.DEFAULT_SEQ_LEN, help_text=f'Default: {choices.DEFAULT_SEQ_LEN}')
@@ -52,7 +46,7 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResou
 
     class Meta:
         model = Neurotagger
-        fields = ('url', 'id', 'description', 'project', 'author', 'queries', 'query_names', 'validation_split', 'score_threshold',
+        fields = ('url', 'id', 'description', 'project', 'author', 'queries', 'validation_split', 'score_threshold',
                   'fields', 'fields_parsed', 'model_architecture', 'seq_len', 'maximum_sample_size', 'negative_multiplier',
                   'location', 'num_epochs', 'vocab_size', 'plot', 'task', 'validation_accuracy', 'training_accuracy', 'fact_values',
                   'training_loss', 'validation_loss', 'model_plot', 'result_json', 'fact_name', 'min_fact_doc_count', 'max_fact_doc_count')
