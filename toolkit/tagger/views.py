@@ -22,8 +22,10 @@ from toolkit import permissions as toolkit_permissions
 from toolkit.view_constants import TagLogicViews
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.core.task.models import Task
+from toolkit.tools.mlp_lemmatizer import MLPLemmatizer
 
 import json
+import re
 
 # initialize model cache for taggers & phrasers
 model_cache = ModelCache(TextTagger)
@@ -38,6 +40,22 @@ def get_payload(request):
     else:
         data = {}
     return data
+
+
+def validate_input_document(input_document, field_data):
+    # check if document exists and is a dict
+    if not input_document or not isinstance(input_document, dict):
+        return None, Response({'error': 'no input document (dict) provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # check if fields match
+    if set(field_data) != set(input_document.keys()):
+        return None, Response({'error': 'document fields do not match. Required keys: {}'.format(field_data)}, status=status.HTTP_400_BAD_REQUEST)
+
+    # check if any values present in the document
+    if not [v for v in input_document.values() if v]:
+        return None, Response({'error': 'no values in the input document.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    return input_document, None
 
 
 class TaggerViewSet(viewsets.ModelViewSet):
@@ -208,17 +226,18 @@ class TaggerViewSet(viewsets.ModelViewSet):
         if not tagger_object.location:
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # create text processor object for tagger
-        stop_words = json.loads(tagger_object.stop_words)
-        if tagger_object.embedding:
-            phraser = phraser_cache.get_model(tagger_object.embedding.pk)
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words)
-        else:
-            text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
+        # by default, lemmatizer is disabled
+        lemmatizer = None
+
+        # create lemmatizer if needed
+        if serializer.validated_data['lemmatize'] == True:
+            lemmatizer = MLPLemmatizer(lite=True)
+            # check if lemmatizer available
+            if not lemmatizer.status:
+                return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # apply tagger
-        tagger_id = tagger_object.pk
-        tagger_response = self.apply_tagger(tagger_id, serializer.validated_data['text'], input_type='text', text_processor=text_processor)
+        tagger_response = self.apply_tagger(tagger_object, serializer.validated_data['text'], input_type='text', lemmatizer=lemmatizer)
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
@@ -241,27 +260,43 @@ class TaggerViewSet(viewsets.ModelViewSet):
         if not tagger_object.location:
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # check if fields match
-        field_path_list = json.loads(tagger_object.fields)
-        if set(field_path_list) != set(serializer.validated_data['doc'].keys()):
-            return Response({'error': 'document fields do not match. Required keys: {}'.format(field_path_list)}, status=status.HTTP_400_BAD_REQUEST)
+        # declare input_document variable
+        input_document = serializer.validated_data['doc']
 
-        # create text processor object for tagger
-        stop_words = json.loads(tagger_object.stop_words)
-        if tagger_object.embedding:
-            phraser = phraser_cache.get_model(tagger_object.embedding.pk)
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words)
-        else:
-            text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
+        # load field data
+        tagger_field_data = json.loads(tagger_object.fields)
+
+        # validate input document
+        input_document, error_response = validate_input_document(input_document, tagger_field_data)
+        if error_response:
+            return error_response
+
+        # by default, lemmatizer is disabled
+        lemmatizer = False
+
+        # lemmatize if needed
+        if serializer.validated_data['lemmatize'] == True:
+            lemmatizer = MLPLemmatizer(lite=True)
+            # check if lemmatization available
+            if not lemmatizer.status:
+                return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # apply tagger
-        tagger_id = tagger_object.pk
-        tagger_response = self.apply_tagger(tagger_id, serializer.validated_data['doc'], input_type='doc', text_processor=text_processor)
+        tagger_response = self.apply_tagger(tagger_object, input_document, input_type='doc', lemmatizer=lemmatizer)
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
-    def apply_tagger(self, tagger_id, tagger_input, input_type='text', text_processor=None):
-        tagger = model_cache.get_model(tagger_id)
+    def apply_tagger(self, tagger_object, tagger_input, input_type='text', phraser=None, lemmatizer=None):
+        # create text processor object for tagger
+        stop_words = json.loads(tagger_object.stop_words)
+
+        if tagger_object.embedding:
+            phraser = phraser_cache.get_model(tagger_object.embedding.pk)
+            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
+        else:
+            text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
+
+        tagger = model_cache.get_model(tagger_object.id)
         tagger.add_text_processor(text_processor)
 
         if input_type == 'doc':
@@ -340,14 +375,12 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-    def get_tag_candidates(self, field_paths, text, hybrid=True, n_candidates=30):
+    def get_tag_candidates(self, field_paths, text, n_candidates=30):
         """
         Finds frequent tags from documents similar to input document.
         Returns empty list if hybrid option false.
         """
-        if not hybrid:
-            return []
-
+        # create es aggregator object
         es_a = ElasticAggregator()
         es_a.update_field_data(field_paths)
 
@@ -362,6 +395,20 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         # perform aggregation to find frequent tags
         tag_candidates = es_a.facts(filter_by_fact_name=self.get_object().fact_name, size=n_candidates)
         return tag_candidates
+
+
+    @action(detail=True, methods=['get', 'post'])
+    def models_list(self, request, pk=None, project_pk=None):
+        """
+        API endpoint for listing tagger objects connected to tagger group instance.
+        """
+
+        path = re.sub(r'tagger_groups/(\d+)*\/*$', 'taggers/', request.path)
+        tagger_url_prefix = request.build_absolute_uri(path)
+        tagger_objects = TaggerGroup.objects.get(id=pk).taggers.all()
+        response = [{'tag': tagger.description, 'id': tagger.id, 'url': f'{tagger_url_prefix}{tagger.id}/', 'status': tagger.task.status} for tagger in tagger_objects]
+
+        return Response(response, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['get', 'post'])
@@ -384,18 +431,26 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         """
         API endpoint for loading all relevant tagger models.
         """
+        num_taggers_errors = 0
+        num_phrasers_errors = 0
         num_phrasers = 0
         num_taggers = 0
         instance = self.get_object()
         for tagger in instance.taggers.all():
             # load tagger model
-            model_cache.get_model(tagger.pk)
-            num_taggers += 1
-            if tagger.embedding:
-                # load phraser model
-                phraser_cache.get_model(tagger.embedding.pk)
-                num_phrasers += 1
-        return Response({'loaded': {'phraser': num_phrasers, 'tagger': num_taggers}}, status=status.HTTP_200_OK)
+            loaded = model_cache.get_model(tagger.pk)
+            if loaded:
+                num_taggers += 1
+                if tagger.embedding:
+                    # load phraser model
+                    phraser_loaded = phraser_cache.get_model(tagger.embedding.pk)
+                    if phraser_loaded:
+                        num_phrasers += 1
+                    else:
+                        num_phrasers_errors += 1
+            else:
+                num_taggers_errors += 1  
+        return Response({'loaded': {'phraser': num_phrasers, 'tagger': num_taggers}, 'error_loading': {'tagger': num_taggers_errors, 'phraser': num_phrasers_errors}}, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['get','post'], serializer_class=TextGroupSerializer)
@@ -414,21 +469,38 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
 
         # check if any of the models ready
         if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
-            return Response({'error': 'models doe not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'models do not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve field data from the first element
         # we can do that safely because all taggers inside
         # hybrid tagger instance are trained on same fields
         hybrid_tagger_field_data = json.loads(hybrid_tagger_object.taggers.first().fields)
 
+        # declare text variable
+        text = serializer.validated_data['text']
+
+        # by default, lemmatizer is disabled
+        lemmatizer = False
+
+        # lemmatize if needed
+        if serializer.validated_data['lemmatize'] == True:
+            lemmatizer = MLPLemmatizer(lite=True)
+            # check if lemmatization available
+            if not lemmatizer.status:
+                return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # lemmatize text
+            text = lemmatizer.lemmatize(text)
+            # check if any non stop words left
+            if not text:
+                return Response({'error': 'no words left after lemmatization. did your request contain only stop words?'}, status=status.HTTP_400_BAD_REQUEST)
+
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data,
-                                                 serializer.validated_data['text'],
-                                                 hybrid=serializer.validated_data['hybrid'],
+                                                 text,
                                                  n_candidates=serializer.validated_data['num_candidates'])
 
         # get tags
-        tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, serializer.validated_data['text'], input_type='text', show_candidates=serializer.validated_data['show_candidates'])
+        tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, text, input_type='text', show_candidates=serializer.validated_data['show_candidates'])
 
         return Response(tags, status=status.HTTP_200_OK)
 
@@ -456,22 +528,48 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         # hybrid tagger instance are trained on same fields
         hybrid_tagger_field_data = json.loads(hybrid_tagger_object.taggers.first().fields)
 
-        # check if fields match
-        if set(hybrid_tagger_field_data) != set(serializer.validated_data['doc'].keys()):
-            return Response({'error': 'document fields do not match. Required keys: {}'.format(hybrid_tagger_field_data)}, status=status.HTTP_400_BAD_REQUEST)
+        # declare input_document variable
+        input_document = serializer.validated_data['doc']
+
+        # validate input document
+        input_document, error_response = validate_input_document(input_document, hybrid_tagger_field_data)
+        if error_response:
+            return error_response
+
+        # combine document field values into one string
+        combined_texts = '\n'.join(input_document.values())
+
+        # by default, lemmatizer is disabled
+        lemmatizer = False
+
+        # lemmatize if needed
+        if serializer.validated_data['lemmatize'] == True:
+            lemmatizer = MLPLemmatizer(lite=True)
+            # check if lemmatization available
+            if not lemmatizer.status:
+                return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # lemmatize text
+            combined_texts = lemmatizer.lemmatize(combined_texts)
+            # check if any non stop words left
+            if not combined_texts:
+                return Response({'error': 'no words left after lemmatization. did your request contain only stop words?'}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve tag candidates
-        combined_texts = ' '.join(serializer.validated_data['doc'].values())
         tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data,
                                                  combined_texts,
                                                  n_candidates=serializer.validated_data['num_candidates'])
 
         # get tags
-        tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, serializer.validated_data['doc'], input_type='doc', show_candidates=serializer.validated_data['show_candidates'])
+        tags = self.apply_taggers(hybrid_tagger_object,
+                                  tag_candidates,
+                                  serializer.validated_data['doc'],
+                                  input_type='doc',
+                                  show_candidates=serializer.validated_data['show_candidates'],
+                                  lemmatizer=lemmatizer)
         return Response(tags, status=status.HTTP_200_OK)
 
 
-    def apply_taggers(self, hybrid_tagger_object, tag_candidates, tagger_input, input_type='text', show_candidates=False):
+    def apply_taggers(self, hybrid_tagger_object, tag_candidates, tagger_input, input_type='text', show_candidates=False, lemmatizer=None):
         # filter if tag candidates. use all if no candidates.
         if tag_candidates:
             tagger_objects = hybrid_tagger_object.taggers.filter(description__in=tag_candidates)
@@ -486,27 +584,27 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
             stop_words = json.loads(tagger.stop_words)
             if tagger.embedding:
                 phraser = phraser_cache.get_model(tagger.embedding.pk)
-                text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words)
+                text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
             else:
-                text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
+                text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
 
             # load tagger model
             tagger = model_cache.get_model(tagger_id)
-            tagger.add_text_processor(text_processor)
+            if tagger:
+                tagger.add_text_processor(text_processor)
+                if input_type == 'doc':
+                    tagger_result = tagger.tag_doc(tagger_input)
+                else:
+                    tagger_result = tagger.tag_text(tagger_input)
+                decision = bool(tagger_result[0])
+                tagger_response = {'tag': tagger.description, 'probability': tagger_result[1], 'tagger_id': tagger_id}
 
-            if input_type == 'doc':
-                tagger_result = tagger.tag_doc(tagger_input)
-            else:
-                tagger_result = tagger.tag_text(tagger_input)
-            decision = bool(tagger_result[0])
-            tagger_response = {'tag': tagger.description, 'probability': tagger_result[1], 'tagger_id': tagger_id}
-
-            if not show_candidates and decision:
-                # filter tags if omitted
-                tags.append(tagger_response)
-            elif show_candidates:
-                # show tag candidates if asked
-                tagger_response['decision'] = decision
-                tags.append(tagger_response)
+                if not show_candidates and decision:
+                    # filter tags if omitted
+                    tags.append(tagger_response)
+                elif show_candidates:
+                    # show tag candidates if asked
+                    tagger_response['decision'] = decision
+                    tags.append(tagger_response)
 
         return sorted(tags, key=lambda k: k['probability'], reverse=True)

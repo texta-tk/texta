@@ -34,6 +34,6 @@ class TestElasticCore(TestCase):
         '''Tests ElasticCore field operations.'''
         # test field list retrieval
         fields = self.elastic_core.get_fields()
-        print_output('test_run_fields:fields', fields)
+        print_output('test_run_fields:fields', fields[:10])
         self.assertTrue(isinstance(fields, list))
         self.assertTrue(len(fields) > 0)

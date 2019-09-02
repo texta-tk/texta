@@ -176,6 +176,8 @@ STATIC_ROOT =  os.path.join(BASE_DIR, 'static')
 # ELASTICSEARCH
 ES_URL = os.getenv('TEXTA_ES_URL', 'http://localhost:9200')
 
+# MLP
+MLP_URL = os.getenv('TEXTA_MLP_URL', 'http://mlp-dev.texta.ee:5000')
 
 # CELERY
 BROKER_URL = os.getenv('TEXTA_REDIS_URL', 'redis://localhost:6379')
@@ -185,9 +187,8 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
-# this is for training embeddings & taggers
-NUM_WORKERS=4
-
+# we set num workers to 1 because celery tasks are not allowed to have deamon processes
+NUM_WORKERS=1
 
 # create model dirs
 MODELS_DIR = os.path.join(BASE_DIR, 'data', 'models')

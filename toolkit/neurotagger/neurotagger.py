@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 from django.core.files.base import ContentFile
 from toolkit.settings import MODELS_DIR, MEDIA_URL
 from toolkit.neurotagger.models import Neurotagger
-from toolkit.utils.plot_utils import save_plot
+from toolkit.tools.plot_utils import save_plot
 # Data management imports
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split

@@ -1,6 +1,7 @@
 import os
-
-from toolkit.settings import BASE_DIR
+import requests
+from toolkit.settings import BASE_DIR, MLP_URL, ES_URL
+from toolkit.elastic.core import ElasticCore
 
 def get_version():
     """
@@ -27,3 +28,35 @@ def get_cache_status():
             'embedding_cluster': len(cluster_cache.models.keys()),
             'phraser': len(phraser_cache.models.keys()),
             'tagger': len(tagger_cache.models.keys())}
+
+
+def get_mlp_status():
+    """
+    Checks if MLP is available.
+    """
+    mlp_info = {"url": MLP_URL, "alive": False}
+
+    try:
+        response = requests.get(MLP_URL)
+        if response.status_code == 200:
+            mlp_info["status"] = response.json()
+            mlp_info["alive"] = True
+    except:
+        pass
+    
+    return mlp_info
+
+def get_elastic_status():
+    """
+    Checks Elasticsearch connection status and version.
+    """
+    es_info = {"url": ES_URL, "alive": False}
+    es_core = ElasticCore()
+
+    if es_core.connection:
+        es_info["alive"] = True
+        es_info["status"] = es_core.es.info()
+
+    return es_info
+
+

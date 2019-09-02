@@ -18,8 +18,16 @@ Running application:
 
 Building Docker:
 
-`docker build -t texta-rest -f docker/Dockerfile .`
+`docker build -t texta-rest:latest -f docker/Dockerfile .`
+
+Running Docker:
+
+`docker run -p 8000:8000 texta-rest:latest`
 
 Building Docker with GPU support:
 
-`docker build -t texta-rest -f docker/gpu.Dockerfile .`
+`docker build -t texta-rest:gpu-latest -f docker/gpu.Dockerfile .`
+
+Running Docker with GPU support:
+
+`docker run --gpus all -p 8000:8000 texta-rest:gpu-latest`

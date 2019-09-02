@@ -38,7 +38,8 @@ class TextProcessor:
     Processor for processing texts prior to modelling
     """
 
-    def __init__(self, phraser=None, remove_stop_words=True, sentences=False, tokenize=False, custom_stop_words=[]):
+    def __init__(self, lemmatizer=None, phraser=None, remove_stop_words=True, sentences=False, tokenize=False, custom_stop_words=[]):
+        self.lemmatizer = lemmatizer
         self.phraser = phraser
         self.remove_stop_words = remove_stop_words
         self.sentences = sentences
@@ -48,7 +49,7 @@ class TextProcessor:
     
     def process(self, input_text):
         if isinstance(input_text, str):
-            stripped_text = input_text.strip().lower()
+            stripped_text = input_text.strip()
             if self.sentences:
                 list_of_texts = stripped_text.split('\n')
             else:
@@ -58,15 +59,22 @@ class TextProcessor:
         out = []
         for text in list_of_texts:
             if text:
+                # lemmatize if asked
+                if self.lemmatizer:
+                    text = self.lemmatizer.lemmatize(text)
+                # lower & strip
+                text = text.lower().strip()
+                # convert string to list of tokens
                 tokens = text.split(' ')
+                # remove stop words
                 if self.remove_stop_words:
                     tokens = self.stop_words.remove(tokens)
+                # use phraser
                 if self.phraser:
                     tokens = self.phraser.phrase(tokens)
-
                 # remove empty tokens
                 tokens = [token for token in tokens if token]
-
+                # prepare output
                 if not self.tokenize:
                     out.append(' '.join([token.replace(' ', '_') for token in tokens]))
                 else:

@@ -13,17 +13,19 @@ class ModelCache:
 
     def get_model(self, model_id):
         # load model if not in cache
-        if model_id not in self.models:
-            model = self.object_class(model_id)
-            model.load()
-            self.models[model_id] = {'model': model, 'last_access': time()}
-        
-        # update last access timestamp & remove old models
-        self.models[model_id]['last_access'] = time()
-        self.clean_cache()
-
-        # return model
-        return self.models[model_id]['model']
+        try:
+            if model_id not in self.models:
+                model = self.object_class(model_id)
+                model.load()
+                self.models[model_id] = {'model': model, 'last_access': time()}
+            # update last access timestamp & remove old models
+            self.models[model_id]['last_access'] = time()
+            self.clean_cache()
+            # return model
+            return self.models[model_id]['model']
+        except Exception as e:
+            print("Error loading modal to cache:", e)
+            return None
     
 
     def clean_cache(self):

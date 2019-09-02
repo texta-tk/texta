@@ -40,7 +40,9 @@ class TaggerViewTests(APITestCase):
     def test_run(self):
         self.run_create_tagger_training_and_task_signal()
         self.run_tag_text()
+        self.run_tag_text_with_lemmatization()
         self.run_tag_doc()
+        self.run_tag_doc_with_lemmatization()
         self.run_stop_word_list()
         self.run_stop_word_add()
         self.run_stop_word_remove()
@@ -95,6 +97,21 @@ class TaggerViewTests(APITestCase):
             self.assertTrue('probability' in response.data)
 
 
+    def run_tag_text_with_lemmatization(self):
+        '''Tests the endpoint for the tag_text action'''
+        payload = { "text": "See tekst peaks saama lemmatiseeritud ja täägitud.",
+                    "lemmatize": True }
+        for test_tagger_id in self.test_tagger_ids:
+            tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
+            response = self.client.post(tag_text_url, payload)
+            print_output('test_tag_text_lemmatized:response.data', response.data)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            # Check if response data is not empty, but a result instead
+            self.assertTrue(response.data)
+            self.assertTrue('result' in response.data)
+            self.assertTrue('probability' in response.data)
+
+
     def run_tag_doc(self):
         '''Tests the endpoint for the tag_doc action'''
         payload = { "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" })}
@@ -107,6 +124,22 @@ class TaggerViewTests(APITestCase):
             self.assertTrue(response.data)
             self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
+
+
+    def run_tag_doc_with_lemmatization(self):
+        '''Tests the endpoint for the tag_doc action'''
+        payload = { "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" }),
+                    "lemmatize": True }
+        for test_tagger_id in self.test_tagger_ids:
+            tag_text_url = f'{self.url}{test_tagger_id}/tag_doc/'
+            response = self.client.post(tag_text_url, payload)
+            print_output('test_tag_doc_lemmatized:response.data', response.data)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            # Check if response data is not empty, but a result instead
+            self.assertTrue(response.data)
+            self.assertTrue('result' in response.data)
+            self.assertTrue('probability' in response.data)
+
 
 
     def run_list_features(self):

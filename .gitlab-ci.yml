@@ -3,7 +3,9 @@ image: continuumio/miniconda3:latest
 services:
   - name: docker.elastic.co/elasticsearch/elasticsearch:6.7.2
     alias: elasticsearch
-  - redis:latest
+  - name: docker.texta.ee/texta/mlp:latest
+    alias: texta-mlp
+  - name: redis:latest
 
 stages:
   - test
@@ -19,6 +21,7 @@ Test:
   - ci-test
   variables:
     TEXTA_ES_URL: http://elasticsearch:9200
+    TEXTA_MLP_URL: http://texta-mlp:5000
     TEXTA_REDIS_URL: redis://redis:6379
   script:
   - python manage.py test

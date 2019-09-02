@@ -31,30 +31,16 @@ class TestElasticSearcher(TestCase):
 
     def run_search(self):
         '''Tests ElasticSearcher search method.'''
-        # test without field data & indices
-        elastic_searcher = ElasticSearcher()
+        elastic_searcher = ElasticSearcher(indices=[TEST_INDEX], field_data=TEST_FIELD_CHOICE)
         result = elastic_searcher.search(size=1)
-        print_output('test_run_search:result', result)
-        self.assertTrue(isinstance(result, list))
-        self.assertTrue(result[0])     
-        # test with field data
-        elastic_searcher = ElasticSearcher(field_data=TEST_FIELD_CHOICE)
-        result = elastic_searcher.search(size=1)
-        print_output('test_run_search_with_field_data:result', result)
-        self.assertTrue(isinstance(result, list))
-        self.assertTrue(TEST_FIELD in result[0])
-        # test with index list
-        elastic_searcher = ElasticSearcher(indices=[TEST_INDEX])
-        result = elastic_searcher.search(size=1)
-        print_output('test_run_search_with_index_list:result', result)    
+        print_output('test_run_searchresult', result)
         self.assertTrue(isinstance(result, list))
         self.assertTrue(TEST_FIELD in result[0])
 
 
     def run_iterator(self):
         '''Tests ElasticSearcher scrolling as iterator.'''
-        # test without field data
-        elastic_searcher = ElasticSearcher()
+        elastic_searcher = ElasticSearcher(indices=[TEST_INDEX], field_data=TEST_FIELD_CHOICE)
         i = 0
         last_hit = None
         for hit in elastic_searcher:
@@ -62,19 +48,7 @@ class TestElasticSearcher(TestCase):
             if i >=500:
                 last_hit = hit
                 break
-        print_output('test_run_search_iterator_without_field_data:last_hit', last_hit) 
-        self.assertTrue(isinstance(last_hit, dict))
-        self.assertTrue(last_hit)
-        # test with field data
-        elastic_searcher = ElasticSearcher(field_data=TEST_FIELD_CHOICE)
-        i = 0
-        last_hit = None
-        for hit in elastic_searcher:
-            i+=1
-            if i >=500:
-                last_hit = hit
-                break
-        print_output('test_run_search_iterator_with_field_data:last_hit', last_hit) 
+        print_output('test_run_search_iterator:last_hit', last_hit) 
         self.assertTrue(isinstance(last_hit, dict))
         self.assertTrue(TEST_FIELD in last_hit)
   
