@@ -14,6 +14,10 @@ Running application:
 
 `celery -A toolkit.taskman worker -l info`
 
+Running tests:
+
+python manage.py test
+python manage.py test appname (eg python manage.py test toolkit.neurotagger)
 
 
 Building Docker:
@@ -31,3 +35,6 @@ Building Docker with GPU support:
 Running Docker with GPU support:
 
 `docker run --gpus all -p 8000:8000 texta-rest:gpu-latest`
+
+WIKI:
+https://git.texta.ee/texta/texta-rest/wikis/home
