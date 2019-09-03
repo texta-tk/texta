@@ -400,7 +400,6 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         """
         API endpoint for listing tagger objects connected to tagger group instance.
         """
-
         path = re.sub(r'tagger_groups/(\d+)*\/*$', 'taggers/', request.path)
         tagger_url_prefix = request.build_absolute_uri(path)
         tagger_objects = TaggerGroup.objects.get(id=pk).taggers.all()
@@ -422,33 +421,6 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
             tagger.save()
             train_tagger.apply_async(args=(tagger.pk,))
         return Response({'success': 'retraining tasks created'}, status=status.HTTP_200_OK)
-
-
-    @action(detail=True, methods=['get', 'post'])
-    def models_load(self, request, pk=None, project_pk=None):
-        """
-        API endpoint for loading all relevant tagger models.
-        """
-        num_taggers_errors = 0
-        num_phrasers_errors = 0
-        num_phrasers = 0
-        num_taggers = 0
-        instance = self.get_object()
-        for tagger in instance.taggers.all():
-            # load tagger model
-            loaded = model_cache.get_model(tagger.pk)
-            if loaded:
-                num_taggers += 1
-                if tagger.embedding:
-                    # load phraser model
-                    phraser_loaded = phraser_cache.get_model(tagger.embedding.pk)
-                    if phraser_loaded:
-                        num_phrasers += 1
-                    else:
-                        num_phrasers_errors += 1
-            else:
-                num_taggers_errors += 1
-        return Response({'loaded': {'phraser': num_phrasers, 'tagger': num_taggers}, 'error_loading': {'tagger': num_taggers_errors, 'phraser': num_phrasers_errors}}, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['get','post'], serializer_class=TextGroupSerializer)
