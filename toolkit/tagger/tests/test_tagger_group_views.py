@@ -36,7 +36,6 @@ class TaggerGroupViewTests(APITestCase):
         self.run_create_tagger_group_training_and_task_signal()
         self.run_tag_text()
         self.run_tag_doc()
-        self.run_models_load()
         self.run_models_retrain()
 
 
@@ -100,17 +99,6 @@ class TaggerGroupViewTests(APITestCase):
         # Check if response is list
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue('decision' in response.data[0])
-
-
-    def run_models_load(self):
-        '''Tests the endpoint for the models_load action'''
-        url = f'{self.url}{self.test_tagger_group_id}/models_load/'
-        response = self.client.post(url)
-        print_output('test_models_load:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Check if response data
-        self.assertTrue(response.data)
-        self.assertTrue('loaded' in response.data)
 
 
     def run_models_retrain(self):
