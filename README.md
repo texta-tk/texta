@@ -1,4 +1,4 @@
-WIKI:
+**WIKI:**
 https://git.texta.ee/texta/texta-rest/wikis/home
 
 Works with Python 3.6
