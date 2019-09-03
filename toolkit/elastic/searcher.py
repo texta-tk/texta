@@ -124,6 +124,14 @@ class ElasticSearcher:
             return response
 
 
+    def random_documents(self, size=10):
+        random_query = {"query": {"function_score": {"query": {"match_all": {}}, "functions": [{"random_score": {}}]}}}
+        response = self.core.es.search(index=self.indices, body=random_query, size=size)
+        if self.output == self.OUT_DOC:
+            return [self._parse_doc(doc) for doc in response['hits']['hits']]
+        else:
+            return response
+
     def scroll(self):
         page = self.core.es.search(index=self.indices, body=self.query, scroll='1m', size=self.scroll_size)
         scroll_id = page['_scroll_id']

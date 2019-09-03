@@ -4,6 +4,7 @@ from rest_framework.response import Response
 
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.aggregator import ElasticAggregator
+from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.query import Query
 
 from toolkit.tagger.models import Tagger, TaggerGroup
@@ -421,6 +422,33 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
             tagger.save()
             train_tagger.apply_async(args=(tagger.pk,))
         return Response({'success': 'retraining tasks created'}, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['get', 'post'])
+    def tag_random_doc(self, request, pk=None, project_pk=None):
+        """
+        API endpoint for tagging a random document.
+        """
+        # get hybrid tagger object
+        hybrid_tagger_object = self.get_object()
+        # check if any of the models ready
+        if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
+            return Response({'error': 'models do not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+        # retrieve tagger fields from the first object
+        tagger_fields = json.loads(hybrid_tagger_object.taggers.first().fields)
+        # retrieve random document
+        random_doc = ElasticSearcher(indices=hybrid_tagger_object.project.indices).random_documents(size=1)[0]
+        # filter out correct fields from the document
+        random_doc_filtered = {k:v for k,v in random_doc.items() if k in tagger_fields}
+        # combine document field values into one string
+        combined_texts = '\n'.join(random_doc_filtered.values())
+        # retrieve tag candidates
+        tag_candidates = self.get_tag_candidates(tagger_fields, combined_texts)
+        # get tags
+        tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, random_doc_filtered, input_type='doc')
+        # return document with tags
+        response = {"document": random_doc, "tags": tags}
+        return Response(response, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['get','post'], serializer_class=TextGroupSerializer)

@@ -36,6 +36,7 @@ class TaggerGroupViewTests(APITestCase):
         self.run_create_tagger_group_training_and_task_signal()
         self.run_tag_text()
         self.run_tag_doc()
+        self.run_tag_random_doc()
         self.run_models_retrain()
 
 
@@ -99,6 +100,17 @@ class TaggerGroupViewTests(APITestCase):
         # Check if response is list
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue('decision' in response.data[0])
+
+
+    def run_tag_random_doc(self):
+        '''Tests the endpoint for the tag_random_doc action'''
+        url = f'{self.url}{self.test_tagger_group_id}/tag_random_doc/'
+        response = self.client.get(url)
+        print_output('test_tag_random_doc_group:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response is list
+        self.assertTrue(isinstance(response.data, dict))
+        self.assertTrue('tags' in response.data)
 
 
     def run_models_retrain(self):
