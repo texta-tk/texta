@@ -43,6 +43,7 @@ class TaggerViewTests(APITestCase):
         self.run_tag_text_with_lemmatization()
         self.run_tag_doc()
         self.run_tag_doc_with_lemmatization()
+        self.run_tag_random_doc()
         self.run_stop_word_list()
         self.run_stop_word_add()
         self.run_stop_word_remove()
@@ -140,6 +141,17 @@ class TaggerViewTests(APITestCase):
             self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
 
+
+    def run_tag_random_doc(self):
+        '''Tests the endpoint for the tag_random_doc action'''
+        for test_tagger_id in self.test_tagger_ids:
+            url = f'{self.url}{test_tagger_id}/tag_random_doc/'
+            response = self.client.get(url)
+            print_output('test_tag_random_doc:response.data', response.data)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            # Check if response is list
+            self.assertTrue(isinstance(response.data, dict))
+            self.assertTrue('prediction' in response.data)
 
 
     def run_list_features(self):

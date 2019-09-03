@@ -286,6 +286,28 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
+    @action(detail=True, methods=['get', 'post'])
+    def tag_random_doc(self, request, pk=None, project_pk=None):
+        """
+        API endpoint for tagging a random document.
+        """
+        # get tagger object
+        tagger_object = self.get_object()
+        # check if tagger exists
+        if not tagger_object.location:
+            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+        # retrieve tagger fields
+        tagger_fields = json.loads(tagger_object.fields)
+        # retrieve random document
+        random_doc = ElasticSearcher(indices=tagger_object.project.indices).random_documents(size=1)[0]
+        # filter out correct fields from the document
+        random_doc_filtered = {k:v for k,v in random_doc.items() if k in tagger_fields}
+        # apply tagger
+        tagger_response = self.apply_tagger(tagger_object, random_doc, input_type='doc')
+        response = {"document": random_doc, "prediction": tagger_response}
+        return Response(response, status=status.HTTP_200_OK)
+
+
     def apply_tagger(self, tagger_object, tagger_input, input_type='text', phraser=None, lemmatizer=None):
         # create text processor object for tagger
         stop_words = json.loads(tagger_object.stop_words)
