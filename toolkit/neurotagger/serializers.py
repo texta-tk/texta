@@ -87,3 +87,12 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResou
         if obj.fields:
             return json.loads(obj.fields)
         return None
+
+
+class DocSerializer(serializers.Serializer):
+    doc = serializers.JSONField()
+    thershold = serializers.FloatField(default=0.3, help_text=f'Filter out tags with a lower than threshold probaility. Default: {choices.DEFAULT_THRESHOLD_VALUE}')
+
+class TextSerializer(serializers.Serializer):
+    text = serializers.CharField()
+    thershold = serializers.FloatField(default=0.3, help_text=f'Filter out tags with a lower than threshold probaility. Default: {choices.DEFAULT_THRESHOLD_VALUE}')

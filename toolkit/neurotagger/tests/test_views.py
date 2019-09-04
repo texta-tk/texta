@@ -90,8 +90,7 @@ class NeurotaggerViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
-        self.assertTrue('classes' in response.data)
-        self.assertTrue('probability' in response.data)
+        self.assertTrue('tags' in response.data)
 
 
     def run_tag_doc(self, tagger_id=None):
@@ -103,5 +102,4 @@ class NeurotaggerViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
-        self.assertTrue('classes' in response.data)
-        self.assertTrue('probability' in response.data)
+        self.assertTrue('tags' in response.data)

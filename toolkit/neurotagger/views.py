@@ -17,7 +17,7 @@ from toolkit.tools.model_cache import ModelCache
 from toolkit import permissions as toolkit_permissions
 from toolkit.view_constants import TagLogicViews
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
-from toolkit.tagger.serializers import TextSerializer, DocSerializer
+from toolkit.neurotagger.serializers import TextSerializer, DocSerializer
 
 
 # initialize model cache for neurotaggers
@@ -124,11 +124,6 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
         if not tagger_object.location:
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # check if fields match
-        field_path_list = json.loads(tagger_object.fields)
-        if set(field_path_list) != set(serializer.validated_data['doc'].keys()):
-            return Response({'error': 'document fields do not match. Required keys: {}'.format(field_path_list)}, status=status.HTTP_400_BAD_REQUEST)
-
         # apply tagger
         tagger_id = tagger_object.pk
         tagger_response = self.apply_tagger(tagger_id, serializer.data['doc'], input_type='doc')
@@ -142,8 +137,12 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
         else:
             tagger_result = tagger.tag_text(tagger_input)
 
-        classes = ""
-        if self.get_object().fact_values:
-            classes = json.loads(self.get_object().fact_values)
+        classes = json.loads(self.get_object().fact_values)
+        probabilities = list(tagger_result[0])
+        threshold = 0.0000001
+        tag_data = [{ 'tag': label, 'probability': probability } for label, probability in zip(classes, probabilities) if probability > threshold]
+        tag_data = sorted(tag_data, key=lambda k: k['probability'], reverse=True)
 
-        return { 'classes': classes, 'probability': np.around(tagger_result, 3) }
+        result = {'tags': tag_data }
+
+        return result

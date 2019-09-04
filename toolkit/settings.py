@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
     # Apps
@@ -63,7 +64,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # For corsheaders/external frontend
 CORS_ORIGIN_WHITELIST = (
-    'localhost:4200',
+    'http://localhost:4200',
 )
 
 REST_FRAMEWORK = {

@@ -10,6 +10,8 @@ DEFAULT_NEGATIVE_MULTIPLIER = 1.0
 DEFAULT_SCORE_THRESHOLD = 0.0
 DEFAULT_MIN_FACT_DOC_COUNT = 50
 
+# Tag doc/text probability threshold
+DEFAULT_THRESHOLD_VALUE = 0.3
 
 # For choicefield
 model_arch_choices = (
