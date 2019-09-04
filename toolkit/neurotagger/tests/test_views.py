@@ -55,8 +55,6 @@ class NeurotaggerViewTests(APITestCase):
         # Check if Neurotagger gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created_neurotagger = Neurotagger.objects.get(id=response.data['id'])
-        # Apply Celery task for tests
-        neurotagger_train_handler(response.data['id'], testing=True).apply()
 
         # Test the tagging endpoints 
         self.run_tag_text(tagger_id=created_neurotagger.id)

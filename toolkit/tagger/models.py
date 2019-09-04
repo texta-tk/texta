@@ -15,7 +15,7 @@ from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.tagger.choices import (DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE,
                                     DEFAULT_CLASSIFIER, DEFAULT_FEATURE_SELECTOR, DEFAULT_VECTORIZER)
-
+from toolkit.helper_functions import apply_celery_task
 
 class Tagger(models.Model):
     description = models.CharField(max_length=MAX_DESC_LEN)
@@ -52,11 +52,7 @@ class Tagger(models.Model):
             instance.save()
             from toolkit.tagger.tasks import train_tagger
 
-            # If not running tests via python manage.py test
-            if not 'test' in sys.argv:
-                train_tagger.apply_async(args=(instance.pk,))
-            else: 
-                train_tagger(instance.pk)
+            apply_celery_task(train_tagger, instance.pk)
 
 signals.post_save.connect(Tagger.train_tagger_model, sender=Tagger)
 

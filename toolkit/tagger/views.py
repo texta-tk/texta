@@ -1,3 +1,7 @@
+import json
+import re
+import sys
+
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -23,9 +27,7 @@ from toolkit.view_constants import TagLogicViews
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.core.task.models import Task
 from toolkit.tools.mlp_lemmatizer import MLPLemmatizer
-
-import json
-import re
+from toolkit.helper_functions import apply_celery_task
 
 # initialize model cache for taggers & phrasers
 model_cache = ModelCache(TextTagger)
@@ -203,7 +205,9 @@ class TaggerViewSet(viewsets.ModelViewSet):
         API endpoint for retraining tagger model.
         """
         instance = self.get_object()
-        train_tagger.apply_async(args=(instance.pk,))
+        
+        apply_celery_task(train_tagger, instance.pk)
+
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
 
 
@@ -442,7 +446,8 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
             # update task status so statistics are correct during retraining
             tagger.status = Task.STATUS_CREATED
             tagger.save()
-            train_tagger.apply_async(args=(tagger.pk,))
+            apply_celery_task(train_tagger, tagger.pk)
+
         return Response({'success': 'retraining tasks created'}, status=status.HTTP_200_OK)
 
 

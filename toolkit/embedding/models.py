@@ -9,7 +9,7 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.constants import MAX_DESC_LEN
-
+from toolkit.helper_functions import apply_celery_task
 
 class Embedding(models.Model):
     description = models.CharField(max_length=MAX_DESC_LEN)
@@ -36,10 +36,9 @@ class Embedding(models.Model):
             instance.task = new_task
             instance.save()
             from toolkit.embedding.tasks import train_embedding
-            if not 'test' in sys.argv:
-                train_embedding.apply_async(args=(instance.pk,))
-            else:
-                train_embedding(instance.pk)
+
+            apply_celery_task(train_embedding, instance.pk)
+                
 
 
 signals.post_save.connect(Embedding.train_embedding_model, sender=Embedding)
@@ -64,10 +63,7 @@ class EmbeddingCluster(models.Model):
             instance.task = new_task
             instance.save()
             from toolkit.embedding.tasks import cluster_embedding
-            if not 'test' in sys.argv:
-                cluster_embedding.apply_async(args=(instance.pk,))
-            else:
-                cluster_embedding(instance.pk)
+            apply_celery_task(cluster_embedding, instance.pk)
 
 
 signals.post_save.connect(EmbeddingCluster.cluster_embedding_vocabulary, sender=EmbeddingCluster)

@@ -62,8 +62,11 @@ class Neurotagger(models.Model):
             instance.save()
             from toolkit.neurotagger.tasks import neurotagger_train_handler
 
-            # If not running tests via python manage.py test
+            # Due to Neurotagger using chord, it has separate logic for calling out celery task and handling tests
             if not 'test' in sys.argv:
                 neurotagger_train_handler.apply_async(args=(instance.pk,))
+            else:
+                neurotagger_train_handler(instance.pk, testing=True).apply()
+                
 
 signals.post_save.connect(Neurotagger.train_neurotagger_model, sender=Neurotagger)
