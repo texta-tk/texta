@@ -467,8 +467,8 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         # retrieve tagger fields from the first object
         tagger_fields = json.loads(hybrid_tagger_object.taggers.first().fields)
 
-        if not ElasticCore().check_if_indices_exist(tagger_object.project.indices):
-            return Response({'error': f'One or more index from {list(tagger_object.project.indices)} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        if not ElasticCore().check_if_indices_exist(hybrid_tagger_object.project.indices):
+            return Response({'error': f'One or more index from {list(hybrid_tagger_object.project.indices)} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
         # retrieve random document
         random_doc = ElasticSearcher(indices=hybrid_tagger_object.project.indices).random_documents(size=1)[0]
         # filter out correct fields from the document
