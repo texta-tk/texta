@@ -85,3 +85,6 @@ class ElasticCore:
                 data = {'path': path, 'type': v['type']}
                 mapping_data.append(data)
         return mapping_data
+
+    def check_if_indices_exist(self, indices):
+        return self.es.indices.exists(index=','.join(indices))

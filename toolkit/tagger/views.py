@@ -302,12 +302,15 @@ class TaggerViewSet(viewsets.ModelViewSet):
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
         # retrieve tagger fields
         tagger_fields = json.loads(tagger_object.fields)
+
+        if not ElasticCore().check_if_indices_exist(tagger_object.project.indices):
+            return Response({'error': f'One or more index from {list(tagger_object.project.indices)} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
         # retrieve random document
         random_doc = ElasticSearcher(indices=tagger_object.project.indices).random_documents(size=1)[0]
         # filter out correct fields from the document
         random_doc_filtered = {k:v for k,v in random_doc.items() if k in tagger_fields}
         # apply tagger
-        tagger_response = self.apply_tagger(tagger_object, random_doc, input_type='doc')
+        tagger_response = self.apply_tagger(tagger_object, random_doc_filtered, input_type='doc')
         response = {"document": random_doc, "prediction": tagger_response}
         return Response(response, status=status.HTTP_200_OK)
 
@@ -463,6 +466,9 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
             return Response({'error': 'models do not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
         # retrieve tagger fields from the first object
         tagger_fields = json.loads(hybrid_tagger_object.taggers.first().fields)
+
+        if not ElasticCore().check_if_indices_exist(tagger_object.project.indices):
+            return Response({'error': f'One or more index from {list(tagger_object.project.indices)} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
         # retrieve random document
         random_doc = ElasticSearcher(indices=hybrid_tagger_object.project.indices).random_documents(size=1)[0]
         # filter out correct fields from the document
