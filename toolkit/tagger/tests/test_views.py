@@ -6,7 +6,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE
+from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_QUERY
 from toolkit.core.project.models import Project
 from toolkit.tagger.models import Tagger
 from toolkit.core.task.models import Task
@@ -58,6 +58,7 @@ class TaggerViewTests(APITestCase):
                 for feature_selector_opt in self.feature_selector_opts:
                     payload = {
                         "description": "TestTagger",
+                        "query": json.dumps(TEST_QUERY),
                         "fields": TEST_FIELD_CHOICE,
                         "vectorizer": vectorizer_opt,
                         "classifier": classifier_opt,
