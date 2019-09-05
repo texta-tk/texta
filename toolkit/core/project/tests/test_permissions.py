@@ -11,17 +11,17 @@ class ProjectPermissionsTests(APITestCase):
 
 
     def setUp(self):
+        self.default_password = 'pw'
         self.admin = create_test_user(name='admin', password='1234')
         self.admin.is_superuser = True
         self.admin.save()
-        self.owner = create_test_user(name='owner', password='pw')
-        self.project_user = create_test_user(name='project_user', password='pw')
-        self.user = create_test_user(name='user', password='pw')
+        self.owner = create_test_user(name='owner', password=self.default_password)
+        self.project_user = create_test_user(name='project_user', password=self.default_password)
+        self.user = create_test_user(name='user', password=self.default_password)
         self.project = Project.objects.create(title='testproj', owner=self.owner)
         self.project.users.add(self.owner)
         self.project.users.add(self.project_user)
         self.client = APIClient()
-        self.project_list_url = f'/projects/'
         self.project_instance_url = f'/projects/{self.project.id}/'
 
     def test_all(self):
@@ -33,13 +33,13 @@ class ProjectPermissionsTests(APITestCase):
 
     def run_with_users(self, func, resource=None):
         func(self.admin, '1234')
-        func(self.project.owner, self.project.owner.password)
+        func(self.project.owner, self.default_password)
         if resource is None:
-            func(self.project_user, 'pw', UNSAFE_FORBIDDEN=True)
-            func(self.user, 'pw', SAFE_FORBIDDEN=True, UNSAFE_FORBIDDEN=True)
+            func(self.project_user, self.default_password, UNSAFE_FORBIDDEN=True)
+            func(self.user, self.default_password, SAFE_FORBIDDEN=True, UNSAFE_FORBIDDEN=True)
         else:
-            func(self.project_user, 'pw')
-            func(self.user, 'pw', fail=True)
+            func(self.project_user, self.default_password)
+            func(self.user, self.default_password, fail=True)
 
     def access_project_resources(self, username, password, fail=False):
         url = self.project_resource_url
@@ -77,6 +77,5 @@ class ProjectPermissionsTests(APITestCase):
                 self.assertEqual(put_response.status_code, status.HTTP_404_NOT_FOUND)
         if SAFE_FORBIDDEN is False and UNSAFE_FORBIDDEN is True:
             self.assertEqual(put_response.status_code, status.HTTP_403_FORBIDDEN)
-
 
     # TODO: implement owner, user put testing separately; affects existing tests.
