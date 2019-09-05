@@ -17,10 +17,13 @@ Running application:
 
 `celery -A toolkit.taskman worker -l info`
 
-Running tests:
+Run all tests:
 
-python manage.py test
-python manage.py test appname (eg python manage.py test toolkit.neurotagger)
+`python manage.py test`
+
+Run tests for specific app:
+
+`python manage.py test appname (eg python manage.py test toolkit.neurotagger)`
 
 
 Building Docker:
