@@ -20,7 +20,7 @@ def get_cache_status():
     """
     Gets info about model caches in applications.
     """
-    from toolkit.tagger.views import model_cache as tagger_cache
+    from toolkit.tagger.tagger_views import tagger_cache
     from toolkit.embedding.views import w2v_cache, phraser_cache, cluster_cache
 
 
