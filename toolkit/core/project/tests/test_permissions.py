@@ -32,14 +32,12 @@ class ProjectPermissionsTests(APITestCase):
         self.run_with_users(self.update_project_fields)
 
     def run_with_users(self, func, resource=None):
+        func(self.admin, '1234')
+        func(self.project.owner, self.project.owner.password)
         if resource is None:
-            func(self.admin, '1234')
-            func(self.project.owner, self.project.owner.password)
             func(self.project_user, 'pw', UNSAFE_FORBIDDEN=True)
             func(self.user, 'pw', SAFE_FORBIDDEN=True, UNSAFE_FORBIDDEN=True)
         else:
-            func(self.admin, '1234')
-            func(self.project.owner, self.project.owner.password)
             func(self.project_user, 'pw')
             func(self.user, 'pw', fail=True)
 
