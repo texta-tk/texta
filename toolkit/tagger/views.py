@@ -430,7 +430,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         """
         API endpoint for listing tagger objects connected to tagger group instance.
         """
-        path = re.sub(r'tagger_groups/(\d+)*\/*$', 'taggers/', request.path)
+        path = re.sub(r'tagger_groups/\d+/models_list/*$', 'taggers/', request.path)
         tagger_url_prefix = request.build_absolute_uri(path)
         tagger_objects = TaggerGroup.objects.get(id=pk).taggers.all()
         response = [{'tag': tagger.description, 'id': tagger.id, 'url': f'{tagger_url_prefix}{tagger.id}/', 'status': tagger.task.status} for tagger in tagger_objects]

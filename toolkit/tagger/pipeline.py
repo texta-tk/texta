@@ -166,20 +166,21 @@ def get_pipeline_builder():
     ### params are used grid search to find optimal choices
 
     # Feature Extraction
-    analyzer_params = ['word', 'char_wb', 'char']
-    ngram_params = [(1, 1), (1, 2), (1, 3)]
+    analyzer_params = ['word', 'char_wb']
+    ngram_params = [(1, 2), (1, 3)]
+    min_df_params = [5]
 
     params = {'ngram_range': ngram_params, 'analyzer': analyzer_params}
     pipe_builder.add_extractor('vectorizer', HashingVectorizer, 'Hashing Vectorizer', params)
 
-    params = {'ngram_range': ngram_params, 'min_df': [5, 10]}
+    params = {'ngram_range': ngram_params, 'min_df': min_df_params}
     pipe_builder.add_extractor('vectorizer', CountVectorizer, 'Count Vectorizer', params)
 
-    params = {'ngram_range': ngram_params, 'min_df': [5, 10]}
+    params = {'ngram_range': ngram_params, 'min_df': min_df_params}
     pipe_builder.add_extractor('vectorizer', TfidfVectorizer, 'TfIdf Vectorizer', params)
 
     # Classification Models
-    params = {'solver': ['lbfgs'], 'C': [0.1, 1.0, 10, 100], 'penalty': ['l2']}
+    params = {'solver': ['lbfgs'], 'C': [0.1, 1.0, 10], 'penalty': ['l2']}
     pipe_builder.add_classifier('classifier', LogisticRegression, 'Logistic Regression', params)
 
     params = {'probability': [True], 'kernel': ['linear']}
