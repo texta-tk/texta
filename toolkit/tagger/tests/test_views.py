@@ -38,6 +38,7 @@ class TaggerViewTests(APITestCase):
 
     def test_run(self):
         self.run_create_tagger_training_and_task_signal()
+        self.run_create_tagger_with_incorrect_fields()
         self.run_tag_text()
         self.run_tag_text_with_lemmatization()
         self.run_tag_doc()
@@ -80,6 +81,25 @@ class TaggerViewTests(APITestCase):
                 self.assertTrue(created_tagger.task is not None)
                 # Check if Tagger gets trained and completed
                 self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
+
+
+    def run_create_tagger_with_incorrect_fields(self):
+        '''Tests the endpoint for a new Tagger with incorrect field data (should give error)'''
+        payload = {
+            "description": "TestTagger",
+            "query": json.dumps(TEST_QUERY),
+            "fields": ["randomgibberishhhhhhhhhh"],
+            "vectorizer": self.vectorizer_opts[0],
+            "classifier": self.classifier_opts[0],
+            "maximum_sample_size": 500,
+            "negative_multiplier": 1.0,
+        }        
+
+        response = self.client.post(self.url, payload, format='json')
+        print_output('test_create_tagger_with_invalid_fields:response.data', response.data)
+        # Check if Tagger gets rejected
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue('error' in response.data)
 
 
     def run_tag_text(self):
