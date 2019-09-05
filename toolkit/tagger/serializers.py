@@ -63,8 +63,6 @@ class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer
         help_text=f'Multiplies the size of positive samples to determine negative example set size. Default: {DEFAULT_NEGATIVE_MULTIPLIER}')
     maximum_sample_size = serializers.IntegerField(default=DEFAULT_MAX_SAMPLE_SIZE,
         help_text=f'Maximum number of documents used to build a model. Default: {DEFAULT_MAX_SAMPLE_SIZE}')
-    feature_selector = serializers.ChoiceField(choices=get_feature_selector_choices(),
-        help_text=f'Feature selection algorithm to decrease the number of features.')
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
     stop_words = serializers.SerializerMethodField()
@@ -75,7 +73,7 @@ class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer
 
     class Meta:
         model = Tagger
-        fields = ('id', 'url', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'feature_selector', 'stop_words', 'fields_parsed',
+        fields = ('id', 'url', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words', 'fields_parsed',
                   'maximum_sample_size', 'negative_multiplier', 'location', 'precision', 'recall', 'f1_score', 'num_features', 'plot', 'task')
         read_only_fields = ('precision', 'recall', 'f1_score', 'num_features')
 

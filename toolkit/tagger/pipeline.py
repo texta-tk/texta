@@ -187,8 +187,5 @@ def get_pipeline_builder():
     params = {}
     pipe_builder.add_feature_selector('feature_selector', SelectFromModel, 'SVM Feature Selector', params, estimator=LinearSVC(penalty='l1', dual=False))
 
-    #params = {'k': [50, 100, 500, 1000]}
-    #pipe_builder.add_feature_selector('feature_selector', SelectKBest, 'KBest Feature Selector', params, estimator=mutual_info_classif)
-
     return pipe_builder
     
