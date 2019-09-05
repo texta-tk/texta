@@ -1,7 +1,3 @@
-import warnings
-from sklearn.exceptions import DataConversionWarning
-warnings.filterwarnings(action='ignore', category=DataConversionWarning)
-
 from toolkit.tagger.pipeline import get_pipeline_builder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
