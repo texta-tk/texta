@@ -6,6 +6,7 @@ from toolkit.tagger.pipeline import get_pipeline_builder
 def get_field_choices():
    """
    Retrieves field options from ES.
+   :return: list
    """
    es = ElasticCore()
    if es.connection:
@@ -16,6 +17,7 @@ def get_field_choices():
 def get_classifier_choices():
    """
    Retrieves classifier choices.
+   :return: list
    """
    pipeline = get_pipeline_builder()
    return [(a, a) for a in pipeline.get_classifier_options()]
@@ -23,6 +25,7 @@ def get_classifier_choices():
 def get_vectorizer_choices():
    """
    Retrieves vectorizer choices.
+   :return: list
    """
    pipeline = get_pipeline_builder()
    return [(a, a) for a in pipeline.get_extractor_options()]
@@ -31,10 +34,19 @@ def get_vectorizer_choices():
 def get_feature_selector_choices():
    """
    Retrieves feature selector choices.
+   :return: list
    """
    pipeline = get_pipeline_builder()
    return [(a, a) for a in pipeline.get_feature_selector_options()]
 
+
+def get_tokenizer_choices():
+   """
+   Retrieves tokenizer choices
+   :return: list
+   """
+   pipeline = get_pipeline_builder()
+   return [(a, a) for a in pipeline.get_analyzer_options()]
 
 DEFAULT_MAX_SAMPLE_SIZE = 10000
 DEFAULT_NEGATIVE_MULTIPLIER = 1.0

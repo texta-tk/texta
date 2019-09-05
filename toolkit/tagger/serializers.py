@@ -6,7 +6,7 @@ from django.db.models import Avg
 from toolkit.tagger.models import Tagger, TaggerGroup
 
 from toolkit.tagger.choices import (get_field_choices, get_classifier_choices, get_vectorizer_choices, get_feature_selector_choices,
-                                    DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE,
+                                    get_tokenizer_choices, DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE,
                                     DEFAULT_NUM_CANDIDATES, DEFAULT_TAGGER_GROUP_FACT_NAME)
 
 from toolkit.core.task.serializers import TaskSerializer

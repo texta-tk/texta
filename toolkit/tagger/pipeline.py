@@ -163,27 +163,29 @@ class PipelineBuilder:
 
 def get_pipeline_builder():
     pipe_builder = PipelineBuilder()
+    ### params are used grid search to find optimal choices
 
     # Feature Extraction
-    params = {}
+    analyzer_params = ['word', 'char_wb', 'char']
+    ngram_params = [(1, 1), (1, 2), (1, 3)]
+
+    params = {'ngram_range': ngram_params, 'analyzer': analyzer_params}
     pipe_builder.add_extractor('vectorizer', HashingVectorizer, 'Hashing Vectorizer', params)
 
-    params = {'ngram_range': [(1, 1), (1, 2)], 'min_df': [5]}
+    params = {'ngram_range': ngram_params, 'min_df': [5, 10]}
     pipe_builder.add_extractor('vectorizer', CountVectorizer, 'Count Vectorizer', params)
 
-    params = {'ngram_range': [(1, 1), (1, 2)], 'min_df': [5]}
+    params = {'ngram_range': ngram_params, 'min_df': [5, 10]}
     pipe_builder.add_extractor('vectorizer', TfidfVectorizer, 'TfIdf Vectorizer', params)
 
     # Classification Models
-
-    params = {'solver': ['lbfgs']}
+    params = {'solver': ['lbfgs'], 'C': [0.1, 1.0, 10, 100], 'penalty': ['l2']}
     pipe_builder.add_classifier('classifier', LogisticRegression, 'Logistic Regression', params)
 
     params = {'probability': [True], 'kernel': ['linear']}
     pipe_builder.add_classifier('classifier', SVC, 'LinearSVC', params)
 
     # Feature selectors
-
     params = {}
     pipe_builder.add_feature_selector('feature_selector', SelectFromModel, 'SVM Feature Selector', params, estimator=LinearSVC(penalty='l1', dual=False))
 
