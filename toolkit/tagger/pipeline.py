@@ -167,7 +167,7 @@ def get_pipeline_builder():
 
     # Feature Extraction
     analyzer_params = ['word', 'char_wb']
-    ngram_params = [(1, 2), (1, 3)]
+    ngram_params = [(1, 2)]
     min_df_params = [5]
 
     params = {'ngram_range': ngram_params, 'analyzer': analyzer_params}
@@ -180,10 +180,14 @@ def get_pipeline_builder():
     pipe_builder.add_extractor('vectorizer', TfidfVectorizer, 'TfIdf Vectorizer', params)
 
     # Classification Models
-    params = {'solver': ['lbfgs'], 'C': [0.1, 1.0, 10], 'penalty': ['l2']}
+    # we need multiprocessing to do this
+    # fuck celery?
+    #c_params = [0.1, 1.0, 10.0]
+    c_params = [1.0]
+    params = {'solver': ['lbfgs'], 'penalty': ['l2'], 'C': c_params}
     pipe_builder.add_classifier('classifier', LogisticRegression, 'Logistic Regression', params)
 
-    params = {'probability': [True], 'kernel': ['linear']}
+    params = {'probability': [True], 'kernel': ['linear'], 'C': c_params}
     pipe_builder.add_classifier('classifier', SVC, 'LinearSVC', params)
 
     # Feature selectors
