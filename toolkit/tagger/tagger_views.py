@@ -37,7 +37,8 @@ class TaggerViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
-                        fields=json.dumps(serializer.validated_data['fields']))
+                        fields=json.dumps(serializer.validated_data['fields']),
+                        query=json.dumps(serializer.validated_data['query']))
 
 
     def get_queryset(self):

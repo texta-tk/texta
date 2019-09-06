@@ -45,10 +45,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
             queryset = (queryset.filter(owner=current_user) | queryset.filter(users=current_user)).distinct()
         return queryset
 
-    #def get_serializer_class(self):
-    #    if self.request.user.is_superuser:
-    #        return ProjectAdminSerializer
-    #    return ProjectSerializer
+    def get_serializer_class(self):
+        if self.action == 'get_facts':
+            return GetFactsSerializer
+        if self.action == 'search':
+            return SearchSerializer
+        if self.request.user.is_superuser:
+            return ProjectAdminSerializer
+        return ProjectSerializer
 
     @action(detail=True, methods=['get', 'post'])
     def get_fields(self, request, pk=None, project_pk=None):
