@@ -47,6 +47,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self):
+        if self.action == 'get_facts':
+            return GetFactsSerializer
+        if self.action == 'search':
+            return SearchSerializer
         if self.request.user.is_superuser:
             return ProjectAdminSerializer
         return ProjectSerializer
