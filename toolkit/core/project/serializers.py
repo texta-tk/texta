@@ -4,7 +4,7 @@ from django import forms
 
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.core.project.models import Project
-from toolkit.core.choices import get_index_choices
+from toolkit.core.choices import get_index_choices, MATCH_CHOICES
 from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.tagger.models import Tagger
 
@@ -13,14 +13,26 @@ DEFAULT_VALUES_PER_NAME = 10
 
 
 class SearchSerializer(serializers.Serializer):
-    text = serializers.CharField()
+    match_text = serializers.CharField(help_text='String of list of strings to match.')
+    match_type = serializers.ChoiceField(choices=MATCH_CHOICES,
+        help_text='Match type to apply. Default: match.',
+        required=False)
+    match_indices = serializers.ListField(child=serializers.CharField(), 
+        help_text='Match from specific indices in project. Default: EMPTY - all indices are used.',
+        required=False)
+    match_fields = serializers.ListField(child=serializers.CharField(), 
+        help_text='Match from specific fields in project. Default: EMPTY - all fields are used.',
+        required=False)
+    size = serializers.IntegerField(default=10,
+        help_text='Number of documents returned',
+        required=False)
 
 
 class GetFactsSerializer(serializers.Serializer):
     values_per_name = serializers.IntegerField(default=DEFAULT_VALUES_PER_NAME,
-                                               help_text=f'Number of fact values per fact name. Default: 10.')
+        help_text=f'Number of fact values per fact name. Default: 10.')
     output_type = serializers.ChoiceField(choices=((True, 'fact names with values'), (False, 'fact names without values')),
-                                          help_text=f'Include fact values in output. Default: True', default=True)
+        help_text=f'Include fact values in output. Default: True', default=True)
 
 
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):

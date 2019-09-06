@@ -29,7 +29,6 @@ def get_payload(request):
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
-    queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     permission_classes = (
         permissions.IsAuthenticated,
@@ -46,10 +45,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
             queryset = (queryset.filter(owner=current_user) | queryset.filter(users=current_user)).distinct()
         return queryset
 
-    def get_serializer_class(self):
-        if self.request.user.is_superuser:
-            return ProjectAdminSerializer
-        return ProjectSerializer
+    #def get_serializer_class(self):
+    #    if self.request.user.is_superuser:
+    #        return ProjectAdminSerializer
+    #    return ProjectSerializer
 
     @action(detail=True, methods=['get', 'post'])
     def get_fields(self, request, pk=None, project_pk=None):
@@ -92,18 +91,30 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         project_object = self.get_object()
         project_indices = list(project_object.indices)
+        
+        # TODO: test if indices & fields are valid
+
         if not project_indices:
             return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST)
 
-        es = ElasticSearcher(indices=project_indices, output='raw')
-
-        query_string = serializer.validated_data['text']
-
+        es = ElasticSearcher(indices=project_indices, output='doc')
         q = Query()
-        q.add_query_string(query_string)
 
+        # if input is string, convert to list
+        # if unknown format, return error
+        match_text = serializer.validated_data['match_text']
+        if isinstance(match_text, list):
+            match_texts = [str(item) for item in match_text if item]
+        elif isinstance(match_text, str):
+            match_texts = [match_text]
+        else:
+            return Response({'error': f'match text is in unknown format: {match_text}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # add query filters
+        for item in match_texts:
+            q.add_string_filter(item)
+        # update query
         es.update_query(q.query)
-
+        # retrieve results
         results = es.search()
-
         return Response(results, status=status.HTTP_200_OK)

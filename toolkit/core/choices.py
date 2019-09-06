@@ -22,3 +22,5 @@ STATUS_CHOICES = (
     (STATUS_CANCELED, 'Canceled'),
     (STATUS_FAILED, 'Failed'),
 )
+
+MATCH_CHOICES = (('match', 'match'),( 'match_phrase', 'match_phrase'), ('match_phrase_prefix', 'match_phrase_prefix'))
