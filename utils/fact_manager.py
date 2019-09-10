@@ -37,13 +37,13 @@ class FactManager:
         Keyword Arguments:
             doc_id {str} -- If present, deletes the facts only in a given document (default: {None})
         """
-        task_type = TaskTypes.MANAGEMENT_TASK
+        task_type = TaskTypes.MANAGEMENT_TASK.value
         description = 'fact_manager_fact_deletion'
         params = {
             'fact_deleter_fact_values': rm_facts_dict,
             'fact_deleter_doc_id': doc_id,
             'task_type': task_type,
-            'manager_key': ManagerKeys.FACT_DELETER,
+            'manager_key': ManagerKeys.FACT_DELETER.value,
             'description': description,
             'dataset': self.request.session['dataset']
         }

@@ -68,7 +68,7 @@ def filter_params(post: QueryDict):
     filtered_params = {}
 
     for param in post:
-        if prefix not in [TaskTypes.APPLY_PREPROCESSOR, TaskTypes.MANAGEMENT_TASK]:
+        if prefix not in [TaskTypes.APPLY_PREPROCESSOR.value, TaskTypes.MANAGEMENT_TASK.value]:
             param_name = param[len(prefix) + 1:]
         else:
             param_name = param
@@ -104,10 +104,10 @@ def translate_parameters(params):
     all_taggers = Task.objects.filter(task_type=TaskTypes.TRAIN_TAGGER.value, status=Task.STATUS_COMPLETED)
     enabled_taggers = {tagger.pk: tagger.description for tagger in all_taggers}
 
-    all_extraction_models = Task.objects.filter(task_type=TaskTypes.TRAIN_ENTITY_EXTRACTOR, status=Task.STATUS_COMPLETED)
+    all_extraction_models = Task.objects.filter(task_type=TaskTypes.TRAIN_ENTITY_EXTRACTOR.value, status=Task.STATUS_COMPLETED)
     enabled_extractors = {model.pk: model.description for model in all_extraction_models}
 
-    all_neuroclassifier_models = Task.objects.filter(task_type=TaskTypes.TRAIN_NEUROCLASSIFIER, status=Task.STATUS_COMPLETED)
+    all_neuroclassifier_models = Task.objects.filter(task_type=TaskTypes.TRAIN_NEUROCLASSIFIER.value, status=Task.STATUS_COMPLETED)
     enabled_neuroclassifiers = {model.pk: model.description for model in all_neuroclassifier_models}
     extractor_options = {a['index']: a['label'] for a in pipe_builder.get_extractor_options()}
     reductor_options = {a['index']: a['label'] for a in pipe_builder.get_reductor_options()}

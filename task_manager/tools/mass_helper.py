@@ -146,7 +146,7 @@ class MassHelper:
             task_param["dataset"] = dataset_id
             self._add_search_tag_query(task_param, tag_label)
             # Create execution task
-            task_type = TaskTypes.TRAIN_TAGGER
+            task_type = TaskTypes.TRAIN_TAGGER.value
             task_id = create_task(task_type, tag_label, task_param, user)
             # Add task to queue
             task = Task.get_by_id(task_id)
