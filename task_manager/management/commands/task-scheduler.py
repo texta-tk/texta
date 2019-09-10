@@ -55,9 +55,7 @@ class Command(BaseCommand):
         task_type = task.task_type
         task_id = task.id
         worker = activate_task_worker(task_type)
-        import pdb; pdb.set_trace()
         if worker is None:
-            # Invalid task
             task.update_status(Task.STATUS_FAILED)
             log_dict = {'task': 'Task Scheduler', 'event': 'invalid_task', 'task_type': task_type, 'task_id': task_id}
             logging.getLogger(ERROR_LOGGER).error("Invalid task", extra=log_dict)
