@@ -111,7 +111,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(success, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'], serializer_class=TextSerializer)
+    @action(detail=True, methods=['post'], serializer_class=TextSerializer)
     def stop_word_add(self, request, pk=None, project_pk=None):
         """
         API endpoint for adding a new stop word to tagger
@@ -139,7 +139,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(success, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'], serializer_class=TextSerializer)
+    @action(detail=True, methods=['post'], serializer_class=TextSerializer)
     def stop_word_remove(self, request, pk=None, project_pk=None):
         """
         API endpoint for removing tagger stop word.
@@ -172,7 +172,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(success, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['post'])
     def retrain_tagger(self, request, pk=None, project_pk=None):
         """
         API endpoint for retraining tagger model.
@@ -218,7 +218,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get','post'], serializer_class=DocSerializer)
+    @action(detail=True, methods=['post'], serializer_class=DocSerializer)
     def tag_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging JSON documents.

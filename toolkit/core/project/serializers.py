@@ -4,7 +4,7 @@ from django import forms
 
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.core.project.models import Project
-from toolkit.core.choices import get_index_choices, MATCH_CHOICES
+from toolkit.core.choices import get_index_choices, MATCH_CHOICES, OPERATOR_CHOICES
 from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.tagger.models import Tagger
 
@@ -19,9 +19,14 @@ class SearchSerializer(serializers.Serializer):
         required=False)
     match_indices = serializers.ListField(child=serializers.CharField(), 
         help_text='Match from specific indices in project. Default: EMPTY - all indices are used.',
+        default=None,
         required=False)
     match_fields = serializers.ListField(child=serializers.CharField(), 
         help_text='Match from specific fields in project. Default: EMPTY - all fields are used.',
+        default=None,
+        required=False)
+    operator = serializers.ChoiceField(choices=OPERATOR_CHOICES,
+        help_text=f'Operator to use in search.',
         required=False)
     size = serializers.IntegerField(default=10,
         help_text='Number of documents returned',

@@ -87,22 +87,35 @@ class ProjectViewSet(viewsets.ModelViewSet):
         fact_map_list = [{'name': k, 'values': v} for k, v in fact_map.items()]
         return Response(fact_map_list, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['get', 'post'], serializer_class=SearchSerializer)
+    @action(detail=True, methods=['post'], serializer_class=SearchSerializer)
     def search(self, request, pk=None, project_pk=None):
-        data = get_payload(request)
+        data = request.POST
         serializer = SearchSerializer(data=data)
+        print(data)
         if not serializer.is_valid():
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         project_object = self.get_object()
         project_indices = list(project_object.indices)
-        
-        # TODO: test if indices & fields are valid
+        project_fields = project_object.get_elastic_fields(path_list=True)
 
         if not project_indices:
             return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # test if indices are valid
+        if serializer.validated_data['match_indices']:
+            if not set(serializer.validated_data['match_indices']).issubset(set(project_indices)):
+                return Response({'error': 'index names are not valid for this project. allowed values are: {project_indices}'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        # test if fields are valid
+        if serializer.validated_data['match_fields']:
+            if not set(serializer.validated_data['match_fields']).issubset(set(project_fields)):
+                return Response({'error': 'fields names are not valid for this project. allowed values are: {project_fields}'},
+                                status=status.HTTP_400_BAD_REQUEST)
+                                
+
         es = ElasticSearcher(indices=project_indices, output='doc')
-        q = Query()
+        q = Query(operator=serializer.validated_data['operator'])
 
         # if input is string, convert to list
         # if unknown format, return error
@@ -116,9 +129,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         # add query filters
         for item in match_texts:
-            q.add_string_filter(item)
+            q.add_string_filter(item, match_type=serializer.validated_data["match_type"])
         # update query
         es.update_query(q.query)
         # retrieve results
-        results = es.search()
+        results = es.search(size=serializer.validated_data["size"])
         return Response(results, status=status.HTTP_200_OK)

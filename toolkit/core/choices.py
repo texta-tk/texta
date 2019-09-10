@@ -23,4 +23,5 @@ STATUS_CHOICES = (
     (STATUS_FAILED, 'Failed'),
 )
 
-MATCH_CHOICES = (('match', 'match'),( 'match_phrase', 'match_phrase'), ('match_phrase_prefix', 'match_phrase_prefix'))
+MATCH_CHOICES = (('word', 'word'),( 'phrase', 'phrase'), ('phrase_prefix', 'phrase_prefix'))
+OPERATOR_CHOICES = (('must', 'must'), ('must_not', 'mut_not'), ('should', 'should'))

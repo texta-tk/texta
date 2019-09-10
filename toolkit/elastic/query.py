@@ -53,5 +53,5 @@ class Query:
         """
         string_matching_query = {"multi_match": {"query": query_string}}
         if match_type in ("phrase", "phrase_prefix"):
-            string_matching_query["multi_match"]["query"]["type"] = match_type
+            string_matching_query["multi_match"]["type"] = match_type
         self.query["query"]["bool"][self.operator].append(string_matching_query)
