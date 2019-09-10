@@ -19,21 +19,10 @@ from toolkit import permissions as toolkit_permissions
 from toolkit.view_constants import TagLogicViews
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.neurotagger.serializers import TextSerializer, DocSerializer
-
+from toolkit.helper_functions import get_payload
 
 # initialize model cache for neurotaggers
 model_cache = ModelCache(NeurotaggerWorker)
-
-
-def get_payload(request):
-    if request.GET:
-        data = request.GET
-    elif request.POST:
-
-        data = request.POST
-    else:
-        data = {}
-    return data
 
 class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
     serializer_class = NeurotaggerSerializer
@@ -101,8 +90,6 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
         tagger_id = tagger_object.pk
         tagger_response = self.apply_tagger(tagger_id, serializer.validated_data['text'], input_type='text')
         return Response(tagger_response, status=status.HTTP_200_OK)
-
-
 
 
     @action(detail=True, methods=['get','post'], serializer_class=DocSerializer)

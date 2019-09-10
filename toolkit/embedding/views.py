@@ -1,3 +1,5 @@
+import json
+
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -12,22 +14,12 @@ from toolkit.core.project.models import Project
 from toolkit.tools.model_cache import ModelCache
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.tools.text_processor import TextProcessor
+from toolkit.helper_functions import get_payload
 
-import json
 
 w2v_cache = ModelCache(W2VEmbedding)
 phraser_cache = ModelCache(Phraser)
 cluster_cache = ModelCache(WordCluster)
-
-
-def get_payload(request):
-    if request.GET:
-        data = request.GET
-    elif request.POST:
-        data = request.POST
-    else:
-        data = {}
-    return data
 
 
 class EmbeddingViewSet(viewsets.ModelViewSet):

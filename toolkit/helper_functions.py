@@ -7,10 +7,12 @@ def apply_celery_task(task_func, *args):
         task_func.apply(args=(*args,))
 
 def get_payload(request):
-    if request.GET:
-        data = request.GET
-    elif request.POST:
-        data = request.POST
-    else:
-        data = {}
-    return data
+    # if request.GET:
+    #     data = request.GET
+    # elif request.POST:
+    #     data = request.data
+    # else:
+    #     data = {}
+    
+    # request.GET or request.POST only works with formdata, not json data
+    return request.data

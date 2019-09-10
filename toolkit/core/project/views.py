@@ -16,16 +16,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.query import Query
-
-
-def get_payload(request):
-    if request.GET:
-        data = request.GET
-    elif request.POST:
-        data = request.POST
-    else:
-        data = {}
-    return data
+from toolkit.helper_functions import get_payload
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
