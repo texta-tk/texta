@@ -19,7 +19,6 @@ ENV PATH /opt/conda/bin:$PATH
 COPY environment.yaml /var/environment.yaml
 # Modify environment file for cpu
 RUN sed -i '/  - tensorflow-gpu/c\  - tensorflow' /var/environment.yaml
-RUN cat /var/environment.yaml
 
 # Create Conda environment
 RUN conda env create -f /var/environment.yaml
