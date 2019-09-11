@@ -202,8 +202,9 @@ class TaggerViewTests(APITestCase):
     def run_stop_word_add(self):
         '''Tests the endpoint for the stop_word_add action'''
         for test_tagger_id in self.test_tagger_ids:
-            url = f'{self.url}{test_tagger_id}/stop_word_add/?text=stopsõna'
-            response = self.client.get(url)
+            url = f'{self.url}{test_tagger_id}/stop_word_add/'
+            payload = {"text": "stopsõna"}
+            response = self.client.post(url, payload, format='json')
             print_output('test_stop_word_add:response.data', response.data)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
@@ -215,7 +216,8 @@ class TaggerViewTests(APITestCase):
         for test_tagger_id in self.test_tagger_ids:
             '''Tests the endpoint for the stop_word_remove action'''
             url = f'{self.url}{test_tagger_id}/stop_word_remove/?text=stopsõna'
-            response = self.client.get(url)
+            payload = {"text": "stopsõna"}            
+            response = self.client.post(url, payload, format='json')
             print_output('test_stop_word_remove:response.data', response.data)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
