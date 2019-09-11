@@ -7,7 +7,7 @@ class ElasticCore:
     """
     Class for holding most general settings and Elasticsearch object itself
     """
-    
+
     def __init__(self):
         self.es = Elasticsearch([ES_URL])
         self.connection = self._check_connection()
@@ -20,19 +20,6 @@ class ElasticCore:
             return True
         except:
             return False
-
-
-    @staticmethod
-    def load_indices_from_field_data(field_data, indices):
-        # try loading indices from field data. if not present, use list.
-        if field_data:
-            try:
-                parsed_indices = list(set([field['index'] for field in field_data]))
-                parsed_indices = ','.join(parsed_indices)
-                return parsed_indices
-            except:
-                KeyError
-        return indices
 
 
     def get_indices(self):
@@ -56,7 +43,7 @@ class ElasticCore:
                         index_with_field = {'index': index, 'path': field['path'], 'type': field['type']}
                         out.append(index_with_field)
         return out
-    
+
 
     def _decode_mapping_structure(self, structure, root_path=list(), nested_layers=list()):
         """
@@ -71,7 +58,7 @@ class ElasticCore:
                 path_list.append(k)
                 sub_mapping = [{'path': k, 'type': 'fact'}]
                 mapping_data.extend(sub_mapping)
-            # deal with object & nested structures 
+            # deal with object & nested structures
             elif 'properties' in v and k not in self.TEXTA_RESERVED:
                 sub_structure = v['properties']
                 path_list = root_path[:]
