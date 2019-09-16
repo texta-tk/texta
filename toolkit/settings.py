@@ -177,6 +177,7 @@ STATIC_ROOT =  os.path.join(BASE_DIR, 'static')
 
 # ELASTICSEARCH
 ES_URL = os.getenv('TEXTA_ES_URL', 'http://localhost:9200')
+ES_PREFIX = os.getenv('TEXTA_ES_PREFIX', '')
 
 # MLP
 MLP_URL = os.getenv('TEXTA_MLP_URL', 'http://mlp-dev.texta.ee:5000')

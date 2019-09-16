@@ -1,7 +1,7 @@
 from elasticsearch import Elasticsearch
 import urllib
 import requests
-from toolkit.settings import ES_URL
+from toolkit.settings import ES_URL, ES_PREFIX
 
 class ElasticCore:
     """
@@ -10,6 +10,7 @@ class ElasticCore:
 
     def __init__(self):
         self.es = Elasticsearch([ES_URL])
+        self.es_prefix = ES_PREFIX
         self.connection = self._check_connection()
         self.TEXTA_RESERVED = ['texta_facts']
 
@@ -24,7 +25,10 @@ class ElasticCore:
 
     def get_indices(self):
         if self.connection:
-            return list(self.es.indices.get_alias('*').keys())
+            alias = '*'
+            if self.es_prefix:
+                alias = f'{self.es_prefix}_*'
+            return list(self.es.indices.get_alias(alias).keys())
         else:
             return []
 
