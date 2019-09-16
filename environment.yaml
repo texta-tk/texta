@@ -36,3 +36,4 @@ dependencies:
     - django-rest-serializer-field-permissions
     - django-cors-headers
     - sentencepiece
+    - python-json-logger

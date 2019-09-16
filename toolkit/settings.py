@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os
+from .logging_settings import setup_logging
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -94,7 +95,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'toolkit.neurotagger.middleware.middleware.ExceptionMiddleware',
 ]
 
 ROOT_URLCONF = 'toolkit.urls'
@@ -212,3 +212,16 @@ if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
 
 MEDIA_URL = 'data/media/'
+
+
+
+
+# Path to the log directory. Default is /log
+LOG_PATH = os.path.join(BASE_DIR, "data", "log")
+# Logger IDs, used in apps.
+INFO_LOGGER = "info_logger"
+ERROR_LOGGER = "error_logger"
+# Paths to info and error log files.
+INFO_LOG_FILE_NAME = os.path.join(LOG_PATH, "info.log")
+ERROR_LOG_FILE_NAME = os.path.join(LOG_PATH, "error.log")
+LOGGING = setup_logging(INFO_LOG_FILE_NAME, ERROR_LOG_FILE_NAME, INFO_LOGGER, ERROR_LOGGER)

@@ -13,9 +13,10 @@ from toolkit.tools.show_progress import ShowProgress
 from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.tagger.plots import create_tagger_plot
+from toolkit.base_task import BaseTask
 
 
-@task(name="train_tagger")
+@task(name="train_tagger", base=BaseTask)
 def train_tagger(tagger_id):
     # retrieve tagger & task objects
     tagger_object = Tagger.objects.get(pk=tagger_id)

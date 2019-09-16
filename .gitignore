@@ -7,3 +7,4 @@ data/media/*
 .vscode/*
 *.png
 data-volumes/*
+data/log/*
