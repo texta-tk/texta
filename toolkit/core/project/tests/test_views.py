@@ -32,3 +32,21 @@ class ProjectViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue(TEST_FACT_NAME in [field['name'] for field in response.data])
+
+    def test_search(self):
+        payload = {"match_text": "jeesus", "size": 1}
+        url = f'/projects/{self.project.id}/search/'
+        response = self.client.post(url, payload)
+        print_output('search:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue(len(response.data) == 1)
+
+    def test_search_match_phrase_empty_result(self):
+        payload = {"match_text": "jeesus tuleb ja tapab kõik ära", "match_type": "phrase"}
+        url = f'/projects/{self.project.id}/search/'
+        response = self.client.post(url, payload)
+        print_output('search:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue(len(response.data) == 0)

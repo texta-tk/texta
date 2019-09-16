@@ -82,7 +82,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def search(self, request, pk=None, project_pk=None):
         data = request.POST
         serializer = SearchSerializer(data=data)
-        print(data)
         if not serializer.is_valid():
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         project_object = self.get_object()

@@ -16,6 +16,7 @@ class SearchSerializer(serializers.Serializer):
     match_text = serializers.CharField(help_text='String of list of strings to match.')
     match_type = serializers.ChoiceField(choices=MATCH_CHOICES,
         help_text='Match type to apply. Default: match.',
+        default='word',
         required=False)
     match_indices = serializers.ListField(child=serializers.CharField(), 
         help_text='Match from specific indices in project. Default: EMPTY - all indices are used.',
@@ -27,6 +28,7 @@ class SearchSerializer(serializers.Serializer):
         required=False)
     operator = serializers.ChoiceField(choices=OPERATOR_CHOICES,
         help_text=f'Operator to use in search.',
+        default='must',
         required=False)
     size = serializers.IntegerField(default=10,
         help_text='Number of documents returned',
