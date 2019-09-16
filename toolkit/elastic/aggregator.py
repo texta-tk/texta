@@ -16,7 +16,7 @@ class ElasticAggregator:
         """
         self.core = ElasticCore()
         self.field_data = field_data
-        self.indices = self.core.load_indices_from_field_data(field_data, indices)
+        self.indices = indices
         self.query = query
 
 
@@ -75,7 +75,7 @@ class ElasticAggregator:
                                     entities[fact_name].append(fact_value["key"])
                             else:
                                 entities[fact_name].append(fact_value["key"])
-        
+
         # filter by name if fact name present
         if filter_by_fact_name:
             if filter_by_fact_name in entities:
@@ -85,5 +85,5 @@ class ElasticAggregator:
 
         if not include_values:
             entities = list(entities.keys())
-        
+
         return entities

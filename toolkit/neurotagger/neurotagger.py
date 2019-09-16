@@ -281,12 +281,7 @@ class NeurotaggerWorker():
     def load(self):
         '''Load model/tokenizer for preprocessor'''
         K.clear_session()
-        # Clear Keras session, because currently this function
-        # is called in every elastic scroll batch, because
-        # preprocessor worker just calls the .transform() function
-        # on Task preprocessors, reloading the models on every bad (bad).
-        # This also causes a memory leak in Tensorflow, to prevent it,
-        # clear the session, or rework the entire preprocessor system
+        # Clear Keras session, to prevent memory leaks
 
         self.neurotagger_obj = Neurotagger.objects.get(pk=self.neurotagger_id)
         self.seq_len = self.neurotagger_obj.seq_len

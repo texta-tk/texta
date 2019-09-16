@@ -15,17 +15,12 @@ class TestElasticAggregator(TestCase):
         '''Tests ElasticAggregator field data update.'''
         elastic_aggregator = ElasticAggregator()
         elastic_aggregator.update_field_data(TEST_FIELD_CHOICE)
-        self.assertTrue(elastic_aggregator.field_data)      
+        self.assertTrue(elastic_aggregator.field_data)
 
 
     def run_facts(self):
         '''Tests ElasticAggregator fact retrieval.'''
-        # test without defining index.
-        elastic_aggregator = ElasticAggregator()
-        facts = elastic_aggregator.facts()
-        print_output('test_run_facts:facts', facts)
-        self.assertTrue(isinstance(facts, dict))
-        self.assertTrue(len(list(facts.keys())) > 0)
+
         # test with test index
         elastic_aggregator = ElasticAggregator(indices=[TEST_INDEX])
         facts = elastic_aggregator.facts()
@@ -34,9 +29,10 @@ class TestElasticAggregator(TestCase):
         self.assertTrue(len(list(facts.keys())) > 0)
         self.assertTrue(TEST_FACT_NAME in facts)
         # test with field data
-        elastic_aggregator = ElasticAggregator(field_data=TEST_FIELD_CHOICE)
+        elastic_aggregator = ElasticAggregator(field_data=TEST_FIELD_CHOICE, indices=[TEST_INDEX])
         facts = elastic_aggregator.facts()
         print_output('test_run_facts_with_field_data:facts', facts)
         self.assertTrue(isinstance(facts, dict))
         self.assertTrue(len(list(facts.keys())) > 0)
         self.assertTrue(TEST_FACT_NAME in facts)
+

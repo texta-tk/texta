@@ -15,8 +15,12 @@ RUN sh Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && rm Miniconda3-lates
 # Add conda binaries to path
 ENV PATH /opt/conda/bin:$PATH
 
-# Create and activate Conda env
+# Copy environment file
 COPY environment.yaml /var/environment.yaml
+# Modify environment file for cpu
+RUN sed -i '/  - tensorflow-gpu/c\  - tensorflow' /var/environment.yaml
+
+# Create Conda environment
 RUN conda env create -f /var/environment.yaml
 ENV PATH /opt/conda/envs/texta-rest/bin:$PATH
 
