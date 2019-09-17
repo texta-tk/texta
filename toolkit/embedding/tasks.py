@@ -14,9 +14,10 @@ from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.phraser import Phraser
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.settings import MODELS_DIR, NUM_WORKERS
+from toolkit.base_task import BaseTask
 
 
-@task(name="train_embedding")
+@task(name="train_embedding", base=BaseTask)
 def train_embedding(embedding_id):
     # retrieve embedding & task objects
     embedding_object = Embedding.objects.get(pk=embedding_id)
@@ -94,7 +95,7 @@ def train_embedding(embedding_id):
         return False
 
 
-@task(name="cluster_embedding")
+@task(name="cluster_embedding", base=BaseTask)
 def cluster_embedding(clustering_id):
     # retrieve clustering object
     clustering_object = EmbeddingCluster.objects.get(pk=clustering_id)

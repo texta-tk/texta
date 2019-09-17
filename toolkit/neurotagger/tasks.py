@@ -13,10 +13,9 @@ from toolkit.embedding.phraser import Phraser
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.neurotagger.neurotagger import NeurotaggerWorker
-# from toolkit.neurotagger.plots import create_neurotagger_plot
+from toolkit.base_task import BaseTask
 
-
-@task(name="neurotagger_train_handler")
+@task(name="neurotagger_train_handler", base=BaseTask)
 def neurotagger_train_handler(neurotagger_id, testing=False):
     # retrieve neurotagger & task objects
     neurotagger_obj = Neurotagger.objects.get(pk=neurotagger_id)
@@ -37,7 +36,7 @@ def neurotagger_train_handler(neurotagger_id, testing=False):
     return task_worker
 
 
-@task(name="scroll_data")
+@task(name="scroll_data", base=BaseTask)
 def scroll_data(query, kwargs={}):
     neurotagger_obj = Neurotagger.objects.get(pk=kwargs["neurotagger_id"])
     num_queries = kwargs["num_queries"]
@@ -54,14 +53,13 @@ def scroll_data(query, kwargs={}):
     neurotagger_obj.task.update_process_iteration(total=num_queries, step_prefix='Scrolling queries')
     print(f'TICK {neurotagger_obj.task.num_processed} / {num_queries}')
     return {"query_samples": query_samples, "query_labels": query_labels, "query_ids": query_ids}
-    
 
-@task(name="train_model")
+
+@task(name="train_model", base=BaseTask)
 def train_model(scrolled_samples_by_query, kwargs={}):
     # retrieve neurotagger & task objects
     neurotagger_obj = Neurotagger.objects.get(pk=kwargs["neurotagger_id"])
     task_object = neurotagger_obj.task
-
     # update progress step to training
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('training')
