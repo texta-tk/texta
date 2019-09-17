@@ -211,10 +211,11 @@ if not os.path.exists(MEDIA_DIR):
 MEDIA_URL = 'data/media/'
 
 
-
-
 # Path to the log directory. Default is /log
 LOG_PATH = os.path.join(BASE_DIR, "data", "log")
+if not os.path.exists(LOG_PATH):
+    os.makedirs(LOG_PATH)
+
 # Logger IDs, used in apps.
 INFO_LOGGER = "info_logger"
 ERROR_LOGGER = "error_logger"
