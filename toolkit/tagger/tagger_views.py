@@ -6,6 +6,7 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.tagger.models import Tagger
@@ -37,8 +38,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
-                        fields=json.dumps(serializer.validated_data['fields']),
-                        query=json.dumps(serializer.validated_data['query']))
+                        fields=json.dumps(serializer.validated_data['fields']))
 
 
     def get_queryset(self):

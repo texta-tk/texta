@@ -62,6 +62,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ProjectAdminSerializer(ProjectSerializer):
+    owner = serializers.PrimaryKeyRelatedField(required=False, queryset=User.objects.all())
 
     class Meta:
         model = Project

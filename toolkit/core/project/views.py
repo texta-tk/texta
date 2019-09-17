@@ -27,6 +27,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     )
 
     def perform_create(self, serializer):
+        print(self.request.data)
         serializer.save(owner=self.request.user)
 
     def get_queryset(self):
