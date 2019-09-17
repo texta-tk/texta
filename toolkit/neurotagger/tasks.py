@@ -52,7 +52,7 @@ def scroll_data(query, kwargs={}):
     query_samples, query_labels, query_ids = _scroll_multilabel_positives(query, maximum_sample_size, field_data, fact_values, max_seq_len)
     neurotagger_obj.task.update_process_iteration(total=num_queries, step_prefix='Scrolling queries')
     print(f'TICK {neurotagger_obj.task.num_processed} / {num_queries}')
-    # return {"query_samples": query_samples, "query_labels": query_labels, "query_ids": query_ids}
+    return {"query_samples": query_samples, "query_labels": query_labels, "query_ids": query_ids}
 
 
 @task(name="train_model", base=BaseTask)

@@ -119,14 +119,11 @@ WSGI_APPLICATION = 'toolkit.wsgi.application'
 
 DATABASES = {
 	'default': {
-		# 'ENGINE':       os.getenv('DJANGO_DATABASE_ENGINE', 'django.db.backends.sqlite3'),
-		'ENGINE':       os.getenv('DJANGO_DATABASE_ENGINE', 'django.db.backends.postgresql_psycopg2'),
-		# 'NAME':         os.getenv('DJANGO_DATABASE_NAME', os.path.join(BASE_DIR, 'data', 'db.sqlite3')),
-		'NAME':         os.getenv('DJANGO_DATABASE_NAME', 'texta2'),
-		# 'USER':         os.getenv('DJANGO_DATABASE_USER', ''),  # Not used with sqlite3.
-		'USER':         os.getenv('DJANGO_DATABASE_USER', 'admin'),  # Not used with sqlite3.
-		'PASSWORD':     os.getenv('DJANGO_DATABASE_PASSWORD', '1234'),  # Not used with sqlite3.
-		'HOST':         os.getenv('DJANGO_DATABASE_HOST', 'localhost'),
+		'ENGINE':       os.getenv('DJANGO_DATABASE_ENGINE', 'django.db.backends.sqlite3'),
+		'NAME':         os.getenv('DJANGO_DATABASE_NAME', os.path.join(BASE_DIR, 'data', 'db.sqlite3')),
+		'USER':         os.getenv('DJANGO_DATABASE_USER', ''),  # Not used with sqlite3.
+		'PASSWORD':     os.getenv('DJANGO_DATABASE_PASSWORD', ''),  # Not used with sqlite3.
+		'HOST':         os.getenv('DJANGO_DATABASE_HOST', ''),
 		# Set to empty string for localhost. Not used with sqlite3.
 		'PORT':         os.getenv('DJANGO_DATABASE_PORT', ''),
 		# Set to empty string for default. Not used with sqlite3.
@@ -137,6 +134,7 @@ DATABASES = {
         'timeout': 5,
     }
 }
+
 
 
 # Password validation
@@ -179,8 +177,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT =  os.path.join(BASE_DIR, 'static')
 
 # ELASTICSEARCH
-# ES_URL = os.getenv('TEXTA_ES_URL', 'http://localhost:9200')
-ES_URL = os.getenv('TEXTA_ES_URL', 'http://elastic-dev.texta.ee:9200')
+ES_URL = os.getenv('TEXTA_ES_URL', 'http://localhost:9200')
 
 # MLP
 MLP_URL = os.getenv('TEXTA_MLP_URL', 'http://mlp-dev.texta.ee:5000')
