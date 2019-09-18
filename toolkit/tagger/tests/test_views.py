@@ -57,7 +57,7 @@ class TaggerViewTests(APITestCase):
             for classifier_opt in self.classifier_opts:
                 payload = {
                     "description": "TestTagger",
-                    "query": TEST_QUERY,
+                    "query": json.dumps(TEST_QUERY),
                     "fields": TEST_FIELD_CHOICE,
                     "vectorizer": vectorizer_opt,
                     "classifier": classifier_opt,
