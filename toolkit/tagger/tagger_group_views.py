@@ -90,25 +90,36 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-    def get_tag_candidates(self, field_paths, text, n_candidates=30):
+    def get_tag_candidates(self, text, n_similar_docs=10):
         """
         Finds frequent tags from documents similar to input document.
         Returns empty list if hybrid option false.
         """
-        # create es aggregator object
-        es_a = ElasticAggregator()
-        es_a.update_field_data(field_paths)
+        hybrid_tagger_object = self.get_object()
+        field_paths = json.loads(hybrid_tagger_object.taggers.first().fields)
+        indices = hybrid_tagger_object.project.indices
 
         # process text
         text = TextProcessor(remove_stop_words=True).process(text)[0]
 
-        # create & update query
+        # create query
         query = Query()
         query.add_mlt(field_paths, text)
-        es_a.update_query(query.query)
 
-        # perform aggregation to find frequent tags
-        tag_candidates = es_a.facts(filter_by_fact_name=self.get_object().fact_name, size=n_candidates)
+        # create Searcher object for MLT
+        es_s = ElasticSearcher(indices=indices, query=query.query)
+        docs = es_s.search(size=n_similar_docs)
+
+        # filter out tag candidates
+        tag_candidates = []
+        for doc in docs:
+            if "texta_facts" in doc:
+                for fact in doc["texta_facts"]:
+                    if fact["fact"] == hybrid_tagger_object.fact_name:
+                        fact_val = fact["str_val"]
+                        tag_candidates.append(fact_val)
+
+        tag_candidates = set(tag_candidates)
         return tag_candidates
 
 
@@ -163,9 +174,9 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         # combine document field values into one string
         combined_texts = '\n'.join(random_doc_filtered.values())
         # retrieve tag candidates
-        tag_candidates = self.get_tag_candidates(tagger_fields, combined_texts)
+        tag_candidates = self.get_tag_candidates(combined_texts)
         # get tags
-        tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, random_doc_filtered, input_type='doc')
+        tags = self.apply_taggers(tag_candidates, random_doc_filtered, input_type='doc')
         # return document with tags
         response = {"document": random_doc, "tags": tags}
         return Response(response, status=status.HTTP_200_OK)
@@ -189,11 +200,6 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
             return Response({'error': 'models do not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # retrieve field data from the first element
-        # we can do that safely because all taggers inside
-        # hybrid tagger instance are trained on same fields
-        hybrid_tagger_field_data = json.loads(hybrid_tagger_object.taggers.first().fields)
-
         # declare text variable
         text = serializer.validated_data['text']
 
@@ -213,12 +219,10 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
                 return Response({'error': 'no words left after lemmatization. did your request contain only stop words?'}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve tag candidates
-        tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data,
-                                                 text,
-                                                 n_candidates=serializer.validated_data['num_candidates'])
+        tag_candidates = self.get_tag_candidates(text, n_similar_docs=serializer.validated_data['n_similar_docs'])
 
         # get tags
-        tags = self.apply_taggers(hybrid_tagger_object, tag_candidates, text, input_type='text', show_candidates=serializer.validated_data['show_candidates'])
+        tags = self.apply_taggers(tag_candidates, text, input_type='text', show_candidates=serializer.validated_data['show_candidates'])
 
         return Response(tags, status=status.HTTP_200_OK)
 
@@ -273,13 +277,10 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
                 return Response({'error': 'no words left after lemmatization. did your request contain only stop words?'}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve tag candidates
-        tag_candidates = self.get_tag_candidates(hybrid_tagger_field_data,
-                                                 combined_texts,
-                                                 n_candidates=serializer.validated_data['num_candidates'])
+        tag_candidates = self.get_tag_candidates(combined_texts, n_similar_docs=serializer.validated_data['n_similar_docs'])
 
         # get tags
-        tags = self.apply_taggers(hybrid_tagger_object,
-                                  tag_candidates,
+        tags = self.apply_taggers(tag_candidates,
                                   serializer.validated_data['doc'],
                                   input_type='doc',
                                   show_candidates=serializer.validated_data['show_candidates'],
@@ -287,7 +288,8 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         return Response(tags, status=status.HTTP_200_OK)
 
 
-    def apply_taggers(self, hybrid_tagger_object, tag_candidates, tagger_input, input_type='text', show_candidates=False, lemmatizer=None):
+    def apply_taggers(self, tag_candidates, tagger_input, input_type='text', show_candidates=False, lemmatizer=None):
+        hybrid_tagger_object = self.get_object()
         # filter if tag candidates. use all if no candidates.
         if tag_candidates:
             tagger_objects = hybrid_tagger_object.taggers.filter(description__in=tag_candidates)

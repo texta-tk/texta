@@ -7,7 +7,7 @@ from toolkit.tagger.models import Tagger, TaggerGroup
 
 from toolkit.tagger.choices import (get_field_choices, get_classifier_choices, get_vectorizer_choices, get_feature_selector_choices,
                                     get_tokenizer_choices, DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE,
-                                    DEFAULT_NUM_CANDIDATES, DEFAULT_TAGGER_GROUP_FACT_NAME)
+                                    DEFAULT_NUM_DOCUMENTS, DEFAULT_TAGGER_GROUP_FACT_NAME)
 
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.settings import URL_PREFIX
@@ -36,8 +36,8 @@ class TextGroupSerializer(serializers.Serializer):
         help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
     show_candidates = serializers.BooleanField(default=False, 
         help_text=f'Show tagger candidates prior to supervised filtering. Default: False')
-    num_candidates = serializers.IntegerField(default=DEFAULT_NUM_CANDIDATES, 
-        help_text=f'Number of candidates used in unsupervised prefiltering. Default: {DEFAULT_NUM_CANDIDATES}')
+    n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS, 
+        help_text=f'Number of documents used in unsupervised prefiltering. Default: {DEFAULT_NUM_DOCUMENTS}')
 
 
 class DocGroupSerializer(serializers.Serializer):
@@ -48,8 +48,8 @@ class DocGroupSerializer(serializers.Serializer):
         help_text=f'Use hybrid tagging. Default: True')
     show_candidates = serializers.BooleanField(default=False, 
         help_text=f'Show tagger candidates prior to supervised filtering. Default: False')
-    num_candidates = serializers.IntegerField(default=DEFAULT_NUM_CANDIDATES, 
-        help_text=f'Number of candidates used in unsupervised prefiltering. Default: {DEFAULT_NUM_CANDIDATES}')
+    n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS, 
+        help_text=f'Number of documents used in unsupervised prefiltering. Default: {DEFAULT_NUM_DOCUMENTS}')
 
 
 class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
