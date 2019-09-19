@@ -3,6 +3,8 @@ import argparse
 import zipfile
 from elasticsearch import Elasticsearch
 
+from toolkit.settings import ES_PASSWORD, ES_USERNAME
+
 parser = argparse.ArgumentParser(description='Import the Elasticsearch index for unit tests.')
 parser.add_argument('-es', type=str, default='localhost:9200',
                    help='Elasticsearch host URL, default: localhost:9200')
@@ -17,7 +19,7 @@ file_name = args.f
 host = args.es
 index = args.i
 
-es = Elasticsearch(host)
+es = Elasticsearch(host, http_auth=(ES_USERNAME, ES_PASSWORD))
 
 fact_mapping = {
     'test_mapping': {
@@ -38,11 +40,16 @@ fact_mapping = {
 
 def import_docs():
     try:
+        print("Unzipping test data.")
         with zipfile.ZipFile(f'data/test_data/{file_name}.zip', 'r') as z:
             with z.open(f'{file_name}.jl') as f:
                 lines = f.readlines()
+                print("Deleting existing index for safety precaution.")
                 es.indices.delete(index=index, ignore=[400, 404])
                 es.indices.create(index=index, body={'mappings': fact_mapping})
+                print("Created new index with fact mappings.")
+
+                print("Line-per-line data insertion, this might take a moment...")
                 for line in lines:
                     doc = json.dumps(json.loads(line))
                     es.index(index=index, body=doc, doc_type='test_mapping')

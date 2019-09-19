@@ -1,18 +1,33 @@
-from elasticsearch import Elasticsearch
-import urllib
 import requests
-from toolkit.settings import ES_URL, ES_PREFIX
+from elasticsearch import Elasticsearch
+
+from toolkit.settings import ES_CONNECTION_PARAMETERS, ES_PASSWORD, ES_PREFIX, ES_URL, ES_USERNAME
+
 
 class ElasticCore:
     """
     Class for holding most general settings and Elasticsearch object itself
     """
 
+
     def __init__(self):
-        self.es = Elasticsearch([ES_URL])
+        self.es = self._create_client_interface()
         self.es_prefix = ES_PREFIX
         self.connection = self._check_connection()
         self.TEXTA_RESERVED = ['texta_facts']
+
+
+    def _create_client_interface(self):
+        """
+        Support using multiple hosts by splitting a coma-separated ES_URL.
+        Having empty strings for auth is safe and does nothing if ES isn't configured for users.
+        For safety's sake we remove all connection parameters with None (default if not configured in env),
+        and then throw the existing ones with dictionary unpacking as per the Urllib3HttpConnection class.
+        """
+        list_of_hosts = ES_URL.split(",")
+        existing_connection_parameters = dict((key, value) for key, value in ES_CONNECTION_PARAMETERS.items() if value is not None)
+        client = Elasticsearch(list_of_hosts, http_auth=(ES_USERNAME, ES_PASSWORD), **existing_connection_parameters)
+        return client
 
 
     def _check_connection(self):
@@ -28,7 +43,9 @@ class ElasticCore:
             alias = '*'
             if self.es_prefix:
                 alias = f'{self.es_prefix}_*'
-            return list(self.es.indices.get_alias(alias).keys())
+                return list(self.es.indices.get_alias(alias).keys())
+
+            return list(self.es.indices.get_alias().keys())
         else:
             return []
 
@@ -54,7 +71,7 @@ class ElasticCore:
         Decode mapping structure (nested dictionary) to a flat structure
         """
         mapping_data = []
-        for k,v in structure.items():
+        for k, v in structure.items():
             # deal with fact field
             if 'properties' in v and k in self.TEXTA_RESERVED:
                 sub_structure = v['properties']
@@ -76,6 +93,7 @@ class ElasticCore:
                 data = {'path': path, 'type': v['type']}
                 mapping_data.append(data)
         return mapping_data
+
 
     def check_if_indices_exist(self, indices):
         return self.es.indices.exists(index=','.join(indices))
