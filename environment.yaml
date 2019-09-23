@@ -8,7 +8,7 @@ dependencies:
   - python=3.6
   - pip
   - tensorflow-gpu
-  - keras
+  - keras==2.2.5
   - mkl
   - pandas
   - scikit-learn
