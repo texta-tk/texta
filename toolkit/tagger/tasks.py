@@ -14,6 +14,7 @@ from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.tagger.plots import create_tagger_plot
 from toolkit.base_task import BaseTask
+from toolkit.tools.mlp_lemmatizer import MLPLemmatizer
 
 
 @task(name="train_tagger", base=BaseTask)
@@ -104,3 +105,44 @@ def train_tagger(tagger_id):
         show_progress.update_errors(e)
         task_object.update_status(Task.STATUS_FAILED)
         return False
+
+
+@task(name="apply_tagger", base=BaseTask)
+def apply_tagger(text, tagger_id, input_type, lemmatize=False):
+    from toolkit.tagger.tagger_views import tagger_cache
+    from toolkit.embedding.views import phraser_cache
+    
+    # get tagger object
+    tagger = Tagger.objects.get(pk=tagger_id)
+
+    # get lemmatizer if needed
+    lemmatizer = None
+    if lemmatize:
+        lemmatizer = MLPLemmatizer(lite=True)
+    
+    # create text processor object for tagger
+    stop_words = json.loads(tagger.stop_words)
+    if tagger.embedding:
+        phraser = phraser_cache.get_model(tagger.embedding.pk)
+        text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
+    else:
+        text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
+    
+    # load tagger
+    tagger = tagger_cache.get_model(tagger_id)
+    if not tagger:
+        return None
+    
+    # check input type
+    if input_type == 'doc':
+        tagger_result = tagger.tag_doc(text)
+    else:
+        tagger_result = tagger.tag_text(text)
+
+    # check if prediction positive
+    decision = bool(tagger_result[0])
+    if not decision:
+        return None
+    
+    # return tag info
+    return {'tag': tagger.description, 'probability': tagger_result[1], 'tagger_id': tagger_id}

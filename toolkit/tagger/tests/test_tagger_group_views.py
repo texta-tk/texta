@@ -78,28 +78,24 @@ class TaggerGroupViewTests(APITestCase):
 
     def run_tag_text(self):
         '''Tests the endpoint for the tag_text action'''
-        payload = { "text": "see on mingi suvaline naisteka kommentaar. ehk joppab ja saab täägi",
-                    "show_candidates": True }
+        payload = { "text": "see on mingi suvaline naisteka kommentaar. ehk joppab ja saab täägi" }
         tag_text_url = f'{self.url}{self.test_tagger_group_id}/tag_text/'
         response = self.client.post(tag_text_url, payload)
         print_output('test_tag_text_group:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response is list
         self.assertTrue(isinstance(response.data, list))
-        self.assertTrue('decision' in response.data[0])
 
 
     def run_tag_doc(self):
         '''Tests the endpoint for the tag_doc action'''
-        payload = { "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" }), 
-                    "show_candidates": True }
+        payload = { "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" }) }
         url = f'{self.url}{self.test_tagger_group_id}/tag_doc/'
         response = self.client.post(url, payload)
         print_output('test_tag_doc_group:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response is list
         self.assertTrue(isinstance(response.data, list))
-        self.assertTrue('decision' in response.data[0])
 
 
     def run_tag_random_doc(self):

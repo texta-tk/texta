@@ -2,6 +2,8 @@ import json
 import re
 import sys
 
+from celery import group
+
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -11,7 +13,7 @@ from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.query import Query
 
-from toolkit.tagger.tasks import train_tagger
+from toolkit.tagger.tasks import train_tagger, apply_tagger
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.core.project.models import Project
 from toolkit.tagger.serializers import TaggerGroupSerializer, TextGroupSerializer, DocGroupSerializer
@@ -22,9 +24,6 @@ from toolkit.core.task.models import Task
 from toolkit.tools.mlp_lemmatizer import MLPLemmatizer
 from toolkit.helper_functions import apply_celery_task, get_payload
 from toolkit.tagger.validators import validate_input_document
-
-from toolkit.embedding.views import phraser_cache
-from toolkit.tagger.tagger_views import tagger_cache
 
 
 class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
@@ -90,7 +89,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-    def get_tag_candidates(self, text, n_similar_docs=10):
+    def get_tag_candidates(self, text, n_similar_docs=100):
         """
         Finds frequent tags from documents similar to input document.
         Returns empty list if hybrid option false.
@@ -176,7 +175,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(combined_texts)
         # get tags
-        tags = self.apply_taggers(tag_candidates, random_doc_filtered, input_type='doc')
+        tags = self.apply_tagger_group(random_doc_filtered, tag_candidates, input_type='doc')
         # return document with tags
         response = {"document": random_doc, "tags": tags}
         return Response(response, status=status.HTTP_200_OK)
@@ -222,8 +221,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         tag_candidates = self.get_tag_candidates(text, n_similar_docs=serializer.validated_data['n_similar_docs'])
 
         # get tags
-        tags = self.apply_taggers(tag_candidates, text, input_type='text', show_candidates=serializer.validated_data['show_candidates'])
-
+        tags = self.apply_tagger_group(text, tag_candidates, input_type='text')
         return Response(tags, status=status.HTTP_200_OK)
 
 
@@ -280,51 +278,18 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         tag_candidates = self.get_tag_candidates(combined_texts, n_similar_docs=serializer.validated_data['n_similar_docs'])
 
         # get tags
-        tags = self.apply_taggers(tag_candidates,
-                                  serializer.validated_data['doc'],
-                                  input_type='doc',
-                                  show_candidates=serializer.validated_data['show_candidates'],
-                                  lemmatizer=lemmatizer)
+        tags = self.apply_tagger_group(input_document, tag_candidates, input_type='doc', lemmatize=True)
         return Response(tags, status=status.HTTP_200_OK)
 
 
-    def apply_taggers(self, tag_candidates, tagger_input, input_type='text', show_candidates=False, lemmatizer=None):
-        hybrid_tagger_object = self.get_object()
-        # filter if tag candidates. use all if no candidates.
-        if tag_candidates:
-            tagger_objects = hybrid_tagger_object.taggers.filter(description__in=tag_candidates)
-        else:
-            tagger_objects = hybrid_tagger_object.taggers.all()
-        tags = []
+    def apply_tagger_group(self, text, tag_candidates, input_type='text', lemmatize=False):
+        # get tagger group object
+        tagger_group_object = self.get_object()
 
-        for tagger in tagger_objects:
-            tagger_id = tagger.pk
+        # get tagger objects
+        tagger_objects = tagger_group_object.taggers.filter(description__in=tag_candidates)
 
-            # create text processor object for tagger
-            stop_words = json.loads(tagger.stop_words)
-            if tagger.embedding:
-                phraser = phraser_cache.get_model(tagger.embedding.pk)
-                text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
-            else:
-                text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
-
-            # load tagger model
-            tagger = tagger_cache.get_model(tagger_id)
-            if tagger:
-                tagger.add_text_processor(text_processor)
-                if input_type == 'doc':
-                    tagger_result = tagger.tag_doc(tagger_input)
-                else:
-                    tagger_result = tagger.tag_text(tagger_input)
-                decision = bool(tagger_result[0])
-                tagger_response = {'tag': tagger.description, 'probability': tagger_result[1], 'tagger_id': tagger_id}
-
-                if not show_candidates and decision:
-                    # filter tags if omitted
-                    tags.append(tagger_response)
-                elif show_candidates:
-                    # show tag candidates if asked
-                    tagger_response['decision'] = decision
-                    tags.append(tagger_response)
-
+        # predict & sort tags
+        tags = group(apply_tagger.s(text, tagger.pk, input_type) for tagger in tagger_objects).apply()
+        tags = [tag for tag in tags.get() if tag]
         return sorted(tags, key=lambda k: k['probability'], reverse=True)
