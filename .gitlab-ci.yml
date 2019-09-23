@@ -13,6 +13,7 @@ stages:
 
 Test:
   before_script:
+#    - sed -i '/  - tensorflow-gpu/c\  - tensorflow' environment.yaml
     - conda env create -f environment.yaml && source activate texta-rest
     - python import_test_index.py -es http://elasticsearch:9200
     - python migrate.py
