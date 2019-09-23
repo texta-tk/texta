@@ -20,7 +20,7 @@ from toolkit.tools.text_processor import TextProcessor
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.core.task.models import Task
 from toolkit.tools.mlp_lemmatizer import MLPLemmatizer
-from toolkit.helper_functions import apply_celery_task, get_payload
+from toolkit.helper_functions import apply_celery_task
 from toolkit.tagger.validators import validate_input_document
 
 # initialize model cache for taggers & phrasers
@@ -64,7 +64,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         """
         API endpoint for listing tagger features.
         """
-        data = get_payload(request)
+        data = request.data
         serializer = FeatureListSerializer(data=data)
 
         # check if valid request
@@ -116,7 +116,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         """
         API endpoint for adding a new stop word to tagger
         """
-        data = get_payload(request)
+        data = request.data
         serializer = TextSerializer(data=data)
 
         # check if valid request
@@ -144,7 +144,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         """
         API endpoint for removing tagger stop word.
         """
-        data = get_payload(request)
+        data = request.data
         serializer = TextSerializer(data=data)
 
         # check if valid request
@@ -189,7 +189,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         """
         API endpoint for tagging raw text.
         """
-        data = get_payload(request)
+        data = request.data
         serializer = TextSerializer(data=data)
 
         # check if valid request
@@ -223,7 +223,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
         """
         API endpoint for tagging JSON documents.
         """
-        data = get_payload(request)
+        data = request.data
         serializer = DocSerializer(data=data)
 
         # check if valid request

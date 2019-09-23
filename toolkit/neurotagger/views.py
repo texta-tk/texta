@@ -19,7 +19,7 @@ from toolkit import permissions as toolkit_permissions
 from toolkit.view_constants import TagLogicViews
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.neurotagger.serializers import TextSerializer, DocSerializer
-from toolkit.helper_functions import get_payload
+
 
 # initialize model cache for neurotaggers
 model_cache = ModelCache(NeurotaggerWorker)
@@ -77,7 +77,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
         """
         API endpoint for tagging raw text.
         """
-        data = get_payload(request)
+        data = request.data
         serializer = TextSerializer(data=data)
 
         # check if valid request
@@ -103,7 +103,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
         API endpoint for tagging JSON documents.
         """
 
-        data = get_payload(request)
+        data = request.data
         serializer = DocSerializer(data=data)
 
         # check if valid request

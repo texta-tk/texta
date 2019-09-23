@@ -14,7 +14,6 @@ from toolkit.core.project.models import Project
 from toolkit.tools.model_cache import ModelCache
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.tools.text_processor import TextProcessor
-from toolkit.helper_functions import get_payload
 
 
 w2v_cache = ModelCache(W2VEmbedding)
@@ -46,7 +45,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get', 'post'],serializer_class=EmbeddingPrecictionSerializer)
     def predict(self, request, pk=None, project_pk=None):
-        data = get_payload(request)
+        data = request.data
         serializer = EmbeddingPrecictionSerializer(data=data)
         if serializer.is_valid():
             embedding_object = self.get_object()
@@ -66,7 +65,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get', 'post'], serializer_class=TextSerializer)
     def phrase(self, request, pk=None, project_pk=None):
-        data = get_payload(request)
+        data = request.data
         serializer = TextSerializer(data=data)
         if serializer.is_valid():
             embedding_object = self.get_object()
@@ -106,7 +105,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
         """
         API endpoint for browsing clustering results.
         """
-        data = get_payload(request)
+        data = request.data
         serializer = ClusterBrowserSerializer(data=data)
 
         # check if valid request
@@ -134,7 +133,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
         """
         API endpoint for finding a cluster for any word in model.
         """
-        data = get_payload(request)
+        data = request.data
         serializer = TextSerializer(data=data)
 
         # check if valid request
@@ -158,7 +157,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
         """
         API endpoint for clustering raw text.
         """
-        data = get_payload(request)
+        data = request.data
         serializer = TextSerializer(data=data)
 
         # check if valid request

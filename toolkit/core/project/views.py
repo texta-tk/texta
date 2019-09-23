@@ -16,7 +16,6 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.query import Query
-from toolkit.helper_functions import get_payload
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
@@ -64,7 +63,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get', 'post'], serializer_class=GetFactsSerializer)
     def get_facts(self, request, pk=None, project_pk=None):
-        data = get_payload(request)
+        data = request.data
         serializer = GetFactsSerializer(data=data)
         if not serializer.is_valid():
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

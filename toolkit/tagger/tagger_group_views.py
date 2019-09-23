@@ -22,7 +22,7 @@ from toolkit.view_constants import TagLogicViews
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.core.task.models import Task
 from toolkit.tools.mlp_lemmatizer import MLPLemmatizer
-from toolkit.helper_functions import apply_celery_task, get_payload
+from toolkit.helper_functions import apply_celery_task
 from toolkit.tagger.validators import validate_input_document
 
 
@@ -186,7 +186,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         """
         API endpoint for tagging raw text with tagger group.
         """
-        data = get_payload(request)
+        data = request.data
         serializer = TextGroupSerializer(data=data)
 
         # check if valid request
@@ -230,7 +230,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         """
         API endpoint for tagging JSON documents with tagger group.
         """
-        data = get_payload(request)
+        data = request.data
         serializer = DocGroupSerializer(data=data)
 
         # check if valid request
