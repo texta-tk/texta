@@ -68,7 +68,7 @@ class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer
     stop_words = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
     fields_parsed = serializers.SerializerMethodField()
-    query = serializers.JSONField(help_text='Query in JSON format')
+    query = serializers.JSONField(help_text='Query in JSON format', required=False)
     url = serializers.SerializerMethodField()
 
     class Meta:
