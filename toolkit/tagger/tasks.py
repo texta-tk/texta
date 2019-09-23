@@ -104,7 +104,7 @@ def train_tagger(tagger_id):
         # declare the job failed
         show_progress.update_errors(e)
         task_object.update_status(Task.STATUS_FAILED)
-        return False
+        raise
 
 
 @task(name="apply_tagger", base=BaseTask)
