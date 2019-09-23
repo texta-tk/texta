@@ -1,9 +1,48 @@
 import os
+import unittest
 
 from django.test import TestCase
+
 from toolkit.elastic.core import ElasticCore
 from toolkit.test_settings import TEST_INDEX
 from toolkit.tools.utils_for_tests import print_output
+
+
+class TestElasticXpackSecurity(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.elastic_core = ElasticCore()
+
+
+    @unittest.skipIf(ElasticCore.check_for_security_xpack(), "authentication is turned on")
+    def test_check_without_xpack(self):
+        """
+        Check whether the current mechanism works with set env values but no XPACK.
+        :return:
+        """
+        es = ElasticCore()
+        es.es.indices.get("*")
+        print_output("test_run_existing_auth", "Successfully accessed data with auth parameters in env.")
+
+
+    @unittest.skipUnless(ElasticCore.check_for_security_xpack(), "authentification exists")
+    def test_whether_auth_works_with_xpack(self):
+        es = ElasticCore()
+        es.es.indices.get("*")
+        print_output("test_run_existing_auth", "Successfully accessed data with XPACK enabled.")
+
+
+    @unittest.skipIf(ElasticCore.check_for_security_xpack(), "authentication is turned on")
+    def test_whether_auth_works_with_no_env_values_and_no_xpack(self):
+        try:
+            del os.environ["TEXTA_ES_USER"]
+            del os.environ["TEXTA_ES_PASSWORD"]
+        except Exception:
+            pass
+
+        es = ElasticCore()
+        es.es.indices.get("*")
+        print_output("test_run_existing_auth", "Successfully accessed data with no env values.")
 
 
 class TestElasticCore(TestCase):
@@ -11,22 +50,6 @@ class TestElasticCore(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.elastic_core = ElasticCore()
-
-
-    def test_check_existing_auth(self):
-        os.environ["TEXTA_ES_USER"] = "elastic"
-        os.environ["TEXTA_ES_PASSWORD"] = "changeme"
-        es = ElasticCore()
-        es.es.indices.get("*")
-        print_output("test_run_existing_auth", "Successfully accessed data with auth parameters in env.")
-
-
-    def test_check_non_existing_auth(self):
-        del os.environ["TEXTA_ES_USER"]
-        del os.environ["TEXTA_ES_PASSWORD"]
-        es = ElasticCore()
-        es.es.indices.get("*")
-        print_output("test_run_non_existing_auth", "Successfully accessed data without auth.")
 
 
     def test_connection(self):

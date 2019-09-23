@@ -38,6 +38,18 @@ class ElasticCore:
             return False
 
 
+    @staticmethod
+    def check_for_security_xpack() -> bool:
+        """
+        Checks whether the Elasticsearch Security X-Pack module is in use
+        with its SSL and user authentication support.
+        """
+        ec = ElasticCore()
+        info = ec.es.xpack.info(categories="features")
+        available = info["features"]["security"]["available"]
+        return available
+
+
     def get_indices(self):
         if self.connection:
             alias = '*'

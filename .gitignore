@@ -8,3 +8,6 @@ data/media/*
 *.png
 data-volumes/*
 data/log/*
+static
+.idea
+/.env
