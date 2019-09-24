@@ -67,11 +67,6 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-    @action(detail=False, methods=['get'])
-    def debug(self, request, project_pk=None):
-        raise Exception('testing, attention please')
-        return Response('hi', status=status.HTTP_200_OK)
-
     @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
         """
