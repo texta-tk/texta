@@ -47,7 +47,6 @@ INSTALLED_APPS = [
     # Apps
     'toolkit.core',
     'toolkit.embedding',
-    'toolkit.elastic',
     'toolkit.tagger',
     'toolkit.neurotagger',
     # THIRD PARTY
