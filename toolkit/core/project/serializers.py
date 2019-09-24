@@ -7,10 +7,14 @@ from toolkit.core.project.models import Project
 from toolkit.core.choices import get_index_choices, MATCH_CHOICES, OPERATOR_CHOICES
 from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.tagger.models import Tagger
+from toolkit.elastic.searcher import EMPTY_QUERY
 
 
 DEFAULT_VALUES_PER_NAME = 10
 
+
+class SearchByQuerySerializer(serializers.Serializer):
+    query = serializers.JSONField(help_text='Query to search', default=EMPTY_QUERY)
 
 class SearchSerializer(serializers.Serializer):
     match_text = serializers.CharField(help_text='String of list of strings to match.')
