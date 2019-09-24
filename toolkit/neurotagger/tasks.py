@@ -95,7 +95,7 @@ def train_model(scrolled_samples_by_query, kwargs={}):
         # declare the job failed
         show_progress.update_errors(f"training failed: {e}")
         task_object.update_status(Task.STATUS_FAILED)
-        return False
+        raise
     finally:
         # Clear session/release memory after training and saving
         K.clear_session()

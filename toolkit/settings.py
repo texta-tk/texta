@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 
 import os
 import warnings
+
 from .logging_settings import setup_logging
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -79,9 +80,9 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         # For DRF API browser pages
-       'rest_framework.authentication.SessionAuthentication',
-       # For authenticating requests with the Token
-       'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        # For authenticating requests with the Token
+        'rest_framework.authentication.TokenAuthentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'toolkit.pagination.PageNumberPaginationDataOnly',
     'PAGE_SIZE': 30,
@@ -119,24 +120,22 @@ TEMPLATES = [
 WSGI_APPLICATION = 'toolkit.wsgi.application'
 
 DATABASES = {
-	'default': {
-		'ENGINE':       os.getenv('DJANGO_DATABASE_ENGINE', 'django.db.backends.sqlite3'),
-		'NAME':         os.getenv('DJANGO_DATABASE_NAME', os.path.join(BASE_DIR, 'data', 'db.sqlite3')),
-		'USER':         os.getenv('DJANGO_DATABASE_USER', ''),  # Not used with sqlite3.
-		'PASSWORD':     os.getenv('DJANGO_DATABASE_PASSWORD', ''),  # Not used with sqlite3.
-		'HOST':         os.getenv('DJANGO_DATABASE_HOST', ''),
-		# Set to empty string for localhost. Not used with sqlite3.
-		'PORT':         os.getenv('DJANGO_DATABASE_PORT', ''),
-		# Set to empty string for default. Not used with sqlite3.
-		'BACKUP_COUNT': 5,
-		'CONN_MAX_AGE': None
-	},
+    'default': {
+        'ENGINE': os.getenv('DJANGO_DATABASE_ENGINE', 'django.db.backends.sqlite3'),
+        'NAME': os.getenv('DJANGO_DATABASE_NAME', os.path.join(BASE_DIR, 'data', 'db.sqlite3')),
+        'USER': os.getenv('DJANGO_DATABASE_USER', ''),  # Not used with sqlite3.
+        'PASSWORD': os.getenv('DJANGO_DATABASE_PASSWORD', ''),  # Not used with sqlite3.
+        'HOST': os.getenv('DJANGO_DATABASE_HOST', ''),
+        # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': os.getenv('DJANGO_DATABASE_PORT', ''),
+        # Set to empty string for default. Not used with sqlite3.
+        'BACKUP_COUNT': 5,
+        'CONN_MAX_AGE': None
+    },
     'OPTIONS': {
         'timeout': 5,
     }
 }
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
@@ -156,7 +155,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
 
@@ -170,16 +168,26 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT =  os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # ELASTICSEARCH
-ES_URL = os.getenv('TEXTA_ES_URL', 'http://localhost:9200')
+# ES_URL = os.getenv('TEXTA_ES_URL', 'http://localhost:9200')
+ES_URL = os.getenv('TEXTA_ES_URL', 'http://elastic-dev.texta.ee:9200')
 ES_PREFIX = os.getenv('TEXTA_ES_PREFIX', '')
+ES_USERNAME = os.getenv("TEXTA_ES_USER", "")
+ES_PASSWORD = os.getenv("TEXTA_ES_PASSWORD", "")
+ES_CONNECTION_PARAMETERS = {
+    "use_ssl": True if os.getenv("TEXTA_ES_USE_SSL", None) == "True" else None,
+    "verify_certs": True if os.getenv("TEXTA_ES_VERIFY_CERTS", None) == "True" else None,
+    "ca_certs": os.getenv("TEXTA_ES_CA_CERT_PATH", None),
+    "client_cert": os.getenv("TEXTA_ES_CLIENT_CERT_PATH", None),
+    "client_key": os.getenv("TEXTA_ES_CLIENT_KEY_PATH", None),
+    "timeout": int(os.getenv("TEXTA_ES_TIMEOUT", None)) if os.getenv("TEXTA_ES_TIMEOUT", None) else None
+}
 
 # MLP
 MLP_URL = os.getenv('TEXTA_MLP_URL', 'http://mlp-dev.texta.ee:5000')
@@ -193,7 +201,7 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
 # we set num workers to 1 because celery tasks are not allowed to have deamon processes
-NUM_WORKERS=1
+NUM_WORKERS = 1
 
 # create model dirs
 MODELS_DIR = os.path.join(BASE_DIR, 'data', 'models')
@@ -224,7 +232,6 @@ ERROR_LOGGER = "error_logger"
 INFO_LOG_FILE_NAME = os.path.join(LOG_PATH, "info.log")
 ERROR_LOG_FILE_NAME = os.path.join(LOG_PATH, "error.log")
 LOGGING = setup_logging(INFO_LOG_FILE_NAME, ERROR_LOG_FILE_NAME, INFO_LOGGER, ERROR_LOGGER)
-
 
 # Ignore Python Warning base class
 warnings.simplefilter(action='ignore', category=Warning)
