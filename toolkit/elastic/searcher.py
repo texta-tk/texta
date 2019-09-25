@@ -24,7 +24,7 @@ class ElasticSearcher:
                        output=OUT_DOC,
                        callback_progress=None,
                        scroll_limit=None,
-                       ignore_ids=set(), 
+                       ignore_ids=set(),
                        text_processor=None):
         """
         Output options: document (default), text (lowered & stopwords removed), sentences (text + line splitting), raw (raw elastic output)
@@ -54,7 +54,7 @@ class ElasticSearcher:
 
     def update_query(self, query):
         self.query = query
-    
+
 
     def update_field_data(self, field_data):
         self.field_data = field_data
@@ -132,6 +132,8 @@ class ElasticSearcher:
         else:
             return response
 
+
+    # batch search makes an inital search, and then keeps pulling batches of results, until none are left.
     def scroll(self):
         page = self.core.es.search(index=self.indices, body=self.query, scroll='1m', size=self.scroll_size)
         scroll_id = page['_scroll_id']

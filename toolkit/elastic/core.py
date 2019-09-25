@@ -50,6 +50,9 @@ class ElasticCore:
         return available
 
 
+    # TODO delete index method, use ES client
+
+
     def get_indices(self):
         if self.connection:
             alias = '*'

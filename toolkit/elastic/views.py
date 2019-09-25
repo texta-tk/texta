@@ -5,6 +5,7 @@ from toolkit.core.project.models import Project
 from toolkit.elastic.models import Reindexer
 from rest_framework.response import Response
 from rest_framework.decorators import action
+import json
 
 
 # TODO serve Task progress
@@ -20,6 +21,13 @@ class ReindexerViewSet(viewsets.ModelViewSet):
         if self.request.method == 'PUT':
             return ReindexerUpdateSerializer
         return ReindexerCreateSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(
+                        author=self.request.user,
+                        project=Project.objects.get(id=self.kwargs['project_pk']),
+                        fields=json.dumps(serializer.validated_data['fields']),
+                        indices=json.dumps(serializer.validated_data['indices']))
 
     # TODO: also serve fields
     @action(detail=False, methods=['get'])
