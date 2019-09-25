@@ -50,7 +50,8 @@ class ElasticCore:
         return available
 
 
-    # TODO delete index method, use ES client
+    def delete_index(self, index):
+        self.es.indices.delete(index=index, ignore=[400, 404])
 
 
     def get_indices(self):

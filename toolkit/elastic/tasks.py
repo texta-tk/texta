@@ -23,7 +23,6 @@ from toolkit.elastic.document import ElasticDocument
     liiguta get_indices extra_action project instance alla
     fix test freeze
 
-
     kui indeks on olemas, siis eelnevalt kustutada, vaadetes; lisa delete meetod core sisse.
     kontrollida, kas indeksid on projektis olemas, et ei saaks nendega h'kkida
     Kas fieldid on olemas projektis, projekti mudelis on olemas meetod get_elastic_fields
