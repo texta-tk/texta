@@ -29,12 +29,4 @@ class ReindexerViewSet(viewsets.ModelViewSet):
                         fields=json.dumps(serializer.validated_data['fields']),
                         indices=json.dumps(serializer.validated_data['indices']))
 
-    # TODO: also serve fields
-    @action(detail=False, methods=['get'])
-    def get_indices(self, request, pk=None, project_pk=None):
-        project_object = Project.objects.filter(id=self.kwargs['project_pk'])
-        indices = project_object.values("indices")
-        return Response(indices.first())
-
-
 
