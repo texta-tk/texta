@@ -19,7 +19,7 @@ class ReindexerViewTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         # Owner of the project
-        cls.user = create_test_user('embeddingOwner', 'my@email.com', 'pw')
+        cls.user = create_test_user('indexOwner', 'my@email.com', 'pw')
 
         cls.project = Project.objects.create(
             title='ReindexerTestProject',
@@ -30,7 +30,7 @@ class ReindexerViewTests(APITestCase):
         cls.url = f'/projects/{cls.project.id}/reindexer/'
 
     def setUp(self):
-        self.client.login(username='embeddingOwner', password='pw')
+        self.client.login(username='indexOwner', password='pw')
 
 
     def test_run(self):
@@ -45,15 +45,17 @@ class ReindexerViewTests(APITestCase):
             "indices": [TEST_INDEX],
             "new_index": TEST_INDEX_REINDEX
         }
-
-        response = self.client.post(self.url, payload, format='json')
-        print_output('run_create_reindexer_task_signal:response.data', response.data)
-        # Check if new_index gets created
-        # self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        created_reindexer = Reindexer.objects.get(id=response.data['id'])
-        # self.test_reindexer_id = created_reindexer.id
-        # Check if Embedding gets trained and completed
-        # self.assertEqual(created_reindexer.task.status, Task.STATUS_COMPLETED)
-        # remove test texta_test_index_reindexed
-        new_index = response.data['new_index']
-        ElasticCore().delete_index(new_index)
+        # safety-check for identical name overwrite
+        if TEST_INDEX_REINDEX not in ElasticCore().get_indices():
+            response = self.client.post(self.url, payload, format='json')
+            print_output('run_create_reindexer_task_signal:response.data', response.data)
+            # Check if new_index gets created
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            created_reindexer = Reindexer.objects.get(id=response.data['id'])
+            print_output("Re-index status: ", created_reindexer.task.status)
+            # Check if Index gets re-indexed and completed
+            self.assertEqual(created_reindexer.task.status, Task.STATUS_COMPLETED)
+            # remove test texta_test_index_reindexed
+            new_index = response.data['new_index']
+            ElasticCore().delete_index(new_index)
+        assert TEST_INDEX_REINDEX not in ElasticCore().get_indices()

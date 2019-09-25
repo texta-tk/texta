@@ -20,11 +20,7 @@ from toolkit.elastic.document import ElasticDocument
 
     TODOs:
 
-    liiguta get_indices extra_action project instance alla
-    fix test freeze
-
-    kui indeks on olemas, siis eelnevalt kustutada, vaadetes; lisa delete meetod core sisse.
-    kontrollida, kas indeksid on projektis olemas, et ei saaks nendega h'kkida
+    kontrollida, kas indeksid on projektis olemas, et ei saaks nendega h2kkida
     Kas fieldid on olemas projektis, projekti mudelis on olemas meetod get_elastic_fields
     random subsetide oma olemas searchis
     peaks ka käima juurde query, nagu embeddingus, selle abil saab valitud subsete teha.
@@ -51,6 +47,10 @@ def reindex_task(reindexer_task_id, testing=False):
         new_doc = {k:v for k,v in document.items() if k in fields}
         if new_doc:
             es_doc.add(new_doc)
+
+    # finish Task
+    show_progress.update_view(100.0)
+    task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
     return True
 

@@ -50,6 +50,7 @@ class ElasticCore:
         return available
 
 
+    # use with caution
     def delete_index(self, index):
         self.es.indices.delete(index=index, ignore=[400, 404])
 
