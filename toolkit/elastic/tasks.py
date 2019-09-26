@@ -20,6 +20,8 @@ from toolkit.elastic.document import ElasticDocument
 
     TODOs:
     Kas fieldid on olemas projektis, projekti mudelis on olemas meetod get_elastic_fields
+    reindekseeritud indeks peab jõudma relevantse project instance alla
+    [] fields post valib kõik väljad
     random subsetide oma olemas searchis
     peaks ka käima juurde query, nagu embeddingus, selle abil saab valitud subsete teha.
 

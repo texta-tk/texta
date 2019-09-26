@@ -23,7 +23,7 @@ class ReindexerViewSet(viewsets.ModelViewSet):
             return ReindexerUpdateSerializer
         return ReindexerCreateSerializer
 
-    # TODO get_queryset to render user specific tasks in listview.
+    # get_queryset to render user specific tasks in listview.
     def get_queryset(self):
         return Reindexer.objects.filter(project=self.kwargs['project_pk'])
 
@@ -46,17 +46,10 @@ class ReindexerViewSet(viewsets.ModelViewSet):
                         indices=json.dumps(serializer.validated_data['indices']))
 
     def validate_indices(self, request):
-        active_project = Project.objects.filter(owner=self.request.user)
+        active_project = Project.objects.filter(id=self.kwargs['project_pk'])
         project_indices = list(active_project.values_list('indices', flat=True))
+        print(project_indices)
         if self.request.data['indices'] not in project_indices:
             return False
         return True
-
-
-
-
-
-
-
-
 
