@@ -14,6 +14,7 @@ from toolkit.core.task.models import Task
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
+
 class ReindexerViewTests(APITestCase):
 
     @classmethod
@@ -32,12 +33,11 @@ class ReindexerViewTests(APITestCase):
     def setUp(self):
         self.client.login(username='indexOwner', password='pw')
 
-
     def test_run(self):
         self.run_create_reindexer_task_signal()
 
-
-    def run_create_reindexer_task_signal(self):
+    # TODO run with wrong (no) indices, fields
+    def run_create_reindexer_task_signal(self, overwrite=False):
         '''Tests the endpoint for a new Reindexer task, and if a new Task gets created via the signal'''
         payload = {
             "description": "TestReindexer",
@@ -45,8 +45,8 @@ class ReindexerViewTests(APITestCase):
             "indices": [TEST_INDEX],
             "new_index": TEST_INDEX_REINDEX
         }
-        # safety-check for identical name overwrite
-        if TEST_INDEX_REINDEX not in ElasticCore().get_indices():
+
+        if overwrite == False and TEST_INDEX_REINDEX not in ElasticCore().get_indices():
             response = self.client.post(self.url, payload, format='json')
             print_output('run_create_reindexer_task_signal:response.data', response.data)
             # Check if new_index gets created
@@ -58,4 +58,5 @@ class ReindexerViewTests(APITestCase):
             # remove test texta_test_index_reindexed
             new_index = response.data['new_index']
             ElasticCore().delete_index(new_index)
+        # check if TEST_INDEX_REINDEX was removed
         assert TEST_INDEX_REINDEX not in ElasticCore().get_indices()

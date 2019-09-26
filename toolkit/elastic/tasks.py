@@ -19,8 +19,6 @@ from toolkit.elastic.document import ElasticDocument
     NB! test with texta_test_index
 
     TODOs:
-
-    kontrollida, kas indeksid on projektis olemas, et ei saaks nendega h2kkida
     Kas fieldid on olemas projektis, projekti mudelis on olemas meetod get_elastic_fields
     random subsetide oma olemas searchis
     peaks ka käima juurde query, nagu embeddingus, selle abil saab valitud subsete teha.
