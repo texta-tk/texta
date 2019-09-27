@@ -24,6 +24,7 @@ from toolkit.core.task.models import Task
 from toolkit.tools.mlp_lemmatizer import MLPLemmatizer
 from toolkit.helper_functions import apply_celery_task
 from toolkit.tagger.validators import validate_input_document
+from toolkit.tagger.tagger_views import global_mlp_lemmatizer
 
 
 class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
@@ -207,7 +208,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
 
         # lemmatize if needed
         if serializer.validated_data['lemmatize'] == True:
-            lemmatizer = MLPLemmatizer(lite=True)
+            lemmatizer = global_mlp_lemmatizer
             # check if lemmatization available
             if not lemmatizer.status:
                 return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -264,7 +265,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
 
         # lemmatize if needed
         if serializer.validated_data['lemmatize'] == True:
-            lemmatizer = MLPLemmatizer(lite=True)
+            lemmatizer = global_mlp_lemmatizer
             # check if lemmatization available
             if not lemmatizer.status:
                 return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

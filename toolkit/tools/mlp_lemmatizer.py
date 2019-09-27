@@ -5,32 +5,42 @@ import requests
 
 class MLPLemmatizer:
     
-    def __init__(self, lite=False):
-        self.mlp_url = self._create_url(lite)
-        self.status = self._check_connection()
+    def __init__(self):
+        self.mlp_url = urljoin(MLP_URL, 'mlp')
+        self.status, self.version = self._check_connection()
 
 
-    @staticmethod
-    def _create_url(lite):
+    def _check_connection(self):
         """
-        Creates url based on lite option.
-        :return: MLP resource url as string
+        Checks MLP connection and major MLP version (2, 3).
+        :return: bool, int
         """
-        if lite == True:
-            return urljoin(MLP_URL, 'mlp_lite')
-        else:
-            return urljoin(MLP_URL, 'mlp')
-
-
-    @staticmethod
-    def _check_connection():
+        major_mlp_version = 0
         try:
             response = requests.get(MLP_URL)
             if response.status_code == 200:
-                return True
-            return False
+                response_json = response.json()
+                if "version" in response_json:
+                    # this is likely version 2.x
+                    major_mlp_version = self._parse_major_version(response_json)
+                elif "health" in response_json:
+                    # this is likely version 3.x or later
+                    health_response_json = requests.get(response_json["health"])
+                    if "version" in health_response_json:
+                        major_mlp_version = self._parse_major_version(health_response_json)
+                return True, major_mlp_version
+            return False, major_mlp_version
         except:
-            return False
+            return False, major_mlp_version
+
+
+    @staticmethod
+    def _parse_major_version(response_json):
+        """
+        Parses major version number of MLP from health response.
+        :return: int
+        """
+        return int(response_json["version"].split('.')[0])
 
 
     def lemmatize(self, text):
@@ -43,6 +53,6 @@ class MLPLemmatizer:
                 text = text["lemmas"]
             return text
         else:
-            # if lemmatization fails, return None
+            # if lemmatization fails, return empty string
             # TODO: log the response if lemmatization fails
-            return None
+            return ""

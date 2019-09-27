@@ -26,7 +26,7 @@ from toolkit.tagger.validators import validate_input_document
 
 # initialize model cache for taggers & phrasers
 tagger_cache = ModelCache(TextTagger)
-
+global_mlp_lemmatizer = MLPLemmatizer()
 
 class TaggerViewSet(viewsets.ModelViewSet):
     serializer_class = TaggerSerializer
@@ -208,7 +208,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
         # create lemmatizer if needed
         if serializer.validated_data['lemmatize'] == True:
-            lemmatizer = MLPLemmatizer(lite=True)
+            lemmatizer = global_mlp_lemmatizer
             # check if lemmatizer available
             if not lemmatizer.status:
                 return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -253,7 +253,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
         # lemmatize if needed
         if serializer.validated_data['lemmatize'] == True:
-            lemmatizer = MLPLemmatizer(lite=True)
+            lemmatizer = global_mlp_lemmatizer
             # check if lemmatization available
             if not lemmatizer.status:
                 return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -299,7 +299,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
             text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
 
         tagger = tagger_cache.get_model(tagger_object.id)
-        tagger.add_text_processor(text_processor)
+        tagger.add_text_processor(text_processor) 
 
         if input_type == 'doc':
             tagger_result = tagger.tag_doc(tagger_input)

@@ -67,7 +67,6 @@ class EmbeddingViewTests(APITestCase):
         created_embedding = Embedding.objects.get(id=response.data['id'])
         self.test_embedding_id = created_embedding.id
         # Remove Embedding files after test is done
-        print(created_embedding.task.status)
         self.addCleanup(remove_file, json.loads(created_embedding.location)['embedding'])
         self.addCleanup(remove_file, json.loads(created_embedding.location)['phraser'])
         # Check if Task gets created via a signal
