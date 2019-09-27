@@ -47,7 +47,6 @@ class ReindexerViewTests(APITestCase):
             "indices": [TEST_INDEX],
             "new_index": TEST_INDEX_REINDEX
         }
-
         if overwrite == False and TEST_INDEX_REINDEX not in ElasticCore().get_indices():
             response = self.client.post(url, payload, format='json')
             print_output('run_create_reindexer_task_signal:response.data', response.data)
@@ -66,3 +65,9 @@ class ReindexerViewTests(APITestCase):
                 ElasticCore().delete_index(new_index)
         # check if TEST_INDEX_REINDEX was removed
         assert TEST_INDEX_REINDEX not in ElasticCore().get_indices()
+
+        check = self.client.get(f'/projects/{project.id}/', format='json')
+        print("created test_project", response.status_code, check.data)
+
+
+
