@@ -10,7 +10,8 @@ class Search(models.Model):
     description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    query = models.TextField(default=EMPTY_QUERY)
+    # TextField saving JSON for saving front-end state
+    query_constraints = models.TextField()
 
     def __str__(self):
         return self.query

@@ -330,7 +330,6 @@ class TrainingProgressCallback(Callback):
 
     def on_epoch_end(self, epoch, logs={}):
         # Use on_epoch_end because on_epoch_begin logs are empty
-        print('!!!!LOGS: ', logs)
         eval_info = 'epoch - {}; [acc {:.2f}%, loss {:.2f}] [val_acc {:.2f}%, val_loss {:.2f}]'.format(
                                                                 epoch,
                                                                 logs['acc'] * 100,

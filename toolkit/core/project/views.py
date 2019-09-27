@@ -10,6 +10,7 @@ from toolkit.core.project.serializers import (
     ProjectSerializer,
     GetFactsSerializer,
     SearchSerializer,
+    SearchByQuerySerializer,
     ProjectAdminSerializer,
 )
 from toolkit.elastic.core import ElasticCore
@@ -41,6 +42,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return GetFactsSerializer
         if self.action == 'search':
             return SearchSerializer
+        if self.action == 'search_by_query':
+            return SearchByQuerySerializer
         if self.request.user.is_superuser:
             return ProjectAdminSerializer
         return ProjectSerializer
@@ -94,13 +97,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
         # test if indices are valid
         if serializer.validated_data['match_indices']:
             if not set(serializer.validated_data['match_indices']).issubset(set(project_indices)):
-                return Response({'error': 'index names are not valid for this project. allowed values are: {project_indices}'},
+                return Response({'error': f'index names are not valid for this project. allowed values are: {project_indices}'},
                                 status=status.HTTP_400_BAD_REQUEST)
 
         # test if fields are valid
         if serializer.validated_data['match_fields']:
             if not set(serializer.validated_data['match_fields']).issubset(set(project_fields)):
-                return Response({'error': 'fields names are not valid for this project. allowed values are: {project_fields}'},
+                return Response({'error': f'fields names are not valid for this project. allowed values are: {project_fields}'},
                                 status=status.HTTP_400_BAD_REQUEST)
                                 
 
@@ -124,4 +127,25 @@ class ProjectViewSet(viewsets.ModelViewSet):
         es.update_query(q.query)
         # retrieve results
         results = es.search(size=serializer.validated_data["size"])
+        return Response(results, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['post'], serializer_class=SearchByQuerySerializer)
+    def search_by_query(self, request, pk=None, project_pk=None):
+        data = request.data
+        serializer = SearchByQuerySerializer(data=data)
+        if not serializer.is_valid():
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        project_object = self.get_object()
+        project_indices = list(project_object.indices)
+        project_fields = project_object.get_elastic_fields(path_list=True)
+
+        if not project_indices:
+            return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST) 
+
+        es = ElasticSearcher(indices=project_indices, output='doc')
+        es.update_query(serializer.validated_data['query'])
+        results = es.search()
+
         return Response(results, status=status.HTTP_200_OK)

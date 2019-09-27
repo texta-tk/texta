@@ -7,10 +7,14 @@ from toolkit.core.project.models import Project
 from toolkit.core.choices import get_index_choices, MATCH_CHOICES, OPERATOR_CHOICES
 from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.tagger.models import Tagger
+from toolkit.elastic.searcher import EMPTY_QUERY
 
 
 DEFAULT_VALUES_PER_NAME = 10
 
+
+class SearchByQuerySerializer(serializers.Serializer):
+    query = serializers.JSONField(help_text='Query to search', default=EMPTY_QUERY)
 
 class SearchSerializer(serializers.Serializer):
     match_text = serializers.CharField(help_text='String of list of strings to match.')
@@ -18,11 +22,11 @@ class SearchSerializer(serializers.Serializer):
         help_text='Match type to apply. Default: match.',
         default='word',
         required=False)
-    match_indices = serializers.ListField(child=serializers.CharField(), 
+    match_indices = serializers.ListField(child=serializers.CharField(),
         help_text='Match from specific indices in project. Default: EMPTY - all indices are used.',
         default=None,
         required=False)
-    match_fields = serializers.ListField(child=serializers.CharField(), 
+    match_fields = serializers.ListField(child=serializers.CharField(),
         help_text='Match from specific fields in project. Default: EMPTY - all fields are used.',
         default=None,
         required=False)
@@ -56,7 +60,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         request = self.context.get('request')
         base_url = request.build_absolute_uri(f'/projects/{obj.id}/')
         resource_dict = {}
-        for resource_name in ('lexicons', 'embeddings', 'embedding_clusters', 'taggers', 'tagger_groups', 'neurotaggers'):
+        for resource_name in ('lexicons', 'searches', 'embeddings', 'embedding_clusters', 'taggers', 'tagger_groups', 'neurotaggers'):
             resource_dict[resource_name] = f'{base_url}{resource_name}/'
         return resource_dict
 
