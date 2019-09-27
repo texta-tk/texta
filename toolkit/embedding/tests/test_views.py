@@ -27,8 +27,6 @@ class EmbeddingViewTests(APITestCase):
 
         cls.url = f'/projects/{cls.project.id}/embeddings/'
         cls.cluster_url = f'/projects/{cls.project.id}/embedding_clusters/'
-        
-        #cls.user.profile.activate_project(cls.project)
 
         cls.test_embedding_id = None
         cls.test_embedding_clustering_id = None

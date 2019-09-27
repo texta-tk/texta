@@ -14,30 +14,39 @@ class TestModelCache(TestCase):
     @classmethod
     def setUpTestData(cls):
         # Owner of the project
-        cls.user = create_test_user('embeddingOwner', 'my@email.com', 'pw')
+        cls.user = create_test_user('modelCacheOwner', 'my@email.com', 'pw')
         cls.project = Project.objects.create(
             title='textprocessorTestProject',
             owner=cls.user,
             indices=TEST_INDEX
         )
-        cls.user.profile.activate_project(cls.project)
-        # Create embedding used in the test
-        cls.test_embedding = Embedding.objects.create(
-            description='EmbeddingForTesting',
-            project=cls.project,
-            author=cls.user,
-            fields=TEST_FIELD_CHOICE,
-            min_freq=1,
-            num_dimensions=100,
-        )
-        # Get the object, since .create does not update on changes
-        Embedding.objects.get(id=cls.test_embedding.id)
-        cls.test_embedding_id = cls.test_embedding.id
+        cls.test_embedding_id = None
+
+
+    def setUp(self):
+        self.client.login(username='modelCacheOwner', password='pw')
 
 
     def test_run(self):
+        self.run_train_embedding()
         self.run_cache(W2VEmbedding)
         self.run_cache(Phraser)
+    
+
+    def run_train_embedding(self):
+        # payload for training embedding
+        payload = {
+            "description": "TestEmbedding",
+            "query": "",
+            "fields": TEST_FIELD_CHOICE,
+            "max_vocab": 10000,
+            "min_freq": 5,
+            "num_dimensions": 100,
+        }
+        # post
+        embeddings_url = f'/projects/{self.project.id}/embeddings/'
+        response = self.client.post(embeddings_url, payload, format='json')
+        self.test_embedding_id = response.data["id"]
 
 
     def run_cache(self, model_class):
