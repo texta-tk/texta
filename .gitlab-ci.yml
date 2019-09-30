@@ -37,6 +37,6 @@ Build:
     - conda activate base && pip install requests
   script:
   - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee
-  - conda activate base && python ./docker/build_and_push.py
+  - python ./docker/build_and_push.py
   only:
   - master
