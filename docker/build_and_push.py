@@ -19,7 +19,7 @@ def main():
                 push_command = "docker push docker.texta.ee/texta/texta-rest:{}".format(tag)
                 pushed = subprocess.Popen(push_command, shell=True)
                 print("Pushed {}.".format(tag))
-    except as e:
+    except Exception as e:
         print("Build failed:", e)
         return
 
