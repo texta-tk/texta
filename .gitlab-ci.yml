@@ -37,3 +37,4 @@ Build:
   - docker push docker.texta.ee/texta/texta-rest:latest
   only:
   - master
+  - tags
