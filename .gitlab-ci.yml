@@ -33,6 +33,7 @@ Build:
   stage: build
   tags:
   - ci-test
+  - docker
   before_script:
     - pip install requests
   script:
