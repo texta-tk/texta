@@ -69,9 +69,7 @@ class ReindexerViewSet(viewsets.ModelViewSet):
         return True
 
     def update_project_indices(self, serializer, project_obj):
-        # probably have to replace this one as well
         project_indices = serializer.validated_data['indices']
-        # print("serializer indices", project_indices)
         indices_to_add = [serializer.validated_data['new_index']]
         for index in indices_to_add:
             project_indices.append(index)
