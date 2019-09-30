@@ -33,8 +33,6 @@ Build:
   stage: build
   tags:
   - docker
-  before_script:
-    - pip install requests
   script:
   - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee
   - python ./docker/build_and_push.py
