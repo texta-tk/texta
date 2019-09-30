@@ -56,4 +56,4 @@ DEFAULT_TAGGER_GROUP_FACT_NAME = 'TEEMA'
 DEFAULT_VECTORIZER = get_vectorizer_choices()[0][0]
 DEFAULT_CLASSIFIER = get_classifier_choices()[0][0]
 DEFAULT_FEATURE_SELECTOR = get_feature_selector_choices()[0][0]
-DEFAULT_NUM_DOCUMENTS = 25
+DEFAULT_NUM_DOCUMENTS = 10
