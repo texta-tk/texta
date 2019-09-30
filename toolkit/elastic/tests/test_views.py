@@ -25,6 +25,13 @@ class ReindexerViewTests(APITestCase):
             owner=cls.user,
             indices=TEST_INDEX
         )
+        # many indices
+        # cls.project_many_indices = Project.objects.create(
+        #     title='ReindexerManyIndicesTestProject',
+        #     owner=cls.user,
+        #     indices=['texta_test_index', 'test_deletes']
+        # )
+
         cls.project_no_indices = Project.objects.create(
             title='ReindexerNoIndicesTestProject',
             owner=cls.user
@@ -35,7 +42,10 @@ class ReindexerViewTests(APITestCase):
         self.client.login(username='indexOwner', password='pw')
 
     def test_run(self):
-        for project in (self.project, self.project_no_indices):
+        for project in (self.project,
+                        # self.project_many_indices,
+                        self.project_no_indices,
+                        ):
             url =  f'/projects/{project.id}/reindexer/'
             self.run_create_reindexer_task_signal(project, url)
 
@@ -47,11 +57,14 @@ class ReindexerViewTests(APITestCase):
             "indices": [TEST_INDEX],
             "new_index": TEST_INDEX_REINDEX
         }
+
+        # ElasticCore().delete_index(TEST_INDEX_REINDEX)
+
         if overwrite == False and TEST_INDEX_REINDEX not in ElasticCore().get_indices():
             response = self.client.post(url, payload, format='json')
             print_output('run_create_reindexer_task_signal:response.data', response.data)
-            # if project has no indices, not created
-            if project.indices not in payload['indices']:
+            # if project has no indices, or not contained in payload, not created
+            if project.indices is None or project.indices not in payload['indices']:
                 self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             else:
                 # Check if new_index gets created
@@ -69,5 +82,6 @@ class ReindexerViewTests(APITestCase):
         check = self.client.get(f'/projects/{project.id}/', format='json')
         print("created test_project", response.status_code, check.data)
 
+    # no point in testing fields, before you implement changing them.
 
 

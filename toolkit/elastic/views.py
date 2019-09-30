@@ -24,22 +24,24 @@ class ReindexerViewSet(viewsets.ModelViewSet):
             return ReindexerUpdateSerializer
         return ReindexerCreateSerializer
 
-    # get_queryset to render user specific tasks in listview.
     def get_queryset(self):
         return Reindexer.objects.filter(project=self.kwargs['project_pk'])
 
     def create(self, request, *args, **kwargs):
-        # TODO, validate fields
         project_obj = Project.objects.get(id=self.kwargs['project_pk'])
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # before the model is created, validate indices and fields
-        if self.validate_indices(self.request):
+        validate_indices = self.validate_indices(serializer, self.request)
+        validate_fields = self.validate_fields(self.request, serializer)
+        if validate_indices and validate_fields:
             self.perform_create(serializer, project_obj)
             self.update_project_indices(serializer, project_obj)
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-        return Response({'error': f'insufficient permissions to re-index'}, status=status.HTTP_400_BAD_REQUEST)
+        if not validate_indices:
+            return Response({'error': f'The indices you are attempting to re-index are not contained in your project indices'}, status=status.HTTP_400_BAD_REQUEST)
+        if not validate_fields:
+            return Response({'error': f'The fields you are attempting to re-index are not contained in your project fields'}, status=status.HTTP_400_BAD_REQUEST)
 
     def perform_create(self, serializer, project_obj):
         serializer.save(
@@ -48,18 +50,30 @@ class ReindexerViewSet(viewsets.ModelViewSet):
                         fields=json.dumps(serializer.validated_data['fields']),
                         indices=json.dumps(serializer.validated_data['indices']))
 
-    def validate_indices(self, request):
-        active_project = Project.objects.filter(id=self.kwargs['project_pk'])
-        project_indices = list(active_project.values_list('indices', flat=True))
+    def validate_indices(self, serializer, request):
+        ''' check if re-indexed index is in relevant project indices '''
+        active_projects = Project.objects.filter(id=self.kwargs['project_pk'])
+        project_indices = list(active_projects.values_list('indices', flat=True)) # gets [[index], ['index']]
         if self.request.data['indices'] not in project_indices:
             return False
         return True
 
+    def validate_fields(self, request, serializer):
+        ''' check if changed fields included in the request are in relevant project fields '''
+        project_fields = ElasticCore().get_fields(indices=serializer.validated_data['indices'])
+        field_data = [field["path"] for field in project_fields]
+        request_fields = self.request.data['fields']
+        for field in request_fields:
+            if field not in field_data:
+                return False
+        return True
+
     def update_project_indices(self, serializer, project_obj):
+        # probably have to replace this one as well
         project_indices = serializer.validated_data['indices']
+        # print("serializer indices", project_indices)
         indices_to_add = [serializer.validated_data['new_index']]
         for index in indices_to_add:
             project_indices.append(index)
         project_obj.save(add_indices=project_indices)
-
 

@@ -20,7 +20,7 @@ from toolkit.elastic.document import ElasticDocument
 
     TODOs:
     Kas fieldid on olemas projektis, projekti mudelis on olemas meetod get_elastic_fields
-    reindekseeritud indeks peab jõudma relevantse project instance alla
+    reindexer should add to project in format [first index count, ..., reindexed_index] because it is a set, unordered
     [] fields post valib kõik väljad
     random subsetide oma olemas searchis
     peaks ka käima juurde query, nagu embeddingus, selle abil saab valitud subsete teha.
@@ -53,6 +53,3 @@ def reindex_task(reindexer_task_id, testing=False):
     task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 
     return True
-
-
-
