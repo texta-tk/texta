@@ -1,5 +1,5 @@
 from django.test import TestCase
-from toolkit.tools.mlp_lemmatizer import MLPAnalyzer
+from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
@@ -7,7 +7,7 @@ class MLPLemmatizerTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.lemmatizer = MLPLemmatizer()
+        cls.lemmatizer = MLPAnalyzer()
         cls.test_texts = [
             {"lang": "et", "text": "See eestikeelne tekst peab saama lemmatiseeritud!"},
             {"lang": "en", "text": "This text is beyond boring. But its in English!"},
