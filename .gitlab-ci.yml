@@ -27,7 +27,7 @@ Test:
   script:
   - python manage.py test
   except:
-  - master
+  - tags
 
 Build:
   stage: build
@@ -37,4 +37,4 @@ Build:
   - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee
   - python ./docker/build_and_push.py
   only:
-  - master
+  - tags
