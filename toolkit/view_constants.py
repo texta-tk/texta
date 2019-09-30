@@ -1,5 +1,8 @@
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.query import Query    
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.decorators import action
 
 
 class TagLogicViews():
@@ -26,3 +29,20 @@ class TagLogicViews():
             query.add_fact_filter(fact_name, tag)
             queries.append(query.query)
         return queries
+
+
+
+class BulkDelete():
+
+    @action(detail=False, methods=['post'])
+    def bulk_delete(self, request, project_pk=None):
+        '''API endpoint for bulk deleting objects, given { "ids": [int] }'''
+        data = request.data
+        if not "ids" in data:
+            return Response('Must include key "ids" with an array of integers (private keys)', status=status.HTTP_400_BAD_REQUEST)
+
+        deleted = self.get_queryset().filter(id__in=data['ids'], project_id=project_pk).delete()
+        # Show  the number of objects deleted and a dictionary with the number of deletions per object type
+        info = {"num_deleted": deleted[0], "deleted_types": deleted[1] }
+
+        return Response(info, status=status.HTTP_200_OK)

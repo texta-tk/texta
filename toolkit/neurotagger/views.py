@@ -19,12 +19,12 @@ from toolkit import permissions as toolkit_permissions
 from toolkit.view_constants import TagLogicViews
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.neurotagger.serializers import TextSerializer, DocSerializer
-
+from toolkit.view_constants import BulkDelete
 
 # initialize model cache for neurotaggers
 model_cache = ModelCache(NeurotaggerWorker)
 
-class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
+class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
     serializer_class = NeurotaggerSerializer
     permission_classes = (
         permissions.IsAuthenticated,

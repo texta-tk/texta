@@ -23,12 +23,13 @@ from toolkit.core.task.models import Task
 from toolkit.tools.mlp_lemmatizer import MLPLemmatizer
 from toolkit.helper_functions import apply_celery_task
 from toolkit.tagger.validators import validate_input_document
+from toolkit.view_constants import BulkDelete
 
 # initialize model cache for taggers & phrasers
 tagger_cache = ModelCache(TextTagger)
 global_mlp_lemmatizer = MLPLemmatizer()
 
-class TaggerViewSet(viewsets.ModelViewSet):
+class TaggerViewSet(viewsets.ModelViewSet, BulkDelete):
     serializer_class = TaggerSerializer
     permission_classes = (
         ProjectResourceAllowed,
