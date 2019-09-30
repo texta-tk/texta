@@ -1,5 +1,5 @@
 from django.test import TestCase
-from toolkit.tools.mlp_lemmatizer import MLPLemmatizer
+from toolkit.tools.mlp_lemmatizer import MLPAnalyzer
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 

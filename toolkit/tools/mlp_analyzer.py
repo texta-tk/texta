@@ -3,7 +3,7 @@ from toolkit.settings import MLP_URL
 from urllib.parse import urljoin
 import requests
 
-class MLPLemmatizer:
+class MLPAnalyzer:
     
     def __init__(self):
         self.mlp_url = urljoin(MLP_URL, 'mlp')
@@ -43,15 +43,25 @@ class MLPLemmatizer:
         return int(response_json["version"].split('.')[0])
 
 
+    def process(self, text):
+        # TODO: remove unused analyzers in request for MLP 3.x
+        response = requests.post(self.mlp_url, data=text.encode())
+
+        if response.status_code == 200:
+            response_json = response.json()
+            return response_json
+        else:
+            # if processing fails, return empty dict
+            # TODO: log the response if processing fails
+            return {}
+
+
     def lemmatize(self, text):
         response = requests.post(self.mlp_url, data=text.encode())
         if response.status_code == 200:
             response_json = response.json()
-            text = response_json["text"]
-            # this magic is required because MLP returns a dict & MLP lite returns a string
-            if isinstance(text, dict):
-                text = text["lemmas"]
-            return text
+            lemmas = response_json["text"]["lemmas"]
+            return lemmas
         else:
             # if lemmatization fails, return empty string
             # TODO: log the response if lemmatization fails

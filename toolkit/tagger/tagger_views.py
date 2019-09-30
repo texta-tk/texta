@@ -16,17 +16,17 @@ from toolkit.tagger.serializers import TaggerSerializer, FeatureListSerializer, 
                                        TextSerializer, DocSerializer
 from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tools.model_cache import ModelCache
-from toolkit.embedding.views import phraser_cache
+from toolkit.embedding.views import global_phraser_cache
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.core.task.models import Task
-from toolkit.tools.mlp_lemmatizer import MLPLemmatizer
+from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.helper_functions import apply_celery_task
 from toolkit.tagger.validators import validate_input_document
 
 # initialize model cache for taggers & phrasers
-tagger_cache = ModelCache(TextTagger)
-global_mlp_lemmatizer = MLPLemmatizer()
+global_tagger_cache = ModelCache(TextTagger)
+global_mlp_for_taggers = MLPAnalyzer()
 
 class TaggerViewSet(viewsets.ModelViewSet):
     serializer_class = TaggerSerializer
@@ -79,7 +79,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve model
-        tagger = tagger_cache.get_model(tagger_object.pk)
+        tagger = global_tagger_cache.get_model(tagger_object.pk)
 
         try:
             # get feature names
@@ -208,7 +208,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
         # create lemmatizer if needed
         if serializer.validated_data['lemmatize'] == True:
-            lemmatizer = global_mlp_lemmatizer
+            lemmatizer = global_mlp_for_taggers
             # check if lemmatizer available
             if not lemmatizer.status:
                 return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -253,7 +253,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
         # lemmatize if needed
         if serializer.validated_data['lemmatize'] == True:
-            lemmatizer = global_mlp_lemmatizer
+            lemmatizer = global_mlp_for_taggers
             # check if lemmatization available
             if not lemmatizer.status:
                 return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -293,12 +293,12 @@ class TaggerViewSet(viewsets.ModelViewSet):
         stop_words = json.loads(tagger_object.stop_words)
 
         if tagger_object.embedding:
-            phraser = phraser_cache.get_model(tagger_object.embedding.pk)
+            phraser = global_phraser_cache.get_model(tagger_object.embedding.pk)
             text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
         else:
             text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
 
-        tagger = tagger_cache.get_model(tagger_object.id)
+        tagger = global_tagger_cache.get_model(tagger_object.id)
         tagger.add_text_processor(text_processor) 
 
         if input_type == 'doc':
