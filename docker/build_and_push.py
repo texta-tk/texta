@@ -1,3 +1,4 @@
+import subprocess
 import sys
 
 
@@ -5,8 +6,6 @@ import sys
 def main():
     print("Using Python version: {}".format(sys.version))
     try:
-        import requests
-        import subprocess
         with open("VERSION") as fh:
             version = fh.read()
             build_command = "docker build -t docker.texta.ee/texta/texta-rest:{}".format(version)
