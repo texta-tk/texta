@@ -14,7 +14,7 @@ from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.tagger.plots import create_tagger_plot
 from toolkit.base_task import BaseTask
-from toolkit.tools.mlp_lemmatizer import MLPLemmatizer
+from toolkit.tools.mlp_analyzer import MLPAnalyzer
 
 
 @task(name="train_tagger", base=BaseTask)
@@ -109,8 +109,8 @@ def train_tagger(tagger_id):
 
 @task(name="apply_tagger", base=BaseTask)
 def apply_tagger(text, tagger_id, input_type, lemmatize=False):
-    from toolkit.tagger.tagger_views import tagger_cache
-    from toolkit.embedding.views import phraser_cache
+    from toolkit.tagger.tagger_views import global_tagger_cache
+    from toolkit.embedding.views import global_phraser_cache
     
     # get tagger object
     tagger = Tagger.objects.get(pk=tagger_id)
@@ -118,18 +118,18 @@ def apply_tagger(text, tagger_id, input_type, lemmatize=False):
     # get lemmatizer if needed
     lemmatizer = None
     if lemmatize:
-        lemmatizer = MLPLemmatizer(lite=True)
+        lemmatizer = MLPAnalyzer()
     
     # create text processor object for tagger
     stop_words = json.loads(tagger.stop_words)
     if tagger.embedding:
-        phraser = phraser_cache.get_model(tagger.embedding.pk)
+        phraser = global_phraser_cache.get_model(tagger.embedding.pk)
         text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
     else:
         text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
     
     # load tagger
-    tagger = tagger_cache.get_model(tagger_id)
+    tagger = global_tagger_cache.get_model(tagger_id)
     if not tagger:
         return None
     

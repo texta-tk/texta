@@ -16,9 +16,9 @@ from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.view_constants import BulkDelete
 
-w2v_cache = ModelCache(W2VEmbedding)
-phraser_cache = ModelCache(Phraser)
-cluster_cache = ModelCache(WordCluster)
+global_w2v_cache = ModelCache(W2VEmbedding)
+global_phraser_cache = ModelCache(Phraser)
+global_cluster_cache = ModelCache(WordCluster)
 
 
 class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
@@ -52,7 +52,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
             if not embedding_object.location:
                 return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
-            embedding = w2v_cache.get_model(embedding_object.pk)
+            embedding = global_w2v_cache.get_model(embedding_object.pk)
 
             predictions = embedding.get_similar(serializer.validated_data['positives'],
                 negatives=serializer.validated_data['negatives'],
@@ -72,7 +72,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
             if not embedding_object.location:
                 return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
-            phraser = phraser_cache.get_model(embedding_object.pk)
+            phraser = global_phraser_cache.get_model(embedding_object.pk)
             text_processor = TextProcessor(phraser=phraser, sentences=False, remove_stop_words=False, tokenize=False)
             phrased_text = text_processor.process(serializer.validated_data['text'])[0]
 
@@ -118,7 +118,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # load cluster model
-        clusterer = cluster_cache.get_model(clustering_object.pk)
+        clusterer = global_cluster_cache.get_model(clustering_object.pk)
 
 
         clustering_result = clusterer.browse(max_examples_per_cluster=serializer.validated_data['max_examples_per_cluster'],
@@ -146,7 +146,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # load cluster model
-        clusterer = cluster_cache.get_model(clustering_object.pk)
+        clusterer = global_cluster_cache.get_model(clustering_object.pk)
 
         clustering_result = clusterer.query(serializer.validated_data['text'])
         return Response(clustering_result, status=status.HTTP_200_OK)
@@ -170,7 +170,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # load cluster model
-        clusterer = cluster_cache.get_model(clustering_object.pk)
+        clusterer = global_cluster_cache.get_model(clustering_object.pk)
 
         clustered_text = clusterer.text_to_clusters(serializer.validated_data['text'])
         return Response(clustered_text, status=status.HTTP_200_OK)

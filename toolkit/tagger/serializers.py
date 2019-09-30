@@ -32,22 +32,20 @@ class FeatureListSerializer(serializers.Serializer):
 
 class TextGroupSerializer(serializers.Serializer):
     text = serializers.CharField(help_text=f'Raw text input.')
-    lemmatize = serializers.BooleanField(default=False,
-        help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
-    show_candidates = serializers.BooleanField(default=False, 
-        help_text=f'Show tagger candidates prior to supervised filtering. Default: False')
+    lemmatize = serializers.BooleanField(default=True,
+        help_text=f'Use MLP lemmatizer to lemmatize input text. Use only if training data was lemmatized. Default: True')
+    use_ner = serializers.BooleanField(default=True,
+        help_text=f'Use MLP Named Entity Recognition to detect tag candidates. Default: True')
     n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS, 
         help_text=f'Number of documents used in unsupervised prefiltering. Default: {DEFAULT_NUM_DOCUMENTS}')
 
 
 class DocGroupSerializer(serializers.Serializer):
     doc = serializers.JSONField(help_text=f'Document in JSON format.')
-    lemmatize = serializers.BooleanField(default=False,
-        help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
-    hybrid = serializers.BooleanField(default=True, 
-        help_text=f'Use hybrid tagging. Default: True')
-    show_candidates = serializers.BooleanField(default=False, 
-        help_text=f'Show tagger candidates prior to supervised filtering. Default: False')
+    lemmatize = serializers.BooleanField(default=True,
+        help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: True')
+    use_ner = serializers.BooleanField(default=True,
+        help_text=f'Use MLP Named Entity Recognition to detect tag candidates. Default: True')
     n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS, 
         help_text=f'Number of documents used in unsupervised prefiltering. Default: {DEFAULT_NUM_DOCUMENTS}')
 
