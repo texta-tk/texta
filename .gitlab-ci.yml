@@ -32,8 +32,7 @@ Test:
 Build:
   stage: build
   tags:
-  - ci-test
-  - docker
+  - docker-build
   before_script:
     - pip install requests
   script:
