@@ -83,5 +83,6 @@ class ReindexerViewTests(APITestCase):
         print("created test_project", response.status_code, check.data)
 
     # no point in testing fields, before you implement changing them.
+    # test if added to project
 
 

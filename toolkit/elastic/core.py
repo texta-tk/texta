@@ -53,6 +53,7 @@ class ElasticCore:
     # use with caution
     def delete_index(self, index):
         self.es.indices.delete(index=index, ignore=[400, 404])
+        # return response
 
 
     def get_indices(self):
