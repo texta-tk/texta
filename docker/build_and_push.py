@@ -2,7 +2,7 @@ import subprocess
 import sys
 
 
-def build(project, version, tag_suffix="", dockerfile="./docker/Dockerfile":
+def build(project, version, tag_suffix="", dockerfile="./docker/Dockerfile"):
     # build image
     build_command = "docker build -t docker.texta.ee/texta/{0}:{1}{2} -f {3} .".format(project, version, tag_suffix, dockerfile)
     print("Building, tagging and pushing Docker image for version {}.".format(version))
