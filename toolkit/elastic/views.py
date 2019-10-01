@@ -52,14 +52,14 @@ class ReindexerViewSet(viewsets.ModelViewSet):
                         indices=json.dumps(serializer.validated_data['indices']))
 
     def validate_indices(self, request, project_indices):
-        ''' check if re-indexed index is in relevant project indices '''
+        ''' check if re-indexed index is in the relevant project indices field '''
         for index in self.request.data['indices']:
             if index not in project_indices:
                 return False
             return True
 
     def validate_fields(self, request, project_indices):
-        ''' check if changed fields included in the request are in relevant project fields '''
+        ''' check if changed fields included in the request are in the relevant project fields '''
         project_fields = ElasticCore().get_fields(indices=project_indices)
         field_data = [field["path"] for field in project_fields]
         for field in self.request.data['fields']:

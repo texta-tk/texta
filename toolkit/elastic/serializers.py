@@ -5,15 +5,6 @@ from toolkit.elastic.models import Reindexer
 from rest_framework import serializers
 import json
 
-"""
-{
-    "description": "",   # required
-    "indices": null,      # required
-    "fields": []             # default tyhi, k6ik kasutuses kui tyhi,
-    "new_index": "",   # required
-
-}
-"""
 
 class ReindexerCreateSerializer(serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
     url = serializers.SerializerMethodField()

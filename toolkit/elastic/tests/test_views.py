@@ -56,37 +56,36 @@ class ReindexerViewTests(APITestCase):
             self.run_create_reindexer_task_signal(project, url)
 
     def run_create_reindexer_task_signal(self, project, url, overwrite=False):
-        '''Tests the endpoint for a new Reindexer task, and if a new Task gets created via the signal'''
+        ''' Tests the endpoint for a new Reindexer task, and if a new Task gets created via the signal
+           checks if new_index was removed '''
         payload = {
             "description": "TestReindexer",
             "fields": [TEST_FIELD],
             "indices": [TEST_INDEX],
             "new_index": TEST_INDEX_REINDEX
         }
-
         # ElasticCore().delete_index(TEST_INDEX_REINDEX)
-
         if overwrite == False and TEST_INDEX_REINDEX not in ElasticCore().get_indices():
             response = self.client.post(url, payload, format='json')
             print_output('run_create_reindexer_task_signal:response.data', response.data)
-            # if project has no indices, or not contained in payload, not created
-            if project.indices is None or project.indices not in payload['indices']:
-                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            else:
-                # Check if new_index gets created
-                self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-                created_reindexer = Reindexer.objects.get(id=response.data['id'])
-                print_output("Re-index task status: ", created_reindexer.task.status)
-                # Check if Index gets re-indexed and completed
-                self.assertEqual(created_reindexer.task.status, Task.STATUS_COMPLETED)
-                # remove test texta_test_index_reindexed
-                new_index = response.data['new_index']
-                delete_response = ElasticCore().delete_index(new_index)
-                print_output("Reindexer Test index remove status", delete_response)
-        # check if TEST_INDEX_REINDEX was removed
+            self.is_new_index_created_if_yes_remove(response, payload, project)
         assert TEST_INDEX_REINDEX not in ElasticCore().get_indices()
-
         self.is_reindexed_index_added_to_project(response, payload['new_index'], project)
+
+    def is_new_index_created_if_yes_remove(self, response, payload, project):
+        ''' Check if new_index gets created
+            Check if new_index gets re-indexed and completed
+            remove test new_index '''
+        if project.indices is None or project.indices not in payload['indices']:
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        else:
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            created_reindexer = Reindexer.objects.get(id=response.data['id'])
+            print_output("Re-index task status: ", created_reindexer.task.status)
+            self.assertEqual(created_reindexer.task.status, Task.STATUS_COMPLETED)
+            new_index = response.data['new_index']
+            delete_response = ElasticCore().delete_index(new_index)
+            print_output("Reindexer Test index remove status", delete_response)
 
     def is_reindexed_index_added_to_project(self, response, new_index, project):
         check = self.client.get(f'/projects/{project.id}/', format='json')
