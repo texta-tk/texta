@@ -34,13 +34,14 @@ class ReindexerViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         validate_indices = self.validate_indices(self.request, project_indices)
         validate_fields = self.validate_fields(self.request, project_indices)
-        if validate_indices and validate_fields:
+        if validate_indices['result'] and validate_fields:
             self.perform_create(serializer, project_obj)
             self.update_project_indices(serializer, project_obj, project_indices)
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-        if not validate_indices:
-            return Response({'error': f'The indices you are attempting to re-index are not contained in your project indices'}, status=status.HTTP_400_BAD_REQUEST)
+        if not validate_indices['result']:
+            return Response({'error': f'Index "{validate_indices["missing"]}" is not contained in your project indices "{repr(project_indices)}"'},
+                            status=status.HTTP_400_BAD_REQUEST)
         if not validate_fields:
             return Response({'error': f'The fields you are attempting to re-index are not contained in your project fields'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -55,8 +56,8 @@ class ReindexerViewSet(viewsets.ModelViewSet):
         ''' check if re-indexed index is in the relevant project indices field '''
         for index in self.request.data['indices']:
             if index not in project_indices:
-                return False
-            return True
+                return {"result": False, "missing": index}
+            return {"result": True}
 
     def validate_fields(self, request, project_indices):
         ''' check if changed fields included in the request are in the relevant project fields '''
