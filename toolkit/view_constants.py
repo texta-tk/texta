@@ -1,9 +1,10 @@
-from toolkit.elastic.aggregator import ElasticAggregator
-from toolkit.elastic.query import Query    
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import action
 
+from toolkit.elastic.aggregator import ElasticAggregator
+from toolkit.elastic.query import Query    
+from toolkit.serializer_constants import BulkDeleteSerializer
 
 class TagLogicViews():
     '''Re-usable logic for when a view needs to deal with facts'''
@@ -33,8 +34,7 @@ class TagLogicViews():
 
 
 class BulkDelete():
-
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], serializer_class=BulkDeleteSerializer)
     def bulk_delete(self, request, project_pk=None):
         '''API endpoint for bulk deleting objects, given { "ids": [int] }'''
         data = request.data
