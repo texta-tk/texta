@@ -70,7 +70,7 @@ class ReindexerViewTests(APITestCase):
             response = self.client.post(url, payload, format='json')
             print_output('run_create_reindexer_task_signal:response.data', response.data)
             # if project has no indices, or not contained in payload, not created
-            if project.indices is None or project.indices not in payload['indices'] or project.title == 'ReindexerMissingFieldsTestProject':
+            if project.indices is None or project.indices not in payload['indices']:
                 self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             else:
                 # Check if new_index gets created
