@@ -2,9 +2,9 @@ import subprocess
 import sys
 
 
-def build(project, version, tag_suffix=""):
+def build(project, version, tag_suffix="", dockerfile="./docker/Dockerfile":
     # build image
-    build_command = "docker build -t docker.texta.ee/texta/{0}:{1}{2} -f ./docker/Dockerfile .".format(project, version, tag_suffix)
+    build_command = "docker build -t docker.texta.ee/texta/{0}:{1}{2} -f {3} .".format(project, version, tag_suffix, dockerfile)
     print("Building, tagging and pushing Docker image for version {}.".format(version))
     print("Building...")
     built = subprocess.Popen(build_command, shell=True, stdout=subprocess.PIPE)
@@ -31,7 +31,7 @@ def main():
         # build CPU version
         build(project, version)
         # build GPU version
-        build(project, version, tag_suffix="-gpu")
+        build(project, version, tag_suffix="-gpu", dockefile="./docker/gpu.Dockerfile")
     except Exception as e:
         print("Build failed:", e)
         return
