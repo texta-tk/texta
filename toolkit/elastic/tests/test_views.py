@@ -92,7 +92,7 @@ class ReindexerViewTests(APITestCase):
         check = self.client.get(f'/projects/{project.id}/', format='json')
         if response.status_code == 201:
             assert new_index in check.data['indices']
-            print_output('Re-indexed index sucessfully added to project', check.data)
+            print_output('Re-indexed index added to project', check.data)
         if response.status_code == 400:
             assert new_index not in check.data['indices']
             print_output('Re-indexed index not added to project', check.data)

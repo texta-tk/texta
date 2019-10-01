@@ -29,13 +29,14 @@ class ReindexerViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         project_obj = Project.objects.get(id=self.kwargs['project_pk'])
+        project_indices = project_obj.indices
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        validate_indices = self.validate_indices(self.request, project_obj)
-        validate_fields = self.validate_fields(self.request, project_obj)
+        validate_indices = self.validate_indices(self.request, project_indices)
+        validate_fields = self.validate_fields(self.request, project_indices)
         if validate_indices and validate_fields:
             self.perform_create(serializer, project_obj)
-            self.update_project_indices(serializer, project_obj)
+            self.update_project_indices(serializer, project_obj, project_indices)
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         if not validate_indices:
@@ -50,25 +51,24 @@ class ReindexerViewSet(viewsets.ModelViewSet):
                         fields=json.dumps(serializer.validated_data['fields']),
                         indices=json.dumps(serializer.validated_data['indices']))
 
-    def validate_indices(self, request, project_obj):
+    def validate_indices(self, request, project_indices):
         ''' check if re-indexed index is in relevant project indices '''
         for index in self.request.data['indices']:
-            if index not in project_obj.indices:
+            if index not in project_indices:
                 return False
             return True
 
-    def validate_fields(self, request, project_obj):
+    def validate_fields(self, request, project_indices):
         ''' check if changed fields included in the request are in relevant project fields '''
-        project_fields = ElasticCore().get_fields(indices=project_obj.indices)
+        project_fields = ElasticCore().get_fields(indices=project_indices)
         field_data = [field["path"] for field in project_fields]
         for field in self.request.data['fields']:
             if field not in field_data:
                 return False
         return True
 
-    def update_project_indices(self, serializer, project_obj):
+    def update_project_indices(self, serializer, project_obj, project_indices):
         ''' add new_index included in the request to the relevant project object '''
-        project_indices = project_obj.indices
         indices_to_add = [serializer.validated_data['new_index']]
         for index in indices_to_add:
             project_indices.append(index)
