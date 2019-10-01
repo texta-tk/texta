@@ -31,7 +31,7 @@ def main():
         # build CPU version
         build(project, version)
         # build GPU version
-        build(project, version, tag_suffix="-gpu", dockerfile="./docker/gpu.Dockerfile")
+        #build(project, version, tag_suffix="-gpu", dockerfile="./docker/gpu.Dockerfile")
     except Exception as e:
         print("Build failed:", e)
         return
