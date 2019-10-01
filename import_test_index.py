@@ -21,7 +21,7 @@ file_name = args.f
 host = args.es
 index = args.i
 
-test_data_url = "https://git.texta.ee/texta/texta-resources/raw/master/tk_test_data/texta_test_index.zip"
+test_data_url = "https://git.texta.ee/texta/texta-resources/raw/master/tk_test_data/elastic_data/texta_test_index.zip"
 
 es = Elasticsearch(host, http_auth=(ES_USERNAME, ES_PASSWORD))
 
