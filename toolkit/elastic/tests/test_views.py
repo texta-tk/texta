@@ -26,11 +26,11 @@ class ReindexerViewTests(APITestCase):
             indices=TEST_INDEX
         )
         # many indices
-        # cls.project_many_indices = Project.objects.create(
-        #     title='ReindexerManyIndicesTestProject',
-        #     owner=cls.user,
-        #     indices=['texta_test_index', 'test_deletes']
-        # )
+        cls.project_many_indices = Project.objects.create(
+            title='ReindexerManyIndicesTestProject',
+            owner=cls.user,
+            indices=['texta_test_index', 'test_deletes']
+        )
 
         cls.project_no_indices = Project.objects.create(
             title='ReindexerNoIndicesTestProject',
@@ -70,12 +70,13 @@ class ReindexerViewTests(APITestCase):
                 # Check if new_index gets created
                 self.assertEqual(response.status_code, status.HTTP_201_CREATED)
                 created_reindexer = Reindexer.objects.get(id=response.data['id'])
-                print_output("Re-index status: ", created_reindexer.task.status)
+                print_output("Re-index task status: ", created_reindexer.task.status)
                 # Check if Index gets re-indexed and completed
                 self.assertEqual(created_reindexer.task.status, Task.STATUS_COMPLETED)
                 # remove test texta_test_index_reindexed
                 new_index = response.data['new_index']
-                ElasticCore().delete_index(new_index)
+                delete_response = ElasticCore().delete_index(new_index)
+                print_output("Reindexer Test index remove status", delete_response)
         # check if TEST_INDEX_REINDEX was removed
         assert TEST_INDEX_REINDEX not in ElasticCore().get_indices()
 
@@ -83,6 +84,6 @@ class ReindexerViewTests(APITestCase):
         print("created test_project", response.status_code, check.data)
 
     # no point in testing fields, before you implement changing them.
-    # test if added to project
+    # test if reindexed index is added to project
 
 

@@ -16,8 +16,6 @@ from toolkit.elastic.document import ElasticDocument
         changing or adding types
         re-indexing: new or changed.
 
-    NB! test with texta_test_index
-
     TODOs:
     Kas fieldid on olemas projektis, projekti mudelis on olemas meetod get_elastic_fields
     reindexer should add to project in format [first index count, ..., reindexed_index] because it is a set, unordered
@@ -49,6 +47,7 @@ def reindex_task(reindexer_task_id, testing=False):
             es_doc.add(new_doc)
 
     # finish Task
+    # TODO, complete always, but give result message
     show_progress.update_view(100.0)
     task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 

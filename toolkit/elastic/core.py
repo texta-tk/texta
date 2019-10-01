@@ -49,12 +49,10 @@ class ElasticCore:
         available = info["features"]["security"]["available"]
         return available
 
-
     # use with caution
     def delete_index(self, index):
-        self.es.indices.delete(index=index, ignore=[400, 404])
-        # return response
-
+        # returns either {'acknowledged': True} or detailed error response
+        return self.es.indices.delete(index=index, ignore=[400, 404])
 
     def get_indices(self):
         if self.connection:
