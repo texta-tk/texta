@@ -5,7 +5,7 @@ import sys
 def build(project, version, tag_suffix="", dockerfile="./docker/Dockerfile"):
     # build image
     build_command = "docker build -t docker.texta.ee/texta/{0}:{1}{2} -f {3} .".format(project, version, tag_suffix, dockerfile)
-    print("Building, tagging and pushing Docker image for version {}.".format(version))
+    print("Building, tagging and pushing Docker image for version {0}{1}.".format(version, tag_suffix))
     print("Building...")
     built = subprocess.Popen(build_command, shell=True, stdout=subprocess.PIPE)
     built_id = built.communicate()[0].strip().split('\n')[-2].split()[-1]
@@ -15,10 +15,10 @@ def build(project, version, tag_suffix="", dockerfile="./docker/Dockerfile"):
     tagged = subprocess.Popen(tag_command, shell=True)
     # push
     for tag in [version, "latest"]:
-        print("Pushing {}...".format(tag))
+        print("Pushing {0}{1}...".format(tag, tag_suffix))
         push_command = "docker push docker.texta.ee/texta/{0}:{1}{2}".format(project, tag, tag_suffix)
         pushed = subprocess.Popen(push_command, shell=True)
-        print("Pushed {}.".format(tag))
+        print("Pushed {0}{1}.".format(tag, tag_suffix))
 
 
 def main():
@@ -31,7 +31,7 @@ def main():
         # build CPU version
         build(project, version)
         # build GPU version
-        build(project, version, tag_suffix="-gpu", dockefile="./docker/gpu.Dockerfile")
+        build(project, version, tag_suffix="-gpu", dockerfile="./docker/gpu.Dockerfile")
     except Exception as e:
         print("Build failed:", e)
         return
