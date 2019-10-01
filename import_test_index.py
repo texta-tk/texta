@@ -1,6 +1,8 @@
 import json
 import argparse
 import zipfile
+from urllib.request import urlopen
+from io import BytesIO
 from elasticsearch import Elasticsearch
 
 from toolkit.settings import ES_PASSWORD, ES_USERNAME
@@ -18,6 +20,8 @@ args = parser.parse_args()
 file_name = args.f
 host = args.es
 index = args.i
+
+test_data_url = "https://git.texta.ee/texta/texta-resources/raw/master/tk_test_data/texta_test_index.zip"
 
 es = Elasticsearch(host, http_auth=(ES_USERNAME, ES_PASSWORD))
 
@@ -38,10 +42,14 @@ fact_mapping = {
     }
 }
 
+
 def import_docs():
     try:
-        print("Unzipping test data.")
-        with zipfile.ZipFile(f'data/test_data/{file_name}.zip', 'r') as z:
+        print("Downloading test data.")
+        response = urlopen(test_data_url)
+        test_data_zip = BytesIO(response.read())
+        print("Reading test data.")
+        with zipfile.ZipFile(test_data_zip) as z:
             with z.open(f'{file_name}.jl') as f:
                 lines = f.readlines()
                 print("Deleting existing index for safety precaution.")
