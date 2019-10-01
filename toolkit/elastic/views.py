@@ -31,8 +31,8 @@ class ReindexerViewSet(viewsets.ModelViewSet):
         project_obj = Project.objects.get(id=self.kwargs['project_pk'])
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        validate_indices = self.validate_indices(project_obj, self.request)
-        validate_fields = self.validate_fields(self.request, serializer)
+        validate_indices = self.validate_indices(self.request, project_obj)
+        validate_fields = self.validate_fields(self.request, project_obj)
         if validate_indices and validate_fields:
             self.perform_create(serializer, project_obj)
             self.update_project_indices(serializer, project_obj)
@@ -50,16 +50,16 @@ class ReindexerViewSet(viewsets.ModelViewSet):
                         fields=json.dumps(serializer.validated_data['fields']),
                         indices=json.dumps(serializer.validated_data['indices']))
 
-    def validate_indices(self, project_obj, request):
+    def validate_indices(self, request, project_obj):
         ''' check if re-indexed index is in relevant project indices '''
         for index in self.request.data['indices']:
             if index not in project_obj.indices:
                 return False
             return True
 
-    def validate_fields(self, request, serializer):
+    def validate_fields(self, request, project_obj):
         ''' check if changed fields included in the request are in relevant project fields '''
-        project_fields = ElasticCore().get_fields(indices=serializer.validated_data['indices'])
+        project_fields = ElasticCore().get_fields(indices=project_obj.indices)
         field_data = [field["path"] for field in project_fields]
         for field in self.request.data['fields']:
             if field not in field_data:
@@ -67,9 +67,9 @@ class ReindexerViewSet(viewsets.ModelViewSet):
         return True
 
     def update_project_indices(self, serializer, project_obj):
-        project_indices = serializer.validated_data['indices']
+        ''' add new_index included in the request to the relevant project object '''
+        project_indices = project_obj.indices
         indices_to_add = [serializer.validated_data['new_index']]
         for index in indices_to_add:
             project_indices.append(index)
         project_obj.save(add_indices=project_indices)
-
