@@ -17,12 +17,10 @@ from toolkit.elastic.document import ElasticDocument
         re-indexing: new or changed.
 
     TODOs:
-    Kas fieldid on olemas projektis, projekti mudelis on olemas meetod get_elastic_fields
     reindexer should add to project in format [first index count, ..., reindexed_index] because it is a set, unordered
     [] fields post valib kõik väljad
     random subsetide oma olemas searchis
     peaks ka käima juurde query, nagu embeddingus, selle abil saab valitud subsete teha.
-
 """
 
 @task(name="reindex_task", base=BaseTask)

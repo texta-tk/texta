@@ -26,17 +26,22 @@ class ReindexerViewTests(APITestCase):
             indices=TEST_INDEX
         )
         # many indices
-        cls.project_many_indices = Project.objects.create(
-            title='ReindexerManyIndicesTestProject',
-            owner=cls.user,
-            indices=['texta_test_index', 'test_deletes']
-        )
+        # cls.project_many_indices = Project.objects.create(
+        #     title='ReindexerManyIndicesTestProject',
+        #     owner=cls.user,
+        #     indices=['texta_test_index', 'test_deletes']
+        # )
 
         cls.project_no_indices = Project.objects.create(
             title='ReindexerNoIndicesTestProject',
             owner=cls.user
             # either has no indices or those not contained in test_payload "indices"
         )
+        # cls.project_missing_fields = Project.objects.create(
+        #     title='ReindexerMissingFieldsTestProject',
+        #     owner=cls.user,
+        #     indices=TEST_INDEX
+        # )
 
     def setUp(self):
         self.client.login(username='indexOwner', password='pw')
@@ -45,6 +50,7 @@ class ReindexerViewTests(APITestCase):
         for project in (self.project,
                         # self.project_many_indices,
                         self.project_no_indices,
+                        # self.project_missing_fields,
                         ):
             url =  f'/projects/{project.id}/reindexer/'
             self.run_create_reindexer_task_signal(project, url)
@@ -64,7 +70,7 @@ class ReindexerViewTests(APITestCase):
             response = self.client.post(url, payload, format='json')
             print_output('run_create_reindexer_task_signal:response.data', response.data)
             # if project has no indices, or not contained in payload, not created
-            if project.indices is None or project.indices not in payload['indices']:
+            if project.indices is None or project.indices not in payload['indices'] or project.title == 'ReindexerMissingFieldsTestProject':
                 self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             else:
                 # Check if new_index gets created
@@ -80,10 +86,18 @@ class ReindexerViewTests(APITestCase):
         # check if TEST_INDEX_REINDEX was removed
         assert TEST_INDEX_REINDEX not in ElasticCore().get_indices()
 
+        self.is_reindexed_index_added_to_project(response, payload['new_index'], project)
+
+    def is_reindexed_index_added_to_project(self, response, new_index, project):
         check = self.client.get(f'/projects/{project.id}/', format='json')
-        print("created test_project", response.status_code, check.data)
+        if response.status_code == 201:
+            assert new_index in check.data['indices']
+            print_output('Re-indexed index sucessfully added to project', check.data)
+        if response.status_code == 400:
+            assert new_index not in check.data['indices']
+            print_output('Re-indexed index not added to project', check.data)
 
     # no point in testing fields, before you implement changing them.
-    # test if reindexed index is added to project
+
 
 

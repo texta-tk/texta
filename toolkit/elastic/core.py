@@ -51,7 +51,7 @@ class ElasticCore:
 
     # use with caution
     def delete_index(self, index):
-        # returns either {'acknowledged': True} or detailed error response
+        # returns either {'acknowledged': True} or a detailed error response
         return self.es.indices.delete(index=index, ignore=[400, 404])
 
     def get_indices(self):
