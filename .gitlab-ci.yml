@@ -26,7 +26,6 @@ Test:
     TEXTA_REDIS_URL: redis://redis:6379
   script:
   - python manage.py test
-  - docker system prune --volumes -f
   except:
   - tags
 
