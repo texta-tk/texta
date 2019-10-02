@@ -8,6 +8,7 @@ import json
 
 class ReindexerCreateSerializer(serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
     url = serializers.SerializerMethodField()
+    query = serializers.SerializerMethodField()
     indices = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True, required=True)
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
     fields_parsed = serializers.SerializerMethodField()
@@ -15,12 +16,17 @@ class ReindexerCreateSerializer(serializers.HyperlinkedModelSerializer, ProjectR
 
     class Meta:
         model = Reindexer
-        fields = ('id', 'url', 'description', 'indices', 'fields', 'task', 'fields_parsed', 'new_index')
+        fields = ('id', 'url', 'description', 'indices', 'fields', 'query', 'task', 'fields_parsed', 'new_index')
         extra_kwargs = {'description': {'required': True}, 'new_index': {'required': True}}
 
     def get_fields_parsed(self, obj):
         if obj.fields:
             return json.loads(obj.fields)
+        return None
+
+    def get_query(self, obj):
+        if obj.query:
+            return json.loads(obj.query)
         return None
 
 

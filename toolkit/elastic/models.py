@@ -1,4 +1,5 @@
 from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.task.models import Task
 from toolkit.core.project.models import Project
@@ -14,10 +15,12 @@ class Reindexer(models.Model):
     description = models.CharField(max_length=MAX_DESC_LEN, default="")
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
+    query = models.TextField(default=json.dumps(EMPTY_QUERY))
     indices = models.TextField(default=json.dumps([]))
     fields = models.TextField(default=json.dumps([]))
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
     new_index = models.CharField(max_length=MAX_DESC_LEN, default="")
+
 
     def __str__(self):
         return self.description
