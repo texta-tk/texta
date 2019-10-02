@@ -155,7 +155,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         hybrid_tagger_object = self.get_object()
         field_paths = json.loads(hybrid_tagger_object.taggers.first().fields)
         indices = hybrid_tagger_object.project.indices
-        ignore_tags = set([tag["tag"] for tag in ignore_tags])
+        ignore_tags = {tag["tag"]: True for tag in ignore_tags}
         # create query
         query = Query()
         query.add_mlt(field_paths, text)
@@ -203,15 +203,13 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         lemmatize = serializer.validated_data['lemmatize']
         use_ner = serializer.validated_data['use_ner']
 
-        # list to put final tags in
-        tags = []
-
         # check if MLP available
         if lemmatize or use_ner:
             if not global_mlp_for_taggers.status:
                 return Response({'error': 'mlp not available. check connection to mlp.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            # update text and tags with MLP
-            text, tags = self.get_mlp(text, lemmatize=True)
+        
+        # update text and tags with MLP
+        text, tags = self.get_mlp(text, lemmatize=lemmatize, use_ner=use_ner)
         
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(text, ignore_tags=tags, n_similar_docs=n_similar_docs)
@@ -259,15 +257,13 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         lemmatize = serializer.validated_data['lemmatize']
         use_ner = serializer.validated_data['use_ner']
 
-        # list to put final tags in
-        tags = []
-
         # check if MLP available
         if lemmatize or use_ner:
             if not global_mlp_for_taggers.status:
                 return Response({'error': 'mlp not available. check connection to mlp.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            # update text and tags with MLP
-            combined_texts, tags = self.get_mlp(combined_texts, lemmatize=True) 
+        
+        # update text and tags with MLP
+        combined_texts, tags = self.get_mlp(combined_texts, lemmatize=lemmatize, use_ner=use_ner)
         
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(combined_texts, ignore_tags=tags, n_similar_docs=n_similar_docs)
@@ -312,7 +308,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         tagger_group_object = self.get_object()
         # get tagger objects
         candidates_str = "|".join(tag_candidates)
-        tagger_objects = tagger_group_object.taggers.filter(description__iregex=f"({candidates_str})")
+        tagger_objects = tagger_group_object.taggers.filter(description__iregex=f"^({candidates_str})$")
         # filter out completed
         tagger_objects = [tagger for tagger in tagger_objects if tagger.task.status == tagger.task.STATUS_COMPLETED]
         # predict & sort tags
