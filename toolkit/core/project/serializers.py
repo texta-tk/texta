@@ -13,6 +13,12 @@ from toolkit.elastic.searcher import EMPTY_QUERY
 DEFAULT_VALUES_PER_NAME = 10
 
 
+class MultiTagSerializer(serializers.Serializer):
+    text = serializers.CharField(help_text = 'Text to be tagged.')
+    taggers = serializers.ListField(help_text = 'List of Tagger IDs to be used.',
+        child = serializers.IntegerField())
+
+
 class SearchByQuerySerializer(serializers.Serializer):
     query = serializers.JSONField(help_text='Query to search', default=EMPTY_QUERY)
 

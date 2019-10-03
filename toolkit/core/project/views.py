@@ -12,12 +12,17 @@ from toolkit.core.project.serializers import (
     SearchSerializer,
     SearchByQuerySerializer,
     ProjectAdminSerializer,
+    MultiTagSerializer
 )
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.query import Query
+from toolkit.tagger.models import Tagger
+from toolkit.core.task.models import Task
+from toolkit.tagger.tasks import apply_tagger
 
+from celery import group
 
 class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
@@ -38,6 +43,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self):
+        if self.action == 'multitag_text':
+            return MultiTagSerializer
         if self.action == 'get_facts':
             return GetFactsSerializer
         if self.action == 'search':
@@ -47,6 +54,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if self.request.user.is_superuser:
             return ProjectAdminSerializer
         return ProjectSerializer
+
 
     @action(detail=True, methods=['get', 'post'])
     def get_fields(self, request, pk=None, project_pk=None):
@@ -65,6 +73,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         field_map_list = [{'index': k, 'fields': v} for k, v in field_map.items()]
         return Response(field_map_list, status=status.HTTP_200_OK)
 
+
     @action(detail=True, methods=['get', 'post'], serializer_class=GetFactsSerializer)
     def get_facts(self, request, pk=None, project_pk=None):
         data = request.data
@@ -80,6 +89,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         fact_map = ElasticAggregator(indices=project_indices).facts(size=vals_per_name, include_values=include_values)
         fact_map_list = [{'name': k, 'values': v} for k, v in fact_map.items()]
         return Response(fact_map_list, status=status.HTTP_200_OK)
+
 
     @action(detail=True, methods=['post'], serializer_class=SearchSerializer)
     def search(self, request, pk=None, project_pk=None):
@@ -149,3 +159,28 @@ class ProjectViewSet(viewsets.ModelViewSet):
         results = es.search()
 
         return Response(results, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['post'], serializer_class=MultiTagSerializer)
+    def multitag_text(self, request, pk=None, project_pk=None):
+        data = request.data
+        serializer = MultiTagSerializer(data=data)
+        # validate serializer
+        if not serializer.is_valid():
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        # get project object
+        project_object = self.get_object()
+        # get available taggers from project
+        taggers = Tagger.objects.filter(project=project_object).filter(task__status=Task.STATUS_COMPLETED)
+        # filter again
+        taggers = taggers.filter(pk__in=serializer.validated_data['taggers'])
+        # error if filtering resulted 0 taggers
+        if not taggers:
+            return Response({'error': 'none of provided taggers are present. are the models ready?'}, status=status.HTTP_400_BAD_REQUEST)
+        # tag text using celery group primitive
+        text = serializer.validated_data['text']
+        tags = group(apply_tagger.s(text, tagger.pk, 'text') for tagger in taggers).apply()
+        tags = [tag for tag in tags.get() if tag]
+        # sort & return tags
+        sorted_tags = sorted(tags, key=lambda k: k['probability'], reverse=True)
+        return Response(sorted_tags, status=status.HTTP_200_OK)
