@@ -13,16 +13,17 @@ from toolkit.elastic.searcher import EMPTY_QUERY
 DEFAULT_VALUES_PER_NAME = 10
 
 
-class MultiTagSerializer(serializers.Serializer):
+class ProjectMultiTagSerializer(serializers.Serializer):
     text = serializers.CharField(help_text = 'Text to be tagged.')
     taggers = serializers.ListField(help_text = 'List of Tagger IDs to be used.',
         child = serializers.IntegerField())
 
 
-class SearchByQuerySerializer(serializers.Serializer):
+class ProjectSearchByQuerySerializer(serializers.Serializer):
     query = serializers.JSONField(help_text='Query to search', default=EMPTY_QUERY)
 
-class SearchSerializer(serializers.Serializer):
+
+class ProjectSimplifiedSearchSerializer(serializers.Serializer):
     match_text = serializers.CharField(help_text='String of list of strings to match.')
     match_type = serializers.ChoiceField(choices=MATCH_CHOICES,
         help_text='Match type to apply. Default: match.',
@@ -45,7 +46,7 @@ class SearchSerializer(serializers.Serializer):
         required=False)
 
 
-class GetFactsSerializer(serializers.Serializer):
+class ProjectGetFactsSerializer(serializers.Serializer):
     values_per_name = serializers.IntegerField(default=DEFAULT_VALUES_PER_NAME,
         help_text=f'Number of fact values per fact name. Default: 10.')
     output_type = serializers.ChoiceField(choices=((True, 'fact names with values'), (False, 'fact names without values')),

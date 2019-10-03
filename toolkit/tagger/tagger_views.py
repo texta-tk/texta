@@ -12,8 +12,9 @@ from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import train_tagger
 from toolkit.core.project.models import Project
-from toolkit.tagger.serializers import TaggerSerializer, FeatureListSerializer, \
-                                       TextSerializer, DocSerializer
+from toolkit.tagger.serializers import TaggerSerializer, TaggerListFeaturesSerializer, \
+                                       TaggerTagTextSerializer, TaggerTagDocumentSerializer
+from toolkit.serializer_constants import GeneralTextSerializer
 from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tools.model_cache import ModelCache
 from toolkit.embedding.views import global_phraser_cache
@@ -60,13 +61,13 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete):
 
 
 
-    @action(detail=True, methods=['get', 'post'], serializer_class=FeatureListSerializer)
+    @action(detail=True, methods=['get'], serializer_class=TaggerListFeaturesSerializer)
     def list_features(self, request, pk=None, project_pk=None):
         """
         API endpoint for listing tagger features.
         """
         data = request.data
-        serializer = FeatureListSerializer(data=data)
+        serializer = TaggerListFeaturesSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -101,7 +102,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         return Response(feature_info, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['get'])
     def stop_word_list(self, request, pk=None, project_pk=None):
         """
         API endpoint for listing tagger object stop words.
@@ -112,13 +113,13 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         return Response(success, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=TextSerializer)
+    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
     def stop_word_add(self, request, pk=None, project_pk=None):
         """
         API endpoint for adding a new stop word to tagger
         """
         data = request.data
-        serializer = TextSerializer(data=data)
+        serializer = GeneralTextSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -140,13 +141,13 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         return Response(success, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=TextSerializer)
+    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
     def stop_word_remove(self, request, pk=None, project_pk=None):
         """
         API endpoint for removing tagger stop word.
         """
         data = request.data
-        serializer = TextSerializer(data=data)
+        serializer = GeneralTextSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -185,13 +186,13 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
+    @action(detail=True, methods=['post'], serializer_class=TaggerTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging raw text.
         """
         data = request.data
-        serializer = TextSerializer(data=data)
+        serializer = TaggerTagTextSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -219,13 +220,13 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=DocSerializer)
+    @action(detail=True, methods=['post'], serializer_class=TaggerTagDocumentSerializer)
     def tag_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging JSON documents.
         """
         data = request.data
-        serializer = DocSerializer(data=data)
+        serializer = TaggerTagDocumentSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -264,7 +265,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['get'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging a random document.

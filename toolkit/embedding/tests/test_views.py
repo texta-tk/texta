@@ -77,7 +77,7 @@ class EmbeddingViewTests(APITestCase):
         '''Tests the endpoint for the predict action'''
         # Send only "text" in payload, because "output_size" should be 10 by default
         payload = { "positives": ["eesti", "läti"] }
-        predict_url = f'{self.url}{self.test_embedding_id}/predict/'
+        predict_url = f'{self.url}{self.test_embedding_id}/predict_similar/'
         response = self.client.post(predict_url, payload)
         print_output('predict:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -89,7 +89,7 @@ class EmbeddingViewTests(APITestCase):
         '''Tests the endpoint for the predict action'''
         # Send only "text" in payload, because "output_size" should be 10 by default
         payload = { "positives": ["eesti", "läti"], "negatives": ["juhtuma"] }
-        predict_url = f'{self.url}{self.test_embedding_id}/predict/'
+        predict_url = f'{self.url}{self.test_embedding_id}/predict_similar/'
         response = self.client.post(predict_url, payload)
         print_output('predict_with_negatives:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -100,7 +100,7 @@ class EmbeddingViewTests(APITestCase):
     def run_phrase(self):
         '''Tests the endpoint for the predict action'''
         payload = { "text": "See on mingi eesti keelne tekst testimiseks" }
-        predict_url = f'{self.url}{self.test_embedding_id}/phrase/'
+        predict_url = f'{self.url}{self.test_embedding_id}/phrase_text/'
         response = self.client.post(predict_url, payload)
         print_output('predict:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -132,7 +132,7 @@ class EmbeddingViewTests(APITestCase):
     def run_embedding_cluster_browse(self):
         '''Tests the endpoint for the browse action'''
         payload = { "number_of_clusters": 10, "cluster_order": True }
-        browse_url = f'{self.cluster_url}{self.test_embedding_clustering_id}/browse/'
+        browse_url = f'{self.cluster_url}{self.test_embedding_clustering_id}/browse_clusters/'
         response = self.client.post(browse_url, payload)
         print_output('browse:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -143,7 +143,7 @@ class EmbeddingViewTests(APITestCase):
     def run_embedding_cluster_find_word(self):
         '''Tests the endpoint for the find_word action'''
         payload = { "text": "putin" }
-        browse_url = f'{self.cluster_url}{self.test_embedding_clustering_id}/find_word/'
+        browse_url = f'{self.cluster_url}{self.test_embedding_clustering_id}/find_cluster_by_word/'
         response = self.client.post(browse_url, payload)
         print_output('find_word:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

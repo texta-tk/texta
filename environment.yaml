@@ -38,3 +38,4 @@ dependencies:
     - django-cors-headers
     - sentencepiece
     - python-json-logger
+    - drf-yasg

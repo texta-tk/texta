@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'rest_auth.registration',
     'django_extensions',
     'rest_framework_serializer_field_permissions',
+    'drf_yasg'
 ]
 
 # For registration (see: https://django-rest-auth.readthedocs.io/en/latest/installation.html#registration-optional)
@@ -235,3 +236,8 @@ LOGGING = setup_logging(INFO_LOG_FILE_NAME, ERROR_LOG_FILE_NAME, INFO_LOGGER, ER
 
 # Ignore Python Warning base class
 warnings.simplefilter(action='ignore', category=Warning)
+
+# Swagger Documentation
+SWAGGER_SETTINGS = {
+    'DEFAULT_AUTO_SCHEMA_CLASS': 'toolkit.tools.swagger.CompoundTagsSchema'
+}

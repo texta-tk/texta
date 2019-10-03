@@ -15,7 +15,7 @@ from toolkit.elastic.query import Query
 from toolkit.tagger.tasks import train_tagger, apply_tagger
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.core.project.models import Project
-from toolkit.tagger.serializers import TaggerGroupSerializer, TextGroupSerializer, DocGroupSerializer
+from toolkit.tagger.serializers import TaggerGroupSerializer, TaggerGroupTagTextSerializer, TaggerGroupTagDocumentSerializer
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.view_constants import TagLogicViews
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
@@ -88,7 +88,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['get'])
     def models_list(self, request, pk=None, project_pk=None):
         """
         API endpoint for listing tagger objects connected to tagger group instance.
@@ -101,7 +101,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         return Response(response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['post'])
     def models_retrain(self, request, pk=None, project_pk=None):
         """
         API endpoint for retraining tagger model.
@@ -179,13 +179,13 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         return tag_candidates
 
 
-    @action(detail=True, methods=['get','post'], serializer_class=TextGroupSerializer)
+    @action(detail=True, methods=['post'], serializer_class=TaggerGroupTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging raw text with tagger group.
         """
         data = request.data
-        serializer = TextGroupSerializer(data=data)
+        serializer = TaggerGroupTagTextSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -218,13 +218,13 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         return Response(tags, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get','post'], serializer_class=DocGroupSerializer)
+    @action(detail=True, methods=['post'], serializer_class=TaggerGroupTagDocumentSerializer)
     def tag_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging JSON documents with tagger group.
         """
         data = request.data
-        serializer = DocGroupSerializer(data=data)
+        serializer = TaggerGroupTagDocumentSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -272,7 +272,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         return Response(tags, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['get'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging a random document.
