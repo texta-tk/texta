@@ -24,25 +24,22 @@ class ReindexerViewTests(APITestCase):
             owner=cls.user,
             indices=TEST_INDEX
         )
-        cls.project_empty_fields = Project.objects.create(
+        cls.project_no_fields = Project.objects.create(
             title='ReindexerEmptyFieldsTestProject',
             owner=cls.user,
             indices=TEST_INDEX
         )
-
-        # many indices
-        # cls.project_many_indices = Project.objects.create(
-        #     title='ReindexerManyIndicesTestProject',
-        #     owner=cls.user,
-        #     indices=['texta_test_index', 'test_deletes']
-        # )
+        cls.project_many_indices = Project.objects.create(
+            title='ReindexerManyIndicesTestProject',
+            owner=cls.user,
+            indices=['texta_test_index', 'test_deletes']
+        )
 
         cls.project_no_indices = Project.objects.create(
             title='ReindexerNoIndicesTestProject',
             owner=cls.user
             # either has no indices or those not contained in test_payload "indices"
         )
-
 
     def setUp(self):
         self.client.login(username='indexOwner', password='pw')
@@ -66,14 +63,16 @@ class ReindexerViewTests(APITestCase):
             "indices": [TEST_INDEX],
             "new_index": TEST_INDEX_REINDEX
         }
-        for project in (self.project,
-                        # self.project_many_indices,
+        for project in (
+                        self.project,
+                        self.project_many_indices,
                         # self.project_no_indices,
                         # self.project_missing_fields,
                         ):
             url =  f'/projects/{project.id}/reindexer/'
             self.run_create_reindexer_task_signal(project, url, payload)
-        url =  f'/projects/{self.project_empty_fields.id}/reindexer/'
+
+        url =  f'/projects/{self.project_no_fields.id}/reindexer/'
         self.run_create_reindexer_task_signal(self.project, url, empty_fields_test_payload)
 
     def run_create_reindexer_task_signal(self, project, url, payload, overwrite=False):
@@ -92,7 +91,10 @@ class ReindexerViewTests(APITestCase):
         ''' Check if new_index gets created
             Check if new_index gets re-indexed and completed
             remove test new_index '''
-        if project.indices is None or project.indices not in payload['indices']:
+        for index in payload['indices']:
+            if index not in project.indices:
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        if project.indices is None:
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         else:
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
