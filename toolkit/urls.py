@@ -59,6 +59,5 @@ urlpatterns = [
     path('rest-auth/', include('rest_auth.urls')),
     path('rest-auth/registration/', include('rest_auth.registration.urls')),
     url(r'^', include(router.urls)),
-    url(r'^', include(project_router.urls)),
-    path('', include('drf_autodocs.urls'), name="docs"),
+    url(r'^', include(project_router.urls))
 ]
