@@ -5,8 +5,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from toolkit.embedding.models import Embedding, EmbeddingCluster
-from toolkit.embedding.serializers import (EmbeddingSerializer, EmbeddingPrecictionSerializer, TextSerializer,
-                                           EmbeddingClusterSerializer, ClusterBrowserSerializer)
+from toolkit.embedding.serializers import (EmbeddingSerializer, EmbeddingPredictSimilarWordsSerializer,
+                                           EmbeddingClusterSerializer, EmbeddingClusterBrowserSerializer)
+from toolkit.serializer_constants import GeneralTextSerializer
 from toolkit.embedding.embedding import W2VEmbedding
 from toolkit.embedding.phraser import Phraser
 from toolkit.embedding.word_cluster import WordCluster
@@ -43,10 +44,10 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
                         fields=json.dumps(serializer.validated_data['fields']))
 
 
-    @action(detail=True, methods=['get', 'post'],serializer_class=EmbeddingPrecictionSerializer)
+    @action(detail=True, methods=['get', 'post'],serializer_class=EmbeddingPredictSimilarWordsSerializer)
     def predict(self, request, pk=None, project_pk=None):
         data = request.data
-        serializer = EmbeddingPrecictionSerializer(data=data)
+        serializer = EmbeddingPredictSimilarWordsSerializer(data=data)
         if serializer.is_valid():
             embedding_object = self.get_object()
             if not embedding_object.location:
@@ -63,10 +64,10 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
         else:
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['get', 'post'], serializer_class=TextSerializer)
+    @action(detail=True, methods=['get', 'post'], serializer_class=GeneralTextSerializer)
     def phrase(self, request, pk=None, project_pk=None):
         data = request.data
-        serializer = TextSerializer(data=data)
+        serializer = GeneralTextSerializer(data=data)
         if serializer.is_valid():
             embedding_object = self.get_object()
             if not embedding_object.location:
@@ -100,13 +101,13 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user,  project=Project.objects.get(id=self.kwargs['project_pk']))
 
 
-    @action(detail=True, methods=['get', 'post'], serializer_class=ClusterBrowserSerializer)
+    @action(detail=True, methods=['get', 'post'], serializer_class=EmbeddingClusterBrowserSerializer)
     def browse(self, request, pk=None, project_pk=None):
         """
         API endpoint for browsing clustering results.
         """
         data = request.data
-        serializer = ClusterBrowserSerializer(data=data)
+        serializer = EmbeddingClusterBrowserSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -128,13 +129,13 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
         return Response(clustering_result, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'], serializer_class=TextSerializer)
+    @action(detail=True, methods=['get', 'post'], serializer_class=GeneralTextSerializer)
     def find_word(self, request, pk=None, project_pk=None):
         """
         API endpoint for finding a cluster for any word in model.
         """
         data = request.data
-        serializer = TextSerializer(data=data)
+        serializer = GeneralTextSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -152,13 +153,13 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
         return Response(clustering_result, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
+    @action(detail=True, methods=['get','post'], serializer_class=GeneralTextSerializer)
     def cluster_text(self, request, pk=None, project_pk=None):
         """
         API endpoint for clustering raw text.
         """
         data = request.data
-        serializer = TextSerializer(data=data)
+        serializer = GeneralTextSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():

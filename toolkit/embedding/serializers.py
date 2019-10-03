@@ -36,15 +36,11 @@ class EmbeddingSerializer(serializers.HyperlinkedModelSerializer, ProjectResourc
         return None
 
 
-class EmbeddingPrecictionSerializer(serializers.Serializer):
+class EmbeddingPredictSimilarWordsSerializer(serializers.Serializer):
     positives = serializers.ListField(child=serializers.CharField(), help_text=f'Positive words for the model.')
     negatives = serializers.ListField(child=serializers.CharField(), help_text=f'Negative words for the model. Default: EMPTY', required=False, default=[])
     output_size = serializers.IntegerField(default=DEFAULT_OUTPUT_SIZE,
                                     help_text=f'Default: {DEFAULT_OUTPUT_SIZE}')
-
-
-class TextSerializer(serializers.Serializer):
-    text = serializers.CharField()
 
 
 class EmbeddingClusterSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
@@ -67,7 +63,7 @@ class EmbeddingClusterSerializer(serializers.ModelSerializer, ProjectResourceUrl
     def get_location(self, obj):
         return json.loads(obj.location)
 
-class ClusterBrowserSerializer(serializers.Serializer):
+class EmbeddingClusterBrowserSerializer(serializers.Serializer):
     number_of_clusters = serializers.IntegerField(default=DEFAULT_BROWSER_NUM_CLUSTERS, help_text=f'Default: {DEFAULT_BROWSER_NUM_CLUSTERS}')
     max_examples_per_cluster = serializers.IntegerField(default=DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER, help_text=f'Default: {DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER}')
     cluster_order = serializers.ChoiceField(((False, 'ascending'), (True, 'descending')))

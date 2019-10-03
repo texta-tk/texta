@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'rest_auth.registration',
     'django_extensions',
     'rest_framework_serializer_field_permissions',
+    'drf_yasg'
 ]
 
 # For registration (see: https://django-rest-auth.readthedocs.io/en/latest/installation.html#registration-optional)

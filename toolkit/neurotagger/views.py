@@ -18,7 +18,7 @@ from toolkit.tools.model_cache import ModelCache
 from toolkit import permissions as toolkit_permissions
 from toolkit.view_constants import TagLogicViews
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
-from toolkit.neurotagger.serializers import TextSerializer, DocSerializer
+from toolkit.neurotagger.serializers import NeuroTaggerTagTextSerializer, NeuroTaggerTagDocumentSerializer
 from toolkit.view_constants import BulkDelete
 
 # initialize model cache for neurotaggers
@@ -67,13 +67,13 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-    @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
+    @action(detail=True, methods=['get','post'], serializer_class=NeuroTaggerTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging raw text.
         """
         data = request.data
-        serializer = TextSerializer(data=data)
+        serializer = NeuroTaggerTagTextSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -92,14 +92,14 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get','post'], serializer_class=DocSerializer)
+    @action(detail=True, methods=['get','post'], serializer_class=NeuroTaggerTagDocumentSerializer)
     def tag_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging JSON documents.
         """
 
         data = request.data
-        serializer = DocSerializer(data=data)
+        serializer = NeuroTaggerTagDocumentSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
