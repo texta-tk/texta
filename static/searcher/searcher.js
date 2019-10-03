@@ -237,7 +237,7 @@ function query() {
             var button = $('.toggle-column-select-wrapper')
             button.appendTo(div)
             $('.selection-props-checkbox').append(
-                $(`<input type="checkbox" id="scales" name="toggleTextSelectionCheckbox" onchange="toggleTextSelection(this)" checked title="Toggle fact adding menu in text selecting">`),
+                $(`<input type="checkbox" id="scales" name="toggleTextSelectionCheckbox" onchange="toggleTextSelection(this)" title="Toggle fact adding menu in text selecting">`),
                 $(`<label for="toggleTextSelectionCheckbox" title="Toggle fact adding menu in text selecting"> <span class="glyphicon glyphicon-hand-up"></span></label>`)
             );
             if ($('.fullscreen-actions-div > i').length === 0) {
