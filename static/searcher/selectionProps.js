@@ -1,5 +1,5 @@
 // Global for toggling the enabling of text selection fact creation menu
-SELECT_FACT_MENU_ENABLED = true;
+SELECT_FACT_MENU_ENABLED = false;
 
 function createSelectionProps() {
     var spans = $(".\\[HL\\]").add($("span[title='\\[HL\\]']"));
