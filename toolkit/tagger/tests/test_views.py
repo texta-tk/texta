@@ -233,5 +233,3 @@ class TaggerViewTests(APITestCase):
         response = self.client.post(self.multitag_text_url, payload, format='json')
         print_output('test_multitag:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(len(response.data) > 0)
-
