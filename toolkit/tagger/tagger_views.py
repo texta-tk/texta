@@ -61,7 +61,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete):
 
 
 
-    @action(detail=True, methods=['get', 'post'], serializer_class=TaggerListFeaturesSerializer)
+    @action(detail=True, methods=['get'], serializer_class=TaggerListFeaturesSerializer)
     def list_features(self, request, pk=None, project_pk=None):
         """
         API endpoint for listing tagger features.
@@ -102,7 +102,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         return Response(feature_info, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['get'])
     def stop_word_list(self, request, pk=None, project_pk=None):
         """
         API endpoint for listing tagger object stop words.
@@ -186,7 +186,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get','post'], serializer_class=TaggerTagTextSerializer)
+    @action(detail=True, methods=['post'], serializer_class=TaggerTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging raw text.
@@ -265,7 +265,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['get'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging a random document.

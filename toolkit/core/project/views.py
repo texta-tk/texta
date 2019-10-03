@@ -56,7 +56,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return ProjectSerializer
 
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['get'])
     def get_fields(self, request, pk=None, project_pk=None):
         project_object = self.get_object()
         project_indices = list(project_object.indices)
@@ -74,7 +74,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return Response(field_map_list, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'], serializer_class=ProjectGetFactsSerializer)
+    @action(detail=True, methods=['get'], serializer_class=ProjectGetFactsSerializer)
     def get_facts(self, request, pk=None, project_pk=None):
         data = request.data
         serializer = ProjectGetFactsSerializer(data=data)

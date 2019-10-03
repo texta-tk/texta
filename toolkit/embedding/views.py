@@ -44,8 +44,8 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
                         fields=json.dumps(serializer.validated_data['fields']))
 
 
-    @action(detail=True, methods=['get', 'post'],serializer_class=EmbeddingPredictSimilarWordsSerializer)
-    def predict(self, request, pk=None, project_pk=None):
+    @action(detail=True, methods=['post'],serializer_class=EmbeddingPredictSimilarWordsSerializer)
+    def predict_similar(self, request, pk=None, project_pk=None):
         data = request.data
         serializer = EmbeddingPredictSimilarWordsSerializer(data=data)
         if serializer.is_valid():
@@ -64,8 +64,8 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
         else:
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['get', 'post'], serializer_class=GeneralTextSerializer)
-    def phrase(self, request, pk=None, project_pk=None):
+    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
+    def phrase_text(self, request, pk=None, project_pk=None):
         data = request.data
         serializer = GeneralTextSerializer(data=data)
         if serializer.is_valid():
@@ -101,8 +101,8 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user,  project=Project.objects.get(id=self.kwargs['project_pk']))
 
 
-    @action(detail=True, methods=['get', 'post'], serializer_class=EmbeddingClusterBrowserSerializer)
-    def browse(self, request, pk=None, project_pk=None):
+    @action(detail=True, methods=['post'], serializer_class=EmbeddingClusterBrowserSerializer)
+    def browse_clusters(self, request, pk=None, project_pk=None):
         """
         API endpoint for browsing clustering results.
         """
@@ -129,8 +129,8 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
         return Response(clustering_result, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'], serializer_class=GeneralTextSerializer)
-    def find_word(self, request, pk=None, project_pk=None):
+    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
+    def find_cluster_by_word(self, request, pk=None, project_pk=None):
         """
         API endpoint for finding a cluster for any word in model.
         """
@@ -153,7 +153,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
         return Response(clustering_result, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get','post'], serializer_class=GeneralTextSerializer)
+    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
     def cluster_text(self, request, pk=None, project_pk=None):
         """
         API endpoint for clustering raw text.
