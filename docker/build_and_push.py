@@ -4,7 +4,7 @@ import sys
 
 def build(project, version, tag_suffix="", dockerfile="./docker/Dockerfile"):
     # build image
-    build_command = "docker build -t docker.texta.ee/texta/{0}:{1}{2} -f {3} .".format(project, version, tag_suffix, dockerfile)
+    build_command = "docker build --compress --force-rm --no-cache -t docker.texta.ee/texta/{0}:{1}{2} -f {3} .".format(project, version, tag_suffix, dockerfile)
     print("Building, tagging and pushing Docker image for version {0}{1}.".format(version, tag_suffix))
     print("Building...")
     built = subprocess.Popen(build_command, shell=True, stdout=subprocess.PIPE)
