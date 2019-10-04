@@ -17,7 +17,7 @@ from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.neurotagger.tasks import neurotagger_train_handler
 
 
-class NeurotaggerViewTests(APITestCase):
+class NeurotaggerPerformanceTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         # Owner of the project

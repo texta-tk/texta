@@ -13,7 +13,7 @@ from toolkit.tagger.models import Tagger
 from toolkit.core.task.models import Task
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
-class TaggerViewTests(APITestCase):
+class TaggerPerformanceTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         # Owner of the project
