@@ -18,7 +18,6 @@ dependencies:
   - pydot
   - psutil
   - redis
-  - nginx
   - uwsgi
   - supervisor
   - psycopg2
