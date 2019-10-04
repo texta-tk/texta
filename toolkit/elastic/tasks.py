@@ -10,23 +10,13 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.document import ElasticDocument
 
-"""Use cases:
-        changing field names
-        changing or adding types
-        re-indexing: new or changed.
-
-    An index is an optimized collection of documents;
-    a document is a collection of document_fields;
-    document_fields contain the key, value pairs that contain your data.
-
-    TODOs:
-    posting fields [] chooses all fields associated with our project index
-    currently all fields are selected by default. from our project index, in the future should work with many indices.
-
-    perhaps posting_fields should actually add fields to the new_index, makes more sense from a REST standpoint. If a filter is needed we can have filter_fields
-    But really, we should do bulk filtering (subsets) and field-type changes through the QUERY.
-    Posting indices into Reindexer always creates the same result; a reindexed index, of the count of new_index list and named by its elements.
+""" TODOs:
+    implement changing field types
     random subsetide oma implementeerida (olemas searchis)
+    complete always, but give result message
+    optimize show_progress
+    implement query for advanced filtering.
+    implement renaming fields
 """
 
 @task(name="reindex_task", base=BaseTask)
@@ -37,9 +27,8 @@ def reindex_task(reindexer_task_id, testing=False):
     fields = set(json.loads(reindexer_obj.fields))
 
     if fields == set():
-        project_indices = reindexer_obj.project.indices
-        project_fields = ElasticCore().get_fields(indices=project_indices)
-        fields = [field["path"] for field in project_fields]
+        fields = ElasticCore().get_fields(indices=indices)
+        fields = set(field["path"] for field in fields)
 
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step("scrolling data")
@@ -54,7 +43,6 @@ def reindex_task(reindexer_task_id, testing=False):
             es_doc.add(new_doc)
 
     # finish Task
-    # TODO, complete always, but give result message
     show_progress.update_view(100.0)
     task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 

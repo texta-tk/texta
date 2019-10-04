@@ -9,7 +9,7 @@ import json
 class ReindexerCreateSerializer(serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
     url = serializers.SerializerMethodField()
     query = serializers.SerializerMethodField()
-    indices = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True, required=True)
+    indices = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True, required=False)
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
     fields_parsed = serializers.SerializerMethodField()
     task = TaskSerializer(read_only=True)

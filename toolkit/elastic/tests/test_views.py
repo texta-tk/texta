@@ -24,17 +24,13 @@ class ReindexerViewTests(APITestCase):
             owner=cls.user,
             indices=TEST_INDEX
         )
-        cls.project_no_fields = Project.objects.create(
+        # because clean project is needed
+        cls.join_fields_project = Project.objects.create(
             title='ReindexerEmptyFieldsTestProject',
             owner=cls.user,
             indices=TEST_INDEX
         )
-        cls.project_many_indices = Project.objects.create(
-            title='ReindexerManyIndicesTestProject',
-            owner=cls.user,
-            indices=['texta_test_index', 'test_deletes']
-        )
-
+        # for failure test
         cls.project_no_indices = Project.objects.create(
             title='ReindexerNoIndicesTestProject',
             owner=cls.user
@@ -45,35 +41,33 @@ class ReindexerViewTests(APITestCase):
         self.client.login(username='indexOwner', password='pw')
 
     def test_run(self):
-        # payload = {
-        #     "description": "TestReindexer",
-        #     "fields": [TEST_FIELD, 'comment_content_clean.text'],
-        #     "indices": [TEST_INDEX],
-        #     "new_index": TEST_INDEX_REINDEX,
-        # }
-        payload = {
-            "description": "TestReindexer",
-            "fields": [TEST_FIELD],
+        pick_fields_payload = {
+            "description": "TestManyReindexerFields",
+            # we can pick out fields present in TEST_INDEX
+            "fields": [TEST_FIELD, 'comment_content_clean.text', 'content_entity_anonymous_sort_nr'],
             "indices": [TEST_INDEX],
             "new_index": TEST_INDEX_REINDEX,
         }
-        empty_fields_test_payload = {
+
+        # empty fields & many indices; we test joining the fields of indices
+        join_indices_fields_payload = {
             "description": "TestReindexerFields",
             "fields": [],
-            "indices": [TEST_INDEX],
+            "indices": [TEST_INDEX, 'kuusalu_vv'],
             "new_index": TEST_INDEX_REINDEX
         }
+
         for project in (
                         self.project,
-                        self.project_many_indices,
-                        # self.project_no_indices,
-                        # self.project_missing_fields,
+                        self.project_no_indices,    # indices validation failure test
+                                                      # TODO: fields validation failure test
                         ):
             url =  f'/projects/{project.id}/reindexer/'
-            self.run_create_reindexer_task_signal(project, url, payload)
+            self.run_create_reindexer_task_signal(project, url, pick_fields_payload) # kõik postitatud väjad, kui valideeritud projekti kaudu
 
-        url =  f'/projects/{self.project_no_fields.id}/reindexer/'
-        self.run_create_reindexer_task_signal(self.project, url, empty_fields_test_payload)
+        url =  f'/projects/{self.join_fields_project.id}/reindexer/'
+        self.run_create_reindexer_task_signal(self.join_fields_project, url, join_indices_fields_payload) # this test should combine the fields of two indices
+
 
     def run_create_reindexer_task_signal(self, project, url, payload, overwrite=False):
         ''' Tests the endpoint for a new Reindexer task, and if a new Task gets created via the signal
@@ -91,9 +85,6 @@ class ReindexerViewTests(APITestCase):
         ''' Check if new_index gets created
             Check if new_index gets re-indexed and completed
             remove test new_index '''
-        for index in payload['indices']:
-            if index not in project.indices:
-                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         if project.indices is None:
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         else:
@@ -101,6 +92,8 @@ class ReindexerViewTests(APITestCase):
             created_reindexer = Reindexer.objects.get(id=response.data['id'])
             print_output("Re-index task status: ", created_reindexer.task.status)
             self.assertEqual(created_reindexer.task.status, Task.STATUS_COMPLETED)
+
+
             new_index = response.data['new_index']
             delete_response = ElasticCore().delete_index(new_index)
             print_output("Reindexer Test index remove status", delete_response)
