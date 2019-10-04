@@ -18,6 +18,7 @@ from task_manager.document_preprocessor.preprocessors import ScoroPreprocessor
 from task_manager.document_preprocessor.preprocessors import EntityExtractorPreprocessor
 from task_manager.document_preprocessor.preprocessors import NeuroClassifierPreprocessor
 from task_manager.document_preprocessor.preprocessors import PaasteametPreprocessor
+from task_manager.document_preprocessor.preprocessors import SearchTaggerPreprocessor
 
 
 mlp_field_properties = {
@@ -199,6 +200,21 @@ try:
 except Exception as e:
     logging.getLogger(ERROR_LOGGER).exception(e)
     log_preprocessor_status(code='paasteamet', status='disabled')
+
+try:
+    preprocessor_map['search_tagger'] = {
+        'name': 'SearchTagger',
+        'description': 'Tag documents based on selected search',
+        'class': SearchTaggerPreprocessor,
+        'parameters_template': 'preprocessor_parameters/search_tagger.html',
+        'arguments': {},
+        'is_enabled': True
+    }
+    print('search tagger should be enambled!')
+    log_preprocessor_status(code='search_tagger', status='enabled')
+except Exception as e:
+    print(e)
+    log_preprocessor_status(code='search_tagger', status='disabled')
 
 PREPROCESSOR_INSTANCES = {
     preprocessor_code: preprocessor['class'](**preprocessor['arguments'])

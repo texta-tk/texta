@@ -1,0 +1,39 @@
+<div class="task-manager-grid-wrapper bg-grey preprocessor-padding width-max">
+  <div class="grid-i">
+      <label class="control-label" for="search-tagger-processor-feature-name">Fields:</label>
+      <div class="select-wrapper">
+          {% if fields %}
+          <select class="selectpicker" multiple data-width="100%"  required data-selected-text-format="count"  id="search-tagger-feature-names" name="search_tagger_feature_names" >
+              {% for field in fields %}
+              <option value="{{field.data}}">{{field.label}}</option>
+              {% endfor %}
+          </select>
+          {% else %}
+          <textarea class="form-control" rows="2" id="search-tagger-processor-feature-names" name="search_tagger_feature_names"></textarea>
+          {% endif %}
+      </div>
+
+      {% if fields %}
+      <span data-toggle="tooltip" data-placement="bottom" title="Select one or more fields to process." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+      {% else %}
+      <span data-toggle="tooltip" data-placement="bottom" title="List of feature names one below another." class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+      {% endif %}
+  </div>
+
+  <div class="grid-i">
+      <label class="control-label" for="search-tagger-processor-fact-name">Fact name:</label>
+      <div class="select-wrapper">
+          <input required id="search-tagger-preprocessor-fact-name" name="search_tagger_processor_fact_name" class="form-control input-sm" autocomplete="off"  data-width='100%'>
+      </div>
+      <span data-toggle="tooltip" data-placement="bottom" title="Fact name" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+  </div>
+
+  <div class="grid-i">
+      <label class="control-label" for="search-tagger-processor-fact-value">Fact value:</label>
+      <div class="select-wrapper">
+          <input required id="search-tagger-preprocessor-fact-value" name="search_tagger_processor_fact_value" class="form-control input-sm" autocomplete="off"  data-width='100%'>
+      </div>
+      <span data-toggle="tooltip" data-placement="bottom" title="Fact value" class="glyphicon glyphicon-question-sign texta-tooltip"></span>
+  </div>
+
+</div>
