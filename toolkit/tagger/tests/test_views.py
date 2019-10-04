@@ -39,16 +39,16 @@ class TaggerViewTests(APITestCase):
 
     def test_run(self):
         self.run_create_tagger_training_and_task_signal()
-        #self.run_create_tagger_with_incorrect_fields()
-        #self.run_tag_text()
-        #self.run_tag_text_with_lemmatization()
-        #self.run_tag_doc()
-        #self.run_tag_doc_with_lemmatization()
-        #self.run_tag_random_doc()
-        #self.run_stop_word_list()
-        #self.run_stop_word_add()
-        #self.run_stop_word_remove()
-        #self.run_list_features()
+        self.run_create_tagger_with_incorrect_fields()
+        self.run_tag_text()
+        self.run_tag_text_with_lemmatization()
+        self.run_tag_doc()
+        self.run_tag_doc_with_lemmatization()
+        self.run_tag_random_doc()
+        self.run_stop_word_list()
+        self.run_stop_word_add()
+        self.run_stop_word_remove()
+        self.run_list_features()
         self.run_multitag_text()
 
 
