@@ -39,7 +39,6 @@ def reindex_task(reindexer_task_id, testing=False):
     for document in es_search:
         new_doc = {k:v for k,v in document.items() if k in fields}
         if new_doc:
-            # add new document, contains a dict with {"posted_field_key", "posted_field_key_associated_values"}
             es_doc.add(new_doc)
 
     # finish Task
