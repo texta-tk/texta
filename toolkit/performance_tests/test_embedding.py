@@ -26,10 +26,8 @@ class EmbeddingPerformanceTests(APITestCase):
         )
         cls.url = f'/projects/{cls.project.id}/embeddings/'
 
-
     def setUp(self):
         self.client.login(username='embeddingOwner', password='pw')
-
 
     def test_embedding_training_duration(self):
         print('Training Embedding')
