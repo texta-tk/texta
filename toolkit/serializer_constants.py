@@ -11,5 +11,9 @@ class ProjectResourceUrlSerializer():
         return resource_url 
 
 
-class BulkDeleteSerializer(serializers.Serializer):
+class ProjectResourceBulkDeleteSerializer(serializers.Serializer):
     ids = serializers.JSONField(help_text='JSON list of ints. WARNING: use the "Raw data" form for proper JSON serialization.')
+
+
+class GeneralTextSerializer(serializers.Serializer):
+    text = serializers.CharField()

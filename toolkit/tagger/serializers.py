@@ -14,23 +14,23 @@ from toolkit.settings import URL_PREFIX
 from toolkit.serializer_constants import ProjectResourceUrlSerializer
 
 
-class TextSerializer(serializers.Serializer):
+class TaggerTagTextSerializer(serializers.Serializer):
     text = serializers.CharField()
     lemmatize = serializers.BooleanField(default=False,
         help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
 
 
-class DocSerializer(serializers.Serializer):
+class TaggerTagDocumentSerializer(serializers.Serializer):
     doc = serializers.JSONField()
     lemmatize = serializers.BooleanField(default=False,
         help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
 
 
-class FeatureListSerializer(serializers.Serializer):
+class TaggerListFeaturesSerializer(serializers.Serializer):
     size = serializers.IntegerField(default=100, help_text='Default: 100')
 
 
-class TextGroupSerializer(serializers.Serializer):
+class TaggerGroupTagTextSerializer(serializers.Serializer):
     text = serializers.CharField(help_text=f'Raw text input.')
     lemmatize = serializers.BooleanField(default=True,
         help_text=f'Use MLP lemmatizer to lemmatize input text. Use only if training data was lemmatized. Default: True')
@@ -40,7 +40,7 @@ class TextGroupSerializer(serializers.Serializer):
         help_text=f'Number of documents used in unsupervised prefiltering. Default: {DEFAULT_NUM_DOCUMENTS}')
 
 
-class DocGroupSerializer(serializers.Serializer):
+class TaggerGroupTagDocumentSerializer(serializers.Serializer):
     doc = serializers.JSONField(help_text=f'Document in JSON format.')
     lemmatize = serializers.BooleanField(default=True,
         help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: True')

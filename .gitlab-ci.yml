@@ -36,5 +36,6 @@ Build:
   script:
   - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee
   - python ./docker/build_and_push.py
+  - docker system prune --volumes -f
   only:
   - tags

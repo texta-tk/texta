@@ -15,7 +15,7 @@ from toolkit.elastic.query import Query
 from toolkit.tagger.tasks import train_tagger, apply_tagger
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.core.project.models import Project
-from toolkit.tagger.serializers import TaggerGroupSerializer, TextGroupSerializer, DocGroupSerializer
+from toolkit.tagger.serializers import TaggerGroupSerializer, TaggerGroupTagTextSerializer, TaggerGroupTagDocumentSerializer
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.view_constants import TagLogicViews
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
@@ -88,7 +88,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['get'])
     def models_list(self, request, pk=None, project_pk=None):
         """
         API endpoint for listing tagger objects connected to tagger group instance.
@@ -101,7 +101,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         return Response(response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['post'])
     def models_retrain(self, request, pk=None, project_pk=None):
         """
         API endpoint for retraining tagger model.
@@ -155,7 +155,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         hybrid_tagger_object = self.get_object()
         field_paths = json.loads(hybrid_tagger_object.taggers.first().fields)
         indices = hybrid_tagger_object.project.indices
-        ignore_tags = set([tag["tag"] for tag in ignore_tags])
+        ignore_tags = {tag["tag"]: True for tag in ignore_tags}
         # create query
         query = Query()
         query.add_mlt(field_paths, text)
@@ -179,13 +179,13 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         return tag_candidates
 
 
-    @action(detail=True, methods=['get','post'], serializer_class=TextGroupSerializer)
+    @action(detail=True, methods=['post'], serializer_class=TaggerGroupTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging raw text with tagger group.
         """
         data = request.data
-        serializer = TextGroupSerializer(data=data)
+        serializer = TaggerGroupTagTextSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -203,15 +203,13 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         lemmatize = serializer.validated_data['lemmatize']
         use_ner = serializer.validated_data['use_ner']
 
-        # list to put final tags in
-        tags = []
-
         # check if MLP available
         if lemmatize or use_ner:
             if not global_mlp_for_taggers.status:
                 return Response({'error': 'mlp not available. check connection to mlp.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            # update text and tags with MLP
-            text, tags = self.get_mlp(text, lemmatize=True)
+        
+        # update text and tags with MLP
+        text, tags = self.get_mlp(text, lemmatize=lemmatize, use_ner=use_ner)
         
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(text, ignore_tags=tags, n_similar_docs=n_similar_docs)
@@ -220,13 +218,13 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         return Response(tags, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get','post'], serializer_class=DocGroupSerializer)
+    @action(detail=True, methods=['post'], serializer_class=TaggerGroupTagDocumentSerializer)
     def tag_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging JSON documents with tagger group.
         """
         data = request.data
-        serializer = DocGroupSerializer(data=data)
+        serializer = TaggerGroupTagDocumentSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -259,15 +257,13 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         lemmatize = serializer.validated_data['lemmatize']
         use_ner = serializer.validated_data['use_ner']
 
-        # list to put final tags in
-        tags = []
-
         # check if MLP available
         if lemmatize or use_ner:
             if not global_mlp_for_taggers.status:
                 return Response({'error': 'mlp not available. check connection to mlp.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            # update text and tags with MLP
-            combined_texts, tags = self.get_mlp(combined_texts, lemmatize=True) 
+        
+        # update text and tags with MLP
+        combined_texts, tags = self.get_mlp(combined_texts, lemmatize=lemmatize, use_ner=use_ner)
         
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(combined_texts, ignore_tags=tags, n_similar_docs=n_similar_docs)
@@ -276,7 +272,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         return Response(tags, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['get'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging a random document.
@@ -312,7 +308,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         tagger_group_object = self.get_object()
         # get tagger objects
         candidates_str = "|".join(tag_candidates)
-        tagger_objects = tagger_group_object.taggers.filter(description__iregex=f"({candidates_str})")
+        tagger_objects = tagger_group_object.taggers.filter(description__iregex=f"^({candidates_str})$")
         # filter out completed
         tagger_objects = [tagger for tagger in tagger_objects if tagger.task.status == tagger.task.STATUS_COMPLETED]
         # predict & sort tags

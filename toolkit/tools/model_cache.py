@@ -1,6 +1,8 @@
 from collections import OrderedDict
-from time import time
 from psutil import virtual_memory
+from time import time
+
+from toolkit.tools.logger import Logger
 
 class ModelCache:
     """
@@ -27,7 +29,7 @@ class ModelCache:
             # return model
             return self.models[model_id]["model"]
         except Exception as e:
-            print("Error loading modal to cache:", e)
+            Logger().error("Error loading models.", execution_info=e)
             return None
     
 
@@ -40,8 +42,18 @@ class ModelCache:
         """
         Checks memory availability and flushes cache if memory full.
         """
-        memory = virtual_memory()
+        free_percentage = self._mem_free_percentage()
         # if less than 5% free, flush the models to make room for more
-        if memory.available/memory.total < 0.05:
-            print("Warning: Memory full, flushed models to make room.")
+        if free_percentage < 5.0:
+            Logger().info(f"Memory almost full ({free_percentage} percent free). Releasing memory by flushing models.")
             self.models = {}
+            # check again to see how much memory we gained
+            free_percentage = _mem_free_percentage()
+            Logger().info(f"Models successfully flushed. {free_percentage} percent free.")
+
+
+    @staticmethod
+    def _mem_free_percentage():
+        memory = virtual_memory()
+        free_percentage = (float(memory.available)/float(memory.total))*100
+        return free_percentage

@@ -25,6 +25,9 @@ Run tests for specific app:
 
 `python manage.py test appname (eg python manage.py test toolkit.neurotagger)`
 
+Run performance tests (not run by default as they are slow):
+
+`python manage.py test toolkit.performance_tests`
 
 Building Docker:
 
