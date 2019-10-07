@@ -8,10 +8,11 @@ class ModelCache:
     """
     Cache to hold recently used Tagger & Embedding objects in memory.
     """
-    def __init__(self, object_class, cache_duration=3600):
+    def __init__(self, object_class, cache_duration=3600, memory_limit=20.0):
         self.models = {}
         self.object_class = object_class
         self.cache_duration = cache_duration
+        self.memory_limit = memory_limit
 
 
     def get_model(self, model_id):
@@ -43,8 +44,8 @@ class ModelCache:
         Checks memory availability and flushes cache if memory full.
         """
         free_percentage = self._mem_free_percentage()
-        # if less than 5% free, flush the models to make room for more
-        if free_percentage < 5.0:
+        # if less than memory_limit % free, flush the models to make room for more
+        if free_percentage < self.memory_limit:
             Logger().info(f"Memory almost full ({free_percentage} percent free). Releasing memory by flushing models.")
             self.models = {}
             # check again to see how much memory we gained
