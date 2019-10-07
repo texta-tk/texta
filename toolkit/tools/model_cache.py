@@ -8,7 +8,7 @@ class ModelCache:
     """
     Cache to hold recently used Tagger & Embedding objects in memory.
     """
-    def __init__(self, object_class, cache_duration=3600, memory_limit=20.0):
+    def __init__(self, object_class, cache_duration=1800, memory_limit=20.0):
         self.models = {}
         self.object_class = object_class
         self.cache_duration = cache_duration
