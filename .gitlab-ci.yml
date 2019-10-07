@@ -11,8 +11,7 @@ stages:
 
 Test:
   before_script:
-    - sed -i '/  - tensorflow-gpu/c\  - tensorflow' environment.yaml
-    - conda env create -f environment.yaml && source activate texta-rest
+    - conda env create -f environment-nomkl.yaml && source activate texta-rest
     - python import_test_index.py -es http://172.17.0.1:9200
     - python migrate.py
   stage: test
