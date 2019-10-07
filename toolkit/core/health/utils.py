@@ -10,7 +10,7 @@ def get_version():
     """
     try:
         with open(os.path.join(BASE_DIR, 'VERSION'), 'r') as fh:
-            version = fh.read()
+            version = fh.read().strip()
     except IOError:
         version = 'unknown'
     return version

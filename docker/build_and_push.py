@@ -49,7 +49,7 @@ def main():
         project = "texta-rest"
         # load version from file system
         with open("VERSION") as fh:
-            version = fh.read()
+            version = fh.read().strip()
         # build CPU version
         db = DockerBuilder(project, version)
         built_id = db.build()
