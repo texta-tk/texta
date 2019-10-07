@@ -16,7 +16,7 @@ class ReindexerCreateSerializer(serializers.HyperlinkedModelSerializer, ProjectR
 
     class Meta:
         model = Reindexer
-        fields = ('id', 'url', 'description', 'indices', 'fields', 'query', 'task', 'fields_parsed', 'new_index')
+        fields = ('id', 'url', 'description', 'indices', 'fields', 'query', 'task', 'fields_parsed', 'new_index', 'random_size')
         extra_kwargs = {'description': {'required': True}, 'new_index': {'required': True}}
 
     def get_fields_parsed(self, obj):

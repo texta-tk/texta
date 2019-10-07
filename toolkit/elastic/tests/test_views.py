@@ -24,13 +24,6 @@ class ReindexerViewTests(APITestCase):
             owner=cls.user,
             indices=TEST_INDEX
         )
-        # because clean project is needed
-        cls.join_fields_project = Project.objects.create(
-            title='ReindexerEmptyFieldsTestProject',
-            owner=cls.user,
-            indices=TEST_INDEX
-        )
-        # for failure test
         cls.project_no_indices = Project.objects.create(
             title='ReindexerNoIndicesTestProject',
             owner=cls.user
@@ -48,26 +41,31 @@ class ReindexerViewTests(APITestCase):
             "indices": [TEST_INDEX],
             "new_index": TEST_INDEX_REINDEX,
         }
-
-        # empty fields & many indices; we test joining the fields of indices
         join_indices_fields_payload = {
             "description": "TestReindexerFields",
             "fields": [],
             "indices": [TEST_INDEX, 'kuusalu_vv'],
-            "new_index": TEST_INDEX_REINDEX
+            "new_index": TEST_INDEX_REINDEX,
+        }
+        random_docs_payload = {
+            "description": "TestReindexerFields",
+            "fields": [],
+            "indices": [TEST_INDEX, 'kuusalu_vv'],
+            "new_index": TEST_INDEX_REINDEX,
+            "random_size": 500
         }
 
         for project in (
                         self.project,
                         self.project_no_indices,    # indices validation failure test
-                                                      # TODO: fields validation failure test
+                                                    # TODO: fields validation failure test
                         ):
             url =  f'/projects/{project.id}/reindexer/'
-            self.run_create_reindexer_task_signal(project, url, pick_fields_payload) # kõik postitatud väjad, kui valideeritud projekti kaudu
+            self.run_create_reindexer_task_signal(project, url, pick_fields_payload) # kõik postitatud väjad uude indeksisse, kui valideeritud projekti kaudu
 
-        url =  f'/projects/{self.join_fields_project.id}/reindexer/'
-        self.run_create_reindexer_task_signal(self.join_fields_project, url, join_indices_fields_payload) # this test should combine the fields of two indices
-
+        url =  f'/projects/{self.project.id}/reindexer/'
+        self.run_create_reindexer_task_signal(self.project, url, join_indices_fields_payload) # combine the fields of two indices
+        self.run_create_reindexer_task_signal(self.project, url, random_docs_payload)  # test random
 
     def run_create_reindexer_task_signal(self, project, url, payload, overwrite=False):
         ''' Tests the endpoint for a new Reindexer task, and if a new Task gets created via the signal
@@ -77,9 +75,9 @@ class ReindexerViewTests(APITestCase):
         if overwrite == False and TEST_INDEX_REINDEX not in ElasticCore().get_indices():
             response = self.client.post(url, payload, format='json')
             print_output('run_create_reindexer_task_signal:response.data', response.data)
+            self.is_reindexed_index_added_to_project_if_yes_remove(response, payload['new_index'], project)
             self.is_new_index_created_if_yes_remove(response, payload, project)
         assert TEST_INDEX_REINDEX not in ElasticCore().get_indices()
-        self.is_reindexed_index_added_to_project(response, payload['new_index'], project)
 
     def is_new_index_created_if_yes_remove(self, response, payload, project):
         ''' Check if new_index gets created
@@ -92,22 +90,22 @@ class ReindexerViewTests(APITestCase):
             created_reindexer = Reindexer.objects.get(id=response.data['id'])
             print_output("Re-index task status: ", created_reindexer.task.status)
             self.assertEqual(created_reindexer.task.status, Task.STATUS_COMPLETED)
-
-
             new_index = response.data['new_index']
             delete_response = ElasticCore().delete_index(new_index)
             print_output("Reindexer Test index remove status", delete_response)
 
-    def is_reindexed_index_added_to_project(self, response, new_index, project):
-        check = self.client.get(f'/projects/{project.id}/', format='json')
+    def is_reindexed_index_added_to_project_if_yes_remove(self, response, new_index, project):
+        url = f'/projects/{project.id}/'
+        check = self.client.get(url, format='json')
         if response.status_code == 201:
             assert new_index in check.data['indices']
             print_output('Re-indexed index added to project', check.data)
+            check.data['indices'] = [TEST_INDEX]
+            self.client.put(url, check.data, format='json')
+
         if response.status_code == 400:
             assert new_index not in check.data['indices']
             print_output('Re-indexed index not added to project', check.data)
-
-
 
 
 

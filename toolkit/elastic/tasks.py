@@ -12,7 +12,6 @@ from toolkit.elastic.document import ElasticDocument
 
 """ TODOs:
     implement changing field types
-    random subsetide oma implementeerida (olemas searchis)
     complete always, but give result message
     optimize show_progress
     implement query for advanced filtering.
@@ -25,6 +24,7 @@ def reindex_task(reindexer_task_id, testing=False):
     task_object = reindexer_obj.task
     indices = json.loads(reindexer_obj.indices)
     fields = set(json.loads(reindexer_obj.fields))
+    random_size = reindexer_obj.random_size
 
     if fields == set():
         fields = ElasticCore().get_fields(indices=indices)
@@ -34,12 +34,16 @@ def reindex_task(reindexer_task_id, testing=False):
     show_progress.update_step("scrolling data")
     show_progress.update_view(0)
 
-    es_search = ElasticSearcher(indices=indices, callback_progress=show_progress)
-    es_doc = ElasticDocument(reindexer_obj.new_index)
-    for document in es_search:
+    elastic_search = ElasticSearcher(indices=indices, callback_progress=show_progress)
+    elastic_doc = ElasticDocument(reindexer_obj.new_index)
+
+    if random_size > 0:
+        elastic_search = ElasticSearcher(indices=indices).random_documents(size=random_size)
+
+    for document in elastic_search:
         new_doc = {k:v for k,v in document.items() if k in fields}
         if new_doc:
-            es_doc.add(new_doc)
+            elastic_doc.add(new_doc)
 
     # finish Task
     show_progress.update_view(100.0)
