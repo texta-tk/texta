@@ -18,6 +18,21 @@ from toolkit.elastic.document import ElasticDocument
     implement renaming fields
 """
 
+def update_field_types(indices, field_type):
+    ''' if fieldtype, for field named fieldtype change its type'''
+    my_fields = ElasticCore().get_fields(indices=indices)
+    my_field_data = [field["path"] for field in my_fields]
+    if field_type:
+        for field in field_type:
+            if field['path'] in my_field_data:
+                field_to_retype = field['path']
+                new_type = field['field_type']
+                for field in my_fields:
+                    if field['path'] == field_to_retype:
+                        field['type'] = new_type
+    # return my_fields
+    return [field["path"] for field in my_fields]
+
 @task(name="reindex_task", base=BaseTask)
 def reindex_task(reindexer_task_id, testing=False):
     reindexer_obj = Reindexer.objects.get(pk=reindexer_task_id)
@@ -25,10 +40,15 @@ def reindex_task(reindexer_task_id, testing=False):
     indices = json.loads(reindexer_obj.indices)
     fields = set(json.loads(reindexer_obj.fields))
     random_size = reindexer_obj.random_size
+    field_type = json.loads(reindexer_obj.field_type.replace("'", '"'))
 
+    ''' for empty field post, use all posted indices fields '''
     if fields == set():
         fields = ElasticCore().get_fields(indices=indices)
         fields = set(field["path"] for field in fields)
+
+    if field_type:
+        fields = update_field_types(indices, field_type)
 
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step("scrolling data")

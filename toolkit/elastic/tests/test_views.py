@@ -42,30 +42,40 @@ class ReindexerViewTests(APITestCase):
             "new_index": TEST_INDEX_REINDEX,
         }
         join_indices_fields_payload = {
-            "description": "TestReindexerFields",
+            "description": "TestReindexerJoinFields",
             "fields": [],
             "indices": [TEST_INDEX, 'kuusalu_vv'],
             "new_index": TEST_INDEX_REINDEX,
         }
         random_docs_payload = {
-            "description": "TestReindexerFields",
+            "description": "TestReindexerRandomFields",
             "fields": [],
             "indices": [TEST_INDEX, 'kuusalu_vv'],
             "new_index": TEST_INDEX_REINDEX,
-            "random_size": 500
+            "random_size": 500,
+            "field_type": [],
+        }
+        update_field_type_payload = {
+            "description": "TestReindexerUpdateFieldType",
+            "fields": [],
+            "indices": [TEST_INDEX, 'kuusalu_vv'],
+            "new_index": TEST_INDEX_REINDEX,
+            "field_type": [{"path": "comment_subject", "field_type": "long"}, {"path": "comment_content_lemmas", "field_type": "long"},],
+            # "field_type": []
         }
 
-        for project in (
-                        self.project,
-                        self.project_no_indices,    # indices validation failure test
-                                                    # TODO: fields validation failure test
-                        ):
-            url =  f'/projects/{project.id}/reindexer/'
-            self.run_create_reindexer_task_signal(project, url, pick_fields_payload) # kõik postitatud väjad uude indeksisse, kui valideeritud projekti kaudu
+        # for project in (
+        #                 self.project,
+        #                 self.project_no_indices,    # indices validation failure test
+        #                                             # TODO: fields validation failure test
+        #                 ):
+        #     url =  f'/projects/{project.id}/reindexer/'
+        #     self.run_create_reindexer_task_signal(project, url, pick_fields_payload) # kõik postitatud väjad uude indeksisse, kui valideeritud projekti kaudu
 
         url =  f'/projects/{self.project.id}/reindexer/'
-        self.run_create_reindexer_task_signal(self.project, url, join_indices_fields_payload) # combine the fields of two indices
-        self.run_create_reindexer_task_signal(self.project, url, random_docs_payload)  # test random
+        # self.run_create_reindexer_task_signal(self.project, url, join_indices_fields_payload) # combine the fields of two indices
+        # self.run_create_reindexer_task_signal(self.project, url, random_docs_payload)  # test random
+        self.run_create_reindexer_task_signal(self.project, url, update_field_type_payload)
 
     def run_create_reindexer_task_signal(self, project, url, payload, overwrite=False):
         ''' Tests the endpoint for a new Reindexer task, and if a new Task gets created via the signal
@@ -106,6 +116,9 @@ class ReindexerViewTests(APITestCase):
         if response.status_code == 400:
             assert new_index not in check.data['indices']
             print_output('Re-indexed index not added to project', check.data)
+
+
+
 
 
 

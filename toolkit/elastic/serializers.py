@@ -13,10 +13,11 @@ class ReindexerCreateSerializer(serializers.HyperlinkedModelSerializer, ProjectR
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
     fields_parsed = serializers.SerializerMethodField()
     task = TaskSerializer(read_only=True)
+    field_type = serializers.ListField(child=serializers.DictField(child=serializers.CharField()), help_text=f'Used to update field types.', required=False)
 
     class Meta:
         model = Reindexer
-        fields = ('id', 'url', 'description', 'indices', 'fields', 'query', 'task', 'fields_parsed', 'new_index', 'random_size')
+        fields = ('id', 'url', 'description', 'indices', 'fields', 'query', 'task', 'fields_parsed', 'new_index', 'random_size', 'field_type',)
         extra_kwargs = {'description': {'required': True}, 'new_index': {'required': True}}
 
     def get_fields_parsed(self, obj):

@@ -21,7 +21,7 @@ class Reindexer(models.Model):
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
     new_index = models.CharField(max_length=MAX_DESC_LEN, default="")
     random_size = models.IntegerField(default=0)
-
+    field_type = models.TextField(default=json.dumps([]))
 
     def __str__(self):
         return self.description
