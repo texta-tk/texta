@@ -40,12 +40,14 @@ class ReindexerViewTests(APITestCase):
             "fields": [TEST_FIELD, 'comment_content_clean.text', 'content_entity_anonymous_sort_nr'],
             "indices": [TEST_INDEX],
             "new_index": TEST_INDEX_REINDEX,
+            "field_type": [],
         }
         join_indices_fields_payload = {
             "description": "TestReindexerJoinFields",
             "fields": [],
             "indices": [TEST_INDEX, 'kuusalu_vv'],
             "new_index": TEST_INDEX_REINDEX,
+            "field_type": [],
         }
         random_docs_payload = {
             "description": "TestReindexerRandomFields",
@@ -64,17 +66,17 @@ class ReindexerViewTests(APITestCase):
             # "field_type": []
         }
 
-        # for project in (
-        #                 self.project,
-        #                 self.project_no_indices,    # indices validation failure test
-        #                                             # TODO: fields validation failure test
-        #                 ):
-        #     url =  f'/projects/{project.id}/reindexer/'
-        #     self.run_create_reindexer_task_signal(project, url, pick_fields_payload) # kõik postitatud väjad uude indeksisse, kui valideeritud projekti kaudu
+        for project in (
+                        self.project,
+                        self.project_no_indices,    # indices validation failure test
+                                                    # TODO: fields validation failure test
+                        ):
+            url =  f'/projects/{project.id}/reindexer/'
+            self.run_create_reindexer_task_signal(project, url, pick_fields_payload) # kõik postitatud väjad uude indeksisse, kui valideeritud projekti kaudu
 
         url =  f'/projects/{self.project.id}/reindexer/'
-        # self.run_create_reindexer_task_signal(self.project, url, join_indices_fields_payload) # combine the fields of two indices
-        # self.run_create_reindexer_task_signal(self.project, url, random_docs_payload)  # test random
+        self.run_create_reindexer_task_signal(self.project, url, join_indices_fields_payload) # combine the fields of two indices
+        self.run_create_reindexer_task_signal(self.project, url, random_docs_payload)  # test random
         self.run_create_reindexer_task_signal(self.project, url, update_field_type_payload)
 
     def run_create_reindexer_task_signal(self, project, url, payload, overwrite=False):

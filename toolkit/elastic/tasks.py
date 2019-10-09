@@ -12,24 +12,24 @@ from toolkit.elastic.document import ElasticDocument
 
 """ TODOs:
     implement changing field types
+    implement renaming fields: probably add to field_type new_field_name
     complete always, but give result message
     optimize show_progress
     implement query for advanced filtering.
-    implement renaming fields
+
 """
 
 def update_field_types(indices, field_type):
     ''' if fieldtype, for field named fieldtype change its type'''
     my_fields = ElasticCore().get_fields(indices=indices)
     my_field_data = [field["path"] for field in my_fields]
-    if field_type:
-        for field in field_type:
-            if field['path'] in my_field_data:
-                field_to_retype = field['path']
-                new_type = field['field_type']
-                for field in my_fields:
-                    if field['path'] == field_to_retype:
-                        field['type'] = new_type
+    for field in field_type:
+        if field['path'] in my_field_data:
+            field_to_retype = field['path']
+            new_type = field['field_type']
+            for field in my_fields:
+                if field['path'] == field_to_retype:
+                    field['type'] = new_type
     # return my_fields
     return [field["path"] for field in my_fields]
 
@@ -46,6 +46,8 @@ def reindex_task(reindexer_task_id, testing=False):
     if fields == set():
         fields = ElasticCore().get_fields(indices=indices)
         fields = set(field["path"] for field in fields)
+
+    # print(bool(field_type))
 
     if field_type:
         fields = update_field_types(indices, field_type)
