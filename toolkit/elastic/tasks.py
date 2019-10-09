@@ -9,6 +9,7 @@ from toolkit.tools.show_progress import ShowProgress
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.document import ElasticDocument
+from toolkit.elastic.mapping_generator import SchemaGenerator
 
 """ TODOs:
     implement changing field types
@@ -16,10 +17,9 @@ from toolkit.elastic.document import ElasticDocument
     complete always, but give result message
     optimize show_progress
     implement query for advanced filtering.
-
 """
 
-def update_field_types(indices, field_type):
+def update_field_types(indices, field_type, new_index):
     ''' if fieldtype, for field named fieldtype change its type'''
     my_fields = ElasticCore().get_fields(indices=indices)
     my_field_data = [field["path"] for field in my_fields]
@@ -27,9 +27,53 @@ def update_field_types(indices, field_type):
         if field['path'] in my_field_data:
             field_to_retype = field['path']
             new_type = field['field_type']
+
+            if 'new_path_name' in field.keys():
+                new_path_name = field['new_path_name']
+
             for field in my_fields:
                 if field['path'] == field_to_retype:
                     field['type'] = new_type
+                if 'new_path_name' in field.keys():
+                    field['path'] = new_path_name
+
+
+    # obtain unique keys from parsed response
+    keys = []
+    for field in my_fields:
+        keys.append(field['type'])
+    keys = list(set(keys))
+
+    # create dicts for unique keys
+    unique_dicts = []
+    for key in keys:
+        unique_dicts.append({key: []})
+
+    # populate unique_dicts with their respective values
+    for field in my_fields:
+        for _dict in unique_dicts:
+            if field['type'] in _dict.keys():
+                my_key = field['type']
+                _dict[my_key].append(field['path'])
+
+    schema_input = unique_dicts
+
+
+    # field_list = [field["path"] for field in my_fields]
+
+    # # we need a list of dictionaries, which contain the key of the mapping and the fields to be changed into that type
+    # field_list = []
+    # for element in field_type:
+    #     if element['field_type'] == 'long':
+    #         field_list.append(element['path'])
+    # schema_input = {'long': field_list}
+
+    # first arg is mapping_name
+    generate_mapping = SchemaGenerator().generate_schema(new_index, schema_input[3])
+
+    print(generate_mapping)
+    # update mapping in core ->
+
     # return my_fields
     return [field["path"] for field in my_fields]
 
@@ -47,10 +91,8 @@ def reindex_task(reindexer_task_id, testing=False):
         fields = ElasticCore().get_fields(indices=indices)
         fields = set(field["path"] for field in fields)
 
-    # print(bool(field_type))
-
     if field_type:
-        fields = update_field_types(indices, field_type)
+        fields = update_field_types(indices, field_type, reindexer_obj.new_index)
 
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step("scrolling data")
