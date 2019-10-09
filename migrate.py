@@ -11,6 +11,7 @@ import logging
 import json
 
 BASE_APP_NAME = "toolkit"
+EXTENSION_APPS = ("docscraper",)
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", BASE_APP_NAME+".settings")
 django.setup()
@@ -59,7 +60,7 @@ def migrate(custom_apps):
 
 # CREATE LIST OF CUSTOM APPS
 cwd = os.path.realpath(os.path.dirname(__file__))
-custom_apps = [app.split('.')[-1] for app in INSTALLED_APPS if app.startswith(BASE_APP_NAME)] # Migration works for custom apps only. Manage.py can't detect relevant built-in django apps.
+custom_apps = [app.split('.')[-1] for app in INSTALLED_APPS if app.startswith(BASE_APP_NAME) or app in EXTENSION_APPS] # Migration works for custom apps only. Manage.py can't detect relevant built-in django apps.
 print('Running migrations for apps:', ', '.join(custom_apps))
 
 # DELETE MIGRATIONS IF ASKED

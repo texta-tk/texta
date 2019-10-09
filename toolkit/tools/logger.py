@@ -10,9 +10,8 @@ class Logger:
     def info(self, message):
         self.info_logger.info(message)
     
-    def error(self, message, exec_info=None):
-        if execution_info:
+    def error(self, message, exc_info=None):
+        if exc_info:
             self.error_logger.error(message, exc_info=exc)
         else:
             self.error_logger.error(message)
-    

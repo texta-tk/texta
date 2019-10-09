@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'toolkit.embedding',
     'toolkit.tagger',
     'toolkit.neurotagger',
+    # TEXTA Extension Apps
+    #'docscraper',
     # THIRD PARTY
     # https://github.com/goinnn/django-multiselectfield
     'multiselectfield',
@@ -206,18 +208,20 @@ NUM_WORKERS = 1
 # create model dirs
 MODELS_DIR = os.path.join(BASE_DIR, 'data', 'models')
 MODEL_TYPES = ['embedding', 'tagger', 'extractor', 'cluster', 'neurotagger']
-
 for model_type in MODEL_TYPES:
     model_dir = os.path.join(MODELS_DIR, model_type)
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
+# create dir for DocScraper temporary files
+DOC_SCRAPER_TEMP_DIR = os.path.join(BASE_DIR, 'data', 'temp')
+if not os.path.exists(DOC_SCRAPER_TEMP_DIR) and 'docscraper' in INSTALLED_APPS:
+    os.makedirs(DOC_SCRAPER_TEMP_DIR)
+
 # create protected media dirs
 MEDIA_DIR = os.path.join(BASE_DIR, 'data', 'media')
-
 if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
-
 MEDIA_URL = 'data/media/'
 
 # Path to the log directory. Default is /log
