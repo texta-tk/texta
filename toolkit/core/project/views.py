@@ -25,6 +25,8 @@ from toolkit.tagger.tasks import apply_tagger
 from celery import group
 
 class ProjectViewSet(viewsets.ModelViewSet):
+    # Disable default pagination
+    pagination_class = None
     serializer_class = ProjectSerializer
     permission_classes = (
         permissions.IsAuthenticated,
