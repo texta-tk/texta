@@ -35,7 +35,7 @@ from keras.utils.vis_utils import model_to_dot
 # Import model architectures
 from toolkit.neurotagger.neuro_models import NeuroModels
 import sentencepiece as spm
-
+import tensorflow as tf
 
 class NeurotaggerWorker():
     def __init__(self, neurotagger_id):
