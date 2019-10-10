@@ -81,7 +81,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete):
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve model
-        tagger = global_tagger_cache.get_model(tagger_object.pk)
+        tagger = global_tagger_cache.get_model(tagger_object)
 
         try:
             # get feature names
@@ -295,12 +295,12 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         stop_words = json.loads(tagger_object.stop_words)
 
         if tagger_object.embedding:
-            phraser = global_phraser_cache.get_model(tagger_object.embedding.pk)
+            phraser = global_phraser_cache.get_model(tagger_object)
             text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
         else:
             text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
 
-        tagger = global_tagger_cache.get_model(tagger_object.id)
+        tagger = global_tagger_cache.get_model(tagger_object)
         tagger.add_text_processor(text_processor) 
 
         if input_type == 'doc':

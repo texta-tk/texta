@@ -123,13 +123,13 @@ def apply_tagger(text, tagger_id, input_type, lemmatize=False):
     # create text processor object for tagger
     stop_words = json.loads(tagger.stop_words)
     if tagger.embedding:
-        phraser = global_phraser_cache.get_model(tagger.embedding.pk)
+        phraser = global_phraser_cache.get_model(tagger.embedding)
         text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
     else:
         text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
     
     # load tagger
-    tagger = global_tagger_cache.get_model(tagger_id)
+    tagger = global_tagger_cache.get_model(tagger)
     if not tagger:
         return None
     

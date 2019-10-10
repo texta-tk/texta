@@ -57,7 +57,8 @@ class TestModelCache(TestCase):
         self.assertTrue(isinstance(model_cache.models, dict))
         self.assertTrue(not model_cache.models)
         # load model to cache
-        model_cache.get_model(self.test_embedding_id)
+        embedding_object = Embedding.objects.get(pk=self.test_embedding_id)
+        model_cache.get_model(embedding_object)
         print_output('test_run_cache_with_embedding:models', model_cache.models)
         # check if model present in the cache
         self.assertTrue(isinstance(model_cache.models, dict))

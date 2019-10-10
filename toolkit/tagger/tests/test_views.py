@@ -6,7 +6,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_QUERY
+from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_QUERY, TEST_MATCH_TEXT
 from toolkit.core.project.models import Project
 from toolkit.tagger.models import Tagger
 from toolkit.core.task.models import Task
@@ -26,7 +26,7 @@ class TaggerViewTests(APITestCase):
         cls.multitag_text_url = f'/projects/{cls.project.id}/multitag_text/'
 
         # set vectorizer & classifier options
-        cls.vectorizer_opts = ('Hashing Vectorizer', 'Count Vectorizer', 'TfIdf Vectorizer')
+        cls.vectorizer_opts = ('Count Vectorizer', 'Hashing Vectorizer', 'TfIdf Vectorizer')
         cls.classifier_opts = ('Logistic Regression', 'LinearSVC')
 
         # list tagger_ids for testing. is populatated duriong training test
@@ -50,6 +50,7 @@ class TaggerViewTests(APITestCase):
         self.run_stop_word_remove()
         self.run_list_features()
         self.run_multitag_text()
+        self.run_model_retrain()
 
 
     def run_create_tagger_training_and_task_signal(self):
@@ -233,3 +234,30 @@ class TaggerViewTests(APITestCase):
         response = self.client.post(self.multitag_text_url, payload, format='json')
         print_output('test_multitag:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+    def run_model_retrain(self):
+        '''Tests the endpoint for the model_retrain action'''
+        test_tagger_id = self.test_tagger_ids[0]
+        # Check if stop word present in features
+        url = f'{self.url}{test_tagger_id}/list_features/'
+        response = self.client.get(url)
+        feature_dict = {a['feature']: True for a in response.data['features']}
+        self.assertTrue(TEST_MATCH_TEXT in feature_dict)
+        # add stop word before retraining
+        url = f'{self.url}{test_tagger_id}/stop_word_add/'
+        payload = {"text": TEST_MATCH_TEXT}
+        response = self.client.post(url, payload, format='json')
+        # retrain tagger
+        url = f'{self.url}{test_tagger_id}/retrain_tagger/'
+        response = self.client.post(url)
+        print_output('test_model_retrain:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response data
+        self.assertTrue(response.data)
+        self.assertTrue('success' in response.data)
+        # Check if stop word NOT present in features
+        url = f'{self.url}{test_tagger_id}/list_features/'
+        response = self.client.get(url)
+        feature_dict = {a['feature']: True for a in response.data['features']}
+        self.assertTrue(TEST_MATCH_TEXT not in feature_dict)

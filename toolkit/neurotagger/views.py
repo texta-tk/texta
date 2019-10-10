@@ -87,8 +87,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # apply tagger
-        tagger_id = tagger_object.pk
-        tagger_response = self.apply_tagger(tagger_id, serializer.validated_data['text'], input_type='text')
+        tagger_response = self.apply_tagger(tagger_object, serializer.validated_data['text'], input_type='text')
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
@@ -113,13 +112,12 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # apply tagger
-        tagger_id = tagger_object.pk
-        tagger_response = self.apply_tagger(tagger_id, serializer.data['doc'], input_type='doc')
+        tagger_response = self.apply_tagger(tagger_object, serializer.data['doc'], input_type='doc')
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
-    def apply_tagger(self, tagger_id, tagger_input, input_type='text'):
-        tagger = model_cache.get_model(tagger_id)
+    def apply_tagger(self, tagger_object, tagger_input, input_type='text'):
+        tagger = model_cache.get_model(tagger_object)
         if input_type == 'doc':
             tagger_result = tagger.tag_doc(tagger_input)
         else:

@@ -15,23 +15,33 @@ class ModelCache:
         self.memory_limit = memory_limit
 
 
-    def get_model(self, model_id):
+    def get_model(self, model_object):
+        model_id = model_object.pk
+        model_hash = model_object.task.result_hash
         # check memory availability
         self.check_memory()
         # load model if not in cache
         try:
             if model_id not in self.models:
-                model = self.object_class(model_id)
-                model.load()
-                self.models[model_id] = {"model": model, "last_access": time()}
+                self.load_model(model_id, model_hash)
+            # check if model has been retrained (hash is changed)
+            elif model_hash != self.models[model_id]["hash"]:
+                self.load_model(model_id, model_hash)
             # update last access timestamp & remove old models
             self.models[model_id]["last_access"] = time()
             self.clean_cache()
             # return model
             return self.models[model_id]["model"]
         except Exception as e:
-            Logger().error("Error loading models.", execution_info=e)
+            Logger().error("Error loading models.", exc_info=e)
             return None
+    
+
+    def load_model(self, model_id, model_hash):
+        model = self.object_class(model_id)
+        model.load()
+        self.models[model_id] = {"model": model, "last_access": time(), "hash": model_hash}
+        return model
     
 
     def clean_cache(self):
