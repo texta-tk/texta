@@ -13,6 +13,9 @@ from toolkit.core.user_profile.serializers import UserSerializer
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = UserSerializer
+    # Disable default pagination
+    pagination_class = None
+
 
     """
     User permissions are contained in this class. A non-superuser can view itself and users who are members in projects the user owns.
