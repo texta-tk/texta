@@ -304,7 +304,10 @@ class NeurotaggerWorker():
         :return: class names of decision
         """
         to_predict = self._convert_texts([text])
-        return self.model.predict_proba(to_predict, batch_size=self.bs)
+        preds = self.model.predict_proba(to_predict, batch_size=self.bs) 
+        # Clear session to prevent "Tensor is not an element of this graph" issues
+        K.clear_session()
+        return preds
 
 
     def tag_doc(self, doc):
@@ -315,7 +318,10 @@ class NeurotaggerWorker():
         """
         texts = [doc[field] for field in doc]
         to_predict = self._convert_texts(texts)
-        return self.model.predict_proba(to_predict, batch_size=self.bs)
+        preds = self.model.predict_proba(to_predict, batch_size=self.bs) 
+        # Clear session to prevent "Tensor is not an element of this graph" issues
+        K.clear_session()
+        return preds
     
 
 class TrainingProgressCallback(Callback):
