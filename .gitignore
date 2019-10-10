@@ -1,5 +1,4 @@
 *.pyc
-toolkit/*/migrations/*
 *.sqlite3
 data/models/*
 *.rdb
