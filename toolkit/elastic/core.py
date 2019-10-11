@@ -54,7 +54,7 @@ class ElasticCore:
         if self.connection:
             alias = '*'
             if self.es_prefix:
-                alias = f'{self.es_prefix}_*'
+                alias = f'{self.es_prefix}*'
                 return list(self.es.indices.get_alias(alias).keys())
 
             return list(self.es.indices.get_alias().keys())
