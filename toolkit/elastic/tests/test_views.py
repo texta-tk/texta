@@ -62,22 +62,27 @@ class ReindexerViewTests(APITestCase):
             "fields": [],
             "indices": [TEST_INDEX, 'kuusalu_vv'],
             "new_index": TEST_INDEX_REINDEX,
-            # "field_type": [{"path": "comment_subject", "field_type": "long"}, {"path": "comment_content_lemmas", "field_type": "long"},],
+            "field_type": [{"path": "comment_subject", "field_type": "long", "new_path_name": "CHANGED_NAME"},
+                           {"path": "comment_content_lemmas", "field_type": "fact", "new_path_name": "CHANGED_TOO"},
+                           {"path": "comment_content_clean.stats.text_length", "field_type": "boolean", "new_path_name": "CHANGED_AS_WELL"},
+                           ],
             # "field_type": []
-            "field_type": [{"path": "comment_subject", "field_type": "long", "new_path_name": "changed_path_name"}],
+            # "field_type": [{"path": "comment_subject", "field_type": "long", "new_path_name": "changed_path_name"}],
+            # "field_type": [{"path": "comment_subject", "new_path_name": "changed_path_name"}], #TODO
+
         }
 
-        # for project in (
-        #                 self.project,
-        #                 self.project_no_indices,    # indices validation failure test
-        #                                             # TODO: fields validation failure test
-        #                 ):
-        #     url =  f'/projects/{project.id}/reindexer/'
-        #     self.run_create_reindexer_task_signal(project, url, pick_fields_payload) # kõik postitatud väjad uude indeksisse, kui valideeritud projekti kaudu
+        for project in (
+                        self.project,
+                        self.project_no_indices,    # indices validation failure test
+                                                    # TODO: fields validation failure test
+                        ):
+            url =  f'/projects/{project.id}/reindexer/'
+            self.run_create_reindexer_task_signal(project, url, pick_fields_payload) # kõik postitatud väjad uude indeksisse, kui valideeritud projekti kaudu
 
         for payload in (
-                        # join_indices_fields_payload,
-                        # random_docs_payload,
+                        join_indices_fields_payload,
+                        random_docs_payload,
                         update_field_type_payload,
             ):
             url = f'/projects/{self.project.id}/reindexer/'

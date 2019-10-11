@@ -91,8 +91,6 @@ class SchemaGenerator:
         '''
         fields: dict
         '''
-        # print("input_fields", fields)
-
         fields = self.init_fields(fields)
         schema = {'mappings':{mapping_name:{'properties':{}}}}
         text_structure = self._get_text_structure()
@@ -111,5 +109,7 @@ class SchemaGenerator:
         if fields['nested']:
             nested_mapping = self.get_nested_structure(fields['nested'])
             schema['mappings'][mapping_name]['properties'].update(nested_mapping)
+
+
 
         return schema

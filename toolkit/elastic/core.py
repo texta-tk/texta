@@ -49,10 +49,20 @@ class ElasticCore:
         available = info["features"]["security"]["available"]
         return available
 
+
+    def create_index(self, index, body):
+        return self.es.indices.create(index=index, ignore=400, body=body)
+
+
     # use with caution
     def delete_index(self, index):
         # returns either {'acknowledged': True} or a detailed error response
         return self.es.indices.delete(index=index, ignore=[400, 404])
+
+
+    def get_mapping(self, index):
+        return self.es.indices.get_mapping(index=index)
+
 
     def get_indices(self):
         if self.connection:
@@ -113,3 +123,7 @@ class ElasticCore:
 
     def check_if_indices_exist(self, indices):
         return self.es.indices.exists(index=','.join(indices))
+
+
+
+

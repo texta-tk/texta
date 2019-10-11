@@ -13,6 +13,7 @@ class ReindexerCreateSerializer(serializers.HyperlinkedModelSerializer, ProjectR
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
     fields_parsed = serializers.SerializerMethodField()
     task = TaskSerializer(read_only=True)
+    # TODO: default no post seems to not work
     field_type = serializers.ListField(child=serializers.DictField(child=serializers.CharField()), help_text=f'Used to update field types.', required=False)
 
     class Meta:
