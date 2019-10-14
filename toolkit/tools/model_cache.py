@@ -59,7 +59,7 @@ class ModelCache:
             Logger().info(f"Memory almost full ({free_percentage} percent free). Releasing memory by flushing models.")
             self.models = {}
             # check again to see how much memory we gained
-            free_percentage = _mem_free_percentage()
+            free_percentage = self._mem_free_percentage()
             Logger().info(f"Models successfully flushed. {free_percentage} percent free.")
 
 
