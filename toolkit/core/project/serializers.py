@@ -47,7 +47,7 @@ class GetFactsSerializer(serializers.Serializer):
 
 
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):
-    indices = serializers.MultipleChoiceField(choices=get_index_choices())
+    indices = serializers.MultipleChoiceField(choices=get_index_choices(), read_only=True)
     users = serializers.HyperlinkedRelatedField(many=True, view_name='user-detail', queryset=User.objects.all(),)
     resources = serializers.SerializerMethodField()
 
@@ -67,6 +67,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
 class ProjectAdminSerializer(ProjectSerializer):
     owner = serializers.PrimaryKeyRelatedField(required=False, queryset=User.objects.all())
+    indices = serializers.MultipleChoiceField(choices=get_index_choices(), read_only=False)
 
     class Meta:
         model = Project

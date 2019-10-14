@@ -12,8 +12,6 @@ from toolkit.elastic.document import ElasticDocument
 from toolkit.elastic.mapping_generator import SchemaGenerator
 
 """ TODOs:
-    implement changing field types
-    implement renaming fields: probably add to field_type new_field_name
     complete always, but give result message
     optimize show_progress
     implement query for advanced filtering.
