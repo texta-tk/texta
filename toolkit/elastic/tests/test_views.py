@@ -73,21 +73,20 @@ class ReindexerViewTests(APITestCase):
         }
 
         for project in (
-                        self.project,
-                        self.project_no_indices,    # indices validation failure test
-                                                    # TODO: fields validation failure test
-                        ):
-            url =  f'/projects/{project.id}/reindexer/'
-            self.run_create_reindexer_task_signal(project, url, pick_fields_payload) # kõik postitatud väjad uude indeksisse, kui valideeritud projekti kaudu
+            self.project,
+            self.project_no_indices,    # indices validation failure test
+            # TODO: fields validation failure test
+        ):
+            url = f'/projects/{project.id}/reindexer/'
+            self.run_create_reindexer_task_signal(project, url, pick_fields_payload)  # kõik postitatud väjad uude indeksisse, kui valideeritud projekti kaudu
 
         for payload in (
-                        join_indices_fields_payload,
-                        random_docs_payload,
-                        update_field_type_payload,
-            ):
+            join_indices_fields_payload,
+            random_docs_payload,
+            update_field_type_payload,
+        ):
             url = f'/projects/{self.project.id}/reindexer/'
             self.run_create_reindexer_task_signal(self.project, url, payload)
-
 
     def run_create_reindexer_task_signal(self, project, url, payload, overwrite=False):
         ''' Tests the endpoint for a new Reindexer task, and if a new Task gets created via the signal
@@ -128,12 +127,3 @@ class ReindexerViewTests(APITestCase):
         if response.status_code == 400:
             assert new_index not in check.data['indices']
             print_output('Re-indexed index not added to project', check.data)
-
-
-
-
-
-
-
-
-

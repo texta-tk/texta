@@ -19,6 +19,7 @@ from toolkit.elastic.mapping_generator import SchemaGenerator
     implement query for advanced filtering.
 """
 
+
 def update_field_types(indices, field_type):
     ''' if fieldtype, for field named fieldtype change its type'''
     # returns fields edited by serializer input
@@ -54,8 +55,10 @@ def update_field_types(indices, field_type):
 
     return unique_dicts
 
+
 def generate_mapping(new_index, schema_input):
     return SchemaGenerator().generate_schema(new_index, schema_input)
+
 
 @task(name="reindex_task", base=BaseTask)
 def reindex_task(reindexer_task_id, testing=False):
@@ -83,7 +86,7 @@ def reindex_task(reindexer_task_id, testing=False):
 
     # TODO, refactor into def create index
     for document in elastic_search:
-        new_doc = {k:v for k,v in document.items() if k in fields}
+        new_doc = {k: v for k, v in document.items() if k in fields}
         if new_doc:
             elastic_doc.add(new_doc)
 

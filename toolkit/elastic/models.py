@@ -26,7 +26,6 @@ class Reindexer(models.Model):
     def __str__(self):
         return self.description
 
-
     @classmethod
     def create_reindexer_model(cls, sender, instance, created, **kwargs):
         if created:

@@ -3,6 +3,7 @@ import json
 from toolkit.elastic.core import ElasticCore
 from toolkit.settings import ES_URL
 
+
 class ElasticAggregator:
     """
     Everything related to performing aggregations in Elasticsearch
@@ -19,10 +20,8 @@ class ElasticAggregator:
         self.indices = indices
         self.query = query
 
-
     def update_query(self, query):
         self.query = query
-
 
     def update_field_data(self, field_data):
         """
@@ -30,26 +29,24 @@ class ElasticAggregator:
         """
         self.field_data = field_data
 
-
     def _aggregate(self, agg_query):
         self.query["aggregations"] = agg_query
         response = self.core.es.search(index=self.indices, body=self.query)
         return response
-
 
     def facts(self, size=30, filter_by_fact_name=None, min_count=0, max_count=None, include_values=True):
         """
         For retrieving entities (facts) from ES
         """
         agg_query = {"facts": {
-                            "nested": {"path": "texta_facts"},
-                            "aggs": {
-                                "facts": {
-                                    "terms": {"field": "texta_facts.fact", "size": size}
-                                }
-                            }
-                        }
-                    }
+            "nested": {"path": "texta_facts"},
+            "aggs": {
+                "facts": {
+                    "terms": {"field": "texta_facts.fact", "size": size}
+                }
+            }
+        }
+        }
 
         # filter by name if fact name present
         if filter_by_fact_name:

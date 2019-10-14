@@ -17,7 +17,7 @@ class ReindexerViewSet(viewsets.ModelViewSet):
     permission_classes = (
         ProjectResourceAllowed,
         permissions.IsAuthenticated,
-        )
+    )
 
     def get_serializer_class(self):
         if self.request.method == 'PUT':
@@ -47,10 +47,10 @@ class ReindexerViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer, project_obj):
         serializer.save(
-                        author=self.request.user,
-                        project=project_obj,
-                        fields=json.dumps(serializer.validated_data['fields']),
-                        indices=json.dumps(serializer.validated_data['indices']))
+            author=self.request.user,
+            project=project_obj,
+            fields=json.dumps(serializer.validated_data['fields']),
+            indices=json.dumps(serializer.validated_data['indices']))
 
     def validate_indices(self, request, project_indices):
         ''' check if re-indexed index is in the relevant project indices field '''

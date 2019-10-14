@@ -47,5 +47,3 @@ class ReindexerUpdateSerializer(serializers.HyperlinkedModelSerializer, ProjectR
         if obj.fields:
             return json.loads(obj.fields)
         return None
-
-

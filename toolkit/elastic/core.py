@@ -9,13 +9,11 @@ class ElasticCore:
     Class for holding most general settings and Elasticsearch object itself
     """
 
-
     def __init__(self):
         self.es = self._create_client_interface()
         self.es_prefix = ES_PREFIX
         self.connection = self._check_connection()
         self.TEXTA_RESERVED = ['texta_facts']
-
 
     def _create_client_interface(self):
         """
@@ -29,14 +27,12 @@ class ElasticCore:
         client = Elasticsearch(list_of_hosts, http_auth=(ES_USERNAME, ES_PASSWORD), **existing_connection_parameters)
         return client
 
-
     def _check_connection(self):
         try:
             requests.get(ES_URL)
             return True
         except:
             return False
-
 
     @staticmethod
     def check_for_security_xpack() -> bool:
@@ -49,20 +45,16 @@ class ElasticCore:
         available = info["features"]["security"]["available"]
         return available
 
-
     def create_index(self, index, body):
         return self.es.indices.create(index=index, ignore=400, body=body)
-
 
     # use with caution
     def delete_index(self, index):
         # returns either {'acknowledged': True} or a detailed error response
         return self.es.indices.delete(index=index, ignore=[400, 404])
 
-
     def get_mapping(self, index):
         return self.es.indices.get_mapping(index=index)
-
 
     def get_indices(self):
         if self.connection:
@@ -74,7 +66,6 @@ class ElasticCore:
             return list(self.es.indices.get_alias().keys())
         else:
             return []
-
 
     def get_fields(self, indices=[]):
         out = []
@@ -90,7 +81,6 @@ class ElasticCore:
                         index_with_field = {'index': index, 'path': field['path'], 'type': field['type']}
                         out.append(index_with_field)
         return out
-
 
     def _decode_mapping_structure(self, structure, root_path=list(), nested_layers=list()):
         """
@@ -120,10 +110,5 @@ class ElasticCore:
                 mapping_data.append(data)
         return mapping_data
 
-
     def check_if_indices_exist(self, indices):
         return self.es.indices.exists(index=','.join(indices))
-
-
-
-
