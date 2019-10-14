@@ -86,7 +86,6 @@ class NeurotaggerWorker():
         self.y_val = None
         self.tokenizer = None
         self.model = None
-        self.graph = None
 
 
     def _set_up_data(self, samples, labels, label_names, show_progress):
@@ -289,7 +288,8 @@ class NeurotaggerWorker():
         # model/graph to prevent "Tensor is not an element of this graph" errors
         # https://github.com/tensorflow/tensorflow/issues/14356#issuecomment-385962623
         self.model = load_model(json.loads(self.neurotagger_obj.location)['model'])
-        self.graph = tf.get_default_graph()
+        global graph
+        graph = tf.get_default_graph()
 
     def _convert_texts(self, texts: List[str]):
         sp = spm.SentencePieceProcessor()
@@ -308,8 +308,8 @@ class NeurotaggerWorker():
         :return: class names of decision
         """
         to_predict = self._convert_texts([text])
-        # Use graph to prevent "Tensor is not an element of this graph" issues
-        with self.graph.as_default():
+        # Use global graph to prevent "Tensor is not an element of this graph" issues
+        with graph.as_default():
             preds = self.model.predict_proba(to_predict, batch_size=self.bs) 
         return preds
 
@@ -322,8 +322,8 @@ class NeurotaggerWorker():
         """
         texts = [doc[field] for field in doc]
         to_predict = self._convert_texts(texts)
-        # Use graph to prevent "Tensor is not an element of this graph" issues
-        with self.graph.as_default():
+        # Use global graph to prevent "Tensor is not an element of this graph" issues
+        with graph.as_default():
             preds = self.model.predict_proba(to_predict, batch_size=self.bs) 
         return preds
     
