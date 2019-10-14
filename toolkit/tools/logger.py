@@ -12,6 +12,6 @@ class Logger:
     
     def error(self, message, exc_info=None):
         if exc_info:
-            self.error_logger.error(message, exc_info=exc)
+            self.error_logger.error(message, exc_info=exc_info)
         else:
             self.error_logger.error(message)

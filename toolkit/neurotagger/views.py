@@ -155,6 +155,6 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
         # filter out correct fields from the document
         random_doc_filtered = {k:v for k,v in random_doc.items() if k in tagger_fields}
         # apply tagger
-        tagger_response = self.apply_tagger(tagger_id, random_doc_filtered, input_type='doc')
+        tagger_response = self.apply_tagger(tagger_object, random_doc_filtered, input_type='doc')
         response = {"document": random_doc, "prediction": tagger_response}
         return Response(response, status=status.HTTP_200_OK)
