@@ -14,24 +14,26 @@ from toolkit.core.task.models import Task
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
+''' TODO: needed to remove indices and field validation fail tests, because indices are required. Test in some other way. '''
+
 class ReindexerViewTests(APITestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.user = create_test_user('indexOwner', 'my@email.com', 'pw')
+        ''' user needs to be admin, because of changed indices permissions '''
+        cls.default_password = 'pw'
+        cls.default_username = 'indexOwner'
+        cls.user = create_test_user(cls.default_username, 'my@email.com', cls.default_password)
+        cls.user.is_superuser = True
+        cls.user.save()
         cls.project = Project.objects.create(
             title='ReindexerTestProject',
             owner=cls.user,
-            indices=TEST_INDEX
-        )
-        cls.project_no_indices = Project.objects.create(
-            title='ReindexerNoIndicesTestProject',
-            owner=cls.user
-            # either has no indices or those not contained in test_payload "indices"
+            indices=[TEST_INDEX]
         )
 
     def setUp(self):
-        self.client.login(username='indexOwner', password='pw')
+        self.client.login(username=self.default_username, password=self.default_password)
 
     def test_run(self):
         pick_fields_payload = {
@@ -42,6 +44,7 @@ class ReindexerViewTests(APITestCase):
             "new_index": TEST_INDEX_REINDEX,
             "field_type": [],
         }
+        # unique problem, and also test it
         join_indices_fields_payload = {
             "description": "TestReindexerJoinFields",
             "fields": [],
@@ -74,8 +77,7 @@ class ReindexerViewTests(APITestCase):
 
         for project in (
             self.project,
-            self.project_no_indices,    # indices validation failure test
-            # TODO: fields validation failure test
+
         ):
             url = f'/projects/{project.id}/reindexer/'
             self.run_create_reindexer_task_signal(project, url, pick_fields_payload)  # kõik postitatud väjad uude indeksisse, kui valideeritud projekti kaudu
@@ -96,8 +98,8 @@ class ReindexerViewTests(APITestCase):
         if overwrite == False and TEST_INDEX_REINDEX not in ElasticCore().get_indices():
             response = self.client.post(url, payload, format='json')
             print_output('run_create_reindexer_task_signal:response.data', response.data)
-            self.is_reindexed_index_added_to_project_if_yes_remove(response, payload['new_index'], project)
             self.is_new_index_created_if_yes_remove(response, payload, project)
+            self.is_reindexed_index_added_to_project_if_yes_remove(response, payload['new_index'], project)
         assert TEST_INDEX_REINDEX not in ElasticCore().get_indices()
 
     def is_new_index_created_if_yes_remove(self, response, payload, project):
@@ -121,9 +123,9 @@ class ReindexerViewTests(APITestCase):
         if response.status_code == 201:
             assert new_index in check.data['indices']
             print_output('Re-indexed index added to project', check.data)
-            check.data['indices'] = [TEST_INDEX]
-            self.client.put(url, check.data, format='json')
-
+            check.data['indices'].remove(new_index)
+            remove_response = self.client.put(url, check.data, format='json')
+            print_output("Re-indexed index removed from project", remove_response.status_code)
         if response.status_code == 400:
-            assert new_index not in check.data['indices']
             print_output('Re-indexed index not added to project', check.data)
+        assert new_index not in check.data['indices']

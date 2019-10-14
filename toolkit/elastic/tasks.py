@@ -15,8 +15,9 @@ from toolkit.elastic.mapping_generator import SchemaGenerator
     complete always, but give result message
     optimize show_progress
     implement query for advanced filtering.
+    unique name problem and testing it.
+    bulk doc_add
 """
-
 
 def update_field_types(indices, field_type):
     ''' if fieldtype, for field named fieldtype change its type'''
@@ -57,6 +58,12 @@ def update_field_types(indices, field_type):
 def generate_mapping(new_index, schema_input):
     return SchemaGenerator().generate_schema(new_index, schema_input)
 
+def add_documents(elastic_search, fields, elastic_doc):
+    # teha efektiivsemaks, bulk insert
+    for document in elastic_search:
+        new_doc = {k: v for k, v in document.items() if k in fields}
+        if new_doc:
+            elastic_doc.add(new_doc)
 
 @task(name="reindex_task", base=BaseTask)
 def reindex_task(reindexer_task_id, testing=False):
@@ -82,17 +89,10 @@ def reindex_task(reindexer_task_id, testing=False):
     if random_size > 0:
         elastic_search = ElasticSearcher(indices=indices).random_documents(size=random_size)
 
-    # TODO, refactor into def create index
-    for document in elastic_search:
-        new_doc = {k: v for k, v in document.items() if k in fields}
-        if new_doc:
-            elastic_doc.add(new_doc)
-
-    ''' the operations that don't require mapping update have been completed, and reindexed index has been created '''
-    ''' if field_types are changed we remove old version of new index, anc create a new one, using its data '''
+    ''' the operations that don't require mapping update have been completed '''
 
     if field_type:
-        # create mapping based on earlier operations (we need to delete the old index and re-add our docs)
+        # create new mapping
         schema_input = update_field_types(indices, field_type)
         mod_schema = {"properties": {}}
         props = {}
@@ -102,15 +102,14 @@ def reindex_task(reindexer_task_id, testing=False):
             mod_schema.update(properties=props)
         updated_schema = {'mappings': {reindexer_obj.new_index: mod_schema}}
 
-        # delete reindexed index
-        ElasticCore().delete_index(reindexer_obj.new_index)
-        # create again with updated schema
         create_index_res = ElasticCore().create_index(reindexer_obj.new_index, updated_schema)
         print(create_index_res)
 
         # check new mapping ->
         # new_index_mapping = ElasticCore().get_mapping(reindexer_obj.new_index)
         # print(new_index_mapping)
+
+    add_documents(elastic_search, fields, elastic_doc)
 
     # finish Task
     show_progress.update_view(100.0)

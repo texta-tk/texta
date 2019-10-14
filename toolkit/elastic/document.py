@@ -18,6 +18,8 @@ class ElasticDocument:
         """
         return self.core.es.index(index=self.index, doc_type=self.index, body=doc)
 
+    # TODO bulk add
+
     def remove(self, doc_id):
         """
         Removes given document from ES.

@@ -8,42 +8,20 @@ import json
 
 class ReindexerCreateSerializer(serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
     url = serializers.SerializerMethodField()
+    description = serializers.CharField(help_text='Describe your re-indexing task', required=True, allow_blank=False)
+    indices = serializers.ListField(child=serializers.CharField(), help_text=f'Indices to reindex.', write_only=True, required=True)
+    fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields to add to reindexed index.', write_only=True)
     query = serializers.SerializerMethodField()
-    indices = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True, required=False)
-    fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
-    fields_parsed = serializers.SerializerMethodField()
-    task = TaskSerializer(read_only=True)
-    # TODO: default no post seems to not work
+    new_index = serializers.CharField(help_text='Your new re-indexed index name', allow_blank=False, required=True)
     field_type = serializers.ListField(child=serializers.DictField(child=serializers.CharField()), help_text=f'Used to update field types.', required=False)
+    task = TaskSerializer(read_only=True)
 
     class Meta:
         model = Reindexer
-        fields = ('id', 'url', 'description', 'indices', 'fields', 'query', 'task', 'fields_parsed', 'new_index', 'random_size', 'field_type',)
-        extra_kwargs = {'description': {'required': True}, 'new_index': {'required': True}}
-
-    def get_fields_parsed(self, obj):
-        if obj.fields:
-            return json.loads(obj.fields)
-        return None
+        fields = ('id', 'url', 'description', 'indices', 'fields', 'query', 'new_index', 'random_size', 'field_type', 'task')
 
     def get_query(self, obj):
         if obj.query:
             return json.loads(obj.query)
         return None
 
-
-class ReindexerUpdateSerializer(serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
-    url = serializers.SerializerMethodField()
-    indices = serializers.MultipleChoiceField(choices=get_index_choices())
-    fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
-    fields_parsed = serializers.SerializerMethodField()
-    task = TaskSerializer(read_only=True)
-
-    class Meta:
-        model = Reindexer
-        fields = ('id', 'url', 'description', 'indices', 'fields', 'fields_parsed')
-
-    def get_fields_parsed(self, obj):
-        if obj.fields:
-            return json.loads(obj.fields)
-        return None
