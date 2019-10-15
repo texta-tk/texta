@@ -39,6 +39,7 @@ class TaggerViewTests(APITestCase):
     def test_run(self):
         self.run_create_tagger_training_and_task_signal()
         self.run_create_tagger_with_incorrect_fields()
+
         self.run_tag_text()
         self.run_tag_text_with_lemmatization()
         self.run_tag_doc()
@@ -48,6 +49,7 @@ class TaggerViewTests(APITestCase):
         self.run_stop_word_add()
         self.run_stop_word_remove()
         self.run_list_features()
+        # self.create_tagger_then_delete_tagger()
 
 
     def run_create_tagger_training_and_task_signal(self):
@@ -77,10 +79,32 @@ class TaggerViewTests(APITestCase):
                 # Remove tagger files after test is done
                 self.addCleanup(remove_file, json.loads(created_tagger.location)['tagger'])
                 self.addCleanup(remove_file, created_tagger.plot.path)
-                # Check if Task gets created via a signal
+                # Check if Task gets created via a signaladdCleanup
                 self.assertTrue(created_tagger.task is not None)
                 # Check if Tagger gets trained and completed
                 self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
+
+
+    def create_tagger_then_delete_tagger(self):
+        ''' creates a tagger and removes it with in instance view '''
+        payload = {
+                    "description": "TestTagger",
+                    "query": json.dumps(TEST_QUERY),
+                    "fields": TEST_FIELD_CHOICE,
+                    "vectorizer": 'Hashing Vectorizer',
+                    "classifier": 'Logistic Regression',
+                    "maximum_sample_size": 500,
+                    "negative_multiplier": 1.0,
+        }
+
+        create_response = self.client.post(self.url, payload, format='json')
+        print(create_response.data)
+        get_response = self.client.get(self.url, format='json')
+        print('')
+        print("get_info", get_response.data)
+        delete_response = self.client.delete(self.url, format='json')
+        print(delete_response.status_code)
+
 
 
     def run_create_tagger_with_incorrect_fields(self):
@@ -93,7 +117,7 @@ class TaggerViewTests(APITestCase):
             "classifier": self.classifier_opts[0],
             "maximum_sample_size": 500,
             "negative_multiplier": 1.0,
-        }        
+        }
 
         response = self.client.post(self.url, payload, format='json')
         print_output('test_create_tagger_with_invalid_fields:response.data', response.data)
@@ -185,7 +209,7 @@ class TaggerViewTests(APITestCase):
                 # Check if response data is not empty, but a result instead
                 self.assertTrue(response.data)
                 self.assertTrue('features' in response.data)
-    
+
 
     def run_stop_word_list(self):
         '''Tests the endpoint for the stop_word_list action'''
@@ -196,7 +220,7 @@ class TaggerViewTests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
-            self.assertTrue('stop_words' in response.data)  
+            self.assertTrue('stop_words' in response.data)
 
 
     def run_stop_word_add(self):
@@ -216,7 +240,7 @@ class TaggerViewTests(APITestCase):
         for test_tagger_id in self.test_tagger_ids:
             '''Tests the endpoint for the stop_word_remove action'''
             url = f'{self.url}{test_tagger_id}/stop_word_remove/?text=stopsõna'
-            payload = {"text": "stopsõna"}            
+            payload = {"text": "stopsõna"}
             response = self.client.post(url, payload, format='json')
             print_output('test_stop_word_remove:response.data', response.data)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
