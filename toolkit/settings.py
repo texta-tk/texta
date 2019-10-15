@@ -188,7 +188,9 @@ ES_CONNECTION_PARAMETERS = {
     "ca_certs": os.getenv("TEXTA_ES_CA_CERT_PATH", None),
     "client_cert": os.getenv("TEXTA_ES_CLIENT_CERT_PATH", None),
     "client_key": os.getenv("TEXTA_ES_CLIENT_KEY_PATH", None),
-    "timeout": int(os.getenv("TEXTA_ES_TIMEOUT", None)) if os.getenv("TEXTA_ES_TIMEOUT", None) else None
+    "timeout": int(os.getenv("TEXTA_ES_TIMEOUT", None)) if os.getenv("TEXTA_ES_TIMEOUT", None) else None,
+    "sniff_on_start":  eval(os.getenv("TEXTA_ES_SNIFF_ON_START", "True")),
+    "sniff_on_connection_fail":  eval(os.getenv("TEXTA_ES_SNIFF_ON_FAIL", "True"))
 }
 
 # MLP
