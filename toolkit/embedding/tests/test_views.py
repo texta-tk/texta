@@ -27,7 +27,7 @@ class EmbeddingViewTests(APITestCase):
 
         cls.url = f'/projects/{cls.project.id}/embeddings/'
         cls.cluster_url = f'/projects/{cls.project.id}/embedding_clusters/'
-        
+
         #cls.user.profile.activate_project(cls.project)
 
         cls.test_embedding_id = None
@@ -109,7 +109,7 @@ class EmbeddingViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
-    
+
 
     def run_create_embedding_cluster_training_and_task_signal(self):
         '''Tests the endpoint for a new EmbeddingCluster, and if a new Task gets created via the signal'''
@@ -130,6 +130,8 @@ class EmbeddingViewTests(APITestCase):
         self.assertTrue(created_embedding_cluster.task is not None)
         # Check if Embedding gets trained and completed
         self.assertEqual(created_embedding_cluster.task.status, Task.STATUS_COMPLETED)
+        # remove created embedding cluster model
+        self.addCleanup(remove_file, json.loads(created_embedding_cluster.location)['cluster'])
 
 
     def run_embedding_cluster_browse(self):
@@ -163,4 +165,3 @@ class EmbeddingViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
-    
