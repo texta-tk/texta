@@ -1,4 +1,8 @@
 import json
+import uuid
+
+from elasticsearch import Elasticsearch
+from elasticsearch.helpers import bulk
 
 from toolkit.elastic.core import ElasticCore
 
@@ -18,7 +22,11 @@ class ElasticDocument:
         """
         return self.core.es.index(index=self.index, doc_type=self.index, body=doc)
 
-    # TODO bulk add
+    def bulk_add(self, doc, index):
+        # print(doc)
+        ''' _type is deprecated in ES 6'''
+        actions = [{"_index": index, "_type": "your doctype", "_id": uuid.uuid4(), "_source": doc}]
+        return bulk(client=self.core.es, actions=actions, chunk_size=1000)
 
     def remove(self, doc_id):
         """
