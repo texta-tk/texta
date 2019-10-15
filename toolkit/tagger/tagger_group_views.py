@@ -147,8 +147,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
             tagger.status = Task.STATUS_CREATED
             tagger.save()
             apply_celery_task(train_tagger, tagger.pk)
-
-        return Response({'success': 'retraining tasks created'}, status=status.HTTP_200_OK)
+        return Response({'success': 'retraining tasks created', 'tagger_group_id': instance.id}, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['get', 'post'])
