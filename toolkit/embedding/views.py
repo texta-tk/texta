@@ -1,3 +1,4 @@
+import os
 import json
 
 from rest_framework import viewsets, status, permissions
@@ -32,19 +33,27 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
     permission_classes = (
         ProjectResourceAllowed,
         permissions.IsAuthenticated,
-        )
+    )
 
     def get_queryset(self):
         return Embedding.objects.filter(project=self.kwargs['project_pk'])
-
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         fields=json.dumps(serializer.validated_data['fields']))
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        try:
+            model_location = json.loads(instance.location)['embedding']
+            os.remove(model_location)
+            return Response({"success": "Model removed"}, status=status.HTTP_204_NO_CONTENT)
+        except:
+            return Response({"success": "Embedding instance deleted, but model was not removed"}, status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['get', 'post'],serializer_class=EmbeddingPrecictionSerializer)
+    @action(detail=True, methods=['get', 'post'], serializer_class=EmbeddingPrecictionSerializer)
     def predict(self, request, pk=None, project_pk=None):
         data = get_payload(request)
         serializer = EmbeddingPrecictionSerializer(data=data)
@@ -56,9 +65,9 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
             embedding = w2v_cache.get_model(embedding_object.pk)
 
             predictions = embedding.get_similar(serializer.validated_data['positives'],
-                negatives=serializer.validated_data['negatives'],
-                n=serializer.validated_data['output_size']
-            )
+                                                negatives=serializer.validated_data['negatives'],
+                                                n=serializer.validated_data['output_size']
+                                                )
 
             return Response(predictions, status=status.HTTP_200_OK)
         else:
@@ -91,15 +100,13 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
     permission_classes = (
         ProjectResourceAllowed,
         permissions.IsAuthenticated,
-        )
+    )
 
     def get_queryset(self):
         return EmbeddingCluster.objects.filter(project=self.kwargs['project_pk'])
 
-
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user,  project=Project.objects.get(id=self.kwargs['project_pk']))
-
+        serializer.save(author=self.request.user, project=Project.objects.get(id=self.kwargs['project_pk']))
 
     @action(detail=True, methods=['get', 'post'], serializer_class=ClusterBrowserSerializer)
     def browse(self, request, pk=None, project_pk=None):
@@ -121,13 +128,11 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
         # load cluster model
         clusterer = cluster_cache.get_model(clustering_object.pk)
 
-
         clustering_result = clusterer.browse(max_examples_per_cluster=serializer.validated_data['max_examples_per_cluster'],
                                              number_of_clusters=serializer.validated_data['number_of_clusters'],
                                              sort_reverse=serializer.validated_data['cluster_order'])
 
         return Response(clustering_result, status=status.HTTP_200_OK)
-
 
     @action(detail=True, methods=['get', 'post'], serializer_class=TextSerializer)
     def find_word(self, request, pk=None, project_pk=None):
@@ -152,8 +157,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet):
         clustering_result = clusterer.query(serializer.validated_data['text'])
         return Response(clustering_result, status=status.HTTP_200_OK)
 
-
-    @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
+    @action(detail=True, methods=['get', 'post'], serializer_class=TextSerializer)
     def cluster_text(self, request, pk=None, project_pk=None):
         """
         API endpoint for clustering raw text.

@@ -1,3 +1,4 @@
+import os
 import json
 import re
 import sys
@@ -13,7 +14,7 @@ from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import train_tagger
 from toolkit.core.project.models import Project
 from toolkit.tagger.serializers import TaggerSerializer, FeatureListSerializer, \
-                                       TextSerializer, DocSerializer
+    TextSerializer, DocSerializer
 from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tools.model_cache import ModelCache
 from toolkit.embedding.views import phraser_cache
@@ -33,17 +34,15 @@ class TaggerViewSet(viewsets.ModelViewSet):
     permission_classes = (
         ProjectResourceAllowed,
         permissions.IsAuthenticated,
-        )
+    )
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         fields=json.dumps(serializer.validated_data['fields']))
 
-
     def get_queryset(self):
         return Tagger.objects.filter(project=self.kwargs['project_pk'])
-
 
     def create(self, request, *args, **kwargs):
         serializer = TaggerSerializer(data=request.data, context={'request': request})
@@ -57,7 +56,15 @@ class TaggerViewSet(viewsets.ModelViewSet):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        try:
+            model_location = json.loads(instance.location)['tagger']
+            os.remove(model_location)
+            return Response({"success": "Model removed"}, status=status.HTTP_204_NO_CONTENT)
+        except:
+            return Response({"success": "Tagger instance deleted, but model was not removed"}, status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['get', 'post'], serializer_class=FeatureListSerializer)
     def list_features(self, request, pk=None, project_pk=None):
@@ -99,7 +106,6 @@ class TaggerViewSet(viewsets.ModelViewSet):
                         'showing_features': len(features_to_show)}
         return Response(feature_info, status=status.HTTP_200_OK)
 
-
     @action(detail=True, methods=['get', 'post'])
     def stop_word_list(self, request, pk=None, project_pk=None):
         """
@@ -109,7 +115,6 @@ class TaggerViewSet(viewsets.ModelViewSet):
         tagger_object = self.get_object()
         success = {'stop_words': json.loads(tagger_object.stop_words)}
         return Response(success, status=status.HTTP_200_OK)
-
 
     @action(detail=True, methods=['post'], serializer_class=TextSerializer)
     def stop_word_add(self, request, pk=None, project_pk=None):
@@ -137,7 +142,6 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
         success = {'added': new_stop_word, 'stop_words': stop_words}
         return Response(success, status=status.HTTP_200_OK)
-
 
     @action(detail=True, methods=['post'], serializer_class=TextSerializer)
     def stop_word_remove(self, request, pk=None, project_pk=None):
@@ -171,20 +175,18 @@ class TaggerViewSet(viewsets.ModelViewSet):
         success = {'removed': remove_stop_word, 'stop_words': stop_words}
         return Response(success, status=status.HTTP_200_OK)
 
-
     @action(detail=True, methods=['post'])
     def retrain_tagger(self, request, pk=None, project_pk=None):
         """
         API endpoint for retraining tagger model.
         """
         instance = self.get_object()
-        
+
         apply_celery_task(train_tagger, instance.pk)
 
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
 
-
-    @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
+    @action(detail=True, methods=['get', 'post'], serializer_class=TextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging raw text.
@@ -216,7 +218,6 @@ class TaggerViewSet(viewsets.ModelViewSet):
         # apply tagger
         tagger_response = self.apply_tagger(tagger_object, serializer.validated_data['text'], input_type='text', lemmatizer=lemmatizer)
         return Response(tagger_response, status=status.HTTP_200_OK)
-
 
     @action(detail=True, methods=['post'], serializer_class=DocSerializer)
     def tag_doc(self, request, pk=None, project_pk=None):
@@ -262,7 +263,6 @@ class TaggerViewSet(viewsets.ModelViewSet):
         tagger_response = self.apply_tagger(tagger_object, input_document, input_type='doc', lemmatizer=lemmatizer)
         return Response(tagger_response, status=status.HTTP_200_OK)
 
-
     @action(detail=True, methods=['get', 'post'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """
@@ -281,12 +281,11 @@ class TaggerViewSet(viewsets.ModelViewSet):
         # retrieve random document
         random_doc = ElasticSearcher(indices=tagger_object.project.indices).random_documents(size=1)[0]
         # filter out correct fields from the document
-        random_doc_filtered = {k:v for k,v in random_doc.items() if k in tagger_fields}
+        random_doc_filtered = {k: v for k, v in random_doc.items() if k in tagger_fields}
         # apply tagger
         tagger_response = self.apply_tagger(tagger_object, random_doc_filtered, input_type='doc')
         response = {"document": random_doc, "prediction": tagger_response}
         return Response(response, status=status.HTTP_200_OK)
-
 
     def apply_tagger(self, tagger_object, tagger_input, input_type='text', phraser=None, lemmatizer=None):
         # create text processor object for tagger

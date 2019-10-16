@@ -12,11 +12,16 @@ from toolkit.tagger.models import Tagger
 from toolkit.core.task.models import Task
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
+
 class TaggerViewTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         # Owner of the project
-        cls.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
+        cls.default_password = 'pw'
+        cls.default_username = 'taggerOwner'
+        cls.user = create_test_user(cls.default_username, 'my@email.com', 'pw')
+        cls.user.is_superuser = True
+        cls.user.save()
         cls.project = Project.objects.create(
             title='taggerTestProject',
             owner=cls.user,
@@ -31,10 +36,8 @@ class TaggerViewTests(APITestCase):
         # list tagger_ids for testing. is populatated duriong training test
         cls.test_tagger_ids = []
 
-
     def setUp(self):
-        self.client.login(username='taggerOwner', password='pw')
-
+        self.client.login(username=self.default_username, password=self.default_password)
 
     def test_run(self):
         self.run_create_tagger_training_and_task_signal()
@@ -49,8 +52,7 @@ class TaggerViewTests(APITestCase):
         self.run_stop_word_add()
         self.run_stop_word_remove()
         self.run_list_features()
-        # self.create_tagger_then_delete_tagger()
-
+        self.create_tagger_then_delete_tagger_and_created_model()
 
     def run_create_tagger_training_and_task_signal(self):
         '''Tests the endpoint for a new Tagger, and if a new Task gets created via the signal'''
@@ -84,28 +86,30 @@ class TaggerViewTests(APITestCase):
                 # Check if Tagger gets trained and completed
                 self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
 
-
-    def create_tagger_then_delete_tagger(self):
+    def create_tagger_then_delete_tagger_and_created_model(self):
         ''' creates a tagger and removes it with in instance view '''
         payload = {
-                    "description": "TestTagger",
-                    "query": json.dumps(TEST_QUERY),
-                    "fields": TEST_FIELD_CHOICE,
-                    "vectorizer": 'Hashing Vectorizer',
-                    "classifier": 'Logistic Regression',
-                    "maximum_sample_size": 500,
-                    "negative_multiplier": 1.0,
+            "description": "TestTagger",
+            "query": json.dumps(TEST_QUERY),
+            "fields": TEST_FIELD_CHOICE,
+            "vectorizer": 'Hashing Vectorizer',
+            "classifier": 'Logistic Regression',
+            "maximum_sample_size": 500,
+            "negative_multiplier": 1.0,
         }
 
         create_response = self.client.post(self.url, payload, format='json')
-        print(create_response.data)
-        get_response = self.client.get(self.url, format='json')
-        print('')
-        print("get_info", get_response.data)
-        delete_response = self.client.delete(self.url, format='json')
-        print(delete_response.status_code)
+        self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
 
+        created_tagger_id = create_response.data['id']
+        created_tagger_url = f'{self.url}{created_tagger_id}/'
+        created_tagger_obj = Tagger.objects.get(id=created_tagger_id)
+        model_location = json.loads(created_tagger_obj.location)['tagger']
 
+        delete_response = self.client.delete(created_tagger_url, format='json')
+        print_output('delete_response.data: ', delete_response.data)
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+        assert not os.path.isfile(model_location)
 
     def run_create_tagger_with_incorrect_fields(self):
         '''Tests the endpoint for a new Tagger with incorrect field data (should give error)'''
@@ -125,10 +129,9 @@ class TaggerViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertTrue('error' in response.data)
 
-
     def run_tag_text(self):
         '''Tests the endpoint for the tag_text action'''
-        payload = { "text": "This is some test text for the Tagger Test" }
+        payload = {"text": "This is some test text for the Tagger Test"}
         for test_tagger_id in self.test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
             response = self.client.post(tag_text_url, payload)
@@ -139,11 +142,10 @@ class TaggerViewTests(APITestCase):
             self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
 
-
     def run_tag_text_with_lemmatization(self):
         '''Tests the endpoint for the tag_text action'''
-        payload = { "text": "See tekst peaks saama lemmatiseeritud ja täägitud.",
-                    "lemmatize": True }
+        payload = {"text": "See tekst peaks saama lemmatiseeritud ja täägitud.",
+                   "lemmatize": True}
         for test_tagger_id in self.test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
             response = self.client.post(tag_text_url, payload)
@@ -154,10 +156,9 @@ class TaggerViewTests(APITestCase):
             self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
 
-
     def run_tag_doc(self):
         '''Tests the endpoint for the tag_doc action'''
-        payload = { "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" })}
+        payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"})}
         for test_tagger_id in self.test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_doc/'
             response = self.client.post(tag_text_url, payload)
@@ -168,11 +169,10 @@ class TaggerViewTests(APITestCase):
             self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
 
-
     def run_tag_doc_with_lemmatization(self):
         '''Tests the endpoint for the tag_doc action'''
-        payload = { "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" }),
-                    "lemmatize": True }
+        payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"}),
+                   "lemmatize": True}
         for test_tagger_id in self.test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_doc/'
             response = self.client.post(tag_text_url, payload)
@@ -182,7 +182,6 @@ class TaggerViewTests(APITestCase):
             self.assertTrue(response.data)
             self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
-
 
     def run_tag_random_doc(self):
         '''Tests the endpoint for the tag_random_doc action'''
@@ -194,7 +193,6 @@ class TaggerViewTests(APITestCase):
             # Check if response is list
             self.assertTrue(isinstance(response.data, dict))
             self.assertTrue('prediction' in response.data)
-
 
     def run_list_features(self):
         '''Tests the endpoint for the list_features action'''
@@ -210,7 +208,6 @@ class TaggerViewTests(APITestCase):
                 self.assertTrue(response.data)
                 self.assertTrue('features' in response.data)
 
-
     def run_stop_word_list(self):
         '''Tests the endpoint for the stop_word_list action'''
         for test_tagger_id in self.test_tagger_ids:
@@ -221,7 +218,6 @@ class TaggerViewTests(APITestCase):
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
             self.assertTrue('stop_words' in response.data)
-
 
     def run_stop_word_add(self):
         '''Tests the endpoint for the stop_word_add action'''
@@ -234,7 +230,6 @@ class TaggerViewTests(APITestCase):
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
             self.assertTrue('added' in response.data)
-
 
     def run_stop_word_remove(self):
         for test_tagger_id in self.test_tagger_ids:
