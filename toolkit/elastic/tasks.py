@@ -19,6 +19,7 @@ from toolkit.elastic.mapping_generator import SchemaGenerator
     bulk doc_add
 """
 
+
 def update_field_types(indices, field_type):
     ''' if fieldtype, for field named fieldtype change its type'''
     # returns fields edited by serializer input
@@ -54,8 +55,10 @@ def update_field_types(indices, field_type):
 
     return unique_dicts
 
+
 def generate_mapping(new_index, schema_input):
     return SchemaGenerator().generate_schema(new_index, schema_input)
+
 
 def add_documents(elastic_search, fields, elastic_doc):
     # teha efektiivsemaks, bulk insert
@@ -64,11 +67,13 @@ def add_documents(elastic_search, fields, elastic_doc):
         if new_doc:
             elastic_doc.add(new_doc)
 
+
 # def bulk_add_documents(elastic_search, fields, elastic_doc, index):
 #     for document in elastic_search:
 #         new_doc = {k: v for k, v in document.items() if k in fields}
 #         if new_doc:
 #             elastic_doc.bulk_add(new_doc, index)
+
 
 @task(name="reindex_task", base=BaseTask)
 def reindex_task(reindexer_task_id, testing=False):

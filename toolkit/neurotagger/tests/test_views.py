@@ -39,6 +39,7 @@ class NeurotaggerViewTests(APITestCase):
 
     def test_run(self):
         self.run_create_and_tag_multilabel()
+        self.create_neurotagger_then_delete_neurotagger_and_created_model()
 
 
     def run_create_and_tag_multilabel(self):
@@ -56,17 +57,17 @@ class NeurotaggerViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created_neurotagger = Neurotagger.objects.get(id=response.data['id'])
 
-        # Test the tagging endpoints 
+        # Test the tagging endpoints
         self.run_tag_text(tagger_id=created_neurotagger.id)
         self.run_tag_doc(tagger_id=created_neurotagger.id)
-        
+
         # Remove neurotagger files after test is done
         if 'model' in created_neurotagger.location:
             self.addCleanup(remove_file, json.loads(created_neurotagger.location)['model'])
         if 'tokenizer_model' in created_neurotagger.location:
             self.addCleanup(remove_file, json.loads(created_neurotagger.location)['tokenizer_model'])
             self.addCleanup(remove_file, json.loads(created_neurotagger.location)['tokenizer_vocab'])
-            
+
         if created_neurotagger.plot:
             remove_file(created_neurotagger.plot.path)
         if created_neurotagger.model_plot:
@@ -76,7 +77,7 @@ class NeurotaggerViewTests(APITestCase):
         self.assertTrue(created_neurotagger.task is not None)
         if created_neurotagger.task.errors:
             print_output('test_create_neurotagger_training_and_task_signal:task.errors', created_neurotagger.task.errors)
-            
+
         # Check if Neurotagger gets trained and completed
         self.assertEqual(created_neurotagger.task.status, Task.STATUS_COMPLETED)
 
@@ -103,3 +104,39 @@ class NeurotaggerViewTests(APITestCase):
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
         self.assertTrue('tags' in response.data)
+
+
+    def create_neurotagger_then_delete_neurotagger_and_created_model(self):
+        payload = {
+            "description": "TestNeurotaggerView",
+            "fact_name": TEST_FACT_NAME,
+            "model_architecture": choices.model_arch_choices[0][0],
+            "fields": TEST_FIELD_CHOICE,
+            "maximum_sample_size": 500,
+        }
+        create_response = self.client.post(self.url, payload, format='json')
+        self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
+
+        created_neurotagger = Neurotagger.objects.get(id=create_response.data['id'])
+        created_neurotagger_id = create_response.data['id']
+        created_neurotagger_url = f'{self.url}{created_neurotagger_id}/'
+
+        neurotagger_model_location = json.loads(created_neurotagger.location)['model']
+        tokenizer_model_location = json.loads(created_neurotagger.location)['tokenizer_model']
+        tokenizer_vocab_model_location = json.loads(created_neurotagger.location)['tokenizer_vocab']
+
+        delete_response = self.client.delete(created_neurotagger_url, format='json')
+        print_output('delete_response.data: ', delete_response.data)
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+
+        for model in(
+                    neurotagger_model_location,
+                    tokenizer_model_location,
+                    tokenizer_vocab_model_location,
+                    created_neurotagger.plot.path,
+                    created_neurotagger.model_plot.path
+                    ):
+            assert not os.path.isfile(model)
+
+
+
