@@ -15,6 +15,7 @@ class ReindexerCreateSerializer(serializers.HyperlinkedModelSerializer, ProjectR
                                    write_only=True)
     query = serializers.SerializerMethodField()
     new_index = serializers.CharField(help_text='Your new re-indexed index name', allow_blank=False, required=True)
+    random_size = serializers.IntegerField(help_text='By default, random document add is not applied. If you want this feature applied, define a random size value.', required=False)
     field_type = serializers.ListField(child=serializers.DictField(child=serializers.CharField()), help_text=f'Used to update the fieldname and the field type of chosen paths.', required=False)
     task = TaskSerializer(read_only=True)
 

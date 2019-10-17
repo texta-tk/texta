@@ -51,9 +51,9 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
             phraser_model_location = json.loads(instance.location)['phraser']
             os.remove(embedding_model_location)
             os.remove(phraser_model_location)
-            return Response({"success": "Model removed"}, status=status.HTTP_204_NO_CONTENT)
+            return Response({"success": "Models removed"}, status=status.HTTP_204_NO_CONTENT)
         except:
-            return Response({"success": "Embedding instance deleted, but model was not removed"}, status=status.HTTP_204_NO_CONTENT)
+            return Response({"success": "Embedding instance deleted, but models were not removed"}, status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['get', 'post'], serializer_class=EmbeddingPrecictionSerializer)
     def predict(self, request, pk=None, project_pk=None):
