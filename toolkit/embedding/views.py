@@ -47,8 +47,10 @@ class EmbeddingViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         self.perform_destroy(instance)
         try:
-            model_location = json.loads(instance.location)['embedding']
-            os.remove(model_location)
+            embedding_model_location = json.loads(instance.location)['embedding']
+            phraser_model_location = json.loads(instance.location)['phraser']
+            os.remove(embedding_model_location)
+            os.remove(phraser_model_location)
             return Response({"success": "Model removed"}, status=status.HTTP_204_NO_CONTENT)
         except:
             return Response({"success": "Embedding instance deleted, but model was not removed"}, status=status.HTTP_204_NO_CONTENT)

@@ -66,7 +66,7 @@ class EmbeddingViewTests(APITestCase):
         created_embedding = Embedding.objects.get(id=response.data['id'])
         self.test_embedding_id = created_embedding.id
         # Remove Embedding files after test is done
-        print(created_embedding.task.status)
+        print_output("created embedding task status", created_embedding.task.status)
         self.addCleanup(remove_file, json.loads(created_embedding.location)['embedding'])
         self.addCleanup(remove_file, json.loads(created_embedding.location)['phraser'])
         # Check if Task gets created via a signal
@@ -88,12 +88,14 @@ class EmbeddingViewTests(APITestCase):
         created_embedding_id = create_response.data['id']
         created_embedding_url = f'{self.url}{created_embedding_id}/'
         created_embedding_obj = Embedding.objects.get(id=created_embedding_id)
-        model_location = json.loads(created_embedding_obj.location)['embedding']
+        embedding_model_location = json.loads(created_embedding_obj.location)['embedding']
+        phraser_model_location = json.loads(created_embedding_obj.location)['phraser']
 
         delete_response = self.client.delete(created_embedding_url, format='json')
         print_output('delete_response.data: ', delete_response.data)
         self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
-        assert not os.path.isfile(model_location)
+        assert not os.path.isfile(embedding_model_location)
+        assert not os.path.isfile(phraser_model_location)
 
     def run_predict(self):
         '''Tests the endpoint for the predict action'''
