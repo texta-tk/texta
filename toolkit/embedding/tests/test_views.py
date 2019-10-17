@@ -146,9 +146,6 @@ class EmbeddingViewTests(APITestCase):
         self.assertTrue(created_embedding_cluster.task is not None)
         # Check if Embedding gets trained and completed
         self.assertEqual(created_embedding_cluster.task.status, Task.STATUS_COMPLETED)
-
-        # try to get rid of obj
-
         # remove created embedding cluster model
         self.addCleanup(remove_file, json.loads(created_embedding_cluster.location)['cluster'])
 
