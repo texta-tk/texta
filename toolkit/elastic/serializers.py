@@ -9,11 +9,13 @@ import json
 class ReindexerCreateSerializer(serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
     url = serializers.SerializerMethodField()
     description = serializers.CharField(help_text='Describe your re-indexing task', required=True, allow_blank=False)
-    indices = serializers.ListField(child=serializers.CharField(), help_text=f'Indices to reindex.', write_only=True, required=True)
-    fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields to add to reindexed index.', write_only=True)
+    indices = serializers.ListField(child=serializers.CharField(), help_text=f'Add the indices, you wish to reindex into a new index.', write_only=True, required=True)
+    fields = serializers.ListField(child=serializers.CharField(),
+                                   help_text=f'Empty fields chooses all posted indices fields. Fields content adds custom field content to the new index.',
+                                   write_only=True)
     query = serializers.SerializerMethodField()
     new_index = serializers.CharField(help_text='Your new re-indexed index name', allow_blank=False, required=True)
-    field_type = serializers.ListField(child=serializers.DictField(child=serializers.CharField()), help_text=f'Used to update field types.', required=False)
+    field_type = serializers.ListField(child=serializers.DictField(child=serializers.CharField()), help_text=f'Used to update the fieldname and the field type of chosen paths.', required=False)
     task = TaskSerializer(read_only=True)
 
     class Meta:
