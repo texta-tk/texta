@@ -105,11 +105,13 @@ class TaggerViewTests(APITestCase):
         created_tagger_url = f'{self.url}{created_tagger_id}/'
         created_tagger_obj = Tagger.objects.get(id=created_tagger_id)
         model_location = json.loads(created_tagger_obj.location)['tagger']
+        plot_location = created_tagger_obj.plot.path
 
         delete_response = self.client.delete(created_tagger_url, format='json')
         print_output('delete_response.data: ', delete_response.data)
         self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
         assert not os.path.isfile(model_location)
+        assert not os.path.isfile(plot_location)
 
     def run_create_tagger_with_incorrect_fields(self):
         '''Tests the endpoint for a new Tagger with incorrect field data (should give error)'''
@@ -242,3 +244,4 @@ class TaggerViewTests(APITestCase):
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
             self.assertTrue('removed' in response.data)
+

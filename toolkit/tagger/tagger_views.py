@@ -62,9 +62,10 @@ class TaggerViewSet(viewsets.ModelViewSet):
         try:
             model_location = json.loads(instance.location)['tagger']
             os.remove(model_location)
-            return Response({"success": "Model removed"}, status=status.HTTP_204_NO_CONTENT)
+            os.remove(instance.plot.path)
+            return Response({"success": "Tagger instance deleted, model and plot removed"}, status=status.HTTP_204_NO_CONTENT)
         except:
-            return Response({"success": "Tagger instance deleted, but model was not removed"}, status=status.HTTP_204_NO_CONTENT)
+            return Response({"success": "Tagger instance deleted, but model and plot were was not removed"}, status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['get', 'post'], serializer_class=FeatureListSerializer)
     def list_features(self, request, pk=None, project_pk=None):
