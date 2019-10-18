@@ -121,11 +121,11 @@ class ImportModel():
                 # save object
                 model_object.save()
                 # save model files to disk
-                model_object = self.save_files(archive, zip_content, model_object)
-            # update task to completed and save again
-            model_object.task.status = model_object.task.STATUS_COMPLETED
-            model_object.save()
-            success_response = {'imported': [{'id': model_object.id, 'model': model_json['model']}]}
+                self.save_files(archive, zip_content, model_object)
+                # update task to completed and save again
+                model_object.task.status = model_object.task.STATUS_COMPLETED
+                model_object.task.save()
+                success_response = {'imported': [{'id': model_object.id, 'model': model_json['model']}]}
             return Response(success_response, status=status.HTTP_200_OK)
         except Exception as e:
             Logger().error('error importing model', exc_info=e)
@@ -156,10 +156,10 @@ class ImportModel():
             new_model_file = self.rewrite_model_id(model_object.id, model_file)
             with open(os.path.join(BASE_DIR, new_model_file), 'wb') as fh:
                 fh.write(archive.read(model_file))
-            # update model path in model object
-            new_location = {k: self.rewrite_model_id(model_object.id, v) for k, v in json.loads(model_object.location).items()}
-            model_object.location = json.dumps(new_location)
-        return model_object
+        # update model path in model object
+        new_location = {k: self.rewrite_model_id(model_object.id, v) for k, v in json.loads(model_object.location).items()}
+        model_object.location = json.dumps(new_location)
+        model_object.save()
     
     @staticmethod
     def rewrite_model_id(_id, model_path):
