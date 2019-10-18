@@ -152,8 +152,6 @@ class TaggerGroupViewTests(APITestCase):
         tagger_model_locations = [json.loads(created_tagger_group_obj.location)['tagger'] for tagger in tagger_objects]
         tagger_plot_locations = [created_tagger_group_obj.plot.path for tagger in tagger_objects]
 
-        print(tagger_model_locations, tagger_plot_locations)
-
         delete_response = self.client.delete(created_tagger_group_url, format='json')
         self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
 
@@ -171,7 +169,6 @@ class TaggerGroupViewTests(APITestCase):
                         tagger_plot_locations,
                         ):
                 for model_dir in model_dir_list:
-                    print(model_dir)
                     assert not os.path.isfile(model_dir)
 
 
