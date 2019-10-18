@@ -1,3 +1,4 @@
+from io import BytesIO
 import json
 import os
 from django.db.models import signals
@@ -51,6 +52,7 @@ class TaggerViewTests(APITestCase):
         self.run_list_features()
         self.run_multitag_text()
         self.run_model_retrain()
+        self.run_model_export_import()
 
 
     def run_create_tagger_training_and_task_signal(self):
@@ -261,3 +263,16 @@ class TaggerViewTests(APITestCase):
         response = self.client.get(url)
         feature_dict = {a['feature']: True for a in response.data['features']}
         self.assertTrue(TEST_MATCH_TEXT not in feature_dict)
+
+
+    def run_model_export_import(self):
+        '''Tests endpoint for model export and import'''
+        test_tagger_id = self.test_tagger_ids[0]
+        # retrieve model zip
+        url = f'{self.url}{test_tagger_id}/export_tagger/'
+        response = self.client.get(url)
+        # post model zip
+        url = f'{self.url}import_tagger/'
+        response = self.client.post(url, data={'file': BytesIO(response.content)})
+        print_output('test_import_model:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
