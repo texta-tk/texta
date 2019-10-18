@@ -87,7 +87,7 @@ class TaggerViewTests(APITestCase):
                 self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
 
     def create_tagger_then_delete_tagger_and_created_model(self):
-        ''' creates a tagger and removes it with in instance view '''
+        ''' creates a tagger and removes it with DELETE in instance view '''
         payload = {
             "description": "TestTagger",
             "query": json.dumps(TEST_QUERY),

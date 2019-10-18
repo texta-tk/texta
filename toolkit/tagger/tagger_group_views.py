@@ -1,3 +1,4 @@
+import os
 import json
 import re
 import sys
@@ -87,6 +88,26 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        tagger_objects = instance.taggers.all()
+        for tagger in tagger_objects:
+            self.perform_destroy(tagger)
+        self.perform_destroy(instance)
+        tagger_model_locations = [json.loads(tagger.location)['tagger'] for tagger in tagger_objects]
+        tagger_plot_locations = [tagger.plot.path for tagger in tagger_objects]
+        try:
+            for model_dir_list in (
+                        tagger_model_locations,
+                        tagger_plot_locations,
+                        ):
+                for model_dir in model_dir_list:
+                    os.remove(model_dir)
+            return Response({"success": "Taggergroup instance deleted, related tagger instances deleted and related models and plots removed"}, status=status.HTTP_204_NO_CONTENT)
+        except:
+            return Response({"success": "Taggergroup instance deleted, related tagger instances deleted, but related models and plots were not removed"}, status=status.HTTP_204_NO_CONTENT)
 
 
     def get_tag_candidates(self, text, n_similar_docs=100):
