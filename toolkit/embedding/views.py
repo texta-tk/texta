@@ -15,14 +15,14 @@ from toolkit.core.project.models import Project
 from toolkit.tools.model_cache import ModelCache
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.tools.text_processor import TextProcessor
-from toolkit.view_constants import BulkDelete
+from toolkit.view_constants import BulkDelete, ExportModel
 
 global_w2v_cache = ModelCache(W2VEmbedding)
 global_phraser_cache = ModelCache(Phraser)
 global_cluster_cache = ModelCache(WordCluster)
 
 
-class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
+class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
     """
     API endpoint that allows TEXTA models to be viewed or edited.
     Only include the embeddings that are related to the request UserProfile's active_project

@@ -75,10 +75,11 @@ class ExportModel():
                 for model_type, model_path in json.loads(model_object.location).items():
                     new_model_path = os.path.join('data', 'models', model_type, os.path.basename(model_path))
                     archive.write(model_path, arcname=new_model_path)
-                # write plot files to zip
-                plot_path = model_object.plot.path
-                new_plot_path = os.path.join('data', 'media', os.path.basename(plot_path))
-                archive.write(plot_path, arcname=new_plot_path)
+                # write plot files to zip. we need to check, because e.g. embeddings do not have plots (yet?)
+                if hasattr(model_object, 'plot'):
+                    plot_path = model_object.plot.path
+                    new_plot_path = os.path.join('data', 'media', os.path.basename(plot_path))
+                    archive.write(plot_path, arcname=new_plot_path)
             # reset file pointer
             tmp.seek(0)
             # write file data to response
@@ -109,8 +110,10 @@ class ImportModel():
                 # remove object pk to avoid id clash (django will create one)
                 del model_json['pk']
 
-                # remove embedding THIS IS A HACK!
-                del model_json['fields']['embedding']
+                # remove embedding (if any)
+                # THIS IS A HACK - we need some better solution to handle missing fields
+                if 'embedding' in model_json['fields']:
+                    del model_json['fields']['embedding']
 
                 # remove task object and let django create new
                 del model_json['fields']['task']
@@ -138,9 +141,6 @@ class ImportModel():
         # check if model json inside zip
         if not [f for f in zip_content if f.endswith('.json')]:
             return False
-        # check if plot present
-        if not [f for f in zip_content if f.startswith('data/media') and f.endswith('.png')]:
-            return False
         # check if model files present
         if not [f for f in zip_content if f.startswith('data/models')]:
             return False
@@ -148,11 +148,12 @@ class ImportModel():
 
     def save_files(self, archive, zip_content, model_object):
         # identify relevant files
-        plot_file = [f for f in zip_content if f.startswith('data/media') and f.endswith('.png')][0]
+        plot_files = [f for f in zip_content if f.startswith('data/media') and f.endswith('.png')]
         model_files = [f for f in zip_content if f.startswith('data/models')]
-        # write plot file to disk
-        with open(os.path.join(BASE_DIR, plot_file), 'wb') as fh:
-            fh.write(archive.read(plot_file))
+        # write plot file (if any) to disk
+        for plot_file in plot_files:
+            with open(os.path.join(BASE_DIR, plot_file), 'wb') as fh:
+                fh.write(archive.read(plot_file))
         # write model files to disk
         for model_file in model_files:
             new_model_file = self.rewrite_model_id(model_object.id, model_file)

@@ -1,3 +1,4 @@
+from io import BytesIO
 import json
 import os
 from django.db.models import signals
@@ -26,6 +27,7 @@ class EmbeddingViewTests(APITestCase):
         )
 
         cls.url = f'/projects/{cls.project.id}/embeddings/'
+        cls.project_url = f'/projects/{cls.project.id}'
         cls.cluster_url = f'/projects/{cls.project.id}/embedding_clusters/'
 
         cls.test_embedding_id = None
@@ -45,6 +47,7 @@ class EmbeddingViewTests(APITestCase):
         self.run_embedding_cluster_browse()
         self.run_embedding_cluster_find_word()
         self.run_embedding_cluster_text()
+        self.run_model_export_import()
 
 
     def run_create_embedding_training_and_task_signal(self):
@@ -160,4 +163,15 @@ class EmbeddingViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
-    
+
+
+    def run_model_export_import(self):
+        '''Tests endpoint for model export and import'''
+        # retrieve model zip
+        url = f'{self.url}{self.test_embedding_id}/export_model/'
+        response = self.client.get(url)
+        # post model zip
+        import_url = f'{self.project_url}/import_model/'
+        response = self.client.post(import_url, data={'file': BytesIO(response.content)})
+        print_output('test_import_model:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
