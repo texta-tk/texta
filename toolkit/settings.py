@@ -209,7 +209,7 @@ NUM_WORKERS = 1
 
 # create model dirs
 MODELS_DIR = os.path.join(BASE_DIR, 'data', 'models')
-MODEL_TYPES = ['embedding', 'phraser', 'tagger', 'extractor', 'cluster', 'neurotagger']
+MODEL_TYPES = ['embedding', 'tagger', 'neurotagger']
 for model_type in MODEL_TYPES:
     model_dir = os.path.join(MODELS_DIR, model_type)
     if not os.path.exists(model_dir):

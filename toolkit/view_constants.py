@@ -71,8 +71,11 @@ class ExportModel():
                 # write model object to zip as json
                 model_json = serializers.serialize('json', [model_object])
                 archive.writestr(json_name, model_json)
+                model_json_loaded = json.loads(model_json)[0]
                 # write model files to zip
-                for model_type, model_path in json.loads(model_object.location).items():
+                for model_path in json.loads(model_json_loaded['fields']['location']).values():
+                    # derive model type from model name
+                    model_type = model_json_loaded['model'].split('.')[-1]
                     new_model_path = os.path.join('data', 'models', model_type, os.path.basename(model_path))
                     archive.write(model_path, arcname=new_model_path)
                 # write plot files to zip. we need to check, because e.g. embeddings do not have plots (yet?)
