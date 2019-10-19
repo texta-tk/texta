@@ -56,7 +56,7 @@ class BulkDelete():
 
 class ExportModel():
     @action(detail=True, methods=['get'])
-    def export_tagger(self, request, pk=None, project_pk=None):
+    def export_model(self, request, pk=None, project_pk=None):
         '''API endpoint for exporting the model.'''
         # retrieve model object
         model_object = self.get_object()
@@ -90,8 +90,8 @@ class ExportModel():
 
 
 class ImportModel():
-    @action(detail=False, methods=['post'], serializer_class=ProjectResourceImportModelSerializer)
-    def import_tagger(self, request, project_pk=None):
+    @action(detail=True, methods=['post'], serializer_class=ProjectResourceImportModelSerializer)
+    def import_model(self, request, pk=None):
         '''API endpoint for importing the model.'''
         serializer = ProjectResourceImportModelSerializer(data=request.data)
         # check if valid request
@@ -108,12 +108,14 @@ class ImportModel():
                 model_json = json.loads(archive.read(json_file[0]).decode())[0]
                 # remove object pk to avoid id clash (django will create one)
                 del model_json['pk']
+
                 # remove embedding THIS IS A HACK!
                 del model_json['fields']['embedding']
+
                 # remove task object and let django create new
                 del model_json['fields']['task']
                 # update object project & user to match current
-                model_json['fields']['project'] = project_pk
+                model_json['fields']['project'] = pk
                 model_json['fields']['author'] = request.user.id
                 # deserialize json into django object
                 model_object = list(serializers.deserialize('json', json.dumps([model_json])))[0]

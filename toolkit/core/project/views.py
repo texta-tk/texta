@@ -14,6 +14,7 @@ from toolkit.core.project.serializers import (
     ProjectAdminSerializer,
     ProjectMultiTagSerializer
 )
+from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.searcher import ElasticSearcher
@@ -21,10 +22,11 @@ from toolkit.elastic.query import Query
 from toolkit.tagger.models import Tagger
 from toolkit.core.task.models import Task
 from toolkit.tagger.tasks import apply_tagger
+from toolkit.view_constants import ImportModel
 
 from celery import group
 
-class ProjectViewSet(viewsets.ModelViewSet):
+class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
     # Disable default pagination
     pagination_class = None
     serializer_class = ProjectSerializer
@@ -45,6 +47,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self):
+        # Can we remove this somehow? This is ugly AF.
+        if self.action == 'import_model':
+            return ProjectResourceImportModelSerializer
         if self.action == 'multitag_text':
             return ProjectMultiTagSerializer
         if self.action == 'get_facts':

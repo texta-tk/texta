@@ -25,13 +25,13 @@ from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.helper_functions import apply_celery_task
 from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import BulkDelete
-from toolkit.view_constants import ExportModel, ImportModel
+from toolkit.view_constants import ExportModel
 
 # initialize model cache for taggers & phrasers
 global_tagger_cache = ModelCache(TextTagger)
 global_mlp_for_taggers = MLPAnalyzer()
 
-class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, ImportModel):
+class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
     serializer_class = TaggerSerializer
     permission_classes = (
         ProjectResourceAllowed,

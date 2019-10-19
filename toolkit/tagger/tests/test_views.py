@@ -24,6 +24,7 @@ class TaggerViewTests(APITestCase):
             indices=TEST_INDEX
         )
         cls.url = f'/projects/{cls.project.id}/taggers/'
+        cls.project_url = f'/projects/{cls.project.id}'
         cls.multitag_text_url = f'/projects/{cls.project.id}/multitag_text/'
 
         # set vectorizer & classifier options
@@ -269,10 +270,10 @@ class TaggerViewTests(APITestCase):
         '''Tests endpoint for model export and import'''
         test_tagger_id = self.test_tagger_ids[0]
         # retrieve model zip
-        url = f'{self.url}{test_tagger_id}/export_tagger/'
+        url = f'{self.url}{test_tagger_id}/export_model/'
         response = self.client.get(url)
         # post model zip
-        url = f'{self.url}import_tagger/'
-        response = self.client.post(url, data={'file': BytesIO(response.content)})
+        import_url = f'{self.project_url}/import_model/'
+        response = self.client.post(import_url, data={'file': BytesIO(response.content)})
         print_output('test_import_model:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
