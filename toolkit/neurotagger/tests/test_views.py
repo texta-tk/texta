@@ -117,3 +117,6 @@ class NeurotaggerViewTests(APITestCase):
         response = self.client.post(import_url, data={'file': BytesIO(response.content)})
         print_output('test_import_model:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Test tagging with imported model
+        tagger_id = response.data['id']
+        self.run_tag_text(tagger_id=tagger_id)

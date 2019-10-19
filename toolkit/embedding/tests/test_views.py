@@ -40,7 +40,7 @@ class EmbeddingViewTests(APITestCase):
 
     def test_run(self):
         self.run_create_embedding_training_and_task_signal()
-        self.run_predict()
+        self.run_predict(self.test_embedding_id)
         self.run_predict_with_negatives()
         self.run_phrase()
         self.run_create_embedding_cluster_training_and_task_signal()
@@ -76,11 +76,11 @@ class EmbeddingViewTests(APITestCase):
         self.assertEqual(created_embedding.task.status, Task.STATUS_COMPLETED)
 
 
-    def run_predict(self):
+    def run_predict(self, test_embedding_id):
         '''Tests the endpoint for the predict action'''
         # Send only "text" in payload, because "output_size" should be 10 by default
         payload = { "positives": ["eesti", "läti"] }
-        predict_url = f'{self.url}{self.test_embedding_id}/predict_similar/'
+        predict_url = f'{self.url}{test_embedding_id}/predict_similar/'
         response = self.client.post(predict_url, payload)
         print_output('predict:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -175,3 +175,7 @@ class EmbeddingViewTests(APITestCase):
         response = self.client.post(import_url, data={'file': BytesIO(response.content)})
         print_output('test_import_model:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Test prediction with imported embedding
+        embedding_id = response.data['id']
+        self.run_predict(embedding_id)
+        

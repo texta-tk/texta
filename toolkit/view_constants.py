@@ -133,7 +133,7 @@ class ImportModel():
                 # update task to completed and save again
                 model_object.task.status = model_object.task.STATUS_COMPLETED
                 model_object.task.save()
-                success_response = {'imported': [{'id': model_object.id, 'model': model_json['model']}]}
+                success_response = {'id': model_object.id, 'model': model_json['model']}
             return Response(success_response, status=status.HTTP_200_OK)
         except Exception as e:
             Logger().error('error importing model', exc_info=e)

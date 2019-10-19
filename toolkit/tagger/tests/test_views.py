@@ -42,7 +42,7 @@ class TaggerViewTests(APITestCase):
     def test_run(self):
         self.run_create_tagger_training_and_task_signal()
         self.run_create_tagger_with_incorrect_fields()
-        self.run_tag_text()
+        self.run_tag_text(self.test_tagger_ids)
         self.run_tag_text_with_lemmatization()
         self.run_tag_doc()
         self.run_tag_doc_with_lemmatization()
@@ -108,10 +108,10 @@ class TaggerViewTests(APITestCase):
         self.assertTrue('error' in response.data)
 
 
-    def run_tag_text(self):
+    def run_tag_text(self, test_tagger_ids):
         '''Tests the endpoint for the tag_text action'''
         payload = { "text": "This is some test text for the Tagger Test" }
-        for test_tagger_id in self.test_tagger_ids:
+        for test_tagger_id in test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
             response = self.client.post(tag_text_url, payload)
             print_output('test_tag_text:response.data', response.data)
@@ -277,3 +277,6 @@ class TaggerViewTests(APITestCase):
         response = self.client.post(import_url, data={'file': BytesIO(response.content)})
         print_output('test_import_model:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Test tagging with imported model
+        tagger_id = response.data['id']
+        self.run_tag_text([tagger_id])
