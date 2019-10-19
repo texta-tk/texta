@@ -1,3 +1,4 @@
+from io import BytesIO
 import json
 import os
 from django.db.models import signals
@@ -23,6 +24,7 @@ class TaggerViewTests(APITestCase):
             indices=TEST_INDEX
         )
         cls.url = f'/projects/{cls.project.id}/taggers/'
+        cls.project_url = f'/projects/{cls.project.id}'
         cls.multitag_text_url = f'/projects/{cls.project.id}/multitag_text/'
 
         # set vectorizer & classifier options
@@ -40,7 +42,7 @@ class TaggerViewTests(APITestCase):
     def test_run(self):
         self.run_create_tagger_training_and_task_signal()
         self.run_create_tagger_with_incorrect_fields()
-        self.run_tag_text()
+        self.run_tag_text(self.test_tagger_ids)
         self.run_tag_text_with_lemmatization()
         self.run_tag_doc()
         self.run_tag_doc_with_lemmatization()
@@ -51,6 +53,7 @@ class TaggerViewTests(APITestCase):
         self.run_list_features()
         self.run_multitag_text()
         self.run_model_retrain()
+        self.run_model_export_import()
 
 
     def run_create_tagger_training_and_task_signal(self):
@@ -105,10 +108,10 @@ class TaggerViewTests(APITestCase):
         self.assertTrue('error' in response.data)
 
 
-    def run_tag_text(self):
+    def run_tag_text(self, test_tagger_ids):
         '''Tests the endpoint for the tag_text action'''
         payload = { "text": "This is some test text for the Tagger Test" }
-        for test_tagger_id in self.test_tagger_ids:
+        for test_tagger_id in test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
             response = self.client.post(tag_text_url, payload)
             print_output('test_tag_text:response.data', response.data)
@@ -261,3 +264,19 @@ class TaggerViewTests(APITestCase):
         response = self.client.get(url)
         feature_dict = {a['feature']: True for a in response.data['features']}
         self.assertTrue(TEST_MATCH_TEXT not in feature_dict)
+
+
+    def run_model_export_import(self):
+        '''Tests endpoint for model export and import'''
+        test_tagger_id = self.test_tagger_ids[0]
+        # retrieve model zip
+        url = f'{self.url}{test_tagger_id}/export_model/'
+        response = self.client.get(url)
+        # post model zip
+        import_url = f'{self.project_url}/import_model/'
+        response = self.client.post(import_url, data={'file': BytesIO(response.content)})
+        print_output('test_import_model:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Test tagging with imported model
+        tagger_id = response.data['id']
+        self.run_tag_text([tagger_id])

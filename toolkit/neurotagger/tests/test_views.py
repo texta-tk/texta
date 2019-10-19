@@ -1,3 +1,4 @@
+from io import BytesIO
 import json
 import os
 from django.db.models import signals
@@ -22,15 +23,13 @@ class NeurotaggerViewTests(APITestCase):
     def setUpTestData(cls):
         # Owner of the project
         cls.user = create_test_user('neurotaggerOwner', 'my@email.com', 'pw')
-
         cls.project = Project.objects.create(
             title='neurotaggerTestProject',
             owner=cls.user,
             indices=TEST_INDEX
         )
-
         cls.url = f'/projects/{cls.project.id}/neurotaggers/'
-
+        cls.project_url = f'/projects/{cls.project.id}'
 
 
     def setUp(self):
@@ -59,6 +58,9 @@ class NeurotaggerViewTests(APITestCase):
         # Test the tagging endpoints 
         self.run_tag_text(tagger_id=created_neurotagger.id)
         self.run_tag_doc(tagger_id=created_neurotagger.id)
+
+        # Test model import
+        self.run_model_export_import(tagger_id=created_neurotagger.id)
         
         # Remove neurotagger files after test is done
         if 'model' in created_neurotagger.location:
@@ -103,3 +105,18 @@ class NeurotaggerViewTests(APITestCase):
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
         self.assertTrue('tags' in response.data)
+
+
+    def run_model_export_import(self, tagger_id=None):
+        '''Tests endpoint for model export and import'''
+        # retrieve model zip
+        url = f'{self.url}{tagger_id}/export_model/'
+        response = self.client.get(url)
+        # post model zip
+        import_url = f'{self.project_url}/import_model/'
+        response = self.client.post(import_url, data={'file': BytesIO(response.content)})
+        print_output('test_import_model:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Test tagging with imported model
+        tagger_id = response.data['id']
+        self.run_tag_text(tagger_id=tagger_id)

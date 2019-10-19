@@ -17,3 +17,7 @@ class ProjectResourceBulkDeleteSerializer(serializers.Serializer):
 
 class GeneralTextSerializer(serializers.Serializer):
     text = serializers.CharField()
+
+
+class ProjectResourceImportModelSerializer(serializers.Serializer):
+    file = serializers.FileField()

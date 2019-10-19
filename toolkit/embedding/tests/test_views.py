@@ -1,3 +1,4 @@
+from io import BytesIO
 import json
 import os
 from django.db.models import signals
@@ -26,6 +27,7 @@ class EmbeddingViewTests(APITestCase):
         )
 
         cls.url = f'/projects/{cls.project.id}/embeddings/'
+        cls.project_url = f'/projects/{cls.project.id}'
         cls.cluster_url = f'/projects/{cls.project.id}/embedding_clusters/'
 
         cls.test_embedding_id = None
@@ -38,13 +40,14 @@ class EmbeddingViewTests(APITestCase):
 
     def test_run(self):
         self.run_create_embedding_training_and_task_signal()
-        self.run_predict()
+        self.run_predict(self.test_embedding_id)
         self.run_predict_with_negatives()
         self.run_phrase()
         self.run_create_embedding_cluster_training_and_task_signal()
         self.run_embedding_cluster_browse()
         self.run_embedding_cluster_find_word()
         self.run_embedding_cluster_text()
+        self.run_model_export_import()
 
 
     def run_create_embedding_training_and_task_signal(self):
@@ -73,11 +76,11 @@ class EmbeddingViewTests(APITestCase):
         self.assertEqual(created_embedding.task.status, Task.STATUS_COMPLETED)
 
 
-    def run_predict(self):
+    def run_predict(self, test_embedding_id):
         '''Tests the endpoint for the predict action'''
         # Send only "text" in payload, because "output_size" should be 10 by default
         payload = { "positives": ["eesti", "läti"] }
-        predict_url = f'{self.url}{self.test_embedding_id}/predict_similar/'
+        predict_url = f'{self.url}{test_embedding_id}/predict_similar/'
         response = self.client.post(predict_url, payload)
         print_output('predict:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -160,4 +163,19 @@ class EmbeddingViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
-    
+
+
+    def run_model_export_import(self):
+        '''Tests endpoint for model export and import'''
+        # retrieve model zip
+        url = f'{self.url}{self.test_embedding_id}/export_model/'
+        response = self.client.get(url)
+        # post model zip
+        import_url = f'{self.project_url}/import_model/'
+        response = self.client.post(import_url, data={'file': BytesIO(response.content)})
+        print_output('test_import_model:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Test prediction with imported embedding
+        embedding_id = response.data['id']
+        self.run_predict(embedding_id)
+        
