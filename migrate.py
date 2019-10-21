@@ -45,7 +45,7 @@ def check_mysql_connection():
 def migrate(custom_apps):
     log_message = 'Toolkit: Detecting database changes.'
     print(log_message)
-    make_migrations_output = subprocess.check_output(['python', 'manage.py', 'makemigrations'] + custom_apps)
+    make_migrations_output = subprocess.check_output(['python', 'manage.py', 'makemigrations', '--noinput'] + custom_apps)
     log_message = 'Toolkit: Making database changes.'
     print(log_message)
     sleep(2)

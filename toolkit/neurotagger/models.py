@@ -45,8 +45,7 @@ class Neurotagger(models.Model):
     classification_report = models.TextField(blank=True)
 
     location = models.TextField()
-    model_plot = models.FileField(upload_to='media', null=True, verbose_name='')
-    plot = models.FileField(upload_to='media', null=True, verbose_name='')
+    plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
     result_json = models.TextField(blank=True)
     
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)

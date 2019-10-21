@@ -37,7 +37,6 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResou
 
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
-    model_plot = serializers.SerializerMethodField()
     url = serializers.SerializerMethodField()
 
 
@@ -46,10 +45,10 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResou
         fields = ('url', 'id', 'description', 'project', 'author', 'validation_split', 'score_threshold',
                   'fields', 'fields_parsed', 'model_architecture', 'seq_len', 'maximum_sample_size', 'negative_multiplier',
                   'location', 'num_epochs', 'vocab_size', 'plot', 'task', 'validation_accuracy', 'training_accuracy', 'fact_values',
-                  'training_loss', 'validation_loss', 'model_plot', 'result_json', 'fact_name', 'min_fact_doc_count', 'max_fact_doc_count')
+                  'training_loss', 'validation_loss', 'result_json', 'fact_name', 'min_fact_doc_count', 'max_fact_doc_count')
 
         read_only_fields = ('author', 'project', 'location', 'accuracy', 'loss', 'plot',
-                            'model_plot', 'result_json', 'validation_accuracy', 'training_accuracy',
+                            'result_json', 'validation_accuracy', 'training_accuracy',
                             'training_loss', 'validation_loss', 'fact_values', 'classification_report'
                             )
         
@@ -66,12 +65,6 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResou
             # for multiple fields in a list
             for field_name in remove_fields:
                 self.fields.pop(field_name)
-
-    def get_model_plot(self, obj):
-        if obj.model_plot:
-            return '{0}/{1}'.format(URL_PREFIX, obj.model_plot)
-        else:
-            return None
 
     def get_fields_parsed(self, obj):
         if obj.fields:

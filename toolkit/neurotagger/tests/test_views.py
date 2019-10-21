@@ -71,8 +71,6 @@ class NeurotaggerViewTests(APITestCase):
             
         if created_neurotagger.plot:
             remove_file(created_neurotagger.plot.path)
-        if created_neurotagger.model_plot:
-            remove_file(created_neurotagger.model_plot.path)
 
         # Check if Task gets created via a signal
         self.assertTrue(created_neurotagger.task is not None)

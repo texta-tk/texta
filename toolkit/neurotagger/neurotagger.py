@@ -29,7 +29,6 @@ from keras.callbacks import Callback
 from keras.models import load_model
 from keras.optimizers import Adam
 from keras.activations import relu, elu, softmax, sigmoid
-from keras.utils import plot_model
 from keras.utils.vis_utils import model_to_dot
 
 # Import model architectures
@@ -268,14 +267,6 @@ class NeurotaggerWorker():
         acc_loss_plot_path = f'{secrets.token_hex(15)}.png'
         self.neurotagger_obj.plot.save(acc_loss_plot_path, save_plot(plt))
         plt.clf()
-
-        # Plot Keras model
-        model_plot_path = f'{secrets.token_hex(15)}.png'
-        # Get byte representation of the plot
-        model_plot = model_to_dot(self.model).create(prog='dot', format='png')
-        # Wrap it as a Django ContentFile, and save to model
-        c_f = ContentFile(model_plot)
-        self.neurotagger_obj.model_plot.save(model_plot_path, c_f)
 
 
     def load(self):
