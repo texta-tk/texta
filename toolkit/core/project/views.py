@@ -110,7 +110,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
                 return Response({'error': f'fields names are not valid for this project. allowed values are: {project_fields}'},
                                 status=status.HTTP_400_BAD_REQUEST)
                                 
-        es = ElasticSearcher(indices=project_indices, output='doc')
+        es = ElasticSearcher(indices=project_indices, output=ElasticSearcher.OUT_DOC)
         q = Query(operator=serializer.validated_data['operator'])
         # if input is string, convert to list
         # if unknown format, return error
@@ -145,7 +145,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
         if not project_indices:
             return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST) 
 
-        es = ElasticSearcher(indices=project_indices, output='doc')
+        es = ElasticSearcher(indices=project_indices, output=ElasticSearcher.OUT_RAW_HITS)
         es.update_query(serializer.validated_data['query'])
         results = es.search()
 

@@ -36,7 +36,7 @@ def train_embedding(embedding_id):
         sentences = ElasticSearcher(query=json.loads(embedding_object.query),
                                     indices=indices,
                                     field_data=field_data,
-                                    output='text',
+                                    output=ElasticSearcher.OUT_TEXT,
                                     callback_progress=show_progress,
                                     text_processor=text_processor)
         
@@ -60,7 +60,7 @@ def train_embedding(embedding_id):
         sentences = ElasticSearcher(query=json.loads(embedding_object.query),
                                     indices=indices,
                                     field_data=field_data,
-                                    output='text',
+                                    output=ElasticSearcher.OUT_TEXT,
                                     callback_progress=show_progress,
                                     text_processor=text_processor)
         # word2vec model

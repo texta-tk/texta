@@ -45,7 +45,7 @@ def train_tagger(tagger_id):
             query=json.loads(tagger_object.query),
             indices=indices,
             field_data=field_data,
-            output='doc_with_id',
+            output=ElasticSearcher.OUT_DOC_WITH_ID,
             callback_progress=show_progress,
             scroll_limit=int(tagger_object.maximum_sample_size),
             text_processor=text_processor
@@ -59,7 +59,7 @@ def train_tagger(tagger_id):
         negative_samples = ElasticSearcher(
             indices=indices,
             field_data=field_data,
-            output='doc_with_id',
+            output=ElasticSearcher.OUT_DOC_WITH_ID,
             callback_progress=show_progress,
             scroll_limit=int(tagger_object.maximum_sample_size)*int(tagger_object.negative_multiplier),
             ignore_ids=positive_ids,

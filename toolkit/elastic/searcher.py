@@ -13,6 +13,7 @@ class ElasticSearcher:
     Everything related to performing searches in Elasticsearch
     """
     OUT_RAW         = 'raw'
+    OUT_RAW_HITS    = 'raw_hits'
     OUT_DOC         = 'doc'
     OUT_DOC_WITH_ID = 'doc_with_id'
     OUT_TEXT        = 'text'
@@ -120,6 +121,9 @@ class ElasticSearcher:
         response = self.core.es.search(index=self.indices, body=self.query, size=size)
         if self.output == self.OUT_DOC:
             return [self._parse_doc(doc) for doc in response['hits']['hits']]
+        if self.output == self.OUT_RAW_HITS:
+            return [doc for doc in response['hits']['hits']]
+        
         else:
             return response
 
