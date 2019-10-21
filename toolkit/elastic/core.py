@@ -2,7 +2,7 @@ import requests
 from elasticsearch import Elasticsearch
 
 from toolkit.settings import ES_CONNECTION_PARAMETERS, ES_PASSWORD, ES_PREFIX, ES_URL, ES_USERNAME
-
+from toolkit.tools.logger import Logger
 
 class ElasticCore:
     """
@@ -11,9 +11,9 @@ class ElasticCore:
 
 
     def __init__(self):
+        self.connection = self._check_connection()
         self.es = self._create_client_interface()
         self.es_prefix = ES_PREFIX
-        self.connection = self._check_connection()
         self.TEXTA_RESERVED = ['texta_facts']
 
 
@@ -24,10 +24,14 @@ class ElasticCore:
         For safety's sake we remove all connection parameters with None (default if not configured in env),
         and then throw the existing ones with dictionary unpacking as per the Urllib3HttpConnection class.
         """
-        list_of_hosts = ES_URL.split(",")
-        existing_connection_parameters = dict((key, value) for key, value in ES_CONNECTION_PARAMETERS.items() if value is not None)
-        client = Elasticsearch(list_of_hosts, http_auth=(ES_USERNAME, ES_PASSWORD), **existing_connection_parameters)
-        return client
+        if self.connection:
+            list_of_hosts = ES_URL.split(",")
+            existing_connection_parameters = dict((key, value) for key, value in ES_CONNECTION_PARAMETERS.items() if value is not None)
+            client = Elasticsearch(list_of_hosts, http_auth=(ES_USERNAME, ES_PASSWORD), **existing_connection_parameters)
+            return client
+        else:
+            Logger().error("Error connecting to Elasticsearch")
+            return None
 
 
     def _check_connection(self):
