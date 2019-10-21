@@ -10,7 +10,6 @@ from toolkit.tagger.choices import (get_field_choices, get_classifier_choices, g
                                     DEFAULT_NUM_DOCUMENTS, DEFAULT_TAGGER_GROUP_FACT_NAME)
 
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.settings import URL_PREFIX
 from toolkit.serializer_constants import ProjectResourceUrlSerializer
 
 
@@ -87,11 +86,6 @@ class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer
             # for multiple fields in a list
             for field_name in remove_fields:
                 self.fields.pop(field_name)
-    
-    def get_plot(self, obj):
-        if obj.plot:
-            return '{0}/{1}'.format(URL_PREFIX, obj.plot)
-        return None
 
     def get_stop_words(self, obj):
         if obj.stop_words:

@@ -8,7 +8,6 @@ from . import choices
 from .models import Neurotagger
 from toolkit.constants import get_field_choices
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.settings import URL_PREFIX
 from toolkit.serializer_constants import ProjectResourceUrlSerializer
 
 
@@ -67,13 +66,6 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResou
             # for multiple fields in a list
             for field_name in remove_fields:
                 self.fields.pop(field_name)
-    
-
-    def get_plot(self, obj):
-        if obj.plot:
-            return '{0}/{1}'.format(URL_PREFIX, obj.plot)
-        else:
-            return None
 
     def get_model_plot(self, obj):
         if obj.model_plot:
