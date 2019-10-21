@@ -64,6 +64,8 @@ class TestModelCache(TestCase):
         self.assertTrue(isinstance(model_cache.models, dict))
         self.assertTrue(model_cache.models)
         self.assertTrue(self.test_embedding_id in model_cache.models)
+        # test check memory
+        model_cache.check_memory()
         # sleep for 1 second to wait for model cache timeout
         sleep(1)
         # try cleaning the cache
@@ -71,4 +73,4 @@ class TestModelCache(TestCase):
         print_output('test_run_cache_with_embedding_clean_cache:models', model_cache.models)
         # check if model cache empty again
         self.assertTrue(isinstance(model_cache.models, dict))
-        self.assertTrue(not model_cache.models)        
+        self.assertTrue(not model_cache.models)  
