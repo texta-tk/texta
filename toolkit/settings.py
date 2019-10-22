@@ -67,9 +67,7 @@ SITE_ID = 1
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # For corsheaders/external frontend
-CORS_ORIGIN_WHITELIST = (
-    'http://localhost:4200',
-)
+CORS_ORIGIN_REGEX_WHITELIST = [r'.+:4200']
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
