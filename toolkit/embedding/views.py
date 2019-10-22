@@ -82,7 +82,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class EmbeddingClusterViewSet(viewsets.ModelViewSet):
+class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
     """
     API endpoint that allows TEXTA embedding clusterings to be viewed or edited.
     Only include embedding clusterings that are related to the request UserProfile's active_project

@@ -17,7 +17,7 @@ from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.core.project.models import Project
 from toolkit.tagger.serializers import TaggerGroupSerializer, TaggerGroupTagTextSerializer, TaggerGroupTagDocumentSerializer
 from toolkit.tools.text_processor import TextProcessor
-from toolkit.view_constants import TagLogicViews
+from toolkit.view_constants import TagLogicViews, BulkDelete
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.core.task.models import Task
 from toolkit.helper_functions import apply_celery_task
@@ -25,7 +25,8 @@ from toolkit.tagger.validators import validate_input_document
 from toolkit.tagger.tagger_views import global_mlp_for_taggers
 
 
-class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
+
+class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
     queryset = TaggerGroup.objects.all()
     serializer_class = TaggerGroupSerializer
     permission_classes = (
