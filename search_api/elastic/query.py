@@ -65,7 +65,7 @@ class Query(object):
             if start:
                 date_range['range'][field]['gte'] = start
             if end:
-                date_range['range'][field]['gte'] = end
+                date_range['range'][field]['lte'] = end
 
             self._query['query']['bool']['must'].append(date_range)
 
