@@ -50,3 +50,24 @@ class ProjectViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue(len(response.data) == 0)
+
+    def test_autocomplete_fact_values(self):
+        payload = {"limit": 5, "startswith": "fo", "fact_name": TEST_FACT_NAME}
+        url = f'/projects/{self.project.id}/autocomplete_fact_values/'
+        response = self.client.post(url, payload)
+        print_output('test_autocomplete_fact_values:response.data', response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue('foo' in response.data)
+        self.assertTrue('bar' not in response.data)
+
+
+    def test_autocomplete_fact_names(self):
+        payload = {"limit": 5, "startswith": "TE" }
+        url = f'/projects/{self.project.id}/autocomplete_fact_names/'
+        response = self.client.post(url, payload)
+        print_output('test_autocomplete_fact_names:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue('TEEMA' in response.data)

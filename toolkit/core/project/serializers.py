@@ -4,13 +4,10 @@ from django import forms
 
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.core.project.models import Project
-from toolkit.core.choices import get_index_choices, MATCH_CHOICES, OPERATOR_CHOICES
+from toolkit.core import choices as choices
 from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.tagger.models import Tagger
 from toolkit.elastic.searcher import EMPTY_QUERY
-
-
-DEFAULT_VALUES_PER_NAME = 10
 
 
 class ProjectMultiTagSerializer(serializers.Serializer):
@@ -25,7 +22,7 @@ class ProjectSearchByQuerySerializer(serializers.Serializer):
 
 class ProjectSimplifiedSearchSerializer(serializers.Serializer):
     match_text = serializers.CharField(help_text='String of list of strings to match.')
-    match_type = serializers.ChoiceField(choices=MATCH_CHOICES,
+    match_type = serializers.ChoiceField(choices=choices.MATCH_CHOICES,
         help_text='Match type to apply. Default: match.',
         default='word',
         required=False)
@@ -37,7 +34,7 @@ class ProjectSimplifiedSearchSerializer(serializers.Serializer):
         help_text='Match from specific fields in project. Default: EMPTY - all fields are used.',
         default=None,
         required=False)
-    operator = serializers.ChoiceField(choices=OPERATOR_CHOICES,
+    operator = serializers.ChoiceField(choices=choices.OPERATOR_CHOICES,
         help_text=f'Operator to use in search.',
         default='must',
         required=False)
@@ -47,7 +44,7 @@ class ProjectSimplifiedSearchSerializer(serializers.Serializer):
 
 
 class ProjectGetFactsSerializer(serializers.Serializer):
-    values_per_name = serializers.IntegerField(default=DEFAULT_VALUES_PER_NAME,
+    values_per_name = serializers.IntegerField(default=choices.DEFAULT_VALUES_PER_NAME,
         help_text=f'Number of fact values per fact name. Default: 10.')
     output_type = serializers.ChoiceField(choices=((True, 'fact names with values'), (False, 'fact names without values')),
         help_text=f'Include fact values in output. Default: True', default=True)
@@ -57,7 +54,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
     owner = serializers.PrimaryKeyRelatedField(required=False, queryset=User.objects.all())
     owner_username = serializers.CharField(source='owner.username', read_only=True)
 
-    indices = serializers.MultipleChoiceField(choices=get_index_choices())
+    indices = serializers.MultipleChoiceField(choices=choices.get_index_choices())
     users = serializers.HyperlinkedRelatedField(many=True, view_name='user-detail', queryset=User.objects.all(),)
     resources = serializers.SerializerMethodField()
 
@@ -73,3 +70,16 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         for resource_name in ('lexicons', 'searches', 'embeddings', 'embedding_clusters', 'taggers', 'tagger_groups', 'neurotaggers'):
             resource_dict[resource_name] = f'{base_url}{resource_name}/'
         return resource_dict
+
+
+class ProjectSuggestFactValuesSerializer(serializers.Serializer):
+    limit = serializers.IntegerField(default=choices.DEFAULT_VALUES_PER_NAME,
+        help_text=f'Number of suggestions. Default: {choices.DEFAULT_SUGGESTION_LIMIT}.')
+    startswith = serializers.CharField(help_text=f'The string to autocomplete fact values with.', allow_blank=True)
+    fact_name = serializers.CharField(help_text='Fact name from which to suggest values.')
+
+
+class ProjectSuggestFactNamesSerializer(serializers.Serializer):
+    limit = serializers.IntegerField(default=choices.DEFAULT_VALUES_PER_NAME,
+        help_text=f'Number of suggestions. Default: {choices.DEFAULT_SUGGESTION_LIMIT}.')
+    startswith = serializers.CharField(help_text=f'The string to autocomplete fact names with.', allow_blank=True)

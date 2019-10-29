@@ -25,3 +25,6 @@ STATUS_CHOICES = (
 
 MATCH_CHOICES = (('word', 'word'),( 'phrase', 'phrase'), ('phrase_prefix', 'phrase_prefix'))
 OPERATOR_CHOICES = (('must', 'must'), ('must_not', 'mut_not'), ('should', 'should'))
+
+DEFAULT_SUGGESTION_LIMIT = 10
+DEFAULT_VALUES_PER_NAME = 10
