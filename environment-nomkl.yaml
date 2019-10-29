@@ -3,6 +3,7 @@ name: texta-rest
 channels:
   - conda-forge
   - anaconda
+  - bioconda
 
 dependencies:
   - nomkl
@@ -20,7 +21,7 @@ dependencies:
   - uwsgi
   - supervisor
   - psycopg2
-  - mysql-connector-python
+  - mysqlclient
   - pip:
     - tensorflow==1.5.0
     - django==2.1.*
