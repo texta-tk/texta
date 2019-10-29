@@ -12,6 +12,9 @@ class Search(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     # TextField saving JSON for saving front-end state
     query_constraints = models.TextField()
+    # TextField for saving the JSON elasticsearch query
+    # useful for when you want to use the saved search outside of front-end (where saving the query might not necessary)
+    query = models.TextField()
 
     def __str__(self):
         return self.query

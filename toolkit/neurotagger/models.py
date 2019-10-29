@@ -6,7 +6,6 @@ from django.db.models import signals
 
 from . import choices
 from toolkit.constants import get_field_choices
-from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.task.models import Task
 from toolkit.core.project.models import Project
