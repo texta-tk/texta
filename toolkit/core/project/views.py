@@ -222,3 +222,17 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
 
 
         return Response(fact_values, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['get'])
+    def get_resource_counts(self, request, pk=None, project_pk=None):
+        proj = self.get_object()
+        response = {
+            'num_neurotaggers': proj.neurotagger_set.count(),
+            'num_taggers': proj.tagger_set.count(),
+            'num_tagger_groups': proj.taggergroup_set.count(),
+            'num_embeddings': proj.embedding_set.count(),
+            'num_embedding_clusters': proj.embeddingcluster_set.count(),
+        }
+
+        return Response(response, status=status.HTTP_200_OK)

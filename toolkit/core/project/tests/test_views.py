@@ -71,3 +71,16 @@ class ProjectViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue('TEEMA' in response.data)
+
+
+    def test_resource_counts(self):
+        url = f'/projects/{self.project.id}/get_resource_counts/'
+        response = self.client.get(url)
+        print_output('get_resource_counts:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, dict))
+        self.assertTrue('num_neurotaggers' in response.data)
+        self.assertTrue('num_taggers' in response.data)
+        self.assertTrue('num_tagger_groups' in response.data)
+        self.assertTrue('num_embeddings' in response.data)
+        self.assertTrue('num_embedding_clusters' in response.data)
