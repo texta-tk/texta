@@ -11,3 +11,4 @@ class SearchSerializer(serializers.HyperlinkedModelSerializer, ProjectResourceUr
     class Meta:
         model = Search
         fields = ('url', 'id', 'description', 'query_constraints', 'author', 'project', 'query')
+        read_only_fields = ('url', 'author', 'project',)
