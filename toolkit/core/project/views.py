@@ -1,29 +1,19 @@
-from django.db.models.query import QuerySet
-from rest_framework import viewsets, status, permissions
-from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.response import Response
 
-from toolkit.permissions.project_permissions import ProjectAllowed
 from toolkit.core.project.models import Project
-from toolkit.core.project.serializers import (
-    ProjectSerializer,
-    ProjectGetFactsSerializer,
-    ProjectSimplifiedSearchSerializer,
-    ProjectSearchByQuerySerializer,
-    ProjectMultiTagSerializer
-)
-from toolkit.serializer_constants import ProjectResourceImportModelSerializer
-from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.aggregator import ElasticAggregator
-from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.elastic.query import Query
-from toolkit.tagger.models import Tagger
+from toolkit.core.project.serializers import (ProjectGetFactsSerializer, ProjectMultiTagSerializer, ProjectSearchByQuerySerializer, ProjectSerializer, ProjectSimplifiedSearchSerializer, ProjectSpamSerializer)
 from toolkit.core.task.models import Task
+from toolkit.elastic.aggregator import ElasticAggregator
+from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.query import Query
+from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.permissions.project_permissions import ProjectAllowed
+from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.view_constants import ImportModel
 
-from celery import group
 
 class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
     # Disable default pagination
@@ -34,8 +24,10 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
         ProjectAllowed,
     )
 
+
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
 
     def get_queryset(self):
         queryset = Project.objects.all()
@@ -61,6 +53,20 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
             field_map[field['index']].append(field_info)
         field_map_list = [{'index': k, 'fields': v} for k, v in field_map.items()]
         return Response(field_map_list, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['post'], serializer_class=ProjectSpamSerializer)
+    def get_spam_content(self, request):
+        data = ProjectSpamSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+
+        project_object = self.get_object()
+        project_indices = list(project_object.indices)
+
+        aggregator = ElasticAggregator(indices=project_indices)
+        response = aggregator.get_spam_content(**data.validated_data)
+
+        return Response(response, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['get', 'post'], serializer_class=ProjectGetFactsSerializer)
@@ -109,7 +115,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
             if not set(serializer.validated_data['match_fields']).issubset(set(project_fields)):
                 return Response({'error': f'fields names are not valid for this project. allowed values are: {project_fields}'},
                                 status=status.HTTP_400_BAD_REQUEST)
-                                
+
         es = ElasticSearcher(indices=project_indices, output=ElasticSearcher.OUT_DOC)
         q = Query(operator=serializer.validated_data['operator'])
         # if input is string, convert to list
@@ -143,7 +149,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
         project_fields = project_object.get_elastic_fields(path_list=True)
 
         if not project_indices:
-            return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST) 
+            return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST)
 
         es = ElasticSearcher(indices=project_indices, output=ElasticSearcher.OUT_DOC_HL)
         es.update_query(serializer.validated_data['query'])

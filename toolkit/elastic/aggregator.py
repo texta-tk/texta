@@ -1,13 +1,16 @@
-import json
+from typing import List
+
+from elasticsearch_dsl import A, Q, Search
 
 from toolkit.elastic.core import ElasticCore
-from toolkit.settings import ES_URL
+
 
 class ElasticAggregator:
     """
     Everything related to performing aggregations in Elasticsearch
     """
     EMPTY_QUERY = {"query": {"match_all": {}}}
+
 
     def __init__(self, field_data=[], indices=[], query=EMPTY_QUERY):
         """
@@ -37,19 +40,41 @@ class ElasticAggregator:
         return response
 
 
+    def get_spam_content(self, target_field: str, all_fields: List[dict], from_date: str = "now-1h", to_date: str = "now", date_field: str = "@timestamp", aggregation_size: int = 100, min_doc_count=10):
+        s = Search(using=self.core.es, index=self.indices)
+
+        date_filter = A("filter", Q("range", **{date_field: {'gte': from_date, 'lte': to_date}}))
+        term_filter = A("terms", field="{}.keyword".format(target_field), size=aggregation_size, min_doc_count=min_doc_count)
+
+        s.aggs.bucket("date_filter", date_filter).bucket("spam", term_filter)
+        s = s.extra(size=0)  # returns only aggregations, skips hits.
+
+        for field in all_fields:
+            ignored_fields = ["date", "fact"]
+            if field["type"] not in ignored_fields:
+                if field["type"] == "text":
+                    s.aggs["date_filter"]["spam"].bucket(field, "terms", field="{}.keyword".format(field), size=aggregation_size, min_doc_count=min_doc_count)
+                else:
+                    s.aggs["date_filter"]["spam"].bucket(field, "terms", field="{}".format(field), size=aggregation_size, min_doc_count=min_doc_count)
+
+        response = s.execute().to_dict()
+        return response
+
+
     def facts(self, size=30, filter_by_fact_name=None, min_count=0, max_count=None, include_values=True):
         """
         For retrieving entities (facts) from ES
         """
-        agg_query = {"facts": {
-                            "nested": {"path": "texta_facts"},
-                            "aggs": {
-                                "facts": {
-                                    "terms": {"field": "texta_facts.fact", "size": size}
-                                }
-                            }
-                        }
+        agg_query = {
+            "facts": {
+                "nested": {"path": "texta_facts"},
+                "aggs": {
+                    "facts": {
+                        "terms": {"field": "texta_facts.fact", "size": size}
                     }
+                }
+            }
+        }
 
         # filter by name if fact name present
         if filter_by_fact_name:

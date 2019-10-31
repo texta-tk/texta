@@ -35,6 +35,7 @@ dependencies:
     - joblib
     - django-rest-serializer-field-permissions
     - django-cors-headers
+    - elasticsearch_dsl<7
     - sentencepiece
     - python-json-logger
     - drf-yasg
