@@ -1,15 +1,19 @@
+from celery import group
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
-from toolkit.core.project.serializers import (ProjectGetFactsSerializer, ProjectMultiTagSerializer, ProjectSearchByQuerySerializer, ProjectSerializer, ProjectSimplifiedSearchSerializer, ProjectSpamSerializer)
+from toolkit.core.project.serializers import (ProjectGetFactsSerializer, ProjectMultiTagSerializer, ProjectSearchByQuerySerializer, ProjectSerializer, ProjectSimplifiedSearchSerializer)
 from toolkit.core.task.models import Task
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.elastic.serializers import SpamSerializer
+from toolkit.elastic.spam_detector import SpamDetector
 from toolkit.permissions.project_permissions import ProjectAllowed
+from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.view_constants import ImportModel
@@ -54,17 +58,26 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
         field_map_list = [{'index': k, 'fields': v} for k, v in field_map.items()]
         return Response(field_map_list, status=status.HTTP_200_OK)
 
-
-    @action(detail=True, methods=['post'], serializer_class=ProjectSpamSerializer)
-    def get_spam_content(self, request):
-        data = ProjectSpamSerializer(data=request.data)
-        data.is_valid(raise_exception=True)
-
+    def get_project_indices(self, pk=None):
         project_object = self.get_object()
         project_indices = list(project_object.indices)
+        return project_indices
 
-        aggregator = ElasticAggregator(indices=project_indices)
-        response = aggregator.get_spam_content(**data.validated_data)
+
+    @action(detail=True, methods=['post'], serializer_class=SpamSerializer)
+    def get_spam_content(self,  request, pk=None):
+        serializer = SpamSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        indices = self.get_project_indices(pk)
+        detector = SpamDetector(ES_URL, indices)
+
+        all_fields = ElasticCore().get_fields(indices)
+        fields = detector.filter_fields(serializer.validated_data["common_feature_fields"], all_fields)
+        serializer.validated_data["common_feature_fields"] = fields  # Since we're unpacking all the data in the serializer, gonna overwrite what's inside it for comfort.
+
+        response = detector.get_spam_content(**serializer.validated_data)
+        response = detector.format_elastic_response(response)
 
         return Response(response, status=status.HTTP_200_OK)
 

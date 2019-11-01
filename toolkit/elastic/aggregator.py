@@ -1,7 +1,3 @@
-from typing import List
-
-from elasticsearch_dsl import A, Q, Search
-
 from toolkit.elastic.core import ElasticCore
 
 
@@ -37,27 +33,6 @@ class ElasticAggregator:
     def _aggregate(self, agg_query):
         self.query["aggregations"] = agg_query
         response = self.core.es.search(index=self.indices, body=self.query)
-        return response
-
-
-    def get_spam_content(self, target_field: str, all_fields: List[dict], from_date: str = "now-1h", to_date: str = "now", date_field: str = "@timestamp", aggregation_size: int = 100, min_doc_count=10):
-        s = Search(using=self.core.es, index=self.indices)
-
-        date_filter = A("filter", Q("range", **{date_field: {'gte': from_date, 'lte': to_date}}))
-        term_filter = A("terms", field="{}.keyword".format(target_field), size=aggregation_size, min_doc_count=min_doc_count)
-
-        s.aggs.bucket("date_filter", date_filter).bucket("spam", term_filter)
-        s = s.extra(size=0)  # returns only aggregations, skips hits.
-
-        for field in all_fields:
-            ignored_fields = ["date", "fact"]
-            if field["type"] not in ignored_fields:
-                if field["type"] == "text":
-                    s.aggs["date_filter"]["spam"].bucket(field, "terms", field="{}.keyword".format(field), size=aggregation_size, min_doc_count=min_doc_count)
-                else:
-                    s.aggs["date_filter"]["spam"].bucket(field, "terms", field="{}".format(field), size=aggregation_size, min_doc_count=min_doc_count)
-
-        response = s.execute().to_dict()
         return response
 
 

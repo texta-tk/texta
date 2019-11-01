@@ -71,13 +71,3 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         for resource_name in ('lexicons', 'searches', 'embeddings', 'embedding_clusters', 'taggers', 'tagger_groups', 'neurotaggers'):
             resource_dict[resource_name] = f'{base_url}{resource_name}/'
         return resource_dict
-
-
-class ProjectSpamSerializer(serializers.Serializer):
-    target_field = serializers.CharField(required=True)
-    from_date = serializers.CharField(default="now")
-    to_date = serializers.CharField(default="now-1h")
-    date_field = serializers.CharField(required=True)
-    aggregation_size = serializers.IntegerField(min_value=1, max_value=10000, default=10)
-    min_doc_count = serializers.IntegerField(min_value=1, default=10)
-    all_fields = serializers.ListField(required=True, child=serializers.DictField(), min_length=1)
