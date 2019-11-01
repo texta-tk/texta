@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     # Apps
     'toolkit.core',
+    'toolkit.elastic',
     'toolkit.embedding',
     'toolkit.tagger',
     'toolkit.neurotagger',
