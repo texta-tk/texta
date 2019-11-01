@@ -14,6 +14,8 @@ from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.view_constants import ImportModel
 
+from celery import group
+
 
 class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
     # Disable default pagination
