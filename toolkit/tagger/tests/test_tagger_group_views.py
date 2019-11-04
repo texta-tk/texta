@@ -118,3 +118,8 @@ class TaggerGroupViewTests(APITestCase):
         # Check if response data
         self.assertTrue(response.data)
         self.assertTrue('success' in response.data)
+        # remove retrained tagger models
+        retrained_tagger_group = TaggerGroup.objects.get(id=response.data['tagger_group_id'])
+        for tagger in retrained_tagger_group.taggers.all():
+            self.addCleanup(remove_file, json.loads(tagger.location)['tagger'])
+

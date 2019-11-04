@@ -104,7 +104,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
             tagger.save()
             apply_celery_task(train_tagger, tagger.pk)
 
-        return Response({'success': 'retraining tasks created'}, status=status.HTTP_200_OK)
+        return Response({'success': 'retraining tasks created', 'tagger_group_id': instance.id}, status=status.HTTP_200_OK)
 
 
     def get_mlp(self, text, lemmatize=False, use_ner=True):
@@ -197,10 +197,10 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
         if lemmatize or use_ner:
             if not global_mlp_for_taggers.status:
                 return Response({'error': 'mlp not available. check connection to mlp.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
         # update text and tags with MLP
         text, tags = self.get_mlp(text, lemmatize=lemmatize, use_ner=use_ner)
-        
+
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(text, ignore_tags=tags, n_similar_docs=n_similar_docs)
         # get tags
@@ -251,10 +251,10 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
         if lemmatize or use_ner:
             if not global_mlp_for_taggers.status:
                 return Response({'error': 'mlp not available. check connection to mlp.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
         # update text and tags with MLP
         combined_texts, tags = self.get_mlp(combined_texts, lemmatize=lemmatize, use_ner=use_ner)
-        
+
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(combined_texts, ignore_tags=tags, n_similar_docs=n_similar_docs)
         # get tags
