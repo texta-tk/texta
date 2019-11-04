@@ -36,7 +36,7 @@ def train_embedding(embedding_id):
         sentences = ElasticSearcher(query=json.loads(embedding_object.query),
                                     indices=indices,
                                     field_data=field_data,
-                                    output='text',
+                                    output=ElasticSearcher.OUT_TEXT,
                                     callback_progress=show_progress,
                                     text_processor=text_processor)
         
@@ -60,7 +60,7 @@ def train_embedding(embedding_id):
         sentences = ElasticSearcher(query=json.loads(embedding_object.query),
                                     indices=indices,
                                     field_data=field_data,
-                                    output='text',
+                                    output=ElasticSearcher.OUT_TEXT,
                                     callback_progress=show_progress,
                                     text_processor=text_processor)
         # word2vec model
@@ -121,7 +121,7 @@ def cluster_embedding(clustering_id):
         show_progress.update_step('saving')
         show_progress.update_view(0)
 
-        clustering_path = os.path.join(MODELS_DIR, 'cluster', f'cluster_{clustering_id}_{secrets.token_hex(10)}')
+        clustering_path = os.path.join(MODELS_DIR, 'embedding', f'cluster_{clustering_id}_{secrets.token_hex(10)}')
         clustering.save(clustering_path)
 
         # save clustering

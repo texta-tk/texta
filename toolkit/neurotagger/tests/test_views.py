@@ -1,3 +1,4 @@
+from io import BytesIO
 import json
 import os
 from django.db.models import signals
@@ -22,15 +23,13 @@ class NeurotaggerViewTests(APITestCase):
     def setUpTestData(cls):
         # Owner of the project
         cls.user = create_test_user('neurotaggerOwner', 'my@email.com', 'pw')
-
         cls.project = Project.objects.create(
             title='neurotaggerTestProject',
             owner=cls.user,
             indices=TEST_INDEX
         )
-
         cls.url = f'/projects/{cls.project.id}/neurotaggers/'
-
+        cls.project_url = f'/projects/{cls.project.id}'
 
 
     def setUp(self):
@@ -61,6 +60,9 @@ class NeurotaggerViewTests(APITestCase):
         self.run_tag_text(tagger_id=created_neurotagger.id)
         self.run_tag_doc(tagger_id=created_neurotagger.id)
 
+        # Test model import
+        self.run_model_export_import(tagger_id=created_neurotagger.id)
+        
         # Remove neurotagger files after test is done
         if 'model' in created_neurotagger.location:
             self.addCleanup(remove_file, json.loads(created_neurotagger.location)['model'])
@@ -70,8 +72,6 @@ class NeurotaggerViewTests(APITestCase):
 
         if created_neurotagger.plot:
             remove_file(created_neurotagger.plot.path)
-        if created_neurotagger.model_plot:
-            remove_file(created_neurotagger.model_plot.path)
 
         # Check if Task gets created via a signal
         self.assertTrue(created_neurotagger.task is not None)
@@ -106,6 +106,21 @@ class NeurotaggerViewTests(APITestCase):
         self.assertTrue('tags' in response.data)
 
 
+    def run_model_export_import(self, tagger_id=None):
+        '''Tests endpoint for model export and import'''
+        # retrieve model zip
+        url = f'{self.url}{tagger_id}/export_model/'
+        response = self.client.get(url)
+        # post model zip
+        import_url = f'{self.project_url}/import_model/'
+        response = self.client.post(import_url, data={'file': BytesIO(response.content)})
+        print_output('test_import_model:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Test tagging with imported model
+        tagger_id = response.data['id']
+        self.run_tag_text(tagger_id=tagger_id)
+
+
     def create_neurotagger_then_delete_neurotagger_and_created_model(self):
         payload = {
             "description": "TestNeurotaggerView",
@@ -137,6 +152,3 @@ class NeurotaggerViewTests(APITestCase):
                     created_neurotagger.model_plot.path
                     ):
             assert not os.path.isfile(model)
-
-
-

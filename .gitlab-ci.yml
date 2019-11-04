@@ -1,37 +1,38 @@
 image: continuumio/miniconda3:latest
 
 services:
-  - name: docker.elastic.co/elasticsearch/elasticsearch:6.7.2
-    alias: elasticsearch
   - name: docker.texta.ee/texta/mlp:latest
     alias: texta-mlp
   - name: redis:latest
 
 stages:
   - test
-#  - build
+  - build
 
 Test:
   before_script:
-    - sed -i '/  - tensorflow-gpu/c\  - tensorflow' environment.yaml
-    - conda env create -f environment.yaml && source activate texta-rest
-    - python import_test_index.py -es http://elasticsearch:9200
+    - conda env create -f environment-nomkl.yaml && source activate texta-rest
+    - python import_test_index.py -es http://172.17.0.1:9200
     - python migrate.py
   stage: test
   tags:
   - ci-test
   variables:
-    TEXTA_ES_URL: http://elasticsearch:9200
+    TEXTA_ES_URL: http://172.17.0.1:9200
     TEXTA_MLP_URL: http://texta-mlp:5000
     TEXTA_REDIS_URL: redis://redis:6379
   script:
   - python manage.py test
+  except:
+  - tags
 
-#Build:
-#  stage: build
-#  tags:
-#  - docker
-#  script:
-#  - docker build -t docker.texta.ee/texta/texta-rest:latest .
-#  - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee
-#  - docker push docker.texta.ee/texta/texta-rest:latest
+Build:
+  stage: build
+  tags:
+  - docker
+  script:
+  - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD docker.texta.ee
+  - python ./docker/build_and_push.py
+  - docker system prune --volumes -f
+  only:
+  - tags

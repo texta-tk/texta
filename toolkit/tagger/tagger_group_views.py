@@ -2,7 +2,6 @@ import os
 import json
 import re
 import sys
-
 from celery import group
 
 from rest_framework import viewsets, status, permissions
@@ -14,31 +13,27 @@ from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.query import Query
 
-from toolkit.tagger.tasks import train_tagger, apply_tagger
+from toolkit.tagger.tasks import train_tagger, apply_tagger, create_tagger_objects
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.core.project.models import Project
-from toolkit.tagger.serializers import TaggerGroupSerializer, TextGroupSerializer, DocGroupSerializer
+from toolkit.tagger.serializers import TaggerGroupSerializer, TaggerGroupTagTextSerializer, TaggerGroupTagDocumentSerializer
 from toolkit.tools.text_processor import TextProcessor
-from toolkit.view_constants import TagLogicViews
+from toolkit.view_constants import TagLogicViews, BulkDelete
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.core.task.models import Task
-from toolkit.tools.mlp_lemmatizer import MLPLemmatizer
-from toolkit.helper_functions import apply_celery_task, get_payload
+from toolkit.helper_functions import apply_celery_task
 from toolkit.tagger.validators import validate_input_document
+from toolkit.tagger.tagger_views import global_mlp_for_taggers
 
 
-class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
+
+class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
     queryset = TaggerGroup.objects.all()
     serializer_class = TaggerGroupSerializer
     permission_classes = (
         permissions.IsAuthenticated,
         ProjectResourceAllowed,
         )
-
-    def perform_create(self, serializer, tagger_set):
-        serializer.save(author=self.request.user,
-                        project=Project.objects.get(id=self.kwargs['project_pk']),
-                        taggers=tagger_set)
 
 
     def get_queryset(self):
@@ -64,32 +59,27 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         if not tags:
             return Response({'error': f'found no tags for fact name: {fact_name}'}, status=status.HTTP_400_BAD_REQUEST)
 
-
+        # create queries for taggers
         tag_queries = self.create_queries(fact_name, tags)
 
         # retrive tagger options from hybrid tagger serializer
         validated_tagger_data = serializer.validated_data.pop('tagger')
         validated_tagger_data.update('')
 
-        # create tagger objects
-        tagger_set = set()
-        for i,tag in enumerate(tags):
-            tagger_data = validated_tagger_data.copy()
-            tagger_data.update({'query': json.dumps(tag_queries[i])})
-            tagger_data.update({'description': tag})
-            tagger_data.update({'fields': json.dumps(tagger_data['fields'])})
-            created_tagger = Tagger.objects.create(**tagger_data,
-                                      author=request.user,
-                                      project=active_project)
-            tagger_set.add(created_tagger)
+        # create tagger group object
+        tagger_group = serializer.save(author=self.request.user,
+                                       project=Project.objects.get(id=self.kwargs['project_pk']))
 
-        # create hybrid tagger object
-        self.perform_create(serializer, tagger_set)
+        # create taggers objects inside tagger group object
+        # use async to make things faster
+        apply_celery_task(create_tagger_objects, tagger_group.pk, validated_tagger_data, tags, tag_queries)
 
+        # retrieve headers and create response
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
+    @action(detail=True, methods=['get'])
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         tagger_objects = instance.taggers.all()
@@ -110,40 +100,8 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
             return Response({"success": "Taggergroup instance deleted, related tagger instances deleted, but related models and plots were not removed"}, status=status.HTTP_204_NO_CONTENT)
 
 
-    def get_tag_candidates(self, text, n_similar_docs=100):
-        """
-        Finds frequent tags from documents similar to input document.
-        Returns empty list if hybrid option false.
-        """
-        hybrid_tagger_object = self.get_object()
-        field_paths = json.loads(hybrid_tagger_object.taggers.first().fields)
-        indices = hybrid_tagger_object.project.indices
-
-        # process text
-        text = TextProcessor(remove_stop_words=True).process(text)[0]
-
-        # create query
-        query = Query()
-        query.add_mlt(field_paths, text)
-
-        # create Searcher object for MLT
-        es_s = ElasticSearcher(indices=indices, query=query.query)
-        docs = es_s.search(size=n_similar_docs)
-
-        # filter out tag candidates
-        tag_candidates = []
-        for doc in docs:
-            if "texta_facts" in doc:
-                for fact in doc["texta_facts"]:
-                    if fact["fact"] == hybrid_tagger_object.fact_name:
-                        fact_val = fact["str_val"]
-                        tag_candidates.append(fact_val)
-
-        tag_candidates = set(tag_candidates)
-        return tag_candidates
 
 
-    @action(detail=True, methods=['get', 'post'])
     def models_list(self, request, pk=None, project_pk=None):
         """
         API endpoint for listing tagger objects connected to tagger group instance.
@@ -156,7 +114,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         return Response(response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['post'])
     def models_retrain(self, request, pk=None, project_pk=None):
         """
         API endpoint for retraining tagger model.
@@ -171,43 +129,75 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         return Response({'success': 'retraining tasks created', 'tagger_group_id': instance.id}, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'])
-    def tag_random_doc(self, request, pk=None, project_pk=None):
+    def get_mlp(self, text, lemmatize=False, use_ner=True):
         """
-        API endpoint for tagging a random document.
+        Retrieves lemmas.
+        Retrieves tags predicted by MLP NER and present in models.
+        :return: string, list
         """
-        # get hybrid tagger object
+        tags = []
         hybrid_tagger_object = self.get_object()
-        # check if any of the models ready
-        if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
-            return Response({'error': 'models do not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
-        # retrieve tagger fields from the first object
-        tagger_fields = json.loads(hybrid_tagger_object.taggers.first().fields)
+        taggers = {t.description.lower(): {"tag": t.description, "id": t.id} for t in hybrid_tagger_object.taggers.all()}
+        mlp_output = global_mlp_for_taggers.process(text)
+        # lemmatize
+        if lemmatize and mlp_output:
+            text = mlp_output["text"]["lemmas"]
+        # retrieve tags
+        if use_ner and mlp_output:
+            seen_tags = {}
+            for fact in mlp_output["texta_facts"]:
+                fact_val = fact["str_val"].lower().strip()
+                if fact_val in taggers and fact_val not in seen_tags:
+                    fact_val_dict = {
+                        "tag": taggers[fact_val]["tag"],
+                        "probability": 1.0,
+                        "tagger_id": taggers[fact_val]["id"],
+                        "ner_match": True
+                    }
+                    tags.append(fact_val_dict)
+                    seen_tags[fact_val] = True
+        return text, tags
 
-        if not ElasticCore().check_if_indices_exist(hybrid_tagger_object.project.indices):
-            return Response({'error': f'One or more index from {list(hybrid_tagger_object.project.indices)} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
-        # retrieve random document
-        random_doc = ElasticSearcher(indices=hybrid_tagger_object.project.indices).random_documents(size=1)[0]
-        # filter out correct fields from the document
-        random_doc_filtered = {k:v for k,v in random_doc.items() if k in tagger_fields}
-        # combine document field values into one string
-        combined_texts = '\n'.join(random_doc_filtered.values())
-        # retrieve tag candidates
-        tag_candidates = self.get_tag_candidates(combined_texts)
-        # get tags
-        tags = self.apply_tagger_group(random_doc_filtered, tag_candidates, input_type='doc')
-        # return document with tags
-        response = {"document": random_doc, "tags": tags}
-        return Response(response, status=status.HTTP_200_OK)
+
+    def get_tag_candidates(self, text, ignore_tags=[], n_similar_docs=10, max_candidates=10):
+        """
+        Finds frequent tags from documents similar to input document.
+        Returns empty list if hybrid option false.
+        """
+        hybrid_tagger_object = self.get_object()
+        field_paths = json.loads(hybrid_tagger_object.taggers.first().fields)
+        indices = hybrid_tagger_object.project.indices
+        ignore_tags = {tag["tag"]: True for tag in ignore_tags}
+        # create query
+        query = Query()
+        query.add_mlt(field_paths, text)
+        # create Searcher object for MLT
+        es_s = ElasticSearcher(indices=indices, query=query.query)
+        docs = es_s.search(size=n_similar_docs)
+        # dict for tag candidates from elastic
+        tag_candidates = {}
+        # retrieve tags from elastic response
+        for doc in docs:
+            if "texta_facts" in doc:
+                for fact in doc["texta_facts"]:
+                    if fact["fact"] == hybrid_tagger_object.fact_name:
+                        fact_val = fact["str_val"]
+                        if fact_val not in ignore_tags:
+                            if fact_val not in tag_candidates:
+                                tag_candidates[fact_val] = 0
+                            tag_candidates[fact_val] += 1
+        # sort and limit candidates
+        tag_candidates = [item[0] for item in sorted(tag_candidates.items(), key=lambda k: k[1], reverse=True)][:max_candidates]
+        return tag_candidates
 
 
-    @action(detail=True, methods=['get','post'], serializer_class=TextGroupSerializer)
+    @action(detail=True, methods=['post'], serializer_class=TaggerGroupTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging raw text with tagger group.
         """
-        data = get_payload(request)
-        serializer = TextGroupSerializer(data=data)
+        data = request.data
+        serializer = TaggerGroupTagTextSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -219,39 +209,34 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
             return Response({'error': 'models do not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # declare text variable
+        # declare tag candidates variables
         text = serializer.validated_data['text']
+        n_similar_docs = serializer.validated_data['n_similar_docs']
+        lemmatize = serializer.validated_data['lemmatize']
+        use_ner = serializer.validated_data['use_ner']
 
-        # by default, lemmatizer is disabled
-        lemmatizer = False
+        # check if MLP available
+        if lemmatize or use_ner:
+            if not global_mlp_for_taggers.status:
+                return Response({'error': 'mlp not available. check connection to mlp.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # lemmatize if needed
-        if serializer.validated_data['lemmatize'] == True:
-            lemmatizer = MLPLemmatizer(lite=True)
-            # check if lemmatization available
-            if not lemmatizer.status:
-                return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            # lemmatize text
-            text = lemmatizer.lemmatize(text)
-            # check if any non stop words left
-            if not text:
-                return Response({'error': 'no words left after lemmatization. did your request contain only stop words?'}, status=status.HTTP_400_BAD_REQUEST)
+        # update text and tags with MLP
+        text, tags = self.get_mlp(text, lemmatize=lemmatize, use_ner=use_ner)
 
         # retrieve tag candidates
-        tag_candidates = self.get_tag_candidates(text, n_similar_docs=serializer.validated_data['n_similar_docs'])
-
+        tag_candidates = self.get_tag_candidates(text, ignore_tags=tags, n_similar_docs=n_similar_docs)
         # get tags
-        tags = self.apply_tagger_group(text, tag_candidates, input_type='text')
+        tags += self.apply_tagger_group(text, tag_candidates, input_type='text')
         return Response(tags, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get','post'], serializer_class=DocGroupSerializer)
+    @action(detail=True, methods=['post'], serializer_class=TaggerGroupTagDocumentSerializer)
     def tag_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging JSON documents with tagger group.
         """
-        data = get_payload(request)
-        serializer = DocGroupSerializer(data=data)
+        data = request.data
+        serializer = TaggerGroupTagDocumentSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -279,36 +264,65 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews):
         # combine document field values into one string
         combined_texts = '\n'.join(input_document.values())
 
-        # by default, lemmatizer is disabled
-        lemmatizer = False
+        # declare tag candidates variables
+        n_similar_docs = serializer.validated_data['n_similar_docs']
+        lemmatize = serializer.validated_data['lemmatize']
+        use_ner = serializer.validated_data['use_ner']
 
-        # lemmatize if needed
-        if serializer.validated_data['lemmatize'] == True:
-            lemmatizer = MLPLemmatizer(lite=True)
-            # check if lemmatization available
-            if not lemmatizer.status:
-                return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            # lemmatize text
-            combined_texts = lemmatizer.lemmatize(combined_texts)
-            # check if any non stop words left
-            if not combined_texts:
-                return Response({'error': 'no words left after lemmatization. did your request contain only stop words?'}, status=status.HTTP_400_BAD_REQUEST)
+        # check if MLP available
+        if lemmatize or use_ner:
+            if not global_mlp_for_taggers.status:
+                return Response({'error': 'mlp not available. check connection to mlp.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # update text and tags with MLP
+        combined_texts, tags = self.get_mlp(combined_texts, lemmatize=lemmatize, use_ner=use_ner)
 
         # retrieve tag candidates
-        tag_candidates = self.get_tag_candidates(combined_texts, n_similar_docs=serializer.validated_data['n_similar_docs'])
-
+        tag_candidates = self.get_tag_candidates(combined_texts, ignore_tags=tags, n_similar_docs=n_similar_docs)
         # get tags
-        tags = self.apply_tagger_group(input_document, tag_candidates, input_type='doc', lemmatize=True)
+        tags += self.apply_tagger_group(input_document, tag_candidates, input_type='doc', lemmatize=True)
         return Response(tags, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['get'])
+    def tag_random_doc(self, request, pk=None, project_pk=None):
+        """
+        API endpoint for tagging a random document.
+        """
+        # get hybrid tagger object
+        hybrid_tagger_object = self.get_object()
+        # check if any of the models ready
+        if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
+            return Response({'error': 'models do not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+        # retrieve tagger fields from the first object
+        tagger_fields = json.loads(hybrid_tagger_object.taggers.first().fields)
+
+        if not ElasticCore().check_if_indices_exist(hybrid_tagger_object.project.indices):
+            return Response({'error': f'One or more index from {list(hybrid_tagger_object.project.indices)} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        # retrieve random document
+        random_doc = ElasticSearcher(indices=hybrid_tagger_object.project.indices).random_documents(size=1)[0]
+        # filter out correct fields from the document
+        random_doc_filtered = {k:v for k,v in random_doc.items() if k in tagger_fields}
+        # combine document field values into one string
+        combined_texts = '\n'.join(random_doc_filtered.values())
+        combined_texts, tags = self.get_mlp(combined_texts, lemmatize=False)
+        # retrieve tag candidates
+        tag_candidates = self.get_tag_candidates(combined_texts, ignore_tags=tags)
+        # get tags
+        tags += self.apply_tagger_group(random_doc_filtered, tag_candidates, input_type='doc')
+        # return document with tags
+        response = {"document": random_doc, "tags": tags}
+        return Response(response, status=status.HTTP_200_OK)
 
 
     def apply_tagger_group(self, text, tag_candidates, input_type='text', lemmatize=False):
         # get tagger group object
         tagger_group_object = self.get_object()
-
         # get tagger objects
-        tagger_objects = tagger_group_object.taggers.filter(description__in=tag_candidates)
-
+        candidates_str = "|".join(tag_candidates)
+        tagger_objects = tagger_group_object.taggers.filter(description__iregex=f"^({candidates_str})$")
+        # filter out completed
+        tagger_objects = [tagger for tagger in tagger_objects if tagger.task.status == tagger.task.STATUS_COMPLETED]
         # predict & sort tags
         tags = group(apply_tagger.s(text, tagger.pk, input_type) for tagger in tagger_objects).apply()
         tags = [tag for tag in tags.get() if tag]

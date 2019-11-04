@@ -4,7 +4,7 @@ from rest_framework.test import APIClient
 from toolkit.core.user_profile.models import UserProfile
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 
-class UserProfileSignalsAndViewsTests(APITestCase):
+class HealthViewsTests(APITestCase):
 
     @classmethod
     def setUpTestData(cls):

@@ -18,8 +18,6 @@ from .logging_settings import setup_logging
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-URL_PREFIX = os.getenv('TEXTA_HOST', 'http://localhost:8000')
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
@@ -46,10 +44,12 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     # Apps
     'toolkit.core',
-    'toolkit.embedding',
     'toolkit.elastic',
+    'toolkit.embedding',
     'toolkit.tagger',
     'toolkit.neurotagger',
+    # TEXTA Extension Apps
+    #'docscraper',
     # THIRD PARTY
     # https://github.com/goinnn/django-multiselectfield
     'multiselectfield',
@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'rest_auth.registration',
     'django_extensions',
     'rest_framework_serializer_field_permissions',
+    'drf_yasg'
 ]
 
 # For registration (see: https://django-rest-auth.readthedocs.io/en/latest/installation.html#registration-optional)
@@ -67,9 +68,7 @@ SITE_ID = 1
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # For corsheaders/external frontend
-CORS_ORIGIN_WHITELIST = (
-    'http://localhost:4200',
-)
+CORS_ORIGIN_ALLOW_ALL = True
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
@@ -176,8 +175,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # ELASTICSEARCH
-# ES_URL = os.getenv('TEXTA_ES_URL', 'http://localhost:9200')
-ES_URL = os.getenv('TEXTA_ES_URL', 'http://elastic-dev.texta.ee:9200')
+ES_URL = os.getenv('TEXTA_ES_URL', 'http://localhost:9200')
 ES_PREFIX = os.getenv('TEXTA_ES_PREFIX', '')
 ES_USERNAME = os.getenv("TEXTA_ES_USER", "")
 ES_PASSWORD = os.getenv("TEXTA_ES_PASSWORD", "")
@@ -187,7 +185,9 @@ ES_CONNECTION_PARAMETERS = {
     "ca_certs": os.getenv("TEXTA_ES_CA_CERT_PATH", None),
     "client_cert": os.getenv("TEXTA_ES_CLIENT_CERT_PATH", None),
     "client_key": os.getenv("TEXTA_ES_CLIENT_KEY_PATH", None),
-    "timeout": int(os.getenv("TEXTA_ES_TIMEOUT", None)) if os.getenv("TEXTA_ES_TIMEOUT", None) else None
+    "timeout": int(os.getenv("TEXTA_ES_TIMEOUT", None)) if os.getenv("TEXTA_ES_TIMEOUT", None) else None,
+    "sniff_on_start":  eval(os.getenv("TEXTA_ES_SNIFF_ON_START", "True")),
+    "sniff_on_connection_fail":  eval(os.getenv("TEXTA_ES_SNIFF_ON_FAIL", "True"))
 }
 
 # MLP
@@ -206,19 +206,21 @@ NUM_WORKERS = 1
 
 # create model dirs
 MODELS_DIR = os.path.join(BASE_DIR, 'data', 'models')
-MODEL_TYPES = ['embedding', 'tagger', 'extractor', 'cluster', 'neurotagger']
-
+MODEL_TYPES = ['embedding', 'tagger', 'neurotagger']
 for model_type in MODEL_TYPES:
     model_dir = os.path.join(MODELS_DIR, model_type)
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
+# create dir for DocScraper temporary files
+DOC_SCRAPER_TEMP_DIR = os.path.join(BASE_DIR, 'data', 'temp')
+if not os.path.exists(DOC_SCRAPER_TEMP_DIR) and 'docscraper' in INSTALLED_APPS:
+    os.makedirs(DOC_SCRAPER_TEMP_DIR)
+
 # create protected media dirs
 MEDIA_DIR = os.path.join(BASE_DIR, 'data', 'media')
-
 if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
-
 MEDIA_URL = 'data/media/'
 
 # Path to the log directory. Default is /log
@@ -236,3 +238,8 @@ LOGGING = setup_logging(INFO_LOG_FILE_NAME, ERROR_LOG_FILE_NAME, INFO_LOGGER, ER
 
 # Ignore Python Warning base class
 warnings.simplefilter(action='ignore', category=Warning)
+
+# Swagger Documentation
+SWAGGER_SETTINGS = {
+    'DEFAULT_AUTO_SCHEMA_CLASS': 'toolkit.tools.swagger.CompoundTagsSchema'
+}

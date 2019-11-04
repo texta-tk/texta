@@ -29,11 +29,17 @@ def neurotagger_train_handler(neurotagger_id, testing=False):
     num_queries = len(queries)
 
     kwargs = {"neurotagger_id": neurotagger_obj.id, "num_queries": num_queries}
-    task_worker = chord((scroll_data.s(query, kwargs=kwargs) for query in queries), train_model.s(kwargs=kwargs))
-    if not testing:
-        return task_worker()
+    
+    # FOR ASYNC SCROLLING WITH CELERY CHORD, SEE ISSUE https://git.texta.ee/texta/texta-rest/issues/66
+    # task_worker = chord((scroll_data.s(query, kwargs=kwargs) for query in queries), train_model.s(kwargs=kwargs))
+    # if not testing:
+    #     return task_worker()
+    # return task_worker
 
-    return task_worker
+    # TEMPORARILY SCROLL SYNCHRONOUSLY ISNTEAD
+    data = [scroll_data(query, kwargs=kwargs) for query in queries]
+    train_model(data, kwargs=kwargs)
+    return True
 
 
 @task(name="scroll_data", base=BaseTask)

@@ -14,30 +14,39 @@ class TestModelCache(TestCase):
     @classmethod
     def setUpTestData(cls):
         # Owner of the project
-        cls.user = create_test_user('embeddingOwner', 'my@email.com', 'pw')
+        cls.user = create_test_user('modelCacheOwner', 'my@email.com', 'pw')
         cls.project = Project.objects.create(
             title='textprocessorTestProject',
             owner=cls.user,
             indices=TEST_INDEX
         )
-        cls.user.profile.activate_project(cls.project)
-        # Create embedding used in the test
-        cls.test_embedding = Embedding.objects.create(
-            description='EmbeddingForTesting',
-            project=cls.project,
-            author=cls.user,
-            fields=TEST_FIELD_CHOICE,
-            min_freq=1,
-            num_dimensions=100,
-        )
-        # Get the object, since .create does not update on changes
-        Embedding.objects.get(id=cls.test_embedding.id)
-        cls.test_embedding_id = cls.test_embedding.id
+        cls.test_embedding_id = None
+
+
+    def setUp(self):
+        self.client.login(username='modelCacheOwner', password='pw')
 
 
     def test_run(self):
+        self.run_train_embedding()
         self.run_cache(W2VEmbedding)
         self.run_cache(Phraser)
+    
+
+    def run_train_embedding(self):
+        # payload for training embedding
+        payload = {
+            "description": "TestEmbedding",
+            "query": "",
+            "fields": TEST_FIELD_CHOICE,
+            "max_vocab": 10000,
+            "min_freq": 5,
+            "num_dimensions": 100,
+        }
+        # post
+        embeddings_url = f'/projects/{self.project.id}/embeddings/'
+        response = self.client.post(embeddings_url, payload, format='json')
+        self.test_embedding_id = response.data["id"]
 
 
     def run_cache(self, model_class):
@@ -48,12 +57,15 @@ class TestModelCache(TestCase):
         self.assertTrue(isinstance(model_cache.models, dict))
         self.assertTrue(not model_cache.models)
         # load model to cache
-        model_cache.get_model(self.test_embedding_id)
+        embedding_object = Embedding.objects.get(pk=self.test_embedding_id)
+        model_cache.get_model(embedding_object)
         print_output('test_run_cache_with_embedding:models', model_cache.models)
         # check if model present in the cache
         self.assertTrue(isinstance(model_cache.models, dict))
         self.assertTrue(model_cache.models)
         self.assertTrue(self.test_embedding_id in model_cache.models)
+        # test check memory
+        model_cache.check_memory()
         # sleep for 1 second to wait for model cache timeout
         sleep(1)
         # try cleaning the cache
@@ -61,4 +73,4 @@ class TestModelCache(TestCase):
         print_output('test_run_cache_with_embedding_clean_cache:models', model_cache.models)
         # check if model cache empty again
         self.assertTrue(isinstance(model_cache.models, dict))
-        self.assertTrue(not model_cache.models)        
+        self.assertTrue(not model_cache.models)  

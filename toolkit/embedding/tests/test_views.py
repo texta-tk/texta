@@ -1,3 +1,4 @@
+from io import BytesIO
 import json
 import os
 from django.db.models import signals
@@ -27,6 +28,7 @@ class EmbeddingViewTests(APITestCase):
         )
 
         cls.url = f'/projects/{cls.project.id}/embeddings/'
+        cls.project_url = f'/projects/{cls.project.id}'
         cls.cluster_url = f'/projects/{cls.project.id}/embedding_clusters/'
 
         # cls.user.profile.activate_project(cls.project)
@@ -39,13 +41,14 @@ class EmbeddingViewTests(APITestCase):
 
     def test_run(self):
         self.run_create_embedding_training_and_task_signal()
-        self.run_predict()
+        self.run_predict(self.test_embedding_id)
         self.run_predict_with_negatives()
         self.run_phrase()
         self.run_create_embedding_cluster_training_and_task_signal()
         self.run_embedding_cluster_browse()
         self.run_embedding_cluster_find_word()
         self.run_embedding_cluster_text()
+        self.run_model_export_import()
         self.create_embedding_then_delete_embedding_and_created_model()
 
     def run_create_embedding_training_and_task_signal(self):
@@ -97,11 +100,11 @@ class EmbeddingViewTests(APITestCase):
         assert not os.path.isfile(embedding_model_location)
         assert not os.path.isfile(phraser_model_location)
 
-    def run_predict(self):
+    def run_predict(self, test_embedding_id):
         '''Tests the endpoint for the predict action'''
         # Send only "text" in payload, because "output_size" should be 10 by default
-        payload = {"positives": ["eesti", "läti"]}
-        predict_url = f'{self.url}{self.test_embedding_id}/predict/'
+        payload = { "positives": ["eesti", "läti"] }
+        predict_url = f'{self.url}{test_embedding_id}/predict_similar/'
         response = self.client.post(predict_url, payload)
         print_output('predict:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -111,8 +114,8 @@ class EmbeddingViewTests(APITestCase):
     def run_predict_with_negatives(self):
         '''Tests the endpoint for the predict action'''
         # Send only "text" in payload, because "output_size" should be 10 by default
-        payload = {"positives": ["eesti", "läti"], "negatives": ["juhtuma"]}
-        predict_url = f'{self.url}{self.test_embedding_id}/predict/'
+        payload = { "positives": ["eesti", "läti"], "negatives": ["juhtuma"] }
+        predict_url = f'{self.url}{self.test_embedding_id}/predict_similar/'
         response = self.client.post(predict_url, payload)
         print_output('predict_with_negatives:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -121,13 +124,14 @@ class EmbeddingViewTests(APITestCase):
 
     def run_phrase(self):
         '''Tests the endpoint for the predict action'''
-        payload = {"text": "See on mingi eesti keelne tekst testimiseks"}
-        predict_url = f'{self.url}{self.test_embedding_id}/phrase/'
+        payload = { "text": "See on mingi eesti keelne tekst testimiseks" }
+        predict_url = f'{self.url}{self.test_embedding_id}/phrase_text/'
         response = self.client.post(predict_url, payload)
         print_output('predict:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
+
 
     def run_create_embedding_cluster_training_and_task_signal(self):
         '''Tests the endpoint for a new EmbeddingCluster, and if a new Task gets created via the signal'''
@@ -153,8 +157,8 @@ class EmbeddingViewTests(APITestCase):
 
     def run_embedding_cluster_browse(self):
         '''Tests the endpoint for the browse action'''
-        payload = {"number_of_clusters": 10, "cluster_order": True}
-        browse_url = f'{self.cluster_url}{self.test_embedding_clustering_id}/browse/'
+        payload = { "number_of_clusters": 10, "cluster_order": True }
+        browse_url = f'{self.cluster_url}{self.test_embedding_clustering_id}/browse_clusters/'
         response = self.client.post(browse_url, payload)
         print_output('browse:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -163,8 +167,8 @@ class EmbeddingViewTests(APITestCase):
 
     def run_embedding_cluster_find_word(self):
         '''Tests the endpoint for the find_word action'''
-        payload = {"text": "putin"}
-        browse_url = f'{self.cluster_url}{self.test_embedding_clustering_id}/find_word/'
+        payload = { "text": "putin" }
+        browse_url = f'{self.cluster_url}{self.test_embedding_clustering_id}/find_cluster_by_word/'
         response = self.client.post(browse_url, payload)
         print_output('find_word:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -180,3 +184,18 @@ class EmbeddingViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
+
+
+    def run_model_export_import(self):
+        '''Tests endpoint for model export and import'''
+        # retrieve model zip
+        url = f'{self.url}{self.test_embedding_id}/export_model/'
+        response = self.client.get(url)
+        # post model zip
+        import_url = f'{self.project_url}/import_model/'
+        response = self.client.post(import_url, data={'file': BytesIO(response.content)})
+        print_output('test_import_model:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Test prediction with imported embedding
+        embedding_id = response.data['id']
+        self.run_predict(embedding_id)

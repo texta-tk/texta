@@ -10,44 +10,41 @@ from toolkit.tagger.choices import (get_field_choices, get_classifier_choices, g
                                     DEFAULT_NUM_DOCUMENTS, DEFAULT_TAGGER_GROUP_FACT_NAME)
 
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.settings import URL_PREFIX
 from toolkit.serializer_constants import ProjectResourceUrlSerializer
 
 
-class TextSerializer(serializers.Serializer):
+class TaggerTagTextSerializer(serializers.Serializer):
     text = serializers.CharField()
     lemmatize = serializers.BooleanField(default=False,
         help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
 
 
-class DocSerializer(serializers.Serializer):
+class TaggerTagDocumentSerializer(serializers.Serializer):
     doc = serializers.JSONField()
     lemmatize = serializers.BooleanField(default=False,
         help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
 
 
-class FeatureListSerializer(serializers.Serializer):
+class TaggerListFeaturesSerializer(serializers.Serializer):
     size = serializers.IntegerField(default=100, help_text='Default: 100')
 
 
-class TextGroupSerializer(serializers.Serializer):
+class TaggerGroupTagTextSerializer(serializers.Serializer):
     text = serializers.CharField(help_text=f'Raw text input.')
-    lemmatize = serializers.BooleanField(default=False,
-        help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
-    show_candidates = serializers.BooleanField(default=False, 
-        help_text=f'Show tagger candidates prior to supervised filtering. Default: False')
+    lemmatize = serializers.BooleanField(default=True,
+        help_text=f'Use MLP lemmatizer to lemmatize input text. Use only if training data was lemmatized. Default: True')
+    use_ner = serializers.BooleanField(default=True,
+        help_text=f'Use MLP Named Entity Recognition to detect tag candidates. Default: True')
     n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS, 
         help_text=f'Number of documents used in unsupervised prefiltering. Default: {DEFAULT_NUM_DOCUMENTS}')
 
 
-class DocGroupSerializer(serializers.Serializer):
+class TaggerGroupTagDocumentSerializer(serializers.Serializer):
     doc = serializers.JSONField(help_text=f'Document in JSON format.')
-    lemmatize = serializers.BooleanField(default=False,
-        help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
-    hybrid = serializers.BooleanField(default=True, 
-        help_text=f'Use hybrid tagging. Default: True')
-    show_candidates = serializers.BooleanField(default=False, 
-        help_text=f'Show tagger candidates prior to supervised filtering. Default: False')
+    lemmatize = serializers.BooleanField(default=True,
+        help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: True')
+    use_ner = serializers.BooleanField(default=True,
+        help_text=f'Use MLP Named Entity Recognition to detect tag candidates. Default: True')
     n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS, 
         help_text=f'Number of documents used in unsupervised prefiltering. Default: {DEFAULT_NUM_DOCUMENTS}')
 
@@ -89,11 +86,6 @@ class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer
             # for multiple fields in a list
             for field_name in remove_fields:
                 self.fields.pop(field_name)
-    
-    def get_plot(self, obj):
-        if obj.plot:
-            return '{0}/{1}'.format(URL_PREFIX, obj.plot)
-        return None
 
     def get_stop_words(self, obj):
         if obj.stop_words:

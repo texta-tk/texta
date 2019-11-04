@@ -62,7 +62,6 @@ RUN chown -R www-data:www-data /var/texta-rest \
     && rm -rf /root/.cache
 
 # System configuration files
-COPY docker/conf/nginx.conf  /opt/conda/envs/texta-rest/etc/nginx/conf.d/nginx.conf
 COPY docker/conf/supervisord.conf /opt/conda/envs/texta-rest/etc/supervisord/conf.d/supervisord.conf
 ENV UWSGI_INI /var/texta-rest/docker/conf/texta-rest.ini
 
@@ -71,8 +70,6 @@ ENV JOBLIB_MULTIPROCESSING 0
 ENV PYTHONIOENCODING=UTF-8
 ENV UWSGI_CHEAPER 2
 ENV UWSGI_PROCESSES 16
-ENV NGINX_MAX_UPLOAD 0
-ENV NGINX_WORKER_PROCESSES auto
 
 # Expose ports
 EXPOSE 80

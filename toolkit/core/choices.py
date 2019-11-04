@@ -1,10 +1,6 @@
 # CHOICES FOR CORE APP
 from toolkit.elastic.core import ElasticCore
 
-
-def get_index_choices():
-   return sorted([(a, a) for a in ElasticCore().get_indices()])
-
 STATUS_CREATED = 'created'
 STATUS_QUEUED = 'queued'
 STATUS_RUNNING = 'running'
@@ -25,3 +21,6 @@ STATUS_CHOICES = (
 
 MATCH_CHOICES = (('word', 'word'),( 'phrase', 'phrase'), ('phrase_prefix', 'phrase_prefix'))
 OPERATOR_CHOICES = (('must', 'must'), ('must_not', 'mut_not'), ('should', 'should'))
+
+DEFAULT_SUGGESTION_LIMIT = 10
+DEFAULT_VALUES_PER_NAME = 10

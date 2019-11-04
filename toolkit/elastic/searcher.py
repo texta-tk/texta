@@ -16,7 +16,8 @@ class ElasticSearcher:
     OUT_RAW = 'raw'
     OUT_DOC = 'doc'
     OUT_DOC_WITH_ID = 'doc_with_id'
-    OUT_TEXT = 'text'
+    OUT_TEXT        = 'text'
+    OUT_DOC_HL      = 'doc_with_hl'
 
     def __init__(self, field_data=[],
                  indices=[],
@@ -61,21 +62,31 @@ class ElasticSearcher:
         """
         Parses Elasticsearch hit into something nicer
         """
-        parsed_doc, index = self._flatten_doc(doc)
+        parsed_doc, _, _ = self._flatten_doc(doc)
         if self.field_data:
             parsed_doc = {k: v for k, v in parsed_doc.items() if self.field_data.count(k)}
         else:
-            parsed_doc, _ = self._flatten_doc(doc)
+            parsed_doc, _, _ = self._flatten_doc(doc)
         return parsed_doc
+
+
+    def _parse_doc_with_highlight(self, doc):
+        """
+        Parses Elasticsearch hit into something nicer, includes the highlight field
+        """
+        parsed_doc, _, highlight = self._flatten_doc(doc)
+        return {'highlight': highlight, 'doc': parsed_doc}
+
 
     def _flatten_doc(self, doc):
         """
         Flattens a document.
         """
         index = doc['_index']
+        highlight = doc['highlight'] if 'highlight' in doc else {}
         doc = doc['_source']
         new_doc = self._flatten(doc)
-        return new_doc, index
+        return new_doc, index, highlight
 
     def _flatten(self, d, parent_key='', sep='.'):
         """
@@ -112,6 +123,9 @@ class ElasticSearcher:
         response = self.core.es.search(index=self.indices, body=self.query, size=size)
         if self.output == self.OUT_DOC:
             return [self._parse_doc(doc) for doc in response['hits']['hits']]
+        if self.output == self.OUT_DOC_HL:
+            return [self._parse_doc_with_highlight(doc) for doc in response['hits']['hits']]
+        
         else:
             return response
 

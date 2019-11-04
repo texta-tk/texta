@@ -13,23 +13,26 @@ from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import train_tagger
 from toolkit.core.project.models import Project
-from toolkit.tagger.serializers import TaggerSerializer, FeatureListSerializer, \
-    TextSerializer, DocSerializer
+from toolkit.tagger.serializers import TaggerSerializer, TaggerListFeaturesSerializer, \
+                                       TaggerTagTextSerializer, TaggerTagDocumentSerializer
+from toolkit.serializer_constants import GeneralTextSerializer
 from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tools.model_cache import ModelCache
-from toolkit.embedding.views import phraser_cache
+from toolkit.embedding.views import global_phraser_cache
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.core.task.models import Task
-from toolkit.tools.mlp_lemmatizer import MLPLemmatizer
-from toolkit.helper_functions import apply_celery_task, get_payload
+from toolkit.tools.mlp_analyzer import MLPAnalyzer
+from toolkit.helper_functions import apply_celery_task
 from toolkit.tagger.validators import validate_input_document
+from toolkit.view_constants import BulkDelete
+from toolkit.view_constants import ExportModel
 
 # initialize model cache for taggers & phrasers
-tagger_cache = ModelCache(TextTagger)
+global_tagger_cache = ModelCache(TextTagger)
+global_mlp_for_taggers = MLPAnalyzer()
 
-
-class TaggerViewSet(viewsets.ModelViewSet):
+class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
     serializer_class = TaggerSerializer
     permission_classes = (
         ProjectResourceAllowed,
@@ -67,13 +70,13 @@ class TaggerViewSet(viewsets.ModelViewSet):
         except:
             return Response({"success": "Tagger instance deleted, but model and plot were was not removed"}, status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['get', 'post'], serializer_class=FeatureListSerializer)
+    @action(detail=True, methods=['get'], serializer_class=TaggerListFeaturesSerializer)
     def list_features(self, request, pk=None, project_pk=None):
         """
         API endpoint for listing tagger features.
         """
-        data = get_payload(request)
-        serializer = FeatureListSerializer(data=data)
+        data = request.data
+        serializer = TaggerListFeaturesSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -87,7 +90,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve model
-        tagger = tagger_cache.get_model(tagger_object.pk)
+        tagger = global_tagger_cache.get_model(tagger_object)
 
         try:
             # get feature names
@@ -107,7 +110,8 @@ class TaggerViewSet(viewsets.ModelViewSet):
                         'showing_features': len(features_to_show)}
         return Response(feature_info, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['get', 'post'])
+
+    @action(detail=True, methods=['get'])
     def stop_word_list(self, request, pk=None, project_pk=None):
         """
         API endpoint for listing tagger object stop words.
@@ -117,13 +121,14 @@ class TaggerViewSet(viewsets.ModelViewSet):
         success = {'stop_words': json.loads(tagger_object.stop_words)}
         return Response(success, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], serializer_class=TextSerializer)
+
+    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
     def stop_word_add(self, request, pk=None, project_pk=None):
         """
         API endpoint for adding a new stop word to tagger
         """
-        data = get_payload(request)
-        serializer = TextSerializer(data=data)
+        data = request.data
+        serializer = GeneralTextSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -144,13 +149,14 @@ class TaggerViewSet(viewsets.ModelViewSet):
         success = {'added': new_stop_word, 'stop_words': stop_words}
         return Response(success, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], serializer_class=TextSerializer)
+
+    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
     def stop_word_remove(self, request, pk=None, project_pk=None):
         """
         API endpoint for removing tagger stop word.
         """
-        data = get_payload(request)
-        serializer = TextSerializer(data=data)
+        data = request.data
+        serializer = GeneralTextSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -187,13 +193,14 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['get', 'post'], serializer_class=TextSerializer)
+
+    @action(detail=True, methods=['post'], serializer_class=TaggerTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging raw text.
         """
-        data = get_payload(request)
-        serializer = TextSerializer(data=data)
+        data = request.data
+        serializer = TaggerTagTextSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -211,7 +218,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
         # create lemmatizer if needed
         if serializer.validated_data['lemmatize'] == True:
-            lemmatizer = MLPLemmatizer(lite=True)
+            lemmatizer = global_mlp_for_taggers
             # check if lemmatizer available
             if not lemmatizer.status:
                 return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -220,13 +227,14 @@ class TaggerViewSet(viewsets.ModelViewSet):
         tagger_response = self.apply_tagger(tagger_object, serializer.validated_data['text'], input_type='text', lemmatizer=lemmatizer)
         return Response(tagger_response, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], serializer_class=DocSerializer)
+
+    @action(detail=True, methods=['post'], serializer_class=TaggerTagDocumentSerializer)
     def tag_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging JSON documents.
         """
-        data = get_payload(request)
-        serializer = DocSerializer(data=data)
+        data = request.data
+        serializer = TaggerTagDocumentSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -255,7 +263,7 @@ class TaggerViewSet(viewsets.ModelViewSet):
 
         # lemmatize if needed
         if serializer.validated_data['lemmatize'] == True:
-            lemmatizer = MLPLemmatizer(lite=True)
+            lemmatizer = global_mlp_for_taggers
             # check if lemmatization available
             if not lemmatizer.status:
                 return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -264,7 +272,8 @@ class TaggerViewSet(viewsets.ModelViewSet):
         tagger_response = self.apply_tagger(tagger_object, input_document, input_type='doc', lemmatizer=lemmatizer)
         return Response(tagger_response, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['get', 'post'])
+
+    @action(detail=True, methods=['get'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging a random document.
@@ -293,13 +302,13 @@ class TaggerViewSet(viewsets.ModelViewSet):
         stop_words = json.loads(tagger_object.stop_words)
 
         if tagger_object.embedding:
-            phraser = phraser_cache.get_model(tagger_object.embedding.pk)
+            phraser = global_phraser_cache.get_model(tagger_object)
             text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
         else:
             text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
 
-        tagger = tagger_cache.get_model(tagger_object.id)
-        tagger.add_text_processor(text_processor)
+        tagger = global_tagger_cache.get_model(tagger_object)
+        tagger.add_text_processor(text_processor) 
 
         if input_type == 'doc':
             tagger_result = tagger.tag_doc(tagger_input)

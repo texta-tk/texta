@@ -6,7 +6,6 @@ from django.db.models import signals
 
 from . import choices
 from toolkit.constants import get_field_choices
-from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.task.models import Task
 from toolkit.core.project.models import Project
@@ -45,8 +44,7 @@ class Neurotagger(models.Model):
     classification_report = models.TextField(blank=True)
 
     location = models.TextField()
-    model_plot = models.FileField(upload_to='media', null=True, verbose_name='')
-    plot = models.FileField(upload_to='media', null=True, verbose_name='')
+    plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
     result_json = models.TextField(blank=True)
     
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
@@ -62,11 +60,15 @@ class Neurotagger(models.Model):
             instance.save()
             from toolkit.neurotagger.tasks import neurotagger_train_handler
 
+            # FOR ASYNC SCROLLING WITH CELERY CHORD, SEE ISSUE https://git.texta.ee/texta/texta-rest/issues/66
             # Due to Neurotagger using chord, it has separate logic for calling out celery task and handling tests
-            if not 'test' in sys.argv:
-                neurotagger_train_handler.apply_async(args=(instance.pk,))
-            else:
-                neurotagger_train_handler(instance.pk, testing=True).apply()
-                
+            # if not 'test' in sys.argv:
+            #     neurotagger_train_handler.apply_async(args=(instance.pk,))
+            # else:
+            #     neurotagger_train_handler(instance.pk, testing=True).apply()
+
+            # TEMPORARILY SCROLL SYNCHRONOUSLY ISNTEAD            
+            from toolkit.helper_functions import apply_celery_task
+            apply_celery_task(neurotagger_train_handler, instance.pk)
 
 signals.post_save.connect(Neurotagger.train_neurotagger_model, sender=Neurotagger)

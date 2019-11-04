@@ -19,10 +19,16 @@ class ReindexerViewSet(viewsets.ModelViewSet):
         permissions.IsAuthenticated,
     )
 
-    def get_serializer_class(self):
-        if self.request.method == 'PUT':
-            return ReindexerUpdateSerializer
-        return ReindexerCreateSerializer
+class ElasticGetIndices(views.APIView):
+    """
+    Retrieves all available Elasticsearch indices.
+    """
+    def get(self, request):
+        es_core = ElasticCore()
+        if not es_core.connection:
+            return Response({"error": "no connection to Elasticsearch"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        indices = sorted(ElasticCore().get_indices())
+        return Response(indices, status=status.HTTP_200_OK)
 
     def get_queryset(self):
         return Reindexer.objects.filter(project=self.kwargs['project_pk'])

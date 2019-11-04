@@ -1,34 +1,47 @@
 from collections import OrderedDict
-from time import time
 from psutil import virtual_memory
+from time import time
+
+from toolkit.tools.logger import Logger
 
 class ModelCache:
     """
     Cache to hold recently used Tagger & Embedding objects in memory.
     """
-    def __init__(self, object_class, cache_duration=3600):
+    def __init__(self, object_class, cache_duration=1800, memory_limit=20.0):
         self.models = {}
         self.object_class = object_class
         self.cache_duration = cache_duration
+        self.memory_limit = memory_limit
 
 
-    def get_model(self, model_id):
+    def get_model(self, model_object):
+        model_id = model_object.pk
+        model_hash = model_object.task.result_hash
         # check memory availability
         self.check_memory()
         # load model if not in cache
         try:
             if model_id not in self.models:
-                model = self.object_class(model_id)
-                model.load()
-                self.models[model_id] = {"model": model, "last_access": time()}
+                self.load_model(model_id, model_hash)
+            # check if model has been retrained (hash is changed)
+            elif model_hash != self.models[model_id]["hash"]:
+                self.load_model(model_id, model_hash)
             # update last access timestamp & remove old models
             self.models[model_id]["last_access"] = time()
             self.clean_cache()
             # return model
             return self.models[model_id]["model"]
         except Exception as e:
-            print("Error loading modal to cache:", e)
+            Logger().error("Error loading models.", exc_info=e)
             return None
+    
+
+    def load_model(self, model_id, model_hash):
+        model = self.object_class(model_id)
+        model.load()
+        self.models[model_id] = {"model": model, "last_access": time(), "hash": model_hash}
+        return model
     
 
     def clean_cache(self):
@@ -40,8 +53,18 @@ class ModelCache:
         """
         Checks memory availability and flushes cache if memory full.
         """
-        memory = virtual_memory()
-        # if less than 5% free, flush the models to make room for more
-        if memory.available/memory.total < 0.05:
-            print("Warning: Memory full, flushed models to make room.")
+        free_percentage = self._mem_free_percentage()
+        # if less than memory_limit % free, flush the models to make room for more
+        if free_percentage < self.memory_limit:
+            Logger().info(f"Memory almost full ({free_percentage} percent free). Releasing memory by flushing models.")
             self.models = {}
+            # check again to see how much memory we gained
+            free_percentage = self._mem_free_percentage()
+            Logger().info(f"Models successfully flushed. {free_percentage} percent free.")
+
+
+    @staticmethod
+    def _mem_free_percentage():
+        memory = virtual_memory()
+        free_percentage = (float(memory.available)/float(memory.total))*100
+        return free_percentage

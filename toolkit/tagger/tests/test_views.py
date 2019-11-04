@@ -1,3 +1,4 @@
+from io import BytesIO
 import json
 import os
 from django.db.models import signals
@@ -6,7 +7,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_QUERY
+from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_QUERY, TEST_MATCH_TEXT
 from toolkit.core.project.models import Project
 from toolkit.tagger.models import Tagger
 from toolkit.core.task.models import Task
@@ -28,9 +29,11 @@ class TaggerViewTests(APITestCase):
             indices=TEST_INDEX
         )
         cls.url = f'/projects/{cls.project.id}/taggers/'
+        cls.project_url = f'/projects/{cls.project.id}'
+        cls.multitag_text_url = f'/projects/{cls.project.id}/multitag_text/'
 
         # set vectorizer & classifier options
-        cls.vectorizer_opts = ('Hashing Vectorizer', 'Count Vectorizer', 'TfIdf Vectorizer')
+        cls.vectorizer_opts = ('Count Vectorizer', 'Hashing Vectorizer', 'TfIdf Vectorizer')
         cls.classifier_opts = ('Logistic Regression', 'LinearSVC')
 
         # list tagger_ids for testing. is populatated duriong training test
@@ -42,8 +45,7 @@ class TaggerViewTests(APITestCase):
     def test_run(self):
         self.run_create_tagger_training_and_task_signal()
         self.run_create_tagger_with_incorrect_fields()
-
-        self.run_tag_text()
+        self.run_tag_text(self.test_tagger_ids)
         self.run_tag_text_with_lemmatization()
         self.run_tag_doc()
         self.run_tag_doc_with_lemmatization()
@@ -52,6 +54,9 @@ class TaggerViewTests(APITestCase):
         self.run_stop_word_add()
         self.run_stop_word_remove()
         self.run_list_features()
+        self.run_multitag_text()
+        self.run_model_retrain()
+        self.run_model_export_import()
         self.create_tagger_then_delete_tagger_and_created_model()
 
     def run_create_tagger_training_and_task_signal(self):
@@ -131,10 +136,11 @@ class TaggerViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertTrue('error' in response.data)
 
-    def run_tag_text(self):
+
+    def run_tag_text(self, test_tagger_ids):
         '''Tests the endpoint for the tag_text action'''
-        payload = {"text": "This is some test text for the Tagger Test"}
-        for test_tagger_id in self.test_tagger_ids:
+        payload = { "text": "This is some test text for the Tagger Test" }
+        for test_tagger_id in test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
             response = self.client.post(tag_text_url, payload)
             print_output('test_tag_text:response.data', response.data)
@@ -245,3 +251,53 @@ class TaggerViewTests(APITestCase):
             self.assertTrue(response.data)
             self.assertTrue('removed' in response.data)
 
+
+    def run_multitag_text(self):
+        '''Tests tagging with multiple models using multitag endpoint.'''
+        payload = {"text": "Some sad text for tagging", "taggers": self.test_tagger_ids}
+        response = self.client.post(self.multitag_text_url, payload, format='json')
+        print_output('test_multitag:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+    def run_model_retrain(self):
+        '''Tests the endpoint for the model_retrain action'''
+        test_tagger_id = self.test_tagger_ids[0]
+        # Check if stop word present in features
+        url = f'{self.url}{test_tagger_id}/list_features/'
+        response = self.client.get(url)
+        feature_dict = {a['feature']: True for a in response.data['features']}
+        self.assertTrue(TEST_MATCH_TEXT in feature_dict)
+        # add stop word before retraining
+        url = f'{self.url}{test_tagger_id}/stop_word_add/'
+        payload = {"text": TEST_MATCH_TEXT}
+        response = self.client.post(url, payload, format='json')
+        # retrain tagger
+        url = f'{self.url}{test_tagger_id}/retrain_tagger/'
+        response = self.client.post(url)
+        print_output('test_model_retrain:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response data
+        self.assertTrue(response.data)
+        self.assertTrue('success' in response.data)
+        # Check if stop word NOT present in features
+        url = f'{self.url}{test_tagger_id}/list_features/'
+        response = self.client.get(url)
+        feature_dict = {a['feature']: True for a in response.data['features']}
+        self.assertTrue(TEST_MATCH_TEXT not in feature_dict)
+
+
+    def run_model_export_import(self):
+        '''Tests endpoint for model export and import'''
+        test_tagger_id = self.test_tagger_ids[0]
+        # retrieve model zip
+        url = f'{self.url}{test_tagger_id}/export_model/'
+        response = self.client.get(url)
+        # post model zip
+        import_url = f'{self.project_url}/import_model/'
+        response = self.client.post(import_url, data={'file': BytesIO(response.content)})
+        print_output('test_import_model:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Test tagging with imported model
+        tagger_id = response.data['id']
+        self.run_tag_text([tagger_id])

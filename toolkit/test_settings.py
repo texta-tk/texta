@@ -2,7 +2,9 @@
 
 TEST_INDEX = 'texta_test_index'
 TEST_INDEX_REINDEX = f'{TEST_INDEX}_reindexed'
+TEST_INDEX_LARGE = 'texta_test_index_large'
 TEST_FIELD_CHOICE = ["comment_content_lemmas"]
 TEST_FIELD = 'comment_content_lemmas'
 TEST_FACT_NAME = 'TEEMA'
-TEST_QUERY = {"query": {"bool": {"should": [], "must": [], "must_not": []}}}
+TEST_MATCH_TEXT = 'loll'
+TEST_QUERY = {"query": {"match": {TEST_FIELD: {"query": TEST_MATCH_TEXT}}}}

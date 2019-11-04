@@ -10,7 +10,7 @@ def get_version():
     """
     try:
         with open(os.path.join(BASE_DIR, 'VERSION'), 'r') as fh:
-            version = fh.read()
+            version = fh.read().strip()
     except IOError:
         version = 'unknown'
     return version
@@ -20,14 +20,14 @@ def get_cache_status():
     """
     Gets info about model caches in applications.
     """
-    from toolkit.tagger.tagger_views import tagger_cache
-    from toolkit.embedding.views import w2v_cache, phraser_cache, cluster_cache
+    from toolkit.tagger.tagger_views import global_tagger_cache
+    from toolkit.embedding.views import global_w2v_cache, global_phraser_cache, global_cluster_cache
 
 
-    return {'embedding': len(w2v_cache.models.keys()),
-            'embedding_cluster': len(cluster_cache.models.keys()),
-            'phraser': len(phraser_cache.models.keys()),
-            'tagger': len(tagger_cache.models.keys())}
+    return {'embedding': len(global_w2v_cache.models.keys()),
+            'embedding_cluster': len(global_cluster_cache.models.keys()),
+            'phraser': len(global_phraser_cache.models.keys()),
+            'tagger': len(global_tagger_cache.models.keys())}
 
 
 def get_mlp_status():

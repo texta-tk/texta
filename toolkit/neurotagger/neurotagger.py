@@ -29,13 +29,12 @@ from keras.callbacks import Callback
 from keras.models import load_model
 from keras.optimizers import Adam
 from keras.activations import relu, elu, softmax, sigmoid
-from keras.utils import plot_model
 from keras.utils.vis_utils import model_to_dot
 
 # Import model architectures
 from toolkit.neurotagger.neuro_models import NeuroModels
 import sentencepiece as spm
-
+import tensorflow as tf
 
 class NeurotaggerWorker():
     def __init__(self, neurotagger_id):
@@ -269,14 +268,6 @@ class NeurotaggerWorker():
         self.neurotagger_obj.plot.save(acc_loss_plot_path, save_plot(plt))
         plt.clf()
 
-        # Plot Keras model
-        model_plot_path = f'{secrets.token_hex(15)}.png'
-        # Get byte representation of the plot
-        model_plot = model_to_dot(self.model).create(prog='dot', format='png')
-        # Wrap it as a Django ContentFile, and save to model
-        c_f = ContentFile(model_plot)
-        self.neurotagger_obj.model_plot.save(model_plot_path, c_f)
-
 
     def load(self):
         '''Load model/tokenizer for preprocessor'''
@@ -285,7 +276,11 @@ class NeurotaggerWorker():
 
         self.neurotagger_obj = Neurotagger.objects.get(pk=self.neurotagger_id)
         self.seq_len = self.neurotagger_obj.seq_len
+        # model/graph to prevent "Tensor is not an element of this graph" errors
+        # https://github.com/tensorflow/tensorflow/issues/14356#issuecomment-385962623
         self.model = load_model(json.loads(self.neurotagger_obj.location)['model'])
+        global graph
+        graph = tf.get_default_graph()
 
     def _convert_texts(self, texts: List[str]):
         sp = spm.SentencePieceProcessor()
@@ -304,7 +299,10 @@ class NeurotaggerWorker():
         :return: class names of decision
         """
         to_predict = self._convert_texts([text])
-        return self.model.predict_proba(to_predict, batch_size=self.bs)
+        # Use global graph to prevent "Tensor is not an element of this graph" issues
+        with graph.as_default():
+            preds = self.model.predict_proba(to_predict, batch_size=self.bs) 
+        return preds
 
 
     def tag_doc(self, doc):
@@ -315,7 +313,10 @@ class NeurotaggerWorker():
         """
         texts = [doc[field] for field in doc]
         to_predict = self._convert_texts(texts)
-        return self.model.predict_proba(to_predict, batch_size=self.bs)
+        # Use global graph to prevent "Tensor is not an element of this graph" issues
+        with graph.as_default():
+            preds = self.model.predict_proba(to_predict, batch_size=self.bs) 
+        return preds
     
 
 class TrainingProgressCallback(Callback):

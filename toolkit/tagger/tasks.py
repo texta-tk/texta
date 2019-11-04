@@ -5,7 +5,7 @@ import secrets
 from celery.decorators import task
 
 from toolkit.core.task.models import Task
-from toolkit.tagger.models import Tagger
+from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.settings import NUM_WORKERS, MODELS_DIR
 from toolkit.embedding.phraser import Phraser
 from toolkit.elastic.searcher import ElasticSearcher
@@ -14,7 +14,28 @@ from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.tagger.plots import create_tagger_plot
 from toolkit.base_task import BaseTask
-from toolkit.tools.mlp_lemmatizer import MLPLemmatizer
+from toolkit.tools.mlp_analyzer import MLPAnalyzer
+
+
+@task(name="create_tagger_objects", base=BaseTask)
+def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries):
+    # retrieve Tagger Group object
+    tagger_group_object = TaggerGroup.objects.get(pk=tagger_group_id)
+    # create tagger objects
+    taggers_to_create = []
+    for i,tag in enumerate(tags):
+        tagger_data = tagger_serializer.copy()
+        tagger_data.update({'query': json.dumps(tag_queries[i])})
+        tagger_data.update({'description': tag})
+        tagger_data.update({'fields': json.dumps(tagger_data['fields'])})
+        created_tagger = Tagger.objects.create(**tagger_data,
+            author=tagger_group_object.author,
+            project=tagger_group_object.project)
+        taggers_to_create.append(created_tagger)
+    # create tagger objects
+    tagger_group_object.taggers.add(*taggers_to_create)
+    tagger_group_object.save()
+    return True
 
 
 @task(name="train_tagger", base=BaseTask)
@@ -45,7 +66,7 @@ def train_tagger(tagger_id):
             query=json.loads(tagger_object.query),
             indices=indices,
             field_data=field_data,
-            output='doc_with_id',
+            output=ElasticSearcher.OUT_DOC_WITH_ID,
             callback_progress=show_progress,
             scroll_limit=int(tagger_object.maximum_sample_size),
             text_processor=text_processor
@@ -59,7 +80,7 @@ def train_tagger(tagger_id):
         negative_samples = ElasticSearcher(
             indices=indices,
             field_data=field_data,
-            output='doc_with_id',
+            output=ElasticSearcher.OUT_DOC_WITH_ID,
             callback_progress=show_progress,
             scroll_limit=int(tagger_object.maximum_sample_size)*int(tagger_object.negative_multiplier),
             ignore_ids=positive_ids,
@@ -109,8 +130,8 @@ def train_tagger(tagger_id):
 
 @task(name="apply_tagger", base=BaseTask)
 def apply_tagger(text, tagger_id, input_type, lemmatize=False):
-    from toolkit.tagger.tagger_views import tagger_cache
-    from toolkit.embedding.views import phraser_cache
+    from toolkit.tagger.tagger_views import global_tagger_cache
+    from toolkit.embedding.views import global_phraser_cache
     
     # get tagger object
     tagger = Tagger.objects.get(pk=tagger_id)
@@ -118,18 +139,18 @@ def apply_tagger(text, tagger_id, input_type, lemmatize=False):
     # get lemmatizer if needed
     lemmatizer = None
     if lemmatize:
-        lemmatizer = MLPLemmatizer(lite=True)
+        lemmatizer = MLPAnalyzer()
     
     # create text processor object for tagger
     stop_words = json.loads(tagger.stop_words)
     if tagger.embedding:
-        phraser = phraser_cache.get_model(tagger.embedding.pk)
+        phraser = global_phraser_cache.get_model(tagger.embedding)
         text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
     else:
         text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
     
     # load tagger
-    tagger = tagger_cache.get_model(tagger_id)
+    tagger = global_tagger_cache.get_model(tagger)
     if not tagger:
         return None
     

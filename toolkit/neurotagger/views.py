@@ -19,13 +19,13 @@ from toolkit.tools.model_cache import ModelCache
 from toolkit import permissions as toolkit_permissions
 from toolkit.view_constants import TagLogicViews
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
-from toolkit.neurotagger.serializers import TextSerializer, DocSerializer
-from toolkit.helper_functions import get_payload
+from toolkit.neurotagger.serializers import NeuroTaggerTagTextSerializer, NeuroTaggerTagDocumentSerializer
+from toolkit.view_constants import BulkDelete, ExportModel
 
 # initialize model cache for neurotaggers
 model_cache = ModelCache(NeurotaggerWorker)
 
-class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
+class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, ExportModel):
     serializer_class = NeurotaggerSerializer
     permission_classes = (
         permissions.IsAuthenticated,
@@ -68,6 +68,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
+    @action(detail=True, methods=['post'], serializer_class=NeuroTaggerTagTextSerializer)
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
@@ -98,8 +99,8 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
         """
         API endpoint for tagging raw text.
         """
-        data = get_payload(request)
-        serializer = TextSerializer(data=data)
+        data = request.data
+        serializer = NeuroTaggerTagTextSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -113,19 +114,18 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # apply tagger
-        tagger_id = tagger_object.pk
-        tagger_response = self.apply_tagger(tagger_id, serializer.validated_data['text'], input_type='text')
+        tagger_response = self.apply_tagger(tagger_object, serializer.validated_data['text'], input_type='text')
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get','post'], serializer_class=DocSerializer)
+    @action(detail=True, methods=['post'], serializer_class=NeuroTaggerTagDocumentSerializer)
     def tag_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging JSON documents.
         """
 
-        data = get_payload(request)
-        serializer = DocSerializer(data=data)
+        data = request.data
+        serializer = NeuroTaggerTagDocumentSerializer(data=data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -139,13 +139,12 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # apply tagger
-        tagger_id = tagger_object.pk
-        tagger_response = self.apply_tagger(tagger_id, serializer.data['doc'], input_type='doc')
+        tagger_response = self.apply_tagger(tagger_object, serializer.data['doc'], input_type='doc')
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
-    def apply_tagger(self, tagger_id, tagger_input, input_type='text'):
-        tagger = model_cache.get_model(tagger_id)
+    def apply_tagger(self, tagger_object, tagger_input, input_type='text'):
+        tagger = model_cache.get_model(tagger_object)
         if input_type == 'doc':
             tagger_result = tagger.tag_doc(tagger_input)
         else:
@@ -161,7 +160,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
 
         return result
 
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['get'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging a random document.
@@ -183,6 +182,6 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews):
         # filter out correct fields from the document
         random_doc_filtered = {k:v for k,v in random_doc.items() if k in tagger_fields}
         # apply tagger
-        tagger_response = self.apply_tagger(tagger_id, random_doc_filtered, input_type='doc')
+        tagger_response = self.apply_tagger(tagger_object, random_doc_filtered, input_type='doc')
         response = {"document": random_doc, "prediction": tagger_response}
         return Response(response, status=status.HTTP_200_OK)

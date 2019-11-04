@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import django # For making sure the correct Python environment is used.
 from django.db import connections
 from django.db.utils import OperationalError
@@ -11,6 +13,7 @@ import logging
 import json
 
 BASE_APP_NAME = "toolkit"
+EXTENSION_APPS = ("docscraper",)
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", BASE_APP_NAME+".settings")
 django.setup()
@@ -44,7 +47,7 @@ def check_mysql_connection():
 def migrate(custom_apps):
     log_message = 'Toolkit: Detecting database changes.'
     print(log_message)
-    make_migrations_output = subprocess.check_output(['python', 'manage.py', 'makemigrations'] + custom_apps)
+    make_migrations_output = subprocess.check_output(['python', 'manage.py', 'makemigrations', '--noinput'] + custom_apps)
     log_message = 'Toolkit: Making database changes.'
     print(log_message)
     sleep(2)
@@ -59,7 +62,7 @@ def migrate(custom_apps):
 
 # CREATE LIST OF CUSTOM APPS
 cwd = os.path.realpath(os.path.dirname(__file__))
-custom_apps = [app.split('.')[-1] for app in INSTALLED_APPS if app.startswith(BASE_APP_NAME)] # Migration works for custom apps only. Manage.py can't detect relevant built-in django apps.
+custom_apps = [app.split('.')[-1] for app in INSTALLED_APPS if app.startswith(BASE_APP_NAME) or app in EXTENSION_APPS] # Migration works for custom apps only. Manage.py can't detect relevant built-in django apps.
 print('Running migrations for apps:', ', '.join(custom_apps))
 
 # DELETE MIGRATIONS IF ASKED
