@@ -5,7 +5,7 @@ import secrets
 from celery.decorators import task
 
 from toolkit.core.task.models import Task
-from toolkit.tagger.models import Tagger
+from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.settings import NUM_WORKERS, MODELS_DIR
 from toolkit.embedding.phraser import Phraser
 from toolkit.elastic.searcher import ElasticSearcher
@@ -15,6 +15,27 @@ from toolkit.tools.text_processor import TextProcessor
 from toolkit.tagger.plots import create_tagger_plot
 from toolkit.base_task import BaseTask
 from toolkit.tools.mlp_analyzer import MLPAnalyzer
+
+
+@task(name="create_tagger_objects", base=BaseTask)
+def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries):
+    # retrieve Tagger Group object
+    tagger_group_object = TaggerGroup.objects.get(pk=tagger_group_id)
+    # create tagger objects
+    taggers_to_create = []
+    for i,tag in enumerate(tags):
+        tagger_data = tagger_serializer.copy()
+        tagger_data.update({'query': json.dumps(tag_queries[i])})
+        tagger_data.update({'description': tag})
+        tagger_data.update({'fields': json.dumps(tagger_data['fields'])})
+        created_tagger = Tagger.objects.create(**tagger_data,
+            author=tagger_group_object.author,
+            project=tagger_group_object.project)
+        taggers_to_create.append(created_tagger)
+    # create tagger objects
+    tagger_group_object.taggers.add(*taggers_to_create)
+    tagger_group_object.save()
+    return True
 
 
 @task(name="train_tagger", base=BaseTask)
