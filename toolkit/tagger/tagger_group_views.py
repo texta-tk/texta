@@ -79,7 +79,6 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-    @action(detail=True, methods=['get'])
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         tagger_objects = instance.taggers.all()
@@ -100,8 +99,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
             return Response({"success": "Taggergroup instance deleted, related tagger instances deleted, but related models and plots were not removed"}, status=status.HTTP_204_NO_CONTENT)
 
 
-
-
+    @action(detail=True, methods=['get'])
     def models_list(self, request, pk=None, project_pk=None):
         """
         API endpoint for listing tagger objects connected to tagger group instance.

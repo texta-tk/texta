@@ -46,14 +46,15 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        try:
-            embedding_model_location = json.loads(instance.location)['embedding']
-            phraser_model_location = json.loads(instance.location)['phraser']
-            os.remove(embedding_model_location)
-            os.remove(phraser_model_location)
-            return Response({"success": "Models removed"}, status=status.HTTP_204_NO_CONTENT)
-        except:
-            return Response({"success": "Embedding instance deleted, but models were not removed"}, status=status.HTTP_204_NO_CONTENT)
+        # try:
+        embedding_model_location = json.loads(instance.location)['embedding']
+        phraser_model_location = json.loads(instance.location)['phraser']
+        print("location", phraser_model_location)
+        os.remove(embedding_model_location)
+        os.remove(phraser_model_location)
+        return Response({"success": "Models removed"}, status=status.HTTP_204_NO_CONTENT)
+        # except:
+            # return Response({"success": "Embedding instance deleted, but models were not removed"}, status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post'],serializer_class=EmbeddingPredictSimilarWordsSerializer)
     def predict_similar(self, request, pk=None, project_pk=None):

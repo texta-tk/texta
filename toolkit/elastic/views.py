@@ -1,4 +1,4 @@
-from rest_framework import status, viewsets, permissions
+from rest_framework import status, views, viewsets, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action
 import json
@@ -11,14 +11,6 @@ from toolkit.elastic.serializers import ReindexerCreateSerializer
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 
 
-class ReindexerViewSet(viewsets.ModelViewSet):
-    queryset = Reindexer.objects.all()
-    serializer_class = ReindexerCreateSerializer
-    permission_classes = (
-        ProjectResourceAllowed,
-        permissions.IsAuthenticated,
-    )
-
 class ElasticGetIndices(views.APIView):
     """
     Retrieves all available Elasticsearch indices.
@@ -29,6 +21,15 @@ class ElasticGetIndices(views.APIView):
             return Response({"error": "no connection to Elasticsearch"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         indices = sorted(ElasticCore().get_indices())
         return Response(indices, status=status.HTTP_200_OK)
+
+
+class ReindexerViewSet(viewsets.ModelViewSet):
+    queryset = Reindexer.objects.all()
+    serializer_class = ReindexerCreateSerializer
+    permission_classes = (
+        ProjectResourceAllowed,
+        permissions.IsAuthenticated,
+    )
 
     def get_queryset(self):
         return Reindexer.objects.filter(project=self.kwargs['project_pk'])

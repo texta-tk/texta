@@ -62,7 +62,7 @@ class NeurotaggerViewTests(APITestCase):
 
         # Test model import
         self.run_model_export_import(tagger_id=created_neurotagger.id)
-        
+
         # Remove neurotagger files after test is done
         if 'model' in created_neurotagger.location:
             self.addCleanup(remove_file, json.loads(created_neurotagger.location)['model'])
@@ -149,6 +149,5 @@ class NeurotaggerViewTests(APITestCase):
                     tokenizer_model_location,
                     tokenizer_vocab_model_location,
                     created_neurotagger.plot.path,
-                    created_neurotagger.model_plot.path
                     ):
             assert not os.path.isfile(model)

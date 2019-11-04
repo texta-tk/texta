@@ -68,7 +68,6 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-    @action(detail=True, methods=['post'], serializer_class=NeuroTaggerTagTextSerializer)
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
@@ -81,7 +80,6 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
                         tokenizer_model_location,
                         tokenizer_vocab_model_location,
                         instance.plot.path,
-                        instance.model_plot.path
                         ):
                 os.remove(model)
             return Response({"success": f'Neurotagger instance "{instance.description}" deleted, models and plots were removed'}, status=status.HTTP_204_NO_CONTENT)
@@ -94,7 +92,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
         raise Exception('testing, attention please')
         return Response('hi', status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['get','post'], serializer_class=TextSerializer)
+    @action(detail=True, methods=['get','post'], serializer_class=NeuroTaggerTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging raw text.

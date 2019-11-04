@@ -1,6 +1,6 @@
 from toolkit.serializer_constants import ProjectResourceUrlSerializer
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.core.choices import get_index_choices
+# from toolkit.core.choices import get_index_choices
 from toolkit.elastic.models import Reindexer
 from rest_framework import serializers
 import json
