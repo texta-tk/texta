@@ -1,13 +1,12 @@
-import json
-
 from toolkit.elastic.core import ElasticCore
-from toolkit.settings import ES_URL
+
 
 class ElasticAggregator:
     """
     Everything related to performing aggregations in Elasticsearch
     """
     EMPTY_QUERY = {"query": {"match_all": {}}}
+
 
     def __init__(self, field_data=[], indices=[], query=EMPTY_QUERY):
         """
@@ -41,15 +40,16 @@ class ElasticAggregator:
         """
         For retrieving entities (facts) from ES
         """
-        agg_query = {"facts": {
-                            "nested": {"path": "texta_facts"},
-                            "aggs": {
-                                "facts": {
-                                    "terms": {"field": "texta_facts.fact", "size": size}
-                                }
-                            }
-                        }
+        agg_query = {
+            "facts": {
+                "nested": {"path": "texta_facts"},
+                "aggs": {
+                    "facts": {
+                        "terms": {"field": "texta_facts.fact", "size": size}
                     }
+                }
+            }
+        }
 
         # filter by name if fact name present
         if filter_by_fact_name:

@@ -23,8 +23,6 @@ Test:
     TEXTA_REDIS_URL: redis://redis:6379
   script:
   - python manage.py test
-  except:
-  - tags
 
 Build:
   stage: build
