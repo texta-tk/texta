@@ -85,7 +85,7 @@ class ReindexerViewTests(APITestCase):
         for payload in (
             join_indices_fields_payload,
             random_docs_payload,
-            update_field_type_payload,
+            # update_field_type_payload,
         ):
             url = f'/projects/{self.project.id}/reindexer/'
             self.run_create_reindexer_task_signal(self.project, url, payload)
@@ -95,7 +95,6 @@ class ReindexerViewTests(APITestCase):
            checks if new_index was removed '''
 
         print(payload)
-
         # ElasticCore().delete_index(TEST_INDEX_REINDEX)
         if overwrite == False and TEST_INDEX_REINDEX not in ElasticCore().get_indices():
             response = self.client.post(url, payload, format='json')

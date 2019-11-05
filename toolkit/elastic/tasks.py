@@ -68,11 +68,11 @@ def add_documents(elastic_search, fields, elastic_doc):
             elastic_doc.add(new_doc)
 
 
-# def bulk_add_documents(elastic_search, fields, elastic_doc, index):
-#     for document in elastic_search:
-#         new_doc = {k: v for k, v in document.items() if k in fields}
-#         if new_doc:
-#             elastic_doc.bulk_add(new_doc, index)
+def bulk_add_documents(elastic_search, fields, elastic_doc, index):
+    for document in elastic_search:
+        new_doc = {k: v for k, v in document.items() if k in fields}
+        if new_doc:
+            elastic_doc.bulk_add(new_doc, index)
 
 
 @task(name="reindex_task", base=BaseTask)
@@ -83,8 +83,6 @@ def reindex_task(reindexer_task_id):
     fields = set(json.loads(reindexer_obj.fields))
     random_size = reindexer_obj.random_size
     field_type = json.loads(reindexer_obj.field_type)
-
-
 
     ''' for empty field post, use all posted indices fields '''
     if fields == set():
@@ -118,11 +116,11 @@ def reindex_task(reindexer_task_id):
         print(create_index_res)
 
         # check new mapping ->
-        # new_index_mapping = ElasticCore().get_mapping(reindexer_obj.new_index)
-        # print(new_index_mapping)
+        new_index_mapping = ElasticCore().get_mapping(reindexer_obj.new_index)
+        print("new mapping", new_index_mapping)
 
-    add_documents(elastic_search, fields, elastic_doc)
-    # bulk_add_documents(elastic_search, fields, elastic_doc, reindexer_obj.new_index)
+    # add_documents(elastic_search, fields, elastic_doc)
+    bulk_add_documents(elastic_search, fields, elastic_doc, reindexer_obj.new_index)
 
     # declare the job done
     show_progress.update_step('')
