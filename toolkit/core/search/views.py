@@ -5,9 +5,9 @@ from toolkit.permissions.project_permissions import ProjectAllowed
 from toolkit.core.search.models import Search
 from toolkit.core.project.models import Project
 from toolkit.core.search.serializers import SearchSerializer
+from toolkit.view_constants import BulkDelete
 
-
-class SearchViewSet(viewsets.ModelViewSet):
+class SearchViewSet(viewsets.ModelViewSet, BulkDelete):
     pagination_class = None
     serializer_class = SearchSerializer
     permission_classes = (
