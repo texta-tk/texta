@@ -16,7 +16,7 @@ class TestSpamDetection(TestCase):
             owner=cls.user,
             indices=TEST_INDEX
         )
-        cls.url = f'/projects/{cls.project.id}/get_spam_content/'
+        cls.url = f'/projects/{cls.project.id}/get_spam/'
 
 
     def setUp(self):
@@ -25,15 +25,15 @@ class TestSpamDetection(TestCase):
 
     def test_spam_detection(self):
         common_fields = ["client_ip", "client_cookie"]
-        response = self.client.post(TestSpamDetection.url, {
+        payload = {
             "target_field": TEST_FIELD,
             "from_date": "now-5y",
             "to_date": "now",
             "date_field": "@timestamp",
             "min_doc_count": 1,
             "common_feature_fields": common_fields
-        }).json()
-
+        }
+        response = self.client.post(self.url, payload, format="json").json()
         self.assertEqual(len(response) > 1, True)
 
         for item in response:

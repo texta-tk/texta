@@ -12,13 +12,13 @@ from toolkit.core.project.serializers import (
     ProjectMultiTagSerializer,
     ProjectSuggestFactValuesSerializer,
     ProjectSuggestFactNamesSerializer,
+    ProjectGetSpamSerializer,
 )
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.aggregator import ElasticAggregator
-from toolkit.elastic.serializers import SpamSerializer
 from toolkit.elastic.spam_detector import SpamDetector
 from toolkit.permissions.project_permissions import ProjectAllowed
 from toolkit.settings import ES_URL
@@ -75,9 +75,9 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
         return project_indices
 
 
-    @action(detail=True, methods=['post'], serializer_class=SpamSerializer)
-    def get_spam_content(self,  request, pk=None):
-        serializer = SpamSerializer(data=request.data)
+    @action(detail=True, methods=['post'], serializer_class=ProjectGetSpamSerializer)
+    def get_spam(self,  request, pk=None):
+        serializer = ProjectGetSpamSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         indices = self.get_project_indices(pk)
