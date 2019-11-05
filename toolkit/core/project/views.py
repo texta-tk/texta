@@ -79,8 +79,6 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
         serializer.validated_data["common_feature_fields"] = fields  # Since we're unpacking all the data in the serializer, gonna overwrite what's inside it for comfort.
 
         response = detector.get_spam_content(**serializer.validated_data)
-        response = detector.format_elastic_response(response)
-
         return Response(response, status=status.HTTP_200_OK)
 
 
