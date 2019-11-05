@@ -12,8 +12,13 @@ from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import train_tagger
 from toolkit.core.project.models import Project
-from toolkit.tagger.serializers import TaggerSerializer, TaggerListFeaturesSerializer, \
-                                       TaggerTagTextSerializer, TaggerTagDocumentSerializer
+from toolkit.tagger.serializers import (
+    TaggerSerializer,
+    TaggerListFeaturesSerializer,
+    TaggerTagTextSerializer,
+    TaggerTagDocumentSerializer,
+    TaggerFeedbackSerializer,
+)
 from toolkit.serializer_constants import GeneralTextSerializer
 from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tools.model_cache import ModelCache
@@ -24,14 +29,17 @@ from toolkit.core.task.models import Task
 from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.helper_functions import apply_celery_task
 from toolkit.tagger.validators import validate_input_document
-from toolkit.view_constants import BulkDelete
-from toolkit.view_constants import ExportModel
+from toolkit.view_constants import (
+    BulkDelete,
+    ExportModel,
+    GenericTaggerFeedback,
+)
 
 # initialize model cache for taggers & phrasers
 global_tagger_cache = ModelCache(TextTagger)
 global_mlp_for_taggers = MLPAnalyzer()
 
-class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
+class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, GenericTaggerFeedback):
     serializer_class = TaggerSerializer
     permission_classes = (
         ProjectResourceAllowed,
@@ -288,6 +296,18 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         tagger_response = self.apply_tagger(tagger_object, random_doc_filtered, input_type='doc')
         response = {"document": random_doc, "prediction": tagger_response}
         return Response(response, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['post'], serializer_class=TaggerFeedbackSerializer)
+    def feedback(self, request, project_pk=None, pk=None):
+        '''API endpoint for giving feedback to taggers and neurotaggers.'''
+        serializer = TaggerFeedbackSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # retrieve Tagger/NeuroTagger object
+        tagger_object = self.get_object()
+
+
+        return Response("info", status=status.HTTP_200_OK)
 
 
     def apply_tagger(self, tagger_object, tagger_input, input_type='text', phraser=None, lemmatizer=None):

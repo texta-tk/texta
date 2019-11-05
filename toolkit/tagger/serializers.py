@@ -132,3 +132,8 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
                         'avg_recall': tagger_objects.aggregate(Avg('recall'))['recall__avg'],
                         'avg_f1_score': tagger_objects.aggregate(Avg('f1_score'))['f1_score__avg']}
         return tagger_stats
+
+
+class TaggerFeedbackSerializer(serializers.Serializer):
+    prediction_id = serializers.IntegerField()
+    correct_prediction = serializers.BooleanField()
