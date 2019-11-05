@@ -43,8 +43,8 @@ class SpamDetector:
         date_field = kwargs["date_field"]
         from_date = kwargs["from_date"]
         to_date = kwargs["to_date"]
-
-        date_filter = A("filter", Q("range", **{date_field: {'gte': from_date, 'lte': to_date}}))  # You need a filter aggregation to limit the documents of other aggregations.
+         # You need a filter aggregation to limit the documents of other aggregations.
+        date_filter = A("filter", Q("range", **{date_field: {'gte': from_date, 'lte': to_date}}))
         self.search.aggs.bucket("date_filter", date_filter)
 
 
@@ -58,9 +58,10 @@ class SpamDetector:
         target_field = kwargs["target_field"]
         aggregation_size = kwargs["aggregation_size"]
         min_doc_count = kwargs["min_doc_count"]
-
-        term_filter = A("terms", field="{}.keyword".format(target_field), size=aggregation_size, min_doc_count=min_doc_count)  # Frequent items aggregation to find posts with the same values.
-        self.search.aggs["date_filter"].bucket("spam", term_filter)  # Applying the previous two pre-made aggregations into the query.
+        # Frequent items aggregation to find posts with the same values.
+        term_filter = A("terms", field="{}.keyword".format(target_field), size=aggregation_size, min_doc_count=min_doc_count)
+        # Applying the previous two pre-made aggregations into the query.
+        self.search.aggs["date_filter"].bucket("spam", term_filter)
 
 
     def apply_nested_terms_aggregations(self, **kwargs):
@@ -78,10 +79,20 @@ class SpamDetector:
         for field in common_feature_fields:
             if field["type"] == "text":
                 elastic_field_name = "{}.keyword".format(field["path"])
-                self.search.aggs["date_filter"]["spam"].bucket(field["path"], "terms", field=elastic_field_name, size=aggregation_size, min_doc_count=min_doc_count)
+                self.search.aggs["date_filter"]["spam"].bucket(
+                    field["path"], 
+                    "terms", 
+                    field=elastic_field_name,
+                    size=aggregation_size
+                    min_doc_count=min_doc_count)
             else:
                 elastic_field_name = "{}".format(field["path"])
-                self.search.aggs["date_filter"]["spam"].bucket(field["path"], "terms", field=elastic_field_name, size=aggregation_size, min_doc_count=min_doc_count)
+                self.search.aggs["date_filter"]["spam"].bucket(
+                    field["path"],
+                    "terms",
+                    field=elastic_field_name,
+                    size=aggregation_size,
+                    min_doc_count=min_doc_count)
 
 
     def execute_query(self):
