@@ -4,7 +4,7 @@ from keras import backend as K
 from rest_framework import views, status
 from rest_framework.response import Response
 
-from toolkit.core.health.utils import get_version, get_cache_status, get_mlp_status, get_elastic_status
+from toolkit.core.health.utils import get_version, get_cache_status, get_mlp_status, get_elastic_status, get_active_tasks
 
 class HealthView(views.APIView):
 
@@ -33,5 +33,6 @@ class HealthView(views.APIView):
         
         gpus = K.tensorflow_backend._get_available_gpus()
         toolkit_status['gpu'] = {'count': len(gpus), 'devices': gpus}
+        toolkit_status['active_tasks'] = get_active_tasks()
 
         return Response(toolkit_status, status=status.HTTP_200_OK)

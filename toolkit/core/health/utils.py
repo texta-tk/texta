@@ -2,6 +2,8 @@ import os
 import requests
 from toolkit.settings import BASE_DIR, MLP_URL, ES_URL
 from toolkit.elastic.core import ElasticCore
+from toolkit.core.task.models import Task
+from datetime import datetime, timedelta, time
 
 def get_version():
     """
@@ -46,6 +48,7 @@ def get_mlp_status():
     
     return mlp_info
 
+
 def get_elastic_status():
     """
     Checks Elasticsearch connection status and version.
@@ -60,3 +63,13 @@ def get_elastic_status():
     return es_info
 
 
+def get_active_tasks():
+    """
+    Gets the number of active tasks by the last update and status
+    """
+    # 1 hour ago from now
+    timeframe = datetime.now().date() - timedelta(hours=1)
+    # Return the count of tasks with last update within an hour and exclude inactive status tasks
+    return Task.objects.filter(last_update__gte=timeframe).exclude(
+        status__in=[Task.STATUS_COMPLETED, Task.STATUS_CANCELLED, Task.STATUS_FAILED]
+    ).count()
