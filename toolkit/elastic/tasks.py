@@ -60,19 +60,13 @@ def generate_mapping(new_index, schema_input):
     return SchemaGenerator().generate_schema(new_index, schema_input)
 
 
-def add_documents(elastic_search, fields, elastic_doc):
-    # teha efektiivsemaks, bulk insert
-    for document in elastic_search:
-        new_doc = {k: v for k, v in document.items() if k in fields}
-        if new_doc:
-            elastic_doc.add(new_doc)
-
-
 def bulk_add_documents(elastic_search, fields, elastic_doc, index):
+    new_docs = []
     for document in elastic_search:
         new_doc = {k: v for k, v in document.items() if k in fields}
         if new_doc:
-            elastic_doc.bulk_add(new_doc, index)
+            new_docs.append(new_doc)
+    elastic_doc.bulk_add(new_docs, index)
 
 
 @task(name="reindex_task", base=BaseTask)
@@ -113,13 +107,7 @@ def reindex_task(reindexer_task_id):
         updated_schema = {'mappings': {reindexer_obj.new_index: mod_schema}}
 
         create_index_res = ElasticCore().create_index(reindexer_obj.new_index, updated_schema)
-        print(create_index_res)
 
-        # check new mapping ->
-        new_index_mapping = ElasticCore().get_mapping(reindexer_obj.new_index)
-        print("new mapping", new_index_mapping)
-
-    # add_documents(elastic_search, fields, elastic_doc)
     bulk_add_documents(elastic_search, fields, elastic_doc, reindexer_obj.new_index)
 
     # declare the job done

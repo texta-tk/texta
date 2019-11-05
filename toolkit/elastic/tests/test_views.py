@@ -72,12 +72,10 @@ class ReindexerViewTests(APITestCase):
             # "field_type": []
             # "field_type": [{"path": "comment_subject", "field_type": "long", "new_path_name": "changed_path_name"}],
             # "field_type": [{"path": "comment_subject", "new_path_name": "changed_path_name"}], #TODO
-
         }
 
         for project in (
             self.project,
-
         ):
             url = f'/projects/{project.id}/reindexer/'
             self.run_create_reindexer_task_signal(project, url, pick_fields_payload)  # kõik postitatud väjad uude indeksisse, kui valideeritud projekti kaudu
@@ -85,7 +83,7 @@ class ReindexerViewTests(APITestCase):
         for payload in (
             join_indices_fields_payload,
             random_docs_payload,
-            # update_field_type_payload,
+            update_field_type_payload,
         ):
             url = f'/projects/{self.project.id}/reindexer/'
             self.run_create_reindexer_task_signal(self.project, url, payload)
@@ -93,14 +91,14 @@ class ReindexerViewTests(APITestCase):
     def run_create_reindexer_task_signal(self, project, url, payload, overwrite=False):
         ''' Tests the endpoint for a new Reindexer task, and if a new Task gets created via the signal
            checks if new_index was removed '''
-
-        print(payload)
-        # ElasticCore().delete_index(TEST_INDEX_REINDEX)
-        if overwrite == False and TEST_INDEX_REINDEX not in ElasticCore().get_indices():
-            response = self.client.post(url, payload, format='json')
-            print_output('run_create_reindexer_task_signal:response.data', response.data)
-            self.is_new_index_created_if_yes_remove(response, payload, project)
-            self.is_reindexed_index_added_to_project_if_yes_remove(response, payload['new_index'], project)
+        try:
+            ElasticCore().delete_index(TEST_INDEX_REINDEX)
+        except:
+               print("TEST_INDEX_REINDEX not deleted")
+        response = self.client.post(url, payload, format='json')
+        print_output('run_create_reindexer_task_signal:response.data', response.data)
+        self.is_new_index_created_if_yes_remove(response, payload, project)
+        self.is_reindexed_index_added_to_project_if_yes_remove(response, payload['new_index'], project)
         assert TEST_INDEX_REINDEX not in ElasticCore().get_indices()
 
     def is_new_index_created_if_yes_remove(self, response, payload, project):
