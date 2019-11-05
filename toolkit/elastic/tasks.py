@@ -76,13 +76,15 @@ def add_documents(elastic_search, fields, elastic_doc):
 
 
 @task(name="reindex_task", base=BaseTask)
-def reindex_task(reindexer_task_id, testing=False):
+def reindex_task(reindexer_task_id):
     reindexer_obj = Reindexer.objects.get(pk=reindexer_task_id)
     task_object = reindexer_obj.task
     indices = json.loads(reindexer_obj.indices)
     fields = set(json.loads(reindexer_obj.fields))
     random_size = reindexer_obj.random_size
-    field_type = json.loads(reindexer_obj.field_type.replace("'", '"'))
+    field_type = json.loads(reindexer_obj.field_type)
+
+
 
     ''' for empty field post, use all posted indices fields '''
     if fields == set():
@@ -122,7 +124,8 @@ def reindex_task(reindexer_task_id, testing=False):
     add_documents(elastic_search, fields, elastic_doc)
     # bulk_add_documents(elastic_search, fields, elastic_doc, reindexer_obj.new_index)
 
-    # finish Task
+    # declare the job done
+    show_progress.update_step('')
     show_progress.update_view(100.0)
     task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
 

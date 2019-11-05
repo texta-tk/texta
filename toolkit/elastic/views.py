@@ -56,6 +56,7 @@ class ReindexerViewSet(viewsets.ModelViewSet):
         serializer.save(
             author=self.request.user,
             project=project_obj,
+            field_type=json.dumps(serializer.validated_data['field_type']),
             fields=json.dumps(serializer.validated_data['fields']),
             indices=json.dumps(serializer.validated_data['indices']))
 

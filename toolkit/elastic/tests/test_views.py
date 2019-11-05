@@ -94,6 +94,8 @@ class ReindexerViewTests(APITestCase):
         ''' Tests the endpoint for a new Reindexer task, and if a new Task gets created via the signal
            checks if new_index was removed '''
 
+        print(payload)
+
         # ElasticCore().delete_index(TEST_INDEX_REINDEX)
         if overwrite == False and TEST_INDEX_REINDEX not in ElasticCore().get_indices():
             response = self.client.post(url, payload, format='json')
