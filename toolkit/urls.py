@@ -10,6 +10,7 @@ from toolkit.tagger.urls import router as tagger_router
 from toolkit.neurotagger.urls import router as neurotagger_router
 from toolkit.core.user_profile import views as profile_views
 from toolkit.core.health.views import HealthView
+from toolkit.elastic.views import ElasticGetIndices
 from toolkit.core.project.views import ProjectViewSet
 from toolkit.core.user_profile.views import UserViewSet
 from toolkit.embedding.views import EmbeddingViewSet
@@ -47,6 +48,8 @@ urlpatterns = [
     # auth
     path('rest-auth/', include('rest_auth.urls')),
     path('rest-auth/registration/', include('rest_auth.registration.urls')),
+    # elastic
+    url('get_indices', ElasticGetIndices.as_view()),
     # routers
     url(r'^', include(router.urls)),
     url(r'^', include(project_router.urls))

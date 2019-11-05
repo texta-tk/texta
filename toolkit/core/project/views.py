@@ -4,12 +4,20 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
-from toolkit.core.project.serializers import (ProjectGetFactsSerializer, ProjectMultiTagSerializer, ProjectSearchByQuerySerializer, ProjectSerializer, ProjectSimplifiedSearchSerializer)
-from toolkit.core.task.models import Task
-from toolkit.elastic.aggregator import ElasticAggregator
+from toolkit.core.project.serializers import (
+    ProjectSerializer,
+    ProjectGetFactsSerializer,
+    ProjectSimplifiedSearchSerializer,
+    ProjectSearchByQuerySerializer,
+    ProjectMultiTagSerializer,
+    ProjectSuggestFactValuesSerializer,
+    ProjectSuggestFactNamesSerializer,
+)
+from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.serializers import SpamSerializer
 from toolkit.elastic.spam_detector import SpamDetector
 from toolkit.permissions.project_permissions import ProjectAllowed
@@ -17,6 +25,7 @@ from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.view_constants import ImportModel
+from toolkit.tools.autocomplete import Autocomplete
 
 from celery import group
 
@@ -159,7 +168,6 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
 
         project_object = self.get_object()
         project_indices = list(project_object.indices)
-        project_fields = project_object.get_elastic_fields(path_list=True)
 
         if not project_indices:
             return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST)
@@ -194,3 +202,62 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
         # sort & return tags
         sorted_tags = sorted(tags, key=lambda k: k['probability'], reverse=True)
         return Response(sorted_tags, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactValuesSerializer)
+    def autocomplete_fact_values(self, request, pk=None, project_pk=None):
+        data = request.data
+        serializer = ProjectSuggestFactValuesSerializer(data=data)
+        if not serializer.is_valid():
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        project_object = self.get_object()
+        project_indices = list(project_object.indices)
+        if not project_indices:
+            return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST)
+
+        limit = serializer.validated_data['limit']
+        startswith = serializer.validated_data['startswith']
+        fact_name = serializer.validated_data['fact_name']
+
+        autocomplete = Autocomplete(project_object, project_indices, limit)
+        fact_values = autocomplete.get_fact_values(startswith, fact_name)
+
+
+        return Response(fact_values, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactNamesSerializer)
+    def autocomplete_fact_names(self, request, pk=None, project_pk=None):
+        data = request.data
+        serializer = ProjectSuggestFactNamesSerializer(data=data)
+        if not serializer.is_valid():
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        project_object = self.get_object()
+        project_indices = list(project_object.indices)
+        if not project_indices:
+            return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST)
+
+        limit = serializer.validated_data['limit']
+        startswith = serializer.validated_data['startswith']
+
+        autocomplete = Autocomplete(project_object, project_indices, limit)
+        fact_values = autocomplete.get_fact_names(startswith)
+
+
+        return Response(fact_values, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['get'])
+    def get_resource_counts(self, request, pk=None, project_pk=None):
+        proj = self.get_object()
+        response = {
+            'num_neurotaggers': proj.neurotagger_set.count(),
+            'num_taggers': proj.tagger_set.count(),
+            'num_tagger_groups': proj.taggergroup_set.count(),
+            'num_embeddings': proj.embedding_set.count(),
+            'num_embedding_clusters': proj.embeddingcluster_set.count(),
+        }
+
+        return Response(response, status=status.HTTP_200_OK)

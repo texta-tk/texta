@@ -12,7 +12,7 @@ from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.query import Query
 
-from toolkit.tagger.tasks import train_tagger, apply_tagger
+from toolkit.tagger.tasks import train_tagger, apply_tagger, create_tagger_objects
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.core.project.models import Project
 from toolkit.tagger.serializers import TaggerGroupSerializer, TaggerGroupTagTextSerializer, TaggerGroupTagDocumentSerializer
@@ -33,11 +33,6 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
         permissions.IsAuthenticated,
         ProjectResourceAllowed,
         )
-
-    def perform_create(self, serializer, tagger_set):
-        serializer.save(author=self.request.user,
-                        project=Project.objects.get(id=self.kwargs['project_pk']),
-                        taggers=tagger_set)
 
 
     def get_queryset(self):
@@ -63,28 +58,22 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
         if not tags:
             return Response({'error': f'found no tags for fact name: {fact_name}'}, status=status.HTTP_400_BAD_REQUEST)
 
-
+        # create queries for taggers
         tag_queries = self.create_queries(fact_name, tags)
 
         # retrive tagger options from hybrid tagger serializer
         validated_tagger_data = serializer.validated_data.pop('tagger')
         validated_tagger_data.update('')
 
-        # create tagger objects
-        tagger_set = set()
-        for i,tag in enumerate(tags):
-            tagger_data = validated_tagger_data.copy()
-            tagger_data.update({'query': json.dumps(tag_queries[i])})
-            tagger_data.update({'description': tag})
-            tagger_data.update({'fields': json.dumps(tagger_data['fields'])})
-            created_tagger = Tagger.objects.create(**tagger_data,
-                                      author=request.user,
-                                      project=active_project)
-            tagger_set.add(created_tagger)
+        # create tagger group object
+        tagger_group = serializer.save(author=self.request.user,
+                                       project=Project.objects.get(id=self.kwargs['project_pk']))
 
-        # create hybrid tagger object
-        self.perform_create(serializer, tagger_set)
+        # create taggers objects inside tagger group object
+        # use async to make things faster
+        apply_celery_task(create_tagger_objects, tagger_group.pk, validated_tagger_data, tags, tag_queries)
 
+        # retrieve headers and create response
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 

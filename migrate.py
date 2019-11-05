@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import django # For making sure the correct Python environment is used.
 from django.db import connections
 from django.db.utils import OperationalError
