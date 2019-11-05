@@ -25,7 +25,7 @@ class ElasticDocument:
     def bulk_add(self, docs, index, chunk_size=100):
         ''' _type is deprecated in ES 6'''
         actions = [{"_index": index, "_type": index, "_source": doc} for doc in docs]
-        return bulk(client=self.core.es, actions=actions, chunk_size=chunk_size)
+        return bulk(client=self.core.es, actions=actions, chunk_size=chunk_size, stats_only=True)
 
     def remove(self, doc_id):
         """

@@ -19,7 +19,6 @@ from toolkit.elastic.mapping_generator import SchemaGenerator
     bulk doc_add
 """
 
-
 def update_field_types(indices, field_type):
     ''' if fieldtype, for field named fieldtype change its type'''
     # returns fields edited by serializer input
@@ -60,13 +59,13 @@ def generate_mapping(new_index, schema_input):
     return SchemaGenerator().generate_schema(new_index, schema_input)
 
 
-def bulk_add_documents(elastic_search, fields, elastic_doc, index):
+def bulk_add_documents(elastic_search, fields, elastic_doc, new_index):
     new_docs = []
     for document in elastic_search:
         new_doc = {k: v for k, v in document.items() if k in fields}
         if new_doc:
             new_docs.append(new_doc)
-    elastic_doc.bulk_add(new_docs, index)
+    print(elastic_doc.bulk_add(new_docs, new_index))
 
 
 @task(name="reindex_task", base=BaseTask)
@@ -74,14 +73,14 @@ def reindex_task(reindexer_task_id):
     reindexer_obj = Reindexer.objects.get(pk=reindexer_task_id)
     task_object = reindexer_obj.task
     indices = json.loads(reindexer_obj.indices)
-    fields = set(json.loads(reindexer_obj.fields))
+    fields = json.loads(reindexer_obj.fields)
     random_size = reindexer_obj.random_size
     field_type = json.loads(reindexer_obj.field_type)
 
     ''' for empty field post, use all posted indices fields '''
-    if fields == set():
+    if not fields:
         fields = ElasticCore().get_fields(indices=indices)
-        fields = set(field["path"] for field in fields)
+        fields = [field["path"] for field in fields]
 
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step("scrolling data")
@@ -92,6 +91,7 @@ def reindex_task(reindexer_task_id):
 
     if random_size > 0:
         elastic_search = ElasticSearcher(indices=indices).random_documents(size=random_size)
+
 
     ''' the operations that don't require mapping update have been completed '''
 

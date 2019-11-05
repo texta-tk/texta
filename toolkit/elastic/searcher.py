@@ -125,7 +125,7 @@ class ElasticSearcher:
             return [self._parse_doc(doc) for doc in response['hits']['hits']]
         if self.output == self.OUT_DOC_HL:
             return [self._parse_doc_with_highlight(doc) for doc in response['hits']['hits']]
-        
+
         else:
             return response
 
