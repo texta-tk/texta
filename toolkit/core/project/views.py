@@ -26,6 +26,7 @@ from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.view_constants import ImportModel
 from toolkit.tools.autocomplete import Autocomplete
+from toolkit.core.task.models import Task
 
 from celery import group
 
