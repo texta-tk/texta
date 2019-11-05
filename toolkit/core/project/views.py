@@ -1,10 +1,8 @@
-from django.db.models.query import QuerySet
-from rest_framework import viewsets, status, permissions
-from rest_framework.response import Response
-from rest_framework.views import APIView
+from celery import group
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.response import Response
 
-from toolkit.permissions.project_permissions import ProjectAllowed
 from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import (
     ProjectSerializer,
@@ -14,19 +12,24 @@ from toolkit.core.project.serializers import (
     ProjectMultiTagSerializer,
     ProjectSuggestFactValuesSerializer,
     ProjectSuggestFactNamesSerializer,
+    ProjectGetSpamSerializer,
 )
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.aggregator import ElasticAggregator
-from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.query import Query
+from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.elastic.aggregator import ElasticAggregator
+from toolkit.elastic.spam_detector import SpamDetector
+from toolkit.permissions.project_permissions import ProjectAllowed
+from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
-from toolkit.core.task.models import Task
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.view_constants import ImportModel
 from toolkit.tools.autocomplete import Autocomplete
+from toolkit.core.task.models import Task
 
 from celery import group
+
 
 class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
     # Disable default pagination
@@ -37,8 +40,10 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
         ProjectAllowed,
     )
 
+
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
 
     def get_queryset(self):
         queryset = Project.objects.all()
@@ -64,6 +69,27 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
             field_map[field['index']].append(field_info)
         field_map_list = [{'index': k, 'fields': v} for k, v in field_map.items()]
         return Response(field_map_list, status=status.HTTP_200_OK)
+
+    def get_project_indices(self, pk=None):
+        project_object = self.get_object()
+        project_indices = list(project_object.indices)
+        return project_indices
+
+
+    @action(detail=True, methods=['post'], serializer_class=ProjectGetSpamSerializer)
+    def get_spam(self,  request, pk=None):
+        serializer = ProjectGetSpamSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        indices = self.get_project_indices(pk)
+        detector = SpamDetector(ES_URL, indices)
+
+        all_fields = ElasticCore().get_fields(indices)
+        fields = detector.filter_fields(serializer.validated_data["common_feature_fields"], all_fields)
+        serializer.validated_data["common_feature_fields"] = fields  # Since we're unpacking all the data in the serializer, gonna overwrite what's inside it for comfort.
+
+        response = detector.get_spam_content(**serializer.validated_data)
+        return Response(response, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['get', 'post'], serializer_class=ProjectGetFactsSerializer)
@@ -112,7 +138,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
             if not set(serializer.validated_data['match_fields']).issubset(set(project_fields)):
                 return Response({'error': f'fields names are not valid for this project. allowed values are: {project_fields}'},
                                 status=status.HTTP_400_BAD_REQUEST)
-                                
+
         es = ElasticSearcher(indices=project_indices, output=ElasticSearcher.OUT_DOC)
         q = Query(operator=serializer.validated_data['operator'])
         # if input is string, convert to list
@@ -145,7 +171,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
         project_indices = list(project_object.indices)
 
         if not project_indices:
-            return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST) 
+            return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST)
 
         es = ElasticSearcher(indices=project_indices, output=ElasticSearcher.OUT_DOC_HL)
         es.update_query(serializer.validated_data['query'])
