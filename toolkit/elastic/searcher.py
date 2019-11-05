@@ -16,7 +16,7 @@ class ElasticSearcher:
     OUT_DOC         = 'doc'
     OUT_DOC_WITH_ID = 'doc_with_id'
     OUT_TEXT        = 'text'
-    OUT_DOC_HL      = 'doc_with_hl'
+    OUT_DOC_TOTAL_AND_HL      = 'doc_with_total_and_hl'
 
     def __init__(self, field_data=[],
                        indices=[],
@@ -127,11 +127,16 @@ class ElasticSearcher:
 
 
     def search(self, size=10):
-        response = self.core.es.search(index=self.indices, body=self.query, size=size)
+        # In case size/from is included in query in pagination, don't overwrite it by passing the size parameter
+        if 'size' in self.query:
+            response = self.core.es.search(index=self.indices, body=self.query)
+        else:
+            response = self.core.es.search(index=self.indices, body=self.query, size=size)
+
         if self.output == self.OUT_DOC:
             return [self._parse_doc(doc) for doc in response['hits']['hits']]
-        if self.output == self.OUT_DOC_HL:
-            return [self._parse_doc_with_highlight(doc) for doc in response['hits']['hits']]
+        if self.output == self.OUT_DOC_TOTAL_AND_HL:
+            return {'count': response['hits']['total'], 'results': [self._parse_doc_with_highlight(doc) for doc in response['hits']['hits']]}
         
         else:
             return response
