@@ -35,7 +35,7 @@ def create_tagger_plot(statistics):
     plt.xticks(tick_marks, classes, rotation=45)
     plt.yticks(tick_marks, classes)
     fmt = 'd'
-    thresh = cm.max() / 2.
+    thresh = cm.max() / 1.5
     for i, j in product(range(cm.shape[0]), range(cm.shape[1])):
         plt.text(j, i, format(cm[i, j], fmt),
                 horizontalalignment="center",
