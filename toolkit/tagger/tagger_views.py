@@ -6,6 +6,7 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from toolkit.tools.feedback import FeedbackManager
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher
@@ -38,6 +39,8 @@ from toolkit.view_constants import (
 # initialize model cache for taggers & phrasers
 global_tagger_cache = ModelCache(TextTagger)
 global_mlp_for_taggers = MLPAnalyzer()
+# for managing tagger feedback
+feedback = Feedback()
 
 class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, GenericTaggerFeedback):
     serializer_class = TaggerSerializer
@@ -224,7 +227,14 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, GenericTagge
                 return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # apply tagger
-        tagger_response = self.apply_tagger(tagger_object, serializer.validated_data['text'], input_type='text', lemmatizer=lemmatizer)
+        tagger_response = self.apply_tagger(
+            tagger_object,
+            serializer.validated_data['text'],
+            input_type='text',
+            lemmatizer=lemmatizer,
+            feedback=serializer.validated_data['feedback_enabled']
+        )
+
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
@@ -269,7 +279,13 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, GenericTagge
                 return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # apply tagger
-        tagger_response = self.apply_tagger(tagger_object, input_document, input_type='doc', lemmatizer=lemmatizer)
+        tagger_response = self.apply_tagger(
+            tagger_object, 
+            input_document, 
+            input_type='doc', 
+            lemmatizer=lemmatizer,
+            feedback=serializer.validated_data['feedback_enabled'],
+        )
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
@@ -310,21 +326,27 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, GenericTagge
         return Response("info", status=status.HTTP_200_OK)
 
 
-    def apply_tagger(self, tagger_object, tagger_input, input_type='text', phraser=None, lemmatizer=None):
+    def apply_tagger(self, tagger_object, tagger_input, input_type='text', phraser=None, lemmatizer=None, feedback=False):
         # create text processor object for tagger
         stop_words = json.loads(tagger_object.stop_words)
-
+        # use phraser is embedding used
         if tagger_object.embedding:
             phraser = global_phraser_cache.get_model(tagger_object)
             text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
         else:
             text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
-
+        # load model and 
         tagger = global_tagger_cache.get_model(tagger_object)
         tagger.add_text_processor(text_processor) 
-
+        # select function according to input type
         if input_type == 'doc':
             tagger_result = tagger.tag_doc(tagger_input)
         else:
             tagger_result = tagger.tag_text(tagger_input)
-        return {'result': bool(tagger_result[0]), 'probability': tagger_result[1]}
+        # initial result
+        prediction = {'result': bool(tagger_result[0]), 'probability': tagger_result[1]}
+        # add feedback option
+        if feedback:
+            feedback_id = feedback.store(tagger_input, prediction['result'], 'tagger')
+            prediction['feedback'] = {'id': feedback_id, 'url': 'foobar'}
+        return prediction

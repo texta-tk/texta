@@ -16,14 +16,17 @@ from toolkit.serializer_constants import ProjectResourceUrlSerializer
 class TaggerTagTextSerializer(serializers.Serializer):
     text = serializers.CharField()
     lemmatize = serializers.BooleanField(default=False,
-        help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
+        help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
+    feedback_enabled = serializers.BooleanField(default=False,
+        help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False') 
 
 
 class TaggerTagDocumentSerializer(serializers.Serializer):
     doc = serializers.JSONField()
     lemmatize = serializers.BooleanField(default=False,
         help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
-
+    feedback_enabled = serializers.BooleanField(default=False,
+        help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False') 
 
 class TaggerListFeaturesSerializer(serializers.Serializer):
     size = serializers.IntegerField(default=100, help_text='Default: 100')
@@ -37,7 +40,8 @@ class TaggerGroupTagTextSerializer(serializers.Serializer):
         help_text=f'Use MLP Named Entity Recognition to detect tag candidates. Default: True')
     n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS, 
         help_text=f'Number of documents used in unsupervised prefiltering. Default: {DEFAULT_NUM_DOCUMENTS}')
-
+    feedback_enabled = serializers.BooleanField(default=False,
+        help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False') 
 
 class TaggerGroupTagDocumentSerializer(serializers.Serializer):
     doc = serializers.JSONField(help_text=f'Document in JSON format.')
@@ -47,7 +51,8 @@ class TaggerGroupTagDocumentSerializer(serializers.Serializer):
         help_text=f'Use MLP Named Entity Recognition to detect tag candidates. Default: True')
     n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS, 
         help_text=f'Number of documents used in unsupervised prefiltering. Default: {DEFAULT_NUM_DOCUMENTS}')
-
+    feedback_enabled = serializers.BooleanField(default=False,
+        help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False') 
 
 class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
     description = serializers.CharField(help_text=f'Description for the Tagger. Will be used as tag.')
