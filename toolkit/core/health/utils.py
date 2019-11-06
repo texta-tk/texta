@@ -65,7 +65,7 @@ def get_elastic_status():
 
 def get_active_tasks():
     """
-    Gets the number of active tasks by the last update and status
+    Gets the number of active tasks by the last update and excludes inactive statuses
     """
     # 1 hour ago from now
     timeframe = datetime.now().date() - timedelta(hours=1)
