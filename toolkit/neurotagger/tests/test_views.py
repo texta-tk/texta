@@ -38,7 +38,7 @@ class NeurotaggerViewTests(APITestCase):
 
     def test_run(self):
         self.run_create_and_tag_multilabel()
-        self.create_neurotagger_then_delete_neurotagger_and_created_model()
+        # self.create_neurotagger_then_delete_neurotagger_and_created_model()
 
 
     def run_create_and_tag_multilabel(self):
@@ -61,14 +61,15 @@ class NeurotaggerViewTests(APITestCase):
         self.run_tag_doc(tagger_id=created_neurotagger.id)
 
         # Test model import
-        self.run_model_export_import(tagger_id=created_neurotagger.id)
+        imported_neurotagger = self.run_model_export_import(tagger_id=created_neurotagger.id)
 
         # Remove neurotagger files after test is done
-        if 'model' in created_neurotagger.location:
-            self.addCleanup(remove_file, json.loads(created_neurotagger.location)['model'])
-        if 'tokenizer_model' in created_neurotagger.location:
-            self.addCleanup(remove_file, json.loads(created_neurotagger.location)['tokenizer_model'])
-            self.addCleanup(remove_file, json.loads(created_neurotagger.location)['tokenizer_vocab'])
+        for location in (created_neurotagger.location, imported_neurotagger.location):
+            if 'model' in location:
+                self.addCleanup(remove_file, json.loads(location)['model'])
+            if 'tokenizer_model' in location:
+                self.addCleanup(remove_file, json.loads(location)['tokenizer_model'])
+                self.addCleanup(remove_file, json.loads(location)['tokenizer_vocab'])
 
         if created_neurotagger.plot:
             remove_file(created_neurotagger.plot.path)
@@ -119,6 +120,8 @@ class NeurotaggerViewTests(APITestCase):
         # Test tagging with imported model
         tagger_id = response.data['id']
         self.run_tag_text(tagger_id=tagger_id)
+        # return obj location for removal
+        return Neurotagger.objects.get(id=tagger_id)
 
 
     def create_neurotagger_then_delete_neurotagger_and_created_model(self):
