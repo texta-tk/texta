@@ -17,13 +17,11 @@ class LexiconViewSet(viewsets.ModelViewSet):
         permissions.IsAuthenticated,
         )
 
-
     def perform_create(self, serializer):
         try:
             discarded_phrases = serializer.validated_data['discarded_phrases']
         except KeyError:
             discarded_phrases = []
-        print(serializer.validated_data['phrases'])
         serializer.save(author = self.request.user,
             project = Project.objects.get(id=self.kwargs['project_pk']),
             phrases = json.dumps(serializer.validated_data['phrases']),

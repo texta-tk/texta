@@ -45,11 +45,13 @@ class Query:
         mlt_query = {"more_like_this": {"fields": mlt_fields, "like": text, "min_term_freq": 1, "max_query_terms": 12}}
         self.query["query"] = mlt_query
 
-    def add_string_filter(self, query_string, match_type="match", fields=["*"]):
+    def add_string_filter(self, query_string, match_type="match", fields=None):
         """
         Adds string filter to the query.
         """
-        string_matching_query = {"multi_match": {"query": query_string, "fields": fields}}
+        string_matching_query = {"multi_match": {"query": query_string}}
+        if fields:
+            string_matching_query["multi_match"]["fields"] = fields
         if match_type in ("phrase", "phrase_prefix"):
             string_matching_query["multi_match"]["type"] = match_type
         self.query["query"]["bool"][self.operator].append(string_matching_query)
