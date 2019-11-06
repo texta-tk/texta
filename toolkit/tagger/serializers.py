@@ -140,5 +140,5 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
 
 
 class TaggerFeedbackSerializer(serializers.Serializer):
-    prediction_id = serializers.IntegerField()
+    feedback_id = serializers.CharField()
     correct_prediction = serializers.BooleanField()

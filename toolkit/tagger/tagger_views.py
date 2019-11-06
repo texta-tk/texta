@@ -6,7 +6,7 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.tools.feedback import FeedbackManager
+from toolkit.tools.feedback import Feedback
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher
@@ -33,16 +33,14 @@ from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import (
     BulkDelete,
     ExportModel,
-    GenericTaggerFeedback,
 )
 
 # initialize model cache for taggers & phrasers
 global_tagger_cache = ModelCache(TextTagger)
 global_mlp_for_taggers = MLPAnalyzer()
-# for managing tagger feedback
-feedback = Feedback()
 
-class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, GenericTaggerFeedback):
+
+class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
     serializer_class = TaggerSerializer
     permission_classes = (
         ProjectResourceAllowed,
@@ -319,11 +317,13 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, GenericTagge
         '''API endpoint for giving feedback to taggers and neurotaggers.'''
         serializer = TaggerFeedbackSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # retrieve Tagger/NeuroTagger object
-        tagger_object = self.get_object()
-
-
-        return Response("info", status=status.HTTP_200_OK)
+        # feedback object for the project
+        feedback = Feedback(project_pk, pk, model_type='tagger')
+        added = feedback.add_feedback(
+            serializer.validated_data['feedback_id'],
+            serializer.validated_data['correct_prediction']
+        )
+        return Response(added, status=status.HTTP_200_OK)
 
 
     def apply_tagger(self, tagger_object, tagger_input, input_type='text', phraser=None, lemmatizer=None, feedback=False):
@@ -345,8 +345,10 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, GenericTagge
             tagger_result = tagger.tag_text(tagger_input)
         # initial result
         prediction = {'result': bool(tagger_result[0]), 'probability': tagger_result[1]}
-        # add feedback option
+        # add optional feedback
         if feedback:
-            feedback_id = feedback.store(tagger_input, prediction['result'], 'tagger')
-            prediction['feedback'] = {'id': feedback_id, 'url': 'foobar'}
+            project_pk = tagger_object.project.pk
+            feedback = Feedback(project_pk, tagger_object.pk)
+            feedback_id = feedback.store(tagger_input, prediction['result'])
+            prediction['feedback'] = {'id': feedback_id}
         return prediction

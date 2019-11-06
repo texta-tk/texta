@@ -286,21 +286,20 @@ class TaggerViewTests(APITestCase):
     def run_tag_and_feedback(self):
         '''Tests feeback extra action.'''
         tagger_id = self.test_tagger_ids[0]
-        payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" })}
-        #tag_text_url = f'{self.url}{tagger_id}/tag_doc/'
-        #response = self.client.post(tag_text_url, payload)
-
-        payload = {"doc": {TEST_FIELD: "This is some test text for the Tagger Test" }, "tags": []}
+        payload = {
+            "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" }),
+            "feedback_enabled": True}
+        tag_text_url = f'{self.url}{tagger_id}/tag_doc/'
+        response = self.client.post(tag_text_url, payload)
+        print_output('test_tag_doc_with_feedback:response.data', response.data)
+        self.assertTrue('feedback' in response.data)
+        # generate feedback
+        fb_id = response.data['feedback']['id']
         feedback_url = f'{self.url}{tagger_id}/feedback/'
+        payload = {"feedback_id": fb_id, "correct_prediction": True}
         response = self.client.post(feedback_url, payload, format='json')
-
-        print(response.data)    
-
-
-
-
-
-        #    print_output('test_tag_doc_lemmatized:response.data', response.data)
+        print_output('test_tag_doc_with_feedback:response.data', response.data)
+        
         #    self.assertEqual(response.status_code, status.HTTP_200_OK)
         #    # Check if response data is not empty, but a result instead
         #    self.assertTrue(response.data)

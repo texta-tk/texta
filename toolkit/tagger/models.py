@@ -24,13 +24,6 @@ from toolkit.tagger.choices import (
 from toolkit.helper_functions import apply_celery_task
 
 
-class Feedback(models.Model):
-    document = models.TextField(default=json.dumps({}))
-    predicion_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    prediction = models.BooleanField(default=None)
-    correct_prediction = models.BooleanField(default=None)
-
-
 class Tagger(models.Model):
     description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
@@ -53,7 +46,6 @@ class Tagger(models.Model):
     plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
     
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
-    feedback = models.ManyToManyField(Feedback, default=None)
 
     def __str__(self):
         return '{0} - {1}'.format(self.pk, self.description)
