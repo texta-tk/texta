@@ -1,3 +1,4 @@
+import os
 import json
 
 from rest_framework import viewsets, status, permissions
@@ -32,17 +33,28 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
     permission_classes = (
         ProjectResourceAllowed,
         permissions.IsAuthenticated,
-        )
+    )
 
     def get_queryset(self):
         return Embedding.objects.filter(project=self.kwargs['project_pk'])
-
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         fields=json.dumps(serializer.validated_data['fields']))
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        # try:
+        embedding_model_location = json.loads(instance.location)['embedding']
+        phraser_model_location = json.loads(instance.location)['phraser']
+        print("location", phraser_model_location)
+        os.remove(embedding_model_location)
+        os.remove(phraser_model_location)
+        return Response({"success": "Models removed"}, status=status.HTTP_204_NO_CONTENT)
+        # except:
+            # return Response({"success": "Embedding instance deleted, but models were not removed"}, status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post'],serializer_class=EmbeddingPredictSimilarWordsSerializer)
     def predict_similar(self, request, pk=None, project_pk=None):
@@ -56,9 +68,9 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
             embedding = global_w2v_cache.get_model(embedding_object)
 
             predictions = embedding.get_similar(serializer.validated_data['positives'],
-                negatives=serializer.validated_data['negatives'],
-                n=serializer.validated_data['output_size']
-            )
+                                                negatives=serializer.validated_data['negatives'],
+                                                n=serializer.validated_data['output_size']
+                                                )
 
             return Response(predictions, status=status.HTTP_200_OK)
         else:
@@ -91,14 +103,13 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
     permission_classes = (
         ProjectResourceAllowed,
         permissions.IsAuthenticated,
-        )
+    )
 
     def get_queryset(self):
         return EmbeddingCluster.objects.filter(project=self.kwargs['project_pk'])
 
-
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user,  project=Project.objects.get(id=self.kwargs['project_pk']))
+        serializer.save(author=self.request.user, project=Project.objects.get(id=self.kwargs['project_pk']))
 
 
     @action(detail=True, methods=['post'], serializer_class=EmbeddingClusterBrowserSerializer)
@@ -120,7 +131,6 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
 
         # load cluster model
         clusterer = global_cluster_cache.get_model(clustering_object)
-
 
         clustering_result = clusterer.browse(max_examples_per_cluster=serializer.validated_data['max_examples_per_cluster'],
                                              number_of_clusters=serializer.validated_data['number_of_clusters'],

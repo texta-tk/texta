@@ -15,7 +15,7 @@ class Project(models.Model):
 
     def __str__(self):
         return self.title
-    
+
     def get_elastic_fields(self, path_list=False):
         """
         Method for retrieving all valid Elasticsearch fields for a given project.
@@ -26,3 +26,9 @@ class Project(models.Model):
         if path_list:
             field_data = [field["path"] for field in field_data]
         return field_data
+
+    def save(self, add_indices=False, *args, **kwargs):
+        if add_indices:
+            self.indices = add_indices
+        super(Project, self).save(*args, **kwargs)
+

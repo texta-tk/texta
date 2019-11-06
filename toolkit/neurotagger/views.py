@@ -1,3 +1,4 @@
+import os
 import json
 import numpy as np
 
@@ -51,7 +52,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
             # retrieve tags with sufficient counts & create queries to build models
             tags = self.get_tags(fact_name,
                                  active_project,
-                                 min_count=serializer.validated_data['min_fact_doc_count'], 
+                                 min_count=serializer.validated_data['min_fact_doc_count'],
                                  max_count=serializer.validated_data['max_fact_doc_count'])
             # check if found any tags to build models on
             if not tags:
@@ -67,7 +68,31 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-    @action(detail=True, methods=['post'], serializer_class=NeuroTaggerTagTextSerializer)
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        try:
+            neurotagger_model_location = json.loads(instance.location)['model']
+            tokenizer_model_location = json.loads(instance.location)['tokenizer_model']
+            tokenizer_vocab_model_location = json.loads(instance.location)['tokenizer_vocab']
+            for model in(
+                        neurotagger_model_location,
+                        tokenizer_model_location,
+                        tokenizer_vocab_model_location,
+                        instance.plot.path,
+                        ):
+                os.remove(model)
+            return Response({"success": f'Neurotagger instance "{instance.description}" deleted, models and plots were removed'}, status=status.HTTP_204_NO_CONTENT)
+        except:
+            return Response({"warning": f'Neurotagger instance "{instance.description}" deleted, but models and plots were not removed'}, status=status.HTTP_204_NO_CONTENT)
+
+
+    @action(detail=False, methods=['get'])
+    def debug(self, request, project_pk=None):
+        raise Exception('testing, attention please')
+        return Response('hi', status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get','post'], serializer_class=NeuroTaggerTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging raw text.
@@ -149,7 +174,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
 
         if not ElasticCore().check_if_indices_exist(tagger_object.project.indices):
             return Response({'error': f'One or more index from {list(tagger_object.project.indices)} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
         # retrieve random document
         random_doc = ElasticSearcher(indices=tagger_object.project.indices).random_documents(size=1)[0]
         # filter out correct fields from the document

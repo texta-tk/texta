@@ -18,10 +18,8 @@ class ElasticAggregator:
         self.indices = indices
         self.query = query
 
-
     def update_query(self, query):
         self.query = query
-
 
     def update_field_data(self, field_data):
         """
@@ -29,12 +27,10 @@ class ElasticAggregator:
         """
         self.field_data = field_data
 
-
     def _aggregate(self, agg_query):
         self.query["aggregations"] = agg_query
         response = self.core.es.search(index=self.indices, body=self.query)
         return response
-
 
     def facts(self, size=30, filter_by_fact_name=None, min_count=0, max_count=None, include_values=True):
         """

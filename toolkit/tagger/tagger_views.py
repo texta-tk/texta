@@ -1,3 +1,4 @@
+import os
 import json
 import re
 import sys
@@ -45,17 +46,15 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
     permission_classes = (
         ProjectResourceAllowed,
         permissions.IsAuthenticated,
-        )
+    )
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         fields=json.dumps(serializer.validated_data['fields']))
 
-
     def get_queryset(self):
         return Tagger.objects.filter(project=self.kwargs['project_pk'])
-
 
     def create(self, request, *args, **kwargs):
         serializer = TaggerSerializer(data=request.data, context={'request': request})
@@ -69,6 +68,16 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        try:
+            model_location = json.loads(instance.location)['tagger']
+            os.remove(model_location)
+            os.remove(instance.plot.path)
+            return Response({"success": "Tagger instance deleted, model and plot removed"}, status=status.HTTP_204_NO_CONTENT)
+        except:
+            return Response({"success": "Tagger instance deleted, but model and plot were was not removed"}, status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['get'], serializer_class=TaggerListFeaturesSerializer)
     def list_features(self, request, pk=None, project_pk=None):
@@ -182,14 +191,13 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         success = {'removed': remove_stop_word, 'stop_words': stop_words}
         return Response(success, status=status.HTTP_200_OK)
 
-
     @action(detail=True, methods=['post'])
     def retrain_tagger(self, request, pk=None, project_pk=None):
         """
         API endpoint for retraining tagger model.
         """
         instance = self.get_object()
-        
+
         apply_celery_task(train_tagger, instance.pk)
 
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
@@ -305,7 +313,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         # retrieve random document
         random_doc = ElasticSearcher(indices=tagger_object.project.indices).random_documents(size=1)[0]
         # filter out correct fields from the document
-        random_doc_filtered = {k:v for k,v in random_doc.items() if k in tagger_fields}
+        random_doc_filtered = {k: v for k, v in random_doc.items() if k in tagger_fields}
         # apply tagger
         tagger_response = self.apply_tagger(tagger_object, random_doc_filtered, input_type='doc')
         response = {"document": random_doc, "prediction": tagger_response}

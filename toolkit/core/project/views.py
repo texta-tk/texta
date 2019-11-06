@@ -115,6 +115,11 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
 
         return Response(fact_map_list, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['get'])
+    def get_indices(self, request, pk=None, project_pk=None):
+        project_object = self.get_object()
+        project_indices = {"indices": list(project_object.indices)}
+        return Response(project_indices)
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSimplifiedSearchSerializer)
     def search(self, request, pk=None, project_pk=None):

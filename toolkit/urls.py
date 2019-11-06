@@ -7,6 +7,7 @@ from rest_framework_nested import routers
 from toolkit.core.urls import router as core_router
 from toolkit.embedding.urls import embedding_router
 from toolkit.tagger.urls import router as tagger_router
+from toolkit.elastic.urls import router as reindexer_router
 from toolkit.neurotagger.urls import router as neurotagger_router
 from toolkit.core.user_profile import views as profile_views
 from toolkit.core.health.views import HealthView
@@ -29,6 +30,7 @@ router.register('users', profile_views.UserViewSet, base_name='user')
 
 project_router = routers.NestedDefaultRouter(router, r'projects', lookup='project')
 project_router.registry.extend(embedding_router.registry)
+project_router.registry.extend(reindexer_router.registry)
 project_router.registry.extend(tagger_router.registry)
 project_router.registry.extend(core_router.registry)
 project_router.registry.extend(neurotagger_router.registry)

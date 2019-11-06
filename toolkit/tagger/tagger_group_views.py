@@ -1,3 +1,4 @@
+import os
 import json
 import re
 import sys
@@ -78,6 +79,26 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        tagger_objects = instance.taggers.all()
+        for tagger in tagger_objects:
+            self.perform_destroy(tagger)
+        self.perform_destroy(instance)
+        tagger_model_locations = [json.loads(tagger.location)['tagger'] for tagger in tagger_objects]
+        tagger_plot_locations = [tagger.plot.path for tagger in tagger_objects]
+        try:
+            for model_dir_list in (
+                        tagger_model_locations,
+                        tagger_plot_locations,
+                        ):
+                for model_dir in model_dir_list:
+                    os.remove(model_dir)
+            return Response({"success": "Taggergroup instance deleted, related tagger instances deleted and related models and plots removed"}, status=status.HTTP_204_NO_CONTENT)
+        except:
+            return Response({"success": "Taggergroup instance deleted, related tagger instances deleted, but related models and plots were not removed"}, status=status.HTTP_204_NO_CONTENT)
+
+
     @action(detail=True, methods=['get'])
     def models_list(self, request, pk=None, project_pk=None):
         """
@@ -103,8 +124,7 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
             tagger.status = Task.STATUS_CREATED
             tagger.save()
             apply_celery_task(train_tagger, tagger.pk)
-
-        return Response({'success': 'retraining tasks created'}, status=status.HTTP_200_OK)
+        return Response({'success': 'retraining tasks created', 'tagger_group_id': instance.id}, status=status.HTTP_200_OK)
 
 
     def get_mlp(self, text, lemmatize=False, use_ner=True):
@@ -197,10 +217,10 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
         if lemmatize or use_ner:
             if not global_mlp_for_taggers.status:
                 return Response({'error': 'mlp not available. check connection to mlp.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
         # update text and tags with MLP
         text, tags = self.get_mlp(text, lemmatize=lemmatize, use_ner=use_ner)
-        
+
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(text, ignore_tags=tags, n_similar_docs=n_similar_docs)
         # get tags
@@ -251,10 +271,10 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
         if lemmatize or use_ner:
             if not global_mlp_for_taggers.status:
                 return Response({'error': 'mlp not available. check connection to mlp.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
         # update text and tags with MLP
         combined_texts, tags = self.get_mlp(combined_texts, lemmatize=lemmatize, use_ner=use_ner)
-        
+
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(combined_texts, ignore_tags=tags, n_similar_docs=n_similar_docs)
         # get tags

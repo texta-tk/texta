@@ -12,13 +12,11 @@ class TestElasticSearcher(TestCase):
         self.run_search()
         self.run_iterator()
 
-
     def run_update_field_data(self):
         '''Tests ElasticSearcher field data update.'''
         elastic_searcher = ElasticSearcher()
         elastic_searcher.update_field_data(TEST_FIELD_CHOICE)
         self.assertTrue(elastic_searcher.field_data)
-
 
     def run_count(self):
         '''Tests ElasticSearcher count method.'''
@@ -28,7 +26,6 @@ class TestElasticSearcher(TestCase):
         self.assertTrue(isinstance(count, int))
         self.assertTrue(count > 0)
 
-
     def run_search(self):
         '''Tests ElasticSearcher search method.'''
         elastic_searcher = ElasticSearcher(indices=[TEST_INDEX], field_data=TEST_FIELD_CHOICE)
@@ -37,18 +34,16 @@ class TestElasticSearcher(TestCase):
         self.assertTrue(isinstance(result, list))
         self.assertTrue(TEST_FIELD in result[0])
 
-
     def run_iterator(self):
         '''Tests ElasticSearcher scrolling as iterator.'''
         elastic_searcher = ElasticSearcher(indices=[TEST_INDEX], field_data=TEST_FIELD_CHOICE)
         i = 0
         last_hit = None
         for hit in elastic_searcher:
-            i+=1
-            if i >=500:
+            i += 1
+            if i >= 500:
                 last_hit = hit
                 break
-        print_output('test_run_search_iterator:last_hit', last_hit) 
+        print_output('test_run_search_iterator:last_hit', last_hit)
         self.assertTrue(isinstance(last_hit, dict))
         self.assertTrue(TEST_FIELD in last_hit)
-  
