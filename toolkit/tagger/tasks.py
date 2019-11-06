@@ -15,6 +15,7 @@ from toolkit.tools.text_processor import TextProcessor
 from toolkit.tagger.plots import create_tagger_plot
 from toolkit.base_task import BaseTask
 from toolkit.tools.mlp_analyzer import MLPAnalyzer
+from toolkit.elastic.feedback import Feedback
 
 
 @task(name="create_tagger_objects", base=BaseTask)
@@ -43,16 +44,15 @@ def train_tagger(tagger_id):
     # retrieve tagger & task objects
     tagger_object = Tagger.objects.get(pk=tagger_id)
     task_object = tagger_object.task
-
+    # create progress object
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('scrolling positives')
     show_progress.update_view(0)
-
+    
     try:
         # retrieve indices & field data from project 
         indices = tagger_object.project.indices
         field_data = json.loads(tagger_object.fields)
-        
         # add phraser and stop words
         stop_words = json.loads(tagger_object.stop_words)
         if tagger_object.embedding:
@@ -62,6 +62,21 @@ def train_tagger(tagger_id):
         else:
             text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
 
+        show_progress.update_step('scrolling positive feedback')
+        show_progress.update_view(0)
+        # Iterator for retrieving feedback examples
+        feedback_samples = Feedback(
+            tagger_object.project.pk,
+            model_pk=tagger_object.pk,
+            model_type='tagger',
+            prediction_to_match='true',
+            text_processor=text_processor,
+            callback_progress=show_progress,
+        )
+
+        print(len(list(feedback_samples)))
+
+        # Iterator for retrieving positive examples
         positive_samples = ElasticSearcher(
             query=json.loads(tagger_object.query),
             indices=indices,
@@ -77,6 +92,7 @@ def train_tagger(tagger_id):
 
         show_progress.update_step('scrolling negatives')
         show_progress.update_view(0)
+        # Iterator for retrieving negative examples
         negative_samples = ElasticSearcher(
             indices=indices,
             field_data=field_data,

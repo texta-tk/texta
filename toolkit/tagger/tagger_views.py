@@ -7,7 +7,7 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.tools.feedback import Feedback
+from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher

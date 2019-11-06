@@ -12,6 +12,7 @@ from django.http import HttpResponse
 
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.query import Query
+from toolkit.elastic.feedback import Feedback
 from toolkit.serializer_constants import (
     ProjectResourceBulkDeleteSerializer,
     ProjectResourceImportModelSerializer,
@@ -19,7 +20,6 @@ from toolkit.serializer_constants import (
 )
 from toolkit.settings import BASE_DIR
 from toolkit.tools.logger import Logger
-from toolkit.tools.feedback import Feedback
 
 class TagLogicViews():
     '''Re-usable logic for when a view needs to deal with facts'''
