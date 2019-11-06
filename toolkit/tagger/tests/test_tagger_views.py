@@ -299,9 +299,7 @@ class TaggerViewTests(APITestCase):
         payload = {"feedback_id": fb_id, "correct_prediction": True}
         response = self.client.post(feedback_url, payload, format='json')
         print_output('test_tag_doc_with_feedback:response.data', response.data)
-        
-        #    self.assertEqual(response.status_code, status.HTTP_200_OK)
-        #    # Check if response data is not empty, but a result instead
-        #    self.assertTrue(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data)
         #    self.assertTrue('result' in response.data)
         #    self.assertTrue('probability' in response.data)

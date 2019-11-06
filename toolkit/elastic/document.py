@@ -16,6 +16,24 @@ class ElasticDocument:
         self.core = ElasticCore()
         self.index = index
 
+    def get(self, doc_id):
+        """
+        Retrieve document by ID.
+        """
+        try:
+            return self.core.es.get(index=self.index, doc_type=self.index, id=doc_id)["_source"]
+        except:
+            return None
+
+    def update(self, doc_id, doc):
+        """
+        Updates document in ES by ID.
+        """
+        try:
+            return self.core.es.update(index=self.index, doc_type=self.index, id=doc_id, body={"doc": doc})
+        except:
+            return None
+
     def add(self, doc):
         """
         Adds document to ES.
