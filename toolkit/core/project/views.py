@@ -24,14 +24,14 @@ from toolkit.permissions.project_permissions import ProjectAllowed
 from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
-from toolkit.view_constants import ImportModel
+from toolkit.view_constants import ImportModel, FeedbackIndexView
 from toolkit.tools.autocomplete import Autocomplete
 from toolkit.core.task.models import Task
 
 from celery import group
 
 
-class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
+class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
     # Disable default pagination
     pagination_class = None
     serializer_class = ProjectSerializer

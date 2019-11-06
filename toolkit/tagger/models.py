@@ -25,6 +25,8 @@ from toolkit.helper_functions import apply_celery_task
 
 
 class Tagger(models.Model):
+    MODEL_TYPE = 'tagger'
+
     description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)

@@ -19,9 +19,11 @@ from toolkit.tagger.serializers import (
     TaggerListFeaturesSerializer,
     TaggerTagTextSerializer,
     TaggerTagDocumentSerializer,
-    TaggerFeedbackSerializer,
 )
-from toolkit.serializer_constants import GeneralTextSerializer
+from toolkit.serializer_constants import (
+    GeneralTextSerializer,
+    FeedbackSerializer,
+)
 from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tools.model_cache import ModelCache
 from toolkit.embedding.views import global_phraser_cache
@@ -34,6 +36,7 @@ from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import (
     BulkDelete,
     ExportModel,
+    FeedbackModelView,
 )
 
 # initialize model cache for taggers & phrasers
@@ -41,7 +44,7 @@ global_tagger_cache = ModelCache(TextTagger)
 global_mlp_for_taggers = MLPAnalyzer()
 
 
-class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
+class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackModelView):
     serializer_class = TaggerSerializer
     permission_classes = (
         ProjectResourceAllowed,
@@ -320,20 +323,6 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         return Response(response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=TaggerFeedbackSerializer)
-    def feedback(self, request, project_pk=None, pk=None):
-        '''API endpoint for giving feedback to taggers and neurotaggers.'''
-        serializer = TaggerFeedbackSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        # feedback object for the project
-        feedback = Feedback(project_pk, pk, model_type='tagger')
-        added = feedback.add_feedback(
-            serializer.validated_data['feedback_id'],
-            serializer.validated_data['correct_prediction']
-        )
-        return Response(added, status=status.HTTP_200_OK)
-
-
     def apply_tagger(self, tagger_object, tagger_input, input_type='text', phraser=None, lemmatizer=None, feedback=False):
         # create text processor object for tagger
         stop_words = json.loads(tagger_object.stop_words)
@@ -356,7 +345,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         # add optional feedback
         if feedback:
             project_pk = tagger_object.project.pk
-            feedback = Feedback(project_pk, tagger_object.pk)
-            feedback_id = feedback.store(tagger_input, prediction['result'])
+            feedback_object = Feedback(project_pk, tagger_object.pk)
+            feedback_id = feedback_object.store(tagger_input, prediction['result'])
             prediction['feedback'] = {'id': feedback_id}
         return prediction

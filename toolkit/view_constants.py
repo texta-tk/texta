@@ -12,9 +12,14 @@ from django.http import HttpResponse
 
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.query import Query
-from toolkit.serializer_constants import ProjectResourceBulkDeleteSerializer, ProjectResourceImportModelSerializer
+from toolkit.serializer_constants import (
+    ProjectResourceBulkDeleteSerializer,
+    ProjectResourceImportModelSerializer,
+    FeedbackSerializer,
+)
 from toolkit.settings import BASE_DIR
 from toolkit.tools.logger import Logger
+from toolkit.tools.feedback import Feedback
 
 class TagLogicViews():
     '''Re-usable logic for when a view needs to deal with facts'''
@@ -174,3 +179,34 @@ class ImportModel():
         model_basename = re.sub('_(\d)+_', f'_{_id}_', model_basename)
         model_dir = os.path.dirname(model_path)
         return os.path.join(model_dir, model_basename)
+
+
+class FeedbackModelView:
+    @action(detail=True, methods=['get', 'post', 'delete'], serializer_class=FeedbackSerializer)
+    def feedback(self, request, project_pk=None, pk=None):
+        '''API endpoint for retrieving, ading and deleting feedback.'''
+        model_object = self.get_object()
+        feedback = Feedback(project_pk, model_pk=pk, model_type=model_object.MODEL_TYPE)
+        if request.method == 'POST':
+            serializer = FeedbackSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            added = feedback.add(serializer.validated_data['feedback_id'], serializer.validated_data['correct_prediction'])
+            return Response(added, status=status.HTTP_200_OK)
+        elif request.method == 'DELETE':
+            feedback_deleted = feedback.delete()
+            return Response(feedback_deleted, status=status.HTTP_200_OK)
+        elif request.method == 'GET':
+            feedback_list = feedback.list()
+            return Response(feedback_list, status=status.HTTP_200_OK)
+
+class FeedbackIndexView:
+    @action(detail=True, methods=['get', 'delete'])
+    def feedback(self, request, pk=None):
+        '''API endpoint for retrieving and deleting feedback index for current project.'''
+        feedback = Feedback(pk)
+        if request.method == 'DELETE':
+            feedback_deleted = feedback.delete_index()
+            return Response(feedback_deleted, status=status.HTTP_200_OK)
+        elif request.method == 'GET':
+            feedback_list = feedback.list()
+            return Response(feedback_list, status=status.HTTP_200_OK)

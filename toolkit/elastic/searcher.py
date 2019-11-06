@@ -15,9 +15,9 @@ class ElasticSearcher:
     """
     OUT_RAW = 'raw'
     OUT_DOC = 'doc'
+    OUT_TEXT = 'text'
     OUT_DOC_WITH_ID = 'doc_with_id'
-    OUT_TEXT        = 'text'
-    OUT_DOC_TOTAL_AND_HL      = 'doc_with_total_and_hl'
+    OUT_DOC_TOTAL_AND_HL = 'doc_with_total_and_hl'
 
     def __init__(self, field_data=[],
                  indices=[],
@@ -125,12 +125,11 @@ class ElasticSearcher:
             response = self.core.es.search(index=self.indices, body=self.query)
         else:
             response = self.core.es.search(index=self.indices, body=self.query, size=size)
-
         if self.output == self.OUT_DOC:
-            return [self._parse_doc(doc) for doc in response['hits']['hits']]
+            hits = [self._parse_doc(doc) for doc in response['hits']['hits']]
+            return hits
         if self.output == self.OUT_DOC_TOTAL_AND_HL:
             return {'count': response['hits']['total'], 'results': [self._parse_doc_with_highlight(doc) for doc in response['hits']['hits']]}
-        
         else:
             return response
 

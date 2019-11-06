@@ -1,4 +1,5 @@
 from io import BytesIO
+from time import sleep
 import json
 import os
 from django.db.models import signals
@@ -293,6 +294,7 @@ class TaggerViewTests(APITestCase):
         response = self.client.post(tag_text_url, payload)
         print_output('test_tag_doc_with_feedback:response.data', response.data)
         self.assertTrue('feedback' in response.data)
+
         # generate feedback
         fb_id = response.data['feedback']['id']
         feedback_url = f'{self.url}{tagger_id}/feedback/'
@@ -301,5 +303,35 @@ class TaggerViewTests(APITestCase):
         print_output('test_tag_doc_with_feedback:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data)
-        #    self.assertTrue('result' in response.data)
-        #    self.assertTrue('probability' in response.data)
+        self.assertTrue('success' in response.data)
+        # sleep for a sec to allow elastic to finish its bussiness
+        sleep(1)
+
+        # list feedback
+        feedback_list_url = f'{self.url}{tagger_id}/feedback/'
+        response = self.client.get(feedback_list_url)
+        print_output('test_tag_doc_list_feedback:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data)
+        self.assertTrue(len(response.data) > 0)
+
+        # delete feedback
+        feedback_delete_url = f'{self.url}{tagger_id}/feedback/'
+        response = self.client.delete(feedback_delete_url)
+        print_output('test_tag_doc_delete_feedback:response.data', response.data)
+        # sleep for a sec to allow elastic to finish its bussiness
+        sleep(1)
+
+        # list feedback again to make sure its emtpy      
+        feedback_list_url = f'{self.url}{tagger_id}/feedback/'
+        response = self.client.get(feedback_list_url)
+        print_output('test_tag_doc_list_feedback_after_delete:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) == 0)
+
+        # remove created index
+        feedback_index_url = f'{self.project_url}/feedback/'
+        response = self.client.delete(feedback_index_url)
+        print_output('test_delete_feedback_index:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue('success' in response.data)
