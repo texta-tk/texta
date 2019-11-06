@@ -8,25 +8,26 @@ from toolkit.settings import ES_URL
 ES_SCROLL_SIZE = 500
 EMPTY_QUERY = {"query": {"match_all": {}}}
 
+
 class ElasticSearcher:
     """
     Everything related to performing searches in Elasticsearch
     """
-    OUT_RAW         = 'raw'
-    OUT_DOC         = 'doc'
+    OUT_RAW = 'raw'
+    OUT_DOC = 'doc'
+    OUT_TEXT = 'text'
     OUT_DOC_WITH_ID = 'doc_with_id'
-    OUT_TEXT        = 'text'
-    OUT_DOC_TOTAL_AND_HL      = 'doc_with_total_and_hl'
+    OUT_DOC_TOTAL_AND_HL = 'doc_with_total_and_hl'
 
     def __init__(self, field_data=[],
-                       indices=[],
-                       query=EMPTY_QUERY,
-                       scroll_size=ES_SCROLL_SIZE,
-                       output=OUT_DOC,
-                       callback_progress=None,
-                       scroll_limit=None,
-                       ignore_ids=set(), 
-                       text_processor=None):
+                 indices=[],
+                 query=EMPTY_QUERY,
+                 scroll_size=ES_SCROLL_SIZE,
+                 output=OUT_DOC,
+                 callback_progress=None,
+                 scroll_limit=None,
+                 ignore_ids=set(),
+                 text_processor=None):
         """
         Output options: document (default), text (lowered & stopwords removed), sentences (text + line splitting), raw (raw elastic output)
         """
@@ -45,21 +46,17 @@ class ElasticSearcher:
             total_elements = self.count()
             callback_progress.set_total(total_elements)
 
-
     def __iter__(self):
         """
         Iterator for iterating through scroll
         """
         return self.scroll()
 
-
     def update_query(self, query):
         self.query = query
-    
 
     def update_field_data(self, field_data):
         self.field_data = field_data
-
 
     def _parse_doc(self, doc):
         """
@@ -67,7 +64,7 @@ class ElasticSearcher:
         """
         parsed_doc, _, _ = self._flatten_doc(doc)
         if self.field_data:
-            parsed_doc = {k:v for k,v in parsed_doc.items() if self.field_data.count(k)}
+            parsed_doc = {k: v for k, v in parsed_doc.items() if self.field_data.count(k)}
         else:
             parsed_doc, _, _ = self._flatten_doc(doc)
         return parsed_doc
@@ -91,7 +88,6 @@ class ElasticSearcher:
         new_doc = self._flatten(doc)
         return new_doc, index, highlight
 
-
     def _flatten(self, d, parent_key='', sep='.'):
         """
         From: https://stackoverflow.com/questions/6027558/flatten-nested-dictionaries-compressing-keys
@@ -104,7 +100,6 @@ class ElasticSearcher:
             else:
                 items.append((new_key, v))
         return dict(items)
-
 
     def _decode_doc(self, doc, field_path=None):
         decoded_text = doc['_source']
@@ -120,11 +115,9 @@ class ElasticSearcher:
             pass
         return decoded_text
 
-
     def count(self):
         response = self.core.es.search(index=self.indices, body=self.query)
         return response['hits']['total']
-
 
     def search(self, size=10):
         # In case size/from is included in query in pagination, don't overwrite it by passing the size parameter
@@ -132,15 +125,13 @@ class ElasticSearcher:
             response = self.core.es.search(index=self.indices, body=self.query)
         else:
             response = self.core.es.search(index=self.indices, body=self.query, size=size)
-
         if self.output == self.OUT_DOC:
-            return [self._parse_doc(doc) for doc in response['hits']['hits']]
+            hits = [self._parse_doc(doc) for doc in response['hits']['hits']]
+            return hits
         if self.output == self.OUT_DOC_TOTAL_AND_HL:
             return {'count': response['hits']['total'], 'results': [self._parse_doc_with_highlight(doc) for doc in response['hits']['hits']]}
-        
         else:
             return response
-
 
     def random_documents(self, size=10):
         random_query = {"query": {"function_score": {"query": {"match_all": {}}, "functions": [{"random_score": {}}]}}}
@@ -150,6 +141,7 @@ class ElasticSearcher:
         else:
             return response
 
+    # batch search makes an inital search, and then keeps pulling batches of results, until none are left.
     def scroll(self):
         page = self.core.es.search(index=self.indices, body=self.query, scroll='1m', size=self.scroll_size)
         scroll_id = page['_scroll_id']

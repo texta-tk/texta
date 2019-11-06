@@ -13,11 +13,20 @@ from toolkit.core.task.models import Task
 from toolkit.embedding.models import Embedding
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.constants import MAX_DESC_LEN
-from toolkit.tagger.choices import (DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE,
-                                    DEFAULT_CLASSIFIER, DEFAULT_FEATURE_SELECTOR, DEFAULT_VECTORIZER)
+from toolkit.tagger.choices import (
+    DEFAULT_NEGATIVE_MULTIPLIER,
+    DEFAULT_MAX_SAMPLE_SIZE,
+    DEFAULT_MIN_SAMPLE_SIZE,
+    DEFAULT_CLASSIFIER,
+    DEFAULT_FEATURE_SELECTOR,
+    DEFAULT_VECTORIZER
+)
 from toolkit.helper_functions import apply_celery_task
 
+
 class Tagger(models.Model):
+    MODEL_TYPE = 'tagger'
+
     description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)

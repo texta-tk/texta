@@ -25,7 +25,7 @@ class ProjectPermissionsTests(APITestCase):
         self.project_instance_url = f'/projects/{self.project.id}/'
 
     def test_all(self):
-        for resource in ('lexicons', 'taggers', 'embeddings', 'embedding_clusters', 'tagger_groups'):
+        for resource in ('lexicons', 'taggers', 'embeddings', 'embedding_clusters', 'tagger_groups', 'reindexer'):
             self.project_resource_url = f'/projects/{self.project.id}/{resource}/'
             self.run_with_users(self.access_project_resources, resource)
         self.run_with_users(self.access_project_instance_methods)

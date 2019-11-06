@@ -1,3 +1,4 @@
+import os
 import json
 import re
 import sys
@@ -6,15 +7,23 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import train_tagger
 from toolkit.core.project.models import Project
-from toolkit.tagger.serializers import TaggerSerializer, TaggerListFeaturesSerializer, \
-                                       TaggerTagTextSerializer, TaggerTagDocumentSerializer
-from toolkit.serializer_constants import GeneralTextSerializer
+from toolkit.tagger.serializers import (
+    TaggerSerializer,
+    TaggerListFeaturesSerializer,
+    TaggerTagTextSerializer,
+    TaggerTagDocumentSerializer,
+)
+from toolkit.serializer_constants import (
+    GeneralTextSerializer,
+    FeedbackSerializer,
+)
 from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tools.model_cache import ModelCache
 from toolkit.embedding.views import global_phraser_cache
@@ -24,29 +33,31 @@ from toolkit.core.task.models import Task
 from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.helper_functions import apply_celery_task
 from toolkit.tagger.validators import validate_input_document
-from toolkit.view_constants import BulkDelete
-from toolkit.view_constants import ExportModel
+from toolkit.view_constants import (
+    BulkDelete,
+    ExportModel,
+    FeedbackModelView,
+)
 
 # initialize model cache for taggers & phrasers
 global_tagger_cache = ModelCache(TextTagger)
 global_mlp_for_taggers = MLPAnalyzer()
 
-class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
+
+class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackModelView):
     serializer_class = TaggerSerializer
     permission_classes = (
         ProjectResourceAllowed,
         permissions.IsAuthenticated,
-        )
+    )
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         fields=json.dumps(serializer.validated_data['fields']))
 
-
     def get_queryset(self):
         return Tagger.objects.filter(project=self.kwargs['project_pk'])
-
 
     def create(self, request, *args, **kwargs):
         serializer = TaggerSerializer(data=request.data, context={'request': request})
@@ -60,6 +71,16 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        try:
+            model_location = json.loads(instance.location)['tagger']
+            os.remove(model_location)
+            os.remove(instance.plot.path)
+            return Response({"success": "Tagger instance deleted, model and plot removed"}, status=status.HTTP_204_NO_CONTENT)
+        except:
+            return Response({"success": "Tagger instance deleted, but model and plot were was not removed"}, status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['get'], serializer_class=TaggerListFeaturesSerializer)
     def list_features(self, request, pk=None, project_pk=None):
@@ -173,14 +194,13 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         success = {'removed': remove_stop_word, 'stop_words': stop_words}
         return Response(success, status=status.HTTP_200_OK)
 
-
     @action(detail=True, methods=['post'])
     def retrain_tagger(self, request, pk=None, project_pk=None):
         """
         API endpoint for retraining tagger model.
         """
         instance = self.get_object()
-        
+
         apply_celery_task(train_tagger, instance.pk)
 
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
@@ -216,7 +236,14 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
                 return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # apply tagger
-        tagger_response = self.apply_tagger(tagger_object, serializer.validated_data['text'], input_type='text', lemmatizer=lemmatizer)
+        tagger_response = self.apply_tagger(
+            tagger_object,
+            serializer.validated_data['text'],
+            input_type='text',
+            lemmatizer=lemmatizer,
+            feedback=serializer.validated_data['feedback_enabled']
+        )
+
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
@@ -261,7 +288,13 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
                 return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # apply tagger
-        tagger_response = self.apply_tagger(tagger_object, input_document, input_type='doc', lemmatizer=lemmatizer)
+        tagger_response = self.apply_tagger(
+            tagger_object, 
+            input_document, 
+            input_type='doc', 
+            lemmatizer=lemmatizer,
+            feedback=serializer.validated_data['feedback_enabled'],
+        )
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
@@ -283,28 +316,36 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         # retrieve random document
         random_doc = ElasticSearcher(indices=tagger_object.project.indices).random_documents(size=1)[0]
         # filter out correct fields from the document
-        random_doc_filtered = {k:v for k,v in random_doc.items() if k in tagger_fields}
+        random_doc_filtered = {k: v for k, v in random_doc.items() if k in tagger_fields}
         # apply tagger
         tagger_response = self.apply_tagger(tagger_object, random_doc_filtered, input_type='doc')
         response = {"document": random_doc, "prediction": tagger_response}
         return Response(response, status=status.HTTP_200_OK)
 
 
-    def apply_tagger(self, tagger_object, tagger_input, input_type='text', phraser=None, lemmatizer=None):
+    def apply_tagger(self, tagger_object, tagger_input, input_type='text', phraser=None, lemmatizer=None, feedback=False):
         # create text processor object for tagger
         stop_words = json.loads(tagger_object.stop_words)
-
+        # use phraser is embedding used
         if tagger_object.embedding:
             phraser = global_phraser_cache.get_model(tagger_object)
             text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
         else:
             text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
-
+        # load model and 
         tagger = global_tagger_cache.get_model(tagger_object)
         tagger.add_text_processor(text_processor) 
-
+        # select function according to input type
         if input_type == 'doc':
             tagger_result = tagger.tag_doc(tagger_input)
         else:
             tagger_result = tagger.tag_text(tagger_input)
-        return {'result': bool(tagger_result[0]), 'probability': tagger_result[1]}
+        # initial result
+        prediction = {'result': bool(tagger_result[0]), 'probability': tagger_result[1]}
+        # add optional feedback
+        if feedback:
+            project_pk = tagger_object.project.pk
+            feedback_object = Feedback(project_pk, tagger_object.pk)
+            feedback_id = feedback_object.store(tagger_input, prediction['result'])
+            prediction['feedback'] = {'id': feedback_id}
+        return prediction

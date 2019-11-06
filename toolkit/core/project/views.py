@@ -24,14 +24,14 @@ from toolkit.permissions.project_permissions import ProjectAllowed
 from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
-from toolkit.view_constants import ImportModel
+from toolkit.view_constants import ImportModel, FeedbackIndexView
 from toolkit.tools.autocomplete import Autocomplete
 from toolkit.core.task.models import Task
 
 from celery import group
 
 
-class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
+class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
     # Disable default pagination
     pagination_class = None
     serializer_class = ProjectSerializer
@@ -115,6 +115,11 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel):
 
         return Response(fact_map_list, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['get'])
+    def get_indices(self, request, pk=None, project_pk=None):
+        project_object = self.get_object()
+        project_indices = {"indices": list(project_object.indices)}
+        return Response(project_indices)
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSimplifiedSearchSerializer)
     def search(self, request, pk=None, project_pk=None):

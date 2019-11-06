@@ -33,6 +33,7 @@ class TaggerGroupViewTests(APITestCase):
 
 
     def test_run(self):
+        self.create_and_delete_tagger_group_removes_related_children_models_plots()
         self.run_create_tagger_group_training_and_task_signal()
         self.run_tag_text()
         self.run_tag_doc()
@@ -118,3 +119,59 @@ class TaggerGroupViewTests(APITestCase):
         # Check if response data
         self.assertTrue(response.data)
         self.assertTrue('success' in response.data)
+        # remove retrained tagger models
+        retrained_tagger_group = TaggerGroup.objects.get(id=response.data['tagger_group_id'])
+        for tagger in retrained_tagger_group.taggers.all():
+            self.addCleanup(remove_file, json.loads(tagger.location)['tagger'])
+            self.addCleanup(remove_file, tagger.plot.path)
+
+
+    def create_and_delete_tagger_group_removes_related_children_models_plots(self):
+        payload = {
+            "description": "TestTaggerGroup",
+            "minimum_sample_size": 50,
+            "fact_name": TEST_FACT_NAME,
+            "tagger": {
+                "fields": TEST_FIELD_CHOICE,
+                "vectorizer": "Hashing Vectorizer",
+                "classifier": "LinearSVC",
+                "feature_selector": "SVM Feature Selector",
+                "maximum_sample_size": 500,
+                "negative_multiplier": 1.0,
+                }
+        }
+        create_response = self.client.post(self.url, payload, format='json')
+        self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
+        created_tagger_group_id = create_response.data['id']
+        created_tagger_group_url = f'{self.url}{created_tagger_group_id}/'
+        created_tagger_group_obj = Tagger.objects.get(id=created_tagger_group_id)
+
+        # get chidren related props
+        tagger_objects = TaggerGroup.objects.get(id=created_tagger_group_id).taggers.all()
+        tagger_ids = [tagger.id for tagger in tagger_objects]
+        tagger_model_locations = [json.loads(created_tagger_group_obj.location)['tagger'] for tagger in tagger_objects]
+        tagger_plot_locations = [created_tagger_group_obj.plot.path for tagger in tagger_objects]
+
+        delete_response = self.client.delete(created_tagger_group_url, format='json')
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # check if child objects were removed
+        for _id in tagger_ids:
+            try:
+                Tagger.objects.get(id=_id)
+                assert False
+            except Tagger.DoesNotExist:
+                assert True
+
+        # check if related models and plots were removed
+        for model_dir_list in (
+                        tagger_model_locations,
+                        tagger_plot_locations,
+                        ):
+                for model_dir in model_dir_list:
+                    assert not os.path.isfile(model_dir)
+
+
+
+
+

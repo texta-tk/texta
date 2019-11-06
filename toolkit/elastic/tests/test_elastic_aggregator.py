@@ -10,13 +10,11 @@ class TestElasticAggregator(TestCase):
         self.run_update_field_data()
         self.run_facts()
 
-
     def run_update_field_data(self):
         '''Tests ElasticAggregator field data update.'''
         elastic_aggregator = ElasticAggregator()
         elastic_aggregator.update_field_data(TEST_FIELD_CHOICE)
         self.assertTrue(elastic_aggregator.field_data)
-
 
     def run_facts(self):
         '''Tests ElasticAggregator fact retrieval.'''
@@ -35,4 +33,3 @@ class TestElasticAggregator(TestCase):
         self.assertTrue(isinstance(facts, dict))
         self.assertTrue(len(list(facts.keys())) > 0)
         self.assertTrue(TEST_FACT_NAME in facts)
-
