@@ -19,7 +19,7 @@ from toolkit.elastic.feedback import Feedback
 
 
 @task(name="create_tagger_objects", base=BaseTask)
-def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries):
+def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries, batch_size=100):
     # retrieve Tagger Group object
     tagger_group_object = TaggerGroup.objects.get(pk=tagger_group_id)
     # create tagger objects
@@ -33,9 +33,17 @@ def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries)
             author=tagger_group_object.author,
             project=tagger_group_object.project)
         taggers_to_create.append(created_tagger)
-    # create tagger objects
-    tagger_group_object.taggers.add(*taggers_to_create)
-    tagger_group_object.save()
+        # if batch size reached, save result
+        if len(taggers_to_create) >= batch_size:
+            # create tagger objects
+            tagger_group_object.taggers.add(*taggers_to_create)
+            tagger_group_object.save()
+            taggers_to_create = []
+    # if any taggers remaining
+    if taggers_to_create:
+        # create tagger objects of remaining items
+        tagger_group_object.taggers.add(*taggers_to_create)
+        tagger_group_object.save()        
     return True
 
 
