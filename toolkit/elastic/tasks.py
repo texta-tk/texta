@@ -21,7 +21,7 @@ from toolkit.elastic.mapping_generator import SchemaGenerator
 def update_field_types(indices, field_type):
     ''' if fieldtype, for field named fieldtype change its type'''
     # returns fields edited by serializer input
-    my_fields = ElasticCore().get_fields(indices)    # what if no indices
+    my_fields = ElasticCore().get_fields(indices)
     my_field_data = [field["path"] for field in my_fields]
     for item in field_type:
         if item['path'] in my_field_data:
