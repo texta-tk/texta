@@ -17,7 +17,6 @@ class ElasticDocument:
         self.index = index
 
     def add(self, doc, index):
-        # print("myindex", index)
         """
         Adds document to ES.
         """
