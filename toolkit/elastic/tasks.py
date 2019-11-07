@@ -50,8 +50,19 @@ def update_field_types(indices, field_type):
     return unique_dicts
 
 
+def update_mapping(schema_input, new_index):
+    mod_schema = {"properties": {}}
+    props = {}
+    for schema in schema_input:
+        prop = generate_mapping('a_mapping', schema)['mappings']['a_mapping']['properties']
+        props.update(prop)
+        mod_schema.update(properties=props)
+    return {'mappings': {new_index: mod_schema}}
+
+
 def generate_mapping(new_index, schema_input):
     return SchemaGenerator().generate_schema(new_index, schema_input)
+
 
 def apply_elastic_search(elastic_search, fields):
     new_docs = []
@@ -95,13 +106,7 @@ def reindex_task(reindexer_task_id):
     ''' the operations that don't require a mapping update have been completed '''
 
     schema_input = update_field_types(indices, field_type)
-    mod_schema = {"properties": {}}
-    props = {}
-    for schema in schema_input:
-        prop = generate_mapping('a_mapping', schema)['mappings']['a_mapping']['properties']
-        props.update(prop)
-        mod_schema.update(properties=props)
-    updated_schema = {'mappings': {reindexer_obj.new_index: mod_schema}}
+    updated_schema = update_mapping(schema_input, reindexer_obj.new_index)
 
     # create new_index
     create_index_res = ElasticCore().create_index(reindexer_obj.new_index, updated_schema)
