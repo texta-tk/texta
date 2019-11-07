@@ -14,8 +14,6 @@ from toolkit.core.task.models import Task
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
-''' TODO: needed to remove indices and field validation fail tests, because indices are required. Test in some other way. '''
-
 class ReindexerViewTests(APITestCase):
 
     @classmethod
@@ -36,10 +34,22 @@ class ReindexerViewTests(APITestCase):
         self.client.login(username=self.default_username, password=self.default_password)
 
     def test_run(self):
+        wrong_fields_payload = {
+        "description": "TestWrongField",
+        "indices": [TEST_INDEX],
+        "new_index": TEST_INDEX_REINDEX,
+        "fields": ['12345'],
+        }
+        wrong_indices_payload = {
+        "description": "TestWrongIndex",
+        "indices": ["Wrong_Index"],
+        "new_index": TEST_INDEX_REINDEX,
+        "fields": [],
+        }
         pick_fields_payload = {
             "description": "TestManyReindexerFields",
             # this has a problem with possible name duplicates
-            "fields": [TEST_FIELD, 'comment_content_clean.text', 'content_entity_anonymous_sort_nr'],
+            "fields": [TEST_FIELD, 'comment_content_clean.text', 'texta_facts', 'quote_count'],
             # "fields": [TEST_FIELD],
             "indices": [TEST_INDEX],
             "new_index": TEST_INDEX_REINDEX,
@@ -49,7 +59,7 @@ class ReindexerViewTests(APITestCase):
         join_indices_fields_payload = {
             "description": "TestReindexerJoinFields",
             "fields": [],
-            "indices": [TEST_INDEX],
+            "indices": [TEST_INDEX],    # 'texta_test_index_large'
             "new_index": TEST_INDEX_REINDEX,
             "field_type": [],
         }
@@ -70,18 +80,12 @@ class ReindexerViewTests(APITestCase):
                            {"path": "comment_content_lemmas", "field_type": "fact", "new_path_name": "CHANGED_TOO"},
                            {"path": "comment_content_clean.stats.text_length", "field_type": "boolean", "new_path_name": "CHANGED_AS_WELL"},
                            ],
-            # "field_type": []
-            # "field_type": [{"path": "comment_subject", "field_type": "long", "new_path_name": "changed_path_name"}],
-            # "field_type": [{"path": "comment_subject", "new_path_name": "changed_path_name"}], #TODO
         }
 
-        # for project in (
-        #     self.project,
-        # ):
-        #     url = f'/projects/{project.id}/reindexer/'
-        #     self.run_create_reindexer_task_signal(project, url, pick_fields_payload)  # kõik postitatud väjad uude indeksisse, kui valideeritud projekti kaudu
-
         for payload in (
+            wrong_indices_payload,
+            wrong_fields_payload,
+            # pick_fields_payload,
             join_indices_fields_payload,
             # random_docs_payload,
             update_field_type_payload,
@@ -92,12 +96,11 @@ class ReindexerViewTests(APITestCase):
     def run_create_reindexer_task_signal(self, project, url, payload, overwrite=False):
         ''' Tests the endpoint for a new Reindexer task, and if a new Task gets created via the signal
            checks if new_index was removed '''
-
         print(payload['description'])
         try:
             ElasticCore().delete_index(TEST_INDEX_REINDEX)
         except:
-               print("TEST_INDEX_REINDEX not deleted")
+               print(f'{TEST_INDEX_REINDEX} was not deleted')
         response = self.client.post(url, payload, format='json')
         print_output('run_create_reindexer_task_signal:response.data', response.data)
         self.is_new_index_created_if_yes_remove(response, payload, project)
@@ -108,7 +111,7 @@ class ReindexerViewTests(APITestCase):
         ''' Check if new_index gets created
             Check if new_index gets re-indexed and completed
             remove test new_index '''
-        if project.indices is None:
+        if project.indices is None or not self.validate_fields(project, payload) or not self.validate_indices(project, payload):
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         else:
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -131,3 +134,20 @@ class ReindexerViewTests(APITestCase):
         if response.status_code == 400:
             print_output('Re-indexed index not added to project', check.data)
         assert new_index not in check.data['indices']
+
+    def validate_fields(self, project, payload):
+        project_fields = ElasticCore().get_fields(project.indices)
+        project_field_paths = [field["path"] for field in project_fields]
+        for field in payload['fields']:
+            if field not in project_field_paths:
+                return False
+        return True
+
+    def validate_indices(self, project, payload):
+        for index in payload['indices']:
+            if index not in project.indices:
+                return False
+        return True
+
+
+
