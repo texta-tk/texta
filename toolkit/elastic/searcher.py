@@ -1,4 +1,5 @@
 import collections
+import elasticsearch
 import urllib
 import json
 
@@ -116,8 +117,11 @@ class ElasticSearcher:
         return decoded_text
 
     def count(self):
-        response = self.core.es.search(index=self.indices, body=self.query)
-        return response['hits']['total']
+        try:
+            response = self.core.es.search(index=self.indices, body=self.query)
+            return response['hits']['total']
+        except elasticsearch.NotFoundError:
+            return 0
 
     def search(self, size=10):
         # In case size/from is included in query in pagination, don't overwrite it by passing the size parameter
