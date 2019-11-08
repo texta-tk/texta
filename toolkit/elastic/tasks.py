@@ -110,7 +110,7 @@ def reindex_task(reindexer_task_id):
 
     # create new_index
     create_index_res = ElasticCore().create_index(reindexer_obj.new_index, updated_schema)
-    print(create_index_res)
+    # print(create_index_res)
 
     # set new_index name as mapping name, perhaps make it customizable in the future
     mapping_name = reindexer_obj.new_index
