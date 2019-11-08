@@ -259,7 +259,6 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
     def get_resource_counts(self, request, pk=None, project_pk=None):
         proj = self.get_object()
         response = {
-            'num_lexicons': proj.lexicon_set.count(),
             'num_neurotaggers': proj.neurotagger_set.count(),
             'num_taggers': proj.tagger_set.count(),
             'num_tagger_groups': proj.taggergroup_set.count(),
