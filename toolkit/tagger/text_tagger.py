@@ -20,7 +20,6 @@ class TextTagger:
         self.tagger_id = int(tagger_id)
         self.workers = workers
         self.description = None
-        self.text_processor = None
 
 
     def _create_data_map(self, data, field_list):
@@ -33,10 +32,6 @@ class TextTagger:
                 else:
                     data_map[field].append('')
         return data_map
-
-
-    def add_text_processor(self, text_processor):
-        self.text_processor = text_processor
 
 
     def train(self, positive_samples, negative_samples, field_list=[], classifier='Logistic Regression', vectorizer='Hashing Vectorizer', feature_selector='SVM Feature Selector'):
@@ -140,7 +135,7 @@ class TextTagger:
         return True
 
 
-    def tag_text(self, text):
+    def tag_text(self, text, text_processor=None):
         """
         Predicts on raw text
         :param text: input text as string
@@ -150,7 +145,7 @@ class TextTagger:
         field_features = [x[5:] for x in union_features]
 
         # process text if asked
-        if self.text_processor:
+        if text_processor:
             text = self.text_processor.process(text)[0]
 
         # generate text map for dataframe
@@ -161,7 +156,7 @@ class TextTagger:
 
 
 
-    def tag_doc(self, doc):
+    def tag_doc(self, doc, text_processor=None):
         """
         Predicts on json document
         :param text: input doc as json string
@@ -175,8 +170,8 @@ class TextTagger:
         for field in field_features:
             if field in doc:
                 # process text if asked
-                if self.text_processor:
-                    doc_field = self.text_processor.process(doc[field])[0]
+                if text_processor:
+                    doc_field = text_processor.process(doc[field])[0]
                 else:
                     doc_field = doc[field]
                 text_map[field] = [doc_field]
