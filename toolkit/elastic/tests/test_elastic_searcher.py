@@ -11,6 +11,7 @@ class TestElasticSearcher(TestCase):
         self.run_count()
         self.run_search()
         self.run_iterator()
+        self.run_count_with_nonexisting_index()
 
     def run_update_field_data(self):
         '''Tests ElasticSearcher field data update.'''
@@ -47,3 +48,11 @@ class TestElasticSearcher(TestCase):
         print_output('test_run_search_iterator:last_hit', last_hit)
         self.assertTrue(isinstance(last_hit, dict))
         self.assertTrue(TEST_FIELD in last_hit)
+
+    def run_count_with_nonexisting_index(self):
+        '''Tests ElasticSearcher count method with nonexisting index.'''
+        elastic_searcher = ElasticSearcher(indices=['asdasdasd'])
+        count = elastic_searcher.count()
+        print_output('test_run_count_nonexiting_index:count', count)
+        self.assertTrue(isinstance(count, int))
+        self.assertTrue(count == 0)

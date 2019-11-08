@@ -27,3 +27,4 @@ class HealthViewsTests(APITestCase):
         self.assertTrue('cpu' in response.data)
         self.assertTrue('elastic' in response.data)
         self.assertTrue('version' in response.data)
+        self.assertTrue('active_tasks' in response.data)

@@ -16,7 +16,25 @@ class ElasticDocument:
         self.core = ElasticCore()
         self.index = index
 
-    def add(self, doc, index):
+    def get(self, doc_id):
+        """
+        Retrieve document by ID.
+        """
+        try:
+            return self.core.es.get(index=self.index, doc_type=self.index, id=doc_id)["_source"]
+        except:
+            return None
+
+    def update(self, doc_id, doc):
+        """
+        Updates document in ES by ID.
+        """
+        try:
+            return self.core.es.update(index=self.index, doc_type=self.index, id=doc_id, body={"doc": doc})
+        except:
+            return None
+
+    def add(self, doc):
         """
         Adds document to ES.
         """
@@ -27,11 +45,17 @@ class ElasticDocument:
         actions = [{"_index": index, "_type": mapping_name, "_source": doc} for doc in docs]
         return bulk(client=self.core.es, actions=actions, chunk_size=chunk_size, stats_only=True)
 
-    def remove(self, doc_id):
+    def delete(self, doc_id):
         """
         Removes given document from ES.
         """
         return self.core.es.delete(index=self.index, doc_type=self.index, id=doc_id)
+
+    def delete_by_query(self, query):
+        """
+        Removes given document from ES.
+        """
+        return self.core.es.delete_by_query(index=self.index, body=query)
 
     def count(self):
         """

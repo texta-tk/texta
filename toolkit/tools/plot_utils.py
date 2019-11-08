@@ -6,5 +6,5 @@ matplotlib.use('agg')
 
 def save_plot(plt):
     f = BytesIO()
-    plt.savefig(f, bbox_inches='tight')
+    plt.savefig(f)
     return ContentFile(f.getvalue())

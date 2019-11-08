@@ -14,6 +14,8 @@ from toolkit.embedding.models import Embedding
 
 # Create your models here.
 class Neurotagger(models.Model):
+    MODEL_TYPE = 'neurotagger'
+
     description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
