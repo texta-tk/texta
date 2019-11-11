@@ -8,7 +8,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_INDEX_REINDEX, TEST_INDEX_LARGE
+from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_INDEX_REINDEX, TEST_INDEX_LARGE, TEST_QUERY, TEST_MATCH_TEXT
 from toolkit.core.project.models import Project
 from toolkit.elastic.models import Reindexer
 from toolkit.elastic.core import ElasticCore
@@ -66,6 +66,14 @@ class ReindexerViewTests(APITestCase):
             "new_index": TEST_INDEX_REINDEX,
             "field_type": [],
         }
+        test_query_payload = {
+            "description": "TestQueryFiltering",
+            "fields": [],
+            "indices": [TEST_INDEX],
+            "new_index": TEST_INDEX_REINDEX,
+            "field_type": [],
+            "query": json.dumps(TEST_QUERY)
+        }
         random_docs_payload = {
             "description": "TestReindexerRandomFields",
             "fields": [],
@@ -89,6 +97,7 @@ class ReindexerViewTests(APITestCase):
             wrong_fields_payload,
             pick_fields_payload,
             join_indices_fields_payload,
+            test_query_payload,
             random_docs_payload,
             update_field_type_payload,
         ):
