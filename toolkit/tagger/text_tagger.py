@@ -146,7 +146,7 @@ class TextTagger:
 
         # process text if asked
         if text_processor:
-            text = self.text_processor.process(text)[0]
+            text = text_processor.process(text)[0]
 
         # generate text map for dataframe
         text_map = {feature_name:[text] for feature_name in field_features}
