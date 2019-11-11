@@ -8,6 +8,25 @@ from toolkit.core.search.serializers import SearchSerializer
 from toolkit.view_constants import BulkDelete
 
 class SearchViewSet(viewsets.ModelViewSet, BulkDelete):
+    """
+    list:
+    Returns list of Search objects.
+
+    read:
+    Return Search object by id.
+
+    create:
+    Creates Search object.
+
+    update:
+    Updates entire Search object.
+
+    partial_update:
+    Performs partial update on Search object.
+
+    delete:
+    Deletes Search object.
+    """
     pagination_class = None
     serializer_class = SearchSerializer
     permission_classes = (

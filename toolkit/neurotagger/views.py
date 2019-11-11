@@ -26,6 +26,25 @@ from toolkit.view_constants import BulkDelete, ExportModel
 model_cache = ModelCache(NeurotaggerWorker)
 
 class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, ExportModel):
+    """
+    list:
+    Returns list of Neurotagger objects.
+
+    read:
+    Return Neurotagger object by id.
+
+    create:
+    Creates Neurotagger object.
+
+    update:
+    Updates entire Neurotagger object.
+
+    partial_update:
+    Performs partial update on Neurotagger object.
+
+    delete:
+    Deletes Neurotagger object.
+    """
     serializer_class = NeurotaggerSerializer
     permission_classes = (
         permissions.IsAuthenticated,
@@ -87,18 +106,10 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
             return Response({"warning": f'Neurotagger instance "{instance.description}" deleted, but models and plots were not removed'}, status=status.HTTP_204_NO_CONTENT)
 
 
-    @action(detail=False, methods=['get'])
-    def debug(self, request, project_pk=None):
-        raise Exception('testing, attention please')
-        return Response('hi', status=status.HTTP_200_OK)
-
-    @action(detail=True, methods=['get','post'], serializer_class=NeuroTaggerTagTextSerializer)
+    @action(detail=True, methods=['post'], serializer_class=NeuroTaggerTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
-        """
-        API endpoint for tagging raw text.
-        """
-        data = request.data
-        serializer = NeuroTaggerTagTextSerializer(data=data)
+        """Returns tags for input text."""
+        serializer = NeuroTaggerTagTextSerializer(data=request.data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -118,12 +129,8 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
 
     @action(detail=True, methods=['post'], serializer_class=NeuroTaggerTagDocumentSerializer)
     def tag_doc(self, request, pk=None, project_pk=None):
-        """
-        API endpoint for tagging JSON documents.
-        """
-
-        data = request.data
-        serializer = NeuroTaggerTagDocumentSerializer(data=data)
+        """Returns tags for input document."""
+        serializer = NeuroTaggerTagDocumentSerializer(data=request.data)
 
         # check if valid request
         if not serializer.is_valid():
@@ -160,9 +167,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
 
     @action(detail=True, methods=['get'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
-        """
-        API endpoint for tagging a random document.
-        """
+        """Returns list of tags for a random document in Elasticsearch."""
         # get tagger object
         tagger_object = self.get_object()
         tagger_id = tagger_object.id
