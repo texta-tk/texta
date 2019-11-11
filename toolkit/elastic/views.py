@@ -12,10 +12,11 @@ from toolkit.permissions.project_permissions import ProjectResourceAllowed
 
 
 class ElasticGetIndices(views.APIView):
-    """
-    Retrieves all available Elasticsearch indices.
-    """
     def get(self, request):
+        """
+        Returns **all** available indices from Elasticsearch.
+        This is different from get_indices action in project view as it lists **all** indices in Elasticsearch.
+        """
         es_core = ElasticCore()
         if not es_core.connection:
             return Response({"error": "no connection to Elasticsearch"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -24,6 +25,25 @@ class ElasticGetIndices(views.APIView):
 
 
 class ReindexerViewSet(viewsets.ModelViewSet):
+    """
+    list:
+    Returns list of reindexing task objects.
+
+    read:
+    Return  reindexing task object by id.
+
+    create:
+    Creates  reindexing task object.
+
+    update:
+    Updates entire reindexing task object.
+
+    partial_update:
+    Performs partial update on reindexing task object.
+
+    delete:
+    Deletes reindexing task object.
+    """
     queryset = Reindexer.objects.all()
     serializer_class = ReindexerCreateSerializer
     permission_classes = (

@@ -11,6 +11,25 @@ from toolkit.permissions.project_permissions import ProjectResourceAllowed
 
 
 class LexiconViewSet(viewsets.ModelViewSet):
+    """
+    list:
+    Returns list of Lexicon objects.
+
+    read:
+    Return Lexicon object by id.
+
+    create:
+    Creates Lexicon object.
+
+    update:
+    Updates entire Lexicon object.
+
+    partial_update:
+    Performs partial update on Lexicon object.
+
+    delete:
+    Deletes Lexicon object.
+    """
     serializer_class = LexiconSerializer
     permission_classes = (
         ProjectResourceAllowed,
