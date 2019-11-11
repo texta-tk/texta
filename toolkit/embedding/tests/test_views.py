@@ -81,7 +81,7 @@ class EmbeddingViewTests(APITestCase):
     def create_embedding_then_delete_embedding_and_created_model(self):
         payload = {
             "description": "TestEmbedding",
-            "query": "",
+            "query": json.dumps(EMPTY_QUERY),
             "fields": TEST_FIELD_CHOICE,
             "max_vocab": 10000,
             "min_freq": 5,
