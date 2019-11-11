@@ -18,36 +18,22 @@ from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.elastic.feedback import Feedback
 
 
-@task(name="create_tagger_objects", base=BaseTask)
-def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries, batch_size=100):
+def create_tagger_batch(tagger_group_id, taggers_to_create):
+    '''Creates Tagger objects from list of tagger data and saves into tagger group object.'''
     # retrieve Tagger Group object
     tagger_group_object = TaggerGroup.objects.get(pk=tagger_group_id)
-    # create tagger objects
-    taggers_to_create = []
-    for i,tag in enumerate(tags):
-        tagger_data = tagger_serializer.copy()
-        tagger_data.update({'query': json.dumps(tag_queries[i])})
-        tagger_data.update({'description': tag})
-        tagger_data.update({'fields': json.dumps(tagger_data['fields'])})
+    # iterate through batch
+    for tagger_data in taggers_to_create:
         created_tagger = Tagger.objects.create(**tagger_data,
-            author=tagger_group_object.author,
-            project=tagger_group_object.project)
-        taggers_to_create.append(created_tagger)
-        # if batch size reached, save result
-        if len(taggers_to_create) >= batch_size:
-            # create tagger objects
-            tagger_group_object.taggers.add(*taggers_to_create)
-            tagger_group_object.save()
-            taggers_to_create = []
-    # if any taggers remaining
-    if taggers_to_create:
-        # create tagger objects of remaining items
-        tagger_group_object.taggers.add(*taggers_to_create)
-        tagger_group_object.save()        
-    return True
+        author=tagger_group_object.author,
+        project=tagger_group_object.project)
+        # add and save
+        tagger_group_object.taggers.add(created_tagger)
+        tagger_group_object.save()
 
 
 def get_data_samples(tagger_object, text_processor, show_progress, indices, field_data):
+    '''Retrieves positive & negative data samples from Elastic.'''
     # change status to scrolling negative feedback
     show_progress.update_step('scrolling positive feedback')
     show_progress.update_view(0)
@@ -114,8 +100,31 @@ def get_data_samples(tagger_object, text_processor, show_progress, indices, fiel
     return positive_sample, negative_sample
 
 
+@task(name="create_tagger_objects", base=BaseTask)
+def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries, batch_size=100):
+    '''Task for creating Tagger objects inside Tagger Group to prevent database timeouts.'''
+    # create tagger objects
+    taggers_to_create = []
+    for i,tag in enumerate(tags):
+        tagger_data = tagger_serializer.copy()
+        tagger_data.update({'query': json.dumps(tag_queries[i])})
+        tagger_data.update({'description': tag})
+        tagger_data.update({'fields': json.dumps(tagger_data['fields'])})
+        taggers_to_create.append(tagger_data)
+        # if batch size reached, save result
+        if len(taggers_to_create) >= batch_size:
+            create_tagger_batch(tagger_group_id, taggers_to_create)
+            taggers_to_create = []
+    # if any taggers remaining
+    if taggers_to_create:
+        # create tagger objects of remaining items
+        create_tagger_batch(tagger_group_id, taggers_to_create)
+    return True
+
+
 @task(name="train_tagger", base=BaseTask)
 def train_tagger(tagger_id):
+    '''Task for training Text Tagger.'''
     # retrieve tagger & task objects
     tagger_object = Tagger.objects.get(pk=tagger_id)
     task_object = tagger_object.task
@@ -179,6 +188,7 @@ def train_tagger(tagger_id):
 
 @task(name="apply_tagger", base=BaseTask)
 def apply_tagger(text, tagger_id, input_type, lemmatize=False):
+    '''Task for applying tagger to text.'''
     from toolkit.tagger.tagger_views import global_tagger_cache
     from toolkit.embedding.views import global_phraser_cache
     # get tagger object
