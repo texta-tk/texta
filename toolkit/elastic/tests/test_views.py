@@ -8,7 +8,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_INDEX_REINDEX, TEST_INDEX_LARGE, TEST_QUERY, TEST_MATCH_TEXT
+from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_INDEX_REINDEX, TEST_INDEX_LARGE, TEST_QUERY
 from toolkit.core.project.models import Project
 from toolkit.elastic.models import Reindexer
 from toolkit.elastic.core import ElasticCore
@@ -167,7 +167,4 @@ class ReindexerViewTests(APITestCase):
         count_new_documents = ElasticSearcher(indices=TEST_INDEX_REINDEX).count()
         print_output("Bulk add doc count", count_new_documents)
         assert count_new_documents > 0
-
-
-
 
