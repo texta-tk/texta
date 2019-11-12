@@ -64,7 +64,6 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         # try:
         embedding_model_location = json.loads(instance.location)['embedding']
         phraser_model_location = json.loads(instance.location)['phraser']
-        print("location", phraser_model_location)
         os.remove(embedding_model_location)
         os.remove(phraser_model_location)
         return Response({"success": "Models removed"}, status=status.HTTP_204_NO_CONTENT)
