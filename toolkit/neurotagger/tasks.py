@@ -113,6 +113,7 @@ def _scroll_multilabel_positives(query, maximum_sample_size, field_data, fact_va
     positive_samples = ElasticSearcher(query=query, 
                                        field_data=field_data + ['texta_facts'],
                                        scroll_limit=maximum_sample_size,
+                                       output=ElasticSearcher.OUT_DOC_WITH_ID
                                        )
     query_ids = []
     combined_samples = []
