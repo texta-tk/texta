@@ -56,6 +56,7 @@ class TaggerViewTests(APITestCase):
         self.run_model_retrain()
         self.run_model_export_import()
         self.run_tag_and_feedback_and_retrain()
+        self.create_tagger_then_delete_tagger_and_created_model()
 
 
     def run_create_tagger_training_and_task_signal(self):
@@ -101,7 +102,7 @@ class TaggerViewTests(APITestCase):
             "classifier": self.classifier_opts[0],
             "maximum_sample_size": 500,
             "negative_multiplier": 1.0,
-        }        
+        }
 
         response = self.client.post(self.url, payload, format='json')
         print_output('test_create_tagger_with_invalid_fields:response.data', response.data)
@@ -109,6 +110,32 @@ class TaggerViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertTrue('error' in response.data)
 
+    def create_tagger_then_delete_tagger_and_created_model(self):
+        ''' creates a tagger and removes it with DELETE in instance view '''
+        payload = {
+            "description": "TestTagger",
+            "query": json.dumps(TEST_QUERY),
+            "fields": TEST_FIELD_CHOICE,
+            "vectorizer": 'Hashing Vectorizer',
+            "classifier": 'Logistic Regression',
+            "maximum_sample_size": 500,
+            "negative_multiplier": 1.0,
+        }
+
+        create_response = self.client.post(self.url, payload, format='json')
+        self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
+
+        created_tagger_id = create_response.data['id']
+        created_tagger_url = f'{self.url}{created_tagger_id}/'
+        created_tagger_obj = Tagger.objects.get(id=created_tagger_id)
+        model_location = json.loads(created_tagger_obj.location)['tagger']
+        plot_location = created_tagger_obj.plot.path
+
+        delete_response = self.client.delete(created_tagger_url, format='json')
+        print_output('delete_response.data: ', delete_response.data)
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+        assert not os.path.isfile(model_location)
+        assert not os.path.isfile(plot_location)
 
     def run_tag_text(self, test_tagger_ids):
         '''Tests the endpoint for the tag_text action'''
@@ -193,7 +220,7 @@ class TaggerViewTests(APITestCase):
                 # Check if response data is not empty, but a result instead
                 self.assertTrue(response.data)
                 self.assertTrue('features' in response.data)
-    
+
 
     def run_stop_word_list(self):
         '''Tests the endpoint for the stop_word_list action'''
@@ -204,7 +231,7 @@ class TaggerViewTests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
-            self.assertTrue('stop_words' in response.data)  
+            self.assertTrue('stop_words' in response.data)
 
 
     def run_stop_word_add(self):
@@ -224,7 +251,7 @@ class TaggerViewTests(APITestCase):
         for test_tagger_id in self.test_tagger_ids:
             '''Tests the endpoint for the stop_word_remove action'''
             url = f'{self.url}{test_tagger_id}/stop_word_remove/?text=stopsõna'
-            payload = {"text": "stopsõna"}            
+            payload = {"text": "stopsõna"}
             response = self.client.post(url, payload, format='json')
             print_output('test_stop_word_remove:response.data', response.data)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -325,7 +352,7 @@ class TaggerViewTests(APITestCase):
         print_output('test_feedback_retrained_tag_doc:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue('result' in response.data)
-        self.assertTrue('probability' in response.data)  
+        self.assertTrue('probability' in response.data)
 
         # delete feedback
         feedback_delete_url = f'{self.url}{tagger_id}/feedback/'
@@ -334,7 +361,7 @@ class TaggerViewTests(APITestCase):
         # sleep for a sec to allow elastic to finish its bussiness
         sleep(1)
 
-        # list feedback again to make sure its emtpy      
+        # list feedback again to make sure its emtpy
         feedback_list_url = f'{self.url}{tagger_id}/feedback/'
         response = self.client.get(feedback_list_url)
         print_output('test_tag_doc_list_feedback_after_delete:response.data', response.data)
