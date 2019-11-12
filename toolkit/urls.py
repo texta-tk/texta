@@ -8,7 +8,7 @@ from toolkit.core.urls import router as core_router
 from toolkit.embedding.urls import embedding_router
 from toolkit.tagger.urls import router as tagger_router
 from toolkit.elastic.urls import router as reindexer_router
-from toolkit.neurotagger.urls import router as neurotagger_router
+from toolkit.torchtagger.urls import router as torchtagger_router
 from toolkit.core.user_profile import views as profile_views
 from toolkit.core.health.views import HealthView
 from toolkit.elastic.views import ElasticGetIndices
@@ -33,7 +33,7 @@ project_router.registry.extend(embedding_router.registry)
 project_router.registry.extend(reindexer_router.registry)
 project_router.registry.extend(tagger_router.registry)
 project_router.registry.extend(core_router.registry)
-project_router.registry.extend(neurotagger_router.registry)
+project_router.registry.extend(torchtagger_router.registry)
 
 
 urlpatterns = [
