@@ -177,7 +177,7 @@ class ElasticSearcher:
                         elif self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID):
                             if self.text_processor:
                                 parsed_doc = {k: '\n'.join(self.text_processor.process(v)) for k, v in parsed_doc.items()}
-                            if self.OUT_DOC_WITH_ID:
+                            if self.output == self.OUT_DOC_WITH_ID:
                                 parsed_doc['_id'] = hit['_id']
                             yield parsed_doc
 

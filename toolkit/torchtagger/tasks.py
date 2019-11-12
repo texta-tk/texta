@@ -1,19 +1,33 @@
 from celery.decorators import task
 
 from toolkit.core.task.models import Task
-from toolkit.torchtagger.models import TorchTagger
+from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.base_task import BaseTask
+from toolkit.torchtagger.data_sample import DataSample
+from toolkit.torchtagger.torchtagger import TorchTagger
+
 
 @task(name="torchtagger_train_handler", base=BaseTask)
 def torchtagger_train_handler(tagger_id, testing=False):
     # retrieve neurotagger & task objects
-    tagger_obj = TorchTagger.objects.get(pk=tagger_id)
-    task_object = tagger_obj.task
+    tagger_object = TorchTaggerObject.objects.get(pk=tagger_id)
+    task_object = tagger_object.task
 
     show_progress = ShowProgress(task_object, multiplier=1)
-    show_progress.update_step("scrolling data")
-    show_progress.update_view(0)
+    # create Datasample object for retrieving positive and negative sample
+    data_sample = DataSample(tagger_object, show_progress=show_progress, join_fields=True)
+
+    tagger = TorchTagger()
+    tagger.train(data_sample)
 
 
+    # Load data from pd.DataFrame into torchtext.data.Dataset
+    #train_df = self.get_pandas_df(train_file)
+    #train_examples = [data.Example.fromlist(i, datafields) for i in train_df.values.tolist()]
+    #train_data = data.Dataset(train_examples, datafields)
+        
+    #test_df = self.get_pandas_df(test_file)
+    #test_examples = [data.Example.fromlist(i, datafields) for i in test_df.values.tolist()]
+    #test_data = data.Dataset(test_examples, datafields)

@@ -9,6 +9,7 @@ from toolkit.torchtagger import choices
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.task.models import Task
 from toolkit.core.project.models import Project
+from toolkit.elastic.searcher import EMPTY_QUERY
 
 
 class TorchTagger(models.Model):
@@ -17,9 +18,9 @@ class TorchTagger(models.Model):
     description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-
     fields = models.TextField(default=json.dumps([]))
-    #queries = models.TextField(default=json.dumps([]))
+
+    query = models.TextField(default=json.dumps(EMPTY_QUERY))
     #fact_name = models.CharField(max_length=MAX_DESC_LEN, blank=True)
     #fact_values = models.TextField(blank=True)
 
@@ -29,8 +30,8 @@ class TorchTagger(models.Model):
     #num_epochs = models.IntegerField(default=choices.DEFAULT_NUM_EPOCHS)
     #validation_split = models.FloatField(default=choices.DEFAULT_VALIDATION_SPLIT)
 
-    #negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER, blank=True)
-    maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, blank=True)
+    negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER)
+    maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE)
 
     # RESULTS
     #validation_accuracy = models.FloatField(default=None, null=True)
