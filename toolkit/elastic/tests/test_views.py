@@ -107,7 +107,6 @@ class ReindexerViewTests(APITestCase):
     def run_create_reindexer_task_signal(self, project, url, payload, overwrite=False):
         ''' Tests the endpoint for a new Reindexer task, and if a new Task gets created via the signal
            checks if new_index was removed '''
-        print(payload['description'])
         try:
             ElasticCore().delete_index(TEST_INDEX_REINDEX)
         except:
