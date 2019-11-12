@@ -204,7 +204,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         if not project_indices:
             return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST)
 
-        es = ElasticSearcher(indices=project_indices, output=ElasticSearcher.OUT_DOC_TOTAL_AND_HL)
+        es = ElasticSearcher(indices=project_indices, output=ElasticSearcher.OUT_DOC_WITH_TOTAL_HL_AGGS)
 
         es.update_query(serializer.validated_data['query'])
         results = es.search()
