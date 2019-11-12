@@ -50,7 +50,7 @@ class ElasticCore:
         return available
 
     def create_index(self, index, body):
-        return self.es.indices.create(index=index, ignore=400, body=body)
+        return self.es.indices.create(index=index, body=body, ignore=400)
 
     # use with caution
     def delete_index(self, index):

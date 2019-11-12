@@ -195,13 +195,16 @@ class EmbeddingViewTests(APITestCase):
         import_url = f'{self.project_url}/import_model/'
         response = self.client.post(import_url, data={'file': BytesIO(response.content)})
         print_output('test_import_model:response.data', response.data)
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Test prediction with imported embedding
         imported_embedding_id = response.data['id']
         self.run_predict(imported_embedding_id)
+
         # remove embedding and phraser models
         created_embedding = Embedding.objects.get(id=imported_embedding_id)
         created_embedding_location = json.loads(created_embedding.location)['embedding']
         created_phraser_location = json.loads(created_embedding.location)['phraser']
+
         self.addCleanup(remove_file, created_embedding_location)
         self.addCleanup(remove_file, created_phraser_location)
