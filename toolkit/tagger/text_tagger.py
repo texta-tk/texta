@@ -51,7 +51,7 @@ class TextTagger:
         data_sample_x_map = {}
         for field in field_list:
             data_sample_x_map[field] = positive_samples_map[field] + negative_samples_map[field]
-        
+
         # Build target (positive + negative samples) for binary classifier
         data_sample_y = [1] * len(positive_samples) + [0] * len(negative_samples)
 
@@ -94,11 +94,11 @@ class TextTagger:
             'area_under_curve':     roc_auc,
             'num_features':         num_features,
             'feature_coefs':        feature_coefs
-        }       
+        }
 
         self.statistics = statistics
         return model
-    
+
 
     def get_feature_coefs(self):
         """
@@ -130,7 +130,7 @@ class TextTagger:
     def save(self, file_path):
         joblib.dump(self.model, file_path)
         return True
-    
+
 
     def load(self):
         tagger_object = Tagger.objects.get(pk=self.tagger_id)
@@ -140,7 +140,7 @@ class TextTagger:
         return True
 
 
-    def tag_text(self, text):
+    def tag_text(self, text, text_processor=None):
         """
         Predicts on raw text
         :param text: input text as string
@@ -169,7 +169,7 @@ class TextTagger:
         """
         union_features = [x[0] for x in self.model.named_steps['union'].transformer_list if x[0].startswith('pipe_')]
         field_features = [x[5:] for x in union_features]
-        
+
         # generate text map for dataframe
         text_map = {}
         for field in field_features:
