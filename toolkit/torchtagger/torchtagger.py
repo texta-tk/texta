@@ -3,23 +3,15 @@ from torchtext import data
 from torchtext.vocab import Vectors
 import pandas as pd
 
-
-class Config(object):
-    embed_size = 300
-    num_channels = 100
-    kernel_size = [3,4,5]
-    output_size = 4
-    max_epochs = 15
-    lr = 0.3
-    batch_size = 64
-    max_sen_len = 30
-    dropout_keep = 0.8
+from .torch_models.text_cnn.model import TextCNN
+from .torch_models.text_cnn.config import Config
 
 
 class TorchTagger:
 
-    def __init__(self):
+    def __init__(self, embedding_location):
         self.config = Config()
+        self.embedding_location = embedding_location
 
     def train(self, data_sample):
         # my first hacky tokenizer
@@ -43,5 +35,18 @@ class TorchTagger:
         train_data = data.Dataset(train_examples, datafields)
         # split training and testing data
         train_data, val_data = train_data.split(split_ratio=0.8)
+        # build vocab
+        text_field.build_vocab(train_data, vectors=Vectors(self.embedding_location))
 
-        print(train_data)
+        # Create Model with specified optimizer and loss function
+        ##############################################################
+        model = TextCNN(self.config, len(dataset.vocab), dataset.word_embeddings)
+        if torch.cuda.is_available():
+            model.cuda()
+        model.train()
+        optimizer = optim.SGD(model.parameters(), lr=config.lr)
+        NLLLoss = nn.NLLLoss()
+        model.add_optimizer(optimizer)
+        model.add_loss_op(NLLLoss)
+        ##############################################################
+

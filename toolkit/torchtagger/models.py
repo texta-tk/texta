@@ -9,6 +9,7 @@ from toolkit.torchtagger import choices
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.task.models import Task
 from toolkit.core.project.models import Project
+from toolkit.embedding.models import Embedding
 from toolkit.elastic.searcher import EMPTY_QUERY
 
 
@@ -19,6 +20,7 @@ class TorchTagger(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     fields = models.TextField(default=json.dumps([]))
+    embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE, default=None)
 
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     #fact_name = models.CharField(max_length=MAX_DESC_LEN, blank=True)

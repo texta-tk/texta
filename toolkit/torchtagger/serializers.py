@@ -10,8 +10,8 @@ from toolkit.serializer_constants import ProjectResourceUrlSerializer
 
 
 
-class TorchTaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
-    author_username = serializers.CharField(source='author.username', read_only=True)    
+class TorchTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
+    author_username = serializers.CharField(source='author.username', read_only=True)
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
     fields_parsed = serializers.SerializerMethodField()
     maximum_sample_size = serializers.IntegerField(default=10000, required=False)
@@ -23,7 +23,7 @@ class TorchTaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResou
     class Meta:
         model = TorchTagger
         fields = (
-            'url', 'author_username', 'id', 'description', 'fields', 'fields_parsed', 
+            'url', 'author_username', 'id', 'description', 'fields', 'fields_parsed', 'embedding',
             'maximum_sample_size', 'location', 'plot', 'task')
         
         read_only_fields = ('project', 'fields_parsed', 'location', 'plot', 'task')

@@ -1,8 +1,8 @@
 from celery.decorators import task
+import json
 
 from toolkit.core.task.models import Task
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
-from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.base_task import BaseTask
 from toolkit.torchtagger.data_sample import DataSample
@@ -14,12 +14,13 @@ def torchtagger_train_handler(tagger_id, testing=False):
     # retrieve neurotagger & task objects
     tagger_object = TorchTaggerObject.objects.get(pk=tagger_id)
     task_object = tagger_object.task
+    embedding_location = json.loads(tagger_object.embedding.location)["embedding"]
 
     show_progress = ShowProgress(task_object, multiplier=1)
     # create Datasample object for retrieving positive and negative sample
     data_sample = DataSample(tagger_object, show_progress=show_progress, join_fields=True)
 
-    tagger = TorchTagger()
+    tagger = TorchTagger(embedding_location)
     tagger.train(data_sample)
 
 
