@@ -113,18 +113,20 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     minimum_sample_size = serializers.IntegerField(default=DEFAULT_MIN_SAMPLE_SIZE, help_text=f'Minimum number of documents required to train a model. Default: {DEFAULT_MIN_SAMPLE_SIZE}')
     fact_name = serializers.CharField(default=DEFAULT_TAGGER_GROUP_FACT_NAME, help_text=f'Fact name used to filter tags (fact values). Default: {DEFAULT_TAGGER_GROUP_FACT_NAME}')
     tagger = TaggerSerializer(write_only=True, remove_fields=['description', 'query'])
+    num_tags = serializers.IntegerField(read_only=True)
     tagger_status = serializers.SerializerMethodField()
     tagger_statistics = serializers.SerializerMethodField()
+    tagger_params = serializers.SerializerMethodField()
     url = serializers.SerializerMethodField()
 
     class Meta:
         model = TaggerGroup
-        fields = ('id', 'url', 'description', 'fact_name', 'minimum_sample_size', 
-                  'tagger_status', 'tagger', 'tagger_statistics')
+        fields = ('id', 'url', 'description', 'fact_name', 'num_tags', 'minimum_sample_size', 
+                  'tagger_status', 'tagger_params', 'tagger', 'tagger_statistics')
 
     def get_tagger_status(self, obj):
-        tagger_objects = TaggerGroup.objects.get(id=obj.id).taggers
-        tagger_status = {'total': len(tagger_objects.all()),
+        tagger_objects = obj.taggers
+        tagger_status = {'total': obj.num_tags,
                          'completed': len(tagger_objects.filter(task__status='completed')),
                          'training': len(tagger_objects.filter(task__status='running')),
                          'created': len(tagger_objects.filter(task__status='created')),
@@ -132,8 +134,17 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
         return tagger_status
 
     def get_tagger_statistics(self, obj):
-        tagger_objects = TaggerGroup.objects.get(id=obj.id).taggers
+        tagger_objects = obj.taggers
         tagger_stats = {'avg_precision': tagger_objects.aggregate(Avg('precision'))['precision__avg'],
                         'avg_recall': tagger_objects.aggregate(Avg('recall'))['recall__avg'],
                         'avg_f1_score': tagger_objects.aggregate(Avg('f1_score'))['f1_score__avg']}
         return tagger_stats
+
+    def get_tagger_params(self, obj):
+        first_tagger = obj.taggers.first()
+        params =  {
+            'fields': json.loads(first_tagger.fields),
+            'vectorizer': first_tagger.vectorizer,
+            'classifier': first_tagger.classifier
+        }
+        return params

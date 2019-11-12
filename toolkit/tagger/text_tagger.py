@@ -20,6 +20,7 @@ class TextTagger:
         self.tagger_id = int(tagger_id)
         self.workers = workers
         self.description = None
+        self.text_processor = None
 
 
     def _create_data_map(self, data, field_list):
@@ -34,6 +35,10 @@ class TextTagger:
         return data_map
 
 
+    def add_text_processor(self, text_processor):
+        self.text_processor = text_processor
+
+
     def train(self, positive_samples, negative_samples, field_list=[], classifier='Logistic Regression', vectorizer='Hashing Vectorizer', feature_selector='SVM Feature Selector'):
         positive_samples_map = self._create_data_map(positive_samples, field_list)
         negative_samples_map = self._create_data_map(negative_samples, field_list)
@@ -46,7 +51,7 @@ class TextTagger:
         data_sample_x_map = {}
         for field in field_list:
             data_sample_x_map[field] = positive_samples_map[field] + negative_samples_map[field]
-        
+
         # Build target (positive + negative samples) for binary classifier
         data_sample_y = [1] * len(positive_samples) + [0] * len(negative_samples)
 
@@ -89,11 +94,11 @@ class TextTagger:
             'area_under_curve':     roc_auc,
             'num_features':         num_features,
             'feature_coefs':        feature_coefs
-        }       
+        }
 
         self.statistics = statistics
         return model
-    
+
 
     def get_feature_coefs(self):
         """
@@ -125,7 +130,7 @@ class TextTagger:
     def save(self, file_path):
         joblib.dump(self.model, file_path)
         return True
-    
+
 
     def load(self):
         tagger_object = Tagger.objects.get(pk=self.tagger_id)
@@ -156,7 +161,7 @@ class TextTagger:
 
 
 
-    def tag_doc(self, doc, text_processor=None):
+    def tag_doc(self, doc):
         """
         Predicts on json document
         :param text: input doc as json string
@@ -164,14 +169,14 @@ class TextTagger:
         """
         union_features = [x[0] for x in self.model.named_steps['union'].transformer_list if x[0].startswith('pipe_')]
         field_features = [x[5:] for x in union_features]
-        
+
         # generate text map for dataframe
         text_map = {}
         for field in field_features:
             if field in doc:
                 # process text if asked
-                if text_processor:
-                    doc_field = text_processor.process(doc[field])[0]
+                if self.text_processor:
+                    doc_field = self.text_processor.process(doc[field])[0]
                 else:
                     doc_field = doc[field]
                 text_map[field] = [doc_field]

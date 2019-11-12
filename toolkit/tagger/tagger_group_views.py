@@ -68,7 +68,9 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
 
         # create tagger group object
         tagger_group = serializer.save(author=self.request.user,
-                                       project=Project.objects.get(id=self.kwargs['project_pk']))
+                                       project=Project.objects.get(id=self.kwargs['project_pk']),
+                                       num_tags=len(tags)
+                                       )
 
         # create taggers objects inside tagger group object
         # use async to make things faster

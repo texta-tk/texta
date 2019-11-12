@@ -12,6 +12,7 @@ from toolkit.core.project.models import Project
 from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.core.task.models import Task
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
+from toolkit.elastic.searcher import EMPTY_QUERY
 
 
 class EmbeddingViewTests(APITestCase):
@@ -41,21 +42,21 @@ class EmbeddingViewTests(APITestCase):
 
     def test_run(self):
         self.run_create_embedding_training_and_task_signal()
-        # self.run_predict(self.test_embedding_id)
-        # self.run_predict_with_negatives()
-        # self.run_phrase()
-        # self.run_create_embedding_cluster_training_and_task_signal()
-        # self.run_embedding_cluster_browse()
-        # self.run_embedding_cluster_find_word()
-        # self.run_embedding_cluster_text()
+        self.run_predict(self.test_embedding_id)
+        self.run_predict_with_negatives()
+        self.run_phrase()
+        self.run_create_embedding_cluster_training_and_task_signal()
+        self.run_embedding_cluster_browse()
+        self.run_embedding_cluster_find_word()
+        self.run_embedding_cluster_text()
         self.run_model_export_import()
-        # self.create_embedding_then_delete_embedding_and_created_model()
+        self.create_embedding_then_delete_embedding_and_created_model()
 
     def run_create_embedding_training_and_task_signal(self):
         '''Tests the endpoint for a new Embedding, and if a new Task gets created via the signal'''
         payload = {
             "description": "TestEmbedding",
-            "query": "",
+            "query": json.dumps(EMPTY_QUERY),
             "fields": TEST_FIELD_CHOICE,
             "max_vocab": 10000,
             "min_freq": 5,
@@ -80,7 +81,7 @@ class EmbeddingViewTests(APITestCase):
     def create_embedding_then_delete_embedding_and_created_model(self):
         payload = {
             "description": "TestEmbedding",
-            "query": "",
+            "query": json.dumps(EMPTY_QUERY),
             "fields": TEST_FIELD_CHOICE,
             "max_vocab": 10000,
             "min_freq": 5,
@@ -194,15 +195,16 @@ class EmbeddingViewTests(APITestCase):
         import_url = f'{self.project_url}/import_model/'
         response = self.client.post(import_url, data={'file': BytesIO(response.content)})
         print_output('test_import_model:response.data', response.data)
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Test prediction with imported embedding
         imported_embedding_id = response.data['id']
         self.run_predict(imported_embedding_id)
+
         # remove embedding and phraser models
         created_embedding = Embedding.objects.get(id=imported_embedding_id)
         created_embedding_location = json.loads(created_embedding.location)['embedding']
         created_phraser_location = json.loads(created_embedding.location)['phraser']
+
         self.addCleanup(remove_file, created_embedding_location)
         self.addCleanup(remove_file, created_phraser_location)
-
-

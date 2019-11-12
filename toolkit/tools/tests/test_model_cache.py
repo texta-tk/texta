@@ -37,7 +37,6 @@ class TestModelCache(TestCase):
         # payload for training embedding
         payload = {
             "description": "TestEmbedding",
-            "query": "",
             "fields": TEST_FIELD_CHOICE,
             "max_vocab": 10000,
             "min_freq": 5,

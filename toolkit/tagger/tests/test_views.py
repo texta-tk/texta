@@ -1,5 +1,4 @@
 from io import BytesIO
-from time import sleep
 import json
 import os
 from django.db.models import signals
@@ -14,11 +13,16 @@ from toolkit.tagger.models import Tagger
 from toolkit.core.task.models import Task
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
+
 class TaggerViewTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         # Owner of the project
-        cls.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
+        cls.default_password = 'pw'
+        cls.default_username = 'taggerOwner'
+        cls.user = create_test_user(cls.default_username, 'my@email.com', 'pw')
+        cls.user.is_superuser = True
+        cls.user.save()
         cls.project = Project.objects.create(
             title='taggerTestProject',
             owner=cls.user,
@@ -35,10 +39,8 @@ class TaggerViewTests(APITestCase):
         # list tagger_ids for testing. is populatated duriong training test
         cls.test_tagger_ids = []
 
-
     def setUp(self):
-        self.client.login(username='taggerOwner', password='pw')
-
+        self.client.login(username=self.default_username, password=self.default_password)
 
     def test_run(self):
         self.run_create_tagger_training_and_task_signal()
@@ -55,8 +57,7 @@ class TaggerViewTests(APITestCase):
         self.run_multitag_text()
         self.run_model_retrain()
         self.run_model_export_import()
-        self.run_tag_and_feedback_and_retrain()
-
+        self.create_tagger_then_delete_tagger_and_created_model()
 
     def run_create_tagger_training_and_task_signal(self):
         '''Tests the endpoint for a new Tagger, and if a new Task gets created via the signal'''
@@ -85,11 +86,37 @@ class TaggerViewTests(APITestCase):
                 # Remove tagger files after test is done
                 self.addCleanup(remove_file, json.loads(created_tagger.location)['tagger'])
                 self.addCleanup(remove_file, created_tagger.plot.path)
-                # Check if Task gets created via a signal
+                # Check if Task gets created via a signaladdCleanup
                 self.assertTrue(created_tagger.task is not None)
                 # Check if Tagger gets trained and completed
                 self.assertEqual(created_tagger.task.status, Task.STATUS_COMPLETED)
 
+    def create_tagger_then_delete_tagger_and_created_model(self):
+        ''' creates a tagger and removes it with DELETE in instance view '''
+        payload = {
+            "description": "TestTagger",
+            "query": json.dumps(TEST_QUERY),
+            "fields": TEST_FIELD_CHOICE,
+            "vectorizer": 'Hashing Vectorizer',
+            "classifier": 'Logistic Regression',
+            "maximum_sample_size": 500,
+            "negative_multiplier": 1.0,
+        }
+
+        create_response = self.client.post(self.url, payload, format='json')
+        self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
+
+        created_tagger_id = create_response.data['id']
+        created_tagger_url = f'{self.url}{created_tagger_id}/'
+        created_tagger_obj = Tagger.objects.get(id=created_tagger_id)
+        model_location = json.loads(created_tagger_obj.location)['tagger']
+        plot_location = created_tagger_obj.plot.path
+
+        delete_response = self.client.delete(created_tagger_url, format='json')
+        print_output('delete_response.data: ', delete_response.data)
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+        assert not os.path.isfile(model_location)
+        assert not os.path.isfile(plot_location)
 
     def run_create_tagger_with_incorrect_fields(self):
         '''Tests the endpoint for a new Tagger with incorrect field data (should give error)'''
@@ -101,7 +128,7 @@ class TaggerViewTests(APITestCase):
             "classifier": self.classifier_opts[0],
             "maximum_sample_size": 500,
             "negative_multiplier": 1.0,
-        }        
+        }
 
         response = self.client.post(self.url, payload, format='json')
         print_output('test_create_tagger_with_invalid_fields:response.data', response.data)
@@ -123,11 +150,10 @@ class TaggerViewTests(APITestCase):
             self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
 
-
     def run_tag_text_with_lemmatization(self):
         '''Tests the endpoint for the tag_text action'''
-        payload = { "text": "See tekst peaks saama lemmatiseeritud ja täägitud.",
-                    "lemmatize": True }
+        payload = {"text": "See tekst peaks saama lemmatiseeritud ja täägitud.",
+                   "lemmatize": True}
         for test_tagger_id in self.test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
             response = self.client.post(tag_text_url, payload)
@@ -138,10 +164,9 @@ class TaggerViewTests(APITestCase):
             self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
 
-
     def run_tag_doc(self):
         '''Tests the endpoint for the tag_doc action'''
-        payload = { "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" })}
+        payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"})}
         for test_tagger_id in self.test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_doc/'
             response = self.client.post(tag_text_url, payload)
@@ -152,11 +177,10 @@ class TaggerViewTests(APITestCase):
             self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
 
-
     def run_tag_doc_with_lemmatization(self):
         '''Tests the endpoint for the tag_doc action'''
-        payload = { "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" }),
-                    "lemmatize": True }
+        payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"}),
+                   "lemmatize": True}
         for test_tagger_id in self.test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_doc/'
             response = self.client.post(tag_text_url, payload)
@@ -166,7 +190,6 @@ class TaggerViewTests(APITestCase):
             self.assertTrue(response.data)
             self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
-
 
     def run_tag_random_doc(self):
         '''Tests the endpoint for the tag_random_doc action'''
@@ -178,7 +201,6 @@ class TaggerViewTests(APITestCase):
             # Check if response is list
             self.assertTrue(isinstance(response.data, dict))
             self.assertTrue('prediction' in response.data)
-
 
     def run_list_features(self):
         '''Tests the endpoint for the list_features action'''
@@ -193,7 +215,6 @@ class TaggerViewTests(APITestCase):
                 # Check if response data is not empty, but a result instead
                 self.assertTrue(response.data)
                 self.assertTrue('features' in response.data)
-    
 
     def run_stop_word_list(self):
         '''Tests the endpoint for the stop_word_list action'''
@@ -204,8 +225,7 @@ class TaggerViewTests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
-            self.assertTrue('stop_words' in response.data)  
-
+            self.assertTrue('stop_words' in response.data)
 
     def run_stop_word_add(self):
         '''Tests the endpoint for the stop_word_add action'''
@@ -219,12 +239,11 @@ class TaggerViewTests(APITestCase):
             self.assertTrue(response.data)
             self.assertTrue('added' in response.data)
 
-
     def run_stop_word_remove(self):
         for test_tagger_id in self.test_tagger_ids:
             '''Tests the endpoint for the stop_word_remove action'''
             url = f'{self.url}{test_tagger_id}/stop_word_remove/?text=stopsõna'
-            payload = {"text": "stopsõna"}            
+            payload = {"text": "stopsõna"}
             response = self.client.post(url, payload, format='json')
             print_output('test_stop_word_remove:response.data', response.data)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -266,6 +285,12 @@ class TaggerViewTests(APITestCase):
         response = self.client.get(url)
         feature_dict = {a['feature']: True for a in response.data['features']}
         self.assertTrue(TEST_MATCH_TEXT not in feature_dict)
+        # remove retrained tagger models and plots
+        created_tagger = Tagger.objects.get(id=test_tagger_id)
+        created_tagger_location = json.loads(created_tagger.location)['tagger']
+        created_plot_path = created_tagger.plot.path
+        self.addCleanup(remove_file, created_tagger_location)
+        self.addCleanup(remove_file, created_plot_path)
 
 
     def run_model_export_import(self):
@@ -283,67 +308,9 @@ class TaggerViewTests(APITestCase):
         tagger_id = response.data['id']
         self.run_tag_text([tagger_id])
 
+        # remove imported tagger model
+        created_tagger = Tagger.objects.get(id=tagger_id)
+        created_tagger_location = json.loads(created_tagger.location)['tagger']
+        self.addCleanup(remove_file, created_tagger_location)
 
-    def run_tag_and_feedback_and_retrain(self):
-        '''Tests feeback extra action.'''
-        tagger_id = self.test_tagger_ids[0]
-        payload = {
-            "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" }),
-            "feedback_enabled": True}
-        tag_text_url = f'{self.url}{tagger_id}/tag_doc/'
-        response = self.client.post(tag_text_url, payload)
-        print_output('test_tag_doc_with_feedback:response.data', response.data)
-        self.assertTrue('feedback' in response.data)
 
-        # generate feedback
-        fb_id = response.data['feedback']['id']
-        feedback_url = f'{self.url}{tagger_id}/feedback/'
-        payload = {"feedback_id": fb_id, "correct_prediction": True}
-        response = self.client.post(feedback_url, payload, format='json')
-        print_output('test_tag_doc_with_feedback:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(response.data)
-        self.assertTrue('success' in response.data)
-        # sleep for a sec to allow elastic to finish its bussiness
-        sleep(1)
-
-        # list feedback
-        feedback_list_url = f'{self.url}{tagger_id}/feedback/'
-        response = self.client.get(feedback_list_url)
-        print_output('test_tag_doc_list_feedback:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(response.data)
-        self.assertTrue(len(response.data) > 0)
-
-        # retrain model
-        url = f'{self.url}{tagger_id}/retrain_tagger/'
-        response = self.client.post(url)
-        # test tagging again for this model
-        payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" })}
-        tag_text_url = f'{self.url}{tagger_id}/tag_doc/'
-        response = self.client.post(tag_text_url, payload)
-        print_output('test_feedback_retrained_tag_doc:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue('result' in response.data)
-        self.assertTrue('probability' in response.data)  
-
-        # delete feedback
-        feedback_delete_url = f'{self.url}{tagger_id}/feedback/'
-        response = self.client.delete(feedback_delete_url)
-        print_output('test_tag_doc_delete_feedback:response.data', response.data)
-        # sleep for a sec to allow elastic to finish its bussiness
-        sleep(1)
-
-        # list feedback again to make sure its emtpy      
-        feedback_list_url = f'{self.url}{tagger_id}/feedback/'
-        response = self.client.get(feedback_list_url)
-        print_output('test_tag_doc_list_feedback_after_delete:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(len(response.data) == 0)
-
-        # remove created index
-        feedback_index_url = f'{self.project_url}/feedback/'
-        response = self.client.delete(feedback_index_url)
-        print_output('test_delete_feedback_index:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue('success' in response.data)

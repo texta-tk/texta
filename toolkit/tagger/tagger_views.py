@@ -297,11 +297,12 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
             text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
         # load model and 
         tagger = global_tagger_cache.get_model(tagger_object)
+        tagger.add_text_processor(text_processor) 
         # select function according to input type
         if input_type == 'doc':
-            tagger_result = tagger.tag_doc(tagger_input, text_processor=text_processor)
+            tagger_result = tagger.tag_doc(tagger_input)
         else:
-            tagger_result = tagger.tag_text(tagger_input, text_processor=text_processor)
+            tagger_result = tagger.tag_text(tagger_input)
         # initial result
         prediction = {'result': bool(tagger_result[0]), 'probability': tagger_result[1]}
         # add optional feedback

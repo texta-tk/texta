@@ -12,7 +12,6 @@ from toolkit.elastic.document import ElasticDocument
 from toolkit.elastic.mapping_generator import SchemaGenerator
 
 """ TODOs:
-    complete always, but give result message
     optimize show_progress
     implement query for advanced filtering.
     unique name problem and testing it.
@@ -22,7 +21,7 @@ from toolkit.elastic.mapping_generator import SchemaGenerator
 def update_field_types(indices, field_type):
     ''' if fieldtype, for field named fieldtype change its type'''
     # returns fields edited by serializer input
-    my_fields = ElasticCore().get_fields(indices=indices)    # what if no indices
+    my_fields = ElasticCore().get_fields(indices)
     my_field_data = [field["path"] for field in my_fields]
     for item in field_type:
         if item['path'] in my_field_data:
@@ -37,14 +36,10 @@ def update_field_types(indices, field_type):
                         new_path_name = item['new_path_name']
                         field['path'] = new_path_name
     # obtain unique keys from parsed response
-    keys = []
-    for field in my_fields:
-        keys.append(field['type'])
+    keys = [field['type'] for field in my_fields]
     keys = list(set(keys))
     # create dicts for unique keys
-    unique_dicts = []
-    for key in keys:
-        unique_dicts.append({key: []})
+    unique_dicts = [{key: []} for key in keys]
     # populate unique_dicts with their respective values
     for field in my_fields:
         for _dict in unique_dicts:
@@ -55,17 +50,32 @@ def update_field_types(indices, field_type):
     return unique_dicts
 
 
+def update_mapping(schema_input, new_index):
+    mod_schema = {"properties": {}}
+    props = {}
+    for schema in schema_input:
+        prop = generate_mapping('a_mapping', schema)['mappings']['a_mapping']['properties']
+        props.update(prop)
+        mod_schema.update(properties=props)
+    return {'mappings': {new_index: mod_schema}}
+
+
 def generate_mapping(new_index, schema_input):
     return SchemaGenerator().generate_schema(new_index, schema_input)
 
 
-def bulk_add_documents(elastic_search, fields, elastic_doc, new_index):
+def apply_elastic_search(elastic_search, fields):
     new_docs = []
     for document in elastic_search:
         new_doc = {k: v for k, v in document.items() if k in fields}
         if new_doc:
             new_docs.append(new_doc)
-    print(elastic_doc.bulk_add(new_docs, new_index))
+    return new_docs
+
+
+def bulk_add_documents(elastic_search, fields, elastic_doc, new_index, mapping_name):
+    new_docs = apply_elastic_search(elastic_search, fields)
+    elastic_doc.bulk_add(new_docs, new_index, mapping_name)
 
 
 @task(name="reindex_task", base=BaseTask)
@@ -76,39 +86,39 @@ def reindex_task(reindexer_task_id):
     fields = json.loads(reindexer_obj.fields)
     random_size = reindexer_obj.random_size
     field_type = json.loads(reindexer_obj.field_type)
+    query = reindexer_obj.query
 
     ''' for empty field post, use all posted indices fields '''
+
     if not fields:
-        fields = ElasticCore().get_fields(indices=indices)
+        fields = ElasticCore().get_fields(indices)
         fields = [field["path"] for field in fields]
 
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step("scrolling data")
     show_progress.update_view(0)
 
-    elastic_search = ElasticSearcher(indices=indices, callback_progress=show_progress)
+    elastic_search = ElasticSearcher(indices=indices, callback_progress=show_progress, query=query)
     elastic_doc = ElasticDocument(reindexer_obj.new_index)
 
     if random_size > 0:
-        elastic_search = ElasticSearcher(indices=indices).random_documents(size=random_size)
+        elastic_search = ElasticSearcher(indices=indices, query=query).random_documents(size=random_size)
 
+    ''' the operations that don't require a mapping update have been completed '''
 
-    ''' the operations that don't require mapping update have been completed '''
+    schema_input = update_field_types(indices, field_type)
+    updated_schema = update_mapping(schema_input, reindexer_obj.new_index)
 
-    if field_type:
-        # create new mapping
-        schema_input = update_field_types(indices, field_type)
-        mod_schema = {"properties": {}}
-        props = {}
-        for schema in schema_input:
-            prop = generate_mapping('a_mapping', schema)['mappings']['a_mapping']['properties']
-            props.update(prop)
-            mod_schema.update(properties=props)
-        updated_schema = {'mappings': {reindexer_obj.new_index: mod_schema}}
+    # create new_index
+    create_index_res = ElasticCore().create_index(reindexer_obj.new_index, updated_schema)
+    # print(create_index_res)
 
-        create_index_res = ElasticCore().create_index(reindexer_obj.new_index, updated_schema)
+    # set new_index name as mapping name, perhaps make it customizable in the future
+    mapping_name = reindexer_obj.new_index
+    bulk_add_documents(elastic_search, fields, elastic_doc, reindexer_obj.new_index, mapping_name)
 
-    bulk_add_documents(elastic_search, fields, elastic_doc, reindexer_obj.new_index)
+    # get_map = ElasticCore().get_mapping(index=reindexer_obj.new_index)
+    # print("ourmap", get_map)
 
     # declare the job done
     show_progress.update_step('')
