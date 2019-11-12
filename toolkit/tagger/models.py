@@ -69,8 +69,8 @@ class TaggerGroup(models.Model):
     description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-
     fact_name = models.CharField(max_length=MAX_DESC_LEN)
+    num_tags = models.IntegerField(default=0)
     minimum_sample_size = models.IntegerField(default=DEFAULT_MIN_SAMPLE_SIZE)
 
     taggers = models.ManyToManyField(Tagger, default=None)

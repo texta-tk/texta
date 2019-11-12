@@ -16,7 +16,7 @@ class EmbeddingSerializer(serializers.HyperlinkedModelSerializer, ProjectResourc
     min_freq = serializers.IntegerField(default=DEFAULT_MIN_FREQ,
                                     help_text=f'Default: {DEFAULT_MIN_FREQ}')
     fields_parsed = serializers.SerializerMethodField()
-    query = serializers.SerializerMethodField()
+    query = serializers.JSONField(help_text='Query in JSON format', required=False)
     url = serializers.SerializerMethodField()
 
     class Meta:
@@ -28,11 +28,6 @@ class EmbeddingSerializer(serializers.HyperlinkedModelSerializer, ProjectResourc
     def get_fields_parsed(self, obj):
         if obj.fields:
             return json.loads(obj.fields)
-        return None
-
-    def get_query(self, obj):
-        if obj.query:
-            return json.loads(obj.query)
         return None
 
 

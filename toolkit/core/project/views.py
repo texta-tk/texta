@@ -32,7 +32,25 @@ from celery import group
 
 
 class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
-    # Disable default pagination
+    """
+    list:
+    Returns list of projects.
+
+    read:
+    Returns project by id.
+
+    create:
+    Creates new project object.
+
+    update:
+    Updates entire project object.
+
+    partial_update:
+    Partially updates project object.
+
+    delete:
+    Deletes project object.
+    """
     pagination_class = None
     serializer_class = ProjectSerializer
     permission_classes = (
@@ -55,6 +73,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
 
     @action(detail=True, methods=['get'])
     def get_fields(self, request, pk=None, project_pk=None):
+        """Returns list of fields from all Elasticsearch indices inside the project."""
         project_object = self.get_object()
         project_indices = list(project_object.indices)
         if not project_indices:
@@ -70,6 +89,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         field_map_list = [{'index': k, 'fields': v} for k, v in field_map.items()]
         return Response(field_map_list, status=status.HTTP_200_OK)
 
+
     def get_project_indices(self, pk=None):
         project_object = self.get_object()
         project_indices = list(project_object.indices)
@@ -78,6 +98,10 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
 
     @action(detail=True, methods=['post'], serializer_class=ProjectGetSpamSerializer)
     def get_spam(self,  request, pk=None):
+        """
+        Analyses Elasticsearch inside the project to detect frequently occuring texts.
+        Returns list of potential spam messages with frequently co-occurring features.
+        """
         serializer = ProjectGetSpamSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -92,10 +116,12 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         return Response(response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get', 'post'], serializer_class=ProjectGetFactsSerializer)
+    @action(detail=True, methods=['get'], serializer_class=ProjectGetFactsSerializer)
     def get_facts(self, request, pk=None, project_pk=None):
-        data = request.data
-        serializer = ProjectGetFactsSerializer(data=data)
+        """
+        Returns existing fact names and values from Elasticsearch.
+        """
+        serializer = ProjectGetFactsSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -112,19 +138,19 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
             fact_map_list = [{'name': k, 'values': v} for k, v in fact_map.items()]
         else:
             fact_map_list = [v for v in fact_map]
-
         return Response(fact_map_list, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['get'])
     def get_indices(self, request, pk=None, project_pk=None):
+        """Returns list of available indices in project."""
         project_object = self.get_object()
         project_indices = {"indices": list(project_object.indices)}
         return Response(project_indices)
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSimplifiedSearchSerializer)
     def search(self, request, pk=None, project_pk=None):
-        data = request.POST
-        serializer = ProjectSimplifiedSearchSerializer(data=data)
+        """Simplified search interface for making Elasticsearch queries."""
+        serializer = ProjectSimplifiedSearchSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         project_object = self.get_object()
@@ -167,8 +193,8 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSearchByQuerySerializer)
     def search_by_query(self, request, pk=None, project_pk=None):
-        data = request.data
-        serializer = ProjectSearchByQuerySerializer(data=data)
+        """Executes **raw** Elasticsearch query on all project indices."""
+        serializer = ProjectSearchByQuerySerializer(data=request.data)
         if not serializer.is_valid():
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -187,8 +213,12 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
 
     @action(detail=True, methods=['post'], serializer_class=ProjectMultiTagSerializer)
     def multitag_text(self, request, pk=None, project_pk=None):
-        data = request.data
-        serializer = ProjectMultiTagSerializer(data=data)
+        """
+        Applies list of tagger objects inside project to any text.
+        This is different from Tagger Group as **all** taggers in project are used and they do not have to reside in the same Tagger Group.
+        Returns list of tags.
+        """
+        serializer = ProjectMultiTagSerializer(data=request.data)
         # validate serializer
         if not serializer.is_valid():
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

@@ -25,8 +25,23 @@ global_cluster_cache = ModelCache(WordCluster)
 
 class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
     """
-    API endpoint that allows TEXTA models to be viewed or edited.
-    Only include the embeddings that are related to the request UserProfile's active_project
+    list:
+    Returns list of Embedding objects.
+
+    read:
+    Return Embedding object by id.
+
+    create:
+    Creates Embedding object.
+
+    update:
+    Updates entire Embedding object.
+
+    partial_update:
+    Performs partial update on Embedding object.
+
+    delete:
+    Deletes Embedding object.
     """
     queryset = Embedding.objects.all()
     serializer_class = EmbeddingSerializer
@@ -58,8 +73,8 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
 
     @action(detail=True, methods=['post'],serializer_class=EmbeddingPredictSimilarWordsSerializer)
     def predict_similar(self, request, pk=None, project_pk=None):
-        data = request.data
-        serializer = EmbeddingPredictSimilarWordsSerializer(data=data)
+        """Returns predictions of similar items to input words/phrases."""
+        serializer = EmbeddingPredictSimilarWordsSerializer(data=request.data)
         if serializer.is_valid():
             embedding_object = self.get_object()
             if not embedding_object.location:
@@ -78,6 +93,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
 
     @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
     def phrase_text(self, request, pk=None, project_pk=None):
+        """Returns phrased version of input text. Phrasing is done using Gensim phraser trained with the embedding."""
         data = request.data
         serializer = GeneralTextSerializer(data=data)
         if serializer.is_valid():
@@ -96,8 +112,23 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
 
 class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
     """
-    API endpoint that allows TEXTA embedding clusterings to be viewed or edited.
-    Only include embedding clusterings that are related to the request UserProfile's active_project
+    list:
+    Returns list of Embedding Cluster objects.
+
+    read:
+    Return Embedding Cluster object by id.
+
+    create:
+    Creates Embedding Cluster object.
+
+    update:
+    Updates entire Embedding Cluster object.
+
+    partial_update:
+    Performs partial update on Embedding Cluster object.
+
+    delete:
+    Deletes Embedding Cluster object.
     """
     serializer_class = EmbeddingClusterSerializer
     permission_classes = (
@@ -114,9 +145,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
 
     @action(detail=True, methods=['post'], serializer_class=EmbeddingClusterBrowserSerializer)
     def browse_clusters(self, request, pk=None, project_pk=None):
-        """
-        API endpoint for browsing clustering results.
-        """
+        """Returns clustering results."""
         data = request.data
         serializer = EmbeddingClusterBrowserSerializer(data=data)
 
@@ -141,9 +170,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
 
     @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
     def find_cluster_by_word(self, request, pk=None, project_pk=None):
-        """
-        API endpoint for finding a cluster for any word in model.
-        """
+        """Returns cluster id for input word."""
         data = request.data
         serializer = GeneralTextSerializer(data=data)
 
@@ -165,9 +192,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
 
     @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
     def cluster_text(self, request, pk=None, project_pk=None):
-        """
-        API endpoint for clustering raw text.
-        """
+        """Returns text with words replaced with cluster names in input text."""
         data = request.data
         serializer = GeneralTextSerializer(data=data)
 

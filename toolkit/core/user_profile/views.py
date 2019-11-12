@@ -12,15 +12,11 @@ from toolkit.core.user_profile.serializers import UserSerializer
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    list: Returns list of users.
+    read: Returns user details by id.
+    """
     serializer_class = UserSerializer
-    # Disable default pagination
-    pagination_class = None
-
-
-    """
-    User permissions are contained in this class. A non-superuser can view itself and users who are members in projects the user owns.
-    """
-
     def get_queryset(self):
         queryset = User.objects.all().order_by('-date_joined')
         current_user = self.request.user

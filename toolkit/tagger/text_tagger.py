@@ -150,8 +150,8 @@ class TextTagger:
         field_features = [x[5:] for x in union_features]
 
         # process text if asked
-        if self.text_processor:
-            text = self.text_processor.process(text)[0]
+        if text_processor:
+            text = text_processor.process(text)[0]
 
         # generate text map for dataframe
         text_map = {feature_name:[text] for feature_name in field_features}

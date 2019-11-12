@@ -10,9 +10,8 @@ from toolkit.core.health.utils import get_version, get_cache_status, get_mlp_sta
 
 @permission_classes((AllowAny, ))
 class HealthView(views.APIView):
-
-
     def get(self, request):
+        """Returns health statistics about host machine and running services."""
         toolkit_status = {}
 
         toolkit_status['elastic'] = get_elastic_status()

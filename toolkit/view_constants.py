@@ -25,9 +25,7 @@ class TagLogicViews():
     '''Re-usable logic for when a view needs to deal with facts'''
 
     def get_tags(self, fact_name, active_project, min_count=1000, max_count=None):
-        """
-        Finds possible tags for training by aggregating active project's indices.
-        """
+        '''Finds possible tags for training by aggregating active project's indices.'''
         active_indices = list(active_project.indices)
         es_a = ElasticAggregator(indices=active_indices)
         # limit size to 10000 unique tags
@@ -35,9 +33,7 @@ class TagLogicViews():
         return tag_values
 
     def create_queries(self, fact_name, tags):
-        """
-        Creates queries for finding documents for each tag.
-        """
+        '''Creates queries for finding documents for each tag.'''
         queries = []
         for tag in tags:
             query = Query()
@@ -49,7 +45,7 @@ class TagLogicViews():
 class BulkDelete():
     @action(detail=False, methods=['post'], serializer_class=ProjectResourceBulkDeleteSerializer)
     def bulk_delete(self, request, project_pk=None):
-        '''API endpoint for bulk deleting objects, given { "ids": [int] }'''
+        '''Deletes bulk of objects, given { "ids": [int] }'''
         data = request.data
         if not "ids" in data:
             return Response({'error': 'Must include key "ids" with an array of integers (private keys)'}, status=status.HTTP_400_BAD_REQUEST)
@@ -62,7 +58,7 @@ class BulkDelete():
 class ExportModel():
     @action(detail=True, methods=['get'])
     def export_model(self, request, pk=None, project_pk=None):
-        '''API endpoint for exporting the model.'''
+        '''Exports and saves any model object as zip file.'''
         # retrieve model object
         model_object = self.get_object()
         # check if model completed
@@ -101,7 +97,7 @@ class ExportModel():
 class ImportModel():
     @action(detail=True, methods=['post'], serializer_class=ProjectResourceImportModelSerializer)
     def import_model(self, request, pk=None):
-        '''API endpoint for importing the model.'''
+        '''Imports any saved model object (tagger, embedding, neurotagger, etc.) from zip file.'''
         serializer = ProjectResourceImportModelSerializer(data=request.data)
         # check if valid request
         if not serializer.is_valid():
@@ -184,7 +180,16 @@ class ImportModel():
 class FeedbackModelView:
     @action(detail=True, methods=['get', 'post', 'delete'], serializer_class=FeedbackSerializer)
     def feedback(self, request, project_pk=None, pk=None):
-        '''API endpoint for retrieving, ading and deleting feedback.'''
+        """
+        get:
+        Retrieves feedback for the model.
+        
+        post:
+        Adds feedback to the model.
+        
+        delete:
+        Deletes feedback object for the model.
+        """
         model_object = self.get_object()
         feedback = Feedback(project_pk, model_pk=pk, model_type=model_object.MODEL_TYPE)
         if request.method == 'POST':
@@ -202,7 +207,13 @@ class FeedbackModelView:
 class FeedbackIndexView:
     @action(detail=True, methods=['get', 'delete'])
     def feedback(self, request, pk=None):
-        '''API endpoint for retrieving and deleting feedback index for current project.'''
+        """
+        get:
+        Retrieves content for feedback index for the project
+
+        delete:
+        Deletes feedback index for the project.
+        """
         feedback = Feedback(pk)
         if request.method == 'DELETE':
             feedback_deleted = feedback.delete_index()

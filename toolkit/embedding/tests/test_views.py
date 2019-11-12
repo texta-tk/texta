@@ -12,6 +12,7 @@ from toolkit.core.project.models import Project
 from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.core.task.models import Task
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
+from toolkit.elastic.searcher import EMPTY_QUERY
 
 
 class EmbeddingViewTests(APITestCase):
@@ -55,7 +56,7 @@ class EmbeddingViewTests(APITestCase):
         '''Tests the endpoint for a new Embedding, and if a new Task gets created via the signal'''
         payload = {
             "description": "TestEmbedding",
-            "query": "",
+            "query": json.dumps(EMPTY_QUERY),
             "fields": TEST_FIELD_CHOICE,
             "max_vocab": 10000,
             "min_freq": 5,
@@ -80,7 +81,7 @@ class EmbeddingViewTests(APITestCase):
     def create_embedding_then_delete_embedding_and_created_model(self):
         payload = {
             "description": "TestEmbedding",
-            "query": "",
+            "query": json.dumps(EMPTY_QUERY),
             "fields": TEST_FIELD_CHOICE,
             "max_vocab": 10000,
             "min_freq": 5,
