@@ -21,15 +21,5 @@ def torchtagger_train_handler(tagger_id, testing=False):
     # create Datasample object for retrieving positive and negative sample
     data_sample = DataSample(tagger_object, show_progress=show_progress, join_fields=True)
 
-    tagger = TorchTagger(embedding_model)
+    tagger = TorchTagger(embedding_model, model_arch=tagger_object.model_architecture)
     tagger.train(data_sample)
-
-
-    # Load data from pd.DataFrame into torchtext.data.Dataset
-    #train_df = self.get_pandas_df(train_file)
-    #train_examples = [data.Example.fromlist(i, datafields) for i in train_df.values.tolist()]
-    #train_data = data.Dataset(train_examples, datafields)
-        
-    #test_df = self.get_pandas_df(test_file)
-    #test_examples = [data.Example.fromlist(i, datafields) for i in test_df.values.tolist()]
-    #test_data = data.Dataset(test_examples, datafields)

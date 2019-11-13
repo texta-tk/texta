@@ -9,11 +9,11 @@ from toolkit.core.task.serializers import TaskSerializer
 from toolkit.serializer_constants import ProjectResourceUrlSerializer
 
 
-
 class TorchTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
-    fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
-    fields_parsed = serializers.SerializerMethodField()
+    fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
+
+    model_architecture = serializers.ChoiceField(choices=choices.MODEL_CHOICES)
     maximum_sample_size = serializers.IntegerField(default=10000, required=False)
 
     task = TaskSerializer(read_only=True)
@@ -23,12 +23,8 @@ class TorchTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     class Meta:
         model = TorchTagger
         fields = (
-            'url', 'author_username', 'id', 'description', 'fields', 'fields_parsed', 'embedding',
-            'maximum_sample_size', 'location', 'plot', 'task')
+            'url', 'author_username', 'id', 'description', 'fields', 'embedding',
+            'model_architecture', 'maximum_sample_size', 'location', 'plot', 'task'
+        )
         
         read_only_fields = ('project', 'fields_parsed', 'location', 'plot', 'task')
-
-    def get_fields_parsed(self, obj):
-        if obj.fields:
-            return json.loads(obj.fields)
-        return None

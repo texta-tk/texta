@@ -26,20 +26,18 @@ class TorchTagger(models.Model):
     #fact_name = models.CharField(max_length=MAX_DESC_LEN, blank=True)
     #fact_values = models.TextField(blank=True)
 
-    #model_architecture = models.CharField(default='', max_length=10)
+    model_architecture = models.CharField(default=choices.MODEL_CHOICES[0][0], max_length=10)
     #seq_len = models.IntegerField(default=choices.DEFAULT_SEQ_LEN)
     #vocab_size = models.IntegerField(default=choices.DEFAULT_VOCAB_SIZE)
-    #num_epochs = models.IntegerField(default=choices.DEFAULT_NUM_EPOCHS)
-    #validation_split = models.FloatField(default=choices.DEFAULT_VALIDATION_SPLIT)
+    num_epochs = models.IntegerField(default=choices.DEFAULT_NUM_EPOCHS)
+    validation_ratio = models.FloatField(default=choices.DEFAULT_VALIDATION_SPLIT)
 
     negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER)
     maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE)
 
     # RESULTS
     #validation_accuracy = models.FloatField(default=None, null=True)
-    #training_accuracy = models.FloatField(default=None, null=True)
     #training_loss = models.FloatField(default=None, null=True)
-    #validation_loss = models.FloatField(default=None, null=True)
     precision = models.FloatField(default=None, null=True)
     recall = models.FloatField(default=None, null=True)
     f1_score = models.FloatField(default=None, null=True)

@@ -13,6 +13,7 @@ from toolkit.torchtagger.models import TorchTagger
 from toolkit.core.task.models import Task
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.torchtagger.torch_models.models import TORCH_MODELS
 
 
 class TorchTaggerViewTests(APITestCase):
@@ -28,6 +29,7 @@ class TorchTaggerViewTests(APITestCase):
         cls.url = f'/projects/{cls.project.id}/torchtaggers/'
         cls.project_url = f'/projects/{cls.project.id}'
         cls.test_embedding_id = None
+        cls.torch_models = list(TORCH_MODELS.keys())
 
     def setUp(self):
         self.client.login(username='torchTaggerOwner', password='pw')
@@ -57,7 +59,7 @@ class TorchTaggerViewTests(APITestCase):
             "fact_name": TEST_FACT_NAME,
             "fields": TEST_FIELD_CHOICE,
             "maximum_sample_size": 500,
-            #"model_architecture": "fastText",
+            "model_architecture": self.torch_models[2],
             "embedding": 1,
         }
         response = self.client.post(self.url, payload, format='json')
