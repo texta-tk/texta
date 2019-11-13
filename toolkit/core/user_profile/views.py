@@ -16,7 +16,11 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     list: Returns list of users.
     read: Returns user details by id.
     """
+
     serializer_class = UserSerializer
+    # Disable default pagination
+    pagination_class = None
+
     def get_queryset(self):
         queryset = User.objects.all().order_by('-date_joined')
         current_user = self.request.user
