@@ -1,6 +1,7 @@
 import json
 import re
 from rest_framework import serializers
+from collections import OrderedDict
 from django.db.models import Avg
 
 from toolkit.tagger.models import Tagger, TaggerGroup
@@ -18,7 +19,7 @@ class TaggerTagTextSerializer(serializers.Serializer):
     lemmatize = serializers.BooleanField(default=False,
         help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
     feedback_enabled = serializers.BooleanField(default=False,
-        help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False') 
+        help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 
 class TaggerTagDocumentSerializer(serializers.Serializer):
@@ -26,7 +27,7 @@ class TaggerTagDocumentSerializer(serializers.Serializer):
     lemmatize = serializers.BooleanField(default=False,
         help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
     feedback_enabled = serializers.BooleanField(default=False,
-        help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False') 
+        help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 class TaggerListFeaturesSerializer(serializers.Serializer):
     size = serializers.IntegerField(default=100, help_text='Default: 100')
@@ -38,10 +39,10 @@ class TaggerGroupTagTextSerializer(serializers.Serializer):
         help_text=f'Use MLP lemmatizer to lemmatize input text. Use only if training data was lemmatized. Default: True')
     use_ner = serializers.BooleanField(default=True,
         help_text=f'Use MLP Named Entity Recognition to detect tag candidates. Default: True')
-    n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS, 
+    n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS,
         help_text=f'Number of documents used in unsupervised prefiltering. Default: {DEFAULT_NUM_DOCUMENTS}')
     feedback_enabled = serializers.BooleanField(default=False,
-        help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False') 
+        help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 class TaggerGroupTagDocumentSerializer(serializers.Serializer):
     doc = serializers.JSONField(help_text=f'Document in JSON format.')
@@ -49,17 +50,17 @@ class TaggerGroupTagDocumentSerializer(serializers.Serializer):
         help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: True')
     use_ner = serializers.BooleanField(default=True,
         help_text=f'Use MLP Named Entity Recognition to detect tag candidates. Default: True')
-    n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS, 
+    n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS,
         help_text=f'Number of documents used in unsupervised prefiltering. Default: {DEFAULT_NUM_DOCUMENTS}')
     feedback_enabled = serializers.BooleanField(default=False,
-        help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False') 
+        help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
     description = serializers.CharField(help_text=f'Description for the Tagger. Will be used as tag.')
-    fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
+    fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices(),
         help_text=f'Vectorizer algorithm to create document vectors. NB! HashingVectorizer does not support feature name extraction!')
-    classifier = serializers.ChoiceField(choices=get_classifier_choices(), 
+    classifier = serializers.ChoiceField(choices=get_classifier_choices(),
         help_text=f'Classification algorithm used in the model.')
     negative_multiplier = serializers.IntegerField(default=DEFAULT_NEGATIVE_MULTIPLIER,
         help_text=f'Multiplies the size of positive samples to determine negative example set size. Default: {DEFAULT_NEGATIVE_MULTIPLIER}')
@@ -69,15 +70,15 @@ class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer
     plot = serializers.SerializerMethodField()
     stop_words = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
-    fields_parsed = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
     url = serializers.SerializerMethodField()
 
     class Meta:
         model = Tagger
-        fields = ('id', 'url', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words', 'fields_parsed',
+        fields = ('id', 'url', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
                   'maximum_sample_size', 'negative_multiplier', 'location', 'precision', 'recall', 'f1_score', 'num_features', 'plot', 'task')
         read_only_fields = ('precision', 'recall', 'f1_score', 'num_features')
+        fields_to_parse = ('fields',)
 
     def __init__(self, *args, **kwargs):
         '''
@@ -92,6 +93,14 @@ class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer
             for field_name in remove_fields:
                 self.fields.pop(field_name)
 
+    def to_representation(self, instance):
+        result = super(TaggerSerializer, self).to_representation(instance)
+        tagger_obj = Tagger.objects.get(id=instance.id)
+        fields_to_parse = TaggerSerializer.Meta.fields_to_parse
+        for field in fields_to_parse:
+            result[field] = json.loads(tagger_obj.fields)
+        return OrderedDict([(key, result[key]) for key in result])
+
     def get_stop_words(self, obj):
         if obj.stop_words:
             return json.loads(obj.stop_words)
@@ -100,11 +109,6 @@ class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer
     def get_location(self, obj):
         if obj.location:
             return json.loads(obj.location)
-        return None
-
-    def get_fields_parsed(self, obj):
-        if obj.fields:
-            return json.loads(obj.fields)
         return None
 
 
@@ -121,7 +125,7 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
 
     class Meta:
         model = TaggerGroup
-        fields = ('id', 'url', 'description', 'fact_name', 'num_tags', 'minimum_sample_size', 
+        fields = ('id', 'url', 'description', 'fact_name', 'num_tags', 'minimum_sample_size',
                   'tagger_status', 'tagger_params', 'tagger', 'tagger_statistics')
 
     def get_tagger_status(self, obj):
