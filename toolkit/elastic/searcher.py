@@ -45,7 +45,7 @@ class ElasticSearcher:
 
         if self.callback_progress:
             total_elements = self.count()
-            if scroll_limit < total_elements:
+            if scroll_limit and scroll_limit < total_elements:
                 total_elements = scroll_limit
             callback_progress.set_total(total_elements)
 
