@@ -8,7 +8,7 @@ def get_field_choices():
    else:
       return []
 
-
+DEFAULT_MAX_DOCUMENTS = 0
 DEFAULT_NUM_DIMENSIONS = 100
 DEFAULT_MIN_FREQ = 5
 DEFAULT_MAX_VOCAB = 50000
