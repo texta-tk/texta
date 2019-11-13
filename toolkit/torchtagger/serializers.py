@@ -12,6 +12,7 @@ from toolkit.serializer_constants import ProjectResourceUrlSerializer
 class TorchTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
+    query = serializers.JSONField(help_text='Query in JSON format', required=False)
 
     model_architecture = serializers.ChoiceField(choices=choices.MODEL_CHOICES)
     maximum_sample_size = serializers.IntegerField(default=10000, required=False)
@@ -23,7 +24,7 @@ class TorchTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     class Meta:
         model = TorchTagger
         fields = (
-            'url', 'author_username', 'id', 'description', 'fields', 'embedding',
+            'url', 'author_username', 'id', 'description', 'query', 'fields', 'embedding',
             'model_architecture', 'maximum_sample_size', 'location', 'plot', 'task'
         )
         
