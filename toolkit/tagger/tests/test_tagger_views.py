@@ -57,6 +57,7 @@ class TaggerViewTests(APITestCase):
         self.run_model_export_import()
         self.run_tag_and_feedback_and_retrain()
         self.create_tagger_then_delete_tagger_and_created_model()
+        # run these last ->
         self.run_patch_on_tagger_instances(self.test_tagger_ids)
         self.run_put_on_tagger_instances(self.test_tagger_ids)
 
@@ -160,17 +161,22 @@ class TaggerViewTests(APITestCase):
             print_output("patch_response", patch_response.data)
             self.assertEqual(patch_response.status_code, status.HTTP_200_OK)
 
-            # restore tagger fields
-            patch_back = self.client.patch(tagger_url, get_response.data, format='json')
-            print_output('restore patch_response', patch_back.data)
-
 
     def run_put_on_tagger_instances(self, test_tagger_ids):
         ''' Tests put response success for Tagger fields '''
+        payload = {
+                    "description": "PutTagger",
+                    "query": json.dumps(TEST_QUERY),
+                    "fields": TEST_FIELD_CHOICE,
+                    "vectorizer": 'Hashing Vectorizer',
+                    "classifier": 'Logistic Regression',
+                    "maximum_sample_size": 1000,
+                    "negative_multiplier": 3.0,
+                }
         for test_tagger_id in test_tagger_ids:
             tagger_url = f'{self.url}{test_tagger_id}/'
-            get_response = self.client.get(tagger_url, format='json')
-            put_response = self.client.put(tagger_url, get_response.data, format='json')
+            # get_response = self.client.get(tagger_url, format='json')
+            put_response = self.client.put(tagger_url, payload, format='json')
             self.assertEqual(put_response.status_code, status.HTTP_200_OK)
             print_output("put_response", put_response.data)
 

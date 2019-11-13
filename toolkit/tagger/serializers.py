@@ -68,8 +68,7 @@ class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer
         help_text=f'Maximum number of documents used to build a model. Default: {DEFAULT_MAX_SAMPLE_SIZE}')
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
-    stop_words = serializers.SerializerMethodField()
-    location = serializers.SerializerMethodField()
+    location = serializers.CharField(required=False) # either required False, or set default
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
     url = serializers.SerializerMethodField()
 
@@ -77,8 +76,8 @@ class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer
         model = Tagger
         fields = ('id', 'url', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
                   'maximum_sample_size', 'negative_multiplier', 'location', 'precision', 'recall', 'f1_score', 'num_features', 'plot', 'task')
-        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features')
-        fields_to_parse = ('fields',)
+        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'location,', 'stop_words')
+        fields_to_parse = ('fields', 'stop_words', 'location')
 
     def __init__(self, *args, **kwargs):
         '''
@@ -98,18 +97,8 @@ class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer
         tagger_obj = Tagger.objects.get(id=instance.id)
         fields_to_parse = TaggerSerializer.Meta.fields_to_parse
         for field in fields_to_parse:
-            result[field] = json.loads(tagger_obj.fields)
+            result[field] = json.loads(getattr(tagger_obj, field))
         return OrderedDict([(key, result[key]) for key in result])
-
-    def get_stop_words(self, obj):
-        if obj.stop_words:
-            return json.loads(obj.stop_words)
-        return None
-
-    def get_location(self, obj):
-        if obj.location:
-            return json.loads(obj.location)
-        return None
 
 
 class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
