@@ -43,7 +43,7 @@ class TorchTaggerViewTests(APITestCase):
             "fields": TEST_FIELD_CHOICE,
             "max_vocab": 10000,
             "min_freq": 5,
-            "num_dimensions": 100,
+            "num_dimensions": 300,
         }
         # post
         embeddings_url = f'/projects/{self.project.id}/embeddings/'
@@ -57,6 +57,7 @@ class TorchTaggerViewTests(APITestCase):
             "fact_name": TEST_FACT_NAME,
             "fields": TEST_FIELD_CHOICE,
             "maximum_sample_size": 500,
+            #"model_architecture": "fastText",
             "embedding": 1,
         }
         response = self.client.post(self.url, payload, format='json')

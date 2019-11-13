@@ -1,4 +1,5 @@
-from gensim.models import word2vec
+from gensim.models import word2vec, KeyedVectors
+from torch import FloatTensor
 import json
 
 from toolkit.embedding.models import Embedding
@@ -12,21 +13,31 @@ class W2VEmbedding:
     
     def load(self):
         """
-        Load embedding from file system
+        Loads embedding from file system.
         """
         if not self.embedding_id:
             return False
 
         embedding_object = Embedding.objects.get(pk=self.embedding_id)
         file_path = json.loads(embedding_object.location)['embedding']
-        model = word2vec.Word2Vec.load(file_path)
+        # load model using KeyedVector module to reduce memory usage
+        model = KeyedVectors.load(file_path)
         self.model = model
         self.name = embedding_object.description
         return True
-    
+
+    def tensorize(self):
+        """
+        Returns vectors as FloatTensor and word2index dict for torchtext Vocab object. We can use embeddings in torch taggers!
+        https://torchtext.readthedocs.io/en/latest/vocab.html
+        """
+        word2index = {token: token_index for token_index, token in enumerate(self.model.wv.index2word)}
+        return FloatTensor(self.model.wv.vectors), word2index
+
+
     def similarity(self):
         """
-        Compute similarity for input pair
+        Returns similarity for input pair.
         """
         pass
 
@@ -50,12 +61,12 @@ class W2VEmbedding:
     
     def get_vector(self, word):
         """
-        Get vector for given embedding entry
+        Returns vector for given embedding entry.
         """
         return self.model[word]
     
     def get_vocabulary(self):
         """
-        Get embedding vocabulary
+        Returns embedding vocabulary from KeyedVectors.
         """
         return self.model.wv.index2word
