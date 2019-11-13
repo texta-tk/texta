@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from collections import OrderedDict
 import json
 import re
 
@@ -10,25 +11,27 @@ from toolkit.serializer_constants import ProjectResourceUrlSerializer
 
 class EmbeddingSerializer(serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
     task = TaskSerializer(read_only=True)
-    fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
+    fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     num_dimensions = serializers.IntegerField(default=DEFAULT_NUM_DIMENSIONS,
                                     help_text=f'Default: {DEFAULT_NUM_DIMENSIONS}')
     min_freq = serializers.IntegerField(default=DEFAULT_MIN_FREQ,
                                     help_text=f'Default: {DEFAULT_MIN_FREQ}')
-    fields_parsed = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
     url = serializers.SerializerMethodField()
 
     class Meta:
         model = Embedding
-        fields = ('id', 'url', 'description', 'fields', 'query', 'num_dimensions', 'min_freq', 'vocab_size', 'task', 'fields_parsed')
+        fields = ('id', 'url', 'description', 'fields', 'query', 'num_dimensions', 'min_freq', 'vocab_size', 'task')
         read_only_fields = ('vocab_size',)
+        fields_to_parse = ('fields',)
 
-
-    def get_fields_parsed(self, obj):
-        if obj.fields:
-            return json.loads(obj.fields)
-        return None
+    def to_representation(self, instance):
+        result = super(EmbeddingSerializer, self).to_representation(instance)
+        embedding_obj = Embedding.objects.get(id=instance.id)
+        fields_to_parse = EmbeddingSerializer.Meta.fields_to_parse
+        for field in fields_to_parse:
+            result[field] = json.loads(getattr(embedding_obj, field))
+        return OrderedDict([(key, result[key]) for key in result])
 
 
 class EmbeddingPredictSimilarWordsSerializer(serializers.Serializer):

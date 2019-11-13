@@ -51,6 +51,8 @@ class EmbeddingViewTests(APITestCase):
         self.run_embedding_cluster_text()
         self.run_model_export_import()
         self.create_embedding_then_delete_embedding_and_created_model()
+        self.run_patch_on_embedding_instances(self.test_embedding_id)
+        self.run_put_on_embedding_instances(self.test_embedding_id)
 
     def run_create_embedding_training_and_task_signal(self):
         '''Tests the endpoint for a new Embedding, and if a new Task gets created via the signal'''
@@ -100,6 +102,37 @@ class EmbeddingViewTests(APITestCase):
         self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
         assert not os.path.isfile(embedding_model_location)
         assert not os.path.isfile(phraser_model_location)
+
+    def run_patch_on_embedding_instances(self, test_embedding_id):
+        ''' Tests patch response success for Tagger fields '''
+        payload = {
+            "description": "PatchedEmbedding",
+            "query": json.dumps(EMPTY_QUERY),
+            "fields": TEST_FIELD_CHOICE,
+            "max_vocab": 10000,
+            "min_freq": 5,
+            "num_dimensions": 100,
+        }
+        embedding_url = f'{self.url}{test_embedding_id}/'
+        patch_response = self.client.patch(embedding_url, payload, format='json')
+        print_output("patch_response", patch_response.data)
+        self.assertEqual(patch_response.status_code, status.HTTP_200_OK)
+
+    def run_put_on_embedding_instances(self, test_embedding_id):
+        ''' Tests put response success for Tagger fields '''
+        payload = {
+            "description": "PutEmbedding",
+            "query": json.dumps(EMPTY_QUERY),
+            "fields": TEST_FIELD_CHOICE,
+            "max_vocab": 10000,
+            "min_freq": 5,
+            "num_dimensions": 100,
+        }
+        embedding_url = f'{self.url}{test_embedding_id}/'
+        # get_response = self.client.get(tagger_url, format='json')
+        put_response = self.client.put(embedding_url, payload, format='json')
+        self.assertEqual(put_response.status_code, status.HTTP_200_OK)
+        print_output("put_response", put_response.data)
 
     def run_predict(self, test_embedding_id):
         '''Tests the endpoint for the predict action'''

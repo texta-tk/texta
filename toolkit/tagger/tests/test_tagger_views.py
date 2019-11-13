@@ -156,7 +156,6 @@ class TaggerViewTests(APITestCase):
 
         for test_tagger_id in test_tagger_ids:
             tagger_url = f'{self.url}{test_tagger_id}/'
-            get_response = self.client.get(tagger_url, format='json')
             patch_response = self.client.patch(tagger_url, payload, format='json')
             print_output("patch_response", patch_response.data)
             self.assertEqual(patch_response.status_code, status.HTTP_200_OK)
