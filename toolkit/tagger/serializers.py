@@ -68,7 +68,6 @@ class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer
         help_text=f'Maximum number of documents used to build a model. Default: {DEFAULT_MAX_SAMPLE_SIZE}')
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
-    stop_words = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
     fields_parsed = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
@@ -93,10 +92,6 @@ class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer
             for field_name in remove_fields:
                 self.fields.pop(field_name)
 
-    def get_stop_words(self, obj):
-        if obj.stop_words:
-            return json.loads(obj.stop_words)
-        return None
 
     def get_location(self, obj):
         if obj.location:

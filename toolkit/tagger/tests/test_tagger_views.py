@@ -50,7 +50,7 @@ class TaggerViewTests(APITestCase):
         self.run_tag_random_doc()
         self.run_stop_word_list()
         self.run_stop_word_add()
-        self.run_stop_word_remove()
+        self.run_stop_word_replace()
         self.run_list_features()
         self.run_multitag_text()
         self.run_model_retrain()
@@ -198,9 +198,9 @@ class TaggerViewTests(APITestCase):
     def run_stop_word_list(self):
         '''Tests the endpoint for the stop_word_list action'''
         for test_tagger_id in self.test_tagger_ids:
-            url = f'{self.url}{test_tagger_id}/stop_word_list/'
+            url = f'{self.url}{test_tagger_id}/stop_words/'
             response = self.client.get(url)
-            print_output('test_stop_word_list:response.data', response.data)
+            print_output('run_stop_word_list:response.data', response.data)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
@@ -210,27 +210,35 @@ class TaggerViewTests(APITestCase):
     def run_stop_word_add(self):
         '''Tests the endpoint for the stop_word_add action'''
         for test_tagger_id in self.test_tagger_ids:
-            url = f'{self.url}{test_tagger_id}/stop_word_add/'
+            url = f'{self.url}{test_tagger_id}/stop_words/'
             payload = {"text": "stopsõna"}
             response = self.client.post(url, payload, format='json')
-            print_output('test_stop_word_add:response.data', response.data)
+            print_output('run_stop_word_add:response.data', response.data)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
-            self.assertTrue('added' in response.data)
+            self.assertTrue('stop_words' in response.data)
+            self.assertTrue('stopsõna' in response.data['stop_words'])
 
 
-    def run_stop_word_remove(self):
+    def run_stop_word_replace(self):
         for test_tagger_id in self.test_tagger_ids:
             '''Tests the endpoint for the stop_word_remove action'''
-            url = f'{self.url}{test_tagger_id}/stop_word_remove/?text=stopsõna'
-            payload = {"text": "stopsõna"}            
+            # First add stop_words
+            url = f'{self.url}{test_tagger_id}/stop_words/'
+            payload = {"text": "stopsõna"}
             response = self.client.post(url, payload, format='json')
-            print_output('test_stop_word_remove:response.data', response.data)
+
+            # Then replace them
+            payload = {"text": "sõnastop"}
+            response = self.client.post(url, payload, format='json')
+            print_output('run_stop_word_replace:response.data', response.data)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
-            self.assertTrue('removed' in response.data)
+            self.assertTrue('stop_words' in response.data)
+            self.assertTrue('stopsõna' not in response.data['stop_words'])
+            self.assertTrue('sõnastop' in response.data['stop_words'])
 
 
     def run_multitag_text(self):
@@ -250,7 +258,7 @@ class TaggerViewTests(APITestCase):
         feature_dict = {a['feature']: True for a in response.data['features']}
         self.assertTrue(TEST_MATCH_TEXT in feature_dict)
         # add stop word before retraining
-        url = f'{self.url}{test_tagger_id}/stop_word_add/'
+        url = f'{self.url}{test_tagger_id}/stop_words/'
         payload = {"text": TEST_MATCH_TEXT}
         response = self.client.post(url, payload, format='json')
         # retrain tagger
