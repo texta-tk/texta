@@ -18,7 +18,7 @@ class ElasticSearcher:
     OUT_DOC = 'doc'
     OUT_TEXT = 'text'
     OUT_DOC_WITH_ID = 'doc_with_id'
-    OUT_DOC_TOTAL_AND_HL = 'doc_with_total_and_hl'
+    OUT_DOC_WITH_TOTAL_HL_AGGS = 'doc_with_total_hl_aggs'
 
     def __init__(self, field_data=[],
                  indices=[],
@@ -132,8 +132,13 @@ class ElasticSearcher:
         if self.output == self.OUT_DOC:
             hits = [self._parse_doc(doc) for doc in response['hits']['hits']]
             return hits
-        if self.output == self.OUT_DOC_TOTAL_AND_HL:
-            return {'count': response['hits']['total'], 'results': [self._parse_doc_with_highlight(doc) for doc in response['hits']['hits']]}
+        if self.output == self.OUT_DOC_WITH_TOTAL_HL_AGGS:
+            return {
+                'count': response['hits']['total'],
+                'aggs': response['aggregations'] if 'aggregations' in response else {},
+                'results': [self._parse_doc_with_highlight(doc) for doc in response['hits']['hits']]
+            }
+
         else:
             return response
 
@@ -172,7 +177,7 @@ class ElasticSearcher:
                         elif self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID):
                             if self.text_processor:
                                 parsed_doc = {k: '\n'.join(self.text_processor.process(v)) for k, v in parsed_doc.items()}
-                            if self.OUT_DOC_WITH_ID:
+                            if self.output == self.OUT_DOC_WITH_ID:
                                 parsed_doc['_id'] = hit['_id']
                             yield parsed_doc
 
