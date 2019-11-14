@@ -42,28 +42,24 @@ class TextTagger:
     def train(self, positive_samples, negative_samples, field_list=[], classifier='Logistic Regression', vectorizer='Hashing Vectorizer', feature_selector='SVM Feature Selector'):
         positive_samples_map = self._create_data_map(positive_samples, field_list)
         negative_samples_map = self._create_data_map(negative_samples, field_list)
-
+        # pipeline
         pipe_builder = get_pipeline_builder()
         pipe_builder.set_pipeline_options(vectorizer, classifier, feature_selector)
         c_pipe, c_params = pipe_builder.build(fields=field_list)
-
         # Build X feature map
         data_sample_x_map = {}
         for field in field_list:
             data_sample_x_map[field] = positive_samples_map[field] + negative_samples_map[field]
-
         # Build target (positive + negative samples) for binary classifier
         data_sample_y = [1] * len(positive_samples) + [0] * len(negative_samples)
-
         X_train = {}
         X_test = {}
-
+        #  split data
         for field in field_list:
             X_train[field], X_test[field], y_train, y_test = train_test_split(data_sample_x_map[field], data_sample_y, test_size=0.20, random_state=42)
-
+        # dataframes
         df_train = pd.DataFrame(X_train)
         df_test = pd.DataFrame(X_test)
-
         # Use Train data to parameter selection in a Grid Search
         gs_clf = GridSearchCV(c_pipe, c_params, n_jobs=self.workers, cv=5, verbose=False)
         gs_clf = gs_clf.fit(df_train, y_train)
@@ -72,7 +68,13 @@ class TextTagger:
         # Use best model and test data for final evaluation
         y_pred = model.predict(df_test)
         # Report model statistics
-        statistics = TaggingReport(y_test, y_pred).dict
+        # TODO: refactor this horrible dict lookup
+        report = TaggingReport(y_test, y_pred)
+        statistics = {}
+        statistics["precision"] = report.precision
+        statistics["recall"] = report.recall
+        statistics["f1_score"] = report.f1_score
+        statistics["confusion_matrix"] = report.confusion
         # calculate roc
         y_scores = model.decision_function(df_test)
         fpr, tpr, _ = roc_curve(y_test, y_scores)

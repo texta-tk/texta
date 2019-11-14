@@ -1,5 +1,5 @@
-from .text_cnn.model import TextCNN
-from .text_cnn.config import Config as TextCNNConfig
+from .text_rnn.model import TextRNN
+from .text_rnn.config import Config as TextRNNConfig
 
 from .fasttext.model import fastText
 from .fasttext.config import Config as fastTextConfig
@@ -13,9 +13,9 @@ from .rcnn.config import Config as RCNNConfig
 
 
 TORCH_MODELS = {
-    "TextCNN": {
-        "model": TextCNN,
-        "config": TextCNNConfig
+    "TextRNN": {
+        "model": TextRNN,
+        "config": TextRNNConfig
     },
     "fastText": {
         "model": fastText,
