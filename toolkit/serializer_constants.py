@@ -25,12 +25,11 @@ class FieldParseSerializer():
     def to_representation(self, instance):
         # self is the parent class obj in this case
         result = super(FieldParseSerializer, self).to_representation(instance)
-        embedding_obj = self.Meta.model.objects.get(id=instance.id)
+        model_obj = self.Meta.model.objects.get(id=instance.id)
         fields_to_parse = self.Meta.fields_to_parse
         for field in fields_to_parse:
-            result[field] = json.loads(getattr(embedding_obj, field))
+            result[field] = json.loads(getattr(model_obj, field))
         return OrderedDict([(key, result[key]) for key in result])
-
 
 
 class ProjectResourceBulkDeleteSerializer(serializers.Serializer):

@@ -36,18 +36,30 @@ class LexiconViewSet(viewsets.ModelViewSet):
         permissions.IsAuthenticated,
         )
 
+
     def perform_create(self, serializer):
         try:
-            discarded_phrases = serializer.validated_data['discarded_phrases']
+            discarded_phrases = json.dumps(serializer.validated_data['discarded_phrases'])
         except KeyError:
             discarded_phrases = []
-        serializer.save(author = self.request.user,
-            project = Project.objects.get(id=self.kwargs['project_pk']),
-            phrases = json.dumps(serializer.validated_data['phrases']),
-            discarded_phrases = discarded_phrases)
+        serializer.save(author=self.request.user,
+            project=Project.objects.get(id=self.kwargs['project_pk']),
+            phrases=json.dumps(serializer.validated_data['phrases']),
+            discarded_phrases=discarded_phrases)
+
+
+    def perform_update(self, serializer):
+        try:
+            discarded_phrases = json.dumps(serializer.validated_data['discarded_phrases'])
+        except KeyError:
+            discarded_phrases = []
+        serializer.save(phrases=json.dumps(serializer.validated_data['phrases']),
+                        discarded_phrases=discarded_phrases)
+
 
     def get_queryset(self):
         return Lexicon.objects.filter(project=self.kwargs['project_pk'])
+
 
     def create(self, request, *args, **kwargs):
         serializer = LexiconSerializer(data=request.data, context={'request': request})
