@@ -174,10 +174,9 @@ class TaggerViewTests(APITestCase):
                 }
         for test_tagger_id in test_tagger_ids:
             tagger_url = f'{self.url}{test_tagger_id}/'
-            # get_response = self.client.get(tagger_url, format='json')
             put_response = self.client.put(tagger_url, payload, format='json')
-            self.assertEqual(put_response.status_code, status.HTTP_200_OK)
             print_output("put_response", put_response.data)
+            self.assertEqual(put_response.status_code, status.HTTP_200_OK)
 
 
     def run_tag_text(self, test_tagger_ids):

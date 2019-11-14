@@ -8,13 +8,13 @@ from . import choices
 from .models import Neurotagger
 from toolkit.constants import get_field_choices
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.serializer_constants import ProjectResourceUrlSerializer
+from toolkit.serializer_constants import ProjectResourceUrlSerializer, FieldParseSerializer
 
 
 
-class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
+class NeurotaggerSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
-    fields_parsed = serializers.SerializerMethodField()
+    # fields_parsed = serializers.SerializerMethodField()
     fact_name = serializers.CharField(help_text=
         'Fact name used to train a multilabel model, with fact values as classes.',
         required=False,
@@ -43,7 +43,7 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResou
     class Meta:
         model = Neurotagger
         fields = ('url', 'id', 'description', 'project', 'author', 'validation_split', 'score_threshold',
-                  'fields', 'fields_parsed', 'model_architecture', 'seq_len', 'maximum_sample_size', 'negative_multiplier',
+                  'fields', 'model_architecture', 'seq_len', 'maximum_sample_size', 'negative_multiplier',
                   'location', 'num_epochs', 'vocab_size', 'plot', 'task', 'validation_accuracy', 'training_accuracy', 'fact_values',
                   'training_loss', 'validation_loss', 'result_json', 'fact_name', 'min_fact_doc_count', 'max_fact_doc_count')
 
@@ -51,7 +51,8 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResou
                             'result_json', 'validation_accuracy', 'training_accuracy',
                             'training_loss', 'validation_loss', 'fact_values', 'classification_report'
                             )
-        
+        fields_to_parse = ('fields',)
+
 
     def __init__(self, *args, **kwargs):
         '''
@@ -65,11 +66,6 @@ class NeurotaggerSerializer(serializers.HyperlinkedModelSerializer, ProjectResou
             # for multiple fields in a list
             for field_name in remove_fields:
                 self.fields.pop(field_name)
-
-    def get_fields_parsed(self, obj):
-        if obj.fields:
-            return json.loads(obj.fields)
-        return None
 
 
 class NeuroTaggerTagDocumentSerializer(serializers.Serializer):

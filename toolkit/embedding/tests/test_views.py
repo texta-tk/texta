@@ -131,8 +131,9 @@ class EmbeddingViewTests(APITestCase):
         embedding_url = f'{self.url}{test_embedding_id}/'
         # get_response = self.client.get(tagger_url, format='json')
         put_response = self.client.put(embedding_url, payload, format='json')
-        self.assertEqual(put_response.status_code, status.HTTP_200_OK)
         print_output("put_response", put_response.data)
+        self.assertEqual(put_response.status_code, status.HTTP_200_OK)
+
 
     def run_predict(self, test_embedding_id):
         '''Tests the endpoint for the predict action'''
