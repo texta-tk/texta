@@ -7,9 +7,9 @@ from toolkit.embedding.models import Embedding, Task, EmbeddingCluster
 from toolkit.embedding.choices import (get_field_choices, DEFAULT_NUM_DIMENSIONS, DEFAULT_MAX_VOCAB, DEFAULT_MIN_FREQ, DEFAULT_OUTPUT_SIZE,
                                        DEFAULT_NUM_CLUSTERS, DEFAULT_BROWSER_NUM_CLUSTERS, DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER)
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.serializer_constants import ProjectResourceUrlSerializer
+from toolkit.serializer_constants import ProjectResourceUrlSerializer, FieldParseSerializer
 
-class EmbeddingSerializer(serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
+class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
     task = TaskSerializer(read_only=True)
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     num_dimensions = serializers.IntegerField(default=DEFAULT_NUM_DIMENSIONS,
@@ -24,14 +24,6 @@ class EmbeddingSerializer(serializers.HyperlinkedModelSerializer, ProjectResourc
         fields = ('id', 'url', 'description', 'fields', 'query', 'num_dimensions', 'min_freq', 'vocab_size', 'task')
         read_only_fields = ('vocab_size',)
         fields_to_parse = ('fields',)
-
-    def to_representation(self, instance):
-        result = super(EmbeddingSerializer, self).to_representation(instance)
-        embedding_obj = Embedding.objects.get(id=instance.id)
-        fields_to_parse = EmbeddingSerializer.Meta.fields_to_parse
-        for field in fields_to_parse:
-            result[field] = json.loads(getattr(embedding_obj, field))
-        return OrderedDict([(key, result[key]) for key in result])
 
 
 class EmbeddingPredictSimilarWordsSerializer(serializers.Serializer):
@@ -52,7 +44,6 @@ class EmbeddingClusterSerializer(serializers.ModelSerializer, ProjectResourceUrl
     class Meta:
         model = EmbeddingCluster
         fields = ('id', 'url', 'description', 'embedding', 'vocab_size', 'num_clusters', 'location', 'task')
-
         read_only_fields = ('task',)
 
     def get_vocab_size(self, obj):

@@ -11,7 +11,7 @@ from toolkit.tagger.choices import (get_field_choices, get_classifier_choices, g
                                     DEFAULT_NUM_DOCUMENTS, DEFAULT_TAGGER_GROUP_FACT_NAME)
 
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.serializer_constants import ProjectResourceUrlSerializer
+from toolkit.serializer_constants import ProjectResourceUrlSerializer, FieldParseSerializer
 
 
 class TaggerTagTextSerializer(serializers.Serializer):
@@ -55,7 +55,7 @@ class TaggerGroupTagDocumentSerializer(serializers.Serializer):
     feedback_enabled = serializers.BooleanField(default=False,
         help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
-class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
+class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
     description = serializers.CharField(help_text=f'Description for the Tagger. Will be used as tag.')
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices(),
@@ -91,14 +91,6 @@ class TaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer
             # for multiple fields in a list
             for field_name in remove_fields:
                 self.fields.pop(field_name)
-
-    def to_representation(self, instance):
-        result = super(TaggerSerializer, self).to_representation(instance)
-        tagger_obj = Tagger.objects.get(id=instance.id)
-        fields_to_parse = TaggerSerializer.Meta.fields_to_parse
-        for field in fields_to_parse:
-            result[field] = json.loads(getattr(tagger_obj, field))
-        return OrderedDict([(key, result[key]) for key in result])
 
 
 class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
