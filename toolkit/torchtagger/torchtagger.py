@@ -1,17 +1,20 @@
-import torch
-from torch import nn
+from sklearn.metrics import accuracy_score
+from torchtext.vocab import Vectors
 import torch.optim as optim
 from torchtext import data
-from torchtext.vocab import Vectors
+from torch import nn
 import pandas as pd
 import numpy as np
-from sklearn.metrics import accuracy_score
+import json
+import torch
+
 from .torch_models.models import TORCH_MODELS
 from toolkit.tagger.report import TaggingReport
+from .models import TorchTagger as TorchTaggerObject
 
 class TorchTagger:
 
-    def __init__(self, embedding, model_arch="fastText", n_classes=2, num_epochs=5):
+    def __init__(self, tagger_id, embedding=None, model_arch="fastText", n_classes=2, num_epochs=5):
         self.embedding = embedding
         self.config = TORCH_MODELS[model_arch]["config"]()
         self.model_arch = TORCH_MODELS[model_arch]["model"]
@@ -23,17 +26,25 @@ class TorchTagger:
         self.report = None
         # model
         self.model = None
+        self.tagger_id = int(tagger_id)
 
 
     def save(self, path):
-        saved = torch.save(self.model.state_dict(), path)
+        """Saves model on disk."""
+        saved = torch.save(self.model, path)
         return saved
 
+
     def load(self):
-        model = self.model_arch()
-        model.load_state_dict(torch.load(path))
+        """Loads model from disk."""
+        tagger_object = TorchTaggerObject.objects.get(pk=self.tagger_id)
+        tagger_path = json.loads(tagger_object.location)[TorchTaggerObject.MODEL_TYPE]
+        model = torch.load(tagger_path)
         model.eval()
+        self.description = tagger_object.description
         self.model = model
+        return self.model
+
 
     @staticmethod
     def evaluate_model(model, iterator):
@@ -130,3 +141,18 @@ class TorchTagger:
         # set model
         self.model = model
         return self.report
+
+
+    def tag_text(self, text):
+        tokenizer = lambda sent: [x.strip() for x in sent.split(" ")]
+        text_field = data.Field(sequential=True, tokenize=tokenizer, lower=True)
+
+        datafields = {"text": text_field}
+        data.Example.fromdict({"text": text}, [datafields])
+
+        if torch.cuda.is_available():
+            x = batch.text.cuda()
+        else:
+            x = batch.text
+        
+        prediction = self.model(x)

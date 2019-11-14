@@ -30,6 +30,7 @@ class TorchTaggerViewTests(APITestCase):
         cls.project_url = f'/projects/{cls.project.id}'
         cls.test_embedding_id = None
         cls.torch_models = list(TORCH_MODELS.keys())
+        cls.test_tagger_id = None
 
     def setUp(self):
         self.client.login(username='torchTaggerOwner', password='pw')
@@ -37,6 +38,7 @@ class TorchTaggerViewTests(APITestCase):
     def test(self):
         self.run_train_embedding()
         self.run_train_tagger()
+        self.run_tag_text()
 
     def run_train_embedding(self):
         # payload for training embedding
@@ -74,7 +76,15 @@ class TorchTaggerViewTests(APITestCase):
         print_output('test_torchtagger_has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
-
+        self.test_tagger_id = tagger_id
         # Remove tagger files after test is done
         self.addCleanup(remove_file, json.loads(response.data['location'])['torchtagger'])
         #self.addCleanup(remove_file, created_tagger.plot.path)
+
+    def run_tag_text(self):
+        '''Tests tag prediction for texts.'''
+        payload = {
+            "text": "mine kukele, kala"
+        }
+        response = self.client.post(f'{self.url}{self.test_tagger_id}/tag_text/', payload)
+        print_output('test_torchtagger_tag_text:response.data', response.data)
