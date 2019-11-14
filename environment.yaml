@@ -4,13 +4,12 @@ channels:
   - conda-forge
   - anaconda
   - bioconda
+  - pytorch
 
 dependencies:
   - python=3.6
   - pip
-  - tensorflow-gpu
   - keras==2.2.*
-  - mkl
   - pandas
   - scikit-learn
   - matplotlib
@@ -23,6 +22,7 @@ dependencies:
   - supervisor
   - psycopg2
   - mysqlclient
+  - pytorch
   - pip:
     - django==2.1.*
     - djangorestframework==3.9.*
@@ -38,6 +38,6 @@ dependencies:
     - django-rest-serializer-field-permissions
     - django-cors-headers
     - elasticsearch_dsl<7
-    - sentencepiece
     - python-json-logger
     - drf-yasg
+    - torchtext
