@@ -1,9 +1,8 @@
 import re
 import json
 from rest_framework import serializers
-# from toolkit.embedding.models import Embedding
 from collections import OrderedDict
-# from toolkit.embedding.serializers import EmbeddingSerializer
+
 
 class ProjectResourceUrlSerializer():
     '''For project serializers which need to construct the HyperLinked URL'''
