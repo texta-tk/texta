@@ -57,7 +57,6 @@ class LexiconViewsTests(APITestCase):
         payload = {
             "description": "TestLexicon",
             "phrases": ["esimene fraas", "teine fraas"]
-            # "discarded_phrases": ["shit"]
         }
         response = self.client.post(self.url, payload)
         print_output('test_lexicon_create:response.data', response.data)
