@@ -16,6 +16,7 @@ class TorchTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
 
     model_architecture = serializers.ChoiceField(choices=choices.MODEL_CHOICES)
     maximum_sample_size = serializers.IntegerField(default=10000, required=False)
+    num_epochs = serializers.IntegerField(default=choices.DEFAULT_NUM_EPOCHS, required=False)
 
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
@@ -24,8 +25,8 @@ class TorchTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     class Meta:
         model = TorchTagger
         fields = (
-            'url', 'author_username', 'id', 'description', 'query', 'fields', 'embedding',
-            'model_architecture', 'maximum_sample_size', 'location', 'plot', 'task'
+            'url', 'author_username', 'id', 'description', 'query', 'fields', 'embedding', 'f1_score', 'precision', 'recall', 'accuracy',
+            'model_architecture', 'maximum_sample_size', 'num_epochs', 'location', 'plot', 'task'
         )
         
-        read_only_fields = ('project', 'fields_parsed', 'location', 'plot', 'task')
+        read_only_fields = ('project', 'fields_parsed', 'f1_score', 'precision', 'recall', 'accuracy', 'location', 'plot', 'task')

@@ -72,7 +72,6 @@ class RCNN(nn.Module):
         self.loss_op = loss_op
     
     def reduce_lr(self):
-        print("Reducing LR")
         for g in self.optimizer.param_groups:
             g['lr'] = g['lr'] / 2
                 
@@ -100,16 +99,13 @@ class RCNN(nn.Module):
             self.optimizer.step()
     
             if i % 100 == 0:
-                print("Iter: {}".format(i+1))
                 avg_train_loss = np.mean(losses)
                 train_losses.append(avg_train_loss)
-                print("\tAverage training loss: {:.5f}".format(avg_train_loss))
                 losses = []
-                
                 # Evalute Accuracy on validation set
-                val_accuracy = self.evaluate_model(self, val_iterator)
-                val_accuracies.append(val_accuracy)
-                print("\tVal Accuracy: {:.4f}".format(val_accuracy))
+                report = self.evaluate_model(self, val_iterator)
+                report.training_loss = avg_train_loss
+                val_accuracies.append(report.accuracy)
                 self.train()
-                
-        return train_losses, val_accuracies
+        # return info about current epoch
+        return report

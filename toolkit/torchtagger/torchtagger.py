@@ -7,15 +7,20 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import accuracy_score
 from .torch_models.models import TORCH_MODELS
+from toolkit.tagger.report import TaggingReport
 
 class TorchTagger:
 
-    def __init__(self, embedding, model_arch="fastText", n_classes=2):
+    def __init__(self, embedding, model_arch="fastText", n_classes=2, num_epochs=5):
         self.embedding = embedding
         self.config = TORCH_MODELS[model_arch]["config"]()
         self.model_arch = TORCH_MODELS[model_arch]["model"]
         # set number of output classes
         self.config.output_size = n_classes
+        # set number of epochs
+        self.config.max_epochs = num_epochs
+        # statistics report
+        self.report = None
 
 
     @staticmethod
@@ -31,8 +36,13 @@ class TorchTagger:
             predicted = torch.max(y_pred.cpu().data, 1)[1]
             all_preds.extend(predicted.numpy())
             all_y.extend(batch.label.numpy())
-        score = accuracy_score(all_y, np.array(all_preds).flatten())
-        return score
+        # flatten predictions
+        all_preds = np.array(all_preds).flatten()
+        # f1, precision and recall
+        report = TaggingReport(all_y, all_preds)
+        # accuracy
+        report.accuracy = accuracy_score(all_y, all_preds)
+        return report
 
 
     def _prepare_data(self, data_sample):
@@ -100,14 +110,11 @@ class TorchTagger:
         model.add_optimizer(optimizer)
         model.add_loss_op(NLLLoss)
 
-        train_losses = []
-        val_accuracies = []
-        
+        # run epochs
+        reports = []
         for i in range(self.config.max_epochs):
-            print ("Epoch: {}".format(i))
-            train_loss, val_accuracy = model.run_epoch(train_iterator, val_iterator, i)
-            train_losses.append(train_loss)
-            val_accuracies.append(val_accuracy)
-        
-        print(train_losses)
-        print(val_accuracies)
+            report = model.run_epoch(train_iterator, val_iterator, i)
+            reports.append(report)
+        # set model statistics based on evaluation of last epoch
+        self.report = reports[-1]
+        return self.report

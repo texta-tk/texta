@@ -60,9 +60,17 @@ class TorchTaggerViewTests(APITestCase):
             "fields": TEST_FIELD_CHOICE,
             "maximum_sample_size": 500,
             "model_architecture": self.torch_models[2],
+            "num_epochs": 3,
             "embedding": 1,
         }
         response = self.client.post(self.url, payload, format='json')
         print_output('test_create_torchtagger_training_and_task_signal:response.data', response.data)
         # Check if Neurotagger gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Check if f1 not NULL (train and validation success)
+        tagger_id = response.data['id']
+        response = self.client.get(f'{self.url}{tagger_id}/')
+        print_output('test_torchtagger_has_stats:response.data', response.data)
+        for score in ['f1_score', 'precision', 'recall', 'accuracy']:
+            self.assertTrue(isinstance(response.data[score], float))
