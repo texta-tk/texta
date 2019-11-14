@@ -1,5 +1,7 @@
 from celery.decorators import task
+import secrets
 import json
+import os
 
 from toolkit.core.task.models import Task
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
@@ -8,6 +10,7 @@ from toolkit.base_task import BaseTask
 from toolkit.tagger.data_sample import DataSample
 from toolkit.torchtagger.torchtagger import TorchTagger
 from toolkit.embedding.views import global_w2v_cache
+from toolkit.settings import MODELS_DIR
 
 
 @task(name="torchtagger_train_handler", base=BaseTask)
@@ -31,6 +34,11 @@ def torchtagger_train_handler(tagger_id, testing=False):
         )
         # train tagger and get result statistics
         tagger_stats = tagger.train(data_sample)
+        # save tagger to disk
+        tagger_path = os.path.join(MODELS_DIR, 'torchtagger', f'torchtagger_{tagger_id}_{secrets.token_hex(10)}')
+        tagger.save(tagger_path)
+        # set tagger location
+        tagger_object.location = json.dumps({"torchtagger": tagger_path})
         # stats to model object
         tagger_object.f1_score = tagger_stats.f1_score
         tagger_object.precision = tagger_stats.precision

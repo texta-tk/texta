@@ -21,7 +21,19 @@ class TorchTagger:
         self.config.max_epochs = num_epochs
         # statistics report
         self.report = None
+        # model
+        self.model = None
 
+
+    def save(self, path):
+        saved = torch.save(self.model.state_dict(), path)
+        return saved
+
+    def load(self):
+        model = self.model_arch()
+        model.load_state_dict(torch.load(path))
+        model.eval()
+        self.model = model
 
     @staticmethod
     def evaluate_model(model, iterator):
@@ -102,14 +114,12 @@ class TorchTagger:
         # check cuda
         if torch.cuda.is_available():
             model.cuda()
-
+        # train
         model.train()
-
         optimizer = optim.SGD(model.parameters(), lr=self.config.lr)
         NLLLoss = nn.NLLLoss()
         model.add_optimizer(optimizer)
         model.add_loss_op(NLLLoss)
-
         # run epochs
         reports = []
         for i in range(self.config.max_epochs):
@@ -117,4 +127,6 @@ class TorchTagger:
             reports.append(report)
         # set model statistics based on evaluation of last epoch
         self.report = reports[-1]
+        # set model
+        self.model = model
         return self.report

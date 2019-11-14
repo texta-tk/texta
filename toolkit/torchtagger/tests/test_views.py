@@ -59,7 +59,7 @@ class TorchTaggerViewTests(APITestCase):
             "fact_name": TEST_FACT_NAME,
             "fields": TEST_FIELD_CHOICE,
             "maximum_sample_size": 500,
-            "model_architecture": self.torch_models[2],
+            "model_architecture": self.torch_models[1],
             "num_epochs": 3,
             "embedding": 1,
         }
@@ -74,3 +74,7 @@ class TorchTaggerViewTests(APITestCase):
         print_output('test_torchtagger_has_stats:response.data', response.data)
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
+
+        # Remove tagger files after test is done
+        self.addCleanup(remove_file, json.loads(response.data['location'])['torchtagger'])
+        #self.addCleanup(remove_file, created_tagger.plot.path)
