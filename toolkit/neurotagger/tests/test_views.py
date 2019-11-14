@@ -60,9 +60,6 @@ class NeurotaggerViewTests(APITestCase):
         # Test the tagging endpoints
         self.run_tag_text(tagger_id=created_neurotagger.id)
         self.run_tag_doc(tagger_id=created_neurotagger.id)
-        # run these last ->
-        # self.run_patch_on_neurotagger_instances(tagger_id=created_neurotagger.id)
-        # self.run_put_on_neurotagger_instances(tagger_id=created_neurotagger.id)
 
         # Test model import
         imported_neurotagger = self.run_model_export_import(tagger_id=created_neurotagger.id)
