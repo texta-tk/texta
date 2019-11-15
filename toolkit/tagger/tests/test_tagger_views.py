@@ -273,7 +273,7 @@ class TaggerViewTests(APITestCase):
         url = f'{self.url}{test_tagger_id}/list_features/'
         response = self.client.get(url)
         feature_dict = {a['feature']: True for a in response.data['features']}
-        self.assertTrue(TEST_MATCH_TEXT not in list(feature_dict.keys()))
+        self.assertTrue(TEST_MATCH_TEXT not in feature_dict)
 
 
     def run_model_export_import(self):

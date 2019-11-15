@@ -7,7 +7,7 @@ from toolkit.core.task.models import Task
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.base_task import BaseTask
-from toolkit.tagger.data_sample import DataSample
+from toolkit.elastic.data_sample import DataSample
 from toolkit.torchtagger.torchtagger import TorchTagger
 from toolkit.embedding.views import global_w2v_cache
 from toolkit.settings import MODELS_DIR

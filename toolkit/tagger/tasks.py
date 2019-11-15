@@ -16,7 +16,7 @@ from toolkit.tagger.plots import create_tagger_plot
 from toolkit.base_task import BaseTask
 from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.elastic.feedback import Feedback
-from toolkit.tagger.data_sample import DataSample
+from toolkit.elastic.data_sample import DataSample
 
 
 def create_tagger_batch(tagger_group_id, taggers_to_create):
@@ -71,6 +71,7 @@ def train_tagger(tagger_id):
         indices = tagger_object.project.indices
         field_data = json.loads(tagger_object.fields)
         stop_words = tagger_object.stop_words.split(' ')
+
         # load embedding and create text processor
         if tagger_object.embedding:
             phraser = Phraser(embedding_id=tagger_object.embedding.pk)

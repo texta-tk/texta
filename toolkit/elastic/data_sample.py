@@ -85,6 +85,7 @@ class DataSample:
             output=ElasticSearcher.OUT_DOC_WITH_ID,
             callback_progress=self.show_progress,
             scroll_limit=int(self.tagger_object.maximum_sample_size),
+            text_processor=self.text_processor
         )
         positive_sample = []
         # set positive ids to ignore while scrolling for negatives
@@ -116,6 +117,7 @@ class DataSample:
             prediction_to_match=prediction_to_match,
             text_processor=self.text_processor,
             callback_progress=self.show_progress,
+            text_proecessor=self.text_processor
         )
         # iterator to list
         feedback_sample = list(feedback_sample)
@@ -137,6 +139,7 @@ class DataSample:
             field_data=json.loads(self.tagger_object.fields),
             output=ElasticSearcher.OUT_DOC,
             callback_progress=self.show_progress,
+            text_processor=self.text_processor,
 
 
             scroll_limit=len(self.ignore_ids)*int(self.tagger_object.negative_multiplier),
