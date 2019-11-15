@@ -56,6 +56,7 @@ class TaggerGroupTagDocumentSerializer(serializers.Serializer):
         help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
+    author_username = serializers.CharField(source='author.username', read_only=True)    
     description = serializers.CharField(help_text=f'Description for the Tagger. Will be used as tag.')
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices(),
@@ -75,6 +76,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     class Meta:
         model = Tagger
         fields = ('id', 'url', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
+        fields = ('id', 'author_username', 'url', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words', 'fields_parsed',
                   'maximum_sample_size', 'negative_multiplier', 'location', 'precision', 'recall', 'f1_score', 'num_features', 'plot', 'task')
         read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'location,', 'stop_words')
         fields_to_parse = ('fields', 'stop_words', 'location')
@@ -94,6 +96,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
 
 
 class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
+    author_username = serializers.CharField(source='author.username', read_only=True)
     description = serializers.CharField(help_text=f'Description for the Tagger Group.')
     minimum_sample_size = serializers.IntegerField(default=DEFAULT_MIN_SAMPLE_SIZE, help_text=f'Minimum number of documents required to train a model. Default: {DEFAULT_MIN_SAMPLE_SIZE}')
     fact_name = serializers.CharField(default=DEFAULT_TAGGER_GROUP_FACT_NAME, help_text=f'Fact name used to filter tags (fact values). Default: {DEFAULT_TAGGER_GROUP_FACT_NAME}')
@@ -106,30 +109,32 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
 
     class Meta:
         model = TaggerGroup
-        fields = ('id', 'url', 'description', 'fact_name', 'num_tags', 'minimum_sample_size',
+        fields = ('id', 'author_username', 'url', 'description', 'fact_name', 'num_tags', 'minimum_sample_size', 
                   'tagger_status', 'tagger_params', 'tagger', 'tagger_statistics')
 
     def get_tagger_status(self, obj):
         tagger_objects = obj.taggers
         tagger_status = {'total': obj.num_tags,
-                         'completed': len(tagger_objects.filter(task__status='completed')),
-                         'training': len(tagger_objects.filter(task__status='running')),
-                         'created': len(tagger_objects.filter(task__status='created')),
-                         'failed': len(tagger_objects.filter(task__status='failed'))}
+                        'completed': len(tagger_objects.filter(task__status='completed')),
+                        'training': len(tagger_objects.filter(task__status='running')),
+                        'created': len(tagger_objects.filter(task__status='created')),
+                        'failed': len(tagger_objects.filter(task__status='failed'))}
         return tagger_status
 
     def get_tagger_statistics(self, obj):
         tagger_objects = obj.taggers
-        tagger_stats = {'avg_precision': tagger_objects.aggregate(Avg('precision'))['precision__avg'],
-                        'avg_recall': tagger_objects.aggregate(Avg('recall'))['recall__avg'],
-                        'avg_f1_score': tagger_objects.aggregate(Avg('f1_score'))['f1_score__avg']}
-        return tagger_stats
+        if tagger_objects.exists():
+            tagger_stats = {'avg_precision': tagger_objects.aggregate(Avg('precision'))['precision__avg'],
+                            'avg_recall': tagger_objects.aggregate(Avg('recall'))['recall__avg'],
+                            'avg_f1_score': tagger_objects.aggregate(Avg('f1_score'))['f1_score__avg']}
+            return tagger_stats
 
     def get_tagger_params(self, obj):
-        first_tagger = obj.taggers.first()
-        params =  {
-            'fields': json.loads(first_tagger.fields),
-            'vectorizer': first_tagger.vectorizer,
-            'classifier': first_tagger.classifier
-        }
-        return params
+        if obj.taggers.exists():
+            first_tagger = obj.taggers.first()
+            params =  {
+                'fields': json.loads(first_tagger.fields),
+                'vectorizer': first_tagger.vectorizer,
+                'classifier': first_tagger.classifier
+            }
+            return params

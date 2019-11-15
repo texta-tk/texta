@@ -204,7 +204,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         if not project_indices:
             return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST)
 
-        es = ElasticSearcher(indices=project_indices, output=ElasticSearcher.OUT_DOC_TOTAL_AND_HL)
+        es = ElasticSearcher(indices=project_indices, output=ElasticSearcher.OUT_DOC_WITH_TOTAL_HL_AGGS)
 
         es.update_query(serializer.validated_data['query'])
         results = es.search()
@@ -289,6 +289,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
     def get_resource_counts(self, request, pk=None, project_pk=None):
         proj = self.get_object()
         response = {
+            'num_lexicons': proj.lexicon_set.count(),
             'num_neurotaggers': proj.neurotagger_set.count(),
             'num_taggers': proj.tagger_set.count(),
             'num_tagger_groups': proj.taggergroup_set.count(),

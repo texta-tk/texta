@@ -13,6 +13,7 @@ from toolkit.serializer_constants import ProjectResourceUrlSerializer, FieldPars
 
 
 class NeurotaggerSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
+    author_username = serializers.CharField(source='author.username', read_only=True)    
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
     # fields_parsed = serializers.SerializerMethodField()
     fact_name = serializers.CharField(help_text=
@@ -42,8 +43,8 @@ class NeurotaggerSerializer(FieldParseSerializer, serializers.HyperlinkedModelSe
 
     class Meta:
         model = Neurotagger
-        fields = ('url', 'id', 'description', 'project', 'author', 'validation_split', 'score_threshold',
-                  'fields', 'model_architecture', 'seq_len', 'maximum_sample_size', 'negative_multiplier',
+        fields = ('url', 'author_username', 'id', 'description', 'project', 'author', 'validation_split', 'score_threshold',
+                  'fields', 'fields_parsed', 'model_architecture', 'seq_len', 'maximum_sample_size', 'negative_multiplier',
                   'location', 'num_epochs', 'vocab_size', 'plot', 'task', 'validation_accuracy', 'training_accuracy', 'fact_values',
                   'training_loss', 'validation_loss', 'result_json', 'fact_name', 'min_fact_doc_count', 'max_fact_doc_count')
 

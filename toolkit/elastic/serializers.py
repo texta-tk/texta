@@ -7,6 +7,7 @@ from toolkit.serializer_constants import ProjectResourceUrlSerializer, FieldPars
 
 
 class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
+    author_username = serializers.CharField(source='author.username', read_only=True)
     url = serializers.SerializerMethodField()
     description = serializers.CharField(help_text='Describe your re-indexing task', required=True, allow_blank=False)
     indices = serializers.ListField(child=serializers.CharField(), help_text=f'Add the indices, you wish to reindex into a new index.', write_only=True, required=True)
