@@ -70,13 +70,20 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         permissions.IsAuthenticated,
     )
 
+
+    def get_queryset(self):
+        return Tagger.objects.filter(project=self.kwargs['project_pk'])
+
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         fields=json.dumps(serializer.validated_data['fields']))
 
-    def get_queryset(self):
-        return Tagger.objects.filter(project=self.kwargs['project_pk'])
+
+    def perform_update(self, serializer):
+        serializer.save(fields=json.dumps(serializer.validated_data['fields']))
+
 
     def create(self, request, *args, **kwargs):
         serializer = TaggerSerializer(data=request.data, context={'request': request})
@@ -90,6 +97,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
@@ -100,6 +108,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
             return Response({"success": "Tagger instance deleted, model and plot removed"}, status=status.HTTP_204_NO_CONTENT)
         except:
             return Response({"success": "Tagger instance deleted, but model and plot were was not removed"}, status=status.HTTP_204_NO_CONTENT)
+
 
     @action(detail=True, methods=['get'], serializer_class=TaggerListFeaturesSerializer)
     def list_features(self, request, pk=None, project_pk=None):
@@ -144,11 +153,11 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
             return Response(success, status=status.HTTP_200_OK)
         elif self.request.method == 'POST':
             serializer = GeneralTextSerializer(data=request.data)
-            
+
             # check if valid request
             if not serializer.is_valid():
                 return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
+
             new_stop_words = serializer.validated_data['text']
             # save tagger object
             tagger_object.stop_words = new_stop_words
@@ -227,9 +236,9 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
                 return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         # apply tagger
         tagger_response = self.apply_tagger(
-            tagger_object, 
-            input_document, 
-            input_type='doc', 
+            tagger_object,
+            input_document,
+            input_type='doc',
             lemmatizer=lemmatizer,
             feedback=serializer.validated_data['feedback_enabled'],
         )
@@ -267,9 +276,9 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
             text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
         else:
             text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
-        # load model and 
+        # load model and
         tagger = global_tagger_cache.get_model(tagger_object)
-        tagger.add_text_processor(text_processor) 
+        tagger.add_text_processor(text_processor)
         # select function according to input type
         if input_type == 'doc':
             tagger_result = tagger.tag_doc(tagger_input)
