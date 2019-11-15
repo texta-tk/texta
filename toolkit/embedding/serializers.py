@@ -10,7 +10,7 @@ from toolkit.core.task.serializers import TaskSerializer
 from toolkit.serializer_constants import ProjectResourceUrlSerializer, FieldParseSerializer
 
 class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
-    author_username = serializers.CharField(source='author.username', read_only=True)    
+    author_username = serializers.CharField(source='author.username', read_only=True)
     task = TaskSerializer(read_only=True)
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     num_dimensions = serializers.IntegerField(default=DEFAULT_NUM_DIMENSIONS,
@@ -22,7 +22,7 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
 
     class Meta:
         model = Embedding
-        fields = ('id', 'url', 'description', 'fields', 'query', 'num_dimensions', 'min_freq', 'vocab_size', 'task')
+        fields = ('id', 'url', 'author_username', 'description', 'fields', 'query', 'num_dimensions', 'min_freq', 'vocab_size', 'task')
         read_only_fields = ('vocab_size',)
         fields_to_parse = ('fields',)
 
@@ -35,7 +35,7 @@ class EmbeddingPredictSimilarWordsSerializer(serializers.Serializer):
 
 
 class EmbeddingClusterSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
-    author_username = serializers.CharField(source='author.username', read_only=True)    
+    author_username = serializers.CharField(source='author.username', read_only=True)
     task = TaskSerializer(read_only=True)
     num_clusters = serializers.IntegerField(default=DEFAULT_NUM_CLUSTERS, help_text=f'Default: {DEFAULT_NUM_CLUSTERS}')
     description = serializers.CharField(default='', help_text=f'Default: EMPTY')
