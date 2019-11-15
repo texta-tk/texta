@@ -21,6 +21,7 @@ class DataSample:
         # retrive feedback
         self.feedback = self._get_feedback()
         # TODO: COMBINE FEEDBACK TO DATA
+        # we need to retrieve id-s for each class
 
 
         # retrieve data sample for each class
@@ -131,6 +132,8 @@ class DataSample:
             # remove id from doc
             del doc["_id"]
             feedback_sample_without_ids.append(doc)
+        if self.join_fields:
+            feedback_sample_without_ids = self._join_fields(feedback_sample_without_ids)
         return feedback_sample_without_ids
 
 
