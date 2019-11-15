@@ -4,7 +4,7 @@ import re
 import sys
 from celery import group
 
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -27,7 +27,13 @@ from toolkit.tagger.tagger_views import global_mlp_for_taggers
 
 
 
-class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
+class TaggerGroupViewSet(mixins.CreateModelMixin,
+                         mixins.RetrieveModelMixin,
+                         mixins.DestroyModelMixin,
+                         viewsets.GenericViewSet,
+                         TagLogicViews,
+                         BulkDelete):
+
     queryset = TaggerGroup.objects.all()
     serializer_class = TaggerGroupSerializer
     permission_classes = (

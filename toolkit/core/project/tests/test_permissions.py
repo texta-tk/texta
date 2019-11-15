@@ -24,8 +24,9 @@ class ProjectPermissionsTests(APITestCase):
         self.client = APIClient()
         self.project_instance_url = f'/projects/{self.project.id}/'
 
+    # TODO, test tagger_groups and reindexer differently
     def test_all(self):
-        for resource in ('lexicons', 'taggers', 'embeddings', 'embedding_clusters', 'tagger_groups'):
+        for resource in ('lexicons', 'taggers', 'embeddings', 'embedding_clusters'):
             self.project_resource_url = f'/projects/{self.project.id}/{resource}/'
             self.run_with_users(self.access_project_resources, resource)
         self.run_with_users(self.access_project_instance_methods)

@@ -43,6 +43,7 @@ class GeneralTextSerializer(serializers.Serializer):
 class ProjectResourceImportModelSerializer(serializers.Serializer):
     file = serializers.FileField()
 
+
 class FeedbackSerializer(serializers.Serializer):
     feedback_id = serializers.CharField()
     correct_prediction = serializers.BooleanField()
