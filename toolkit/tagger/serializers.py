@@ -75,10 +75,10 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
 
     class Meta:
         model = Tagger
-        fields = ('id', 'author_username', 'url', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
+        fields = ('id', 'url', 'author_username', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
                   'maximum_sample_size', 'negative_multiplier', 'location', 'precision', 'recall', 'f1_score', 'num_features', 'plot', 'task')
         read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'location,', 'stop_words')
-        fields_to_parse = ('fields', 'stop_words', 'location')
+        fields_to_parse = ('fields', 'location')
 
     def __init__(self, *args, **kwargs):
         '''
@@ -108,7 +108,7 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
 
     class Meta:
         model = TaggerGroup
-        fields = ('id', 'author_username', 'url', 'description', 'fact_name', 'num_tags', 'minimum_sample_size',
+        fields = ('id', 'url', 'author_username', 'description', 'fact_name', 'num_tags', 'minimum_sample_size',
                   'tagger_status', 'tagger_params', 'tagger', 'tagger_statistics')
 
     def get_tagger_status(self, obj):

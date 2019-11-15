@@ -153,11 +153,11 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
             return Response(success, status=status.HTTP_200_OK)
         elif self.request.method == 'POST':
             serializer = GeneralTextSerializer(data=request.data)
-            
+
             # check if valid request
             if not serializer.is_valid():
                 return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
+
             new_stop_words = serializer.validated_data['text']
             # save tagger object
             tagger_object.stop_words = new_stop_words
