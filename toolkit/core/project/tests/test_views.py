@@ -62,7 +62,6 @@ class ProjectViewTests(APITestCase):
         self.assertTrue('foo' in response.data)
         self.assertTrue('bar' not in response.data)
 
-
     def test_autocomplete_fact_names(self):
         payload = {"limit": 5, "startswith": "TE" }
         url = f'/projects/{self.project.id}/autocomplete_fact_names/'
@@ -71,7 +70,6 @@ class ProjectViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue('TEEMA' in response.data)
-
 
     def test_resource_counts(self):
         url = f'/projects/{self.project.id}/get_resource_counts/'
