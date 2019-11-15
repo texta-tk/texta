@@ -14,10 +14,15 @@ class DataSample:
         self.text_processor = text_processor
         self.add_negative_sample = add_negative_sample
 
+        self.class_names, self.queries = self._prepare_class_names_with_queries()
+
         self.ignore_ids = []
 
         # retrive feedback
-        #self.feedback = self._get_feedback(classes)
+        self.feedback = self._get_feedback()
+        # TODO: COMBINE FEEDBACK TO DATA
+
+
         # retrieve data sample for each class
         self.data = self._get_samples_for_classes()
 
@@ -38,6 +43,19 @@ class DataSample:
         return queries
 
 
+    def _prepare_class_names_with_queries(self):
+        fact_name = self.tagger_object.fact_name
+        if fact_name:
+            class_names = self._get_tags(fact_name)
+            queries = self._create_queries(fact_name, class_names)
+        else:
+            # use description as class name for binary decisions
+            class_names = ['true']
+            # if fact name not present, use query provided
+            queries = [json.loads(self.tagger_object.query)]
+        return class_names, queries
+
+
     def _get_tags(self, fact_name, min_count=1000, max_count=None):
         '''Finds possible tags for training by aggregating active project's indices.'''
         active_indices = list(self.tagger_object.project.indices)
@@ -50,25 +68,13 @@ class DataSample:
     def _get_samples_for_classes(self):
         """Returns samples for each class as a dict."""
         samples = {}
-        # generate queries if fact name present
-        fact_name = self.tagger_object.fact_name
-        if fact_name:
-            class_names = self._get_tags(fact_name)
-            queries = self._create_queries(fact_name, class_names)
-        else:
-            # use description as class name for binary decisions
-            class_names = ['true']
-            # if fact name not present, use query provided
-            queries = [json.loads(self.tagger_object.query)]
-
-        for i, class_name in enumerate(class_names):
+        for i, class_name in enumerate(self.class_names):
             self.show_progress.update_step(f"scrolling sample for {class_name}")
             self.show_progress.update_view(0)
-            samples[class_name] = self._get_class_sample(queries[i])
-
+            samples[class_name] = self._get_class_sample(self.queries[i])
         # if only one class, add negatives automatically
         # add negatives as additional class if asked
-        if len(class_names) < 2 or self.add_negative_sample:
+        if len(self.class_names) < 2 or self.add_negative_sample:
             self.show_progress.update_step("scrolling negative sample")
             self.show_progress.update_view(0)
             samples['false'] = self._get_negatives()
@@ -100,11 +106,9 @@ class DataSample:
         return positive_sample
 
 
-    def _get_feedback(self, feedback_classes, use_feedback):
+    def _get_feedback(self):
         """Returns feedback for each class/predicion."""
-        if not use_feedback:
-            return {}
-        return {a: self._get_feedback_for_class(a) for a in feedback_classes}
+        return {a: self._get_feedback_for_class(a) for a in self.class_names}
 
 
     def _get_feedback_for_class(self, prediction_to_match):
@@ -117,17 +121,17 @@ class DataSample:
             prediction_to_match=prediction_to_match,
             text_processor=self.text_processor,
             callback_progress=self.show_progress,
-            text_proecessor=self.text_processor
         )
         # iterator to list
         feedback_sample = list(feedback_sample)
+        feedback_sample_without_ids = []
         # set positive ids to ignore while scrolling for negatives
         for doc in feedback_sample:
             self.ignore_ids.append(doc["_id"])
             # remove id from doc
             del doc["_id"]
-            positive_sample.append(doc)
-        return feedback_sample
+            feedback_sample_without_ids.append(doc)
+        return feedback_sample_without_ids
 
 
     def _get_negatives(self):
@@ -141,9 +145,10 @@ class DataSample:
             callback_progress=self.show_progress,
             text_processor=self.text_processor,
 
-
+            # THIS IS WRONG
             scroll_limit=len(self.ignore_ids)*int(self.tagger_object.negative_multiplier),
             ignore_ids=self.ignore_ids,
+
         )
         # iterator to list
         negative_sample = list(negative_sample_iterator)
