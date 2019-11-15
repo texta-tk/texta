@@ -25,7 +25,16 @@ from toolkit.helper_functions import apply_celery_task
 from toolkit.tagger.validators import validate_input_document
 from toolkit.tagger.tagger_views import global_mlp_for_taggers
 
+from django_filters import rest_framework as filters
+import rest_framework.filters as drf_filters
 
+
+class TaggerGroupFilter(filters.FilterSet):
+    description = filters.CharFilter('description', lookup_expr='icontains')
+    class Meta:
+        model = TaggerGroup
+        fields = []
+        
 
 class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
     queryset = TaggerGroup.objects.all()
@@ -34,6 +43,11 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
         permissions.IsAuthenticated,
         ProjectResourceAllowed,
         )
+
+
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+    filterset_class = TaggerGroupFilter
+    ordering_fields = ('id', 'author__username', 'description', 'fact_name',  'minimum_sample_size', 'num_tags')
 
 
     def get_queryset(self):
