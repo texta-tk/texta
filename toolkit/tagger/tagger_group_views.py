@@ -28,6 +28,7 @@ from toolkit.tagger.tagger_views import global_mlp_for_taggers
 
 
 class TaggerGroupViewSet(mixins.CreateModelMixin,
+                         mixins.ListModelMixin,
                          mixins.RetrieveModelMixin,
                          mixins.DestroyModelMixin,
                          viewsets.GenericViewSet,

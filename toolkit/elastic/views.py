@@ -25,6 +25,7 @@ class ElasticGetIndices(views.APIView):
 
 
 class ReindexerViewSet(mixins.CreateModelMixin,
+                       mixins.ListModelMixin,
                        mixins.RetrieveModelMixin,
                        mixins.DestroyModelMixin,
                        viewsets.GenericViewSet):
