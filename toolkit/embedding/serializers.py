@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from collections import OrderedDict
 import json
 import re
 
@@ -6,30 +7,24 @@ from toolkit.embedding.models import Embedding, Task, EmbeddingCluster
 from toolkit.embedding.choices import (get_field_choices, DEFAULT_NUM_DIMENSIONS, DEFAULT_MAX_VOCAB, DEFAULT_MIN_FREQ, DEFAULT_OUTPUT_SIZE,
                                        DEFAULT_NUM_CLUSTERS, DEFAULT_BROWSER_NUM_CLUSTERS, DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER)
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.serializer_constants import ProjectResourceUrlSerializer
+from toolkit.serializer_constants import ProjectResourceUrlSerializer, FieldParseSerializer
 
-class EmbeddingSerializer(serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
-    author_username = serializers.CharField(source='author.username', read_only=True)    
+class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
+    author_username = serializers.CharField(source='author.username', read_only=True)
     task = TaskSerializer(read_only=True)
-    fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.', write_only=True)
+    fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     num_dimensions = serializers.IntegerField(default=DEFAULT_NUM_DIMENSIONS,
                                     help_text=f'Default: {DEFAULT_NUM_DIMENSIONS}')
     min_freq = serializers.IntegerField(default=DEFAULT_MIN_FREQ,
                                     help_text=f'Default: {DEFAULT_MIN_FREQ}')
-    fields_parsed = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
     url = serializers.SerializerMethodField()
 
     class Meta:
         model = Embedding
-        fields = ('id', 'author_username', 'url', 'description', 'fields', 'query', 'num_dimensions', 'min_freq', 'vocab_size', 'task', 'fields_parsed')
+        fields = ('id', 'url', 'author_username', 'description', 'fields', 'query', 'num_dimensions', 'min_freq', 'vocab_size', 'task')
         read_only_fields = ('vocab_size',)
-
-
-    def get_fields_parsed(self, obj):
-        if obj.fields:
-            return json.loads(obj.fields)
-        return None
+        fields_to_parse = ('fields',)
 
 
 class EmbeddingPredictSimilarWordsSerializer(serializers.Serializer):
@@ -40,7 +35,7 @@ class EmbeddingPredictSimilarWordsSerializer(serializers.Serializer):
 
 
 class EmbeddingClusterSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
-    author_username = serializers.CharField(source='author.username', read_only=True)    
+    author_username = serializers.CharField(source='author.username', read_only=True)
     task = TaskSerializer(read_only=True)
     num_clusters = serializers.IntegerField(default=DEFAULT_NUM_CLUSTERS, help_text=f'Default: {DEFAULT_NUM_CLUSTERS}')
     description = serializers.CharField(default='', help_text=f'Default: EMPTY')

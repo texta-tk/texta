@@ -73,6 +73,9 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         fields=json.dumps(serializer.validated_data['fields']))
 
+    def perform_update(self, serializer):
+        serializer.save(fields=json.dumps(serializer.validated_data['fields']))
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)

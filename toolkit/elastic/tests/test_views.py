@@ -113,6 +113,7 @@ class ReindexerViewTests(APITestCase):
                print(f'{TEST_INDEX_REINDEX} was not deleted')
         response = self.client.post(url, payload, format='json')
         print_output('run_create_reindexer_task_signal:response.data', response.data)
+        self.check_update_forbidden(url, payload)
         self.is_new_index_created_if_yes_remove(response, payload, project)
         self.is_reindexed_index_added_to_project_if_yes_remove(response, payload['new_index'], project)
         assert TEST_INDEX_REINDEX not in ElasticCore().get_indices()
@@ -162,8 +163,20 @@ class ReindexerViewTests(APITestCase):
 
     def check_positive_doc_count(self):
         # current reindexing tests require approx 2 seconds delay
-        sleep(1.5)
+        sleep(1.8)
         count_new_documents = ElasticSearcher(indices=TEST_INDEX_REINDEX).count()
         print_output("Bulk add doc count", count_new_documents)
         assert count_new_documents > 0
+
+    def check_update_forbidden(self, url, payload):
+        put_response = self.client.put(url, payload, format='json')
+        patch_response = self.client.patch(url, payload, format='json')
+        print_output("put_response.data", put_response.data)
+        print_output("patch_response.data", patch_response.data)
+        self.assertEqual(put_response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(patch_response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+
+
 

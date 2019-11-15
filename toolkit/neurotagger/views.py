@@ -68,14 +68,19 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
                         'validation_accuracy', 'validation_loss', 'task__status')
 
 
+
+    def get_queryset(self):
+        return Neurotagger.objects.filter(project=self.kwargs['project_pk'])
+
+
     def perform_create(self, serializer, **kwargs):
         serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         fields=json.dumps(serializer.validated_data['fields']),
                         **kwargs)
 
-    def get_queryset(self):
-        return Neurotagger.objects.filter(project=self.kwargs['project_pk'])
+    def perform_update(self, serializer):
+        serializer.save(fields=json.dumps(serializer.validated_data['fields']))
 
 
     def create(self, request, *args, **kwargs):

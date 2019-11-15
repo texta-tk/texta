@@ -1,4 +1,4 @@
-from rest_framework import status, views, viewsets, permissions
+from rest_framework import status, views, viewsets, mixins, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action
 import json
@@ -32,7 +32,10 @@ class ReindexerFilter(filters.FilterSet):
         model = Reindexer
         fields = []
 
-class ReindexerViewSet(viewsets.ModelViewSet):
+class ReindexerViewSet(mixins.CreateModelMixin,
+                       mixins.RetrieveModelMixin,
+                       mixins.DestroyModelMixin,
+                       viewsets.GenericViewSet):
     """
     list:
     Returns list of reindexing task objects.
@@ -42,12 +45,6 @@ class ReindexerViewSet(viewsets.ModelViewSet):
 
     create:
     Creates  reindexing task object.
-
-    update:
-    Updates entire reindexing task object.
-
-    partial_update:
-    Performs partial update on reindexing task object.
 
     delete:
     Deletes reindexing task object.
