@@ -76,12 +76,15 @@ class TorchTagger:
         text_field = data.Field(sequential=True, tokenize=tokenizer, lower=True)
         label_field = data.Field(sequential=False, use_vocab=False)
         datafields = [("text", text_field), ("label", label_field)]
+
         # iterators to lists
-        positives = list(data_sample.positives)
-        negatives = list(data_sample.negatives)
+        positives = list(data_sample.data["true"])
+        negatives = list(data_sample.data["false"])
         # combine samples and create labels
         texts = positives+negatives
         labels = [1]*len(positives)+[0]*len(negatives)
+
+
         # retrieve vectors and vocab dict from embedding
         embedding_matrix, word2index = self.embedding.tensorize()
         # set embedding size according to the dimensionality embedding model

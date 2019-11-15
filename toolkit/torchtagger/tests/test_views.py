@@ -58,7 +58,7 @@ class TorchTaggerViewTests(APITestCase):
         '''Tests TorchTagger training, and if a new Task gets created via the signal'''
         payload = {
             "description": "TestTorchTaggerTraining",
-            "fact_name": TEST_FACT_NAME,
+            #"fact_name": TEST_FACT_NAME,
             "fields": TEST_FIELD_CHOICE,
             "maximum_sample_size": 500,
             "model_architecture": self.torch_models[0],

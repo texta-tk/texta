@@ -39,9 +39,9 @@ class TextTagger:
         self.text_processor = text_processor
 
 
-    def train(self, positive_samples, negative_samples, field_list=[], classifier='Logistic Regression', vectorizer='Hashing Vectorizer', feature_selector='SVM Feature Selector'):
-        positive_samples_map = self._create_data_map(positive_samples, field_list)
-        negative_samples_map = self._create_data_map(negative_samples, field_list)
+    def train(self, data_sample, field_list=[], classifier='Logistic Regression', vectorizer='Hashing Vectorizer', feature_selector='SVM Feature Selector'):
+        positive_samples_map = self._create_data_map(data_sample.data['true'], field_list)
+        negative_samples_map = self._create_data_map(data_sample.data['false'], field_list)
         # pipeline
         pipe_builder = get_pipeline_builder()
         pipe_builder.set_pipeline_options(vectorizer, classifier, feature_selector)
@@ -51,7 +51,7 @@ class TextTagger:
         for field in field_list:
             data_sample_x_map[field] = positive_samples_map[field] + negative_samples_map[field]
         # Build target (positive + negative samples) for binary classifier
-        data_sample_y = [1] * len(positive_samples) + [0] * len(negative_samples)
+        data_sample_y = [1] * len(data_sample.data['true']) + [0] * len(data_sample.data['false'])
         X_train = {}
         X_test = {}
         #  split data

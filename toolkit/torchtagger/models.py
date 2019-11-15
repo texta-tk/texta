@@ -23,7 +23,7 @@ class TorchTagger(models.Model):
     embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE, default=None)
 
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
-    fact_name = models.CharField(max_length=MAX_DESC_LEN, blank=True)
+    fact_name = models.CharField(max_length=MAX_DESC_LEN, null=True)
 
     model_architecture = models.CharField(default=choices.MODEL_CHOICES[0][0], max_length=10)
     #seq_len = models.IntegerField(default=choices.DEFAULT_SEQ_LEN)
