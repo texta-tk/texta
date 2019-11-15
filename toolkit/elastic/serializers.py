@@ -6,6 +6,7 @@ import json
 
 
 class ReindexerCreateSerializer(serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
+    author_username = serializers.CharField(source='author.username', read_only=True)
     url = serializers.SerializerMethodField()
     description = serializers.CharField(help_text='Describe your re-indexing task', required=True, allow_blank=False)
     indices = serializers.ListField(child=serializers.CharField(), help_text=f'Add the indices, you wish to reindex into a new index.', write_only=True, required=True)
@@ -23,10 +24,9 @@ class ReindexerCreateSerializer(serializers.HyperlinkedModelSerializer, ProjectR
 
     class Meta:
         model = Reindexer
-        fields = ('id', 'url', 'description', 'indices', 'fields', 'query', 'new_index', 'random_size', 'field_type', 'task', 'field_type_parsed')
+        fields = ('id', 'url', 'author_username', 'description', 'indices', 'fields', 'query', 'new_index', 'random_size', 'field_type', 'task', 'field_type_parsed')
 
     def get_field_type_parsed(self, obj):
         if obj.field_type:
             return json.loads(obj.field_type)
         return None
-
