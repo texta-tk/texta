@@ -56,7 +56,7 @@ class TaggerGroupTagDocumentSerializer(serializers.Serializer):
         help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
-    author_username = serializers.CharField(source='author.username', read_only=True)    
+    author_username = serializers.CharField(source='author.username', read_only=True)
     description = serializers.CharField(help_text=f'Description for the Tagger. Will be used as tag.')
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
     vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices(),
@@ -75,8 +75,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
 
     class Meta:
         model = Tagger
-        fields = ('id', 'url', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
-        fields = ('id', 'author_username', 'url', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words', 'fields_parsed',
+        fields = ('id', 'author_username', 'url', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
                   'maximum_sample_size', 'negative_multiplier', 'location', 'precision', 'recall', 'f1_score', 'num_features', 'plot', 'task')
         read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'location,', 'stop_words')
         fields_to_parse = ('fields', 'stop_words', 'location')
@@ -109,7 +108,7 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
 
     class Meta:
         model = TaggerGroup
-        fields = ('id', 'author_username', 'url', 'description', 'fact_name', 'num_tags', 'minimum_sample_size', 
+        fields = ('id', 'author_username', 'url', 'description', 'fact_name', 'num_tags', 'minimum_sample_size',
                   'tagger_status', 'tagger_params', 'tagger', 'tagger_statistics')
 
     def get_tagger_status(self, obj):
