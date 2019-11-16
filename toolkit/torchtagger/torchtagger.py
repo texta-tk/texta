@@ -27,6 +27,9 @@ class TorchTagger:
         # model
         self.model = None
         self.tagger_id = int(tagger_id)
+        # indixes to save label to int relations
+        self.label_dict = None
+        self.label_reverse_index = None
 
 
     def save(self, path):
@@ -76,14 +79,19 @@ class TorchTagger:
         text_field = data.Field(sequential=True, tokenize=tokenizer, lower=True)
         label_field = data.Field(sequential=False, use_vocab=False)
         datafields = [("text", text_field), ("label", label_field)]
-
-        # iterators to lists
-        positives = list(data_sample.data["true"])
-        negatives = list(data_sample.data["false"])
-        # combine samples and create labels
-        texts = positives+negatives
-        labels = [1]*len(positives)+[0]*len(negatives)
-
+        # create label dicts for later lookup
+        self.label_index = {a: i for i, a in enumerate(data_sample.data.keys())}
+        self.label_reverse_index = {b: a for a, b in self.label_index.items()}
+        # lists for examples and labels
+        examples = []
+        labels = []
+        # retrieve examples for each class
+        for label, class_examples in data_sample.data.items():
+            for example in class_examples:
+                examples.append(example)
+                labels.append(self.label_index[label])
+        
+        print(len(labels), len(examples))
 
         # retrieve vectors and vocab dict from embedding
         embedding_matrix, word2index = self.embedding.tensorize()
@@ -91,7 +99,7 @@ class TorchTagger:
         embedding_size = len(embedding_matrix[0])
         self.config.embed_size = embedding_size
         # create pandas dataframe and torchtext dataset
-        train_dataframe = pd.DataFrame({"text": texts, "label": labels})
+        train_dataframe = pd.DataFrame({"text": examples, "label": labels})
         train_examples = [data.Example.fromlist(i, datafields) for i in train_dataframe.values.tolist()]
         train_data = data.Dataset(train_examples, datafields)
         # split data for training and testing

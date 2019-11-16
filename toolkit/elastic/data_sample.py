@@ -16,7 +16,7 @@ class DataSample:
 
         self.class_names, self.queries = self._prepare_class_names_with_queries()
 
-        self.ignore_ids = []
+        self.ignore_ids = set()
 
         # retrive feedback
         self.feedback = self._get_feedback()
@@ -78,7 +78,9 @@ class DataSample:
         if len(self.class_names) < 2 or self.add_negative_sample:
             self.show_progress.update_step("scrolling negative sample")
             self.show_progress.update_view(0)
-            samples['false'] = self._get_negatives()
+            # set size of negatives equal to first class examples len
+            size = len(samples[self.class_names[0]])
+            samples['false'] = self._get_negatives(size)
         return samples
 
 
@@ -97,7 +99,7 @@ class DataSample:
         positive_sample = []
         # set positive ids to ignore while scrolling for negatives
         for doc in positive_sample_iterator:
-            self.ignore_ids.append(doc["_id"])
+            self.ignore_ids.add(doc["_id"])
             # remove id from doc
             del doc["_id"]
             positive_sample.append(doc)
@@ -128,7 +130,7 @@ class DataSample:
         feedback_sample_without_ids = []
         # set positive ids to ignore while scrolling for negatives
         for doc in feedback_sample:
-            self.ignore_ids.append(doc["_id"])
+            self.ignore_ids.add(doc["_id"])
             # remove id from doc
             del doc["_id"]
             feedback_sample_without_ids.append(doc)
@@ -137,7 +139,7 @@ class DataSample:
         return feedback_sample_without_ids
 
 
-    def _get_negatives(self):
+    def _get_negatives(self, size):
         self.show_progress.update_step("scrolling negative sample")
         self.show_progress.update_view(0)
         # iterator for retrieving negative examples
@@ -147,9 +149,8 @@ class DataSample:
             output=ElasticSearcher.OUT_DOC,
             callback_progress=self.show_progress,
             text_processor=self.text_processor,
-
             # THIS IS WRONG
-            scroll_limit=len(self.ignore_ids)*int(self.tagger_object.negative_multiplier),
+            scroll_limit=size*int(self.tagger_object.negative_multiplier),
             ignore_ids=self.ignore_ids,
 
         )
