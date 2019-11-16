@@ -35,7 +35,7 @@ class DataSample:
 
     @staticmethod
     def _create_queries(fact_name, tags):
-        '''Creates queries for finding documents for each tag.'''
+        """Creates queries for finding documents for each tag."""
         queries = []
         for tag in tags:
             query = Query()
@@ -45,6 +45,17 @@ class DataSample:
 
 
     def _prepare_class_names_with_queries(self):
+        """
+        Analyses model object's fact name and query fields to determine logic for generating the data.
+
+        If fact name present, query field is ignored and problem is regarded as multi-class classification task.
+        Each value for fact name is regarded as separate class.
+
+        If fact name not present, query is used to determine "positive" exmples and "negative" examples
+        are determined automatically. This is now a binary classification problem.
+
+        :return: list of class names, list of queries
+        """
         fact_name = self.tagger_object.fact_name
         if fact_name:
             class_names = self._get_tags(fact_name)
@@ -58,7 +69,7 @@ class DataSample:
 
 
     def _get_tags(self, fact_name, min_count=1000, max_count=None):
-        '''Finds possible tags for training by aggregating active project's indices.'''
+        """Finds possible tags for training by aggregating active project's indices."""
         active_indices = list(self.tagger_object.project.indices)
         es_a = ElasticAggregator(indices=active_indices)
         # limit size to 10000 unique tags
