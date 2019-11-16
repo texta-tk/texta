@@ -39,10 +39,19 @@ from toolkit.view_constants import (
     FeedbackModelView,
 )
 
+from django_filters import rest_framework as filters
+import rest_framework.filters as drf_filters
+
+
 # initialize model cache for taggers & phrasers
 global_tagger_cache = ModelCache(TextTagger)
 global_mlp_for_taggers = MLPAnalyzer()
 
+class TaggerFilter(filters.FilterSet):
+    description = filters.CharFilter('description', lookup_expr='icontains')
+    class Meta:
+        model = Tagger
+        fields = []
 
 class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackModelView):
     """
@@ -69,6 +78,10 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         ProjectResourceAllowed,
         permissions.IsAuthenticated,
     )
+    
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+    filterset_class = TaggerFilter
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'f1_score', 'precision', 'recall', 'task__status')
 
 
     def get_queryset(self):
@@ -146,7 +159,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
 
     @action(detail=True, methods=['get', 'post'], serializer_class=GeneralTextSerializer)
     def stop_words(self, request, pk=None, project_pk=None):
-        """Adds stop word to Tagger model."""
+        """Adds stop word to Tagger model. Input Text is a string of space separated words, eg 'word1 word2 word3'"""
         tagger_object = self.get_object()
         if self.request.method == 'GET':
             success = {'stop_words': tagger_object.stop_words}

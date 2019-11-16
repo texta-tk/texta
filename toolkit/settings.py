@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     # THIRD PARTY
     # https://github.com/goinnn/django-multiselectfield
     'multiselectfield',
+    'django_filters',
     # 'rest_auth' https://github.com/Tivix/django-rest-auth
     'rest_auth',
     'allauth',
