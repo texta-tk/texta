@@ -68,6 +68,12 @@ def get_active_tasks():
     """
     Gets the number of active (running + queued) from message broker.
     """
-    active_tasks = sum([len(tasks) for tasks in inspect().active().values()])
-    scheduled_tasks = sum([len(tasks) for tasks in inspect().scheduled().values()])
-    return active_tasks + scheduled_tasks
+    active_and_scheduled_tasks = 0
+    inspector = inspect()
+    active_tasks = inspector.active()
+    scheduled_tasks = inspector.scheduled()
+    if active_tasks:
+        active_and_scheduled_tasks += sum([len(tasks) for tasks in active_tasks.values()])
+    if scheduled_tasks:
+        active_and_scheduled_tasks += sum([len(tasks) for tasks in scheduled_tasks.values()])
+    return active_and_scheduled_tasks
