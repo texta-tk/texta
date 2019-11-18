@@ -57,8 +57,8 @@ class DataSample:
         :return: list of class names, list of queries
         """
         fact_name = self.tagger_object.fact_name
-        min_count = self.tagger_object.minimum_sample_size
         if fact_name:
+            min_count = self.tagger_object.minimum_sample_size
             class_names = self._get_tags(fact_name, min_count)
             queries = self._create_queries(fact_name, class_names)
         else:
