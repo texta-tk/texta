@@ -24,6 +24,7 @@ class TorchTagger(models.Model):
 
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     fact_name = models.CharField(max_length=MAX_DESC_LEN, null=True)
+    minimum_sample_size = models.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE)
 
     model_architecture = models.CharField(default=choices.MODEL_CHOICES[0][0], max_length=10)
     #seq_len = models.IntegerField(default=choices.DEFAULT_SEQ_LEN)
