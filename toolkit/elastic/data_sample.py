@@ -75,7 +75,6 @@ class DataSample:
         es_a = ElasticAggregator(indices=active_indices)
         # limit size to 10000 unique tags
         tag_values = es_a.facts(filter_by_fact_name=fact_name, min_count=min_count, max_count=max_count, size=10000)
-        print(tag_values)
         return tag_values
 
 
