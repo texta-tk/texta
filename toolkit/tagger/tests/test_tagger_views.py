@@ -41,25 +41,26 @@ class TaggerViewTests(APITestCase):
 
 
     def test_run(self):
-        self.run_create_tagger_training_and_task_signal()
-        self.run_create_tagger_with_incorrect_fields()
-        self.run_tag_text(self.test_tagger_ids)
-        self.run_tag_text_with_lemmatization()
-        self.run_tag_doc()
-        self.run_tag_doc_with_lemmatization()
-        self.run_tag_random_doc()
-        self.run_stop_word_list()
-        self.run_stop_word_add()
-        self.run_stop_word_replace()
-        self.run_list_features()
-        self.run_multitag_text()
-        self.run_model_retrain()
-        self.run_model_export_import()
-        self.run_tag_and_feedback_and_retrain()
-        self.create_tagger_then_delete_tagger_and_created_model()
+        # self.run_create_tagger_training_and_task_signal()
+        # self.run_create_tagger_with_incorrect_fields()
+        # self.run_tag_text(self.test_tagger_ids)
+        # self.run_tag_text_with_lemmatization()
+        # self.run_tag_doc()
+        # self.run_tag_doc_with_lemmatization()
+        # self.run_tag_random_doc()
+        # self.run_stop_word_list()
+        # self.run_stop_word_add()
+        # self.run_stop_word_replace()
+        # self.run_list_features()
+        # self.run_multitag_text()
+        # self.run_model_retrain()
+        # self.run_model_export_import()
+        # self.run_tag_and_feedback_and_retrain()
+        self.create_tagger_with_empty_fields()
+        # self.create_tagger_then_delete_tagger_and_created_model()
         # run these last ->
-        self.run_patch_on_tagger_instances(self.test_tagger_ids)
-        self.run_put_on_tagger_instances(self.test_tagger_ids)
+        # self.run_patch_on_tagger_instances(self.test_tagger_ids)
+        # self.run_put_on_tagger_instances(self.test_tagger_ids)
 
 
     def run_create_tagger_training_and_task_signal(self):
@@ -140,6 +141,22 @@ class TaggerViewTests(APITestCase):
         self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
         assert not os.path.isfile(model_location)
         assert not os.path.isfile(plot_location)
+
+
+    def create_tagger_with_empty_fields(self):
+        ''' tests to_repr serializer constant. Should fail because empty fields obj is filtered out in view'''
+        payload = {
+            "description": "TestTagger",
+            "query": json.dumps(TEST_QUERY),
+            "fields": [],
+            "vectorizer": 'Hashing Vectorizer',
+            "classifier": 'Logistic Regression',
+            "maximum_sample_size": 500,
+            "negative_multiplier": 1.0,
+        }
+        create_response = self.client.post(self.url, payload, format='json')
+        print_output("empty_fields_response", create_response.data)
+        self.assertEqual(create_response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
     def run_patch_on_tagger_instances(self, test_tagger_ids):

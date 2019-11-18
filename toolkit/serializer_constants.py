@@ -28,7 +28,8 @@ class FieldParseSerializer():
         model_obj = self.Meta.model.objects.get(id=instance.id)
         fields_to_parse = self.Meta.fields_to_parse
         for field in fields_to_parse:
-            result[field] = json.loads(getattr(model_obj, field))
+            if getattr(model_obj, field):
+                result[field] = json.loads(getattr(model_obj, field))
         return OrderedDict([(key, result[key]) for key in result])
 
 
