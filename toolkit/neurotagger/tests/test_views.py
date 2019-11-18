@@ -43,7 +43,6 @@ class NeurotaggerViewTests(APITestCase):
         self.create_neurotagger_then_delete_neurotagger_and_created_model()
 
 
-
     def run_create_and_tag_multilabel(self):
         '''Tests the endpoint for a new multilabel Neurotagger with facts, and if a new Task gets created via the signal'''
         payload = {
