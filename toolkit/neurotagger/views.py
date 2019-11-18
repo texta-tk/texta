@@ -31,6 +31,8 @@ model_cache = ModelCache(NeurotaggerWorker)
 
 class NeuroTaggerFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
+    task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+
     class Meta:
         model = Neurotagger
         fields = []

@@ -31,6 +31,7 @@ import rest_framework.filters as drf_filters
 
 class TaggerGroupFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
+
     class Meta:
         model = TaggerGroup
         fields = []

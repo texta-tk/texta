@@ -49,6 +49,8 @@ global_mlp_for_taggers = MLPAnalyzer()
 
 class TaggerFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
+    task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+
     class Meta:
         model = Tagger
         fields = []

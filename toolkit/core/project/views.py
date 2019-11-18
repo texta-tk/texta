@@ -37,6 +37,7 @@ import rest_framework.filters as drf_filters
 
 class ProjectFilter(filters.FilterSet):
     title = filters.CharFilter('title', lookup_expr='icontains')
+
     class Meta:
         model = Project
         fields = []

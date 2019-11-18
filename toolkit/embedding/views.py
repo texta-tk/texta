@@ -29,6 +29,8 @@ global_cluster_cache = ModelCache(WordCluster)
 
 class EmbeddingFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
+    task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+
     class Meta:
         model = Embedding
         fields = []
