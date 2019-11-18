@@ -10,6 +10,7 @@ from toolkit.base_task import BaseTask
 from toolkit.elastic.data_sample import DataSample
 from toolkit.torchtagger.torchtagger import TorchTagger
 from toolkit.embedding.views import global_w2v_cache
+from toolkit.torchtagger.plots import create_torchtagger_plot
 from toolkit.settings import MODELS_DIR
 
 
@@ -41,6 +42,8 @@ def torchtagger_train_handler(tagger_id, testing=False):
         tagger.save(tagger_path)
         # set tagger location
         tagger_object.location = json.dumps({model_type: tagger_path})
+        # save tagger plot
+        tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_torchtagger_plot(tagger_stats))
         # stats to model object
         tagger_object.f1_score = tagger_stats.f1_score
         tagger_object.precision = tagger_stats.precision
