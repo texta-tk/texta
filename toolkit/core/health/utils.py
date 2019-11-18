@@ -4,6 +4,7 @@ from toolkit.settings import BASE_DIR, MLP_URL, ES_URL
 from toolkit.elastic.core import ElasticCore
 from toolkit.core.task.models import Task
 from datetime import datetime, timedelta, time
+from celery.task.control import inspect
 
 def get_version():
     """
@@ -65,11 +66,14 @@ def get_elastic_status():
 
 def get_active_tasks():
     """
-    Gets the number of active tasks by the last update and excludes inactive statuses
+    Gets the number of active (running + queued) from message broker.
     """
-    # 1 hour ago from now
-    timeframe = datetime.now().date() - timedelta(hours=1)
-    # Return the count of tasks with last update within an hour and exclude inactive status tasks
-    return Task.objects.filter(last_update__gte=timeframe).exclude(
-        status__in=[Task.STATUS_COMPLETED, Task.STATUS_CANCELLED, Task.STATUS_FAILED]
-    ).count()
+    active_and_scheduled_tasks = 0
+    inspector = inspect()
+    active_tasks = inspector.active()
+    scheduled_tasks = inspector.scheduled()
+    if active_tasks:
+        active_and_scheduled_tasks += sum([len(tasks) for tasks in active_tasks.values()])
+    if scheduled_tasks:
+        active_and_scheduled_tasks += sum([len(tasks) for tasks in scheduled_tasks.values()])
+    return active_and_scheduled_tasks
