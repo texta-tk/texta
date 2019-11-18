@@ -37,9 +37,10 @@ class NeurotaggerViewTests(APITestCase):
 
 
     def test_run(self):
-        self.run_create_and_tag_multilabel()
+        # self.run_create_and_tag_multilabel()
         # run this last ->
-        self.create_neurotagger_then_delete_neurotagger_and_created_model()
+        # self.create_neurotagger_then_delete_neurotagger_and_created_model()
+        self.create_neurotagger_with_empty_fields()
 
 
     def run_create_and_tag_multilabel(self):
@@ -157,7 +158,6 @@ class NeurotaggerViewTests(APITestCase):
         self.assertEqual(put_response.status_code, status.HTTP_200_OK)
 
 
-
     def create_neurotagger_then_delete_neurotagger_and_created_model(self):
         payload = {
             "description": "TestNeurotaggerView",
@@ -192,6 +192,20 @@ class NeurotaggerViewTests(APITestCase):
                     created_neurotagger.plot.path,
                     ):
             assert not os.path.isfile(model)
+
+
+    def create_neurotagger_with_empty_fields(self):
+        ''' tests to_repr serializer constant. Should fail because empty fields obj is filtered out in view'''
+        payload = {
+            "description": "TestNeurotaggerView",
+            "fact_name": TEST_FACT_NAME,
+            "model_architecture": choices.model_arch_choices[0][0],
+            "fields": [],
+            "maximum_sample_size": 500,
+        }
+        create_response = self.client.post(self.url, payload, format='json')
+        print_output("empty_fields_response", create_response.data)
+        self.assertEqual(create_response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 

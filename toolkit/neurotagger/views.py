@@ -62,6 +62,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
                         fields=json.dumps(serializer.validated_data['fields']),
                         **kwargs)
 
+
     def perform_update(self, serializer):
         serializer.save(fields=json.dumps(serializer.validated_data['fields']))
 
@@ -69,6 +70,12 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
     def create(self, request, *args, **kwargs):
         serializer = NeurotaggerSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
+
+        # raise error on neurotagger empty fields
+        project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
+        entered_fields = set(serializer.validated_data['fields'])
+        if not entered_fields:
+            return Response({'error': f'entered fields not in current project fields: {project_fields}'}, status=status.HTTP_400_BAD_REQUEST)
 
         if 'fact_name' in serializer.validated_data and serializer.validated_data['fact_name']:
             fact_name = serializer.validated_data['fact_name']
@@ -82,10 +89,13 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
             if not tags:
                 return Response({'error': f'found no tags for fact name: {fact_name}'}, status=status.HTTP_400_BAD_REQUEST)
 
+
             queries = json.dumps(self.create_queries(fact_name, tags))
             self.perform_create(serializer, fact_values=json.dumps(tags), queries=queries)
         else:
             return Response({"error": "Tag name must be included!"}, status=status.HTTP_400_BAD_REQUEST)
+
+
 
         headers = self.get_success_headers(serializer.data)
 
@@ -169,6 +179,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
         result = {'tags': tag_data }
 
         return result
+
 
     @action(detail=True, methods=['get'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
