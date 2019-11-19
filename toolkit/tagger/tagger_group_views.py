@@ -4,7 +4,7 @@ import re
 import sys
 from celery import group
 
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -35,9 +35,16 @@ class TaggerGroupFilter(filters.FilterSet):
     class Meta:
         model = TaggerGroup
         fields = []
-        
 
-class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
+
+class TaggerGroupViewSet(mixins.CreateModelMixin,
+                         mixins.ListModelMixin,
+                         mixins.RetrieveModelMixin,
+                         mixins.DestroyModelMixin,
+                         viewsets.GenericViewSet,
+                         TagLogicViews,
+                         BulkDelete):
+
     queryset = TaggerGroup.objects.all()
     serializer_class = TaggerGroupSerializer
     permission_classes = (
@@ -63,6 +70,11 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
         # validate serializer again with updated values
         serializer = TaggerGroupSerializer(data=request_data, context={'request': request})
         serializer.is_valid(raise_exception=True)
+
+        # raise error on tagger empty fields
+        project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
+        if not serializer.validated_data['tagger']['fields']:
+            return Response({'error': f'entered fields not in current project fields: {project_fields}'}, status=status.HTTP_400_BAD_REQUEST)
 
         fact_name = serializer.validated_data['fact_name']
         active_project = Project.objects.get(id=self.kwargs['project_pk'])
