@@ -78,17 +78,29 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
     def perform_update(self, serializer):
         serializer.save(fields=json.dumps(serializer.validated_data['fields']))
 
+    def create(self, request, *args, **kwargs):
+        serializer = EmbeddingSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        # check if selected fields are present in the project:
+        project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
+        entered_fields = set(serializer.validated_data['fields'])
+        if not entered_fields or not entered_fields.issubset(project_fields):
+            return Response({'error': f'entered fields not in current project fields: {project_fields}'}, status=status.HTTP_400_BAD_REQUEST)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        # try:
-        embedding_model_location = json.loads(instance.location)['embedding']
-        phraser_model_location = json.loads(instance.location)['phraser']
-        os.remove(embedding_model_location)
-        os.remove(phraser_model_location)
-        return Response({"success": "Models removed"}, status=status.HTTP_204_NO_CONTENT)
-        # except:
-            # return Response({"success": "Embedding instance deleted, but models were not removed"}, status=status.HTTP_204_NO_CONTENT)
+        try:
+            embedding_model_location = json.loads(instance.location)['embedding']
+            phraser_model_location = json.loads(instance.location)['phraser']
+            os.remove(embedding_model_location)
+            os.remove(phraser_model_location)
+            return Response({"success": "Models removed"}, status=status.HTTP_204_NO_CONTENT)
+        except:
+            return Response({"success": "Embedding instance deleted, but models were not removed"}, status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post'],serializer_class=EmbeddingPredictSimilarWordsSerializer)
     def predict_similar(self, request, pk=None, project_pk=None):

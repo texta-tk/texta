@@ -62,16 +62,21 @@ class LexiconViewsTests(APITestCase):
         print_output('test_lexicon_create:response.data', response.data)
         created_id = response.data['id']
 
-        # Check if lexicon is nicely updated when using put
+        # Test update with PUT and PATCH
         payload = {
             "description": "PutTestLexicon",
             "phrases": ["esimene fraas", "teine fraas", "kolmas fraas"],
             "discarded_phrases": ["discard phrase changed"]
         }
-        response = self.client.put(f'{self.url}{created_id}/', payload)
-        print_output('test_lexicon_update:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue('esimene fraas' in response.data['phrases'])
+        put_response = self.client.put(f'{self.url}{created_id}/', payload)
+        print_output('test_lexicon_put:response.data', put_response.data)
+        self.assertEqual(put_response.status_code, status.HTTP_200_OK)
+        self.assertTrue('esimene fraas' in put_response.data['phrases'])
+
+        patch_response = self.client.patch(f'{self.url}{created_id}/', payload)
+        print_output('test_lexicon_patch:response.data', patch_response.data)
+        self.assertEqual(patch_response.status_code, status.HTTP_200_OK)
+        self.assertTrue('esimene fraas' in patch_response.data['phrases'])
 
         # Check if updated lexicon is accessible via API
         response = self.client.get(f'{self.url}{created_id}/')

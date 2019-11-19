@@ -3,8 +3,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from toolkit.core.project.models import Project
-from toolkit.tools.utils_for_tests import create_test_user
-from toolkit import permissions as toolkit_permissions
+from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 
 class ProjectPermissionsTests(APITestCase):
@@ -24,8 +23,9 @@ class ProjectPermissionsTests(APITestCase):
         self.client = APIClient()
         self.project_instance_url = f'/projects/{self.project.id}/'
 
+    # TODO, test tagger_groups and reindexer differently
     def test_all(self):
-        for resource in ('lexicons', 'taggers', 'embeddings', 'embedding_clusters', 'tagger_groups'):
+        for resource in ('lexicons', 'taggers', 'embeddings', 'embedding_clusters'):
             self.project_resource_url = f'/projects/{self.project.id}/{resource}/'
             self.run_with_users(self.access_project_resources, resource)
         self.run_with_users(self.access_project_instance_methods)
@@ -45,6 +45,7 @@ class ProjectPermissionsTests(APITestCase):
         url = self.project_resource_url
         self.client.login(username=username, password=password)
         response = self.client.get(url)
+        print_output(f'{username} access project resources at: {url}', response.status_code)
         if fail is True:
             return self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -58,11 +59,15 @@ class ProjectPermissionsTests(APITestCase):
         for response in list(responses.values()):
             if SAFE_FORBIDDEN is False and UNSAFE_FORBIDDEN is False:
                 self.assertEqual(response.status_code, status.HTTP_200_OK)
+                print_output(f'{username} access project instance methods at: {url}', response.status_code)
             if SAFE_FORBIDDEN is True and UNSAFE_FORBIDDEN is True:
                 self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+                print_output(f'{username} access project instance methods at: {url}', response.status_code)
         if SAFE_FORBIDDEN is False and UNSAFE_FORBIDDEN is True:
             self.assertEqual(responses['GET'].status_code, status.HTTP_200_OK)
+            print_output(f'{username} access GET methods at: {url}', response.status_code)
             self.assertEqual(responses['PUT'].status_code, status.HTTP_403_FORBIDDEN)
+            print_output(f'{username} access PUT methods at: {url}', response.status_code)
 
     def update_project_fields(self, username, password, SAFE_FORBIDDEN=False, UNSAFE_FORBIDDEN=False):
         url = self.project_instance_url
@@ -73,9 +78,12 @@ class ProjectPermissionsTests(APITestCase):
         put_response = self.client.put(url, response.data, format='json')
         if SAFE_FORBIDDEN is False and UNSAFE_FORBIDDEN is False:
             self.assertEqual(put_response.status_code, status.HTTP_200_OK)
+            print_output(f'{username} update permissions at: {url}', response.status_code)
         if SAFE_FORBIDDEN is True and UNSAFE_FORBIDDEN is True:
                 self.assertEqual(put_response.status_code, status.HTTP_404_NOT_FOUND)
         if SAFE_FORBIDDEN is False and UNSAFE_FORBIDDEN is True:
             self.assertEqual(put_response.status_code, status.HTTP_403_FORBIDDEN)
+            print_output(f'{username} update permissions at: {url}', response.status_code)
 
     # TODO: implement owner, user put testing separately; affects existing tests.
+
