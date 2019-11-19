@@ -12,7 +12,7 @@ class TaggingReport:
         self.accuracy = None
         self.training_loss = None
 
-    def to_json(self):
+    def to_dict(self):
         return {
             'f1_score': str(round(self.f1_score, 3)),
             'precision': str(round(self.precision, 3)),
