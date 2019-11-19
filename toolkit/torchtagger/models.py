@@ -35,6 +35,7 @@ class TorchTagger(models.Model):
     maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE)
 
     # RESULTS
+    epoch_reports = models.TextField(default=json.dumps([]))
     accuracy = models.FloatField(default=None, null=True)
     training_loss = models.FloatField(default=None, null=True)
     precision = models.FloatField(default=None, null=True)

@@ -50,6 +50,7 @@ def torchtagger_train_handler(tagger_id, testing=False):
         tagger_object.recall = tagger_stats.recall
         tagger_object.accuracy = tagger_stats.accuracy
         tagger_object.training_loss = tagger_stats.training_loss
+        tagger_object.epoch_reports = json.dumps([a.to_dict() for a in tagger.epoch_reports])
         # save tagger object
         tagger_object.save()
         # declare the job done

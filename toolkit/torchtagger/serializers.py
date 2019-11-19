@@ -26,7 +26,7 @@ class TorchTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
         model = TorchTagger
         fields = (
             'url', 'author_username', 'id', 'description', 'query', 'fields', 'embedding', 'f1_score', 'precision', 'recall', 'accuracy',
-            'model_architecture', 'maximum_sample_size', 'num_epochs', 'location', 'plot', 'task', 'fact_name',
+            'model_architecture', 'maximum_sample_size', 'num_epochs', 'location', 'plot', 'task', 'fact_name', 'epoch_reports',
         )
-        read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'location', 'plot', 'task' ,'fact_name')
+        read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'location', 'plot', 'task' ,'fact_name', 'epoch_reports')
         fields_to_parse = ('fields', 'location')

@@ -1,5 +1,6 @@
 from sklearn.metrics import f1_score
 from sklearn.metrics import confusion_matrix, precision_score, recall_score
+import json
 
 class TaggingReport:
 
@@ -10,3 +11,12 @@ class TaggingReport:
         self.recall = recall_score(y_test, y_pred, average='micro')
         self.accuracy = None
         self.training_loss = None
+
+    def to_json(self):
+        return {
+            'f1_score': str(round(self.f1_score, 3)),
+            'precision': str(round(self.precision, 3)),
+            'recall': str(round(self.recall, 3)),
+            'accuracy': str(round(self.accuracy, 3)),
+            'training_loss': str(round(self.training_loss, 3))
+        }

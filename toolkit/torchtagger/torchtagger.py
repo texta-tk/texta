@@ -16,14 +16,15 @@ class TorchTagger:
 
     def __init__(self, tagger_id, embedding=None, model_arch="fastText", n_classes=2, num_epochs=5):
         self.embedding = embedding
+        # retrieve model and initial config
         self.config = TORCH_MODELS[model_arch]["config"]()
         self.model_arch = TORCH_MODELS[model_arch]["model"]
         # set number of output classes
         self.config.output_size = n_classes
         # set number of epochs
         self.config.max_epochs = num_epochs
-        # statistics report
-        self.report = None
+        # statistics report for each epoch
+        self.epoch_reports = []
         # model
         self.model = None
         self.tagger_id = int(tagger_id)
@@ -145,15 +146,13 @@ class TorchTagger:
         model.add_optimizer(optimizer)
         model.add_loss_op(NLLLoss)
         # run epochs
-        reports = []
         for i in range(self.config.max_epochs):
             report = model.run_epoch(train_iterator, val_iterator, i)
-            reports.append(report)
-        # set model statistics based on evaluation of last epoch
-        self.report = reports[-1]
+            self.epoch_reports.append(report)
         # set model
         self.model = model
-        return self.report
+        # return report for last epoch
+        return report
 
 
     def tag_text(self, text):
