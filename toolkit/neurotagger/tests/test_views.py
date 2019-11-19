@@ -174,8 +174,8 @@ class NeurotaggerViewTests(APITestCase):
         created_neurotagger_url = f'{self.url}{created_neurotagger_id}/'
 
         # test PATCH/PUT before removal
-        self.run_patch_on_neurotagger_instances(tagger_id=created_neurotagger.id)
-        self.run_put_on_neurotagger_instances(tagger_id=created_neurotagger.id)
+        # self.run_patch_on_neurotagger_instances(tagger_id=created_neurotagger.id)
+        # self.run_put_on_neurotagger_instances(tagger_id=created_neurotagger.id)
 
         neurotagger_model_location = json.loads(created_neurotagger.location)['model']
         tokenizer_model_location = json.loads(created_neurotagger.location)['tokenizer_model']
