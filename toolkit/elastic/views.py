@@ -10,6 +10,8 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.serializers import ReindexerCreateSerializer
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 
+from django_filters import rest_framework as filters
+import rest_framework.filters as drf_filters
 
 class ElasticGetIndices(views.APIView):
     def get(self, request):
@@ -23,6 +25,12 @@ class ElasticGetIndices(views.APIView):
         indices = sorted(ElasticCore().get_indices())
         return Response(indices, status=status.HTTP_200_OK)
 
+
+class ReindexerFilter(filters.FilterSet):
+    description = filters.CharFilter('description', lookup_expr='icontains')
+    class Meta:
+        model = Reindexer
+        fields = []
 
 class ReindexerViewSet(mixins.CreateModelMixin,
                        mixins.ListModelMixin,
@@ -48,6 +56,13 @@ class ReindexerViewSet(mixins.CreateModelMixin,
         ProjectResourceAllowed,
         permissions.IsAuthenticated,
     )
+    
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+    filterset_class = ReindexerFilter
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'new_index', 'indices', 'random_size',
+                        'task__time_started', 'task__time_completed',
+                        'task__status')
+
 
     def get_queryset(self):
         return Reindexer.objects.filter(project=self.kwargs['project_pk'])

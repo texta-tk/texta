@@ -18,9 +18,22 @@ from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.view_constants import BulkDelete, ExportModel
 
+from django_filters import rest_framework as filters
+import rest_framework.filters as drf_filters
+
+
 global_w2v_cache = ModelCache(W2VEmbedding)
 global_phraser_cache = ModelCache(Phraser)
 global_cluster_cache = ModelCache(WordCluster)
+
+
+class EmbeddingFilter(filters.FilterSet):
+    description = filters.CharFilter('description', lookup_expr='icontains')
+    task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+
+    class Meta:
+        model = Embedding
+        fields = []
 
 
 class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
@@ -49,6 +62,10 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         ProjectResourceAllowed,
         permissions.IsAuthenticated,
     )
+
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+    filterset_class = EmbeddingFilter
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'num_dimensions', 'min_freq', 'vocab_size', 'task__status')
 
     def get_queryset(self):
         return Embedding.objects.filter(project=self.kwargs['project_pk'])

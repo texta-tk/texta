@@ -22,8 +22,21 @@ from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.neurotagger.serializers import NeuroTaggerTagTextSerializer, NeuroTaggerTagDocumentSerializer
 from toolkit.view_constants import BulkDelete, ExportModel
 
+from django_filters import rest_framework as filters
+import rest_framework.filters as drf_filters
+
+
 # initialize model cache for neurotaggers
 model_cache = ModelCache(NeurotaggerWorker)
+
+class NeuroTaggerFilter(filters.FilterSet):
+    description = filters.CharFilter('description', lookup_expr='icontains')
+    task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+
+    class Meta:
+        model = Neurotagger
+        fields = []
+
 
 class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, ExportModel):
     """
@@ -50,6 +63,12 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
         permissions.IsAuthenticated,
         ProjectResourceAllowed,
         )
+    
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+    filterset_class = NeuroTaggerFilter
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'training_loss', 'training_accuracy',
+                        'validation_accuracy', 'validation_loss', 'task__status')
+
 
 
     def get_queryset(self):

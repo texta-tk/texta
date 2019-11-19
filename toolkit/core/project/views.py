@@ -1,4 +1,5 @@
 from celery import group
+from django.db.models import Count
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -30,6 +31,16 @@ from toolkit.core.task.models import Task
 
 from celery import group
 
+from django_filters import rest_framework as filters
+import rest_framework.filters as drf_filters
+
+
+class ProjectFilter(filters.FilterSet):
+    title = filters.CharFilter('title', lookup_expr='icontains')
+
+    class Meta:
+        model = Project
+        fields = []
 
 class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
     """
@@ -57,6 +68,11 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         permissions.IsAuthenticated,
         ProjectAllowed,
     )
+    
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+    filterset_class = ProjectFilter
+    ordering_fields = ('id', 'title', 'owner__username', 'users_count', 'indices_count',)
+
 
 
     def perform_create(self, serializer):
@@ -64,7 +80,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
 
 
     def get_queryset(self):
-        queryset = Project.objects.all()
+        queryset = Project.objects.annotate(users_count=Count('users'), indices_count=Count('indices')).all()
         current_user = self.request.user
         if not current_user.is_superuser:
             queryset = (queryset.filter(owner=current_user) | queryset.filter(users=current_user)).distinct()
