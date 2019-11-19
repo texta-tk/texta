@@ -16,6 +16,7 @@ class TorchTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     fact_name = serializers.CharField(default=None, required=False, help_text=f'Fact name used to filter tags (fact values). Default: None')
     model_architecture = serializers.ChoiceField(choices=choices.MODEL_CHOICES)
     maximum_sample_size = serializers.IntegerField(default=10000, required=False)
+    minimum_sample_size = serializers.IntegerField(default=50, required=False)
     num_epochs = serializers.IntegerField(default=choices.DEFAULT_NUM_EPOCHS, required=False)
 
     task = TaskSerializer(read_only=True)
@@ -26,7 +27,7 @@ class TorchTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
         model = TorchTagger
         fields = (
             'url', 'author_username', 'id', 'description', 'query', 'fields', 'embedding', 'f1_score', 'precision', 'recall', 'accuracy',
-            'model_architecture', 'maximum_sample_size', 'num_epochs', 'location', 'plot', 'task', 'fact_name',
+            'model_architecture', 'maximum_sample_size', 'minimum_sample_size', 'num_epochs', 'location', 'plot', 'task', 'fact_name',
         )
         read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'location', 'plot', 'task' ,'fact_name')
         fields_to_parse = ('fields', 'location')
