@@ -49,6 +49,8 @@ global_mlp_for_taggers = MLPAnalyzer()
 
 class TaggerFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
+    task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+
     class Meta:
         model = Tagger
         fields = []
@@ -104,7 +106,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         # check if selected fields are present in the project:
         project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
         entered_fields = set(serializer.validated_data['fields'])
-        if not entered_fields.issubset(project_fields):
+        if not entered_fields or not entered_fields.issubset(project_fields):
             return Response({'error': f'entered fields not in current project fields: {project_fields}'}, status=status.HTTP_400_BAD_REQUEST)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)

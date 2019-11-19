@@ -60,7 +60,6 @@ INSTALLED_APPS = [
     'allauth.account',
     'rest_auth.registration',
     'django_extensions',
-    'rest_framework_serializer_field_permissions',
     'drf_yasg'
 ]
 

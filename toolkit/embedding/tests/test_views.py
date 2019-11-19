@@ -53,6 +53,8 @@ class EmbeddingViewTests(APITestCase):
         self.create_embedding_then_delete_embedding_and_created_model()
         self.run_patch_on_embedding_instances(self.test_embedding_id)
         self.run_put_on_embedding_instances(self.test_embedding_id)
+        self.create_embedding_with_empty_fields()
+
 
     def run_create_embedding_training_and_task_signal(self):
         '''Tests the endpoint for a new Embedding, and if a new Task gets created via the signal'''
@@ -133,6 +135,21 @@ class EmbeddingViewTests(APITestCase):
         put_response = self.client.put(embedding_url, payload, format='json')
         print_output("put_response", put_response.data)
         self.assertEqual(put_response.status_code, status.HTTP_200_OK)
+
+
+    def create_embedding_with_empty_fields(self):
+        ''' tests to_repr serializer constant. Should fail because empty fields obj is filtered out in view'''
+        payload = {
+            "description": "TestEmbedding",
+            "query": json.dumps(EMPTY_QUERY),
+            "fields": [],
+            "max_vocab": 10000,
+            "min_freq": 5,
+            "num_dimensions": 100,
+        }
+        create_response = self.client.post(self.url, payload, format='json')
+        print_output("empty_fields_response", create_response.data)
+        self.assertEqual(create_response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
     def run_predict(self, test_embedding_id):

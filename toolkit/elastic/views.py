@@ -33,6 +33,7 @@ class ReindexerFilter(filters.FilterSet):
         fields = []
 
 class ReindexerViewSet(mixins.CreateModelMixin,
+                       mixins.ListModelMixin,
                        mixins.RetrieveModelMixin,
                        mixins.DestroyModelMixin,
                        viewsets.GenericViewSet):
