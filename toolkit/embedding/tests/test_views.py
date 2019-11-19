@@ -53,7 +53,7 @@ class EmbeddingViewTests(APITestCase):
         self.create_embedding_then_delete_embedding_and_created_model()
         self.run_patch_on_embedding_instances(self.test_embedding_id)
         self.run_put_on_embedding_instances(self.test_embedding_id)
-        # self.create_embedding_with_empty_fields()
+        self.create_embedding_with_empty_fields()
 
 
     def run_create_embedding_training_and_task_signal(self):

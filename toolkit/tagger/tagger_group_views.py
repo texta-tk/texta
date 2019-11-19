@@ -71,12 +71,10 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         serializer = TaggerGroupSerializer(data=request_data, context={'request': request})
         serializer.is_valid(raise_exception=True)
 
-        '''
         # raise error on tagger empty fields
         project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
         if not serializer.validated_data['tagger']['fields']:
             return Response({'error': f'entered fields not in current project fields: {project_fields}'}, status=status.HTTP_400_BAD_REQUEST)
-        '''
 
         fact_name = serializer.validated_data['fact_name']
         active_project = Project.objects.get(id=self.kwargs['project_pk'])

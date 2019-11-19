@@ -40,7 +40,7 @@ class NeurotaggerViewTests(APITestCase):
         self.run_create_and_tag_multilabel()
         # run these last ->
         self.create_neurotagger_then_delete_neurotagger_and_created_model()
-        # self.create_neurotagger_with_empty_fields()
+        self.create_neurotagger_with_empty_fields()
 
 
     def run_create_and_tag_multilabel(self):
@@ -173,7 +173,7 @@ class NeurotaggerViewTests(APITestCase):
         created_neurotagger_id = create_response.data['id']
         created_neurotagger_url = f'{self.url}{created_neurotagger_id}/'
 
-        # test PATCH/PUT before removal
+        # test PATCH/PUT before removal.
         # self.run_patch_on_neurotagger_instances(tagger_id=created_neurotagger.id)
         # self.run_put_on_neurotagger_instances(tagger_id=created_neurotagger.id)
 
