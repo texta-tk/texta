@@ -5,10 +5,10 @@ import json
 class TaggingReport:
 
     def __init__(self, y_test, y_pred):
-        self.f1_score = f1_score(y_test, y_pred, average='micro')
+        self.f1_score = f1_score(y_test, y_pred, average='macro')
         self.confusion = confusion_matrix(y_test, y_pred)
-        self.precision = precision_score(y_test, y_pred, average='micro')
-        self.recall = recall_score(y_test, y_pred, average='micro')
+        self.precision = precision_score(y_test, y_pred, average='macro')
+        self.recall = recall_score(y_test, y_pred, average='macro')
         self.accuracy = None
         self.training_loss = None
 

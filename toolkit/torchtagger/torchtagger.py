@@ -139,6 +139,8 @@ class TorchTagger:
         # check cuda
         if torch.cuda.is_available():
             model.cuda()
+            # clear cuda cache prior to training
+            torch.cuda.empty_cache()
         # train
         model.train()
         optimizer = optim.SGD(model.parameters(), lr=self.config.lr)
@@ -149,6 +151,8 @@ class TorchTagger:
         for i in range(self.config.max_epochs):
             report = model.run_epoch(train_iterator, val_iterator, i)
             self.epoch_reports.append(report)
+
+            print('Epoch:', i, report.to_dict())
         # set model
         self.model = model
         # return report for last epoch
