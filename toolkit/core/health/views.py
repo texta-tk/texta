@@ -1,6 +1,6 @@
 import psutil
 import shutil
-from keras import backend as K
+import torch
 from rest_framework import views, status
 from rest_framework.response import Response
 from rest_framework.decorators import permission_classes
@@ -34,8 +34,10 @@ class HealthView(views.APIView):
         toolkit_status['cpu'] = {'percent': psutil.cpu_percent()}
         toolkit_status['model_cache'] = get_cache_status()
 
-        gpus = K.tensorflow_backend._get_available_gpus()
-        toolkit_status['gpu'] = {'count': len(gpus), 'devices': gpus}
+        gpu_count = torch.cuda.device_count()
+        gpu_devices = [torch.cuda.get_device_name(i) for i in range(0, gpu_count)]
+
+        toolkit_status['gpu'] = {'count': gpu_count, 'devices': gpu_devices}
         toolkit_status['active_tasks'] = get_active_tasks()
 
         return Response(toolkit_status, status=status.HTTP_200_OK)
