@@ -15,7 +15,19 @@ from toolkit.view_constants import BulkDelete, ExportModel
 from toolkit.serializer_constants import GeneralTextSerializer
 from toolkit.tools.model_cache import ModelCache
 
+from django_filters import rest_framework as filters
+import rest_framework.filters as drf_filters
+
 global_torchtagger_cache = ModelCache(TorchTagger)
+
+class TorchTaggerFilter(filters.FilterSet):
+    description = filters.CharFilter('description', lookup_expr='icontains')
+    task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+
+    class Meta:
+        model = TorchTaggerObject
+        fields = []
+
 
 class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
     serializer_class = TorchTaggerSerializer
@@ -23,6 +35,11 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         permissions.IsAuthenticated,
         ProjectResourceAllowed,
         )
+    
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+    filterset_class = TorchTaggerFilter
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'f1_score', 'precision', 'recall', 'task__status')
+
 
     def perform_create(self, serializer, **kwargs):
         serializer.save(author=self.request.user,
