@@ -29,6 +29,14 @@ from django_filters import rest_framework as filters
 import rest_framework.filters as drf_filters
 
 
+class TaggerGroupFilter(filters.FilterSet):
+    description = filters.CharFilter('description', lookup_expr='icontains')
+
+    class Meta:
+        model = TaggerGroup
+        fields = []
+
+
 class TaggerGroupViewSet(mixins.CreateModelMixin,
                          mixins.ListModelMixin,
                          mixins.RetrieveModelMixin,
