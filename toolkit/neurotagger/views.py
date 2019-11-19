@@ -71,11 +71,11 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
         serializer = NeurotaggerSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
 
-        # raise error on neurotagger empty fields
-        project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
-        entered_fields = set(serializer.validated_data['fields'])
-        if not entered_fields:
-            return Response({'error': f'entered fields not in current project fields: {project_fields}'}, status=status.HTTP_400_BAD_REQUEST)
+        # # raise error on neurotagger empty fields
+        # project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
+        # entered_fields = set(serializer.validated_data['fields'])
+        # if not entered_fields:
+        #     return Response({'error': f'entered fields not in current project fields: {project_fields}'}, status=status.HTTP_400_BAD_REQUEST)
 
         if 'fact_name' in serializer.validated_data and serializer.validated_data['fact_name']:
             fact_name = serializer.validated_data['fact_name']

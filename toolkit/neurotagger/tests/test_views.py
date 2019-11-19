@@ -39,8 +39,8 @@ class NeurotaggerViewTests(APITestCase):
     def test_run(self):
         self.run_create_and_tag_multilabel()
         # run these last ->
-        self.create_neurotagger_with_empty_fields()
         self.create_neurotagger_then_delete_neurotagger_and_created_model()
+        # self.create_neurotagger_with_empty_fields()
 
 
     def run_create_and_tag_multilabel(self):
