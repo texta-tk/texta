@@ -90,7 +90,9 @@ class TorchTagger:
             for example in class_examples:
                 examples.append(example)
                 labels.append(self.label_index[label])
-        
+        # update output size to match number of classes
+        self.config.output_size = len(list(data_sample.data.keys()))
+
         print(len(labels), len(examples))
 
         # retrieve vectors and vocab dict from embedding

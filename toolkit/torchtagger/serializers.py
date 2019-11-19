@@ -6,7 +6,7 @@ from toolkit.torchtagger import choices
 from toolkit.torchtagger.models import TorchTagger
 from toolkit.constants import get_field_choices
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.serializer_constants import ProjectResourceUrlSerializer
+from toolkit.serializer_constants import ProjectResourceUrlSerializer, FieldParseSerializer
 
 
 class TorchTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
@@ -28,5 +28,5 @@ class TorchTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
             'url', 'author_username', 'id', 'description', 'query', 'fields', 'embedding', 'f1_score', 'precision', 'recall', 'accuracy',
             'model_architecture', 'maximum_sample_size', 'num_epochs', 'location', 'plot', 'task', 'fact_name',
         )
-        
-        read_only_fields = ('project', 'fields_parsed', 'f1_score', 'precision', 'recall', 'accuracy', 'location', 'plot', 'task' ,'fact_name')
+        read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'location', 'plot', 'task' ,'fact_name')
+        fields_to_parse = ('fields', 'location')

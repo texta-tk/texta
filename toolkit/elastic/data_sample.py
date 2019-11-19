@@ -58,7 +58,8 @@ class DataSample:
         """
         fact_name = self.tagger_object.fact_name
         if fact_name:
-            class_names = self._get_tags(fact_name)
+            min_count = self.tagger_object.minimum_sample_size
+            class_names = self._get_tags(fact_name, min_count)
             queries = self._create_queries(fact_name, class_names)
         else:
             # use description as class name for binary decisions
@@ -68,9 +69,9 @@ class DataSample:
         return class_names, queries
 
 
-    def _get_tags(self, fact_name, min_count=1000, max_count=None):
+    def _get_tags(self, fact_name, min_count=50, max_count=None):
         """Finds possible tags for training by aggregating active project's indices."""
-        active_indices = list(self.tagger_object.project.indices)
+        active_indices = self.tagger_object.project.indices
         es_a = ElasticAggregator(indices=active_indices)
         # limit size to 10000 unique tags
         tag_values = es_a.facts(filter_by_fact_name=fact_name, min_count=min_count, max_count=max_count, size=10000)

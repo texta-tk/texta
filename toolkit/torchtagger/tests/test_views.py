@@ -37,7 +37,8 @@ class TorchTaggerViewTests(APITestCase):
 
     def test(self):
         self.run_train_embedding()
-        self.run_train_tagger()
+        #self.run_train_tagger()
+        self.run_train_multiclass_tagger()
         #self.run_tag_text()
 
     def run_train_embedding(self):
@@ -59,6 +60,32 @@ class TorchTaggerViewTests(APITestCase):
         payload = {
             "description": "TestTorchTaggerTraining",
             #"fact_name": TEST_FACT_NAME,
+            "fields": TEST_FIELD_CHOICE,
+            "maximum_sample_size": 500,
+            "model_architecture": self.torch_models[0],
+            "num_epochs": 3,
+            "embedding": self.test_embedding_id,
+        }
+        response = self.client.post(self.url, payload, format='json')
+        print_output('test_create_torchtagger_training_and_task_signal:response.data', response.data)
+        # Check if Neurotagger gets created
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # Check if f1 not NULL (train and validation success)
+        tagger_id = response.data['id']
+        response = self.client.get(f'{self.url}{tagger_id}/')
+        print_output('test_torchtagger_has_stats:response.data', response.data)
+        for score in ['f1_score', 'precision', 'recall', 'accuracy']:
+            self.assertTrue(isinstance(response.data[score], float))
+        self.test_tagger_id = tagger_id
+        # Remove tagger files after test is done
+        self.addCleanup(remove_file, json.loads(response.data['location'])['torchtagger'])
+        #self.addCleanup(remove_file, created_tagger.plot.path)
+
+    def run_train_multiclass_tagger(self):
+        '''Tests TorchTagger training with multiple classes and if a new Task gets created via the signal'''
+        payload = {
+            "description": "TestTorchTaggerTraining",
+            "fact_name": TEST_FACT_NAME,
             "fields": TEST_FIELD_CHOICE,
             "maximum_sample_size": 500,
             "model_architecture": self.torch_models[0],
