@@ -25,7 +25,7 @@ class ProjectPermissionsTests(APITestCase):
 
     # TODO, test tagger_groups and reindexer differently
     def test_all(self):
-        for resource in ('lexicons', 'taggers', 'embeddings', 'embedding_clusters'):
+        for resource in ('lexicons', 'taggers', 'embeddings', 'embedding_clusters', 'tagger_groups', 'reindexer'):
             self.project_resource_url = f'/projects/{self.project.id}/{resource}/'
             self.run_with_users(self.access_project_resources, resource)
         self.run_with_users(self.access_project_instance_methods)
@@ -73,6 +73,8 @@ class ProjectPermissionsTests(APITestCase):
         url = self.project_instance_url
         self.client.login(username=username, password=password)
         response = self.client.get(url)
+
+        print(response.data)
         response.data["indices"] =  {"texta_test_index"}
         response.data["title"] = "put_title"
         put_response = self.client.put(url, response.data, format='json')
@@ -86,4 +88,5 @@ class ProjectPermissionsTests(APITestCase):
             print_output(f'{username} update permissions at: {url}', response.status_code)
 
     # TODO: implement owner, user put testing separately; affects existing tests.
+
 

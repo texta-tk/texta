@@ -9,6 +9,7 @@ from toolkit.test_settings import TEST_INDEX, TEST_FACT_NAME
 
 
 class ProjectViewTests(APITestCase):
+    ''' since permissions are project based, project PUT/PATCH is tested in the permissions package '''
 
     def setUp(self):
         # Create a new User
