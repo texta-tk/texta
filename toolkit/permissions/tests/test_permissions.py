@@ -4,6 +4,7 @@ from rest_framework.test import APIClient
 
 from toolkit.core.project.models import Project
 from toolkit.tools.utils_for_tests import create_test_user, print_output
+from toolkit.test_settings import TEST_FIELD, TEST_INDEX
 
 
 class ProjectPermissionsTests(APITestCase):
@@ -23,7 +24,6 @@ class ProjectPermissionsTests(APITestCase):
         self.client = APIClient()
         self.project_instance_url = f'/projects/{self.project.id}/'
 
-    # TODO, test tagger_groups and reindexer differently
     def test_all(self):
         for resource in ('lexicons', 'taggers', 'embeddings', 'embedding_clusters', 'tagger_groups', 'reindexer'):
             self.project_resource_url = f'/projects/{self.project.id}/{resource}/'
@@ -73,11 +73,10 @@ class ProjectPermissionsTests(APITestCase):
         url = self.project_instance_url
         self.client.login(username=username, password=password)
         response = self.client.get(url)
-
-        print(response.data)
-        response.data["indices"] =  {"texta_test_index"}
+        response.data["indices"] =  {TEST_INDEX}
         response.data["title"] = "put_title"
         put_response = self.client.put(url, response.data, format='json')
+
         if SAFE_FORBIDDEN is False and UNSAFE_FORBIDDEN is False:
             self.assertEqual(put_response.status_code, status.HTTP_200_OK)
             print_output(f'{username} update permissions at: {url}', response.status_code)
@@ -88,5 +87,11 @@ class ProjectPermissionsTests(APITestCase):
             print_output(f'{username} update permissions at: {url}', response.status_code)
 
     # TODO: implement owner, user put testing separately; affects existing tests.
+
+    # def add_user(self, response_data):
+    #     self.user_to_add = create_test_user(name='user_to_add', password=self.default_password)
+        # add_response = self.client.put()
+
+
 
 
