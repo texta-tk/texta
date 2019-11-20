@@ -98,16 +98,16 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
         if 'fact_name' in serializer.validated_data and serializer.validated_data['fact_name']:
             fact_name = serializer.validated_data['fact_name']
             active_project = Project.objects.get(id=self.kwargs['project_pk'])
-            # retrieve tags with sufficient counts & create queries to build models
+            # Retrieve tags/fact values and create queries to build models. Every tag will be a class.
             tags = self.get_tags(fact_name,
                                  active_project,
                                  min_count=serializer.validated_data['min_fact_doc_count'],
                                  max_count=serializer.validated_data['max_fact_doc_count'])
-            # check if found any tags to build models on
+            # Check if any tags were found
             if not tags:
                 return Response({'error': f'found no tags for fact name: {fact_name}'}, status=status.HTTP_400_BAD_REQUEST)
 
-
+            # Create queries for each fact
             queries = json.dumps(self.create_queries(fact_name, tags))
             self.perform_create(serializer, fact_values=json.dumps(tags), queries=queries)
         else:
@@ -155,7 +155,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # apply tagger
-        tagger_response = self.apply_tagger(tagger_object, serializer.validated_data['text'], input_type='text')
+        tagger_response = self.apply_tagger(tagger_object, serializer.validated_data['text'], threshold=serializer.validated_data['threshold'], input_type='text')
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
@@ -176,11 +176,11 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # apply tagger
-        tagger_response = self.apply_tagger(tagger_object, serializer.data['doc'], input_type='doc')
+        tagger_response = self.apply_tagger(tagger_object, serializer.data['doc'], threshold=serializer.validated_data['threshold'], input_type='doc')
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
-    def apply_tagger(self, tagger_object, tagger_input, input_type='text'):
+    def apply_tagger(self, tagger_object, tagger_input, threshold=0.0000001, input_type='text'):
         tagger = model_cache.get_model(tagger_object)
         if input_type == 'doc':
             tagger_result = tagger.tag_doc(tagger_input)
@@ -189,7 +189,6 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
 
         classes = json.loads(self.get_object().fact_values)
         probabilities = list(tagger_result[0])
-        threshold = 0.0000001
         tag_data = [{ 'tag': label, 'probability': probability } for label, probability in zip(classes, probabilities) if probability > threshold]
         tag_data = sorted(tag_data, key=lambda k: k['probability'], reverse=True)
 
