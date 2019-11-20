@@ -37,7 +37,7 @@ class TorchTaggerViewTests(APITestCase):
 
     def test(self):
         self.run_train_embedding()
-        #self.run_train_tagger()
+        self.run_train_tagger()
         self.run_train_multiclass_tagger()
         #self.run_tag_text()
 
@@ -78,7 +78,7 @@ class TorchTaggerViewTests(APITestCase):
             self.assertTrue(isinstance(response.data[score], float))
         self.test_tagger_id = tagger_id
         # Remove tagger files after test is done
-        self.addCleanup(remove_file, json.loads(response.data['location'])['torchtagger'])
+        self.addCleanup(remove_file, response.data['location']['torchtagger'])
         #self.addCleanup(remove_file, created_tagger.plot.path)
 
     def run_train_multiclass_tagger(self):
@@ -104,7 +104,7 @@ class TorchTaggerViewTests(APITestCase):
             self.assertTrue(isinstance(response.data[score], float))
         self.test_tagger_id = tagger_id
         # Remove tagger files after test is done
-        self.addCleanup(remove_file, json.loads(response.data['location'])['torchtagger'])
+        self.addCleanup(remove_file, response.data['location']['torchtagger'])
         #self.addCleanup(remove_file, created_tagger.plot.path)
 
     def run_tag_text(self):
