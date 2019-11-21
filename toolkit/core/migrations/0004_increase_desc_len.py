@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='task',
             name='errors',
-            field=models.CharField(default='', max_length=100000),
+            field=models.TextField(default=''),
         ),
         migrations.AlterField(
             model_name='task',
