@@ -41,3 +41,4 @@ dependencies:
     - sentencepiece
     - python-json-logger
     - drf-yasg
+    - django-filter

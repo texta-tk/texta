@@ -39,10 +39,21 @@ from toolkit.view_constants import (
     FeedbackModelView,
 )
 
+from django_filters import rest_framework as filters
+import rest_framework.filters as drf_filters
+
+
 # initialize model cache for taggers & phrasers
 global_tagger_cache = ModelCache(TextTagger)
 global_mlp_for_taggers = MLPAnalyzer()
 
+class TaggerFilter(filters.FilterSet):
+    description = filters.CharFilter('description', lookup_expr='icontains')
+    task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+
+    class Meta:
+        model = Tagger
+        fields = []
 
 class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackModelView):
     """
@@ -69,14 +80,25 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         ProjectResourceAllowed,
         permissions.IsAuthenticated,
     )
+    
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+    filterset_class = TaggerFilter
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'f1_score', 'precision', 'recall', 'task__status')
+
+
+    def get_queryset(self):
+        return Tagger.objects.filter(project=self.kwargs['project_pk'])
+
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         fields=json.dumps(serializer.validated_data['fields']))
 
-    def get_queryset(self):
-        return Tagger.objects.filter(project=self.kwargs['project_pk'])
+
+    def perform_update(self, serializer):
+        serializer.save(fields=json.dumps(serializer.validated_data['fields']))
+
 
     def create(self, request, *args, **kwargs):
         serializer = TaggerSerializer(data=request.data, context={'request': request})
@@ -84,11 +106,12 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         # check if selected fields are present in the project:
         project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
         entered_fields = set(serializer.validated_data['fields'])
-        if not entered_fields.issubset(project_fields):
+        if not entered_fields or not entered_fields.issubset(project_fields):
             return Response({'error': f'entered fields not in current project fields: {project_fields}'}, status=status.HTTP_400_BAD_REQUEST)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -100,6 +123,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
             return Response({"success": "Tagger instance deleted, model and plot removed"}, status=status.HTTP_204_NO_CONTENT)
         except:
             return Response({"success": "Tagger instance deleted, but model and plot were was not removed"}, status=status.HTTP_204_NO_CONTENT)
+
 
     @action(detail=True, methods=['get'], serializer_class=TaggerListFeaturesSerializer)
     def list_features(self, request, pk=None, project_pk=None):
@@ -135,56 +159,28 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         return Response(feature_info, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get'])
-    def stop_word_list(self, request, pk=None, project_pk=None):
-        """Returns list of stop words for the Tagger."""
-        # retrieve tagger object and load stop words
+    @action(detail=True, methods=['get', 'post'], serializer_class=GeneralTextSerializer)
+    def stop_words(self, request, pk=None, project_pk=None):
+        """Adds stop word to Tagger model. Input Text is a string of space separated words, eg 'word1 word2 word3'"""
         tagger_object = self.get_object()
-        success = {'stop_words': json.loads(tagger_object.stop_words)}
-        return Response(success, status=status.HTTP_200_OK)
+        if self.request.method == 'GET':
+            success = {'stop_words': tagger_object.stop_words}
+            return Response(success, status=status.HTTP_200_OK)
+        elif self.request.method == 'POST':
+            serializer = GeneralTextSerializer(data=request.data)
+
+            # check if valid request
+            if not serializer.is_valid():
+                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+            new_stop_words = serializer.validated_data['text']
+            # save tagger object
+            tagger_object.stop_words = new_stop_words
+            tagger_object.save()
+
+            return Response({"stop_words": new_stop_words}, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
-    def stop_word_add(self, request, pk=None, project_pk=None):
-        """Adds stop word to Tagger model."""
-        serializer = GeneralTextSerializer(data=request.data)
-        # check if valid request
-        if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        new_stop_word = serializer.validated_data['text']
-        # retrieve tagger object and update stop word list
-        tagger_object = self.get_object()
-        stop_words = json.loads(tagger_object.stop_words)
-        if new_stop_word not in stop_words:
-            stop_words.append(new_stop_word)
-        # save tagger object
-        tagger_object.stop_words = json.dumps(stop_words)
-        tagger_object.save()
-        success = {'added': new_stop_word, 'stop_words': stop_words}
-        return Response(success, status=status.HTTP_200_OK)
-
-
-    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
-    def stop_word_remove(self, request, pk=None, project_pk=None):
-        """Removes stop word from Tagger model."""
-        serializer = GeneralTextSerializer(data=request.data)
-        # check if valid request
-        if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        remove_stop_word = serializer.validated_data['text']
-        # retrieve tagger object and update stop word list
-        tagger_object = self.get_object()
-        stop_words = json.loads(tagger_object.stop_words)
-        # check is word in list
-        if remove_stop_word not in stop_words:
-            return Response({'error': 'word not present among stop words'}, status=status.HTTP_400_BAD_REQUEST)
-        # remove stop word
-        stop_words.remove(remove_stop_word)
-        # save tagger object
-        tagger_object.stop_words = json.dumps(stop_words)
-        tagger_object.save()
-        success = {'removed': remove_stop_word, 'stop_words': stop_words}
-        return Response(success, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def retrain_tagger(self, request, pk=None, project_pk=None):
@@ -255,9 +251,9 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
                 return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         # apply tagger
         tagger_response = self.apply_tagger(
-            tagger_object, 
-            input_document, 
-            input_type='doc', 
+            tagger_object,
+            input_document,
+            input_type='doc',
             lemmatizer=lemmatizer,
             feedback=serializer.validated_data['feedback_enabled'],
         )
@@ -288,16 +284,16 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
 
     def apply_tagger(self, tagger_object, tagger_input, input_type='text', phraser=None, lemmatizer=None, feedback=False):
         # create text processor object for tagger
-        stop_words = json.loads(tagger_object.stop_words)
+        stop_words = tagger_object.stop_words.split(' ')
         # use phraser is embedding used
         if tagger_object.embedding:
             phraser = global_phraser_cache.get_model(tagger_object)
             text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
         else:
             text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
-        # load model and 
+        # load model and
         tagger = global_tagger_cache.get_model(tagger_object)
-        tagger.add_text_processor(text_processor) 
+        tagger.add_text_processor(text_processor)
         # select function according to input type
         if input_type == 'doc':
             tagger_result = tagger.tag_doc(tagger_input)

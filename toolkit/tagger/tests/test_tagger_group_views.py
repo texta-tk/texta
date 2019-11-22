@@ -33,12 +33,13 @@ class TaggerGroupViewTests(APITestCase):
 
 
     def test_run(self):
-        self.create_and_delete_tagger_group_removes_related_children_models_plots()
+        # self.create_and_delete_tagger_group_removes_related_children_models_plots()
         self.run_create_tagger_group_training_and_task_signal()
         self.run_tag_text()
         self.run_tag_doc()
         self.run_tag_random_doc()
         self.run_models_retrain()
+        self.create_taggers_with_empty_fields()
 
 
     def run_create_tagger_group_training_and_task_signal(self):
@@ -75,6 +76,25 @@ class TaggerGroupViewTests(APITestCase):
             self.assertTrue(tagger.task is not None)
             # Check if Tagger gets trained and completed
             self.assertEqual(tagger.task.status, Task.STATUS_COMPLETED)
+
+
+    def create_taggers_with_empty_fields(self):
+        payload = {
+            "description": "TestTaggerGroup",
+            "minimum_sample_size": 50,
+            "fact_name": TEST_FACT_NAME,
+            "tagger": {
+                "fields": [],
+                "vectorizer": "Hashing Vectorizer",
+                "classifier": "LinearSVC",
+                "feature_selector": "SVM Feature Selector",
+                "maximum_sample_size": 500,
+                "negative_multiplier": 1.0,
+                }
+        }
+        response = self.client.post(self.url, payload, format='json')
+        print_output('create_taggers_with_empty_fields:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
     def run_tag_text(self):

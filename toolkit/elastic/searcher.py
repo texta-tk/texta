@@ -123,12 +123,12 @@ class ElasticSearcher:
         except elasticsearch.NotFoundError:
             return 0
 
-    def search(self, size=10):
+    def search(self, size=10, timeout='1m'):
         # In case size/from is included in query in pagination, don't overwrite it by passing the size parameter
         if 'size' in self.query:
-            response = self.core.es.search(index=self.indices, body=self.query)
+            response = self.core.es.search(index=self.indices, body=self.query, timeout=timeout)
         else:
-            response = self.core.es.search(index=self.indices, body=self.query, size=size)
+            response = self.core.es.search(index=self.indices, body=self.query, size=size, timeout=timeout)
         if self.output == self.OUT_DOC:
             hits = [self._parse_doc(doc) for doc in response['hits']['hits']]
             return hits

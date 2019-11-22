@@ -4,7 +4,7 @@ import re
 import sys
 from celery import group
 
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -25,15 +25,37 @@ from toolkit.helper_functions import apply_celery_task
 from toolkit.tagger.validators import validate_input_document
 from toolkit.tagger.tagger_views import global_mlp_for_taggers
 
+from django_filters import rest_framework as filters
+import rest_framework.filters as drf_filters
 
 
-class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
+class TaggerGroupFilter(filters.FilterSet):
+    description = filters.CharFilter('description', lookup_expr='icontains')
+
+    class Meta:
+        model = TaggerGroup
+        fields = []
+
+
+class TaggerGroupViewSet(mixins.CreateModelMixin,
+                         mixins.ListModelMixin,
+                         mixins.RetrieveModelMixin,
+                         mixins.DestroyModelMixin,
+                         viewsets.GenericViewSet,
+                         TagLogicViews,
+                         BulkDelete):
+
     queryset = TaggerGroup.objects.all()
     serializer_class = TaggerGroupSerializer
     permission_classes = (
         permissions.IsAuthenticated,
         ProjectResourceAllowed,
         )
+
+
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+    filterset_class = TaggerGroupFilter
+    ordering_fields = ('id', 'author__username', 'description', 'fact_name',  'minimum_sample_size', 'num_tags')
 
 
     def get_queryset(self):
@@ -48,6 +70,11 @@ class TaggerGroupViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
         # validate serializer again with updated values
         serializer = TaggerGroupSerializer(data=request_data, context={'request': request})
         serializer.is_valid(raise_exception=True)
+
+        # raise error on tagger empty fields
+        project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
+        if not serializer.validated_data['tagger']['fields']:
+            return Response({'error': f'entered fields not in current project fields: {project_fields}'}, status=status.HTTP_400_BAD_REQUEST)
 
         fact_name = serializer.validated_data['fact_name']
         active_project = Project.objects.get(id=self.kwargs['project_pk'])

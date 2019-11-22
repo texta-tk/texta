@@ -2,7 +2,7 @@ from toolkit.elastic.core import ElasticCore
 
 '''For storing constant variables'''
 # Default max description lenght for models
-MAX_DESC_LEN = 100
+MAX_DESC_LEN = 1000
 
 def get_field_choices():
    """

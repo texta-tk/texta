@@ -66,8 +66,10 @@ def import_docs(params):
         print("Created new index with fact mappings.")
         print("Line-per-line data insertion, this might take a moment...")
         for line in lines:
-            doc = json.dumps(json.loads(line))
-            es.index(index=params["index"], body=doc, doc_type="test_mapping")
+            line = line.strip()
+            if line:
+                doc = json.dumps(json.loads(line))
+                es.index(index=params["index"], body=doc, doc_type="test_mapping")
         print('Test Elasticsearch index imported successfully')
         print('')
 

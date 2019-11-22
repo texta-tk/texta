@@ -18,9 +18,22 @@ from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.view_constants import BulkDelete, ExportModel
 
+from django_filters import rest_framework as filters
+import rest_framework.filters as drf_filters
+
+
 global_w2v_cache = ModelCache(W2VEmbedding)
 global_phraser_cache = ModelCache(Phraser)
 global_cluster_cache = ModelCache(WordCluster)
+
+
+class EmbeddingFilter(filters.FilterSet):
+    description = filters.CharFilter('description', lookup_expr='icontains')
+    task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+
+    class Meta:
+        model = Embedding
+        fields = []
 
 
 class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
@@ -50,6 +63,10 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         permissions.IsAuthenticated,
     )
 
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+    filterset_class = EmbeddingFilter
+    ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'num_dimensions', 'min_freq', 'vocab_size', 'task__status')
+
     def get_queryset(self):
         return Embedding.objects.filter(project=self.kwargs['project_pk'])
 
@@ -58,17 +75,32 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         fields=json.dumps(serializer.validated_data['fields']))
 
+    def perform_update(self, serializer):
+        serializer.save(fields=json.dumps(serializer.validated_data['fields']))
+
+    def create(self, request, *args, **kwargs):
+        serializer = EmbeddingSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        # check if selected fields are present in the project:
+        project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
+        entered_fields = set(serializer.validated_data['fields'])
+        if not entered_fields or not entered_fields.issubset(project_fields):
+            return Response({'error': f'entered fields not in current project fields: {project_fields}'}, status=status.HTTP_400_BAD_REQUEST)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        # try:
-        embedding_model_location = json.loads(instance.location)['embedding']
-        phraser_model_location = json.loads(instance.location)['phraser']
-        os.remove(embedding_model_location)
-        os.remove(phraser_model_location)
-        return Response({"success": "Models removed"}, status=status.HTTP_204_NO_CONTENT)
-        # except:
-            # return Response({"success": "Embedding instance deleted, but models were not removed"}, status=status.HTTP_204_NO_CONTENT)
+        try:
+            embedding_model_location = json.loads(instance.location)['embedding']
+            phraser_model_location = json.loads(instance.location)['phraser']
+            os.remove(embedding_model_location)
+            os.remove(phraser_model_location)
+            return Response({"success": "Models removed"}, status=status.HTTP_204_NO_CONTENT)
+        except:
+            return Response({"success": "Embedding instance deleted, but models were not removed"}, status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post'],serializer_class=EmbeddingPredictSimilarWordsSerializer)
     def predict_similar(self, request, pk=None, project_pk=None):

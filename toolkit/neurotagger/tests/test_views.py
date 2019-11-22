@@ -38,7 +38,9 @@ class NeurotaggerViewTests(APITestCase):
 
     def test_run(self):
         self.run_create_and_tag_multilabel()
+        # run these last ->
         self.create_neurotagger_then_delete_neurotagger_and_created_model()
+        self.create_neurotagger_with_empty_fields()
 
 
     def run_create_and_tag_multilabel(self):
@@ -124,6 +126,38 @@ class NeurotaggerViewTests(APITestCase):
         return Neurotagger.objects.get(id=tagger_id)
 
 
+    def run_patch_on_neurotagger_instances(self, tagger_id=None):
+        ''' Tests patch response success for Tagger fields '''
+        payload = {
+            "description": "PatchedTestNeurotaggerView",
+            "fact_name": TEST_FACT_NAME,
+            "model_architecture": choices.model_arch_choices[0][0],
+            "fields": TEST_FIELD_CHOICE,
+            "maximum_sample_size": 500,
+        }
+
+        neurotagger_url = f'{self.url}{tagger_id}/'
+        patch_response = self.client.patch(neurotagger_url, payload, format='json')
+        print_output("patch_response", patch_response.data)
+        self.assertEqual(patch_response.status_code, status.HTTP_200_OK)
+
+
+    def run_put_on_neurotagger_instances(self, tagger_id=None):
+        ''' Tests put response success for Tagger fields '''
+        payload = {
+            "description": "PutTestNeurotaggerView",
+            "fact_name": TEST_FACT_NAME,
+            "model_architecture": choices.model_arch_choices[0][0],
+            "fields": TEST_FIELD_CHOICE,
+            "maximum_sample_size": 500,
+        }
+
+        neurotagger_url = f'{self.url}{tagger_id}/'
+        put_response = self.client.put(neurotagger_url, payload, format='json')
+        print_output("put_response", put_response.data)
+        self.assertEqual(put_response.status_code, status.HTTP_200_OK)
+
+
     def create_neurotagger_then_delete_neurotagger_and_created_model(self):
         payload = {
             "description": "TestNeurotaggerView",
@@ -138,6 +172,10 @@ class NeurotaggerViewTests(APITestCase):
         created_neurotagger = Neurotagger.objects.get(id=create_response.data['id'])
         created_neurotagger_id = create_response.data['id']
         created_neurotagger_url = f'{self.url}{created_neurotagger_id}/'
+
+        # test PATCH/PUT before removal.
+        # self.run_patch_on_neurotagger_instances(tagger_id=created_neurotagger.id)
+        # self.run_put_on_neurotagger_instances(tagger_id=created_neurotagger.id)
 
         neurotagger_model_location = json.loads(created_neurotagger.location)['model']
         tokenizer_model_location = json.loads(created_neurotagger.location)['tokenizer_model']
@@ -154,3 +192,20 @@ class NeurotaggerViewTests(APITestCase):
                     created_neurotagger.plot.path,
                     ):
             assert not os.path.isfile(model)
+
+
+    def create_neurotagger_with_empty_fields(self):
+        ''' tests to_repr serializer constant. Should fail because empty fields obj is filtered out in view'''
+        payload = {
+            "description": "TestNeurotaggerView",
+            "fact_name": TEST_FACT_NAME,
+            "model_architecture": choices.model_arch_choices[0][0],
+            "fields": [],
+            "maximum_sample_size": 500,
+        }
+        create_response = self.client.post(self.url, payload, format='json')
+        print_output("empty_fields_response", create_response.data)
+        self.assertEqual(create_response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+
