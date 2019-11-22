@@ -1,59 +1,49 @@
-import os
 import json
-import re
-import sys
+import os
 
-from rest_framework import viewsets, status, permissions
+import rest_framework.filters as drf_filters
+from django_filters import rest_framework as filters
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.elastic.feedback import Feedback
-from toolkit.elastic.searcher import EMPTY_QUERY
-from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.tagger.models import Tagger
-from toolkit.tagger.tasks import train_tagger
 from toolkit.core.project.models import Project
-from toolkit.tagger.serializers import (
-    TaggerSerializer,
-    TaggerListFeaturesSerializer,
-    TaggerTagTextSerializer,
-    TaggerTagDocumentSerializer,
-)
+from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.feedback import Feedback
+from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.embedding.phraser import Phraser
+from toolkit.helper_functions import apply_celery_task
+from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import (
     GeneralTextSerializer,
-    FeedbackSerializer,
 )
+from toolkit.tagger.models import Tagger
+from toolkit.tagger.serializers import (TaggerListFeaturesSerializer, TaggerSerializer, TaggerTagDocumentSerializer, TaggerTagTextSerializer)
+from toolkit.tagger.tasks import train_tagger
 from toolkit.tagger.text_tagger import TextTagger
-from toolkit.tools.model_cache import ModelCache
-from toolkit.embedding.views import global_phraser_cache
-from toolkit.tools.text_processor import TextProcessor
-from toolkit.permissions.project_permissions import ProjectResourceAllowed
-from toolkit.core.task.models import Task
-from toolkit.tools.mlp_analyzer import MLPAnalyzer
-from toolkit.helper_functions import apply_celery_task
 from toolkit.tagger.validators import validate_input_document
+from toolkit.tools.mlp_analyzer import MLPAnalyzer
+from toolkit.tools.text_processor import TextProcessor
 from toolkit.view_constants import (
     BulkDelete,
     ExportModel,
     FeedbackModelView,
 )
 
-from django_filters import rest_framework as filters
-import rest_framework.filters as drf_filters
-
 
 # initialize model cache for taggers & phrasers
-global_tagger_cache = ModelCache(TextTagger)
 global_mlp_for_taggers = MLPAnalyzer()
+
 
 class TaggerFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
     task_status = filters.CharFilter('task__status', lookup_expr='icontains')
 
+
     class Meta:
         model = Tagger
         fields = []
+
 
 class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackModelView):
     """
@@ -80,7 +70,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         ProjectResourceAllowed,
         permissions.IsAuthenticated,
     )
-    
+
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = TaggerFilter
     ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'f1_score', 'precision', 'recall', 'task__status')
@@ -138,8 +128,11 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         # check if tagger exists
         if not tagger_object.location:
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+
         # retrieve model
-        tagger = global_tagger_cache.get_model(tagger_object)
+        tagger = TextTagger(tagger_object.id)
+        tagger.load()
+
         try:
             # get feature names
             features = tagger.get_feature_names()
@@ -153,9 +146,11 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         selected_features = sorted(selected_features, key=lambda k: k['coefficient'], reverse=True)
 
         features_to_show = selected_features[:serializer.validated_data['size']]
-        feature_info = {'features': features_to_show,
-                        'total_features': len(selected_features),
-                        'showing_features': len(features_to_show)}
+        feature_info = {
+            'features': features_to_show,
+            'total_features': len(selected_features),
+            'showing_features': len(features_to_show)
+        }
         return Response(feature_info, status=status.HTTP_200_OK)
 
 
@@ -179,7 +174,6 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
             tagger_object.save()
 
             return Response({"stop_words": new_stop_words}, status=status.HTTP_200_OK)
-
 
 
     @action(detail=True, methods=['post'])
@@ -287,12 +281,16 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         stop_words = tagger_object.stop_words.split(' ')
         # use phraser is embedding used
         if tagger_object.embedding:
-            phraser = global_phraser_cache.get_model(tagger_object)
+            phraser = Phraser(tagger_object.id)
+            phraser.load()
+
             text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
         else:
             text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
         # load model and
-        tagger = global_tagger_cache.get_model(tagger_object)
+        tagger = TextTagger(tagger_object.id)
+        tagger.load()
+
         tagger.add_text_processor(text_processor)
         # select function according to input type
         if input_type == 'doc':

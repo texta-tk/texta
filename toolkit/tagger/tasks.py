@@ -1,39 +1,39 @@
-import os
 import json
+import os
 import secrets
 
 from celery.decorators import task
 
-from toolkit.core.task.models import Task
-from toolkit.tagger.models import Tagger, TaggerGroup
-from toolkit.settings import NUM_WORKERS, MODELS_DIR
-from toolkit.embedding.phraser import Phraser
-from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.tools.show_progress import ShowProgress
-from toolkit.tagger.text_tagger import TextTagger
-from toolkit.tools.text_processor import TextProcessor
-from toolkit.tagger.plots import create_tagger_plot
 from toolkit.base_task import BaseTask
-from toolkit.tools.mlp_analyzer import MLPAnalyzer
+from toolkit.core.task.models import Task
 from toolkit.elastic.feedback import Feedback
+from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.embedding.phraser import Phraser
+from toolkit.settings import MODELS_DIR
+from toolkit.tagger.models import Tagger, TaggerGroup
+from toolkit.tagger.plots import create_tagger_plot
+from toolkit.tagger.text_tagger import TextTagger
+from toolkit.tools.mlp_analyzer import MLPAnalyzer
+from toolkit.tools.show_progress import ShowProgress
+from toolkit.tools.text_processor import TextProcessor
 
 
 def create_tagger_batch(tagger_group_id, taggers_to_create):
-    '''Creates Tagger objects from list of tagger data and saves into tagger group object.'''
+    """Creates Tagger objects from list of tagger data and saves into tagger group object."""
     # retrieve Tagger Group object
     tagger_group_object = TaggerGroup.objects.get(pk=tagger_group_id)
     # iterate through batch
     for tagger_data in taggers_to_create:
         created_tagger = Tagger.objects.create(**tagger_data,
-        author=tagger_group_object.author,
-        project=tagger_group_object.project)
+                                               author=tagger_group_object.author,
+                                               project=tagger_group_object.project)
         # add and save
         tagger_group_object.taggers.add(created_tagger)
         tagger_group_object.save()
 
 
 def get_data_samples(tagger_object, text_processor, show_progress, indices, field_data):
-    '''Retrieves positive & negative data samples from Elastic.'''
+    """Retrieves positive & negative data samples from Elastic."""
     # change status to scrolling negative feedback
     show_progress.update_step('scrolling positive feedback')
     show_progress.update_view(0)
@@ -58,12 +58,12 @@ def get_data_samples(tagger_object, text_processor, show_progress, indices, fiel
         field_data=field_data,
         output=ElasticSearcher.OUT_DOC_WITH_ID,
         callback_progress=show_progress,
-        scroll_limit=int(tagger_object.maximum_sample_size)-len(positive_feedback_sample),
+        scroll_limit=int(tagger_object.maximum_sample_size) - len(positive_feedback_sample),
         text_processor=text_processor
     )
 
     # iterators into lists and combine positive samples into one
-    positive_sample = positive_feedback_sample+list(positive_sample)
+    positive_sample = positive_feedback_sample + list(positive_sample)
     positive_ids = list([doc['_id'] for doc in positive_sample])
 
     # change status to scrolling negative feedback
@@ -90,22 +90,22 @@ def get_data_samples(tagger_object, text_processor, show_progress, indices, fiel
         field_data=field_data,
         output=ElasticSearcher.OUT_DOC_WITH_ID,
         callback_progress=show_progress,
-        scroll_limit=(len(positive_sample)-len(negative_feedback_sample))*int(tagger_object.negative_multiplier),
+        scroll_limit=(len(positive_sample) - len(negative_feedback_sample)) * int(tagger_object.negative_multiplier),
         ignore_ids=positive_ids,
         text_processor=text_processor
     )
     # combine negative samples into one
-    negative_sample = negative_feedback_sample+list(negative_sample)
+    negative_sample = negative_feedback_sample + list(negative_sample)
 
     return positive_sample, negative_sample
 
 
 @task(name="create_tagger_objects", base=BaseTask)
 def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries, batch_size=100):
-    '''Task for creating Tagger objects inside Tagger Group to prevent database timeouts.'''
+    """Task for creating Tagger objects inside Tagger Group to prevent database timeouts."""
     # create tagger objects
     taggers_to_create = []
-    for i,tag in enumerate(tags):
+    for i, tag in enumerate(tags):
         tagger_data = tagger_serializer.copy()
         tagger_data.update({'query': json.dumps(tag_queries[i])})
         tagger_data.update({'description': tag})
@@ -124,7 +124,7 @@ def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries,
 
 @task(name="train_tagger", base=BaseTask)
 def train_tagger(tagger_id):
-    '''Task for training Text Tagger.'''
+    """Task for training Text Tagger."""
     # retrieve tagger & task objects
     tagger_object = Tagger.objects.get(pk=tagger_id)
     task_object = tagger_object.task
@@ -132,7 +132,7 @@ def train_tagger(tagger_id):
     show_progress = ShowProgress(task_object, multiplier=1)
     show_progress.update_step('scrolling positives')
     show_progress.update_view(0)
-    
+
     try:
         # retrieve indices & field data from project 
         indices = tagger_object.project.indices
@@ -188,9 +188,7 @@ def train_tagger(tagger_id):
 
 @task(name="apply_tagger", base=BaseTask)
 def apply_tagger(text, tagger_id, input_type, lemmatize=False):
-    '''Task for applying tagger to text.'''
-    from toolkit.tagger.tagger_views import global_tagger_cache
-    from toolkit.embedding.views import global_phraser_cache
+    """Task for applying tagger to text."""
     # get tagger object
     tagger = Tagger.objects.get(pk=tagger_id)
     # get lemmatizer if needed
@@ -200,12 +198,16 @@ def apply_tagger(text, tagger_id, input_type, lemmatize=False):
     # create text processor object for tagger
     stop_words = tagger.stop_words.split(' ')
     if tagger.embedding:
-        phraser = global_phraser_cache.get_model(tagger.embedding)
+        phraser = Phraser(tagger.id)
+        phraser.load()
+
         text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
     else:
         text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
     # load tagger
-    tagger = global_tagger_cache.get_model(tagger)
+    tagger = TextTagger(tagger_id)
+    tagger.load()
+
     if not tagger:
         return None
     # check input type
