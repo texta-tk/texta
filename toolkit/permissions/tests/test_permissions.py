@@ -127,23 +127,3 @@ class ProjectPermissionsTests(APITestCase):
         if SAFE_FORBIDDEN is True and UNSAFE_FORBIDDEN is True:
                 print_output(f'{username} update permissions at: {url}', response.status_code)
                 self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
