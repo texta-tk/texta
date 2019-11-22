@@ -227,8 +227,7 @@ class FeedbackIndexView:
 
 
 class AdminPermissionsViewSetMixin(object):
-
-    # TODO separate listview
+    ''' When admin and/or project_owners need a different serialization '''
 
     def get_serializer_class(self):
         current_user = self.request.user
