@@ -76,8 +76,9 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     class Meta:
         model = Tagger
         fields = ('id', 'url', 'author_username', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
-                  'maximum_sample_size', 'negative_multiplier', 'location', 'precision', 'recall', 'f1_score', 'num_features', 'plot', 'task')
-        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'location,', 'stop_words')
+                  'maximum_sample_size', 'negative_multiplier', 'location', 'precision', 'recall', 'f1_score', 'num_features', 
+                  'num_positives', 'num_negatives', 'plot', 'task')
+        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_positives', 'num_negatives', 'location,', 'stop_words')
         fields_to_parse = ('fields', 'location')
 
     def __init__(self, *args, **kwargs):

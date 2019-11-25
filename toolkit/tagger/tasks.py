@@ -171,6 +171,8 @@ def train_tagger(tagger_id):
         tagger_object.recall = float(tagger.statistics['recall'])
         tagger_object.f1_score = float(tagger.statistics['f1_score'])
         tagger_object.num_features = tagger.statistics['num_features']
+        tagger_object.num_positives = tagger.statistics['num_positives']
+        tagger_object.num_negatives = tagger.statistics['num_negatives']
         tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_tagger_plot(tagger.statistics))
         tagger_object.save()
         # declare the job done
