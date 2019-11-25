@@ -25,7 +25,7 @@ from toolkit.permissions.project_permissions import ProjectAllowed
 from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
-from toolkit.view_constants import ImportModel, FeedbackIndexView
+from toolkit.view_constants import ImportModel, FeedbackIndexView, AdminPermissionsViewSetMixin
 from toolkit.tools.autocomplete import Autocomplete
 from toolkit.core.task.models import Task
 
@@ -42,7 +42,7 @@ class ProjectFilter(filters.FilterSet):
         model = Project
         fields = []
 
-class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
+class ProjectViewSet(AdminPermissionsViewSetMixin, viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
     """
     list:
     Returns list of projects.
@@ -68,15 +68,18 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         permissions.IsAuthenticated,
         ProjectAllowed,
     )
-    
+
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = ProjectFilter
     ordering_fields = ('id', 'title', 'owner__username', 'users_count', 'indices_count',)
 
 
-
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        ''' admin can choose owner others get assigned self as owner'''
+        if self.request.user.is_superuser:
+            serializer.save(owner=serializer.validated_data['owner'])
+        else:
+            serializer.save(owner=self.request.user)
 
 
     def get_queryset(self):

@@ -8,8 +8,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import action
 from django.core import serializers
+from django.db.models import Count
 from django.http import HttpResponse
 
+from toolkit.core.project.models import Project
+from toolkit.core.project.serializers import ProjectAdminSerializer
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.query import Query
 from toolkit.elastic.feedback import Feedback
@@ -167,7 +170,7 @@ class ImportModel():
         new_location = {k: self.rewrite_model_id(model_object.id, v) for k, v in json.loads(model_object.location).items()}
         model_object.location = json.dumps(new_location)
         model_object.save()
-    
+
     @staticmethod
     def rewrite_model_id(_id, model_path):
         '''Rewrites id in model name'''
@@ -183,10 +186,10 @@ class FeedbackModelView:
         """
         get:
         Retrieves feedback for the model.
-        
+
         post:
         Adds feedback to the model.
-        
+
         delete:
         Deletes feedback object for the model.
         """
@@ -221,3 +224,15 @@ class FeedbackIndexView:
         elif request.method == 'GET':
             feedback_list = feedback.list()
             return Response(feedback_list, status=status.HTTP_200_OK)
+
+
+class AdminPermissionsViewSetMixin(object):
+    ''' When admin and/or project_owners need a different serialization '''
+
+    def get_serializer_class(self):
+        current_user = self.request.user
+        queryset = Project.objects.annotate(users_count=Count('users'))
+        if current_user.is_superuser or queryset.filter(owner=current_user):
+            return ProjectAdminSerializer
+        else:
+            return super(AdminPermissionsViewSetMixin, self).get_serializer_class()
