@@ -1,35 +1,28 @@
-import os
 import json
+import os
 
-from rest_framework import viewsets, status, permissions
+import rest_framework.filters as drf_filters
+from django_filters import rest_framework as filters
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.embedding.models import Embedding, EmbeddingCluster
-from toolkit.embedding.serializers import (EmbeddingSerializer, EmbeddingPredictSimilarWordsSerializer,
-                                           EmbeddingClusterSerializer, EmbeddingClusterBrowserSerializer)
-from toolkit.serializer_constants import GeneralTextSerializer
-from toolkit.embedding.embedding import W2VEmbedding
-from toolkit.embedding.phraser import Phraser
-from toolkit.embedding.word_cluster import WordCluster
 from toolkit.core.project.models import Project
-from toolkit.tools.model_cache import ModelCache
+from toolkit.embedding.embedding import W2VEmbedding
+from toolkit.embedding.models import Embedding, EmbeddingCluster
+from toolkit.embedding.phraser import Phraser
+from toolkit.embedding.serializers import (EmbeddingClusterBrowserSerializer, EmbeddingClusterSerializer, EmbeddingPredictSimilarWordsSerializer, EmbeddingSerializer)
+from toolkit.embedding.word_cluster import WordCluster
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.serializer_constants import GeneralTextSerializer
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.view_constants import BulkDelete, ExportModel
-
-from django_filters import rest_framework as filters
-import rest_framework.filters as drf_filters
-
-
-global_w2v_cache = ModelCache(W2VEmbedding)
-global_phraser_cache = ModelCache(Phraser)
-global_cluster_cache = ModelCache(WordCluster)
 
 
 class EmbeddingFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
     task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+
 
     class Meta:
         model = Embedding
@@ -67,16 +60,20 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
     filterset_class = EmbeddingFilter
     ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'num_dimensions', 'min_freq', 'vocab_size', 'task__status')
 
+
     def get_queryset(self):
         return Embedding.objects.filter(project=self.kwargs['project_pk'])
+
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         fields=json.dumps(serializer.validated_data['fields']))
 
+
     def perform_update(self, serializer):
         serializer.save(fields=json.dumps(serializer.validated_data['fields']))
+
 
     def create(self, request, *args, **kwargs):
         serializer = EmbeddingSerializer(data=request.data, context={'request': request})
@@ -90,6 +87,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
@@ -102,7 +100,8 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         except:
             return Response({"success": "Embedding instance deleted, but models were not removed"}, status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['post'],serializer_class=EmbeddingPredictSimilarWordsSerializer)
+
+    @action(detail=True, methods=['post'], serializer_class=EmbeddingPredictSimilarWordsSerializer)
     def predict_similar(self, request, pk=None, project_pk=None):
         """Returns predictions of similar items to input words/phrases."""
         serializer = EmbeddingPredictSimilarWordsSerializer(data=request.data)
@@ -111,16 +110,19 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
             if not embedding_object.location:
                 return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
-            embedding = global_w2v_cache.get_model(embedding_object)
+            embedding = W2VEmbedding(embedding_object.id)
+            embedding.load()
 
-            predictions = embedding.get_similar(serializer.validated_data['positives'],
-                                                negatives=serializer.validated_data['negatives'],
-                                                n=serializer.validated_data['output_size']
-                                                )
+            predictions = embedding.get_similar(
+                serializer.validated_data['positives'],
+                negatives=serializer.validated_data['negatives'],
+                n=serializer.validated_data['output_size']
+            )
 
             return Response(predictions, status=status.HTTP_200_OK)
         else:
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
 
     @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
     def phrase_text(self, request, pk=None, project_pk=None):
@@ -132,7 +134,9 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
             if not embedding_object.location:
                 return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
-            phraser = global_phraser_cache.get_model(embedding_object)
+            phraser = Phraser(embedding_object.id)
+            phraser.load()
+
             text_processor = TextProcessor(phraser=phraser, sentences=False, remove_stop_words=False, tokenize=False)
             phrased_text = text_processor.process(serializer.validated_data['text'])[0]
 
@@ -167,8 +171,10 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
         permissions.IsAuthenticated,
     )
 
+
     def get_queryset(self):
         return EmbeddingCluster.objects.filter(project=self.kwargs['project_pk'])
+
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user, project=Project.objects.get(id=self.kwargs['project_pk']))
@@ -190,7 +196,8 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # load cluster model
-        clusterer = global_cluster_cache.get_model(clustering_object)
+        clusterer = WordCluster(clustering_object.id)
+        clusterer.load()
 
         clustering_result = clusterer.browse(max_examples_per_cluster=serializer.validated_data['max_examples_per_cluster'],
                                              number_of_clusters=serializer.validated_data['number_of_clusters'],
@@ -215,7 +222,8 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
         # load cluster model
-        clusterer = global_cluster_cache.get_model(clustering_object)
+        clusterer = WordCluster(clustering_object.id)
+        clusterer.load()
 
         clustering_result = clusterer.query(serializer.validated_data['text'])
         return Response(clustering_result, status=status.HTTP_200_OK)
@@ -236,8 +244,8 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
         if not clustering_object.location:
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # load cluster model
-        clusterer = global_cluster_cache.get_model(clustering_object)
+        clusterer = WordCluster(clustering_object.id)
+        clusterer.load()
 
         clustered_text = clusterer.text_to_clusters(serializer.validated_data['text'])
         return Response(clustered_text, status=status.HTTP_200_OK)

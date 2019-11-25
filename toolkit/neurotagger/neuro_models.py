@@ -39,7 +39,7 @@ class NeuroModels():
 
 
     def get_model(self, model_arch, vocab_sz, seq_len, num_cls):
-
+        '''Get the model based on the given architecture, and give specific parameters'''
         if model_arch in self.models_map:
             model = self.models_map[model_arch](vocab_sz, num_cls, seq_len)
             model = self._compile_model(model)
@@ -50,6 +50,7 @@ class NeuroModels():
     # Simplier models
     @staticmethod
     def fnn(vocab_sz, num_cls, seq_len):
+        '''Feed-forward neural network'''
         embed_dim = 300
         model = Sequential()
         model.add(Embedding(vocab_sz, embed_dim, input_length=seq_len))
@@ -64,6 +65,7 @@ class NeuroModels():
 
     @staticmethod
     def cnn(vocab_sz, num_cls, seq_len):
+        '''Convolutional neural network'''
         embed_dim = 200
         model = Sequential()
         model.add(Embedding(vocab_sz, embed_dim, input_length=seq_len))
@@ -78,6 +80,7 @@ class NeuroModels():
 
     @staticmethod
     def gru(vocab_sz, num_cls, seq_len):
+        '''Gated recurrent unit network. Gets a big speedup with CuDNN.'''
         embed_dim = 200
         n_hidden = 32
         model = Sequential()
@@ -91,6 +94,7 @@ class NeuroModels():
 
     @staticmethod
     def lstm(vocab_sz, num_cls, seq_len):
+        '''Long short term memory network. Gets a big speedup with CuDNN.'''
         embed_dim = 200
         n_hidden = 32
         model = Sequential()
@@ -105,6 +109,7 @@ class NeuroModels():
     # Combined models
     @staticmethod
     def gruCNN(vocab_sz, num_cls, seq_len):
+        '''GRU + CNN model'''
         embed_dim = 200
         model = Sequential()
         model.add(Embedding(vocab_sz, embed_dim, input_length=seq_len))
@@ -119,6 +124,7 @@ class NeuroModels():
 
     @staticmethod
     def lstmCNN(vocab_sz, num_cls, seq_len):
+        '''LSTM + CNN model'''
         embed_dim = 200
         model = Sequential()
         model.add(Embedding(vocab_sz, embed_dim, input_length=seq_len))
@@ -133,6 +139,7 @@ class NeuroModels():
 
     @staticmethod
     def _compile_model(model, loss='binary_crossentropy', optimizer='adam', metrics=['accuracy']):
+        '''Compile the model, pass in an optional loss, optimizer and metrics'''
         # Activate multi_gpu_model if more than 1 gpu found
         gpus = K.tensorflow_backend._get_available_gpus()
         if len(gpus) > 1:

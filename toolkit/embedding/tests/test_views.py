@@ -1,18 +1,16 @@
-from io import BytesIO
 import json
 import os
-from django.db.models import signals
+from io import BytesIO
 
-from rest_framework.test import APITestCase
 from rest_framework import status
-from rest_framework.test import APIClient
+from rest_framework.test import APITestCase
 
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE
 from toolkit.core.project.models import Project
-from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.core.task.models import Task
-from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.embedding.models import Embedding, EmbeddingCluster
+from toolkit.test_settings import TEST_FIELD_CHOICE, TEST_INDEX
+from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
 class EmbeddingViewTests(APITestCase):
@@ -37,8 +35,10 @@ class EmbeddingViewTests(APITestCase):
         cls.test_embedding_id = None
         cls.test_embedding_clustering_id = None
 
+
     def setUp(self):
         self.client.login(username='embeddingOwner', password='pw')
+
 
     def test_run(self):
         self.run_create_embedding_training_and_task_signal()
@@ -57,7 +57,7 @@ class EmbeddingViewTests(APITestCase):
 
 
     def run_create_embedding_training_and_task_signal(self):
-        '''Tests the endpoint for a new Embedding, and if a new Task gets created via the signal'''
+        """Tests the endpoint for a new Embedding, and if a new Task gets created via the signal"""
         payload = {
             "description": "TestEmbedding",
             "query": json.dumps(EMPTY_QUERY),
@@ -82,6 +82,7 @@ class EmbeddingViewTests(APITestCase):
         # Check if Embedding gets trained and completed
         self.assertEqual(created_embedding.task.status, Task.STATUS_COMPLETED)
 
+
     def create_embedding_then_delete_embedding_and_created_model(self):
         payload = {
             "description": "TestEmbedding",
@@ -105,8 +106,9 @@ class EmbeddingViewTests(APITestCase):
         assert not os.path.isfile(embedding_model_location)
         assert not os.path.isfile(phraser_model_location)
 
+
     def run_patch_on_embedding_instances(self, test_embedding_id):
-        ''' Tests patch response success for Tagger fields '''
+        """ Tests patch response success for Tagger fields """
         payload = {
             "description": "PatchedEmbedding",
             "query": json.dumps(EMPTY_QUERY),
@@ -120,8 +122,9 @@ class EmbeddingViewTests(APITestCase):
         print_output("patch_response", patch_response.data)
         self.assertEqual(patch_response.status_code, status.HTTP_200_OK)
 
+
     def run_put_on_embedding_instances(self, test_embedding_id):
-        ''' Tests put response success for Tagger fields '''
+        """ Tests put response success for Tagger fields """
         payload = {
             "description": "PutEmbedding",
             "query": json.dumps(EMPTY_QUERY),
@@ -138,7 +141,7 @@ class EmbeddingViewTests(APITestCase):
 
 
     def create_embedding_with_empty_fields(self):
-        ''' tests to_repr serializer constant. Should fail because empty fields obj is filtered out in view'''
+        """ tests to_repr serializer constant. Should fail because empty fields obj is filtered out in view"""
         payload = {
             "description": "TestEmbedding",
             "query": json.dumps(EMPTY_QUERY),
@@ -153,9 +156,9 @@ class EmbeddingViewTests(APITestCase):
 
 
     def run_predict(self, test_embedding_id):
-        '''Tests the endpoint for the predict action'''
+        """Tests the endpoint for the predict action"""
         # Send only "text" in payload, because "output_size" should be 10 by default
-        payload = { "positives": ["eesti", "läti"] }
+        payload = {"positives": ["eesti", "läti"]}
         predict_url = f'{self.url}{test_embedding_id}/predict_similar/'
         response = self.client.post(predict_url, payload)
         print_output('predict:response.data', response.data)
@@ -163,10 +166,11 @@ class EmbeddingViewTests(APITestCase):
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
 
+
     def run_predict_with_negatives(self):
-        '''Tests the endpoint for the predict action'''
+        """Tests the endpoint for the predict action"""
         # Send only "text" in payload, because "output_size" should be 10 by default
-        payload = { "positives": ["eesti", "läti"], "negatives": ["juhtuma"] }
+        payload = {"positives": ["eesti", "läti"], "negatives": ["juhtuma"]}
         predict_url = f'{self.url}{self.test_embedding_id}/predict_similar/'
         response = self.client.post(predict_url, payload)
         print_output('predict_with_negatives:response.data', response.data)
@@ -174,9 +178,10 @@ class EmbeddingViewTests(APITestCase):
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
 
+
     def run_phrase(self):
-        '''Tests the endpoint for the predict action'''
-        payload = { "text": "See on mingi eesti keelne tekst testimiseks" }
+        """Tests the endpoint for the predict action"""
+        payload = {"text": "See on mingi eesti keelne tekst testimiseks"}
         predict_url = f'{self.url}{self.test_embedding_id}/phrase_text/'
         response = self.client.post(predict_url, payload)
         print_output('predict:response.data', response.data)
@@ -186,7 +191,7 @@ class EmbeddingViewTests(APITestCase):
 
 
     def run_create_embedding_cluster_training_and_task_signal(self):
-        '''Tests the endpoint for a new EmbeddingCluster, and if a new Task gets created via the signal'''
+        """Tests the endpoint for a new EmbeddingCluster, and if a new Task gets created via the signal"""
         payload = {
             "embedding": self.test_embedding_id,
             "num_clusters": 10
@@ -207,9 +212,10 @@ class EmbeddingViewTests(APITestCase):
         # remove created embedding cluster model
         self.addCleanup(remove_file, json.loads(created_embedding_cluster.location)['cluster'])
 
+
     def run_embedding_cluster_browse(self):
-        '''Tests the endpoint for the browse action'''
-        payload = { "number_of_clusters": 10, "cluster_order": True }
+        """Tests the endpoint for the browse action"""
+        payload = {"number_of_clusters": 10, "cluster_order": True}
         browse_url = f'{self.cluster_url}{self.test_embedding_clustering_id}/browse_clusters/'
         response = self.client.post(browse_url, payload)
         print_output('browse:response.data', response.data)
@@ -217,9 +223,10 @@ class EmbeddingViewTests(APITestCase):
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
 
+
     def run_embedding_cluster_find_word(self):
-        '''Tests the endpoint for the find_word action'''
-        payload = { "text": "putin" }
+        """Tests the endpoint for the find_word action"""
+        payload = {"text": "putin"}
         browse_url = f'{self.cluster_url}{self.test_embedding_clustering_id}/find_cluster_by_word/'
         response = self.client.post(browse_url, payload)
         print_output('find_word:response.data', response.data)
@@ -227,8 +234,9 @@ class EmbeddingViewTests(APITestCase):
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
 
+
     def run_embedding_cluster_text(self):
-        '''Tests the endpoint for the find_word action'''
+        """Tests the endpoint for the find_word action"""
         payload = {"text": "putin ja teised reptiloidid nagu ansip ja kallas. nats ja nats"}
         browse_url = f'{self.cluster_url}{self.test_embedding_clustering_id}/cluster_text/'
         response = self.client.post(browse_url, payload)
@@ -237,8 +245,9 @@ class EmbeddingViewTests(APITestCase):
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
 
+
     def run_model_export_import(self):
-        '''Tests endpoint for model export and import'''
+        """Tests endpoint for model export and import"""
         # retrieve model zip
         url = f'{self.url}{self.test_embedding_id}/export_model/'
         response = self.client.get(url)

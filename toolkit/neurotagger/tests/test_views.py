@@ -1,21 +1,16 @@
-from io import BytesIO
 import json
 import os
-from django.db.models import signals
+from io import BytesIO
 
-from rest_framework.test import APITestCase
 from rest_framework import status
-from rest_framework.test import APIClient
+from rest_framework.test import APITestCase
 
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_FACT_NAME
 from toolkit.core.project.models import Project
-from toolkit.neurotagger.models import Neurotagger
 from toolkit.core.task.models import Task
-from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 from toolkit.neurotagger import choices
-from toolkit.elastic.searcher import EMPTY_QUERY
-from toolkit.neurotagger.tasks import neurotagger_train_handler
-
+from toolkit.neurotagger.models import Neurotagger
+from toolkit.test_settings import TEST_FACT_NAME, TEST_FIELD, TEST_FIELD_CHOICE, TEST_INDEX
+from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
 class NeurotaggerViewTests(APITestCase):

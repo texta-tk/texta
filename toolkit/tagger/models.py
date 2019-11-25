@@ -44,6 +44,8 @@ class Tagger(models.Model):
     recall = models.FloatField(default=None, null=True)
     f1_score = models.FloatField(default=None, null=True)
     num_features = models.IntegerField(default=None, null=True)
+    num_positives = models.IntegerField(default=None, null=True)
+    num_negatives = models.IntegerField(default=None, null=True)
     location = models.TextField()
     plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
     

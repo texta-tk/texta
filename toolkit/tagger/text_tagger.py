@@ -93,7 +93,9 @@ class TextTagger:
             'false_positive_rate':  fpr,
             'area_under_curve':     roc_auc,
             'num_features':         num_features,
-            'feature_coefs':        feature_coefs
+            'feature_coefs':        feature_coefs,
+            'num_positives':        len(positive_samples),  
+            'num_negatives':        len(negative_samples)
         }
 
         self.statistics = statistics

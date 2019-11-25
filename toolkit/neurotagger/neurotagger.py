@@ -41,7 +41,7 @@ class NeurotaggerWorker():
         """
         Main class for training the NeuroClassifier
 
-        Arguments:
+        Variables:
             samples {List[str]} -- List of str for the training data
             labels {List[int]} -- List of int for the labels
             label_names {List[str]} -- List of label names
@@ -89,13 +89,15 @@ class NeurotaggerWorker():
 
     def _set_up_data(self, samples, labels, label_names, show_progress):
         self.neurotagger_obj = Neurotagger.objects.get(pk=self.neurotagger_id)
+        # Set up show_progres to give updates to the Task
         self.show_progress = show_progress
 
+        # Set up params
         self.model_arch = self.neurotagger_obj.model_architecture
         self.validation_split = self.neurotagger_obj.validation_split
         self.num_epochs = self.neurotagger_obj.num_epochs
 
-        # Derived params
+        # Set the initial values for parameters that might change
         self.vocab_size = self.neurotagger_obj.vocab_size
         self.seq_len = self.neurotagger_obj.seq_len
 
@@ -107,10 +109,15 @@ class NeurotaggerWorker():
 
 
     def run(self, samples, labels, show_progress, label_names):
+        # Set up data and class parameters
         self._set_up_data(samples, labels, label_names, show_progress)
+        # Process, tokenize, etc with the given data.
         self._process_data()
+        # Train the model, and save training history into a variable
         history = self._train_model()
+        # Using the training history data, plot the model training (acc/loss per epoch etc)
         self._plot_model(history)
+        # Cross validate the model, and save results to the neurotagger obj
         self._cross_validation()
 
         self._create_task_result()
@@ -118,6 +125,7 @@ class NeurotaggerWorker():
 
 
     def _train_tokenizer(self):
+        # Generate an unique path for the Tokenizer file
         self.output_tokenizer_file = os.path.join(MODELS_DIR,
             'neurotagger', f'neurotagger_tokenizer_{self.neurotagger_obj.id}_{secrets.token_hex(10)}'
         )
@@ -149,10 +157,12 @@ class NeurotaggerWorker():
         self.show_progress.update_step('processing data')
         self.show_progress.update_view(0)
 
-        # Tokenize
+        # Train the SentencePIece Tokenizer
         self._train_tokenizer()
+        # Load it up
         sp = spm.SentencePieceProcessor()
         sp.load(f'{self.output_tokenizer_file}.model')
+        # Convert the samples into tokenized training data
         self.X_train = [sp.encode_as_ids(x) for x in self.samples]
 
         # Get the max length of sequence of X_train values
@@ -170,6 +180,7 @@ class NeurotaggerWorker():
         # Split data, so it would be shuffeled before cropping
         self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X_train, self.labels, test_size=self.validation_split, random_state=42)
 
+        # Convert the data to numpy arrays
         self.y_train = np.array(self.y_train)
         self.y_val = np.array(self.y_val)
 
@@ -184,6 +195,7 @@ class NeurotaggerWorker():
         # Training callback which shows progress to the user
         trainingProgress = TrainingProgressCallback(self.num_epochs, self.show_progress)
 
+        # Train the model and return training history
         return self.model.fit(self.X_train, self.y_train,
                         batch_size=self.bs,
                         epochs=self.num_epochs,
@@ -210,22 +222,25 @@ class NeurotaggerWorker():
 
     def _cross_validation(self):
         # Evaluate model, get [loss, accuracy]
+        # On the validation set
         val_eval = self.model.evaluate(x=self.X_val, y=self.y_val, batch_size=self.bs, verbose=1)
+        # On the training set
         train_eval = self.model.evaluate(x=self.X_train, y=self.y_train, batch_size=self.bs, verbose=1)
         self.neurotagger_obj.validation_accuracy = val_eval[1]
         self.neurotagger_obj.training_accuracy =  train_eval[1]
         self.neurotagger_obj.validation_loss = val_eval[0]
         self.neurotagger_obj.training_loss = train_eval[0]
         
+        # Round the predictions, so the floats wouldn't go to infinity and beyond
         rounded_preds = np.round(self.model.predict(self.X_val))
 
-        # If binary classification, add a negative class name
-        if len(self.label_names) == 1:
-            self.label_names.insert(0, 'negative')
+        # Get the classification report to print to the console for debug
         metrics = classification_report(self.y_val, rounded_preds, target_names=self.label_names)
         print(metrics)
+        # Get the classification report to save itself into a dictionary variable
         metrics = classification_report(self.y_val, rounded_preds, target_names=self.label_names, output_dict=True)
 
+        # And dump the metrics of each class to the model obj
         self.neurotagger_obj.classification_report = json.dumps(metrics)
 
 
@@ -248,6 +263,7 @@ class NeurotaggerWorker():
 
 
     def _plot_model(self, history):
+        # Create 2 plots into one image
         fig, ax = plt.subplots(1, 2, figsize=(16,8))
         # Plot training & validation accuracy values
         ax[0].plot(history.history['acc'])
@@ -266,6 +282,7 @@ class NeurotaggerWorker():
         ax[1].legend(['Train', 'Test'], loc='upper left')
         acc_loss_plot_path = f'{secrets.token_hex(15)}.png'
         self.neurotagger_obj.plot.save(acc_loss_plot_path, save_plot(plt))
+        # Clear the canvas
         plt.clf()
 
 
@@ -283,11 +300,11 @@ class NeurotaggerWorker():
         graph = tf.get_default_graph()
 
     def _convert_texts(self, texts: List[str]):
+        # Convert raw text into tokenized data with a pre-trained sentencepiece model
         sp = spm.SentencePieceProcessor()
         sp.load(json.loads(self.neurotagger_obj.location)['tokenizer_model'])
         texts = [sp.encode_as_ids(x) for x in texts]
         texts = pad_sequences(texts, maxlen=self.seq_len)
-        
         
         return texts
 
