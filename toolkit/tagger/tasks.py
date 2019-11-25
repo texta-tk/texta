@@ -166,7 +166,7 @@ def train_tagger(tagger_id):
         tagger_path = os.path.join(MODELS_DIR, 'tagger', f'tagger_{tagger_id}_{secrets.token_hex(10)}')
         tagger.save(tagger_path)
         # save model locations
-        tagger_object.model.name = tagger_path
+        tagger_object.location = json.dumps({'tagger': tagger_path})
         tagger_object.precision = float(tagger.statistics['precision'])
         tagger_object.recall = float(tagger.statistics['recall'])
         tagger_object.f1_score = float(tagger.statistics['f1_score'])
