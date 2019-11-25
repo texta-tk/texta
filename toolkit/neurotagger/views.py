@@ -1,37 +1,26 @@
-import os
 import json
-import numpy as np
+import os
 
-from rest_framework import viewsets, status, permissions
+import rest_framework.filters as drf_filters
+from django_filters import rest_framework as filters
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.aggregator import ElasticAggregator
-from toolkit.elastic.query import Query
-
-from toolkit.neurotagger.models import Neurotagger
 from toolkit.core.project.models import Project
-from toolkit.neurotagger.serializers import NeurotaggerSerializer
+from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.neurotagger.models import Neurotagger
 from toolkit.neurotagger.neurotagger import NeurotaggerWorker
-from toolkit.tools.model_cache import ModelCache
-from toolkit import permissions as toolkit_permissions
-from toolkit.view_constants import TagLogicViews
+from toolkit.neurotagger.serializers import NeuroTaggerTagDocumentSerializer, NeuroTaggerTagTextSerializer, NeurotaggerSerializer
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
-from toolkit.neurotagger.serializers import NeuroTaggerTagTextSerializer, NeuroTaggerTagDocumentSerializer
-from toolkit.view_constants import BulkDelete, ExportModel
+from toolkit.view_constants import BulkDelete, ExportModel, TagLogicViews
 
-from django_filters import rest_framework as filters
-import rest_framework.filters as drf_filters
-
-
-# initialize model cache for neurotaggers
-model_cache = ModelCache(NeurotaggerWorker)
 
 class NeuroTaggerFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
     task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+
 
     class Meta:
         model = Neurotagger
@@ -62,12 +51,12 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
     permission_classes = (
         permissions.IsAuthenticated,
         ProjectResourceAllowed,
-        )
+    )
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = NeuroTaggerFilter
     ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'training_loss', 'training_accuracy',
-                        'validation_accuracy', 'validation_loss', 'task__status')
+                       'validation_accuracy', 'validation_loss', 'task__status')
 
 
     def get_queryset(self):
@@ -113,7 +102,6 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
         else:
             return Response({"error": "Tag name must be included!"}, status=status.HTTP_400_BAD_REQUEST)
 
-
         headers = self.get_success_headers(serializer.data)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
@@ -126,12 +114,12 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
             neurotagger_model_location = json.loads(instance.location)['model']
             tokenizer_model_location = json.loads(instance.location)['tokenizer_model']
             tokenizer_vocab_model_location = json.loads(instance.location)['tokenizer_vocab']
-            for model in(
-                        neurotagger_model_location,
-                        tokenizer_model_location,
-                        tokenizer_vocab_model_location,
-                        instance.plot.path,
-                        ):
+            for model in (
+                    neurotagger_model_location,
+                    tokenizer_model_location,
+                    tokenizer_vocab_model_location,
+                    instance.plot.path,
+            ):
                 os.remove(model)
             return Response({"success": f'Neurotagger instance "{instance.description}" deleted, models and plots were removed'}, status=status.HTTP_204_NO_CONTENT)
         except:
@@ -181,7 +169,9 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
 
 
     def apply_tagger(self, tagger_object, tagger_input, threshold=0.0000001, input_type='text'):
-        tagger = model_cache.get_model(tagger_object)
+        tagger = NeurotaggerWorker(tagger_object.id)
+        tagger.load()
+
         if input_type == 'doc':
             tagger_result = tagger.tag_doc(tagger_input)
         else:
@@ -189,10 +179,10 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
 
         classes = json.loads(self.get_object().fact_values)
         probabilities = list(tagger_result[0])
-        tag_data = [{ 'tag': label, 'probability': probability } for label, probability in zip(classes, probabilities) if probability > threshold]
+        tag_data = [{'tag': label, 'probability': probability} for label, probability in zip(classes, probabilities) if probability > threshold]
         tag_data = sorted(tag_data, key=lambda k: k['probability'], reverse=True)
 
-        result = {'tags': tag_data }
+        result = {'tags': tag_data}
 
         return result
 
@@ -215,7 +205,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
         # retrieve random document
         random_doc = ElasticSearcher(indices=tagger_object.project.indices).random_documents(size=1)[0]
         # filter out correct fields from the document
-        random_doc_filtered = {k:v for k,v in random_doc.items() if k in tagger_fields}
+        random_doc_filtered = {k: v for k, v in random_doc.items() if k in tagger_fields}
         # apply tagger
         tagger_response = self.apply_tagger(tagger_object, random_doc_filtered, input_type='doc')
         response = {"document": random_doc, "prediction": tagger_response}
