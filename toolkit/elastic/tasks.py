@@ -12,10 +12,7 @@ from toolkit.elastic.document import ElasticDocument
 from toolkit.elastic.mapping_generator import SchemaGenerator
 
 """ TODOs:
-    optimize show_progress
-    implement query for advanced filtering.
     unique name problem and testing it.
-    bulk doc_add
 """
 
 def update_field_types(indices, field_type):
