@@ -2,7 +2,7 @@ import json
 import re
 from rest_framework import serializers
 from collections import OrderedDict
-from django.db.models import Avg
+from django.db.models import Avg, Sum
 
 from toolkit.tagger.models import Tagger, TaggerGroup
 
@@ -76,9 +76,10 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     class Meta:
         model = Tagger
         fields = ('id', 'url', 'author_username', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
-                  'maximum_sample_size', 'negative_multiplier', 'location', 'precision', 'recall', 'f1_score', 'num_features', 
-                  'num_positives', 'num_negatives', 'plot', 'task')
-        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_positives', 'num_negatives', 'location,', 'stop_words')
+            'maximum_sample_size', 'negative_multiplier', 'location', 'precision', 'recall', 'f1_score', 'num_features', 
+            'num_positives', 'num_negatives', 'model_size', 'plot', 'task')
+        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_positives', 'num_negatives', 'model_size', 
+            'location,', 'stop_words')
         fields_to_parse = ('fields', 'location')
 
     def __init__(self, *args, **kwargs):
@@ -126,7 +127,8 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
         if tagger_objects.exists():
             tagger_stats = {'avg_precision': tagger_objects.aggregate(Avg('precision'))['precision__avg'],
                             'avg_recall': tagger_objects.aggregate(Avg('recall'))['recall__avg'],
-                            'avg_f1_score': tagger_objects.aggregate(Avg('f1_score'))['f1_score__avg']}
+                            'avg_f1_score': tagger_objects.aggregate(Avg('f1_score'))['f1_score__avg'],
+                            'sum_size': round(tagger_objects.aggregate(Sum('model_size'))['model_size__sum'], 1)}
             return tagger_stats
 
     def get_tagger_params(self, obj):
