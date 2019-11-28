@@ -5,7 +5,7 @@ from collections import OrderedDict
 from django.db.models import Avg, Sum
 
 from toolkit.tagger.models import Tagger, TaggerGroup
-
+from toolkit.core.task.models import Task
 from toolkit.tagger.choices import (get_field_choices, get_classifier_choices, get_vectorizer_choices, get_feature_selector_choices,
                                     get_tokenizer_choices, DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE,
                                     DEFAULT_NUM_DOCUMENTS, DEFAULT_TAGGER_GROUP_FACT_NAME)
@@ -116,19 +116,20 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     def get_tagger_status(self, obj):
         tagger_objects = obj.taggers
         tagger_status = {'total': obj.num_tags,
-                        'completed': len(tagger_objects.filter(task__status='completed')),
-                        'training': len(tagger_objects.filter(task__status='running')),
-                        'created': len(tagger_objects.filter(task__status='created')),
-                        'failed': len(tagger_objects.filter(task__status='failed'))}
+                        'completed': len(tagger_objects.filter(task__status=Task.STATUS_COMPLETED)),
+                        'training': len(tagger_objects.filter(task__status=Task.STATUS_RUNNING)),
+                        'created': len(tagger_objects.filter(task__status=Task.STATUS_CREATED)),
+                        'failed': len(tagger_objects.filter(task__status=Task.STATUS_FAILED))}
         return tagger_status
 
     def get_tagger_statistics(self, obj):
         tagger_objects = obj.taggers
         if tagger_objects.exists():
+            tagger_size_sum = round(tagger_objects.filter(model_size__isnull=False).aggregate(Sum('model_size'))['model_size__sum'], 1)
             tagger_stats = {'avg_precision': tagger_objects.aggregate(Avg('precision'))['precision__avg'],
                             'avg_recall': tagger_objects.aggregate(Avg('recall'))['recall__avg'],
                             'avg_f1_score': tagger_objects.aggregate(Avg('f1_score'))['f1_score__avg'],
-                            'sum_size': round(tagger_objects.aggregate(Sum('model_size'))['model_size__sum'], 1)}
+                            'sum_size': tagger_size_sum}
             return tagger_stats
 
     def get_tagger_params(self, obj):
