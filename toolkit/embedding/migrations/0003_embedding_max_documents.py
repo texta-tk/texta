@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('embedding', '0001_initial'),
+        ('embedding', '0002_auto_20191121_1406'),
     ]
 
     operations = [

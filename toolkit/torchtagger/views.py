@@ -13,12 +13,10 @@ from toolkit.torchtagger.serializers import TorchTaggerSerializer
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.view_constants import BulkDelete, ExportModel
 from toolkit.serializer_constants import GeneralTextSerializer
-from toolkit.tools.model_cache import ModelCache
 
 from django_filters import rest_framework as filters
 import rest_framework.filters as drf_filters
 
-global_torchtagger_cache = ModelCache(TorchTagger)
 
 class TorchTaggerFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
@@ -62,7 +60,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         if not tagger_object.location:
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
         # retrieve model from cache
-        tagger = global_torchtagger_cache.get_model(tagger_object)
+        #tagger = global_torchtagger_cache.get_model(tagger_object)
 
-        tagger_response = tagger.tag_text(serializer.validated_data['text'])
-        return Response(tagger_response, status=status.HTTP_200_OK)
+        #tagger_response = tagger.tag_text(serializer.validated_data['text'])
+        return Response("tagger_response", status=status.HTTP_200_OK)
