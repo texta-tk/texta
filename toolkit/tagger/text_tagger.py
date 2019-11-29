@@ -84,6 +84,9 @@ class TextTagger:
         statistics["area_under_curve"] = auc(fpr, tpr)
         statistics["feature_coefs"] = feature_coefs
         statistics["num_features"] = len(feature_coefs)
+        statistics["num_positives"] = len(data_sample.data['true'])
+        statistics["num_negatives"] = len(data_sample.data['false'])
+
         self.statistics = statistics
         return model
 
