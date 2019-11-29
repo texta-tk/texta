@@ -88,6 +88,10 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 30,
 }
 
+REST_AUTH_SERIALIZERS = {
+'USER_DETAILS_SERIALIZER': 'toolkit.core.user_profile.serializers.UserSerializer',
+}
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',

@@ -1,10 +1,11 @@
 import os
+
 import requests
-from toolkit.settings import BASE_DIR, MLP_URL, ES_URL
-from toolkit.elastic.core import ElasticCore
-from toolkit.core.task.models import Task
-from datetime import datetime, timedelta, time
 from celery.task.control import inspect
+
+from toolkit.elastic.core import ElasticCore
+from toolkit.settings import BASE_DIR, ES_URL, MLP_URL
+
 
 def get_version():
     """
@@ -17,20 +18,6 @@ def get_version():
     except IOError:
         version = 'unknown'
     return version
-
-
-def get_cache_status():
-    """
-    Gets info about model caches in applications.
-    """
-    from toolkit.tagger.tagger_views import global_tagger_cache
-    from toolkit.embedding.views import global_w2v_cache, global_phraser_cache, global_cluster_cache
-
-
-    return {'embedding': len(global_w2v_cache.models.keys()),
-            'embedding_cluster': len(global_cluster_cache.models.keys()),
-            'phraser': len(global_phraser_cache.models.keys()),
-            'tagger': len(global_tagger_cache.models.keys())}
 
 
 def get_mlp_status():
@@ -46,7 +33,7 @@ def get_mlp_status():
             mlp_info["alive"] = True
     except:
         pass
-    
+
     return mlp_info
 
 

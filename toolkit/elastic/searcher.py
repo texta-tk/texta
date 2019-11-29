@@ -168,6 +168,8 @@ class ElasticSearcher:
                 if self.callback_progress:
                     self.callback_progress.update(page_size)
                 for hit in page['hits']['hits']:
+                    if self.scroll_limit and num_scrolled >= self.scroll_limit:
+                        break
                     if hit['_id'] not in self.ignore_ids:
                         num_scrolled += 1
                         parsed_doc = self._parse_doc(hit)
