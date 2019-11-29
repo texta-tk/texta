@@ -8,8 +8,8 @@ from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.base_task import BaseTask
 from toolkit.elastic.data_sample import DataSample
+from toolkit.embedding.embedding import W2VEmbedding
 from toolkit.torchtagger.torchtagger import TorchTagger
-from toolkit.embedding.views import global_w2v_cache
 from toolkit.torchtagger.plots import create_torchtagger_plot
 from toolkit.settings import MODELS_DIR
 
@@ -20,9 +20,10 @@ def torchtagger_train_handler(tagger_id, testing=False):
         # retrieve neurotagger & task objects
         tagger_object = TorchTaggerObject.objects.get(pk=tagger_id)
         task_object = tagger_object.task
-        embedding_model = global_w2v_cache.get_model(tagger_object.embedding)
+        # load embedding
+        embedding_model = W2VEmbedding(tagger_object.embedding.id)
+        embedding_model.load()
         model_type = TorchTaggerObject.MODEL_TYPE
-
         show_progress = ShowProgress(task_object, multiplier=1)
         # create Datasample object for retrieving positive and negative sample
         data_sample = DataSample(tagger_object, show_progress=show_progress, join_fields=True)
