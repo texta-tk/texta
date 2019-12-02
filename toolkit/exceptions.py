@@ -22,10 +22,9 @@ class NonExistantModelError(APIException):
 
 
 class SerializerNotValid(APIException):
-    pass
-
-
-
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = "Serializer is not valid"
+    default_code = "nonvalid_serializer"
 
 
 

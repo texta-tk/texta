@@ -21,6 +21,7 @@ from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.spam_detector import SpamDetector
+from toolkit.exceptions import ProjectValidationFailed, SerializerNotValid
 from toolkit.permissions.project_permissions import ProjectAllowed
 from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
@@ -96,7 +97,7 @@ class ProjectViewSet(AdminPermissionsViewSetMixin, viewsets.ModelViewSet, Import
         project_object = self.get_object()
         project_indices = list(project_object.indices)
         if not project_indices:
-            return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST)
+            raise ProjectValidationFailed(detail="Project has no indices")
         fields = project_object.get_elastic_fields()
         field_map = {}
         for field in fields:
@@ -142,12 +143,12 @@ class ProjectViewSet(AdminPermissionsViewSetMixin, viewsets.ModelViewSet, Import
         """
         serializer = ProjectGetFactsSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            assert SerializerNotValid(detail=serializer.errors)
 
         project_object = self.get_object()
         project_indices = list(project_object.indices)
         if not project_indices:
-            return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST)
+            raise ProjectValidationFailed(detail="Project has no indices")
 
         vals_per_name = serializer.validated_data['values_per_name']
         include_values = serializer.validated_data['output_type']
@@ -171,23 +172,21 @@ class ProjectViewSet(AdminPermissionsViewSetMixin, viewsets.ModelViewSet, Import
         """Simplified search interface for making Elasticsearch queries."""
         serializer = ProjectSimplifiedSearchSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            assert SerializerNotValid(detail=serializer.errors)
         project_object = self.get_object()
         project_indices = list(project_object.indices)
         project_fields = project_object.get_elastic_fields(path_list=True)
         # test if indices exist
         if not project_indices:
-            return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST)
+            raise ProjectValidationFailed(detail="Project has no indices")
         # test if indices are valid
         if serializer.validated_data['match_indices']:
             if not set(serializer.validated_data['match_indices']).issubset(set(project_indices)):
-                return Response({'error': f'index names are not valid for this project. allowed values are: {project_indices}'},
-                                status=status.HTTP_400_BAD_REQUEST)
+                raise ProjectValidationFailed(detail=f"Index names are not valid for this project. allowed values are: {project_indices}")
         # test if fields are valid
         if serializer.validated_data['match_fields']:
             if not set(serializer.validated_data['match_fields']).issubset(set(project_fields)):
-                return Response({'error': f'fields names are not valid for this project. allowed values are: {project_fields}'},
-                                status=status.HTTP_400_BAD_REQUEST)
+                raise ProjectValidationFailed(detail=f"Fields names are not valid for this project. allowed values are: {project_fields}")
 
         es = ElasticSearcher(indices=project_indices, output=ElasticSearcher.OUT_DOC)
         q = Query(operator=serializer.validated_data['operator'])
@@ -215,13 +214,13 @@ class ProjectViewSet(AdminPermissionsViewSetMixin, viewsets.ModelViewSet, Import
         """Executes **raw** Elasticsearch query on all project indices."""
         serializer = ProjectSearchByQuerySerializer(data=request.data)
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            assert SerializerNotValid(detail=serializer.errors)
 
         project_object = self.get_object()
         project_indices = list(project_object.indices)
 
         if not project_indices:
-            return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST)
+            raise ProjectValidationFailed(detail="Project has no indices")
 
         es = ElasticSearcher(indices=project_indices, output=ElasticSearcher.OUT_DOC_WITH_TOTAL_HL_AGGS)
 
@@ -240,7 +239,7 @@ class ProjectViewSet(AdminPermissionsViewSetMixin, viewsets.ModelViewSet, Import
         serializer = ProjectMultiTagSerializer(data=request.data)
         # validate serializer
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            assert SerializerNotValid(detail=serializer.errors)
         # get project object
         project_object = self.get_object()
         # get available taggers from project
@@ -264,12 +263,12 @@ class ProjectViewSet(AdminPermissionsViewSetMixin, viewsets.ModelViewSet, Import
         data = request.data
         serializer = ProjectSuggestFactValuesSerializer(data=data)
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            assert SerializerNotValid(detail=serializer.errors)
 
         project_object = self.get_object()
         project_indices = list(project_object.indices)
         if not project_indices:
-            return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST)
+            raise ProjectValidationFailed(detail="Project has no indices")
 
         limit = serializer.validated_data['limit']
         startswith = serializer.validated_data['startswith']
@@ -287,19 +286,17 @@ class ProjectViewSet(AdminPermissionsViewSetMixin, viewsets.ModelViewSet, Import
         data = request.data
         serializer = ProjectSuggestFactNamesSerializer(data=data)
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
+            assert SerializerNotValid(detail=serializer.errors)
         project_object = self.get_object()
         project_indices = list(project_object.indices)
         if not project_indices:
-            return Response({'error': 'project has no indices'}, status=status.HTTP_400_BAD_REQUEST)
+            raise ProjectValidationFailed(detail="Project has no indices")
 
         limit = serializer.validated_data['limit']
         startswith = serializer.validated_data['startswith']
 
         autocomplete = Autocomplete(project_object, project_indices, limit)
         fact_values = autocomplete.get_fact_names(startswith)
-
 
         return Response(fact_values, status=status.HTTP_200_OK)
 
