@@ -143,7 +143,7 @@ class ProjectViewSet(AdminPermissionsViewSetMixin, viewsets.ModelViewSet, Import
         """
         serializer = ProjectGetFactsSerializer(data=request.data)
         if not serializer.is_valid():
-            assert SerializerNotValid(detail=serializer.errors)
+            raise SerializerNotValid(detail=serializer.errors)
 
         project_object = self.get_object()
         project_indices = list(project_object.indices)
@@ -172,7 +172,7 @@ class ProjectViewSet(AdminPermissionsViewSetMixin, viewsets.ModelViewSet, Import
         """Simplified search interface for making Elasticsearch queries."""
         serializer = ProjectSimplifiedSearchSerializer(data=request.data)
         if not serializer.is_valid():
-            assert SerializerNotValid(detail=serializer.errors)
+            raise SerializerNotValid(detail=serializer.errors)
         project_object = self.get_object()
         project_indices = list(project_object.indices)
         project_fields = project_object.get_elastic_fields(path_list=True)
@@ -214,7 +214,7 @@ class ProjectViewSet(AdminPermissionsViewSetMixin, viewsets.ModelViewSet, Import
         """Executes **raw** Elasticsearch query on all project indices."""
         serializer = ProjectSearchByQuerySerializer(data=request.data)
         if not serializer.is_valid():
-            assert SerializerNotValid(detail=serializer.errors)
+            raise SerializerNotValid(detail=serializer.errors)
 
         project_object = self.get_object()
         project_indices = list(project_object.indices)
@@ -239,7 +239,7 @@ class ProjectViewSet(AdminPermissionsViewSetMixin, viewsets.ModelViewSet, Import
         serializer = ProjectMultiTagSerializer(data=request.data)
         # validate serializer
         if not serializer.is_valid():
-            assert SerializerNotValid(detail=serializer.errors)
+            raise SerializerNotValid(detail=serializer.errors)
         # get project object
         project_object = self.get_object()
         # get available taggers from project
@@ -263,7 +263,7 @@ class ProjectViewSet(AdminPermissionsViewSetMixin, viewsets.ModelViewSet, Import
         data = request.data
         serializer = ProjectSuggestFactValuesSerializer(data=data)
         if not serializer.is_valid():
-            assert SerializerNotValid(detail=serializer.errors)
+            raise SerializerNotValid(detail=serializer.errors)
 
         project_object = self.get_object()
         project_indices = list(project_object.indices)
@@ -286,7 +286,7 @@ class ProjectViewSet(AdminPermissionsViewSetMixin, viewsets.ModelViewSet, Import
         data = request.data
         serializer = ProjectSuggestFactNamesSerializer(data=data)
         if not serializer.is_valid():
-            assert SerializerNotValid(detail=serializer.errors)
+            raise SerializerNotValid(detail=serializer.errors)
         project_object = self.get_object()
         project_indices = list(project_object.indices)
         if not project_indices:
