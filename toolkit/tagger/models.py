@@ -46,6 +46,7 @@ class Tagger(models.Model):
     num_features = models.IntegerField(default=None, null=True)
     num_positives = models.IntegerField(default=None, null=True)
     num_negatives = models.IntegerField(default=None, null=True)
+    model_size = models.FloatField(default=None, null=True)
     location = models.TextField()
     plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
     
