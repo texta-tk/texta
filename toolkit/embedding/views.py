@@ -13,7 +13,7 @@ from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.embedding.phraser import Phraser
 from toolkit.embedding.serializers import (EmbeddingClusterBrowserSerializer, EmbeddingClusterSerializer, EmbeddingPredictSimilarWordsSerializer, EmbeddingSerializer)
 from toolkit.embedding.word_cluster import WordCluster
-from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError
+from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError, SerializerNotValid
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import GeneralTextSerializer
 from toolkit.tools.text_processor import TextProcessor
@@ -119,10 +119,9 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
                 negatives=serializer.validated_data['negatives'],
                 n=serializer.validated_data['output_size']
             )
-
             return Response(predictions, status=status.HTTP_200_OK)
         else:
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
 
 
     @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
@@ -143,7 +142,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
 
             return Response(phrased_text, status=status.HTTP_200_OK)
         else:
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
 
 
 class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
@@ -189,7 +188,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
 
         # check if valid request
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
 
         clustering_object = self.get_object()
         # check if clustering ready
@@ -215,7 +214,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
 
         # check if valid request
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
 
         clustering_object = self.get_object()
         # check if clustering ready
@@ -238,7 +237,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
 
         # check if valid request
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
 
         clustering_object = self.get_object()
         # check if clustering ready

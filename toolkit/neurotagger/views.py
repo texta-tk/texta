@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError
+from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError, SerializerNotValid
 from toolkit.neurotagger.models import Neurotagger
 from toolkit.neurotagger.neurotagger import NeurotaggerWorker
 from toolkit.neurotagger.serializers import NeuroTaggerTagDocumentSerializer, NeuroTaggerTagTextSerializer, NeurotaggerSerializer
@@ -133,7 +133,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
 
         # check if valid request
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
 
         # retrieve tagger object
         tagger_object = self.get_object()
@@ -154,7 +154,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
 
         # check if valid request
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
 
         # retrieve tagger object
         tagger_object = self.get_object()

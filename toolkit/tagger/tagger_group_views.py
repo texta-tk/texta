@@ -12,7 +12,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.query import Query
-from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError
+from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError, SerializerNotValid
 
 from toolkit.tagger.tasks import train_tagger, apply_tagger, create_tagger_objects
 from toolkit.tagger.models import Tagger, TaggerGroup
@@ -229,7 +229,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
         # check if valid request
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
 
         hybrid_tagger_object = self.get_object()
 
@@ -268,7 +268,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
         # check if valid request
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
 
         hybrid_tagger_object = self.get_object()
 

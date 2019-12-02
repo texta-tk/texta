@@ -12,7 +12,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.phraser import Phraser
-from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError
+from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError, SerializerNotValid
 from toolkit.helper_functions import apply_celery_task
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import (
@@ -123,7 +123,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
 
         # check if valid request
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
         # retrieve tagger object
         tagger_object = self.get_object()
         # check if tagger exists
@@ -167,7 +167,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
 
             # check if valid request
             if not serializer.is_valid():
-                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                raise SerializerNotValid(detail=serializer.errors)
 
             new_stop_words = serializer.validated_data['text']
             # save tagger object
@@ -191,7 +191,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         serializer = TaggerTagTextSerializer(data=request.data)
         # check if valid request
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
         # retrieve tagger object
         tagger_object = self.get_object()
         # check if tagger exists
@@ -222,7 +222,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         serializer = TaggerTagDocumentSerializer(data=request.data)
         # check if valid request
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
         # retrieve tagger object
         tagger_object = self.get_object()
         # check if tagger exists
