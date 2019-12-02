@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'toolkit.core',
     'toolkit.elastic',
     'toolkit.embedding',
+    'toolkit.dataset_import',
     'toolkit.tagger',
     'toolkit.neurotagger',
     # TEXTA Extension Apps
@@ -179,7 +180,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # ELASTICSEARCH
-ES_URL = os.getenv('TEXTA_ES_URL', 'http://localhost:9200')
+ES_URL = os.getenv('TEXTA_ES_URL', 'http://elastic-dev.texta.ee:9200')
 ES_PREFIX = os.getenv('TEXTA_ES_PREFIX', '')
 ES_USERNAME = os.getenv("TEXTA_ES_USER", "")
 ES_PASSWORD = os.getenv("TEXTA_ES_PASSWORD", "")
@@ -231,6 +232,12 @@ MEDIA_URL = 'data/media/'
 LOG_PATH = os.path.join(BASE_DIR, "data", "log")
 if not os.path.exists(LOG_PATH):
     os.makedirs(LOG_PATH)
+
+# Path to the upload directory. Default is /upload
+UPLOAD_PATH = os.path.join(BASE_DIR, "data", "upload")
+if not os.path.exists(UPLOAD_PATH):
+    os.makedirs(UPLOAD_PATH)
+
 
 # Logger IDs, used in apps.
 INFO_LOGGER = "info_logger"
