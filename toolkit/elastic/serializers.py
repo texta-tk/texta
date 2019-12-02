@@ -25,4 +25,3 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
         model = Reindexer
         fields = ('id', 'url', 'author_username', 'description', 'indices', 'fields', 'query', 'new_index', 'random_size', 'field_type', 'task')
         fields_to_parse = ('fields', 'field_type')
-

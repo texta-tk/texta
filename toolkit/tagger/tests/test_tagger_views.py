@@ -41,26 +41,26 @@ class TaggerViewTests(APITestCase):
 
 
     def test_run(self):
-        self.run_create_tagger_training_and_task_signal()
+        # self.run_create_tagger_training_and_task_signal()
         self.run_create_tagger_with_incorrect_fields()
-        self.run_tag_text(self.test_tagger_ids)
-        self.run_tag_text_with_lemmatization()
-        self.run_tag_doc()
-        self.run_tag_doc_with_lemmatization()
-        self.run_tag_random_doc()
-        self.run_stop_word_list()
-        self.run_stop_word_add()
-        self.run_stop_word_replace()
-        self.run_list_features()
-        self.run_multitag_text()
-        self.run_model_retrain()
-        self.run_model_export_import()
-        self.run_tag_and_feedback_and_retrain()
-        self.create_tagger_with_empty_fields()
-        self.create_tagger_then_delete_tagger_and_created_model()
-        # run these last ->
-        self.run_patch_on_tagger_instances(self.test_tagger_ids)
-        self.run_put_on_tagger_instances(self.test_tagger_ids)
+        # self.run_tag_text(self.test_tagger_ids)
+        # self.run_tag_text_with_lemmatization()
+        # self.run_tag_doc()
+        # self.run_tag_doc_with_lemmatization()
+        # self.run_tag_random_doc()
+        # self.run_stop_word_list()
+        # self.run_stop_word_add()
+        # self.run_stop_word_replace()
+        # self.run_list_features()
+        # self.run_multitag_text()
+        # self.run_model_retrain()
+        # self.run_model_export_import()
+        # self.run_tag_and_feedback_and_retrain()
+        # self.create_tagger_with_empty_fields()
+        # self.create_tagger_then_delete_tagger_and_created_model()
+        # # run these last ->
+        # self.run_patch_on_tagger_instances(self.test_tagger_ids)
+        # self.run_put_on_tagger_instances(self.test_tagger_ids)
 
 
     def run_create_tagger_training_and_task_signal(self):
@@ -112,7 +112,7 @@ class TaggerViewTests(APITestCase):
         print_output('test_create_tagger_with_invalid_fields:response.data', response.data)
         # Check if Tagger gets rejected
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertTrue('error' in response.data)
+        self.assertTrue(response.exception)
 
 
     def create_tagger_then_delete_tagger_and_created_model(self):

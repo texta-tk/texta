@@ -13,6 +13,7 @@ from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.embedding.phraser import Phraser
 from toolkit.embedding.serializers import (EmbeddingClusterBrowserSerializer, EmbeddingClusterSerializer, EmbeddingPredictSimilarWordsSerializer, EmbeddingSerializer)
 from toolkit.embedding.word_cluster import WordCluster
+from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import GeneralTextSerializer
 from toolkit.tools.text_processor import TextProcessor
@@ -82,7 +83,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
         entered_fields = set(serializer.validated_data['fields'])
         if not entered_fields or not entered_fields.issubset(project_fields):
-            return Response({'error': f'entered fields not in current project fields: {project_fields}'}, status=status.HTTP_400_BAD_REQUEST)
+            raise ProjectValidationFailed(detail=f'entered fields not in current project fields: {project_fields}')
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
@@ -108,7 +109,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         if serializer.is_valid():
             embedding_object = self.get_object()
             if not embedding_object.location:
-                return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+                raise NonExistantModelError()
 
             embedding = W2VEmbedding(embedding_object.id)
             embedding.load()
@@ -132,7 +133,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         if serializer.is_valid():
             embedding_object = self.get_object()
             if not embedding_object.location:
-                return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+                raise NonExistantModelError()
 
             phraser = Phraser(embedding_object.id)
             phraser.load()
@@ -193,7 +194,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
         clustering_object = self.get_object()
         # check if clustering ready
         if not clustering_object.location:
-            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+            raise NonExistantModelError()
 
         # load cluster model
         clusterer = WordCluster(clustering_object.id)
@@ -219,7 +220,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
         clustering_object = self.get_object()
         # check if clustering ready
         if not clustering_object.location:
-            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+            raise NonExistantModelError()
 
         # load cluster model
         clusterer = WordCluster(clustering_object.id)
@@ -242,7 +243,7 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
         clustering_object = self.get_object()
         # check if clustering ready
         if not clustering_object.location:
-            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+            raise NonExistantModelError()
 
         clusterer = WordCluster(clustering_object.id)
         clusterer.load()

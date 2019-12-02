@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 import json
 
+from toolkit.exceptions import ProjectValidationFailed
 from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import ProjectSerializer
 from toolkit.elastic.models import Reindexer
@@ -12,6 +13,7 @@ from toolkit.permissions.project_permissions import ProjectResourceAllowed
 
 from django_filters import rest_framework as filters
 import rest_framework.filters as drf_filters
+
 
 class ElasticGetIndices(views.APIView):
     def get(self, request):
@@ -31,6 +33,7 @@ class ReindexerFilter(filters.FilterSet):
     class Meta:
         model = Reindexer
         fields = []
+
 
 class ReindexerViewSet(mixins.CreateModelMixin,
                        mixins.ListModelMixin,
@@ -56,13 +59,12 @@ class ReindexerViewSet(mixins.CreateModelMixin,
         ProjectResourceAllowed,
         permissions.IsAuthenticated,
     )
-    
+
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = ReindexerFilter
     ordering_fields = ('id', 'author__username', 'description', 'fields', 'new_index', 'indices', 'random_size',
                         'task__time_started', 'task__time_completed',
                         'task__status')
-
 
     def get_queryset(self):
         return Reindexer.objects.filter(project=self.kwargs['project_pk'])
@@ -70,20 +72,20 @@ class ReindexerViewSet(mixins.CreateModelMixin,
     def create(self, request, *args, **kwargs):
         project_obj = Project.objects.get(id=self.kwargs['project_pk'])
         project_indices = project_obj.indices
+        project_fields = ElasticCore().get_fields(indices=project_indices)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         validate_indices = self.validate_indices(self.request, project_indices)
-        validate_fields = self.validate_fields(self.request, project_indices)
+        validate_fields = self.validate_fields(self.request, project_indices, project_fields)
         if validate_indices['result'] and validate_fields:
             self.perform_create(serializer, project_obj)
             self.update_project_indices(serializer, project_obj, project_indices)
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         if not validate_indices['result']:
-            return Response({'error': f'Index "{validate_indices["missing"]}" is not contained in your project indices "{repr(project_indices)}"'},
-                            status=status.HTTP_400_BAD_REQUEST)
+            raise ProjectValidationFailed(detail=f'Index "{validate_indices["missing"]}" is not contained in your project indices "{repr(project_indices)}"')
         if not validate_fields:
-            return Response({'error': f'The fields you are attempting to re-index are not contained in your project fields'}, status=status.HTTP_400_BAD_REQUEST)
+            raise ProjectValidationFailed(detail=f'The fields you are attempting to re-index are not in current project fields: {project_fields}')
 
     def perform_create(self, serializer, project_obj):
         serializer.save(
@@ -100,9 +102,8 @@ class ReindexerViewSet(mixins.CreateModelMixin,
                 return {"result": False, "missing": index}
             return {"result": True}
 
-    def validate_fields(self, request, project_indices):
+    def validate_fields(self, request, project_indices, project_fields):
         ''' check if changed fields included in the request are in the relevant project fields '''
-        project_fields = ElasticCore().get_fields(indices=project_indices)
         field_data = [field["path"] for field in project_fields]
         for field in self.request.data['fields']:
             if field not in field_data:
