@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from rest_framework.test import APITestCase, URLPatternsTestCase
 from rest_framework import status
 
-from toolkit.tools.utils_for_tests import create_test_user
+from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 
 class AuthTests(APITestCase, URLPatternsTestCase):
@@ -31,6 +31,7 @@ class AuthTests(APITestCase, URLPatternsTestCase):
             'password2': 'safepassword123',
         })
 
+        print_output("creating API account", response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
 
@@ -45,6 +46,7 @@ class AuthTests(APITestCase, URLPatternsTestCase):
             'password': 'password',
         })
 
+        print_output("Login to API account", response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
@@ -57,4 +59,5 @@ class AuthTests(APITestCase, URLPatternsTestCase):
         self.client.force_authenticate(self.test_user)
         response = self.client.post(url)
 
+        print_output("Log out of API account", response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

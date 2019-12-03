@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError, SerializerNotValid
 from toolkit.neurotagger.models import Neurotagger
 from toolkit.neurotagger.neurotagger import NeurotaggerWorker
 from toolkit.neurotagger.serializers import NeuroTaggerTagDocumentSerializer, NeuroTaggerTagTextSerializer, NeurotaggerSerializer
@@ -82,8 +83,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
         project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
         entered_fields = set(serializer.validated_data['fields'])
         if not entered_fields:
-            return Response({'error': f'entered fields not in current project fields: {project_fields}'}, status=status.HTTP_400_BAD_REQUEST)
-
+            raise ProjectValidationFailed(detail=f'entered fields not in current project fields: {project_fields}')
         if 'fact_name' in serializer.validated_data and serializer.validated_data['fact_name']:
             fact_name = serializer.validated_data['fact_name']
             active_project = Project.objects.get(id=self.kwargs['project_pk'])
@@ -133,14 +133,14 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
 
         # check if valid request
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
 
         # retrieve tagger object
         tagger_object = self.get_object()
 
         # check if tagger exists
         if not tagger_object.location:
-            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+            raise NonExistantModelError()
 
         # apply tagger
         tagger_response = self.apply_tagger(tagger_object, serializer.validated_data['text'], threshold=serializer.validated_data['threshold'], input_type='text')
@@ -154,14 +154,14 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
 
         # check if valid request
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
 
         # retrieve tagger object
         tagger_object = self.get_object()
 
         # check if tagger exists
         if not tagger_object.location:
-            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+            raise NonExistantModelError()
 
         # apply tagger
         tagger_response = self.apply_tagger(tagger_object, serializer.data['doc'], threshold=serializer.validated_data['threshold'], input_type='doc')
@@ -195,7 +195,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
         tagger_id = tagger_object.id
         # check if tagger exists
         if not tagger_object.location:
-            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+            raise NonExistantModelError()
         # retrieve tagger fields
         tagger_fields = json.loads(tagger_object.fields)
 
