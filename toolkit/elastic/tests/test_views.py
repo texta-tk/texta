@@ -8,7 +8,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_INDEX_REINDEX, TEST_INDEX_LARGE, TEST_QUERY
+from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_INDEX_REINDEX, TEST_INDEX_LARGE, TEST_QUERY, REINDEXER_TEST_INDEX
 from toolkit.core.project.models import Project
 from toolkit.elastic.models import Reindexer
 from toolkit.elastic.core import ElasticCore
@@ -40,8 +40,9 @@ class ReindexerViewTests(APITestCase):
         existing_new_index_payload = {
         "description": "TestWrongField",
         "indices": [TEST_INDEX],
-        "new_index": "reindexer_test_index",  #  currently exists for test purposes
+        "new_index": REINDEXER_TEST_INDEX,  # index created for test purposes
         "fields": [],
+        "field_type": [],
         }
         wrong_fields_payload = {
         "description": "TestWrongField",
@@ -100,13 +101,13 @@ class ReindexerViewTests(APITestCase):
         }
         for payload in (
             existing_new_index_payload,
-            # wrong_indices_payload,
-            # wrong_fields_payload,
-            # pick_fields_payload,
-            # join_indices_fields_payload,
-            # test_query_payload,
-            # random_docs_payload,
-            # update_field_type_payload,
+            wrong_indices_payload,
+            wrong_fields_payload,
+            pick_fields_payload,
+            join_indices_fields_payload,
+            test_query_payload,
+            random_docs_payload,
+            update_field_type_payload,
         ):
             url = f'/projects/{self.project.id}/reindexer/'
             self.run_create_reindexer_task_signal(self.project, url, payload)
@@ -129,7 +130,8 @@ class ReindexerViewTests(APITestCase):
         ''' Check if new_index gets created
             Check if new_index gets re-indexed and completed
             remove test new_index '''
-        if project.indices is None or not self.validate_fields(project, payload) or not self.validate_indices(project, payload) or response.exception:
+
+        if project.indices is None or response.exception:
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         else:
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -182,7 +184,6 @@ class ReindexerViewTests(APITestCase):
         print_output("patch_response.data", patch_response.data)
         self.assertEqual(put_response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
         self.assertEqual(patch_response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
-
 
 
 

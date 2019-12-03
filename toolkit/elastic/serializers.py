@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Reindexer
+from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.serializer_constants import ProjectResourceUrlSerializer, FieldParseSerializer
 
@@ -27,9 +28,10 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
         fields = ('id', 'url', 'author_username', 'description', 'indices', 'fields', 'query', 'new_index', 'random_size', 'field_type', 'task')
         fields_to_parse = ('fields', 'field_type')
 
-
     def validate_new_index(self, value):
         """ Check that new_index does not exist """
         if value in ElasticCore().get_indices():
             raise serializers.ValidationError("new_index already exists, choose a different name for your reindexed index")
         return value
+
+
