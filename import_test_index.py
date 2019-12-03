@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import json
 import argparse
 import zipfile
@@ -7,7 +6,7 @@ from urllib.request import urlopen
 from io import BytesIO
 from elasticsearch import Elasticsearch
 
-from toolkit.settings import ES_PASSWORD, ES_USERNAME
+from toolkit.settings import ES_PASSWORD, ES_USERNAME, TEST_DATA_DIR
 
 parser = argparse.ArgumentParser(description='Import the Elasticsearch index for unit tests.')
 parser.add_argument('-es', type=str, default='localhost:9200',
@@ -22,11 +21,12 @@ args = parser.parse_args()
 HOST = args.es
 LARGE = args.lg
 
-url_prefix = "https://git.texta.ee/texta/texta-resources/raw/master/tk_test_data/elastic_data/"
+url_prefix = "https://git.texta.ee/texta/texta-resources/raw/master/tk_test_data/"
 
 dataset_params = {
-    "lg": {"index": args.i + "_large", "url": url_prefix + "texta_test_index_large.zip", "file_name": "texta_test_index_large"},
-    "sm": {"index": args.i, "url": url_prefix + "texta_test_index.zip", "file_name": "texta_test_index"}
+    "lg": {"index": args.i + "_large", "url": url_prefix + "elastic_data/texta_test_index_large.zip", "file_name": "texta_test_index_large"},
+    "sm": {"index": args.i, "url": url_prefix + "elastic_data/texta_test_index.zip", "file_name": "texta_test_index"},
+    "collection": {"url": url_prefix + "import_data/import_test_data.zip"}
 }
 
 es = Elasticsearch(HOST, http_auth=(ES_USERNAME, ES_PASSWORD))
@@ -74,13 +74,23 @@ def import_docs(params):
         print('')
 
 
+def import_collections(params):
+    print("Downloading test collections.")
+    response = urlopen(params["url"])
+    test_data_zip = BytesIO(response.read())
+    print("Reading test collections.")
+    with zipfile.ZipFile(test_data_zip) as z:
+        z.extractall(TEST_DATA_DIR)
+    print("Extracted test collections.")
+
 def main():
     try:
         print("Processing small dataset:")
         import_docs(dataset_params["sm"])
         if LARGE == True:
             print("Processing large dataset:")
-            import_docs(dataset_params["lg"])          
+            import_docs(dataset_params["lg"])
+        import_collections(dataset_params["collection"])       
     except Exception as e:
         print(e)
         print('An error occurred during loading and importing the data')
