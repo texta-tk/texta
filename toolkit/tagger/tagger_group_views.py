@@ -12,6 +12,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.query import Query
+from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError, SerializerNotValid, MLPNotAvailable
 
 from toolkit.tagger.tasks import train_tagger, apply_tagger, create_tagger_objects
 from toolkit.tagger.models import Tagger, TaggerGroup
@@ -74,7 +75,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # raise error on tagger empty fields
         project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
         if not serializer.validated_data['tagger']['fields']:
-            return Response({'error': f'entered fields not in current project fields: {project_fields}'}, status=status.HTTP_400_BAD_REQUEST)
+            raise ProjectValidationFailed(detail=f'entered fields not in current project fields: {project_fields}')
 
         fact_name = serializer.validated_data['fact_name']
         active_project = Project.objects.get(id=self.kwargs['project_pk'])
@@ -228,13 +229,13 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
         # check if valid request
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
 
         hybrid_tagger_object = self.get_object()
 
         # check if any of the models ready
         if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
-            return Response({'error': 'models do not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+            raise NonExistantModelError()
 
         # declare tag candidates variables
         text = serializer.validated_data['text']
@@ -245,7 +246,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # check if MLP available
         if lemmatize or use_ner:
             if not global_mlp_for_taggers.status:
-                return Response({'error': 'mlp not available. check connection to mlp.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                raise MLPNotAvailable()
 
         # update text and tags with MLP
         text, tags = self.get_mlp(text, lemmatize=lemmatize, use_ner=use_ner)
@@ -267,13 +268,13 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
         # check if valid request
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
 
         hybrid_tagger_object = self.get_object()
 
         # check if any of the models ready
         if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
-            return Response({'error': 'models doe not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+            raise NonExistantModelError()
 
         # retrieve field data from the first element
         # we can do that safely because all taggers inside
@@ -299,7 +300,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # check if MLP available
         if lemmatize or use_ner:
             if not global_mlp_for_taggers.status:
-                return Response({'error': 'mlp not available. check connection to mlp.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                raise MLPNotAvailable()
 
         # update text and tags with MLP
         combined_texts, tags = self.get_mlp(combined_texts, lemmatize=lemmatize, use_ner=use_ner)
@@ -320,12 +321,12 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         hybrid_tagger_object = self.get_object()
         # check if any of the models ready
         if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
-            return Response({'error': 'models do not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+            raise NonExistantModelError()
         # retrieve tagger fields from the first object
         tagger_fields = json.loads(hybrid_tagger_object.taggers.first().fields)
 
         if not ElasticCore().check_if_indices_exist(hybrid_tagger_object.project.indices):
-            return Response({'error': f'One or more index from {list(hybrid_tagger_object.project.indices)} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': f'One or more index from {list(hybrid_tagger_object.project.indices)} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         # retrieve random document
         random_doc = ElasticSearcher(indices=hybrid_tagger_object.project.indices).random_documents(size=1)[0]
         # filter out correct fields from the document

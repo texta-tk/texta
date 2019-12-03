@@ -7,7 +7,6 @@ from toolkit.core.project.models import Project
     Superuser has no restrictions.
     If current_user is not a project user or owner, the project is filtered out in the queryset. So in most or all cases ProjectResourceAllowed permissions
     are not actually required. With future use cases, however, they may become useful.
-
 """
 
 

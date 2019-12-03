@@ -31,7 +31,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
     def handle_exception(self, exc):
         if isinstance(exc, Http404):
-            return Response({'data': 'Insufficient permissions for this resource.'},
+            return Response({'detail': 'Insufficient permissions for this resource.'},
                             status=status.HTTP_404_NOT_FOUND)
 
         return super(ProjectDetails, self).handle_exception(exc)

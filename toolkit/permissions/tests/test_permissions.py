@@ -25,14 +25,12 @@ class ProjectPermissionsTests(APITestCase):
         self.client = APIClient()
         self.project_instance_url = f'/projects/{self.project.id}/'
 
-
     def test_all(self):
         for resource in ('lexicons', 'taggers', 'embeddings', 'embedding_clusters', 'tagger_groups', 'reindexer'):
             self.project_resource_url = f'/projects/{self.project.id}/{resource}/'
             self.run_with_users(self.access_project_resources, resource)
         self.run_with_users(self.access_project_instance_methods)
         self.run_with_users(self.update_project_fields)
-
 
     def run_with_users(self, func, resource=None):
         func(self.admin, '1234')
@@ -44,7 +42,6 @@ class ProjectPermissionsTests(APITestCase):
             func(self.project_user, self.default_password)
             func(self.user, self.default_password, SAFE_FORBIDDEN=True)
 
-
     def access_project_resources(self, username, password, SAFE_FORBIDDEN=False):
         url = self.project_resource_url
         self.client.login(username=username, password=password)
@@ -54,17 +51,14 @@ class ProjectPermissionsTests(APITestCase):
             return self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-
     def access_project_instance_methods(self, username, password, SAFE_FORBIDDEN=False, UNSAFE_FORBIDDEN=False):
         '''F, F for owner,admin, F, T for p_user, F, F for non-member.'''
         url = self.project_instance_url
         self.client.login(username=username, password=password)
         get_response = self.client.get(url)
         responses = {'GET': get_response, 'PUT': self.client.put(url, get_response.data, format='json')}
-
         self.validate_safe_response(responses['GET'], url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
         self.validate_unsafe_response(responses['PUT'], url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
-
 
     def update_project_fields(self, username, password, SAFE_FORBIDDEN=False, UNSAFE_FORBIDDEN=False):
         url = self.project_instance_url
@@ -72,14 +66,12 @@ class ProjectPermissionsTests(APITestCase):
         self.update_title_and_indices(url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
         self.add_user_to_project(url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
 
-
     def update_title_and_indices(self, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN):
         get_response = self.client.get(url)
         get_response.data["indices"] =  {TEST_INDEX}
         get_response.data["title"] = "put_title"
         put_response = self.client.put(url, get_response.data, format='json')
         self.validate_unsafe_response(put_response, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
-
 
     def add_user_to_project(self, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN):
         self.user_to_add = create_test_user(name=f'{username}_added_user', password=self.default_password)
@@ -98,7 +90,6 @@ class ProjectPermissionsTests(APITestCase):
             add_response = self.client.put(url, payload, format='json')
             print_output("user_add: ", add_response.data)
             self.validate_unsafe_response(add_response, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
-
 
     def validate_safe_response(self, response, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN):
         # admin & project_owner

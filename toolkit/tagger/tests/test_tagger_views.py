@@ -112,7 +112,7 @@ class TaggerViewTests(APITestCase):
         print_output('test_create_tagger_with_invalid_fields:response.data', response.data)
         # Check if Tagger gets rejected
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertTrue('error' in response.data)
+        self.assertTrue(response.exception)
 
 
     def create_tagger_then_delete_tagger_and_created_model(self):
