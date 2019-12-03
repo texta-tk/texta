@@ -12,7 +12,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.query import Query
-from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError, SerializerNotValid
+from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError, SerializerNotValid, MLPNotAvailable
 
 from toolkit.tagger.tasks import train_tagger, apply_tagger, create_tagger_objects
 from toolkit.tagger.models import Tagger, TaggerGroup
@@ -246,7 +246,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # check if MLP available
         if lemmatize or use_ner:
             if not global_mlp_for_taggers.status:
-                return Response({'error': 'mlp not available. check connection to mlp.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                raise MLPNotAvailable()
 
         # update text and tags with MLP
         text, tags = self.get_mlp(text, lemmatize=lemmatize, use_ner=use_ner)
@@ -300,7 +300,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # check if MLP available
         if lemmatize or use_ner:
             if not global_mlp_for_taggers.status:
-                return Response({'error': 'mlp not available. check connection to mlp.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                raise MLPNotAvailable()
 
         # update text and tags with MLP
         combined_texts, tags = self.get_mlp(combined_texts, lemmatize=lemmatize, use_ner=use_ner)

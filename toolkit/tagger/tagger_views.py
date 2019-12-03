@@ -12,7 +12,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.phraser import Phraser
-from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError, SerializerNotValid
+from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError, SerializerNotValid, MLPNotAvailable
 from toolkit.helper_functions import apply_celery_task
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import (
@@ -204,7 +204,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
             lemmatizer = global_mlp_for_taggers
             # check if lemmatizer available
             if not lemmatizer.status:
-                return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                raise MLPNotAvailable(detail="Lemmatization failed. Check connection to MLP.")
         # apply tagger
         tagger_response = self.apply_tagger(
             tagger_object,
@@ -243,7 +243,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
             lemmatizer = global_mlp_for_taggers
             # check if lemmatization available
             if not lemmatizer.status:
-                return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                raise MLPNotAvailable(detail="Lemmatization failed. Check connection to MLP.")
         # apply tagger
         tagger_response = self.apply_tagger(
             tagger_object,
