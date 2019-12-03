@@ -9,7 +9,8 @@ TEST_FACT_NAME = "TEEMA"
 TEST_MATCH_TEXT = "loll"
 TEST_QUERY = {"query": {"match": {TEST_FIELD: {"query": TEST_MATCH_TEXT}}}}
 
-TEST_DATASETS = ["/home/rsirel/dev/texta-rest/data/erakonnad_25_01_2019.csv", 
-#"/home/rsirel/dev/texta-rest/data/import.xlsx"
+TEST_DATASETS = [
+    "/home/rsirel/dev/texta-rest/data/import_test_data.csv", 
+    "/home/rsirel/dev/texta-rest/data/import_test_data.xls"
 ]
 TEST_IMPORT_DATASET = "texta-test-import-dataset"

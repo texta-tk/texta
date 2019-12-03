@@ -19,12 +19,11 @@ def import_dataset(dataset_import_id):
     try:
         # retrieve file path from object
         file_path = import_object.file.path
-        ds = Dataset(file_path, import_object.index)
+        ds = Dataset(file_path, import_object.index, show_progress=show_progress)
         errors = ds.import_dataset()
+        # update errors
         if errors:
             show_progress.update_errors(errors)
-            task_object.update_status(Task.STATUS_FAILED)
-            return False
         # declare the job done
         show_progress.update_step('')
         show_progress.update_view(100.0)

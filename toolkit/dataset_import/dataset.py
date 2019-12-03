@@ -9,10 +9,12 @@ class Dataset:
     TYPE_XLSX = '.xlsx'
     TYPE_JSON = '.json'
 
-    def __init__(self, file_path, index, separator=','):
+    def __init__(self, file_path, index, separator=',', show_progress=None):
         self.file_path = file_path
         self.separator = separator
+        self.show_progress = show_progress
         self.index = index
+        self.num_records = 0
 
     def _get_file_content(self):
         '''Retrieves DataFrame for a collection from given path.'''
@@ -33,21 +35,32 @@ class Dataset:
         return False, None
     
     def import_dataset(self):
+        errors = []
         # retrieve content from file
         success, file_content = self._get_file_content()
         # check if file was parsed
         if not success:
-            return {'error': 'unknown file type'}
+            errors.append('unknown file type')
+            return errors
         # convert content to list of records (dicts)
         records = file_content.to_dict(orient='records')
+        # set num_records
+        self.num_records = len(records)
+        # set total number of documents for progress
+        if self.show_progress:
+            self.show_progress.set_total(self.num_records)
         # add documents to ES
         es_doc = ElasticDocument(self.index)
         for record in records:
             # remove nan values
             record = {k: v for k, v in record.items() if pd.Series(v).notna().all()}
             # add to Elastic
-
-            
-            es_doc.add(record)
-        # return no errors
-        return None
+            try:
+                es_doc.add(record)
+            except Exception as e:
+                errors.append(e)
+            # update progress
+            if self.show_progress:
+                self.show_progress.update(1)
+        # return errors
+        return errors

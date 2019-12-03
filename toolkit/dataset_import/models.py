@@ -13,6 +13,7 @@ class DatasetImport(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     index = models.CharField(max_length=MAX_DESC_LEN)
     file = models.FileField(upload_to='data/upload')
+    num_documents = models.IntegerField(default=0)
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):

@@ -32,12 +32,12 @@ class DatasetImportViewTests(APITestCase):
 
     def test_import_dataset(self):
         """Tests the endpoint for importing dataset."""
-        for file_path in TEST_DATASETS:
-            with open(file_path, 'r', encoding='latin1') as fh:
+        for i,file_path in enumerate(TEST_DATASETS):
+            with open(file_path, 'rb') as fh:
                 payload = {
                     "description": "Testimport",
                     "file": fh,
-                    "index": TEST_IMPORT_DATASET
+                    "index": f"{TEST_IMPORT_DATASET}-{i}"
                 }
                 response = self.client.post(self.url, payload)
                 print_output('test_import_dataset:response.data', response.data)
