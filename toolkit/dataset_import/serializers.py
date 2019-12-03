@@ -16,6 +16,6 @@ class DatasetImportSerializer(FieldParseSerializer, serializers.HyperlinkedModel
 
     class Meta:
         model = DatasetImport
-        fields = ('id', 'url', 'author_username', 'description', 'index', 'separator', 'num_documents', 'file', 'task')
+        fields = ('id', 'url', 'author_username', 'description', 'index', 'separator', 'num_documents', 'num_documents_success', 'file', 'task')
         fields_to_parse = ()
-        read_only_fields = ('id', 'author_username', 'num_documents', 'task')
+        read_only_fields = ('id', 'author_username', 'num_documents', 'num_documents_success', 'task')

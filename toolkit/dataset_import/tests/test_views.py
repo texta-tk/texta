@@ -49,6 +49,9 @@ class DatasetImportViewTests(APITestCase):
                 self.addCleanup(remove_file, import_dataset.file.name)
                 # Check if Import is completed
                 self.assertEqual(import_dataset.task.status, Task.STATUS_COMPLETED)
+                self.assertTrue(import_dataset.num_documents > 0)
+                self.assertTrue(import_dataset.num_documents_success > 0)
+                self.assertTrue(import_dataset.num_documents_success <= import_dataset.num_documents)
 
     def tearDown(self):
         # delete created indices

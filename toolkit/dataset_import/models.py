@@ -15,6 +15,7 @@ class DatasetImport(models.Model):
     file = models.FileField(upload_to='data/upload')
     separator = models.CharField(max_length=MAX_DESC_LEN, default=',')
     num_documents = models.IntegerField(default=0)
+    num_documents_success = models.IntegerField(default=0)
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):

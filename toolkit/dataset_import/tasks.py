@@ -24,6 +24,10 @@ def import_dataset(dataset_import_id):
         # update errors
         if errors:
             show_progress.update_errors(errors)
+        # update num_documents
+        import_object.num_documents = ds.num_records
+        import_object.num_documents_success = ds.num_records_success
+        import_object.save()
         # declare the job done
         show_progress.update_step('')
         show_progress.update_view(100.0)

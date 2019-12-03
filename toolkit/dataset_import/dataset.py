@@ -15,6 +15,7 @@ class Dataset:
         self.show_progress = show_progress
         self.index = index
         self.num_records = 0
+        self.num_records_success = 0
 
     def _get_file_content(self):
         '''Retrieves DataFrame for a collection from given path.'''
@@ -57,6 +58,7 @@ class Dataset:
             # add to Elastic
             try:
                 es_doc.add(record)
+                self.num_records_success += 1
             except Exception as e:
                 errors.append(e)
             # update progress
