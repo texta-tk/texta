@@ -49,7 +49,7 @@ class ProjectGetFactsSerializer(serializers.Serializer):
 
 
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):
-    # owner = serializers.PrimaryKeyRelatedField(required=False, queryset=User.objects.all())
+    owner = serializers.PrimaryKeyRelatedField(required=False, queryset=User.objects.all())
     owner_username = serializers.CharField(source='owner.username', read_only=True)
 
     indices = serializers.ListField(default=[], child=serializers.CharField())
@@ -67,18 +67,9 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         request = self.context.get('request')
         base_url = request.build_absolute_uri(f'/projects/{obj.id}/')
         resource_dict = {}
-        for resource_name in ('lexicons', 'reindexer', 'searches', 'embeddings', 'embedding_clusters', 'taggers', 'tagger_groups', 'neurotaggers'):
+        for resource_name in ('lexicons', 'reindexer', 'dataset_imports', 'searches', 'embeddings', 'embedding_clusters', 'taggers', 'tagger_groups', 'neurotaggers'):
             resource_dict[resource_name] = f'{base_url}{resource_name}/'
         return resource_dict
-
-
-class ProjectAdminSerializer(ProjectSerializer):
-    owner = serializers.PrimaryKeyRelatedField(required=False, queryset=User.objects.all())
-
-    class Meta:
-        model = Project
-        fields = ('url', 'id', 'title', 'owner', 'users', 'indices', 'resources', 'owner_username')
-        read_only_fields = ('resources',)
 
 
 class ProjectSuggestFactValuesSerializer(serializers.Serializer):

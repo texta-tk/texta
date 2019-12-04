@@ -43,7 +43,7 @@ class ProjectFilter(filters.FilterSet):
         model = Project
         fields = []
 
-class ProjectViewSet(AdminPermissionsViewSetMixin, viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
+class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
     """
     list:
     Returns list of projects.
@@ -76,11 +76,7 @@ class ProjectViewSet(AdminPermissionsViewSetMixin, viewsets.ModelViewSet, Import
 
 
     def perform_create(self, serializer):
-        ''' admin can choose owner others get assigned self as owner'''
-        if self.request.user.is_superuser:
-            serializer.save(owner=serializer.validated_data['owner'])
-        else:
-            serializer.save(owner=self.request.user)
+        serializer.save(owner=self.request.user)
 
 
     def get_queryset(self):

@@ -236,7 +236,6 @@ class NeurotaggerWorker():
 
         # Get the classification report to print to the console for debug
         metrics = classification_report(self.y_val, rounded_preds, target_names=self.label_names)
-        print(metrics)
         # Get the classification report to save itself into a dictionary variable
         metrics = classification_report(self.y_val, rounded_preds, target_names=self.label_names, output_dict=True)
 

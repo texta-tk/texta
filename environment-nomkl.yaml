@@ -42,3 +42,4 @@ dependencies:
     - python-json-logger
     - drf-yasg
     - django-filter
+    - xlrd

@@ -12,7 +12,6 @@ from django.db.models import Count
 from django.http import HttpResponse
 
 from toolkit.core.project.models import Project
-from toolkit.core.project.serializers import ProjectAdminSerializer
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.query import Query
 from toolkit.elastic.feedback import Feedback
