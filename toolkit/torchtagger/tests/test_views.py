@@ -39,7 +39,7 @@ class TorchTaggerViewTests(APITestCase):
         self.run_train_embedding()
         self.run_train_tagger()
         self.run_train_multiclass_tagger()
-        #self.run_tag_text()
+        self.run_tag_text()
 
     def run_train_embedding(self):
         # payload for training embedding

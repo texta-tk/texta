@@ -60,7 +60,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         if not tagger_object.location:
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
         # retrieve model from cache
-        #tagger = global_torchtagger_cache.get_model(tagger_object)
-
-        #tagger_response = tagger.tag_text(serializer.validated_data['text'])
-        return Response("tagger_response", status=status.HTTP_200_OK)
+        tagger = TorchTagger(tagger_object.id)
+        tagger.load()
+        tagger_response = tagger.tag_text(serializer.validated_data['text'])
+        return Response(tagger_response, status=status.HTTP_200_OK)

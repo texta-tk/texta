@@ -7,15 +7,16 @@ import pandas as pd
 import numpy as np
 import json
 import torch
+import dill
 
+from toolkit.embedding.embedding import W2VEmbedding
 from .torch_models.models import TORCH_MODELS
 from toolkit.tagger.report import TaggingReport
 from .models import TorchTagger as TorchTaggerObject
 
 class TorchTagger:
 
-    def __init__(self, tagger_id, embedding=None, model_arch="fastText", n_classes=2, num_epochs=5):
-        self.embedding = embedding
+    def __init__(self, tagger_id, model_arch="fastText", n_classes=2, num_epochs=5):
         # retrieve model and initial config
         self.config = TORCH_MODELS[model_arch]["config"]()
         self.model_arch = TORCH_MODELS[model_arch]["model"]
@@ -27,26 +28,53 @@ class TorchTagger:
         self.epoch_reports = []
         # model
         self.model = None
+        self.text_field = None
         self.tagger_id = int(tagger_id)
         # indixes to save label to int relations
-        self.label_dict = None
+        self.label_index = None
         self.label_reverse_index = None
+        # load tokenizer and embedding for the model
+        self.tokenizer = self._get_tokenizer()
+        self.embedding = self._get_embedding()
+
+
+    def _get_tokenizer(self):
+        # TODO: replace with normal tokenizer
+        # my first hacky tokenizer
+        return lambda sent: [x.strip() for x in sent.split(" ")]
+
+
+    def _get_embedding(self):
+        # load embedding
+        tagger_object = TorchTaggerObject.objects.get(pk=self.tagger_id)
+        embedding_model = W2VEmbedding(tagger_object.embedding.id)
+        embedding_model.load()
+        return embedding_model
 
 
     def save(self, path):
         """Saves model on disk."""
-        saved = torch.save(self.model, path)
-        return saved
+        torch.save(self.model, path)
+        with open(f"{path}_text_field", "wb") as fh:
+            dill.dump(self.text_field, fh)
+        return True
 
 
     def load(self):
         """Loads model from disk."""
         tagger_object = TorchTaggerObject.objects.get(pk=self.tagger_id)
         tagger_path = json.loads(tagger_object.location)[TorchTaggerObject.MODEL_TYPE]
+        # load model
         model = torch.load(tagger_path)
         model.eval()
+        # set tagger description & model
         self.description = tagger_object.description
         self.model = model
+        # load & set field object
+        with open(f"{tagger_path}_text_field", "rb") as fh:
+            self.text_field = dill.load(fh)
+        # set label index
+        self.label_index = json.loads(tagger_object.label_index)
         return self.model
 
 
@@ -73,11 +101,8 @@ class TorchTagger:
 
 
     def _prepare_data(self, data_sample):
-        # TODO: replace with normal tokenizer
-        # my first hacky tokenizer
-        tokenizer = lambda sent: [x.strip() for x in sent.split(" ")]
         # Creating Field for data
-        text_field = data.Field(sequential=True, tokenize=tokenizer, lower=True)
+        text_field = data.Field(sequential=True, tokenize=self.tokenizer, lower=True)
         label_field = data.Field(sequential=False, use_vocab=False)
         datafields = [("text", text_field), ("label", label_field)]
         # create label dicts for later lookup
@@ -93,9 +118,6 @@ class TorchTagger:
                 labels.append(self.label_index[label])
         # update output size to match number of classes
         self.config.output_size = len(list(data_sample.data.keys()))
-
-        print(len(labels), len(examples))
-
         # retrieve vectors and vocab dict from embedding
         embedding_matrix, word2index = self.embedding.tensorize()
         # set embedding size according to the dimensionality embedding model
@@ -151,24 +173,17 @@ class TorchTagger:
         for i in range(self.config.max_epochs):
             report = model.run_epoch(train_iterator, val_iterator, i)
             self.epoch_reports.append(report)
-
-            print('Epoch:', i, report.to_dict())
+            print("Epoch:", i, report.to_dict())
         # set model
         self.model = model
+        # set vocab
+        self.text_field = text_field
         # return report for last epoch
         return report
 
 
     def tag_text(self, text):
-        tokenizer = lambda sent: [x.strip() for x in sent.split(" ")]
-        text_field = data.Field(sequential=True, tokenize=tokenizer, lower=True)
-
-        datafields = {"text": text_field}
-        data.Example.fromdict({"text": text}, [datafields])
-
-        if torch.cuda.is_available():
-            x = batch.text.cuda()
-        else:
-            x = batch.text
-        
-        prediction = self.model(x)
+        """Tags text using saved model."""
+        processed_text = self.text_field.process([self.text_field.preprocess(text)])
+        prediction = self.model(processed_text).argmax().item()
+        print(prediction, self.label_index)
