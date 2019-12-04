@@ -91,19 +91,6 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         serializer.save(fields=json.dumps(serializer.validated_data['fields']))
 
 
-    def create(self, request, *args, **kwargs):
-        serializer = TaggerSerializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        # check if selected fields are present in the project:
-        project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
-        entered_fields = set(serializer.validated_data['fields'])
-        if not entered_fields or not entered_fields.issubset(project_fields):
-            raise ProjectValidationFailed(detail=f'entered fields not in current project fields: {project_fields}')
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
-
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)

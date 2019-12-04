@@ -11,6 +11,7 @@ from toolkit.tagger.choices import (get_field_choices, get_classifier_choices, g
                                     DEFAULT_NUM_DOCUMENTS, DEFAULT_TAGGER_GROUP_FACT_NAME)
 
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.core.project.models import Project
 from toolkit.serializer_constants import ProjectResourceUrlSerializer, FieldParseSerializer
 
 
@@ -76,11 +77,21 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     class Meta:
         model = Tagger
         fields = ('id', 'url', 'author_username', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
-            'maximum_sample_size', 'negative_multiplier', 'location', 'precision', 'recall', 'f1_score', 'num_features', 
+            'maximum_sample_size', 'negative_multiplier', 'location', 'precision', 'recall', 'f1_score', 'num_features',
             'num_positives', 'num_negatives', 'model_size', 'plot', 'task')
-        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_positives', 'num_negatives', 'model_size', 
+        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'num_positives', 'num_negatives', 'model_size',
             'location,', 'stop_words')
         fields_to_parse = ('fields', 'location')
+
+
+    def validate_fields(self, value):
+        """ check if selected fields are present in the project """
+        project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
+        project_fields = set(project_obj.get_elastic_fields(path_list=True))
+        if not value or not set(value).issubset(project_fields):
+            raise serializers.ValidationError(f'entered fields not in current project fields: {project_fields}')
+        return value
+
 
     def __init__(self, *args, **kwargs):
         '''

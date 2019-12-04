@@ -29,6 +29,7 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
         read_only_fields = ('vocab_size',)
         fields_to_parse = ('fields',)
 
+
     def validate_fields(self, value):
         """ check if selected fields are present in the project """
         project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
