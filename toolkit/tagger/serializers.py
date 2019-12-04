@@ -84,15 +84,6 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
         fields_to_parse = ('fields', 'location')
 
 
-    def validate_fields(self, value):
-        """ check if selected fields are present in the project """
-        project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
-        project_fields = set(project_obj.get_elastic_fields(path_list=True))
-        if not value or not set(value).issubset(project_fields):
-            raise serializers.ValidationError(f'entered fields not in current project fields: {project_fields}')
-        return value
-
-
     def __init__(self, *args, **kwargs):
         '''
         Add the ability to pass extra arguments such as "remove_fields".

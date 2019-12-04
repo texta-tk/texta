@@ -30,15 +30,6 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
         fields_to_parse = ('fields',)
 
 
-    def validate_fields(self, value):
-        """ check if selected fields are present in the project """
-        project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
-        project_fields = set(project_obj.get_elastic_fields(path_list=True))
-        if not value or not set(value).issubset(project_fields):
-            raise serializers.ValidationError(f'entered fields not in current project fields: {project_fields}')
-        return value
-
-
 class EmbeddingPredictSimilarWordsSerializer(serializers.Serializer):
     positives = serializers.ListField(child=serializers.CharField(), help_text=f'Positive words for the model.')
     negatives = serializers.ListField(child=serializers.CharField(), help_text=f'Negative words for the model. Default: EMPTY', required=False, default=[])

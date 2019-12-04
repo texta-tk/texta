@@ -56,14 +56,6 @@ class NeurotaggerSerializer(FieldParseSerializer, serializers.HyperlinkedModelSe
         fields_to_parse = ('fields',)
 
 
-    def validate_fields(self, value):
-        """ raise error on neurotagger empty fields """
-        project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
-        project_fields = set(project_obj.get_elastic_fields(path_list=True))
-        if not value:
-            raise serializers.ValidationError(f'entered fields not in current project fields: {project_fields}')
-        return value
-
     def validate(self, data):
         """ validate if tags are retrievable with serializer input """
         if data['fact_name'] and 'fact_name' in data:

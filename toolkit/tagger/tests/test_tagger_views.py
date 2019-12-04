@@ -63,7 +63,6 @@ class TaggerViewTests(APITestCase):
         self.run_put_on_tagger_instances(self.test_tagger_ids)
 
 
-
     def run_create_tagger_training_and_task_signal(self):
         '''Tests the endpoint for a new Tagger, and if a new Task gets created via the signal'''
         # run test for each vectorizer & classifier option
