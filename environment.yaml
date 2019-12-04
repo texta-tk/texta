@@ -42,3 +42,5 @@ dependencies:
     - drf-yasg
     - torchtext
     - django-filter
+    - xlrd
+    - dill

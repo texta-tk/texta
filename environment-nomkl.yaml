@@ -9,7 +9,6 @@ dependencies:
   - nomkl
   - python=3.6
   - pip
-  - keras==2.2.*
   - pandas
   - scikit-learn
   - matplotlib
@@ -22,8 +21,8 @@ dependencies:
   - supervisor
   - psycopg2
   - mysqlclient
+  - pytorch
   - pip:
-    - tensorflow==1.5.0
     - django==2.1.*
     - djangorestframework==3.9.*
     - celery==4.2.*
