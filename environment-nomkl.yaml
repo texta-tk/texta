@@ -4,6 +4,7 @@ channels:
   - conda-forge
   - anaconda
   - bioconda
+  - puytorch
 
 dependencies:
   - nomkl
@@ -37,9 +38,9 @@ dependencies:
     - django-rest-serializer-field-permissions
     - django-cors-headers
     - elasticsearch_dsl<7
-    - sentencepiece
     - python-json-logger
     - drf-yasg
+    - torchtext
     - django-filter
     - xlrd
     - dill
