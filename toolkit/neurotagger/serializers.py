@@ -8,6 +8,8 @@ from . import choices
 from .models import Neurotagger
 from toolkit.constants import get_field_choices
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.core.project.models import Project
+from . import views
 from toolkit.serializer_constants import ProjectResourceUrlSerializer, FieldParseSerializer
 
 
@@ -52,6 +54,31 @@ class NeurotaggerSerializer(FieldParseSerializer, serializers.HyperlinkedModelSe
                             'training_loss', 'validation_loss', 'fact_values', 'classification_report'
                             )
         fields_to_parse = ('fields',)
+
+
+    def validate_fields(self, value):
+        """ raise error on neurotagger empty fields """
+        project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
+        project_fields = set(project_obj.get_elastic_fields(path_list=True))
+        if not value:
+            raise serializers.ValidationError(f'entered fields not in current project fields: {project_fields}')
+        return value
+
+    def validate(self, data):
+        """ validate if tags are retrievable with serializer input """
+        if data['fact_name'] and 'fact_name' in data:
+            project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
+            # Retrieve tags/fact values and create queries to build models. Every tag will be a class.
+            tags = views.NeurotaggerViewSet().get_tags(data['fact_name'],
+                                                     project_obj,
+                                                     min_count=data['min_fact_doc_count'],
+                                                     max_count=data['max_fact_doc_count'])
+            # Check if any tags were found
+            if not tags:
+                raise serializers.ValidationError(f'found no tags for fact name: {fact_name}')
+        else:
+            raise serializers.ValidationError("Tag name must be included!")
+        return data
 
 
     def __init__(self, *args, **kwargs):

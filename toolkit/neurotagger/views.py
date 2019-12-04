@@ -64,47 +64,25 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
         return Neurotagger.objects.filter(project=self.kwargs['project_pk'])
 
 
-    def perform_create(self, serializer, **kwargs):
+    def perform_create(self, serializer):
+        project_obj = Project.objects.get(id=self.kwargs['project_pk'])
+        fact_name = serializer.validated_data['fact_name']
+        tags = self.get_tags(fact_name,
+                             project_obj,
+                             min_count=serializer.validated_data['min_fact_doc_count'],
+                             max_count=serializer.validated_data['max_fact_doc_count'])
+        # Create queries for each fact
+        queries = json.dumps(self.create_queries(fact_name, tags))
+
         serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         fields=json.dumps(serializer.validated_data['fields']),
-                        **kwargs)
+                        fact_values = json.dumps(tags),
+                        queries=queries)
 
 
     def perform_update(self, serializer):
         serializer.save(fields=json.dumps(serializer.validated_data['fields']))
-
-
-    def create(self, request, *args, **kwargs):
-        serializer = NeurotaggerSerializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-
-        # raise error on neurotagger empty fields
-        project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
-        entered_fields = set(serializer.validated_data['fields'])
-        if not entered_fields:
-            raise ProjectValidationFailed(detail=f'entered fields not in current project fields: {project_fields}')
-        if 'fact_name' in serializer.validated_data and serializer.validated_data['fact_name']:
-            fact_name = serializer.validated_data['fact_name']
-            active_project = Project.objects.get(id=self.kwargs['project_pk'])
-            # Retrieve tags/fact values and create queries to build models. Every tag will be a class.
-            tags = self.get_tags(fact_name,
-                                 active_project,
-                                 min_count=serializer.validated_data['min_fact_doc_count'],
-                                 max_count=serializer.validated_data['max_fact_doc_count'])
-            # Check if any tags were found
-            if not tags:
-                return Response({'error': f'found no tags for fact name: {fact_name}'}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Create queries for each fact
-            queries = json.dumps(self.create_queries(fact_name, tags))
-            self.perform_create(serializer, fact_values=json.dumps(tags), queries=queries)
-        else:
-            return Response({"error": "Tag name must be included!"}, status=status.HTTP_400_BAD_REQUEST)
-
-        headers = self.get_success_headers(serializer.data)
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
     def destroy(self, request, *args, **kwargs):
