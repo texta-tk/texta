@@ -37,7 +37,7 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
         return value
 
     def validate_indices(self, value):
-        ''' check if re-indexed index is in the relevant project indices field '''
+        """ check if re-indexed index is in the relevant project indices field """
         project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
         for index in value:
             if index not in project_obj.indices:
@@ -45,7 +45,7 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
         return value
 
     def validate_fields(self, value):
-        ''' check if changed fields included in the request are in the relevant project fields '''
+        """ check if changed fields included in the request are in the relevant project fields """
         project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
         project_fields = ElasticCore().get_fields(indices=project_obj.indices)
         field_data = [field["path"] for field in project_fields]

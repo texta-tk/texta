@@ -7,7 +7,9 @@ from toolkit.embedding.models import Embedding, Task, EmbeddingCluster
 from toolkit.embedding.choices import (get_field_choices, DEFAULT_NUM_DIMENSIONS, DEFAULT_MAX_VOCAB, DEFAULT_MIN_FREQ, DEFAULT_OUTPUT_SIZE,
                                        DEFAULT_NUM_CLUSTERS, DEFAULT_BROWSER_NUM_CLUSTERS, DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER)
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.core.project.models import Project
 from toolkit.serializer_constants import ProjectResourceUrlSerializer, FieldParseSerializer
+
 
 class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
@@ -20,11 +22,20 @@ class EmbeddingSerializer(FieldParseSerializer, serializers.HyperlinkedModelSeri
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
     url = serializers.SerializerMethodField()
 
+
     class Meta:
         model = Embedding
         fields = ('id', 'url', 'author_username', 'description', 'fields', 'query', 'num_dimensions', 'min_freq', 'vocab_size', 'task')
         read_only_fields = ('vocab_size',)
         fields_to_parse = ('fields',)
+
+    def validate_fields(self, value):
+        """ check if selected fields are present in the project """
+        project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
+        project_fields = set(project_obj.get_elastic_fields(path_list=True))
+        if not value or not set(value).issubset(project_fields):
+            raise serializers.ValidationError(f'entered fields not in current project fields: {project_fields}')
+        return value
 
 
 class EmbeddingPredictSimilarWordsSerializer(serializers.Serializer):
