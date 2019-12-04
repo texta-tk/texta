@@ -151,7 +151,6 @@ class TextTagger:
         return self.model.predict(df_text)[0], max(self.model.predict_proba(df_text)[0])
 
 
-
     def tag_doc(self, doc):
         """
         Predicts on json document

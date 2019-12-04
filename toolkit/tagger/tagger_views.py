@@ -7,6 +7,8 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from toolkit.tools.text_processor import TextProcessor
+from toolkit.embedding.phraser import Phraser
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.feedback import Feedback
@@ -282,7 +284,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         stop_words = tagger_object.stop_words.split(' ')
         # use phraser is embedding used
         if tagger_object.embedding:
-            phraser = Phraser(tagger_object.id)
+            phraser = Phraser(tagger_object.embedding.id)
             phraser.load()
 
             text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)

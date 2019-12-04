@@ -15,6 +15,8 @@ from toolkit.view_constants import BulkDelete, ExportModel
 from toolkit.serializer_constants import GeneralTextSerializer
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.tools.text_processor import TextProcessor
+from toolkit.embedding.phraser import Phraser
 
 from django_filters import rest_framework as filters
 import rest_framework.filters as drf_filters
@@ -88,17 +90,18 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         # apply tagger
         text = serializer.validated_data['text']
         prediction = self.apply_tagger(tagger_object, text)
-        # add optional feedback
-        #if feedback:
-        #    project_pk = tagger_object.project.pk
-        #    feedback_object = Feedback(project_pk, tagger_object.pk)
-        #    feedback_id = feedback_object.store(tagger_input, prediction['result'])
-        #    prediction['feedback'] = {'id': feedback_id}
         return Response(prediction, status=status.HTTP_200_OK)
 
 
-    def apply_tagger(self, tagger_object, tagger_input, input_type='text'):
-        # retrieve model from cache
+    def apply_tagger(self, tagger_object, tagger_input, input_type='text', lemmatizer=None, feedback=False):
+        # use phraser is embedding used
+        if tagger_object.embedding:
+            phraser = Phraser(tagger_object.embedding.id)
+            phraser.load()
+            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, lemmatizer=lemmatizer)
+        else:
+            text_processor = TextProcessor(remove_stop_words=True, lemmatizer=lemmatizer)
+        # retrieve model
         tagger = TorchTagger(tagger_object.id)
         tagger.load()
         # tag text
@@ -107,4 +110,10 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         else:
             tagger_result = tagger.tag_text(tagger_input)
         prediction = {'result': tagger_result[0], 'probability': tagger_result[1]}
+        # add optional feedback
+        #if feedback:
+        #    project_pk = tagger_object.project.pk
+        #    feedback_object = Feedback(project_pk, tagger_object.pk)
+        #    feedback_id = feedback_object.store(tagger_input, prediction['result'])
+        #    prediction['feedback'] = {'id': feedback_id}
         return prediction

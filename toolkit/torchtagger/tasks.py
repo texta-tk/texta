@@ -3,6 +3,8 @@ import secrets
 import json
 import os
 
+from toolkit.tools.text_processor import TextProcessor
+from toolkit.embedding.phraser import Phraser
 from toolkit.core.task.models import Task
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
 from toolkit.tools.show_progress import ShowProgress
@@ -21,10 +23,15 @@ def torchtagger_train_handler(tagger_id, testing=False):
         task_object = tagger_object.task
         model_type = TorchTaggerObject.MODEL_TYPE
         show_progress = ShowProgress(task_object, multiplier=1)
+        # load embedding and create text processor
+        # TODO: investigate if stop words should not be removed
+        if tagger_object.embedding:
+            phraser = Phraser(embedding_id=tagger_object.embedding.pk)
+            phraser.load()
+            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
+        else:
+            text_processor = TextProcessor(remove_stop_words=True)
         # create Datasample object for retrieving positive and negative sample
-
-        # TODO: Add text_processor
-
         data_sample = DataSample(tagger_object, show_progress=show_progress, join_fields=True)
         show_progress.update_step('training torchtagger')
         show_progress.update_view(0.0)

@@ -142,9 +142,8 @@ def apply_tagger(text, tagger_id, input_type, lemmatize=False):
     # create text processor object for tagger
     stop_words = tagger.stop_words.split(' ')
     if tagger.embedding:
-        phraser = Phraser(tagger.id)
+        phraser = Phraser(tagger.embedding.id)
         phraser.load()
-
         text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
     else:
         text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
