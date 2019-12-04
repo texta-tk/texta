@@ -257,7 +257,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
 
     @action(detail=True, methods=['get'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
-        """Returns list of tags for random document in Elasticsearch."""
+        """Returns prediction for a random document in Elasticsearch."""
         # get tagger object
         tagger_object = self.get_object()
         # check if tagger exists

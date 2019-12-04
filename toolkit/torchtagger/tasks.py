@@ -22,6 +22,9 @@ def torchtagger_train_handler(tagger_id, testing=False):
         model_type = TorchTaggerObject.MODEL_TYPE
         show_progress = ShowProgress(task_object, multiplier=1)
         # create Datasample object for retrieving positive and negative sample
+
+        # TODO: Add text_processor
+
         data_sample = DataSample(tagger_object, show_progress=show_progress, join_fields=True)
         show_progress.update_step('training torchtagger')
         show_progress.update_view(0.0)
@@ -41,7 +44,7 @@ def torchtagger_train_handler(tagger_id, testing=False):
         # save tagger plot
         tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_torchtagger_plot(tagger_stats))
         # save label index
-        tagger_object.label_index = json.dumps(tagger.label_index)
+        tagger_object.label_index = json.dumps(tagger.label_reverse_index)
         # stats to model object
         tagger_object.f1_score = tagger_stats.f1_score
         tagger_object.precision = tagger_stats.precision

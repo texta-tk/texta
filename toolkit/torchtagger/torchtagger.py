@@ -73,8 +73,8 @@ class TorchTagger:
         # load & set field object
         with open(f"{tagger_path}_text_field", "rb") as fh:
             self.text_field = dill.load(fh)
-        # set label index
-        self.label_index = json.loads(tagger_object.label_index)
+        # set label reverse index used for prediction
+        self.label_reverse_index = json.loads(tagger_object.label_index)
         return self.model
 
 
@@ -182,8 +182,33 @@ class TorchTagger:
         return report
 
 
-    def tag_text(self, text):
-        """Tags text using saved model."""
+    def tag_text(self, text, get_label=True):
+        """
+        Predicts on raw text.
+        :return: class number, class probability
+        """
         processed_text = self.text_field.process([self.text_field.preprocess(text)])
-        prediction = self.model(processed_text).argmax().item()
-        print(prediction, self.label_index)
+        if torch.cuda.is_available():
+            processed_text = processed_text.to('cuda')
+        prediction = self.model(processed_text)
+        prediction_item = prediction.argmax().item()
+        prediction_prob = prediction[0][prediction_item].item()
+        # get class label if asked
+        if get_label:
+            prediction_item = self.label_reverse_index[str(prediction_item)]
+        # TODO: should use some other metric for prob
+        # because prob depends currently on number of classes
+        return prediction_item, prediction_prob
+
+
+    def tag_doc(self, doc):
+        """
+        Predicts on json document.
+        :return: class number, class probability
+        """
+        # TODO: redo this function to use multiple fields correctly
+        combined_text = []
+        for v in doc.values():
+            combined_text.append(v)
+        combined_text = " ".join(combined_text)
+        return self.tag_text(combined_text)

@@ -40,6 +40,7 @@ class TorchTaggerViewTests(APITestCase):
         self.run_train_tagger()
         self.run_train_multiclass_tagger()
         self.run_tag_text()
+        self.run_tag_random_doc()
 
     def run_train_embedding(self):
         # payload for training embedding
@@ -114,3 +115,13 @@ class TorchTaggerViewTests(APITestCase):
         }
         response = self.client.post(f'{self.url}{self.test_tagger_id}/tag_text/', payload)
         print_output('test_torchtagger_tag_text:response.data', response.data)
+
+    def run_tag_random_doc(self):
+        '''Tests the endpoint for the tag_random_doc action'''
+        url = f'{self.url}{self.test_tagger_id}/tag_random_doc/'
+        response = self.client.get(url)
+        print_output('test_tag_random_doc:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check if response is list
+        self.assertTrue(isinstance(response.data, dict))
+        self.assertTrue('prediction' in response.data)
