@@ -37,7 +37,8 @@ class FieldParseSerializer():
 
     def validate_fields(self, value):
         """ check if selected fields are present in the project and raise error on None
-            if no "fields" field is declared in the serializer, no validation """
+            if no "fields" field is declared in the serializer, no validation
+            to write custom validation for serializers with FieldParseSerializer, simply override validate validate_fields in the project serializer"""
         project_obj = Project.objects.get(id=super(FieldParseSerializer, self).context['view'].kwargs['project_pk'])
         project_fields = set(project_obj.get_elastic_fields(path_list=True))
         if not value or not set(value).issubset(project_fields):
