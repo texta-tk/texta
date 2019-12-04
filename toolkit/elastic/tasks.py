@@ -70,9 +70,9 @@ def apply_elastic_search(elastic_search, fields):
     return new_docs
 
 
-def bulk_add_documents(elastic_search, fields, elastic_doc, new_index, mapping_name):
+def bulk_add_documents(elastic_search, fields, elastic_doc):
     new_docs = apply_elastic_search(elastic_search, fields)
-    elastic_doc.bulk_add(new_docs, new_index, mapping_name)
+    elastic_doc.bulk_add(new_docs)
 
 
 @task(name="reindex_task", base=BaseTask)
@@ -112,7 +112,7 @@ def reindex_task(reindexer_task_id):
 
     # set new_index name as mapping name, perhaps make it customizable in the future
     mapping_name = reindexer_obj.new_index
-    bulk_add_documents(elastic_search, fields, elastic_doc, reindexer_obj.new_index, mapping_name)
+    bulk_add_documents(elastic_search, fields, elastic_doc)
 
     # get_map = ElasticCore().get_mapping(index=reindexer_obj.new_index)
     # print("ourmap", get_map)

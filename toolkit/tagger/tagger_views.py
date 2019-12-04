@@ -12,6 +12,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.phraser import Phraser
+from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError, SerializerNotValid, MLPNotAvailable
 from toolkit.helper_functions import apply_celery_task
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import (
@@ -97,7 +98,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
         entered_fields = set(serializer.validated_data['fields'])
         if not entered_fields or not entered_fields.issubset(project_fields):
-            return Response({'error': f'entered fields not in current project fields: {project_fields}'}, status=status.HTTP_400_BAD_REQUEST)
+            raise ProjectValidationFailed(detail=f'entered fields not in current project fields: {project_fields}')
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
@@ -122,12 +123,12 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
 
         # check if valid request
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
         # retrieve tagger object
         tagger_object = self.get_object()
         # check if tagger exists
         if not tagger_object.location:
-            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+            raise NonExistantModelError()
 
         # retrieve model
         tagger = TextTagger(tagger_object.id)
@@ -166,7 +167,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
 
             # check if valid request
             if not serializer.is_valid():
-                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                raise SerializerNotValid(detail=serializer.errors)
 
             new_stop_words = serializer.validated_data['text']
             # save tagger object
@@ -190,12 +191,12 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         serializer = TaggerTagTextSerializer(data=request.data)
         # check if valid request
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
         # retrieve tagger object
         tagger_object = self.get_object()
         # check if tagger exists
         if not tagger_object.location:
-            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+            raise NonExistantModelError()
         # by default, lemmatizer is disabled
         lemmatizer = None
         # create lemmatizer if needed
@@ -203,7 +204,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
             lemmatizer = global_mlp_for_taggers
             # check if lemmatizer available
             if not lemmatizer.status:
-                return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                raise MLPNotAvailable(detail="Lemmatization failed. Check connection to MLP.")
         # apply tagger
         tagger_response = self.apply_tagger(
             tagger_object,
@@ -221,12 +222,12 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         serializer = TaggerTagDocumentSerializer(data=request.data)
         # check if valid request
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            raise SerializerNotValid(detail=serializer.errors)
         # retrieve tagger object
         tagger_object = self.get_object()
         # check if tagger exists
         if not tagger_object.location:
-            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+            raise NonExistantModelError()
         # declare input_document variable
         input_document = serializer.validated_data['doc']
         # load field data
@@ -242,7 +243,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
             lemmatizer = global_mlp_for_taggers
             # check if lemmatization available
             if not lemmatizer.status:
-                return Response({'error': 'lemmatization failed. do you have MLP available?'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                raise MLPNotAvailable(detail="Lemmatization failed. Check connection to MLP.")
         # apply tagger
         tagger_response = self.apply_tagger(
             tagger_object,
@@ -261,7 +262,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         tagger_object = self.get_object()
         # check if tagger exists
         if not tagger_object.location:
-            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+            raise NonExistantModelError()
         # retrieve tagger fields
         tagger_fields = json.loads(tagger_object.fields)
         if not ElasticCore().check_if_indices_exist(tagger_object.project.indices):

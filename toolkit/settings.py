@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'toolkit.core',
     'toolkit.elastic',
     'toolkit.embedding',
+    'toolkit.dataset_import',
     'toolkit.tagger',
     'toolkit.torchtagger',
     # TEXTA Extension Apps
@@ -216,11 +217,6 @@ for model_type in MODEL_TYPES:
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
-# create dir for DocScraper temporary files
-DOC_SCRAPER_TEMP_DIR = os.path.join(BASE_DIR, 'data', 'temp')
-if not os.path.exists(DOC_SCRAPER_TEMP_DIR) and 'docscraper' in INSTALLED_APPS:
-    os.makedirs(DOC_SCRAPER_TEMP_DIR)
-
 # create protected media dirs
 MEDIA_DIR = os.path.join(BASE_DIR, 'data', 'media')
 if not os.path.exists(MEDIA_DIR):
@@ -231,6 +227,17 @@ MEDIA_URL = 'data/media/'
 LOG_PATH = os.path.join(BASE_DIR, "data", "log")
 if not os.path.exists(LOG_PATH):
     os.makedirs(LOG_PATH)
+
+# Path to the upload directory. Default is /upload
+UPLOAD_PATH = os.path.join(BASE_DIR, "data", "upload")
+if not os.path.exists(UPLOAD_PATH):
+    os.makedirs(UPLOAD_PATH)
+
+# Path to the directory containing test files 
+TEST_DATA_DIR = os.path.join(BASE_DIR, 'data', 'test')
+if not os.path.exists(TEST_DATA_DIR):
+    os.makedirs(TEST_DATA_DIR)
+
 
 # Logger IDs, used in apps.
 INFO_LOGGER = "info_logger"
