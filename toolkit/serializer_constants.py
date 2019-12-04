@@ -21,7 +21,8 @@ class ProjectResourceUrlSerializer():
 
 
 class FieldParseSerializer():
-    ''' For serializers that need to override to_representation and parse fields '''
+    ''' For serializers that need to override to_representation and parse fields
+        Serializers overriden with FieldParseSerializer will validate, if field input                                                                                    '''
 
     def to_representation(self, instance):
         # self is the parent class obj in this case
@@ -35,7 +36,7 @@ class FieldParseSerializer():
 
 
     def validate_fields(self, value):
-        """ check if selected fields are present in the project
+        """ check if selected fields are present in the project and raise error on None
             if no "fields" field is declared in the serializer, no validation """
         project_obj = Project.objects.get(id=super(FieldParseSerializer, self).context['view'].kwargs['project_pk'])
         project_fields = set(project_obj.get_elastic_fields(path_list=True))

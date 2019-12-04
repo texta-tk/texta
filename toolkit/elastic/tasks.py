@@ -86,6 +86,7 @@ def reindex_task(reindexer_task_id):
     query = reindexer_obj.query
 
     ''' for empty field post, use all posted indices fields '''
+    print(fields)
 
     if not fields:
         fields = ElasticCore().get_fields(indices)

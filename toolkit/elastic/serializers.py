@@ -44,6 +44,17 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
                 raise serializers.ValidationError(f'Index "{index}" is not contained in your project indices "{repr(project_obj.indices)}"')
         return value
 
+    def validate_fields(self, value):
+        ''' check if changed fields included in the request are in the relevant project fields '''
+        project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
+        project_fields = ElasticCore().get_fields(indices=project_obj.indices)
+        field_data = [field["path"] for field in project_fields]
+        for field in value:
+            if field not in field_data:
+                raise serializers.ValidationError(f'The fields you are attempting to re-index are not in current project fields: {project_fields}')
+        return value
+
+
 
 
 
