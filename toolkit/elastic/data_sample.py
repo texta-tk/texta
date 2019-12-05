@@ -164,7 +164,6 @@ class DataSample:
             # THIS IS WRONG
             scroll_limit=size*int(self.tagger_object.negative_multiplier),
             ignore_ids=self.ignore_ids,
-
         )
         # iterator to list
         negative_sample = list(negative_sample_iterator)

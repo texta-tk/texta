@@ -100,14 +100,7 @@ class TorchTagger:
         return report
 
 
-    def _prepare_data(self, data_sample):
-        # Creating Field for data
-        text_field = data.Field(sequential=True, tokenize=self.tokenizer, lower=True)
-        label_field = data.Field(sequential=False, use_vocab=False)
-        datafields = [("text", text_field), ("label", label_field)]
-        # create label dicts for later lookup
-        self.label_index = {a: i for i, a in enumerate(data_sample.data.keys())}
-        self.label_reverse_index = {b: a for a, b in self.label_index.items()}
+    def _get_examples_and_labels(self, data_sample):
         # lists for examples and labels
         examples = []
         labels = []
@@ -116,13 +109,35 @@ class TorchTagger:
             for example in class_examples:
                 examples.append(example)
                 labels.append(self.label_index[label])
-        # update output size to match number of classes
-        self.config.output_size = len(list(data_sample.data.keys()))
+        return examples, labels
+
+
+    def _get_datafields(self):
+        # Creating blank Fields for data
+        text_field = data.Field(sequential=True, tokenize=self.tokenizer, lower=True)
+        label_field = data.Field(sequential=False, use_vocab=False)
+        # create Fields based on field names in document
+        datafields = [("text", text_field), ("label", label_field)]
+        return datafields, text_field
+
+
+    def _prepare_data(self, data_sample):
         # retrieve vectors and vocab dict from embedding
         embedding_matrix, word2index = self.embedding.tensorize()
         # set embedding size according to the dimensionality embedding model
         embedding_size = len(embedding_matrix[0])
         self.config.embed_size = embedding_size
+        # create label dicts for later lookup
+        self.label_index = {a: i for i, a in enumerate(data_sample.data.keys())}
+        self.label_reverse_index = {b: a for a, b in self.label_index.items()}
+        # update output size to match number of classes
+        self.config.output_size = len(list(data_sample.data.keys()))
+
+        # retrieve examples and labels from data sample
+        examples, labels = self._get_examples_and_labels(data_sample)
+        # create datafields
+        datafields, text_field = self._get_datafields()
+
         # create pandas dataframe and torchtext dataset
         train_dataframe = pd.DataFrame({"text": examples, "label": labels})
         train_examples = [data.Example.fromlist(i, datafields) for i in train_dataframe.values.tolist()]
@@ -158,6 +173,7 @@ class TorchTagger:
         train_iterator, val_iterator, test_iterator, text_field = self._prepare_data(data_sample)
         # declare model
         model = self.model_arch(self.config, len(text_field.vocab), text_field.vocab.vectors, self.evaluate_model)
+        
         # check cuda
         if torch.cuda.is_available():
             model.cuda()
