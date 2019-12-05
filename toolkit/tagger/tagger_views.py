@@ -220,9 +220,9 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         # load field data
         tagger_field_data = json.loads(tagger_object.fields)
         # validate input document
-        input_document, error_response = validate_input_document(input_document, tagger_field_data)
-        if error_response:
-            return error_response
+        input_document = validate_input_document(input_document, tagger_field_data)
+        if isinstance(input_document, Exception):
+            return input_document
         # by default, lemmatizer is disabled
         lemmatizer = False
         # lemmatize if needed

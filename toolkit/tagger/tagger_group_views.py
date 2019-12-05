@@ -280,9 +280,9 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         input_document = serializer.validated_data['doc']
 
         # validate input document
-        input_document, error_response = validate_input_document(input_document, hybrid_tagger_field_data)
-        if error_response:
-            return error_response
+        input_document = validate_input_document(input_document, hybrid_tagger_field_data)
+        if isinstance(input_document, Exception):
+            return input_document
 
         # combine document field values into one string
         combined_texts = '\n'.join(input_document.values())
