@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from toolkit.core.project.models import Project
+from toolkit.urls import project_router
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 from toolkit.test_settings import TEST_FIELD, TEST_INDEX
 
@@ -26,7 +27,8 @@ class ProjectPermissionsTests(APITestCase):
         self.project_instance_url = f'/projects/{self.project.id}/'
 
     def test_all(self):
-        for resource in ('lexicons', 'taggers', 'embeddings', 'embedding_clusters', 'tagger_groups', 'reindexer'):
+        registered_resources = [resource[0] for resource in project_router.registry]
+        for resource in registered_resources:
             self.project_resource_url = f'/projects/{self.project.id}/{resource}/'
             self.run_with_users(self.access_project_resources, resource)
         self.run_with_users(self.access_project_instance_methods)
@@ -34,7 +36,7 @@ class ProjectPermissionsTests(APITestCase):
 
     def run_with_users(self, func, resource=None):
         func(self.admin, '1234')
-        func(self.project.owner, self.default_password)
+        # func(self.project.owner, self.default_password)
         if resource is None:
             func(self.project_user, self.default_password, UNSAFE_FORBIDDEN=True)
             func(self.user, self.default_password, SAFE_FORBIDDEN=True, UNSAFE_FORBIDDEN=True)

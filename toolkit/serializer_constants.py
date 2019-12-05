@@ -24,6 +24,7 @@ class FieldParseSerializer():
     ''' For serializers that need to override to_representation and parse fields
         Serializers overriden with FieldParseSerializer will validate, if field input                                                                                    '''
 
+
     def to_representation(self, instance):
         # self is the parent class obj in this case
         result = super(FieldParseSerializer, self).to_representation(instance)
