@@ -22,7 +22,7 @@ from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.spam_detector import SpamDetector
 from toolkit.exceptions import ProjectValidationFailed, SerializerNotValid
-from toolkit.permissions.project_permissions import ProjectAllowed
+from toolkit.permissions.project_permissions import ProjectAllowed, ExtraActionResource, ProjectResourceAllowed
 from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
@@ -205,7 +205,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         return Response(results, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=ProjectSearchByQuerySerializer)
+    @action(detail=True, methods=['post'], serializer_class=ProjectSearchByQuerySerializer, permission_classes=[ExtraActionResource])
     def search_by_query(self, request, pk=None, project_pk=None):
         """Executes **raw** Elasticsearch query on all project indices."""
         serializer = ProjectSearchByQuerySerializer(data=request.data)

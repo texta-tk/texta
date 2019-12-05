@@ -98,7 +98,6 @@ class ProjectPermissionsTests(APITestCase):
 
     def add_user_to_project(self, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN):
         self.user_to_add = create_test_user(name=f'{username}_added_user', password=self.default_password)
-
         # if auth_user can't access the project go straight to validation
         get_res = self.client.get(url)
         if SAFE_FORBIDDEN is True and UNSAFE_FORBIDDEN is True:
@@ -141,5 +140,3 @@ class ProjectPermissionsTests(APITestCase):
         if SAFE_FORBIDDEN is True and UNSAFE_FORBIDDEN is True:
                 print_output(f'{username} update permissions at: {url}', response.status_code)
                 self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-

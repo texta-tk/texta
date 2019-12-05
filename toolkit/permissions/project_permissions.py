@@ -61,3 +61,31 @@ class IsSuperUser(permissions.BasePermission):
 
     def has_permission(self, request, view):
         return request.user and request.user.is_superuser
+
+
+class ExtraActionResource(ProjectResourceAllowed):
+    """ Overrides ProjectResourceAllowed with list level permission True by default """
+
+    def _permission_check(self, request, view):
+        # retrieve project object
+        try:
+            project_object = Project.objects.get(id=view.kwargs['pk'])
+        except:
+            return False
+        # check if user is owner or listed in project users
+        if request.user in project_object.users.all() or request.user == project_object.owner:
+            return True
+        # check if user is superuser
+        if request.user.is_superuser:
+            return True
+        # nah, not goa see anything!
+        return False
+
+
+
+
+
+
+
+
+
