@@ -15,6 +15,7 @@ class ProjectPermissionsTests(APITestCase):
         self.default_password = 'pw'
         self.admin = create_test_user(name='admin', password='1234')
         self.admin.is_superuser = True
+        # self.admin.is_staff = True
         self.admin.save()
         self.owner = create_test_user(name='owner', password=self.default_password)
         self.project_user = create_test_user(name='project_user', password=self.default_password)
@@ -31,6 +32,8 @@ class ProjectPermissionsTests(APITestCase):
         for resource in registered_resources:
             self.project_resource_url = f'/projects/{self.project.id}/{resource}/'
             self.run_with_users(self.access_project_resources, resource)
+        self.run_with_users(self.access_get_indices)
+        self.run_with_users(self.access_health)
         self.run_with_users(self.access_project_instance_methods)
         self.run_with_users(self.update_project_fields)
 
@@ -43,6 +46,24 @@ class ProjectPermissionsTests(APITestCase):
         else:
             func(self.project_user, self.default_password)
             func(self.user, self.default_password, SAFE_FORBIDDEN=True)
+
+    def access_get_indices(self, username, password, SAFE_FORBIDDEN=False, UNSAFE_FORBIDDEN=False):
+        """ only superusers can access /get_indices """
+        url = '/get_indices/'
+        self.client.login(username=username, password=password)
+        get_response = self.client.get(url)
+        print_output(f"{username} access get_indices", get_response.status_code)
+        if not username.is_superuser:
+            return self.assertEqual(get_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(get_response.status_code, status.HTTP_200_OK)
+
+    def access_health(self, username, password, SAFE_FORBIDDEN=False, UNSAFE_FORBIDDEN=False):
+        """ all users, including non-auth can access /health """
+        url = '/health/'
+        self.client.login(username=username, password=password)
+        get_response = self.client.get(url)
+        print_output(f"{username} access health", get_response.status_code)
+        self.assertEqual(get_response.status_code, status.HTTP_200_OK)
 
     def access_project_resources(self, username, password, SAFE_FORBIDDEN=False):
         url = self.project_resource_url
@@ -120,3 +141,5 @@ class ProjectPermissionsTests(APITestCase):
         if SAFE_FORBIDDEN is True and UNSAFE_FORBIDDEN is True:
                 print_output(f'{username} update permissions at: {url}', response.status_code)
                 self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+

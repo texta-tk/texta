@@ -55,3 +55,9 @@ class ProjectAllowed(permissions.BasePermission):
             return True
         # if user is owner, allow UNSAFE_METHODS; conversion necessary because of SimpleLazyObject
         return project_object.owner == request.user
+
+
+class IsSuperUser(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        return request.user and request.user.is_superuser

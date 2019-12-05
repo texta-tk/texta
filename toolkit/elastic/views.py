@@ -9,13 +9,16 @@ from toolkit.core.project.serializers import ProjectSerializer
 from toolkit.elastic.models import Reindexer
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.serializers import ReindexerCreateSerializer
-from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.permissions.project_permissions import ProjectResourceAllowed, IsSuperUser
 
 from django_filters import rest_framework as filters
 import rest_framework.filters as drf_filters
 
 
 class ElasticGetIndices(views.APIView):
+    permission_classes = (IsSuperUser,)
+
+
     def get(self, request):
         """
         Returns **all** available indices from Elasticsearch.
