@@ -82,7 +82,7 @@ class WordCluster(object):
             return False
 
         clustering_object = EmbeddingCluster.objects.get(pk=self.clustering_id)
-        file_path = json.loads(clustering_object.location)['cluster']
+        file_path = clustering_object.cluster_model.path
         with open(file_path) as fh:
             loaded_json = json.loads(fh.read())
             self.cluster_dict = loaded_json['cluster_dict']

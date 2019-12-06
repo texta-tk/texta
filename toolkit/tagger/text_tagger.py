@@ -125,7 +125,7 @@ class TextTagger:
 
     def load(self):
         tagger_object = Tagger.objects.get(pk=self.tagger_id)
-        tagger_path = json.loads(tagger_object.location)['tagger']
+        tagger_path = tagger_object.model.path
         self.model = joblib.load(tagger_path)
         self.description = tagger_object.description
         return True

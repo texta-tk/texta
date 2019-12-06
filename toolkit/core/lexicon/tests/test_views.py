@@ -1,11 +1,10 @@
-from rest_framework.test import APITestCase
 from rest_framework import status
-from rest_framework.test import APIClient
+from rest_framework.test import APITestCase
+
 from toolkit.core.project.models import Project
-from toolkit.core.user_profile.models import UserProfile
-from toolkit.tools.utils_for_tests import create_test_user, print_output
 from toolkit.test_settings import TEST_INDEX
-import json
+from toolkit.tools.utils_for_tests import create_test_user, print_output
+
 
 class LexiconViewsTests(APITestCase):
 

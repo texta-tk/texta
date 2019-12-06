@@ -24,7 +24,7 @@ class Phraser:
 
     def load(self):
         embedding_object = Embedding.objects.get(pk=self.embedding_id)
-        phraser_location = json.loads(embedding_object.location)['phraser']
+        phraser_location = embedding_object.phraser_model.path
         self._phraser = GSPhraser.load(phraser_location)
 
     def phrase(self, text):

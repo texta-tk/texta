@@ -1,5 +1,4 @@
 import json
-import os
 
 import rest_framework.filters as drf_filters
 from django_filters import rest_framework as filters
@@ -14,7 +13,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.phraser import Phraser
-from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError, SerializerNotValid, MLPNotAvailable
+from toolkit.exceptions import MLPNotAvailable, NonExistantModelError, ProjectValidationFailed, SerializerNotValid
 from toolkit.helper_functions import apply_celery_task
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import (
@@ -107,29 +106,21 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
 
 
     def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        try:
-            model_location = json.loads(instance.location)['tagger']
-            os.remove(model_location)
-            os.remove(instance.plot.path)
-            return Response({"success": "Tagger instance deleted, model and plot removed"}, status=status.HTTP_204_NO_CONTENT)
-        except:
-            return Response({"success": "Tagger instance deleted, but model and plot were was not removed"}, status=status.HTTP_204_NO_CONTENT)
+        instance: Tagger = self.get_object()
+        instance.delete()
+        return Response({"success": "Tagger instance deleted, model and plot removed"}, status=status.HTTP_204_NO_CONTENT)
 
 
     @action(detail=True, methods=['get'], serializer_class=TaggerListFeaturesSerializer)
     def list_features(self, request, pk=None, project_pk=None):
         """Returns list of features for the tagger. By default, features are sorted by their relevance in descending order."""
         serializer = TaggerListFeaturesSerializer(data=request.data)
-
-        # check if valid request
-        if not serializer.is_valid():
-            raise SerializerNotValid(detail=serializer.errors)
+        serializer.is_valid(raise_exception=True)
         # retrieve tagger object
-        tagger_object = self.get_object()
+        tagger_object: Tagger = self.get_object()
+
         # check if tagger exists
-        if not tagger_object.location:
+        if not tagger_object.model.path:
             raise NonExistantModelError()
 
         # retrieve model
@@ -197,8 +188,9 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         # retrieve tagger object
         tagger_object = self.get_object()
         # check if tagger exists
-        if not tagger_object.location:
+        if not tagger_object.model.path:
             raise NonExistantModelError()
+
         # by default, lemmatizer is disabled
         lemmatizer = None
         # create lemmatizer if needed
@@ -207,6 +199,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
             # check if lemmatizer available
             if not lemmatizer.status:
                 raise MLPNotAvailable(detail="Lemmatization failed. Check connection to MLP.")
+
         # apply tagger
         tagger_response = self.apply_tagger(
             tagger_object,
@@ -228,8 +221,10 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         # retrieve tagger object
         tagger_object = self.get_object()
         # check if tagger exists
-        if not tagger_object.location:
+
+        if not tagger_object.model.path:
             raise NonExistantModelError()
+
         # declare input_document variable
         input_document = serializer.validated_data['doc']
         # load field data
@@ -238,14 +233,18 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         input_document, error_response = validate_input_document(input_document, tagger_field_data)
         if error_response:
             return error_response
+
         # by default, lemmatizer is disabled
         lemmatizer = False
+
         # lemmatize if needed
         if serializer.validated_data['lemmatize'] == True:
             lemmatizer = global_mlp_for_taggers
+
             # check if lemmatization available
             if not lemmatizer.status:
                 raise MLPNotAvailable(detail="Lemmatization failed. Check connection to MLP.")
+
         # apply tagger
         tagger_response = self.apply_tagger(
             tagger_object,
@@ -263,16 +262,25 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         # get tagger object
         tagger_object = self.get_object()
         # check if tagger exists
-        if not tagger_object.location:
+
+
+        if not tagger_object.model.path:
             raise NonExistantModelError()
+
+        if not tagger_object.model.path:
+            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+
         # retrieve tagger fields
         tagger_fields = json.loads(tagger_object.fields)
         if not ElasticCore().check_if_indices_exist(tagger_object.project.indices):
             return Response({'error': f'One or more index from {list(tagger_object.project.indices)} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
+
         # retrieve random document
         random_doc = ElasticSearcher(indices=tagger_object.project.indices).random_documents(size=1)[0]
+
         # filter out correct fields from the document
         random_doc_filtered = {k: v for k, v in random_doc.items() if k in tagger_fields}
+
         # apply tagger
         tagger_response = self.apply_tagger(tagger_object, random_doc_filtered, input_type='doc')
         response = {"document": random_doc, "prediction": tagger_response}

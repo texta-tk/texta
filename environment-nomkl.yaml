@@ -11,6 +11,7 @@ dependencies:
   - python=3.6
   - pip
   - pandas
+  - xlrd
   - scikit-learn
   - matplotlib
   - graphviz

@@ -1,3 +1,4 @@
+import elasticsearch
 import requests
 from elasticsearch import Elasticsearch
 
@@ -44,10 +45,15 @@ class ElasticCore:
         Checks whether the Elasticsearch Security X-Pack module is in use
         with its SSL and user authentication support.
         """
-        ec = ElasticCore()
-        info = ec.es.xpack.info(categories="features")
-        available = info["features"]["security"]["available"]
-        return available
+        try:
+            ec = ElasticCore()
+            info = ec.es.xpack.info(categories="features")
+            available = info["features"]["security"]["available"]
+            return available
+        except elasticsearch.exceptions.RequestError as e:
+            # When XPACK is not installed the xpack module will lose the info function,
+            # which will then create an error, return False in that case.
+            return False
 
     def create_index(self, index, body):
         return self.es.indices.create(index=index, body=body, ignore=400)

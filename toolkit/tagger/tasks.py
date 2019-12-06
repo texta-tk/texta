@@ -29,9 +29,12 @@ def create_tagger_batch(tagger_group_id, taggers_to_create):
     tagger_group_object = TaggerGroup.objects.get(pk=tagger_group_id)
     # iterate through batch
     for tagger_data in taggers_to_create:
-        created_tagger = Tagger.objects.create(**tagger_data,
-                                               author=tagger_group_object.author,
-                                               project=tagger_group_object.project)
+        created_tagger = Tagger.objects.create(
+            **tagger_data,
+            author=tagger_group_object.author,
+            project=tagger_group_object.project
+        )
+
         # add and save
         tagger_group_object.taggers.add(created_tagger)
         tagger_group_object.save()
@@ -107,7 +110,7 @@ def train_tagger(tagger_id):
         tagger_path = os.path.join(MODELS_DIR, 'tagger', f'tagger_{tagger_id}_{secrets.token_hex(10)}')
         tagger.save(tagger_path)
         # save model locations
-        tagger_object.location = json.dumps({'tagger': tagger_path})
+        tagger_object.model.name = tagger_path
         tagger_object.precision = float(tagger.statistics['precision'])
         tagger_object.recall = float(tagger.statistics['recall'])
         tagger_object.f1_score = float(tagger.statistics['f1_score'])
