@@ -95,6 +95,7 @@ class DataSample:
             # set size of negatives equal to first class examples len
             size = len(samples[self.class_names[0]])
             samples['false'] = self._get_negatives(size)
+        
         return samples
 
 
@@ -144,12 +145,10 @@ class DataSample:
         # set positive ids to ignore while scrolling for negatives
         for doc in feedback_sample:
             self.ignore_ids.add(doc["_id"])
-            print(doc)
-            content = doc['predicted_content']
-            #print(content)
-            #if self.join_fields:
-            #    content = self._join_fields(content)
-            #feedback_sample_content.append(content)
+            content = json.loads(doc['predicted_content'])
+            feedback_sample_content.append(content)
+        if self.join_fields:
+            feedback_sample_content = self._join_fields(feedback_sample_content)
         return feedback_sample_content
 
 
