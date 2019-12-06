@@ -38,7 +38,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({"detail": "Can't reassign this user"})
         user = User.objects.get(id=self.kwargs['pk'])
         # toggle
-        user.is_superuser ^= True,
+        user.is_superuser ^= True
         user.is_staff ^= True
         user.save()
         if user.is_superuser:
