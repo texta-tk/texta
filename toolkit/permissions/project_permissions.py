@@ -69,7 +69,7 @@ class IsSuperUser(permissions.BasePermission):
 
 
 class ExtraActionResource(ProjectResourceAllowed):
-    """ Overrides ProjectResourceAllowed with list level permission True by default """
+    """ Overrides ProjectResourceAllowed """
 
     def _permission_check(self, request, view):
         # retrieve project object
