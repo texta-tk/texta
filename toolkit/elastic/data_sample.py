@@ -13,21 +13,15 @@ class DataSample:
         self.join_fields = join_fields
         self.text_processor = text_processor
         self.add_negative_sample = add_negative_sample
-
         self.class_names, self.queries = self._prepare_class_names_with_queries()
-
         self.ignore_ids = set()
 
         # retrive feedback
         self.feedback = self._get_feedback()
-
-        print(self.feedback)
-        # TODO: COMBINE FEEDBACK TO DATA
-        # we need to retrieve id-s for each class
-
-
         # retrieve data sample for each class
         self.data = self._get_samples_for_classes()
+        # combine feedback & data dicts
+        self.data = {**self.feedback, **self.data}
 
 
     @staticmethod
@@ -86,7 +80,7 @@ class DataSample:
         for i, class_name in enumerate(self.class_names):
             self.show_progress.update_step(f"scrolling sample for {class_name}")
             self.show_progress.update_view(0)
-            samples[class_name] = self._get_class_sample(self.queries[i])
+            samples[class_name] = self._get_class_sample(self.queries[i], class_name)
         # if only one class, add negatives automatically
         # add negatives as additional class if asked
         if len(self.class_names) < 2 or self.add_negative_sample:
@@ -95,12 +89,15 @@ class DataSample:
             # set size of negatives equal to first class examples len
             size = len(samples[self.class_names[0]])
             samples['false'] = self._get_negatives(size)
-        
         return samples
 
 
-    def _get_class_sample(self, query):
+    def _get_class_sample(self, query, class_name):
         """Returns sample for given class"""
+        # limit the docs according to max sample size & feedback size
+        limit = int(self.tagger_object.maximum_sample_size)
+        if class_name in self.feedback:
+            limit = limit - len(self.feedback[class_name])
         # iterator for retrieving positive sample by query
         positive_sample_iterator = ElasticSearcher(
             query=query,
@@ -108,7 +105,7 @@ class DataSample:
             field_data=json.loads(self.tagger_object.fields),
             output=ElasticSearcher.OUT_DOC_WITH_ID,
             callback_progress=self.show_progress,
-            scroll_limit=int(self.tagger_object.maximum_sample_size),
+            scroll_limit=limit,
             text_processor=self.text_processor
         )
         positive_sample = []
@@ -162,7 +159,6 @@ class DataSample:
             output=ElasticSearcher.OUT_DOC,
             callback_progress=self.show_progress,
             text_processor=self.text_processor,
-            # THIS IS WRONG
             scroll_limit=size*int(self.tagger_object.negative_multiplier),
             ignore_ids=self.ignore_ids,
         )
