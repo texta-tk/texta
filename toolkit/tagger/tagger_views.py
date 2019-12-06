@@ -305,7 +305,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         # add optional feedback
         if feedback:
             project_pk = tagger_object.project.pk
-            feedback_object = Feedback(project_pk, tagger_object.pk)
+            feedback_object = Feedback(project_pk, model_object=tagger_object)
             feedback_id = feedback_object.store(tagger_input, prediction['result'])
             prediction['feedback'] = {'id': feedback_id}
         return prediction

@@ -392,7 +392,7 @@ class TaggerViewTests(APITestCase):
         # generate feedback
         fb_id = response.data['feedback']['id']
         feedback_url = f'{self.url}{tagger_id}/feedback/'
-        payload = {"feedback_id": fb_id, "correct_prediction": True}
+        payload = {"feedback_id": fb_id, "correct_prediction": "True"}
         response = self.client.post(feedback_url, payload, format='json')
         print_output('test_tag_doc_with_feedback:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

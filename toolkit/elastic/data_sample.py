@@ -20,6 +20,8 @@ class DataSample:
 
         # retrive feedback
         self.feedback = self._get_feedback()
+
+        print(self.feedback)
         # TODO: COMBINE FEEDBACK TO DATA
         # we need to retrieve id-s for each class
 
@@ -131,24 +133,24 @@ class DataSample:
         # create feedback object for positive sample
         feedback_sample = Feedback(
             self.tagger_object.project.pk,
-            model_pk=self.tagger_object.pk,
-            model_type=self.tagger_object.MODEL_TYPE,
+            model_object=self.tagger_object,
             prediction_to_match=prediction_to_match,
             text_processor=self.text_processor,
             callback_progress=self.show_progress,
         )
         # iterator to list
         feedback_sample = list(feedback_sample)
-        feedback_sample_without_ids = []
+        feedback_sample_content = []
         # set positive ids to ignore while scrolling for negatives
         for doc in feedback_sample:
             self.ignore_ids.add(doc["_id"])
-            # remove id from doc
-            del doc["_id"]
-            feedback_sample_without_ids.append(doc)
-        if self.join_fields:
-            feedback_sample_without_ids = self._join_fields(feedback_sample_without_ids)
-        return feedback_sample_without_ids
+            print(doc)
+            content = doc['predicted_content']
+            #print(content)
+            #if self.join_fields:
+            #    content = self._join_fields(content)
+            #feedback_sample_content.append(content)
+        return feedback_sample_content
 
 
     def _get_negatives(self, size):

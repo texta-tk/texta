@@ -11,12 +11,15 @@ from toolkit.torchtagger.torchtagger import TorchTagger
 from toolkit.core.project.models import Project
 from toolkit.torchtagger.serializers import TorchTaggerSerializer
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
-from toolkit.view_constants import BulkDelete, ExportModel
-from toolkit.serializer_constants import GeneralTextSerializer
+from toolkit.view_constants import BulkDelete, ExportModel, FeedbackModelView
+from toolkit.tagger.serializers import TaggerTagTextSerializer
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.embedding.phraser import Phraser
+from toolkit.elastic.feedback import Feedback
+from toolkit.torchtagger.tasks import torchtagger_train_handler       
+from toolkit.helper_functions import apply_celery_task
 
 from django_filters import rest_framework as filters
 import rest_framework.filters as drf_filters
@@ -31,7 +34,7 @@ class TorchTaggerFilter(filters.FilterSet):
         fields = []
 
 
-class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
+class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackModelView):
     serializer_class = TorchTaggerSerializer
     permission_classes = (
         permissions.IsAuthenticated,
@@ -52,6 +55,14 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
 
     def get_queryset(self):
         return TorchTaggerObject.objects.filter(project=self.kwargs['project_pk'])
+
+
+    @action(detail=True, methods=['post'])
+    def retrain_tagger(self, request, pk=None, project_pk=None):
+        """Starts retraining task for the TorchTagger model."""
+        instance = self.get_object()
+        apply_celery_task(torchtagger_train_handler, instance.pk)
+        return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['get'])
@@ -76,9 +87,9 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         return Response(response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
+    @action(detail=True, methods=['post'], serializer_class=TaggerTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
-        serializer = GeneralTextSerializer(data=request.data)
+        serializer = TaggerTagTextSerializer(data=request.data)
         # check if valid request
         if not serializer.is_valid():
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -89,7 +100,8 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
             raise NonExistantModelError()
         # apply tagger
         text = serializer.validated_data['text']
-        prediction = self.apply_tagger(tagger_object, text)
+        feedback = serializer.validated_data['feedback_enabled']
+        prediction = self.apply_tagger(tagger_object, text, feedback=feedback)
         return Response(prediction, status=status.HTTP_200_OK)
 
 
@@ -111,9 +123,9 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
             tagger_result = tagger.tag_text(tagger_input)
         prediction = {'result': tagger_result[0], 'probability': tagger_result[1]}
         # add optional feedback
-        #if feedback:
-        #    project_pk = tagger_object.project.pk
-        #    feedback_object = Feedback(project_pk, tagger_object.pk)
-        #    feedback_id = feedback_object.store(tagger_input, prediction['result'])
-        #    prediction['feedback'] = {'id': feedback_id}
+        if feedback:
+            project_pk = tagger_object.project.pk
+            feedback_object = Feedback(project_pk, model_object=tagger_object)
+            feedback_id = feedback_object.store(tagger_input, prediction['result'])
+            prediction['feedback'] = {'id': feedback_id}
         return prediction

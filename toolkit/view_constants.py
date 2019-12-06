@@ -193,7 +193,7 @@ class FeedbackModelView:
         Deletes feedback object for the model.
         """
         model_object = self.get_object()
-        feedback = Feedback(project_pk, model_pk=pk, model_type=model_object.MODEL_TYPE)
+        feedback = Feedback(project_pk, model_object=model_object)
         if request.method == 'POST':
             serializer = FeedbackSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
