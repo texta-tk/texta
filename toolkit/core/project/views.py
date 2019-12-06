@@ -3,7 +3,6 @@ from django.db.models import Count
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
 from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import (
     ProjectSerializer,
@@ -22,7 +21,7 @@ from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.spam_detector import SpamDetector
 from toolkit.exceptions import ProjectValidationFailed, SerializerNotValid
-from toolkit.permissions.project_permissions import ProjectAllowed, ExtraActionResource, ProjectResourceAllowed
+from toolkit.permissions.project_permissions import ProjectAllowed, ExtraActionResource, ProjectResourceAllowed, IsSuperUser
 from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
@@ -42,6 +41,7 @@ class ProjectFilter(filters.FilterSet):
     class Meta:
         model = Project
         fields = []
+
 
 class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
     """
@@ -73,6 +73,17 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = ProjectFilter
     ordering_fields = ('id', 'title', 'owner__username', 'users_count', 'indices_count',)
+
+
+    def get_permissions(self):
+        """
+        Disable project creation for non-superusers
+        """
+        if self.action == 'create':
+            permission_classes = [permissions.IsAuthenticated, IsSuperUser]
+        else:
+            permission_classes = self.permission_classes
+        return [permission() for permission in permission_classes]
 
 
     def perform_create(self, serializer):

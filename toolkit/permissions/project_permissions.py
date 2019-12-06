@@ -37,7 +37,6 @@ class ProjectResourceAllowed(permissions.BasePermission):
 
 class ProjectAllowed(permissions.BasePermission):
     message = 'Insufficient permissions for this project.'
-    # in case of first access, convert from SimpleLazyObject
 
     def has_object_permission(self, request, view, obj):
         return self._permission_check(request, view)
@@ -53,7 +52,6 @@ class ProjectAllowed(permissions.BasePermission):
             return False
         if request.user in project_object.users.all() and request.method in permissions.SAFE_METHODS:
             return True
-        # if user is owner, allow UNSAFE_METHODS; conversion necessary because of SimpleLazyObject
         return project_object.owner == request.user
 
 
