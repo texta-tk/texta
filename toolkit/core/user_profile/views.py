@@ -33,13 +33,14 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, methods=['get', 'post'], permission_classes=[IsSuperUser])
     def assign_superuser(self, request, pk=None):
+        # hack to forbid original admin toggle. Something like a custom admin profile would be better
+        if self.kwargs['pk'] == '1':
+            return Response({"detail": "Can't reassign this user"})
         user = User.objects.get(id=self.kwargs['pk'])
-        user.is_superuser ^= True   # toggle
+        # toggle
+        user.is_superuser ^= True,
+        user.is_staff ^= True
         user.save()
         if user.is_superuser:
             return Response({"detail": "Superuser status assigned"}, status=status.HTTP_200_OK)
         return Response({"detail": "Superuser status removed"}, status=status.HTTP_200_OK)
-
-
-
-
