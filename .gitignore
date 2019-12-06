@@ -69,6 +69,8 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+data/test/*
+
 # celery beat schedule file
 celerybeat-schedule
 

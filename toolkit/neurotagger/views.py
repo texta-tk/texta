@@ -1,5 +1,4 @@
 import json
-import os
 
 import rest_framework.filters as drf_filters
 from django_filters import rest_framework as filters
@@ -10,7 +9,7 @@ from rest_framework.response import Response
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError, SerializerNotValid
+from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, SerializerNotValid
 from toolkit.neurotagger.models import Neurotagger
 from toolkit.neurotagger.neurotagger import NeurotaggerWorker
 from toolkit.neurotagger.serializers import NeuroTaggerTagDocumentSerializer, NeuroTaggerTagTextSerializer, NeurotaggerSerializer
@@ -88,10 +87,12 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
             fact_name = serializer.validated_data['fact_name']
             active_project = Project.objects.get(id=self.kwargs['project_pk'])
             # Retrieve tags/fact values and create queries to build models. Every tag will be a class.
-            tags = self.get_tags(fact_name,
-                                 active_project,
-                                 min_count=serializer.validated_data['min_fact_doc_count'],
-                                 max_count=serializer.validated_data['max_fact_doc_count'])
+            tags = self.get_tags(
+                fact_name,
+                active_project,
+                min_count=serializer.validated_data['min_fact_doc_count'],
+                max_count=serializer.validated_data['max_fact_doc_count']
+            )
             # Check if any tags were found
             if not tags:
                 return Response({'error': f'found no tags for fact name: {fact_name}'}, status=status.HTTP_400_BAD_REQUEST)
@@ -108,22 +109,9 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
 
 
     def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        try:
-            neurotagger_model_location = json.loads(instance.location)['model']
-            tokenizer_model_location = json.loads(instance.location)['tokenizer_model']
-            tokenizer_vocab_model_location = json.loads(instance.location)['tokenizer_vocab']
-            for model in (
-                    neurotagger_model_location,
-                    tokenizer_model_location,
-                    tokenizer_vocab_model_location,
-                    instance.plot.path,
-            ):
-                os.remove(model)
-            return Response({"success": f'Neurotagger instance "{instance.description}" deleted, models and plots were removed'}, status=status.HTTP_204_NO_CONTENT)
-        except:
-            return Response({"warning": f'Neurotagger instance "{instance.description}" deleted, but models and plots were not removed'}, status=status.HTTP_204_NO_CONTENT)
+        instance: Neurotagger = self.get_object()
+        instance.delete()
+        return Response({"success": f'Neurotagger instance "{instance.description}" deleted, models and plots were removed'}, status=status.HTTP_204_NO_CONTENT)
 
 
     @action(detail=True, methods=['post'], serializer_class=NeuroTaggerTagTextSerializer)
@@ -139,7 +127,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
         tagger_object = self.get_object()
 
         # check if tagger exists
-        if not tagger_object.location:
+        if not tagger_object.model.name:
             raise NonExistantModelError()
 
         # apply tagger
@@ -160,7 +148,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
         tagger_object = self.get_object()
 
         # check if tagger exists
-        if not tagger_object.location:
+        if not tagger_object.model.path:
             raise NonExistantModelError()
 
         # apply tagger
@@ -190,11 +178,13 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
     @action(detail=True, methods=['get'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """Returns list of tags for a random document in Elasticsearch."""
-        # get tagger object
-        tagger_object = self.get_object()
+
+        tagger_object = self.get_object()  # get tagger object
+        tagger_fields = json.loads(tagger_object.fields)  # retrieve tagger fields
         tagger_id = tagger_object.id
+
         # check if tagger exists
-        if not tagger_object.location:
+        if not tagger_object.model.name:
             raise NonExistantModelError()
         # retrieve tagger fields
         tagger_fields = json.loads(tagger_object.fields)

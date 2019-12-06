@@ -1,20 +1,6 @@
 from keras import backend as K
+from keras.layers import (Conv1D, CuDNNGRU, CuDNNLSTM, Dense, Dropout, Embedding, Flatten, GlobalAveragePooling1D)
 from keras.models import Sequential
-from keras.layers import (Dense,
-                          Embedding,
-                          CuDNNLSTM,
-                          CuDNNGRU, GRU,
-                          Bidirectional,
-                          Dropout,
-                          MaxPooling1D,
-                          Conv1D,
-                          GlobalAveragePooling1D,
-                          MaxPooling1D,
-                          Flatten,
-                         )
-from keras.activations import relu, elu, softmax, sigmoid
-from keras.optimizers import Adam, Nadam
-from keras.losses import categorical_crossentropy, logcosh
 from keras.utils import multi_gpu_model
 
 
@@ -25,6 +11,7 @@ class NeuroModels():
     LSTM = "lstm"
     GRUCNN = "gruCNN"
     LSTMCNN = "lstmCNN"
+
 
     def __init__(self):
         # Map models to string so they would be easy to call
@@ -39,7 +26,7 @@ class NeuroModels():
 
 
     def get_model(self, model_arch, vocab_sz, seq_len, num_cls):
-        '''Get the model based on the given architecture, and give specific parameters'''
+        """Get the model based on the given architecture, and give specific parameters"""
         if model_arch in self.models_map:
             model = self.models_map[model_arch](vocab_sz, num_cls, seq_len)
             model = self._compile_model(model)
@@ -47,10 +34,11 @@ class NeuroModels():
         else:
             raise ValueError('"{}" is not a valid model architecture!'.format(model_arch))
 
+
     # Simplier models
     @staticmethod
     def fnn(vocab_sz, num_cls, seq_len):
-        '''Feed-forward neural network'''
+        """Feed-forward neural network"""
         embed_dim = 300
         model = Sequential()
         model.add(Embedding(vocab_sz, embed_dim, input_length=seq_len))
@@ -65,7 +53,7 @@ class NeuroModels():
 
     @staticmethod
     def cnn(vocab_sz, num_cls, seq_len):
-        '''Convolutional neural network'''
+        """Convolutional neural network"""
         embed_dim = 200
         model = Sequential()
         model.add(Embedding(vocab_sz, embed_dim, input_length=seq_len))
@@ -80,12 +68,12 @@ class NeuroModels():
 
     @staticmethod
     def gru(vocab_sz, num_cls, seq_len):
-        '''Gated recurrent unit network. Gets a big speedup with CuDNN.'''
+        """Gated recurrent unit network. Gets a big speedup with CuDNN."""
         embed_dim = 200
         n_hidden = 32
         model = Sequential()
         model.add(Embedding(vocab_sz, embed_dim, input_length=seq_len))
-        model.add(CuDNNGRU(n_hidden,))
+        model.add(CuDNNGRU(n_hidden, ))
         model.add(Dropout(0.5))
         model.add(Dense(num_cls, activation='sigmoid'))
 
@@ -94,7 +82,7 @@ class NeuroModels():
 
     @staticmethod
     def lstm(vocab_sz, num_cls, seq_len):
-        '''Long short term memory network. Gets a big speedup with CuDNN.'''
+        """Long short term memory network. Gets a big speedup with CuDNN."""
         embed_dim = 200
         n_hidden = 32
         model = Sequential()
@@ -109,7 +97,7 @@ class NeuroModels():
     # Combined models
     @staticmethod
     def gruCNN(vocab_sz, num_cls, seq_len):
-        '''GRU + CNN model'''
+        """GRU + CNN model"""
         embed_dim = 200
         model = Sequential()
         model.add(Embedding(vocab_sz, embed_dim, input_length=seq_len))
@@ -124,7 +112,7 @@ class NeuroModels():
 
     @staticmethod
     def lstmCNN(vocab_sz, num_cls, seq_len):
-        '''LSTM + CNN model'''
+        """LSTM + CNN model"""
         embed_dim = 200
         model = Sequential()
         model.add(Embedding(vocab_sz, embed_dim, input_length=seq_len))
@@ -139,14 +127,14 @@ class NeuroModels():
 
     @staticmethod
     def _compile_model(model, loss='binary_crossentropy', optimizer='adam', metrics=['accuracy']):
-        '''Compile the model, pass in an optional loss, optimizer and metrics'''
+        """Compile the model, pass in an optional loss, optimizer and metrics"""
         # Activate multi_gpu_model if more than 1 gpu found
         gpus = K.tensorflow_backend._get_available_gpus()
         if len(gpus) > 1:
             model = multi_gpu_model(model)
 
         model.compile(loss=loss,
-                    optimizer=optimizer,
-                    metrics=metrics)
+                      optimizer=optimizer,
+                      metrics=metrics)
 
         return model

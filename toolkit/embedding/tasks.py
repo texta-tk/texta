@@ -1,20 +1,20 @@
-import os
 import json
+import os
 import secrets
 
 from celery.decorators import task
 from gensim.models import word2vec
 
-from toolkit.embedding.embedding import W2VEmbedding
-from toolkit.embedding.word_cluster import WordCluster
-from toolkit.embedding.models import Embedding, EmbeddingCluster
-from toolkit.core.task.models import Task
-from toolkit.tools.show_progress import ShowProgress
-from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.embedding.phraser import Phraser
-from toolkit.tools.text_processor import TextProcessor
-from toolkit.settings import MODELS_DIR, NUM_WORKERS
 from toolkit.base_task import BaseTask
+from toolkit.core.task.models import Task
+from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.embedding.embedding import W2VEmbedding
+from toolkit.embedding.models import Embedding, EmbeddingCluster
+from toolkit.embedding.phraser import Phraser
+from toolkit.embedding.word_cluster import WordCluster
+from toolkit.settings import MODELS_DIR, NUM_WORKERS
+from toolkit.tools.show_progress import ShowProgress
+from toolkit.tools.text_processor import TextProcessor
 
 
 @task(name="train_embedding", base=BaseTask)
@@ -33,13 +33,15 @@ def train_embedding(embedding_id):
 
         # create itrerator for phraser
         text_processor = TextProcessor(sentences=True, remove_stop_words=True, tokenize=True)
-        sentences = ElasticSearcher(query=json.loads(embedding_object.query),
-                                    indices=indices,
-                                    field_data=field_data,
-                                    output=ElasticSearcher.OUT_TEXT,
-                                    callback_progress=show_progress,
-                                    text_processor=text_processor)
-        
+        sentences = ElasticSearcher(
+            query=json.loads(embedding_object.query),
+            indices=indices,
+            field_data=field_data,
+            output=ElasticSearcher.OUT_TEXT,
+            callback_progress=show_progress,
+            text_processor=text_processor
+        )
+
         # build phrase model
         phraser = Phraser(embedding_id)
         phraser.build(sentences)
@@ -57,18 +59,22 @@ def train_embedding(embedding_id):
         text_processor = TextProcessor(phraser=phraser, sentences=True, remove_stop_words=True, tokenize=True)
 
         # iterate again with built phrase model to include phrases in language model
-        sentences = ElasticSearcher(query=json.loads(embedding_object.query),
-                                    indices=indices,
-                                    field_data=field_data,
-                                    output=ElasticSearcher.OUT_TEXT,
-                                    callback_progress=show_progress,
-                                    text_processor=text_processor)
+        sentences = ElasticSearcher(
+            query=json.loads(embedding_object.query),
+            indices=indices,
+            field_data=field_data,
+            output=ElasticSearcher.OUT_TEXT,
+            callback_progress=show_progress,
+            text_processor=text_processor
+        )
         # word2vec model
-        model = word2vec.Word2Vec(sentences,
-                                  min_count=embedding_object.min_freq,
-                                  size=embedding_object.num_dimensions,
-                                  workers=NUM_WORKERS,
-                                  iter=int(num_passes))
+        model = word2vec.Word2Vec(
+            sentences,
+            min_count=embedding_object.min_freq,
+            size=embedding_object.num_dimensions,
+            iter=int(num_passes),
+            workers=NUM_WORKERS
+        )
 
         # Save models
         show_progress.update_step('saving')
@@ -77,8 +83,9 @@ def train_embedding(embedding_id):
         model.save(model_path)
         phraser.save(phraser_path)
 
-        # save model locations
-        embedding_object.location = json.dumps({'embedding': model_path, 'phraser': phraser_path})
+        # save model paths
+        embedding_object.embedding_model.name = model_path
+        embedding_object.phraser_model.name = phraser_path
         embedding_object.vocab_size = len(model.wv.vocab)
         embedding_object.save()
 
@@ -100,7 +107,7 @@ def cluster_embedding(clustering_id):
     # retrieve clustering object
     clustering_object = EmbeddingCluster.objects.get(pk=clustering_id)
     num_clusters = clustering_object.num_clusters
-    
+
     task_object = clustering_object.task
     show_progress = ShowProgress(task_object, multiplier=1)
 
@@ -125,7 +132,8 @@ def cluster_embedding(clustering_id):
         clustering.save(clustering_path)
 
         # save clustering
-        clustering_object.location = json.dumps({'cluster': clustering_path})
+        # TODO Ask what's actually being saved in this place.
+        clustering_object.cluster_model = clustering_path
         clustering_object.save()
 
         # finish task

@@ -1,4 +1,6 @@
-from django.test import TestCase
+import json
+
+from django.test import TestCase, TransactionTestCase
 from toolkit.tools.text_processor import TextProcessor, StopWords
 from toolkit.embedding.phraser import Phraser
 from toolkit.core.project.models import Project
@@ -7,23 +9,21 @@ from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
-class TextProcessorTests(TestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        # Owner of the project
-        cls.user = create_test_user('textProcessorOwner', 'my@email.com', 'pw')
-        cls.project = Project.objects.create(
-            title='textprocessorTestProject',
-            owner=cls.user,
-            indices=TEST_INDEX
-        )
-
-        cls.test_embedding = None
-        cls.test_phraser = None
+class TextProcessorTests(TransactionTestCase):
 
 
     def setUp(self):
+        # Owner of the project
+        self.user = create_test_user('textProcessorOwner', 'my@email.com', 'pw')
+        self.project = Project.objects.create(
+            title='textprocessorTestProject',
+            owner=self.user,
+            indices=TEST_INDEX
+        )
+
+        self.test_embedding = None
+        self.test_phraser = None
+
         self.client.login(username='textProcessorOwner', password='pw')
 
 
@@ -46,7 +46,7 @@ class TextProcessorTests(TestCase):
         }
         # post
         embeddings_url = f'/projects/{self.project.id}/embeddings/'
-        response = self.client.post(embeddings_url, payload, format='json')
+        response = self.client.post(embeddings_url, json.dumps(payload), content_type='application/json')
         # load embedding & phraser
         self.test_embedding = Embedding.objects.get(id=response.data['id'])
         self.test_phraser = Phraser(self.test_embedding.id)

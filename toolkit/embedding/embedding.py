@@ -21,7 +21,7 @@ class W2VEmbedding:
             return False
 
         embedding_object = Embedding.objects.get(pk=self.embedding_id)
-        file_path = json.loads(embedding_object.location)['embedding']
+        file_path = embedding_object.embedding_model.path
         model = word2vec.Word2Vec.load(file_path)
         self.model = model
         self.name = embedding_object.description
