@@ -31,6 +31,7 @@ class TaggerGroupViewTests(APITestCase):
 
 
     def test_run(self):
+        self.run_create_and_delete_tagger_group_removes_related_children_models_plots()
         self.run_create_tagger_group_training_and_task_signal()
         self.run_tag_text()
         self.run_tag_doc()
@@ -143,7 +144,7 @@ class TaggerGroupViewTests(APITestCase):
             self.addCleanup(remove_file, tagger.plot.path)
 
 
-    def test_create_and_delete_tagger_group_removes_related_children_models_plots(self):
+    def run_create_and_delete_tagger_group_removes_related_children_models_plots(self):
         payload = {
             "description": "TestTaggerGroup",
             "minimum_sample_size": 50,
