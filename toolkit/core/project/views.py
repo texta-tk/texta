@@ -72,7 +72,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = ProjectFilter
-    ordering_fields = ('id', 'title', 'owner__username', 'users_count', 'indices_count',)
+    ordering_fields = ('id', 'title', 'users_count', 'indices_count',)
 
 
     def get_permissions(self):
@@ -86,15 +86,11 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         return [permission() for permission in permission_classes]
 
 
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
-
-
     def get_queryset(self):
         queryset = Project.objects.annotate(users_count=Count('users'), indices_count=Count('indices')).all()
         current_user = self.request.user
         if not current_user.is_superuser:
-            queryset = (queryset.filter(owner=current_user) | queryset.filter(users=current_user)).distinct()
+            queryset.filter(users=current_user)
         return queryset
 
 

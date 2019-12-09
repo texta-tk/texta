@@ -29,7 +29,6 @@ class ReindexerViewTests(APITestCase):
         cls.user.save()
         cls.project = Project.objects.create(
             title='ReindexerTestProject',
-            owner=cls.user,
             indices=[TEST_INDEX]
         )
 

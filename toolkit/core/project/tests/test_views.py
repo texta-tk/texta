@@ -14,7 +14,9 @@ class ProjectViewTests(APITestCase):
     def setUp(self):
         # Create a new User
         self.user = create_test_user(name='user', password='pw')
-        self.project = Project.objects.create(title='testproj', owner=self.user, indices=[TEST_INDEX])
+        self.project = Project.objects.create(title='testproj', indices=[TEST_INDEX])
+        self.user.is_superuser = True
+        self.user.save()
         self.client = APIClient()
         self.client.login(username='user', password='pw')
 

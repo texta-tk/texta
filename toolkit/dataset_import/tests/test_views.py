@@ -15,9 +15,10 @@ class DatasetImportViewTests(APITestCase):
     def setUpTestData(cls):
         # Owner of the project
         cls.user = create_test_user('Owner', 'my@email.com', 'pw')
+        cls.user.is_superuser = True
+        cls.user.save()
         cls.project = Project.objects.create(
             title='testImportDatasetProject',
-            owner=cls.user
         )
         cls.url = f'/projects/{cls.project.id}/dataset_imports/'
         cls.project_url = f'/projects/{cls.project.id}'

@@ -26,9 +26,8 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         queryset = User.objects.all().order_by('-date_joined')
         current_user = self.request.user
-        projects = Project.objects.filter(owner=current_user)
         if not current_user.is_superuser:
-            queryset = (queryset.filter(id=self.request.user.id) | queryset.filter(project_users__in=projects)).distinct()
+            queryset = queryset.filter(id=self.request.user.id)
         return queryset
 
     @action(detail=True, methods=['get', 'post'], permission_classes=[IsSuperUser])

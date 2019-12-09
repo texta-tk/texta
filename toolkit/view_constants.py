@@ -260,8 +260,7 @@ class AdminPermissionsViewSetMixin(object):
 
     def get_serializer_class(self):
         current_user = self.request.user
-        queryset = Project.objects.annotate(users_count=Count('users'))
-        if current_user.is_superuser or queryset.filter(owner=current_user):
+        if current_user.is_superuser:
             return ProjectAdminSerializer
         else:
             return super(AdminPermissionsViewSetMixin, self).get_serializer_class()

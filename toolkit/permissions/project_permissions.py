@@ -25,8 +25,8 @@ class ProjectResourceAllowed(permissions.BasePermission):
             project_object = Project.objects.get(id=view.kwargs['project_pk'])
         except:
             return False
-        # check if user is owner or listed in project users
-        if request.user in project_object.users.all() or request.user == project_object.owner:
+        # check if user is listed among project users
+        if request.user in project_object.users.all():
             return True
         # check if user is superuser
         if request.user.is_superuser:
@@ -39,20 +39,22 @@ class ProjectAllowed(permissions.BasePermission):
     message = 'Insufficient permissions for this project.'
 
     def has_object_permission(self, request, view, obj):
+        print("perm", self._permission_check(request, view))
         return self._permission_check(request, view)
 
     def _permission_check(self, request, view):
         # always permit SAFE_METHODS and superuser
-        if request.user.is_superuser or request.method in permissions.SAFE_METHODS:
+        if request.user.is_superuser:
             return True
         # retrieve project object
         try:
             project_object = Project.objects.get(id=view.kwargs['pk'])
         except:
             return False
+        # project users are permitted safe access to project list_view
         if request.user in project_object.users.all() and request.method in permissions.SAFE_METHODS:
             return True
-        return project_object.owner == request.user
+        return False
 
 
 class IsSuperUser(permissions.BasePermission):
@@ -77,8 +79,8 @@ class ExtraActionResource(ProjectResourceAllowed):
             project_object = Project.objects.get(id=view.kwargs['pk'])
         except:
             return False
-        # check if user is owner or listed in project users
-        if request.user in project_object.users.all() or request.user == project_object.owner:
+        # check if user is listed among project users
+        if request.user in project_object.users.all():
             return True
         # check if user is superuser
         if request.user.is_superuser:
