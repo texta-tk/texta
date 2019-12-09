@@ -41,6 +41,7 @@ class TorchTaggerViewTests(TransactionTestCase):
         self.run_tag_text()
         self.run_tag_random_doc()
         self.run_tag_and_feedback_and_retrain()
+        self.run_model_export_import()
 
     def run_train_embedding(self):
         # payload for training embedding
@@ -155,9 +156,8 @@ class TorchTaggerViewTests(TransactionTestCase):
 
     def run_model_export_import(self):
         '''Tests endpoint for model export and import'''
-        test_tagger_id = self.test_tagger_ids[0]
         # retrieve model zip
-        url = f'{self.url}{test_tagger_id}/export_model/'
+        url = f'{self.url}{self.test_tagger_id}/export_model/'
         response = self.client.get(url)
         # post model zip
         import_url = f'{self.project_url}/import_model/'
@@ -166,7 +166,7 @@ class TorchTaggerViewTests(TransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Test tagging with imported model
         tagger_id = response.data['id']
-        self.run_tag_text([tagger_id])
+        self.run_tag_text()
 
 
     def run_tag_and_feedback_and_retrain(self):

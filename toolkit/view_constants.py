@@ -80,8 +80,8 @@ class ExportModel:
                 archive.writestr(json_name, model_json)
                 model_json_loaded = json.loads(model_json)[0]
                 # write model files to zip
-
                 model_type = model_json_loaded['model'].split('.')[-1]
+                # if model is embedding
                 if model_type == "embedding":
                     embedding_path = model_object.embedding_model.path
                     phraser_path = model_object.phraser_model.path
@@ -89,16 +89,14 @@ class ExportModel:
                         # derive model type from model name
                         new_model_path = os.path.join('data', 'models', model_type, os.path.basename(model_path))
                         archive.write(model_path, arcname=new_model_path)
-
-                elif model_type == "neurotagger":
-                    model = model_object.model.path
-                    tokenizer_model = model_object.tokenizer_model.path
-                    tokenizer_vocab = model_object.tokenizer_vocab.path
-                    for model_path in (model, tokenizer_model, tokenizer_vocab):
+                # if model is torchtagger
+                elif model_type == "torchtagger":
+                    model_path = model_object.model.path
+                    text_field_path = model_object.text_field.path
+                    for path in (model_path, text_field_path):
                         # derive model type from model name
-                        new_model_path = os.path.join('data', 'models', model_type, os.path.basename(model_path))
-                        archive.write(model_path, arcname=new_model_path)
-
+                        new_model_path = os.path.join('data', 'models', model_type, os.path.basename(path))
+                        archive.write(path, arcname=new_model_path)
                 # write plot files to zip. we need to check, because e.g. embeddings do not have plots (yet?)
                 if hasattr(model_object, 'plot'):
                     plot_path = model_object.plot.path
@@ -132,12 +130,6 @@ class ImportModel:
                 model_json = json.loads(archive.read(json_file[0]).decode())[0]
                 # remove object pk to avoid id clash (django will create one)
                 del model_json['pk']
-
-                # remove embedding (if any)
-                # THIS IS A HACK - we need some better solution to handle missing fields
-                if 'embedding' in model_json['fields']:
-                    del model_json['fields']['embedding']
-
                 # remove task object and let django create new
                 del model_json['fields']['task']
                 # update object project & user to match current
@@ -180,20 +172,17 @@ class ImportModel:
             with open(os.path.join(BASE_DIR, plot_file), 'wb') as fh:
                 fh.write(archive.read(plot_file))
         # write model files to disk
-
         for model_file in model_files:
             new_model_file = self.rewrite_model_id(model_object.id, model_file)
             with open(os.path.join(BASE_DIR, new_model_file), 'wb') as fh:
                 fh.write(archive.read(model_file))
-
         # update model path in model object
+        # if model is torchtagger
         if isinstance(model_object, TorchTagger):
-            pass
-        #    model_object.model = self.rewrite_model_id(model_object.id, model_object.model.path)
-        #    model_object.tokenizer_model = self.rewrite_model_id(model_object.id, model_object.tokenizer_model.path)
-        #    model_object.tokenizer_vocab = self.rewrite_model_id(model_object.id, model_object.tokenizer_vocab.path)
-        #    model_object.save()
-
+            model_object.model = self.rewrite_model_id(model_object.id, model_object.model.path)
+            model_object.text_field = self.rewrite_model_id(model_object.id, model_object.text_field.path)
+            model_object.save()
+        # if model is embedding
         elif isinstance(model_object, Embedding):
             model_object.embedding_model = self.rewrite_model_id(model_object.id, model_object.embedding_model.path)
             model_object.phraser_model = self.rewrite_model_id(model_object.id, model_object.phraser_model.path)
