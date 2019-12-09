@@ -42,7 +42,8 @@ class TorchTagger(models.Model):
     precision = models.FloatField(default=None, null=True)
     recall = models.FloatField(default=None, null=True)
     f1_score = models.FloatField(default=None, null=True)
-    location = models.TextField()
+    model = models.FileField(upload_to="data/models/torchtaggers", null=True, verbose_name='', default=None)
+    text_field = models.FileField(upload_to="data/models/torchtaggers", null=True, verbose_name='', default=None)
     plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
     
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)

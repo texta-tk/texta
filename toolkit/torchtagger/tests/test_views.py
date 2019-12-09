@@ -4,7 +4,7 @@ import json
 import os
 from django.db.models import signals
 
-from rest_framework.test import APITestCase
+from django.test import TransactionTestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -17,7 +17,7 @@ from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.torchtagger.torch_models.models import TORCH_MODELS
 
 
-class TorchTaggerViewTests(APITestCase):
+class TorchTaggerViewTests(TransactionTestCase):
     @classmethod
     def setUpTestData(cls):
         # Owner of the project

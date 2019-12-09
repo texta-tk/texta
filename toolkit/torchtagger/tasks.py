@@ -47,7 +47,7 @@ def torchtagger_train_handler(tagger_id, testing=False):
         tagger_path = os.path.join(MODELS_DIR, model_type, f'{model_type}_{tagger_id}_{secrets.token_hex(10)}')
         tagger.save(tagger_path)
         # set tagger location
-        tagger_object.location = json.dumps({model_type: tagger_path})
+        tagger_object.model.name = tagger_path
         # save tagger plot
         tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_torchtagger_plot(tagger_stats))
         # save label index

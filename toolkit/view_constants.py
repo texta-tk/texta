@@ -16,7 +16,6 @@ from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.query import Query
 from toolkit.embedding.models import Embedding
-from toolkit.neurotagger.models import Neurotagger
 from toolkit.serializer_constants import (FeedbackSerializer, ProjectResourceBulkDeleteSerializer, ProjectResourceImportModelSerializer)
 from toolkit.settings import BASE_DIR
 from toolkit.tools.logger import Logger

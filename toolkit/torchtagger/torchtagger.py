@@ -63,7 +63,7 @@ class TorchTagger:
     def load(self):
         """Loads model from disk."""
         tagger_object = TorchTaggerObject.objects.get(pk=self.tagger_id)
-        tagger_path = json.loads(tagger_object.location)[TorchTaggerObject.MODEL_TYPE]
+        tagger_path = tagger_object.model.path
         # load model
         model = torch.load(tagger_path)
         model.eval()
@@ -71,7 +71,7 @@ class TorchTagger:
         self.description = tagger_object.description
         self.model = model
         # load & set field object
-        with open(f"{tagger_path}_text_field", "rb") as fh:
+        with open(tagger_object.text_field.path, "rb") as fh:
             self.text_field = dill.load(fh)
         # set label reverse index used for prediction
         self.label_reverse_index = json.loads(tagger_object.label_index)
