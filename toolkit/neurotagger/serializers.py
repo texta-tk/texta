@@ -1,8 +1,9 @@
 from rest_framework import serializers
 
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.core.project.models import Project
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
-from . import choices
+from . import choices, views
 from .models import Neurotagger
 
 
