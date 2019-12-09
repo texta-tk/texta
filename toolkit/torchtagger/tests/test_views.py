@@ -18,22 +18,20 @@ from toolkit.torchtagger.torch_models.models import TORCH_MODELS
 
 
 class TorchTaggerViewTests(TransactionTestCase):
-    @classmethod
-    def setUpTestData(cls):
+    def setUp(self):
         # Owner of the project
-        cls.user = create_test_user('torchTaggerOwner', 'my@email.com', 'pw')
-        cls.project = Project.objects.create(
+        self.user = create_test_user('torchTaggerOwner', 'my@email.com', 'pw')
+        self.project = Project.objects.create(
             title='torchTaggerTestProject',
-            owner=cls.user,
+            owner=self.user,
             indices=TEST_INDEX
         )
-        cls.url = f'/projects/{cls.project.id}/torchtaggers/'
-        cls.project_url = f'/projects/{cls.project.id}'
-        cls.test_embedding_id = None
-        cls.torch_models = list(TORCH_MODELS.keys())
-        cls.test_tagger_id = None
+        self.url = f'/projects/{self.project.id}/torchtaggers/'
+        self.project_url = f'/projects/{self.project.id}'
+        self.test_embedding_id = None
+        self.torch_models = list(TORCH_MODELS.keys())
+        self.test_tagger_id = None
 
-    def setUp(self):
         self.client.login(username='torchTaggerOwner', password='pw')
 
     def test(self):
@@ -81,7 +79,7 @@ class TorchTaggerViewTests(TransactionTestCase):
             self.assertTrue(isinstance(response.data[score], float))
         self.test_tagger_id = tagger_id
         # Remove tagger files after test is done
-        self.addCleanup(remove_file, response.data['location']['torchtagger'])
+        #self.addCleanup(remove_file, response.data['location']['torchtagger'])
         #self.addCleanup(remove_file, created_tagger.plot.path)
 
     def run_train_multiclass_tagger(self):
@@ -107,7 +105,7 @@ class TorchTaggerViewTests(TransactionTestCase):
             self.assertTrue(isinstance(response.data[score], float))
         self.test_tagger_id = tagger_id
         # Remove tagger files after test is done
-        self.addCleanup(remove_file, response.data['location']['torchtagger'])
+        #self.addCleanup(remove_file, response.data['location']['torchtagger'])
         #self.addCleanup(remove_file, created_tagger.plot.path)
 
     def run_tag_text(self):

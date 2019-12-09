@@ -111,7 +111,10 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     def get_tagger_statistics(self, obj):
         tagger_objects = obj.taggers
         if tagger_objects.exists():
-            tagger_size_sum = round(tagger_objects.filter(model_size__isnull=False).aggregate(Sum('model_size'))['model_size__sum'], 1)
+            try:
+                tagger_size_sum = round(tagger_objects.filter(model_size__isnull=False).aggregate(Sum('model_size'))['model_size__sum'], 1)
+            except TypeError:
+                tagger_size_sum = 0
             tagger_stats = {
                 'avg_precision': tagger_objects.aggregate(Avg('precision'))['precision__avg'],
                 'avg_recall': tagger_objects.aggregate(Avg('recall'))['recall__avg'],

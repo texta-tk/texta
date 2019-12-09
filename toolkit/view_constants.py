@@ -16,6 +16,7 @@ from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.query import Query
 from toolkit.embedding.models import Embedding
+from toolkit.torchtagger.models import TorchTagger
 from toolkit.serializer_constants import (FeedbackSerializer, ProjectResourceBulkDeleteSerializer, ProjectResourceImportModelSerializer)
 from toolkit.settings import BASE_DIR
 from toolkit.tools.logger import Logger
@@ -186,11 +187,12 @@ class ImportModel:
                 fh.write(archive.read(model_file))
 
         # update model path in model object
-        if isinstance(model_object, Neurotagger):
-            model_object.model = self.rewrite_model_id(model_object.id, model_object.model.path)
-            model_object.tokenizer_model = self.rewrite_model_id(model_object.id, model_object.tokenizer_model.path)
-            model_object.tokenizer_vocab = self.rewrite_model_id(model_object.id, model_object.tokenizer_vocab.path)
-            model_object.save()
+        if isinstance(model_object, TorchTagger):
+            pass
+        #    model_object.model = self.rewrite_model_id(model_object.id, model_object.model.path)
+        #    model_object.tokenizer_model = self.rewrite_model_id(model_object.id, model_object.tokenizer_model.path)
+        #    model_object.tokenizer_vocab = self.rewrite_model_id(model_object.id, model_object.tokenizer_vocab.path)
+        #    model_object.save()
 
         elif isinstance(model_object, Embedding):
             model_object.embedding_model = self.rewrite_model_id(model_object.id, model_object.embedding_model.path)

@@ -71,7 +71,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, Feedbac
         # get tagger object
         tagger_object = self.get_object()
         # check if tagger exists
-        if not tagger_object.location:
+        if not tagger_object.model:
             raise NonExistantModelError()
         # retrieve tagger fields
         tagger_fields = json.loads(tagger_object.fields)
@@ -96,7 +96,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, Feedbac
         # retrieve tagger object
         tagger_object = self.get_object()
         # check if tagger exists
-        if not tagger_object.location:
+        if not tagger_object.model:
             raise NonExistantModelError()
         # apply tagger
         text = serializer.validated_data['text']

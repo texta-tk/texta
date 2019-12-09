@@ -55,9 +55,10 @@ class TorchTagger:
     def save(self, path):
         """Saves model on disk."""
         torch.save(self.model, path)
-        with open(f"{path}_text_field", "wb") as fh:
+        text_field_path = f"{path}_text_field"
+        with open(text_field_path, "wb") as fh:
             dill.dump(self.text_field, fh)
-        return True
+        return path, text_field_path
 
 
     def load(self):
