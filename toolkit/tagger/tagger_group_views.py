@@ -110,7 +110,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         for tagger in tagger_objects:
             self.perform_destroy(tagger)
         self.perform_destroy(instance)
-        tagger_model_locations = [json.loads(tagger.location)['tagger'] for tagger in tagger_objects]
+        tagger_model_locations = [tagger.model.path for tagger in tagger_objects]
         tagger_plot_locations = [tagger.plot.path for tagger in tagger_objects]
         try:
             for model_dir_list in (

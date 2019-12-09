@@ -15,6 +15,7 @@ import warnings
 
 from .logging_settings import setup_logging
 
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -50,7 +51,7 @@ INSTALLED_APPS = [
     'toolkit.tagger',
     'toolkit.neurotagger',
     # TEXTA Extension Apps
-    #'docscraper',
+    # 'docscraper',
     # THIRD PARTY
     # https://github.com/goinnn/django-multiselectfield
     'multiselectfield',
@@ -59,6 +60,7 @@ INSTALLED_APPS = [
     'rest_auth',
     'allauth',
     'allauth.account',
+    'allauth.socialaccount',
     'rest_auth.registration',
     'django_extensions',
     'drf_yasg'
@@ -135,10 +137,6 @@ DATABASES = {
         'PORT': os.getenv('DJANGO_DATABASE_PORT', ''),
         # Set to empty string for default. Not used with sqlite3.
         'BACKUP_COUNT': 5,
-        'CONN_MAX_AGE': None
-    },
-    'OPTIONS': {
-        'timeout': 5,
     }
 }
 
@@ -191,8 +189,8 @@ ES_CONNECTION_PARAMETERS = {
     "client_cert": os.getenv("TEXTA_ES_CLIENT_CERT_PATH", None),
     "client_key": os.getenv("TEXTA_ES_CLIENT_KEY_PATH", None),
     "timeout": int(os.getenv("TEXTA_ES_TIMEOUT", None)) if os.getenv("TEXTA_ES_TIMEOUT", None) else None,
-    "sniff_on_start":  eval(os.getenv("TEXTA_ES_SNIFF_ON_START", "True")),
-    "sniff_on_connection_fail":  eval(os.getenv("TEXTA_ES_SNIFF_ON_FAIL", "True"))
+    "sniff_on_start": True if os.getenv("TEXTA_ES_SNIFF_ON_START", "True") == "True" else False,
+    "sniff_on_connection_fail": True if os.getenv("TEXTA_ES_SNIFF_ON_FAIL", "True") == "True" else False
 }
 
 # MLP

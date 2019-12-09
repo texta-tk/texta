@@ -1,16 +1,13 @@
-from io import StringIO
-import json
-import os
-
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from toolkit.test_settings import TEST_DATASETS, TEST_IMPORT_DATASET
 from toolkit.core.project.models import Project
-from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
-from toolkit.dataset_import.models import DatasetImport
 from toolkit.core.task.models import Task
+from toolkit.dataset_import.models import DatasetImport
 from toolkit.elastic.core import ElasticCore
+from toolkit.test_settings import TEST_DATASETS, TEST_IMPORT_DATASET
+from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
+
 
 class DatasetImportViewTests(APITestCase):
 
@@ -26,13 +23,14 @@ class DatasetImportViewTests(APITestCase):
         cls.project_url = f'/projects/{cls.project.id}'
         cls.created_indices = []
 
+
     def setUp(self):
         self.client.login(username='Owner', password='pw')
 
 
     def test_import_dataset(self):
         """Tests the endpoint for importing dataset."""
-        for i,file_path in enumerate(TEST_DATASETS):
+        for i, file_path in enumerate(TEST_DATASETS):
             with open(file_path, 'rb') as fh:
                 payload = {
                     "description": "Testimport",
@@ -52,6 +50,7 @@ class DatasetImportViewTests(APITestCase):
                 self.assertTrue(import_dataset.num_documents > 0)
                 self.assertTrue(import_dataset.num_documents_success > 0)
                 self.assertTrue(import_dataset.num_documents_success <= import_dataset.num_documents)
+
 
     def tearDown(self):
         # delete created indices

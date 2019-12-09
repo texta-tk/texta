@@ -1,19 +1,15 @@
-import os
 import json
-import secrets
 
 from celery.decorators import task
-from celery import chord
 from keras import backend as K
 
-from toolkit.core.task.models import Task
-from toolkit.neurotagger.models import Neurotagger
-from toolkit.settings import MODELS_DIR
-from toolkit.embedding.phraser import Phraser
-from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.tools.show_progress import ShowProgress
-from toolkit.neurotagger.neurotagger import NeurotaggerWorker
 from toolkit.base_task import BaseTask
+from toolkit.core.task.models import Task
+from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.neurotagger.models import Neurotagger
+from toolkit.neurotagger.neurotagger import NeurotaggerWorker
+from toolkit.tools.show_progress import ShowProgress
+
 
 @task(name="neurotagger_train_handler", base=BaseTask)
 def neurotagger_train_handler(neurotagger_id, testing=False):
@@ -29,7 +25,7 @@ def neurotagger_train_handler(neurotagger_id, testing=False):
     num_queries = len(queries)
 
     kwargs = {"neurotagger_id": neurotagger_obj.id, "num_queries": num_queries}
-    
+
     # FOR ASYNC SCROLLING WITH CELERY CHORD, SEE ISSUE https://git.texta.ee/texta/texta-rest/issues/66
     # task_worker = chord((scroll_data.s(query, kwargs=kwargs) for query in queries), train_model.s(kwargs=kwargs))
     # if not testing:
@@ -49,10 +45,9 @@ def scroll_data(query, kwargs={}):
 
     indices = neurotagger_obj.project.indices
     field_data = json.loads(neurotagger_obj.fields)
-    fact_values =  json.loads(neurotagger_obj.fact_values)
+    fact_values = json.loads(neurotagger_obj.fact_values)
     maximum_sample_size = neurotagger_obj.maximum_sample_size
     max_seq_len = neurotagger_obj.seq_len
-
 
     doc_ids = []
     query_samples, query_labels, query_ids = _scroll_multilabel_positives(query, maximum_sample_size, field_data, fact_values, max_seq_len)
@@ -73,7 +68,7 @@ def train_model(scrolled_samples_by_query, kwargs={}):
 
     # samples & labels for the model
     samples = []
-    labels  = []
+    labels = []
 
     # dict to track duplicates
     seen_doc_ids = {}
@@ -84,7 +79,6 @@ def train_model(scrolled_samples_by_query, kwargs={}):
                 samples.append(scrolled_samples["query_samples"][i])
                 labels.append(scrolled_samples["query_labels"][i])
                 seen_doc_ids[doc_id] = True
-
 
     try:
         assert len(labels) == len(samples), f'X/y are inconsistent lengths: {len(samples)} != {len(labels)}'
@@ -110,7 +104,7 @@ def train_model(scrolled_samples_by_query, kwargs={}):
 
 
 def _scroll_multilabel_positives(query, maximum_sample_size, field_data, fact_values, max_seq_len):
-    positive_samples = ElasticSearcher(query=query, 
+    positive_samples = ElasticSearcher(query=query,
                                        field_data=field_data + ['texta_facts'],
                                        scroll_limit=maximum_sample_size,
                                        output=ElasticSearcher.OUT_DOC_WITH_ID

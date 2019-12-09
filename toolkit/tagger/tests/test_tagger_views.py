@@ -1,18 +1,17 @@
-from io import BytesIO
-from time import sleep
 import json
 import os
-from django.db.models import signals
+from io import BytesIO
+from time import sleep
 
-from rest_framework.test import APITestCase
 from rest_framework import status
-from rest_framework.test import APIClient
+from rest_framework.test import APITestCase
 
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_QUERY, TEST_MATCH_TEXT
 from toolkit.core.project.models import Project
-from toolkit.tagger.models import Tagger
 from toolkit.core.task.models import Task
+from toolkit.tagger.models import Tagger
+from toolkit.test_settings import TEST_FIELD, TEST_FIELD_CHOICE, TEST_INDEX, TEST_MATCH_TEXT, TEST_QUERY
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
+
 
 class TaggerViewTests(APITestCase):
     @classmethod
@@ -64,7 +63,7 @@ class TaggerViewTests(APITestCase):
 
 
     def run_create_tagger_training_and_task_signal(self):
-        '''Tests the endpoint for a new Tagger, and if a new Task gets created via the signal'''
+        """Tests the endpoint for a new Tagger, and if a new Task gets created via the signal"""
         # run test for each vectorizer & classifier option
         for vectorizer_opt in self.vectorizer_opts:
             for classifier_opt in self.classifier_opts:
@@ -88,7 +87,7 @@ class TaggerViewTests(APITestCase):
                 # Check if not errors
                 self.assertEqual(created_tagger.task.errors, '')
                 # Remove tagger files after test is done
-                self.addCleanup(remove_file, json.loads(created_tagger.location)['tagger'])
+                self.addCleanup(remove_file, created_tagger.model.path)
                 self.addCleanup(remove_file, created_tagger.plot.path)
                 # Check if Task gets created via a signal
                 self.assertTrue(created_tagger.task is not None)
@@ -97,7 +96,7 @@ class TaggerViewTests(APITestCase):
 
 
     def run_create_tagger_with_incorrect_fields(self):
-        '''Tests the endpoint for a new Tagger with incorrect field data (should give error)'''
+        """Tests the endpoint for a new Tagger with incorrect field data (should give error)"""
         payload = {
             "description": "TestTagger",
             "query": json.dumps(TEST_QUERY),
@@ -116,7 +115,7 @@ class TaggerViewTests(APITestCase):
 
 
     def create_tagger_then_delete_tagger_and_created_model(self):
-        ''' creates a tagger and removes it with DELETE in instance view '''
+        """ creates a tagger and removes it with DELETE in instance view """
         payload = {
             "description": "TestTagger",
             "query": json.dumps(TEST_QUERY),
@@ -133,26 +132,26 @@ class TaggerViewTests(APITestCase):
         created_tagger_id = create_response.data['id']
         created_tagger_url = f'{self.url}{created_tagger_id}/'
         created_tagger_obj = Tagger.objects.get(id=created_tagger_id)
-        model_location = json.loads(created_tagger_obj.location)['tagger']
+        model_location = created_tagger_obj.model.path
         plot_location = created_tagger_obj.plot.path
 
         delete_response = self.client.delete(created_tagger_url, format='json')
         print_output('delete_response.data: ', delete_response.data)
         self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
-        assert not os.path.isfile(model_location)
-        assert not os.path.isfile(plot_location)
+        self.assertEqual(os.path.isfile(model_location), False)
+        self.assertEqual(os.path.isfile(plot_location), False)
 
 
     def create_tagger_with_empty_fields(self):
-        ''' tests to_repr serializer constant. Should fail because empty fields obj is filtered out in view'''
+        """ tests to_repr serializer constant. Should fail because empty fields obj is filtered out in view"""
         payload = {
             "description": "TestTagger",
             "query": json.dumps(TEST_QUERY),
             "fields": [],
-            "vectorizer": 'Hashing Vectorizer',
-            "classifier": 'Logistic Regression',
+            "vectorizer": "Hashing Vectorizer",
+            "classifier": "Logistic Regression",
             "maximum_sample_size": 500,
-            "negative_multiplier": 1.0,
+            "negative_multiplier": 1.0
         }
         create_response = self.client.post(self.url, payload, format='json')
         print_output("empty_fields_response", create_response.data)
@@ -160,16 +159,16 @@ class TaggerViewTests(APITestCase):
 
 
     def run_patch_on_tagger_instances(self, test_tagger_ids):
-        ''' Tests patch response success for Tagger fields '''
+        """ Tests patch response success for Tagger fields """
         payload = {
-                    "description": "PatchedTagger",
-                    "query": json.dumps(TEST_QUERY),
-                    "fields": TEST_FIELD_CHOICE,
-                    "vectorizer": 'Hashing Vectorizer',
-                    "classifier": 'Logistic Regression',
-                    "maximum_sample_size": 1000,
-                    "negative_multiplier": 3.0,
-                }
+            "description": "PatchedTagger",
+            "query": json.dumps(TEST_QUERY),
+            "fields": TEST_FIELD_CHOICE,
+            "vectorizer": 'Hashing Vectorizer',
+            "classifier": 'Logistic Regression',
+            "maximum_sample_size": 1000,
+            "negative_multiplier": 3.0,
+        }
 
         for test_tagger_id in test_tagger_ids:
             tagger_url = f'{self.url}{test_tagger_id}/'
@@ -179,16 +178,16 @@ class TaggerViewTests(APITestCase):
 
 
     def run_put_on_tagger_instances(self, test_tagger_ids):
-        ''' Tests put response success for Tagger fields '''
+        """ Tests put response success for Tagger fields """
         payload = {
-                    "description": "PutTagger",
-                    "query": json.dumps(TEST_QUERY),
-                    "fields": TEST_FIELD_CHOICE,
-                    "vectorizer": 'Hashing Vectorizer',
-                    "classifier": 'Logistic Regression',
-                    "maximum_sample_size": 1000,
-                    "negative_multiplier": 3.0,
-                }
+            "description": "PutTagger",
+            "query": json.dumps(TEST_QUERY),
+            "fields": TEST_FIELD_CHOICE,
+            "vectorizer": 'Hashing Vectorizer',
+            "classifier": 'Logistic Regression',
+            "maximum_sample_size": 1000,
+            "negative_multiplier": 3.0,
+        }
         for test_tagger_id in test_tagger_ids:
             tagger_url = f'{self.url}{test_tagger_id}/'
             put_response = self.client.put(tagger_url, payload, format='json')
@@ -197,8 +196,8 @@ class TaggerViewTests(APITestCase):
 
 
     def run_tag_text(self, test_tagger_ids):
-        '''Tests the endpoint for the tag_text action'''
-        payload = { "text": "This is some test text for the Tagger Test" }
+        """Tests the endpoint for the tag_text action"""
+        payload = {"text": "This is some test text for the Tagger Test"}
         for test_tagger_id in test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
             response = self.client.post(tag_text_url, payload)
@@ -211,9 +210,11 @@ class TaggerViewTests(APITestCase):
 
 
     def run_tag_text_with_lemmatization(self):
-        '''Tests the endpoint for the tag_text action'''
-        payload = { "text": "See tekst peaks saama lemmatiseeritud ja täägitud.",
-                    "lemmatize": True }
+        """Tests the endpoint for the tag_text action"""
+        payload = {
+            "text": "See tekst peaks saama lemmatiseeritud ja täägitud.",
+            "lemmatize": True
+        }
         for test_tagger_id in self.test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_text/'
             response = self.client.post(tag_text_url, payload)
@@ -226,8 +227,8 @@ class TaggerViewTests(APITestCase):
 
 
     def run_tag_doc(self):
-        '''Tests the endpoint for the tag_doc action'''
-        payload = { "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" })}
+        """Tests the endpoint for the tag_doc action"""
+        payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"})}
         for test_tagger_id in self.test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_doc/'
             response = self.client.post(tag_text_url, payload)
@@ -240,9 +241,11 @@ class TaggerViewTests(APITestCase):
 
 
     def run_tag_doc_with_lemmatization(self):
-        '''Tests the endpoint for the tag_doc action'''
-        payload = { "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" }),
-                    "lemmatize": True }
+        """Tests the endpoint for the tag_doc action"""
+        payload = {
+            "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"}),
+            "lemmatize": True
+        }
         for test_tagger_id in self.test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_doc/'
             response = self.client.post(tag_text_url, payload)
@@ -255,7 +258,7 @@ class TaggerViewTests(APITestCase):
 
 
     def run_tag_random_doc(self):
-        '''Tests the endpoint for the tag_random_doc action'''
+        """Tests the endpoint for the tag_random_doc action"""
         for test_tagger_id in self.test_tagger_ids:
             url = f'{self.url}{test_tagger_id}/tag_random_doc/'
             response = self.client.get(url)
@@ -267,7 +270,7 @@ class TaggerViewTests(APITestCase):
 
 
     def run_list_features(self):
-        '''Tests the endpoint for the list_features action'''
+        """Tests the endpoint for the list_features action"""
         for test_tagger_id in self.test_tagger_ids:
             test_tagger_object = Tagger.objects.get(pk=test_tagger_id)
             # pass if using HashingVectorizer as it does not support feature listing
@@ -282,7 +285,7 @@ class TaggerViewTests(APITestCase):
 
 
     def run_stop_word_list(self):
-        '''Tests the endpoint for the stop_word_list action'''
+        """Tests the endpoint for the stop_word_list action"""
         for test_tagger_id in self.test_tagger_ids:
             url = f'{self.url}{test_tagger_id}/stop_words/'
             response = self.client.get(url)
@@ -294,7 +297,7 @@ class TaggerViewTests(APITestCase):
 
 
     def run_stop_word_add(self):
-        '''Tests the endpoint for the stop_word_add action'''
+        """Tests the endpoint for the stop_word_add action"""
         for test_tagger_id in self.test_tagger_ids:
             url = f'{self.url}{test_tagger_id}/stop_words/'
             payload = {"text": "stopsõna"}
@@ -309,7 +312,7 @@ class TaggerViewTests(APITestCase):
 
     def run_stop_word_replace(self):
         for test_tagger_id in self.test_tagger_ids:
-            '''Tests the endpoint for the stop_word_remove action'''
+            """Tests the endpoint for the stop_word_remove action"""
             # First add stop_words
             url = f'{self.url}{test_tagger_id}/stop_words/'
             payload = {"text": "stopsõna"}
@@ -328,7 +331,7 @@ class TaggerViewTests(APITestCase):
 
 
     def run_multitag_text(self):
-        '''Tests tagging with multiple models using multitag endpoint.'''
+        """Tests tagging with multiple models using multitag endpoint."""
         payload = {"text": "Some sad text for tagging", "taggers": self.test_tagger_ids}
         response = self.client.post(self.multitag_text_url, payload, format='json')
         print_output('test_multitag:response.data', response.data)
@@ -336,7 +339,7 @@ class TaggerViewTests(APITestCase):
 
 
     def run_model_retrain(self):
-        '''Tests the endpoint for the model_retrain action'''
+        """Tests the endpoint for the model_retrain action"""
         test_tagger_id = self.test_tagger_ids[0]
         # Check if stop word present in features
         url = f'{self.url}{test_tagger_id}/list_features/'
@@ -363,7 +366,7 @@ class TaggerViewTests(APITestCase):
 
 
     def run_model_export_import(self):
-        '''Tests endpoint for model export and import'''
+        """Tests endpoint for model export and import"""
         test_tagger_id = self.test_tagger_ids[0]
         # retrieve model zip
         url = f'{self.url}{test_tagger_id}/export_model/'
@@ -379,11 +382,12 @@ class TaggerViewTests(APITestCase):
 
 
     def run_tag_and_feedback_and_retrain(self):
-        '''Tests feeback extra action.'''
+        """Tests feeback extra action."""
         tagger_id = self.test_tagger_ids[0]
         payload = {
-            "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" }),
-            "feedback_enabled": True}
+            "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"}),
+            "feedback_enabled": True
+        }
         tag_text_url = f'{self.url}{tagger_id}/tag_doc/'
         response = self.client.post(tag_text_url, payload)
         print_output('test_tag_doc_with_feedback:response.data', response.data)
@@ -413,7 +417,7 @@ class TaggerViewTests(APITestCase):
         url = f'{self.url}{tagger_id}/retrain_tagger/'
         response = self.client.post(url)
         # test tagging again for this model
-        payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test" })}
+        payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"})}
         tag_text_url = f'{self.url}{tagger_id}/tag_doc/'
         response = self.client.post(tag_text_url, payload)
         print_output('test_feedback_retrained_tag_doc:response.data', response.data)

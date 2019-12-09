@@ -1,8 +1,8 @@
-from rest_framework.test import APITestCase
 from rest_framework import status
-from rest_framework.test import APIClient
-from toolkit.core.user_profile.models import UserProfile
+from rest_framework.test import APITestCase
+
 from toolkit.tools.utils_for_tests import create_test_user, print_output
+
 
 class HealthViewsTests(APITestCase):
 

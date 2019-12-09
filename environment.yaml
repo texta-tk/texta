@@ -11,6 +11,7 @@ dependencies:
   - tensorflow-gpu
   - keras==2.2.*
   - mkl
+  - xlrd
   - pandas
   - scikit-learn
   - matplotlib

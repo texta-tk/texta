@@ -1,21 +1,18 @@
-import os
-import csv
 import json
-import pickle
+import os
 import secrets
 import tempfile
-import numpy as np
-from io import BytesIO
-from typing import List, Dict
+from typing import List
 
 # For non-GUI rendering
 import matplotlib
+import numpy as np
+
+
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
-
-from django.core.files.base import ContentFile
-from toolkit.settings import MODELS_DIR, MEDIA_URL
+from toolkit.settings import MODELS_DIR
 from toolkit.neurotagger.models import Neurotagger
 from toolkit.tools.plot_utils import save_plot
 # Data management imports
@@ -27,16 +24,14 @@ from keras.preprocessing.sequence import pad_sequences
 from keras import backend as K
 from keras.callbacks import Callback
 from keras.models import load_model
-from keras.optimizers import Adam
-from keras.activations import relu, elu, softmax, sigmoid
-from keras.utils.vis_utils import model_to_dot
 
 # Import model architectures
 from toolkit.neurotagger.neuro_models import NeuroModels
 import sentencepiece as spm
 import tensorflow as tf
 
-class NeurotaggerWorker():
+
+class NeurotaggerWorker:
     def __init__(self, neurotagger_id):
         """
         Main class for training the NeuroClassifier
@@ -127,8 +122,8 @@ class NeurotaggerWorker():
     def _train_tokenizer(self):
         # Generate an unique path for the Tokenizer file
         self.output_tokenizer_file = os.path.join(MODELS_DIR,
-            'neurotagger', f'neurotagger_tokenizer_{self.neurotagger_obj.id}_{secrets.token_hex(10)}'
-        )
+                                                  'neurotagger', f'neurotagger_tokenizer_{self.neurotagger_obj.id}_{secrets.token_hex(10)}'
+                                                  )
 
         # As Sentencepiece requires a file as input, a tempfile will be created
         fd, temp_path = tempfile.mkstemp()
@@ -187,23 +182,23 @@ class NeurotaggerWorker():
         # Set up num_classes for the neural net last layer output size. Get the last shape size of y.
         self.num_classes = self.y_train.shape[-1]
 
-    
+
     def _train_model(self):
         # Get and compile model
         self.model = NeuroModels().get_model(self.model_arch, self.vocab_size, self.seq_len, self.num_classes)
-        
+
         # Training callback which shows progress to the user
         trainingProgress = TrainingProgressCallback(self.num_epochs, self.show_progress)
 
         # Train the model and return training history
         return self.model.fit(self.X_train, self.y_train,
-                        batch_size=self.bs,
-                        epochs=self.num_epochs,
-                        verbose=2,
-                        # validation_split=self.validation_split,
-                        validation_data=(self.X_val, self.y_val),
-                        callbacks=[trainingProgress]
-                    )
+                              batch_size=self.bs,
+                              epochs=self.num_epochs,
+                              verbose=2,
+                              # validation_split=self.validation_split,
+                              validation_data=(self.X_val, self.y_val),
+                              callbacks=[trainingProgress]
+                              )
 
 
     def _create_task_result(self):
@@ -227,10 +222,10 @@ class NeurotaggerWorker():
         # On the training set
         train_eval = self.model.evaluate(x=self.X_train, y=self.y_train, batch_size=self.bs, verbose=1)
         self.neurotagger_obj.validation_accuracy = val_eval[1]
-        self.neurotagger_obj.training_accuracy =  train_eval[1]
+        self.neurotagger_obj.training_accuracy = train_eval[1]
         self.neurotagger_obj.validation_loss = val_eval[0]
         self.neurotagger_obj.training_loss = train_eval[0]
-        
+
         # Round the predictions, so the floats wouldn't go to infinity and beyond
         rounded_preds = np.round(self.model.predict(self.X_val))
 
@@ -252,18 +247,15 @@ class NeurotaggerWorker():
         output_model_file = os.path.join(MODELS_DIR, 'neurotagger', model_path)
         self.model.save(output_model_file)
 
-        self.neurotagger_obj.location = json.dumps({
-            'model': output_model_file,
-            'tokenizer_model': f'{self.output_tokenizer_file}.model',
-            'tokenizer_vocab': f'{self.output_tokenizer_file}.vocab'
-        })
-
+        self.neurotagger_obj.model.name = output_model_file
+        self.neurotagger_obj.tokenizer_model.name = f'{self.output_tokenizer_file}.model'
+        self.neurotagger_obj.tokenizer_vocab.name = f'{self.output_tokenizer_file}.vocab'
         self.neurotagger_obj.save()
 
 
     def _plot_model(self, history):
         # Create 2 plots into one image
-        fig, ax = plt.subplots(1, 2, figsize=(16,8))
+        fig, ax = plt.subplots(1, 2, figsize=(16, 8))
         # Plot training & validation accuracy values
         ax[0].plot(history.history['acc'])
         ax[0].plot(history.history['val_acc'])
@@ -294,17 +286,18 @@ class NeurotaggerWorker():
         self.seq_len = self.neurotagger_obj.seq_len
         # model/graph to prevent "Tensor is not an element of this graph" errors
         # https://github.com/tensorflow/tensorflow/issues/14356#issuecomment-385962623
-        self.model = load_model(json.loads(self.neurotagger_obj.location)['model'])
+        self.model = load_model(self.neurotagger_obj.model.path)
         global graph
         graph = tf.get_default_graph()
+
 
     def _convert_texts(self, texts: List[str]):
         # Convert raw text into tokenized data with a pre-trained sentencepiece model
         sp = spm.SentencePieceProcessor()
-        sp.load(json.loads(self.neurotagger_obj.location)['tokenizer_model'])
+        sp.load(self.neurotagger_obj.tokenizer_model.path)
         texts = [sp.encode_as_ids(x) for x in texts]
         texts = pad_sequences(texts, maxlen=self.seq_len)
-        
+
         return texts
 
 
@@ -317,7 +310,7 @@ class NeurotaggerWorker():
         to_predict = self._convert_texts([text])
         # Use global graph to prevent "Tensor is not an element of this graph" issues
         with graph.as_default():
-            preds = self.model.predict_proba(to_predict, batch_size=self.bs) 
+            preds = self.model.predict_proba(to_predict, batch_size=self.bs)
         return preds
 
 
@@ -331,9 +324,9 @@ class NeurotaggerWorker():
         to_predict = self._convert_texts(texts)
         # Use global graph to prevent "Tensor is not an element of this graph" issues
         with graph.as_default():
-            preds = self.model.predict_proba(to_predict, batch_size=self.bs) 
+            preds = self.model.predict_proba(to_predict, batch_size=self.bs)
         return preds
-    
+
 
 class TrainingProgressCallback(Callback):
     """Callback for updating the Task Progress every epoch
@@ -341,18 +334,21 @@ class TrainingProgressCallback(Callback):
     Arguments:
         show_epochs {ShowSteps} -- ShowSteps callback to be called in on_epoch_end
     """
+
+
     def __init__(self, num_epochs, show_progress):
         self.show_progress = show_progress
         self.num_epochs = num_epochs
 
+
     def on_epoch_end(self, epoch, logs={}):
         # Use on_epoch_end because on_epoch_begin logs are empty
         eval_info = 'epoch - {}; [acc {:.2f}%, loss {:.2f}] [val_acc {:.2f}%, val_loss {:.2f}]'.format(
-                                                                epoch,
-                                                                logs['acc'] * 100,
-                                                                logs['loss'],
-                                                                logs['val_acc'] * 100,
-                                                                logs['val_loss'])
+            epoch,
+            logs['acc'] * 100,
+            logs['loss'],
+            logs['val_acc'] * 100,
+            logs['val_loss'])
 
         self.show_progress.update_step(f'training: {eval_info}')
         self.show_progress.update_view(round(100 / (self.num_epochs + 1 / (epoch + 1)), 2))

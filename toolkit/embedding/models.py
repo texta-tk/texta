@@ -1,15 +1,16 @@
-import sys
 import json
-from django.contrib.auth.models import User
-from django.db.models import signals
-from django.db import models
-from multiselectfield import MultiSelectField
+import os
 
+from django.contrib.auth.models import User
+from django.db import models
+from django.dispatch import receiver
+
+from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import EMPTY_QUERY
-from toolkit.constants import MAX_DESC_LEN
 from toolkit.helper_functions import apply_celery_task
+
 
 class Embedding(models.Model):
     description = models.CharField(max_length=MAX_DESC_LEN)
@@ -19,16 +20,18 @@ class Embedding(models.Model):
     fields = models.TextField(default=json.dumps([]))
 
     num_dimensions = models.IntegerField(default=100)
-    #max_vocab = models.IntegerField(default=0)
     min_freq = models.IntegerField(default=10)
 
     vocab_size = models.IntegerField(default=0)
-    location = models.TextField(default=json.dumps({}))
+    embedding_model = models.FileField(upload_to='data/models/embedding', null=True, verbose_name='', default=None)
+    phraser_model = models.FileField(upload_to='data/models/embedding', null=True, verbose_name='', default=None)
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
+
 
     def __str__(self):
         return self.description
-    
+
+
     @classmethod
     def train_embedding_model(cls, sender, instance, created, **kwargs):
         if created:
@@ -38,10 +41,6 @@ class Embedding(models.Model):
             from toolkit.embedding.tasks import train_embedding
 
             apply_celery_task(train_embedding, instance.pk)
-                
-
-
-signals.post_save.connect(Embedding.train_embedding_model, sender=Embedding)
 
 
 class EmbeddingCluster(models.Model):
@@ -50,12 +49,14 @@ class EmbeddingCluster(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE)
     num_clusters = models.IntegerField(default=100)
-    location = models.TextField(default=json.dumps({}))
+    cluster_model = models.FileField(upload_to='data/models/embedding', null=True, verbose_name='', default=None)
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
+
 
     def __str__(self):
         return self.description
-    
+
+
     @classmethod
     def cluster_embedding_vocabulary(cls, sender, instance, created, **kwargs):
         if created:
@@ -66,4 +67,37 @@ class EmbeddingCluster(models.Model):
             apply_celery_task(cluster_embedding, instance.pk)
 
 
-signals.post_save.connect(EmbeddingCluster.cluster_embedding_vocabulary, sender=EmbeddingCluster)
+@receiver(models.signals.post_save, sender=Embedding)
+def train_embedding_model(sender, instance: Embedding, created, **kwargs):
+    Embedding.train_embedding_model(sender, instance, created, **kwargs)
+
+
+@receiver(models.signals.post_delete, sender=Embedding)
+def auto_delete_embedding_on_delete(sender, instance: Embedding, **kwargs):
+    """
+    Delete resources on the file-system upon Embedding deletion.
+    Triggered on individual model object and queryset Embedding deletion.
+    """
+    if instance.embedding_model:
+        if os.path.isfile(instance.embedding_model.path):
+            os.remove(instance.embedding_model.path)
+
+    if instance.phraser_model:
+        if os.path.isfile(instance.phraser_model.path):
+            os.remove(instance.phraser_model.path)
+
+
+@receiver(models.signals.post_save, sender=EmbeddingCluster)
+def train_cluster_embedding_vocabulary(sender, instance: EmbeddingCluster, created, **kwargs):
+    EmbeddingCluster.cluster_embedding_vocabulary(sender, instance, created, **kwargs)
+
+
+@receiver(models.signals.post_delete, sender=EmbeddingCluster)
+def auto_delete_embedding_cluster_on_delete(sender, instance: EmbeddingCluster, **kwargs):
+    """
+    Delete resources on the file-system upon cluster deletion.
+    Triggered on individual model object and queryset EmbeddingCluster deletion.
+    """
+    if instance.cluster_model:
+        if os.path.isfile(instance.cluster_model.path):
+            os.remove(instance.cluster_model.path)

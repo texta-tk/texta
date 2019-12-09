@@ -1,5 +1,4 @@
 import json
-import os
 
 import rest_framework.filters as drf_filters
 from django_filters import rest_framework as filters
@@ -13,7 +12,7 @@ from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.embedding.phraser import Phraser
 from toolkit.embedding.serializers import (EmbeddingClusterBrowserSerializer, EmbeddingClusterSerializer, EmbeddingPredictSimilarWordsSerializer, EmbeddingSerializer)
 from toolkit.embedding.word_cluster import WordCluster
-from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError, SerializerNotValid
+from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, SerializerNotValid
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import GeneralTextSerializer
 from toolkit.tools.text_processor import TextProcessor
@@ -67,9 +66,11 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
 
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user,
-                        project=Project.objects.get(id=self.kwargs['project_pk']),
-                        fields=json.dumps(serializer.validated_data['fields']))
+        serializer.save(
+            author=self.request.user,
+            project=Project.objects.get(id=self.kwargs['project_pk']),
+            fields=json.dumps(serializer.validated_data['fields'])
+        )
 
 
     def perform_update(self, serializer):
@@ -77,16 +78,9 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
 
 
     def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        try:
-            embedding_model_location = json.loads(instance.location)['embedding']
-            phraser_model_location = json.loads(instance.location)['phraser']
-            os.remove(embedding_model_location)
-            os.remove(phraser_model_location)
-            return Response({"success": "Models removed"}, status=status.HTTP_204_NO_CONTENT)
-        except:
-            return Response({"success": "Embedding instance deleted, but models were not removed"}, status=status.HTTP_204_NO_CONTENT)
+        instance: Embedding = self.get_object()
+        instance.delete()
+        return Response({"success": "Models removed"}, status=status.HTTP_204_NO_CONTENT)
 
 
     @action(detail=True, methods=['post'], serializer_class=EmbeddingPredictSimilarWordsSerializer)
@@ -95,8 +89,9 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
 
         serializer = EmbeddingPredictSimilarWordsSerializer(data=request.data)
         if serializer.is_valid():
+
             embedding_object = self.get_object()
-            if not embedding_object.location:
+            if not embedding_object.embedding_model.path:
                 raise NonExistantModelError()
 
             embedding = W2VEmbedding(embedding_object.id)
@@ -118,8 +113,9 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
         data = request.data
         serializer = GeneralTextSerializer(data=data)
         if serializer.is_valid():
+
             embedding_object = self.get_object()
-            if not embedding_object.location:
+            if not embedding_object.embedding_model.name:
                 raise NonExistantModelError()
 
             phraser = Phraser(embedding_object.id)
@@ -178,18 +174,22 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
 
-        clustering_object = self.get_object()
+        clustering_object: EmbeddingCluster = self.get_object()
         # check if clustering ready
-        if not clustering_object.location:
+
+
+        if not clustering_object.cluster_model.name:
             raise NonExistantModelError()
 
         # load cluster model
         clusterer = WordCluster(clustering_object.id)
         clusterer.load()
 
-        clustering_result = clusterer.browse(max_examples_per_cluster=serializer.validated_data['max_examples_per_cluster'],
-                                             number_of_clusters=serializer.validated_data['number_of_clusters'],
-                                             sort_reverse=serializer.validated_data['cluster_order'])
+        clustering_result = clusterer.browse(
+            max_examples_per_cluster=serializer.validated_data['max_examples_per_cluster'],
+            number_of_clusters=serializer.validated_data['number_of_clusters'],
+            sort_reverse=serializer.validated_data['cluster_order']
+        )
 
         return Response(clustering_result, status=status.HTTP_200_OK)
 
@@ -199,14 +199,12 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
         """Returns cluster id for input word."""
         data = request.data
         serializer = GeneralTextSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
 
-        # check if valid request
-        if not serializer.is_valid():
-            raise SerializerNotValid(detail=serializer.errors)
-
-        clustering_object = self.get_object()
+        clustering_object: EmbeddingCluster = self.get_object()
         # check if clustering ready
-        if not clustering_object.location:
+
+        if not clustering_object.cluster_model.name:
             raise NonExistantModelError()
 
         # load cluster model
@@ -227,9 +225,11 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
 
-        clustering_object = self.get_object()
+        clustering_object: EmbeddingCluster = self.get_object()
         # check if clustering ready
-        if not clustering_object.location:
+
+
+        if not clustering_object.cluster_model.name:
             raise NonExistantModelError()
 
         clusterer = WordCluster(clustering_object.id)
