@@ -3,9 +3,9 @@ import sys
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import signals
+from django.dispatch import receiver
 
 from toolkit.torchtagger import choices
-#from toolkit.constants import get_field_choices
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.task.models import Task
 from toolkit.core.project.models import Project
@@ -61,4 +61,22 @@ class TorchTagger(models.Model):
             from toolkit.helper_functions import apply_celery_task
             apply_celery_task(torchtagger_train_handler, instance.pk)
 
-signals.post_save.connect(TorchTagger.train_torchtagger_model, sender=TorchTagger)
+
+@receiver(models.signals.post_save, sender=TorchTagger)
+def train_torchtagger_model(sender, instance: TorchTagger, created, **kwargs):
+    TorchTagger.train_torchtagger_model(sender, instance, created, **kwargs)
+
+
+@receiver(models.signals.post_delete, sender=TorchTagger)
+def auto_delete_torchtagger_on_delete(sender, instance: Embedding, **kwargs):
+    """
+    Delete resources on the file-system upon TorchTagger deletion.
+    Triggered on individual model object and queryset TorchTagger deletion.
+    """
+    if instance.model:
+        if os.path.isfile(instance.model.path):
+            os.remove(instance.model.path)
+
+    if instance.text_field:
+        if os.path.isfile(instance.text_field.path):
+            os.remove(instance.text_field.path)

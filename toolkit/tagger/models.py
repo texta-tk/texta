@@ -61,8 +61,6 @@ class Tagger(models.Model):
 
             apply_celery_task(train_tagger, instance.pk)
 
-signals.post_save.connect(Tagger.train_tagger_model, sender=Tagger)
-
 
 class TaggerGroup(models.Model):
     description = models.CharField(max_length=MAX_DESC_LEN)
@@ -79,7 +77,9 @@ class TaggerGroup(models.Model):
         return self.fact_name
 
 
-signals.post_save.connect(Tagger.train_tagger_model, sender=Tagger)
+@receiver(models.signals.post_save, sender=Tagger)
+def train_tagger_model(sender, instance: Tagger, created, **kwargs):
+    Tagger.train_tagger_model(sender, instance, created, **kwargs)
 
 
 @receiver(models.signals.pre_delete, sender=TaggerGroup)

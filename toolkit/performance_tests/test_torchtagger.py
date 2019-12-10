@@ -61,11 +61,9 @@ class TorchTaggerPerformanceTests(TransactionTestCase):
         print('Training TorchTagger...')
         payload = {
             "description": "TestTorchTaggerTraining",
-            #"fact_name": TEST_FACT_NAME,
             "fields": TEST_FIELD_CHOICE,
-            "maximum_sample_size": 500,
             "model_architecture": self.torch_models[0],
-            "num_epochs": 10,
+            "num_epochs": 5,
             "embedding": self.test_embedding_id,
         }
         start_time = time()
