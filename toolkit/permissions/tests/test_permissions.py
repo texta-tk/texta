@@ -76,12 +76,10 @@ class ProjectPermissionsTests(APITestCase):
 
     def access_project_instance_methods(self, username, password, SAFE_FORBIDDEN=False, UNSAFE_FORBIDDEN=False):
         '''F, F for owner,admin, F, T for p_user, F, F for non-member.'''
-        print(username)
         url = self.project_instance_url
         self.client.login(username=username, password=password)
         get_response = self.client.get(url)
         responses = {'GET': get_response, 'PUT': self.client.put(url, get_response.data, format='json')}
-        print(responses)
         # self.validate_safe_response(responses['GET'], url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
         self.validate_unsafe_response(responses['PUT'], url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
 
@@ -131,7 +129,6 @@ class ProjectPermissionsTests(APITestCase):
 
 
     def validate_unsafe_response(self, response, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN):
-        print(SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
         # admin
         if SAFE_FORBIDDEN is False and UNSAFE_FORBIDDEN is False:
             self.assertEqual(response.status_code, status.HTTP_200_OK)

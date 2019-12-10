@@ -25,14 +25,15 @@ class ReindexerViewTests(APITestCase):
         cls.default_password = 'pw'
         cls.default_username = 'indexOwner'
         cls.user = create_test_user(cls.default_username, 'my@email.com', cls.default_password)
-        # TODO, must work with p_u perm
-        cls.user.is_superuser = True
-        cls.user.save()
+        # create admin to test indices removal from project
+        cls.admin = create_test_user(name='admin', password='1234')
+        cls.admin.is_superuser = True
+        cls.admin.save()
         cls.project = Project.objects.create(
             title='ReindexerTestProject',
             indices=[TEST_INDEX]
         )
-        # cls.project.users.add(cls.user)
+        cls.project.users.add(cls.user)
 
     def setUp(self):
         self.client.login(username=self.default_username, password=self.default_password)
@@ -145,6 +146,8 @@ class ReindexerViewTests(APITestCase):
             print_output("Reindexer Test index remove status", delete_response)
 
     def is_reindexed_index_added_to_project_if_yes_remove(self, response, new_index, project):
+        # project resource user is not supposed to have indices remove permission, so use admin
+        self.client.login(username='admin', password='1234')
         url = f'/projects/{project.id}/'
         check = self.client.get(url, format='json')
         if response.status_code == 201:
@@ -156,6 +159,9 @@ class ReindexerViewTests(APITestCase):
         if response.status_code == 400:
             print_output('Re-indexed index not added to project', check.data)
         assert new_index not in check.data['indices']
+        # log in with project user again
+        self.client.login(username=self.default_username, password=self.default_password)
+
 
     def validate_fields(self, project, payload):
         project_fields = ElasticCore().get_fields(project.indices)

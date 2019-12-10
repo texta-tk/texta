@@ -39,7 +39,6 @@ class ProjectAllowed(permissions.BasePermission):
     message = 'Insufficient permissions for this project.'
 
     def has_object_permission(self, request, view, obj):
-        print("perm", self._permission_check(request, view))
         return self._permission_check(request, view)
 
     def _permission_check(self, request, view):
