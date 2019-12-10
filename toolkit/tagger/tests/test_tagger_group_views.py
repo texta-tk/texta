@@ -17,12 +17,13 @@ class TaggerGroupViewTests(APITestCase):
     def setUpTestData(cls):
         # Owner of the project
         cls.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
-        cls.user.is_superuser = True
-        cls.user.save()
+        # cls.user.is_superuser = True
+        # cls.user.save()
         cls.project = Project.objects.create(
             title='taggerGroupTestProject',
             indices=TEST_INDEX
         )
+        cls.project.users.add(cls.user)
         cls.url = f'/projects/{cls.project.id}/tagger_groups/'
         cls.test_tagger_group_id = None
 

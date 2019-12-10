@@ -334,7 +334,6 @@ class TaggerViewTests(APITestCase):
         """Tests tagging with multiple models using multitag endpoint."""
         payload = {"text": "Some sad text for tagging", "taggers": self.test_tagger_ids}
         response = self.client.post(self.multitag_text_url, payload, format='json')
-        print("yooo", response.data)
         print_output('test_multitag:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
