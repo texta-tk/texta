@@ -24,6 +24,8 @@ class TaggerViewTests(APITestCase):
             title='taggerTestProject',
             indices=TEST_INDEX
         )
+        # TODO one test fails with p_u permissions
+        # cls.project.users.add(cls.user)
         cls.url = f'/projects/{cls.project.id}/taggers/'
         cls.project_url = f'/projects/{cls.project.id}'
         cls.multitag_text_url = f'/projects/{cls.project.id}/multitag_text/'

@@ -12,9 +12,8 @@ class UserProfileSignalsAndViewsTests(APITestCase):
     def setUp(self):
         # Create a new User
         self.user = create_test_user(name='user', password='pw')
-        self.user.is_superuser = True
-        self.user.save()
         self.project = Project.objects.create(title='testproj', indices=[TEST_INDEX])
+        self.project.users.add(self.user)
         self.client = APIClient()
         self.client.login(username='user', password='pw')
 

@@ -18,13 +18,11 @@ class EmbeddingViewTests(TransactionTestCase):
 
     def setUp(self):
         self.user = create_test_user('embeddingOwner', 'my@email.com', 'pw')
-        self.user.is_superuser = True
-        self.user.save()
-
         self.project = Project.objects.create(
             title='embeddingTestProject',
             indices=TEST_INDEX
         )
+        self.project.users.add(self.user)
 
         self.url = f'/projects/{self.project.id}/embeddings/'
         self.project_url = f'/projects/{self.project.id}'

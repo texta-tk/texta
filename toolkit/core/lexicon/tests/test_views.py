@@ -12,12 +12,11 @@ class LexiconViewsTests(APITestCase):
     def setUpTestData(cls):
         # Owner of the project
         cls.user = create_test_user('user', 'my@email.com', 'pw')
-        cls.user.is_superuser = True
-        cls.user.save()
         cls.project = Project.objects.create(
             title='LexiconTestProject',
             indices=TEST_INDEX
         )
+        cls.project.users.add(cls.user)
         cls.url = f'/projects/{cls.project.id}/lexicons/'
 
 

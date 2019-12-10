@@ -25,12 +25,14 @@ class ReindexerViewTests(APITestCase):
         cls.default_password = 'pw'
         cls.default_username = 'indexOwner'
         cls.user = create_test_user(cls.default_username, 'my@email.com', cls.default_password)
+        # TODO, must work with p_u perm
         cls.user.is_superuser = True
         cls.user.save()
         cls.project = Project.objects.create(
             title='ReindexerTestProject',
             indices=[TEST_INDEX]
         )
+        # cls.project.users.add(cls.user)
 
     def setUp(self):
         self.client.login(username=self.default_username, password=self.default_password)
