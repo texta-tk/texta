@@ -78,6 +78,7 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
                         fields=json.dumps(serializer.validated_data['fields']),
                         fact_values = json.dumps(tags),
                         queries=queries)
+        neurotagger.train()
 
 
     def perform_update(self, serializer):

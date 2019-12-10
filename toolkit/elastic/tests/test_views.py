@@ -126,7 +126,7 @@ class ReindexerViewTests(APITestCase):
         self.check_update_forbidden(url, payload)
         self.is_new_index_created_if_yes_remove(response, payload, project)
         self.is_reindexed_index_added_to_project_if_yes_remove(response, payload['new_index'], project)
-        self.delete_reindexing_task(project, response)
+        # self.delete_reindexing_task(project, response)
         assert TEST_INDEX_REINDEX not in ElasticCore().get_indices()
 
     def is_new_index_created_if_yes_remove(self, response, payload, project):
