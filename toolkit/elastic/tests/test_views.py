@@ -102,14 +102,14 @@ class ReindexerViewTests(APITestCase):
                            ],
         }
         for payload in (
-            # existing_new_index_payload,
-            # wrong_indices_payload,
-            # wrong_fields_payload,
-            # pick_fields_payload,
+            existing_new_index_payload,
+            wrong_indices_payload,
+            wrong_fields_payload,
+            pick_fields_payload,
             join_indices_fields_payload,
-            # test_query_payload,
-            # random_docs_payload,
-            # update_field_type_payload,
+            test_query_payload,
+            random_docs_payload,
+            update_field_type_payload,
         ):
             url = f'/projects/{self.project.id}/reindexer/'
             self.run_create_reindexer_task_signal(self.project, url, payload)
