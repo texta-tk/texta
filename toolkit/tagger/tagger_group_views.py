@@ -1,37 +1,33 @@
-import os
 import json
+import os
 import re
-import sys
-from celery import group
 
-from rest_framework import viewsets, status, permissions, mixins
+import rest_framework.filters as drf_filters
+from celery import group
+from django_filters import rest_framework as filters
+from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.aggregator import ElasticAggregator
-from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.elastic.query import Query
-from toolkit.exceptions import ProjectValidationFailed, NonExistantModelError, SerializerNotValid, MLPNotAvailable
-
-from toolkit.tagger.tasks import train_tagger, apply_tagger, create_tagger_objects
-from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.core.project.models import Project
-from toolkit.tagger.serializers import TaggerGroupSerializer, TaggerGroupTagTextSerializer, TaggerGroupTagDocumentSerializer
-from toolkit.tools.text_processor import TextProcessor
-from toolkit.view_constants import TagLogicViews, BulkDelete
-from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.core.task.models import Task
+from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.query import Query
+from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.exceptions import MLPNotAvailable, NonExistantModelError, ProjectValidationFailed, SerializerNotValid
 from toolkit.helper_functions import apply_celery_task
-from toolkit.tagger.validators import validate_input_document
+from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.tagger.models import TaggerGroup
+from toolkit.tagger.serializers import TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer
 from toolkit.tagger.tagger_views import global_mlp_for_taggers
-
-from django_filters import rest_framework as filters
-import rest_framework.filters as drf_filters
+from toolkit.tagger.tasks import apply_tagger, create_tagger_objects, train_tagger
+from toolkit.tagger.validators import validate_input_document
+from toolkit.view_constants import BulkDelete, TagLogicViews
 
 
 class TaggerGroupFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
+
 
     class Meta:
         model = TaggerGroup
@@ -45,18 +41,16 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
                          viewsets.GenericViewSet,
                          TagLogicViews,
                          BulkDelete):
-
     queryset = TaggerGroup.objects.all()
     serializer_class = TaggerGroupSerializer
     permission_classes = (
         permissions.IsAuthenticated,
         ProjectResourceAllowed,
-        )
-
+    )
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = TaggerGroupFilter
-    ordering_fields = ('id', 'author__username', 'description', 'fact_name',  'minimum_sample_size', 'num_tags')
+    ordering_fields = ('id', 'author__username', 'description', 'fact_name', 'minimum_sample_size', 'num_tags')
 
 
     def get_queryset(self):
@@ -95,10 +89,11 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         validated_tagger_data.update('')
 
         # create tagger group object
-        tagger_group = serializer.save(author=self.request.user,
-                                       project=Project.objects.get(id=self.kwargs['project_pk']),
-                                       num_tags=len(tags)
-                                       )
+        tagger_group = serializer.save(
+            author=self.request.user,
+            project=Project.objects.get(id=self.kwargs['project_pk']),
+            num_tags=len(tags)
+        )
 
         # create taggers objects inside tagger group object
         # use async to make things faster
@@ -119,9 +114,9 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tagger_plot_locations = [tagger.plot.path for tagger in tagger_objects]
         try:
             for model_dir_list in (
-                        tagger_model_locations,
-                        tagger_plot_locations,
-                        ):
+                    tagger_model_locations,
+                    tagger_plot_locations,
+            ):
                 for model_dir in model_dir_list:
                     os.remove(model_dir)
             return Response({"success": "Taggergroup instance deleted, related tagger instances deleted and related models and plots removed"}, status=status.HTTP_204_NO_CONTENT)
@@ -330,7 +325,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # retrieve random document
         random_doc = ElasticSearcher(indices=hybrid_tagger_object.project.indices).random_documents(size=1)[0]
         # filter out correct fields from the document
-        random_doc_filtered = {k:v for k,v in random_doc.items() if k in tagger_fields}
+        random_doc_filtered = {k: v for k, v in random_doc.items() if k in tagger_fields}
         # combine document field values into one string
         combined_texts = '\n'.join(random_doc_filtered.values())
         combined_texts, tags = self.get_mlp(combined_texts, lemmatize=False)

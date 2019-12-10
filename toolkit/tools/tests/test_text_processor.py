@@ -34,6 +34,8 @@ class TextProcessorTests(TransactionTestCase):
         self.run_stop_word_remove_custom_stop_words()
         self.run_text_processor()
 
+    def tearDown(self) -> None:
+        Embedding.objects.all().delete()
 
     def run_train_embedding(self):
         # payload for training embedding

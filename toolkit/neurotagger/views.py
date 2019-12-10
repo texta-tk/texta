@@ -64,10 +64,13 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
 
 
     def perform_create(self, serializer, **kwargs):
-        serializer.save(author=self.request.user,
-                        project=Project.objects.get(id=self.kwargs['project_pk']),
-                        fields=json.dumps(serializer.validated_data['fields']),
-                        **kwargs)
+        neurotagger = serializer.save(
+            author=self.request.user,
+            project=Project.objects.get(id=self.kwargs['project_pk']),
+            fields=json.dumps(serializer.validated_data['fields']),
+            **kwargs
+        )
+        neurotagger.train()
 
 
     def perform_update(self, serializer):

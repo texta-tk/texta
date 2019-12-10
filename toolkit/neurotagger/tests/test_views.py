@@ -31,10 +31,15 @@ class NeurotaggerViewTests(APITestCase):
         self.client.login(username='neurotaggerOwner', password='pw')
 
 
+    def tearDown(self):
+        Neurotagger.objects.all().delete()
+
+
     def test_run(self):
         self.run_create_and_tag_multilabel()
         # run these last ->
         self.create_neurotagger_with_empty_fields()
+        self.create_neurotagger_then_delete_neurotagger_and_created_model()
 
 
     def run_create_and_tag_multilabel(self):
@@ -142,7 +147,7 @@ class NeurotaggerViewTests(APITestCase):
         self.assertEqual(put_response.status_code, status.HTTP_200_OK)
 
 
-    def test_create_neurotagger_then_delete_neurotagger_and_created_model(self):
+    def create_neurotagger_then_delete_neurotagger_and_created_model(self):
         payload = {
             "description": "TestNeurotaggerView",
             "fact_name": TEST_FACT_NAME,

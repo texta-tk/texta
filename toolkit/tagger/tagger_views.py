@@ -81,9 +81,12 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
 
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user,
-                        project=Project.objects.get(id=self.kwargs['project_pk']),
-                        fields=json.dumps(serializer.validated_data['fields']))
+        tagger: Tagger = serializer.save(
+            author=self.request.user,
+            project=Project.objects.get(id=self.kwargs['project_pk']),
+            fields=json.dumps(serializer.validated_data['fields'])
+        )
+        tagger.train()
 
 
     def perform_update(self, serializer):

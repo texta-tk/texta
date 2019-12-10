@@ -31,7 +31,7 @@ class TaggerViewTests(APITestCase):
         cls.vectorizer_opts = ('Count Vectorizer', 'Hashing Vectorizer', 'TfIdf Vectorizer')
         cls.classifier_opts = ('Logistic Regression', 'LinearSVC')
 
-        # list tagger_ids for testing. is populatated duriong training test
+        # list tagger_ids for testing. is populated during training test
         cls.test_tagger_ids = []
 
 
@@ -61,6 +61,8 @@ class TaggerViewTests(APITestCase):
         self.run_patch_on_tagger_instances(self.test_tagger_ids)
         self.run_put_on_tagger_instances(self.test_tagger_ids)
 
+    def tearDown(self) -> None:
+        Tagger.objects.all().delete()
 
     def run_create_tagger_training_and_task_signal(self):
         """Tests the endpoint for a new Tagger, and if a new Task gets created via the signal"""

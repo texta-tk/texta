@@ -83,8 +83,8 @@ class NeurotaggerWorker:
 
 
     def _set_up_data(self, samples, labels, label_names, show_progress):
-        self.neurotagger_obj = Neurotagger.objects.get(pk=self.neurotagger_id)
-        # Set up show_progres to give updates to the Task
+        self.neurotagger_obj: Neurotagger = Neurotagger.objects.get(pk=self.neurotagger_id)
+        # Set up show_progress to give updates to the Task
         self.show_progress = show_progress
 
         # Set up params
@@ -121,9 +121,8 @@ class NeurotaggerWorker:
 
     def _train_tokenizer(self):
         # Generate an unique path for the Tokenizer file
-        self.output_tokenizer_file = os.path.join(MODELS_DIR,
-                                                  'neurotagger', f'neurotagger_tokenizer_{self.neurotagger_obj.id}_{secrets.token_hex(10)}'
-                                                  )
+        file_name = self.neurotagger_obj.generate_name('neurotagger_tokenizer')
+        self.output_tokenizer_file = os.path.join(MODELS_DIR, 'neurotagger', file_name)
 
         # As Sentencepiece requires a file as input, a tempfile will be created
         fd, temp_path = tempfile.mkstemp()
@@ -243,7 +242,7 @@ class NeurotaggerWorker:
         self.show_progress.update_view(0)
 
         # create_file_path from helper_functions creates missing folders and returns a path
-        model_path = f'neurotagger_{self.neurotagger_obj.id}_{secrets.token_hex(10)}'
+        model_path = self.neurotagger_obj.generate_name("neurotagger")
         output_model_file = os.path.join(MODELS_DIR, 'neurotagger', model_path)
         self.model.save(output_model_file)
 
