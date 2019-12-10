@@ -29,7 +29,7 @@ class TaggerPerformanceTests(APITestCase):
         self.client.login(username='taggerOwner', password='pw')
 
     def test_tagger_training_duration(self):
-        print('Training Tagger')
+        print('Training Tagger...')
         payload = {
                     "description": "TestTagger",
                     "query": json.dumps(TEST_QUERY),
