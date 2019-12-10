@@ -90,8 +90,13 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         queryset = Project.objects.annotate(users_count=Count('users'), indices_count=Count('indices')).all()
         current_user = self.request.user
         if not current_user.is_superuser:
-            queryset.filter(users=current_user)
+            return queryset.filter(users=current_user)
         return queryset
+
+    def get_project_indices(self, pk=None):
+        project_object = self.get_object()
+        project_indices = list(project_object.indices)
+        return project_indices
 
 
     @action(detail=True, methods=['get'])
@@ -113,13 +118,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         return Response(field_map_list, status=status.HTTP_200_OK)
 
 
-    def get_project_indices(self, pk=None):
-        project_object = self.get_object()
-        project_indices = list(project_object.indices)
-        return project_indices
-
-
-    @action(detail=True, methods=['post'], serializer_class=ProjectGetSpamSerializer)
+    @action(detail=True, methods=['post'], serializer_class=ProjectGetSpamSerializer, permission_classes=[ExtraActionResource])
     def get_spam(self,  request, pk=None):
         """
         Analyses Elasticsearch inside the project to detect frequently occuring texts.
@@ -166,11 +165,13 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
     @action(detail=True, methods=['get'])
     def get_indices(self, request, pk=None, project_pk=None):
         """Returns list of available indices in project."""
+        # print(project_object.indices)
         project_object = self.get_object()
         project_indices = {"indices": list(project_object.indices)}
+        print(project_indices)
         return Response(project_indices)
 
-    @action(detail=True, methods=['post'], serializer_class=ProjectSimplifiedSearchSerializer)
+    @action(detail=True, methods=['post'], serializer_class=ProjectSimplifiedSearchSerializer, permission_classes=[ExtraActionResource])
     def search(self, request, pk=None, project_pk=None):
         """Simplified search interface for making Elasticsearch queries."""
         serializer = ProjectSimplifiedSearchSerializer(data=request.data)
@@ -261,7 +262,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         return Response(sorted_tags, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactValuesSerializer)
+    @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactValuesSerializer, permission_classes=[ExtraActionResource])
     def autocomplete_fact_values(self, request, pk=None, project_pk=None):
         data = request.data
         serializer = ProjectSuggestFactValuesSerializer(data=data)
@@ -284,7 +285,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         return Response(fact_values, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactNamesSerializer)
+    @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactNamesSerializer, permission_classes=[ExtraActionResource])
     def autocomplete_fact_names(self, request, pk=None, project_pk=None):
         data = request.data
         serializer = ProjectSuggestFactNamesSerializer(data=data)

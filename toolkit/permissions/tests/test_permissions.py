@@ -35,7 +35,7 @@ class ProjectPermissionsTests(APITestCase):
         self.run_with_users(self.access_get_indices)
         self.run_with_users(self.access_health)
         self.run_with_users(self.access_project_instance_methods)
-        # self.run_with_users(self.update_project_fields)
+        self.run_with_users(self.update_project_fields)
 
     def run_with_users(self, func, resource=None):
         func(self.admin, '1234')
@@ -80,7 +80,8 @@ class ProjectPermissionsTests(APITestCase):
         self.client.login(username=username, password=password)
         get_response = self.client.get(url)
         responses = {'GET': get_response, 'PUT': self.client.put(url, get_response.data, format='json')}
-        # self.validate_safe_response(responses['GET'], url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
+        self.validate_safe_response(responses['GET'], url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
+        print(responses['PUT'], url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
         self.validate_unsafe_response(responses['PUT'], url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
 
     def update_project_fields(self, username, password, SAFE_FORBIDDEN=False, UNSAFE_FORBIDDEN=False):
@@ -140,4 +141,4 @@ class ProjectPermissionsTests(APITestCase):
         # auth_user
         if SAFE_FORBIDDEN is True and UNSAFE_FORBIDDEN is True:
                 print_output(f'{username} update permissions at: {url}', response.status_code)
-                self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+                self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

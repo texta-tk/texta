@@ -191,3 +191,6 @@ class ReindexerViewTests(APITestCase):
         print_output("patch_response.data", patch_response.data)
         self.assertEqual(put_response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
         self.assertEqual(patch_response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    # TODO def test delete reindex task
+

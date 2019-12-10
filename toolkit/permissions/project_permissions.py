@@ -2,11 +2,8 @@ from rest_framework import viewsets, permissions
 from toolkit.core.project.models import Project
 
 """
-    All authenticated users can create new projects
-    All project users, and the project owner can perform SAFE and UNSAFE_METHODS on project resources.
-    Superuser has no restrictions.
-    If current_user is not a project user or owner, the project is filtered out in the queryset. So in most or all cases ProjectResourceAllowed permissions
-    are not actually required. With future use cases, however, they may become useful.
+    Only superusers can create new projects
+    All project users can perform SAFE and UNSAFE_METHODS on project resources.
 """
 
 
@@ -70,7 +67,7 @@ class IsSuperUser(permissions.BasePermission):
 
 
 class ExtraActionResource(ProjectResourceAllowed):
-    """ Overrides ProjectResourceAllowed """
+    """ Overrides ProjectResourceAllowed for project extra_actions that use POST """
 
     def _permission_check(self, request, view):
         # retrieve project object
