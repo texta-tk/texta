@@ -18,14 +18,11 @@ class TaggerViewTests(APITestCase):
     def setUpTestData(cls):
         # Owner of the project
         cls.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
-        cls.user.is_superuser = True
-        cls.user.save()
         cls.project = Project.objects.create(
             title='taggerTestProject',
             indices=TEST_INDEX
         )
-        # TODO one test fails with p_u permissions
-        # cls.project.users.add(cls.user)
+        cls.project.users.add(cls.user)
         cls.url = f'/projects/{cls.project.id}/taggers/'
         cls.project_url = f'/projects/{cls.project.id}'
         cls.multitag_text_url = f'/projects/{cls.project.id}/multitag_text/'
@@ -337,6 +334,7 @@ class TaggerViewTests(APITestCase):
         """Tests tagging with multiple models using multitag endpoint."""
         payload = {"text": "Some sad text for tagging", "taggers": self.test_tagger_ids}
         response = self.client.post(self.multitag_text_url, payload, format='json')
+        print("yooo", response.data)
         print_output('test_multitag:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

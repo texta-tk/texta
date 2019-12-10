@@ -232,7 +232,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         return Response(results, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=ProjectMultiTagSerializer)
+    @action(detail=True, methods=['post'], serializer_class=ProjectMultiTagSerializer, permission_classes=[ExtraActionResource])
     def multitag_text(self, request, pk=None, project_pk=None):
         """
         Applies list of tagger objects inside project to any text.
