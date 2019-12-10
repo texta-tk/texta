@@ -54,7 +54,7 @@ urlpatterns = [
     path('rest-auth/registration/', include('rest_auth.registration.urls')),
     # elastic
     # TODO Admin access only
-    url('get_indices', ElasticGetIndices.as_view()),
+    url(r'^get_indices', ElasticGetIndices.as_view()),
     # routers
     url(r'^', include(router.urls)),
     url(r'^', include(project_router.urls))
