@@ -15,9 +15,10 @@ class TextProcessorTests(TransactionTestCase):
     def setUp(self):
         # Owner of the project
         self.user = create_test_user('textProcessorOwner', 'my@email.com', 'pw')
+        self.user.is_superuser = True
+        self.user.save()
         self.project = Project.objects.create(
             title='textprocessorTestProject',
-            owner=self.user,
             indices=TEST_INDEX
         )
 
@@ -53,7 +54,7 @@ class TextProcessorTests(TransactionTestCase):
         self.test_embedding = Embedding.objects.get(id=response.data['id'])
         self.test_phraser = Phraser(self.test_embedding.id)
         self.test_phraser.load()
-        
+
 
 
     def run_phrase(self):

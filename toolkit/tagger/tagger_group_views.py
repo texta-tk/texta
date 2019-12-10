@@ -63,13 +63,8 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         request_data.update({'tagger.description': 'dummy value'})
 
         # validate serializer again with updated values
-        serializer = TaggerGroupSerializer(data=request_data, context={'request': request})
+        serializer = TaggerGroupSerializer(data=request_data, context={'request': request, 'view': self})
         serializer.is_valid(raise_exception=True)
-
-        # raise error on tagger empty fields
-        project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
-        if not serializer.validated_data['tagger']['fields']:
-            raise ProjectValidationFailed(detail=f'entered fields not in current project fields: {project_fields}')
 
         fact_name = serializer.validated_data['fact_name']
         active_project = Project.objects.get(id=self.kwargs['project_pk'])
@@ -280,9 +275,9 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         input_document = serializer.validated_data['doc']
 
         # validate input document
-        input_document, error_response = validate_input_document(input_document, hybrid_tagger_field_data)
-        if error_response:
-            return error_response
+        input_document = validate_input_document(input_document, hybrid_tagger_field_data)
+        if isinstance(input_document, Exception):
+            return input_document
 
         # combine document field values into one string
         combined_texts = '\n'.join(input_document.values())

@@ -33,4 +33,7 @@ class MLPNotAvailable(APIException):
     default_code = "mlp_not_available"
 
 
-
+class InvalidInputDocument(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = ("Invalid input document")
+    default_code = "invalid_document"

@@ -20,9 +20,9 @@ class TaggerViewTests(APITestCase):
         cls.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
         cls.project = Project.objects.create(
             title='taggerTestProject',
-            owner=cls.user,
             indices=TEST_INDEX
         )
+        cls.project.users.add(cls.user)
         cls.url = f'/projects/{cls.project.id}/taggers/'
         cls.project_url = f'/projects/{cls.project.id}'
         cls.multitag_text_url = f'/projects/{cls.project.id}/multitag_text/'

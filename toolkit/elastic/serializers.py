@@ -1,7 +1,9 @@
 import json
 from rest_framework import serializers
 
+from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Reindexer
+from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.serializer_constants import ProjectResourceUrlSerializer, FieldParseSerializer
 
@@ -21,7 +23,41 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
                                        required=False,)
     task = TaskSerializer(read_only=True)
 
+
     class Meta:
         model = Reindexer
         fields = ('id', 'url', 'author_username', 'description', 'indices', 'fields', 'query', 'new_index', 'random_size', 'field_type', 'task')
         fields_to_parse = ('fields', 'field_type')
+
+
+    def validate_new_index(self, value):
+        """ Check that new_index does not exist """
+        if value in ElasticCore().get_indices():
+            raise serializers.ValidationError("new_index already exists, choose a different name for your reindexed index")
+        return value
+
+    def validate_indices(self, value):
+        """ check if re-indexed index is in the relevant project indices field """
+        project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
+        for index in value:
+            if index not in project_obj.indices:
+                raise serializers.ValidationError(f'Index "{index}" is not contained in your project indices "{repr(project_obj.indices)}"')
+        return value
+
+    def validate_fields(self, value):
+        ''' check if changed fields included in the request are in the relevant project fields '''
+        project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
+        project_fields = ElasticCore().get_fields(indices=project_obj.indices)
+        field_data = [field["path"] for field in project_fields]
+        for field in value:
+            if field not in field_data:
+                raise serializers.ValidationError(f'The fields you are attempting to re-index are not in current project fields: {project_fields}')
+        return value
+
+
+
+
+
+
+
+

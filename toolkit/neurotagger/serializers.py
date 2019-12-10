@@ -1,8 +1,9 @@
 from rest_framework import serializers
 
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.core.project.models import Project
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
-from . import choices
+from . import choices, views
 from .models import Neurotagger
 
 
@@ -48,6 +49,23 @@ class NeurotaggerSerializer(FieldParseSerializer, serializers.HyperlinkedModelSe
         )
 
         fields_to_parse = ('fields',)
+
+
+    def validate(self, data):
+        """ validate if tags are retrievable with serializer input """
+        if data['fact_name'] and 'fact_name' in data:
+            project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
+            # Retrieve tags/fact values and create queries to build models. Every tag will be a class.
+            tags = views.NeurotaggerViewSet().get_tags(data['fact_name'],
+                                                     project_obj,
+                                                     min_count=data['min_fact_doc_count'],
+                                                     max_count=data['max_fact_doc_count'])
+            # Check if any tags were found
+            if not tags:
+                raise serializers.ValidationError(f'found no tags for fact name: {fact_name}')
+        else:
+            raise serializers.ValidationError("Tag name must be included!")
+        return data
 
 
     def __init__(self, *args, **kwargs):

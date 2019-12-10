@@ -17,8 +17,8 @@ class DatasetImportViewTests(APITestCase):
         cls.user = create_test_user('Owner', 'my@email.com', 'pw')
         cls.project = Project.objects.create(
             title='testImportDatasetProject',
-            owner=cls.user
         )
+        cls.project.users.add(cls.user)
         cls.url = f'/projects/{cls.project.id}/dataset_imports/'
         cls.project_url = f'/projects/{cls.project.id}'
         cls.created_indices = []

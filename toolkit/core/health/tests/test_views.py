@@ -8,7 +8,6 @@ class HealthViewsTests(APITestCase):
 
     @classmethod
     def setUpTestData(cls):
-        # Owner of the project
         cls.user = create_test_user('user', 'my@email.com', 'pw')
 
 

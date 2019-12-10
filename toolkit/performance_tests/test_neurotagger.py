@@ -22,9 +22,10 @@ class NeurotaggerPerformanceTests(APITestCase):
     def setUpTestData(cls):
         # Owner of the project
         cls.user = create_test_user('neurotaggerOwner', 'my@email.com', 'pw')
+        cls.user.is_superuser = True
+        cls.user.save()
         cls.project = Project.objects.create(
             title='neurotaggerTestProject',
-            owner=cls.user,
             indices=TEST_INDEX_LARGE
         )
         cls.url = f'/projects/{cls.project.id}/neurotaggers/'
