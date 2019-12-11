@@ -73,11 +73,12 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
         # Create queries for each fact
         queries = json.dumps(self.create_queries(fact_name, tags))
 
-        serializer.save(author=self.request.user,
+        neurotagger = serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         fields=json.dumps(serializer.validated_data['fields']),
                         fact_values = json.dumps(tags),
                         queries=queries)
+        neurotagger.train()
 
 
     def perform_update(self, serializer):

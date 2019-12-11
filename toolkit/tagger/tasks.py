@@ -34,6 +34,8 @@ def create_tagger_batch(tagger_group_id, taggers_to_create):
         tagger_group_object.taggers.add(created_tagger)
         tagger_group_object.save()
 
+        created_tagger.train()
+
 
 def get_data_samples(tagger_object, text_processor, show_progress, indices, field_data):
     """Retrieves positive & negative data samples from Elastic."""

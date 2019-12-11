@@ -1,5 +1,6 @@
 import json
 import os
+import secrets
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -10,6 +11,7 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.helper_functions import apply_celery_task
+from toolkit.settings import MODELS_DIR
 
 
 class Embedding(models.Model):
@@ -23,24 +25,23 @@ class Embedding(models.Model):
     min_freq = models.IntegerField(default=10)
 
     vocab_size = models.IntegerField(default=0)
-    embedding_model = models.FileField(upload_to='data/models/embedding', null=True, verbose_name='', default=None)
-    phraser_model = models.FileField(upload_to='data/models/embedding', null=True, verbose_name='', default=None)
+    embedding_model = models.FileField(null=True, verbose_name='', default=None)
+    phraser_model = models.FileField(null=True, verbose_name='', default=None)
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
+    def generate_name(self, name):
+        return os.path.join(MODELS_DIR, 'embedding', f'{name}_{str(self.pk)}_{secrets.token_hex(10)}')
+
+    def train(self):
+        new_task = Task.objects.create(embedding=self, status='created')
+        self.task = new_task
+        self.save()
+        from toolkit.embedding.tasks import train_embedding
+        apply_celery_task(train_embedding, self.pk)
 
     def __str__(self):
         return self.description
 
-
-    @classmethod
-    def train_embedding_model(cls, sender, instance, created, **kwargs):
-        if created:
-            new_task = Task.objects.create(embedding=instance, status='created')
-            instance.task = new_task
-            instance.save()
-            from toolkit.embedding.tasks import train_embedding
-
-            apply_celery_task(train_embedding, instance.pk)
 
 
 class EmbeddingCluster(models.Model):
@@ -49,7 +50,7 @@ class EmbeddingCluster(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE)
     num_clusters = models.IntegerField(default=100)
-    cluster_model = models.FileField(upload_to='data/models/embedding', null=True, verbose_name='', default=None)
+    cluster_model = models.FileField(null=True, verbose_name='', default=None)
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
 
@@ -65,11 +66,6 @@ class EmbeddingCluster(models.Model):
             instance.save()
             from toolkit.embedding.tasks import cluster_embedding
             apply_celery_task(cluster_embedding, instance.pk)
-
-
-@receiver(models.signals.post_save, sender=Embedding)
-def train_embedding_model(sender, instance: Embedding, created, **kwargs):
-    Embedding.train_embedding_model(sender, instance, created, **kwargs)
 
 
 @receiver(models.signals.post_delete, sender=Embedding)

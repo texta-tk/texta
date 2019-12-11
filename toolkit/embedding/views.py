@@ -66,11 +66,12 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
 
 
     def perform_create(self, serializer):
-        serializer.save(
+        embedding: Embedding = serializer.save(
             author=self.request.user,
             project=Project.objects.get(id=self.kwargs['project_pk']),
             fields=json.dumps(serializer.validated_data['fields'])
         )
+        embedding.train()
 
 
     def perform_update(self, serializer):

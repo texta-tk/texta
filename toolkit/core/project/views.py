@@ -165,7 +165,6 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
     @action(detail=True, methods=['get'])
     def get_indices(self, request, pk=None, project_pk=None):
         """Returns list of available indices in project."""
-        # print(project_object.indices)
         project_object = self.get_object()
         project_indices = {"indices": list(project_object.indices)}
         print(project_indices)

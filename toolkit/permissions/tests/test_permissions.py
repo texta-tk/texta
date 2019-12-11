@@ -81,7 +81,6 @@ class ProjectPermissionsTests(APITestCase):
         get_response = self.client.get(url)
         responses = {'GET': get_response, 'PUT': self.client.put(url, get_response.data, format='json')}
         self.validate_safe_response(responses['GET'], url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
-        print(responses['PUT'], url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
         self.validate_unsafe_response(responses['PUT'], url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
 
     def update_project_fields(self, username, password, SAFE_FORBIDDEN=False, UNSAFE_FORBIDDEN=False):

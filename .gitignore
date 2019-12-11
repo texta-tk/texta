@@ -74,3 +74,4 @@ data/test/*
 # celery beat schedule file
 celerybeat-schedule
 
+/data/upload/
