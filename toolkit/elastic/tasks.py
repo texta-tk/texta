@@ -15,11 +15,20 @@ from toolkit.elastic.mapping_generator import SchemaGenerator
     unique name problem and testing it.
 """
 
-def update_field_types(indices, field_type):
+def get_selected_fields(indices, fields):
+    # get all fields in given indices
+    all_fields = ElasticCore().get_fields(indices)
+    # filter out selected fields
+    selected_fields = [field for field in all_fields if field["path"] in fields]
+    return selected_fields
+
+def update_field_types(indices, fields, field_type):
     ''' if fieldtype, for field named fieldtype change its type'''
+
     # returns fields edited by serializer input
-    my_fields = ElasticCore().get_fields(indices)
+    my_fields = get_selected_fields(indices, fields)
     my_field_data = [field["path"] for field in my_fields]
+
     for item in field_type:
         if item['path'] in my_field_data:
             field_to_edit = item['path']
@@ -86,7 +95,6 @@ def reindex_task(reindexer_task_id):
     query = reindexer_obj.query
 
     ''' for empty field post, use all posted indices fields '''
-
     if not fields:
         fields = ElasticCore().get_fields(indices)
         fields = [field["path"] for field in fields]
@@ -103,7 +111,7 @@ def reindex_task(reindexer_task_id):
 
     ''' the operations that don't require a mapping update have been completed '''
 
-    schema_input = update_field_types(indices, field_type)
+    schema_input = update_field_types(indices, fields, field_type)
     updated_schema = update_mapping(schema_input, reindexer_obj.new_index)
 
     # create new_index
