@@ -9,13 +9,16 @@ from toolkit.core.project.serializers import ProjectSerializer
 from toolkit.elastic.models import Reindexer
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.serializers import ReindexerCreateSerializer
-from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.permissions.project_permissions import ProjectResourceAllowed, IsSuperUser
 
 from django_filters import rest_framework as filters
 import rest_framework.filters as drf_filters
 
 
 class ElasticGetIndices(views.APIView):
+    permission_classes = (IsSuperUser,)
+
+
     def get(self, request):
         """
         Returns **all** available indices from Elasticsearch.
@@ -69,46 +72,15 @@ class ReindexerViewSet(mixins.CreateModelMixin,
     def get_queryset(self):
         return Reindexer.objects.filter(project=self.kwargs['project_pk'])
 
-    def create(self, request, *args, **kwargs):
+    def perform_create(self, serializer):
         project_obj = Project.objects.get(id=self.kwargs['project_pk'])
-        project_indices = project_obj.indices
-        project_fields = ElasticCore().get_fields(indices=project_indices)
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        validate_indices = self.validate_indices(self.request, project_indices)
-        validate_fields = self.validate_fields(self.request, project_indices, project_fields)
-        if validate_indices['result'] and validate_fields:
-            self.perform_create(serializer, project_obj)
-            self.update_project_indices(serializer, project_obj, project_indices)
-            headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-        if not validate_indices['result']:
-            raise ProjectValidationFailed(detail=f'Index "{validate_indices["missing"]}" is not contained in your project indices "{repr(project_indices)}"')
-        if not validate_fields:
-            raise ProjectValidationFailed(detail=f'The fields you are attempting to re-index are not in current project fields: {project_fields}')
-
-    def perform_create(self, serializer, project_obj):
         serializer.save(
             author=self.request.user,
             project=project_obj,
             field_type=json.dumps(serializer.validated_data['field_type']),
             fields=json.dumps(serializer.validated_data['fields']),
             indices=json.dumps(serializer.validated_data['indices']))
-
-    def validate_indices(self, request, project_indices):
-        ''' check if re-indexed index is in the relevant project indices field '''
-        for index in self.request.data['indices']:
-            if index not in project_indices:
-                return {"result": False, "missing": index}
-            return {"result": True}
-
-    def validate_fields(self, request, project_indices, project_fields):
-        ''' check if changed fields included in the request are in the relevant project fields '''
-        field_data = [field["path"] for field in project_fields]
-        for field in self.request.data['fields']:
-            if field not in field_data:
-                return False
-        return True
+        self.update_project_indices(serializer, project_obj, project_obj.indices)
 
     def update_project_indices(self, serializer, project_obj, project_indices):
         ''' add new_index included in the request to the relevant project object '''

@@ -7,6 +7,7 @@ from toolkit.core.task.serializers import TaskSerializer
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 from toolkit.tagger.choices import (DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE, DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_NUM_DOCUMENTS, DEFAULT_TAGGER_GROUP_FACT_NAME, get_classifier_choices, get_vectorizer_choices)
 from toolkit.tagger.models import Tagger, TaggerGroup
+from toolkit.tools.logger import Logger
 
 
 class TaggerTagTextSerializer(serializers.Serializer):
@@ -111,7 +112,11 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     def get_tagger_statistics(self, obj):
         tagger_objects = obj.taggers
         if tagger_objects.exists():
-            tagger_size_sum = round(tagger_objects.filter(model_size__isnull=False).aggregate(Sum('model_size'))['model_size__sum'], 1)
+            try:
+                tagger_size_sum = round(tagger_objects.filter(model_size__isnull=False).aggregate(Sum('model_size'))['model_size__sum'], 1)
+            except TypeError as e:
+                Logger().error(str(e), exc_info=True)
+                tagger_size_sum = 0
             tagger_stats = {
                 'avg_precision': tagger_objects.aggregate(Avg('precision'))['precision__avg'],
                 'avg_recall': tagger_objects.aggregate(Avg('recall'))['recall__avg'],

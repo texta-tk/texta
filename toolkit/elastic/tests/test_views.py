@@ -8,7 +8,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_INDEX_REINDEX, TEST_INDEX_LARGE, TEST_QUERY
+from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE, TEST_INDEX_REINDEX, TEST_INDEX_LARGE, TEST_QUERY, REINDEXER_TEST_INDEX
 from toolkit.core.project.models import Project
 from toolkit.elastic.models import Reindexer
 from toolkit.elastic.core import ElasticCore
@@ -25,18 +25,27 @@ class ReindexerViewTests(APITestCase):
         cls.default_password = 'pw'
         cls.default_username = 'indexOwner'
         cls.user = create_test_user(cls.default_username, 'my@email.com', cls.default_password)
-        cls.user.is_superuser = True
-        cls.user.save()
+        # create admin to test indices removal from project
+        cls.admin = create_test_user(name='admin', password='1234')
+        cls.admin.is_superuser = True
+        cls.admin.save()
         cls.project = Project.objects.create(
             title='ReindexerTestProject',
-            owner=cls.user,
             indices=[TEST_INDEX]
         )
+        cls.project.users.add(cls.user)
 
     def setUp(self):
         self.client.login(username=self.default_username, password=self.default_password)
 
     def test_run(self):
+        existing_new_index_payload = {
+        "description": "TestWrongField",
+        "indices": [TEST_INDEX],
+        "new_index": REINDEXER_TEST_INDEX,  # index created for test purposes
+        "fields": [],
+        "field_type": [],
+        }
         wrong_fields_payload = {
         "description": "TestWrongField",
         "indices": [TEST_INDEX],
@@ -93,6 +102,7 @@ class ReindexerViewTests(APITestCase):
                            ],
         }
         for payload in (
+            existing_new_index_payload,
             wrong_indices_payload,
             wrong_fields_payload,
             pick_fields_payload,
@@ -122,7 +132,7 @@ class ReindexerViewTests(APITestCase):
         ''' Check if new_index gets created
             Check if new_index gets re-indexed and completed
             remove test new_index '''
-        if project.indices is None or not self.validate_fields(project, payload) or not self.validate_indices(project, payload):
+        if project.indices is None or response.exception:
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         else:
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -135,6 +145,8 @@ class ReindexerViewTests(APITestCase):
             print_output("Reindexer Test index remove status", delete_response)
 
     def is_reindexed_index_added_to_project_if_yes_remove(self, response, new_index, project):
+        # project resource user is not supposed to have indices remove permission, so use admin
+        self.client.login(username='admin', password='1234')
         url = f'/projects/{project.id}/'
         check = self.client.get(url, format='json')
         if response.status_code == 201:
@@ -143,9 +155,13 @@ class ReindexerViewTests(APITestCase):
             check.data['indices'].remove(new_index)
             remove_response = self.client.put(url, check.data, format='json')
             print_output("Re-indexed index removed from project", remove_response.status_code)
+            self.delete_reindexing_task(project, response)
         if response.status_code == 400:
             print_output('Re-indexed index not added to project', check.data)
         assert new_index not in check.data['indices']
+        # log in with project user again
+        self.client.login(username=self.default_username, password=self.default_password)
+
 
     def validate_fields(self, project, payload):
         project_fields = ElasticCore().get_fields(project.indices)
@@ -175,3 +191,14 @@ class ReindexerViewTests(APITestCase):
         print_output("patch_response.data", patch_response.data)
         self.assertEqual(put_response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
         self.assertEqual(patch_response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def delete_reindexing_task(self, project, response):
+        ''' test delete reindex task '''
+        task_url = response.data['url']
+        get_response = self.client.get(task_url)
+        self.assertEqual(get_response.status_code, status.HTTP_200_OK)
+        delete_response = self.client.delete(task_url, format='json')
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+        get_response = self.client.get(task_url)
+        self.assertEqual(get_response.status_code, status.HTTP_404_NOT_FOUND)
+

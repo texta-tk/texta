@@ -24,7 +24,7 @@ def get_selected_fields(indices, fields):
 
 def update_field_types(indices, fields, field_type):
     ''' if fieldtype, for field named fieldtype change its type'''
-    
+
     # returns fields edited by serializer input
     my_fields = get_selected_fields(indices, fields)
     my_field_data = [field["path"] for field in my_fields]
@@ -116,7 +116,6 @@ def reindex_task(reindexer_task_id):
 
     # create new_index
     create_index_res = ElasticCore().create_index(reindexer_obj.new_index, updated_schema)
-    #print(create_index_res)
 
     # set new_index name as mapping name, perhaps make it customizable in the future
     mapping_name = reindexer_obj.new_index

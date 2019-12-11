@@ -14,9 +14,9 @@ class LexiconViewsTests(APITestCase):
         cls.user = create_test_user('user', 'my@email.com', 'pw')
         cls.project = Project.objects.create(
             title='LexiconTestProject',
-            owner=cls.user,
             indices=TEST_INDEX
         )
+        cls.project.users.add(cls.user)
         cls.url = f'/projects/{cls.project.id}/lexicons/'
 
 

@@ -78,8 +78,8 @@ def train_embedding(embedding_id):
 
         # Save models
         show_progress.update_step('saving')
-        model_path = os.path.join(MODELS_DIR, 'embedding', f'embedding_{str(embedding_id)}_{secrets.token_hex(10)}')
-        phraser_path = os.path.join(MODELS_DIR, 'embedding', f'phraser_{str(embedding_id)}_{secrets.token_hex(10)}')
+        model_path = embedding_object.generate_name("embedding")
+        phraser_path = embedding_object.generate_name("phraser")
         model.save(model_path)
         phraser.save(phraser_path)
 
