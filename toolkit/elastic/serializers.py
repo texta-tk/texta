@@ -14,7 +14,8 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
     description = serializers.CharField(help_text='Describe your re-indexing task', required=True, allow_blank=False)
     indices = serializers.ListField(child=serializers.CharField(), help_text=f'Add the indices, you wish to reindex into a new index.', write_only=True, required=True)
     fields = serializers.ListField(child=serializers.CharField(),
-                                   help_text=f'Empty fields chooses all posted indices fields. Fields content adds custom field content to the new index.',)
+                                   help_text=f'Empty fields chooses all posted indices fields. Fields content adds custom field content to the new index.',
+                                   required=False)
     query = serializers.JSONField(help_text='Add a query, if you wish to filter the new reindexed index.', required=False)
     new_index = serializers.CharField(help_text='Your new re-indexed index name', allow_blank=False, required=True)
     random_size = serializers.IntegerField(help_text='Picks a subset of documents of chosen size at random. Disabled by default.',
