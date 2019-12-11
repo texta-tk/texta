@@ -94,7 +94,7 @@ class LexiconViewsTests(APITestCase):
         # perform_update test
         created_id = response.data['id']
         put_response = self.client.put(f'{self.url}{created_id}/', payload)
-        print_output('test_lexicon_put:response.data', put_response.data)
+        print_output('test_defaults_put', put_response.data)
         self.assertEqual(put_response.status_code, status.HTTP_200_OK)
 
 
