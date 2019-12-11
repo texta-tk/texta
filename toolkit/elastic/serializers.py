@@ -18,7 +18,7 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
     random_size = serializers.IntegerField(help_text='Picks a subset of documents of chosen size at random. Disabled by default.',
                                            required=False)
     field_type = serializers.ListField(help_text=f'Used to update the fieldname and the field type of chosen paths.',
-                                       required=False,)
+                                       required=False)
     task = TaskSerializer(read_only=True)
 
     class Meta:
