@@ -77,8 +77,8 @@ class ReindexerViewSet(mixins.CreateModelMixin,
         serializer.save(
             author=self.request.user,
             project=project_obj,
-            field_type=json.dumps(serializer.validated_data['field_type']),
-            fields=json.dumps(serializer.validated_data['fields']),
+            field_type=json.dumps(serializer.validated_data.get('field_type', [])),
+            fields=json.dumps(serializer.validated_data.get('fields', [])),
             indices=json.dumps(serializer.validated_data['indices']))
         self.update_project_indices(serializer, project_obj, project_obj.indices)
 

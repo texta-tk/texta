@@ -43,8 +43,6 @@ class ReindexerViewTests(APITestCase):
         "description": "TestWrongField",
         "indices": [TEST_INDEX],
         "new_index": REINDEXER_TEST_INDEX,  # index created for test purposes
-        "fields": [],
-        "field_type": [],
         }
         wrong_fields_payload = {
         "description": "TestWrongField",
@@ -56,7 +54,6 @@ class ReindexerViewTests(APITestCase):
         "description": "TestWrongIndex",
         "indices": ["Wrong_Index"],
         "new_index": TEST_INDEX_REINDEX,
-        "fields": [],
         }
         pick_fields_payload = {
             "description": "TestManyReindexerFields",
@@ -64,32 +61,25 @@ class ReindexerViewTests(APITestCase):
             "fields": [TEST_FIELD, 'comment_content_clean.text', 'texta_facts'],
             "indices": [TEST_INDEX],
             "new_index": TEST_INDEX_REINDEX,
-            "field_type": [],
         }
         # duplicate name problem?
         # if you want to actually test it, add an index to indices and project indices
         join_indices_fields_payload = {
             "description": "TestReindexerJoinFields",
-            "fields": [],
             "indices": [TEST_INDEX],
             "new_index": TEST_INDEX_REINDEX,
-            "field_type": [],
         }
         test_query_payload = {
             "description": "TestQueryFiltering",
-            "fields": [],
             "indices": [TEST_INDEX],
             "new_index": TEST_INDEX_REINDEX,
-            "field_type": [],
             "query": json.dumps(TEST_QUERY)
         }
         random_docs_payload = {
             "description": "TestReindexerRandomFields",
-            "fields": [],
             "indices": [TEST_INDEX],
             "new_index": TEST_INDEX_REINDEX,
             "random_size": 500,
-            "field_type": [],
         }
         update_field_type_payload = {
             "description": "TestReindexerUpdateFieldType",
