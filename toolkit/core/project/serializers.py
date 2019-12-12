@@ -49,9 +49,6 @@ class ProjectGetFactsSerializer(serializers.Serializer):
 
 
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):
-    owner = serializers.PrimaryKeyRelatedField(required=False, queryset=User.objects.all())
-    owner_username = serializers.CharField(source='owner.username', read_only=True)
-
     indices = serializers.ListField(default=[], child=serializers.CharField())
     users = serializers.HyperlinkedRelatedField(many=True, view_name='user-detail', queryset=User.objects.all(),)
     resources = serializers.SerializerMethodField()
@@ -59,8 +56,8 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Project
-        fields = ('url', 'id', 'title', 'owner', 'users', 'indices', 'resources', 'owner_username')
-        read_only_fields = ('resources', 'owner')
+        fields = ('url', 'id', 'title', 'users', 'indices', 'resources',)
+        read_only_fields = ('resources',)
 
 
     def get_resources(self, obj):

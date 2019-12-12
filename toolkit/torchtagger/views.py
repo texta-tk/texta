@@ -17,9 +17,9 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.embedding.phraser import Phraser
-from toolkit.elastic.feedback import Feedback
-from toolkit.torchtagger.tasks import torchtagger_train_handler       
+from toolkit.elastic.feedback import Feedback  
 from toolkit.helper_functions import apply_celery_task
+from toolkit.torchtagger.tasks import train_torchtagger
 
 from django_filters import rest_framework as filters
 import rest_framework.filters as drf_filters
@@ -47,10 +47,11 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, Feedbac
 
 
     def perform_create(self, serializer, **kwargs):
-        serializer.save(author=self.request.user,
+        tagger: TorchTagger = serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         fields=json.dumps(serializer.validated_data['fields']),
                         **kwargs)
+        tagger.train()
 
 
     def get_queryset(self):
@@ -61,7 +62,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, Feedbac
     def retrain_tagger(self, request, pk=None, project_pk=None):
         """Starts retraining task for the TorchTagger model."""
         instance = self.get_object()
-        apply_celery_task(torchtagger_train_handler, instance.pk)
+        apply_celery_task(train_torchtagger, instance.pk)
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
 
 

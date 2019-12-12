@@ -2,6 +2,7 @@ import re
 import json
 from rest_framework import serializers
 from collections import OrderedDict
+from toolkit.core.project.models import Project
 
 
 class ProjectResourceUrlSerializer():
@@ -20,7 +21,9 @@ class ProjectResourceUrlSerializer():
 
 
 class FieldParseSerializer():
-    ''' For serializers that need to override to_representation and parse fields '''
+    ''' For serializers that need to override to_representation and parse fields
+        Serializers overriden with FieldParseSerializer will validate, if field input                                                                                    '''
+
 
     def to_representation(self, instance):
         # self is the parent class obj in this case
@@ -31,6 +34,17 @@ class FieldParseSerializer():
             if getattr(model_obj, field):
                 result[field] = json.loads(getattr(model_obj, field))
         return OrderedDict([(key, result[key]) for key in result])
+
+
+    def validate_fields(self, value):
+        """ check if selected fields are present in the project and raise error on None
+            if no "fields" field is declared in the serializer, no validation
+            to write custom validation for serializers with FieldParseSerializer, simply override validate validate_fields in the project serializer"""
+        project_obj = Project.objects.get(id=super(FieldParseSerializer, self).context['view'].kwargs['project_pk'])
+        project_fields = set(project_obj.get_elastic_fields(path_list=True))
+        if not value or not set(value).issubset(project_fields):
+            raise serializers.ValidationError(f'Entered fields not in current project fields: {project_fields}')
+        return value
 
 
 class ProjectResourceBulkDeleteSerializer(serializers.Serializer):

@@ -18,12 +18,11 @@ class EmbeddingViewTests(TransactionTestCase):
 
     def setUp(self):
         self.user = create_test_user('embeddingOwner', 'my@email.com', 'pw')
-
         self.project = Project.objects.create(
             title='embeddingTestProject',
-            owner=self.user,
             indices=TEST_INDEX
         )
+        self.project.users.add(self.user)
 
         self.url = f'/projects/{self.project.id}/embeddings/'
         self.project_url = f'/projects/{self.project.id}'
@@ -49,7 +48,12 @@ class EmbeddingViewTests(TransactionTestCase):
         self.run_patch_on_embedding_instances(self.test_embedding_id)
         self.run_put_on_embedding_instances(self.test_embedding_id)
         self.create_embedding_with_empty_fields()
+        self.create_embedding_then_delete_embedding_and_created_model()
 
+
+    def tearDown(self):
+        Embedding.objects.all().delete()
+        EmbeddingCluster.objects.all().delete()
 
     def run_create_embedding_training_and_task_signal(self):
         """Tests the endpoint for a new Embedding, and if a new Task gets created via the signal"""
@@ -76,7 +80,7 @@ class EmbeddingViewTests(TransactionTestCase):
         self.assertEqual(created_embedding.task.status, Task.STATUS_COMPLETED)
 
 
-    def test_create_embedding_then_delete_embedding_and_created_model(self):
+    def create_embedding_then_delete_embedding_and_created_model(self):
         payload = {
             "description": "TestEmbedding",
             "query": json.dumps(EMPTY_QUERY),

@@ -14,9 +14,9 @@ class LexiconViewsTests(APITestCase):
         cls.user = create_test_user('user', 'my@email.com', 'pw')
         cls.project = Project.objects.create(
             title='LexiconTestProject',
-            owner=cls.user,
             indices=TEST_INDEX
         )
+        cls.project.users.add(cls.user)
         cls.url = f'/projects/{cls.project.id}/lexicons/'
 
 
@@ -27,6 +27,7 @@ class LexiconViewsTests(APITestCase):
     def test_run(self):
         self.run_lexicon_create(),
         self.run_lexicon_update(),
+        self.run_defaults()
 
 
     def run_lexicon_create(self):
@@ -82,3 +83,18 @@ class LexiconViewsTests(APITestCase):
         print_output('test_lexicon_updated_retrieval:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue('kolmas fraas' in response.data['phrases'])
+
+
+    def run_defaults(self):
+        # perform_create test
+        payload = {"description": "testDefaults"}
+        response = self.client.post(self.url, payload)
+        print_output('test_defaults_post', response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # perform_update test
+        created_id = response.data['id']
+        put_response = self.client.put(f'{self.url}{created_id}/', payload)
+        print_output('test_defaults_put', put_response.data)
+        self.assertEqual(put_response.status_code, status.HTTP_200_OK)
+
+

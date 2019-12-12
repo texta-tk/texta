@@ -66,28 +66,16 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
 
 
     def perform_create(self, serializer):
-        serializer.save(
+        embedding: Embedding = serializer.save(
             author=self.request.user,
             project=Project.objects.get(id=self.kwargs['project_pk']),
             fields=json.dumps(serializer.validated_data['fields'])
         )
+        embedding.train()
 
 
     def perform_update(self, serializer):
         serializer.save(fields=json.dumps(serializer.validated_data['fields']))
-
-
-    def create(self, request, *args, **kwargs):
-        serializer = EmbeddingSerializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        # check if selected fields are present in the project:
-        project_fields = set(Project.objects.get(id=self.kwargs['project_pk']).get_elastic_fields(path_list=True))
-        entered_fields = set(serializer.validated_data['fields'])
-        if not entered_fields or not entered_fields.issubset(project_fields):
-            raise ProjectValidationFailed(detail=f'entered fields not in current project fields: {project_fields}')
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
     def destroy(self, request, *args, **kwargs):
@@ -99,6 +87,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
     @action(detail=True, methods=['post'], serializer_class=EmbeddingPredictSimilarWordsSerializer)
     def predict_similar(self, request, pk=None, project_pk=None):
         """Returns predictions of similar items to input words/phrases."""
+
         serializer = EmbeddingPredictSimilarWordsSerializer(data=request.data)
         if serializer.is_valid():
 

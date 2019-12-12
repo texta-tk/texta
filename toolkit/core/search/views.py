@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 
-from toolkit.permissions.project_permissions import ProjectAllowed
+from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.core.search.models import Search
 from toolkit.core.project.models import Project
 from toolkit.core.search.serializers import SearchSerializer
@@ -30,8 +30,8 @@ class SearchViewSet(viewsets.ModelViewSet, BulkDelete):
     pagination_class = None
     serializer_class = SearchSerializer
     permission_classes = (
+        ProjectResourceAllowed,
         permissions.IsAuthenticated,
-        ProjectAllowed,
     )
 
     def perform_create(self, serializer):

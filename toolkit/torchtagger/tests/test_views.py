@@ -23,9 +23,9 @@ class TorchTaggerViewTests(TransactionTestCase):
         self.user = create_test_user('torchTaggerOwner', 'my@email.com', 'pw')
         self.project = Project.objects.create(
             title='torchTaggerTestProject',
-            owner=self.user,
             indices=TEST_INDEX
         )
+        self.project.users.add(self.user)
         self.url = f'/projects/{self.project.id}/torchtaggers/'
         self.project_url = f'/projects/{self.project.id}'
         self.test_embedding_id = None

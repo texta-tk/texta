@@ -12,7 +12,8 @@ class UserProfileSignalsAndViewsTests(APITestCase):
     def setUp(self):
         # Create a new User
         self.user = create_test_user(name='user', password='pw')
-        self.project = Project.objects.create(title='testproj', owner=self.user, indices=[TEST_INDEX])
+        self.project = Project.objects.create(title='testproj', indices=[TEST_INDEX])
+        self.project.users.add(self.user)
         self.client = APIClient()
         self.client.login(username='user', password='pw')
 
@@ -22,6 +23,7 @@ class UserProfileSignalsAndViewsTests(APITestCase):
         url = f'/projects/{self.project.id}/searches/'
         payload = {"description":"test", "query":{"elasticsearchQuery":{"highlight":{"fields":{},"number_of_fragments":0,"post_tags":["<TEXTA_SEARCHER_HIGHLIGHT_END_TAG>"],"pre_tags":["<TEXTA_SEARCHER_HIGHLIGHT_START_TAG>"]},"query":{"bool":{"boost":1,"filter":[],"minimum_should_match":0,"must":[],"must_not":[],"should":[]}}},"highlight":{"fields":{},"number_of_fragments":0,"post_tags":["<TEXTA_SEARCHER_HIGHLIGHT_END_TAG>"],"pre_tags":["<TEXTA_SEARCHER_HIGHLIGHT_START_TAG>"]},"query":{"bool":{"boost":1,"filter":[],"minimum_should_match":0,"must":[],"must_not":[],"should":[]}}},"query_constraints":[]}
         response = self.client.post(url, payload, format='json')
+        print_output("search_creation: ", response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         self.assertTrue(isinstance(response.data, dict))

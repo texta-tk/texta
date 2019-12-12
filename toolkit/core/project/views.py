@@ -3,7 +3,6 @@ from django.db.models import Count
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
 from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import (
     ProjectSerializer,
@@ -22,7 +21,7 @@ from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.spam_detector import SpamDetector
 from toolkit.exceptions import ProjectValidationFailed, SerializerNotValid
-from toolkit.permissions.project_permissions import ProjectAllowed
+from toolkit.permissions.project_permissions import ProjectAllowed, ExtraActionResource, ProjectResourceAllowed, IsSuperUser
 from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
@@ -42,6 +41,7 @@ class ProjectFilter(filters.FilterSet):
     class Meta:
         model = Project
         fields = []
+
 
 class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
     """
@@ -72,19 +72,31 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = ProjectFilter
-    ordering_fields = ('id', 'title', 'owner__username', 'users_count', 'indices_count',)
+    ordering_fields = ('id', 'title', 'users_count', 'indices_count',)
 
 
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+    def get_permissions(self):
+        """
+        Disable project creation for non-superusers
+        """
+        if self.action == 'create':
+            permission_classes = [permissions.IsAuthenticated, IsSuperUser]
+        else:
+            permission_classes = self.permission_classes
+        return [permission() for permission in permission_classes]
 
 
     def get_queryset(self):
         queryset = Project.objects.annotate(users_count=Count('users'), indices_count=Count('indices')).all()
         current_user = self.request.user
         if not current_user.is_superuser:
-            queryset = (queryset.filter(owner=current_user) | queryset.filter(users=current_user)).distinct()
+            return queryset.filter(users=current_user)
         return queryset
+
+    def get_project_indices(self, pk=None):
+        project_object = self.get_object()
+        project_indices = list(project_object.indices)
+        return project_indices
 
 
     @action(detail=True, methods=['get'])
@@ -106,13 +118,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         return Response(field_map_list, status=status.HTTP_200_OK)
 
 
-    def get_project_indices(self, pk=None):
-        project_object = self.get_object()
-        project_indices = list(project_object.indices)
-        return project_indices
-
-
-    @action(detail=True, methods=['post'], serializer_class=ProjectGetSpamSerializer)
+    @action(detail=True, methods=['post'], serializer_class=ProjectGetSpamSerializer, permission_classes=[ExtraActionResource])
     def get_spam(self,  request, pk=None):
         """
         Analyses Elasticsearch inside the project to detect frequently occuring texts.
@@ -161,9 +167,10 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         """Returns list of available indices in project."""
         project_object = self.get_object()
         project_indices = {"indices": list(project_object.indices)}
+        print(project_indices)
         return Response(project_indices)
 
-    @action(detail=True, methods=['post'], serializer_class=ProjectSimplifiedSearchSerializer)
+    @action(detail=True, methods=['post'], serializer_class=ProjectSimplifiedSearchSerializer, permission_classes=[ExtraActionResource])
     def search(self, request, pk=None, project_pk=None):
         """Simplified search interface for making Elasticsearch queries."""
         serializer = ProjectSimplifiedSearchSerializer(data=request.data)
@@ -205,7 +212,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         return Response(results, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=ProjectSearchByQuerySerializer)
+    @action(detail=True, methods=['post'], serializer_class=ProjectSearchByQuerySerializer, permission_classes=[ExtraActionResource])
     def search_by_query(self, request, pk=None, project_pk=None):
         """Executes **raw** Elasticsearch query on all project indices."""
         serializer = ProjectSearchByQuerySerializer(data=request.data)
@@ -225,7 +232,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         return Response(results, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=ProjectMultiTagSerializer)
+    @action(detail=True, methods=['post'], serializer_class=ProjectMultiTagSerializer, permission_classes=[ExtraActionResource])
     def multitag_text(self, request, pk=None, project_pk=None):
         """
         Applies list of tagger objects inside project to any text.
@@ -254,7 +261,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         return Response(sorted_tags, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactValuesSerializer)
+    @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactValuesSerializer, permission_classes=[ExtraActionResource])
     def autocomplete_fact_values(self, request, pk=None, project_pk=None):
         data = request.data
         serializer = ProjectSuggestFactValuesSerializer(data=data)
@@ -277,7 +284,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         return Response(fact_values, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactNamesSerializer)
+    @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactNamesSerializer, permission_classes=[ExtraActionResource])
     def autocomplete_fact_names(self, request, pk=None, project_pk=None):
         data = request.data
         serializer = ProjectSuggestFactNamesSerializer(data=data)

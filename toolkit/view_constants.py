@@ -1,5 +1,6 @@
 import json
 import os
+import pathlib
 import re
 from tempfile import SpooledTemporaryFile
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -12,6 +13,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
+from toolkit.core.task.models import Task
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.query import Query
@@ -19,6 +21,7 @@ from toolkit.embedding.models import Embedding
 from toolkit.torchtagger.models import TorchTagger
 from toolkit.serializer_constants import (FeedbackSerializer, ProjectResourceBulkDeleteSerializer, ProjectResourceImportModelSerializer)
 from toolkit.settings import BASE_DIR
+from toolkit.tagger.models import Tagger
 from toolkit.tools.logger import Logger
 
 
@@ -114,7 +117,7 @@ class ExportModel:
 class ImportModel:
     @action(detail=True, methods=['post'], serializer_class=ProjectResourceImportModelSerializer)
     def import_model(self, request, pk=None):
-        """Imports any saved model object (tagger, embedding, neurotagger, etc.) from zip file."""
+        """Imports any saved model object (tagger, embedding, torchtagger, etc.) from zip file."""
         serializer = ProjectResourceImportModelSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -138,18 +141,40 @@ class ImportModel:
                 # deserialize json into django object
                 model_object = list(serializers.deserialize('json', json.dumps([model_json])))[0]
                 model_object = model_object.object
-                # save object
                 model_object.save()
                 # save model files to disk
                 self.save_files(archive, zip_content, model_object)
                 # update task to completed and save again
-                model_object.task.status = model_object.task.STATUS_COMPLETED
+
+                model_object = self._create_fitting_task(model_object)
                 model_object.task.save()
+                model_object.save()
+
                 success_response = {'id': model_object.id, 'model': model_json['model']}
             return Response(success_response, status=status.HTTP_200_OK)
+
         except Exception as e:
             Logger().error('error importing model', exc_info=e)
             return Response({'error': f'error importing model: {e}'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+    def _create_fitting_task(self, model_object):
+        if isinstance(model_object, TorchTagger):
+            model_object.task = Task.objects.create(torchtagger=model_object, status='created')
+            model_object.task.status = model_object.task.STATUS_COMPLETED
+            return model_object
+
+        elif isinstance(model_object, Embedding):
+            if isinstance(model_object, Embedding):
+                model_object.task = Task.objects.create(embedding=model_object, status='created')
+                model_object.task.status = model_object.task.STATUS_COMPLETED
+                return model_object
+
+        elif isinstance(model_object, Tagger):
+            if isinstance(model_object, Tagger):
+                model_object.task = Task.objects.create(tagger=model_object, status='created')
+                model_object.task.status = model_object.task.STATUS_COMPLETED
+                return model_object
 
 
     @staticmethod
@@ -172,21 +197,72 @@ class ImportModel:
             with open(os.path.join(BASE_DIR, plot_file), 'wb') as fh:
                 fh.write(archive.read(plot_file))
         # write model files to disk
-        for model_file in model_files:
-            new_model_file = self.rewrite_model_id(model_object.id, model_file)
-            with open(os.path.join(BASE_DIR, new_model_file), 'wb') as fh:
-                fh.write(archive.read(model_file))
         # update model path in model object
-        # if model is torchtagger
         if isinstance(model_object, TorchTagger):
-            model_object.model = self.rewrite_model_id(model_object.id, model_object.model.path)
-            model_object.text_field = self.rewrite_model_id(model_object.id, model_object.text_field.path)
-            model_object.save()
-        # if model is embedding
+            for path in model_files:
+                if path in model_object.model.path:
+                    new_path = self._generate_fitting_name(model_object, path)
+                    with open(os.path.join(BASE_DIR, new_path), 'wb') as fh:
+                        fh.write(archive.read(path))
+                    model_object.model = new_path
+
+                elif path in model_object.text_field.path:
+                    new_path = self._generate_fitting_name(model_object, path)
+                    with open(os.path.join(BASE_DIR, new_path), 'wb') as fh:
+                        fh.write(archive.read(path))
+                    model_object.text_field = new_path
+
         elif isinstance(model_object, Embedding):
-            model_object.embedding_model = self.rewrite_model_id(model_object.id, model_object.embedding_model.path)
-            model_object.phraser_model = self.rewrite_model_id(model_object.id, model_object.phraser_model.path)
-            model_object.save()
+            for path in model_files:
+                if path in model_object.embedding_model.path:
+                    new_path = self._generate_fitting_name(model_object, path)
+                    with open(os.path.join(BASE_DIR, new_path), 'wb') as fh:
+                        fh.write(archive.read(path))
+                    model_object.embedding_model = new_path
+
+                elif path in model_object.phraser_model.path:
+                    new_path = self._generate_fitting_name(model_object, path)
+                    with open(os.path.join(BASE_DIR, new_path), 'wb') as fh:
+                        fh.write(archive.read(path))
+                    model_object.phraser_model = new_path
+
+        elif isinstance(model_object, Tagger):
+            for path in model_files:
+                if path in model_object.model.path:
+                    new_path = self._generate_fitting_name(model_object, path)
+                    with open(os.path.join(BASE_DIR, new_path), 'wb') as fh:
+                        fh.write(archive.read(path))
+                    model_object.model = new_path
+
+
+    def _generate_fitting_name(self, model_object, filename):
+        """
+        Generates a new file name to avoid duplicates.
+        :param model_object: Instance of a Django model like TorchTagger or Embedding.
+        :param filename: Path of the model from the root directory: ex data/models/torchtagger/torchtagger_1_hash
+        :return: New file name for the model file.
+        """
+        path = pathlib.Path(filename)
+        file = str(pathlib.Path(path.stem + path.suffix))
+
+        if isinstance(model_object, TorchTagger):
+            if "torchtagger" in file and "text_field" in file:
+                new_path = pathlib.Path(path.parent, model_object.generate_name("torchtagger") + path.suffix + "_text_field")
+                return str(new_path)
+            elif "torchtagger" in file:
+                new_path = pathlib.Path(path.parent, model_object.generate_name("torchtagger") + path.suffix)
+                return str(new_path)
+
+        elif isinstance(model_object, Embedding):
+            if "embedding" in file:
+                new_path = pathlib.Path(path.parent, model_object.generate_name("embedding") + path.suffix)
+                return str(new_path)
+            elif "phraser" in file:
+                new_path = pathlib.Path(path.parent, model_object.generate_name("phraser") + path.suffix)
+                return str(new_path)
+
+        elif isinstance(model_object, Tagger):
+            pass
 
 
     @staticmethod
@@ -248,10 +324,10 @@ class FeedbackIndexView:
 class AdminPermissionsViewSetMixin(object):
     ''' When admin and/or project_owners need a different serialization '''
 
+
     def get_serializer_class(self):
         current_user = self.request.user
-        queryset = Project.objects.annotate(users_count=Count('users'))
-        if current_user.is_superuser or queryset.filter(owner=current_user):
+        if current_user.is_superuser:
             return ProjectAdminSerializer
         else:
             return super(AdminPermissionsViewSetMixin, self).get_serializer_class()

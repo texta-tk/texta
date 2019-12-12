@@ -15,8 +15,8 @@ from toolkit.torchtagger.plots import create_torchtagger_plot
 from toolkit.settings import MODELS_DIR
 
 
-@task(name="torchtagger_train_handler", base=BaseTask)
-def torchtagger_train_handler(tagger_id, testing=False):
+@task(name="train_torchtagger", base=BaseTask)
+def train_torchtagger(tagger_id, testing=False):
     try:
         # retrieve neurotagger & task objects
         tagger_object = TorchTaggerObject.objects.get(pk=tagger_id)
