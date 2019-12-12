@@ -43,6 +43,14 @@ class TorchTaggerViewTests(TransactionTestCase):
         self.run_tag_and_feedback_and_retrain()
         self.run_model_export_import()
 
+    def add_cleanup_files(self, tagger_id):
+        tagger_object = TorchTagger.objects.get(pk=tagger_id)
+        self.addCleanup(remove_file, tagger_object.model.path)
+        self.addCleanup(remove_file, tagger_object.text_field.path)
+        self.addCleanup(remove_file, tagger_object.plot.path)
+        self.addCleanup(remove_file, tagger_object.embedding.embedding_model.path)
+        self.addCleanup(remove_file, tagger_object.embedding.phraser_model.path)
+
     def run_train_embedding(self):
         # payload for training embedding
         payload = {
@@ -79,9 +87,8 @@ class TorchTaggerViewTests(TransactionTestCase):
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
         self.test_tagger_id = tagger_id
-        # Remove tagger files after test is done
-        #self.addCleanup(remove_file, response.data['location']['torchtagger'])
-        #self.addCleanup(remove_file, created_tagger.plot.path)
+        # add cleanup
+        self.add_cleanup_files(tagger_id)
 
     def run_train_multiclass_tagger(self):
         '''Tests TorchTagger training with multiple classes and if a new Task gets created via the signal'''
@@ -105,9 +112,8 @@ class TorchTaggerViewTests(TransactionTestCase):
         for score in ['f1_score', 'precision', 'recall', 'accuracy']:
             self.assertTrue(isinstance(response.data[score], float))
         self.test_tagger_id = tagger_id
-        # Remove tagger files after test is done
-        #self.addCleanup(remove_file, response.data['location']['torchtagger'])
-        #self.addCleanup(remove_file, created_tagger.plot.path)
+        # add cleanup
+        self.add_cleanup_files(tagger_id)
 
     def run_tag_text(self):
         '''Tests tag prediction for texts.'''
@@ -127,32 +133,6 @@ class TorchTaggerViewTests(TransactionTestCase):
         self.assertTrue(isinstance(response.data, dict))
         self.assertTrue('prediction' in response.data)
 
-    def run_model_retrain(self):
-        '''Tests the endpoint for the model_retrain action'''
-        test_tagger_id = self.test_tagger_ids[0]
-        # Check if stop word present in features
-        url = f'{self.url}{test_tagger_id}/list_features/'
-        response = self.client.get(url)
-        feature_dict = {a['feature']: True for a in response.data['features']}
-        self.assertTrue(TEST_MATCH_TEXT in feature_dict)
-        # add stop word before retraining
-        url = f'{self.url}{test_tagger_id}/stop_words/'
-        payload = {"text": TEST_MATCH_TEXT}
-        response = self.client.post(url, payload, format='json')
-        # retrain tagger
-        url = f'{self.url}{test_tagger_id}/retrain_tagger/'
-        response = self.client.post(url)
-        print_output('test_model_retrain:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Check if response data
-        self.assertTrue(response.data)
-        self.assertTrue('success' in response.data)
-        # Check if stop word NOT present in features
-        url = f'{self.url}{test_tagger_id}/list_features/'
-        response = self.client.get(url)
-        feature_dict = {a['feature']: True for a in response.data['features']}
-        self.assertTrue(TEST_MATCH_TEXT not in feature_dict)
-
 
     def run_model_export_import(self):
         '''Tests endpoint for model export and import'''
@@ -167,6 +147,9 @@ class TorchTaggerViewTests(TransactionTestCase):
         # Test tagging with imported model
         tagger_id = response.data['id']
         self.run_tag_text()
+
+        # add model files before retraining
+        self.add_cleanup_files(tagger_id)
 
 
     def run_tag_and_feedback_and_retrain(self):
@@ -198,6 +181,10 @@ class TorchTaggerViewTests(TransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data)
         self.assertTrue(len(response.data) > 0)
+
+        # add model files before retraining
+        self.add_cleanup_files(tagger_id)
+
         # retrain model
         url = f'{self.url}{tagger_id}/retrain_tagger/'
         response = self.client.post(url)
@@ -228,3 +215,6 @@ class TorchTaggerViewTests(TransactionTestCase):
         print_output('test_delete_feedback_index:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue('success' in response.data)
+
+        # add model files after retraining
+        self.add_cleanup_files(tagger_id)
