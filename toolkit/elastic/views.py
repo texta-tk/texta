@@ -10,6 +10,7 @@ from toolkit.elastic.models import Reindexer
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.serializers import ReindexerCreateSerializer
 from toolkit.permissions.project_permissions import ProjectResourceAllowed, IsSuperUser
+from toolkit.view_constants import BulkDelete
 
 from django_filters import rest_framework as filters
 import rest_framework.filters as drf_filters
@@ -42,7 +43,8 @@ class ReindexerViewSet(mixins.CreateModelMixin,
                        mixins.ListModelMixin,
                        mixins.RetrieveModelMixin,
                        mixins.DestroyModelMixin,
-                       viewsets.GenericViewSet):
+                       viewsets.GenericViewSet,
+                       BulkDelete):
     """
     list:
     Returns list of reindexing task objects.
