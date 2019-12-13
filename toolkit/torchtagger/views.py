@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
 from toolkit.torchtagger.torchtagger import TorchTagger
 from toolkit.core.project.models import Project
+from toolkit.exceptions import ProjectValidationFailed
 from toolkit.torchtagger.serializers import TorchTaggerSerializer
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.view_constants import BulkDelete, ExportModel, FeedbackModelView
@@ -17,7 +18,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.embedding.phraser import Phraser
-from toolkit.elastic.feedback import Feedback  
+from toolkit.elastic.feedback import Feedback
 from toolkit.helper_functions import apply_celery_task
 from toolkit.torchtagger.tasks import train_torchtagger
 
@@ -34,13 +35,14 @@ class TorchTaggerFilter(filters.FilterSet):
         fields = []
 
 
+# forbid PUT/PATCH?
 class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackModelView):
     serializer_class = TorchTaggerSerializer
     permission_classes = (
         permissions.IsAuthenticated,
         ProjectResourceAllowed,
         )
-    
+
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = TorchTaggerFilter
     ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'f1_score', 'precision', 'recall', 'task__status')
@@ -77,7 +79,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, Feedbac
         # retrieve tagger fields
         tagger_fields = json.loads(tagger_object.fields)
         if not ElasticCore().check_if_indices_exist(tagger_object.project.indices):
-            return Response({'error': f'One or more index from {list(tagger_object.project.indices)} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
+            raise ProjectValidationFailed(detail=f'One or more index from {list(tagger_object.project.indices)} do not exist')
         # retrieve random document
         random_doc = ElasticSearcher(indices=tagger_object.project.indices).random_documents(size=1)[0]
         # filter out correct fields from the document
@@ -92,8 +94,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, Feedbac
     def tag_text(self, request, pk=None, project_pk=None):
         serializer = TaggerTagTextSerializer(data=request.data)
         # check if valid request
-        if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
         # retrieve tagger object
         tagger_object = self.get_object()
         # check if tagger exists
