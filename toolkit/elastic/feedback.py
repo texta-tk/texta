@@ -66,9 +66,10 @@ class Feedback:
         feedback_doc = {
             "model_id": str(self.model_pk),
             "model_type": self.model_type,
-            "predicted_content": predicted_content,
+            "predicted_content": json.dumps(predicted_content),
             "original_prediction": json.dumps(prediction)
         }
+
         try:
             # add document and return id
             return self.es_doc.add(feedback_doc)["_id"]
