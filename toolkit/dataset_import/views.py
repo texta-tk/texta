@@ -23,7 +23,8 @@ class DatasetImportViewSet(viewsets.ModelViewSet, BulkDelete):
         return DatasetImport.objects.filter(project=self.kwargs['project_pk'])
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user,
+        dataset_import: DatasetImport = serializer.save(author=self.request.user,
                         project=Project.objects.get(id=self.kwargs['project_pk']),
                         index=serializer.validated_data['index'],
                         file=serializer.validated_data['file'])
+        dataset_import.start_import()
