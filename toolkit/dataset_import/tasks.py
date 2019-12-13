@@ -28,6 +28,10 @@ def import_dataset(dataset_import_id):
         import_object.num_documents = ds.num_records
         import_object.num_documents_success = ds.num_records_success
         import_object.save()
+        # add imported index to project indices
+        project_obj = import_object.project
+        project_obj.indices.append(import_object.index)
+        project_obj.save(add_indices=project_obj.indices)
         # declare the job done
         show_progress.update_step('')
         show_progress.update_view(100.0)

@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db.models import signals
+from django.dispatch import receiver
 from django.db import models
 
 from toolkit.core.project.models import Project
@@ -20,14 +21,21 @@ class DatasetImport(models.Model):
 
     def __str__(self):
         return self.description
-    
-    @classmethod
-    def start_import_job(cls, sender, instance, created, **kwargs):
-        if created:
-            new_task = Task.objects.create(datasetimport=instance, status=Task.STATUS_CREATED)
-            instance.task = new_task
-            instance.save()
-            from toolkit.dataset_import.tasks import import_dataset
-            apply_celery_task(import_dataset, instance.pk)
 
-signals.post_save.connect(DatasetImport.start_import_job, sender=DatasetImport)
+    def start_import(self):
+        new_task = Task.objects.create(datasetimport=self, status='created')
+        self.task = new_task
+        self.save()
+        from toolkit.dataset_import.tasks import import_dataset
+        apply_celery_task(import_dataset, self.pk)
+
+
+@receiver(models.signals.post_delete, sender=DatasetImport)
+def auto_delete_file_on_delete(sender, instance: DatasetImport, **kwargs):
+    """
+    Delete resources on the file-system upon DatasetImport deletion.
+    Triggered on individual model object and queryset DatasetImport deletion.
+    """
+    if instance.file:
+        if os.path.isfile(instance.file.path):
+            os.remove(instance.file.path)

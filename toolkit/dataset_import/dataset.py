@@ -60,7 +60,7 @@ class Dataset:
                 es_doc.add(record)
                 self.num_records_success += 1
             except Exception as e:
-                errors.append(e)
+                es_doc.add({'errors': str(e)})
             # update progress
             if self.show_progress:
                 self.show_progress.update(1)

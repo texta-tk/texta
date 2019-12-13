@@ -50,6 +50,8 @@ class DatasetImportViewTests(APITestCase):
                 self.assertTrue(import_dataset.num_documents > 0)
                 self.assertTrue(import_dataset.num_documents_success > 0)
                 self.assertTrue(import_dataset.num_documents_success <= import_dataset.num_documents)
+                # Check if new index added to project
+                self.assertTrue(import_dataset.index in import_dataset.project.indices)
 
 
     def tearDown(self):

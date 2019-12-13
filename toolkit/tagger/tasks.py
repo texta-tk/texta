@@ -79,8 +79,7 @@ def train_tagger(tagger_id):
         # retrieve indices & field data from project 
         indices = tagger_object.project.indices
         field_data = json.loads(tagger_object.fields)
-        stop_words = tagger_object.stop_words.split(' ')
-
+        stop_words = tagger_object.stop_words.split(' \n')
         # load embedding and create text processor
         if tagger_object.embedding:
             phraser = Phraser(embedding_id=tagger_object.embedding.pk)

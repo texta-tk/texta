@@ -83,6 +83,7 @@ class Feedback:
             "predicted_content": json.dumps(predicted_content),
             "original_prediction": str(prediction)
         }
+
         try:
             # add document and return id
             return self.es_doc.add(feedback_doc)["_id"]

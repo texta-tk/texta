@@ -10,6 +10,7 @@ from toolkit.elastic.models import Reindexer
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.serializers import ReindexerCreateSerializer
 from toolkit.permissions.project_permissions import ProjectResourceAllowed, IsSuperUser
+from toolkit.view_constants import BulkDelete
 
 from django_filters import rest_framework as filters
 import rest_framework.filters as drf_filters
@@ -42,7 +43,8 @@ class ReindexerViewSet(mixins.CreateModelMixin,
                        mixins.ListModelMixin,
                        mixins.RetrieveModelMixin,
                        mixins.DestroyModelMixin,
-                       viewsets.GenericViewSet):
+                       viewsets.GenericViewSet,
+                       BulkDelete):
     """
     list:
     Returns list of reindexing task objects.
@@ -80,11 +82,11 @@ class ReindexerViewSet(mixins.CreateModelMixin,
             field_type=json.dumps(serializer.validated_data.get('field_type', [])),
             fields=json.dumps(serializer.validated_data.get('fields', [])),
             indices=json.dumps(serializer.validated_data['indices']))
-        self.update_project_indices(serializer, project_obj, project_obj.indices)
+        self.update_project_indices(serializer, project_obj)
 
-    def update_project_indices(self, serializer, project_obj, project_indices):
+    def update_project_indices(self, serializer, project_obj):
         ''' add new_index included in the request to the relevant project object '''
         indices_to_add = [serializer.validated_data['new_index']]
         for index in indices_to_add:
-            project_indices.append(index)
-        project_obj.save(add_indices=project_indices)
+            project_obj.indices.append(index)
+        project_obj.save(add_indices=project_obj.indices)
