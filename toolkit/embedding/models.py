@@ -12,6 +12,7 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.helper_functions import apply_celery_task
 from toolkit.settings import MODELS_DIR
+from toolkit.multiselectfield import PatchedMultiSelectField as MultiSelectField
 
 
 class Embedding(models.Model):
@@ -20,10 +21,9 @@ class Embedding(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     fields = models.TextField(default=json.dumps([]))
-
+    indices = MultiSelectField(default=None)
     num_dimensions = models.IntegerField(default=100)
     min_freq = models.IntegerField(default=10)
-
     vocab_size = models.IntegerField(default=0)
     embedding_model = models.FileField(null=True, verbose_name='', default=None)
     phraser_model = models.FileField(null=True, verbose_name='', default=None)

@@ -9,6 +9,7 @@ from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.neurotagger.models import Neurotagger
 from toolkit.neurotagger.neurotagger import NeurotaggerWorker
 from toolkit.tools.show_progress import ShowProgress
+from toolkit.helper_functions import get_indices_from_object
 
 
 @task(name="neurotagger_train_handler", base=BaseTask)
@@ -43,7 +44,7 @@ def scroll_data(query, kwargs={}):
     neurotagger_obj = Neurotagger.objects.get(pk=kwargs["neurotagger_id"])
     num_queries = kwargs["num_queries"]
 
-    indices = neurotagger_obj.project.indices
+    indices = get_indices_from_object(neurotagger_obj)
     field_data = json.loads(neurotagger_obj.fields)
     fact_values = json.loads(neurotagger_obj.fact_values)
     maximum_sample_size = neurotagger_obj.maximum_sample_size

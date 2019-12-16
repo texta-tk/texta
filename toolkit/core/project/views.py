@@ -21,13 +21,23 @@ from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.spam_detector import SpamDetector
 from toolkit.exceptions import ProjectValidationFailed, SerializerNotValid
-from toolkit.permissions.project_permissions import ProjectAllowed, ExtraActionResource, ProjectResourceAllowed, IsSuperUser
+from toolkit.permissions.project_permissions import (
+    ProjectAllowed,
+    ExtraActionResource,
+    ProjectResourceAllowed,
+    IsSuperUser
+)
 from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
-from toolkit.view_constants import ImportModel, FeedbackIndexView, AdminPermissionsViewSetMixin
+from toolkit.view_constants import (
+    ImportModel,
+    FeedbackIndexView,
+    AdminPermissionsViewSetMixin
+)
 from toolkit.tools.autocomplete import Autocomplete
 from toolkit.core.task.models import Task
+from toolkit.helper_functions import get_indices_from_object
 
 from celery import group
 
@@ -93,11 +103,6 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
             return queryset.filter(users=current_user)
         return queryset
 
-    def get_project_indices(self, pk=None):
-        project_object = self.get_object()
-        project_indices = list(project_object.indices)
-        return project_indices
-
 
     @action(detail=True, methods=['get'])
     def get_fields(self, request, pk=None, project_pk=None):
@@ -127,7 +132,7 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         serializer = ProjectGetSpamSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        indices = self.get_project_indices(pk)
+        indices = list(self.get_object().indices)
         detector = SpamDetector(ES_URL, indices)
 
         all_fields = ElasticCore().get_fields(indices)
@@ -146,9 +151,8 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         serializer = ProjectGetFactsSerializer(data=request.data)
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
-
-        project_object = self.get_object()
-        project_indices = list(project_object.indices)
+        # retrieve and validate project indices
+        project_indices = list(self.get_object().indices)
         if not project_indices:
             raise ProjectValidationFailed(detail="Project has no indices")
 
@@ -167,7 +171,6 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         """Returns list of available indices in project."""
         project_object = self.get_object()
         project_indices = {"indices": list(project_object.indices)}
-        print(project_indices)
         return Response(project_indices)
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSimplifiedSearchSerializer, permission_classes=[ExtraActionResource])
@@ -219,13 +222,11 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
 
-        project_object = self.get_object()
-        project_indices = list(project_object.indices)
+        indices = get_indices_from_object(self.get_object())
+        if not indices:
+            raise ProjectValidationFailed(detail="No indices supplied and project has no indices")
 
-        if not project_indices:
-            raise ProjectValidationFailed(detail="Project has no indices")
-
-        es = ElasticSearcher(indices=project_indices, output=ElasticSearcher.OUT_DOC_WITH_TOTAL_HL_AGGS)
+        es = ElasticSearcher(indices=indices, output=ElasticSearcher.OUT_DOC_WITH_TOTAL_HL_AGGS)
 
         es.update_query(serializer.validated_data['query'])
         results = es.search()

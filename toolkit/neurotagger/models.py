@@ -11,7 +11,7 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.embedding.models import Embedding
 from . import choices
-
+from toolkit.multiselectfield import PatchedMultiSelectField as MultiSelectField
 
 # Create your models here.
 class Neurotagger(models.Model):
@@ -20,7 +20,7 @@ class Neurotagger(models.Model):
     description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-
+    indices = MultiSelectField(default=None)
     fields = models.TextField(default=json.dumps([]))
     fact_name = models.CharField(max_length=MAX_DESC_LEN, blank=True, help_text="Fact name from which to get value and generate classes/queries from")
     fact_values = models.TextField(blank=True, help_text="Fact values/class names that come from the given fact name")

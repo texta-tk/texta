@@ -16,6 +16,7 @@ from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.tools.text_processor import TextProcessor
+from toolkit.helper_functions import get_indices_from_object
 
 
 def create_tagger_batch(tagger_group_id, taggers_to_create):
@@ -139,8 +140,8 @@ def train_tagger(tagger_id):
     show_progress.update_view(0)
 
     try:
-        # retrieve indices & field data from project 
-        indices = tagger_object.project.indices
+        # retrieve indices & field data
+        indices = get_indices_from_object(tagger_object)
         field_data = json.loads(tagger_object.fields)
         stop_words = tagger_object.stop_words.split(' \n')
         # load embedding and create text processor
