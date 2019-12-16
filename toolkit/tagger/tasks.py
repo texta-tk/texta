@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import secrets
 
 from celery.decorators import task
@@ -143,7 +144,7 @@ def train_tagger(tagger_id):
         # retrieve indices & field data
         indices = get_indices_from_object(tagger_object)
         field_data = json.loads(tagger_object.fields)
-        stop_words = tagger_object.stop_words.split(' \n')
+        stop_words = re.split(' |\n|\r\n', tagger_object.stop_words)
         # load embedding and create text processor
         if tagger_object.embedding:
             phraser = Phraser(embedding_id=tagger_object.embedding.pk)
