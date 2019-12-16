@@ -57,3 +57,4 @@ DEFAULT_VECTORIZER = get_vectorizer_choices()[0][0]
 DEFAULT_CLASSIFIER = get_classifier_choices()[0][0]
 DEFAULT_FEATURE_SELECTOR = get_feature_selector_choices()[0][0]
 DEFAULT_NUM_DOCUMENTS = 10
+DEFAULT_SCORE_THRESHOLD = 0.0

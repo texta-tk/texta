@@ -5,7 +5,16 @@ from rest_framework import serializers
 
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
-from toolkit.tagger.choices import (DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE, DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_NUM_DOCUMENTS, DEFAULT_TAGGER_GROUP_FACT_NAME, get_classifier_choices, get_vectorizer_choices)
+from toolkit.tagger.choices import (
+    DEFAULT_SCORE_THRESHOLD,
+    DEFAULT_MAX_SAMPLE_SIZE, 
+    DEFAULT_MIN_SAMPLE_SIZE, 
+    DEFAULT_NEGATIVE_MULTIPLIER, 
+    DEFAULT_NUM_DOCUMENTS, 
+    DEFAULT_TAGGER_GROUP_FACT_NAME, 
+    get_classifier_choices, 
+    get_vectorizer_choices
+    )
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.tools.logger import Logger
 
@@ -50,6 +59,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     classifier = serializers.ChoiceField(choices=get_classifier_choices(), help_text=f'Classification algorithm used in the model.')
     negative_multiplier = serializers.IntegerField(default=DEFAULT_NEGATIVE_MULTIPLIER, help_text=f'Multiplies the size of positive samples to determine negative example set size. Default: {DEFAULT_NEGATIVE_MULTIPLIER}')
     maximum_sample_size = serializers.IntegerField(default=DEFAULT_MAX_SAMPLE_SIZE, help_text=f'Maximum number of documents used to build a model. Default: {DEFAULT_MAX_SAMPLE_SIZE}')
+    score_threshold = serializers.FloatField(default=DEFAULT_SCORE_THRESHOLD, help_text=f'Elasticsearch score threshold for filtering out irrelevant examples. All examples below first document\'s score * score threshold are ignored. Float between 0 and 1. Default: {DEFAULT_SCORE_THRESHOLD}')
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
@@ -59,7 +69,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     class Meta:
         model = Tagger
         fields = ('id', 'url', 'author_username', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
-                  'maximum_sample_size', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'num_features', 'plot', 'task')
+                  'maximum_sample_size', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 'num_features', 'plot', 'task')
         read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'stop_words')
         fields_to_parse = ('fields',)
 

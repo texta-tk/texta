@@ -77,6 +77,7 @@ class TaggerViewTests(APITestCase):
                     "classifier": classifier_opt,
                     "maximum_sample_size": 500,
                     "negative_multiplier": 1.0,
+                    "score_threshold": 0.5
                 }
 
                 response = self.client.post(self.url, payload, format='json')

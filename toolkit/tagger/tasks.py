@@ -66,7 +66,8 @@ def get_data_samples(tagger_object, text_processor, show_progress, indices, fiel
         output=ElasticSearcher.OUT_DOC_WITH_ID,
         callback_progress=show_progress,
         scroll_limit=int(tagger_object.maximum_sample_size) - len(positive_feedback_sample),
-        text_processor=text_processor
+        text_processor=text_processor,
+        score_threshold=float(tagger_object.score_threshold)
     )
 
     # iterators into lists and combine positive samples into one
@@ -144,6 +145,7 @@ def train_tagger(tagger_id):
         # retrieve indices & field data
         indices = get_indices_from_object(tagger_object)
         field_data = json.loads(tagger_object.fields)
+        # split stop words by space or newline
         stop_words = re.split(' |\n|\r\n', tagger_object.stop_words)
         # load embedding and create text processor
         if tagger_object.embedding:

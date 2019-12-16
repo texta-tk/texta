@@ -28,7 +28,8 @@ class ElasticSearcher:
                  callback_progress=None,
                  scroll_limit=None,
                  ignore_ids=set(),
-                 text_processor=None):
+                 text_processor=None,
+                 score_threshold=0.0):
         """
         Output options: document (default), text (lowered & stopwords removed), sentences (text + line splitting), raw (raw elastic output)
         """
@@ -38,6 +39,7 @@ class ElasticSearcher:
         self.query = query
         self.scroll_size = scroll_size
         self.scroll_limit = scroll_limit
+        self.score_threshold = score_threshold
         self.ignore_ids = ignore_ids
         self.output = output
         self.callback_progress = callback_progress
@@ -143,6 +145,9 @@ class ElasticSearcher:
             return response
 
     def random_documents(self, size=10):
+        """
+        Returns n random documents, where n=size.
+        """
         random_query = {"query": {"function_score": {"query": {"match_all": {}}, "functions": [{"random_score": {}}]}}}
         response = self.core.es.search(index=self.indices, body=random_query, size=size)
         if self.output == self.OUT_DOC:
@@ -155,18 +160,33 @@ class ElasticSearcher:
         page = self.core.es.search(index=self.indices, body=self.query, scroll='1m', size=self.scroll_size)
         scroll_id = page['_scroll_id']
         current_page = 0
-
+        # set page size
         page_size = len(page['hits']['hits'])
         num_scrolled = 0
+        # set score threshold
+        if page['hits']['max_score']:
+            lowest_allowed_score = page['hits']['max_score'] * self.score_threshold
+        else:
+            lowest_allowed_score = self.score_threshold
+        # set scroll break default
+        scroll_break = False
+        # iterate through scroll
         while page_size > 0:
-            if self.scroll_limit and num_scrolled >= self.scroll_limit:
+            # break scroll is asked
+            if scroll_break:
                 break
             # process output
             if self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID, self.OUT_TEXT):
                 if self.callback_progress:
                     self.callback_progress.update(page_size)
                 for hit in page['hits']['hits']:
+                    # if scroll limit reached, break the scroll
                     if self.scroll_limit and num_scrolled >= self.scroll_limit:
+                        scroll_break = True
+                        break
+                    # if score too low, break scroll
+                    elif hit['_score'] < lowest_allowed_score:
+                        scroll_break = True
                         break
                     if hit['_id'] not in self.ignore_ids:
                         num_scrolled += 1
@@ -182,13 +202,19 @@ class ElasticSearcher:
                             if self.output == self.OUT_DOC_WITH_ID:
                                 parsed_doc['_id'] = hit['_id']
                             yield parsed_doc
-
             # return raw hit
             elif self.output == self.OUT_RAW:
+                # filter page by score
+                page = [doc for doc in page if doc['_score'] > lowest_allowed_score]
+                # if score too low, break scroll
+                if not page:
+                    scroll_break = True
+                    break
+                # filter by ignored ids
                 page = [doc for doc in page if doc['_id'] not in self.ignore_ids]
-                num_scrolled += len(page)
-                yield page
-
+                if page:
+                    num_scrolled += len(page)
+                    yield page
             # get new page
             page = self.core.es.scroll(scroll_id=scroll_id, scroll='1m')
             scroll_id = page['_scroll_id']
