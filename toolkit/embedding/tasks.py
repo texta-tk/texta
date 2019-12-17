@@ -15,6 +15,7 @@ from toolkit.embedding.word_cluster import WordCluster
 from toolkit.settings import MODELS_DIR, NUM_WORKERS
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.tools.text_processor import TextProcessor
+from toolkit.helper_functions import get_indices_from_object
 
 
 @task(name="train_embedding", base=BaseTask)
@@ -28,7 +29,7 @@ def train_embedding(embedding_id):
 
     try:
         # retrieve indices from project 
-        indices = embedding_object.project.indices
+        indices = get_indices_from_object(embedding_object)
         field_data = json.loads(embedding_object.fields)
         max_documents = embedding_object.max_documents
 

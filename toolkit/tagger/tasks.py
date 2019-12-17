@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import secrets
 
 from celery.decorators import task
@@ -16,6 +17,7 @@ from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.tools.text_processor import TextProcessor
+from toolkit.helper_functions import get_indices_from_object
 from toolkit.tagger.plots import create_tagger_plot
 from toolkit.base_task import BaseTask
 from toolkit.tools.mlp_analyzer import MLPAnalyzer
@@ -76,10 +78,11 @@ def train_tagger(tagger_id):
     show_progress.update_view(0)
 
     try:
-        # retrieve indices & field data from project 
-        indices = tagger_object.project.indices
+        # retrieve indices & field data
+        indices = get_indices_from_object(tagger_object)
         field_data = json.loads(tagger_object.fields)
-        stop_words = tagger_object.stop_words.split(' \n')
+        # split stop words by space or newline
+        stop_words = re.split(' |\n|\r\n', tagger_object.stop_words)
         # load embedding and create text processor
         if tagger_object.embedding:
             phraser = Phraser(embedding_id=tagger_object.embedding.pk)

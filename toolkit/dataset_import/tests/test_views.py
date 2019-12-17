@@ -42,6 +42,7 @@ class DatasetImportViewTests(APITestCase):
                 # Check if DatasetImport gets created
                 self.assertEqual(response.status_code, status.HTTP_201_CREATED)
                 import_id = response.data['id']
+                import_url = response.data['url']
                 import_dataset = DatasetImport.objects.get(pk=import_id)
                 self.created_indices.append(import_dataset.index)
                 self.addCleanup(remove_file, import_dataset.file.name)
@@ -52,6 +53,9 @@ class DatasetImportViewTests(APITestCase):
                 self.assertTrue(import_dataset.num_documents_success <= import_dataset.num_documents)
                 # Check if new index added to project
                 self.assertTrue(import_dataset.index in import_dataset.project.indices)
+                # test delete
+                response = self.client.delete(import_url)
+                self.assertTrue(response.status_code == 204)
 
 
     def tearDown(self):

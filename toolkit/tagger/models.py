@@ -12,7 +12,14 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import apply_celery_task
-from toolkit.tagger.choices import (DEFAULT_CLASSIFIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE, DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_VECTORIZER)
+from toolkit.multiselectfield import PatchedMultiSelectField as MultiSelectField
+from toolkit.tagger.choices import (
+    DEFAULT_CLASSIFIER,
+    DEFAULT_MAX_SAMPLE_SIZE,
+    DEFAULT_MIN_SAMPLE_SIZE,
+    DEFAULT_NEGATIVE_MULTIPLIER,
+    DEFAULT_VECTORIZER
+)
 
 
 class Tagger(models.Model):
@@ -22,6 +29,7 @@ class Tagger(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
+    indices = MultiSelectField(default=None)
     fields = models.TextField(default=json.dumps([]))
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
     stop_words = models.TextField(default='')

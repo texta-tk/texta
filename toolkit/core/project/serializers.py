@@ -16,6 +16,9 @@ class ProjectMultiTagSerializer(serializers.Serializer):
 
 class ProjectSearchByQuerySerializer(serializers.Serializer):
     query = serializers.JSONField(help_text='Query to search', default=EMPTY_QUERY)
+    indices = serializers.ListField(default=None,
+        required=False,
+        help_text='Indices in project to apply query on. Default: empty (all indices in project)')
 
 
 class ProjectSimplifiedSearchSerializer(serializers.Serializer):

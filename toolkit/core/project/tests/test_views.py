@@ -5,7 +5,7 @@ from rest_framework.test import APIClient
 from toolkit.core.project.models import Project
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 from toolkit import permissions as toolkit_permissions
-from toolkit.test_settings import TEST_INDEX, TEST_FACT_NAME
+from toolkit.test_settings import TEST_INDEX, TEST_FACT_NAME, TEST_QUERY
 
 
 class ProjectViewTests(APITestCase):
@@ -31,17 +31,7 @@ class ProjectViewTests(APITestCase):
         self.client = APIClient()
         self.client.login(username='project_user', password='pw')
 
-    def test_run(self):
-        self.run_get_fields()
-        self.run_get_facts()
-        self.run_search()
-        self.run_search_match_phrase_empty_result()
-        self.run_autocomplete_fact_values()
-        self.run_autocomplete_fact_names()
-        self.run_resource_counts()
-        self.run_get_indices()
-
-    def run_get_fields(self):
+    def test_get_fields(self):
         url = f'/projects/{self.project.id}/get_fields/'
         response = self.client.get(url)
         print_output('get_fields:response.data', response.data)
@@ -49,7 +39,7 @@ class ProjectViewTests(APITestCase):
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue(TEST_INDEX in [field['index'] for field in response.data])
 
-    def run_get_facts(self):
+    def test_get_facts(self):
         url = f'/projects/{self.project.id}/get_facts/'
         response = self.client.get(url)
         print_output('get_facts:response.data', response.data)
@@ -57,7 +47,7 @@ class ProjectViewTests(APITestCase):
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue(TEST_FACT_NAME in [field['name'] for field in response.data])
 
-    def run_search(self):
+    def test_search(self):
         payload = {"match_text": "jeesus", "size": 1}
         url = f'/projects/{self.project.id}/search/'
         response = self.client.post(url, payload)
@@ -66,7 +56,7 @@ class ProjectViewTests(APITestCase):
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue(len(response.data) == 1)
 
-    def run_search_match_phrase_empty_result(self):
+    def test_search_match_phrase_empty_result(self):
         payload = {"match_text": "jeesus tuleb ja tapab kõik ära", "match_type": "phrase"}
         url = f'/projects/{self.project.id}/search/'
         response = self.client.post(url, payload)
@@ -75,7 +65,7 @@ class ProjectViewTests(APITestCase):
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue(len(response.data) == 0)
 
-    def run_autocomplete_fact_values(self):
+    def test_autocomplete_fact_values(self):
         payload = {"limit": 5, "startswith": "fo", "fact_name": TEST_FACT_NAME}
         url = f'/projects/{self.project.id}/autocomplete_fact_values/'
         response = self.client.post(url, payload)
@@ -86,7 +76,7 @@ class ProjectViewTests(APITestCase):
         self.assertTrue('foo' in response.data)
         self.assertTrue('bar' not in response.data)
 
-    def run_autocomplete_fact_names(self):
+    def test_autocomplete_fact_names(self):
         payload = {"limit": 5, "startswith": "TE" }
         url = f'/projects/{self.project.id}/autocomplete_fact_names/'
         response = self.client.post(url, payload)
@@ -95,7 +85,7 @@ class ProjectViewTests(APITestCase):
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue('TEEMA' in response.data)
 
-    def run_resource_counts(self):
+    def test_resource_counts(self):
         url = f'/projects/{self.project.id}/get_resource_counts/'
         response = self.client.get(url)
         print_output('get_resource_counts:response.data', response.data)
@@ -107,7 +97,7 @@ class ProjectViewTests(APITestCase):
         self.assertTrue('num_embeddings' in response.data)
         self.assertTrue('num_embedding_clusters' in response.data)
 
-    def run_get_indices(self):
+    def test_get_indices(self):
         url = f'/projects/{self.project.id}/get_indices/'
         self.client.login(username='user', password='pw')
 
@@ -120,4 +110,16 @@ class ProjectViewTests(APITestCase):
         print_output("get_indices", response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    # TODO: test search_by_query
+    def test_search_by_query(self):
+        url = f'/projects/{self.project.id}/search_by_query/'
+        # check that project user has access and response is success
+        self.client.login(username='project_user', password='pw')
+        payload = {"query": TEST_QUERY}
+        response = self.client.post(url, payload, format='json')
+        print_output("search_by_query_project_user", response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # check that non-project users do not have access
+        self.client.login(username='user', password='pw')
+        response = self.client.post(url, payload, format='json')
+        print_output("search_by_query_no_access_user", response.data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
