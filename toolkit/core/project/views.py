@@ -222,13 +222,17 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
 
-        indices = get_indices_from_object(self.get_object())
+        if serializer.validated_data["indices"]:
+            indices = validated_data["indices"]
+        else:
+            indices = self.get_object().indices
+
         if not indices:
             raise ProjectValidationFailed(detail="No indices supplied and project has no indices")
 
         es = ElasticSearcher(indices=indices, output=ElasticSearcher.OUT_DOC_WITH_TOTAL_HL_AGGS)
 
-        es.update_query(serializer.validated_data['query'])
+        es.update_query(serializer.validated_data["query"])
         results = es.search()
         return Response(results, status=status.HTTP_200_OK)
 
@@ -280,7 +284,6 @@ class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
 
         autocomplete = Autocomplete(project_object, project_indices, limit)
         fact_values = autocomplete.get_fact_values(startswith, fact_name)
-
 
         return Response(fact_values, status=status.HTTP_200_OK)
 
