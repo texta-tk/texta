@@ -112,8 +112,14 @@ class ProjectViewTests(APITestCase):
 
     def test_search_by_query(self):
         url = f'/projects/{self.project.id}/search_by_query/'
-        self.client.login(username='user', password='pw')
+        # check that project user has access and response is success
+        self.client.login(username='project_user', password='pw')
         payload = {"query": TEST_QUERY}
         response = self.client.post(url, payload, format='json')
-        print_output("search_by_query", response.data)
+        print_output("search_by_query_project_user", response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # check that non-project users do not have access
+        self.client.login(username='user', password='pw')
+        response = self.client.post(url, payload, format='json')
+        print_output("search_by_query_no_access_user", response.data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
