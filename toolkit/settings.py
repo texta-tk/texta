@@ -30,6 +30,10 @@ DEBUG = eval(os.getenv('TEXTA_DEBUG', "True"))
 
 ALLOWED_HOSTS = ['*']
 
+
+CSRF_HEADER_NAME = "X-XSRF-TOKEN"
+CSRF_COOKIE_NAME = "XSRF-TOKEN"
+
 # Application definition
 
 INSTALLED_APPS = [
