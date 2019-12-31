@@ -3,25 +3,29 @@ from django.http import HttpResponse, Http404
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from toolkit.core.project.models import Project
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
 from toolkit.core.user_profile.models import UserProfile
 from toolkit.core.user_profile.serializers import UserSerializer
-from toolkit.permissions.project_permissions import IsSuperUser
+from toolkit.permissions.project_permissions import UserIsAdminOrReadOnly
 
 
-
-class UserViewSet(viewsets.ReadOnlyModelViewSet):
+class UserViewSet(mixins.RetrieveModelMixin,
+                  mixins.ListModelMixin,
+                  mixins.UpdateModelMixin,
+                  viewsets.GenericViewSet):
     """
     list: Returns list of users.
     read: Returns user details by id.
+    update: can update superuser status.
     """
 
     serializer_class = UserSerializer
     # Disable default pagination
     pagination_class = None
+    permission_classes = (UserIsAdminOrReadOnly,)
 
     def get_queryset(self):
         queryset = User.objects.all().order_by('-date_joined')
@@ -29,17 +33,3 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         if not current_user.is_superuser:
             queryset = queryset.filter(id=self.request.user.id)
         return queryset
-
-    @action(detail=True, methods=['get', 'post'], permission_classes=[IsSuperUser])
-    def assign_superuser(self, request, pk=None):
-        # hack to forbid original admin toggle. Something like a custom admin profile would be better
-        if self.kwargs['pk'] == '1':
-            return Response({"detail": "Can't reassign this user"})
-        user = User.objects.get(id=self.kwargs['pk'])
-        # toggle
-        user.is_superuser ^= True
-        user.is_staff ^= True
-        user.save()
-        if user.is_superuser:
-            return Response({"detail": "Superuser status assigned"}, status=status.HTTP_200_OK)
-        return Response({"detail": "Superuser status removed"}, status=status.HTTP_200_OK)
