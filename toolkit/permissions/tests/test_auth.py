@@ -18,7 +18,15 @@ class AuthTests(APITestCase, URLPatternsTestCase):
         self.test_user = create_test_user()
 
 
-    def test_create_account(self):
+    def test_run(self):
+        self.create_account(),
+        self.login(),
+        self.logout(),
+        self.change_password(),
+
+
+
+    def create_account(self):
         """
         Ensure we can register.
         """
@@ -35,7 +43,7 @@ class AuthTests(APITestCase, URLPatternsTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
 
-    def test_login(self):
+    def login(self):
         """
         Ensure we can log in.
         """
@@ -50,7 +58,7 @@ class AuthTests(APITestCase, URLPatternsTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
-    def test_logout(self):
+    def logout(self):
         """
         Ensure we can log out.
         """
@@ -61,3 +69,22 @@ class AuthTests(APITestCase, URLPatternsTestCase):
 
         print_output("Log out of API account", response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+    def change_password(self):
+        """
+        Ensure we can change password
+        """
+        url = '/rest-auth/password/change/'
+        self.client.login(username='tester', password='password')
+
+        payload = {
+            "new_password1": "safepassword123",
+            "new_password2": "safepassword123"
+        }
+
+        response = self.client.post(url, payload)
+        print_output("Change password response", response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    # TODO? reset password
