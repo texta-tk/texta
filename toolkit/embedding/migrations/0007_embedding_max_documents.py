@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('embedding', '0005_remove_model_location_fields'),
+        ('embedding', '0006_auto_20191216_1307'),
     ]
 
     operations = [

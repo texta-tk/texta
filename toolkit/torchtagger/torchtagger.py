@@ -11,7 +11,7 @@ import dill
 
 from toolkit.embedding.embedding import W2VEmbedding
 from .torch_models.models import TORCH_MODELS
-from toolkit.tagger.report import TaggingReport
+from toolkit.tools.tagging_report import TaggingReport
 from .models import TorchTagger as TorchTaggerObject
 
 class TorchTagger:

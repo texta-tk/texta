@@ -9,7 +9,7 @@ import json
 
 from toolkit.settings import NUM_WORKERS
 from toolkit.tagger.models import Tagger
-from toolkit.tagger.report import TaggingReport
+from toolkit.tools.tagging_report import TaggingReport
 
 
 class TextTagger:
