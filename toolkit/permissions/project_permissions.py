@@ -1,5 +1,6 @@
 from rest_framework import viewsets, permissions
 from toolkit.core.project.models import Project
+from toolkit.core.user_profile.models import UserProfile
 
 """
     Only superusers can create new projects
@@ -55,7 +56,6 @@ class ProjectAllowed(permissions.BasePermission):
 
 class IsSuperUser(permissions.BasePermission):
 
-
     def has_permission(self, request, view):
         return self._permission_check(request, view)
 
@@ -85,10 +85,20 @@ class ExtraActionResource(ProjectResourceAllowed):
         return False
 
 
+class UserIsAdminOrReadOnly(permissions.BasePermission):
+    ''' custom class for user_profile '''
 
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        else:
+            return request.user.is_superuser
 
-
-
-
-
-
+    def has_object_permission(self, request, view, obj):
+        # can't edit original admin
+        if obj.pk == 1 and request.method not in permissions.SAFE_METHODS:
+            return False
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        else:
+            return request.user.is_superuser
