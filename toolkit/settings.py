@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 import os
 import warnings
 
+from corsheaders.defaults import default_headers
+
 from .logging_settings import setup_logging
 
 
@@ -29,10 +31,6 @@ SECRET_KEY = 'eqr9sjz-&baah&c%ejkaorp)a1$q63y0%*a^&fv=y$(bbe5+(b'
 DEBUG = eval(os.getenv('TEXTA_DEBUG', "True"))
 
 ALLOWED_HOSTS = ['*']
-
-
-CSRF_HEADER_NAME = "HTTP_X_XSRF_TOKEN"
-CSRF_COOKIE_NAME = "XSRF-TOKEN"
 
 # Application definition
 
@@ -75,7 +73,14 @@ SITE_ID = 1
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # For corsheaders/external frontend
-CORS_ORIGIN_ALLOW_ALL = True
+CSRF_HEADER_NAME = "HTTP_X_XSRF_TOKEN"
+CSRF_COOKIE_NAME = "XSRF-TOKEN"
+
+# For accessing a live backend server locally.
+CORS_ORIGIN_WHITELIST = ["http://localhost:4200"]
+CORS_ALLOW_HEADERS = list(default_headers) + ['x-xsrf-token']
+CORS_ALLOW_CREDENTIALS = True
+
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
