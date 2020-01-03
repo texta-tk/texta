@@ -147,6 +147,8 @@ def train_tagger(tagger_id):
         field_data = json.loads(tagger_object.fields)
         # split stop words by space or newline
         stop_words = re.split(' |\n|\r\n', tagger_object.stop_words)
+        # remove empty strings
+        stop_words = [stop_word for stop_word in stop_words if stop_word]
         # load embedding and create text processor
         if tagger_object.embedding:
             phraser = Phraser(embedding_id=tagger_object.embedding.pk)
