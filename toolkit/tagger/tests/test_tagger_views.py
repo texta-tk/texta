@@ -9,7 +9,12 @@ from rest_framework.test import APITestCase
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.tagger.models import Tagger
-from toolkit.test_settings import TEST_FIELD, TEST_FIELD_CHOICE, TEST_INDEX, TEST_MATCH_TEXT, TEST_QUERY
+from toolkit.test_settings import(TEST_FIELD,
+                                  TEST_FIELD_CHOICE,
+                                  TEST_INDEX,
+                                  TEST_MATCH_TEXT,
+                                  TEST_QUERY,
+                                  TEST_VERSION_PREFIX)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
@@ -23,9 +28,9 @@ class TaggerViewTests(APITestCase):
             indices=TEST_INDEX
         )
         cls.project.users.add(cls.user)
-        cls.url = f'/projects/{cls.project.id}/taggers/'
-        cls.project_url = f'/projects/{cls.project.id}'
-        cls.multitag_text_url = f'/projects/{cls.project.id}/multitag_text/'
+        cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/taggers/'
+        cls.project_url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}'
+        cls.multitag_text_url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/multitag_text/'
 
         # set vectorizer & classifier options
         cls.vectorizer_opts = ('Count Vectorizer', 'Hashing Vectorizer', 'TfIdf Vectorizer')

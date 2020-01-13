@@ -1,16 +1,10 @@
-import json
-import os
 from time import time
-from django.db.models import signals
 
 from rest_framework.test import APITestCase
 from rest_framework import status
-from rest_framework.test import APIClient
 
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX_LARGE, TEST_FIELD_CHOICE
+from toolkit.test_settings import TEST_FIELD, TEST_INDEX_LARGE, TEST_FIELD_CHOICE, TEST_VERSION_PREFIX
 from toolkit.core.project.models import Project
-from toolkit.embedding.models import Embedding
-from toolkit.core.task.models import Task
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 class EmbeddingPerformanceTests(APITestCase):
@@ -25,7 +19,7 @@ class EmbeddingPerformanceTests(APITestCase):
             title='embeddingTestProject',
             indices=TEST_INDEX_LARGE
         )
-        cls.url = f'/projects/{cls.project.id}/embeddings/'
+        cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/embeddings/'
 
     def setUp(self):
         self.client.login(username='embeddingOwner', password='pw')

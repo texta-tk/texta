@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from toolkit.core.project.models import Project
-from toolkit.test_settings import TEST_INDEX
+from toolkit.test_settings import TEST_INDEX, TEST_VERSION_PREFIX
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 
@@ -17,7 +17,7 @@ class LexiconViewsTests(APITestCase):
             indices=TEST_INDEX
         )
         cls.project.users.add(cls.user)
-        cls.url = f'/projects/{cls.project.id}/lexicons/'
+        cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/lexicons/'
 
 
     def setUp(self):

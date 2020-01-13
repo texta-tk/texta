@@ -9,7 +9,7 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding, EmbeddingCluster
-from toolkit.test_settings import TEST_FIELD_CHOICE, TEST_INDEX
+from toolkit.test_settings import TEST_FIELD_CHOICE, TEST_INDEX, TEST_VERSION_PREFIX
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 
@@ -24,9 +24,9 @@ class EmbeddingViewTests(TransactionTestCase):
         )
         self.project.users.add(self.user)
 
-        self.url = f'/projects/{self.project.id}/embeddings/'
-        self.project_url = f'/projects/{self.project.id}'
-        self.cluster_url = f'/projects/{self.project.id}/embedding_clusters/'
+        self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/embeddings/'
+        self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
+        self.cluster_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/embedding_clusters/'
 
         # self.user.profile.activate_project(self.project)
 

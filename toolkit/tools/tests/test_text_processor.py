@@ -1,12 +1,12 @@
 import json
 
-from django.test import TestCase, TransactionTestCase
+from django.test import TransactionTestCase
 from toolkit.tools.text_processor import TextProcessor, StopWords
 from toolkit.embedding.phraser import Phraser
 from toolkit.core.project.models import Project
 from toolkit.embedding.models import Embedding
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_FIELD_CHOICE
-from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
+from toolkit.test_settings import TEST_INDEX, TEST_FIELD_CHOICE, TEST_VERSION_PREFIX
+from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 
 class TextProcessorTests(TransactionTestCase):
@@ -48,7 +48,7 @@ class TextProcessorTests(TransactionTestCase):
             "num_dimensions": 100,
         }
         # post
-        embeddings_url = f'/projects/{self.project.id}/embeddings/'
+        embeddings_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/embeddings/'
         response = self.client.post(embeddings_url, json.dumps(payload), content_type='application/json')
         # load embedding & phraser
         self.test_embedding = Embedding.objects.get(id=response.data['id'])
