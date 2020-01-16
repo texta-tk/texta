@@ -1,6 +1,8 @@
 import json
+import os
 
 import rest_framework.filters as drf_filters
+from django.http import HttpResponse
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
@@ -14,7 +16,8 @@ from toolkit.neurotagger.models import Neurotagger
 from toolkit.neurotagger.neurotagger import NeurotaggerWorker
 from toolkit.neurotagger.serializers import NeuroTaggerTagDocumentSerializer, NeuroTaggerTagTextSerializer, NeurotaggerSerializer
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
-from toolkit.view_constants import BulkDelete, ExportModel, TagLogicViews
+from toolkit.serializer_constants import ProjectResourceImportModelSerializer
+from toolkit.view_constants import BulkDelete, TagLogicViews
 
 
 class NeuroTaggerFilter(filters.FilterSet):
@@ -27,7 +30,7 @@ class NeuroTaggerFilter(filters.FilterSet):
         fields = []
 
 
-class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, ExportModel):
+class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete):
     """
     list:
     Returns list of Neurotagger objects.
@@ -89,6 +92,28 @@ class NeurotaggerViewSet(viewsets.ModelViewSet, TagLogicViews, BulkDelete, Expor
         instance: Neurotagger = self.get_object()
         instance.delete()
         return Response({"success": f'Neurotagger instance "{instance.description}" deleted, models and plots were removed'}, status=status.HTTP_204_NO_CONTENT)
+
+
+    @action(detail=True, methods=['get'])
+    def export_model(self, request, pk=None, project_pk=None):
+        """Returns list of tags for input text."""
+        zip_name = f'neurotagger_model_{pk}.zip'
+
+        tagger_object: Neurotagger = self.get_object()
+        data = tagger_object.export_resources()
+        response = HttpResponse(data)
+        response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(zip_name)
+        return response
+
+
+    @action(detail=False, methods=["post"], serializer_class=ProjectResourceImportModelSerializer)
+    def import_model(self, request, pk=None, project_pk=None):
+        serializer = ProjectResourceImportModelSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        uploaded_file = serializer.validated_data['file']
+        neurotagger_id = Neurotagger.import_resources(uploaded_file, request, project_pk)
+        return Response({"id": neurotagger_id, "message": "Successfully imported model and associated files."}, status=status.HTTP_201_CREATED)
 
 
     @action(detail=True, methods=['post'], serializer_class=NeuroTaggerTagTextSerializer)

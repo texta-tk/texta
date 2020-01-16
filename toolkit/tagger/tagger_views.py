@@ -1,6 +1,8 @@
 import json
+import os
 
 import rest_framework.filters as drf_filters
+from django.http import HttpResponse
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
@@ -16,7 +18,7 @@ from toolkit.helper_functions import apply_celery_task
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import (
     GeneralTextSerializer,
-)
+    ProjectResourceImportModelSerializer)
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.serializers import (TaggerListFeaturesSerializer, TaggerSerializer, TaggerTagDocumentSerializer, TaggerTagTextSerializer)
 from toolkit.tagger.tasks import train_tagger
@@ -26,7 +28,6 @@ from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.view_constants import (
     BulkDelete,
-    ExportModel,
     FeedbackModelView,
 )
 
@@ -45,7 +46,7 @@ class TaggerFilter(filters.FilterSet):
         fields = []
 
 
-class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackModelView):
+class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
     """
     list:
     Returns list of Tagger objects.
@@ -166,6 +167,28 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
 
 
+    @action(detail=True, methods=['get'])
+    def export_model(self, request, pk=None, project_pk=None):
+        """Returns list of tags for input text."""
+        zip_name = f'tagger_model_{pk}.zip'
+
+        tagger_object: Tagger = self.get_object()
+        data = tagger_object.export_resources()
+        response = HttpResponse(data)
+        response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(zip_name)
+        return response
+
+
+    @action(detail=False, methods=["post"], serializer_class=ProjectResourceImportModelSerializer)
+    def import_model(self, request, pk=None, project_pk=None):
+        serializer = ProjectResourceImportModelSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        uploaded_file = serializer.validated_data['file']
+        tagger_id = Tagger.import_resources(uploaded_file, request, project_pk)
+        return Response({"id": tagger_id, "message": "Successfully imported model and associated files."}, status=status.HTTP_201_CREATED)
+
+
     @action(detail=True, methods=['post'], serializer_class=TaggerTagTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
         """Returns list of tags for input text."""
@@ -181,9 +204,11 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
 
         # by default, lemmatizer is disabled
         lemmatizer = None
+
         # create lemmatizer if needed
-        if serializer.validated_data['lemmatize'] == True:
+        if serializer.validated_data['lemmatize'] is True:
             lemmatizer = global_mlp_for_taggers
+
             # check if lemmatizer available
             if not lemmatizer.status:
                 raise MLPNotAvailable(detail="Lemmatization failed. Check connection to MLP.")
@@ -225,7 +250,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         lemmatizer = False
 
         # lemmatize if needed
-        if serializer.validated_data['lemmatize'] == True:
+        if serializer.validated_data['lemmatize'] is True:
             lemmatizer = global_mlp_for_taggers
 
             # check if lemmatization available
@@ -249,7 +274,6 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackMode
         # get tagger object
         tagger_object = self.get_object()
         # check if tagger exists
-
 
         if not tagger_object.model.path:
             raise NonExistantModelError()

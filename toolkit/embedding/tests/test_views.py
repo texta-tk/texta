@@ -1,5 +1,6 @@
 import json
 import os
+import pathlib
 from io import BytesIO
 
 from django.test import TransactionTestCase
@@ -9,6 +10,8 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding, EmbeddingCluster
+from toolkit.settings import MODELS_DIR
+from toolkit.test_settings import TEST_FIELD_CHOICE, TEST_INDEX
 from toolkit.test_settings import TEST_FIELD_CHOICE, TEST_INDEX, TEST_VERSION_PREFIX
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 
@@ -63,7 +66,7 @@ class EmbeddingViewTests(TransactionTestCase):
             "fields": TEST_FIELD_CHOICE,
             "max_vocab": 10000,
             "min_freq": 5,
-            "num_dimensions": 100,
+            "num_dimensions": 100
         }
 
         response = self.client.post(self.url, json.dumps(payload), content_type='application/json')
@@ -245,15 +248,33 @@ class EmbeddingViewTests(TransactionTestCase):
 
     def run_model_export_import(self):
         """Tests endpoint for model export and import"""
-        # retrieve model zip
+
+        # Retrieve model zip
         url = f'{self.url}{self.test_embedding_id}/export_model/'
         response = self.client.get(url)
-        # post model zip
-        import_url = f'{self.project_url}/import_model/'
-        response = self.client.post(import_url, data={'file': BytesIO(response.content)})
-        print_output('test_import_model:response.data', response.data)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Post model zip
+        import_url = f'{self.url}import_model/'
+        response = self.client.post(import_url, data={'file': BytesIO(response.content)})
+        print_output('test_import_model:response.data', import_url)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
         # Test prediction with imported embedding
         imported_embedding_id = response.data['id']
+        print_output('test_import_model:response.data', response.data)
+
+        embedding = Embedding.objects.get(id=imported_embedding_id)
+
+        embedding_model_dir = pathlib.Path(MODELS_DIR) / "embedding"
+        embedding_model_path = pathlib.Path(embedding.embedding_model.name)
+        embedding_phraser_path = pathlib.Path(embedding.phraser_model.name)
+
+        self.assertTrue(embedding_model_path.exists())
+        self.assertTrue(embedding_phraser_path.exists())
+
+        # Check whether the model was saved into the right location.
+        self.assertTrue(str(embedding_model_dir) in str(embedding_model_path))
+        self.assertTrue(str(embedding_model_dir) in str(embedding_phraser_path))
+
         self.run_predict(imported_embedding_id)

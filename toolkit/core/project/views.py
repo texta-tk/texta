@@ -30,8 +30,8 @@ from toolkit.permissions.project_permissions import (
 from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
+from toolkit.view_constants import FeedbackIndexView, AdminPermissionsViewSetMixin
 from toolkit.view_constants import (
-    ImportModel,
     FeedbackIndexView,
     AdminPermissionsViewSetMixin
 )
@@ -53,7 +53,7 @@ class ProjectFilter(filters.FilterSet):
         fields = []
 
 
-class ProjectViewSet(viewsets.ModelViewSet, ImportModel, FeedbackIndexView):
+class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
     """
     list:
     Returns list of projects.

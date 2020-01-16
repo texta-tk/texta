@@ -174,7 +174,7 @@ def train_tagger(tagger_id):
         show_progress.update_step('saving')
         show_progress.update_view(0)
         # save tagger to disk
-        tagger_path = os.path.join(MODELS_DIR, 'tagger', f'tagger_{tagger_id}_{secrets.token_hex(10)}')
+        tagger_path = tagger_object.generate_name("tagger")
         tagger.save(tagger_path)
         # save model locations
         tagger_object.model.name = tagger_path
@@ -187,6 +187,7 @@ def train_tagger(tagger_id):
         tagger_object.model_size = round(float(os.path.getsize(tagger_path))/1000000, 1) # bytes to mb
         tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_tagger_plot(tagger.statistics))
         tagger_object.save()
+
         # declare the job done
         show_progress.update_step('')
         show_progress.update_view(100.0)

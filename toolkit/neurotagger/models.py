@@ -1,10 +1,16 @@
+import io
 import json
 import os
+import pathlib
 import secrets
+import tempfile
+import zipfile
 
 from django.contrib.auth.models import User
+from django.core import serializers
 from django.db import models
 from django.dispatch import receiver
+from django.http import HttpResponse
 
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
@@ -14,8 +20,12 @@ from . import choices
 from toolkit.multiselectfield import PatchedMultiSelectField as MultiSelectField
 
 # Create your models here.
+from ..settings import MODELS_DIR
+
+
 class Neurotagger(models.Model):
     MODEL_TYPE = 'neurotagger'
+    MODEL_JSON_NAME = "model.json"
 
     description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
@@ -56,12 +66,96 @@ class Neurotagger(models.Model):
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
 
+    def to_json(self) -> dict:
+        serialized = serializers.serialize('json', [self])
+        json_obj = json.loads(serialized)[0]["fields"]
+        del json_obj["project"]
+        del json_obj["author"]
+        del json_obj["task"]
+        return json_obj
+
+
+    def export_resources(self) -> HttpResponse:
+        with tempfile.SpooledTemporaryFile(encoding="utf8") as tmp:
+            with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as archive:
+                # write model object to zip as json
+                model_json = self.to_json()
+                model_json = json.dumps(model_json).encode("utf8")
+                archive.writestr(self.MODEL_JSON_NAME, model_json)
+
+                for file_path in self.get_resource_paths().values():
+                    path = pathlib.Path(file_path)
+                    archive.write(file_path, arcname=str(path.name))
+
+            tmp.seek(0)
+            return tmp.read()
+
+
+    @staticmethod
+    def import_resources(zip_file, request, pk) -> int:
+        with zipfile.ZipFile(zip_file, 'r') as archive:
+            json_string = archive.read(Neurotagger.MODEL_JSON_NAME).decode()
+            model_json = json.loads(json_string)
+            new_model = Neurotagger(**model_json)
+
+            # Create a task object to fill the new model object with.
+            # Pull the user and project into which it's imported from the web request.
+            new_model.task = Task.objects.create(neurotagger=new_model, status=Task.STATUS_COMPLETED)
+            new_model.author = User.objects.get(id=request.user.id)
+            new_model.project = Project.objects.get(id=pk)
+            new_model.save()  # Save the intermediate results.
+
+            # Get all the informational segments from the name, later used in changing the id
+            # to avoid any collisions just in case.
+            new_neurotagger_name = new_model.generate_name("neurotagger")
+            new_tokenizer_name = new_model.generate_name("neurotagger_tokenizer")
+
+            with open(new_neurotagger_name, "wb") as fp:
+                path = pathlib.Path(model_json["model"]).name
+                fp.write(archive.read(path))
+                new_model.model.name = new_neurotagger_name
+
+            tokenizer_model_path = new_tokenizer_name + ".model"
+            with open(tokenizer_model_path, "wb") as fp:
+                path = pathlib.Path(model_json["tokenizer_model"]).name
+                fp.write(archive.read(path))
+                new_model.tokenizer_model.name = tokenizer_model_path
+
+            tokenizer_vocab_path = new_tokenizer_name + ".vocab"
+            with open(tokenizer_vocab_path, "wb") as fp:
+                path = pathlib.Path(model_json["tokenizer_vocab"]).name
+                fp.write(archive.read(path))
+                new_model.tokenizer_vocab.name = tokenizer_vocab_path
+
+            plot_name = pathlib.Path(model_json["plot"])
+            path = plot_name.name
+            new_model.plot.save(f'{secrets.token_hex(15)}.png', io.BytesIO(archive.read(path)))
+
+            new_model.save()
+            return new_model.id
+
+
+    def get_resource_paths(self):
+        """
+        Return the full paths of every resource used by this model that lives
+        on the filesystem.
+        """
+        return {
+            "model": self.model.path,
+            "plot": self.plot.path,
+            "tokenizer_model": self.tokenizer_model.path,
+            "tokenizer_vocab": self.tokenizer_vocab.path
+        }
+
+
     def __str__(self):
         return '{0} - {1}'.format(self.pk, self.description)
 
 
-    def generate_name(self, name):
-        return f'{name}_{self.pk}_{secrets.token_hex(10)}'
+    def generate_name(self, name="neurotagger"):
+        filename = f'{name}_{self.pk}_{secrets.token_hex(10)}'
+        filepath = pathlib.Path(MODELS_DIR) / "neurotagger" / filename
+        return str(filepath)
 
 
     def train(self):

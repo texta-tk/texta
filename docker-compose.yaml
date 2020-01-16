@@ -4,6 +4,7 @@ services:
 
   elasticsearch:
     container_name: elasticsearch
+    restart: on-failure
     image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.7.2
     ports:
       - 9200:9200
@@ -15,11 +16,6 @@ services:
         hard: -1
     volumes:
       - elastic-data:/usr/share/elasticsearch/data
-
-  redis:
-    image: redis
-    ports:
-      - 6379:6379
 
   postgres:
     container_name: postgres
@@ -33,22 +29,22 @@ services:
       POSTGRES_PASSWORD: docker
     volumes:
       - postgres:/var/lib/postgresql/data
-#
-#  toolkit-rest:
-#    container_name: toolkit-rest
-#    build:
-#      context: .
-#      dockerfile: docker/Dockerfile
-#    ports:
-#      - 8000:80
-#    env_file:
-#      - ./docker/conf/.env
-#    volumes:
-#      - ./data-volumes/toolkit-data:/var/texta-rest/data
-#    depends_on:
-#      - postgres
-#      - elasticsearch
+
+
+  toolkit-rest:
+    container_name: toolkit-rest
+    image: texta-rest:latest
+    ports:
+      - 8000:80
+    env_file:
+      - ./docker/conf/.env
+    volumes:
+      - toolkit-data:/var/texta-rest/data
+    depends_on:
+      - postgres
+      - elasticsearch
 
 volumes:
   elastic-data:
+  toolkit-data:
   postgres:

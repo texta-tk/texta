@@ -1,5 +1,6 @@
 import json
 import os
+import pathlib
 from io import BytesIO
 
 from rest_framework import status
@@ -9,6 +10,8 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.neurotagger import choices
 from toolkit.neurotagger.models import Neurotagger
+from toolkit.settings import MODELS_DIR
+from toolkit.test_settings import TEST_FACT_NAME, TEST_FIELD, TEST_FIELD_CHOICE, TEST_INDEX
 from toolkit.test_settings import (TEST_FACT_NAME,
                                    TEST_FIELD,
                                    TEST_FIELD_CHOICE,
@@ -55,7 +58,7 @@ class NeurotaggerViewTests(APITestCase):
             "fact_name": TEST_FACT_NAME,
             "model_architecture": choices.model_arch_choices[0][0],
             "fields": TEST_FIELD_CHOICE,
-            "maximum_sample_size": 500,
+            "maximum_sample_size": 500
         }
 
         response = self.client.post(self.url, payload, format='json')
@@ -110,15 +113,37 @@ class NeurotaggerViewTests(APITestCase):
         url = f'{self.url}{tagger_id}/export_model/'
         response = self.client.get(url)
         # post model zip
-        import_url = f'{self.project_url}/import_model/'
+        import_url = f'{self.url}import_model/'
+
         response = self.client.post(import_url, data={'file': BytesIO(response.content)})
         print_output('test_import_model:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Test tagging with imported model
-        tagger_id = response.data['id']
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Test prediction with imported tagger
+        imported_tagger_id = response.data['id']
+        print_output('test_import_model:response.data', response.data)
+
+        tagger = Neurotagger.objects.get(id=imported_tagger_id)
+
+        tagger_model_dir = pathlib.Path(MODELS_DIR) / "neurotagger"
+        tagger_model_path = pathlib.Path(tagger.model.name)
+        tagger_vocab_path = pathlib.Path(tagger.tokenizer_vocab.name)
+        tagger_tokenizer_model_path = pathlib.Path(tagger.tokenizer_model.name)
+
+        self.assertTrue(tagger_model_path.exists())
+        self.assertTrue(tagger_vocab_path.exists())
+        self.assertTrue(tagger_tokenizer_model_path.exists())
+
+        # Check whether the model was saved into the right location.
+        self.assertTrue(str(tagger_model_dir) in str(tagger_model_path))
+        self.assertTrue(str(tagger_model_dir) in str(tagger_vocab_path))
+        self.assertTrue(str(tagger_model_dir) in str(tagger_tokenizer_model_path))
+
         self.run_tag_text(tagger_id=tagger_id)
+
         # return obj location for removal
-        return Neurotagger.objects.get(id=tagger_id)
+        return tagger
 
 
     def run_patch_on_neurotagger_instances(self, tagger_id=None):
@@ -183,8 +208,6 @@ class NeurotaggerViewTests(APITestCase):
         # test PATCH/PUT before removal.
         # self.run_patch_on_neurotagger_instances(tagger_id=created_neurotagger.id)
         # self.run_put_on_neurotagger_instances(tagger_id=created_neurotagger.id)
-
-
         delete_response = self.client.delete(created_neurotagger_url, format='json')
         print_output('delete_response.data: ', delete_response.data)
         self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
