@@ -30,8 +30,6 @@ class Task(models.Model):
         self.last_update = now()
         if set_time_completed:
             self.time_completed = now()
-            # update result hash to identify the model
-            self.result_hash = uuid.uuid4()
         self.save()
 
 

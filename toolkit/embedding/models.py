@@ -16,8 +16,8 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.helper_functions import apply_celery_task
-from toolkit.settings import MODELS_DIR
 from toolkit.multiselectfield import PatchedMultiSelectField as MultiSelectField
+from toolkit.settings import MODELS_DIR
 
 
 class Embedding(models.Model):
@@ -174,6 +174,11 @@ def auto_delete_embedding_on_delete(sender, instance: Embedding, **kwargs):
     Triggered on individual model object and queryset Embedding deletion.
     """
     if instance.embedding_model:
+        embedding_path = pathlib.Path(instance.embedding_model.path)
+        for path in embedding_path.parent.glob("{}*".format(embedding_path.name)):
+            if path.exists():
+                os.remove(str(path))
+
         if os.path.isfile(instance.embedding_model.path):
             os.remove(instance.embedding_model.path)
 

@@ -11,7 +11,6 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding, EmbeddingCluster
 from toolkit.settings import MODELS_DIR
-from toolkit.test_settings import TEST_FIELD_CHOICE, TEST_INDEX
 from toolkit.test_settings import TEST_FIELD_CHOICE, TEST_INDEX, TEST_VERSION_PREFIX
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 
@@ -58,6 +57,7 @@ class EmbeddingViewTests(TransactionTestCase):
         Embedding.objects.all().delete()
         EmbeddingCluster.objects.all().delete()
 
+
     def run_create_embedding_training_and_task_signal(self):
         """Tests the endpoint for a new Embedding, and if a new Task gets created via the signal"""
         payload = {
@@ -102,11 +102,20 @@ class EmbeddingViewTests(TransactionTestCase):
         self.assertEqual(os.path.isfile(embedding_model_location), True)
         self.assertEqual(os.path.isfile(phraser_model_location), True)
 
+        additional_path = pathlib.Path(embedding_model_location + ".trainables.syn1neg.npy")
+        additional_path_2 = pathlib.Path(embedding_model_location + ".wv.vectors.npy")
+        additional_path.touch()
+        additional_path_2.touch()
+
         delete_response = self.client.delete(created_embedding_url, content_type='application/json')
         print_output('delete_response.data: ', delete_response.data)
         self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(os.path.isfile(embedding_model_location), False)
         self.assertEqual(os.path.isfile(phraser_model_location), False)
+
+        print_output('delete_additional_embedding_files: ', not additional_path.exists())
+        self.assertFalse(additional_path.exists())
+        self.assertFalse(additional_path_2.exists())
 
 
     def run_patch_on_embedding_instances(self, test_embedding_id):
