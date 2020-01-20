@@ -14,9 +14,6 @@ from toolkit.core.user_profile import views as profile_views
 from toolkit.core.health.views import HealthView
 from toolkit.elastic.views import ElasticGetIndices
 from toolkit.core.project.views import ProjectViewSet
-from toolkit.core.user_profile.views import UserViewSet
-from toolkit.embedding.views import EmbeddingViewSet
-from toolkit.settings import MEDIA_DIR, MEDIA_URL
 from toolkit.tools.swagger import schema_view
 
 
@@ -44,10 +41,6 @@ urlpatterns = [
     url(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     url(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     url(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-    # protected media
-    url(r'^%s(?P<path>.*)$' % MEDIA_URL, protected_serve, {'document_root': MEDIA_DIR}),
-    # static
-    url(r'static/(?P<path>.*)$',serve,{'document_root': 'static'}),
     # health
     url('health', HealthView.as_view()),
     # auth
