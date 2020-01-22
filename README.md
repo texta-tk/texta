@@ -1,4 +1,4 @@
-**DOCUMENTATION**
+**DOCUMENTATION:**
 https://docs.texta.ee
 
 **WIKI:**
