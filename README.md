@@ -1,3 +1,6 @@
+**DOCUMENTATION**
+https://docs.texta.ee
+
 **WIKI:**
 https://git.texta.ee/texta/texta-rest/wikis/home
 
