@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from toolkit.tools.utils_for_tests import create_test_user, print_output
+from toolkit.test_settings import TEST_VERSION_PREFIX
 
 
 class HealthViewsTests(APITestCase):
@@ -17,7 +18,7 @@ class HealthViewsTests(APITestCase):
 
     def test_health(self):
         '''Tests if health endpoint responding with decent values.'''
-        response = self.client.get('/health')
+        response = self.client.get(f'{TEST_VERSION_PREFIX}/health')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         print_output('test_health:response.data', response.data)
         self.assertTrue(isinstance(response.data, dict))

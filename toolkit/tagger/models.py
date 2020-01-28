@@ -1,9 +1,16 @@
+import io
 import json
 import os
+import pathlib
+import secrets
+import tempfile
+import zipfile
 
 from django.contrib.auth.models import User
+from django.core import serializers
 from django.db import models
 from django.dispatch import receiver
+from django.http import HttpResponse
 
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.lexicon.models import Lexicon
@@ -20,10 +27,13 @@ from toolkit.tagger.choices import (
     DEFAULT_NEGATIVE_MULTIPLIER,
     DEFAULT_VECTORIZER
 )
+from toolkit.settings import MODELS_DIR
+from toolkit.tagger.choices import (DEFAULT_CLASSIFIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE, DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_VECTORIZER)
 
 
 class Tagger(models.Model):
     MODEL_TYPE = 'tagger'
+    MODEL_JSON_NAME = "model.json"
 
     description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
@@ -57,6 +67,70 @@ class Tagger(models.Model):
         return '{0} - {1}'.format(self.pk, self.description)
 
 
+    def generate_name(self, name="tagger"):
+        """Model import/export is dependant on the name, do not change carelessly."""
+        return os.path.join(MODELS_DIR, 'tagger', f'{name}_{str(self.pk)}_{secrets.token_hex(10)}')
+
+
+    def to_json(self) -> dict:
+        serialized = serializers.serialize('json', [self])
+        json_obj = json.loads(serialized)[0]["fields"]
+        del json_obj["project"]
+        del json_obj["author"]
+        del json_obj["task"]
+        return json_obj
+
+
+    def export_resources(self) -> HttpResponse:
+        with tempfile.SpooledTemporaryFile(encoding="utf8") as tmp:
+            with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as archive:
+                # Write model object to zip as json
+                model_json = self.to_json()
+                model_json = json.dumps(model_json).encode("utf8")
+                archive.writestr(self.MODEL_JSON_NAME, model_json)
+
+                for file_path in self.get_resource_paths().values():
+                    path = pathlib.Path(file_path)
+                    archive.write(file_path, arcname=str(path.name))
+
+            tmp.seek(0)
+            return tmp.read()
+
+
+    @staticmethod
+    def import_resources(zip_file, request, pk) -> int:
+        with zipfile.ZipFile(zip_file, 'r') as archive:
+            json_string = archive.read(Tagger.MODEL_JSON_NAME).decode()
+            model_json = json.loads(json_string)
+            new_model = Tagger(**model_json)
+
+            new_model.task = Task.objects.create(tagger=new_model, status=Task.STATUS_COMPLETED)
+            new_model.author = User.objects.get(id=request.user.id)
+            new_model.project = Project.objects.get(id=pk)
+            new_model.save()  # Save the intermediate results.
+
+            new_tagger_name = new_model.generate_name("tagger")
+            with open(new_tagger_name, "wb") as fp:
+                path = pathlib.Path(model_json["model"]).name
+                fp.write(archive.read(path))
+                new_model.model.name = new_tagger_name
+
+            plot_name = pathlib.Path(model_json["plot"])
+            path = plot_name.name
+            new_model.plot.save(f'{secrets.token_hex(15)}.png', io.BytesIO(archive.read(path)))
+
+            new_model.save()
+            return new_model.id
+
+
+    def get_resource_paths(self):
+        """
+        Return the full paths of every resource used by this model that lives
+        on the filesystem.
+        """
+        return {"model": self.model.path, "plot": self.plot.path}
+
+
     def train(self):
         new_task = Task.objects.create(tagger=self, status='created')
         self.task = new_task
@@ -64,6 +138,21 @@ class Tagger(models.Model):
         from toolkit.tagger.tasks import train_tagger
         apply_celery_task(train_tagger, self.pk)
 
+
+@receiver(models.signals.post_delete, sender=Tagger)
+def auto_delete_file_on_delete(sender, instance: Tagger, **kwargs):
+    """
+    Delete resources on the file-system upon tagger deletion.
+    Triggered on individual-queryset Tagger deletion and the deletion
+    of a TaggerGroup.
+    """
+    if instance.plot:
+        if os.path.isfile(instance.plot.path):
+            os.remove(instance.plot.path)
+
+    if instance.model:
+        if os.path.isfile(instance.model.path):
+            os.remove(instance.model.path)
 
 
 class TaggerGroup(models.Model):
@@ -88,19 +177,3 @@ def auto_delete_taggers_of_taggergroup(sender, instance: TaggerGroup, **kwargs):
     to enforce a one-to-many behaviour. Triggered before the actual deletion.
     """
     instance.taggers.all().delete()
-
-
-@receiver(models.signals.post_delete, sender=Tagger)
-def auto_delete_file_on_delete(sender, instance: Tagger, **kwargs):
-    """
-    Delete resources on the file-system upon tagger deletion.
-    Triggered on individual-queryset Tagger deletion and the deletion
-    of a TaggerGroup.
-    """
-    if instance.plot:
-        if os.path.isfile(instance.plot.path):
-            os.remove(instance.plot.path)
-
-    if instance.model:
-        if os.path.isfile(instance.model.path):
-            os.remove(instance.model.path)

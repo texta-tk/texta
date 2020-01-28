@@ -161,38 +161,47 @@ class PipelineBuilder:
         return pipe, params
 
 
+def whitespace_tokenizer(s):
+    """
+    Split string on whitespace (e.g. when string is previously tokenized).
+    """
+    return s.split(" ")
+
+
 def get_pipeline_builder():
     pipe_builder = PipelineBuilder()
-    ### params are used grid search to find optimal choices
-
-    # Feature Extraction
+    ### Params are used with grid search to find optimal choices ###
+    # analyzer options: words and word-bound character-based ngrams
     analyzer_params = ['word', 'char_wb']
+    # ngram length options (min, max)
     ngram_params = [(1, 2)]
+    # minimum term frequency options
     min_df_params = [5]
-
-    params = {'ngram_range': ngram_params, 'analyzer': analyzer_params}
+    # use simple whitespace tokenizer because our data is already tokenized by MLP
+    tokenizer_params = [whitespace_tokenizer]
+    # try both with and without idf component computed
+    idf_params = [True, False]
+    # params for hashing vectorizer
+    params = {'ngram_range': ngram_params, 'analyzer': analyzer_params, 'tokenizer': tokenizer_params}
     pipe_builder.add_extractor('vectorizer', HashingVectorizer, 'Hashing Vectorizer', params)
-
-    params = {'ngram_range': ngram_params, 'min_df': min_df_params}
+    # params for count vectorizer
+    params = {'ngram_range': ngram_params, 'min_df': min_df_params, 'tokenizer': tokenizer_params}
     pipe_builder.add_extractor('vectorizer', CountVectorizer, 'Count Vectorizer', params)
-
-    params = {'ngram_range': ngram_params, 'min_df': min_df_params}
+    # params for tfidf vectorizer
+    params = {'ngram_range': ngram_params, 'min_df': min_df_params, 'tokenizer': tokenizer_params, 'use_idf': idf_params}
     pipe_builder.add_extractor('vectorizer', TfidfVectorizer, 'TfIdf Vectorizer', params)
-
-    # Classification Models
     # we need multiprocessing to do this
     # fuck celery?
     #c_params = [0.1, 1.0, 10.0]
     c_params = [1.0]
+    # logistic regression params
     params = {'solver': ['lbfgs'], 'penalty': ['l2'], 'C': c_params}
     pipe_builder.add_classifier('classifier', LogisticRegression, 'Logistic Regression', params)
-
+    # svm params
     params = {'probability': [True], 'kernel': ['linear'], 'C': c_params}
     pipe_builder.add_classifier('classifier', SVC, 'LinearSVC', params)
-
-    # Feature selectors
+    # feature selector params
     params = {}
     pipe_builder.add_feature_selector('feature_selector', SelectFromModel, 'SVM Feature Selector', params, estimator=LinearSVC(penalty='l1', dual=False))
-
     return pipe_builder
     

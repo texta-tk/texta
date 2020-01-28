@@ -3,6 +3,7 @@ from toolkit.settings import BASE_DIR
 import requests
 import os
 
+
 class StopWords:
     """
     Stop word remover using existing lists.
@@ -15,7 +16,7 @@ class StopWords:
         stop_words = {}
         stop_word_dir = os.path.join(BASE_DIR, 'toolkit', 'tools', 'stop_words')
         for f in os.listdir(stop_word_dir):
-            with open('{0}/{1}'.format(stop_word_dir,f),encoding="utf8") as fh:
+            with open('{0}/{1}'.format(stop_word_dir, f), encoding="utf8") as fh:
                 for stop_word in fh.read().strip().split('\n'):
                     stop_words[stop_word] = True
 

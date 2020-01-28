@@ -33,3 +33,4 @@ class UserViewSet(mixins.RetrieveModelMixin,
         if not current_user.is_superuser:
             queryset = queryset.filter(id=self.request.user.id)
         return queryset
+

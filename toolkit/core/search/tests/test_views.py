@@ -5,7 +5,7 @@ from rest_framework.test import APIClient
 from toolkit.core.project.models import Project
 from toolkit.core.user_profile.models import UserProfile
 from toolkit.tools.utils_for_tests import create_test_user, print_output
-from toolkit.test_settings import TEST_INDEX
+from toolkit.test_settings import TEST_INDEX, TEST_VERSION_PREFIX
 
 class UserProfileSignalsAndViewsTests(APITestCase):
 
@@ -20,7 +20,7 @@ class UserProfileSignalsAndViewsTests(APITestCase):
 
     def test_creation(self):
         '''Tests if a saved search gets created properly.'''
-        url = f'/projects/{self.project.id}/searches/'
+        url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/searches/'
         payload = {"description":"test", "query":{"elasticsearchQuery":{"highlight":{"fields":{},"number_of_fragments":0,"post_tags":["<TEXTA_SEARCHER_HIGHLIGHT_END_TAG>"],"pre_tags":["<TEXTA_SEARCHER_HIGHLIGHT_START_TAG>"]},"query":{"bool":{"boost":1,"filter":[],"minimum_should_match":0,"must":[],"must_not":[],"should":[]}}},"highlight":{"fields":{},"number_of_fragments":0,"post_tags":["<TEXTA_SEARCHER_HIGHLIGHT_END_TAG>"],"pre_tags":["<TEXTA_SEARCHER_HIGHLIGHT_START_TAG>"]},"query":{"bool":{"boost":1,"filter":[],"minimum_should_match":0,"must":[],"must_not":[],"should":[]}}},"query_constraints":[]}
         response = self.client.post(url, payload, format='json')
         print_output("search_creation: ", response.data)

@@ -23,7 +23,6 @@ class Task(models.Model):
     time_started = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(null=True, blank=True, default=None)
     time_completed = models.DateTimeField(null=True, blank=True, default=None)
-    result_hash = models.CharField(max_length=MAX_DESC_LEN, default='')
 
 
     def update_status(self, status, set_time_completed=False):
@@ -31,8 +30,6 @@ class Task(models.Model):
         self.last_update = now()
         if set_time_completed:
             self.time_completed = now()
-            # update result hash to identify the model
-            self.result_hash = uuid.uuid4()
         self.save()
 
 

@@ -3,13 +3,12 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from toolkit.core.project.models import Project
-from toolkit.urls import project_router
+from toolkit.urls_v1 import project_router
 from toolkit.tools.utils_for_tests import create_test_user, print_output
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX
+from toolkit.test_settings import TEST_INDEX, TEST_VERSION_PREFIX
 
 
 class ProjectPermissionsTests(APITestCase):
-
 
     def setUp(self):
         self.default_password = 'pw'
@@ -17,7 +16,6 @@ class ProjectPermissionsTests(APITestCase):
         self.admin.is_superuser = True
         # self.admin.is_staff = True
         self.admin.save()
-        # self.owner = create_test_user(name='owner', password=self.default_password)
         self.project_user = create_test_user(name='project_user', password=self.default_password)
         self.user = create_test_user(name='user', password=self.default_password)
 
@@ -25,12 +23,12 @@ class ProjectPermissionsTests(APITestCase):
         self.project.users.add(self.project_user)
 
         self.client = APIClient()
-        self.project_instance_url = f'/projects/{self.project.id}/'
+        self.project_instance_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/'
 
     def test_all(self):
         registered_resources = [resource[0] for resource in project_router.registry]
         for resource in registered_resources:
-            self.project_resource_url = f'/projects/{self.project.id}/{resource}/'
+            self.project_resource_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/{resource}/'
             self.run_with_users(self.access_project_resources, resource)
         self.run_with_users(self.access_get_indices)
         self.run_with_users(self.access_health)
@@ -49,7 +47,7 @@ class ProjectPermissionsTests(APITestCase):
 
     def access_get_indices(self, username, password, SAFE_FORBIDDEN=False, UNSAFE_FORBIDDEN=False):
         """ only superusers can access /get_indices """
-        url = '/get_indices/'
+        url = f'{TEST_VERSION_PREFIX}/get_indices/'
         self.client.login(username=username, password=password)
         get_response = self.client.get(url)
         print_output(f"{username} access get_indices", get_response.status_code)
@@ -59,7 +57,7 @@ class ProjectPermissionsTests(APITestCase):
 
     def access_health(self, username, password, SAFE_FORBIDDEN=False, UNSAFE_FORBIDDEN=False):
         """ all users, including non-auth can access /health """
-        url = '/health/'
+        url = f'{TEST_VERSION_PREFIX}/health/'
         self.client.login(username=username, password=password)
         get_response = self.client.get(url)
         print_output(f"{username} access health", get_response.status_code)
@@ -91,7 +89,7 @@ class ProjectPermissionsTests(APITestCase):
 
     def update_title_and_indices(self, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN):
         get_response = self.client.get(url)
-        get_response.data["indices"] =  {TEST_INDEX}
+        get_response.data["indices"] = {TEST_INDEX}
         get_response.data["title"] = "put_title"
         put_response = self.client.put(url, get_response.data, format='json')
         self.validate_unsafe_response(put_response, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
@@ -104,7 +102,7 @@ class ProjectPermissionsTests(APITestCase):
             self.validate_unsafe_response(get_res, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN)
         else:
             users = get_res.data['users']
-            users.append(f'/users/{self.user_to_add.id}/')
+            users.append(f'{TEST_VERSION_PREFIX}/users/{self.user_to_add.id}/')
             payload = {
                 "title": "user_add_test",
                 "users": users
@@ -127,7 +125,6 @@ class ProjectPermissionsTests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             print_output(f'{username} access safe methods at: {url}', response.status_code)
 
-
     def validate_unsafe_response(self, response, url, username, SAFE_FORBIDDEN, UNSAFE_FORBIDDEN):
         # admin
         if SAFE_FORBIDDEN is False and UNSAFE_FORBIDDEN is False:
@@ -139,5 +136,5 @@ class ProjectPermissionsTests(APITestCase):
             print_output(f'{username} update permissions at: {url}', response.status_code)
         # auth_user
         if SAFE_FORBIDDEN is True and UNSAFE_FORBIDDEN is True:
-                print_output(f'{username} update permissions at: {url}', response.status_code)
-                self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+            print_output(f'{username} update permissions at: {url}', response.status_code)
+            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

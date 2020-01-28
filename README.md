@@ -1,5 +1,14 @@
-**WIKI:**
+# TEXTA Toolkit 2
+
+## Documentation
+
+https://docs.texta.ee
+
+## Wiki
+
 https://git.texta.ee/texta/texta-rest/wikis/home
+
+## Notes
 
 Works with Python 3.6
 

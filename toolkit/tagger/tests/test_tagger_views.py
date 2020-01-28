@@ -1,19 +1,28 @@
 import json
 import os
+import pathlib
 from io import BytesIO
 from time import sleep
+from typing import List
 
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
+from toolkit.settings import MODELS_DIR
 from toolkit.tagger.models import Tagger
-from toolkit.test_settings import TEST_FIELD, TEST_FIELD_CHOICE, TEST_INDEX, TEST_MATCH_TEXT, TEST_QUERY
+from toolkit.test_settings import(TEST_FIELD,
+                                  TEST_FIELD_CHOICE,
+                                  TEST_INDEX,
+                                  TEST_MATCH_TEXT,
+                                  TEST_QUERY,
+                                  TEST_VERSION_PREFIX)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
 class TaggerViewTests(APITestCase):
+
     @classmethod
     def setUpTestData(cls):
         # Owner of the project
@@ -23,9 +32,9 @@ class TaggerViewTests(APITestCase):
             indices=TEST_INDEX
         )
         cls.project.users.add(cls.user)
-        cls.url = f'/projects/{cls.project.id}/taggers/'
-        cls.project_url = f'/projects/{cls.project.id}'
-        cls.multitag_text_url = f'/projects/{cls.project.id}/multitag_text/'
+        cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/taggers/'
+        cls.project_url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}'
+        cls.multitag_text_url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/multitag_text/'
 
         # set vectorizer & classifier options
         cls.vectorizer_opts = ('Count Vectorizer', 'Hashing Vectorizer', 'TfIdf Vectorizer')
@@ -123,10 +132,10 @@ class TaggerViewTests(APITestCase):
             "description": "TestTagger",
             "query": json.dumps(TEST_QUERY),
             "fields": TEST_FIELD_CHOICE,
-            "vectorizer": 'Hashing Vectorizer',
-            "classifier": 'Logistic Regression',
+            "vectorizer": "Hashing Vectorizer",
+            "classifier": "Logistic Regression",
             "maximum_sample_size": 500,
-            "negative_multiplier": 1.0,
+            "negative_multiplier": 1.0
         }
 
         create_response = self.client.post(self.url, payload, format='json')
@@ -198,7 +207,7 @@ class TaggerViewTests(APITestCase):
             self.assertEqual(put_response.status_code, status.HTTP_200_OK)
 
 
-    def run_tag_text(self, test_tagger_ids):
+    def run_tag_text(self, test_tagger_ids: List[int]):
         """Tests the endpoint for the tag_text action"""
         payload = {"text": "This is some test text for the Tagger Test"}
         for test_tagger_id in test_tagger_ids:
@@ -371,17 +380,33 @@ class TaggerViewTests(APITestCase):
     def run_model_export_import(self):
         """Tests endpoint for model export and import"""
         test_tagger_id = self.test_tagger_ids[0]
+
         # retrieve model zip
         url = f'{self.url}{test_tagger_id}/export_model/'
         response = self.client.get(url)
-        # post model zip
-        import_url = f'{self.project_url}/import_model/'
+
+        # Post model zip
+        import_url = f'{self.url}import_model/'
         response = self.client.post(import_url, data={'file': BytesIO(response.content)})
+        print_output('test_import_model:response.data', import_url)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Test prediction with imported tagger
+        imported_tagger_id = response.data['id']
         print_output('test_import_model:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Test tagging with imported model
-        tagger_id = response.data['id']
-        self.run_tag_text([tagger_id])
+
+        tagger = Tagger.objects.get(id=imported_tagger_id)
+
+        tagger_model_dir = pathlib.Path(MODELS_DIR) / "tagger"
+        tagger_model_path = pathlib.Path(tagger.model.name)
+
+        self.assertTrue(tagger_model_path.exists())
+
+        # Check whether the model was saved into the right location.
+        self.assertTrue(str(tagger_model_dir) in str(tagger_model_path))
+
+        self.run_tag_text([imported_tagger_id])
 
 
     def run_tag_and_feedback_and_retrain(self):

@@ -1,6 +1,8 @@
 import json
+import os
 
 import rest_framework.filters as drf_filters
+from django.http import HttpResponse
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
@@ -14,9 +16,9 @@ from toolkit.embedding.serializers import (EmbeddingClusterBrowserSerializer, Em
 from toolkit.embedding.word_cluster import WordCluster
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, SerializerNotValid
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
-from toolkit.serializer_constants import GeneralTextSerializer
+from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceImportModelSerializer
 from toolkit.tools.text_processor import TextProcessor
-from toolkit.view_constants import BulkDelete, ExportModel
+from toolkit.view_constants import BulkDelete
 
 
 class EmbeddingFilter(filters.FilterSet):
@@ -29,7 +31,7 @@ class EmbeddingFilter(filters.FilterSet):
         fields = []
 
 
-class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
+class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
     """
     list:
     Returns list of Embedding objects.
@@ -59,6 +61,28 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel):
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = EmbeddingFilter
     ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'num_dimensions', 'min_freq', 'vocab_size', 'task__status')
+
+
+    @action(detail=False, methods=["post"], serializer_class=ProjectResourceImportModelSerializer)
+    def import_model(self, request, pk=None, project_pk=None):
+        serializer = ProjectResourceImportModelSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        uploaded_file = serializer.validated_data['file']
+        embedding_id = Embedding.import_resources(uploaded_file, request, project_pk)
+        return Response({"id": embedding_id, "message": "Successfully imported model and associated files."}, status=status.HTTP_201_CREATED)
+
+
+    @action(detail=True, methods=['get'])
+    def export_model(self, request, pk=None, project_pk=None):
+        """Returns list of tags for input text."""
+        zip_name = f'embedding_model_{pk}.zip'
+
+        embedding_object: Embedding = self.get_object()
+        data = embedding_object.export_resources()
+        response = HttpResponse(data)
+        response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(zip_name)
+        return response
 
 
     def get_queryset(self):
@@ -228,7 +252,6 @@ class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
 
         clustering_object: EmbeddingCluster = self.get_object()
         # check if clustering ready
-
 
         if not clustering_object.cluster_model.name:
             raise NonExistantModelError()
