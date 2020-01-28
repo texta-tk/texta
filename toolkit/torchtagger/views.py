@@ -12,7 +12,7 @@ from toolkit.core.project.models import Project
 from toolkit.exceptions import ProjectValidationFailed
 from toolkit.torchtagger.serializers import TorchTaggerSerializer
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
-from toolkit.view_constants import BulkDelete, ExportModel, FeedbackModelView
+from toolkit.view_constants import BulkDelete, FeedbackModelView
 from toolkit.tagger.serializers import TaggerTagTextSerializer
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher
@@ -36,7 +36,7 @@ class TorchTaggerFilter(filters.FilterSet):
 
 
 # forbid PUT/PATCH?
-class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, ExportModel, FeedbackModelView):
+class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
     serializer_class = TorchTaggerSerializer
     permission_classes = (
         permissions.IsAuthenticated,
