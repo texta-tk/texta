@@ -28,7 +28,7 @@ Running application:
 
 Import testing data:
 
-`python ./scripts/import_test_data.py`
+`python import_test_data.py`
 
 Run all tests:
 
