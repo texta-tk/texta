@@ -17,6 +17,11 @@ services:
     volumes:
       - elastic-data:/usr/share/elasticsearch/data
 
+  redis:
+    container_name: redis
+    image: redis
+    restart: always
+
   postgres:
     container_name: postgres
     image: postgres
@@ -29,7 +34,6 @@ services:
       POSTGRES_PASSWORD: docker
     volumes:
       - postgres:/var/lib/postgresql/data
-
 
   toolkit-rest:
     container_name: toolkit-rest
