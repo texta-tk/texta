@@ -12,7 +12,7 @@ stages:
 Test:
   before_script:
     - conda env create -f environment.yaml && source activate texta-rest
-    - python ./scripts/import_test_index.py -es http://172.17.0.1:9200
+    - python ./scripts/import_test_data.py -es http://172.17.0.1:9200
     - python migrate.py
   stage: test
   tags:
