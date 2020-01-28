@@ -26,6 +26,10 @@ Running application:
 
 `celery -A toolkit.taskman worker -l info`
 
+Import testing data:
+
+`python ./scripts/import_test_data.py`
+
 Run all tests:
 
 `python manage.py test`
