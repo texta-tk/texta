@@ -14,12 +14,15 @@ def transfer_existing__model_paths(apps, schema_editor):
     embeddings = apps.get_model("embedding", "Embedding")
     for embedding in embeddings.objects.all():
         if embedding.location:
-            embedding_model_path = json.loads(embedding.location)["embedding"]
-            phraser_model_path = json.loads(embedding.location)["phraser"]
+            try:
+                embedding_model_path = json.loads(embedding.location)["embedding"]
+                phraser_model_path = json.loads(embedding.location)["phraser"]
 
-            embedding.embedding_model.name = embedding_model_path
-            embedding.phraser_model.name = phraser_model_path
-            embedding.save()
+                embedding.embedding_model.name = embedding_model_path
+                embedding.phraser_model.name = phraser_model_path
+                embedding.save()
+            except:
+                pass
         else:
             embedding.delete()
 

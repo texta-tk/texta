@@ -313,7 +313,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         proj = self.get_object()
         response = {
             'num_lexicons': proj.lexicon_set.count(),
-            'num_neurotaggers': proj.neurotagger_set.count(),
+            'num_torchtaggers': proj.torchtagger_set.count(),
             'num_taggers': proj.tagger_set.count(),
             'num_tagger_groups': proj.taggergroup_set.count(),
             'num_embeddings': proj.embedding_set.count(),

@@ -2,8 +2,8 @@ version: '3'
 
 services:
 
-  elasticsearch:
-    container_name: elasticsearch
+  texta-elasticsearch:
+    container_name: texta-elasticsearch
     restart: on-failure
     image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.7.2
     ports:
@@ -17,9 +17,14 @@ services:
     volumes:
       - elastic-data:/usr/share/elasticsearch/data
 
-  postgres:
-    container_name: postgres
-    image: postgres
+  texta-redis:
+    container_name: redis
+    image: redis
+    restart: always
+
+  texta-postgres:
+    container_name: texta-postgres
+    image: postgres:11
     restart: on-failure
     ports:
       - 5432:5432
@@ -28,23 +33,31 @@ services:
       POSTGRES_USER: docker
       POSTGRES_PASSWORD: docker
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
 
-
-  toolkit-rest:
-    container_name: toolkit-rest
-    image: texta-rest:latest
+  texta-rest:
+    container_name: texta-rest
+    image: docker.texta.ee/texta/texta-rest:latest
     ports:
-      - 8000:80
+      - 80:80
     env_file:
-      - ./docker/conf/.env
+      - ./env
     volumes:
       - toolkit-data:/var/texta-rest/data
     depends_on:
-      - postgres
-      - elasticsearch
+      - texta-postgres
+      - texta-elasticsearch
+
+  texta-front:
+    container_name: texta-front
+    image: docker.texta.ee/texta/texta-rest-front:latest
+    ports:
+      - 4200:80
+    restart: always
+    env_file:
+      - ./env
 
 volumes:
   elastic-data:
   toolkit-data:
-  postgres:
+  postgres-data:

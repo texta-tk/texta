@@ -2,6 +2,9 @@ TEXTA_HOST=http://localhost
 #TEXTA_ES_URL=http://localhost:9200
 TEXTA_DEBUG=False
 
+TEXTA_REDIS_URL=redis://redis:6379
+TEXTA_MLP_URL=http://texta-mlp:5000
+
 # Elastic is one of the root accounts, only usable with the X-Pack security.
 #TEXTA_ES_USER=elastic
 #TEXTA_ES_PASSWORD=changeme
@@ -16,3 +19,4 @@ TEXTA_DEBUG=False
 #DJANGO_DATABASE_PASSWORD=docker
 #DJANGO_DATABASE_HOST=localhost
 #DJANGO_DATABASE_PORT=5432
+

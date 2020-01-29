@@ -31,17 +31,18 @@ def train_embedding(embedding_id):
         # retrieve indices from project 
         indices = get_indices_from_object(embedding_object)
         field_data = json.loads(embedding_object.fields)
+        max_documents = embedding_object.max_documents
 
         # create itrerator for phraser
         text_processor = TextProcessor(sentences=True, remove_stop_words=True, tokenize=True)
-        sentences = ElasticSearcher(
-            query=json.loads(embedding_object.query),
-            indices=indices,
-            field_data=field_data,
-            output=ElasticSearcher.OUT_TEXT,
-            callback_progress=show_progress,
-            text_processor=text_processor
-        )
+        sentences = ElasticSearcher(query=json.loads(embedding_object.query),
+                                    indices=indices,
+                                    field_data=field_data,
+                                    output=ElasticSearcher.OUT_TEXT,
+                                    callback_progress=show_progress,
+                                    scroll_limit=max_documents,
+                                    text_processor=text_processor)
+        
 
         # build phrase model
         phraser = Phraser(embedding_id)
@@ -60,14 +61,13 @@ def train_embedding(embedding_id):
         text_processor = TextProcessor(phraser=phraser, sentences=True, remove_stop_words=True, tokenize=True)
 
         # iterate again with built phrase model to include phrases in language model
-        sentences = ElasticSearcher(
-            query=json.loads(embedding_object.query),
-            indices=indices,
-            field_data=field_data,
-            output=ElasticSearcher.OUT_TEXT,
-            callback_progress=show_progress,
-            text_processor=text_processor
-        )
+        sentences = ElasticSearcher(query=json.loads(embedding_object.query),
+                                    indices=indices,
+                                    field_data=field_data,
+                                    output=ElasticSearcher.OUT_TEXT,
+                                    callback_progress=show_progress,
+                                    scroll_limit=max_documents,
+                                    text_processor=text_processor)
         # word2vec model
         model = word2vec.Word2Vec(
             sentences,

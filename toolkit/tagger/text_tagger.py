@@ -1,8 +1,7 @@
 from toolkit.tagger.pipeline import get_pipeline_builder
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import f1_score
-from sklearn.metrics import confusion_matrix, precision_score, recall_score, roc_curve, auc
 from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import roc_curve, auc
 import pandas as pd
 import numpy as np
 import joblib
@@ -10,6 +9,7 @@ import json
 
 from toolkit.settings import NUM_WORKERS
 from toolkit.tagger.models import Tagger
+from toolkit.tools.tagging_report import TaggingReport
 
 
 class TextTagger:
@@ -39,31 +39,27 @@ class TextTagger:
         self.text_processor = text_processor
 
 
-    def train(self, positive_samples, negative_samples, field_list=[], classifier='Logistic Regression', vectorizer='Hashing Vectorizer', feature_selector='SVM Feature Selector'):
-        positive_samples_map = self._create_data_map(positive_samples, field_list)
-        negative_samples_map = self._create_data_map(negative_samples, field_list)
-
+    def train(self, data_sample, field_list=[], classifier='Logistic Regression', vectorizer='Hashing Vectorizer', feature_selector='SVM Feature Selector'):
+        positive_samples_map = self._create_data_map(data_sample.data['true'], field_list)
+        negative_samples_map = self._create_data_map(data_sample.data['false'], field_list)
+        # pipeline
         pipe_builder = get_pipeline_builder()
         pipe_builder.set_pipeline_options(vectorizer, classifier, feature_selector)
         c_pipe, c_params = pipe_builder.build(fields=field_list)
-
         # Build X feature map
         data_sample_x_map = {}
         for field in field_list:
             data_sample_x_map[field] = positive_samples_map[field] + negative_samples_map[field]
-
         # Build target (positive + negative samples) for binary classifier
-        data_sample_y = [1] * len(positive_samples) + [0] * len(negative_samples)
-
+        data_sample_y = [1] * len(data_sample.data['true']) + [0] * len(data_sample.data['false'])
         X_train = {}
         X_test = {}
-
+        #  split data
         for field in field_list:
             X_train[field], X_test[field], y_train, y_test = train_test_split(data_sample_x_map[field], data_sample_y, test_size=0.20, random_state=42)
-
+        # dataframes
         df_train = pd.DataFrame(X_train)
         df_test = pd.DataFrame(X_test)
-
         # Use Train data to parameter selection in a Grid Search
         gs_clf = GridSearchCV(c_pipe, c_params, n_jobs=self.workers, cv=5, verbose=False)
         gs_clf = gs_clf.fit(df_train, y_train)
@@ -71,32 +67,25 @@ class TextTagger:
         self.model = model
         # Use best model and test data for final evaluation
         y_pred = model.predict(df_test)
-        # Report
-        f1 = f1_score(y_test, y_pred, average='micro')
-        confusion = confusion_matrix(y_test, y_pred)
-        precision = precision_score(y_test, y_pred)
-        recall = recall_score(y_test, y_pred)
-
+        # Report model statistics
+        # TODO: refactor this horrible dict lookup
+        report = TaggingReport(y_test, y_pred)
+        statistics = {}
+        statistics["precision"] = report.precision
+        statistics["recall"] = report.recall
+        statistics["f1_score"] = report.f1_score
+        statistics["confusion_matrix"] = report.confusion
+        # calculate roc
         y_scores = model.decision_function(df_test)
         fpr, tpr, _ = roc_curve(y_test, y_scores)
-        roc_auc = auc(fpr, tpr)
-
         feature_coefs = self.get_feature_coefs()
-        num_features = len(feature_coefs)
-
-        statistics = {
-            'f1_score':             f1,
-            'confusion_matrix':     confusion,
-            'precision':            precision,
-            'recall':               recall,
-            'true_positive_rate':   tpr,
-            'false_positive_rate':  fpr,
-            'area_under_curve':     roc_auc,
-            'num_features':         num_features,
-            'feature_coefs':        feature_coefs,
-            'num_positives':        len(positive_samples),  
-            'num_negatives':        len(negative_samples)
-        }
+        statistics["true_positive_rate"] = tpr
+        statistics["false_positive_rate"] = fpr
+        statistics["area_under_curve"] = auc(fpr, tpr)
+        statistics["feature_coefs"] = feature_coefs
+        statistics["num_features"] = len(feature_coefs)
+        statistics["num_positives"] = len(data_sample.data['true'])
+        statistics["num_negatives"] = len(data_sample.data['false'])
 
         self.statistics = statistics
         return model
@@ -160,7 +149,6 @@ class TextTagger:
         df_text = pd.DataFrame(text_map)
 
         return self.model.predict(df_text)[0], max(self.model.predict_proba(df_text)[0])
-
 
 
     def tag_doc(self, doc):

@@ -9,12 +9,11 @@ import json
 
 class Feedback:
 
-    def __init__(self, project_pk, model_pk=None, model_type="tagger", text_processor=None, callback_progress=None, prediction_to_match=None):
+    def __init__(self, project_pk, model_object=None, text_processor=None, callback_progress=None, prediction_to_match=None):
         self.es_core = ElasticCore()
         self.project_pk = project_pk
         self.feedback_index = f"texta-feedback-project-{project_pk}"
-        self.model_pk = model_pk
-        self.model_type = model_type
+        self.model_object = model_object
         self.es_doc, self.es_search, self.query = self._initialize_es(project_pk, text_processor, callback_progress, prediction_to_match)
 
     def __iter__(self):
@@ -32,11 +31,14 @@ class Feedback:
     def _initialize_es(self, project_pk, text_processor, callback_progress, prediction_to_match):
         # create es doc
         es_doc = ElasticDocument(self.feedback_index)
+        # if no model objects, return nones for query and search
+        if not self.model_object:
+            return es_doc, None, None
         # create mathing query
         query = Query()
-        query.add_string_filter(query_string=self.model_type, fields=["model_type"])
-        if self.model_pk:
-            query.add_string_filter(query_string=str(self.model_pk), fields=["model_id"])
+        query.add_string_filter(query_string=self.model_object.MODEL_TYPE, fields=["model_type"])
+        if self.model_object:
+            query.add_string_filter(query_string=str(self.model_object.pk), fields=["model_id"])
         if prediction_to_match:
             query.add_string_filter(query_string=prediction_to_match, fields=["correct_prediction"])
         # if no index, don't create searcher object
@@ -59,15 +61,27 @@ class Feedback:
         """
         return self.es_search.search()['hits']['hits']
 
+    def _text_to_doc(self, text):
+        """
+        Generates document dict using input text and list of fields.
+        """
+        # retrieve list of fields model was trained on
+        model_fields = json.loads(self.model_object.fields)
+        return {field_path: text for field_path in model_fields}
+
     def store(self, predicted_content, prediction):
         """
         Stores document with initial prediction in ES.
         """
+        # if predicted on text, generate doc
+        if isinstance(predicted_content, str):
+            predicted_content = self._text_to_doc(predicted_content)
+        # generate feedback doc wrapping predicted doc
         feedback_doc = {
-            "model_id": str(self.model_pk),
-            "model_type": self.model_type,
+            "model_id": str(self.model_object.pk),
+            "model_type": self.model_object.MODEL_TYPE,
             "predicted_content": json.dumps(predicted_content),
-            "original_prediction": json.dumps(prediction)
+            "original_prediction": str(prediction)
         }
 
         try:
@@ -97,7 +111,7 @@ class Feedback:
         """
         try:
             deleted = self.es_doc.delete_by_query(self.query)["deleted"]
-            return {"success": f"deleted {deleted} feedback items."}
+            return {"success": f"deleted {deleted} feedback item(s)."}
         except Exception as e:
             error_msg = "Feedback document delete failed."
             Logger().error(error_msg, exc_info=e)

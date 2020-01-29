@@ -4,32 +4,29 @@ channels:
   - conda-forge
   - anaconda
   - bioconda
+  - pytorch
 
 dependencies:
-  - nomkl
   - python=3.6
   - pip
-  - keras==2.2.*
   - pandas
-  - xlrd
   - scikit-learn
   - matplotlib
   - graphviz
   - gensim==3.7.*
   - pydot
   - psutil
-  - redis
   - uwsgi
   - supervisor
   - psycopg2
   - mysqlclient
+  - pytorch-cpu
   - pip:
-    - tensorflow==1.5.0
     - django==2.1.*
     - djangorestframework==3.9.*
     - celery==4.2.*
     - elasticsearch==6.3.*
-    - redis==3.2.*
+    - redis==3.*
     - django-multiselectfield
     - drf-nested-routers
     - django-rest-auth[with_social]
@@ -39,8 +36,9 @@ dependencies:
     - django-rest-serializer-field-permissions
     - django-cors-headers
     - elasticsearch_dsl<7
-    - sentencepiece
     - python-json-logger
     - drf-yasg
+    - torchtext
     - django-filter
     - xlrd
+    - dill
