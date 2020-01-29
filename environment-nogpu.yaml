@@ -7,7 +7,6 @@ channels:
   - pytorch
 
 dependencies:
-  - nomkl
   - python=3.6
   - pip
   - pandas
@@ -17,18 +16,17 @@ dependencies:
   - gensim==3.7.*
   - pydot
   - psutil
-  - redis
   - uwsgi
   - supervisor
   - psycopg2
   - mysqlclient
-  - pytorch
+  - pytorch-cpu
   - pip:
     - django==2.1.*
     - djangorestframework==3.9.*
     - celery==4.2.*
     - elasticsearch==6.3.*
-    - redis==3.2.*
+    - redis==3.*
     - django-multiselectfield
     - drf-nested-routers
     - django-rest-auth[with_social]
