@@ -8,6 +8,8 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from toolkit.tools.text_processor import TextProcessor
+from toolkit.embedding.phraser import Phraser
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.feedback import Feedback
@@ -270,7 +272,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
     @action(detail=True, methods=['get'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
-        """Returns list of tags for random document in Elasticsearch."""
+        """Returns prediction for a random document in Elasticsearch."""
         # get tagger object
         tagger_object = self.get_object()
         # check if tagger exists
@@ -303,7 +305,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         stop_words = tagger_object.stop_words.split(' ')
         # use phraser is embedding used
         if tagger_object.embedding:
-            phraser = Phraser(tagger_object.id)
+            phraser = Phraser(tagger_object.embedding.id)
             phraser.load()
 
             text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
@@ -324,7 +326,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         # add optional feedback
         if feedback:
             project_pk = tagger_object.project.pk
-            feedback_object = Feedback(project_pk, tagger_object.pk)
+            feedback_object = Feedback(project_pk, model_object=tagger_object)
             feedback_id = feedback_object.store(tagger_input, prediction['result'])
             prediction['feedback'] = {'id': feedback_id}
         return prediction

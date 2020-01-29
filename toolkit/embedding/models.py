@@ -30,6 +30,7 @@ class Embedding(models.Model):
     fields = models.TextField(default=json.dumps([]))
     indices = MultiSelectField(default=None)
     num_dimensions = models.IntegerField(default=100)
+    max_documents = models.IntegerField(default=0)
     min_freq = models.IntegerField(default=10)
     vocab_size = models.IntegerField(default=0)
 

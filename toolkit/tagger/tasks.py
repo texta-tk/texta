@@ -18,6 +18,11 @@ from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.helper_functions import get_indices_from_object
+from toolkit.tagger.plots import create_tagger_plot
+from toolkit.base_task import BaseTask
+from toolkit.tools.mlp_analyzer import MLPAnalyzer
+from toolkit.elastic.feedback import Feedback
+from toolkit.elastic.data_sample import DataSample
 
 
 def create_tagger_batch(tagger_group_id, taggers_to_create):
@@ -37,75 +42,6 @@ def create_tagger_batch(tagger_group_id, taggers_to_create):
         tagger_group_object.save()
 
         created_tagger.train()
-
-
-def get_data_samples(tagger_object, text_processor, show_progress, indices, field_data):
-    """Retrieves positive & negative data samples from Elastic."""
-    # change status to scrolling negative feedback
-    show_progress.update_step('scrolling positive feedback')
-    show_progress.update_view(0)
-    # iterator for retrieving positive feedback sample
-    positive_feedback_sample = Feedback(
-        tagger_object.project.pk,
-        model_pk=tagger_object.pk,
-        model_type='tagger',
-        prediction_to_match='true',
-        text_processor=text_processor,
-        callback_progress=show_progress,
-    )
-    positive_feedback_sample = list(positive_feedback_sample)
-
-    # change status to scrolling positive sample
-    show_progress.update_step('scrolling positive sample')
-    show_progress.update_view(0)
-    # iterator for retrieving positive sample by query
-    positive_sample = ElasticSearcher(
-        query=json.loads(tagger_object.query),
-        indices=indices,
-        field_data=field_data,
-        output=ElasticSearcher.OUT_DOC_WITH_ID,
-        callback_progress=show_progress,
-        scroll_limit=int(tagger_object.maximum_sample_size) - len(positive_feedback_sample),
-        text_processor=text_processor,
-        score_threshold=float(tagger_object.score_threshold)
-    )
-
-    # iterators into lists and combine positive samples into one
-    positive_sample = positive_feedback_sample + list(positive_sample)
-    positive_ids = list([doc['_id'] for doc in positive_sample])
-
-    # change status to scrolling negative feedback
-    show_progress.update_step('scrolling negative feedback')
-    show_progress.update_view(0)
-    # iterator for retrieving negative feedback sample
-    negative_feedback_sample = Feedback(
-        tagger_object.project.pk,
-        model_pk=tagger_object.pk,
-        model_type='tagger',
-        prediction_to_match='false',
-        text_processor=text_processor,
-        callback_progress=show_progress,
-    )
-    # iterator to list
-    negative_feedback_sample = list(negative_feedback_sample)
-
-    # change status to scrolling negative sample
-    show_progress.update_step('scrolling negative sample')
-    show_progress.update_view(0)
-    # iterator for retrieving negative examples
-    negative_sample = ElasticSearcher(
-        indices=indices,
-        field_data=field_data,
-        output=ElasticSearcher.OUT_DOC_WITH_ID,
-        callback_progress=show_progress,
-        scroll_limit=(len(positive_sample) - len(negative_feedback_sample)) * int(tagger_object.negative_multiplier),
-        ignore_ids=positive_ids,
-        text_processor=text_processor
-    )
-    # combine negative samples into one
-    negative_sample = negative_feedback_sample + list(negative_sample)
-
-    return positive_sample, negative_sample
 
 
 @task(name="create_tagger_objects", base=BaseTask)
@@ -156,16 +92,19 @@ def train_tagger(tagger_id):
             text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words)
         else:
             text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
-        # retrieve training samples
-        positive_sample, negative_sample = get_data_samples(tagger_object, text_processor, show_progress, indices, field_data)
+        # create Datasample object for retrieving positive and negative sample
+        data_sample = DataSample(
+            tagger_object,
+            show_progress=show_progress, 
+            text_processor=text_processor
+        )
         # update status to training
         show_progress.update_step('training')
         show_progress.update_view(0)
         # train model
         tagger = TextTagger(tagger_id)
         tagger.train(
-            positive_sample,
-            negative_sample,
+            data_sample,
             field_list=json.loads(tagger_object.fields),
             classifier=tagger_object.classifier,
             vectorizer=tagger_object.vectorizer
@@ -213,9 +152,8 @@ def apply_tagger(text, tagger_id, input_type, lemmatize=False):
     # create text processor object for tagger
     stop_words = tagger.stop_words.split(' ')
     if tagger.embedding:
-        phraser = Phraser(tagger.id)
+        phraser = Phraser(tagger.embedding.id)
         phraser.load()
-
         text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
     else:
         text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)

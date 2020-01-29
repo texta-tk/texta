@@ -61,4 +61,4 @@ class ProjectResourceImportModelSerializer(serializers.Serializer):
 
 class FeedbackSerializer(serializers.Serializer):
     feedback_id = serializers.CharField()
-    correct_prediction = serializers.BooleanField()
+    correct_prediction = serializers.CharField()

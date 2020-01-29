@@ -1,8 +1,7 @@
 FROM continuumio/miniconda3:latest
 
 # Copy environment file
-COPY environment-nomkl.yaml /var/environment.yaml
-
+COPY environment-nogpu.yaml /var/environment.yaml
 
 RUN set -x \
     && conda env create -f /var/environment.yaml \
@@ -10,8 +9,6 @@ RUN set -x \
     && find /opt/conda/ -follow -type f -name '*.a' -delete \
     && find /opt/conda/ -follow -type f -name '*.pyc' -delete \
     && find /opt/conda/ -follow -type f -name '*.js.map' -delete
-
-
 
 # Copy project files
 COPY . /var/texta-rest
@@ -23,7 +20,6 @@ RUN chown -R www-data:www-data /var/texta-rest \
     && chmod +x /var/texta-rest/docker/conf/entrypoint.sh \
     && rm -rf /var/texta-rest/.git \
     && rm -rf /root/.cache
-
 
 # System configuration files
 COPY docker/conf/supervisord.conf /opt/conda/envs/texta-rest/etc/supervisord/conf.d/supervisord.conf

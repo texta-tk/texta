@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     'toolkit.embedding',
     'toolkit.dataset_import',
     'toolkit.tagger',
-    'toolkit.neurotagger',
+    'toolkit.torchtagger',
     # TEXTA Extension Apps
     # 'docscraper',
     # THIRD PARTY
@@ -222,7 +222,7 @@ NUM_WORKERS = 1
 
 # create model dirs
 MODELS_DIR = os.path.join(BASE_DIR, 'data', 'models')
-MODEL_TYPES = ['embedding', 'tagger', 'neurotagger']
+MODEL_TYPES = ['embedding', 'tagger', 'torchtagger']
 for model_type in MODEL_TYPES:
     model_dir = os.path.join(MODELS_DIR, model_type)
     if not os.path.exists(model_dir):

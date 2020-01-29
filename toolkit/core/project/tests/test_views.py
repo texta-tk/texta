@@ -93,7 +93,7 @@ class ProjectViewTests(APITestCase):
         print_output('get_resource_counts:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, dict))
-        self.assertTrue('num_neurotaggers' in response.data)
+        self.assertTrue('num_torchtaggers' in response.data)
         self.assertTrue('num_taggers' in response.data)
         self.assertTrue('num_tagger_groups' in response.data)
         self.assertTrue('num_embeddings' in response.data)
