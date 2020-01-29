@@ -1,7 +1,7 @@
 FROM continuumio/miniconda3:latest
 
 # Copy environment file
-COPY environment-nomkl.yaml /var/environment.yaml
+COPY environment-nogpu.yaml /var/environment.yaml
 
 RUN set -x \
     && conda env create -f /var/environment.yaml \
