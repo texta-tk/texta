@@ -54,7 +54,6 @@ class TorchTaggerPerformanceTests(TransactionTestCase):
         # post
         embeddings_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/embeddings/'
         response = self.client.post(embeddings_url, payload, format='json')
-        print(response)
         # Check if Embedding gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         duration = time()-start_time
