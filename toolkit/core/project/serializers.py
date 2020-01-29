@@ -65,7 +65,8 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_resources(self, obj):
         request = self.context.get('request')
-        base_url = request.build_absolute_uri(f'/projects/{obj.id}/')
+        version_prefix = f'/api/{self.context["request"].version}'
+        base_url = request.build_absolute_uri(f'{version_prefix}/projects/{obj.id}/')
         resource_dict = {}
         for resource_name in ('lexicons', 'reindexer', 'dataset_imports', 'searches', 'embeddings', 'embedding_clusters', 'taggers', 'tagger_groups', 'neurotaggers'):
             resource_dict[resource_name] = f'{base_url}{resource_name}/'
