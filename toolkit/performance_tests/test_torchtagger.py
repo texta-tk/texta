@@ -7,15 +7,19 @@ from django.test import TransactionTestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX_LARGE, TEST_FIELD_CHOICE, TEST_FACT_NAME
+from toolkit.test_settings import (
+    TEST_FIELD,
+    TEST_INDEX_LARGE,
+    TEST_FIELD_CHOICE,
+    TEST_FACT_NAME,
+    TEST_VERSION_PREFIX
+)
 from toolkit.core.project.models import Project
 from toolkit.torchtagger.models import TorchTagger
 from toolkit.core.task.models import Task
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
-#from toolkit.neurotagger import choices
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.torchtagger.torch_models.models import TORCH_MODELS
-from toolkit.torchtagger.tasks import torchtagger_train_handler
 
 
 class TorchTaggerPerformanceTests(TransactionTestCase):
@@ -24,10 +28,10 @@ class TorchTaggerPerformanceTests(TransactionTestCase):
         self.user = create_test_user('torchtaggerOwner', 'my@email.com', 'pw')
         self.project = Project.objects.create(
             title='torchtaggerTestProject',
-            owner=self.user,
             indices=TEST_INDEX_LARGE
         )
-        self.url = f'/projects/{self.project.id}/torchtaggers/'
+        self.project.users.add(self.user)
+        self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/torchtaggers/'
         self.test_embedding_id = None
         self.client.login(username='torchtaggerOwner', password='pw')
         self.torch_models = list(TORCH_MODELS.keys())
@@ -48,8 +52,9 @@ class TorchTaggerPerformanceTests(TransactionTestCase):
         }
         start_time = time()
         # post
-        embeddings_url = f'/projects/{self.project.id}/embeddings/'
+        embeddings_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/embeddings/'
         response = self.client.post(embeddings_url, payload, format='json')
+        print(response)
         # Check if Embedding gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         duration = time()-start_time
@@ -73,3 +78,4 @@ class TorchTaggerPerformanceTests(TransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         duration = time()-start_time
         print_output('test_torchtagger_training_duration:duration', duration)
+
