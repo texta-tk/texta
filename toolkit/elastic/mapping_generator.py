@@ -1,10 +1,5 @@
-# -*- coding: utf-8 -*-
-
 
 class SchemaGenerator:
-    def __init__(self):
-        pass
-
     def _get_text_structure(self):
         txt_structure = {"type": "text",
                          "fields": {
@@ -86,27 +81,27 @@ class SchemaGenerator:
                 fields.update({key: []})
         return fields
 
-    def generate_schema(self, mapping_name, fields):
+    def generate_schema(self, fields):
         '''
         fields: dict
         '''
         fields = self.init_fields(fields)
-        schema = {'mappings': {mapping_name: {'properties': {}}}}
+        schema = {'properties': {}}
         text_structure = self._get_text_structure()
         long_structure = self._get_long_structure()
         date_structure = self._get_date_structure()
         fact_structure = self._get_fact_structure()
 
         for field in fields['text']:
-            schema['mappings'][mapping_name]['properties'][field] = text_structure
+            schema['properties'][field] = text_structure
         for field in fields['long']:
-            schema['mappings'][mapping_name]['properties'][field] = long_structure
+            schema['properties'][field] = long_structure
         for field in fields['date']:
-            schema['mappings'][mapping_name]['properties'][field] = date_structure
+            schema['properties'][field] = date_structure
         for field in fields['texta_facts']:
-            schema['mappings'][mapping_name]['properties']['texta_facts'] = fact_structure
+            schema['properties']['texta_facts'] = fact_structure
         if fields['nested']:
             nested_mapping = self.get_nested_structure(fields['nested'])
-            schema['mappings'][mapping_name]['properties'].update(nested_mapping)
+            schema['properties'].update(nested_mapping)
 
         return schema
