@@ -59,7 +59,13 @@ class Feedback:
         """
         Lists feedback for a given model.
         """
-        return self.es_search.search()['hits']['hits']
+        # this is because the index might not exist yet
+        # check the _initialize_es method for more info
+        if not self.es_search:
+            return []
+        else:
+            return self.es_search.search()['hits']['hits']
+        
 
     def _text_to_doc(self, text):
         """
