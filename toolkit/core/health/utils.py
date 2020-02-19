@@ -57,14 +57,11 @@ def get_active_tasks():
     """
     active_and_scheduled_tasks = 0
     inspector = inspect()
-    if inspector.connection is not None:
-        active_tasks = inspector.active()
-        scheduled_tasks = inspector.scheduled()
-        if active_tasks:
-            active_and_scheduled_tasks += sum([len(tasks) for tasks in active_tasks.values()])
-        if scheduled_tasks:
-            active_and_scheduled_tasks += sum([len(tasks) for tasks in scheduled_tasks.values()])
-        return active_and_scheduled_tasks
 
-    else:
-        return 0
+    active_tasks = inspector.active()
+    scheduled_tasks = inspector.scheduled()
+    if active_tasks:
+        active_and_scheduled_tasks += sum([len(tasks) for tasks in active_tasks.values()])
+    if scheduled_tasks:
+        active_and_scheduled_tasks += sum([len(tasks) for tasks in scheduled_tasks.values()])
+    return active_and_scheduled_tasks
