@@ -69,7 +69,7 @@ class TextTagger:
         y_pred = model.predict(df_test)
         # Report model statistics
         # TODO: refactor this horrible dict lookup
-        report = TaggingReport(y_test, y_pred)
+        report = TaggingReport(y_test, y_pred, average='binary')
         statistics = {}
         statistics["precision"] = report.precision
         statistics["recall"] = report.recall
