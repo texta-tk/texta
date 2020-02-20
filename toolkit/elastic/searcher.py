@@ -29,7 +29,8 @@ class ElasticSearcher:
                  scroll_limit=None,
                  ignore_ids=set(),
                  text_processor=None,
-                 score_threshold=0.0):
+                 score_threshold=0.0,
+                 timeout='10m'):
         """
         Output options: document (default), text (lowered & stopwords removed), sentences (text + line splitting), raw (raw elastic output)
         """
@@ -44,6 +45,7 @@ class ElasticSearcher:
         self.output = output
         self.callback_progress = callback_progress
         self.text_processor = text_processor
+        self.timeout = timeout
 
         if self.callback_progress:
             total_elements = self.count()
@@ -127,12 +129,12 @@ class ElasticSearcher:
         except elasticsearch.NotFoundError:
             return 0
 
-    def search(self, size=10, timeout='1m'):
+    def search(self, size=10):
         # In case size/from is included in query in pagination, don't overwrite it by passing the size parameter
         if 'size' in self.query:
-            response = self.core.es.search(index=self.indices, body=self.query, timeout=timeout)
+            response = self.core.es.search(index=self.indices, body=self.query, timeout=self.timeout)
         else:
-            response = self.core.es.search(index=self.indices, body=self.query, size=size, timeout=timeout)
+            response = self.core.es.search(index=self.indices, body=self.query, size=size, timeout=self.timeout)
         if self.output == self.OUT_DOC:
             hits = [self._parse_doc(doc) for doc in response['hits']['hits']]
             return hits
@@ -159,7 +161,7 @@ class ElasticSearcher:
 
     # batch search makes an inital search, and then keeps pulling batches of results, until none are left.
     def scroll(self):
-        page = self.core.es.search(index=self.indices, body=self.query, scroll='1m', size=self.scroll_size)
+        page = self.core.es.search(index=self.indices, body=self.query, scroll=self.timeout, size=self.scroll_size)
         scroll_id = page['_scroll_id']
         current_page = 0
         # set page size
