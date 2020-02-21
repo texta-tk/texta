@@ -7,11 +7,11 @@ from rest_framework.test import APITestCase
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.tagger.models import Tagger, TaggerGroup
-from toolkit.test_settings import(TEST_FACT_NAME,
-                                  TEST_FIELD,
-                                  TEST_FIELD_CHOICE,
-                                  TEST_INDEX,
-                                  TEST_VERSION_PREFIX)
+from toolkit.test_settings import (TEST_FACT_NAME,
+                                   TEST_FIELD,
+                                   TEST_FIELD_CHOICE,
+                                   TEST_INDEX,
+                                   TEST_VERSION_PREFIX)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
@@ -75,7 +75,7 @@ class TaggerGroupViewTests(APITestCase):
             self.addCleanup(remove_file, tagger.model.path)
             self.addCleanup(remove_file, tagger.plot.path)
             # Check if not errors
-            self.assertEqual(tagger.task.errors, '')
+            self.assertEqual(tagger.task.errors, '[]')
             # Check if Task gets created via a signal
             self.assertTrue(tagger.task is not None)
             # Check if Tagger gets trained and completed

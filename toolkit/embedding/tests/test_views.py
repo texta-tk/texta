@@ -215,7 +215,7 @@ class EmbeddingViewTests(TransactionTestCase):
         created_embedding_cluster = EmbeddingCluster.objects.get(id=response.data['id'])
         self.test_embedding_clustering_id = created_embedding_cluster.id
         # Check if not errors
-        self.assertEqual(created_embedding_cluster.task.errors, '')
+        self.assertEqual(created_embedding_cluster.task.errors, '[]')
         # Check if Task gets created via a signal
         self.assertTrue(created_embedding_cluster.task is not None)
         # Check if Embedding gets trained and completed

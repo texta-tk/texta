@@ -1,10 +1,9 @@
 import collections
+
 import elasticsearch
-import urllib
-import json
 
 from toolkit.elastic.core import ElasticCore
-from toolkit.settings import ES_URL
+
 
 ES_SCROLL_SIZE = 500
 EMPTY_QUERY = {"query": {"match_all": {}}}
@@ -19,6 +18,7 @@ class ElasticSearcher:
     OUT_TEXT = 'text'
     OUT_DOC_WITH_ID = 'doc_with_id'
     OUT_DOC_WITH_TOTAL_HL_AGGS = 'doc_with_total_hl_aggs'
+
 
     def __init__(self, field_data=[],
                  indices=[],
@@ -53,17 +53,21 @@ class ElasticSearcher:
                 total_elements = scroll_limit
             callback_progress.set_total(total_elements)
 
+
     def __iter__(self):
         """
         Iterator for iterating through scroll
         """
         return self.scroll()
 
+
     def update_query(self, query):
         self.query = query
 
+
     def update_field_data(self, field_data):
         self.field_data = field_data
+
 
     def _parse_doc(self, doc):
         """
@@ -95,6 +99,7 @@ class ElasticSearcher:
         new_doc = self._flatten(doc)
         return new_doc, index, highlight
 
+
     def _flatten(self, d, parent_key='', sep='.'):
         """
         From: https://stackoverflow.com/questions/6027558/flatten-nested-dictionaries-compressing-keys
@@ -107,6 +112,7 @@ class ElasticSearcher:
             else:
                 items.append((new_key, v))
         return dict(items)
+
 
     def _decode_doc(self, doc, field_path=None):
         decoded_text = doc['_source']
@@ -122,12 +128,14 @@ class ElasticSearcher:
             pass
         return decoded_text
 
-    def count(self):
+
+    def count(self) -> int:
         try:
-            response = self.core.es.search(index=self.indices, body=self.query)
-            return response['hits']['total']
+            count = self.core.es.count(index=self.indices, body=self.query)
+            return count["count"]
         except elasticsearch.NotFoundError:
             return 0
+
 
     def search(self, size=10):
         # In case size/from is included in query in pagination, don't overwrite it by passing the size parameter
@@ -148,6 +156,7 @@ class ElasticSearcher:
         else:
             return response
 
+
     def random_documents(self, size=10):
         """
         Returns n random documents, where n=size.
@@ -158,6 +167,7 @@ class ElasticSearcher:
             return [self._parse_doc(doc) for doc in response['hits']['hits']]
         else:
             return response
+
 
     # batch search makes an inital search, and then keeps pulling batches of results, until none are left.
     def scroll(self):
@@ -209,7 +219,7 @@ class ElasticSearcher:
             # return raw hit
             elif self.output == self.OUT_RAW:
                 # filter page by score
-                page = [doc for doc in page if doc['_score'] > lowest_allowed_score]
+                page = [doc for doc in page["hits"]["hits"] if doc['_score'] > lowest_allowed_score]
                 # if score too low, break scroll
                 if not page:
                     scroll_break = True
@@ -219,6 +229,7 @@ class ElasticSearcher:
                 if page:
                     num_scrolled += len(page)
                     yield page
+
             # get new page
             page = self.core.es.scroll(scroll_id=scroll_id, scroll='1m')
             scroll_id = page['_scroll_id']

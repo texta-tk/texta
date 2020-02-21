@@ -12,12 +12,12 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.settings import MODELS_DIR
 from toolkit.tagger.models import Tagger
-from toolkit.test_settings import(TEST_FIELD,
-                                  TEST_FIELD_CHOICE,
-                                  TEST_INDEX,
-                                  TEST_MATCH_TEXT,
-                                  TEST_QUERY,
-                                  TEST_VERSION_PREFIX)
+from toolkit.test_settings import (TEST_FIELD,
+                                   TEST_FIELD_CHOICE,
+                                   TEST_INDEX,
+                                   TEST_MATCH_TEXT,
+                                   TEST_QUERY,
+                                   TEST_VERSION_PREFIX)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
@@ -70,8 +70,10 @@ class TaggerViewTests(APITestCase):
         self.run_patch_on_tagger_instances(self.test_tagger_ids)
         self.run_put_on_tagger_instances(self.test_tagger_ids)
 
+
     def tearDown(self) -> None:
         Tagger.objects.all().delete()
+
 
     def run_create_tagger_training_and_task_signal(self):
         """Tests the endpoint for a new Tagger, and if a new Task gets created via the signal"""
@@ -97,7 +99,7 @@ class TaggerViewTests(APITestCase):
                 # add tagger to be tested
                 self.test_tagger_ids.append(created_tagger.pk)
                 # Check if not errors
-                self.assertEqual(created_tagger.task.errors, '')
+                self.assertEqual(created_tagger.task.errors, '[]')
                 # Remove tagger files after test is done
                 self.addCleanup(remove_file, created_tagger.model.path)
                 self.addCleanup(remove_file, created_tagger.plot.path)
@@ -457,7 +459,7 @@ class TaggerViewTests(APITestCase):
         feedback_delete_url = f'{self.url}{tagger_id}/feedback/'
         response = self.client.delete(feedback_delete_url)
         print_output('test_tag_doc_delete_feedback:response.data', response.data)
-        # sleep for a sec to allow elastic to finish its bussiness
+        # sleep for a sec to allow elastic to finish its business
         sleep(1)
 
         # list feedback again to make sure its emtpy

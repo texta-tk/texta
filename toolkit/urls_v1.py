@@ -1,20 +1,22 @@
+from django.conf.urls import url
 from django.contrib.auth.decorators import login_required
 from django.urls import include, path
 from django.views.static import serve
-from django.conf.urls import url
 from rest_framework_nested import routers
 
-from toolkit.core.urls import router as core_router
-from toolkit.embedding.urls import embedding_router
-from toolkit.tagger.urls import router as tagger_router
-from toolkit.elastic.urls import router as reindexer_router
-from toolkit.dataset_import.urls import router as dataset_import_router
-from toolkit.torchtagger.urls import router as torchtagger_router
-from toolkit.core.user_profile import views as profile_views
 from toolkit.core.health.views import HealthView
-from toolkit.elastic.views import ElasticGetIndices
 from toolkit.core.project.views import ProjectViewSet
+from toolkit.core.task.views import TaskAPIView
+from toolkit.core.urls import router as core_router
+from toolkit.core.user_profile import views as profile_views
+from toolkit.dataset_import.urls import router as dataset_import_router
+from toolkit.elastic.urls import router as reindexer_router
+from toolkit.elastic.views import ElasticGetIndices
+from toolkit.embedding.urls import embedding_router
+from toolkit.mlp.urls import mlp_router
+from toolkit.tagger.urls import router as tagger_router
 from toolkit.tools.swagger import schema_view
+from toolkit.torchtagger.urls import router as torchtagger_router
 
 
 @login_required
@@ -33,6 +35,7 @@ project_router.registry.extend(dataset_import_router.registry)
 project_router.registry.extend(tagger_router.registry)
 project_router.registry.extend(core_router.registry)
 project_router.registry.extend(torchtagger_router.registry)
+project_router.registry.extend(mlp_router.registry)
 
 app_name = 'toolkit_v1'
 
@@ -46,6 +49,7 @@ urlpatterns = [
     # auth
     path('rest-auth/', include('rest_auth.urls')),
     path('rest-auth/registration/', include('rest_auth.registration.urls')),
+    path("task/", TaskAPIView.as_view(), name="task_api"),
     # elastic
     # TODO Admin access only
     url(r'^get_indices', ElasticGetIndices.as_view()),
@@ -53,11 +57,3 @@ urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^', include(project_router.urls))
 ]
-
-
-
-
-
-
-
-

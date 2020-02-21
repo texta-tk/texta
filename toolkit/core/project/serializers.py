@@ -78,6 +78,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
             'taggers',
             'tagger_groups',
             'torchtaggers',
+            'mlp'
         )
         for resource_name in resources:
             resource_dict[resource_name] = f'{base_url}{resource_name}/'

@@ -28,7 +28,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'eqr9sjz-&baah&c%ejkaorp)a1$q63y0%*a^&fv=y$(bbe5+(b'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = eval(os.getenv('TEXTA_DEBUG', "True"))
+DEBUG = True if os.getenv('TEXTA_DEBUG', "True") == "True" else False
 
 ALLOWED_HOSTS = ['*']
 
@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'toolkit.dataset_import',
     'toolkit.tagger',
     'toolkit.torchtagger',
+    'toolkit.mlp',
     # TEXTA Extension Apps
     # 'docscraper',
     # THIRD PARTY

@@ -1,52 +1,33 @@
+import rest_framework.filters as drf_filters
 from celery import group
 from django.db.models import Count
+from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
 from toolkit.core.project.models import Project
-from toolkit.core.project.serializers import (
-    ProjectSerializer,
-    ProjectGetFactsSerializer,
-    ProjectSimplifiedSearchSerializer,
-    ProjectSearchByQuerySerializer,
-    ProjectMultiTagSerializer,
-    ProjectSuggestFactValuesSerializer,
-    ProjectSuggestFactNamesSerializer,
-    ProjectGetSpamSerializer,
-)
-from toolkit.serializer_constants import ProjectResourceImportModelSerializer
+from toolkit.core.project.serializers import (ProjectGetFactsSerializer, ProjectGetSpamSerializer, ProjectMultiTagSerializer, ProjectSearchByQuerySerializer, ProjectSerializer, ProjectSimplifiedSearchSerializer, ProjectSuggestFactNamesSerializer, ProjectSuggestFactValuesSerializer)
+from toolkit.core.task.models import Task
+from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.spam_detector import SpamDetector
 from toolkit.exceptions import ProjectValidationFailed, SerializerNotValid
-from toolkit.permissions.project_permissions import (
-    ProjectAllowed,
-    ExtraActionResource,
-    ProjectResourceAllowed,
-    IsSuperUser
-)
+from toolkit.permissions.project_permissions import (ExtraActionResource, IsSuperUser, ProjectAllowed)
 from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
-from toolkit.view_constants import FeedbackIndexView, AdminPermissionsViewSetMixin
-from toolkit.view_constants import (
-    FeedbackIndexView,
-    AdminPermissionsViewSetMixin
-)
 from toolkit.tools.autocomplete import Autocomplete
-from toolkit.core.task.models import Task
-from toolkit.helper_functions import get_indices_from_object
-
-from celery import group
-
-from django_filters import rest_framework as filters
-import rest_framework.filters as drf_filters
+from toolkit.view_constants import (
+    FeedbackIndexView
+)
 
 
 class ProjectFilter(filters.FilterSet):
     title = filters.CharFilter('title', lookup_expr='icontains')
+
 
     class Meta:
         model = Project
@@ -124,7 +105,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
 
 
     @action(detail=True, methods=['post'], serializer_class=ProjectGetSpamSerializer, permission_classes=[ExtraActionResource])
-    def get_spam(self,  request, pk=None):
+    def get_spam(self, request, pk=None):
         """
         Analyses Elasticsearch inside the project to detect frequently occuring texts.
         Returns list of potential spam messages with frequently co-occurring features.
@@ -166,12 +147,14 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             fact_map_list = [v for v in fact_map]
         return Response(fact_map_list, status=status.HTTP_200_OK)
 
+
     @action(detail=True, methods=['get'])
     def get_indices(self, request, pk=None, project_pk=None):
         """Returns list of available indices in project."""
         project_object = self.get_object()
         project_indices = {"indices": list(project_object.indices)}
         return Response(project_indices)
+
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSimplifiedSearchSerializer, permission_classes=[ExtraActionResource])
     def search(self, request, pk=None, project_pk=None):
