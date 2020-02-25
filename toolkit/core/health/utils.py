@@ -27,12 +27,12 @@ def get_mlp_status():
     mlp_info = {"url": MLP_URL, "alive": False}
 
     try:
-        response = requests.get(MLP_URL)
+        response = requests.get(MLP_URL, timeout=30)
         if response.status_code == 200:
             mlp_info["status"] = response.json()
             mlp_info["alive"] = True
-    except:
-        pass
+    except requests.exceptions.Timeout as e:
+        return mlp_info
 
     return mlp_info
 
