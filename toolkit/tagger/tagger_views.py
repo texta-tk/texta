@@ -8,14 +8,12 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.tools.text_processor import TextProcessor
-from toolkit.embedding.phraser import Phraser
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.phraser import Phraser
-from toolkit.exceptions import MLPNotAvailable, NonExistantModelError, ProjectValidationFailed, SerializerNotValid
+from toolkit.exceptions import MLPNotAvailable, NonExistantModelError, SerializerNotValid
 from toolkit.helper_functions import apply_celery_task
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import (

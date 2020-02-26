@@ -4,6 +4,7 @@ import re
 
 import rest_framework.filters as drf_filters
 from celery import group
+from django.http import HttpResponse
 from django_filters import rest_framework as filters
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
@@ -14,9 +15,10 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.exceptions import MLPNotAvailable, NonExistantModelError, ProjectValidationFailed, SerializerNotValid
+from toolkit.exceptions import MLPNotAvailable, NonExistantModelError, SerializerNotValid
 from toolkit.helper_functions import apply_celery_task
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.tagger.models import TaggerGroup
 from toolkit.tagger.serializers import TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer
 from toolkit.tagger.tagger_views import global_mlp_for_taggers
@@ -104,19 +106,10 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tagger_objects = instance.taggers.all()
         for tagger in tagger_objects:
             self.perform_destroy(tagger)
+
         self.perform_destroy(instance)
-        tagger_model_locations = [tagger.model.path for tagger in tagger_objects]
-        tagger_plot_locations = [tagger.plot.path for tagger in tagger_objects]
-        try:
-            for model_dir_list in (
-                    tagger_model_locations,
-                    tagger_plot_locations,
-            ):
-                for model_dir in model_dir_list:
-                    os.remove(model_dir)
-            return Response({"success": "Taggergroup instance deleted, related tagger instances deleted and related models and plots removed"}, status=status.HTTP_204_NO_CONTENT)
-        except:
-            return Response({"success": "Taggergroup instance deleted, related tagger instances deleted, but related models and plots were not removed"}, status=status.HTTP_204_NO_CONTENT)
+
+        return Response({"success": "Taggergroup instance deleted, related tagger instances deleted and related models and plots removed"}, status=status.HTTP_204_NO_CONTENT)
 
 
     @action(detail=True, methods=['get'])
@@ -130,6 +123,28 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         response = [{'tag': tagger.description, 'id': tagger.id, 'url': f'{tagger_url_prefix}{tagger.id}/', 'status': tagger.task.status} for tagger in tagger_objects]
 
         return Response(response, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['get'])
+    def export_model(self, request, pk=None, project_pk=None):
+        """Returns list of tags for input text."""
+        zip_name = f'tagger_group_{pk}.zip'
+
+        tagger_object: TaggerGroup = self.get_object()
+        data = tagger_object.export_resources()
+        response = HttpResponse(data)
+        response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(zip_name)
+        return response
+
+
+    @action(detail=False, methods=["post"], serializer_class=ProjectResourceImportModelSerializer)
+    def import_model(self, request, pk=None, project_pk=None):
+        serializer = ProjectResourceImportModelSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        uploaded_file = serializer.validated_data['file']
+        tagger_id = TaggerGroup.import_resources(uploaded_file, request, project_pk)
+        return Response({"id": tagger_id, "message": "Successfully imported TaggerGroup models and associated files."}, status=status.HTTP_201_CREATED)
 
 
     @action(detail=True, methods=['post'])

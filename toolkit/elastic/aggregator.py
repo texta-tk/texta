@@ -41,7 +41,7 @@ class ElasticAggregator:
                 "nested": {"path": "texta_facts"},
                 "aggs": {
                     "facts": {
-                        "terms": {"field": "texta_facts.fact", "size": size}
+                        "terms": {"field": "texta_facts.fact", "size": 10000}  # Get as many types of facts as possible.
                     }
                 }
             }

@@ -8,7 +8,7 @@ import zipfile
 
 from django.contrib.auth.models import User
 from django.core import serializers
-from django.db import models
+from django.db import models, transaction
 from django.dispatch import receiver
 from django.http import HttpResponse
 
@@ -20,13 +20,6 @@ from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import apply_celery_task
 from toolkit.multiselectfield import PatchedMultiSelectField as MultiSelectField
-from toolkit.tagger.choices import (
-    DEFAULT_CLASSIFIER,
-    DEFAULT_MAX_SAMPLE_SIZE,
-    DEFAULT_MIN_SAMPLE_SIZE,
-    DEFAULT_NEGATIVE_MULTIPLIER,
-    DEFAULT_VECTORIZER
-)
 from toolkit.settings import MODELS_DIR
 from toolkit.tagger.choices import (DEFAULT_CLASSIFIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE, DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_VECTORIZER)
 
@@ -99,28 +92,29 @@ class Tagger(models.Model):
 
     @staticmethod
     def import_resources(zip_file, request, pk) -> int:
-        with zipfile.ZipFile(zip_file, 'r') as archive:
-            json_string = archive.read(Tagger.MODEL_JSON_NAME).decode()
-            model_json = json.loads(json_string)
-            new_model = Tagger(**model_json)
+        with transaction.atomic():
+            with zipfile.ZipFile(zip_file, 'r') as archive:
+                json_string = archive.read(Tagger.MODEL_JSON_NAME).decode()
+                model_json = json.loads(json_string)
+                new_model = Tagger(**model_json)
 
-            new_model.task = Task.objects.create(tagger=new_model, status=Task.STATUS_COMPLETED)
-            new_model.author = User.objects.get(id=request.user.id)
-            new_model.project = Project.objects.get(id=pk)
-            new_model.save()  # Save the intermediate results.
+                new_model.task = Task.objects.create(tagger=new_model, status=Task.STATUS_COMPLETED)
+                new_model.author = User.objects.get(id=request.user.id)
+                new_model.project = Project.objects.get(id=pk)
+                new_model.save()  # Save the intermediate results.
 
-            new_tagger_name = new_model.generate_name("tagger")
-            with open(new_tagger_name, "wb") as fp:
-                path = pathlib.Path(model_json["model"]).name
-                fp.write(archive.read(path))
-                new_model.model.name = new_tagger_name
+                new_tagger_name = new_model.generate_name("tagger")
+                with open(new_tagger_name, "wb") as fp:
+                    path = pathlib.Path(model_json["model"]).name
+                    fp.write(archive.read(path))
+                    new_model.model.name = new_tagger_name
 
-            plot_name = pathlib.Path(model_json["plot"])
-            path = plot_name.name
-            new_model.plot.save(f'{secrets.token_hex(15)}.png', io.BytesIO(archive.read(path)))
+                plot_name = pathlib.Path(model_json["plot"])
+                path = plot_name.name
+                new_model.plot.save(f'{secrets.token_hex(15)}.png', io.BytesIO(archive.read(path)))
 
-            new_model.save()
-            return new_model.id
+                new_model.save()
+                return new_model.id
 
 
     def get_resource_paths(self):
@@ -156,6 +150,8 @@ def auto_delete_file_on_delete(sender, instance: Tagger, **kwargs):
 
 
 class TaggerGroup(models.Model):
+    MODEL_JSON_NAME = "model.json"
+
     description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -166,8 +162,80 @@ class TaggerGroup(models.Model):
     taggers = models.ManyToManyField(Tagger, default=None)
 
 
+    def export_resources(self) -> HttpResponse:
+        with tempfile.SpooledTemporaryFile(encoding="utf8") as tmp:
+            with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as archive:
+                # Write model object to zip as json
+                model_json = self.to_json()
+                model_json = json.dumps(model_json).encode("utf8")
+                archive.writestr(self.MODEL_JSON_NAME, model_json)
+
+                for item in self.get_resource_paths():
+                    for file_path in item.values():
+                        path = pathlib.Path(file_path)
+                        archive.write(file_path, arcname=str(path.name))
+
+            tmp.seek(0)
+            return tmp.read()
+
+
+    @staticmethod
+    def import_resources(zip_file, request, pk) -> int:
+        with transaction.atomic():
+            with zipfile.ZipFile(zip_file, 'r') as archive:
+                json_string = archive.read(Tagger.MODEL_JSON_NAME).decode()
+                model_json: dict = json.loads(json_string)
+                tg_data = {key: model_json[key] for key in model_json if key != 'taggers'}
+                new_model = TaggerGroup(**tg_data)
+
+                new_model.author = User.objects.get(id=request.user.id)
+                new_model.project = Project.objects.get(id=pk)
+                new_model.save()  # Save the intermediate results.
+
+                for tagger in model_json["taggers"]:
+                    tagger_model = Tagger(**tagger)
+
+                    tagger_model.task = Task.objects.create(tagger=tagger_model, status=Task.STATUS_COMPLETED)
+                    tagger_model.author = User.objects.get(id=request.user.id)
+                    tagger_model.project = Project.objects.get(id=pk)
+                    tagger_model.save()
+
+                    new_tagger_name = tagger_model.generate_name("tagger")
+                    with open(new_tagger_name, "wb") as fp:
+                        path = pathlib.Path(tagger["model"]).name
+                        fp.write(archive.read(path))
+                        tagger_model.model.name = new_tagger_name
+
+                        plot_name = pathlib.Path(tagger["plot"])
+                        path = plot_name.name
+                        tagger_model.plot.save(f'{secrets.token_hex(15)}.png', io.BytesIO(archive.read(path)))
+                        tagger_model.save()
+
+                    new_model.taggers.add(tagger_model)
+
+                new_model.save()
+                return new_model.id
+
+
+    def to_json(self) -> dict:
+        serialized = serializers.serialize('json', [self])
+        json_obj = json.loads(serialized)[0]["fields"]
+        json_obj["taggers"] = [tg.to_json() for tg in self.taggers.all()]
+        del json_obj["project"]
+        del json_obj["author"]
+        return json_obj
+
+
     def __str__(self):
         return self.fact_name
+
+
+    def get_resource_paths(self):
+        container = []
+        taggers = self.taggers.all()
+        for tagger in taggers:
+            container.append(tagger.get_resource_paths())
+        return container
 
 
 @receiver(models.signals.pre_delete, sender=TaggerGroup)

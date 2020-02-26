@@ -1,5 +1,6 @@
 import json
 import pathlib
+from io import BytesIO
 
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -44,6 +45,7 @@ class TaggerGroupViewTests(APITestCase):
         self.run_tag_random_doc()
         self.run_models_retrain()
         self.create_taggers_with_empty_fields()
+        self.run_model_export_import()
 
 
     def run_create_tagger_group_training_and_task_signal(self):
@@ -58,7 +60,7 @@ class TaggerGroupViewTests(APITestCase):
                 "classifier": "LinearSVC",
                 "feature_selector": "SVM Feature Selector",
                 "maximum_sample_size": 500,
-                "negative_multiplier": 1.0,
+                "negative_multiplier": 1.0
             }
         }
         response = self.client.post(self.url, payload, format='json')
@@ -198,3 +200,38 @@ class TaggerGroupViewTests(APITestCase):
             has_model_file = pathlib.Path(tagger.model.path).exists()
             self.assertEqual(has_model_file, False)
             self.assertEqual(has_plot_file, False)
+
+
+    def run_model_export_import(self):
+        """Tests endpoint for model export and import"""
+        test_tagger_group_id = self.test_tagger_group_id
+
+        # retrieve model zip
+        url = f'{self.url}{test_tagger_group_id}/export_model/'
+        response = self.client.get(url)
+
+        # Post model zip
+        import_url = f'{self.url}import_model/'
+        response = self.client.post(import_url, data={'file': BytesIO(response.content)})
+        print_output('test_import_model:response.data', import_url)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        tg = TaggerGroup.objects.get(pk=response.data["id"])
+
+        self.assertTrue(tg.taggers.count() > 1)
+
+        # Check if the models and plot files exist.
+        resources = tg.get_resource_paths()
+        for item in resources:
+            for path in item.values():
+                file = pathlib.Path(path)
+                self.assertTrue(file.exists())
+
+        # Tests the endpoint for the tag_random_doc action'''
+        url = f'{self.url}{tg.pk}/tag_random_doc/'
+        response = self.client.get(url)
+        print_output('test_tag_random_doc_group:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, dict))
+        self.assertTrue('tags' in response.data)
