@@ -13,17 +13,7 @@ class MLPLemmatizerTests(TestCase):
             {"lang": "en", "text": "This text is beyond boring. But its in English!"},
             {"lang": "ru", "text": "Путин обсудил с Совбезом РФ ситуацию в Сирии и ДРСМД"}
         ]
-    
-    def test_status_and_version_check(self):
-        """
-        Tests MLP service health and version.
-        """
-        status = self.lemmatizer.status
-        print_output("test_mlp_status:status", status)
-        self.assertTrue(status)
-        version = self.lemmatizer.version     
-        print_output("test_mlp_version:version", version)
-        self.assertTrue(version > 0)  
+
 
     def test_lemmatization(self):
         """

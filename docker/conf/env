@@ -1,9 +1,9 @@
 TEXTA_HOST=http://localhost
-TEXTA_ES_URL=http://texta-elasticsearch:9200
+#TEXTA_ES_URL=http://localhost:9200
 TEXTA_DEBUG=False
 
-TEXTA_REDIS_URL=redis://redis:6379/1
-TEXTA_MLP_URL=http://mlp-dev.texta.ee:5000
+TEXTA_REDIS_URL=redis://redis:6379
+TEXTA_MLP_URL=http://texta-mlp:5000
 
 # Elastic is one of the root accounts, only usable with the X-Pack security.
 #TEXTA_ES_USER=elastic
@@ -17,6 +17,5 @@ TEXTA_MLP_URL=http://mlp-dev.texta.ee:5000
 #DJANGO_DATABASE_NAME=docker
 #DJANGO_DATABASE_USER=docker
 #DJANGO_DATABASE_PASSWORD=docker
-#DJANGO_DATABASE_HOST=texta-postgres
+#DJANGO_DATABASE_HOST=localhost
 #DJANGO_DATABASE_PORT=5432
-

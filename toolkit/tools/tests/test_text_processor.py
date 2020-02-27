@@ -11,7 +11,6 @@ from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 class TextProcessorTests(TransactionTestCase):
 
-
     def setUp(self):
         # Owner of the project
         self.user = create_test_user('textProcessorOwner', 'my@email.com', 'pw')
@@ -35,8 +34,10 @@ class TextProcessorTests(TransactionTestCase):
         self.run_stop_word_remove_custom_stop_words()
         self.run_text_processor()
 
+
     def tearDown(self) -> None:
         Embedding.objects.all().delete()
+
 
     def run_train_embedding(self):
         # payload for training embedding
@@ -56,9 +57,8 @@ class TextProcessorTests(TransactionTestCase):
         self.test_phraser.load()
 
 
-
     def run_phrase(self):
-        '''Tests phrasing using Phraser class.'''
+        """Tests phrasing using Phraser class."""
         test_text = 'eks olema huvitav , et nii palju rõhk siin oma maine siga'
         # test phrasing with string
         result = self.test_phraser.phrase(test_text)
@@ -71,7 +71,7 @@ class TextProcessorTests(TransactionTestCase):
 
 
     def run_stop_word_remove(self):
-        '''Tests removing stopwords using StopWords class'''
+        """Tests removing stopwords using StopWords class"""
         test_text = 'eks olema huvitav , et nii palju rõhk siin oma maine siga'
         # test stop word removal with string
         result = StopWords().remove(test_text)
@@ -86,7 +86,7 @@ class TextProcessorTests(TransactionTestCase):
 
 
     def run_stop_word_remove_custom_stop_words(self):
-        '''Tests removing stopwords using StopWords class and list of custom stopwords'''
+        """Tests removing stopwords using StopWords class and list of custom stopwords"""
         test_text = 'eks olema huvitav , et nii palju rõhk siin oma maine siga'
         custom_stop_words = ['siga', 'maine']
         # test stop word removal with string
@@ -102,7 +102,7 @@ class TextProcessorTests(TransactionTestCase):
 
 
     def run_text_processor(self):
-        '''Tests TextProcessor class'''
+        """Tests TextProcessor class"""
         test_text = 'eks olema huvitav \n\n et nii palju rõhk siin oma maine siga'
         for phraser_opt in (None, self.test_phraser):
             tp = TextProcessor(phraser=phraser_opt)

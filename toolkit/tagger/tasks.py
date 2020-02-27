@@ -23,8 +23,6 @@ from toolkit.tools.text_processor import TextProcessor
 def create_tagger_batch(tagger_group_id, taggers_to_create):
     """Creates Tagger objects from list of tagger data and saves into tagger group object."""
     # retrieve Tagger Group object
-    logging.getLogger().info(tagger_group_id)
-    logging.getLogger().info([t.pk for t in TaggerGroup.objects.all()])
 
     tagger_group_object = TaggerGroup.objects.get(pk=tagger_group_id)
     # iterate through batch
@@ -46,7 +44,6 @@ def create_tagger_batch(tagger_group_id, taggers_to_create):
 def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries, batch_size=100):
     """Task for creating Tagger objects inside Tagger Group to prevent database timeouts."""
     # create tagger objects
-    logging.getLogger().info(tagger_group_id)
     taggers_to_create = []
     for i, tag in enumerate(tags):
         tagger_data = tagger_serializer.copy()
