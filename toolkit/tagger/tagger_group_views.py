@@ -248,11 +248,6 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         lemmatize = serializer.validated_data['lemmatize']
         use_ner = serializer.validated_data['use_ner']
 
-        # check if MLP available
-        if lemmatize or use_ner:
-            if not global_mlp_for_taggers.status:
-                raise MLPNotAvailable()
-
         # update text and tags with MLP
         text, tags = self.get_mlp(text, lemmatize=lemmatize, use_ner=use_ner)
 
@@ -301,11 +296,6 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         n_similar_docs = serializer.validated_data['n_similar_docs']
         lemmatize = serializer.validated_data['lemmatize']
         use_ner = serializer.validated_data['use_ner']
-
-        # check if MLP available
-        if lemmatize or use_ner:
-            if not global_mlp_for_taggers.status:
-                raise MLPNotAvailable()
 
         # update text and tags with MLP
         combined_texts, tags = self.get_mlp(combined_texts, lemmatize=lemmatize, use_ner=use_ner)
