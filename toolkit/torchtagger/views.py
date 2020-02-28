@@ -1,34 +1,35 @@
-import os
 import json
-import numpy as np
+import os
 
-from rest_framework import viewsets, status, permissions
+import rest_framework.filters as drf_filters
+from django.http import HttpResponse
+from django_filters import rest_framework as filters
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
-from toolkit.torchtagger.torchtagger import TorchTagger
 from toolkit.core.project.models import Project
-from toolkit.exceptions import ProjectValidationFailed
-from toolkit.torchtagger.serializers import TorchTaggerSerializer
-from toolkit.permissions.project_permissions import ProjectResourceAllowed
-from toolkit.view_constants import BulkDelete, FeedbackModelView
-from toolkit.tagger.serializers import TaggerTagTextSerializer
 from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.tools.text_processor import TextProcessor
-from toolkit.embedding.phraser import Phraser
 from toolkit.elastic.feedback import Feedback
+from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.embedding.phraser import Phraser
+from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed
 from toolkit.helper_functions import apply_celery_task
+from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.serializer_constants import ProjectResourceImportModelSerializer
+from toolkit.tagger.serializers import TaggerTagTextSerializer
+from toolkit.tools.text_processor import TextProcessor
+from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
+from toolkit.torchtagger.serializers import TorchTaggerSerializer
 from toolkit.torchtagger.tasks import train_torchtagger
-
-from django_filters import rest_framework as filters
-import rest_framework.filters as drf_filters
+from toolkit.torchtagger.torchtagger import TorchTagger
+from toolkit.view_constants import BulkDelete, FeedbackModelView
 
 
 class TorchTaggerFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
     task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+
 
     class Meta:
         model = TorchTaggerObject
@@ -41,7 +42,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
     permission_classes = (
         permissions.IsAuthenticated,
         ProjectResourceAllowed,
-        )
+    )
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     filterset_class = TorchTaggerFilter
@@ -49,10 +50,10 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
 
     def perform_create(self, serializer, **kwargs):
-        tagger: TorchTagger = serializer.save(author=self.request.user,
-                        project=Project.objects.get(id=self.kwargs['project_pk']),
-                        fields=json.dumps(serializer.validated_data['fields']),
-                        **kwargs)
+        tagger: TorchTaggerObject = serializer.save(author=self.request.user,
+                                                    project=Project.objects.get(id=self.kwargs['project_pk']),
+                                                    fields=json.dumps(serializer.validated_data['fields']),
+                                                    **kwargs)
         tagger.train()
 
 
@@ -69,6 +70,28 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
 
     @action(detail=True, methods=['get'])
+    def export_model(self, request, pk=None, project_pk=None):
+        """Returns list of tags for input text."""
+        zip_name = f'torchtagger_model_{pk}.zip'
+
+        tagger_object: TorchTaggerObject = self.get_object()
+        data = tagger_object.export_resources()
+        response = HttpResponse(data)
+        response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(zip_name)
+        return response
+
+
+    @action(detail=False, methods=["post"], serializer_class=ProjectResourceImportModelSerializer)
+    def import_model(self, request, pk=None, project_pk=None):
+        serializer = ProjectResourceImportModelSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        uploaded_file = serializer.validated_data['file']
+        tagger_id = TorchTaggerObject.import_resources(uploaded_file, request, project_pk)
+        return Response({"id": tagger_id, "message": "Successfully imported model and associated files."}, status=status.HTTP_201_CREATED)
+
+
+    @action(detail=True, methods=['get'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """Returns prediction for a random document in Elasticsearch."""
         # get tagger object
@@ -76,6 +99,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         # check if tagger exists
         if not tagger_object.model:
             raise NonExistantModelError()
+
         # retrieve tagger fields
         tagger_fields = json.loads(tagger_object.fields)
         if not ElasticCore().check_if_indices_exist(tagger_object.project.indices):

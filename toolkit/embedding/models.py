@@ -39,19 +39,69 @@ class Embedding(models.Model):
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
 
+    @staticmethod
+    def get_extra_model_file_names(embedding_model_path: str):
+        container = []
+        embedding_model_path = pathlib.Path(embedding_model_path)
+        model_type, pk, model_hash = embedding_model_path.name.split("_")
+        for item in embedding_model_path.parent.glob("*{}*".format(model_hash)):
+            if item.name != embedding_model_path.name:
+                container.append(str(item))
+        return container
+
+
+    @staticmethod
+    def save_embedding_extra_files(archive, modified_model_object, old_model_data: dict, extra_paths: list, embedding_field="embedding_model"):
+        # Add the extra files from Gensim, they are not stored inside the mode,
+        # but need to have the same suffix as the name of the embedding file for Gensim
+        # to pick it up.
+        old_embedding_path = pathlib.Path(old_model_data[embedding_field]).name
+        new_embedding_path = pathlib.Path(modified_model_object.embedding_model.path).name
+        for filename in extra_paths:
+            path = pathlib.Path(filename).name
+            old_file_content = archive.read(path)
+            new_file_name = filename.replace(old_embedding_path, new_embedding_path)
+            new_file_path = pathlib.Path(MODELS_DIR) / "embedding" / new_file_name
+            with open(new_file_path, "wb") as fp:
+                fp.write(old_file_content)
+
+
+    @staticmethod
+    def add_file_to_embedding_object(archive, model_object, model_json, name_key: str, model_json_key: str):
+        """
+        Get all the informational segments from the name, later used in changing the id
+        to avoid any collisions just in case.
+        """
+        new_path = pathlib.Path(model_object.generate_name(name_key))
+        old_path = pathlib.Path(model_json[model_json_key])
+        with open(new_path, "wb") as fp:
+            fp.write(archive.read(old_path.name))
+            ref = getattr(model_object, model_json_key)  # Get reference to the field in the Embedding.
+            setattr(ref, "name", str(new_path))  # Set the fields name parameter to the new path.
+
+        return model_object
+
+
+    @staticmethod
+    def create_embedding_object(model_data: dict, user_id: int, project_id: int):
+        new_model = Embedding(**model_data)
+
+        # Create a task object to fill the new model object with.
+        # Pull the user and project into which it's imported from the web request.
+        new_model.task = Task.objects.create(embedding=new_model, status=Task.STATUS_COMPLETED)
+        new_model.author = User.objects.get(id=user_id)
+        new_model.project = Project.objects.get(id=project_id)
+        new_model.save()  # Save the intermediate results.
+        return new_model
+
+
     def to_json(self) -> dict:
         serialized = serializers.serialize('json', [self])
         json_obj = {"fields": json.loads(serialized)[0]["fields"], "embedding_extras": []}
-        json_obj["fields"].pop("project", None)
+        json_obj["fields"].pop("project")
         json_obj["fields"].pop("author", None)
         json_obj["fields"].pop("task", None)
-
-        embedding_model_path = pathlib.Path(self.embedding_model.path)
-        model_type, pk, model_hash = embedding_model_path.name.split("_")
-        for item in pathlib.Path(self.embedding_model.path).parent.glob("*{}*".format(model_hash)):
-            if item.name != embedding_model_path.name:
-                json_obj["embedding_extras"].append(item.name)
-
+        json_obj["embedding_extras"] = Embedding.get_extra_model_file_names(self.embedding_model.path)
         return json_obj
 
 
@@ -88,40 +138,13 @@ class Embedding(models.Model):
             json_string = archive.read(Embedding.MODEL_JSON_NAME).decode()
             original_json = json.loads(json_string)
             model_json = original_json["fields"]
-            new_model = Embedding(**model_json)
 
-            # Create a task object to fill the new model object with.
-            # Pull the user and project into which it's imported from the web request.
-            new_model.task = Task.objects.create(embedding=new_model, status=Task.STATUS_COMPLETED)
-            new_model.author = User.objects.get(id=request.user.id)
-            new_model.project = Project.objects.get(id=pk)
-            new_model.save()  # Save the intermediate results.
+            # Create the new embedding object and save it to the DB.
+            new_model = Embedding.create_embedding_object(model_json, request.user.id, pk)
+            new_model = Embedding.add_file_to_embedding_object(archive, new_model, model_json, "phraser", "phraser_model")
+            new_model = Embedding.add_file_to_embedding_object(archive, new_model, model_json, "embedding", "embedding_model")
 
-            # Get all the informational segments from the name, later used in changing the id
-            # to avoid any collisions just in case.
-            old_embedding_path = pathlib.Path(model_json["embedding_model"])
-            new_embedding_path = pathlib.Path(new_model.generate_name("embedding"))
-
-            old_phraser_path = pathlib.Path(model_json["phraser_model"])
-            new_phraser_path = pathlib.Path(new_model.generate_name("phraser"))
-
-            with open(new_phraser_path, "wb") as fp:
-                fp.write(archive.read(old_phraser_path.name))
-                new_model.phraser_model.name = str(new_phraser_path)
-
-            with open(new_embedding_path, "wb") as fp:
-                fp.write(archive.read(old_embedding_path.name))
-                new_model.embedding_model.name = str(new_embedding_path)
-
-            # Add the extra files from Gensim, they are not stored inside the mode,
-            # but need to have the same suffix as the name of the embedding file for Gensim
-            # to pick it up.
-            for filename in original_json["embedding_extras"]:
-                old_file_content = archive.read(filename)
-                new_file_name = filename.replace(old_embedding_path.name, new_embedding_path.name)
-                new_file_path = pathlib.Path(MODELS_DIR) / "embedding" / new_file_name
-                with open(new_file_path, "wb") as fp:
-                    fp.write(old_file_content)
+            Embedding.save_embedding_extra_files(archive, new_model, model_json, extra_paths=original_json["embedding_extras"])
 
             new_model.save()
             return new_model.id

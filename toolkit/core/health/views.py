@@ -22,7 +22,7 @@ class HealthView(views.APIView):
             r = redis.Redis(host=parser.hostname, port=parser.port)
             info = r.info()
             redis_status = {
-                "ali    ve": True,
+                "alive": True,
                 "version": info["redis_version"],
                 "expired_keys": info["expired_keys"],
                 "used_memory": info["used_memory_human"],

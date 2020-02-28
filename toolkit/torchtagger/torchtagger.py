@@ -1,23 +1,25 @@
-from sklearn.metrics import accuracy_score
-from torchtext.vocab import Vectors
-import torch.optim as optim
-from torchtext import data
-from torch import nn
-import pandas as pd
-import numpy as np
 import json
-import torch
+
 import dill
+import numpy as np
+import pandas as pd
+import torch
+import torch.optim as optim
+from sklearn.metrics import accuracy_score
+from torch import nn
+from torchtext import data
 
 from toolkit.embedding.embedding import W2VEmbedding
-from .torch_models.models import TORCH_MODELS
 from toolkit.tools.tagging_report import TaggingReport
 from .models import TorchTagger as TorchTaggerObject
+from .torch_models.models import TORCH_MODELS
+
 
 class TorchTagger:
 
     def __init__(self, tagger_id, model_arch="fastText", n_classes=2, num_epochs=5):
         # retrieve model and initial config
+        self.description = None
         self.config = TORCH_MODELS[model_arch]["config"]()
         self.model_arch = TORCH_MODELS[model_arch]["model"]
         # set number of output classes
@@ -30,7 +32,7 @@ class TorchTagger:
         self.model = None
         self.text_field = None
         self.tagger_id = int(tagger_id)
-        # indixes to save label to int relations
+        # indices to save label to int relations
         self.label_index = None
         self.label_reverse_index = None
         # load tokenizer and embedding for the model
@@ -83,7 +85,7 @@ class TorchTagger:
     def evaluate_model(model, iterator):
         all_preds = []
         all_y = []
-        for idx,batch in enumerate(iterator):
+        for idx, batch in enumerate(iterator):
             if torch.cuda.is_available():
                 x = batch.text.cuda()
             else:
@@ -154,10 +156,10 @@ class TorchTagger:
         # training data iterator
         train_iterator = data.BucketIterator(
             (train_data),
-            batch_size = self.config.batch_size,
-            sort_key = lambda x: len(x.text),
-            repeat = False,
-            shuffle = True
+            batch_size=self.config.batch_size,
+            sort_key=lambda x: len(x.text),
+            repeat=False,
+            shuffle=True
         )
         # validation and test data iterator
         val_iterator, test_iterator = data.BucketIterator.splits(
@@ -174,7 +176,7 @@ class TorchTagger:
         train_iterator, val_iterator, test_iterator, text_field = self._prepare_data(data_sample)
         # declare model
         model = self.model_arch(self.config, len(text_field.vocab), text_field.vocab.vectors, self.evaluate_model)
-        
+
         # check cuda
         if torch.cuda.is_available():
             model.cuda()
