@@ -15,7 +15,7 @@ def check_mlp_connection(func):
             if not response.ok: raise MLPNotAvailable()
             return func(*args, **kwargs)
 
-        except requests.exceptions.ConnectTimeout as e:
+        except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
             logging.getLogger(ERROR_LOGGER).error(e)
             raise MLPNotAvailable()
 

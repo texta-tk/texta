@@ -13,7 +13,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.phraser import Phraser
-from toolkit.exceptions import MLPNotAvailable, NonExistantModelError, SerializerNotValid
+from toolkit.exceptions import NonExistantModelError, SerializerNotValid
 from toolkit.helper_functions import apply_celery_task
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import (
@@ -202,16 +202,9 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         if not tagger_object.model.path:
             raise NonExistantModelError()
 
-        # by default, lemmatizer is disabled
-        lemmatizer = None
-
         # create lemmatizer if needed
-        if serializer.validated_data['lemmatize'] is True:
-            lemmatizer = global_mlp_for_taggers
-
-            # check if lemmatizer available
-            if not lemmatizer.status:
-                raise MLPNotAvailable(detail="Lemmatization failed. Check connection to MLP.")
+        lemmatizer = serializer.validated_data['lemmatize']
+        lemmatizer = global_mlp_for_taggers if lemmatizer else None
 
         # apply tagger
         tagger_response = self.apply_tagger(
@@ -252,10 +245,6 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         # lemmatize if needed
         if serializer.validated_data['lemmatize'] is True:
             lemmatizer = global_mlp_for_taggers
-
-            # check if lemmatization available
-            if not lemmatizer.status:
-                raise MLPNotAvailable(detail="Lemmatization failed. Check connection to MLP.")
 
         # apply tagger
         tagger_response = self.apply_tagger(
