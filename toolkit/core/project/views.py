@@ -236,7 +236,8 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         # get available taggers from project
         taggers = Tagger.objects.filter(project=project_object).filter(task__status=Task.STATUS_COMPLETED)
         # filter again
-        taggers = taggers.filter(pk__in=serializer.validated_data['taggers'])
+        if serializer.validated_data['taggers']:
+            taggers = taggers.filter(pk__in=serializer.validated_data['taggers'])
         # error if filtering resulted 0 taggers
         if not taggers:
             return Response({'error': 'none of provided taggers are present. are the models ready?'}, status=status.HTTP_400_BAD_REQUEST)
@@ -247,6 +248,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         # sort & return tags
         sorted_tags = sorted(tags, key=lambda k: k['probability'], reverse=True)
         return Response(sorted_tags, status=status.HTTP_200_OK)
+
 
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactValuesSerializer, permission_classes=[ExtraActionResource])
