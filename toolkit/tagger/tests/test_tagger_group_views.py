@@ -49,7 +49,7 @@ class TaggerGroupViewTests(APITestCase):
 
 
     def run_create_tagger_group_training_and_task_signal(self):
-        '''Tests the endpoint for a new Tagger Group, and if a new Task gets created via the signal'''
+        """Tests the endpoint for a new Tagger Group, and if a new Task gets created via the signal"""
         payload = {
             "description": "TestTaggerGroup",
             "minimum_sample_size": 50,
@@ -104,7 +104,7 @@ class TaggerGroupViewTests(APITestCase):
 
 
     def run_tag_text(self):
-        '''Tests the endpoint for the tag_text action'''
+        """Tests the endpoint for the tag_text action"""
         payload = {"text": "see on mingi suvaline naisteka kommentaar. ehk joppab ja saab täägi"}
         tag_text_url = f'{self.url}{self.test_tagger_group_id}/tag_text/'
         response = self.client.post(tag_text_url, payload)
@@ -115,7 +115,7 @@ class TaggerGroupViewTests(APITestCase):
 
 
     def run_tag_doc(self):
-        '''Tests the endpoint for the tag_doc action'''
+        """Tests the endpoint for the tag_doc action"""
         payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"})}
         url = f'{self.url}{self.test_tagger_group_id}/tag_doc/'
         response = self.client.post(url, payload)
@@ -126,7 +126,7 @@ class TaggerGroupViewTests(APITestCase):
 
 
     def run_tag_random_doc(self):
-        '''Tests the endpoint for the tag_random_doc action'''
+        """Tests the endpoint for the tag_random_doc action"""
         url = f'{self.url}{self.test_tagger_group_id}/tag_random_doc/'
         response = self.client.get(url)
         print_output('test_tag_random_doc_group:response.data', response.data)
@@ -137,7 +137,7 @@ class TaggerGroupViewTests(APITestCase):
 
 
     def run_models_retrain(self):
-        '''Tests the endpoint for the models_retrain action'''
+        """Tests the endpoint for the models_retrain action"""
         url = f'{self.url}{self.test_tagger_group_id}/models_retrain/'
         response = self.client.post(url)
         print_output('test_models_retrain:response.data', response.data)
@@ -228,7 +228,7 @@ class TaggerGroupViewTests(APITestCase):
                 file = pathlib.Path(path)
                 self.assertTrue(file.exists())
 
-        # Tests the endpoint for the tag_random_doc action'''
+        # Tests the endpoint for the tag_random_doc action"""
         url = f'{self.url}{tg.pk}/tag_random_doc/'
         response = self.client.get(url)
         print_output('test_tag_random_doc_group:response.data', response.data)

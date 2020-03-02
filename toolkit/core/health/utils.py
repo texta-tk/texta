@@ -31,7 +31,7 @@ def get_mlp_status():
         if response.status_code == 200:
             mlp_info["status"] = response.json()
             mlp_info["alive"] = True
-    except requests.exceptions.Timeout as e:
+    except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
         return mlp_info
 
     return mlp_info

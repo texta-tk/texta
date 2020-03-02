@@ -1,9 +1,10 @@
-from rest_framework.test import APITestCase
+from django.contrib.auth.models import User
 from rest_framework import status
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, APITestCase
+
 from toolkit.core.user_profile.models import UserProfile
-from toolkit.tools.utils_for_tests import create_test_user, print_output
 from toolkit.test_settings import TEST_VERSION_PREFIX
+from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 
 class UserProfileSignalsAndViewsTests(APITestCase):
@@ -19,14 +20,17 @@ class UserProfileSignalsAndViewsTests(APITestCase):
         cls.user_url = f'{TEST_VERSION_PREFIX}/users/{cls.user.profile.id}/'
         cls.admin_url = f'{TEST_VERSION_PREFIX}/users/{cls.admin.profile.id}/'
 
+
     def test_run(self):
         self.run_profile_object()
         self.run_profile_login()
         self.assign_superuser()
 
+
     def run_profile_object(self):
         """Test whether or not UserProfile object was created"""
         self.assertTrue(UserProfile.objects.filter(user=self.user.pk).exists())
+
 
     def run_profile_login(self):
         """Test if the UserProfile view is working"""
@@ -34,11 +38,12 @@ class UserProfileSignalsAndViewsTests(APITestCase):
         response = self.client.get(self.user_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def assign_superuser(self):
 
+    def assign_superuser(self):
         assign_payload = {
             "is_superuser": True
         }
+
         deassign_payload = {
             "is_superuser": False
         }
@@ -70,3 +75,17 @@ class UserProfileSignalsAndViewsTests(APITestCase):
         # check that superuser status was removed
         print_output("User superuser status after de-assign", put_response.data['is_superuser'])
         assert not put_response.data['is_superuser']
+
+
+    def test_admin_account_deletion(self):
+        self.client.login(username="admin", password="1234")
+        self.client.delete(self.user_url)
+
+        deleted_user = User.objects.filter(username="user").count()
+        self.assertTrue(deleted_user == 0)
+
+
+    def test_normal_user_account_deletion(self):
+        self.client.login(username="user", password="pw")
+        response = self.client.delete(self.admin_url)
+        self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)

@@ -1,18 +1,22 @@
-import re
 import json
-from rest_framework import serializers
+import re
 from collections import OrderedDict
+
+from rest_framework import serializers
+
 from toolkit.core.project.models import Project
 
 
 class ProjectResourceUrlSerializer():
     '''For project serializers which need to construct the HyperLinked URL'''
 
+
     def get_url(self, obj):
         request = self.context['request']
         path = re.sub(r'\d+\/*$', '', request.path)
         resource_url = request.build_absolute_uri(f'{path}{obj.id}/')
         return resource_url
+
 
     def get_plot(self, obj):
         request = self.context['request']

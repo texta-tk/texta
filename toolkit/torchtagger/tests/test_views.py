@@ -1,25 +1,14 @@
+import pathlib
 from io import BytesIO
 from time import sleep
-import json
-import os
-from django.db.models import signals
 
 from django.test import TransactionTestCase
 from rest_framework import status
-from rest_framework.test import APIClient
 
-from toolkit.test_settings import (
-    TEST_FIELD,
-    TEST_INDEX,
-    TEST_FIELD_CHOICE,
-    TEST_FACT_NAME,
-    TEST_VERSION_PREFIX
-)
 from toolkit.core.project.models import Project
-from toolkit.torchtagger.models import TorchTagger
-from toolkit.core.task.models import Task
+from toolkit.test_settings import (TEST_FACT_NAME, TEST_FIELD_CHOICE, TEST_INDEX, TEST_VERSION_PREFIX)
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
-from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.torchtagger.models import TorchTagger
 from toolkit.torchtagger.torch_models.models import TORCH_MODELS
 
 
@@ -40,6 +29,7 @@ class TorchTaggerViewTests(TransactionTestCase):
 
         self.client.login(username='torchTaggerOwner', password='pw')
 
+
     def test(self):
         self.run_train_embedding()
         self.run_train_tagger()
@@ -47,7 +37,8 @@ class TorchTaggerViewTests(TransactionTestCase):
         self.run_tag_text()
         self.run_tag_random_doc()
         self.run_tag_and_feedback_and_retrain()
-        #self.run_model_export_import()
+        self.run_model_export_import()
+
 
     def add_cleanup_files(self, tagger_id):
         tagger_object = TorchTagger.objects.get(pk=tagger_id)
@@ -56,6 +47,7 @@ class TorchTaggerViewTests(TransactionTestCase):
         self.addCleanup(remove_file, tagger_object.plot.path)
         self.addCleanup(remove_file, tagger_object.embedding.embedding_model.path)
         self.addCleanup(remove_file, tagger_object.embedding.phraser_model.path)
+
 
     def run_train_embedding(self):
         # payload for training embedding
@@ -73,10 +65,10 @@ class TorchTaggerViewTests(TransactionTestCase):
 
 
     def run_train_tagger(self):
-        '''Tests TorchTagger training, and if a new Task gets created via the signal'''
+        """Tests TorchTagger training, and if a new Task gets created via the signal"""
         payload = {
             "description": "TestTorchTaggerTraining",
-            #"fact_name": TEST_FACT_NAME,
+            # "fact_name": TEST_FACT_NAME,
             "fields": TEST_FIELD_CHOICE,
             "maximum_sample_size": 500,
             "model_architecture": self.torch_models[0],
@@ -97,8 +89,9 @@ class TorchTaggerViewTests(TransactionTestCase):
         # add cleanup
         self.add_cleanup_files(tagger_id)
 
+
     def run_train_multiclass_tagger(self):
-        '''Tests TorchTagger training with multiple classes and if a new Task gets created via the signal'''
+        """Tests TorchTagger training with multiple classes and if a new Task gets created via the signal"""
         payload = {
             "description": "TestTorchTaggerTraining",
             "fact_name": TEST_FACT_NAME,
@@ -122,16 +115,18 @@ class TorchTaggerViewTests(TransactionTestCase):
         # add cleanup
         self.add_cleanup_files(tagger_id)
 
+
     def run_tag_text(self):
-        '''Tests tag prediction for texts.'''
+        """Tests tag prediction for texts."""
         payload = {
             "text": "mine kukele, kala"
         }
         response = self.client.post(f'{self.url}{self.test_tagger_id}/tag_text/', payload)
         print_output('test_torchtagger_tag_text:response.data', response.data)
 
+
     def run_tag_random_doc(self):
-        '''Tests the endpoint for the tag_random_doc action'''
+        """Tests the endpoint for the tag_random_doc action"""
         url = f'{self.url}{self.test_tagger_id}/tag_random_doc/'
         response = self.client.get(url)
         print_output('test_tag_random_doc:response.data', response.data)
@@ -142,29 +137,45 @@ class TorchTaggerViewTests(TransactionTestCase):
 
 
     def run_model_export_import(self):
-        '''Tests endpoint for model export and import'''
-        # retrieve model zip
-        url = f'{self.url}{self.test_tagger_id}/export_model/'
-        response = self.client.get(url)
-        # post model zip
-        import_url = f'{self.project_url}/import_model/'
-        response = self.client.post(import_url, data={'file': BytesIO(response.content)})
-        print_output('test_import_model:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Test tagging with imported model
-        tagger_id = response.data['id']
-        self.run_tag_text()
+        """Tests endpoint for model export and import"""
+        test_tagger_group_id = self.test_tagger_id
 
-        # add model files before retraining
-        self.add_cleanup_files(tagger_id)
+        # retrieve model zip
+        url = f'{self.url}{test_tagger_group_id}/export_model/'
+        response = self.client.get(url)
+
+        # Post model zip
+        import_url = f'{self.url}import_model/'
+        response = self.client.post(import_url, data={'file': BytesIO(response.content)})
+        print_output('test_import_model:response.data', import_url)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        torchtagger = TorchTagger.objects.get(pk=response.data["id"])
+
+        # Check if the models and plot files exist.
+        resources = torchtagger.get_resource_paths()
+        for path in resources.values():
+            file = pathlib.Path(path)
+            self.assertTrue(file.exists())
+
+        # Tests the endpoint for the tag_random_doc action"""
+        url = f'{self.url}{torchtagger.pk}/tag_random_doc/'
+        response = self.client.get(url)
+        print_output('test_tag_random_doc_group:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, dict))
+
+        self.assertTrue('prediction' in response.data)
 
 
     def run_tag_and_feedback_and_retrain(self):
-        '''Tests feeback extra action.'''
+        """Tests feeback extra action."""
         tagger_id = self.test_tagger_id
         payload = {
             "text": "This is some test text for the Tagger Test",
-            "feedback_enabled": True}
+            "feedback_enabled": True
+        }
         tag_text_url = f'{self.url}{tagger_id}/tag_text/'
         response = self.client.post(tag_text_url, payload)
         print_output('test_tag_text_with_feedback:response.data', response.data)

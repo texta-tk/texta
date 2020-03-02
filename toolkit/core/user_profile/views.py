@@ -1,13 +1,6 @@
-from django.db.models.query import QuerySet
-from django.http import HttpResponse, Http404
-from django.shortcuts import render
 from django.contrib.auth.models import User
-from toolkit.core.project.models import Project
-from rest_framework import viewsets, permissions, status, mixins
-from rest_framework.response import Response
-from rest_framework.decorators import action
+from rest_framework import mixins, viewsets
 
-from toolkit.core.user_profile.models import UserProfile
 from toolkit.core.user_profile.serializers import UserSerializer
 from toolkit.permissions.project_permissions import UserIsAdminOrReadOnly
 
@@ -15,6 +8,7 @@ from toolkit.permissions.project_permissions import UserIsAdminOrReadOnly
 class UserViewSet(mixins.RetrieveModelMixin,
                   mixins.ListModelMixin,
                   mixins.UpdateModelMixin,
+                  mixins.DestroyModelMixin,
                   viewsets.GenericViewSet):
     """
     list: Returns list of users.
@@ -27,10 +21,10 @@ class UserViewSet(mixins.RetrieveModelMixin,
     pagination_class = None
     permission_classes = (UserIsAdminOrReadOnly,)
 
+
     def get_queryset(self):
         queryset = User.objects.all().order_by('-date_joined')
         current_user = self.request.user
         if not current_user.is_superuser:
             queryset = queryset.filter(id=self.request.user.id)
         return queryset
-
