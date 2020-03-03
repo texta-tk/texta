@@ -251,9 +251,10 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
         # update text and tags with MLP
         text, tags = self.get_mlp(text, lemmatize=lemmatize, use_ner=use_ner)
-
+        
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(text, ignore_tags=tags, n_similar_docs=n_similar_docs, max_candidates=n_candidate_tags)
+        
         # get tags
         tags += self.apply_tagger_group(text, tag_candidates, input_type='text')
         return Response(tags, status=status.HTTP_200_OK)
