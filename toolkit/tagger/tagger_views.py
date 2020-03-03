@@ -314,5 +314,5 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             project_pk = tagger_object.project.pk
             feedback_object = Feedback(project_pk, model_object=tagger_object)
             feedback_id = feedback_object.store(tagger_input, tagger_result['prediction'])
-            prediction['feedback'] = {'id': feedback_id}
+            tagger_result['feedback'] = {'id': feedback_id}
         return tagger_result

@@ -452,7 +452,7 @@ class TaggerViewTests(APITestCase):
         response = self.client.post(tag_text_url, payload)
         print_output('test_feedback_retrained_tag_doc:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue('result' in response.data)
+        self.assertTrue('prediction' in response.data)
         self.assertTrue('probability' in response.data)
 
         # delete feedback
