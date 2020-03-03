@@ -4,6 +4,7 @@ import os
 import re
 import secrets
 
+from texta_tagger.tagger import TextTagger
 from celery.decorators import task
 
 from toolkit.base_task import BaseTask
@@ -14,7 +15,6 @@ from toolkit.helper_functions import get_indices_from_object
 from toolkit.settings import ERROR_LOGGER
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.tagger.plots import create_tagger_plot
-from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.tools.text_processor import TextProcessor
@@ -103,7 +103,7 @@ def train_tagger(tagger_id):
         show_progress.update_view(0)
 
         # train model
-        tagger = TextTagger(tagger_id)
+        tagger = TextTagger()
         tagger.train(
             data_sample,
             field_list=json.loads(tagger_object.fields),
@@ -148,26 +148,28 @@ def train_tagger(tagger_id):
 def apply_tagger(text, tagger_id, input_type, lemmatize=False):
     """Task for applying tagger to text."""
     # get tagger object
-    tagger = Tagger.objects.get(pk=tagger_id)
+    tagger_object = Tagger.objects.get(pk=tagger_id)
     # get lemmatizer if needed
     lemmatizer = None
     if lemmatize:
         lemmatizer = MLPAnalyzer()
     # create text processor object for tagger
-    stop_words = tagger.stop_words.split(' ')
-    if tagger.embedding:
-        phraser = Phraser(tagger.embedding.id)
+    stop_words = tagger_object.stop_words.split(' ')
+    if tagger_object.embedding:
+        phraser = Phraser(tagger_object.embedding.id)
         phraser.load()
         text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
     else:
         text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
     # load tagger
-    tagger = TextTagger(tagger_id)
-    tagger.load()
+    tagger = TextTagger()
+    tagger_loaded = tagger.load(tagger_object)
 
-    if not tagger:
+    # check if tagger gets loaded
+    if not tagger_loaded:
         return None
-    
+        
+    # add text processor
     tagger.add_text_processor(text_processor)
     
     # check input type
@@ -175,11 +177,10 @@ def apply_tagger(text, tagger_id, input_type, lemmatize=False):
         tagger_result = tagger.tag_doc(text)
     else:
         tagger_result = tagger.tag_text(text)
+    
     # check if prediction positive
-    decision = bool(tagger_result[0])
-
-    if not decision:
+    if tagger_result['prediction'] == False:
         return None
+    
     # return tag info
-
-    return {'tag': tagger.description, 'probability': tagger_result[1], 'tagger_id': tagger_id}
+    return {'tag': tagger.description, 'probability': tagger_result['probability'], 'tagger_id': tagger_id}

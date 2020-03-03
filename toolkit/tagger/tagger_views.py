@@ -7,6 +7,7 @@ from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from texta_tagger.tagger import TextTagger
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
@@ -22,7 +23,6 @@ from toolkit.serializer_constants import (
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.serializers import (TaggerListFeaturesSerializer, TaggerSerializer, TaggerTagDocumentSerializer, TaggerTagTextSerializer)
 from toolkit.tagger.tasks import train_tagger
-from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tagger.validators import validate_input_document
 from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.tools.text_processor import TextProcessor
@@ -299,8 +299,8 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         else:
             text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
         # load model and
-        tagger = TextTagger(tagger_object.id)
-        tagger.load()
+        tagger = TextTagger()
+        tagger.load(tagger_object)
 
         tagger.add_text_processor(text_processor)
         # select function according to input type
@@ -308,12 +308,11 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             tagger_result = tagger.tag_doc(tagger_input)
         else:
             tagger_result = tagger.tag_text(tagger_input)
-        # initial result
-        prediction = {'result': bool(tagger_result[0]), 'probability': tagger_result[1]}
+
         # add optional feedback
         if feedback:
             project_pk = tagger_object.project.pk
             feedback_object = Feedback(project_pk, model_object=tagger_object)
-            feedback_id = feedback_object.store(tagger_input, prediction['result'])
+            feedback_id = feedback_object.store(tagger_input, tagger_result['prediction'])
             prediction['feedback'] = {'id': feedback_id}
-        return prediction
+        return tagger_result

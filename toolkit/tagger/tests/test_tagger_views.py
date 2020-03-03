@@ -219,7 +219,7 @@ class TaggerViewTests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
-            self.assertTrue('result' in response.data)
+            self.assertTrue('prediction' in response.data)
             self.assertTrue('probability' in response.data)
 
 

@@ -1,7 +1,7 @@
-# CHOICES FOR TAGGER APP
+from texta_tagger.pipeline import get_pipeline_builder
+
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.aggregator import ElasticAggregator
-from toolkit.tagger.pipeline import get_pipeline_builder
 
 def get_field_choices():
    """
