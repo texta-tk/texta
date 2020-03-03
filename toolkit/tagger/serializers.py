@@ -129,13 +129,13 @@ class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
             try:
                 tagger_size_sum = round(tagger_objects.filter(model_size__isnull=False).aggregate(Sum('model_size'))['model_size__sum'], 1)
             except TypeError as e:
-                Logger().error(str(e), exc_info=True)
+                # if models are not ready
                 tagger_size_sum = 0
             tagger_stats = {
                 'avg_precision': tagger_objects.aggregate(Avg('precision'))['precision__avg'],
                 'avg_recall': tagger_objects.aggregate(Avg('recall'))['recall__avg'],
                 'avg_f1_score': tagger_objects.aggregate(Avg('f1_score'))['f1_score__avg'],
-                'sum_size': tagger_size_sum
+                'sum_size': {"size": tagger_size_sum, "unit": "mb"}
             }
             return tagger_stats
 
