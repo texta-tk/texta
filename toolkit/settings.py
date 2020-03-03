@@ -15,6 +15,7 @@ import warnings
 
 from corsheaders.defaults import default_headers
 
+from .helper_functions import parse_list_env_headers
 from .logging_settings import setup_logging
 
 
@@ -25,12 +26,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'eqr9sjz-&baah&c%ejkaorp)a1$q63y0%*a^&fv=y$(bbe5+(b'
+SECRET_KEY = os.getenv("TEXTA_SECRET_KEY", 'eqr9sjz-&baah&c%ejkaorp)a1$q63y0%*a^&fv=y$(bbe5+(b')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True if os.getenv('TEXTA_DEBUG', "True") == "True" else False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = parse_list_env_headers("TEXTA_ALLOWED_HOSTS", ["*"])
 
 # Application definition
 
@@ -78,10 +79,9 @@ CSRF_HEADER_NAME = "HTTP_X_XSRF_TOKEN"
 CSRF_COOKIE_NAME = "XSRF-TOKEN"
 
 # For accessing a live backend server locally.
-CORS_ORIGIN_WHITELIST = ["http://localhost:4200"]
+CORS_ORIGIN_WHITELIST = parse_list_env_headers("TEXTA_CORS_ORIGIN_WHITELIST", ["http://localhost:4200"])
 CORS_ALLOW_HEADERS = list(default_headers) + ['x-xsrf-token']
 CORS_ALLOW_CREDENTIALS = True
-
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
@@ -105,7 +105,7 @@ REST_FRAMEWORK = {
 }
 
 REST_AUTH_SERIALIZERS = {
-'USER_DETAILS_SERIALIZER': 'toolkit.core.user_profile.serializers.UserSerializer',
+    'USER_DETAILS_SERIALIZER': 'toolkit.core.user_profile.serializers.UserSerializer',
 }
 
 MIDDLEWARE = [
@@ -120,7 +120,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'toolkit.urls'
-
 
 TEMPLATES = [
     {
@@ -202,7 +201,7 @@ ES_CONNECTION_PARAMETERS = {
     "ca_certs": os.getenv("TEXTA_ES_CA_CERT_PATH", None),
     "client_cert": os.getenv("TEXTA_ES_CLIENT_CERT_PATH", None),
     "client_key": os.getenv("TEXTA_ES_CLIENT_KEY_PATH", None),
-    "timeout": int(os.getenv("TEXTA_ES_TIMEOUT", None)) if os.getenv("TEXTA_ES_TIMEOUT", None) else None,
+    "timeout": int(os.getenv("TEXTA_ES_TIMEOUT")) if os.getenv("TEXTA_ES_TIMEOUT", None) else 10,
     "sniff_on_start": True if os.getenv("TEXTA_ES_SNIFF_ON_START", "True") == "True" else False,
     "sniff_on_connection_fail": True if os.getenv("TEXTA_ES_SNIFF_ON_FAIL", "True") == "True" else False
 }
@@ -249,7 +248,6 @@ if not os.path.exists(UPLOAD_PATH):
 TEST_DATA_DIR = os.path.join(BASE_DIR, 'data', 'test')
 if not os.path.exists(TEST_DATA_DIR):
     os.makedirs(TEST_DATA_DIR)
-
 
 # Logger IDs, used in apps.
 INFO_LOGGER = "info_logger"

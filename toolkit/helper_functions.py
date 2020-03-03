@@ -1,3 +1,4 @@
+import os
 import sys
 
 
@@ -18,3 +19,18 @@ def get_indices_from_object(model_object):
         return object_indices
     else:
         return model_object.project.indices
+
+
+def parse_list_env_headers(env_key: str, default_value: list) -> list:
+    """
+    Function for handling env values that need to be stored as a list.
+
+    :param env_key: key of the env value you need to parse.
+    :param default_value: in case the key is missing or false, what list value to return
+    """
+
+    data = os.getenv(env_key, None)
+    if data and isinstance(data, str):
+        return data.split(",")
+    else:
+        return default_value
