@@ -113,8 +113,8 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             raise NonExistantModelError()
 
         # retrieve model
-        tagger = TextTagger(tagger_object.id)
-        tagger.load()
+        tagger = TextTagger()
+        tagger.load(tagger_object)
 
         try:
             # get feature names
