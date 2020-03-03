@@ -11,7 +11,7 @@ from toolkit.tagger.choices import (
     DEFAULT_MIN_SAMPLE_SIZE, 
     DEFAULT_NEGATIVE_MULTIPLIER, 
     DEFAULT_NUM_DOCUMENTS, 
-    DEFAULT_NUM_CANIDATES,
+    DEFAULT_NUM_CANDIDATES,
     DEFAULT_TAGGER_GROUP_FACT_NAME,
     get_classifier_choices, 
     get_vectorizer_choices
@@ -41,7 +41,7 @@ class TaggerGroupTagTextSerializer(serializers.Serializer):
     lemmatize = serializers.BooleanField(default=True, help_text=f'Use MLP lemmatizer to lemmatize input text. Use only if training data was lemmatized. Default: True')
     use_ner = serializers.BooleanField(default=True, help_text=f'Use MLP Named Entity Recognition to detect tag candidates. Default: True')
     n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS, help_text=f'Number of documents used in unsupervised prefiltering. Default: {DEFAULT_NUM_DOCUMENTS}')
-    n_candidate_docs = serializers.IntegerField(default=DEFAULT_NUM_CANIDATES, help_text=f'Number of tag candidates retrieved from unsupervised prefiltering. Default: {DEFAULT_NUM_CANIDATES}')
+    n_candidate_docs = serializers.IntegerField(default=DEFAULT_NUM_CANIDATES, help_text=f'Number of tag candidates retrieved from unsupervised prefiltering. Default: {DEFAULT_NUM_CANDIDATES}')
     feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 
@@ -50,7 +50,7 @@ class TaggerGroupTagDocumentSerializer(serializers.Serializer):
     lemmatize = serializers.BooleanField(default=True, help_text=f'Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: True')
     use_ner = serializers.BooleanField(default=True, help_text=f'Use MLP Named Entity Recognition to detect tag candidates. Default: True')
     n_similar_docs = serializers.IntegerField(default=DEFAULT_NUM_DOCUMENTS, help_text=f'Number of documents used in unsupervised prefiltering. Default: {DEFAULT_NUM_DOCUMENTS}')
-    n_candidate_docs = serializers.IntegerField(default=DEFAULT_NUM_CANIDATES, help_text=f'Number of tag candidates retrieved from unsupervised prefiltering. Default: {DEFAULT_NUM_CANIDATES}')
+    n_candidate_docs = serializers.IntegerField(default=DEFAULT_NUM_CANIDATES, help_text=f'Number of tag candidates retrieved from unsupervised prefiltering. Default: {DEFAULT_NUM_CANDIDATES}')
     feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 
