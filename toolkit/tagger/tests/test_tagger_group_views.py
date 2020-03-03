@@ -105,7 +105,7 @@ class TaggerGroupViewTests(APITestCase):
 
     def run_tag_text(self):
         """Tests the endpoint for the tag_text action"""
-        payload = {"text": "see on mingi suvaline naisteka kommentaar. ehk joppab ja saab täägi"}
+        payload = {"text": "see on mingi suvaline naisteka kommentaar. ehk joppab ja saab täägi", "n_similar_docs": 20, "n_candidate_tags": 20}
         tag_text_url = f'{self.url}{self.test_tagger_group_id}/tag_text/'
         response = self.client.post(tag_text_url, payload)
         print_output('test_tag_text_group:response.data', response.data)
@@ -116,7 +116,7 @@ class TaggerGroupViewTests(APITestCase):
 
     def run_tag_doc(self):
         """Tests the endpoint for the tag_doc action"""
-        payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"})}
+        payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"}), "n_similar_docs": 20, "n_candidate_tags": 20}
         url = f'{self.url}{self.test_tagger_group_id}/tag_doc/'
         response = self.client.post(url, payload)
         print_output('test_tag_doc_group:response.data', response.data)

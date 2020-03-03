@@ -245,14 +245,16 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # declare tag candidates variables
         text = serializer.validated_data['text']
         n_similar_docs = serializer.validated_data['n_similar_docs']
+        n_candidate_tags = serializer.validated_data['n_candidate_tags']
         lemmatize = serializer.validated_data['lemmatize']
         use_ner = serializer.validated_data['use_ner']
 
         # update text and tags with MLP
         text, tags = self.get_mlp(text, lemmatize=lemmatize, use_ner=use_ner)
-
+        
         # retrieve tag candidates
-        tag_candidates = self.get_tag_candidates(text, ignore_tags=tags, n_similar_docs=n_similar_docs)
+        tag_candidates = self.get_tag_candidates(text, ignore_tags=tags, n_similar_docs=n_similar_docs, max_candidates=n_candidate_tags)
+        
         # get tags
         tags += self.apply_tagger_group(text, tag_candidates, input_type='text')
         return Response(tags, status=status.HTTP_200_OK)
@@ -294,6 +296,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
         # declare tag candidates variables
         n_similar_docs = serializer.validated_data['n_similar_docs']
+        n_candidate_tags = serializer.validated_data['n_candidate_tags']
         lemmatize = serializer.validated_data['lemmatize']
         use_ner = serializer.validated_data['use_ner']
 
@@ -301,7 +304,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         combined_texts, tags = self.get_mlp(combined_texts, lemmatize=lemmatize, use_ner=use_ner)
 
         # retrieve tag candidates
-        tag_candidates = self.get_tag_candidates(combined_texts, ignore_tags=tags, n_similar_docs=n_similar_docs)
+        tag_candidates = self.get_tag_candidates(combined_texts, ignore_tags=tags, n_similar_docs=n_similar_docs, max_candidates=n_candidate_tags)
         # get tags
         tags += self.apply_tagger_group(input_document, tag_candidates, input_type='doc', lemmatize=True)
         return Response(tags, status=status.HTTP_200_OK)
