@@ -167,6 +167,9 @@ def apply_tagger(text, tagger_id, input_type, lemmatize=False):
 
     if not tagger:
         return None
+    
+    tagger.add_text_processor(text_processor)
+    
     # check input type
     if input_type == 'doc':
         tagger_result = tagger.tag_doc(text)
@@ -174,7 +177,9 @@ def apply_tagger(text, tagger_id, input_type, lemmatize=False):
         tagger_result = tagger.tag_text(text)
     # check if prediction positive
     decision = bool(tagger_result[0])
+
     if not decision:
         return None
     # return tag info
+
     return {'tag': tagger.description, 'probability': tagger_result[1], 'tagger_id': tagger_id}
