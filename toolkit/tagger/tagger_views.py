@@ -7,7 +7,10 @@ from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from texta_tagger.tagger import TextTagger
+
+from texta_tagger.tagger import Tagger as TextTagger
+from texta_tagger.tools.mlp_analyzer import MLPAnalyzer
+from texta_tagger.tools.text_processor import TextProcessor
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
@@ -24,8 +27,6 @@ from toolkit.tagger.models import Tagger
 from toolkit.tagger.serializers import (TaggerListFeaturesSerializer, TaggerSerializer, TaggerTagDocumentSerializer, TaggerTagTextSerializer)
 from toolkit.tagger.tasks import train_tagger
 from toolkit.tagger.validators import validate_input_document
-from toolkit.tools.mlp_analyzer import MLPAnalyzer
-from toolkit.tools.text_processor import TextProcessor
 from toolkit.view_constants import (
     BulkDelete,
     FeedbackModelView,

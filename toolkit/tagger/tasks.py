@@ -4,7 +4,9 @@ import os
 import re
 import secrets
 
-from texta_tagger.tagger import TextTagger
+from texta_tagger.tagger import Tagger as TextTagger
+from texta_tagger.tools.mlp_analyzer import MLPAnalyzer
+from texta_tagger.tools.text_processor import TextProcessor
 from celery.decorators import task
 
 from toolkit.base_task import BaseTask
@@ -15,9 +17,7 @@ from toolkit.helper_functions import get_indices_from_object
 from toolkit.settings import ERROR_LOGGER
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.tagger.plots import create_tagger_plot
-from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.tools.show_progress import ShowProgress
-from toolkit.tools.text_processor import TextProcessor
 
 
 def create_tagger_batch(tagger_group_id, taggers_to_create):
@@ -103,12 +103,10 @@ def train_tagger(tagger_id):
         show_progress.update_view(0)
 
         # train model
-        tagger = TextTagger()
+        tagger = TextTagger(classifier=tagger_object.classifier, vectorizer=tagger_object.vectorizer)
         tagger.train(
             data_sample,
-            field_list=json.loads(tagger_object.fields),
-            classifier=tagger_object.classifier,
-            vectorizer=tagger_object.vectorizer
+            field_list=json.loads(tagger_object.fields)
         )
 
         # update status to saving

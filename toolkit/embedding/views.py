@@ -1,6 +1,8 @@
 import json
 import os
 
+from texta_tagger.tools.text_processor import TextProcessor
+
 import rest_framework.filters as drf_filters
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
@@ -17,7 +19,6 @@ from toolkit.embedding.word_cluster import WordCluster
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, SerializerNotValid
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceImportModelSerializer
-from toolkit.tools.text_processor import TextProcessor
 from toolkit.view_constants import BulkDelete
 
 

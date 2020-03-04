@@ -3,7 +3,8 @@ import secrets
 import json
 import os
 
-from toolkit.tools.text_processor import TextProcessor
+from texta_tagger.tools.text_processor import TextProcessor
+
 from toolkit.embedding.phraser import Phraser
 from toolkit.core.task.models import Task
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject

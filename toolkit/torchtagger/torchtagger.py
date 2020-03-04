@@ -9,8 +9,9 @@ from sklearn.metrics import accuracy_score
 from torch import nn
 from torchtext import data
 
+from texta_tagger.tools.tagging_report import TaggingReport
+
 from toolkit.embedding.embedding import W2VEmbedding
-from toolkit.tools.tagging_report import TaggingReport
 from .models import TorchTagger as TorchTaggerObject
 from .torch_models.models import TORCH_MODELS
 
