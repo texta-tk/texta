@@ -35,25 +35,6 @@ class ProjectFilter(filters.FilterSet):
 
 
 class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
-    """
-    list:
-    Returns list of projects.
-
-    read:
-    Returns project by id.
-
-    create:
-    Creates new project object.
-
-    update:
-    Updates entire project object.
-
-    partial_update:
-    Partially updates project object.
-
-    delete:
-    Deletes project object.
-    """
     pagination_class = None
     serializer_class = ProjectSerializer
     permission_classes = (

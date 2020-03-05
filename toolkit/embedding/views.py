@@ -33,25 +33,6 @@ class EmbeddingFilter(filters.FilterSet):
 
 
 class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
-    """
-    list:
-    Returns list of Embedding objects.
-
-    read:
-    Return Embedding object by id.
-
-    create:
-    Creates Embedding object.
-
-    update:
-    Updates entire Embedding object.
-
-    partial_update:
-    Performs partial update on Embedding object.
-
-    delete:
-    Deletes Embedding object.
-    """
     queryset = Embedding.objects.all()
     serializer_class = EmbeddingSerializer
     permission_classes = (
