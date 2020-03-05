@@ -17,13 +17,11 @@ from toolkit.settings import ERROR_LOGGER
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.tagger.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
-from toolkit.analyzers import mlp_analyzer
 
 
 def create_tagger_batch(tagger_group_id, taggers_to_create):
     """Creates Tagger objects from list of tagger data and saves into tagger group object."""
     # retrieve Tagger Group object
-
     tagger_group_object = TaggerGroup.objects.get(pk=tagger_group_id)
     # iterate through batch
     for tagger_data in taggers_to_create:
@@ -32,11 +30,10 @@ def create_tagger_batch(tagger_group_id, taggers_to_create):
             author=tagger_group_object.author,
             project=tagger_group_object.project
         )
-
         # add and save
         tagger_group_object.taggers.add(created_tagger)
         tagger_group_object.save()
-
+        # train
         created_tagger.train()
 
 
@@ -77,21 +74,11 @@ def train_tagger(tagger_id):
         # retrieve indices & field data
         indices = get_indices_from_object(tagger_object)
         field_data = json.loads(tagger_object.fields)
-
-        # split stop words by space or newline
+        # split stop words by space or newline and remove empties
         stop_words = re.split(" |\n|\r\n", tagger_object.stop_words)
-
-        # remove empty strings
         stop_words = [stop_word for stop_word in stop_words if stop_word]
-
-        # load embedding and create text processor
-        if tagger_object.embedding:
-            phraser = Phraser(embedding_id=tagger_object.embedding.pk)
-            phraser.load()
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words)
-        else:
-            text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
-
+        # create text processor with custom stop words
+        text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
         # create Datasample object for retrieving positive and negative sample
         data_sample = DataSample(
             tagger_object,
@@ -101,7 +88,6 @@ def train_tagger(tagger_id):
         # update status to training
         show_progress.update_step("training")
         show_progress.update_view(0)
-
         # train model
         tagger = TextTagger(classifier=tagger_object.classifier, vectorizer=tagger_object.vectorizer)
         tagger.train(
@@ -109,15 +95,13 @@ def train_tagger(tagger_id):
             data_sample.data["false"],
             field_list=json.loads(tagger_object.fields)
         )
-
         # update status to saving
         show_progress.update_step("saving")
         show_progress.update_view(0)
-
         # save tagger to disk
         tagger_path = tagger_object.generate_name("tagger")
         tagger.save(tagger_path)
-
+        # set info about the model
         tagger_object.model.name = tagger_path
         tagger_object.precision = float(tagger.statistics["precision"])
         tagger_object.recall = float(tagger.statistics["recall"])
@@ -128,7 +112,6 @@ def train_tagger(tagger_id):
         tagger_object.model_size = round(float(os.path.getsize(tagger_path)) / 1000000, 1)  # bytes to mb
         tagger_object.plot.save(f"{secrets.token_hex(15)}.png", create_tagger_plot(tagger.statistics))
         tagger_object.save()
-
         # declare the job done
         show_progress.update_step("")
         show_progress.update_view(100.0)
@@ -148,38 +131,19 @@ def apply_tagger(text, tagger_id, input_type, lemmatize=False):
     """Task for applying tagger to text."""
     # get tagger object
     tagger_object = Tagger.objects.get(pk=tagger_id)
-    # get lemmatizer if needed
-    lemmatizer = None
-    if lemmatize:
-        lemmatizer = mlp_analyzer
-    # create text processor object for tagger
-    stop_words = tagger_object.stop_words.split(" ")
-    if tagger_object.embedding:
-        phraser = Phraser(tagger_object.embedding.id)
-        phraser.load()
-        text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
-    else:
-        text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
     # load tagger
     tagger = TextTagger()
-    tagger_loaded = tagger.load(tagger_object)
-
+    tagger_loaded = tagger.load_django(tagger_object)
     # check if tagger gets loaded
     if not tagger_loaded:
         return None
-        
-    # add text processor
-    tagger.add_text_processor(text_processor)
-    
     # check input type
     if input_type == "doc":
-        tagger_result = tagger.tag_doc(text)
+        tagger_result = tagger.tag_doc(text, lemmatize=lemmatize)
     else:
-        tagger_result = tagger.tag_text(text)
-    
+        tagger_result = tagger.tag_text(text, lemmatize=lemmatize)
     # check if prediction positive
     if tagger_result["prediction"] == False:
         return None
-    
     # return tag info
     return {"tag": tagger.description, "probability": tagger_result["probability"], "tagger_id": tagger_id}

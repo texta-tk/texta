@@ -28,7 +28,7 @@ def create_tagger_plot(statistics):
     # plot confusion matrix
     plt.subplot(1, 3, 2)
     classes = ['negative', 'positive']
-    cm = statistics['confusion_matrix']
+    cm = np.asarray(statistics['confusion_matrix'])
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
     plt.title('Confusion matrix')
     tick_marks = np.arange(2)

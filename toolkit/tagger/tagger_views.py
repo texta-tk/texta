@@ -30,7 +30,6 @@ from toolkit.view_constants import (
     BulkDelete,
     FeedbackModelView,
 )
-from toolkit.analyzers import mlp_analyzer
 
 
 class TaggerFilter(filters.FilterSet):
@@ -44,25 +43,6 @@ class TaggerFilter(filters.FilterSet):
 
 
 class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
-    """
-    list:
-    Returns list of Tagger objects.
-
-    read:
-    Return Tagger object by id.
-
-    create:
-    Creates Tagger object.
-
-    update:
-    Updates entire Tagger object.
-
-    partial_update:
-    Performs partial update on Tagger object.
-
-    delete:
-    Deletes Tagger object.
-    """
     serializer_class = TaggerSerializer
     permission_classes = (
         ProjectResourceAllowed,
@@ -104,21 +84,18 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         serializer.is_valid(raise_exception=True)
         # retrieve tagger object
         tagger_object: Tagger = self.get_object()
-
         # check if tagger exists
         if not tagger_object.model.path:
             raise NonExistantModelError()
-
         # retrieve model
         tagger = TextTagger()
-        tagger.load(tagger_object)
-
+        tagger.load_django(tagger_object)
         try:
             # get feature names
             features = tagger.get_feature_names()
         except:
             return Response({'error': 'Error loading feature names. Are you using HashingVectorizer? It does not support feature names!'}, status=status.HTTP_400_BAD_REQUEST)
-
+        
         feature_coefs = tagger.get_feature_coefs()
         supports = tagger.get_supports()
         selected_features = [feature for i, feature in enumerate(features) if supports[i]]
@@ -143,7 +120,6 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             return Response(success, status=status.HTTP_200_OK)
         elif self.request.method == 'POST':
             serializer = GeneralTextSerializer(data=request.data)
-
             # check if valid request
             if not serializer.is_valid():
                 raise SerializerNotValid(detail=serializer.errors)
@@ -152,7 +128,6 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             # save tagger object
             tagger_object.stop_words = new_stop_words
             tagger_object.save()
-
             return Response({"stop_words": new_stop_words}, status=status.HTTP_200_OK)
 
 
@@ -168,7 +143,6 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
     def export_model(self, request, pk=None, project_pk=None):
         """Returns list of tags for input text."""
         zip_name = f'tagger_model_{pk}.zip'
-
         tagger_object: Tagger = self.get_object()
         data = tagger_object.export_resources()
         response = HttpResponse(data)
@@ -180,7 +154,6 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
     def import_model(self, request, pk=None, project_pk=None):
         serializer = ProjectResourceImportModelSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         uploaded_file = serializer.validated_data['file']
         tagger_id = Tagger.import_resources(uploaded_file, request, project_pk)
         return Response({"id": tagger_id, "message": "Successfully imported model and associated files."}, status=status.HTTP_201_CREATED)
@@ -198,17 +171,12 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         # check if tagger exists
         if not tagger_object.model.path:
             raise NonExistantModelError()
-
-        # create lemmatizer if needed
-        lemmatizer = serializer.validated_data['lemmatize']
-        lemmatizer = mlp_analyzer if lemmatizer else None
-
         # apply tagger
         tagger_response = self.apply_tagger(
             tagger_object,
             serializer.validated_data['text'],
             input_type='text',
-            lemmatizer=lemmatizer,
+            lemmatize=serializer.validated_data['lemmatize'],
             feedback=serializer.validated_data['feedback_enabled']
         )
         return Response(tagger_response, status=status.HTTP_200_OK)
@@ -224,10 +192,8 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         # retrieve tagger object
         tagger_object = self.get_object()
         # check if tagger exists
-
         if not tagger_object.model.path:
             raise NonExistantModelError()
-
         # declare input_document variable
         input_document = serializer.validated_data['doc']
         # load field data
@@ -236,19 +202,12 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         input_document = validate_input_document(input_document, tagger_field_data)
         if isinstance(input_document, Exception):
             return input_document
-        # by default, lemmatizer is disabled
-        lemmatizer = False
-
-        # lemmatize if needed
-        if serializer.validated_data['lemmatize'] is True:
-            lemmatizer = mlp_analyzer
-
         # apply tagger
         tagger_response = self.apply_tagger(
             tagger_object,
             input_document,
             input_type='doc',
-            lemmatizer=lemmatizer,
+            lemmatize=serializer.validated_data['lemmatize'],
             feedback=serializer.validated_data['feedback_enabled'],
         )
         return Response(tagger_response, status=status.HTTP_200_OK)
@@ -260,52 +219,32 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         # get tagger object
         tagger_object = self.get_object()
         # check if tagger exists
-
         if not tagger_object.model.path:
             raise NonExistantModelError()
-
-        if not tagger_object.model.path:
-            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
-
         # retrieve tagger fields
         tagger_fields = json.loads(tagger_object.fields)
         if not ElasticCore().check_if_indices_exist(tagger_object.project.indices):
             return Response({'error': f'One or more index from {list(tagger_object.project.indices)} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
-
         # retrieve random document
         random_doc = ElasticSearcher(indices=tagger_object.project.indices).random_documents(size=1)[0]
-
         # filter out correct fields from the document
         random_doc_filtered = {k: v for k, v in random_doc.items() if k in tagger_fields}
-
         # apply tagger
         tagger_response = self.apply_tagger(tagger_object, random_doc_filtered, input_type='doc')
         response = {"document": random_doc, "prediction": tagger_response}
         return Response(response, status=status.HTTP_200_OK)
 
 
-    def apply_tagger(self, tagger_object, tagger_input, input_type='text', phraser=None, lemmatizer=None, feedback=False):
-        # create text processor object for tagger
-        stop_words = tagger_object.stop_words.split(' ')
-        # use phraser is embedding used
-        if tagger_object.embedding:
-            phraser = Phraser(tagger_object.embedding.id)
-            phraser.load()
-
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
-        else:
-            text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
-        # load model and
+    def apply_tagger(self, tagger_object, tagger_input, input_type='text', lemmatize=False, feedback=False):
+        """Applies Tagger model on a text or document."""
+        # load model
         tagger = TextTagger()
-        tagger.load(tagger_object)
-
-        tagger.add_text_processor(text_processor)
+        tagger.load_django(tagger_object)
         # select function according to input type
         if input_type == 'doc':
-            tagger_result = tagger.tag_doc(tagger_input)
+            tagger_result = tagger.tag_doc(tagger_input, lemmatize=lemmatize)
         else:
-            tagger_result = tagger.tag_text(tagger_input)
-
+            tagger_result = tagger.tag_text(tagger_input, lemmatize=lemmatize)
         # add optional feedback
         if feedback:
             project_pk = tagger_object.project.pk

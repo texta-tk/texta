@@ -209,6 +209,9 @@ ES_CONNECTION_PARAMETERS = {
 # MLP
 MLP_URL = os.getenv('TEXTA_MLP_URL', 'http://mlp-dev.texta.ee:5000')
 MLP_MAJOR_VERSION = int(os.getenv("TEXTA_MLP_MAJOR_VERSION", "2"))
+# set env variable for Tagger package
+os.environ["TEXTA_TAGGER_MLP_URL"] = MLP_URL
+os.environ["TEXTA_TAGGER_MLP_MAJOR_VERSION"] = str(MLP_MAJOR_VERSION)
 
 # CELERY
 BROKER_URL = os.getenv('TEXTA_REDIS_URL', 'redis://localhost:6379')
