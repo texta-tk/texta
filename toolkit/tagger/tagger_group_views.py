@@ -21,10 +21,10 @@ from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.tagger.models import TaggerGroup
 from toolkit.tagger.serializers import TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer
-from toolkit.tagger.tagger_views import global_mlp_for_taggers
 from toolkit.tagger.tasks import apply_tagger, create_tagger_objects, train_tagger
 from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import BulkDelete, TagLogicViews
+from toolkit.analyzers import mlp_analyzer
 
 
 class TaggerGroupFilter(filters.FilterSet):
@@ -171,7 +171,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tags = []
         hybrid_tagger_object = self.get_object()
         taggers = {t.description.lower(): {"tag": t.description, "id": t.id} for t in hybrid_tagger_object.taggers.all()}
-        mlp_output = global_mlp_for_taggers.process(text)
+        mlp_output = mlp_analyzer.process(text)
         # lemmatize
         if lemmatize and mlp_output:
             text = mlp_output["text"]["lemmas"]

@@ -9,7 +9,6 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from texta_tagger.tagger import Tagger as TextTagger
-from texta_tagger.tools.mlp_analyzer import MLPAnalyzer
 from texta_tagger.tools.text_processor import TextProcessor
 
 from toolkit.core.project.models import Project
@@ -31,10 +30,7 @@ from toolkit.view_constants import (
     BulkDelete,
     FeedbackModelView,
 )
-
-
-# initialize model cache for taggers & phrasers
-global_mlp_for_taggers = MLPAnalyzer()
+from toolkit.analyzers import mlp_analyzer
 
 
 class TaggerFilter(filters.FilterSet):
@@ -205,7 +201,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
         # create lemmatizer if needed
         lemmatizer = serializer.validated_data['lemmatize']
-        lemmatizer = global_mlp_for_taggers if lemmatizer else None
+        lemmatizer = mlp_analyzer if lemmatizer else None
 
         # apply tagger
         tagger_response = self.apply_tagger(
@@ -245,7 +241,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
         # lemmatize if needed
         if serializer.validated_data['lemmatize'] is True:
-            lemmatizer = global_mlp_for_taggers
+            lemmatizer = mlp_analyzer
 
         # apply tagger
         tagger_response = self.apply_tagger(

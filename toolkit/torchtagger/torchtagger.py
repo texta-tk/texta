@@ -5,15 +5,13 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.optim as optim
-from sklearn.metrics import accuracy_score
 from torch import nn
 from torchtext import data
-
-from texta_tagger.tools.tagging_report import TaggingReport
 
 from toolkit.embedding.embedding import W2VEmbedding
 from .models import TorchTagger as TorchTaggerObject
 from .torch_models.models import TORCH_MODELS
+from .torch_tagging_report import TorchTaggingReport
 
 
 class TorchTagger:
@@ -97,10 +95,8 @@ class TorchTagger:
             all_y.extend(batch.label.numpy())
         # flatten predictions
         all_preds = np.array(all_preds).flatten()
-        # f1, precision and recall
-        report = TaggingReport(all_y, all_preds)
-        # accuracy
-        report.accuracy = accuracy_score(all_y, all_preds)
+        # report
+        report = TorchTaggingReport(all_y, all_preds)
         return report
 
 

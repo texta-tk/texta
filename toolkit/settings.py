@@ -208,6 +208,7 @@ ES_CONNECTION_PARAMETERS = {
 
 # MLP
 MLP_URL = os.getenv('TEXTA_MLP_URL', 'http://mlp-dev.texta.ee:5000')
+MLP_MAJOR_VERSION = int(os.getenv("TEXTA_MLP_MAJOR_VERSION", "2"))
 
 # CELERY
 BROKER_URL = os.getenv('TEXTA_REDIS_URL', 'redis://localhost:6379')

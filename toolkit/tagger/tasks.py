@@ -5,7 +5,6 @@ import re
 import secrets
 
 from texta_tagger.tagger import Tagger as TextTagger
-from texta_tagger.tools.mlp_analyzer import MLPAnalyzer
 from texta_tagger.tools.text_processor import TextProcessor
 from celery.decorators import task
 
@@ -18,6 +17,7 @@ from toolkit.settings import ERROR_LOGGER
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.tagger.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
+from toolkit.analyzers import mlp_analyzer
 
 
 def create_tagger_batch(tagger_group_id, taggers_to_create):
@@ -47,9 +47,9 @@ def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries,
     taggers_to_create = []
     for i, tag in enumerate(tags):
         tagger_data = tagger_serializer.copy()
-        tagger_data.update({'query': json.dumps(tag_queries[i])})
-        tagger_data.update({'description': tag})
-        tagger_data.update({'fields': json.dumps(tagger_data['fields'])})
+        tagger_data.update({"query": json.dumps(tag_queries[i])})
+        tagger_data.update({"description": tag})
+        tagger_data.update({"fields": json.dumps(tagger_data["fields"])})
         taggers_to_create.append(tagger_data)
         # if batch size reached, save result
         if len(taggers_to_create) >= batch_size:
@@ -70,7 +70,7 @@ def train_tagger(tagger_id):
     task_object = tagger_object.task
     # create progress object
     show_progress = ShowProgress(task_object, multiplier=1)
-    show_progress.update_step('scrolling positives')
+    show_progress.update_step("scrolling positives")
     show_progress.update_view(0)
 
     try:
@@ -79,7 +79,7 @@ def train_tagger(tagger_id):
         field_data = json.loads(tagger_object.fields)
 
         # split stop words by space or newline
-        stop_words = re.split(' |\n|\r\n', tagger_object.stop_words)
+        stop_words = re.split(" |\n|\r\n", tagger_object.stop_words)
 
         # remove empty strings
         stop_words = [stop_word for stop_word in stop_words if stop_word]
@@ -99,18 +99,19 @@ def train_tagger(tagger_id):
             text_processor=text_processor
         )
         # update status to training
-        show_progress.update_step('training')
+        show_progress.update_step("training")
         show_progress.update_view(0)
 
         # train model
         tagger = TextTagger(classifier=tagger_object.classifier, vectorizer=tagger_object.vectorizer)
         tagger.train(
-            data_sample,
+            data_sample.data["true"],
+            data_sample.data["false"],
             field_list=json.loads(tagger_object.fields)
         )
 
         # update status to saving
-        show_progress.update_step('saving')
+        show_progress.update_step("saving")
         show_progress.update_view(0)
 
         # save tagger to disk
@@ -118,18 +119,18 @@ def train_tagger(tagger_id):
         tagger.save(tagger_path)
 
         tagger_object.model.name = tagger_path
-        tagger_object.precision = float(tagger.statistics['precision'])
-        tagger_object.recall = float(tagger.statistics['recall'])
-        tagger_object.f1_score = float(tagger.statistics['f1_score'])
-        tagger_object.num_features = tagger.statistics['num_features']
-        tagger_object.num_positives = tagger.statistics['num_positives']
-        tagger_object.num_negatives = tagger.statistics['num_negatives']
+        tagger_object.precision = float(tagger.statistics["precision"])
+        tagger_object.recall = float(tagger.statistics["recall"])
+        tagger_object.f1_score = float(tagger.statistics["f1_score"])
+        tagger_object.num_features = tagger.statistics["num_features"]
+        tagger_object.num_positives = tagger.statistics["num_positives"]
+        tagger_object.num_negatives = tagger.statistics["num_negatives"]
         tagger_object.model_size = round(float(os.path.getsize(tagger_path)) / 1000000, 1)  # bytes to mb
-        tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_tagger_plot(tagger.statistics))
+        tagger_object.plot.save(f"{secrets.token_hex(15)}.png", create_tagger_plot(tagger.statistics))
         tagger_object.save()
 
         # declare the job done
-        show_progress.update_step('')
+        show_progress.update_step("")
         show_progress.update_view(100.0)
         task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
         return True
@@ -150,9 +151,9 @@ def apply_tagger(text, tagger_id, input_type, lemmatize=False):
     # get lemmatizer if needed
     lemmatizer = None
     if lemmatize:
-        lemmatizer = MLPAnalyzer()
+        lemmatizer = mlp_analyzer
     # create text processor object for tagger
-    stop_words = tagger_object.stop_words.split(' ')
+    stop_words = tagger_object.stop_words.split(" ")
     if tagger_object.embedding:
         phraser = Phraser(tagger_object.embedding.id)
         phraser.load()
@@ -171,14 +172,14 @@ def apply_tagger(text, tagger_id, input_type, lemmatize=False):
     tagger.add_text_processor(text_processor)
     
     # check input type
-    if input_type == 'doc':
+    if input_type == "doc":
         tagger_result = tagger.tag_doc(text)
     else:
         tagger_result = tagger.tag_text(text)
     
     # check if prediction positive
-    if tagger_result['prediction'] == False:
+    if tagger_result["prediction"] == False:
         return None
     
     # return tag info
-    return {'tag': tagger.description, 'probability': tagger_result['probability'], 'tagger_id': tagger_id}
+    return {"tag": tagger.description, "probability": tagger_result["probability"], "tagger_id": tagger_id}

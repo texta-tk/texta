@@ -1,9 +1,10 @@
+from celery.decorators import task
+from gensim.models import word2vec
 import json
 import os
 import secrets
 
-from celery.decorators import task
-from gensim.models import word2vec
+from texta_tagger.tools.text_processor import TextProcessor
 
 from toolkit.base_task import BaseTask
 from toolkit.core.task.models import Task
@@ -14,7 +15,6 @@ from toolkit.embedding.phraser import Phraser
 from toolkit.embedding.word_cluster import WordCluster
 from toolkit.settings import MODELS_DIR, NUM_WORKERS
 from toolkit.tools.show_progress import ShowProgress
-from toolkit.tools.text_processor import TextProcessor
 from toolkit.helper_functions import get_indices_from_object
 
 
