@@ -10,6 +10,8 @@ from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from texta_tagger.tools.mlp_analyzer import get_mlp_analyzer
+
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.core import ElasticCore
@@ -24,7 +26,9 @@ from toolkit.tagger.serializers import TaggerGroupSerializer, TaggerGroupTagDocu
 from toolkit.tagger.tasks import apply_tagger, create_tagger_objects, train_tagger
 from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import BulkDelete, TagLogicViews
-from toolkit.analyzers import mlp_analyzer
+
+
+mlp_analyzer = get_mlp_analyzer()
 
 
 class TaggerGroupFilter(filters.FilterSet):
