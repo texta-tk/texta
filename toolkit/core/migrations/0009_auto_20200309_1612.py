@@ -9,6 +9,7 @@ def data_migration(apps, schema_editor):
     for project in Project.objects.all():
         indices = list(project.indices)
         project.keeper = json.dumps(indices)
+        project.save()
 
 
 def final_solution(apps, schema_editor):
