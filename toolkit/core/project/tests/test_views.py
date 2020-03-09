@@ -1,12 +1,9 @@
-from rest_framework.test import APITestCase
 from rest_framework import status
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, APITestCase
 
-from toolkit.core.project.models import Project
+from toolkit.test_settings import TEST_FACT_NAME, TEST_INDEX, TEST_QUERY, TEST_VERSION_PREFIX
 from toolkit.tools.common_utils import project_creation
 from toolkit.tools.utils_for_tests import create_test_user, print_output
-from toolkit import permissions as toolkit_permissions
-from toolkit.test_settings import TEST_INDEX, TEST_FACT_NAME, TEST_QUERY, TEST_VERSION_PREFIX
 
 
 class ProjectViewTests(APITestCase):
@@ -22,6 +19,8 @@ class ProjectViewTests(APITestCase):
         get_indices,
         in separate file -> get_spam
     """
+
+
     def setUp(cls):
         # Create a new project_user, all project extra actions need to be permissible for this project_user.
         cls.user = create_test_user(name='user', password='pw')
@@ -41,6 +40,7 @@ class ProjectViewTests(APITestCase):
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue(TEST_INDEX in [field['index'] for field in response.data])
 
+
     def test_get_facts(self):
         url = f'{self.project_url}/get_facts/'
         response = self.client.get(url)
@@ -48,6 +48,7 @@ class ProjectViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue(TEST_FACT_NAME in [field['name'] for field in response.data])
+
 
     def test_search(self):
         payload = {"match_text": "jeesus", "size": 1}
@@ -58,6 +59,7 @@ class ProjectViewTests(APITestCase):
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue(len(response.data) == 1)
 
+
     def test_search_match_phrase_empty_result(self):
         payload = {"match_text": "jeesus tuleb ja tapab kõik ära", "match_type": "phrase"}
         url = f'{self.project_url}/search/'
@@ -66,6 +68,7 @@ class ProjectViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue(len(response.data) == 0)
+
 
     def test_autocomplete_fact_values(self):
         payload = {"limit": 5, "startswith": "fo", "fact_name": TEST_FACT_NAME}
@@ -78,8 +81,9 @@ class ProjectViewTests(APITestCase):
         self.assertTrue('foo' in response.data)
         self.assertTrue('bar' not in response.data)
 
+
     def test_autocomplete_fact_names(self):
-        payload = {"limit": 5, "startswith": "TE" }
+        payload = {"limit": 5, "startswith": "TE"}
         url = f'{self.project_url}/autocomplete_fact_names/'
         print(url)
         response = self.client.post(url, payload)
@@ -87,6 +91,7 @@ class ProjectViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue('TEEMA' in response.data)
+
 
     def test_resource_counts(self):
         url = f'{self.project_url}/get_resource_counts/'
@@ -100,18 +105,6 @@ class ProjectViewTests(APITestCase):
         self.assertTrue('num_embeddings' in response.data)
         self.assertTrue('num_embedding_clusters' in response.data)
 
-    def test_get_indices(self):
-        url = f'{self.project_url}/get_indices/'
-        self.client.login(username='user', password='pw')
-
-        response = self.client.get(url)
-        print_output("get_indices", response.data)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-        self.client.login(username='project_user', password='pw')
-        response = self.client.get(url)
-        print_output("get_indices", response.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_search_by_query(self):
         url = f'{self.project_url}/search_by_query/'
@@ -131,4 +124,3 @@ class ProjectViewTests(APITestCase):
         response = self.client.post(url, payload, format='json')
         print_output("search_by_query_no_access_user", response.data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-

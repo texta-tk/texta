@@ -7,6 +7,7 @@ from rest_framework.test import APITestCase
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
+from toolkit.elastic.core import ElasticCore
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.test_settings import (TEST_FACT_NAME,
                                    TEST_FIELD,

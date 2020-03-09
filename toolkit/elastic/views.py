@@ -26,7 +26,7 @@ class IndexViewSet(mixins.CreateModelMixin,
 
 
     def list(self, request, *args, **kwargs):
-        ElasticCore.syncher()
+        ElasticCore().syncher()
         return super(IndexViewSet, self).list(request, *args, **kwargs)
 
 
@@ -63,7 +63,8 @@ class IndexViewSet(mixins.CreateModelMixin,
 
     @action(detail=False, methods=['post'])
     def sync_indices(self, request, pk=None, project_pk=None):
-        return ElasticCore.syncher()
+        ElasticCore().syncher()
+        return Response({"message": "Synched everything successfully!"}, status=status.HTTP_204_NO_CONTENT)
 
 
     @action(detail=True, methods=['patch'])

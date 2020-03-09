@@ -27,11 +27,10 @@ class ProjectPermissionsTests(APITestCase):
         self.project_instance_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/'
 
     def test_all(self):
-        registered_resources = [resource[0] for resource in project_router.registry]
+        registered_resources = [resource[0] for resource in project_router.registry if resource[0] != "index"]
         for resource in registered_resources:
             self.project_resource_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/{resource}/'
             self.run_with_users(self.access_project_resources, resource)
-        self.run_with_users(self.access_get_indices)
         self.run_with_users(self.access_health)
         self.run_with_users(self.access_project_instance_methods)
         self.run_with_users(self.update_project_fields)
@@ -46,15 +45,6 @@ class ProjectPermissionsTests(APITestCase):
             func(self.project_user, self.default_password)
             func(self.user, self.default_password, SAFE_FORBIDDEN=True)
 
-    def access_get_indices(self, username, password, SAFE_FORBIDDEN=False, UNSAFE_FORBIDDEN=False):
-        """ only superusers can access /get_indices """
-        url = f'{TEST_VERSION_PREFIX}/get_indices/'
-        self.client.login(username=username, password=password)
-        get_response = self.client.get(url)
-        print_output(f"{username} access get_indices", get_response.status_code)
-        if not username.is_superuser:
-            return self.assertEqual(get_response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(get_response.status_code, status.HTTP_200_OK)
 
     def access_health(self, username, password, SAFE_FORBIDDEN=False, UNSAFE_FORBIDDEN=False):
         """ all users, including non-auth can access /health """

@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from toolkit.core import choices as choices
 from toolkit.core.project.models import Project
+from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import EMPTY_QUERY
 
 
@@ -65,9 +66,9 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
             instance.title = validated_data["title"]
             instance.save()
 
-        if "indices" in validated_data:
+        if "get_indices" in validated_data:
             container = []
-            for index_name in validated_data["indices"]:
+            for index_name in validated_data["get_indices"]:
                 index, is_created = Index.objects.get_or_create(name=index_name)
                 container.append(index)
 
@@ -78,20 +79,26 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
             instance.users.set(validated_data["users"])
             instance.save()
 
+        return instance
 
     def create(self, validated_data):
         from toolkit.elastic.models import Index
-
-        indices: List[str] = validated_data["indices"]
+        indices: List[str] = validated_data["get_indices"]
         title = validated_data["title"]
         users = validated_data["users"]
+
+        ec = ElasticCore()
 
         project = Project.objects.create(title=title)
         project.users.set(users)
         for index_name in indices:
             index, is_created = Index.objects.get_or_create(name=index_name)
+            ec.create_index(index.name)
             project.indices.add(index)
+
         project.save()
+
+        return project
 
 
     class Meta:

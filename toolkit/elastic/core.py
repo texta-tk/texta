@@ -5,7 +5,6 @@ import elasticsearch
 import requests
 from django.db import transaction
 from elasticsearch import Elasticsearch
-from rest_framework.response import Response
 
 from toolkit.elastic.exceptions import ElasticTimeoutException, ElasticTransportException
 from toolkit.settings import ERROR_LOGGER, ES_CONNECTION_PARAMETERS, ES_PASSWORD, ES_PREFIX, ES_URL, ES_USERNAME
@@ -38,8 +37,6 @@ def elastic_connection(func):
 
 
 class ElasticCore:
-
-
     """
         Class for holding most general settings and Elasticsearch object itself
     """
@@ -50,7 +47,6 @@ class ElasticCore:
         self.es = self._create_client_interface()
         self.es_prefix = ES_PREFIX
         self.TEXTA_RESERVED = ['texta_facts']
-        ElasticCore.syncher()
 
 
     def _create_client_interface(self):
@@ -119,8 +115,8 @@ class ElasticCore:
         return self.es.indices.open(index=index, ignore=[400, 404])
 
 
-    @staticmethod
-    def syncher():
+    @elastic_connection
+    def syncher(self):
         """
         Wipe the slate clean and create a new set of Index objects.
         Since we're not using the destroy views, no actual deletion/creation operations
@@ -130,14 +126,20 @@ class ElasticCore:
         """
         from toolkit.elastic.models import Index
         with transaction.atomic():
-            es_core = ElasticCore()
-            opened, closed = es_core.get_indices()
+            opened, closed = self.get_indices()
 
-            Index.objects.all().delete()
+            # Delete the overreaching parts.
+            es_set = {index for index in opened + closed}
+            tk_set = {index.name for index in Index.objects.all()}
+
+            for index in tk_set:
+                if index not in es_set:
+                    Index.objects.get(name=index).delete()
+
             open_indices = [Index(name=index_name, is_open=True) for index_name in opened]
             closed_indices = [Index(name=index_name, is_open=False) for index_name in closed]
 
-            Index.objects.bulk_create(open_indices + closed_indices)
+            Index.objects.bulk_create(open_indices + closed_indices, ignore_conflicts=True)
 
 
     @elastic_connection

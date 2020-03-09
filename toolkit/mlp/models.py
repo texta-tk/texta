@@ -21,7 +21,6 @@ class MLPProcessor(models.Model):
     fields = models.TextField(default=json.dumps([]))
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
     analyzers = MultiSelectField(default=MLP_ANALYZER_CHOICES[0])
-    indices = models.TextField(default=json.dumps([]))
 
 
     def __str__(self):

@@ -14,9 +14,9 @@ from django.http import HttpResponse
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
+from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.helper_functions import apply_celery_task
-from toolkit.multiselectfield import PatchedMultiSelectField as MultiSelectField
 from toolkit.settings import MODELS_DIR
 
 
@@ -28,7 +28,7 @@ class Embedding(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     fields = models.TextField(default=json.dumps([]))
-    indices = MultiSelectField(default=None)
+    indices = models.ManyToManyField(Index)
     num_dimensions = models.IntegerField(default=100)
     max_documents = models.IntegerField(default=0)
     min_freq = models.IntegerField(default=10)
@@ -84,6 +84,7 @@ class Embedding(models.Model):
 
     @staticmethod
     def create_embedding_object(model_data: dict, user_id: int, project_id: int):
+        indices = model_data.pop("indices")
         new_model = Embedding(**model_data)
 
         # Create a task object to fill the new model object with.
@@ -92,6 +93,12 @@ class Embedding(models.Model):
         new_model.author = User.objects.get(id=user_id)
         new_model.project = Project.objects.get(id=project_id)
         new_model.save()  # Save the intermediate results.
+
+        for index_name in indices:
+            index, is_created = Index.objects.get_or_create(name=index_name)
+            new_model.indices.add(index)
+
+        new_model.save()
         return new_model
 
 
