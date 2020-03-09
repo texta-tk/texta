@@ -272,11 +272,11 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
         # retrieve tagger fields
         tagger_fields = json.loads(tagger_object.fields)
-        if not ElasticCore().check_if_indices_exist(tagger_object.project.indices):
-            return Response({'error': f'One or more index from {list(tagger_object.project.indices)} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        if not ElasticCore().check_if_indices_exist(tagger_object.project.get_indices()):
+            return Response({'error': f'One or more index from {list(tagger_object.project.get_indices())} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve random document
-        random_doc = ElasticSearcher(indices=tagger_object.project.indices).random_documents(size=1)[0]
+        random_doc = ElasticSearcher(indices=tagger_object.project.get_indices()).random_documents(size=1)[0]
 
         # filter out correct fields from the document
         random_doc_filtered = {k: v for k, v in random_doc.items() if k in tagger_fields}

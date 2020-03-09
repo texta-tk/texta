@@ -14,11 +14,11 @@ def get_indices_from_object(model_object):
     Returns indices from object if present.
     If no indices, returns all project indices.
     """
-    object_indices = model_object.project.indices
+    object_indices = model_object.project.get_indices()
     if object_indices:
         return object_indices
     else:
-        return model_object.project.indices
+        return model_object.project.get_indices()
 
 
 def parse_list_env_headers(env_key: str, default_value: list) -> list:

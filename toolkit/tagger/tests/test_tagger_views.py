@@ -18,6 +18,7 @@ from toolkit.test_settings import (TEST_FIELD,
                                    TEST_MATCH_TEXT,
                                    TEST_QUERY,
                                    TEST_VERSION_PREFIX)
+from toolkit.tools.common_utils import project_creation
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
@@ -27,10 +28,7 @@ class TaggerViewTests(APITestCase):
     def setUpTestData(cls):
         # Owner of the project
         cls.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
-        cls.project = Project.objects.create(
-            title='taggerTestProject',
-            indices=TEST_INDEX
-        )
+        cls.project = project_creation("taggerTestProject", TEST_INDEX)
         cls.project.users.add(cls.user)
         cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/taggers/'
         cls.project_url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}'

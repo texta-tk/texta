@@ -31,7 +31,7 @@ class MLPProcessor(models.Model):
     @classmethod
     def start_mlp_task(cls, sender, instance, created, **kwargs):
         if created:
-            indices = json.loads(instance.indices)
+            indices = json.loads(instance.get_indices())
             total = ElasticSearcher(query=instance.query, indices=indices).count()
 
             new_task = Task.objects.create(mlpprocessor=instance, status='created', total=total)

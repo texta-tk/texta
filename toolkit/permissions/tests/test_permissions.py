@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from toolkit.core.project.models import Project
+from toolkit.tools.common_utils import project_creation
 from toolkit.urls_v1 import project_router
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 from toolkit.test_settings import TEST_INDEX, TEST_VERSION_PREFIX
@@ -19,7 +20,7 @@ class ProjectPermissionsTests(APITestCase):
         self.project_user = create_test_user(name='project_user', password=self.default_password)
         self.user = create_test_user(name='user', password=self.default_password)
 
-        self.project = Project.objects.create(title='testproj')
+        self.project = project_creation("proj", TEST_INDEX)
         self.project.users.add(self.project_user)
 
         self.client = APIClient()

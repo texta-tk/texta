@@ -54,10 +54,11 @@ class TestElasticCore(TestCase):
 
     def test_indices(self):
         '''Tests ElasticCore index retrieval.'''
-        indices = self.elastic_core.get_indices()
-        print_output('test_run_indices:indices', indices)
-        self.assertTrue(isinstance(indices, list))
-        self.assertTrue(TEST_INDEX in indices)
+        open_indices, closed_indices = self.elastic_core.get_indices()
+        print_output('test_run_indices:indices', open_indices + closed_indices)
+        self.assertTrue(isinstance(open_indices, list))
+        self.assertTrue(isinstance(closed_indices, list))
+        self.assertTrue(TEST_INDEX in open_indices + closed_indices)
 
     def test_fields(self):
         '''Tests ElasticCore field operations.'''

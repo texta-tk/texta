@@ -1,6 +1,8 @@
 import json
 
 from django.test import TransactionTestCase
+
+from toolkit.tools.common_utils import project_creation
 from toolkit.tools.text_processor import TextProcessor, StopWords
 from toolkit.embedding.phraser import Phraser
 from toolkit.core.project.models import Project
@@ -16,10 +18,7 @@ class TextProcessorTests(TransactionTestCase):
         self.user = create_test_user('textProcessorOwner', 'my@email.com', 'pw')
         self.user.is_superuser = True
         self.user.save()
-        self.project = Project.objects.create(
-            title='textprocessorTestProject',
-            indices=TEST_INDEX
-        )
+        self.project = project_creation("textprocessorTestProject", TEST_INDEX)
 
         self.test_embedding = None
         self.test_phraser = None

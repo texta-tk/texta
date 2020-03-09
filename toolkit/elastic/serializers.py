@@ -1,11 +1,30 @@
-import json
 from rest_framework import serializers
 
-from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.models import Reindexer
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.serializer_constants import ProjectResourceUrlSerializer, FieldParseSerializer
+from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.models import Index, Reindexer
+from toolkit.elastic.validators import check_for_banned_beginning_chars, check_for_colons, check_for_special_symbols, check_for_upper_case, check_for_wildcards
+from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
+
+
+class IndexSerializer(serializers.ModelSerializer):
+    is_open = serializers.BooleanField(default=True)
+    name = serializers.CharField(
+        max_length=255,
+        validators=[
+            check_for_wildcards,
+            check_for_colons,
+            check_for_special_symbols,
+            check_for_banned_beginning_chars,
+            check_for_upper_case
+        ]
+    )
+
+
+    class Meta:
+        model = Index
+        fields = "__all__"
 
 
 class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedModelSerializer, ProjectResourceUrlSerializer):
@@ -37,28 +56,22 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
             raise serializers.ValidationError("new_index already exists, choose a different name for your reindexed index")
         return value
 
+
     def validate_indices(self, value):
         """ check if re-indexed index is in the relevant project indices field """
         project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
         for index in value:
-            if index not in project_obj.indices:
+            if index not in project_obj.get_indices():
                 raise serializers.ValidationError(f'Index "{index}" is not contained in your project indices "{repr(project_obj.indices)}"')
         return value
+
 
     def validate_fields(self, value):
         ''' check if changed fields included in the request are in the relevant project fields '''
         project_obj = Project.objects.get(id=self.context['view'].kwargs['project_pk'])
-        project_fields = ElasticCore().get_fields(indices=project_obj.indices)
+        project_fields = ElasticCore().get_fields(indices=project_obj.get_indices())
         field_data = [field["path"] for field in project_fields]
         for field in value:
             if field not in field_data:
                 raise serializers.ValidationError(f'The fields you are attempting to re-index are not in current project fields: {project_fields}')
         return value
-
-
-
-
-
-
-
-

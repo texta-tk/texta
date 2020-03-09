@@ -199,7 +199,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         """
         hybrid_tagger_object = self.get_object()
         field_paths = json.loads(hybrid_tagger_object.taggers.first().fields)
-        indices = hybrid_tagger_object.project.indices
+        indices = hybrid_tagger_object.project.get_indices()
         ignore_tags = {tag["tag"]: True for tag in ignore_tags}
         # create query
         query = Query()
@@ -323,10 +323,10 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # retrieve tagger fields from the first object
         tagger_fields = json.loads(hybrid_tagger_object.taggers.first().fields)
 
-        if not ElasticCore().check_if_indices_exist(hybrid_tagger_object.project.indices):
-            return Response({'error': f'One or more index from {list(hybrid_tagger_object.project.indices)} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        if not ElasticCore().check_if_indices_exist(hybrid_tagger_object.project.get_indices()):
+            return Response({'error': f'One or more index from {list(hybrid_tagger_object.project.get_indices())} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         # retrieve random document
-        random_doc = ElasticSearcher(indices=hybrid_tagger_object.project.indices).random_documents(size=1)[0]
+        random_doc = ElasticSearcher(indices=hybrid_tagger_object.project.get_indices()).random_documents(size=1)[0]
         # filter out correct fields from the document
         random_doc_filtered = {k: v for k, v in random_doc.items() if k in tagger_fields}
         # combine document field values into one string

@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from toolkit.core.project.models import Project
+from toolkit.tools.common_utils import project_creation
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 from toolkit import permissions as toolkit_permissions
 from toolkit.test_settings import TEST_INDEX, TEST_FACT_NAME, TEST_QUERY, TEST_VERSION_PREFIX
@@ -25,7 +26,7 @@ class ProjectViewTests(APITestCase):
         # Create a new project_user, all project extra actions need to be permissible for this project_user.
         cls.user = create_test_user(name='user', password='pw')
         cls.project_user = create_test_user(name='project_user', password='pw')
-        cls.project = Project.objects.create(title='testproj', indices=[TEST_INDEX])
+        cls.project = project_creation("testproj", TEST_INDEX)
         cls.project.users.add(cls.project_user)
         cls.client = APIClient()
         cls.client.login(username='project_user', password='pw')

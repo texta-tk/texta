@@ -23,7 +23,7 @@ def start_mlp(mlp_id):
     show_progress.update_view(0)
 
     # retrieve indices from project
-    indices = json.loads(mlp_object.indices)
+    indices = json.loads(mlp_object.get_indices())
     field_data = json.loads(mlp_object.fields)
 
     searcher = ElasticSearcher(

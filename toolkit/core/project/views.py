@@ -89,7 +89,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
     def get_fields(self, request, pk=None, project_pk=None):
         """Returns list of fields from all Elasticsearch indices inside the project."""
         project_object = self.get_object()
-        project_indices = list(project_object.indices)
+        project_indices = list(project_object.get_indices())
         if not project_indices:
             raise ProjectValidationFailed(detail="Project has no indices")
         fields = project_object.get_elastic_fields()
@@ -113,7 +113,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         serializer = ProjectGetSpamSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        indices = list(self.get_object().indices)
+        indices = list(self.get_object().get_indices())
         detector = SpamDetector(ES_URL, indices)
 
         all_fields = ElasticCore().get_fields(indices)
@@ -133,7 +133,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
         # retrieve and validate project indices
-        project_indices = list(self.get_object().indices)
+        project_indices = list(self.get_object().get_indices())
         if not project_indices:
             raise ProjectValidationFailed(detail="Project has no indices")
 
@@ -152,7 +152,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
     def get_indices(self, request, pk=None, project_pk=None):
         """Returns list of available indices in project."""
         project_object = self.get_object()
-        project_indices = {"indices": list(project_object.indices)}
+        project_indices = {"indices": list(project_object.get_indices())}
         return Response(project_indices)
 
 
@@ -163,7 +163,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
         project_object = self.get_object()
-        project_indices = list(project_object.indices)
+        project_indices = list(project_object.get_indices())
         project_fields = project_object.get_elastic_fields(path_list=True)
         # test if indices exist
         if not project_indices:
@@ -208,7 +208,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         if serializer.validated_data["indices"]:
             indices = serializer.validated_data["indices"]
         else:
-            indices = self.get_object().indices
+            indices = self.get_object().get_indices()
 
         if not indices:
             raise ProjectValidationFailed(detail="No indices supplied and project has no indices")
@@ -259,7 +259,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             raise SerializerNotValid(detail=serializer.errors)
 
         project_object = self.get_object()
-        project_indices = list(project_object.indices)
+        project_indices = list(project_object.get_indices())
         if not project_indices:
             raise ProjectValidationFailed(detail="Project has no indices")
 
@@ -280,7 +280,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
         project_object = self.get_object()
-        project_indices = list(project_object.indices)
+        project_indices = list(project_object.get_indices())
         if not project_indices:
             raise ProjectValidationFailed(detail="Project has no indices")
 

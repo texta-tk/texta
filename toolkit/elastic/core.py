@@ -1,20 +1,57 @@
+import logging
+from typing import Tuple
+
 import elasticsearch
 import requests
+from django.db import transaction
 from elasticsearch import Elasticsearch
+from rest_framework.response import Response
 
-from toolkit.settings import ES_CONNECTION_PARAMETERS, ES_PASSWORD, ES_PREFIX, ES_URL, ES_USERNAME
+from toolkit.elastic.exceptions import ElasticTimeoutException, ElasticTransportException
+from toolkit.settings import ERROR_LOGGER, ES_CONNECTION_PARAMETERS, ES_PASSWORD, ES_PREFIX, ES_URL, ES_USERNAME
 from toolkit.tools.logger import Logger
 
+
+def elastic_connection(func):
+    """
+    Decorator for wrapping Elasticsearch functions that are used in views,
+    to return a properly formatted error message during connection issues
+    instead of the typical HTTP 500 one.
+    """
+
+
+    def func_wrapper(*args, **kwargs):
+
+        try:
+            return func(*args, **kwargs)
+
+        except elasticsearch.exceptions.TransportError as e:
+            logging.getLogger(ERROR_LOGGER).exception(e.info)
+            raise ElasticTransportException(f"Transport to Elasticsearch failed with error: {e.error}")
+
+        except elasticsearch.exceptions.ConnectionTimeout as e:
+            logging.getLogger(ERROR_LOGGER).exception(e)
+            raise ElasticTimeoutException(f"Connection to Elasticsearch timed out!")
+
+
+    return func_wrapper
+
+
 class ElasticCore:
+
+
     """
-    Class for holding most general settings and Elasticsearch object itself
+        Class for holding most general settings and Elasticsearch object itself
     """
+
 
     def __init__(self):
         self.connection = self._check_connection()
         self.es = self._create_client_interface()
         self.es_prefix = ES_PREFIX
         self.TEXTA_RESERVED = ['texta_facts']
+        ElasticCore.syncher()
+
 
     def _create_client_interface(self):
         """
@@ -32,12 +69,14 @@ class ElasticCore:
             Logger().error("Error connecting to Elasticsearch")
             return None
 
+
     def _check_connection(self):
         try:
             requests.get(ES_URL)
             return True
         except:
             return False
+
 
     @staticmethod
     def check_for_security_xpack() -> bool:
@@ -55,27 +94,72 @@ class ElasticCore:
             # which will then create an error, return False in that case.
             return False
 
-    def create_index(self, index, body):
+
+    def create_index(self, index, body=None):
         return self.es.indices.create(index=index, body=body, ignore=400)
 
-    # use with caution
+
+    @elastic_connection
     def delete_index(self, index):
         # returns either {'acknowledged': True} or a detailed error response
         return self.es.indices.delete(index=index, ignore=[400, 404])
 
+
     def get_mapping(self, index):
         return self.es.indices.get_mapping(index=index)
 
-    def get_indices(self):
+
+    @elastic_connection
+    def close_index(self, index: str):
+        return self.es.indices.close(index=index, ignore=[400, 404])
+
+
+    @elastic_connection
+    def open_index(self, index: str):
+        return self.es.indices.open(index=index, ignore=[400, 404])
+
+
+    @staticmethod
+    def syncher():
+        """
+        Wipe the slate clean and create a new set of Index objects.
+        Since we're not using the destroy views, no actual deletion/creation operations
+        will be done on the Elasticsearch cluster.
+
+        Put this into a separate function to make using it
+        """
+        from toolkit.elastic.models import Index
+        with transaction.atomic():
+            es_core = ElasticCore()
+            opened, closed = es_core.get_indices()
+
+            Index.objects.all().delete()
+            open_indices = [Index(name=index_name, is_open=True) for index_name in opened]
+            closed_indices = [Index(name=index_name, is_open=False) for index_name in closed]
+
+            Index.objects.bulk_create(open_indices + closed_indices)
+
+
+    @elastic_connection
+    def get_indices(self) -> Tuple[list, list]:
+        """
+        Returns a tuple of open and closed list of indices that matches the ES_PREFIX,
+        if it's not set, returns all indices in the server.
+        """
         if self.connection:
             alias = '*'
             if self.es_prefix:
                 alias = f'{self.es_prefix}*'
-                return list(self.es.indices.get_alias(alias).keys())
+                opened = list(self.es.indices.get_alias(alias, expand_wildcards="open").keys())
+                closed = list(self.es.indices.get_alias(alias, expand_wildcards="closed").keys())
+                return opened, closed
 
-            return list(self.es.indices.get_alias().keys())
+            opened = list(self.es.indices.get_alias(alias, expand_wildcards="open").keys())
+            closed = list(self.es.indices.get_alias(alias, expand_wildcards="closed").keys())
+            return opened, closed
         else:
-            return []
+            return [], []
+
 
     def get_fields(self, indices=[]):
         out = []
@@ -91,6 +175,7 @@ class ElasticCore:
                         index_with_field = {'index': index, 'path': field['path'], 'type': field['type']}
                         out.append(index_with_field)
         return out
+
 
     def _decode_mapping_structure(self, structure, root_path=list(), nested_layers=list()):
         """
@@ -119,6 +204,7 @@ class ElasticCore:
                 data = {'path': path, 'type': v['type']}
                 mapping_data.append(data)
         return mapping_data
+
 
     def check_if_indices_exist(self, indices):
         return self.es.indices.exists(index=','.join(indices))
