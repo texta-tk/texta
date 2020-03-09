@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='tagger',
             name='indices',
-            field=models.ManyToManyField(default=None, to='elastic.Index'),
+            field=models.ManyToManyField(to='elastic.Index'),
         ),
 
         migrations.RunPython(final_solution),
