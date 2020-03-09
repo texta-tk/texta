@@ -139,7 +139,8 @@ class ElasticCore:
             open_indices = [Index(name=index_name, is_open=True) for index_name in opened]
             closed_indices = [Index(name=index_name, is_open=False) for index_name in closed]
 
-            Index.objects.bulk_create(open_indices + closed_indices, ignore_conflicts=True)
+            for index in open_indices + closed_indices:
+                Index.objects.get_or_create(name=index)
 
 
     @elastic_connection
