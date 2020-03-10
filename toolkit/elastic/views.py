@@ -2,7 +2,9 @@ import json
 
 import rest_framework.filters as drf_filters
 from django.db import transaction
+from django.http import JsonResponse
 from django_filters import rest_framework as filters
+from rest_auth import views
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -13,6 +15,21 @@ from toolkit.elastic.models import Index, Reindexer
 from toolkit.elastic.serializers import IndexSerializer, ReindexerCreateSerializer
 from toolkit.permissions.project_permissions import IsSuperUser, ProjectResourceAllowed
 from toolkit.view_constants import BulkDelete
+
+
+class ElasticGetIndices(views.APIView):
+    permission_classes = (IsSuperUser,)
+
+
+    def get(self, request):
+        """
+        Returns **all** available indices from Elasticsearch.
+        This is different from get_indices action in project view as it lists **all** indices in Elasticsearch.
+        """
+        es_core = ElasticCore()
+        es_core.syncher()
+        indices = [index.name for index in Index.objects.all()]
+        return JsonResponse(indices, safe=False, status=status.HTTP_200_OK)
 
 
 class IndexViewSet(mixins.CreateModelMixin,

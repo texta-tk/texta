@@ -136,13 +136,11 @@ class ElasticCore:
                 if index not in es_set:
                     Index.objects.get(name=index).delete()
 
-            open_indices = [Index(name=index_name, is_open=True) for index_name in opened]
-            closed_indices = [Index(name=index_name, is_open=False) for index_name in closed]
 
-            for index in open_indices:
+            for index in opened:
                 Index.objects.get_or_create(name=index, is_open=True)
 
-            for index in closed_indices:
+            for index in closed:
                 Index.objects.get_or_create(name=index, is_open=False)
 
 
