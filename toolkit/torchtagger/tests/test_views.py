@@ -51,7 +51,7 @@ class TorchTaggerViewTests(TransactionTestCase):
         # payload for training embedding
         payload = {
             "description": "TestEmbedding",
-            "fields": [TEST_FIELD_CHOICE[0]],
+            "fields": TEST_FIELD_CHOICE,
             "max_vocab": 10000,
             "min_freq": 5,
             "num_dimensions": 300,
@@ -67,7 +67,7 @@ class TorchTaggerViewTests(TransactionTestCase):
         payload = {
             "description": "TestTorchTaggerTraining",
             # "fact_name": TEST_FACT_NAME,
-            "fields": [TEST_FIELD_CHOICE[0]],
+            "fields": TEST_FIELD_CHOICE,
             "maximum_sample_size": 500,
             "model_architecture": self.torch_models[0],
             "num_epochs": 3,
@@ -93,7 +93,7 @@ class TorchTaggerViewTests(TransactionTestCase):
         payload = {
             "description": "TestTorchTaggerTraining",
             "fact_name": TEST_FACT_NAME,
-            "fields": [TEST_FIELD_CHOICE[0]],
+            "fields": TEST_FIELD_CHOICE,
             "maximum_sample_size": 500,
             "model_architecture": self.torch_models[0],
             "num_epochs": 3,
