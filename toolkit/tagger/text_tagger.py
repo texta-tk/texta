@@ -166,7 +166,11 @@ class TextTagger:
             if field in doc:
                 # process text if asked
                 if self.text_processor:
-                    doc_field = self.text_processor.process(doc[field])[0]
+                    processed_field = self.text_processor.process(doc[field])
+                    if processed_field:
+                        doc_field = self.text_processor.process(doc[field])[0]
+                    else:
+                        doc_field = ""
                 else:
                     doc_field = doc[field]
                 text_map[field] = [doc_field]

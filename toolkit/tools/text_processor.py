@@ -56,10 +56,13 @@ class TextProcessor:
             else:
                 list_of_texts = [stripped_text]
         else:
-            list_of_texts = []
+            # whetever obscure was found, output is as string
+            list_of_texts = [str(input_text)]
         out = []
         for text in list_of_texts:
             if text:
+                # make sure it is a string
+                text = str(text)
                 # lemmatize if asked
                 if self.lemmatizer:
                     text = self.lemmatizer.lemmatize(text)

@@ -240,7 +240,7 @@ class TaggerViewTests(APITestCase):
 
     def run_tag_doc(self):
         """Tests the endpoint for the tag_doc action"""
-        payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"})}
+        payload = {"doc": json.dumps({TEST_FIELD_CHOICE[0]: "This is some test text for the Tagger Test", TEST_FIELD_CHOICE[1]: ""})}
         for test_tagger_id in self.test_tagger_ids:
             tag_text_url = f'{self.url}{test_tagger_id}/tag_doc/'
             response = self.client.post(tag_text_url, payload)
@@ -255,7 +255,7 @@ class TaggerViewTests(APITestCase):
     def run_tag_doc_with_lemmatization(self):
         """Tests the endpoint for the tag_doc action"""
         payload = {
-            "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"}),
+            "doc": json.dumps({TEST_FIELD_CHOICE[0]: "This is some test text for the Tagger Test", TEST_FIELD_CHOICE[1]: 123}),
             "lemmatize": True
         }
         for test_tagger_id in self.test_tagger_ids:
@@ -413,7 +413,7 @@ class TaggerViewTests(APITestCase):
         """Tests feeback extra action."""
         tagger_id = self.test_tagger_ids[0]
         payload = {
-            "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"}),
+            "doc": json.dumps({TEST_FIELD_CHOICE[0]: "This is some test text for the Tagger Test", TEST_FIELD_CHOICE[1]: "123"}),
             "feedback_enabled": True
         }
         tag_text_url = f'{self.url}{tagger_id}/tag_doc/'
@@ -445,7 +445,9 @@ class TaggerViewTests(APITestCase):
         url = f'{self.url}{tagger_id}/retrain_tagger/'
         response = self.client.post(url)
         # test tagging again for this model
-        payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"})}
+        payload = {
+            "doc": json.dumps({TEST_FIELD_CHOICE[0]: "This is some test text for the Tagger Test", TEST_FIELD_CHOICE[1]: "123"})
+        }
         tag_text_url = f'{self.url}{tagger_id}/tag_doc/'
         response = self.client.post(tag_text_url, payload)
         print_output('test_feedback_retrained_tag_doc:response.data', response.data)
