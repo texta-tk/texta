@@ -54,7 +54,7 @@ class TaggerGroupViewTests(APITestCase):
             "minimum_sample_size": 50,
             "fact_name": TEST_FACT_NAME,
             "tagger": {
-                "fields": TEST_FIELD_CHOICE,
+                "fields": [TEST_FIELD_CHOICE[0]],
                 "vectorizer": "Hashing Vectorizer",
                 "classifier": "LinearSVC",
                 "feature_selector": "SVM Feature Selector",
@@ -157,7 +157,7 @@ class TaggerGroupViewTests(APITestCase):
             "minimum_sample_size": 50,
             "fact_name": TEST_FACT_NAME,
             "tagger": {
-                "fields": TEST_FIELD_CHOICE,
+                "fields": [TEST_FIELD_CHOICE[0]],
                 "vectorizer": "Hashing Vectorizer",
                 "classifier": "LinearSVC",
                 "feature_selector": "SVM Feature Selector",
