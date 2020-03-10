@@ -47,25 +47,6 @@ class TaggerFilter(filters.FilterSet):
 
 
 class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
-    """
-    list:
-    Returns list of Tagger objects.
-
-    read:
-    Return Tagger object by id.
-
-    create:
-    Creates Tagger object.
-
-    update:
-    Updates entire Tagger object.
-
-    partial_update:
-    Performs partial update on Tagger object.
-
-    delete:
-    Deletes Tagger object.
-    """
     serializer_class = TaggerSerializer
     permission_classes = (
         ProjectResourceAllowed,

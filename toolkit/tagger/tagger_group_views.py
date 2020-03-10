@@ -349,7 +349,10 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tagger_objects = tagger_group_object.taggers.filter(description__iregex=f"^({candidates_str})$")
         # filter out completed
         tagger_objects = [tagger for tagger in tagger_objects if tagger.task.status == tagger.task.STATUS_COMPLETED]
-        # predict & sort tags
-        tags = group(apply_tagger.s(text, tagger.pk, input_type) for tagger in tagger_objects).apply()
-        tags = [tag for tag in tags.get() if tag]
+        # predict tags
+        group_task = group(apply_tagger.s(text, tagger.pk, input_type) for tagger in tagger_objects)
+        group_results = apply_celery_task(group_task)
+        # retrieve results & remove non-hits
+        tags = [tag for tag in group_results.get() if tag]
+        # sort by probability and return
         return sorted(tags, key=lambda k: k['probability'], reverse=True)

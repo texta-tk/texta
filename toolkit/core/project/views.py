@@ -20,6 +20,7 @@ from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.tools.autocomplete import Autocomplete
+from toolkit.helper_functions import apply_celery_task
 from toolkit.view_constants import (
     FeedbackIndexView
 )
@@ -224,8 +225,10 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             return Response({'error': 'none of provided taggers are present. are the models ready?'}, status=status.HTTP_400_BAD_REQUEST)
         # tag text using celery group primitive
         text = serializer.validated_data['text']
-        tags = group(apply_tagger.s(text, tagger.pk, 'text') for tagger in taggers).apply()
-        tags = [tag for tag in tags.get() if tag]
+        group_task = group(apply_tagger.s(text, tagger.pk, 'text') for tagger in taggers)
+        group_results = apply_celery_task(group_task)
+        # retrieve results & remove non-hits
+        tags = [tag for tag in group_results.get() if tag]
         # sort & return tags
         sorted_tags = sorted(tags, key=lambda k: k['probability'], reverse=True)
         return Response(sorted_tags, status=status.HTTP_200_OK)
