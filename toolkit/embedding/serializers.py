@@ -1,10 +1,13 @@
 from rest_framework import serializers
 
-from toolkit.embedding.models import Embedding, Task, EmbeddingCluster
+from toolkit.embedding.models import Embedding, Task
 from toolkit.embedding import choices
 from toolkit.core.task.serializers import TaskSerializer
-from toolkit.embedding.choices import (DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER, DEFAULT_BROWSER_NUM_CLUSTERS, DEFAULT_MIN_FREQ, DEFAULT_NUM_CLUSTERS, DEFAULT_NUM_DIMENSIONS, DEFAULT_OUTPUT_SIZE)
-from toolkit.embedding.models import Embedding, EmbeddingCluster
+from toolkit.embedding.choices import (
+    DEFAULT_MIN_FREQ,
+    DEFAULT_NUM_DIMENSIONS,
+    DEFAULT_OUTPUT_SIZE
+)
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 
 
@@ -33,29 +36,3 @@ class EmbeddingPredictSimilarWordsSerializer(serializers.Serializer):
     negatives = serializers.ListField(child=serializers.CharField(), help_text=f'Negative words for the model. Default: EMPTY', required=False, default=[])
     output_size = serializers.IntegerField(default=choices.DEFAULT_OUTPUT_SIZE,
                                     help_text=f'Default: {choices.DEFAULT_OUTPUT_SIZE}')
-
-
-class EmbeddingClusterSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
-    author_username = serializers.CharField(source='author.username', read_only=True)
-    task = TaskSerializer(read_only=True)
-    num_clusters = serializers.IntegerField(default=choices.DEFAULT_NUM_CLUSTERS, help_text=f'Default: {choices.DEFAULT_NUM_CLUSTERS}')
-    description = serializers.CharField(default='', help_text=f'Default: EMPTY')
-    vocab_size = serializers.SerializerMethodField()
-    url = serializers.SerializerMethodField()
-
-
-    class Meta:
-        model = EmbeddingCluster
-        fields = ('id', 'author_username', 'url', 'description', 'embedding', 'vocab_size', 'num_clusters', 'task')
-
-        read_only_fields = ('task',)
-
-
-    def get_vocab_size(self, obj):
-        return obj.embedding.vocab_size
-
-
-class EmbeddingClusterBrowserSerializer(serializers.Serializer):
-    number_of_clusters = serializers.IntegerField(default=choices.DEFAULT_BROWSER_NUM_CLUSTERS, help_text=f'Default: {choices.DEFAULT_BROWSER_NUM_CLUSTERS}')
-    max_examples_per_cluster = serializers.IntegerField(default=choices.DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER, help_text=f'Default: {choices.DEFAULT_BROWSER_EXAMPLES_PER_CLUSTER}')
-    cluster_order = serializers.ChoiceField(((False, 'ascending'), (True, 'descending')))

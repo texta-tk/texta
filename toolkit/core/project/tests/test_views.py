@@ -103,7 +103,6 @@ class ProjectViewTests(APITestCase):
         self.assertTrue('num_taggers' in response.data)
         self.assertTrue('num_tagger_groups' in response.data)
         self.assertTrue('num_embeddings' in response.data)
-        self.assertTrue('num_embedding_clusters' in response.data)
 
 
     def test_search_by_query(self):

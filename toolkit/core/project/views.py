@@ -35,25 +35,6 @@ class ProjectFilter(filters.FilterSet):
 
 
 class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
-    """
-    list:
-    Returns list of projects.
-
-    read:
-    Returns project by id.
-
-    create:
-    Creates new project object.
-
-    update:
-    Updates entire project object.
-
-    partial_update:
-    Partially updates project object.
-
-    delete:
-    Deletes project object.
-    """
     pagination_class = None
     serializer_class = ProjectSerializer
     permission_classes = (
@@ -301,8 +282,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             'num_torchtaggers': proj.torchtagger_set.count(),
             'num_taggers': proj.tagger_set.count(),
             'num_tagger_groups': proj.taggergroup_set.count(),
-            'num_embeddings': proj.embedding_set.count(),
-            'num_embedding_clusters': proj.embeddingcluster_set.count(),
+            'num_embeddings': proj.embedding_set.count()
         }
 
         return Response(response, status=status.HTTP_200_OK)

@@ -174,30 +174,6 @@ class Embedding(models.Model):
         return self.description
 
 
-class EmbeddingCluster(models.Model):
-    description = models.CharField(max_length=MAX_DESC_LEN)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE)
-    num_clusters = models.IntegerField(default=100)
-    cluster_model = models.FileField(null=True, verbose_name='', default=None)
-    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
-
-
-    def __str__(self):
-        return self.description
-
-
-    @classmethod
-    def cluster_embedding_vocabulary(cls, sender, instance, created, **kwargs):
-        if created:
-            new_task = Task.objects.create(embeddingcluster=instance, status='created')
-            instance.task = new_task
-            instance.save()
-            from toolkit.embedding.tasks import cluster_embedding
-            apply_celery_task(cluster_embedding, instance.pk)
-
-
 @receiver(models.signals.post_delete, sender=Embedding)
 def auto_delete_embedding_on_delete(sender, instance: Embedding, **kwargs):
     """
@@ -216,19 +192,3 @@ def auto_delete_embedding_on_delete(sender, instance: Embedding, **kwargs):
     if instance.phraser_model:
         if os.path.isfile(instance.phraser_model.path):
             os.remove(instance.phraser_model.path)
-
-
-@receiver(models.signals.post_save, sender=EmbeddingCluster)
-def train_cluster_embedding_vocabulary(sender, instance: EmbeddingCluster, created, **kwargs):
-    EmbeddingCluster.cluster_embedding_vocabulary(sender, instance, created, **kwargs)
-
-
-@receiver(models.signals.post_delete, sender=EmbeddingCluster)
-def auto_delete_embedding_cluster_on_delete(sender, instance: EmbeddingCluster, **kwargs):
-    """
-    Delete resources on the file-system upon cluster deletion.
-    Triggered on individual model object and queryset EmbeddingCluster deletion.
-    """
-    if instance.cluster_model:
-        if os.path.isfile(instance.cluster_model.path):
-            os.remove(instance.cluster_model.path)

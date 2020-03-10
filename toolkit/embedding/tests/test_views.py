@@ -9,7 +9,7 @@ from rest_framework import status
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import EMPTY_QUERY
-from toolkit.embedding.models import Embedding, EmbeddingCluster
+from toolkit.embedding.models import Embedding
 from toolkit.settings import MODELS_DIR
 from toolkit.test_settings import TEST_FIELD_CHOICE, TEST_INDEX, TEST_VERSION_PREFIX
 from toolkit.tools.common_utils import project_creation
@@ -18,21 +18,14 @@ from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 class EmbeddingViewTests(TransactionTestCase):
 
-
     def setUp(self):
         self.user = create_test_user('embeddingOwner', 'my@email.com', 'pw')
-        self.project = project_creation("embeddingTestProject", TEST_INDEX)
         self.project = project_creation("embeddingTestProject", TEST_INDEX)
         self.project.users.add(self.user)
 
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/embeddings/'
         self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
-        self.cluster_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/embedding_clusters/'
-
-        # self.user.profile.activate_project(self.project)
-
         self.test_embedding_id = None
-        self.test_embedding_clustering_id = None
         self.client.login(username='embeddingOwner', password='pw')
 
 
@@ -41,10 +34,6 @@ class EmbeddingViewTests(TransactionTestCase):
         self.run_predict(self.test_embedding_id)
         self.run_predict_with_negatives()
         self.run_phrase()
-        self.run_create_embedding_cluster_training_and_task_signal()
-        self.run_embedding_cluster_browse()
-        self.run_embedding_cluster_find_word()
-        self.run_embedding_cluster_text()
         self.run_model_export_import()
         self.run_patch_on_embedding_instances(self.test_embedding_id)
         self.run_put_on_embedding_instances(self.test_embedding_id)
@@ -54,7 +43,6 @@ class EmbeddingViewTests(TransactionTestCase):
 
     def tearDown(self):
         Embedding.objects.all().delete()
-        EmbeddingCluster.objects.all().delete()
 
 
     def run_create_embedding_training_and_task_signal(self):
@@ -195,60 +183,6 @@ class EmbeddingViewTests(TransactionTestCase):
         predict_url = f'{self.url}{self.test_embedding_id}/phrase_text/'
         response = self.client.post(predict_url, json.dumps(payload), content_type='application/json')
         print_output('predict:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Check if response data is not empty, but a result instead
-        self.assertTrue(response.data)
-
-
-    def run_create_embedding_cluster_training_and_task_signal(self):
-        """Tests the endpoint for a new EmbeddingCluster, and if a new Task gets created via the signal"""
-        payload = {
-            "embedding": self.test_embedding_id,
-            "num_clusters": 10
-        }
-
-        response = self.client.post(self.cluster_url, json.dumps(payload), content_type='application/json')
-        print_output('test_create_embedding_clustering_and_task_signal:response.data', response.data)
-        # Check if Embedding gets created
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        created_embedding_cluster = EmbeddingCluster.objects.get(id=response.data['id'])
-        self.test_embedding_clustering_id = created_embedding_cluster.id
-        # Check if not errors
-        self.assertEqual(created_embedding_cluster.task.errors, '[]')
-        # Check if Task gets created via a signal
-        self.assertTrue(created_embedding_cluster.task is not None)
-        # Check if Embedding gets trained and completed
-        self.assertEqual(created_embedding_cluster.task.status, Task.STATUS_COMPLETED)
-
-
-    def run_embedding_cluster_browse(self):
-        """Tests the endpoint for the browse action"""
-        payload = {"number_of_clusters": 10, "cluster_order": True}
-        browse_url = f'{self.cluster_url}{self.test_embedding_clustering_id}/browse_clusters/'
-        response = self.client.post(browse_url, json.dumps(payload), content_type='application/json')
-        print_output('browse:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Check if response data is not empty, but a result instead
-        self.assertTrue(response.data)
-
-
-    def run_embedding_cluster_find_word(self):
-        """Tests the endpoint for the find_word action"""
-        payload = {"text": "putin"}
-        browse_url = f'{self.cluster_url}{self.test_embedding_clustering_id}/find_cluster_by_word/'
-        response = self.client.post(browse_url, json.dumps(payload), content_type='application/json')
-        print_output('find_word:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Check if response data is not empty, but a result instead
-        self.assertTrue(response.data)
-
-
-    def run_embedding_cluster_text(self):
-        """Tests the endpoint for the find_word action"""
-        payload = {"text": "putin ja teised reptiloidid nagu ansip ja kallas. nats ja nats"}
-        browse_url = f'{self.cluster_url}{self.test_embedding_clustering_id}/cluster_text/'
-        response = self.client.post(browse_url, json.dumps(payload), content_type='application/json')
-        print_output('cluster_text:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response data is not empty, but a result instead
         self.assertTrue(response.data)
