@@ -126,11 +126,10 @@ class ElasticIndexViewTests(APITestCase):
 
     def test_proper_open_closed_test_transferal_after_sync(self):
         Index.objects.all().delete()
-        opened, closed = ElasticCore().get_indices()
 
-        created_response = requests.put(f"{ES_URL}/test_closed_sync")
-        closed_response = requests.post(f"{ES_URL}/test_closed_sync/_close")
-        response = self.client.post(f"{self.index_url}sync_indices/")
+        created_response = requests.put(f"{ES_URL}/test_closed_sync")  # Add the index into Elasticsearch.
+        closed_response = requests.post(f"{ES_URL}/test_closed_sync/_close")  # Close said index.
+        response = self.client.post(f"{self.index_url}sync_indices/")  # Do the deed.
 
         closed_index = Index.objects.get(name="test_closed_sync", is_open=False)
         self.assertTrue(closed_index is not None)
