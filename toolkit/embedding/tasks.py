@@ -99,4 +99,4 @@ def train_embedding(embedding_id):
         # declare the job failed
         show_progress.update_errors(e)
         task_object.update_status(Task.STATUS_FAILED)
-        return False
+        raise

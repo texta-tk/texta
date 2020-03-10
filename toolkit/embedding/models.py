@@ -102,6 +102,10 @@ class Embedding(models.Model):
         return new_model
 
 
+    def get_indices(self):
+        return [index.name for index in self.indices.all()]
+
+
     def to_json(self) -> dict:
         serialized = serializers.serialize('json', [self])
         json_obj = {"fields": json.loads(serialized)[0]["fields"], "embedding_extras": []}

@@ -14,9 +14,9 @@ def get_indices_from_object(model_object):
     Returns indices from object if present.
     If no indices, returns all project indices.
     """
-    object_indices = model_object.project.get_indices()
-    if object_indices:
-        return object_indices
+    model_object_indices = model_object.get_indices()
+    if model_object_indices:
+        return model_object_indices
     else:
         return model_object.project.get_indices()
 
