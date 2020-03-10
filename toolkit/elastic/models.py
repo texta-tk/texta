@@ -12,8 +12,11 @@ from toolkit.helper_functions import apply_celery_task
 
 class Index(models.Model):
     """
-    Avoided overwriting model methods for some added
-    'security' when syncing indices. Doing it in the view instead.
+    To NOT in any circumstance sync model deletion and creation
+    with ANY index operation towards Elasticsearch if your life is dear
+    to you. There are several places in tests that have Index.objects.delete.all()...
+
+    Keep it in the views...
     """
     name = models.CharField(max_length=255, unique=True)
     is_open = models.BooleanField(default=True)

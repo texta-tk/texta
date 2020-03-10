@@ -59,8 +59,6 @@ class IndexViewSet(mixins.CreateModelMixin,
             return Response({"message": f"Deleted index {index_name} from Elasticsearch!"})
 
 
-
-
     @action(detail=False, methods=['post'])
     def sync_indices(self, request, pk=None, project_pk=None):
         ElasticCore().syncher()
