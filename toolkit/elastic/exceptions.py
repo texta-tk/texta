@@ -24,3 +24,21 @@ class ElasticConnectionException(APIException):
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     default_detail = "Error with connecting to Elasticsearch!"
     default_code = "elasticsearch_connect_error"
+
+
+class ElasticIndexNotFoundException(APIException):
+    status_code = status.HTTP_404_NOT_FOUND
+    default_detail = "Could not find index!"
+    default_code = "index_not_found"
+
+
+class ElasticAuthorizationException(APIException):
+    status_code = status.HTTP_403_FORBIDDEN
+    default_detail = "Access denied to Elasticsearch!"
+    default_code = "access_denied"
+
+
+class ElasticAuthenticationException(APIException):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    default_detail = "Authentification to Elasticsearch has failed!"
+    default_code = "auth_failed"

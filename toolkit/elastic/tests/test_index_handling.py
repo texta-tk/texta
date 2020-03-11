@@ -1,8 +1,8 @@
 import requests
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Index
 from toolkit.settings import ES_URL
@@ -25,6 +25,18 @@ class ElasticIndexViewTests(APITestCase):
         cls.admin.save()
         cls.project = project_creation("ElasticTestProject", TEST_INDEX)
         cls.project.users.add(cls.user)
+
+
+    def __create_locked_index(self, index_name: str):
+        index_url = f"{ES_URL}/{index_name}"
+        create_index = requests.put(index_url)
+        lock_index = requests.put(f"{index_url}/_settings", json={
+            "index": {
+                "blocks": {
+                    "read_only_allow_delete": True
+                }
+            }
+        })
 
 
     def setUp(self):
@@ -142,3 +154,27 @@ class ElasticIndexViewTests(APITestCase):
             "is_open": False
         })
         closed_index = Index.objects.get(name="same_name_index", is_open=False)
+
+
+    def test_project_creation_using_locked_indices(self):
+        """
+        There was a bug case that warrants this test case.
+        In case any of the indices in Elasticsearch are locked for whatever reason,
+        then project creation fails because it contains/contained  lazy index creation
+        which ignores existing indices and thus created FORBIDDEN_ACCESS errors in Elasticsearch.
+        """
+        index_names = ["locked_index_{}".format(i) for i in range(1, 5)]
+        for index in index_names:
+            self.__create_locked_index(index)
+
+        response = self.client.post(reverse("v1:project-list"), format="json", data={
+            "title": "faulty_project",
+            "indices": index_names,
+            "users": [reverse("v1:user-detail", args=[self.admin.pk])]
+        })
+
+        ec = ElasticCore()
+        for index in index_names:
+            ec.delete_index(index)
+
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)

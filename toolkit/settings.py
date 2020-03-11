@@ -191,7 +191,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # ELASTICSEARCH
-ES_URL = os.getenv('TEXTA_ES_URL', 'http://elastic-dev.texta.ee:9200')
+ES_URL = os.getenv('TEXTA_ES_URL', 'http://localhost:9200')
 ES_PREFIX = os.getenv('TEXTA_ES_PREFIX', '')
 ES_USERNAME = os.getenv("TEXTA_ES_USER", "")
 ES_PASSWORD = os.getenv("TEXTA_ES_PASSWORD", "")

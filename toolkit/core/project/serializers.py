@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from toolkit.core import choices as choices
 from toolkit.core.project.models import Project
+from toolkit.core.project.validators import check_if_in_elastic
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import EMPTY_QUERY
 
@@ -54,13 +55,16 @@ class ProjectGetFactsSerializer(serializers.Serializer):
 
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):
     title = serializers.CharField(required=True)
-    indices = serializers.ListField(default=[], child=serializers.CharField(), source="get_indices")
+    indices = serializers.ListField(default=[], child=serializers.CharField(), source="get_indices", validators=[check_if_in_elastic])
     users = serializers.HyperlinkedRelatedField(many=True, view_name='user-detail', queryset=User.objects.all(), )
     resources = serializers.SerializerMethodField()
 
 
     def update(self, instance, validated_data):
         from toolkit.elastic.models import Index
+
+        ec = ElasticCore()
+        ec.syncher()
 
         if "title" in validated_data:
             instance.title = validated_data["title"]
@@ -88,12 +92,13 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         users = validated_data["users"]
 
         ec = ElasticCore()
+        ec.syncher()
 
         project = Project.objects.create(title=title)
         project.users.set(users)
+
         for index_name in indices:
             index, is_created = Index.objects.get_or_create(name=index_name)
-            ec.create_index(index.name)
             project.indices.add(index)
 
         project.save()

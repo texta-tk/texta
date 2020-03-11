@@ -1,12 +1,12 @@
 import logging
-from typing import Tuple
+from typing import List, Tuple
 
 import elasticsearch
 import requests
 from django.db import transaction
 from elasticsearch import Elasticsearch
 
-from toolkit.elastic.exceptions import ElasticTimeoutException, ElasticTransportException
+from toolkit.elastic.exceptions import ElasticAuthenticationException, ElasticAuthorizationException, ElasticIndexNotFoundException, ElasticTimeoutException, ElasticTransportException
 from toolkit.settings import ERROR_LOGGER, ES_CONNECTION_PARAMETERS, ES_PASSWORD, ES_PREFIX, ES_URL, ES_USERNAME
 from toolkit.tools.logger import Logger
 
@@ -24,12 +24,26 @@ def elastic_connection(func):
         try:
             return func(*args, **kwargs)
 
+        except elasticsearch.exceptions.NotFoundError as e:
+            logging.getLogger(ERROR_LOGGER).exception(e.info)
+            info = [error["index"] for error in e.info["error"]["root_cause"]]
+            raise ElasticIndexNotFoundException(f"Index lookup failed: {str(info)}")
+
+        except elasticsearch.exceptions.AuthorizationException as e:
+            logging.getLogger(ERROR_LOGGER).exception(e.info)
+            error = [error["reason"] for error in e.info["error"]["root_cause"]]
+            raise ElasticAuthorizationException(f"Not authorized to access resource: {str(error)}")
+
+        except elasticsearch.exceptions.AuthenticationException as e:
+            logging.getLogger(ERROR_LOGGER).exception(e.info)
+            raise ElasticAuthenticationException(f"Not authorized to access resource: {e.info}")
+
         except elasticsearch.exceptions.TransportError as e:
             logging.getLogger(ERROR_LOGGER).exception(e.info)
             raise ElasticTransportException(f"Transport to Elasticsearch failed with error: {e.error}")
 
         except elasticsearch.exceptions.ConnectionTimeout as e:
-            logging.getLogger(ERROR_LOGGER).exception(e)
+            logging.getLogger(ERROR_LOGGER).exception(e.info)
             raise ElasticTimeoutException(f"Connection to Elasticsearch timed out!")
 
 
@@ -70,7 +84,8 @@ class ElasticCore:
         try:
             requests.get(ES_URL)
             return True
-        except:
+        except Exception as e:
+            logging.getLogger(ERROR_LOGGER).exception(e)
             return False
 
 
@@ -91,6 +106,7 @@ class ElasticCore:
             return False
 
 
+    @elastic_connection
     def create_index(self, index, body=None):
         return self.es.indices.create(index=index, body=body, ignore=400)
 
@@ -136,7 +152,6 @@ class ElasticCore:
                 if index not in es_set:
                     Index.objects.get(name=index).delete()
 
-
             for index in opened:
                 Index.objects.get_or_create(name=index, is_open=True)
 
@@ -165,6 +180,7 @@ class ElasticCore:
             return [], []
 
 
+    @elastic_connection
     def get_fields(self, indices=[]):
         out = []
         if indices:
@@ -210,5 +226,10 @@ class ElasticCore:
         return mapping_data
 
 
-    def check_if_indices_exist(self, indices):
+    @elastic_connection
+    def check_if_indices_exist(self, indices: List[str]) -> bool:
+        """
+        Returns whether the given indices exist using a list of index
+        names as input.
+        """
         return self.es.indices.exists(index=','.join(indices))
