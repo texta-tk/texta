@@ -9,6 +9,7 @@ from celery.decorators import task
 from toolkit.base_task import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.data_sample import DataSample
+from toolkit.elastic.feedback import Feedback
 from toolkit.embedding.phraser import Phraser
 from toolkit.helper_functions import get_indices_from_object
 from toolkit.settings import ERROR_LOGGER
@@ -145,17 +146,17 @@ def train_tagger(tagger_id):
 
 
 @task(name="apply_tagger", base=BaseTask)
-def apply_tagger(text, tagger_id, input_type, lemmatize=False):
+def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=None):
     """Task for applying tagger to text."""
     # get tagger object
-    tagger = Tagger.objects.get(pk=tagger_id)
+    tagger_object = Tagger.objects.get(pk=tagger_id)
     # get lemmatizer if needed
     lemmatizer = None
     if lemmatize:
         lemmatizer = MLPAnalyzer()
     # create text processor object for tagger
-    stop_words = tagger.stop_words.split(' ')
-    if tagger.embedding:
+    stop_words = tagger_object.stop_words.split(' ')
+    if tagger_object.embedding:
         phraser = Phraser(tagger.embedding.id)
         phraser.load()
         text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
@@ -164,22 +165,28 @@ def apply_tagger(text, tagger_id, input_type, lemmatize=False):
     # load tagger
     tagger = TextTagger(tagger_id)
     tagger.load()
-
+    # if not loaded return None
     if not tagger:
         return None
-    
+    # add text processor
     tagger.add_text_processor(text_processor)
-    
     # check input type
     if input_type == 'doc':
         tagger_result = tagger.tag_doc(text)
     else:
         tagger_result = tagger.tag_text(text)
+
     # check if prediction positive
     decision = bool(tagger_result[0])
+    # create output dict
+    prediction = {'tag': tagger.description, 'probability': tagger_result[1], 'tagger_id': tagger_id, 'result': decision}
 
-    if not decision:
-        return None
-    # return tag info
-
-    return {'tag': tagger.description, 'probability': tagger_result[1], 'tagger_id': tagger_id}
+    # add feedback if asked
+    if feedback:
+        project_pk = tagger_object.project.pk
+        feedback_object = Feedback(project_pk, model_object=tagger_object)
+        feedback_id = feedback_object.store(text, decision)
+        feedback_url = f'/projects/{project_pk}/taggers/{tagger_object.pk}/feedback/'
+        # TODO: add feedback url automagically
+        prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
+    return prediction

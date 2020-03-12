@@ -21,10 +21,13 @@ from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.tagger.models import TaggerGroup
 from toolkit.tagger.serializers import TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer
-from toolkit.tagger.tagger_views import global_mlp_for_taggers
+from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.tagger.tasks import apply_tagger, create_tagger_objects, train_tagger
 from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import BulkDelete, TagLogicViews
+
+
+mlp_analyzer = MLPAnalyzer()
 
 
 class TaggerGroupFilter(filters.FilterSet):
@@ -171,7 +174,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tags = []
         hybrid_tagger_object = self.get_object()
         taggers = {t.description.lower(): {"tag": t.description, "id": t.id} for t in hybrid_tagger_object.taggers.all()}
-        mlp_output = global_mlp_for_taggers.process(text)
+        mlp_output = mlp_analyzer.process(text)
         # lemmatize
         if lemmatize and mlp_output:
             text = mlp_output["text"]["lemmas"]
@@ -350,9 +353,11 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # filter out completed
         tagger_objects = [tagger for tagger in tagger_objects if tagger.task.status == tagger.task.STATUS_COMPLETED]
         # predict tags
-        group_task = group(apply_tagger.s(text, tagger.pk, input_type) for tagger in tagger_objects)
+        group_task = group(apply_tagger.s(tagger.pk, text, input_type=input_type) for tagger in tagger_objects)
         group_results = apply_celery_task(group_task)
         # retrieve results & remove non-hits
         tags = [tag for tag in group_results.get() if tag]
+        # remove non-hits
+        tags = [tag for tag in tags if tag['result']]
         # sort by probability and return
         return sorted(tags, key=lambda k: k['probability'], reverse=True)
