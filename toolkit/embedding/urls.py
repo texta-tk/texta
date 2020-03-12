@@ -3,4 +3,3 @@ from . import views
 
 embedding_router = routers.DefaultRouter()
 embedding_router.register('embeddings', views.EmbeddingViewSet, base_name='embedding')
-embedding_router.register('embedding_clusters', views.EmbeddingClusterViewSet, base_name='cluster')

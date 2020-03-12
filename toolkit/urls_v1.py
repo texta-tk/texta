@@ -50,10 +50,7 @@ urlpatterns = [
     path('rest-auth/', include('rest_auth.urls')),
     path('rest-auth/registration/', include('rest_auth.registration.urls')),
     path("task/", TaskAPIView.as_view(), name="task_api"),
-    # elastic
-    # TODO Admin access only
-    url(r'^get_indices', ElasticGetIndices.as_view()),
-    # routers
+    url(r'^get_indices', ElasticGetIndices.as_view(), name="get_indices_for_project_creation"),    # routers
     url(r'^', include(router.urls)),
     url(r'^', include(project_router.urls))
 ]

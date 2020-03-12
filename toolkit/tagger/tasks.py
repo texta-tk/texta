@@ -6,17 +6,22 @@ import secrets
 
 from texta_tagger.tagger import Tagger as TextTagger
 from texta_tagger.tools.text_processor import TextProcessor
+from texta_tagger.tools.mlp_analyzer import get_mlp_analyzer
 from celery.decorators import task
 
 from toolkit.base_task import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.data_sample import DataSample
+from toolkit.elastic.feedback import Feedback
 from toolkit.embedding.phraser import Phraser
 from toolkit.helper_functions import get_indices_from_object
 from toolkit.settings import ERROR_LOGGER
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.tagger.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
+
+
+mlp_analyzer = get_mlp_analyzer()
 
 
 def create_tagger_batch(tagger_group_id, taggers_to_create):
@@ -127,23 +132,49 @@ def train_tagger(tagger_id):
 
 
 @task(name="apply_tagger", base=BaseTask)
-def apply_tagger(text, tagger_id, input_type, lemmatize=False):
+def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=None):
     """Task for applying tagger to text."""
     # get tagger object
     tagger_object = Tagger.objects.get(pk=tagger_id)
+    # get lemmatizer if needed
+    lemmatizer = None
+    if lemmatize:
+        lemmatizer = mlp_analyzer
+    # create text processor object for tagger
+    stop_words = tagger_object.stop_words.split(' ')
+    if tagger_object.embedding:
+        phraser = Phraser(tagger.embedding.id)
+        phraser.load()
+        text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
+    else:
+        text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
     # load tagger
     tagger = TextTagger()
     tagger_loaded = tagger.load_django(tagger_object)
     # check if tagger gets loaded
     if not tagger_loaded:
         return None
+    # add text processor
+    tagger.add_text_processor(text_processor)
     # check input type
     if input_type == "doc":
         tagger_result = tagger.tag_doc(text, lemmatize=lemmatize)
     else:
-        tagger_result = tagger.tag_text(text, lemmatize=lemmatize)
-    # check if prediction positive
-    if tagger_result["prediction"] == False:
-        return None
-    # return tag info
-    return {"tag": tagger.description, "probability": tagger_result["probability"], "tagger_id": tagger_id}
+        tagger_result = tagger.tag_text(text)
+    # set bool result
+    result = bool(tagger_result['prediction'])
+    # create output dict
+    prediction = {
+        'tag': tagger.description,
+        'probability': tagger_result['probability'],
+        'tagger_id': tagger_id,
+        'result': result
+    }
+    # add feedback if asked
+    if feedback:
+        project_pk = tagger_object.project.pk
+        feedback_object = Feedback(project_pk, model_object=tagger_object)
+        feedback_id = feedback_object.store(text, result)
+        feedback_url = f'/projects/{project_pk}/taggers/{tagger_object.pk}/feedback/'
+        prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
+    return prediction

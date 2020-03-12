@@ -40,7 +40,7 @@ class Feedback:
         if self.model_object:
             query.add_string_filter(query_string=str(self.model_object.pk), fields=["model_id"])
         if prediction_to_match:
-            query.add_string_filter(query_string=prediction_to_match, fields=["correct_prediction"])
+            query.add_string_filter(query_string=prediction_to_match, fields=["correct_result"])
         # if no index, don't create searcher object
         if not self.check_index_exists():
             return es_doc, None, query.query
@@ -97,13 +97,13 @@ class Feedback:
             Logger().error("Failed indexing model feedback", exc_info=e)
             return None
 
-    def add(self, feedback_id, correct_prediction):
+    def add(self, feedback_id, correct_result):
         """
         Adds correct prediction to indexed doc.
         """
         try:
             document = self.es_doc.get(feedback_id)
-            document["correct_prediction"] = json.dumps(correct_prediction)
+            document["correct_result"] = json.dumps(correct_result)
             self.es_doc.update(feedback_id, document)
             return {"success": "Tagger feedback updated."}
         except Exception as e:

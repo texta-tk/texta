@@ -189,7 +189,7 @@ class TorchTagger:
         for i in range(self.config.max_epochs):
             report = model.run_epoch(train_iterator, val_iterator, i)
             self.epoch_reports.append(report)
-            print("Epoch:", i, report.to_dict())
+            #print("Epoch:", i, report.to_dict())
         # set model
         self.model = model
         # set vocab

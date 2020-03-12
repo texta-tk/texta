@@ -5,6 +5,7 @@ from .models import DatasetImport
 from toolkit.core.task.models import Task
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.base_task import BaseTask
+from ..elastic.models import Index
 
 
 @task(name="import_dataset", base=BaseTask)
@@ -30,8 +31,9 @@ def import_dataset(dataset_import_id):
         import_object.save()
         # add imported index to project indices
         project_obj = import_object.project
-        project_obj.indices.append(import_object.index)
-        project_obj.save(add_indices=project_obj.indices)
+        index, is_created = Index.objects.get_or_create(name=import_object.index)
+        project_obj.indices.add(index)
+        project_obj.save()
         # declare the job done
         show_progress.update_step('')
         show_progress.update_view(100.0)

@@ -18,7 +18,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.exceptions import MLPNotAvailable, NonExistantModelError, SerializerNotValid
-from toolkit.helper_functions import apply_celery_task
+from toolkit.helper_functions import apply_celery_task, add_finite_url_to_feedback
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.tagger.models import TaggerGroup
@@ -203,7 +203,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         """
         hybrid_tagger_object = self.get_object()
         field_paths = json.loads(hybrid_tagger_object.taggers.first().fields)
-        indices = hybrid_tagger_object.project.indices
+        indices = hybrid_tagger_object.project.get_indices()
         ignore_tags = {tag["tag"]: True for tag in ignore_tags}
         # create query
         query = Query()
@@ -252,6 +252,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         n_candidate_tags = serializer.validated_data['n_candidate_tags']
         lemmatize = serializer.validated_data['lemmatize']
         use_ner = serializer.validated_data['use_ner']
+        feedback = serializer.validated_data['feedback_enabled']
 
         # update text and tags with MLP
         text, tags = self.get_mlp(text, lemmatize=lemmatize, use_ner=use_ner)
@@ -260,7 +261,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tag_candidates = self.get_tag_candidates(text, ignore_tags=tags, n_similar_docs=n_similar_docs, max_candidates=n_candidate_tags)
         
         # get tags
-        tags += self.apply_tagger_group(text, tag_candidates, input_type='text')
+        tags += self.apply_tagger_group(text, tag_candidates, request, input_type='text', feedback=feedback)
         return Response(tags, status=status.HTTP_200_OK)
 
 
@@ -303,6 +304,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         n_candidate_tags = serializer.validated_data['n_candidate_tags']
         lemmatize = serializer.validated_data['lemmatize']
         use_ner = serializer.validated_data['use_ner']
+        feedback = serializer.validated_data['feedback_enabled']
 
         # update text and tags with MLP
         combined_texts, tags = self.get_mlp(combined_texts, lemmatize=lemmatize, use_ner=use_ner)
@@ -310,7 +312,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(combined_texts, ignore_tags=tags, n_similar_docs=n_similar_docs, max_candidates=n_candidate_tags)
         # get tags
-        tags += self.apply_tagger_group(input_document, tag_candidates, input_type='doc', lemmatize=True)
+        tags += self.apply_tagger_group(input_document, tag_candidates, request, input_type='doc', lemmatize=lemmatize, feedback=feedback)
         return Response(tags, status=status.HTTP_200_OK)
 
 
@@ -327,10 +329,10 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # retrieve tagger fields from the first object
         tagger_fields = json.loads(hybrid_tagger_object.taggers.first().fields)
 
-        if not ElasticCore().check_if_indices_exist(hybrid_tagger_object.project.indices):
-            return Response({'error': f'One or more index from {list(hybrid_tagger_object.project.indices)} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        if not ElasticCore().check_if_indices_exist(hybrid_tagger_object.project.get_indices()):
+            return Response({'error': f'One or more index from {list(hybrid_tagger_object.project.get_indices())} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         # retrieve random document
-        random_doc = ElasticSearcher(indices=hybrid_tagger_object.project.indices).random_documents(size=1)[0]
+        random_doc = ElasticSearcher(indices=hybrid_tagger_object.project.get_indices()).random_documents(size=1)[0]
         # filter out correct fields from the document
         random_doc_filtered = {k: v for k, v in random_doc.items() if k in tagger_fields}
         # combine document field values into one string
@@ -339,13 +341,13 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(combined_texts, ignore_tags=tags)
         # get tags
-        tags += self.apply_tagger_group(random_doc_filtered, tag_candidates, input_type='doc')
+        tags += self.apply_tagger_group(random_doc_filtered, tag_candidates, request, input_type='doc')
         # return document with tags
         response = {"document": random_doc, "tags": tags}
         return Response(response, status=status.HTTP_200_OK)
 
 
-    def apply_tagger_group(self, text, tag_candidates, input_type='text', lemmatize=False):
+    def apply_tagger_group(self, text, tag_candidates, request, input_type='text', lemmatize=False, feedback=False):
         # get tagger group object
         tagger_group_object = self.get_object()
         # get tagger objects
@@ -353,7 +355,14 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tagger_objects = tagger_group_object.taggers.filter(description__iregex=f"^({candidates_str})$")
         # filter out completed
         tagger_objects = [tagger for tagger in tagger_objects if tagger.task.status == tagger.task.STATUS_COMPLETED]
-        # predict & sort tags
-        tags = group(apply_tagger.s(text, tagger.pk, input_type) for tagger in tagger_objects).apply()
-        tags = [tag for tag in tags.get() if tag]
+        # predict tags
+        group_task = group(apply_tagger.s(tagger.pk, text, input_type=input_type, lemmatize=lemmatize, feedback=feedback) for tagger in tagger_objects)
+        group_results = apply_celery_task(group_task)
+        # retrieve results & remove non-hits
+        tags = [tag for tag in group_results.get() if tag]
+        # remove non-hits
+        tags = [tag for tag in tags if tag['result']]
+        # if feedback was enabled, add urls
+        tags = [add_finite_url_to_feedback(tag, request) for tag in tags]
+        # sort by probability and return
         return sorted(tags, key=lambda k: k['probability'], reverse=True)

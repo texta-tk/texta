@@ -6,6 +6,7 @@ from toolkit.core.task.models import Task
 from toolkit.dataset_import.models import DatasetImport
 from toolkit.elastic.core import ElasticCore
 from toolkit.test_settings import TEST_DATASETS, TEST_IMPORT_DATASET, TEST_VERSION_PREFIX
+from toolkit.tools.common_utils import project_creation
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
@@ -15,9 +16,7 @@ class DatasetImportViewTests(APITestCase):
     def setUpTestData(cls):
         # Owner of the project
         cls.user = create_test_user('Owner', 'my@email.com', 'pw')
-        cls.project = Project.objects.create(
-            title='testImportDatasetProject',
-        )
+        cls.project = project_creation("testImportDatasetProject")
         cls.project.users.add(cls.user)
         cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/dataset_imports/'
         cls.project_url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}'
@@ -52,7 +51,7 @@ class DatasetImportViewTests(APITestCase):
                 self.assertTrue(import_dataset.num_documents_success > 0)
                 self.assertTrue(import_dataset.num_documents_success <= import_dataset.num_documents)
                 # Check if new index added to project
-                self.assertTrue(import_dataset.index in import_dataset.project.indices)
+                self.assertTrue(import_dataset.index in import_dataset.project.get_indices())
                 # test delete
                 response = self.client.delete(import_url)
                 self.assertTrue(response.status_code == 204)

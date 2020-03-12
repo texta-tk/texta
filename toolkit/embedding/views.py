@@ -12,10 +12,9 @@ from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
 from toolkit.embedding.embedding import W2VEmbedding
-from toolkit.embedding.models import Embedding, EmbeddingCluster
+from toolkit.embedding.models import Embedding
 from toolkit.embedding.phraser import Phraser
-from toolkit.embedding.serializers import (EmbeddingClusterBrowserSerializer, EmbeddingClusterSerializer, EmbeddingPredictSimilarWordsSerializer, EmbeddingSerializer)
-from toolkit.embedding.word_cluster import WordCluster
+from toolkit.embedding.serializers import EmbeddingPredictSimilarWordsSerializer, EmbeddingSerializer
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, SerializerNotValid
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceImportModelSerializer
@@ -80,10 +79,6 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
         embedding.train()
 
 
-    def perform_update(self, serializer):
-        serializer.save(fields=json.dumps(serializer.validated_data['fields']))
-
-
     def destroy(self, request, *args, **kwargs):
         instance: Embedding = self.get_object()
         instance.delete()
@@ -134,112 +129,3 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
             return Response(phrased_text, status=status.HTTP_200_OK)
         else:
             raise SerializerNotValid(detail=serializer.errors)
-
-
-class EmbeddingClusterViewSet(viewsets.ModelViewSet, BulkDelete):
-    """
-    list:
-    Returns list of Embedding Cluster objects.
-
-    read:
-    Return Embedding Cluster object by id.
-
-    create:
-    Creates Embedding Cluster object.
-
-    update:
-    Updates entire Embedding Cluster object.
-
-    partial_update:
-    Performs partial update on Embedding Cluster object.
-
-    delete:
-    Deletes Embedding Cluster object.
-    """
-    serializer_class = EmbeddingClusterSerializer
-    permission_classes = (
-        ProjectResourceAllowed,
-        permissions.IsAuthenticated,
-    )
-
-
-    def get_queryset(self):
-        return EmbeddingCluster.objects.filter(project=self.kwargs['project_pk'])
-
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user, project=Project.objects.get(id=self.kwargs['project_pk']))
-
-
-    @action(detail=True, methods=['post'], serializer_class=EmbeddingClusterBrowserSerializer)
-    def browse_clusters(self, request, pk=None, project_pk=None):
-        """Returns clustering results."""
-        data = request.data
-        serializer = EmbeddingClusterBrowserSerializer(data=data)
-
-        # check if valid request
-        if not serializer.is_valid():
-            raise SerializerNotValid(detail=serializer.errors)
-
-        clustering_object: EmbeddingCluster = self.get_object()
-        # check if clustering ready
-
-
-        if not clustering_object.cluster_model.name:
-            raise NonExistantModelError()
-
-        # load cluster model
-        clusterer = WordCluster(clustering_object.id)
-        clusterer.load()
-
-        clustering_result = clusterer.browse(
-            max_examples_per_cluster=serializer.validated_data['max_examples_per_cluster'],
-            number_of_clusters=serializer.validated_data['number_of_clusters'],
-            sort_reverse=serializer.validated_data['cluster_order']
-        )
-
-        return Response(clustering_result, status=status.HTTP_200_OK)
-
-
-    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
-    def find_cluster_by_word(self, request, pk=None, project_pk=None):
-        """Returns cluster id for input word."""
-        data = request.data
-        serializer = GeneralTextSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
-
-        clustering_object: EmbeddingCluster = self.get_object()
-        # check if clustering ready
-
-        if not clustering_object.cluster_model.name:
-            raise NonExistantModelError()
-
-        # load cluster model
-        clusterer = WordCluster(clustering_object.id)
-        clusterer.load()
-
-        clustering_result = clusterer.query(serializer.validated_data['text'])
-        return Response(clustering_result, status=status.HTTP_200_OK)
-
-
-    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
-    def cluster_text(self, request, pk=None, project_pk=None):
-        """Returns text with words replaced with cluster names in input text."""
-        data = request.data
-        serializer = GeneralTextSerializer(data=data)
-
-        # check if valid request
-        if not serializer.is_valid():
-            raise SerializerNotValid(detail=serializer.errors)
-
-        clustering_object: EmbeddingCluster = self.get_object()
-        # check if clustering ready
-
-        if not clustering_object.cluster_model.name:
-            raise NonExistantModelError()
-
-        clusterer = WordCluster(clustering_object.id)
-        clusterer.load()
-
-        clustered_text = clusterer.text_to_clusters(serializer.validated_data['text'])
-        return Response(clustered_text, status=status.HTTP_200_OK)

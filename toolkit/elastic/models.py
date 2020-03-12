@@ -1,17 +1,34 @@
-from toolkit.elastic.core import ElasticCore
-from toolkit.elastic.searcher import EMPTY_QUERY
+import json
+
+from django.contrib.auth.models import User, User
+from django.db import models
+from django.db.models import signals
+
 from toolkit.constants import MAX_DESC_LEN
-from toolkit.core.task.models import Task
-from toolkit.core.project.models import Project
+from toolkit.core.task.models import Task, Task, Task
+from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.helper_functions import apply_celery_task
 
-from django.contrib.auth.models import User
-from django.db.models import signals
-from django.db import models
-import json
+
+class Index(models.Model):
+    """
+    To NOT in any circumstance sync model deletion and creation
+    with ANY index operation towards Elasticsearch if your life is dear
+    to you. There are several places in tests that have Index.objects.delete.all()...
+
+    Keep it in the views...
+    """
+    name = models.CharField(max_length=255, unique=True)
+    is_open = models.BooleanField(default=True)
+
+
+    def __str__(self):
+        return self.name
 
 
 class Reindexer(models.Model):
+    from toolkit.core.project.models import Project
+
     description = models.CharField(max_length=MAX_DESC_LEN, default="")
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -23,8 +40,10 @@ class Reindexer(models.Model):
     random_size = models.IntegerField(default=0)
     field_type = models.TextField(default=json.dumps([]))
 
+
     def __str__(self):
         return self.description
+
 
     @classmethod
     def create_reindexer_model(cls, sender, instance, created, **kwargs):

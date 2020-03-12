@@ -9,6 +9,7 @@ from toolkit.test_settings import(TEST_INDEX_LARGE,
                                   TEST_QUERY,
                                   TEST_VERSION_PREFIX)
 from toolkit.core.project.models import Project
+from toolkit.tools.common_utils import project_creation
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 class TaggerPerformanceTests(APITestCase):
@@ -18,10 +19,7 @@ class TaggerPerformanceTests(APITestCase):
         cls.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
         cls.user.is_superuser = True
         cls.user.save()
-        cls.project = Project.objects.create(
-            title='taggerTestProject',
-            indices=TEST_INDEX_LARGE
-        )
+        cls.project = project_creation("taggerTestProject", TEST_INDEX_LARGE)
         cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/taggers/'
 
     def setUp(self):

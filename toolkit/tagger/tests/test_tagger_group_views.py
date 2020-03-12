@@ -7,12 +7,14 @@ from rest_framework.test import APITestCase
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
+from toolkit.elastic.core import ElasticCore
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.test_settings import (TEST_FACT_NAME,
                                    TEST_FIELD,
                                    TEST_FIELD_CHOICE,
                                    TEST_INDEX,
                                    TEST_VERSION_PREFIX)
+from toolkit.tools.common_utils import project_creation
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
@@ -24,10 +26,7 @@ class TaggerGroupViewTests(APITestCase):
         cls.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
         # cls.user.is_superuser = True
         # cls.user.save()
-        cls.project = Project.objects.create(
-            title='taggerGroupTestProject',
-            indices=TEST_INDEX
-        )
+        cls.project = project_creation("taggerGroupTestProject", TEST_INDEX)
         cls.project.users.add(cls.user)
         cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/tagger_groups/'
         cls.test_tagger_group_id = None

@@ -16,10 +16,10 @@ from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.lexicon.models import Lexicon
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
+from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import apply_celery_task
-from toolkit.multiselectfield import PatchedMultiSelectField as MultiSelectField
 from toolkit.settings import MODELS_DIR
 from toolkit.tagger.choices import (DEFAULT_CLASSIFIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE, DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_VECTORIZER)
 
@@ -32,7 +32,7 @@ class Tagger(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
-    indices = MultiSelectField(default=None)
+    indices = models.ManyToManyField(Index)
     fields = models.TextField(default=json.dumps([]))
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
     stop_words = models.TextField(default='')
@@ -54,6 +54,10 @@ class Tagger(models.Model):
     model_size = models.FloatField(default=None, null=True)
     plot = models.FileField(upload_to='data/media', null=True, verbose_name='')
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
+
+
+    def get_indices(self):
+        return [index.name for index in self.indices.all()]
 
 
     def __str__(self):
@@ -96,12 +100,18 @@ class Tagger(models.Model):
             with zipfile.ZipFile(zip_file, 'r') as archive:
                 json_string = archive.read(Tagger.MODEL_JSON_NAME).decode()
                 model_json = json.loads(json_string)
+                indices = model_json.pop("indices")
+
                 new_model = Tagger(**model_json)
 
                 new_model.task = Task.objects.create(tagger=new_model, status=Task.STATUS_COMPLETED)
                 new_model.author = User.objects.get(id=request.user.id)
                 new_model.project = Project.objects.get(id=pk)
                 new_model.save()  # Save the intermediate results.
+
+                for index in indices:
+                    index_model, is_created = Index.objects.get_or_create(name=index)
+                    Tagger.indices.add(index_model)
 
                 new_tagger_name = new_model.generate_name("tagger")
                 with open(new_tagger_name, "wb") as fp:
@@ -193,12 +203,19 @@ class TaggerGroup(models.Model):
                 new_model.save()  # Save the intermediate results.
 
                 for tagger in model_json["taggers"]:
+                    indices = tagger.pop("indices")
                     tagger_model = Tagger(**tagger)
+
 
                     tagger_model.task = Task.objects.create(tagger=tagger_model, status=Task.STATUS_COMPLETED)
                     tagger_model.author = User.objects.get(id=request.user.id)
                     tagger_model.project = Project.objects.get(id=pk)
                     tagger_model.save()
+
+                    for index_name in indices:
+                        index, is_created = Index.objects.get_or_create(name=index_name)
+                        tagger_model.indices.add(index)
+
 
                     new_tagger_name = tagger_model.generate_name("tagger")
                     with open(new_tagger_name, "wb") as fp:

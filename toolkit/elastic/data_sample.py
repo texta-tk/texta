@@ -71,7 +71,7 @@ class DataSample:
 
     def _get_tags(self, fact_name, min_count=50, max_count=None):
         """Finds possible tags for training by aggregating active project's indices."""
-        active_indices = self.tagger_object.project.indices
+        active_indices = self.tagger_object.project.get_indices()
         es_a = ElasticAggregator(indices=active_indices)
         # limit size to 10000 unique tags
         tag_values = es_a.facts(filter_by_fact_name=fact_name, min_count=min_count, max_count=max_count, size=10000)
@@ -105,7 +105,7 @@ class DataSample:
         # iterator for retrieving positive sample by query
         positive_sample_iterator = ElasticSearcher(
             query=query,
-            indices=self.tagger_object.project.indices,
+            indices=self.tagger_object.project.get_indices(),
             field_data=json.loads(self.tagger_object.fields),
             output=ElasticSearcher.OUT_DOC_WITH_ID,
             callback_progress=self.show_progress,
@@ -158,7 +158,7 @@ class DataSample:
         self.show_progress.update_view(0)
         # iterator for retrieving negative examples
         negative_sample_iterator = ElasticSearcher(
-            indices=self.tagger_object.project.indices,
+            indices=self.tagger_object.project.get_indices(),
             field_data=json.loads(self.tagger_object.fields),
             output=ElasticSearcher.OUT_DOC,
             callback_progress=self.show_progress,

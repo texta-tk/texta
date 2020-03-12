@@ -18,6 +18,7 @@ from toolkit.test_settings import (TEST_FIELD,
                                    TEST_MATCH_TEXT,
                                    TEST_QUERY,
                                    TEST_VERSION_PREFIX)
+from toolkit.tools.common_utils import project_creation
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
@@ -27,10 +28,7 @@ class TaggerViewTests(APITestCase):
     def setUpTestData(cls):
         # Owner of the project
         cls.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
-        cls.project = Project.objects.create(
-            title='taggerTestProject',
-            indices=TEST_INDEX
-        )
+        cls.project = project_creation("taggerTestProject", TEST_INDEX)
         cls.project.users.add(cls.user)
         cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/taggers/'
         cls.project_url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}'
@@ -66,9 +64,6 @@ class TaggerViewTests(APITestCase):
         self.run_tag_and_feedback_and_retrain()
         self.create_tagger_with_empty_fields()
         self.create_tagger_then_delete_tagger_and_created_model()
-        # run these last ->
-        self.run_patch_on_tagger_instances(self.test_tagger_ids)
-        self.run_put_on_tagger_instances(self.test_tagger_ids)
 
 
     def tearDown(self) -> None:
@@ -172,25 +167,6 @@ class TaggerViewTests(APITestCase):
         self.assertEqual(create_response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
-    def run_patch_on_tagger_instances(self, test_tagger_ids):
-        """ Tests patch response success for Tagger fields """
-        payload = {
-            "description": "PatchedTagger",
-            "query": json.dumps(TEST_QUERY),
-            "fields": TEST_FIELD_CHOICE,
-            "vectorizer": 'Hashing Vectorizer',
-            "classifier": 'Logistic Regression',
-            "maximum_sample_size": 1000,
-            "negative_multiplier": 3.0,
-        }
-
-        for test_tagger_id in test_tagger_ids:
-            tagger_url = f'{self.url}{test_tagger_id}/'
-            patch_response = self.client.patch(tagger_url, payload, format='json')
-            print_output("patch_response", patch_response.data)
-            self.assertEqual(patch_response.status_code, status.HTTP_200_OK)
-
-
     def run_put_on_tagger_instances(self, test_tagger_ids):
         """ Tests put response success for Tagger fields """
         payload = {
@@ -219,7 +195,7 @@ class TaggerViewTests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
-            self.assertTrue('prediction' in response.data)
+            self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
 
 
@@ -236,7 +212,7 @@ class TaggerViewTests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
-            self.assertTrue('prediction' in response.data)
+            self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
 
 
@@ -250,7 +226,7 @@ class TaggerViewTests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
-            self.assertTrue('prediction' in response.data)
+            self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
 
 
@@ -267,7 +243,7 @@ class TaggerViewTests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response data is not empty, but a result instead
             self.assertTrue(response.data)
-            self.assertTrue('prediction' in response.data)
+            self.assertTrue('result' in response.data)
             self.assertTrue('probability' in response.data)
 
 
@@ -426,7 +402,7 @@ class TaggerViewTests(APITestCase):
         # generate feedback
         fb_id = response.data['feedback']['id']
         feedback_url = f'{self.url}{tagger_id}/feedback/'
-        payload = {"feedback_id": fb_id, "correct_prediction": "True"}
+        payload = {"feedback_id": fb_id, "correct_result": "True"}
         response = self.client.post(feedback_url, payload, format='json')
         print_output('test_tag_doc_with_feedback:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -447,12 +423,14 @@ class TaggerViewTests(APITestCase):
         url = f'{self.url}{tagger_id}/retrain_tagger/'
         response = self.client.post(url)
         # test tagging again for this model
-        payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"})}
+        payload = {
+            "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"})
+        }
         tag_text_url = f'{self.url}{tagger_id}/tag_doc/'
         response = self.client.post(tag_text_url, payload)
         print_output('test_feedback_retrained_tag_doc:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue('prediction' in response.data)
+        self.assertTrue('result' in response.data)
         self.assertTrue('probability' in response.data)
 
         # delete feedback

@@ -21,7 +21,6 @@ class MLPProcessor(models.Model):
     fields = models.TextField(default=json.dumps([]))
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
     analyzers = MultiSelectField(default=MLP_ANALYZER_CHOICES[0])
-    indices = models.TextField(default=json.dumps([]))
 
 
     def __str__(self):
@@ -31,7 +30,7 @@ class MLPProcessor(models.Model):
     @classmethod
     def start_mlp_task(cls, sender, instance, created, **kwargs):
         if created:
-            indices = json.loads(instance.indices)
+            indices = json.loads(instance.get_indices())
             total = ElasticSearcher(query=instance.query, indices=indices).count()
 
             new_task = Task.objects.create(mlpprocessor=instance, status='created', total=total)

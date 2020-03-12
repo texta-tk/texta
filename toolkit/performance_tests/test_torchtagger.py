@@ -15,6 +15,7 @@ from toolkit.test_settings import (
     TEST_VERSION_PREFIX
 )
 from toolkit.core.project.models import Project
+from toolkit.tools.common_utils import project_creation
 from toolkit.torchtagger.models import TorchTagger
 from toolkit.core.task.models import Task
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
@@ -26,10 +27,7 @@ class TorchTaggerPerformanceTests(TransactionTestCase):
 
     def setUp(self):
         self.user = create_test_user('torchtaggerOwner', 'my@email.com', 'pw')
-        self.project = Project.objects.create(
-            title='torchtaggerTestProject',
-            indices=TEST_INDEX_LARGE
-        )
+        self.project = project_creation("torchtaggerTestProject", TEST_INDEX_LARGE)
         self.project.users.add(self.user)
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/torchtaggers/'
         self.test_embedding_id = None
