@@ -109,8 +109,6 @@ class EmbeddingViewTests(TransactionTestCase):
         """ Tests patch response success for Tagger fields """
         payload = {
             "description": "PatchedEmbedding",
-            "query": json.dumps(EMPTY_QUERY),
-            "fields": TEST_FIELD_CHOICE,
             "max_vocab": 10000,
             "min_freq": 5,
             "num_dimensions": 100,

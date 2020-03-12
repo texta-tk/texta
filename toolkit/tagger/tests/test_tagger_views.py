@@ -175,7 +175,6 @@ class TaggerViewTests(APITestCase):
         payload = {
             "description": "PatchedTagger",
             "query": json.dumps(TEST_QUERY),
-            "fields": TEST_FIELD_CHOICE,
             "vectorizer": 'Hashing Vectorizer',
             "classifier": 'Logistic Regression',
             "maximum_sample_size": 1000,
