@@ -36,7 +36,6 @@ class TorchTaggerFilter(filters.FilterSet):
         fields = []
 
 
-# forbid PUT/PATCH?
 class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
     serializer_class = TorchTaggerSerializer
     permission_classes = (

@@ -78,10 +78,6 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
         embedding.train()
 
 
-    def perform_update(self, serializer):
-        serializer.save(fields=json.dumps(serializer.validated_data['fields']))
-
-
     def destroy(self, request, *args, **kwargs):
         instance: Embedding = self.get_object()
         instance.delete()

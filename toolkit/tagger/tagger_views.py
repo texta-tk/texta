@@ -34,7 +34,6 @@ class TaggerFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
     task_status = filters.CharFilter('task__status', lookup_expr='icontains')
 
-
     class Meta:
         model = Tagger
         fields = []
@@ -63,10 +62,6 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             fields=json.dumps(serializer.validated_data['fields'])
         )
         tagger.train()
-
-
-    def perform_update(self, serializer):
-        serializer.save(fields=json.dumps(serializer.validated_data['fields']))
 
 
     def destroy(self, request, *args, **kwargs):
