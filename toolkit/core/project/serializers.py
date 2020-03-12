@@ -14,9 +14,8 @@ class ProjectMultiTagSerializer(serializers.Serializer):
     text = serializers.CharField(help_text='Text to be tagged.')
     taggers = serializers.ListField(help_text='List of Tagger IDs to be used.',
                                     child=serializers.IntegerField(),
-                                    required=False,
                                     default=[])
-    show_false = serializers.BooleanField(default=True, help_text='Show negative tagging results in response.')
+    hide_false = serializers.BooleanField(default=False, help_text='Hide negative tagging results in response.')
     lemmatize = serializers.BooleanField(default=False, help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
     feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 

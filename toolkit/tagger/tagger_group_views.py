@@ -357,5 +357,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         group_results = apply_celery_task(group_task)
         # retrieve results & remove non-hits
         tags = [tag for tag in group_results.get() if tag]
+        # remove non-hits
+        tags = [tag for tag in tags if tag['result']]
         # sort by probability and return
         return sorted(tags, key=lambda k: k['probability'], reverse=True)

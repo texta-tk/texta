@@ -232,19 +232,19 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         # error if filtering resulted 0 taggers
         if not taggers:
             return Response({'error': 'none of provided taggers are present. are the models ready?'}, status=status.HTTP_400_BAD_REQUEST)
-        # lemmatize
+        # retrieve params
         lemmatize = serializer.validated_data['lemmatize']
-        # feedback
         feedback = serializer.validated_data['feedback_enabled']
-        # text
         text = serializer.validated_data['text']
+        hide_false = serializer.validated_data['hide_false']
         # tag text using celery group primitive
         group_task = group(apply_tagger.s(tagger.pk, text, input_type='text', lemmatize=lemmatize, feedback=feedback) for tagger in taggers)
-        group_results = apply_celery_task(group_task)
-        # retrieve results & remove non-hits
-        tags = [tag for tag in group_results.get() if tag]
+        group_results = [a for a in apply_celery_task(group_task).get() if a]
+        # remove non-hits
+        if hide_false == True:
+            group_results = [tag for tag in group_results if tag['result']]
         # sort & return tags
-        sorted_tags = sorted(tags, key=lambda k: k['probability'], reverse=True)
+        sorted_tags = sorted(group_results, key=lambda k: k['probability'], reverse=True)
         return Response(sorted_tags, status=status.HTTP_200_OK)
 
 
