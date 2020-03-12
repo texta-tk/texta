@@ -7,14 +7,23 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
-from toolkit.core.project.serializers import (ProjectGetFactsSerializer, ProjectGetSpamSerializer, ProjectMultiTagSerializer, ProjectSearchByQuerySerializer, ProjectSerializer, ProjectSimplifiedSearchSerializer, ProjectSuggestFactNamesSerializer, ProjectSuggestFactValuesSerializer)
+from toolkit.core.project.serializers import (
+    ProjectGetFactsSerializer,
+    ProjectGetSpamSerializer,
+    ProjectMultiTagSerializer,
+    ProjectSearchByQuerySerializer,
+    ProjectSerializer,
+    ProjectSimplifiedSearchSerializer,
+    ProjectSuggestFactNamesSerializer,
+    ProjectSuggestFactValuesSerializer
+)
 from toolkit.core.task.models import Task
 from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.spam_detector import SpamDetector
-from toolkit.exceptions import ProjectValidationFailed, SerializerNotValid
+from toolkit.exceptions import ProjectValidationFailed, SerializerNotValid, NonExistantModelError
 from toolkit.permissions.project_permissions import (ExtraActionResource, IsSuperUser, ProjectAllowed)
 from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
@@ -223,16 +232,20 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         # error if filtering resulted 0 taggers
         if not taggers:
             return Response({'error': 'none of provided taggers are present. are the models ready?'}, status=status.HTTP_400_BAD_REQUEST)
-        # tag text using celery group primitive
+        # lemmatize
+        lemmatize = serializer.validated_data['lemmatize']
+        # feedback
+        feedback = serializer.validated_data['feedback_enabled']
+        # text
         text = serializer.validated_data['text']
-        group_task = group(apply_tagger.s(text, tagger.pk, 'text') for tagger in taggers)
+        # tag text using celery group primitive
+        group_task = group(apply_tagger.s(tagger.pk, text, input_type='text', lemmatize=lemmatize, feedback=feedback) for tagger in taggers)
         group_results = apply_celery_task(group_task)
         # retrieve results & remove non-hits
         tags = [tag for tag in group_results.get() if tag]
         # sort & return tags
         sorted_tags = sorted(tags, key=lambda k: k['probability'], reverse=True)
         return Response(sorted_tags, status=status.HTTP_200_OK)
-
 
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactValuesSerializer, permission_classes=[ExtraActionResource])
