@@ -29,7 +29,7 @@ from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.tools.autocomplete import Autocomplete
-from toolkit.helper_functions import apply_celery_task, add_url_to_feedback
+from toolkit.helper_functions import apply_celery_task, add_finite_url_to_feedback
 from toolkit.view_constants import (
     FeedbackIndexView
 )
@@ -244,7 +244,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         if hide_false == True:
             group_results = [a for a in group_results if a['result']]
         # if feedback was enabled, add urls
-        group_results = [add_url_to_feedback(a, request) for a in group_results]
+        group_results = [add_finite_url_to_feedback(a, request) for a in group_results]
         # sort & return tags
         sorted_tags = sorted(group_results, key=lambda k: k['probability'], reverse=True)
         return Response(sorted_tags, status=status.HTTP_200_OK)

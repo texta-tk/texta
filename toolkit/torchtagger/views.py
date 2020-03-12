@@ -14,7 +14,7 @@ from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.phraser import Phraser
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed
-from toolkit.helper_functions import apply_celery_task
+from toolkit.helper_functions import apply_celery_task, add_finite_url_to_feedback
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.tagger.serializers import TaggerTagTextSerializer
@@ -127,6 +127,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         text = serializer.validated_data['text']
         feedback = serializer.validated_data['feedback_enabled']
         prediction = self.apply_tagger(tagger_object, text, feedback=feedback)
+        prediction = add_finite_url_to_feedback(prediction, request)
         return Response(prediction, status=status.HTTP_200_OK)
 
 
@@ -152,5 +153,6 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             project_pk = tagger_object.project.pk
             feedback_object = Feedback(project_pk, model_object=tagger_object)
             feedback_id = feedback_object.store(tagger_input, prediction['result'])
-            prediction['feedback'] = {'id': feedback_id}
+            feedback_url = f'/projects/{project_pk}/torchtaggers/{tagger_object.pk}/feedback/'
+            prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
         return prediction

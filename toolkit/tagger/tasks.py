@@ -187,6 +187,5 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
         feedback_object = Feedback(project_pk, model_object=tagger_object)
         feedback_id = feedback_object.store(text, decision)
         feedback_url = f'/projects/{project_pk}/taggers/{tagger_object.pk}/feedback/'
-        # TODO: add feedback url automagically
         prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
     return prediction

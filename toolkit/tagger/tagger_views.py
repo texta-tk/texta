@@ -13,7 +13,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.phraser import Phraser
 from toolkit.exceptions import NonExistantModelError, SerializerNotValid
-from toolkit.helper_functions import apply_celery_task, add_url_to_feedback
+from toolkit.helper_functions import apply_celery_task, add_finite_url_to_feedback
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import (
     GeneralTextSerializer,
@@ -180,7 +180,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             feedback=serializer.validated_data['feedback_enabled']
         )
         # if feedback was enabled, add url
-        tagger_response = add_url_to_feedback(tagger_response, request)
+        tagger_response = add_finite_url_to_feedback(tagger_response, request)
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
@@ -213,7 +213,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             feedback=serializer.validated_data['feedback_enabled'],
         )
         # if feedback was enabled, add url
-        tagger_response = add_url_to_feedback(tagger_response, request)
+        tagger_response = add_finite_url_to_feedback(tagger_response, request)
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 

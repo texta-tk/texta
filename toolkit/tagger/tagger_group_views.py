@@ -16,7 +16,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.exceptions import MLPNotAvailable, NonExistantModelError, SerializerNotValid
-from toolkit.helper_functions import apply_celery_task, add_url_to_feedback
+from toolkit.helper_functions import apply_celery_task, add_finite_url_to_feedback
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.tagger.models import TaggerGroup
@@ -362,6 +362,6 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # remove non-hits
         tags = [tag for tag in tags if tag['result']]
         # if feedback was enabled, add urls
-        tags = [add_url_to_feedback(tag, request) for tag in tags]
+        tags = [add_finite_url_to_feedback(tag, request) for tag in tags]
         # sort by probability and return
         return sorted(tags, key=lambda k: k['probability'], reverse=True)

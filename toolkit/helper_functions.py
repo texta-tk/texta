@@ -38,7 +38,7 @@ def parse_list_env_headers(env_key: str, default_value: list) -> list:
         return default_value
 
 
-def add_url_to_feedback(decision_dict, request):
+def add_finite_url_to_feedback(decision_dict, request):
     """
     Adds finite url to feedback.
     """
