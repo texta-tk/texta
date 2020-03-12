@@ -1,5 +1,7 @@
+from urllib.parse import urljoin
 import os
 import sys
+import re
 
 
 def apply_celery_task(task_func, *args):
@@ -34,3 +36,15 @@ def parse_list_env_headers(env_key: str, default_value: list) -> list:
         return data.split(",")
     else:
         return default_value
+
+
+def add_url_to_feedback(decision_dict, request):
+    """
+    Adds finite url to feedback.
+    """
+    if "feedback" in decision_dict:
+        feedback = decision_dict["feedback"]
+        url = "/api/v1/"+feedback["url"]
+        url = re.sub('/+', '/', url)
+        decision_dict["feedback"]["url"] = request.build_absolute_uri(url)
+    return decision_dict

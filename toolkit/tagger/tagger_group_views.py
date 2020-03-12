@@ -16,7 +16,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.exceptions import MLPNotAvailable, NonExistantModelError, SerializerNotValid
-from toolkit.helper_functions import apply_celery_task
+from toolkit.helper_functions import apply_celery_task, add_url_to_feedback
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.tagger.models import TaggerGroup
@@ -260,7 +260,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tag_candidates = self.get_tag_candidates(text, ignore_tags=tags, n_similar_docs=n_similar_docs, max_candidates=n_candidate_tags)
         
         # get tags
-        tags += self.apply_tagger_group(text, tag_candidates, input_type='text', feedback=feedback)
+        tags += self.apply_tagger_group(text, tag_candidates, request, input_type='text', feedback=feedback)
         return Response(tags, status=status.HTTP_200_OK)
 
 
@@ -311,7 +311,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(combined_texts, ignore_tags=tags, n_similar_docs=n_similar_docs, max_candidates=n_candidate_tags)
         # get tags
-        tags += self.apply_tagger_group(input_document, tag_candidates, input_type='doc', lemmatize=lemmatize, feedback=feedback)
+        tags += self.apply_tagger_group(input_document, tag_candidates, request, input_type='doc', lemmatize=lemmatize, feedback=feedback)
         return Response(tags, status=status.HTTP_200_OK)
 
 
@@ -340,13 +340,13 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(combined_texts, ignore_tags=tags)
         # get tags
-        tags += self.apply_tagger_group(random_doc_filtered, tag_candidates, input_type='doc')
+        tags += self.apply_tagger_group(random_doc_filtered, tag_candidates, request, input_type='doc')
         # return document with tags
         response = {"document": random_doc, "tags": tags}
         return Response(response, status=status.HTTP_200_OK)
 
 
-    def apply_tagger_group(self, text, tag_candidates, input_type='text', lemmatize=False, feedback=False):
+    def apply_tagger_group(self, text, tag_candidates, request, input_type='text', lemmatize=False, feedback=False):
         # get tagger group object
         tagger_group_object = self.get_object()
         # get tagger objects
@@ -361,5 +361,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tags = [tag for tag in group_results.get() if tag]
         # remove non-hits
         tags = [tag for tag in tags if tag['result']]
+        # if feedback was enabled, add urls
+        tags = [add_url_to_feedback(tag, request) for tag in tags]
         # sort by probability and return
         return sorted(tags, key=lambda k: k['probability'], reverse=True)
