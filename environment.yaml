@@ -42,4 +42,3 @@ dependencies:
     - django-filter
     - xlrd
     - dill
-    - git+https://git.texta.ee/texta/texta_tagger.git
