@@ -35,8 +35,6 @@ class EmbeddingViewTests(TransactionTestCase):
         self.run_predict_with_negatives()
         self.run_phrase()
         self.run_model_export_import()
-        self.run_patch_on_embedding_instances(self.test_embedding_id)
-        self.run_put_on_embedding_instances(self.test_embedding_id)
         self.create_embedding_with_empty_fields()
         self.create_embedding_then_delete_embedding_and_created_model()
 
@@ -103,37 +101,6 @@ class EmbeddingViewTests(TransactionTestCase):
         print_output('delete_additional_embedding_files: ', not additional_path.exists())
         self.assertFalse(additional_path.exists())
         self.assertFalse(additional_path_2.exists())
-
-
-    def run_patch_on_embedding_instances(self, test_embedding_id):
-        """ Tests patch response success for Tagger fields """
-        payload = {
-            "description": "PatchedEmbedding",
-            "max_vocab": 10000,
-            "min_freq": 5,
-            "num_dimensions": 100,
-        }
-        embedding_url = f'{self.url}{test_embedding_id}/'
-        patch_response = self.client.patch(embedding_url, json.dumps(payload), content_type='application/json')
-        print_output("patch_response", patch_response.data)
-        self.assertEqual(patch_response.status_code, status.HTTP_200_OK)
-
-
-    def run_put_on_embedding_instances(self, test_embedding_id):
-        """ Tests put response success for Tagger fields """
-        payload = {
-            "description": "PutEmbedding",
-            "query": json.dumps(EMPTY_QUERY),
-            "fields": TEST_FIELD_CHOICE,
-            "max_vocab": 10000,
-            "min_freq": 5,
-            "num_dimensions": 100,
-        }
-        embedding_url = f'{self.url}{test_embedding_id}/'
-        # get_response = self.client.get(tagger_url, format='json')
-        put_response = self.client.put(embedding_url, json.dumps(payload), content_type='application/json')
-        print_output("put_response", put_response.data)
-        self.assertEqual(put_response.status_code, status.HTTP_200_OK)
 
 
     def create_embedding_with_empty_fields(self):

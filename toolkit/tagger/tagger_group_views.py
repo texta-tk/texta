@@ -251,6 +251,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         n_candidate_tags = serializer.validated_data['n_candidate_tags']
         lemmatize = serializer.validated_data['lemmatize']
         use_ner = serializer.validated_data['use_ner']
+        feedback = serializer.validated_data['feedback_enabled']
 
         # update text and tags with MLP
         text, tags = self.get_mlp(text, lemmatize=lemmatize, use_ner=use_ner)
@@ -259,7 +260,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tag_candidates = self.get_tag_candidates(text, ignore_tags=tags, n_similar_docs=n_similar_docs, max_candidates=n_candidate_tags)
         
         # get tags
-        tags += self.apply_tagger_group(text, tag_candidates, input_type='text')
+        tags += self.apply_tagger_group(text, tag_candidates, input_type='text', feedback=feedback)
         return Response(tags, status=status.HTTP_200_OK)
 
 
@@ -302,6 +303,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         n_candidate_tags = serializer.validated_data['n_candidate_tags']
         lemmatize = serializer.validated_data['lemmatize']
         use_ner = serializer.validated_data['use_ner']
+        feedback = serializer.validated_data['feedback_enabled']
 
         # update text and tags with MLP
         combined_texts, tags = self.get_mlp(combined_texts, lemmatize=lemmatize, use_ner=use_ner)
@@ -309,7 +311,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(combined_texts, ignore_tags=tags, n_similar_docs=n_similar_docs, max_candidates=n_candidate_tags)
         # get tags
-        tags += self.apply_tagger_group(input_document, tag_candidates, input_type='doc', lemmatize=True)
+        tags += self.apply_tagger_group(input_document, tag_candidates, input_type='doc', lemmatize=lemmatize, feedback=feedback)
         return Response(tags, status=status.HTTP_200_OK)
 
 
@@ -344,7 +346,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         return Response(response, status=status.HTTP_200_OK)
 
 
-    def apply_tagger_group(self, text, tag_candidates, input_type='text', lemmatize=False):
+    def apply_tagger_group(self, text, tag_candidates, input_type='text', lemmatize=False, feedback=False):
         # get tagger group object
         tagger_group_object = self.get_object()
         # get tagger objects
@@ -353,7 +355,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         # filter out completed
         tagger_objects = [tagger for tagger in tagger_objects if tagger.task.status == tagger.task.STATUS_COMPLETED]
         # predict tags
-        group_task = group(apply_tagger.s(tagger.pk, text, input_type=input_type) for tagger in tagger_objects)
+        group_task = group(apply_tagger.s(tagger.pk, text, input_type=input_type, lemmatize=lemmatize, feedback=feedback) for tagger in tagger_objects)
         group_results = apply_celery_task(group_task)
         # retrieve results & remove non-hits
         tags = [tag for tag in group_results.get() if tag]

@@ -64,9 +64,6 @@ class TaggerViewTests(APITestCase):
         self.run_tag_and_feedback_and_retrain()
         self.create_tagger_with_empty_fields()
         self.create_tagger_then_delete_tagger_and_created_model()
-        # run these last ->
-        self.run_patch_on_tagger_instances(self.test_tagger_ids)
-        self.run_put_on_tagger_instances(self.test_tagger_ids)
 
 
     def tearDown(self) -> None:
@@ -168,24 +165,6 @@ class TaggerViewTests(APITestCase):
         create_response = self.client.post(self.url, payload, format='json')
         print_output("empty_fields_response", create_response.data)
         self.assertEqual(create_response.status_code, status.HTTP_400_BAD_REQUEST)
-
-
-    def run_patch_on_tagger_instances(self, test_tagger_ids):
-        """ Tests patch response success for Tagger fields """
-        payload = {
-            "description": "PatchedTagger",
-            "query": json.dumps(TEST_QUERY),
-            "vectorizer": 'Hashing Vectorizer',
-            "classifier": 'Logistic Regression',
-            "maximum_sample_size": 1000,
-            "negative_multiplier": 3.0,
-        }
-
-        for test_tagger_id in test_tagger_ids:
-            tagger_url = f'{self.url}{test_tagger_id}/'
-            patch_response = self.client.patch(tagger_url, payload, format='json')
-            print_output("patch_response", patch_response.data)
-            self.assertEqual(patch_response.status_code, status.HTTP_200_OK)
 
 
     def run_put_on_tagger_instances(self, test_tagger_ids):
