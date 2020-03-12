@@ -64,7 +64,7 @@ class FeedbackModelView:
         if request.method == 'POST':
             serializer = FeedbackSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            added = feedback.add(serializer.validated_data['feedback_id'], serializer.validated_data['correct_prediction'])
+            added = feedback.add(serializer.validated_data['feedback_id'], serializer.validated_data['correct_result'])
             return Response(added, status=status.HTTP_200_OK)
         elif request.method == 'DELETE':
             feedback_deleted = feedback.delete()

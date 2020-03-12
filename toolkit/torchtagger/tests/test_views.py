@@ -182,7 +182,7 @@ class TorchTaggerViewTests(TransactionTestCase):
         # generate feedback
         fb_id = response.data['feedback']['id']
         feedback_url = f'{self.url}{tagger_id}/feedback/'
-        payload = {"feedback_id": fb_id, "correct_prediction": "FUBAR"}
+        payload = {"feedback_id": fb_id, "correct_result": "FUBAR"}
         response = self.client.post(feedback_url, payload, format='json')
         print_output('test_tag_text_with_feedback:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
