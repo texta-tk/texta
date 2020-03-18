@@ -83,8 +83,11 @@ class ElasticCore:
 
     def _check_connection(self):
         try:
-            requests.get(self.ES_URL)
-            return True
+            response = requests.get(self.ES_URL)
+            if response.status_code == 200:
+                return True
+            else:
+                return False
         except Exception as e:
             return False
 
