@@ -72,5 +72,4 @@ def get_core_setting(setting_name):
             # return value from db
             return variable_match[0].value
     except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
         return CORE_SETTINGS[setting_name]
