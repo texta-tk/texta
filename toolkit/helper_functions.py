@@ -1,4 +1,5 @@
 from urllib.parse import urljoin
+import logging
 import os
 import sys
 import re
@@ -56,12 +57,16 @@ def get_core_setting(setting_name):
     :param: str variable_name: Name for the variable whose value will be returned.
     """
     # import here to avoid import loop
-    from toolkit.core.environment_variable.models import EnvironmentVariable
-    from toolkit.settings import CORE_SETTINGS
+    from toolkit.core.core_variable.models import CoreVariable
+    from toolkit.settings import CORE_SETTINGS, ERROR_LOGGER
     # retrieve variable setting from db
-    variable_match = EnvironmentVariable.objects.filter(name=setting_name)
-    # return value from env if no setting in db
-    if not variable_match:
+    try:
+        variable_match = CoreVariable.objects.filter(name=setting_name)
+        # return value from env if no setting in db
+        if not variable_match:
+            return CORE_SETTINGS[setting_name]
+        else:
+            return variable_match[0].value
+    except Exception as e:
+        logging.getLogger(ERROR_LOGGER).exception(e)
         return CORE_SETTINGS[setting_name]
-    else:
-        return variable_match[0].value

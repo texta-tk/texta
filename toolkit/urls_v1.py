@@ -18,7 +18,7 @@ from toolkit.tagger.urls import router as tagger_router
 from toolkit.tools.swagger import schema_view
 from toolkit.torchtagger.urls import router as torchtagger_router
 
-from toolkit.core.environment_variable.views import EnvironmentVariableViewSet
+from toolkit.core.core_variable.views import CoreVariableViewSet
 
 
 @login_required
@@ -29,7 +29,7 @@ def protected_serve(request, path, document_root=None, show_indexes=False):
 router = routers.DefaultRouter()
 router.register(r'projects', ProjectViewSet, base_name='project')
 router.register('users', profile_views.UserViewSet, base_name='user')
-router.register('environment_variables', EnvironmentVariableViewSet, base_name='environmentvariable')
+router.register('core_variables', CoreVariableViewSet, base_name='corevariable')
 
 # add resources to projects
 project_router = routers.NestedDefaultRouter(router, r'projects', lookup='project')
