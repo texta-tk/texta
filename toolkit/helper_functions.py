@@ -62,10 +62,14 @@ def get_core_setting(setting_name):
     # retrieve variable setting from db
     try:
         variable_match = CoreVariable.objects.filter(name=setting_name)
-        # return value from env if no setting in db
         if not variable_match:
+            # return value from env if no setting record in db
+            return CORE_SETTINGS[setting_name]
+        elif not variable_match[0].value:
+            # return value from env if value in record None
             return CORE_SETTINGS[setting_name]
         else:
+            # return value from db
             return variable_match[0].value
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
