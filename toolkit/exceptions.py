@@ -1,6 +1,8 @@
 from rest_framework.exceptions import APIException
 from rest_framework import status
-from .settings import MLP_URL
+from toolkit.helper_functions import get_core_setting
+
+MLP_URL = get_core_setting("TEXTA_MLP_URL")
 
 '''
 default_detail - detailed message of the exception

@@ -25,7 +25,6 @@ from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.spam_detector import SpamDetector
 from toolkit.exceptions import ProjectValidationFailed, SerializerNotValid, NonExistantModelError
 from toolkit.permissions.project_permissions import (ExtraActionResource, IsSuperUser, ProjectAllowed)
-from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.tools.autocomplete import Autocomplete
@@ -33,6 +32,10 @@ from toolkit.helper_functions import apply_celery_task, add_finite_url_to_feedba
 from toolkit.view_constants import (
     FeedbackIndexView
 )
+from toolkit.helper_functions import get_core_setting
+
+
+ES_URL = get_core_setting("TEXTA_ES_URL")
 
 
 class ProjectFilter(filters.FilterSet):

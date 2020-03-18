@@ -1,10 +1,13 @@
-import logging
-
 from toolkit.exceptions import MLPNotAvailable
-from toolkit.settings import MLP_URL, ERROR_LOGGER
+from toolkit.settings import ERROR_LOGGER
+from toolkit.helper_functions import get_core_setting
 
 from urllib.parse import urljoin
 import requests
+import logging
+
+
+MLP_URL = get_core_setting("TEXTA_MLP_URL")
 
 
 def check_mlp_connection(func):

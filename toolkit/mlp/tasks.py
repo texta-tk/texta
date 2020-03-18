@@ -8,9 +8,13 @@ from toolkit.base_task import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.mlp.models import MLPProcessor
-from toolkit.settings import MLP_URL, ERROR_LOGGER
+from toolkit.settings ERROR_LOGGER
 from toolkit.tools.common_utils import grouper
 from toolkit.tools.show_progress import ShowProgress
+from toolkit.helper_functions import get_core_setting
+
+
+MLP_URL = get_core_setting("TEXTA_MLP_URL")
 
 
 @task(name="start_mlp", base=BaseTask)

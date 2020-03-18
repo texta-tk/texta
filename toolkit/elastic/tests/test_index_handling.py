@@ -5,10 +5,13 @@ from rest_framework.test import APITestCase
 
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Index
-from toolkit.settings import ES_URL
+from toolkit.settings import CORE_SETTINGS
 from toolkit.test_settings import TEST_INDEX, TEST_VERSION_PREFIX
 from toolkit.tools.common_utils import project_creation
 from toolkit.tools.utils_for_tests import create_test_user
+
+
+ES_URL = CORE_SETTINGS["TEXTA_ES_URL"]
 
 
 class ElasticIndexViewTests(APITestCase):

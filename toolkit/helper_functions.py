@@ -48,3 +48,20 @@ def add_finite_url_to_feedback(decision_dict, request):
         url = re.sub('/+', '/', url)
         decision_dict["feedback"]["url"] = request.build_absolute_uri(url)
     return decision_dict
+
+
+def get_core_setting(setting_name):
+    """
+    Retrieves value for a variable from core settings.
+    :param: str variable_name: Name for the variable whose value will be returned.
+    """
+    # import here to avoid import loop
+    from toolkit.core.environment_variable.models import EnvironmentVariable
+    from toolkit.settings import CORE_SETTINGS
+    # retrieve variable setting from db
+    variable_match = EnvironmentVariable.objects.filter(name=setting_name)
+    # return value from env if no setting in db
+    if not variable_match:
+        return CORE_SETTINGS[setting_name]
+    else:
+        return variable_match[0].value

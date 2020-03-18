@@ -7,8 +7,15 @@ from django.db import transaction
 from elasticsearch import Elasticsearch
 
 from toolkit.elastic.exceptions import ElasticAuthenticationException, ElasticAuthorizationException, ElasticIndexNotFoundException, ElasticTimeoutException, ElasticTransportException
-from toolkit.settings import ERROR_LOGGER, ES_CONNECTION_PARAMETERS, ES_PASSWORD, ES_PREFIX, ES_URL, ES_USERNAME
+from toolkit.settings import ERROR_LOGGER, ES_CONNECTION_PARAMETERS
+from toolkit.helper_functions import get_core_setting
 from toolkit.tools.logger import Logger
+
+
+ES_URL = get_core_setting("TEXTA_ES_URL")
+ES_PREFIX = get_core_setting("TEXTA_ES_PREFIX")
+ES_USERNAME = get_core_setting("TEXTA_ES_USERNAME")
+ES_PASSWORD = get_core_setting("TEXTA_ES_PASSWORD")
 
 
 def elastic_connection(func):
