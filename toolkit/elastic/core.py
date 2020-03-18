@@ -7,7 +7,8 @@ from django.db import transaction
 from elasticsearch import Elasticsearch
 
 from toolkit.elastic.exceptions import ElasticAuthenticationException, ElasticAuthorizationException, ElasticIndexNotFoundException, ElasticTimeoutException, ElasticTransportException
-from toolkit.settings import ERROR_LOGGER, ES_CONNECTION_PARAMETERS, ES_PASSWORD, ES_PREFIX, ES_URL, ES_USERNAME
+from toolkit.settings import ERROR_LOGGER, ES_CONNECTION_PARAMETERS
+from toolkit.helper_functions import get_core_setting
 from toolkit.tools.logger import Logger
 
 
@@ -18,9 +19,7 @@ def elastic_connection(func):
     instead of the typical HTTP 500 one.
     """
 
-
     def func_wrapper(*args, **kwargs):
-
         try:
             return func(*args, **kwargs)
 
@@ -46,7 +45,6 @@ def elastic_connection(func):
             logging.getLogger(ERROR_LOGGER).exception(e.info)
             raise ElasticTimeoutException(f"Connection to Elasticsearch timed out!")
 
-
     return func_wrapper
 
 
@@ -56,11 +54,15 @@ class ElasticCore:
     """
 
 
-    def __init__(self):
+    def __init__(self, ES_URL=get_core_setting("TEXTA_ES_URL")):
+        self.ES_URL = ES_URL
+        self.ES_PREFIX = get_core_setting("TEXTA_ES_PREFIX")
+        self.ES_USERNAME = get_core_setting("TEXTA_ES_USERNAME")
+        self.ES_PASSWORD = get_core_setting("TEXTA_ES_PASSWORD")
+        self.TEXTA_RESERVED = ['texta_facts']
+        
         self.connection = self._check_connection()
         self.es = self._create_client_interface()
-        self.es_prefix = ES_PREFIX
-        self.TEXTA_RESERVED = ['texta_facts']
 
 
     def _create_client_interface(self):
@@ -71,21 +73,22 @@ class ElasticCore:
         and then throw the existing ones with dictionary unpacking as per the Urllib3HttpConnection class.
         """
         if self.connection:
-            list_of_hosts = ES_URL.split(",")
+            list_of_hosts = self.ES_URL.split(",")
             existing_connection_parameters = dict((key, value) for key, value in ES_CONNECTION_PARAMETERS.items() if value is not None)
-            client = Elasticsearch(list_of_hosts, http_auth=(ES_USERNAME, ES_PASSWORD), **existing_connection_parameters)
+            client = Elasticsearch(list_of_hosts, http_auth=(self.ES_USERNAME, self.ES_PASSWORD), **existing_connection_parameters)
             return client
         else:
-            Logger().error("Error connecting to Elasticsearch")
             return None
 
 
     def _check_connection(self):
         try:
-            requests.get(ES_URL)
-            return True
+            response = requests.get(self.ES_URL)
+            if response.status_code == 200:
+                return True
+            else:
+                return False
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).exception(e)
             return False
 
 
@@ -167,8 +170,8 @@ class ElasticCore:
         """
         if self.connection:
             alias = '*'
-            if self.es_prefix:
-                alias = f'{self.es_prefix}*'
+            if self.ES_PREFIX:
+                alias = f'{self.ES_PREFIX}*'
                 opened = list(self.es.indices.get_alias(alias, expand_wildcards="open").keys())
                 closed = list(self.es.indices.get_alias(alias, expand_wildcards="closed").keys())
                 return opened, closed

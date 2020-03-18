@@ -93,7 +93,6 @@ class ProjectViewTests(APITestCase):
     def test_autocomplete_fact_names(self):
         payload = {"limit": 5, "startswith": "TE"}
         url = f'{self.project_url}/autocomplete_fact_names/'
-        print(url)
         response = self.client.post(url, payload)
         print_output('test_autocomplete_fact_names:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
