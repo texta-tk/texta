@@ -6,10 +6,14 @@ from urllib.request import urlopen
 from io import BytesIO
 from elasticsearch import Elasticsearch
 
-from toolkit.settings import ES_PASSWORD, ES_USERNAME, TEST_DATA_DIR
+from toolkit.settings import CORE_SETTINGS, TEST_DATA_DIR
+
+ES_URL = CORE_SETTINGS["TEXTA_ES_URL"]
+ES_USERNAME = CORE_SETTINGS["TEXTA_ES_USERNAME"]
+ES_PASSWORD = CORE_SETTINGS["TEXTA_ES_PASSWORD"]
 
 parser = argparse.ArgumentParser(description='Import the Elasticsearch index for unit tests.')
-parser.add_argument('-es', type=str, default='localhost:9200',
+parser.add_argument('-es', type=str, default=ES_URL,
                    help='Elasticsearch host URL, default: localhost:9200')
 parser.add_argument('-i', type=str, default='texta_test_index',
                    help='The final index name of the testing index, that will be added to Elasticsearch. If an old index exists, IT WILL BE DELETED!')
