@@ -32,10 +32,6 @@ from toolkit.helper_functions import apply_celery_task, add_finite_url_to_feedba
 from toolkit.view_constants import (
     FeedbackIndexView
 )
-from toolkit.helper_functions import get_core_setting
-
-
-ES_URL = get_core_setting("TEXTA_ES_URL")
 
 
 class ProjectFilter(filters.FilterSet):
@@ -108,7 +104,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         serializer.is_valid(raise_exception=True)
 
         indices = list(self.get_object().get_indices())
-        detector = SpamDetector(ES_URL, indices)
+        detector = SpamDetector(indices)
 
         all_fields = ElasticCore().get_fields(indices)
         fields = detector.filter_fields(serializer.validated_data["common_feature_fields"], all_fields)

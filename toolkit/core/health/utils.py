@@ -22,35 +22,30 @@ def get_version():
     return version
 
 
-def get_mlp_status():
+def get_mlp_status(MLP_URL=get_core_setting("TEXTA_MLP_URL")):
     """
     Checks if MLP is available.
     """
-    MLP_URL = get_core_setting("TEXTA_MLP_URL")
     mlp_info = {"url": MLP_URL, "alive": False}
-
     try:
         response = requests.get(MLP_URL, timeout=3)
         if response.status_code == 200:
             mlp_info["status"] = response.json()
             mlp_info["alive"] = True
-    except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+    except Exception as e:
         return mlp_info
-
     return mlp_info
 
 
-def get_elastic_status():
+def get_elastic_status(ES_URL=get_core_setting("TEXTA_ES_URL")):
     """
     Checks Elasticsearch connection status and version.
     """
-    es_info = {"url": get_core_setting("TEXTA_ES_URL"), "alive": False}
-    es_core = ElasticCore()
-
+    es_info = {"url": ES_URL, "alive": False}
+    es_core = ElasticCore(ES_URL=ES_URL)
     if es_core.connection:
         es_info["alive"] = True
         es_info["status"] = es_core.es.info()
-
     return es_info
 
 

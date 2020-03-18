@@ -54,8 +54,8 @@ class ElasticCore:
     """
 
 
-    def __init__(self):
-        self.ES_URL = get_core_setting("TEXTA_ES_URL")
+    def __init__(self, ES_URL=get_core_setting("TEXTA_ES_URL")):
+        self.ES_URL = ES_URL
         self.ES_PREFIX = get_core_setting("TEXTA_ES_PREFIX")
         self.ES_USERNAME = get_core_setting("TEXTA_ES_USERNAME")
         self.ES_PASSWORD = get_core_setting("TEXTA_ES_PASSWORD")
@@ -78,7 +78,6 @@ class ElasticCore:
             client = Elasticsearch(list_of_hosts, http_auth=(self.ES_USERNAME, self.ES_PASSWORD), **existing_connection_parameters)
             return client
         else:
-            Logger().error("Error connecting to Elasticsearch")
             return None
 
 
@@ -87,7 +86,6 @@ class ElasticCore:
             requests.get(self.ES_URL)
             return True
         except Exception as e:
-            logging.getLogger(ERROR_LOGGER).exception(e)
             return False
 
 
