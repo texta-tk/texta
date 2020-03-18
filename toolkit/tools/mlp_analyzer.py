@@ -7,14 +7,11 @@ import requests
 import logging
 
 
-MLP_URL = get_core_setting("TEXTA_MLP_URL")
-
-
 def check_mlp_connection(func):
     def func_wrapper(*args, **kwargs):
 
         try:
-            response = requests.get(MLP_URL, timeout=3)
+            response = requests.get(get_core_setting("TEXTA_MLP_URL"), timeout=3)
             if not response.ok: raise MLPNotAvailable()
             return func(*args, **kwargs)
 
@@ -29,7 +26,7 @@ def check_mlp_connection(func):
 class MLPAnalyzer:
 
     def __init__(self):
-        self.mlp_url = urljoin(MLP_URL, 'mlp')
+        self.mlp_url = urljoin(get_core_setting("TEXTA_MLP_URL"), 'mlp')
 
 
     @check_mlp_connection

@@ -14,9 +14,6 @@ from toolkit.tools.show_progress import ShowProgress
 from toolkit.helper_functions import get_core_setting
 
 
-MLP_URL = get_core_setting("TEXTA_MLP_URL")
-
-
 @task(name="start_mlp", base=BaseTask)
 def start_mlp(mlp_id):
     # retrieve embedding & task objects
@@ -54,6 +51,7 @@ def start_mlp(mlp_id):
         if "all" in payload["analyzers"]:
             del payload["analyzers"]
 
+        MLP_URL = get_core_setting("TEXTA_MLP_URL")
         url = "{}/{}".format(MLP_URL, "mlp/doc/task")
         response = requests.post(url, json=payload)
         if not response.ok:
