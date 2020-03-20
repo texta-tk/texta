@@ -44,7 +44,7 @@ class ElasticIndexViewTests(APITestCase):
 
     def setUp(self):
         self.client.login(username=self.admin, password="1234")
-        self.index_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/index/'
+        self.index_url = reverse("v1:index-list")
 
 
     def tearDown(self):
