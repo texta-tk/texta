@@ -10,7 +10,7 @@ from toolkit.core.task.views import TaskAPIView
 from toolkit.core.urls import router as core_router
 from toolkit.core.user_profile import views as profile_views
 from toolkit.dataset_import.urls import router as dataset_import_router
-from toolkit.elastic.urls import router as reindexer_router
+from toolkit.elastic.urls import router as reindexer_router, index_router
 from toolkit.elastic.views import ElasticGetIndices
 from toolkit.embedding.urls import embedding_router
 from toolkit.mlp.urls import mlp_router
@@ -54,7 +54,9 @@ urlpatterns = [
     path('rest-auth/', include('rest_auth.urls')),
     path('rest-auth/registration/', include('rest_auth.registration.urls')),
     path("task/", TaskAPIView.as_view(), name="task_api"),
-    url(r'^get_indices', ElasticGetIndices.as_view(), name="get_indices_for_project_creation"),    # routers
+    url(r'^get_indices', ElasticGetIndices.as_view(), name="get_indices_for_project_creation"),
+    # routers
     url(r'^', include(router.urls)),
+    path("", include(index_router.urls), name="index"),
     url(r'^', include(project_router.urls))
 ]
