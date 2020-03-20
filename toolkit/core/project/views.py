@@ -25,7 +25,6 @@ from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.spam_detector import SpamDetector
 from toolkit.exceptions import ProjectValidationFailed, SerializerNotValid, NonExistantModelError
 from toolkit.permissions.project_permissions import (ExtraActionResource, IsSuperUser, ProjectAllowed)
-from toolkit.settings import ES_URL
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.tools.autocomplete import Autocomplete
@@ -105,7 +104,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         serializer.is_valid(raise_exception=True)
 
         indices = list(self.get_object().get_indices())
-        detector = SpamDetector(ES_URL, indices)
+        detector = SpamDetector(indices)
 
         all_fields = ElasticCore().get_fields(indices)
         fields = detector.filter_fields(serializer.validated_data["common_feature_fields"], all_fields)

@@ -3,7 +3,6 @@
 import django # For making sure the correct Python environment is used.
 from django.db import connections
 from django.db.utils import OperationalError
-from toolkit.settings import INSTALLED_APPS
 import subprocess
 from time import sleep
 import sys
@@ -12,12 +11,17 @@ import shutil
 import logging
 import json
 
+from toolkit.settings import INSTALLED_APPS
+
 BASE_APP_NAME = "toolkit"
-EXTENSION_APPS = ("docscraper",)
+EXTENSION_APPS = ()
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", BASE_APP_NAME+".settings")
 django.setup()
+
 from django.contrib.auth.models import User
+from toolkit.core.core_variable.models import CoreVariable
+from toolkit.core.choices import CORE_VARIABLE_CHOICES
 
 
 def create_admin():
@@ -56,7 +60,7 @@ def migrate(custom_apps):
     print(log_message)
     sleep(2)
     result = create_admin()
-    log_message = 'New admin created: {}'.format(result)
+    log_message = 'Toolkit: Admin created: {}'.format(result)
     print(log_message)
     return True
 
@@ -85,3 +89,16 @@ while connected == False and n_try <= 10:
         n_try += 1
         print('Toolkit migration attempt {}: No connection to database. Sleeping for 10 sec and trying again.'.format(n_try))
         sleep(10)
+
+
+# CREATE CORE VARIABLE ENTRIES TO DB
+log_message = 'Toolkit: Adding empty core variables to database if needed.'
+print(log_message)
+
+for core_variable_choice in CORE_VARIABLE_CHOICES:
+    variable_name = core_variable_choice[0]
+    matching_variables = CoreVariable.objects.filter(name=variable_name)
+    # if core variable not present in db
+    if not matching_variables:
+        new_core_variable = CoreVariable(name=variable_name, value=None)
+        new_core_variable.save()

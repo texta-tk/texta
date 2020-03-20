@@ -1,6 +1,6 @@
 from rest_framework.exceptions import APIException
 from rest_framework import status
-from .settings import MLP_URL
+from toolkit.helper_functions import get_core_setting
 
 '''
 default_detail - detailed message of the exception
@@ -29,6 +29,7 @@ class SerializerNotValid(APIException):
 
 
 class MLPNotAvailable(APIException):
+    MLP_URL = get_core_setting("TEXTA_MLP_URL")
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     default_detail = (f"MLP {MLP_URL} not available. Check connection to MLP.")
     default_code = "mlp_not_available"

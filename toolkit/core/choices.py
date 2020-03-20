@@ -1,5 +1,6 @@
 # CHOICES FOR CORE APP
 from toolkit.elastic.core import ElasticCore
+from toolkit.settings import CORE_SETTINGS
 
 STATUS_CREATED = 'created'
 STATUS_QUEUED = 'queued'
@@ -24,3 +25,5 @@ OPERATOR_CHOICES = (('must', 'must'), ('must_not', 'mut_not'), ('should', 'shoul
 
 DEFAULT_SUGGESTION_LIMIT = 10
 DEFAULT_VALUES_PER_NAME = 10
+
+CORE_VARIABLE_CHOICES = [(a, a) for a in CORE_SETTINGS.keys()]

@@ -4,11 +4,14 @@ import unittest
 import requests
 from django.test import TestCase
 
-from toolkit.settings import ES_URL
+from toolkit.settings import CORE_SETTINGS
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.exceptions import ElasticIndexNotFoundException, ElasticAuthorizationException
 from toolkit.test_settings import TEST_INDEX
 from toolkit.tools.utils_for_tests import print_output
+
+
+ES_URL = CORE_SETTINGS["TEXTA_ES_URL"]
 
 
 class TestElasticXpackSecurity(TestCase):

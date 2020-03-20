@@ -1,16 +1,18 @@
 from typing import List
-
 import elasticsearch
 from elasticsearch_dsl import A, Q, Search
+
+from toolkit.helper_functions import get_core_setting
 
 
 class SpamDetector:
     FILTERED_FIELD_TYPES = ["date", "fact"]
 
 
-    def __init__(self, es_url: str, indices: List[str]):
+    def __init__(self, indices: List[str]):
         self.indices = indices
-        self.es = elasticsearch.Elasticsearch(es_url, timeout=60)
+        self.es_url = get_core_setting("TEXTA_ES_URL")
+        self.es = elasticsearch.Elasticsearch(self.es_url, timeout=60)
         self.search = Search(using=self.es, index=self.indices)
         self.result = None  # Placeholder for the query results.
 

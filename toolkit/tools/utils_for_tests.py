@@ -3,10 +3,13 @@ from django.contrib.auth.models import User
 from termcolor import colored
 
 
-def create_test_user(name: str='tester', email: str='test@mail.com', password: str='password'):
+def create_test_user(name: str='tester', email: str='test@mail.com', password: str='password', superuser=False):
     '''Creates an User for Testing'''
-    user = User.objects.create(username=name, email=email)
-    user.set_password(password)
+    if superuser:
+        user = User.objects.create_superuser(username=name, email=email, password=password)
+    else:
+        user = User.objects.create(username=name, email=email)
+        user.set_password(password)
     user.save()
     return user
 

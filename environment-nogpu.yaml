@@ -7,10 +7,10 @@ channels:
   - pytorch
 
 dependencies:
-  - python=3.6
+  - python=3.7
   - pip
   - pandas
-  - scikit-learn==0.22.1
+  - scikit-learn==0.22.2
   - matplotlib
   - graphviz
   - gensim==3.7.*
@@ -23,23 +23,22 @@ dependencies:
   - pytorch-cpu
   - pip:
     - django==2.1.*
-    - djangorestframework==3.9.*
-    - celery==4.2.*
-    - elasticsearch==6.3.*
-    - redis==3.*
     - django-multiselectfield
-    - drf-nested-routers
-    - django-rest-auth[with_social]
-    - termcolor
-    - django-extensions
-    - joblib
     - django-rest-serializer-field-permissions
     - django-cors-headers
+    - django-extensions
+    - django-filter
+    - django-rest-auth[with_social]
+    - djangorestframework==3.9.*
+    - drf-nested-routers
+    - celery==4.*
+    - redis==3.*
+    - elasticsearch<7
     - elasticsearch_dsl<7
+    - termcolor
+    - joblib
     - python-json-logger
     - drf-yasg
     - torchtext
-    - django-filter
     - xlrd
     - dill
-    - git+https://git.texta.ee/texta/texta_tagger.git
