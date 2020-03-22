@@ -10,7 +10,7 @@ from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from texta_tagger.tools.mlp_analyzer import get_mlp_analyzer
+from texta_tagger.mlp_analyzer import get_mlp_analyzer
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
@@ -18,7 +18,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.exceptions import MLPNotAvailable, NonExistantModelError, SerializerNotValid
-from toolkit.helper_functions import apply_celery_task, add_finite_url_to_feedback
+from toolkit.helper_functions import apply_celery_task, add_finite_url_to_feedback, get_core_setting
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.tagger.models import TaggerGroup
@@ -26,9 +26,6 @@ from toolkit.tagger.serializers import TaggerGroupSerializer, TaggerGroupTagDocu
 from toolkit.tagger.tasks import apply_tagger, create_tagger_objects, train_tagger
 from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import BulkDelete, TagLogicViews
-
-
-mlp_analyzer = get_mlp_analyzer()
 
 
 class TaggerGroupFilter(filters.FilterSet):
@@ -175,6 +172,10 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tags = []
         hybrid_tagger_object = self.get_object()
         taggers = {t.description.lower(): {"tag": t.description, "id": t.id} for t in hybrid_tagger_object.taggers.all()}
+        # retrieve MLP & process
+        mlp_url = get_core_setting("TEXTA_MLP_URL")
+        mlp_major_version = get_core_setting("TEXTA_MLP_MAJOR_VERSION")
+        mlp_analyzer = get_mlp_analyzer(mlp_host=mlp_url, mlp_major_version=mlp_major_version)
         mlp_output = mlp_analyzer.process(text)
         # lemmatize
         if lemmatize and mlp_output:

@@ -12,7 +12,6 @@ stages:
 Test:
   before_script:
     - conda env create -f environment-nogpu.yaml && source activate texta-rest
-    - pip install https://$TAGGER_DEPLOY_USER:$TAGGER_DEPLOY_PWD@git.texta.ee/texta/texta-tagger.git
     - python import_test_data.py -es http://172.17.0.1:9200
     - python migrate.py
   stage: test

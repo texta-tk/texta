@@ -1,4 +1,4 @@
-from texta_tagger.tools.pipeline import get_pipeline_builder
+from texta_tagger.pipeline import get_pipeline_builder
 
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.aggregator import ElasticAggregator

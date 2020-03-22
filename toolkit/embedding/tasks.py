@@ -4,7 +4,7 @@ import json
 import os
 import secrets
 
-from texta_tagger.tools.text_processor import TextProcessor
+from texta_tagger.text_processor import TextProcessor
 
 from toolkit.base_task import BaseTask
 from toolkit.core.task.models import Task

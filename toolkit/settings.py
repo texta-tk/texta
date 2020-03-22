@@ -11,7 +11,7 @@ from .logging_settings import setup_logging
 # NOTE: THESE ARE INITIAL VARIABLES IMPORTED FROM THE ENVIRONMENT
 # DO NOT IMPORT THESE VARIABLES IN APPS, BECAUSE THEY CAN BE OVERWRITTEN WITH VALUES FROM DB
 # INSTEAD USE get_setting_val() function, e.g.:
-# from toolkit.core.settings import get_core_setting
+# from toolkit.helper_functions import get_core_setting
 # ES_URL = get_core_setting("ES_URL")
 CORE_SETTINGS = {
     "TEXTA_ES_URL": os.getenv("TEXTA_ES_URL", "http://elastic-dev.texta.ee:9200"),
@@ -22,14 +22,6 @@ CORE_SETTINGS = {
     "TEXTA_MLP_MAJOR_VERSION": int(os.getenv("TEXTA_MLP_MAJOR_VERSION", "2"))
     }
 ### END OF CORE SETTINGS ###
-
-
-
-# TODO: AS MLP URL MIGHT CHANGE ON THE FLY, THIS IS INCORRECT!
-# Tagger package variables
-os.environ["TEXTA_TAGGER_MLP_URL"] = CORE_SETTINGS["TEXTA_MLP_URL"]
-os.environ["TEXTA_TAGGER_MLP_MAJOR_VERSION"] = str(CORE_SETTINGS["TEXTA_MLP_MAJOR_VERSION"])
-
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)

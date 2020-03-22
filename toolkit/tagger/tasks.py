@@ -5,8 +5,8 @@ import re
 import secrets
 
 from texta_tagger.tagger import Tagger as TextTagger
-from texta_tagger.tools.text_processor import TextProcessor
-from texta_tagger.tools.mlp_analyzer import get_mlp_analyzer
+from texta_tagger.text_processor import TextProcessor
+from texta_tagger.mlp_analyzer import get_mlp_analyzer
 from celery.decorators import task
 
 from toolkit.base_task import BaseTask
@@ -14,14 +14,11 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.data_sample import DataSample
 from toolkit.elastic.feedback import Feedback
 from toolkit.embedding.phraser import Phraser
-from toolkit.helper_functions import get_indices_from_object
+from toolkit.helper_functions import get_indices_from_object, get_core_setting
 from toolkit.settings import ERROR_LOGGER
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.tagger.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
-
-
-mlp_analyzer = get_mlp_analyzer()
 
 
 def create_tagger_batch(tagger_group_id, taggers_to_create):
@@ -139,7 +136,9 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
     # get lemmatizer if needed
     lemmatizer = None
     if lemmatize:
-        lemmatizer = mlp_analyzer
+        mlp_url = get_core_setting("TEXTA_MLP_URL")
+        mlp_major_version = get_core_setting("TEXTA_MLP_MAJOR_VERSION")
+        lemmatizer = get_mlp_analyzer(mlp_host=mlp_url, mlp_major_version=mlp_major_version)
     # create text processor object for tagger
     stop_words = tagger_object.stop_words.split(' ')
     if tagger_object.embedding:
@@ -158,7 +157,7 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
     tagger.add_text_processor(text_processor)
     # check input type
     if input_type == "doc":
-        tagger_result = tagger.tag_doc(text, lemmatize=lemmatize)
+        tagger_result = tagger.tag_doc(text)
     else:
         tagger_result = tagger.tag_text(text)
     # set bool result

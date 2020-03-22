@@ -1,7 +1,7 @@
 import json
 import os
 
-from texta_tagger.tools.text_processor import TextProcessor
+from texta_tagger.text_processor import TextProcessor
 
 import rest_framework.filters as drf_filters
 from django.http import HttpResponse
