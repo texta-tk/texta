@@ -7,10 +7,12 @@ from django_filters import rest_framework as filters
 from rest_auth import views
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.exceptions import ElasticIndexAlreadyExists
 from toolkit.elastic.models import Index, Reindexer
 from toolkit.elastic.serializers import IndexSerializer, ReindexerCreateSerializer
 from toolkit.permissions.project_permissions import IsSuperUser, ProjectResourceAllowed
@@ -51,20 +53,26 @@ class IndexViewSet(mixins.CreateModelMixin,
         data = IndexSerializer(data=request.data)
         data.is_valid(raise_exception=True)
 
+        es = ElasticCore()
         index = data.validated_data["name"]
         is_open = data.validated_data["is_open"]
 
         # Using get_or_create to avoid unique name constraints on creation.
-        # When using the same name, the default behaviour is to only change the is_open value.
-        index = Index.objects.get_or_create(name=index)
-        index = index[0] if isinstance(index, tuple) else index
-        index.is_open = is_open
-        index.save()
+        if es.check_if_indices_exist([index]):
+            # Even if the index already exists, create the index object just in case
+            index, is_created = Index.objects.get_or_create(name=index)
+            if is_created: index.is_open = is_open
+            index.save()
+            raise ElasticIndexAlreadyExists()
 
-        es = ElasticCore()
-        es.create_index(index=index)
-        if not is_open: es.close_index(index)
-        return Response({"message": f"Added index {index} into Elasticsearch!"}, status=status.HTTP_201_CREATED)
+        else:
+            index, is_created = Index.objects.get_or_create(name=index)
+            if is_created: index.is_open = is_open
+            index.save()
+
+            es.create_index(index=index)
+            if not is_open: es.close_index(index)
+            return Response({"message": f"Added index {index} into Elasticsearch!"}, status=status.HTTP_201_CREATED)
 
 
     def destroy(self, request, pk=None, **kwargs):

@@ -155,11 +155,17 @@ class ElasticCore:
                 if index not in es_set:
                     Index.objects.get(name=index).delete()
 
+            # Create an Index object if it doesn't exist in the right open/closed state.
+            # Ensures that changes Elastic-side on the open/closed state are forcefully updated.
             for index in opened:
-                Index.objects.get_or_create(name=index, is_open=True)
+                index, is_created = Index.objects.get_or_create(name=index)
+                index.is_open = True
+                index.save()
 
             for index in closed:
-                Index.objects.get_or_create(name=index, is_open=False)
+                index, is_created = Index.objects.get_or_create(name=index)
+                index.is_open = False
+                index.save()
 
 
     @elastic_connection

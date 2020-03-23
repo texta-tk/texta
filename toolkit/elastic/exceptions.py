@@ -32,6 +32,12 @@ class ElasticIndexNotFoundException(APIException):
     default_code = "index_not_found"
 
 
+class ElasticIndexAlreadyExists(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = "Index already exists!"
+    default_code = "index_already_exists"
+
+
 class ElasticAuthorizationException(APIException):
     status_code = status.HTTP_403_FORBIDDEN
     default_detail = "Access denied to Elasticsearch!"

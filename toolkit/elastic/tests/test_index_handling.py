@@ -44,11 +44,11 @@ class ElasticIndexViewTests(APITestCase):
 
     def setUp(self):
         self.client.login(username=self.admin, password="1234")
-        self.index_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/index/'
+        self.index_url = reverse("v1:index-list")
 
 
     def tearDown(self):
-        index_names = ["same_name_index", "test_closed_sync", "open_index_creation", "closed_index_creation", "open_index_2", "closed_index_2", "bofuun"]
+        index_names = ["first_index_duplicate", "same_name_index", "test_closed_sync", "open_index_creation", "closed_index_creation", "open_index_2", "closed_index_2", "bofuun"]
         for index in index_names:
             requests.delete(f"{ES_URL}/{index}")
 
@@ -181,3 +181,25 @@ class ElasticIndexViewTests(APITestCase):
             ec.delete_index(index)
 
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+
+
+    def test_creating_closed_and_open_index_with_duplicate_names(self):
+        """
+        Created because of an old bug where trying to create an closed index with
+        the same name as existing opened one caused the whole endpoint to die.
+        """
+
+        first_index = self.client.post(self.index_url, format="json", data={
+            "name": "first_index_duplicate",
+            "is_open": False
+        })
+        self.assertTrue(first_index.status_code == status.HTTP_201_CREATED)
+
+        second_index = self.client.post(self.index_url, format="json", data={
+            "name": "first_index_duplicate",
+            "is_open": False
+        })
+
+        self.assertTrue(second_index.status_code == status.HTTP_400_BAD_REQUEST)
+        list_view = self.client.get(self.index_url)
+        self.assertTrue(list_view.status_code == status.HTTP_200_OK)
