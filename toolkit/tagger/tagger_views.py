@@ -89,7 +89,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             features = tagger.get_feature_names()
         except:
             return Response({'error': 'Error loading feature names. Are you using HashingVectorizer? It does not support feature names!'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         feature_coefs = tagger.get_feature_coefs()
         supports = tagger.get_supports()
         selected_features = [feature for i, feature in enumerate(features) if supports[i]]
@@ -114,6 +114,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             return Response(success, status=status.HTTP_200_OK)
         elif self.request.method == 'POST':
             serializer = GeneralTextSerializer(data=request.data)
+
             # check if valid request
             if not serializer.is_valid():
                 raise SerializerNotValid(detail=serializer.errors)
@@ -122,6 +123,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             # save tagger object
             tagger_object.stop_words = new_stop_words
             tagger_object.save()
+
             return Response({"stop_words": new_stop_words}, status=status.HTTP_200_OK)
 
 
@@ -137,6 +139,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
     def export_model(self, request, pk=None, project_pk=None):
         """Returns list of tags for input text."""
         zip_name = f'tagger_model_{pk}.zip'
+
         tagger_object: Tagger = self.get_object()
         data = tagger_object.export_resources()
         response = HttpResponse(data)
@@ -148,6 +151,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
     def import_model(self, request, pk=None, project_pk=None):
         serializer = ProjectResourceImportModelSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         uploaded_file = serializer.validated_data['file']
         tagger_id = Tagger.import_resources(uploaded_file, request, project_pk)
         return Response({"id": tagger_id, "message": "Successfully imported model and associated files."}, status=status.HTTP_201_CREATED)
@@ -217,54 +221,25 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         # get tagger object
         tagger_object = self.get_object()
         # check if tagger exists
+
         if not tagger_object.model.path:
             raise NonExistantModelError()
+
+        if not tagger_object.model.path:
+            return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
+
         # retrieve tagger fields
         tagger_fields = json.loads(tagger_object.fields)
-
-        indices = tagger_object.project.get_indices()
-
-        if not ElasticCore().check_if_indices_exist(indices):
-            return Response({'error': f'One or more index from {list(indices)} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        if not ElasticCore().check_if_indices_exist(tagger_object.project.get_indices()):
+            return Response({'error': f'One or more index from {list(tagger_object.project.get_indices())} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve random document
-        random_doc = ElasticSearcher(indices=indices).random_documents(size=1)[0]
+        random_doc = ElasticSearcher(indices=tagger_object.project.get_indices()).random_documents(size=1)[0]
 
         # filter out correct fields from the document
         random_doc_filtered = {k: v for k, v in random_doc.items() if k in tagger_fields}
+
         # apply tagger
         tagger_response = apply_tagger(tagger_object.id, random_doc_filtered, input_type='doc')
         response = {"document": random_doc, "prediction": tagger_response}
         return Response(response, status=status.HTTP_200_OK)
-
-
-    def apply_tagger(self, tagger_object, tagger_input, input_type='text', phraser=None, lemmatizer=None, feedback=False):
-        # create text processor object for tagger
-        stop_words = tagger_object.stop_words.split(' ')
-        # use phraser is embedding used
-        if tagger_object.embedding:
-            phraser = Phraser(tagger_object.embedding.id)
-            phraser.load()
-
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
-        else:
-            text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
-        # load model and
-        tagger = TextTagger(tagger_object.id)
-        tagger.load()
-
-        tagger.add_text_processor(text_processor)
-        # select function according to input type
-        if input_type == 'doc':
-            tagger_result = tagger.tag_doc(tagger_input)
-        else:
-            tagger_result = tagger.tag_text(tagger_input)
-        # initial result
-        prediction = {'result': bool(tagger_result[0]), 'probability': tagger_result[1]}
-        # add optional feedback
-        if feedback:
-            project_pk = tagger_object.project.pk
-            feedback_object = Feedback(project_pk, model_object=tagger_object)
-            feedback_id = feedback_object.store(tagger_input, prediction['result'])
-            prediction['feedback'] = {'id': feedback_id}
-        return prediction
