@@ -132,14 +132,12 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response(prediction, status=status.HTTP_200_OK)
 
 
-    def apply_tagger(self, tagger_object, tagger_input, input_type='text', lemmatizer=None, feedback=False):
+    def apply_tagger(self, tagger_object, tagger_input, input_type='text', feedback=False):
         # load embedding & phraser
         embedding = W2VEmbedding()
         embedding.load_django(tagger_object.embedding)
-        phraser = embedding.phraser
-        text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, lemmatizer=lemmatizer)
         # retrieve model
-        tagger = TorchTagger()
+        tagger = TorchTagger(embedding)
         tagger.load_django(tagger_object)
         # tag text
         if input_type == 'doc':

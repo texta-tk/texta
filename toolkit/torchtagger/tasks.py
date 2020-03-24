@@ -24,13 +24,9 @@ def train_torchtagger(tagger_id, testing=False):
         task_object = tagger_object.task
         model_type = TorchTaggerObject.MODEL_TYPE
         show_progress = ShowProgress(task_object, multiplier=1)
-        # load embedding and create text processor
+        # load embedding
         embedding = W2VEmbedding()
         embedding.load_django(tagger_object.embedding)
-        phraser = embedding.phraser
-        # TODO: investigate if stop words should be removed or not
-        text_processor = TextProcessor(phraser=phraser, remove_stop_words=False)
-
         # create Datasample object for retrieving positive and negative sample
         data_sample = DataSample(tagger_object, show_progress=show_progress, join_fields=True)
         show_progress.update_step('training')
