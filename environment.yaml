@@ -42,5 +42,6 @@ dependencies:
     - torchtext
     - xlrd
     - dill
+    - texta-torch-tagger
     - texta-tagger
     - texta-tools
