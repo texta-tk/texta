@@ -3,15 +3,15 @@ import secrets
 import json
 import os
 
-from texta_tagger.text_processor import TextProcessor
+from texta_torch_tagger.tagger import TorchTagger
+from texta_tools.text_processor import TextProcessor
+from texta_tools.embedding import W2VEmbedding
 
-from toolkit.embedding.phraser import Phraser
 from toolkit.core.task.models import Task
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.base_task import BaseTask
 from toolkit.elastic.data_sample import DataSample
-from toolkit.torchtagger.torchtagger import TorchTagger
 from toolkit.torchtagger.plots import create_torchtagger_plot
 from toolkit.settings import MODELS_DIR
 
@@ -25,32 +25,29 @@ def train_torchtagger(tagger_id, testing=False):
         model_type = TorchTaggerObject.MODEL_TYPE
         show_progress = ShowProgress(task_object, multiplier=1)
         # load embedding and create text processor
-        # TODO: investigate if stop words should not be removed
-        if tagger_object.embedding:
-            phraser = Phraser(embedding_id=tagger_object.embedding.pk)
-            phraser.load()
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
-        else:
-            text_processor = TextProcessor(remove_stop_words=True)
+        embedding = W2VEmbedding()
+        embedding.load_django(tagger_object.embedding)
+        phraser = embedding.phraser
+        # TODO: investigate if stop words should be removed or not
+        text_processor = TextProcessor(phraser=phraser, remove_stop_words=False)
+
         # create Datasample object for retrieving positive and negative sample
         data_sample = DataSample(tagger_object, show_progress=show_progress, join_fields=True)
-        show_progress.update_step('training torchtagger')
+        show_progress.update_step('training')
         show_progress.update_view(0.0)
         # create TorchTagger
         tagger = TorchTagger(
-            tagger_object.id,
+            embedding,
             model_arch=tagger_object.model_architecture, 
             num_epochs=int(tagger_object.num_epochs)
         )
         # train tagger and get result statistics
-        tagger_stats = tagger.train(data_sample)
+        tagger_stats = tagger.train(data_sample.data)
         # save tagger to disk
         tagger_path = os.path.join(MODELS_DIR, model_type, f'{model_type}_{tagger_id}_{secrets.token_hex(10)}')
-        tagger_path, text_field_path = tagger.save(tagger_path)
+        tagger.save(tagger_path)
         # set tagger location
         tagger_object.model.name = tagger_path
-        # set text_field location
-        tagger_object.text_field.name = text_field_path
         # save tagger plot
         tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_torchtagger_plot(tagger_stats))
         # save label index

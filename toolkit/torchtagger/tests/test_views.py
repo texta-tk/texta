@@ -41,10 +41,8 @@ class TorchTaggerViewTests(TransactionTestCase):
     def add_cleanup_files(self, tagger_id):
         tagger_object = TorchTagger.objects.get(pk=tagger_id)
         self.addCleanup(remove_file, tagger_object.model.path)
-        self.addCleanup(remove_file, tagger_object.text_field.path)
         self.addCleanup(remove_file, tagger_object.plot.path)
         self.addCleanup(remove_file, tagger_object.embedding.embedding_model.path)
-        self.addCleanup(remove_file, tagger_object.embedding.phraser_model.path)
 
 
     def run_train_embedding(self):
