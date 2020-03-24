@@ -43,3 +43,4 @@ dependencies:
     - xlrd
     - dill
     - texta-tagger
+    - texta-tools
