@@ -207,8 +207,9 @@ class ElasticSearcher:
                         parsed_doc = self._parse_doc(hit)
                         if self.output == self.OUT_TEXT:
                             for field in parsed_doc.values():
-                                processed_field = self.text_processor.process(field)
-                                for text in processed_field:
+                                if self.text_processor:
+                                    field = self.text_processor.process(field)
+                                for text in field:
                                     yield text
                         elif self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID):
                             if self.text_processor:

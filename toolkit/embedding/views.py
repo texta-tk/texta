@@ -1,7 +1,8 @@
 import json
 import os
 
-from texta_tagger.text_processor import TextProcessor
+from texta_tools.text_processor import TextProcessor
+from texta_tools.embedding import W2VEmbedding
 
 import rest_framework.filters as drf_filters
 from django.http import HttpResponse
@@ -11,9 +12,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
-from toolkit.embedding.embedding import W2VEmbedding
 from toolkit.embedding.models import Embedding
-from toolkit.embedding.phraser import Phraser
 from toolkit.embedding.serializers import EmbeddingPredictSimilarWordsSerializer, EmbeddingSerializer
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, SerializerNotValid
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
@@ -58,7 +57,6 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
     def export_model(self, request, pk=None, project_pk=None):
         """Returns list of tags for input text."""
         zip_name = f'embedding_model_{pk}.zip'
-
         embedding_object: Embedding = self.get_object()
         data = embedding_object.export_resources()
         response = HttpResponse(data)
@@ -96,8 +94,8 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
             if not embedding_object.embedding_model.path:
                 raise NonExistantModelError()
 
-            embedding = W2VEmbedding(embedding_object.id)
-            embedding.load()
+            embedding = W2VEmbedding()
+            embedding.load_django(embedding_object)
 
             predictions = embedding.get_similar(
                 serializer.validated_data['positives'],
@@ -120,8 +118,9 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
             if not embedding_object.embedding_model.name:
                 raise NonExistantModelError()
 
-            phraser = Phraser(embedding_object.id)
-            phraser.load()
+            embedding = W2VEmbedding()
+            embedding.load_django(embedding_object)
+            phraser = embedding.phraser
 
             text_processor = TextProcessor(phraser=phraser, sentences=False, remove_stop_words=False, tokenize=False)
             phrased_text = text_processor.process(serializer.validated_data['text'])[0]

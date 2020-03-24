@@ -7,13 +7,13 @@ import secrets
 from texta_tagger.tagger import Tagger as TextTagger
 from texta_tagger.text_processor import TextProcessor
 from texta_tagger.mlp_analyzer import get_mlp_analyzer
-from celery.decorators import task
+from texta_tools.embedding import Phraser, W2VEmbedding
 
+from celery.decorators import task
 from toolkit.base_task import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.data_sample import DataSample
 from toolkit.elastic.feedback import Feedback
-from toolkit.embedding.phraser import Phraser
 from toolkit.helper_functions import get_indices_from_object, get_core_setting
 from toolkit.settings import ERROR_LOGGER
 from toolkit.tagger.models import Tagger, TaggerGroup
@@ -80,7 +80,13 @@ def train_tagger(tagger_id):
         stop_words = re.split(" |\n|\r\n", tagger_object.stop_words)
         stop_words = [stop_word for stop_word in stop_words if stop_word]
         # create text processor with custom stop words
-        text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
+        if tagger_object.embedding:
+            embedding = W2VEmbedding()
+            embedding.load_django(tagger_object.embedding)
+            phraser = embedding.phraser
+            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words)
+        else:
+            text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
         # create Datasample object for retrieving positive and negative sample
         data_sample = DataSample(
             tagger_object,
@@ -142,8 +148,9 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
     # create text processor object for tagger
     stop_words = tagger_object.stop_words.split(' ')
     if tagger_object.embedding:
-        phraser = Phraser(tagger_object.embedding.id)
-        phraser.load()
+        embedding = W2VEmbedding()
+        embedding.load_django(tagger_object.embedding)
+        phraser = embedding.phraser
         text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
     else:
         text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)

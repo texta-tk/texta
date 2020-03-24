@@ -14,7 +14,7 @@ from texta_tagger.text_processor import TextProcessor
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.embedding.phraser import Phraser
+#from toolkit.embedding.phraser import Phraser
 from toolkit.exceptions import NonExistantModelError, SerializerNotValid
 from toolkit.helper_functions import apply_celery_task, add_finite_url_to_feedback
 from toolkit.permissions.project_permissions import ProjectResourceAllowed

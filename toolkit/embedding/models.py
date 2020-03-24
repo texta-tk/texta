@@ -35,7 +35,6 @@ class Embedding(models.Model):
     vocab_size = models.IntegerField(default=0)
 
     embedding_model = models.FileField(null=True, verbose_name='', default=None)
-    phraser_model = models.FileField(null=True, verbose_name='', default=None)
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
 
@@ -78,7 +77,6 @@ class Embedding(models.Model):
             fp.write(archive.read(old_path.name))
             ref = getattr(model_object, model_json_key)  # Get reference to the field in the Embedding.
             setattr(ref, "name", str(new_path))  # Set the fields name parameter to the new path.
-
         return model_object
 
 
@@ -123,22 +121,15 @@ class Embedding(models.Model):
                 model_fields = self.to_json()
                 model_json = json.dumps(model_fields).encode("utf8")
                 archive.writestr(self.MODEL_JSON_NAME, model_json)
-
                 # Create some helper paths.
-                phraser_path = pathlib.Path(self.phraser_model.path)
-                model_dir_path = phraser_path.parent
                 embedding_path = pathlib.Path(self.embedding_model.path)
                 model_type, pk, model_hash = embedding_path.name.split("_")
-
-                # Write the phraser model into the zip.
-                archive.write(str(phraser_path), arcname=str(phraser_path.name))
-
+                model_dir_path = embedding_path.parent
                 # Fetch all the embedding related models that share the same hash and write
                 # them into the zip. Gensim creates additional files for larger embeddings,
                 # which makes this necessary.
                 for item in model_dir_path.glob("*{}*".format(model_hash)):
                     archive.write(item, arcname=str(pathlib.Path(item).name))
-
             tmp.seek(0)
             return tmp.read()
 
@@ -149,10 +140,8 @@ class Embedding(models.Model):
             json_string = archive.read(Embedding.MODEL_JSON_NAME).decode()
             original_json = json.loads(json_string)
             model_json = original_json["fields"]
-
             # Create the new embedding object and save it to the DB.
             new_model = Embedding.create_embedding_object(model_json, request.user.id, pk)
-            new_model = Embedding.add_file_to_embedding_object(archive, new_model, model_json, "phraser", "phraser_model")
             new_model = Embedding.add_file_to_embedding_object(archive, new_model, model_json, "embedding", "embedding_model")
 
             Embedding.save_embedding_extra_files(archive, new_model, model_json, extra_paths=original_json["embedding_extras"])
@@ -189,10 +178,5 @@ def auto_delete_embedding_on_delete(sender, instance: Embedding, **kwargs):
         for path in embedding_path.parent.glob("{}*".format(embedding_path.name)):
             if path.exists():
                 os.remove(str(path))
-
         if os.path.isfile(instance.embedding_model.path):
             os.remove(instance.embedding_model.path)
-
-    if instance.phraser_model:
-        if os.path.isfile(instance.phraser_model.path):
-            os.remove(instance.phraser_model.path)
