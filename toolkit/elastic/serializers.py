@@ -4,8 +4,34 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Index, Reindexer
+from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.validators import check_for_banned_beginning_chars, check_for_colons, check_for_special_symbols, check_for_upper_case, check_for_wildcards
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
+
+
+# TODO Test wheter returning documents and documents without meta works properly.
+# TODO Test wheter setting the indices matters at all.
+# TODO Test size parameter working.
+# TODO Test initial scroll request and second one to have different values.
+# TODO Test whether an query actually limits the range.
+# TODO Test that you cant add aggregations into the query dict as input.
+# TODO Test that an exception is raised when trying to add more parameters with the scroll id being present.
+
+
+class ElasticScrollSerializer(serializers.Serializer):
+    indices = serializers.ListField(child=serializers.CharField(), default=[], help_text="From which indices to search, by default all project indices are chosen.")
+    scroll_id = serializers.CharField(required=False)
+    query = serializers.DictField(default=EMPTY_QUERY, help_text="Query to limit returned documents.")
+    documents_size = serializers.IntegerField(min_value=1, max_value=300, default=300, help_text="How many documents should be returned in the response. Max is 300.")
+    fields = serializers.ListField(default=["*"])
+    return_only_docs = serializers.BooleanField(default=False)
+
+
+    # Change what is returned to serializer_instance.validated_data
+    def to_internal_value(self, data):
+        data = super(ElasticScrollSerializer, self).to_internal_value(data)
+        data["query"] = {"query": data["query"]["query"]}  # Make sure we only keep the query, without aggregations.
+        return data
 
 
 class IndexSerializer(serializers.ModelSerializer):

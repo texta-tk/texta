@@ -19,6 +19,7 @@ def elastic_connection(func):
     instead of the typical HTTP 500 one.
     """
 
+
     def func_wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -45,6 +46,7 @@ def elastic_connection(func):
             logging.getLogger(ERROR_LOGGER).exception(e.info)
             raise ElasticTimeoutException(f"Connection to Elasticsearch timed out!")
 
+
     return func_wrapper
 
 
@@ -60,7 +62,7 @@ class ElasticCore:
         self.ES_USERNAME = get_core_setting("TEXTA_ES_USERNAME")
         self.ES_PASSWORD = get_core_setting("TEXTA_ES_PASSWORD")
         self.TEXTA_RESERVED = ['texta_facts']
-        
+
         self.connection = self._check_connection()
         self.es = self._create_client_interface()
 
@@ -242,3 +244,30 @@ class ElasticCore:
         names as input.
         """
         return self.es.indices.exists(index=','.join(indices))
+
+
+    @elastic_connection
+    def scroll(self, indices: List[str], query: dict, scroll_id: str = None, connection_timeout=60 * 1, scroll_timeout="10m", size=300, fields: List[str] = ["*"], return_only_docs=True):
+        indices = ",".join(indices)
+        if scroll_id is None:
+            initial_scroll = self.es.search(index=indices, body=query, request_timeout=connection_timeout, scroll=scroll_timeout, size=size, _source=fields)
+            documents = initial_scroll["hits"]["hits"] if return_only_docs else [doc["_source"] for doc in initial_scroll["hits"]["hits"]]
+            response = {
+                "scroll_id": initial_scroll["_scroll_id"],
+                "total_documents": initial_scroll["hits"]["total"],
+                "returned_count": len(initial_scroll["hits"]["hits"]),
+                "documents": documents
+            }
+            return response
+
+        else:
+            continuation_scroll = self.es.scroll(scroll_id=scroll_id, scroll=scroll_timeout)
+            documents = continuation_scroll["hits"]["hits"] if return_only_docs else [doc["_source"] for doc in continuation_scroll["hits"]["hits"]]
+
+            response = {
+                "scroll_id": continuation_scroll["_scroll_id"],
+                "total_documents": continuation_scroll["hits"]["total"],
+                "returned_count": len(continuation_scroll["hits"]["hits"]),
+                "documents": documents
+            }
+            return response

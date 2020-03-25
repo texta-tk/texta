@@ -1,5 +1,8 @@
+from typing import List
+
 from django.contrib.auth.models import User
 from django.db import models
+from rest_framework.exceptions import ValidationError
 
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.elastic.core import ElasticCore
@@ -32,3 +35,23 @@ class Project(models.Model):
         if path_list:
             field_data = [field["path"] for field in field_data]
         return field_data
+
+
+    def filter_from_indices(self, indices: List[str] = None) -> List[str]:
+        """
+        Used in views where the user can select the indices they wish to use.
+        Returns a list of index names from the ones that are in the project
+        and in the indices parameter or all of the indices if it's None or empty.
+        """
+        if indices:
+            legit_indices = self.indices.filter(name__in=indices)
+            if not legit_indices:
+                raise ValidationError(f"Inserted indices {indices} are not available to you.")
+
+            indices = [index.name for index in legit_indices]
+            return indices
+
+        else:
+            indices = self.indices.all()
+            indices = [index.name for index in indices]
+            return indices
