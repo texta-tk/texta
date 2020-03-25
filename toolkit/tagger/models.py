@@ -34,6 +34,7 @@ class Tagger(models.Model):
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     indices = models.ManyToManyField(Index)
     fields = models.TextField(default=json.dumps([]))
+    lemmatize = models.BooleanField(default=False)
     embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
     stop_words = models.TextField(default='')
     vectorizer = models.CharField(default=DEFAULT_VECTORIZER, max_length=MAX_DESC_LEN)

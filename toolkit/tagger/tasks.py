@@ -5,8 +5,8 @@ import re
 import secrets
 
 from texta_tagger.tagger import Tagger as TextTagger
-from texta_tagger.text_processor import TextProcessor
-from texta_tagger.mlp_analyzer import get_mlp_analyzer
+from texta_tools.text_processor import TextProcessor
+from texta_tools.mlp_analyzer import get_mlp_analyzer
 from texta_tools.embedding import Phraser, W2VEmbedding
 
 from celery.decorators import task
@@ -37,6 +37,15 @@ def create_tagger_batch(tagger_group_id, taggers_to_create):
         tagger_group_object.save()
         # train
         created_tagger.train()
+
+
+def get_lemmatizer(lemmatize):
+    lemmatizer = None
+    if lemmatize:
+        mlp_url = get_core_setting("TEXTA_MLP_URL")
+        mlp_major_version = get_core_setting("TEXTA_MLP_MAJOR_VERSION")
+        lemmatizer = get_mlp_analyzer(mlp_host=mlp_url, mlp_major_version=mlp_major_version)
+    return lemmatizer
 
 
 @task(name="create_tagger_objects", base=BaseTask)
@@ -79,25 +88,30 @@ def train_tagger(tagger_id):
         # split stop words by space or newline and remove empties
         stop_words = re.split(" |\n|\r\n", tagger_object.stop_words)
         stop_words = [stop_word for stop_word in stop_words if stop_word]
-        # create text processor with custom stop words
+        # load embedding if any
         if tagger_object.embedding:
             embedding = W2VEmbedding()
             embedding.load_django(tagger_object.embedding)
-            phraser = embedding.phraser
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words)
         else:
-            text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
+            embedding = None
         # create Datasample object for retrieving positive and negative sample
         data_sample = DataSample(
             tagger_object,
             show_progress=show_progress,
-            text_processor=text_processor
+            #text_processor=text_processor
         )
+        # get lemmatizer if needed
+        lemmatizer = get_lemmatizer(tagger_object.lemmatize)
         # update status to training
         show_progress.update_step("training")
         show_progress.update_view(0)
         # train model
-        tagger = TextTagger(classifier=tagger_object.classifier, vectorizer=tagger_object.vectorizer)
+        tagger = TextTagger(
+            embedding=embedding,
+            mlp=lemmatizer,
+            custom_stop_words=stop_words,
+            classifier=tagger_object.classifier,
+            vectorizer=tagger_object.vectorizer)
         tagger.train(
             data_sample.data["true"],
             data_sample.data["false"],
@@ -140,28 +154,21 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
     # get tagger object
     tagger_object = Tagger.objects.get(pk=tagger_id)
     # get lemmatizer if needed
-    lemmatizer = None
-    if lemmatize:
-        mlp_url = get_core_setting("TEXTA_MLP_URL")
-        mlp_major_version = get_core_setting("TEXTA_MLP_MAJOR_VERSION")
-        lemmatizer = get_mlp_analyzer(mlp_host=mlp_url, mlp_major_version=mlp_major_version)
+    lemmatizer = get_lemmatizer(lemmatize)
     # create text processor object for tagger
     stop_words = tagger_object.stop_words.split(' ')
+    # load embedding
     if tagger_object.embedding:
         embedding = W2VEmbedding()
         embedding.load_django(tagger_object.embedding)
-        phraser = embedding.phraser
-        text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
     else:
-        text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
+        embedding = False
     # load tagger
-    tagger = TextTagger()
+    tagger = TextTagger(embedding=embedding, mlp=lemmatizer, custom_stop_words=stop_words)
     tagger_loaded = tagger.load_django(tagger_object)
     # check if tagger gets loaded
     if not tagger_loaded:
         return None
-    # add text processor
-    tagger.add_text_processor(text_processor)
     # check input type
     if input_type == "doc":
         tagger_result = tagger.tag_doc(text)

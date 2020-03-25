@@ -58,6 +58,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     author_username = serializers.CharField(source='author.username', read_only=True)
     description = serializers.CharField(help_text=f'Description for the Tagger. Will be used as tag.')
     fields = serializers.ListField(child=serializers.CharField(), help_text=f'Fields used to build the model.')
+    lemmatize = serializers.BooleanField(help_text='If input text is lemmatized on training. Do not used if training on already lemmatized text. Default: False.', required=False)
     vectorizer = serializers.ChoiceField(choices=get_vectorizer_choices(), help_text=f'Vectorizer algorithm to create document vectors. NB! HashingVectorizer does not support feature name extraction!')
     classifier = serializers.ChoiceField(choices=get_classifier_choices(), help_text=f'Classification algorithm used in the model.')
     negative_multiplier = serializers.IntegerField(default=DEFAULT_NEGATIVE_MULTIPLIER, help_text=f'Multiplies the size of positive samples to determine negative example set size. Default: {DEFAULT_NEGATIVE_MULTIPLIER}')
@@ -71,7 +72,7 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
 
     class Meta:
         model = Tagger
-        fields = ('id', 'url', 'author_username', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
+        fields = ('id', 'url', 'author_username', 'description', 'query', 'fields', 'lemmatize', 'embedding', 'vectorizer', 'classifier', 'stop_words',
                   'maximum_sample_size', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score', 
                   'num_features', 'num_positives', 'num_negatives', 'plot', 'task')
         read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'stop_words', 'num_positives', 'num_negatives')

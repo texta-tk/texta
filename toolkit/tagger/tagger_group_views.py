@@ -10,7 +10,7 @@ from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from texta_tagger.mlp_analyzer import get_mlp_analyzer
+from texta_tools.mlp_analyzer import get_mlp_analyzer
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task

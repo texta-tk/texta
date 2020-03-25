@@ -9,7 +9,6 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from texta_tagger.tagger import Tagger as TextTagger
-from texta_tagger.text_processor import TextProcessor
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore

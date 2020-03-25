@@ -72,6 +72,7 @@ class TaggerViewTests(APITestCase):
 
     def run_create_tagger_training_and_task_signal(self):
         """Tests the endpoint for a new Tagger, and if a new Task gets created via the signal"""
+        lemmatize = True
         # run test for each vectorizer & classifier option
         for vectorizer_opt in self.vectorizer_opts:
             for classifier_opt in self.classifier_opts:
@@ -79,13 +80,16 @@ class TaggerViewTests(APITestCase):
                     "description": "TestTagger",
                     "query": json.dumps(TEST_QUERY),
                     "fields": TEST_FIELD_CHOICE,
+                    "lemmatize": lemmatize,
                     "vectorizer": vectorizer_opt,
                     "classifier": classifier_opt,
                     "maximum_sample_size": 500,
                     "negative_multiplier": 1.0,
                     "score_threshold": 0.1
                 }
-
+                # as lemmatization is slow, do it only once
+                lemmatize = False
+                # procees to analyze result
                 response = self.client.post(self.url, payload, format='json')
                 print_output('test_create_tagger_training_and_task_signal:response.data', response.data)
                 # Check if Tagger gets created
