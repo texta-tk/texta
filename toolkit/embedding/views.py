@@ -122,7 +122,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
             embedding.load_django(embedding_object)
             phraser = embedding.phraser
 
-            text_processor = TextProcessor(phraser=phraser, sentences=False, remove_stop_words=False, tokenize=False)
+            text_processor = TextProcessor(phraser=phraser, remove_stop_words=False)
             phrased_text = text_processor.process(serializer.validated_data['text'])
 
             return Response(phrased_text, status=status.HTTP_200_OK)
