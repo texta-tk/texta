@@ -4,6 +4,8 @@ from django.db.models import Count
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
@@ -76,23 +78,23 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         return queryset
 
 
-    @action(detail=True, methods=["post"], serializer_class=ElasticScrollSerializer)
+    @action(detail=True, methods=["post"], serializer_class=ElasticScrollSerializer, permission_classes=[IsAuthenticated, ExtraActionResource])
     def scroll(self, request, pk=None, project_pk=None):
         serializer = ElasticScrollSerializer(data=request.data)
-        serializer.is_valid()
+        serializer.is_valid(raise_exception=True)
 
         indices = serializer.validated_data["indices"]
         scroll_id = serializer.validated_data.get("scroll_id", None)
         size = serializer.validated_data["documents_size"]
         query = serializer.validated_data.get("query")
         fields = serializer.validated_data.get("fields", None)
-        return_only_docs = serializer.validated_data.get("return_only_docs", False)
+        return_only_docs = serializer.validated_data.get("with_meta", False)
         project = self.get_object()
 
         indices = project.filter_from_indices(indices)
 
         ec = ElasticCore()
-        documents = ec.scroll(indices=indices, query=query, scroll_id=scroll_id, size=size, return_only_docs=return_only_docs, fields=fields)
+        documents = ec.scroll(indices=indices, query=query, scroll_id=scroll_id, size=size, with_meta=return_only_docs, fields=fields)
         return Response(documents)
 
 

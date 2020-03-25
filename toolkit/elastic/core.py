@@ -247,11 +247,11 @@ class ElasticCore:
 
 
     @elastic_connection
-    def scroll(self, indices: List[str], query: dict, scroll_id: str = None, connection_timeout=60 * 1, scroll_timeout="10m", size=300, fields: List[str] = ["*"], return_only_docs=True):
+    def scroll(self, indices: List[str], query: dict, scroll_id: str = None, connection_timeout=60 * 1, scroll_timeout="10m", size=300, fields: List[str] = ["*"], with_meta=True):
         indices = ",".join(indices)
         if scroll_id is None:
             initial_scroll = self.es.search(index=indices, body=query, request_timeout=connection_timeout, scroll=scroll_timeout, size=size, _source=fields)
-            documents = initial_scroll["hits"]["hits"] if return_only_docs else [doc["_source"] for doc in initial_scroll["hits"]["hits"]]
+            documents = initial_scroll["hits"]["hits"] if with_meta else [doc["_source"] for doc in initial_scroll["hits"]["hits"]]
             response = {
                 "scroll_id": initial_scroll["_scroll_id"],
                 "total_documents": initial_scroll["hits"]["total"],
@@ -262,7 +262,7 @@ class ElasticCore:
 
         else:
             continuation_scroll = self.es.scroll(scroll_id=scroll_id, scroll=scroll_timeout)
-            documents = continuation_scroll["hits"]["hits"] if return_only_docs else [doc["_source"] for doc in continuation_scroll["hits"]["hits"]]
+            documents = continuation_scroll["hits"]["hits"] if with_meta else [doc["_source"] for doc in continuation_scroll["hits"]["hits"]]
 
             response = {
                 "scroll_id": continuation_scroll["_scroll_id"],

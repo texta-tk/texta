@@ -1,0 +1,120 @@
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APIClient, APITestCase
+
+from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.test_settings import TEST_FIELD, TEST_INDEX
+from toolkit.tools.common_utils import project_creation
+from toolkit.tools.utils_for_tests import create_test_user, print_output
+
+
+class ScrollApiTests(APITestCase):
+
+    def setUp(cls):
+        # Create a new project_user, all project extra actions need to be permissible for this project_user.
+        cls.user = create_test_user(name='user', password='pw')
+
+        cls.admin = create_test_user(name='admin', password='pw')
+        cls.admin.is_superuser = True
+        cls.admin.save()
+
+        cls.project_user = create_test_user(name='project_user', password='pw')
+        cls.project = project_creation("testproj", TEST_INDEX)
+        cls.project.users.add(cls.project_user)
+        cls.project.users.add(cls.user)
+
+        cls.client = APIClient()
+        cls.client.login(username='project_user', password='pw')
+
+        cls.scroll_url = reverse("v1:project-scroll", kwargs={"pk": cls.project.id})
+
+
+    def test_basic_functionality(self):
+        response = self.client.post(self.scroll_url, data={}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        for key in ["scroll_id", "documents", "total_documents", "returned_count"]:
+            self.assertTrue(key in response.data)
+        self.assertTrue(response.data["total_documents"] != response.data["returned_count"])
+        self.assertTrue(response.data["total_documents"] > response.data["returned_count"])
+
+        scrolling = self.client.post(self.scroll_url, data={"scroll_id": response.data["scroll_id"]}, format="json")
+        self.assertTrue(scrolling.status_code == status.HTTP_200_OK)
+        for key in ["scroll_id", "documents", "total_documents", "returned_count"]:
+            self.assertTrue(key in scrolling.data)
+        self.assertTrue(scrolling.data["total_documents"] != scrolling.data["returned_count"])
+        self.assertTrue(scrolling.data["total_documents"] > scrolling.data["returned_count"])
+        print_output("test_basic_functionality", 200)
+
+
+    def test_that_query_parameter_limits_search_range(self):
+        response = self.client.post(self.scroll_url, data={
+            "with_meta": False, "fields": [TEST_FIELD], "query": {
+                "query": {"term": {"comment_subject.keyword": "juss"}}
+            }
+        }, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.assertTrue(len(response.data["documents"]) < 100)
+        print_output("test_that_query_parameter_limits_search_range", 200)
+
+
+    def test_that_fields_parameter_returns_only_selected_fields(self):
+        response = self.client.post(self.scroll_url, data={"documents_size": 1, "with_meta": False, "fields": [TEST_FIELD]}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        document = response.data["documents"][0]
+        keys = list(document.keys())
+        self.assertTrue(len(keys) == 1 and keys[0] == TEST_FIELD)
+        print_output("test_that_fields_parameter_returns_only_selected_fields", 200)
+
+
+    def test_that_false_indices_are_handled_properly(self):
+        response = self.client.post(self.scroll_url, data={"documents_size": 1, "with_meta": True, "indices": ["an_european_or_african_swallow"]}, format="json")
+        self.assertTrue((response.status_code == status.HTTP_400_BAD_REQUEST))
+        print_output("test_that_false_indices_are_handled_properly", 400)
+
+
+    def test_that_false_fields_are_handled_properly(self):
+        """
+        When the field doesn't exist, it just returns an empty document.
+        """
+        response = self.client.post(self.scroll_url, data={"documents_size": 1, "with_meta": False, "fields": ["beware_of_tim_the_enchanter"]}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        document = response.data["documents"][0]
+        self.assertFalse(document)
+        print_output("test_that_false_fields_are_handled_properly", 200)
+
+
+    def test_that_initial_scroll_and_continuation_have_different_values(self):
+        response = self.client.post(self.scroll_url, data={"documents_size": 1, "with_meta": True, "fields": [TEST_FIELD]}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        first_id = response.data["documents"][0]["_id"]
+        continuation_scroll = self.client.post(self.scroll_url, data={"scroll_id": response.data["scroll_id"], "with_meta": True}, format="json")
+        second_id = continuation_scroll.data["documents"][0]["_id"]
+        self.assertTrue(continuation_scroll.status_code == status.HTTP_200_OK)
+        self.assertTrue(first_id != second_id)
+        print_output("test_that_initial_scroll_and_continuation_have_different_values", 200)
+
+
+    def test_that_size_parameter_limits_returned_document_count(self):
+        response = self.client.post(self.scroll_url, data={"documents_size": 3}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.assertTrue(len(response.data["documents"]) == 3)
+        print_output("test_that_size_parameter_limits_returned_document_count", 200)
+
+
+    def test_aggregations_being_thrown_away_turning_serialization(self):
+        response = self.client.post(self.scroll_url, data={
+            "query": {**EMPTY_QUERY, **{"aggs": {"genres": {"terms": {"field": "genre"}}}}}
+        }, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        print_output("test_aggregations_being_thrown_away_turning_serialization", 200)
+
+
+    def test_that_all_users_have_access_to_scrolling(self):
+        self.client.login(username="admin", password="pw")
+        response = self.client.post(self.scroll_url, data={}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+        self.client.login(username="user", password="pw")
+        response = self.client.post(self.scroll_url, data={}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        print_output("test_that_all_users_have_access_to_scrolling", 200)
