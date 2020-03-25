@@ -41,6 +41,7 @@ class TorchTagger(models.Model):
     # seq_len = models.IntegerField(default=choices.DEFAULT_SEQ_LEN)
     # vocab_size = models.IntegerField(default=choices.DEFAULT_VOCAB_SIZE)
     num_epochs = models.IntegerField(default=choices.DEFAULT_NUM_EPOCHS)
+    tokenize = models.BooleanField(default=False)
     validation_ratio = models.FloatField(default=choices.DEFAULT_VALIDATION_SPLIT)
     negative_multiplier = models.FloatField(default=choices.DEFAULT_NEGATIVE_MULTIPLIER)
     maximum_sample_size = models.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE)

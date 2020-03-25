@@ -18,6 +18,7 @@ class TorchTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, P
     maximum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, required=False)
     minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, required=False)
     num_epochs = serializers.IntegerField(default=choices.DEFAULT_NUM_EPOCHS, required=False)
+    tokenize = serializers.BooleanField(default=False, required=False, help_text='Tokenize texts using MLP while training. Default: False.')
 
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
@@ -27,7 +28,7 @@ class TorchTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, P
         model = TorchTagger
         fields = (
             'url', 'author_username', 'id', 'description', 'query', 'fields', 'embedding', 'f1_score', 'precision', 'recall', 'accuracy',
-            'model_architecture', 'maximum_sample_size', 'minimum_sample_size', 'num_epochs', 'plot', 'task', 'fact_name', 'epoch_reports',
+            'model_architecture', 'maximum_sample_size', 'minimum_sample_size', 'num_epochs', 'tokenize', 'plot', 'task', 'fact_name', 'epoch_reports',
         )
         read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'plot', 'task' ,'fact_name', 'epoch_reports')
         fields_to_parse = ('fields', 'epoch_reports')
