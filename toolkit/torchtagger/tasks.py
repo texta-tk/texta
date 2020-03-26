@@ -31,6 +31,7 @@ def train_torchtagger(tagger_id, testing=False):
             text_processor = TextProcessor(phraser=phraser, remove_stop_words=True)
         else:
             text_processor = TextProcessor(remove_stop_words=True)
+
         # create Datasample object for retrieving positive and negative sample
         data_sample = DataSample(tagger_object, show_progress=show_progress, join_fields=True)
         show_progress.update_step('training torchtagger')
@@ -64,9 +65,7 @@ def train_torchtagger(tagger_id, testing=False):
         # save tagger object
         tagger_object.save()
         # declare the job done
-        show_progress.update_step('')
-        show_progress.update_view(100.0)
-        task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+        task_object.complete()
         return True
 
     except Exception as e:

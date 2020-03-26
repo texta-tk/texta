@@ -47,6 +47,7 @@ class Task(models.Model):
         self.status = Task.STATUS_COMPLETED
         self.time_completed = now()
         self.step = ""
+        self.progress = 100
         self.save()
 
 

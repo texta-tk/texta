@@ -206,7 +206,6 @@ class TaggerGroup(models.Model):
                     indices = tagger.pop("indices")
                     tagger_model = Tagger(**tagger)
 
-
                     tagger_model.task = Task.objects.create(tagger=tagger_model, status=Task.STATUS_COMPLETED)
                     tagger_model.author = User.objects.get(id=request.user.id)
                     tagger_model.project = Project.objects.get(id=pk)
@@ -215,7 +214,6 @@ class TaggerGroup(models.Model):
                     for index_name in indices:
                         index, is_created = Index.objects.get_or_create(name=index_name)
                         tagger_model.indices.add(index)
-
 
                     new_tagger_name = tagger_model.generate_name("tagger")
                     with open(new_tagger_name, "wb") as fp:
