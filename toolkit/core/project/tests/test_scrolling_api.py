@@ -13,6 +13,7 @@ class ScrollApiTests(APITestCase):
     def setUp(cls):
         # Create a new project_user, all project extra actions need to be permissible for this project_user.
         cls.user = create_test_user(name='user', password='pw')
+        cls.unowned_user = create_test_user(name='unowned_user', password='pw')
 
         cls.admin = create_test_user(name='admin', password='pw')
         cls.admin.is_superuser = True
@@ -27,6 +28,36 @@ class ScrollApiTests(APITestCase):
         cls.client.login(username='project_user', password='pw')
 
         cls.scroll_url = reverse("v1:project-scroll", kwargs={"pk": cls.project.id})
+
+
+    def test_that_only_owner_can_access_project(self):
+        self.client.login(username='unowned_user', password='pw')
+        response = self.client.post(self.scroll_url, data={}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
+        print_output("test_that_only_owner_can_access_project", 406)
+
+
+    def test_full_index_scrolling(self):
+        response = self.client.post(self.scroll_url, data={}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        document_count = len(response.data["documents"])
+        total_documents = response.data["total_documents"]
+        document_counter = document_count  # Initialise counter with the amount of the first response.
+
+        try_counter = 0
+        try_limit = 25
+        while document_count != 0:
+            if try_counter != try_limit:
+                response = self.client.post(self.scroll_url, data={"scroll_id": response.data["scroll_id"]}, format="json")
+                self.assertTrue(response.status_code == status.HTTP_200_OK)
+                document_count = len(response.data["documents"])
+                document_counter += document_count
+                try_counter += 1
+            else:
+                raise Exception("Infinite looping in Scroll API.")
+
+        self.assertTrue(total_documents == document_counter)
+        print_output("test_full_index_scrolling", 200)
 
 
     def test_basic_functionality(self):
