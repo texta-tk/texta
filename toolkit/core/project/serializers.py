@@ -62,6 +62,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
     title = serializers.CharField(required=True)
     indices = serializers.ListField(default=[], child=serializers.CharField(), source="get_indices", validators=[check_if_in_elastic])
     users = serializers.HyperlinkedRelatedField(many=True, view_name='user-detail', queryset=User.objects.all(), )
+    author_username = serializers.CharField(source='author.username', read_only=True)
     resources = serializers.SerializerMethodField()
 
 
@@ -95,11 +96,12 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         indices: List[str] = validated_data["get_indices"]
         title = validated_data["title"]
         users = validated_data["users"]
+        author = self.context["request"].user
 
         ec = ElasticCore()
         ec.syncher()
 
-        project = Project.objects.create(title=title)
+        project = Project.objects.create(title=title, author=author)
         project.users.set(users)
 
         for index_name in indices:
@@ -113,8 +115,8 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Project
-        fields = ('url', 'id', 'title', 'users', 'indices', 'resources',)
-        read_only_fields = ('resources',)
+        fields = ('url', 'id', 'title', 'author_username', 'users', 'indices', 'resources',)
+        read_only_fields = ('author_username', 'resources',)
 
 
     def get_resources(self, obj):

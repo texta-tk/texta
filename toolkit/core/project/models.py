@@ -9,6 +9,7 @@ class Project(models.Model):
     from toolkit.elastic.models import Index
 
     title = models.CharField(max_length=MAX_DESC_LEN)
+    author = models.ForeignKey(User, on_delete=models.CASCADE, default=User.objects.get(pk=1).id)
     users = models.ManyToManyField(User, related_name="project_users")
     indices = models.ManyToManyField(Index, default=None)
 
