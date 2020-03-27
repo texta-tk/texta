@@ -7,7 +7,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Index
 from toolkit.settings import CORE_SETTINGS
 from toolkit.test_settings import TEST_INDEX, TEST_VERSION_PREFIX
-from toolkit.tools.common_utils import project_creation
+from toolkit.tools.utils_for_tests import project_creation
 from toolkit.tools.utils_for_tests import create_test_user
 
 
@@ -26,7 +26,7 @@ class ElasticIndexViewTests(APITestCase):
         cls.admin = create_test_user(name='admin', password="1234")
         cls.admin.is_superuser = True
         cls.admin.save()
-        cls.project = project_creation("ElasticTestProject", TEST_INDEX)
+        cls.project = project_creation("ElasticTestProject", TEST_INDEX, cls.user)
         cls.project.users.add(cls.user)
 
 

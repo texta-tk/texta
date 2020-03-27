@@ -7,7 +7,7 @@ from rest_framework import status
 
 from toolkit.core.project.models import Project
 from toolkit.test_settings import (TEST_FACT_NAME, TEST_FIELD_CHOICE, TEST_INDEX, TEST_VERSION_PREFIX)
-from toolkit.tools.common_utils import project_creation
+from toolkit.tools.utils_for_tests import project_creation
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 from toolkit.torchtagger.models import TorchTagger
 from toolkit.torchtagger.torch_models.models import TORCH_MODELS
@@ -17,7 +17,7 @@ class TorchTaggerViewTests(TransactionTestCase):
     def setUp(self):
         # Owner of the project
         self.user = create_test_user('torchTaggerOwner', 'my@email.com', 'pw')
-        self.project = project_creation("torchTaggerTestProject", TEST_INDEX)
+        self.project = project_creation("torchTaggerTestProject", TEST_INDEX, self.user)
         self.project.users.add(self.user)
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/torchtaggers/'
         self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'

@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from toolkit.core.project.models import Project
 from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_VERSION_PREFIX
-from toolkit.tools.common_utils import project_creation
+from toolkit.tools.utils_for_tests import project_creation
 from toolkit.tools.utils_for_tests import create_test_user
 
 
@@ -12,7 +12,7 @@ class TestSpamDetection(TestCase):
     def setUpTestData(cls):
         # Owner of the project
         cls.user = create_test_user('spamdetector', 'my@email.com', 'pw')
-        cls.project = project_creation("spamDetector", TEST_INDEX)
+        cls.project = project_creation("spamDetector", TEST_INDEX, cls.user)
         cls.project.users.add(cls.user)
         cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/get_spam/'
 
