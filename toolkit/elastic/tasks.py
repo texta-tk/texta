@@ -145,8 +145,6 @@ def reindex_task(reindexer_task_id):
     # print("ourmap", get_map)
 
     # declare the job done
-    show_progress.update_step('')
-    show_progress.update_view(100.0)
-    task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+    task_object.complete()
 
     return True

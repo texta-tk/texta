@@ -135,9 +135,7 @@ def train_tagger(tagger_id):
         tagger_object.plot.save(f"{secrets.token_hex(15)}.png", create_tagger_plot(tagger.statistics))
         tagger_object.save()
         # declare the job done
-        show_progress.update_step("")
-        show_progress.update_view(100.0)
-        task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+        task_object.complete()
         return True
 
     except Exception as e:

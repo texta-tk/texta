@@ -35,9 +35,7 @@ def import_dataset(dataset_import_id):
         project_obj.indices.add(index)
         project_obj.save()
         # declare the job done
-        show_progress.update_step('')
-        show_progress.update_view(100.0)
-        task_object.update_status(Task.STATUS_COMPLETED, set_time_completed=True)
+        task_object.complete()
         return True
     except Exception as e:
         # declare the job failed

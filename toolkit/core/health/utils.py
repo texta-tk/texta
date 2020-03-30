@@ -1,3 +1,4 @@
+import logging
 from urllib.parse import urlparse
 from celery.task.control import inspect
 import requests
@@ -5,7 +6,7 @@ import redis
 import os
 
 from toolkit.elastic.core import ElasticCore
-from toolkit.settings import BASE_DIR, BROKER_URL
+from toolkit.settings import BASE_DIR, BROKER_URL, ERROR_LOGGER
 from toolkit.helper_functions import get_core_setting
 
 
@@ -33,6 +34,7 @@ def get_mlp_status(MLP_URL=get_core_setting("TEXTA_MLP_URL")):
             mlp_info["status"] = response.json()
             mlp_info["alive"] = True
     except Exception as e:
+        logging.getLogger(ERROR_LOGGER).exception(e)
         return mlp_info
     return mlp_info
 
@@ -65,7 +67,8 @@ def get_redis_status():
             "total_memory": info["total_system_memory_human"]
         }
         return redis_status
-    except redis.exceptions.ConnectionError:
+    except Exception as e:
+        logging.getLogger(ERROR_LOGGER).exception(e)
         return {
             "alive": False
         }

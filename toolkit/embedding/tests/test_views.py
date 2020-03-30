@@ -12,7 +12,7 @@ from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.settings import MODELS_DIR
 from toolkit.test_settings import TEST_FIELD_CHOICE, TEST_INDEX, TEST_VERSION_PREFIX
-from toolkit.tools.common_utils import project_creation
+from toolkit.tools.utils_for_tests import project_creation
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 
@@ -20,7 +20,7 @@ class EmbeddingViewTests(TransactionTestCase):
 
     def setUp(self):
         self.user = create_test_user('embeddingOwner', 'my@email.com', 'pw')
-        self.project = project_creation("embeddingTestProject", TEST_INDEX)
+        self.project = project_creation("embeddingTestProject", TEST_INDEX, self.user)
         self.project.users.add(self.user)
 
         self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/embeddings/'

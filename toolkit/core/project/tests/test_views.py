@@ -5,7 +5,7 @@ from rest_framework.test import APIClient, APITestCase
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
 from toolkit.test_settings import TEST_FACT_NAME, TEST_INDEX, TEST_QUERY, TEST_VERSION_PREFIX
-from toolkit.tools.common_utils import project_creation
+from toolkit.tools.utils_for_tests import project_creation
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 
@@ -33,7 +33,7 @@ class ProjectViewTests(APITestCase):
         cls.admin.save()
 
         cls.project_user = create_test_user(name='project_user', password='pw')
-        cls.project = project_creation("testproj", TEST_INDEX)
+        cls.project = project_creation("testproj", TEST_INDEX, cls.user)
         cls.project.users.add(cls.project_user)
         cls.client = APIClient()
         cls.client.login(username='project_user', password='pw')

@@ -114,11 +114,14 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+# we can optionally disable csrf for testing purposes
+USE_CSRF = False if os.getenv("TEXTA_DISABLE_CSRF", "False") == "False" else True
+if USE_CSRF:
+    MIDDLEWARE.append("django.middleware.csrf.CsrfViewMiddleware")
 
 ROOT_URLCONF = "toolkit.urls"
 

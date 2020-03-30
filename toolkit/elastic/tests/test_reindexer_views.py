@@ -15,7 +15,7 @@ from toolkit.test_settings import (TEST_FIELD,
                                    TEST_QUERY,
                                    TEST_VERSION_PREFIX,
                                    REINDEXER_TEST_INDEX)
-from toolkit.tools.common_utils import project_creation
+from toolkit.tools.utils_for_tests import project_creation
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 
@@ -31,7 +31,7 @@ class ReindexerViewTests(APITestCase):
         cls.admin = create_test_user(name='admin', password='1234')
         cls.admin.is_superuser = True
         cls.admin.save()
-        cls.project = project_creation("ReindexerTestProject", TEST_INDEX)
+        cls.project = project_creation("ReindexerTestProject", TEST_INDEX, cls.user)
         cls.project.users.add(cls.user)
 
     def setUp(self):

@@ -1,5 +1,7 @@
 import os
 from django.contrib.auth.models import User
+from toolkit.core.project.models import Project
+from toolkit.elastic.models import Index
 from termcolor import colored
 
 
@@ -25,3 +27,15 @@ def remove_file(path):
     if os.path.exists(path):
         print_output('Cleanup: REMOVING FILE', path, main_color='blue')
         os.remove(path)
+
+
+def project_creation(project_title: str, index_title: str, author: User) -> Project:
+    """
+    Creates Project.
+    """
+    project = Project.objects.create(title=project_title, author=author)
+    if index_title:
+        index, is_created = Index.objects.get_or_create(name=index_title)
+        project.indices.add(index)
+    project.save()
+    return project

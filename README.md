@@ -61,6 +61,10 @@ Running Docker with GPU support:
 
 # Environment variables
 
+## Deploy & Testing variables
+* TEXTA_ADMIN_PASSWORD - Password of the admin user created on first run.
+* TEXTA_DISABLE_CSRF - Disable CSRF for integration tests.
+
 ## External services
 * TEXTA_ES_URL - URL of the Elasticsearch instance including the protocol, host and port (ex. http://localhost:9200).
 * TEXTA_MLP_URL - URL of the Texta MLP instance including the protocol, host and port (ex. http://localhost:5000).

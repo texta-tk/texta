@@ -4,6 +4,8 @@ from django.db.models import Count
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
@@ -22,16 +24,16 @@ from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.elastic.serializers import ElasticScrollSerializer
 from toolkit.elastic.spam_detector import SpamDetector
-from toolkit.exceptions import ProjectValidationFailed, SerializerNotValid, NonExistantModelError
+from toolkit.exceptions import ProjectValidationFailed, SerializerNotValid, RedisNotAvailable, NonExistantModelError
+from toolkit.helper_functions import add_finite_url_to_feedback, apply_celery_task
 from toolkit.permissions.project_permissions import (ExtraActionResource, IsSuperUser, ProjectAllowed)
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.tools.autocomplete import Autocomplete
-from toolkit.helper_functions import apply_celery_task, add_finite_url_to_feedback
-from toolkit.view_constants import (
-    FeedbackIndexView
-)
+from toolkit.view_constants import FeedbackIndexView
+from toolkit.core.health.utils import get_redis_status
 
 
 class ProjectFilter(filters.FilterSet):
@@ -73,6 +75,26 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         if not current_user.is_superuser:
             return queryset.filter(users=current_user)
         return queryset
+
+
+    @action(detail=True, methods=["post"], serializer_class=ElasticScrollSerializer, permission_classes=[IsAuthenticated, ExtraActionResource])
+    def scroll(self, request, pk=None, project_pk=None):
+        serializer = ElasticScrollSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        indices = serializer.validated_data["indices"]
+        scroll_id = serializer.validated_data.get("scroll_id", None)
+        size = serializer.validated_data["documents_size"]
+        query = serializer.validated_data.get("query")
+        fields = serializer.validated_data.get("fields", None)
+        return_only_docs = serializer.validated_data.get("with_meta", False)
+        project = self.get_object()
+
+        indices = project.filter_from_indices(indices)
+
+        ec = ElasticCore()
+        documents = ec.scroll(indices=indices, query=query, scroll_id=scroll_id, size=size, with_meta=return_only_docs, fields=fields)
+        return Response(documents)
 
 
     @action(detail=True, methods=['get'])
@@ -230,12 +252,15 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             taggers = taggers.filter(pk__in=serializer.validated_data['taggers'])
         # error if filtering resulted 0 taggers
         if not taggers:
-            return Response({'error': 'none of provided taggers are present. are the models ready?'}, status=status.HTTP_400_BAD_REQUEST)
+            raise NonExistantModelError(detail='No tagging models available.')
         # retrieve params
         lemmatize = serializer.validated_data['lemmatize']
         feedback = serializer.validated_data['feedback_enabled']
         text = serializer.validated_data['text']
         hide_false = serializer.validated_data['hide_false']
+        # error if redis not available
+        if not get_redis_status()['alive']:
+            raise RedisNotAvailable()
         # tag text using celery group primitive
         group_task = group(apply_tagger.s(tagger.pk, text, input_type='text', lemmatize=lemmatize, feedback=feedback) for tagger in taggers)
         group_results = [a for a in apply_celery_task(group_task).get() if a]
