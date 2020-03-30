@@ -19,7 +19,7 @@ class ScrollApiTests(APITestCase):
         cls.admin.save()
 
         cls.project_user = create_test_user(name='project_user', password='pw')
-        cls.project = project_creation("testproj", TEST_INDEX)
+        cls.project = project_creation("testproj", TEST_INDEX, cls.user)
         cls.project.users.add(cls.project_user)
         cls.project.users.add(cls.user)
 
