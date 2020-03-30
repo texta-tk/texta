@@ -52,6 +52,7 @@ class ProjectSimplifiedSearchSerializer(serializers.Serializer):
 
 
 class ProjectGetFactsSerializer(serializers.Serializer):
+    indices = serializers.ListField(default=[])
     values_per_name = serializers.IntegerField(default=choices.DEFAULT_VALUES_PER_NAME,
                                                help_text=f'Number of fact values per fact name. Default: 10.')
     output_type = serializers.ChoiceField(choices=((True, 'fact names with values'), (False, 'fact names without values')),

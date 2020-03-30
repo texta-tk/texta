@@ -142,10 +142,16 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         Returns existing fact names and values from Elasticsearch.
         """
         serializer = ProjectGetFactsSerializer(data=request.data)
+
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
+
+        indices = serializer.validated_data["indices"]
+
         # retrieve and validate project indices
-        project_indices = list(self.get_object().get_indices())
+        project = self.get_object()
+        project_indices = project.filter_from_indices(indices)  # Gives all if none, the default, is entered.
+
         if not project_indices:
             raise ProjectValidationFailed(detail="Project has no indices")
 
@@ -174,6 +180,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         serializer = ProjectSimplifiedSearchSerializer(data=request.data)
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
+
         project_object = self.get_object()
         project_indices = list(project_object.get_indices())
         project_fields = project_object.get_elastic_fields(path_list=True)
