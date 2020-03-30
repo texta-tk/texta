@@ -176,9 +176,6 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         hybrid_tagger_object = self.get_object()
         taggers = {t.description.lower(): {"tag": t.description, "id": t.id} for t in hybrid_tagger_object.taggers.all()}
         mlp_output = mlp_analyzer.process(text)
-        # error if redis not available
-        if not get_mlp_status()['alive']:
-            raise MLPNotAvailable()
         # lemmatize
         if lemmatize and mlp_output:
             text = mlp_output["text"]["lemmas"]
