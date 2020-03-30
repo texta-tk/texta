@@ -4,6 +4,8 @@ from django.db.models import Count
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
@@ -22,13 +24,14 @@ from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.elastic.serializers import ElasticScrollSerializer
 from toolkit.elastic.spam_detector import SpamDetector
-from toolkit.exceptions import ProjectValidationFailed, SerializerNotValid, NonExistantModelError
+from toolkit.exceptions import ProjectValidationFailed, SerializerNotValid
+from toolkit.helper_functions import add_finite_url_to_feedback, apply_celery_task
 from toolkit.permissions.project_permissions import (ExtraActionResource, IsSuperUser, ProjectAllowed)
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.tools.autocomplete import Autocomplete
-from toolkit.helper_functions import apply_celery_task, add_finite_url_to_feedback
 from toolkit.view_constants import (
     FeedbackIndexView
 )
@@ -73,6 +76,26 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         if not current_user.is_superuser:
             return queryset.filter(users=current_user)
         return queryset
+
+
+    @action(detail=True, methods=["post"], serializer_class=ElasticScrollSerializer, permission_classes=[IsAuthenticated, ExtraActionResource])
+    def scroll(self, request, pk=None, project_pk=None):
+        serializer = ElasticScrollSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        indices = serializer.validated_data["indices"]
+        scroll_id = serializer.validated_data.get("scroll_id", None)
+        size = serializer.validated_data["documents_size"]
+        query = serializer.validated_data.get("query")
+        fields = serializer.validated_data.get("fields", None)
+        return_only_docs = serializer.validated_data.get("with_meta", False)
+        project = self.get_object()
+
+        indices = project.filter_from_indices(indices)
+
+        ec = ElasticCore()
+        documents = ec.scroll(indices=indices, query=query, scroll_id=scroll_id, size=size, with_meta=return_only_docs, fields=fields)
+        return Response(documents)
 
 
     @action(detail=True, methods=['get'])

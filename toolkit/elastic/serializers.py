@@ -1,11 +1,34 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Index, Reindexer
+from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.validators import check_for_banned_beginning_chars, check_for_colons, check_for_special_symbols, check_for_upper_case, check_for_wildcards
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
+
+
+class ElasticScrollSerializer(serializers.Serializer):
+    indices = serializers.ListField(child=serializers.CharField(), default=[], help_text="From which indices to search, by default all project indices are chosen.")
+    scroll_id = serializers.CharField(required=False)
+    query = serializers.DictField(default=EMPTY_QUERY, help_text="Query to limit returned documents.")
+    documents_size = serializers.IntegerField(min_value=1, max_value=300, default=300, help_text="How many documents should be returned in the response. Max is 300.")
+    fields = serializers.ListField(default=["*"], help_text="List of field names you wish to be return by Elasticsearch.")
+    with_meta = serializers.BooleanField(default=False, help_text="Whether to return raw Elasticsearch hits or remove the metadata from the documents.")
+
+
+    # Change what is returned to serializer_instance.validated_data
+    def to_internal_value(self, data):
+        values = super(ElasticScrollSerializer, self).to_internal_value(data)
+        if "query" in values:
+            query_field = values.get("query", None)
+            if query_field:
+                values["query"] = {"query": query_field["query"]}  # Make sure we only keep the query, without aggregations.
+            else:
+                raise ValidationError("Query must have an 'query' key to conduct a search.")
+        return values
 
 
 class IndexSerializer(serializers.ModelSerializer):
