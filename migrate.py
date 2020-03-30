@@ -24,9 +24,13 @@ from toolkit.core.core_variable.models import CoreVariable
 from toolkit.core.choices import CORE_VARIABLE_CHOICES
 
 
+# retrieve admin password from env if possible
+TEXTA_ADMIN_PASSWORD = os.getenv("TEXTA_ADMIN_PASSWORD", "1234")
+
+
 def create_admin():
     u = User(username='admin')
-    u.set_password('1234')
+    u.set_password(TEXTA_ADMIN_PASSWORD)
     u.is_superuser = True
     u.is_staff = True
     
