@@ -26,15 +26,14 @@ from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.serializers import ElasticScrollSerializer
 from toolkit.elastic.spam_detector import SpamDetector
-from toolkit.exceptions import ProjectValidationFailed, SerializerNotValid
+from toolkit.exceptions import ProjectValidationFailed, SerializerNotValid, RedisNotAvailable, NonExistantModelError
 from toolkit.helper_functions import add_finite_url_to_feedback, apply_celery_task
 from toolkit.permissions.project_permissions import (ExtraActionResource, IsSuperUser, ProjectAllowed)
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.tools.autocomplete import Autocomplete
-from toolkit.view_constants import (
-    FeedbackIndexView
-)
+from toolkit.view_constants import FeedbackIndexView
+from toolkit.core.health.utils import get_redis_status
 
 
 class ProjectFilter(filters.FilterSet):
@@ -253,12 +252,15 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             taggers = taggers.filter(pk__in=serializer.validated_data['taggers'])
         # error if filtering resulted 0 taggers
         if not taggers:
-            return Response({'error': 'none of provided taggers are present. are the models ready?'}, status=status.HTTP_400_BAD_REQUEST)
+            raise NonExistantModelError(detail='No tagging models available.')
         # retrieve params
         lemmatize = serializer.validated_data['lemmatize']
         feedback = serializer.validated_data['feedback_enabled']
         text = serializer.validated_data['text']
         hide_false = serializer.validated_data['hide_false']
+        # error if redis not available
+        if not get_redis_status()['alive']:
+            raise RedisNotAvailable()
         # tag text using celery group primitive
         group_task = group(apply_tagger.s(tagger.pk, text, input_type='text', lemmatize=lemmatize, feedback=feedback) for tagger in taggers)
         group_results = [a for a in apply_celery_task(group_task).get() if a]

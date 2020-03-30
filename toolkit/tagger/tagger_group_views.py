@@ -15,7 +15,7 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.exceptions import MLPNotAvailable, NonExistantModelError, SerializerNotValid
+from toolkit.exceptions import MLPNotAvailable, NonExistantModelError, SerializerNotValid, RedisNotAvailable
 from toolkit.helper_functions import apply_celery_task, add_finite_url_to_feedback
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
@@ -25,6 +25,7 @@ from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.tagger.tasks import apply_tagger, create_tagger_objects, train_tagger
 from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import BulkDelete, TagLogicViews
+from toolkit.core.health.utils import get_redis_status
 
 
 mlp_analyzer = MLPAnalyzer()
@@ -175,6 +176,9 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         hybrid_tagger_object = self.get_object()
         taggers = {t.description.lower(): {"tag": t.description, "id": t.id} for t in hybrid_tagger_object.taggers.all()}
         mlp_output = mlp_analyzer.process(text)
+        # error if redis not available
+        if not get_mlp_status()['alive']:
+            raise MLPNotAvailable()
         # lemmatize
         if lemmatize and mlp_output:
             text = mlp_output["text"]["lemmas"]
@@ -234,17 +238,16 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         """
         data = request.data
         serializer = TaggerGroupTagTextSerializer(data=data)
-
         # check if valid request
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
-
         hybrid_tagger_object = self.get_object()
-
         # check if any of the models ready
         if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
             raise NonExistantModelError()
-
+        # error if redis not available
+        if not get_redis_status()['alive']:
+            raise RedisNotAvailable()
         # declare tag candidates variables
         text = serializer.validated_data['text']
         n_similar_docs = serializer.validated_data['n_similar_docs']
@@ -252,13 +255,10 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         lemmatize = serializer.validated_data['lemmatize']
         use_ner = serializer.validated_data['use_ner']
         feedback = serializer.validated_data['feedback_enabled']
-
         # update text and tags with MLP
         text, tags = self.get_mlp(text, lemmatize=lemmatize, use_ner=use_ner)
-        
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(text, ignore_tags=tags, n_similar_docs=n_similar_docs, max_candidates=n_candidate_tags)
-        
         # get tags
         tags += self.apply_tagger_group(text, tag_candidates, request, input_type='text', feedback=feedback)
         return Response(tags, status=status.HTTP_200_OK)
@@ -271,43 +271,36 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         """
         data = request.data
         serializer = TaggerGroupTagDocumentSerializer(data=data)
-
         # check if valid request
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
-
         hybrid_tagger_object = self.get_object()
-
         # check if any of the models ready
         if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
             raise NonExistantModelError()
-
+        # error if redis not available
+        if not get_redis_status()['alive']:
+            raise RedisNotAvailable('Redis not available. Check if Redis is running.')
         # retrieve field data from the first element
         # we can do that safely because all taggers inside
         # hybrid tagger instance are trained on same fields
         hybrid_tagger_field_data = json.loads(hybrid_tagger_object.taggers.first().fields)
-
         # declare input_document variable
         input_document = serializer.validated_data['doc']
-
         # validate input document
         input_document = validate_input_document(input_document, hybrid_tagger_field_data)
         if isinstance(input_document, Exception):
             return input_document
-
         # combine document field values into one string
         combined_texts = '\n'.join(input_document.values())
-
         # declare tag candidates variables
         n_similar_docs = serializer.validated_data['n_similar_docs']
         n_candidate_tags = serializer.validated_data['n_candidate_tags']
         lemmatize = serializer.validated_data['lemmatize']
         use_ner = serializer.validated_data['use_ner']
         feedback = serializer.validated_data['feedback_enabled']
-
         # update text and tags with MLP
         combined_texts, tags = self.get_mlp(combined_texts, lemmatize=lemmatize, use_ner=use_ner)
-
         # retrieve tag candidates
         tag_candidates = self.get_tag_candidates(combined_texts, ignore_tags=tags, n_similar_docs=n_similar_docs, max_candidates=n_candidate_tags)
         # get tags
@@ -327,7 +320,9 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
             raise NonExistantModelError()
         # retrieve tagger fields from the first object
         tagger_fields = json.loads(hybrid_tagger_object.taggers.first().fields)
-
+        # error if redis not available
+        if not get_redis_status()['alive']:
+            raise RedisNotAvailable('Redis not available. Check if Redis is running.')
         if not ElasticCore().check_if_indices_exist(hybrid_tagger_object.project.get_indices()):
             return Response({'error': f'One or more index from {list(hybrid_tagger_object.project.get_indices())} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         # retrieve random document
