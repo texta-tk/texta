@@ -4,8 +4,7 @@ from rest_framework.test import APIClient, APITestCase
 
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.test_settings import TEST_FIELD, TEST_INDEX
-from toolkit.tools.common_utils import project_creation
-from toolkit.tools.utils_for_tests import create_test_user, print_output
+from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
 class ScrollApiTests(APITestCase):
