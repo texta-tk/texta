@@ -6,7 +6,6 @@ from corsheaders.defaults import default_headers
 from .helper_functions import parse_list_env_headers
 from .logging_settings import setup_logging
 
-
 ### CORE SETTINGS ###
 # NOTE: THESE ARE INITIAL VARIABLES IMPORTED FROM THE ENVIRONMENT
 # DO NOT IMPORT THESE VARIABLES IN APPS, BECAUSE THEY CAN BE OVERWRITTEN WITH VALUES FROM DB
@@ -118,9 +117,12 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 # we can optionally disable csrf for testing purposes
-USE_CSRF = False if os.getenv("TEXTA_DISABLE_CSRF", "False") == "False" else True
+USE_CSRF = False if os.getenv("TEXTA_USE_CSRF", "False") == "False" else True
 if USE_CSRF:
     MIDDLEWARE.append("django.middleware.csrf.CsrfViewMiddleware")
+else:
+    # Add additional middleware to turn off the CSRF handling in the SessionsMiddleware.
+    MIDDLEWARE.append("toolkit.tools.common_utils.DisableCSRFMiddleware")
 
 ROOT_URLCONF = "toolkit.urls"
 
