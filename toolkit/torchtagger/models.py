@@ -15,6 +15,7 @@ from django.http import HttpResponse
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
+from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import apply_celery_task
@@ -30,6 +31,7 @@ class TorchTagger(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     fields = models.TextField(default=json.dumps([]))
+    indices = models.ManyToManyField(Index, default=None)
 
     embedding = models.ForeignKey(Embedding, on_delete=models.CASCADE, default=None)
 
@@ -61,7 +63,7 @@ class TorchTagger(models.Model):
 
 
     def get_indices(self):
-        return [index.name for index in self.indices.all()]
+        return [index.name for index in self.indices.filter(is_open=True)]
 
 
     def to_json(self) -> dict:
@@ -83,23 +85,32 @@ class TorchTagger(models.Model):
 
                 torchtagger_json = torch_and_embedding["torchtagger"]
                 embedding_json = torch_and_embedding["embedding"]
+
                 embedding_fields = embedding_json["fields"]
                 extra_embeddings = embedding_json["embedding_extras"]
+
+                indices = torchtagger_json.pop("indices")
                 torchtagger_json.pop("embedding", None)
+
                 torchtagger_model = TorchTagger(**torchtagger_json)
 
                 torchtagger_model.task = Task.objects.create(torchtagger=torchtagger_model, status=Task.STATUS_COMPLETED)
                 torchtagger_model.author = User.objects.get(id=request.user.id)
                 torchtagger_model.project = Project.objects.get(id=pk)
 
-                embedding_model = Embedding.create_embedding_object(embedding_fields, request.user.id, pk)
+                embedding_model = Embedding.create_embedding_object(embedding_fields, user_id=request.user.id, project_id=pk)
                 embedding_model = Embedding.add_file_to_embedding_object(archive, embedding_model, embedding_fields, "phraser", "phraser_model")
                 embedding_model = Embedding.add_file_to_embedding_object(archive, embedding_model, embedding_fields, "embedding", "embedding_model")
                 Embedding.save_embedding_extra_files(archive, embedding_model, embedding_fields, extra_paths=extra_embeddings)
-
                 embedding_model.save()
+
                 torchtagger_model.embedding = embedding_model
                 torchtagger_model.save()
+
+                for index in indices:
+                    index_model, is_created = Index.objects.get_or_create(name=index)
+                    torchtagger_model.indices.add(index_model)
+
 
                 new_tagger_name = torchtagger_model.generate_name("torchtagger")
                 with open(new_tagger_name, "wb") as fp:

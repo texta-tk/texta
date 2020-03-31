@@ -57,7 +57,7 @@ class Tagger(models.Model):
 
 
     def get_indices(self):
-        return [index.name for index in self.indices.all()]
+        return [index.name for index in self.indices.filter(is_open=True)]
 
 
     def __str__(self):
@@ -111,7 +111,7 @@ class Tagger(models.Model):
 
                 for index in indices:
                     index_model, is_created = Index.objects.get_or_create(name=index)
-                    Tagger.indices.add(index_model)
+                    new_model.indices.add(index_model)
 
                 new_tagger_name = new_model.generate_name("tagger")
                 with open(new_tagger_name, "wb") as fp:

@@ -1,3 +1,4 @@
+from django.urls import reverse
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -33,6 +34,7 @@ class ElasticScrollSerializer(serializers.Serializer):
 
 class IndexSerializer(serializers.ModelSerializer):
     is_open = serializers.BooleanField(default=True)
+    url = serializers.SerializerMethodField()
     name = serializers.CharField(
         max_length=255,
         validators=[
@@ -44,6 +46,11 @@ class IndexSerializer(serializers.ModelSerializer):
         ]
     )
 
+    def get_url(self, obj):
+        index = reverse("v1:index-detail", kwargs={"pk": obj.pk})
+        request = self.context["request"]
+        url = request.build_absolute_uri(index)
+        return url
 
     class Meta:
         model = Index

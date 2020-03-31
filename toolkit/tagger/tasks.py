@@ -10,6 +10,7 @@ from toolkit.base_task import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.data_sample import DataSample
 from toolkit.elastic.feedback import Feedback
+from toolkit.elastic.models import Index
 from toolkit.embedding.phraser import Phraser
 from toolkit.helper_functions import get_indices_from_object
 from toolkit.settings import ERROR_LOGGER
@@ -28,11 +29,19 @@ def create_tagger_batch(tagger_group_id, taggers_to_create):
     tagger_group_object = TaggerGroup.objects.get(pk=tagger_group_id)
     # iterate through batch
     for tagger_data in taggers_to_create:
+        indices = [index["name"] for index in tagger_data["indices"]]
+        indices = tagger_group_object.project.filter_from_indices(indices)
+        tagger_data.pop("indices")
+
         created_tagger = Tagger.objects.create(
             **tagger_data,
             author=tagger_group_object.author,
             project=tagger_group_object.project
         )
+
+        for index in Index.objects.filter(name__in=indices, is_open=True):
+            created_tagger.indices.add(index)
+
 
         # add and save
         tagger_group_object.taggers.add(created_tagger)
@@ -45,6 +54,7 @@ def create_tagger_batch(tagger_group_id, taggers_to_create):
 def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries, batch_size=100):
     """Task for creating Tagger objects inside Tagger Group to prevent database timeouts."""
     # create tagger objects
+
     taggers_to_create = []
     for i, tag in enumerate(tags):
         tagger_data = tagger_serializer.copy()
@@ -96,9 +106,12 @@ def train_tagger(tagger_id):
         # create Datasample object for retrieving positive and negative sample
         data_sample = DataSample(
             tagger_object,
+            indices=indices,
+            field_data=field_data,
             show_progress=show_progress,
             text_processor=text_processor
         )
+
         # update status to training
         show_progress.update_step('training')
         show_progress.update_view(0)

@@ -54,7 +54,7 @@ class TorchTaggerViewTests(TransactionTestCase):
             "fields": TEST_FIELD_CHOICE,
             "max_vocab": 10000,
             "min_freq": 5,
-            "num_dimensions": 300,
+            "num_dimensions": 300
         }
         # post
         embeddings_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/embeddings/'

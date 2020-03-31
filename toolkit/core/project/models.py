@@ -18,7 +18,7 @@ class Project(models.Model):
 
 
     def get_indices(self):
-        indices = self.indices.all()
+        indices = self.indices.filter(is_open=True)
         return [index.name for index in indices]
 
 
@@ -43,9 +43,12 @@ class Project(models.Model):
         Used in views where the user can select the indices they wish to use.
         Returns a list of index names from the ones that are in the project
         and in the indices parameter or all of the indices if it's None or empty.
+
+        If all the indices in question are closed, then it will also raise an error,
+        otherwise it will return ONLY open indices.
         """
         if indices:
-            legit_indices = self.indices.filter(name__in=indices)
+            legit_indices = self.indices.filter(name__in=indices, is_open=True)
             if not legit_indices:
                 raise ValidationError(f"Inserted indices {indices} are not available to you.")
 

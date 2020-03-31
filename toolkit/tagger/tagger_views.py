@@ -10,6 +10,7 @@ from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.phraser import Phraser
 from toolkit.exceptions import NonExistantModelError, SerializerNotValid
@@ -56,11 +57,22 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
 
     def perform_create(self, serializer):
+        project = Project.objects.get(id=self.kwargs['project_pk'])
+        indices = [index["name"] for index in serializer.validated_data["indices"]]
+        indices = project.filter_from_indices(indices)
+
+        serializer.validated_data.pop("indices")
+
         tagger: Tagger = serializer.save(
             author=self.request.user,
-            project=Project.objects.get(id=self.kwargs['project_pk']),
+            project=project,
             fields=json.dumps(serializer.validated_data['fields'])
         )
+
+        for index in Index.objects.filter(name__in=indices, is_open=True):
+            tagger.indices.add(index)
+
+
         tagger.train()
 
 
