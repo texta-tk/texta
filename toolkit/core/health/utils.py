@@ -57,7 +57,7 @@ def get_redis_status():
     """
     try:
         parser = urlparse(BROKER_URL)
-        r = redis.Redis(host=parser.hostname, port=parser.port)
+        r = redis.Redis(host=parser.hostname, port=parser.port, socket_timeout=3)
         info = r.info()
         redis_status = {
             "alive": True,
@@ -74,17 +74,20 @@ def get_redis_status():
         }
 
 
-def get_active_tasks():
+def get_active_tasks(is_redis_online):
     """
     Gets the number of active (running + queued) from message broker.
     """
     active_and_scheduled_tasks = 0
-    inspector = inspect()
+    if is_redis_online:
+        inspector = inspect()
 
-    active_tasks = inspector.active()
-    scheduled_tasks = inspector.scheduled()
-    if active_tasks:
-        active_and_scheduled_tasks += sum([len(tasks) for tasks in active_tasks.values()])
-    if scheduled_tasks:
-        active_and_scheduled_tasks += sum([len(tasks) for tasks in scheduled_tasks.values()])
-    return active_and_scheduled_tasks
+        active_tasks = inspector.active()
+        scheduled_tasks = inspector.scheduled()
+        if active_tasks:
+            active_and_scheduled_tasks += sum([len(tasks) for tasks in active_tasks.values()])
+        if scheduled_tasks:
+            active_and_scheduled_tasks += sum([len(tasks) for tasks in scheduled_tasks.values()])
+        return active_and_scheduled_tasks
+    else:
+        return active_and_scheduled_tasks

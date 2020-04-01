@@ -51,6 +51,6 @@ class HealthView(views.APIView):
         gpu_devices = [torch.cuda.get_device_name(i) for i in range(0, gpu_count)]
 
         toolkit_status["host"]["gpu"] = {"count": gpu_count, "devices": gpu_devices}
-        toolkit_status["toolkit"]["active_tasks"] = get_active_tasks()
+        toolkit_status["toolkit"]["active_tasks"] = get_active_tasks(toolkit_status["services"]["redis"]["alive"])
 
         return Response(toolkit_status, status=status.HTTP_200_OK)
