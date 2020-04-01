@@ -185,10 +185,10 @@ def get_pipeline_builder():
     params = {'ngram_range': ngram_params, 'analyzer': analyzer_params, 'tokenizer': tokenizer_params}
     pipe_builder.add_extractor('vectorizer', HashingVectorizer, 'Hashing Vectorizer', params)
     # params for count vectorizer
-    params = {'ngram_range': ngram_params, 'min_df': min_df_params, 'tokenizer': tokenizer_params}
+    params = {'ngram_range': ngram_params, 'min_df': min_df_params, 'tokenizer': tokenizer_params, 'analyzer': analyzer_params}
     pipe_builder.add_extractor('vectorizer', CountVectorizer, 'Count Vectorizer', params)
     # params for tfidf vectorizer
-    params = {'ngram_range': ngram_params, 'min_df': min_df_params, 'tokenizer': tokenizer_params, 'use_idf': idf_params}
+    params = {'ngram_range': ngram_params, 'min_df': min_df_params, 'tokenizer': tokenizer_params, 'use_idf': idf_params, 'analyzer': analyzer_params}
     pipe_builder.add_extractor('vectorizer', TfidfVectorizer, 'TfIdf Vectorizer', params)
     # we need multiprocessing to do this
     # fuck celery?
