@@ -31,6 +31,8 @@ DEBUG = True if os.getenv("TEXTA_DEBUG", "True") == "True" else False
 # ALLOWED HOSTS
 ALLOWED_HOSTS = parse_list_env_headers("TEXTA_ALLOWED_HOSTS", ["*"])
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv("TEXTA_MAX_UPLOAD", 1024*1024*1024))
+
 # Application definition
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -76,7 +78,6 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 # For corsheaders/external frontend
 CSRF_HEADER_NAME = "HTTP_X_XSRF_TOKEN"
 CSRF_COOKIE_NAME = "XSRF-TOKEN"
-
 # For accessing a live backend server locally.
 CORS_ORIGIN_WHITELIST = parse_list_env_headers("TEXTA_CORS_ORIGIN_WHITELIST", ["http://localhost:4200"])
 CORS_ALLOW_HEADERS = list(default_headers) + ["x-xsrf-token"]
