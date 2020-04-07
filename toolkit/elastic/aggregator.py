@@ -1,3 +1,5 @@
+from elasticsearch_dsl import Search, Q
+
 from toolkit.elastic.core import ElasticCore
 
 
@@ -18,8 +20,14 @@ class ElasticAggregator:
         self.indices = indices
         self.query = query
 
+
+    def _get_indices_string(self):
+        return ",".join(self.indices)
+
+
     def update_query(self, query):
         self.query = query
+
 
     def update_field_data(self, field_data):
         """
@@ -27,10 +35,12 @@ class ElasticAggregator:
         """
         self.field_data = field_data
 
+
     def _aggregate(self, agg_query):
         self.query["aggregations"] = agg_query
         response = self.core.es.search(index=self.indices, body=self.query)
         return response
+
 
     def facts(self, size=30, filter_by_fact_name=None, min_count=0, max_count=None, include_values=True):
         """
@@ -83,3 +93,23 @@ class ElasticAggregator:
             entities = list(entities.keys())
 
         return entities
+
+
+    def filter_aggregation_maker(self, agg_type: str, field: str, filter_query: dict = None, size=100):
+
+        container = []
+
+        s = Search(using=self.core.es, index=self._get_indices_string())
+        if filter_query:
+            filter_query = Q(filter_query)
+            s.aggs.bucket("limits", "filter", filter=filter_query).bucket("placekeeper", agg_type, field=field, size=size)
+            r = s.execute()
+            for hit in r.aggs.limits.placekeeper:
+                container.append(hit.to_dict())
+        else:
+            s.aggs.bucket("placekeeper", agg_type, field=field)
+            r = s.execute()
+            for hit in r.aggs.limits.placekeeper:
+                container.append(hit.to_dict())
+
+        return container[:15]

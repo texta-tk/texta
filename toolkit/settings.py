@@ -6,6 +6,7 @@ from corsheaders.defaults import default_headers
 from .helper_functions import parse_list_env_headers
 from .logging_settings import setup_logging
 
+
 ### CORE SETTINGS ###
 # NOTE: THESE ARE INITIAL VARIABLES IMPORTED FROM THE ENVIRONMENT
 # DO NOT IMPORT THESE VARIABLES IN APPS, BECAUSE THEY CAN BE OVERWRITTEN WITH VALUES FROM DB
@@ -18,7 +19,7 @@ CORE_SETTINGS = {
     "TEXTA_ES_USERNAME": os.getenv("TEXTA_ES_USER", ""),
     "TEXTA_ES_PASSWORD": os.getenv("TEXTA_ES_PASSWORD", ""),
     "TEXTA_MLP_URL": os.getenv("TEXTA_MLP_URL", "http://mlp-dev.texta.ee:5000")
-    }
+}
 ### END OF CORE SETTINGS ###
 
 
@@ -31,7 +32,7 @@ DEBUG = True if os.getenv("TEXTA_DEBUG", "True") == "True" else False
 # ALLOWED HOSTS
 ALLOWED_HOSTS = parse_list_env_headers("TEXTA_ALLOWED_HOSTS", ["*"])
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv("TEXTA_MAX_UPLOAD", 1024*1024*1024))
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv("TEXTA_MAX_UPLOAD", 1024 * 1024 * 1024))
 
 # Application definition
 INSTALLED_APPS = [
@@ -53,6 +54,7 @@ INSTALLED_APPS = [
     "toolkit.tagger",
     "toolkit.torchtagger",
     "toolkit.mlp",
+    "toolkit.topic_analyzer",
     # TEXTA Extension Apps
     # "docscraper",
     # THIRD PARTY

@@ -20,7 +20,6 @@ class ProjectMultiTagSerializer(serializers.Serializer):
     feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
 
 
-
 class ProjectSearchByQuerySerializer(serializers.Serializer):
     query = serializers.JSONField(help_text='Query to search', default=EMPTY_QUERY)
     indices = serializers.ListField(default=None,
@@ -92,6 +91,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
         return instance
 
+
     def create(self, validated_data):
         from toolkit.elastic.models import Index
         indices: List[str] = validated_data["get_indices"]
@@ -131,6 +131,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
             'dataset_imports',
             'searches',
             'scroll',
+            'clustering',
             'embeddings',
             'embedding_clusters',
             'taggers',

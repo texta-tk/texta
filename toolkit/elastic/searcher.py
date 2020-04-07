@@ -1,6 +1,9 @@
 import collections
+from typing import List
 
 import elasticsearch
+from elasticsearch_dsl.query import MoreLikeThis
+from elasticsearch_dsl import Search
 
 from toolkit.elastic.core import ElasticCore
 
@@ -16,6 +19,7 @@ class ElasticSearcher:
     OUT_RAW = 'raw'
     OUT_DOC = 'doc'
     OUT_TEXT = 'text'
+    OUT_TEXT_WITH_ID = "text_with_id"
     OUT_DOC_WITH_ID = 'doc_with_id'
     OUT_DOC_WITH_TOTAL_HL_AGGS = 'doc_with_total_hl_aggs'
 
@@ -35,7 +39,7 @@ class ElasticSearcher:
         Output options: document (default), text (lowered & stopwords removed), sentences (text + line splitting), raw (raw elastic output)
         """
         self.core = ElasticCore()
-        self.field_data = field_data
+        self.field_data: List[str] = field_data
         self.indices = indices
         self.query = query
         self.scroll_size = scroll_size
@@ -59,6 +63,39 @@ class ElasticSearcher:
         Iterator for iterating through scroll
         """
         return self.scroll()
+
+
+    def more_like_this(self, mlt_fields: List[str], like, min_term_freq=1, max_query_terms=12, min_doc_freq=5, min_word_length=0, max_word_length=0, stop_words=[], size=10, include_meta=False, indices: str = None):
+        """
+
+        Args:
+            indices: Coma-separated string of the indices you wish to use.
+            mlt_fields: List of strings of the fields you wish to use for analyzation, only these fields are returned as a result.
+            like: Can either be a text field or a list of document metas which is used as a baseline for fetching similar documents.
+            min_term_freq: The minimum term frequency below which the terms will be ignored from the input document.
+            max_query_terms: The maximum number of query terms that will be selected. Increasing this value gives greater accuracy at the expense of query execution speed.
+            min_doc_freq: The minimum document frequency below which the terms will be ignored from the input document.
+            min_word_length: The minimum word length below which the terms will be ignored.
+            max_word_length: The maximum word length above which the terms will be ignored.
+            stop_words: An array of stop words. Any word in this set is considered "uninteresting" and ignored.
+            include_meta: Whether to add the documents meta information (id, index, doctype) into the returning set of documents.
+            size: How many documents to return with the end result.
+        Returns: List of Elasticsearch documents.
+
+        """
+        indices = indices if indices else ",".join(self.indices)
+        s = Search(using=self.core.es, index=indices)
+        mlt = MoreLikeThis(like=like, fields=mlt_fields, min_term_freq=min_term_freq, max_query_terms=max_query_terms, min_doc_freq=min_doc_freq, min_word_length=min_word_length, max_word_length=max_word_length, stop_words=stop_words)
+        s = s.query(mlt)
+        s = s.extra(size=size)
+        s = s.source(mlt_fields)
+        if include_meta:
+            response = [{"_id": hit.meta.id, "_type": hit.meta.doc_type, "_index": hit.meta.index, "_source": hit.to_dict()} for hit in s.execute()]
+            return response
+        else:
+            response = [hit.to_dict() for hit in s.execute()]
+            return response
+
 
 
     def update_query(self, query):
@@ -190,7 +227,7 @@ class ElasticSearcher:
             if scroll_break:
                 break
             # process output
-            if self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID, self.OUT_TEXT):
+            if self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID, self.OUT_TEXT, self.OUT_TEXT_WITH_ID):
                 if self.callback_progress:
                     self.callback_progress.update(page_size)
                 for hit in page['hits']['hits']:
@@ -210,6 +247,15 @@ class ElasticSearcher:
                                 processed_field = self.text_processor.process(field)
                                 for text in processed_field:
                                     yield text
+
+                        elif self.output == self.OUT_TEXT_WITH_ID:
+                            for key, value in parsed_doc.items():
+                                if key in self.field_data:
+                                    processed_field = self.text_processor.process(value)
+                                    for text in processed_field:
+                                        yield hit["_id"], text
+
+
                         elif self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID):
                             if self.text_processor:
                                 parsed_doc = {k: '\n'.join(self.text_processor.process(v)) for k, v in parsed_doc.items()}

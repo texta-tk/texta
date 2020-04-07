@@ -1,0 +1,88 @@
+# Create your models here.
+import json
+import os
+import secrets
+
+from django.contrib.auth.models import User
+from django.db import models
+from django.dispatch import receiver
+
+from toolkit.core.project.models import Project
+from toolkit.core.task.models import Task
+from toolkit.elastic.models import Index
+from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.settings import MODELS_DIR
+from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
+
+
+class Cluster(models.Model):
+    cluster_id = models.TextField()
+    document_ids = models.TextField(default="[]")
+    fields = models.TextField(default="[]")
+    original_text_field = models.TextField(default="")
+    indices = models.TextField(default="[]")
+    significant_words = models.TextField(default="[]")
+    intracluster_similarity = models.FloatField()
+
+
+    def get_document_count(self):
+        documents = json.loads(self.document_ids)
+        return len(documents)
+
+
+class ClusteringResult(models.Model):
+    description = models.TextField()
+    query = models.TextField(default=json.dumps(EMPTY_QUERY))
+    clustering_algorithm = models.CharField(max_length=100, default=CLUSTERING_ALGORITHMS[0][0])
+    fields = models.TextField(default="[]")
+    original_text_field = models.TextField(default="")
+    vectorizer = models.TextField(default=VECTORIZERS[0][0])
+
+    num_topics = models.IntegerField(default=50)
+    num_cluster = models.IntegerField(default=10)
+    num_dims = models.IntegerField(default=1000)
+    document_limit = models.IntegerField(default=100)
+
+    use_lsi = models.BooleanField(default=False)
+
+    # JSON parsable fields.
+    stop_words = models.TextField(default="[]")
+    ignored_ids = models.TextField(default="[]")
+
+    cluster_result = models.ManyToManyField(Cluster)
+    indices = models.ManyToManyField(Index)
+    vector_model = models.FileField(null=True, verbose_name='', default=None)
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
+
+
+    def generate_name(self, name="document_embedding"):
+        return os.path.join(MODELS_DIR, 'embedding', f'{name}_{str(self.pk)}_{secrets.token_hex(10)}')
+
+
+    def get_indices(self):
+        return [index.name for index in self.indices.filter(is_open=True)]
+
+
+    def train(self):
+        from toolkit.topic_analyzer.tasks import train_cluster
+
+        new_task = Task.objects.create(clusteringresult=self, status='created')
+        self.task = new_task
+        self.save()
+
+        train_cluster(self.id)
+
+
+@receiver(models.signals.post_delete, sender=ClusteringResult)
+def auto_delete_file_on_delete(sender, instance: ClusteringResult, **kwargs):
+    """
+    Delete resources on the file-system upon tagger deletion.
+    Triggered on individual-queryset Tagger deletion and the deletion
+    of a TaggerGroup.
+    """
+    if instance.vector_model:
+        if os.path.isfile(instance.vector_model.path):
+            os.remove(instance.vector_model.path)
