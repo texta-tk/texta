@@ -91,14 +91,14 @@ class ElasticDocument:
         """
         Updates document in ES by ID.
         """
-        return self.core.es.update(index=index, doc_type=doc_type, id=doc_id, body={"doc": doc})
+        return self.core.es.update(index=index, doc_type=doc_type, id=doc_id, body={"doc": doc}, refresh="wait_for")
 
 
     def add(self, doc):
         """
         Adds document to ES.
         """
-        return self.core.es.index(index=self.index, doc_type=self.index, body=doc)
+        return self.core.es.index(index=self.index, doc_type=self.index, body=doc, refresh='wait_for')
 
 
     def bulk_add(self, docs, chunk_size=100):
