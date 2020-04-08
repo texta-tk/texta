@@ -8,6 +8,7 @@ from django.http import HttpResponse
 from django_filters import rest_framework as filters
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
@@ -74,9 +75,13 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
         fact_name = serializer.validated_data['fact_name']
         active_project = Project.objects.get(id=self.kwargs['project_pk'])
+        serialized_indices = [index["name"] for index in serializer.validated_data["tagger"]["indices"]]
+        indices = Project.objects.get(pk=kwargs["project_pk"]).filter_from_indices(serialized_indices)
+        if not indices:
+            raise ValidationError("No indices are available to you!")
 
         # retrieve tags with sufficient counts & create queries to build models
-        tags = self.get_tags(fact_name, active_project, min_count=serializer.validated_data['minimum_sample_size'])
+        tags = self.get_tags(fact_name, active_project, min_count=serializer.validated_data['minimum_sample_size'], indices=indices)
 
         # check if found any tags to build models on
         if not tags:
