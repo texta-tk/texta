@@ -4,7 +4,7 @@ CLUSTERING_ALGORITHMS = (
 )
 
 VECTORIZERS = (
+    ("TfIdf Vectorizer", "TfIdf Vectorizer"),
     ("Hashing Vectorizer", "Hashing Vectorizer"),
-    ("Count Vectorizer", "Count Vectorizer"),
-    ("TfIdf Vectorizer", "TfIdf Vectorizer")
+    ("Count Vectorizer", "Count Vectorizer")
 )

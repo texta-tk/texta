@@ -50,8 +50,22 @@ def perform_data_clustering(clustering_id):
         num_topics = serializer.data["num_topics"]
 
         # Removing stopwords, ignored ids while fetching the documents.
+        show_progress = ShowProgress(clustering_model.task, multiplier=1)
+        show_progress.update_step("scrolling data")
+        show_progress.update_view(0)
+
         text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
-        elastic_search = ElasticSearcher(indices=indices, query=query, text_processor=text_processor, ignore_ids=set(ignored_ids), output=ElasticSearcher.OUT_TEXT_WITH_ID, field_data=fields, scroll_limit=document_limit)
+        elastic_search = ElasticSearcher(
+            indices=indices,
+            query=query,
+            callback_progress=show_progress,
+            text_processor=text_processor,
+            ignore_ids=set(ignored_ids),
+            output=ElasticSearcher.OUT_TEXT_WITH_ID,
+            field_data=fields,
+            scroll_limit=document_limit
+        )
+
         docs = [{"id": doc_id, "text": text} for doc_id, text in elastic_search]
 
         # Group em up~!
@@ -94,6 +108,7 @@ def perform_data_clustering(clustering_id):
 def save_clustering_results(clustering_result: dict):
     with transaction.atomic():
         clustering_obj = ClusteringResult.objects.get(pk=clustering_result["pk"])
+        clustering_obj.task.update_status("saving_results")
 
         clustering_results = clustering_result["results"]
         fields = clustering_result["fields"]

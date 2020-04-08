@@ -3,8 +3,10 @@ import json
 import pathlib
 from typing import List
 
+import rest_framework.filters as drf_filters
 from django.db import transaction
 from django.urls import reverse
+from django_filters import rest_framework as filters
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -12,20 +14,35 @@ from rest_framework.response import Response
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
-from toolkit.topic_analyzer.serializers import ClusterSerializer, ClusteringSerializer
+from toolkit.topic_analyzer.serializers import ClusterSerializer, ClusteringSerializer, BulkDeleteSerializer
 from .clustering import ClusterContent
 from ..elastic.aggregator import ElasticAggregator
 from ..elastic.document import ElasticDocument
 from ..elastic.models import Index
 from ..elastic.searcher import ElasticSearcher
 from ..elastic.serializers import ElasticFactSerializer, ElasticMoreLikeThisSerializer
+from ..pagination import PageNumberPaginationDataOnly
 from ..permissions.project_permissions import ProjectResourceAllowed
+from ..view_constants import BulkDelete
 
 
 class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     queryset = ClusteringResult.objects.all()
     serializer_class = ClusterSerializer
     permission_classes = [permissions.IsAuthenticated, ProjectResourceAllowed]
+
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+
+    ordering_fields = (
+        'id',
+        'fields',
+        'task__time_started',
+        'task__time_completed',
+        'indices__name',
+        'original_text_field',
+        'intracluster_similarity',
+        'document_count'
+    )
 
 
     @action(detail=True, methods=["post"])
@@ -146,10 +163,45 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         return Response({"message": "Cluster deleted."}, status=status.HTTP_200_OK)
 
 
-class ClusteringViewSet(viewsets.ModelViewSet):
+class ClusteringViewSet(viewsets.ModelViewSet, BulkDelete):
     queryset = ClusteringResult.objects.all()
     serializer_class = ClusteringSerializer
     permission_classes = [permissions.IsAuthenticated, ProjectResourceAllowed]
+
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+    pagination_class = PageNumberPaginationDataOnly
+
+    ordering_fields = (
+        'id',
+        'author__username',
+        'description',
+        'fields',
+        'task__time_started',
+        'task__time_completed',
+        'clustering_algorithm',
+        'vectorizer',
+        'original_text_field',
+        'num_topics',
+        'num_cluster',
+        'num_dims',
+        'document_limit',
+        'indices__name',
+        'task__status'
+    )
+
+
+    @action(detail=True, methods=["post"], serializer_class=BulkDeleteSerializer)
+    def bulk_delete_clusters(self, request, *args, **kwargs):
+        serializer = BulkDeleteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        ids = serializer.validated_data["ids"]
+        clustering = ClusteringResult.objects.filter(pk=kwargs["pk"])
+        for cluster_set in clustering:
+            cluster_set.cluster_result.filter(id__in=ids).delete()
+
+        return Response({"message": f"Deleted clusters withs ids {ids}."}, status=status.HTTP_200_OK)
+
 
 
     @action(detail=True, methods=["put"], serializer_class=ClusteringSerializer)
@@ -161,7 +213,7 @@ class ClusteringViewSet(viewsets.ModelViewSet):
         return Response({"message": f"Started re-clustering '{clustering_obj.description}' cluster set! "})
 
 
-    @action(detail=True, methods=['get'], serializer_class=ClusteringSerializer)
+    @action(detail=True, methods=['get'])
     def view_clusters(self, request, *args, **kwargs):
         container = []
         clustering_model = ClusteringResult.objects.get(pk=kwargs["pk"])
@@ -169,7 +221,16 @@ class ClusteringViewSet(viewsets.ModelViewSet):
 
         for cluster in clusters:
             url = request.build_absolute_uri(reverse("v1:cluster-detail", kwargs={"pk": cluster.pk, "project_pk": kwargs["project_pk"], "clustering_pk": clustering_model.id}))
-            container.append({"id": cluster.pk, "url": url, "document_count": cluster.get_document_count(), "average_similarity": cluster.intracluster_similarity, "documents": json.loads(cluster.document_ids)})
+            container.append(
+                {
+                    "id": cluster.pk,
+                    "url": url,
+                    "document_count": cluster.get_document_count(),
+                    "average_similarity": cluster.intracluster_similarity,
+                    "significant_words": json.loads(cluster.significant_words),
+                    "documents": json.loads(cluster.document_ids)
+                }
+            )
 
         return Response({"cluster_count": len(container), "clusters": container})
 

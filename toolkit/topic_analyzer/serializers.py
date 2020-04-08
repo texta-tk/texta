@@ -10,6 +10,10 @@ from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 
 
+class BulkDeleteSerializer(serializers.Serializer):
+    ids = serializers.ListField(child=serializers.CharField())
+
+
 class ClusterSerializer(serializers.ModelSerializer):
     document_ids = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     fields = serializers.ListField(child=serializers.CharField())
