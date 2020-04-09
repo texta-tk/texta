@@ -109,8 +109,9 @@ REST_AUTH_SERIALIZERS = {
 }
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -124,6 +125,8 @@ if USE_CSRF:
 else:
     # Add additional middleware to turn off the CSRF handling in the SessionsMiddleware.
     MIDDLEWARE.append("toolkit.tools.common_utils.DisableCSRFMiddleware")
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 ROOT_URLCONF = "toolkit.urls"
 
