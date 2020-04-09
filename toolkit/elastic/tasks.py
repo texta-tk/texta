@@ -37,7 +37,10 @@ def reformat_for_schema_generator(fields, flatten_doc=False):
         fields = add_nested(fields)
     formatted_fields = defaultdict(list)
     for field in fields:
-        formatted_fields[field['type']].append(field['path'])
+        if field['path'] == 'texta_facts':
+            formatted_fields['texta_facts'].append('texta_facts')
+        else:
+            formatted_fields[field['type']].append(field['path'])
     return dict(formatted_fields)
 
 def update_field_types(indices, fields, field_type, flatten_doc=False):
