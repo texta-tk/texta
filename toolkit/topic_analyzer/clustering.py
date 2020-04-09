@@ -5,7 +5,7 @@ import numpy as np
 from gensim import corpora, models
 from gensim.matutils import corpus2csc
 from gensim.parsing.preprocessing import preprocess_string, strip_multiple_whitespaces, strip_punctuation, strip_short, strip_tags
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn.metrics.pairwise import cosine_similarity
 
 
@@ -13,9 +13,9 @@ class Clustering:
 
     def __init__(self,
                  docs,
-                 vectorizer="Hashing Vectorizer",
+                 vectorizer="TfIdf Vectorizer",
                  num_clusters=10,
-                 clustering_algorithm="kmeans",
+                 clustering_algorithm="minibatchkmeans",
                  stop_words=[],
                  num_dims=1000,
                  use_lsi=False,
@@ -32,7 +32,6 @@ class Clustering:
         self.ignore_doc_ids = []
 
         self.clustering_result = {}
-        self.transformed_corpus = None
         self.vectors = {}
 
 
@@ -61,25 +60,29 @@ class Clustering:
         tokens = preprocess_string(text, CUSTOM_FILTERS)
         return [token for token in tokens if token not in self.custom_stop_words]
 
-
     def _get_vectors(self):
         processed_corpus = [self._tokenize(doc["text"]) for doc in self.docs]
         dictionary = corpora.Dictionary(processed_corpus)
+        num_unique_words = len(dictionary)
+        #ignore 20% most frequent words
+        #im not sure whether this is needed as we below filter extremes out anyway but let's keep this right now
+        dictionary.filter_n_most_frequent(int(num_unique_words*0.2))
+        #do some more filtering and keep only n most frequent specified with num_dims parameter
+        dictionary.filter_extremes(no_below=1, no_above=0.8, keep_n=self.num_dims)
+
         bow_corpus = [dictionary.doc2bow(text) for text in processed_corpus]
 
         if self.vectorizer == "TfIdf Vectorizer":
             tfidf_model = models.TfidfModel(bow_corpus)
-            self.transformed_corpus = tfidf_model[bow_corpus]
+            transformed_corpus = tfidf_model[bow_corpus]
         elif self.vectorizer == "Count Vectorizer":
-            self.transformed_corpus = bow_corpus
-        elif self.vectorizer == "Hashing Vectorizer":
-            raise NotImplementedError("Hashing Vectorizer is not supported yet!")
+            transformed_corpus = bow_corpus
 
         if self.use_lsi:
-            lsi_model = models.LsiModel(self.transformed_corpus, id2word=dictionary, num_topics=self.num_topics)
-            self.transformed_corpus = lsi_model[self.transformed_corpus]
+            lsi_model = models.LsiModel(transformed_corpus, id2word=dictionary, num_topics=self.num_topics)
+            transformed_corpus = lsi_model[transformed_corpus]
 
-        matrix = corpus2csc(self.transformed_corpus, num_terms=len(dictionary.keys()), num_docs=dictionary.num_docs)
+        matrix = corpus2csc(transformed_corpus, num_terms=len(dictionary.keys()), num_docs=dictionary.num_docs)
         return matrix.transpose()
 
 
@@ -91,8 +94,8 @@ class Clustering:
 
         if self.algorithm == "kmeans":
             labels = KMeans(n_clusters=self.num_clusters, random_state=10).fit_predict(vectors)
-        else:
-            return
+        elif self.algorithm == "minibatchkmeans":
+            labels = MiniBatchKMeans(n_clusters=self.num_clusters, random_state=10).fit_predict(vectors)
 
         result = defaultdict(list)
         for ix, doc in enumerate(self.docs):
