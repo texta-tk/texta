@@ -15,6 +15,7 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.exceptions import ElasticIndexAlreadyExists
 from toolkit.elastic.models import Index, Reindexer
 from toolkit.elastic.serializers import IndexSerializer, ReindexerCreateSerializer
+from toolkit.pagination import PageNumberPaginationDataOnly
 from toolkit.permissions.project_permissions import IsSuperUser, ProjectResourceAllowed
 from toolkit.view_constants import BulkDelete
 
@@ -42,6 +43,18 @@ class IndexViewSet(mixins.CreateModelMixin,
     queryset = Index.objects.all()
     serializer_class = IndexSerializer
     permission_classes = [IsSuperUser]
+
+
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+    pagination_class = PageNumberPaginationDataOnly
+
+    ordering_fields = (
+        'id',
+        'name',
+        'is_open'
+    )
+
+
 
 
     def list(self, request, *args, **kwargs):

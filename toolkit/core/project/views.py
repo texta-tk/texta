@@ -103,15 +103,18 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         project_object = self.get_object()
         project_indices = list(project_object.get_indices())
         if not project_indices:
-            raise ProjectValidationFailed(detail="Project has no indices")
+            return Response([])
+
         fields = project_object.get_elastic_fields()
         field_map = {}
+
         for field in fields:
             if field['index'] not in field_map:
                 field_map[field['index']] = []
             field_info = dict(field)
             del field_info['index']
             field_map[field['index']].append(field_info)
+
         field_map_list = [{'index': k, 'fields': v} for k, v in field_map.items()]
         return Response(field_map_list, status=status.HTTP_200_OK)
 
@@ -153,7 +156,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         project_indices = project.filter_from_indices(indices)  # Gives all if none, the default, is entered.
 
         if not project_indices:
-            raise ProjectValidationFailed(detail="Project has no indices")
+            return Response([])
 
         vals_per_name = serializer.validated_data['values_per_name']
         include_values = serializer.validated_data['output_type']

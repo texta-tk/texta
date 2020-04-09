@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 import os
 import pathlib
 import secrets
@@ -20,7 +21,7 @@ from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import apply_celery_task
-from toolkit.settings import MODELS_DIR
+from toolkit.settings import MODELS_DIR, INFO_LOGGER
 from toolkit.tagger.choices import (DEFAULT_CLASSIFIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE, DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_VECTORIZER)
 
 
@@ -140,6 +141,7 @@ class Tagger(models.Model):
         self.task = new_task
         self.save()
         from toolkit.tagger.tasks import train_tagger
+        logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for training of tagger: {self.to_json()}")
         apply_celery_task(train_tagger, self.pk)
 
 

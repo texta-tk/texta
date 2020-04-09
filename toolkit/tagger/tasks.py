@@ -13,7 +13,7 @@ from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.models import Index
 from toolkit.embedding.phraser import Phraser
 from toolkit.helper_functions import get_indices_from_object
-from toolkit.settings import ERROR_LOGGER
+from toolkit.settings import ERROR_LOGGER, INFO_LOGGER
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.tagger.plots import create_tagger_plot
 from toolkit.tagger.text_tagger import TextTagger
@@ -28,6 +28,7 @@ def create_tagger_batch(tagger_group_id, taggers_to_create):
 
     tagger_group_object = TaggerGroup.objects.get(pk=tagger_group_id)
     # iterate through batch
+    logging.getLogger(INFO_LOGGER).info(f"Creating {len(taggers_to_create)} taggers for TaggerGroup ID: {tagger_group_id}!")
     for tagger_data in taggers_to_create:
         indices = [index["name"] for index in tagger_data["indices"]]
         indices = tagger_group_object.project.filter_from_indices(indices)
@@ -54,6 +55,7 @@ def create_tagger_batch(tagger_group_id, taggers_to_create):
 def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries, batch_size=100):
     """Task for creating Tagger objects inside Tagger Group to prevent database timeouts."""
     # create tagger objects
+    logging.getLogger(INFO_LOGGER).info(f"Starting task 'create_tagger_objects' for TaggerGroup with ID: {tagger_group_id}!")
 
     taggers_to_create = []
     for i, tag in enumerate(tags):
@@ -70,12 +72,16 @@ def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries,
     if taggers_to_create:
         # create tagger objects of remaining items
         create_tagger_batch(tagger_group_id, taggers_to_create)
+
+    logging.getLogger(INFO_LOGGER).info(f"Completed task 'create_tagger_objects' for TaggerGroup with ID: {tagger_group_id}!")
     return True
 
 
 @task(name="train_tagger", base=BaseTask)
 def train_tagger(tagger_id):
     """Task for training Text Tagger."""
+    logging.getLogger(INFO_LOGGER).info(f"Starting task 'train_tagger' for tagger with ID: {tagger_id}!")
+
     # retrieve tagger & task objects
     tagger_object = Tagger.objects.get(pk=tagger_id)
     task_object = tagger_object.task
@@ -97,6 +103,7 @@ def train_tagger(tagger_id):
 
         # load embedding and create text processor
         if tagger_object.embedding:
+            logging.getLogger(INFO_LOGGER).info(f"Applying embedding ID {tagger_object.embedding.id} for tagger with ID {tagger_object.pk}!")
             phraser = Phraser(embedding_id=tagger_object.embedding.pk)
             phraser.load()
             text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words)
@@ -118,6 +125,7 @@ def train_tagger(tagger_id):
 
         # train model
         tagger = TextTagger(tagger_id)
+        logging.getLogger(INFO_LOGGER).info(f"Starting training process for tagger ID: {tagger_id}")
         tagger.train(
             data_sample,
             field_list=json.loads(tagger_object.fields),
@@ -146,6 +154,7 @@ def train_tagger(tagger_id):
 
         # declare the job done
         task_object.complete()
+        logging.getLogger(INFO_LOGGER).info(f"Completed task 'train_tagger' for tagger with ID: {tagger_id}!")
         return True
 
     except Exception as e:
@@ -159,6 +168,8 @@ def train_tagger(tagger_id):
 @task(name="apply_tagger", base=BaseTask)
 def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=None):
     """Task for applying tagger to text."""
+    logging.getLogger(INFO_LOGGER).info(f"Starting task 'apply_tagger' for tagger with ID: {tagger_id} with params (input_type : {input_type}, lemmatize: {lemmatize}, feedback: {feedback})!")
+
     # get tagger object
     tagger_object = Tagger.objects.get(pk=tagger_id)
     # get lemmatizer if needed
@@ -168,6 +179,7 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
     # create text processor object for tagger
     stop_words = tagger_object.stop_words.split(' ')
     if tagger_object.embedding:
+        logging.getLogger(INFO_LOGGER).info(f"Applying embedding ID {tagger_object.embedding.id} for tagger with ID {tagger_object.pk}!")
         phraser = Phraser(tagger_object.embedding.id)
         phraser.load()
         text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
@@ -183,8 +195,10 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
     tagger.add_text_processor(text_processor)
     # check input type
     if input_type == 'doc':
+        logging.getLogger(INFO_LOGGER).info(f"Tagging document with content: {text}!")
         tagger_result = tagger.tag_doc(text)
     else:
+        logging.getLogger(INFO_LOGGER).info(f"Tagging text with content: {text}!")
         tagger_result = tagger.tag_text(text)
 
     # check if prediction positive
@@ -194,9 +208,12 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
 
     # add feedback if asked
     if feedback:
+        logging.getLogger(INFO_LOGGER).info(f"Adding feedback for Tagger id: {tagger_object.pk}")
         project_pk = tagger_object.project.pk
         feedback_object = Feedback(project_pk, model_object=tagger_object)
         feedback_id = feedback_object.store(text, decision)
         feedback_url = f'/projects/{project_pk}/taggers/{tagger_object.pk}/feedback/'
         prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
+
+    logging.getLogger(INFO_LOGGER).info(f"Completed task 'apply_tagger' for tagger with ID: {tagger_id}!")
     return prediction
