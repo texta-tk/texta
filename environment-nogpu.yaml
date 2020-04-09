@@ -42,3 +42,4 @@ dependencies:
     - django-filter
     - xlrd
     - dill
+    - whitenoise
