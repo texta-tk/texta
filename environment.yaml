@@ -7,7 +7,7 @@ channels:
   - pytorch
 
 dependencies:
-  - python=3.7
+  - python=3.6
   - pip
   - pandas
   - scikit-learn==0.22.1
