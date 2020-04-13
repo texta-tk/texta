@@ -8,9 +8,15 @@ from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.serializers import IndexSerializer
 from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
+from toolkit.topic_analyzer.validators import check_cluster_existence
 
 
-class BulkDeleteSerializer(serializers.Serializer):
+class TransferClusterDocumentsSerializer(serializers.Serializer):
+    ids = serializers.ListField(child=serializers.CharField(), required=True, allow_empty=False)
+    receiving_cluster_id = serializers.IntegerField(min_value=0, required=True, validators=[check_cluster_existence])
+
+
+class ClusteringIdsSerializer(serializers.Serializer):
     ids = serializers.ListField(child=serializers.CharField())
 
 

@@ -217,6 +217,7 @@ class TopicAnalyzerTests(APITestCase):
         self.assertTrue(response.data["documents"][0]["id"] == document_to_keep)
         print_output("test_updating_singular_cluster_information", 200)
 
+
     def test_user_and_admin_access_to_endpoints(self):
         clustering = ClusteringResult.objects.get(pk=self.clustering_id)
         singular_cluster = clustering.cluster_result.first()
@@ -238,3 +239,65 @@ class TopicAnalyzerTests(APITestCase):
             self.assertTrue(response.status_code == status.HTTP_200_OK)
 
         print_output("test_user_and_admin_access_to_endpoints", 200)
+
+
+    def test_adding_documents_to_cluster(self):
+        clustering = ClusteringResult.objects.get(pk=self.clustering_id)
+        singular_cluster = clustering.cluster_result.first()
+
+        helper_cluster = clustering.cluster_result.last()
+        legit_ids_to_add = json.loads(helper_cluster.document_ids)
+
+        url = reverse("v1:cluster-add-documents", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
+        response = self.client.post(url, format="json", data={"ids": legit_ids_to_add})
+
+        updated_cluster = clustering.cluster_result.first()
+        for doc_id in legit_ids_to_add:
+            self.assertTrue(doc_id in json.loads(updated_cluster.document_ids))
+
+
+    def test_removing_documents_from_cluster(self):
+        clustering = ClusteringResult.objects.get(pk=self.clustering_id)
+        singular_cluster = clustering.cluster_result.first()
+
+        ids_to_remove = json.loads(singular_cluster.document_ids)[-3:]
+        url = reverse("v1:cluster-remove-documents", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
+        response = self.client.post(url, format="json", data={"ids": ids_to_remove})
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+        singular_cluster = clustering.cluster_result.first()
+        for doc_id in json.loads(singular_cluster.document_ids):
+            self.assertTrue(doc_id not in ids_to_remove)
+
+        print_output("test_removing_documents_from_cluster", 200)
+
+
+    def test_transferring_documents_from_one_cluster_to_another(self):
+        clustering = ClusteringResult.objects.get(pk=self.clustering_id)
+        from_cluster = clustering.cluster_result.first()
+        to_cluster = clustering.cluster_result.last()
+        self.assertTrue(from_cluster.pk != to_cluster.pk)
+
+        ids = json.loads(from_cluster.document_ids)
+        url = reverse("v1:cluster-transfer-documents", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": from_cluster.pk})
+        response = self.client.post(url, format="json", data={"ids": ids, "receiving_cluster_id": to_cluster.pk})
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+        from_cluster = clustering.cluster_result.first()
+        from_ids = json.loads(from_cluster.document_ids)
+
+        to_cluster = clustering.cluster_result.last()
+        to_ids = json.loads(to_cluster.document_ids)
+
+        for doc_id in ids:
+            self.assertTrue(doc_id not in from_ids)
+            self.assertTrue(doc_id in to_ids)
+
+
+    def test_cluster_exist_validation_for_transferring_endpoint(self):
+        clustering = ClusteringResult.objects.get(pk=self.clustering_id)
+        singular_cluster = clustering.cluster_result.first()
+        url = reverse("v1:cluster-transfer-documents", kwargs={"project_pk": self.project.pk, "clustering_pk": clustering.pk, "pk": singular_cluster.pk})
+
+        response = self.client.post(url, format="json", data={"ids": ["wrong, sample id"], "receiving_cluster_id": 1000})
+        self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)

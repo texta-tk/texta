@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
-from toolkit.topic_analyzer.serializers import ClusterSerializer, ClusteringSerializer, BulkDeleteSerializer
+from toolkit.topic_analyzer.serializers import ClusterSerializer, ClusteringSerializer, ClusteringIdsSerializer, TransferClusterDocumentsSerializer
 from .clustering import ClusterContent
 from ..elastic.aggregator import ElasticAggregator
 from ..elastic.document import ElasticDocument
@@ -43,6 +43,79 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         'intracluster_similarity',
         'document_count'
     )
+
+
+    @action(detail=True, methods=["post"], serializer_class=TransferClusterDocumentsSerializer)
+    def transfer_documents(self, request, *args, **kwargs):
+        serializer = TransferClusterDocumentsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        clustering_obj = ClusteringResult.objects.get(pk=kwargs["clustering_pk"])
+        cluster_obj = clustering_obj.cluster_result.get(pk=kwargs["pk"])
+
+        documents_to_transfer = serializer.validated_data["ids"]
+
+        # Remove the documents from the initial cluster.
+        saved_documents = json.loads(cluster_obj.document_ids)
+        unique_ids = list(set([document for document in saved_documents if document not in documents_to_transfer]))
+        cluster_obj.document_ids = json.dumps(unique_ids)
+
+        # Save the new similarity score.
+        cc = ClusterContent(doc_ids=unique_ids, vectors_filepath=clustering_obj.vector_model.path)
+        cluster_obj.intracluster_similarity = float(cc.get_intracluster_similarity())
+        cluster_obj.save()
+
+        # Add the previously removed documents to the new cluster.
+        cluster_for_transfer = Cluster.objects.get(pk=serializer.validated_data["receiving_cluster_id"])
+        cluster_documents = json.loads(cluster_for_transfer.document_ids)
+        unique_ids = list(set(cluster_documents + documents_to_transfer))
+        cluster_for_transfer.document_ids = json.dumps(unique_ids)
+
+        # Update the score
+        cc = ClusterContent(doc_ids=unique_ids, vectors_filepath=clustering_obj.vector_model.path)
+        cluster_for_transfer.intracluster_similarity = float(cc.get_intracluster_similarity())
+
+        cluster_for_transfer.save()
+        return Response({"message": "Documents successfully added to the cluster!"})
+
+
+    @action(detail=True, methods=["post"], serializer_class=ClusteringIdsSerializer)
+    def add_documents(self, request, *args, **kwargs):
+        serializer = ClusteringIdsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        clustering_obj = ClusteringResult.objects.get(pk=kwargs["clustering_pk"])
+        cluster_obj = clustering_obj.cluster_result.get(pk=kwargs["pk"])
+
+        ed = ElasticDocument("_all")
+        existing_documents = ed.get_bulk(serializer.validated_data["ids"])
+        existing_documents = [document["_id"] for document in existing_documents]
+        saved_documents = json.loads(cluster_obj.document_ids)
+        unique_ids = list(set(existing_documents + saved_documents))
+        cluster_obj.document_ids = json.dumps(unique_ids)
+
+        cc = ClusterContent(doc_ids=unique_ids, vectors_filepath=clustering_obj.vector_model.path)
+        cluster_obj.intracluster_similarity = float(cc.get_intracluster_similarity())
+        cluster_obj.save()
+        return Response({"message": "Documents successfully added to the cluster!"})
+
+
+    @action(detail=True, methods=["post"], serializer_class=ClusteringIdsSerializer)
+    def remove_documents(self, request, *args, **kwargs):
+        serializer = ClusteringIdsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        clustering_obj = ClusteringResult.objects.get(pk=kwargs["clustering_pk"])
+        cluster_obj = clustering_obj.cluster_result.get(pk=kwargs["pk"])
+
+        saved_documents = json.loads(cluster_obj.document_ids)
+        filtered_documents = list(set([document for document in saved_documents if document not in serializer.validated_data["ids"]]))
+        cluster_obj.document_ids = json.dumps(filtered_documents)
+
+        cc = ClusterContent(doc_ids=filtered_documents, vectors_filepath=clustering_obj.vector_model.path)
+        cluster_obj.intracluster_similarity = float(cc.get_intracluster_similarity())
+        cluster_obj.save()
+        return Response({"message": "Documents successfully removed from the cluster!"})
 
 
     @action(detail=True, methods=["post"])
@@ -190,9 +263,9 @@ class ClusteringViewSet(viewsets.ModelViewSet, BulkDelete):
     )
 
 
-    @action(detail=True, methods=["post"], serializer_class=BulkDeleteSerializer)
+    @action(detail=True, methods=["post"], serializer_class=ClusteringIdsSerializer)
     def bulk_delete_clusters(self, request, *args, **kwargs):
-        serializer = BulkDeleteSerializer(data=request.data)
+        serializer = ClusteringIdsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         ids = serializer.validated_data["ids"]
@@ -203,8 +276,7 @@ class ClusteringViewSet(viewsets.ModelViewSet, BulkDelete):
         return Response({"message": f"Deleted clusters withs ids {ids}."}, status=status.HTTP_200_OK)
 
 
-
-    @action(detail=True, methods=["put"], serializer_class=ClusteringSerializer)
+    @action(detail=True, methods=["post"], serializer_class=ClusteringSerializer)
     def retrain(self, *args, **kwargs):
         clustering_obj = ClusteringResult.objects.get(pk=kwargs["pk"])
         vector_file = pathlib.Path(clustering_obj.vector_model.path)  # Delete the existing vectorfile as a new one will be generated.
