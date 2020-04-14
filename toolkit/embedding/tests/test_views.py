@@ -185,3 +185,28 @@ class EmbeddingViewTests(TransactionTestCase):
         self.assertTrue(str(embedding_model_dir) in str(embedding_phraser_path))
 
         self.run_predict(imported_embedding_id)
+
+
+    def run_embedding_training_with_specified_index_name(self):
+        """
+        Since index management got rewritten, it's necessary to separately test
+        if the field is handled correctly.
+        """
+        payload = {
+            "description": "TestEmbedding",
+            "query": json.dumps(EMPTY_QUERY),
+            "fields": TEST_FIELD_CHOICE,
+            "max_vocab": 10000,
+            "min_freq": 5,
+            "num_dimensions": 100,
+            "indices": [{"name": TEST_INDEX}]
+        }
+
+        response = self.client.post(self.url, json.dumps(payload), content_type='application/json')
+        print_output("run_embedding_training_with_specified_index_name:response.data", response.data)
+        # Check if Embedding gets created
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created_embedding = Embedding.objects.get(id=response.data['id'])
+        self.test_embedding_id = created_embedding.id
+        # Remove Embedding files after test is done
+        print_output("created embedding", created_embedding.task.status)
