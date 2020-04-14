@@ -342,6 +342,7 @@ class ClusteringViewSet(viewsets.ModelViewSet, BulkDelete):
                 author=self.request.user,
                 project=project,
                 fields=json.dumps(serializer.validated_data["fields"]),
+                display_fields=json.dumps(serializer.validated_data["display_fields"]),
                 query=json.dumps(serializer.validated_data["query"]),
                 stop_words=json.dumps(serializer.validated_data["stop_words"]),
                 ignored_ids=json.dumps(serializer.validated_data["ignored_ids"])
