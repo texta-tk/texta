@@ -23,6 +23,7 @@ class ClusteringIdsSerializer(serializers.Serializer):
 class ClusterSerializer(serializers.ModelSerializer):
     document_ids = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     fields = serializers.ListField(child=serializers.CharField())
+    display_fields = serializers.ListField(child=serializers.CharField())
     significant_words = serializers.ListField(child=serializers.DictField(), allow_empty=True)
     document_count = serializers.SerializerMethodField()
     intracluster_similarity = serializers.FloatField()
@@ -38,6 +39,7 @@ class ClusterSerializer(serializers.ModelSerializer):
         data["significant_words"] = json.loads(instance.significant_words)
         data["document_ids"] = json.loads(instance.document_ids)
         data["fields"] = json.loads(instance.fields)
+        data["display_fields"] = json.loads(instance.display_fields)
         return data
 
 
@@ -53,7 +55,7 @@ class ClusteringSerializer(serializers.ModelSerializer):
     num_cluster = serializers.IntegerField(min_value=1, max_value=1000, default=10)
     clustering_algorithm = serializers.ChoiceField(choices=CLUSTERING_ALGORITHMS, default=CLUSTERING_ALGORITHMS[0][0], required=False)
     fields = serializers.ListField(required=True)
-    original_text_field = serializers.CharField(default="")
+    display_fields = serializers.ListField(default=[], allow_empty=True)
     vectorizer = serializers.ChoiceField(choices=VECTORIZERS, default=VECTORIZERS[0][0])
     num_dims = serializers.IntegerField(min_value=1, max_value=10000, default=1000)
     use_lsi = serializers.BooleanField(default=False)
@@ -83,6 +85,7 @@ class ClusteringSerializer(serializers.ModelSerializer):
         data["stop_words"] = json.loads(instance.stop_words)
         data["ignored_ids"] = json.loads(instance.ignored_ids)
         data["fields"] = json.loads(instance.fields)
+        data["display_fields"] = json.loads(instance.display_fields)
         data["query"] = json.loads(instance.query)
         return data
 
@@ -91,6 +94,6 @@ class ClusteringSerializer(serializers.ModelSerializer):
         model = ClusteringResult
         fields = [
             "id", "url", "description", "author_username", "query", "indices", "num_cluster", "clustering_algorithm",
-            "vectorizer", "num_dims", "use_lsi", "num_topics", "original_text_field",
+            "vectorizer", "num_dims", "use_lsi", "num_topics", "display_fields",
             "stop_words", "ignored_ids", "fields", "document_limit", "task"
         ]

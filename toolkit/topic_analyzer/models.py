@@ -19,7 +19,7 @@ class Cluster(models.Model):
     cluster_id = models.TextField()
     document_ids = models.TextField(default="[]")
     fields = models.TextField(default="[]")
-    original_text_field = models.TextField(default="")
+    display_fields = models.TextField(default="[]")
     indices = models.TextField(default="[]")
     significant_words = models.TextField(default="[]")
     intracluster_similarity = models.FloatField()
@@ -35,7 +35,7 @@ class ClusteringResult(models.Model):
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
     clustering_algorithm = models.CharField(max_length=100, default=CLUSTERING_ALGORITHMS[0][0])
     fields = models.TextField(default="[]")
-    original_text_field = models.TextField(default="")
+    display_fields = models.TextField(default="[]")
     vectorizer = models.TextField(default=VECTORIZERS[0][0])
 
     num_topics = models.IntegerField(default=50)
