@@ -5,6 +5,7 @@ import elasticsearch
 import requests
 from django.db import transaction
 from elasticsearch import Elasticsearch
+from rest_framework.exceptions import ValidationError
 
 from toolkit.elastic.exceptions import ElasticAuthenticationException, ElasticAuthorizationException, ElasticIndexNotFoundException, ElasticTimeoutException, ElasticTransportException
 from toolkit.settings import ERROR_LOGGER, ES_CONNECTION_PARAMETERS
@@ -79,9 +80,6 @@ class ElasticCore:
             existing_connection_parameters = dict((key, value) for key, value in ES_CONNECTION_PARAMETERS.items() if value is not None)
             client = Elasticsearch(list_of_hosts, http_auth=(self.ES_USERNAME, self.ES_PASSWORD), **existing_connection_parameters)
             return client
-        else:
-            return None
-
 
     def _check_connection(self):
         try:
@@ -91,7 +89,7 @@ class ElasticCore:
             else:
                 return False
         except Exception as e:
-            return False
+            raise ValidationError(f"Error connecting to Elasticsearch: '{self.ES_URL}'! Do you have the right URL configured?")
 
 
     @staticmethod
