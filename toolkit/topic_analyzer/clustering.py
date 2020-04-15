@@ -63,10 +63,10 @@ class Clustering:
     def _get_vectors(self):
         processed_corpus = [self._tokenize(doc["text"]) for doc in self.docs]
         dictionary = corpora.Dictionary(processed_corpus)
-        num_unique_words = len(dictionary)
+        #num_unique_words = len(dictionary)
         #ignore 20% most frequent words
         #im not sure whether this is needed as we below filter extremes out anyway but let's keep this right now
-        dictionary.filter_n_most_frequent(int(num_unique_words*0.2))
+        #dictionary.filter_n_most_frequent(int(num_unique_words*0.2))
         #do some more filtering and keep only n most frequent specified with num_dims parameter
         dictionary.filter_extremes(no_below=1, no_above=0.8, keep_n=self.num_dims)
 
@@ -160,9 +160,6 @@ class ClusterContent:
 
 
     def get_intracluster_similarity(self):
-        if self.doc_ids:
-            cluster_vectors = [self.vectors[doc_id] for doc_id in self.doc_ids]
-            similarities = cosine_similarity(cluster_vectors)
-            return np.mean(similarities)
-        else:
-            return 0
+        cluster_vectors = [self.vectors[doc_id] for doc_id in self.doc_ids]
+        similarities = cosine_similarity(cluster_vectors)
+        return np.mean(similarities)
