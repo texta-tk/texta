@@ -77,7 +77,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         fact_name = serializer.validated_data['fact_name']
         active_project = Project.objects.get(id=self.kwargs['project_pk'])
         serialized_indices = [index["name"] for index in serializer.validated_data["tagger"]["indices"]]
-        indices = Project.objects.get(pk=kwargs["project_pk"]).filter_from_indices(serialized_indices)
+        indices = Project.objects.get(pk=kwargs["project_pk"]).get_available_or_all_project_indices(serialized_indices)
         if not indices:
             raise ValidationError("No indices are available to you!")
 

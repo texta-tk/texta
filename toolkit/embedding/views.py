@@ -74,7 +74,7 @@ class EmbeddingViewSet(viewsets.ModelViewSet, BulkDelete):
     def perform_create(self, serializer):
         project = Project.objects.get(id=self.kwargs['project_pk'])
         indices = [index["name"] for index in serializer.validated_data["indices"]]
-        indices = project.filter_from_indices(indices)
+        indices = project.get_available_or_all_project_indices(indices)
 
         # If no indices are sent with the request, it gets all.
         # If all indices still means none, then we have a problem.

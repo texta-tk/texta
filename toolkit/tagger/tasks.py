@@ -31,7 +31,7 @@ def create_tagger_batch(tagger_group_id, taggers_to_create):
     logging.getLogger(INFO_LOGGER).info(f"Creating {len(taggers_to_create)} taggers for TaggerGroup ID: {tagger_group_id}!")
     for tagger_data in taggers_to_create:
         indices = [index["name"] for index in tagger_data["indices"]]
-        indices = tagger_group_object.project.filter_from_indices(indices)
+        indices = tagger_group_object.project.get_available_or_all_project_indices(indices)
         tagger_data.pop("indices")
 
         created_tagger = Tagger.objects.create(
