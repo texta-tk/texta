@@ -59,7 +59,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
     def perform_create(self, serializer):
         project = Project.objects.get(id=self.kwargs['project_pk'])
         indices = [index["name"] for index in serializer.validated_data["indices"]]
-        indices = project.filter_from_indices(indices)
+        indices = project.get_available_or_all_project_indices(indices)
 
         serializer.validated_data.pop("indices")
 

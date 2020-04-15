@@ -90,7 +90,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         return_only_docs = serializer.validated_data.get("with_meta", False)
         project = self.get_object()
 
-        indices = project.filter_from_indices(indices)
+        indices = project.get_available_or_all_project_indices(indices)
 
         ec = ElasticCore()
         documents = ec.scroll(indices=indices, query=query, scroll_id=scroll_id, size=size, with_meta=return_only_docs, fields=fields)
@@ -101,6 +101,9 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
     def get_fields(self, request, pk=None, project_pk=None):
         """Returns list of fields from all Elasticsearch indices inside the project."""
         project_object = self.get_object()
+
+        # Fetch the indices to return an empty list for project with empty
+        # indices.
         project_indices = list(project_object.get_indices())
         if not project_indices:
             return Response([])
@@ -153,7 +156,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
 
         # retrieve and validate project indices
         project = self.get_object()
-        project_indices = project.filter_from_indices(indices)  # Gives all if none, the default, is entered.
+        project_indices = project.get_available_or_all_project_indices(indices)  # Gives all if none, the default, is entered.
 
         if not project_indices:
             return Response([])
@@ -223,14 +226,13 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
     @action(detail=True, methods=['post'], serializer_class=ProjectSearchByQuerySerializer, permission_classes=[ExtraActionResource])
     def search_by_query(self, request, pk=None, project_pk=None):
         """Executes **raw** Elasticsearch query on all project indices."""
+        project: Project = self.get_object()
         serializer = ProjectSearchByQuerySerializer(data=request.data)
+
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
 
-        if serializer.validated_data["indices"]:
-            indices = serializer.validated_data["indices"]
-        else:
-            indices = self.get_object().get_indices()
+        indices = project.get_available_or_all_project_indices(serializer.validated_data["indices"])
 
         if not indices:
             raise ProjectValidationFailed(detail="No indices supplied and project has no indices")
@@ -286,21 +288,22 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactValuesSerializer, permission_classes=[ExtraActionResource])
     def autocomplete_fact_values(self, request, pk=None, project_pk=None):
-        data = request.data
-        serializer = ProjectSuggestFactValuesSerializer(data=data)
+
+        serializer = ProjectSuggestFactValuesSerializer(data=request.data)
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
 
-        project_object = self.get_object()
-        project_indices = list(project_object.get_indices())
-        if not project_indices:
+        project_object: Project = self.get_object()
+        indices = [index["name"] for index in serializer.validated_data["indices"]]
+        indices = project_object.get_available_or_all_project_indices(indices)
+        if not indices:
             raise ProjectValidationFailed(detail="Project has no indices")
 
         limit = serializer.validated_data['limit']
         startswith = serializer.validated_data['startswith']
         fact_name = serializer.validated_data['fact_name']
 
-        autocomplete = Autocomplete(project_object, project_indices, limit)
+        autocomplete = Autocomplete(project_object, indices, limit)
         fact_values = autocomplete.get_fact_values(startswith, fact_name)
 
         return Response(fact_values, status=status.HTTP_200_OK)
@@ -308,19 +311,22 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
 
     @action(detail=True, methods=['post'], serializer_class=ProjectSuggestFactNamesSerializer, permission_classes=[ExtraActionResource])
     def autocomplete_fact_names(self, request, pk=None, project_pk=None):
-        data = request.data
-        serializer = ProjectSuggestFactNamesSerializer(data=data)
+
+        serializer = ProjectSuggestFactNamesSerializer(data=request.data)
         if not serializer.is_valid():
             raise SerializerNotValid(detail=serializer.errors)
+
         project_object = self.get_object()
-        project_indices = list(project_object.get_indices())
-        if not project_indices:
+        indices = [index["name"] for index in serializer.validated_data["indices"]]
+        indices = project_object.get_available_or_all_project_indices(indices)
+
+        if not indices:
             raise ProjectValidationFailed(detail="Project has no indices")
 
         limit = serializer.validated_data['limit']
         startswith = serializer.validated_data['startswith']
 
-        autocomplete = Autocomplete(project_object, project_indices, limit)
+        autocomplete = Autocomplete(project_object, indices, limit)
         fact_values = autocomplete.get_fact_names(startswith)
 
         return Response(fact_values, status=status.HTTP_200_OK)

@@ -8,6 +8,7 @@ from toolkit.core.project.models import Project
 from toolkit.core.project.validators import check_if_in_elastic
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import EMPTY_QUERY
+from toolkit.elastic.serializers import IndexSerializer
 
 
 class ProjectMultiTagSerializer(serializers.Serializer):
@@ -18,7 +19,6 @@ class ProjectMultiTagSerializer(serializers.Serializer):
     hide_false = serializers.BooleanField(default=False, help_text='Hide negative tagging results in response.')
     lemmatize = serializers.BooleanField(default=False, help_text='Use MLP lemmatizer if available. Use only if training data was lemmatized. Default: False')
     feedback_enabled = serializers.BooleanField(default=False, help_text='Stores tagged response in Elasticsearch and returns additional url for giving feedback to Tagger. Default: False')
-
 
 
 class ProjectSearchByQuerySerializer(serializers.Serializer):
@@ -52,7 +52,7 @@ class ProjectSimplifiedSearchSerializer(serializers.Serializer):
 
 
 class ProjectGetFactsSerializer(serializers.Serializer):
-    indices = serializers.ListField(default=[])
+    indices = IndexSerializer(many=True, default=[], help_text="Which indices to use for the fact search.")
     values_per_name = serializers.IntegerField(default=choices.DEFAULT_VALUES_PER_NAME,
                                                help_text=f'Number of fact values per fact name. Default: 10.')
     output_type = serializers.ChoiceField(choices=((True, 'fact names with values'), (False, 'fact names without values')),
@@ -91,6 +91,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
             instance.save()
 
         return instance
+
 
     def create(self, validated_data):
         from toolkit.elastic.models import Index
@@ -148,12 +149,14 @@ class ProjectSuggestFactValuesSerializer(serializers.Serializer):
                                      help_text=f'Number of suggestions. Default: {choices.DEFAULT_SUGGESTION_LIMIT}.')
     startswith = serializers.CharField(help_text=f'The string to autocomplete fact values with.', allow_blank=True)
     fact_name = serializers.CharField(help_text='Fact name from which to suggest values.')
+    indices = IndexSerializer(many=True, default=[], help_text="Which indices to use for the fact search.")
 
 
 class ProjectSuggestFactNamesSerializer(serializers.Serializer):
     limit = serializers.IntegerField(default=choices.DEFAULT_VALUES_PER_NAME,
                                      help_text=f'Number of suggestions. Default: {choices.DEFAULT_SUGGESTION_LIMIT}.')
     startswith = serializers.CharField(help_text=f'The string to autocomplete fact names with.', allow_blank=True)
+    indices = IndexSerializer(many=True, default=[], help_text="Which indices to use for the fact search.")
 
 
 class ProjectGetSpamSerializer(serializers.Serializer):

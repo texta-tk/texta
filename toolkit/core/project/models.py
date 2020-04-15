@@ -38,7 +38,7 @@ class Project(models.Model):
         return field_data
 
 
-    def filter_from_indices(self, indices: List[str] = None) -> List[str]:
+    def get_available_or_all_project_indices(self, indices: List[str] = None) -> List[str]:
         """
         Used in views where the user can select the indices they wish to use.
         Returns a list of index names from the ones that are in the project
