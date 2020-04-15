@@ -160,6 +160,10 @@ class ClusterContent:
 
 
     def get_intracluster_similarity(self):
-        cluster_vectors = [self.vectors[doc_id] for doc_id in self.doc_ids]
-        similarities = cosine_similarity(cluster_vectors)
-        return np.mean(similarities)
+        if self.doc_ids:
+            cluster_vectors = [self.vectors[doc_id] for doc_id in self.doc_ids]
+            similarities = cosine_similarity(cluster_vectors)
+            return np.mean(similarities)
+        else:
+            return 0
+
