@@ -51,7 +51,16 @@ class ProjectViewTests(APITestCase):
 
     def test_get_facts(self):
         url = f'{self.project_url}/get_facts/'
-        response = self.client.get(url)
+        response = self.client.post(url)
+        print_output('get_facts:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue(TEST_FACT_NAME in [field['name'] for field in response.data])
+
+
+    def test_get_facts_with_indices(self):
+        url = f'{self.project_url}/get_facts/'
+        response = self.client.post(url, format="json", data={"indices": [{"name": TEST_INDEX}]})
         print_output('get_facts:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, list))
@@ -90,8 +99,30 @@ class ProjectViewTests(APITestCase):
         self.assertTrue('bar' not in response.data)
 
 
+    def test_autocomplete_fact_values_with_indices(self):
+        payload = {"limit": 5, "startswith": "fo", "fact_name": TEST_FACT_NAME, "indices": [{"name": TEST_INDEX}]}
+        url = f'{self.project_url}/autocomplete_fact_values/'
+        response = self.client.post(url, payload)
+        print_output('test_autocomplete_fact_values:response.data', response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue('foo' in response.data)
+        self.assertTrue('bar' not in response.data)
+
+
     def test_autocomplete_fact_names(self):
         payload = {"limit": 5, "startswith": "TE"}
+        url = f'{self.project_url}/autocomplete_fact_names/'
+        response = self.client.post(url, payload)
+        print_output('test_autocomplete_fact_names:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue('TEEMA' in response.data)
+
+
+    def test_autocomplete_fact_names_with_indices(self):
+        payload = {"limit": 5, "startswith": "TE", "indices": [{"name": TEST_INDEX}]}
         url = f'{self.project_url}/autocomplete_fact_names/'
         response = self.client.post(url, payload)
         print_output('test_autocomplete_fact_names:response.data', response.data)

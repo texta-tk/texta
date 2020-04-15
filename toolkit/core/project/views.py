@@ -91,6 +91,8 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         project = self.get_object()
 
         indices = project.get_available_or_all_project_indices(indices)
+        if not indices:
+            raise ValidationError("No indices available for scrolling.")
 
         ec = ElasticCore()
         documents = ec.scroll(indices=indices, query=query, scroll_id=scroll_id, size=size, with_meta=return_only_docs, fields=fields)
@@ -132,6 +134,9 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         serializer.is_valid(raise_exception=True)
 
         indices = list(self.get_object().get_indices())
+        if not indices:
+            return Response([])
+
         detector = SpamDetector(indices)
 
         all_fields = ElasticCore().get_fields(indices)
@@ -142,7 +147,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         return Response(response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get'], serializer_class=ProjectGetFactsSerializer)
+    @action(detail=True, methods=['post'], serializer_class=ProjectGetFactsSerializer, permission_classes=[IsAuthenticated, ExtraActionResource])
     def get_facts(self, request, pk=None, project_pk=None):
         """
         Returns existing fact names and values from Elasticsearch.
@@ -153,10 +158,11 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             raise SerializerNotValid(detail=serializer.errors)
 
         indices = serializer.validated_data["indices"]
+        indices = [index["name"] for index in indices]
 
         # retrieve and validate project indices
         project = self.get_object()
-        project_indices = project.get_available_or_all_project_indices(indices)  # Gives all if none, the default, is entered.
+        project_indices = project.get_available_or_all_project_indices(indices)  # Gives all if n   one, the default, is entered.
 
         if not project_indices:
             return Response([])
@@ -297,7 +303,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         indices = [index["name"] for index in serializer.validated_data["indices"]]
         indices = project_object.get_available_or_all_project_indices(indices)
         if not indices:
-            raise ProjectValidationFailed(detail="Project has no indices")
+            return Response([])
 
         limit = serializer.validated_data['limit']
         startswith = serializer.validated_data['startswith']
@@ -321,7 +327,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         indices = project_object.get_available_or_all_project_indices(indices)
 
         if not indices:
-            raise ProjectValidationFailed(detail="Project has no indices")
+            return Response([])
 
         limit = serializer.validated_data['limit']
         startswith = serializer.validated_data['startswith']

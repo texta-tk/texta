@@ -127,7 +127,7 @@ class SpamDetector:
         self.result = container
 
 
-    def get_spam_content(self, **kwargs):
+    def get_spam_content(self, **kwargs) -> List[dict]:
         """
         Default values of the serializer should be hit into this.
         """
