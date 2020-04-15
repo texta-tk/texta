@@ -58,8 +58,8 @@ class ClusteringSerializer(serializers.ModelSerializer):
     display_fields = serializers.ListField(default=[], allow_empty=True, help_text='Fields that are used for displaying cluster content. If not specified it is same as "fields".')
     vectorizer = serializers.ChoiceField(choices=VECTORIZERS, default=VECTORIZERS[0][0])
     num_dims = serializers.IntegerField(min_value=1, max_value=10000, default=1000, help_text='Size of the word dictionary.')
-    use_lsi = serializers.BooleanField(default=False, help_text='Wether to use LSI for dimensionality reduction.')
-    num_topics = serializers.IntegerField(min_value=1, max_value=1000, default=50, help_text='The number of topics related to documents. Is only needed if use_lsi is set to 1.')
+    use_lsi = serializers.BooleanField(default=False, help_text='If set to 1 (true), transforms document-term matrix into lower-dimensional space using LSI. Might and might not improve clustering results.')
+    num_topics = serializers.IntegerField(min_value=1, max_value=1000, default=50, help_text='Is only used if use_lsi is set to 1. The number of dimension in lower-dimensional space.')
 
     stop_words = serializers.ListField(default=[], allow_empty=True, help_text='List of custom stop words to be removed from documents before clustering.')
     document_limit = serializers.IntegerField(default=100, min_value=1, max_value=10000, help_text='Number of documents retrieved from indices.')
