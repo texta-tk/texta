@@ -19,6 +19,7 @@ from toolkit.tools.swagger import schema_view
 from toolkit.torchtagger.urls import router as torchtagger_router
 
 from toolkit.core.core_variable.views import CoreVariableViewSet
+from toolkit.settings import MEDIA_DIR, MEDIA_URL
 
 
 @login_required
@@ -44,6 +45,10 @@ project_router.registry.extend(mlp_router.registry)
 app_name = 'toolkit_v1'
 
 urlpatterns = [
+    # protected media
+    url(r'^%s(?P<path>.*)$' % MEDIA_URL, protected_serve, {'document_root': MEDIA_DIR}),
+    # static
+    url(r'api/v1/static/(?P<path>.*)$', serve, {'document_root': 'static'}),
     # documentation
     url(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     url(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
