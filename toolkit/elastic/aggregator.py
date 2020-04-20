@@ -95,7 +95,7 @@ class ElasticAggregator:
         return entities
 
 
-    def filter_aggregation_maker(self, agg_type: str, field: str, filter_query: dict = None, size=100):
+    def filter_aggregation_maker(self, agg_type: str, field: str, filter_query: dict = None, size=100, return_size=15):
 
         container = []
 
@@ -112,4 +112,4 @@ class ElasticAggregator:
             for hit in r.aggs.limits.placekeeper:
                 container.append(hit.to_dict())
 
-        return container[:15]
+        return container[:return_size]

@@ -277,7 +277,7 @@ class ElasticSearcher:
                     yield page
 
             # get new page
-            page = self.core.es.scroll(scroll_id=scroll_id, scroll='1m')
+            page = self.core.es.scroll(scroll_id=scroll_id, scroll=self.timeout)
             scroll_id = page['_scroll_id']
             page_size = len(page['hits']['hits'])
             current_page += 1

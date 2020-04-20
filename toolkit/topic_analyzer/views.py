@@ -334,7 +334,7 @@ class ClusteringViewSet(viewsets.ModelViewSet, BulkDelete):
             project = Project.objects.get(id=self.kwargs['project_pk'])
             indices = serializer.validated_data["indices"]
             indices = [index["name"] for index in indices]
-            indices = project.filter_from_indices(indices)
+            indices = project.get_available_or_all_project_indices(indices)
 
             serializer.validated_data.pop("indices")
 
