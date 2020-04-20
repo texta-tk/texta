@@ -161,7 +161,13 @@ class ClusterContent:
 
     def get_intracluster_similarity(self):
         if self.doc_ids:
-            cluster_vectors = [self.vectors[doc_id] for doc_id in self.doc_ids]
+            cluster_vectors = []
+            for doc_id in self.doc_ids:
+                try:
+                    cluster_vectors.append(self.vectors[doc_id])
+                except KeyError:
+                    continue
+
             similarities = cosine_similarity(cluster_vectors)
             return np.mean(similarities)
         else:

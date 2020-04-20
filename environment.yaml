@@ -7,7 +7,7 @@ channels:
   - pytorch
 
 dependencies:
-  - python=3.7
+  - python=3.6
   - pip
   - pandas
   - scikit-learn==0.22.1
@@ -22,23 +22,24 @@ dependencies:
   - mysqlclient
   - pytorch
   - pip:
-    - django==2.1.*
-    - django-multiselectfield
-    - django-rest-serializer-field-permissions
-    - django-cors-headers
-    - django-extensions
-    - django-filter
-    - django-rest-auth[with_social]
-    - djangorestframework==3.9.*
-    - drf-nested-routers
-    - celery==4.*
-    - redis==3.*
-    - elasticsearch<7
-    - elasticsearch_dsl<7
-    - termcolor
-    - joblib
-    - python-json-logger
-    - drf-yasg
-    - torchtext
-    - xlrd
-    - dill
+      - django==2.1.*
+      - django-multiselectfield
+      - django-rest-serializer-field-permissions
+      - django-cors-headers
+      - django-extensions
+      - django-filter
+      - django-rest-auth[with_social]
+      - djangorestframework==3.9.*
+      - drf-nested-routers
+      - celery==4.*
+      - redis==3.*
+      - elasticsearch<7
+      - elasticsearch_dsl<7
+      - termcolor
+      - joblib
+      - python-json-logger
+      - drf-yasg
+      - torchtext
+      - xlrd
+      - dill
+      - whitenoise
