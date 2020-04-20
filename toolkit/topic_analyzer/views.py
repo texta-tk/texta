@@ -39,7 +39,7 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         'task__time_started',
         'task__time_completed',
         'indices__name',
-        'original_text_field',
+        'display_fields',
         'intracluster_similarity',
         'document_count'
     )
@@ -216,10 +216,10 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         fields = json.loads(cluster.fields)
         indices = json.loads(cluster.indices)
         significant_words = json.loads(cluster.significant_words)
-        original_text_field = cluster.original_text_field
+        display_fields = json.loads(cluster.display_fields)
 
-        if original_text_field:
-            fields.append(original_text_field)
+        if display_fields:
+            fields += display_fields
 
         ed = ElasticDocument(index=",".join(indices))
 
@@ -253,7 +253,7 @@ class ClusteringViewSet(viewsets.ModelViewSet, BulkDelete):
         'task__time_completed',
         'clustering_algorithm',
         'vectorizer',
-        'original_text_field',
+        'display_fields',
         'num_topics',
         'num_cluster',
         'num_dims',
@@ -342,6 +342,7 @@ class ClusteringViewSet(viewsets.ModelViewSet, BulkDelete):
                 author=self.request.user,
                 project=project,
                 fields=json.dumps(serializer.validated_data["fields"]),
+                display_fields=json.dumps(serializer.validated_data["display_fields"]),
                 query=json.dumps(serializer.validated_data["query"]),
                 stop_words=json.dumps(serializer.validated_data["stop_words"]),
                 ignored_ids=json.dumps(serializer.validated_data["ignored_ids"])

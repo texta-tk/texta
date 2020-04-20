@@ -4,7 +4,7 @@ from collections import defaultdict
 import numpy as np
 from gensim import corpora, models
 from gensim.matutils import corpus2csc
-from gensim.parsing.preprocessing import preprocess_string, strip_multiple_whitespaces, strip_punctuation, strip_short, strip_tags
+from gensim.parsing.preprocessing import preprocess_string, strip_short, strip_tags
 from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -15,7 +15,7 @@ class Clustering:
                  docs,
                  vectorizer="TfIdf Vectorizer",
                  num_clusters=10,
-                 clustering_algorithm="minibatchkmeans",
+                 clustering_algorithm="kmeans",
                  stop_words=[],
                  num_dims=1000,
                  use_lsi=False,
@@ -33,7 +33,6 @@ class Clustering:
 
         self.clustering_result = {}
         self.vectors = {}
-
 
     def to_json(self):
         return {
@@ -55,18 +54,19 @@ class Clustering:
         def _custom_strip_short(s):
             return strip_short(s, minsize=2)
 
-
-        CUSTOM_FILTERS = [lambda x: x.lower(), strip_tags, strip_punctuation, strip_multiple_whitespaces, _custom_strip_short]
-        tokens = preprocess_string(text, CUSTOM_FILTERS)
-        return [token for token in tokens if token not in self.custom_stop_words]
+        #most of the preprocessing is done already
+        #strip_tags removes style definitions etc as well which is good
+        CUSTOM_FILTERS = [strip_tags, _custom_strip_short]
+        return preprocess_string(text, CUSTOM_FILTERS)
 
     def _get_vectors(self):
         processed_corpus = [self._tokenize(doc["text"]) for doc in self.docs]
         dictionary = corpora.Dictionary(processed_corpus)
-        num_unique_words = len(dictionary)
+
         #ignore 20% most frequent words
-        #im not sure whether this is needed as we below filter extremes out anyway but let's keep this right now
-        dictionary.filter_n_most_frequent(int(num_unique_words*0.2))
+        #num_unique_words = len(dictionary)
+        #dictionary.filter_n_most_frequent(int(num_unique_words*0.2))
+
         #do some more filtering and keep only n most frequent specified with num_dims parameter
         dictionary.filter_extremes(no_below=1, no_above=0.8, keep_n=self.num_dims)
 
@@ -166,3 +166,4 @@ class ClusterContent:
             return np.mean(similarities)
         else:
             return 0
+

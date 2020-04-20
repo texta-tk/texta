@@ -42,7 +42,7 @@ def perform_data_clustering(clustering_id):
         query = serializer.data["query"]
         ignored_ids = serializer.data["ignored_ids"]
         fields = serializer.data["fields"]
-        original_text_field = serializer.data["original_text_field"]
+        display_fields = serializer.data["display_fields"]
         document_limit = serializer.data["document_limit"]
         vectorizer = serializer.data["vectorizer"]
         num_dims = serializer.data["num_dims"]
@@ -90,7 +90,7 @@ def perform_data_clustering(clustering_id):
             "results": list(clusters.clustering_result.items()),
             "fields": fields,
             "indices": indices,
-            "original_text_field": original_text_field,
+            "display_fields": display_fields,
             "vectors_filepath": path
         }
 
@@ -113,7 +113,7 @@ def save_clustering_results(clustering_result: dict):
         clustering_results = clustering_result["results"]
         fields = clustering_result["fields"]
         indices = clustering_result["indices"]
-        original_text_field = clustering_result["original_text_field"]
+        display_fields = clustering_result["display_fields"]
         vectors_filepath = clustering_result["vectors_filepath"]
 
         clustering_obj.vector_model.name = vectors_filepath
@@ -135,7 +135,7 @@ def save_clustering_results(clustering_result: dict):
                 document_ids=document_ids_json,
                 cluster_id=cluster_id,
                 fields=json.dumps(fields),
-                original_text_field=original_text_field,
+                display_fields=json.dumps(display_fields),
                 indices=json.dumps(indices),
                 intracluster_similarity=cluster_content.get_intracluster_similarity()
             )
