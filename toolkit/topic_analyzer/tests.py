@@ -301,3 +301,17 @@ class TopicAnalyzerTests(APITestCase):
 
         response = self.client.post(url, format="json", data={"ids": ["wrong, sample id"], "receiving_cluster_id": 1000})
         self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+
+
+    def test_cluster_deletion_on_clustering_deletion(self):
+        clustering_id = self._train_topic_cluster()
+        clustering = ClusteringResult.objects.get(pk=clustering_id)
+        cluster_ids = [cluster.id for cluster in clustering.cluster_result.all()]
+
+        url = reverse("v1:clustering-detail", kwargs={"project_pk": self.project.pk, "pk": clustering_id})
+        response = self.client.delete(url)
+        self.assertTrue(response.status_code == status.HTTP_204_NO_CONTENT)
+
+        clusters = Cluster.objects.filter(id__in=cluster_ids)
+        self.assertTrue(clusters.count() == 0)
+        print_output("test_cluster_deletion_on_clustering_deletion", 204)

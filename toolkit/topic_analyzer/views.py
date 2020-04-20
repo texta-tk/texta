@@ -355,3 +355,8 @@ class ClusteringViewSet(viewsets.ModelViewSet, BulkDelete):
 
             # Start the whole clustering process.
             clustering_result.train()
+
+
+    def perform_destroy(self, instance: ClusteringResult):
+        clusters = instance.cluster_result.all().delete()
+        return super(ClusteringViewSet, self).perform_destroy(instance)
