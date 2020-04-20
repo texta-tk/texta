@@ -6,6 +6,7 @@ import requests
 from django.db import transaction
 from elasticsearch import Elasticsearch
 from rest_framework.exceptions import ValidationError
+from elasticsearch_dsl import Mapping, Nested, Keyword, Long
 
 from toolkit.elastic.exceptions import ElasticAuthenticationException, ElasticAuthorizationException, ElasticIndexNotFoundException, ElasticTimeoutException, ElasticTransportException
 from toolkit.settings import ERROR_LOGGER, ES_CONNECTION_PARAMETERS
@@ -269,3 +270,26 @@ class ElasticCore:
                 "documents": documents
             }
             return response
+
+
+    def add_texta_facts_mapping(self, index: str, doc_type=None):
+        """
+        To allow for more flexibility, we do not use the indices variable in the class.
+
+        Adding the same mapping multiple times doesn't effect anything,
+        adding a single field is also save as the query only adds, not overwrites.
+        """
+        m = Mapping(index) if doc_type is None else Mapping(doc_type)
+        texta_facts = Nested(
+            properties={
+                "spans": Keyword(),
+                "fact": Keyword(),
+                "str_val": Keyword(),
+                "doc_path": Keyword(),
+                "num_val": Long(),
+            }
+        )
+
+        # Set the name of the field along with its mapping body
+        m.field("texta_facts", texta_facts)
+        m.save(index=index, using=self.es)

@@ -137,6 +137,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
             'dataset_imports',
             'searches',
             'scroll',
+            'clustering',
             'embeddings',
             'embedding_clusters',
             'taggers',

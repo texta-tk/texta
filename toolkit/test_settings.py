@@ -3,6 +3,7 @@ from .settings import TEST_DATA_DIR
 import os
 
 TEST_INDEX = "texta_test_index"
+TEST_DOCTYPE = "test_mapping"
 TEST_INDEX_REINDEX = f'{TEST_INDEX}_reindexed'
 TEST_INDEX_LARGE = "texta_test_index_large"
 REINDEXER_TEST_INDEX = "reindexer_test_index"

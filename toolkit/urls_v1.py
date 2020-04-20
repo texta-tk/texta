@@ -16,6 +16,7 @@ from toolkit.embedding.urls import embedding_router
 from toolkit.mlp.urls import mlp_router
 from toolkit.tagger.urls import router as tagger_router
 from toolkit.tools.swagger import schema_view
+from toolkit.topic_analyzer.views import ClusteringViewSet, ClusterViewSet
 from toolkit.torchtagger.urls import router as torchtagger_router
 
 from toolkit.core.core_variable.views import CoreVariableViewSet
@@ -42,6 +43,11 @@ project_router.registry.extend(core_router.registry)
 project_router.registry.extend(torchtagger_router.registry)
 project_router.registry.extend(mlp_router.registry)
 
+# TODO Look for putting this into a better place.
+project_router.register(r'clustering', ClusteringViewSet, base_name='clustering')
+clustering_router = routers.NestedSimpleRouter(project_router, r'clustering', lookup='clustering')
+clustering_router.register("clusters", ClusterViewSet, base_name="cluster")
+
 app_name = 'toolkit_v1'
 
 urlpatterns = [
@@ -63,5 +69,7 @@ urlpatterns = [
     # routers
     url(r'^', include(router.urls)),
     path("", include(index_router.urls), name="index"),
-    url(r'^', include(project_router.urls))
+    url(r'^', include(project_router.urls)),
+    url(r'^', include(clustering_router.urls)),
+
 ]

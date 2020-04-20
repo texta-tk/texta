@@ -60,6 +60,7 @@ class TorchTaggerViewTests(TransactionTestCase):
         embeddings_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/embeddings/'
         response = self.client.post(embeddings_url, payload, format='json')
         self.test_embedding_id = response.data["id"]
+        print_output("run_train_embedding", 201)
 
 
     def run_train_tagger(self):
@@ -73,10 +74,14 @@ class TorchTaggerViewTests(TransactionTestCase):
             "num_epochs": 3,
             "embedding": self.test_embedding_id,
         }
+
+        print_output(f"training tagger with payload: {payload}", 200)
         response = self.client.post(self.url, payload, format='json')
         print_output('test_create_torchtagger_training_and_task_signal:response.data', response.data)
+
         # Check if Neurotagger gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
         # Check if f1 not NULL (train and validation success)
         tagger_id = response.data['id']
         response = self.client.get(f'{self.url}{tagger_id}/')
