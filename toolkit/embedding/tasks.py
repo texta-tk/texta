@@ -95,6 +95,6 @@ def train_embedding(embedding_id):
 
     except Exception as e:
         # declare the job failed
-        show_progress.update_errors(e)
+        task_object.add_error(str(e))
         task_object.update_status(Task.STATUS_FAILED)
         raise

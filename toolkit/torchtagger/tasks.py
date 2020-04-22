@@ -28,7 +28,6 @@ def train_torchtagger(tagger_id, testing=False):
         fields = json.loads(tagger_object.fields)
         indices = get_indices_from_object(tagger_object)
 
-
         # load embedding and create text processor
         # TODO: investigate if stop words should not be removed
         if tagger_object.embedding:
@@ -76,7 +75,6 @@ def train_torchtagger(tagger_id, testing=False):
         return True
 
     except Exception as e:
-        # declare the job failed
-        show_progress.update_errors(e)
+        task_object.add_error(str(e))
         task_object.update_status(Task.STATUS_FAILED)
         raise

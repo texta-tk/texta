@@ -5,7 +5,7 @@ import elasticsearch
 from elasticsearch_dsl.query import MoreLikeThis
 from elasticsearch_dsl import Search
 
-from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.core import ElasticCore, elastic_connection
 
 
 ES_SCROLL_SIZE = 500
@@ -207,6 +207,7 @@ class ElasticSearcher:
 
 
     # batch search makes an inital search, and then keeps pulling batches of results, until none are left.
+    @elastic_connection
     def scroll(self):
         page = self.core.es.search(index=self.indices, body=self.query, scroll=self.timeout, size=self.scroll_size)
         scroll_id = page['_scroll_id']
@@ -222,14 +223,13 @@ class ElasticSearcher:
         # set scroll break default
         scroll_break = False
         # iterate through scroll
-        while page_size > 0:
-            # break scroll is asked
-            if scroll_break:
-                break
+        while page_size > 0 and scroll_break is False:
+
             # process output
             if self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID, self.OUT_TEXT, self.OUT_TEXT_WITH_ID):
                 if self.callback_progress:
                     self.callback_progress.update(page_size)
+
                 for hit in page['hits']['hits']:
                     # if scroll limit reached, break the scroll
                     if self.scroll_limit and num_scrolled >= self.scroll_limit:
@@ -262,6 +262,7 @@ class ElasticSearcher:
                             if self.output == self.OUT_DOC_WITH_ID:
                                 parsed_doc['_id'] = hit['_id']
                             yield parsed_doc
+
             # return raw hit
             elif self.output == self.OUT_RAW:
                 # filter page by score

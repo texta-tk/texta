@@ -237,7 +237,6 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
 
 
 class ClusteringViewSet(viewsets.ModelViewSet, BulkDelete):
-    queryset = ClusteringResult.objects.all()
     serializer_class = ClusteringSerializer
     permission_classes = [permissions.IsAuthenticated, ProjectResourceAllowed]
 
@@ -261,6 +260,48 @@ class ClusteringViewSet(viewsets.ModelViewSet, BulkDelete):
         'indices__name',
         'task__status'
     )
+
+
+    def get_queryset(self):
+        return ClusteringResult.objects.filter(project=self.kwargs['project_pk'])
+
+
+    def perform_create(self, serializer):
+        # Atomic transaction makes sure that when inside the context an error appears,
+        # all actions within the database will be rolled back to avoid ghost records in the DB.
+        with transaction.atomic():
+            serializer.is_valid()
+
+            project = Project.objects.get(id=self.kwargs['project_pk'])
+            indices = serializer.validated_data["indices"]
+            indices = [index["name"] for index in indices]
+            indices = project.get_available_or_all_project_indices(indices)
+
+            serializer.validated_data.pop("indices")
+
+            clustering_result: ClusteringResult = serializer.save(
+                author=self.request.user,
+                project=project,
+                fields=json.dumps(serializer.validated_data["fields"]),
+                display_fields=json.dumps(serializer.validated_data["display_fields"]),
+                query=json.dumps(serializer.validated_data["query"]),
+                stop_words=json.dumps(serializer.validated_data["stop_words"]),
+                ignored_ids=json.dumps(serializer.validated_data["ignored_ids"])
+            )
+
+            clustering_result.task = Task.objects.create(clusteringresult=clustering_result)
+            clustering_result.save()
+
+            for index in Index.objects.filter(name__in=indices, is_open=True):
+                clustering_result.indices.add(index)
+
+            # Start the whole clustering process.
+            clustering_result.train()
+
+
+    def perform_destroy(self, instance: ClusteringResult):
+        clusters = instance.cluster_result.all().delete()
+        return super(ClusteringViewSet, self).perform_destroy(instance)
 
 
     @action(detail=True, methods=["post"], serializer_class=ClusteringIdsSerializer)
@@ -323,41 +364,3 @@ class ClusteringViewSet(viewsets.ModelViewSet, BulkDelete):
         sw = ea.filter_aggregation_maker(agg_type="significant_text", field=field, filter_query=query)
         sw = [{"key": hit["key"], "count": hit["doc_count"]} for hit in sw]
         return sw
-
-
-    def perform_create(self, serializer):
-        # Atomic transaction makes sure that when inside the context an error appears,
-        # all actions within the database will be rolled back to avoid ghost records in the DB.
-        with transaction.atomic():
-            serializer.is_valid()
-
-            project = Project.objects.get(id=self.kwargs['project_pk'])
-            indices = serializer.validated_data["indices"]
-            indices = [index["name"] for index in indices]
-            indices = project.get_available_or_all_project_indices(indices)
-
-            serializer.validated_data.pop("indices")
-
-            clustering_result: ClusteringResult = serializer.save(
-                author=self.request.user,
-                project=project,
-                fields=json.dumps(serializer.validated_data["fields"]),
-                display_fields=json.dumps(serializer.validated_data["display_fields"]),
-                query=json.dumps(serializer.validated_data["query"]),
-                stop_words=json.dumps(serializer.validated_data["stop_words"]),
-                ignored_ids=json.dumps(serializer.validated_data["ignored_ids"])
-            )
-
-            clustering_result.task = Task.objects.create(clusteringresult=clustering_result)
-            clustering_result.save()
-
-            for index in Index.objects.filter(name__in=indices, is_open=True):
-                clustering_result.indices.add(index)
-
-            # Start the whole clustering process.
-            clustering_result.train()
-
-
-    def perform_destroy(self, instance: ClusteringResult):
-        clusters = instance.cluster_result.all().delete()
-        return super(ClusteringViewSet, self).perform_destroy(instance)

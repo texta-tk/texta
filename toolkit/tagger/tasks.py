@@ -43,7 +43,6 @@ def create_tagger_batch(tagger_group_id, taggers_to_create):
         for index in Index.objects.filter(name__in=indices, is_open=True):
             created_tagger.indices.add(index)
 
-
         # add and save
         tagger_group_object.taggers.add(created_tagger)
         tagger_group_object.save()
@@ -160,7 +159,7 @@ def train_tagger(tagger_id):
     except Exception as e:
         # declare the job failed
         logging.getLogger(ERROR_LOGGER).exception(e)
-        show_progress.update_errors(e)
+        task_object.add_error(str(e))
         task_object.update_status(Task.STATUS_FAILED)
         raise
 
