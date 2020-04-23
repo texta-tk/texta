@@ -266,6 +266,27 @@ class ClusteringViewSet(viewsets.ModelViewSet, BulkDelete):
         return ClusteringResult.objects.filter(project=self.kwargs['project_pk'])
 
 
+    def perform_update(self, serializer: ClusteringSerializer):
+        with transaction.atomic():
+            serializer.is_valid(raise_exception=True)
+            data = {}
+
+            # Since we don't have a solid method to handle JSON fields yet,
+            # we handle those fields manually.
+            if "stop_words" in serializer.validated_data:
+                data["stop_words"] = json.dumps(serializer.validated_data["stop_words"])
+            if "ignored_ids" in serializer.validated_data:
+                data["ignored_ids"] = json.dumps(serializer.validated_data["ignored_ids"])
+            if "fields" in serializer.validated_data:
+                data["fields"] = serializer.validated_data["fields"]
+            if "display_fields" in serializer.validated_data:
+                data["display_fields"] = serializer.validated_data["display_fields"]
+            if "query" in serializer.validated_data:
+                data["query"] = serializer.validated_data["query"]
+
+            serializer.save(**data)
+
+
     def perform_create(self, serializer):
         # Atomic transaction makes sure that when inside the context an error appears,
         # all actions within the database will be rolled back to avoid ghost records in the DB.

@@ -315,3 +315,15 @@ class TopicAnalyzerTests(APITestCase):
         clusters = Cluster.objects.filter(id__in=cluster_ids)
         self.assertTrue(clusters.count() == 0)
         print_output("test_cluster_deletion_on_clustering_deletion", 204)
+
+
+    def test_updating_clustering_instances_stop_words(self):
+        stop_words = ["ja", "siis", "kui", "ka"]
+        url = reverse("v1:clustering-detail", kwargs={"project_pk": self.project.pk, "pk": self.clustering_id})
+        response = self.client.patch(url, data={"stop_words": stop_words}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+        clustering = ClusteringResult.objects.get(pk=self.clustering_id)
+        stored_stop_words = json.loads(clustering.stop_words)
+        self.assertTrue(sorted(stop_words) == sorted(stored_stop_words))
+        print_output("test_updating_clustering_instances_stop_words", 201)
