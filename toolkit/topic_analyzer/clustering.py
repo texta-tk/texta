@@ -31,8 +31,11 @@ class Clustering:
         self.num_topics = num_topics
         self.ignore_doc_ids = []
 
-        self.clustering_result = {}
-        self.vectors = {}
+        self.clustering_result = defaultdict(list)
+        self.tfidf_model = None
+        self.lsi_model = None
+        self.dictionary = None
+        self.doc_vectors = {}
 
     def to_json(self):
         return {
@@ -46,11 +49,11 @@ class Clustering:
             "num_topics": self.num_topics,
             "ignore_doc_ids": self.ignore_doc_ids,
             "clustering_result": self.clustering_result,
-            "vectors": self.vectors
+            "doc_vectors": self.doc_vectors
         }
 
-
-    def _tokenize(self, text):
+    @staticmethod
+    def _tokenize(text):
         def _custom_strip_short(s):
             return strip_short(s, minsize=2)
 
@@ -59,30 +62,31 @@ class Clustering:
         CUSTOM_FILTERS = [strip_tags, _custom_strip_short]
         return preprocess_string(text, CUSTOM_FILTERS)
 
+
     def _get_vectors(self):
         processed_corpus = [self._tokenize(doc["text"]) for doc in self.docs]
-        dictionary = corpora.Dictionary(processed_corpus)
+        self.dictionary = corpora.Dictionary(processed_corpus)
 
         #ignore 20% most frequent words
         #num_unique_words = len(dictionary)
         #dictionary.filter_n_most_frequent(int(num_unique_words*0.2))
 
         #do some more filtering and keep only n most frequent specified with num_dims parameter
-        dictionary.filter_extremes(no_below=1, no_above=0.8, keep_n=self.num_dims)
+        self.dictionary.filter_extremes(no_below=1, no_above=0.8, keep_n=self.num_dims)
 
-        bow_corpus = [dictionary.doc2bow(text) for text in processed_corpus]
+        bow_corpus = [self.dictionary.doc2bow(text) for text in processed_corpus]
 
         if self.vectorizer == "TfIdf Vectorizer":
-            tfidf_model = models.TfidfModel(bow_corpus)
-            transformed_corpus = tfidf_model[bow_corpus]
+            self.tfidf_model = models.TfidfModel(bow_corpus)
+            transformed_corpus = self.tfidf_model[bow_corpus]
         elif self.vectorizer == "Count Vectorizer":
             transformed_corpus = bow_corpus
 
         if self.use_lsi:
-            lsi_model = models.LsiModel(transformed_corpus, id2word=dictionary, num_topics=self.num_topics)
-            transformed_corpus = lsi_model[transformed_corpus]
+            self.lsi_model = models.LsiModel(transformed_corpus, id2word=self.dictionary, num_topics=self.num_topics)
+            transformed_corpus = self.lsi_model[transformed_corpus]
 
-        matrix = corpus2csc(transformed_corpus, num_terms=len(dictionary.keys()), num_docs=dictionary.num_docs)
+        matrix = corpus2csc(transformed_corpus, num_terms=len(self.dictionary.keys()), num_docs=self.dictionary.num_docs)
         return matrix.transpose()
 
 
@@ -97,12 +101,9 @@ class Clustering:
         elif self.algorithm == "minibatchkmeans":
             labels = MiniBatchKMeans(n_clusters=self.num_clusters, random_state=10).fit_predict(vectors)
 
-        result = defaultdict(list)
         for ix, doc in enumerate(self.docs):
-            result[int(labels[ix])].append(doc["id"])
-            self.vectors[doc["id"]] = vectors[ix].toarray()[0]
-
-        self.clustering_result = result
+            self.clustering_result[int(labels[ix])].append(doc["id"])
+            self.doc_vectors[doc["id"]] = vectors[ix].toarray()[0]
 
 
     def exclude_doc_from_cluster(self, cluster_id, document_id):
@@ -130,44 +131,61 @@ class Clustering:
         pass
 
 
-    def save_transformation(self, file_path, vectors: dict = None):
+    def save_transformation(self, file_path):
         with open(file_path, "wb") as f:
-            if vectors:
-                pickle.dump(vectors, f)
-            else:
-                pickle.dump(self.vectors, f)
+                pickle.dump({"tfidf_model": self.tfidf_model, 
+                             "lsi_model": self.lsi_model,
+                             "dictionary": self.dictionary,
+                             "doc_vectors": self.doc_vectors}, f)
 
         return True
 
 
 class ClusterContent:
-    def __init__(self, doc_ids, vectors=None, vectors_filepath=""):
+    def __init__(self, doc_ids, models=None, vectors_filepath=""):
         self.doc_ids = doc_ids
-        self.vectors = self._get_vectors(vectors, vectors_filepath)
+        self.vectors_filepath = vectors_filepath
+        self.models = self._get_models(models, vectors_filepath)
 
 
-    def _get_vectors(self, vectors, vectors_filepath):
-        if vectors is None:
-            return self._load_vectors(vectors_filepath)
+    def _get_models(self, models, vectors_filepath):
+        if models is None:
+            return self._load_models(vectors_filepath)
         else:
-            return vectors
+            return models
 
 
-    def _load_vectors(self, file_path):
+    def _load_models(self, file_path):
         with open(file_path, "rb") as f:
-            vectors = pickle.load(f)
-        return vectors
+            models = pickle.load(f)
+        return models
+
+    def _save_updated_models(self):
+        with open(self.vectors_filepath, "wb") as f:
+                pickle.dump(self.models, f)
 
 
-    def get_intracluster_similarity(self):
+    def get_intracluster_similarity(self, new_documents=[]):
+        if(len(new_documents) > 0):
+            dictionary = self.models["dictionary"]
+            for doc in new_documents:
+                processed_text = Clustering._tokenize(doc["text"])
+                doc_vec = [dictionary.doc2bow(processed_text)]
+                if(self.models["tfidf_model"] != None):
+                    doc_vec = self.models["tfidf_model"][doc_vec]
+                if(self.models["lsi_model"] != None):
+                    doc_vec = self.models["lsi_model"][doc_vec]
+
+                full_vec = corpus2csc(doc_vec, num_terms=len(dictionary.keys()), num_docs=dictionary.num_docs)
+                full_vec = full_vec.transpose()
+                self.models["doc_vectors"][doc["id"]] = full_vec[0].toarray()[0]
+
+            self._save_updated_models()
+
         if self.doc_ids:
             cluster_vectors = []
             for doc_id in self.doc_ids:
-                try:
-                    cluster_vectors.append(self.vectors[doc_id])
-                except KeyError:
-                    continue
-
+                cluster_vectors.append(self.models["doc_vectors"][doc_id])
             similarities = cosine_similarity(cluster_vectors)
             return np.mean(similarities)
         else:

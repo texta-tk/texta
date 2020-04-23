@@ -13,6 +13,7 @@ from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
+from toolkit.tools.text_processor import TextProcessor
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 from toolkit.topic_analyzer.serializers import ClusterSerializer, ClusteringSerializer, ClusteringIdsSerializer, TransferClusterDocumentsSerializer
 from .clustering import ClusterContent
@@ -94,8 +95,32 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         unique_ids = list(set(existing_documents + saved_documents))
         cluster_obj.document_ids = json.dumps(unique_ids)
 
+        #get texts of new documents
+        new_ids = [doc_id for doc_id in unique_ids if doc_id not in saved_documents]
+        new_documents = []
+        if(len(new_ids) > 0):
+            indices = clustering_obj.get_indices()
+            stop_words = json.loads(clustering_obj.stop_words)
+            ignored_ids = json.loads(clustering_obj.ignored_ids)
+            fields = json.loads(clustering_obj.fields)
+            document_limit = clustering_obj.document_limit
+            query = { "query": {"ids" : {"values" : new_ids}}}
+
+            text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
+            elastic_search = ElasticSearcher(
+            indices=indices,
+            query=query,
+            text_processor=text_processor,
+            ignore_ids=set(ignored_ids),
+            output=ElasticSearcher.OUT_TEXT_WITH_ID,
+            field_data=fields,
+            scroll_limit=document_limit
+            )
+
+            new_documents = [{"id": doc_id, "text": text} for doc_id, text in elastic_search]
+
         cc = ClusterContent(doc_ids=unique_ids, vectors_filepath=clustering_obj.vector_model.path)
-        cluster_obj.intracluster_similarity = float(cc.get_intracluster_similarity())
+        cluster_obj.intracluster_similarity = float(cc.get_intracluster_similarity(new_documents))
         cluster_obj.save()
         return Response({"message": "Documents successfully added to the cluster!"})
 
