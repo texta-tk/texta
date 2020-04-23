@@ -346,7 +346,8 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             'num_torchtaggers': proj.torchtagger_set.count(),
             'num_taggers': proj.tagger_set.count(),
             'num_tagger_groups': proj.taggergroup_set.count(),
-            'num_embeddings': proj.embedding_set.count()
+            'num_embeddings': proj.embedding_set.count(),
+            'num_clusterings': proj.clusteringresult_set.count()
         }
 
         return Response(response, status=status.HTTP_200_OK)
