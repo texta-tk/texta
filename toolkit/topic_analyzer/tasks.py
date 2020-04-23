@@ -91,7 +91,8 @@ def perform_data_clustering(clustering_id):
             "fields": fields,
             "indices": indices,
             "display_fields": display_fields,
-            "vectors_filepath": path
+            "vectors_filepath": path,
+            "stop_words": stop_words
         }
 
         return clustering_info
@@ -115,6 +116,7 @@ def save_clustering_results(clustering_result: dict):
         indices = clustering_result["indices"]
         display_fields = clustering_result["display_fields"]
         vectors_filepath = clustering_result["vectors_filepath"]
+        stop_words = clustering_result["stop_words"]
 
         clustering_obj.vector_model.name = vectors_filepath
         clustering_obj.save()
@@ -123,15 +125,11 @@ def save_clustering_results(clustering_result: dict):
         for cluster_id, document_ids in clustering_results:
             document_ids_json = json.dumps(document_ids)
 
-            significant_words = []
-            for field in fields:
-                sw = ClusteringViewSet.get_significant_words(indices, document_ids, field)
-                significant_words += sw
-
+            sw = Cluster.get_significant_words(indices=indices, document_ids=document_ids, fields=fields, stop_words=stop_words)
             cluster_content = ClusterContent(document_ids, vectors_filepath=vectors_filepath)
 
             label = Cluster.objects.create(
-                significant_words=json.dumps(significant_words),
+                significant_words=json.dumps(sw),
                 document_ids=document_ids_json,
                 cluster_id=cluster_id,
                 fields=json.dumps(fields),

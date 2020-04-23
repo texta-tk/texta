@@ -1,3 +1,5 @@
+from typing import List
+
 from elasticsearch_dsl import Search, Q
 
 from toolkit.elastic.core import ElasticCore
@@ -95,7 +97,7 @@ class ElasticAggregator:
         return entities
 
 
-    def filter_aggregation_maker(self, agg_type: str, field: str, filter_query: dict = None, size=100, return_size=15):
+    def filter_aggregation_maker(self, agg_type: str, field: str, filter_query: dict = None, size=1000, return_size=15, stop_words: List = None):
 
         container = []
 
@@ -112,4 +114,24 @@ class ElasticAggregator:
             for hit in r.aggs.limits.placekeeper:
                 container.append(hit.to_dict())
 
+        if stop_words:
+            container = [item for item in container if item["key"] not in set(stop_words)]
+
         return container[:return_size]
+
+
+    def get_significant_words(self, document_ids: List[str], field: str, stop_words: List = None) -> List[dict]:
+        """
+        Args:
+            stop_words: Optional parameter to remove stop words from significant words.
+            indices: List of string to limit the indices we're looking from.
+            document_ids: List of document ids to limit the range of the significant words.
+            field: Path name of the field we're comparing text from for significant words.
+
+        Returns: List of dicts with the aggregation results.
+
+        """
+        query = {'ids': {'values': document_ids}}
+        sw = self.filter_aggregation_maker(agg_type="significant_text", field=field, filter_query=query, stop_words=stop_words)
+        sw = [{"key": hit["key"], "count": hit["doc_count"]} for hit in sw]
+        return sw

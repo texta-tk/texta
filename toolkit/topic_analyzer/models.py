@@ -2,6 +2,7 @@
 import json
 import os
 import secrets
+from typing import List
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -9,6 +10,8 @@ from django.dispatch import receiver
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
+from toolkit.elastic.aggregator import ElasticAggregator
+from toolkit.elastic.document import ElasticDocument
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.settings import MODELS_DIR
@@ -23,6 +26,36 @@ class Cluster(models.Model):
     indices = models.TextField(default="[]")
     significant_words = models.TextField(default="[]")
     intracluster_similarity = models.FloatField()
+
+    @staticmethod
+    def get_significant_words(indices: List[str], fields: List[str], document_ids: List[str], stop_words: List = None):
+        """
+        This is a helper function to parse all the given fields and use the document_ids
+        as input to make a significant_words aggregation.
+        Args:
+            stop_words: Optional parameter to remove stopwords from the results.
+            indices: Indices from which to perform the aggregation.
+            fields: From which fields can you get the text content needed for comparison.
+            document_ids: IDs of the documents you want to use as baseline for the aggregation.
+
+        Returns: List of dictionaries with the signifanct word and how many times it occurs in the documents.
+
+        """
+        ed = ElasticDocument("*")
+        ea = ElasticAggregator(indices=indices)
+
+        # Validate that those documents exist.
+        validated_docs: List[dict] = ed.get_bulk(document_ids)
+        if validated_docs:
+            unique_ids = list(set([index["_id"] for index in validated_docs]))
+            significant_words = []
+            for field in fields:
+                sw = ea.get_significant_words(document_ids=unique_ids, field=field, stop_words=stop_words)
+                significant_words += sw
+
+            return significant_words
+        else:
+            return []
 
 
     def get_document_count(self):
