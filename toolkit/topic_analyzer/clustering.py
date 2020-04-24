@@ -1,5 +1,6 @@
 import pickle
 from collections import defaultdict
+from typing import List
 
 import numpy as np
 from gensim import corpora, models
@@ -12,7 +13,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 class Clustering:
 
     def __init__(self,
-                 docs,
+                 docs: List[dict],
                  vectorizer="TfIdf Vectorizer",
                  num_clusters=10,
                  clustering_algorithm="kmeans",
@@ -37,6 +38,7 @@ class Clustering:
         self.dictionary = None
         self.doc_vectors = {}
 
+
     def to_json(self):
         return {
             "algorithm": self.algorithm,
@@ -52,13 +54,15 @@ class Clustering:
             "doc_vectors": self.doc_vectors
         }
 
+
     @staticmethod
     def _tokenize(text):
         def _custom_strip_short(s):
             return strip_short(s, minsize=2)
 
-        #most of the preprocessing is done already
-        #strip_tags removes style definitions etc as well which is good
+
+        # most of the preprocessing is done already
+        # strip_tags removes style definitions etc as well which is good
         CUSTOM_FILTERS = [strip_tags, _custom_strip_short]
         return preprocess_string(text, CUSTOM_FILTERS)
 
@@ -67,11 +71,11 @@ class Clustering:
         processed_corpus = [self._tokenize(doc["text"]) for doc in self.docs]
         self.dictionary = corpora.Dictionary(processed_corpus)
 
-        #ignore 20% most frequent words
-        #num_unique_words = len(dictionary)
-        #dictionary.filter_n_most_frequent(int(num_unique_words*0.2))
+        # ignore 20% most frequent words
+        # num_unique_words = len(dictionary)
+        # dictionary.filter_n_most_frequent(int(num_unique_words*0.2))
 
-        #do some more filtering and keep only n most frequent specified with num_dims parameter
+        # do some more filtering and keep only n most frequent specified with num_dims parameter
         self.dictionary.filter_extremes(no_below=1, no_above=0.8, keep_n=self.num_dims)
 
         bow_corpus = [self.dictionary.doc2bow(text) for text in processed_corpus]
@@ -133,10 +137,12 @@ class Clustering:
 
     def save_transformation(self, file_path):
         with open(file_path, "wb") as f:
-                pickle.dump({"tfidf_model": self.tfidf_model, 
-                             "lsi_model": self.lsi_model,
-                             "dictionary": self.dictionary,
-                             "doc_vectors": self.doc_vectors}, f)
+            pickle.dump({
+                "tfidf_model": self.tfidf_model,
+                "lsi_model": self.lsi_model,
+                "dictionary": self.dictionary,
+                "doc_vectors": self.doc_vectors
+            }, f)
 
         return True
 
@@ -160,20 +166,24 @@ class ClusterContent:
             models = pickle.load(f)
         return models
 
+
     def _save_updated_models(self):
         with open(self.vectors_filepath, "wb") as f:
-                pickle.dump(self.models, f)
+            pickle.dump(self.models, f)
 
 
     def get_intracluster_similarity(self, new_documents=[]):
-        if(len(new_documents) > 0):
+        if len(new_documents) > 0:
             dictionary = self.models["dictionary"]
+
             for doc in new_documents:
                 processed_text = Clustering._tokenize(doc["text"])
                 doc_vec = [dictionary.doc2bow(processed_text)]
-                if(self.models["tfidf_model"] != None):
+
+                if self.models["tfidf_model"] is not None:
                     doc_vec = self.models["tfidf_model"][doc_vec]
-                if(self.models["lsi_model"] != None):
+
+                if self.models["lsi_model"] is not None:
                     doc_vec = self.models["lsi_model"][doc_vec]
 
                 full_vec = corpus2csc(doc_vec, num_terms=len(dictionary.keys()), num_docs=dictionary.num_docs)
@@ -190,4 +200,3 @@ class ClusterContent:
             return np.mean(similarities)
         else:
             return 0
-

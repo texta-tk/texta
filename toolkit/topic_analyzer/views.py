@@ -46,6 +46,66 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
     )
 
 
+    def update(self, request, *args, **kwargs):
+        serializer = ClusterSerializer(data=request.data, partial=True)
+        serializer.is_valid()
+
+        cluster = Cluster.objects.get(pk=kwargs["pk"])
+        clustering_object = ClusteringResult.objects.get(pk=kwargs["clustering_pk"])
+
+        fields = json.loads(cluster.fields)
+        stop_words = json.loads(clustering_object.stop_words)
+        indices = json.loads(cluster.indices)
+
+        if "document_ids" in serializer.validated_data:
+            document_ids = serializer.validated_data["document_ids"]
+            ed = ElasticDocument("*")
+
+            # Validate that those documents exist.
+            validated_docs = ed.get_bulk(document_ids)
+            if validated_docs:
+                unique_ids = list(set([index["_id"] for index in validated_docs]))
+                cluster.document_ids = json.dumps(unique_ids)
+
+                sw = Cluster.get_significant_words(indices=indices, fields=fields, document_ids=unique_ids, stop_words=stop_words)
+                cluster.significant_words = json.dumps(sw)
+
+                cluster_content = ClusterContent(unique_ids, vectors_filepath=clustering_object.vector_model.name)
+                cluster.intracluster_similarity = cluster_content.get_intracluster_similarity()
+            else:
+                cluster.document_ids = json.dumps([])
+
+        cluster.save()
+        return Response({"message": "Cluster has been updated successfully!"})
+
+
+    def retrieve(self, request, *args, **kwargs):
+        cluster = Cluster.objects.get(pk=kwargs["pk"])
+
+        doc_ids = json.loads(cluster.document_ids)
+        fields = json.loads(cluster.fields)
+        indices = json.loads(cluster.indices)
+        significant_words = json.loads(cluster.significant_words)
+        display_fields = json.loads(cluster.display_fields)
+
+        if display_fields:
+            fields += display_fields
+
+        ed = ElasticDocument(index=",".join(indices))
+
+        documents = ed.get_bulk(doc_ids)
+        documents = documents if documents else []
+        documents = [{"id": doc["_id"], "index": doc["_index"], "content": doc["_source"]} for doc in documents]
+
+        formated_cluster = {"id": cluster.pk, "intracluster_similarity": cluster.intracluster_similarity, "document_count": cluster.get_document_count(), "significant_words": significant_words, "documents": documents}
+        return Response(formated_cluster)
+
+
+    def destroy(self, request, *args, **kwargs):
+        Cluster.objects.get(pk=kwargs["pk"]).delete()
+        return Response({"message": "Cluster deleted."}, status=status.HTTP_200_OK)
+
+
     @action(detail=True, methods=["post"], serializer_class=TransferClusterDocumentsSerializer)
     def transfer_documents(self, request, *args, **kwargs):
         serializer = TransferClusterDocumentsSerializer(data=request.data)
@@ -105,41 +165,43 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
 
         ed = ElasticDocument("_all")
 
+        # Get full elasticsearch documents with id, index, type and source values.
         existing_documents: List[dict] = ed.get_bulk(serializer.validated_data["ids"])
         existing_documents: List[str] = [document["_id"] for document in existing_documents]
 
-        # Add the document ids into the cluster.
+        # Remove duplicates with set and save the new list of document ids.
         saved_documents = json.loads(cluster_obj.document_ids)
         unique_ids = list(set(existing_documents + saved_documents))
         cluster_obj.document_ids = json.dumps(unique_ids)
 
-        #get texts of new documents
-        new_ids = [doc_id for doc_id in unique_ids if doc_id not in saved_documents]
+        # get texts of new documents
         new_documents = []
-        if(len(new_ids) > 0):
+        new_ids = [doc_id for doc_id in unique_ids if doc_id not in saved_documents]
+        if len(new_ids) > 0:
             indices = clustering_obj.get_indices()
             stop_words = json.loads(clustering_obj.stop_words)
             ignored_ids = json.loads(clustering_obj.ignored_ids)
             fields = json.loads(clustering_obj.fields)
             document_limit = clustering_obj.document_limit
-            query = { "query": {"ids" : {"values" : new_ids}}}
+            query = {"query": {"ids": {"values": new_ids}}}
 
             text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
             elastic_search = ElasticSearcher(
-            indices=indices,
-            query=query,
-            text_processor=text_processor,
-            ignore_ids=set(ignored_ids),
-            output=ElasticSearcher.OUT_TEXT_WITH_ID,
-            field_data=fields,
-            scroll_limit=document_limit
+                indices=indices,
+                query=query,
+                text_processor=text_processor,
+                ignore_ids=set(ignored_ids),
+                output=ElasticSearcher.OUT_TEXT_WITH_ID,
+                field_data=fields,
+                scroll_limit=document_limit
             )
 
-            new_documents = [{"id": doc_id, "text": text} for doc_id, text in elastic_search]
+            for doc_id, text in elastic_search:
+                new_documents.append({"id": doc_id, "text": text})
 
         # Update the similarity score since the documents were changed.
         cc = ClusterContent(doc_ids=unique_ids, vectors_filepath=clustering_obj.vector_model.path)
-        cluster_obj.intracluster_similarity = float(cc.get_intracluster_similarity())
+        cluster_obj.intracluster_similarity = float(cc.get_intracluster_similarity(new_documents=new_documents))
 
         # Update the significant words since the documents were changed.
         sw = Cluster.get_significant_words(indices=indices, fields=fields, document_ids=unique_ids, stop_words=stop_words)
@@ -161,7 +223,6 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         indices = clustering_obj.get_indices()
         fields = json.loads(clustering_obj.fields)
         stop_words = json.loads(clustering_obj.stop_words)
-
 
         # Edit the changed document ids, removing duplicates.
         saved_documents = json.loads(cluster_obj.document_ids)
@@ -235,66 +296,6 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         clustering_object.save()
 
         return Response({"message": f"Successfully added fact {serializer.validated_data['fact']} to the documents!"})
-
-
-    def update(self, request, *args, **kwargs):
-        serializer = ClusterSerializer(data=request.data, partial=True)
-        serializer.is_valid()
-
-        cluster = Cluster.objects.get(pk=kwargs["pk"])
-        clustering_object = ClusteringResult.objects.get(pk=kwargs["clustering_pk"])
-
-        fields = json.loads(cluster.fields)
-        stop_words = json.loads(clustering_object.stop_words)
-        indices = json.loads(cluster.indices)
-
-        if "document_ids" in serializer.validated_data:
-            document_ids = serializer.validated_data["document_ids"]
-            ed = ElasticDocument("*")
-
-            # Validate that those documents exist.
-            validated_docs = ed.get_bulk(document_ids)
-            if validated_docs:
-                unique_ids = list(set([index["_id"] for index in validated_docs]))
-                cluster.document_ids = json.dumps(unique_ids)
-
-                sw = Cluster.get_significant_words(indices=indices, fields=fields, document_ids=unique_ids, stop_words=stop_words)
-                cluster.significant_words = json.dumps(sw)
-
-                cluster_content = ClusterContent(unique_ids, vectors_filepath=clustering_object.vector_model.name)
-                cluster.intracluster_similarity = cluster_content.get_intracluster_similarity()
-            else:
-                cluster.document_ids = json.dumps([])
-
-        cluster.save()
-        return Response({"message": "Cluster has been updated successfully!"})
-
-
-    def retrieve(self, request, *args, **kwargs):
-        cluster = Cluster.objects.get(pk=kwargs["pk"])
-
-        doc_ids = json.loads(cluster.document_ids)
-        fields = json.loads(cluster.fields)
-        indices = json.loads(cluster.indices)
-        significant_words = json.loads(cluster.significant_words)
-        display_fields = json.loads(cluster.display_fields)
-
-        if display_fields:
-            fields += display_fields
-
-        ed = ElasticDocument(index=",".join(indices))
-
-        documents = ed.get_bulk(doc_ids, fields=fields)
-        documents = documents if documents else []
-        documents = [{"id": doc["_id"], "index": doc["_index"], "content": doc["_source"]} for doc in documents]
-
-        formated_cluster = {"id": cluster.pk, "intracluster_similarity": cluster.intracluster_similarity, "document_count": cluster.get_document_count(), "significant_words": significant_words, "documents": documents}
-        return Response(formated_cluster)
-
-
-    def destroy(self, request, *args, **kwargs):
-        Cluster.objects.get(pk=kwargs["pk"]).delete()
-        return Response({"message": "Cluster deleted."}, status=status.HTTP_200_OK)
 
 
 class ClusteringViewSet(viewsets.ModelViewSet, BulkDelete):
