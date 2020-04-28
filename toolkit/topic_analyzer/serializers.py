@@ -95,5 +95,5 @@ class ClusteringSerializer(serializers.ModelSerializer):
         fields = [
             "id", "url", "description", "author_username", "query", "indices", "num_cluster", "clustering_algorithm",
             "vectorizer", "num_dims", "use_lsi", "num_topics", "display_fields",
-            "stop_words", "ignored_ids", "fields", "document_limit", "task"
+            "stop_words", "ignored_ids", "fields", "embedding", "document_limit", "task"
         ]

@@ -17,6 +17,7 @@ from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.settings import MODELS_DIR
 from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
 from toolkit.tools.text_processor import StopWords
+from toolkit.embedding.models import Embedding
 
 
 class Cluster(models.Model):
@@ -72,6 +73,7 @@ class ClusteringResult(models.Model):
     fields = models.TextField(default="[]")
     display_fields = models.TextField(default="[]")
     vectorizer = models.TextField(default=VECTORIZERS[0][0])
+    embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
 
     num_topics = models.IntegerField(default=50)
     num_cluster = models.IntegerField(default=10)

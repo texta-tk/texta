@@ -13,6 +13,7 @@ from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
+from toolkit.embedding.phraser import Phraser
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 from toolkit.topic_analyzer.serializers import ClusterSerializer, ClusteringSerializer, ClusteringIdsSerializer, TransferClusterDocumentsSerializer
@@ -163,7 +164,7 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         stop_words = json.loads(clustering_obj.stop_words)
         fields = json.loads(clustering_obj.fields)
 
-        ed = ElasticDocument("_all")
+        ed = ElasticDocument(indices)
 
         # Get full elasticsearch documents with id, index, type and source values.
         existing_documents: List[dict] = ed.get_bulk(serializer.validated_data["ids"])
@@ -176,6 +177,7 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
 
         # get texts of new documents
         new_documents = []
+        phraser = None
         new_ids = [doc_id for doc_id in unique_ids if doc_id not in saved_documents]
         if len(new_ids) > 0:
             indices = clustering_obj.get_indices()
@@ -199,16 +201,20 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
             for doc_id, text in elastic_search:
                 new_documents.append({"id": doc_id, "text": text})
 
+            if clustering_obj.embedding:
+                phraser = Phraser(embedding_id=clustering_obj.embedding.pk)
+                phraser.load()
+
         # Update the similarity score since the documents were changed.
         cc = ClusterContent(doc_ids=unique_ids, vectors_filepath=clustering_obj.vector_model.path)
-        cluster_obj.intracluster_similarity = float(cc.get_intracluster_similarity(new_documents=new_documents))
+        cluster_obj.intracluster_similarity = float(cc.get_intracluster_similarity(new_documents=new_documents, phraser=phraser))
 
         # Update the significant words since the documents were changed.
         sw = Cluster.get_significant_words(indices=indices, fields=fields, document_ids=unique_ids, stop_words=stop_words)
         cluster_obj.significant_words = json.dumps(sw)
 
         cluster_obj.save()
-        return Response({"message": "Documents successfully added to the cluster!"})
+        return Response({"message": str(len(new_ids)) + " new document(s) successfully added to the cluster!"})
 
 
     @action(detail=True, methods=["post"], serializer_class=ClusteringIdsSerializer)

@@ -7,6 +7,7 @@ from django.db import transaction
 from toolkit.base_task import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import ElasticSearcher
+from toolkit.embedding.phraser import Phraser
 from toolkit.helper_functions import apply_celery_task
 from toolkit.settings import ERROR_LOGGER
 from toolkit.tools.show_progress import ShowProgress
@@ -54,7 +55,15 @@ def perform_data_clustering(clustering_id):
         show_progress.update_step("scrolling data")
         show_progress.update_view(0)
 
+        if clustering_model.embedding:
+            phraser = Phraser(embedding_id=clustering_model.embedding.pk)
+            phraser.load()
+        else:
+            phraser = None
+        
+        #can't give parser to TextProcessor as some processing is also done in Clustering class
         text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
+
         elastic_search = ElasticSearcher(
             indices=indices,
             query=query,
@@ -77,7 +86,8 @@ def perform_data_clustering(clustering_id):
             vectorizer=vectorizer,
             num_dims=num_dims,
             use_lsi=use_lsi,
-            num_topics=num_topics
+            num_topics=num_topics,
+            phraser=phraser
         )
         clusters.cluster()
 
