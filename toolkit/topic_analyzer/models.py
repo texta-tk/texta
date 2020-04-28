@@ -16,6 +16,7 @@ from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.settings import MODELS_DIR
 from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
+from toolkit.tools.text_processor import StopWords
 
 
 class Cluster(models.Model):
@@ -44,6 +45,7 @@ class Cluster(models.Model):
         ed = ElasticDocument("*")
         ea = ElasticAggregator(indices=indices)
 
+        stop_words = StopWords._get_stop_words(custom_stop_words=stop_words)
         # Validate that those documents exist.
         validated_docs: List[dict] = ed.get_bulk(document_ids)
         if validated_docs:

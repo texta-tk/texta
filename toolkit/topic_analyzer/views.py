@@ -93,7 +93,7 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
 
         ed = ElasticDocument(index=",".join(indices))
 
-        documents = ed.get_bulk(doc_ids)
+        documents = ed.get_bulk(doc_ids, flatten=True)
         documents = documents if documents else []
         documents = [{"id": doc["_id"], "index": doc["_index"], "content": doc["_source"]} for doc in documents]
 

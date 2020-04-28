@@ -72,7 +72,7 @@ class ElasticDocument:
             return None
 
 
-    def get_bulk(self, doc_ids: List[str], fields: List[str] = None) -> List[dict]:
+    def get_bulk(self, doc_ids: List[str], fields: List[str] = None, flatten: bool = False) -> List[dict]:
         """
         Retrieve full Elasticsearch documents by their ids that includes id, index,
         type and content information. For efficiency it's recommended to limit the returned
@@ -84,7 +84,7 @@ class ElasticDocument:
         s = s[:1000]
         response = s.execute()
         if response:
-            return [{"_index": document.meta.index, "_id": document.meta.id, "_type": document.meta.doc_type, "_source": document.to_dict()} for document in response]
+            return [{"_index": document.meta.index, "_id": document.meta.id, "_type": document.meta.doc_type, "_source": self.core.flatten(document.to_dict()) if flatten else document.to_dict()} for document in response]
         else:
             return []
 

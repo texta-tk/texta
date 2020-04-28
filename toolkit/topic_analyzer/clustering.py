@@ -1,13 +1,17 @@
 import pickle
 from collections import defaultdict
 from typing import List
-
 import numpy as np
+import re
+
 from gensim import corpora, models
 from gensim.matutils import corpus2csc
 from gensim.parsing.preprocessing import preprocess_string, strip_short, strip_tags
+from gensim import utils
+
 from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn.metrics.pairwise import cosine_similarity
+
 
 
 class Clustering:
@@ -60,10 +64,15 @@ class Clustering:
         def _custom_strip_short(s):
             return strip_short(s, minsize=2)
 
+        def _custom_strip_numeric(s):
+            RE_NUMERIC = re.compile(r' [0-9]+( [0-9]+)*(\.)? ', re.UNICODE)
+            s = utils.to_unicode(s)
+            return RE_NUMERIC.sub(" ", s)
+
 
         # most of the preprocessing is done already
         # strip_tags removes style definitions etc as well which is good
-        CUSTOM_FILTERS = [strip_tags, _custom_strip_short]
+        CUSTOM_FILTERS = [strip_tags, _custom_strip_short, _custom_strip_numeric]
         return preprocess_string(text, CUSTOM_FILTERS)
 
 
