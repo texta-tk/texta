@@ -5,6 +5,7 @@ from typing import List
 
 import rest_framework.filters as drf_filters
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django_filters import rest_framework as filters
 from rest_framework import mixins, permissions, status, viewsets
@@ -28,7 +29,6 @@ from ..view_constants import BulkDelete
 
 
 class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
-    queryset = ClusteringResult.objects.all()
     serializer_class = ClusterSerializer
     permission_classes = [permissions.IsAuthenticated, ProjectResourceAllowed]
 
@@ -44,6 +44,10 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         'intracluster_similarity',
         'document_count'
     )
+
+
+    def get_queryset(self):
+        return Cluster.objects.filter(clusteringresult__project__pk=self.kwargs["project_pk"], clusteringresult__pk=self.kwargs["clustering_pk"])
 
 
     def update(self, request, *args, **kwargs):
@@ -80,7 +84,8 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
 
 
     def retrieve(self, request, *args, **kwargs):
-        cluster = Cluster.objects.get(pk=kwargs["pk"])
+        queryset = Cluster.objects.filter(clusteringresult__project__pk=self.kwargs["project_pk"], clusteringresult__pk=self.kwargs["clustering_pk"])
+        cluster = get_object_or_404(queryset, pk=self.kwargs["pk"])
 
         doc_ids = json.loads(cluster.document_ids)
         fields = json.loads(cluster.fields)

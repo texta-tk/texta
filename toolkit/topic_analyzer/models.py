@@ -1,5 +1,6 @@
 # Create your models here.
 import json
+import logging
 import os
 import secrets
 from typing import List
@@ -14,7 +15,7 @@ from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.document import ElasticDocument
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
-from toolkit.settings import MODELS_DIR
+from toolkit.settings import MODELS_DIR, ERROR_LOGGER
 from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
 
 
@@ -26,6 +27,7 @@ class Cluster(models.Model):
     indices = models.TextField(default="[]")
     significant_words = models.TextField(default="[]")
     intracluster_similarity = models.FloatField()
+
 
     @staticmethod
     def get_significant_words(indices: List[str], fields: List[str], document_ids: List[str], stop_words: List = None):
@@ -116,6 +118,9 @@ def auto_delete_file_on_delete(sender, instance: ClusteringResult, **kwargs):
     Triggered on individual-queryset Tagger deletion and the deletion
     of a TaggerGroup.
     """
-    if instance.vector_model:
-        if os.path.isfile(instance.vector_model.path):
-            os.remove(instance.vector_model.path)
+    try:
+        if instance.vector_model:
+            if os.path.isfile(instance.vector_model.path):
+                os.remove(instance.vector_model.path)
+    except Exception as e:
+        logging.getLogger(ERROR_LOGGER).exception(e)
