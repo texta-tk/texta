@@ -1,4 +1,3 @@
-import collections
 from typing import List
 
 import elasticsearch
@@ -133,23 +132,8 @@ class ElasticSearcher:
         index = doc['_index']
         highlight = doc['highlight'] if 'highlight' in doc else {}
         doc = doc['_source']
-        new_doc = self._flatten(doc)
+        new_doc = self.core.flatten(doc)
         return new_doc, index, highlight
-
-
-    def _flatten(self, d, parent_key='', sep='.'):
-        """
-        From: https://stackoverflow.com/questions/6027558/flatten-nested-dictionaries-compressing-keys
-        """
-        items = []
-        for k, v in d.items():
-            new_key = parent_key + sep + k if parent_key else k
-            if isinstance(v, collections.MutableMapping):
-                items.extend(self._flatten(v, new_key, sep=sep).items())
-            else:
-                items.append((new_key, v))
-        return dict(items)
-
 
     def _decode_doc(self, doc, field_path=None):
         decoded_text = doc['_source']

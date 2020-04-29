@@ -17,6 +17,8 @@ from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.settings import MODELS_DIR, ERROR_LOGGER
 from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
+from toolkit.tools.text_processor import StopWords
+from toolkit.embedding.models import Embedding
 
 
 class Cluster(models.Model):
@@ -30,29 +32,31 @@ class Cluster(models.Model):
 
 
     @staticmethod
-    def get_significant_words(indices: List[str], fields: List[str], document_ids: List[str], stop_words: List = None):
+    def get_significant_words(indices: List[str], fields: List[str], document_ids: List[str], stop_words: List = None, exclude=""):
         """
         This is a helper function to parse all the given fields and use the document_ids
         as input to make a significant_words aggregation.
         Args:
+            exclude: Regex compatible string for which words to exclude, uses the exclude parameter of Elasticsearch aggregations.
             stop_words: Optional parameter to remove stopwords from the results.
             indices: Indices from which to perform the aggregation.
             fields: From which fields can you get the text content needed for comparison.
             document_ids: IDs of the documents you want to use as baseline for the aggregation.
 
-        Returns: List of dictionaries with the signifanct word and how many times it occurs in the documents.
+        Returns: List of dictionaries with the signifcant word and how many times it occurs in the documents.
 
         """
         ed = ElasticDocument("*")
         ea = ElasticAggregator(indices=indices)
 
+        stop_words = StopWords._get_stop_words(custom_stop_words=stop_words)
         # Validate that those documents exist.
         validated_docs: List[dict] = ed.get_bulk(document_ids)
         if validated_docs:
             unique_ids = list(set([index["_id"] for index in validated_docs]))
             significant_words = []
             for field in fields:
-                sw = ea.get_significant_words(document_ids=unique_ids, field=field, stop_words=stop_words)
+                sw = ea.get_significant_words(document_ids=unique_ids, field=field, stop_words=stop_words, exclude=exclude)
                 significant_words += sw
 
             return significant_words
@@ -72,6 +76,7 @@ class ClusteringResult(models.Model):
     fields = models.TextField(default="[]")
     display_fields = models.TextField(default="[]")
     vectorizer = models.TextField(default=VECTORIZERS[0][0])
+    embedding = models.ForeignKey(Embedding, on_delete=models.SET_NULL, null=True, default=None)
 
     num_topics = models.IntegerField(default=50)
     num_cluster = models.IntegerField(default=10)
@@ -91,6 +96,8 @@ class ClusteringResult(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
+    
+    significant_words_filter = models.CharField(max_length=100, default="[0-9]+")
 
 
     def generate_name(self, name="document_embedding"):

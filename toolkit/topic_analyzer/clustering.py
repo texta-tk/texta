@@ -1,13 +1,17 @@
 import pickle
 from collections import defaultdict
 from typing import List
-
 import numpy as np
+import re
+
 from gensim import corpora, models
 from gensim.matutils import corpus2csc
 from gensim.parsing.preprocessing import preprocess_string, strip_short, strip_tags
+from gensim import utils
+
 from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn.metrics.pairwise import cosine_similarity
+
 
 
 class Clustering:
@@ -20,7 +24,8 @@ class Clustering:
                  stop_words=[],
                  num_dims=1000,
                  use_lsi=False,
-                 num_topics=50):
+                 num_topics=50,
+                 phraser = None):
 
         self.algorithm = clustering_algorithm
         self.num_clusters = num_clusters
@@ -31,6 +36,7 @@ class Clustering:
         self.use_lsi = use_lsi
         self.num_topics = num_topics
         self.ignore_doc_ids = []
+        self.phraser = phraser
 
         self.clustering_result = defaultdict(list)
         self.tfidf_model = None
@@ -56,19 +62,29 @@ class Clustering:
 
 
     @staticmethod
-    def _tokenize(text):
+    def _tokenize(text, phraser=None):
         def _custom_strip_short(s):
             return strip_short(s, minsize=2)
 
+        def _custom_strip_numeric(s):
+            RE_NUMERIC = re.compile(r' [0-9]+( [0-9]+)*(\.)? ', re.UNICODE)
+            s = utils.to_unicode(s)
+            return RE_NUMERIC.sub(" ", s)
 
         # most of the preprocessing is done already
         # strip_tags removes style definitions etc as well which is good
-        CUSTOM_FILTERS = [strip_tags, _custom_strip_short]
-        return preprocess_string(text, CUSTOM_FILTERS)
+        CUSTOM_FILTERS = [strip_tags, _custom_strip_short, _custom_strip_numeric]
+        preprocessed_text = preprocess_string(text, CUSTOM_FILTERS)
+
+        if(phraser):
+            tokens = phraser.phrase(preprocessed_text)
+            return [token.replace(' ', '_') for token in tokens]
+        else:
+            return preprocessed_text
 
 
     def _get_vectors(self):
-        processed_corpus = [self._tokenize(doc["text"]) for doc in self.docs]
+        processed_corpus = [self._tokenize(doc["text"], self.phraser) for doc in self.docs]
         self.dictionary = corpora.Dictionary(processed_corpus)
 
         # ignore 20% most frequent words
@@ -172,12 +188,12 @@ class ClusterContent:
             pickle.dump(self.models, f)
 
 
-    def get_intracluster_similarity(self, new_documents=[]):
+    def get_intracluster_similarity(self, new_documents=[], phraser=None):
         if len(new_documents) > 0:
             dictionary = self.models["dictionary"]
 
             for doc in new_documents:
-                processed_text = Clustering._tokenize(doc["text"])
+                processed_text = Clustering._tokenize(doc["text"], phraser=phraser)
                 doc_vec = [dictionary.doc2bow(processed_text)]
 
                 if self.models["tfidf_model"] is not None:
