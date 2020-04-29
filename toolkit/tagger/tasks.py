@@ -50,7 +50,7 @@ def create_tagger_batch(tagger_group_id, taggers_to_create):
         created_tagger.train()
 
 
-@task(name="create_tagger_objects", base=BaseTask)
+@task(name="create_tagger_objects", base=BaseTask, queue="long_term_tasks")
 def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries, batch_size=100):
     """Task for creating Tagger objects inside Tagger Group to prevent database timeouts."""
     # create tagger objects
@@ -76,7 +76,7 @@ def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries,
     return True
 
 
-@task(name="train_tagger", base=BaseTask)
+@task(name="train_tagger", base=BaseTask, queue="long_term_tasks")
 def train_tagger(tagger_id):
     """Task for training Text Tagger."""
     logging.getLogger(INFO_LOGGER).info(f"Starting task 'train_tagger' for tagger with ID: {tagger_id}!")

@@ -28,7 +28,7 @@ def start_clustering_task(clustering_id: int):
     return clustering_id
 
 
-@task(name="perform_data_clustering", base=BaseTask)
+@task(name="perform_data_clustering", base=BaseTask, queue="long_term_tasks")
 def perform_data_clustering(clustering_id):
     clustering_model = ClusteringResult.objects.get(id=clustering_id)
 

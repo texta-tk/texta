@@ -16,7 +16,7 @@ from toolkit.torchtagger.plots import create_torchtagger_plot
 from toolkit.settings import MODELS_DIR
 
 
-@task(name="train_torchtagger", base=BaseTask)
+@task(name="train_torchtagger", base=BaseTask, queue="long_term_tasks")
 def train_torchtagger(tagger_id, testing=False):
     try:
         # retrieve neurotagger & task objects

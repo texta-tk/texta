@@ -2,6 +2,7 @@ import os
 import warnings
 
 from corsheaders.defaults import default_headers
+from kombu import Exchange, Queue
 
 from .helper_functions import parse_list_env_headers
 from .logging_settings import setup_logging
@@ -212,6 +213,17 @@ CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
+CELERYD_PREFETCH_MULTIPLIER = 1
+
+CELERY_QUEUES = (
+    Queue('long_term_tasks', exchange="long_term_tasks", routing_key='long_term_tasks'),
+    Queue('short_term_tasks', exchange="short_term_tasks", routing_key='short_term_tasks'),
+)
+
+# By default use the queue for short term tasks, unless specified to use the long term one.
+CELERY_DEFAULT_QUEUE = 'short_term_tasks'
+CELERY_DEFAULT_EXCHANGE = 'short_term_tasks'
+CELERY_DEFAULT_ROUTING_KEY = 'short_term_tasks'
 
 # we set num workers to 1 because celery tasks are not allowed to have deamon processes
 NUM_WORKERS = 1

@@ -17,7 +17,7 @@ from toolkit.tools.text_processor import TextProcessor
 from toolkit.helper_functions import get_indices_from_object
 
 
-@task(name="train_embedding", base=BaseTask)
+@task(name="train_embedding", base=BaseTask, queue="long_term_tasks")
 def train_embedding(embedding_id):
     # retrieve embedding & task objects
     embedding_object = Embedding.objects.get(pk=embedding_id)
@@ -41,7 +41,6 @@ def train_embedding(embedding_id):
                                     callback_progress=show_progress,
                                     scroll_limit=max_documents,
                                     text_processor=text_processor)
-        
 
         # build phrase model
         phraser = Phraser(embedding_id)
