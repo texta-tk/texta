@@ -20,6 +20,17 @@ from toolkit.permissions.project_permissions import IsSuperUser, ProjectResource
 from toolkit.view_constants import BulkDelete
 
 
+class IndicesFilter(filters.FilterSet):
+    id = filters.CharFilter('id', lookup_expr='exact')
+    name = filters.CharFilter('name', lookup_expr='icontains')
+    is_open = filters.BooleanFilter("is_open")
+
+
+    class Meta:
+        model = Index
+        fields = []
+
+
 class ElasticGetIndices(views.APIView):
     permission_classes = (IsSuperUser,)
 
@@ -44,17 +55,15 @@ class IndexViewSet(mixins.CreateModelMixin,
     serializer_class = IndexSerializer
     permission_classes = [IsSuperUser]
 
-
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
     pagination_class = PageNumberPaginationDataOnly
+    filterset_class = IndicesFilter
 
     ordering_fields = (
         'id',
         'name',
         'is_open'
     )
-
-
 
 
     def list(self, request, *args, **kwargs):
