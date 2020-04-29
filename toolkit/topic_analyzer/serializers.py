@@ -4,11 +4,13 @@ from django.urls import reverse
 from rest_framework import serializers
 
 from toolkit.core.task.serializers import TaskSerializer
+from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.elastic.serializers import IndexSerializer
 from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 from toolkit.topic_analyzer.validators import check_cluster_existence
+import re
 
 
 class TransferClusterDocumentsSerializer(serializers.Serializer):
@@ -89,6 +91,14 @@ class ClusteringSerializer(serializers.ModelSerializer):
         data["display_fields"] = json.loads(instance.display_fields)
         data["query"] = json.loads(instance.query)
         return data
+
+
+    def validate_significant_words_filter(self, regex):
+        try:
+            re.compile(regex)
+        except re.error:
+            raise serializers.ValidationError("Given string is not a valid regex.")
+        return regex
 
 
     class Meta:
