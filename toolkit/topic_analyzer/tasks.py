@@ -49,6 +49,9 @@ def perform_data_clustering(clustering_id):
         num_dims = serializer.data["num_dims"]
         use_lsi = serializer.data["use_lsi"]
         num_topics = serializer.data["num_topics"]
+        significant_words_filter = serializer.data["significant_words_filter"]
+
+
 
         # Removing stopwords, ignored ids while fetching the documents.
         show_progress = ShowProgress(clustering_model.task, multiplier=1)
@@ -61,7 +64,7 @@ def perform_data_clustering(clustering_id):
         else:
             phraser = None
         
-        #can't give parser to TextProcessor as some processing is also done in Clustering class
+        #Can't give parser to TextProcessor as some processing is also done in Clustering class
         text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
 
         elastic_search = ElasticSearcher(
@@ -102,7 +105,8 @@ def perform_data_clustering(clustering_id):
             "indices": indices,
             "display_fields": display_fields,
             "vectors_filepath": path,
-            "stop_words": stop_words
+            "stop_words": stop_words,
+            "significant_words_filter": significant_words_filter
         }
 
         return clustering_info
@@ -127,6 +131,7 @@ def save_clustering_results(clustering_result: dict):
         display_fields = clustering_result["display_fields"]
         vectors_filepath = clustering_result["vectors_filepath"]
         stop_words = clustering_result["stop_words"]
+        significant_words_filter = clustering_result["significant_words_filter"]
 
         clustering_obj.vector_model.name = vectors_filepath
         clustering_obj.save()
@@ -135,7 +140,7 @@ def save_clustering_results(clustering_result: dict):
         for cluster_id, document_ids in clustering_results:
             document_ids_json = json.dumps(document_ids)
 
-            sw = Cluster.get_significant_words(indices=indices, document_ids=document_ids, fields=fields, stop_words=stop_words)
+            sw = Cluster.get_significant_words(indices=indices, document_ids=document_ids, fields=fields, stop_words=stop_words, exclude=significant_words_filter)
             cluster_content = ClusterContent(document_ids, vectors_filepath=vectors_filepath)
 
             label = Cluster.objects.create(

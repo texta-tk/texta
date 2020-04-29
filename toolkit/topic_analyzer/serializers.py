@@ -63,8 +63,9 @@ class ClusteringSerializer(serializers.ModelSerializer):
 
     stop_words = serializers.ListField(default=[], allow_empty=True, help_text='List of custom stop words to be removed from documents before clustering.')
     document_limit = serializers.IntegerField(default=100, min_value=1, max_value=10000, help_text='Number of documents retrieved from indices.')
-    indices = IndexSerializer(many=True, default=[])
-    ignored_ids = serializers.ListField(default=[])
+    indices = IndexSerializer(many=True, default=[], help_text="From which Elasticsearch indices to pull documents from.")
+    ignored_ids = serializers.ListField(default=[], help_text="List of Elasticsearch document ids to ignore from the clustering process.")
+    significant_words_filter = serializers.CharField(help_text='Regex to filter out desired words.', default="[0-9]+")
 
     url = serializers.SerializerMethodField()
     task = TaskSerializer(read_only=True)
@@ -94,6 +95,6 @@ class ClusteringSerializer(serializers.ModelSerializer):
         model = ClusteringResult
         fields = [
             "id", "url", "description", "author_username", "query", "indices", "num_cluster", "clustering_algorithm",
-            "vectorizer", "num_dims", "use_lsi", "num_topics", "display_fields",
+            "vectorizer", "num_dims", "use_lsi", "num_topics", "significant_words_filter", "display_fields",
             "stop_words", "ignored_ids", "fields", "embedding", "document_limit", "task"
         ]

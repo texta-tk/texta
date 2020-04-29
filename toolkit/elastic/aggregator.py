@@ -97,14 +97,14 @@ class ElasticAggregator:
         return entities
 
 
-    def filter_aggregation_maker(self, agg_type: str, field: str, filter_query: dict = None, size=1000, return_size=15, stop_words: List = None):
+    def filter_aggregation_maker(self, agg_type: str, field: str, filter_query: dict = None, size=1000, return_size=15, stop_words: List = None, exclude=""):
 
         container = []
 
         s = Search(using=self.core.es, index=self._get_indices_string())
         if filter_query:
             filter_query = Q(filter_query)
-            s.aggs.bucket("limits", "filter", filter=filter_query).bucket("placekeeper", agg_type, field=field, size=size)
+            s.aggs.bucket("limits", "filter", filter=filter_query).bucket("placekeeper", agg_type, field=field, size=size, exclude=exclude)
             r = s.execute()
             for hit in r.aggs.limits.placekeeper:
                 container.append(hit.to_dict())
@@ -120,7 +120,7 @@ class ElasticAggregator:
         return container[:return_size]
 
 
-    def get_significant_words(self, document_ids: List[str], field: str, stop_words: List = None) -> List[dict]:
+    def get_significant_words(self, document_ids: List[str], field: str, stop_words: List = None, exclude="") -> List[dict]:
         """
         Args:
             stop_words: Optional parameter to remove stop words from significant words.
@@ -132,6 +132,6 @@ class ElasticAggregator:
 
         """
         query = {'ids': {'values': document_ids}}
-        sw = self.filter_aggregation_maker(agg_type="significant_text", field=field, filter_query=query, stop_words=stop_words)
+        sw = self.filter_aggregation_maker(agg_type="significant_text", field=field, filter_query=query, stop_words=stop_words, exclude=exclude)
         sw = [{"key": hit["key"], "count": hit["doc_count"]} for hit in sw]
         return sw

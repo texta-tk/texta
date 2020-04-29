@@ -30,17 +30,18 @@ class Cluster(models.Model):
     intracluster_similarity = models.FloatField()
 
     @staticmethod
-    def get_significant_words(indices: List[str], fields: List[str], document_ids: List[str], stop_words: List = None):
+    def get_significant_words(indices: List[str], fields: List[str], document_ids: List[str], stop_words: List = None, exclude=""):
         """
         This is a helper function to parse all the given fields and use the document_ids
         as input to make a significant_words aggregation.
         Args:
+            exclude: Regex compatible string for which words to exclude, uses the exclude parameter of Elasticsearch aggregations.
             stop_words: Optional parameter to remove stopwords from the results.
             indices: Indices from which to perform the aggregation.
             fields: From which fields can you get the text content needed for comparison.
             document_ids: IDs of the documents you want to use as baseline for the aggregation.
 
-        Returns: List of dictionaries with the signifanct word and how many times it occurs in the documents.
+        Returns: List of dictionaries with the signifcant word and how many times it occurs in the documents.
 
         """
         ed = ElasticDocument("*")
@@ -53,7 +54,7 @@ class Cluster(models.Model):
             unique_ids = list(set([index["_id"] for index in validated_docs]))
             significant_words = []
             for field in fields:
-                sw = ea.get_significant_words(document_ids=unique_ids, field=field, stop_words=stop_words)
+                sw = ea.get_significant_words(document_ids=unique_ids, field=field, stop_words=stop_words, exclude=exclude)
                 significant_words += sw
 
             return significant_words
@@ -93,6 +94,8 @@ class ClusteringResult(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
+    
+    significant_words_filter = models.CharField(max_length=100, default="[0-9]+")
 
 
     def generate_name(self, name="document_embedding"):
