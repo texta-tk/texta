@@ -25,7 +25,6 @@ class IndexSerializer(serializers.ModelSerializer):
         ]
     )
 
-
     def get_url(self, obj):
         index = reverse("v1:index-detail", kwargs={"pk": obj.pk})
         if "request" in self.context:

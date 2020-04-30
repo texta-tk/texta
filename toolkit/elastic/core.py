@@ -1,4 +1,3 @@
-import logging
 import collections
 from typing import List, Tuple
 
@@ -6,51 +5,12 @@ import elasticsearch
 import requests
 from django.db import transaction
 from elasticsearch import Elasticsearch
+from elasticsearch_dsl import Keyword, Long, Mapping, Nested
 from rest_framework.exceptions import ValidationError
-from elasticsearch_dsl import Mapping, Nested, Keyword, Long
 
-from toolkit.elastic.exceptions import ElasticAuthenticationException, ElasticAuthorizationException, ElasticIndexNotFoundException, ElasticTimeoutException, ElasticTransportException
-from toolkit.settings import ERROR_LOGGER, ES_CONNECTION_PARAMETERS
+from toolkit.elastic.decorators import elastic_connection
 from toolkit.helper_functions import get_core_setting
-from toolkit.tools.logger import Logger
-
-
-def elastic_connection(func):
-    """
-    Decorator for wrapping Elasticsearch functions that are used in views,
-    to return a properly formatted error message during connection issues
-    instead of the typical HTTP 500 one.
-    """
-
-
-    def func_wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-
-        except elasticsearch.exceptions.NotFoundError as e:
-            logging.getLogger(ERROR_LOGGER).exception(e.info)
-            info = [error["index"] for error in e.info["error"]["root_cause"]]
-            raise ElasticIndexNotFoundException(f"Index lookup failed: {str(info)}")
-
-        except elasticsearch.exceptions.AuthorizationException as e:
-            logging.getLogger(ERROR_LOGGER).exception(e.info)
-            error = [error["reason"] for error in e.info["error"]["root_cause"]]
-            raise ElasticAuthorizationException(f"Not authorized to access resource: {str(error)}")
-
-        except elasticsearch.exceptions.AuthenticationException as e:
-            logging.getLogger(ERROR_LOGGER).exception(e.info)
-            raise ElasticAuthenticationException(f"Not authorized to access resource: {e.info}")
-
-        except elasticsearch.exceptions.TransportError as e:
-            logging.getLogger(ERROR_LOGGER).exception(e.info)
-            raise ElasticTransportException(f"Transport to Elasticsearch failed with error: {e.error}")
-
-        except elasticsearch.exceptions.ConnectionTimeout as e:
-            logging.getLogger(ERROR_LOGGER).exception(e.info)
-            raise ElasticTimeoutException(f"Connection to Elasticsearch timed out!")
-
-
-    return func_wrapper
+from toolkit.settings import ES_CONNECTION_PARAMETERS
 
 
 class ElasticCore:
@@ -83,6 +43,7 @@ class ElasticCore:
             client = Elasticsearch(list_of_hosts, http_auth=(self.ES_USERNAME, self.ES_PASSWORD), **existing_connection_parameters)
             return client
 
+
     def _check_connection(self):
         try:
             response = requests.get(self.ES_URL)
@@ -113,7 +74,7 @@ class ElasticCore:
 
     @elastic_connection
     def create_index(self, index, body=None):
-        return self.es.indices.create(index=index, body=body, ignore=400)
+        return self.es.indices.create(index=index, body=body, ignore=[400, 404])
 
 
     @elastic_connection
@@ -149,15 +110,14 @@ class ElasticCore:
         with transaction.atomic():
             opened, closed = self.get_indices()
 
-            # Delete the overreaching parts.
+            # Delete the parts that exist in the toolkit but not in Elasticsearch.
             es_set = {index for index in opened + closed}
             tk_set = {index.name for index in Index.objects.all()}
-
             for index in tk_set:
                 if index not in es_set:
                     Index.objects.get(name=index).delete()
 
-            # Create an Index object if it doesn't exist in the right open/closed state.
+            # Create an Index object if it doesn't exist.
             # Ensures that changes Elastic-side on the open/closed state are forcefully updated.
             for index in opened:
                 index, is_created = Index.objects.get_or_create(name=index)
@@ -273,6 +233,7 @@ class ElasticCore:
             return response
 
 
+    @elastic_connection
     def add_texta_facts_mapping(self, index: str, doc_type=None):
         """
         To allow for more flexibility, we do not use the indices variable in the class.
@@ -308,3 +269,15 @@ class ElasticCore:
             else:
                 items.append((new_key, v))
         return dict(items)
+
+
+    @elastic_connection
+    def get_index_stats(self, indices: List):
+        store = {}
+        indices = ",".join(indices)
+        response = self.es.indices.stats(index=indices, metric="store,docs")
+        for index_name in response["indices"].keys():
+            count = response["indices"][index_name]["total"]["docs"]["count"]
+            size = response["indices"][index_name]["total"]["store"]["size_in_bytes"]
+            store[index_name] = {"doc_count": count, "size": size}
+        return store

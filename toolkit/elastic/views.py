@@ -56,7 +56,7 @@ class IndexViewSet(mixins.CreateModelMixin,
     permission_classes = [IsSuperUser]
 
     filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
-    pagination_class = PageNumberPaginationDataOnly
+    pagination_class = None
     filterset_class = IndicesFilter
 
     ordering_fields = (
@@ -67,8 +67,39 @@ class IndexViewSet(mixins.CreateModelMixin,
 
 
     def list(self, request, *args, **kwargs):
-        ElasticCore().syncher()
-        return super(IndexViewSet, self).list(request, *args, **kwargs)
+        ec = ElasticCore()
+        ec.syncher()
+        response = super(IndexViewSet, self).list(request, *args, **kwargs)
+
+        data = response.data  # Get the paginated and sorted queryset results.
+        open_indices = [index for index in data if index["is_open"]]
+        # We don't want to ping closed indices, otherwise we get an Elasticsearch side error.
+        stats = ec.get_index_stats(indices=[index["name"] for index in open_indices])
+
+        # Update the paginated and sorted queryset results.
+        for index in response.data:
+            name = index["name"]
+            is_open = index["is_open"]
+            if is_open:
+                index.update(**stats[name])
+            else:
+                # For the sake of courtesy on the front-end, make closed indices values zero.
+                index.update(size=0, doc_count=0)
+
+        return response
+
+
+    def retrieve(self, request, *args, **kwargs):
+        ec = ElasticCore()
+        response = super(IndexViewSet, self).retrieve(*args, *kwargs)
+        if response.data["is_open"]:
+            index_name = response.data["name"]
+            stats = ec.get_index_stats(indices=[index_name])
+            response.data.update(**stats[index_name])
+        else:
+            response.data.update(size=0, doc_count=0)
+
+        return response
 
 
     def create(self, request, **kwargs):
