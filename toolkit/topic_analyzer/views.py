@@ -285,7 +285,7 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         serializer.validated_data.pop("fields", None)
 
         es = ElasticSearcher(indices=indices)
-        result = es.more_like_this(indices=indices, mlt_fields=fields, like=document_ids, **serializer.validated_data)
+        result = es.more_like_this(indices=indices, mlt_fields=fields, like=document_ids, flatten=True, **serializer.validated_data)
         return Response(result)
 
 

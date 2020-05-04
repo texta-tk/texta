@@ -64,12 +64,12 @@ class ElasticSearcher:
         return self.scroll()
 
 
-    def more_like_this(self, mlt_fields: List[str], like, min_term_freq=1, max_query_terms=12, min_doc_freq=5, min_word_length=0, max_word_length=0, stop_words=[], size=10, include_meta=False, indices: str = None):
+    def more_like_this(self, mlt_fields: List[str], like, min_term_freq=1, max_query_terms=12, min_doc_freq=5, min_word_length=0, max_word_length=0, stop_words=[], size=10, include_meta=False, indices: str = None, flatten: bool = False):
         """
 
         Args:
             indices: Coma-separated string of the indices you wish to use.
-            mlt_fields: List of strings of the fields you wish to use for analyzation, only these fields are returned as a result.
+            mlt_fields: List of strings of the fields you wish to use for analyzation.
             like: Can either be a text field or a list of document metas which is used as a baseline for fetching similar documents.
             min_term_freq: The minimum term frequency below which the terms will be ignored from the input document.
             max_query_terms: The maximum number of query terms that will be selected. Increasing this value gives greater accuracy at the expense of query execution speed.
@@ -79,6 +79,7 @@ class ElasticSearcher:
             stop_words: An array of stop words. Any word in this set is considered "uninteresting" and ignored.
             include_meta: Whether to add the documents meta information (id, index, doctype) into the returning set of documents.
             size: How many documents to return with the end result.
+            flatten: Whether to flatten nested fields.
         Returns: List of Elasticsearch documents.
 
         """
@@ -87,15 +88,12 @@ class ElasticSearcher:
         mlt = MoreLikeThis(like=like, fields=mlt_fields, min_term_freq=min_term_freq, max_query_terms=max_query_terms, min_doc_freq=min_doc_freq, min_word_length=min_word_length, max_word_length=max_word_length, stop_words=stop_words)
         s = s.query(mlt)
         s = s.extra(size=size)
-        s = s.source(mlt_fields)
         if include_meta:
-            response = [{"_id": hit.meta.id, "_type": hit.meta.doc_type, "_index": hit.meta.index, "_source": hit.to_dict()} for hit in s.execute()]
+            response = [{"_id": hit.meta.id, "_type": hit.meta.doc_type, "_index": hit.meta.index, "_source": self.core.flatten(hit.to_dict()) if flatten else hit.to_dict()} for hit in s.execute()]
             return response
         else:
-            response = [hit.to_dict() for hit in s.execute()]
+            response = [self.core.flatten(hit.to_dict()) if flatten else hit.to_dict() for hit in s.execute()]
             return response
-
-
 
     def update_query(self, query):
         self.query = query
@@ -134,6 +132,7 @@ class ElasticSearcher:
         doc = doc['_source']
         new_doc = self.core.flatten(doc)
         return new_doc, index, highlight
+
 
     def _decode_doc(self, doc, field_path=None):
         decoded_text = doc['_source']
