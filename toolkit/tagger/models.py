@@ -21,7 +21,7 @@ from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import apply_celery_task
-from toolkit.settings import MODELS_DIR, INFO_LOGGER
+from toolkit.settings import DATA_FOLDER_NAME, MODELS_DIR, INFO_LOGGER, MODELS_FOLDER_NAME
 from toolkit.tagger.choices import (DEFAULT_CLASSIFIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE, DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_VECTORIZER)
 
 
@@ -66,8 +66,18 @@ class Tagger(models.Model):
 
 
     def generate_name(self, name="tagger"):
-        """Model import/export is dependant on the name, do not change carelessly."""
-        return os.path.join(MODELS_DIR, 'tagger', f'{name}_{str(self.pk)}_{secrets.token_hex(10)}')
+        """
+        Do not change this carelessly as import/export functionality depends on this.
+        Returns full and relative filepaths for the intended models.
+        Args:
+            name: Name for the model to distinguish itself from others in the same directory.
+
+        Returns: Full and relative file paths, full for saving the model object and relative for actual DB storage.
+        """
+        model_file_name = f'{name}_{str(self.pk)}_{secrets.token_hex(10)}'
+        full_path = os.path.join(MODELS_DIR, 'tagger', model_file_name)
+        relative_path = os.path.join(DATA_FOLDER_NAME, MODELS_FOLDER_NAME, "tagger", model_file_name)
+        return full_path, relative_path
 
 
     def to_json(self) -> dict:
@@ -114,11 +124,11 @@ class Tagger(models.Model):
                     index_model, is_created = Index.objects.get_or_create(name=index)
                     new_model.indices.add(index_model)
 
-                new_tagger_name = new_model.generate_name("tagger")
-                with open(new_tagger_name, "wb") as fp:
+                full_tagger_path, relative_tagger_path = new_model.generate_name("tagger")
+                with open(full_tagger_path, "wb") as fp:
                     path = pathlib.Path(model_json["model"]).name
                     fp.write(archive.read(path))
-                    new_model.model.name = new_tagger_name
+                    new_model.model.name = relative_tagger_path
 
                 plot_name = pathlib.Path(model_json["plot"])
                 path = plot_name.name
@@ -217,11 +227,11 @@ class TaggerGroup(models.Model):
                         index, is_created = Index.objects.get_or_create(name=index_name)
                         tagger_model.indices.add(index)
 
-                    new_tagger_name = tagger_model.generate_name("tagger")
-                    with open(new_tagger_name, "wb") as fp:
+                    full_tagger_path, relative_tagger_path = tagger_model.generate_name("tagger")
+                    with open(full_tagger_path, "wb") as fp:
                         path = pathlib.Path(tagger["model"]).name
                         fp.write(archive.read(path))
-                        tagger_model.model.name = new_tagger_name
+                        tagger_model.model.name = relative_tagger_path
 
                         plot_name = pathlib.Path(tagger["plot"])
                         path = plot_name.name

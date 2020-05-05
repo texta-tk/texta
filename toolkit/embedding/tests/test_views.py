@@ -181,8 +181,8 @@ class EmbeddingViewTests(TransactionTestCase):
         self.assertTrue(embedding_phraser_path.exists())
 
         # Check whether the model was saved into the right location.
-        self.assertTrue(str(embedding_model_dir) in str(embedding_model_path))
-        self.assertTrue(str(embedding_model_dir) in str(embedding_phraser_path))
+        self.assertTrue(str(embedding_model_dir) in str(embedding.embedding_model.path))
+        self.assertTrue(str(embedding_model_dir) in str(embedding.phraser_model.path))
 
         self.run_predict(imported_embedding_id)
 

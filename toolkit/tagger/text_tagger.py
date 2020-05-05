@@ -1,3 +1,5 @@
+import pathlib
+
 from toolkit.tagger.pipeline import get_pipeline_builder
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
@@ -7,7 +9,7 @@ import numpy as np
 import joblib
 import json
 
-from toolkit.settings import NUM_WORKERS
+from toolkit.settings import BASE_DIR, NUM_WORKERS
 from toolkit.tagger.models import Tagger
 from toolkit.tools.tagging_report import TaggingReport
 
@@ -118,14 +120,17 @@ class TextTagger:
         return self.model.named_steps['feature_selector'].get_support()
 
 
-    def save(self, file_path):
+    def save(self, file_path: str) -> bool:
+        """
+        Saving the model to the filesystem using joblib.
+        """
         joblib.dump(self.model, file_path)
         return True
 
 
     def load(self):
         tagger_object = Tagger.objects.get(pk=self.tagger_id)
-        tagger_path = tagger_object.model.path
+        tagger_path = tagger_object.model.name
         self.model = joblib.load(tagger_path)
         self.description = tagger_object.description
         return True
@@ -145,7 +150,7 @@ class TextTagger:
             text = self.text_processor.process(text)[0]
 
         # generate text map for dataframe
-        text_map = {feature_name:[text] for feature_name in field_features}
+        text_map = {feature_name: [text] for feature_name in field_features}
         df_text = pd.DataFrame(text_map)
 
         return self.model.predict(df_text)[0], max(self.model.predict_proba(df_text)[0])

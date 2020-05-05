@@ -64,6 +64,10 @@ Running Docker with GPU support:
 ## Deploy & Testing variables
 * TEXTA_ADMIN_PASSWORD - Password of the admin user created on first run.
 * TEXTA_USE_CSRF - Disable CSRF for integration tests.
+* TEXTA_MODELS_DIR - Optional parameter to a directory path into which models are stored in seperate folders according to their type (tagger, embedding etc)
+Please make sure that the data and models directory name is also set in the TEXTA_DATA_FOLDER_NAME and TEXTA_MODELS_FOLDER_NAME variables.
+* TEXTA_MODELS_FOLDER_NAME - Name of the folder into which models are stored.0
+* TEXTA_DATA_FOLDER_NAME - Name of the folder into which miscellaneous data is stored. Includes the folder for storing models.
 
 ## External services
 * TEXTA_ES_URL - URL of the Elasticsearch instance including the protocol, host and port (ex. http://localhost:9200).

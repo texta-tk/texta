@@ -137,17 +137,17 @@ def train_tagger(tagger_id):
         show_progress.update_view(0)
 
         # save tagger to disk
-        tagger_path = tagger_object.generate_name("tagger")
-        tagger.save(tagger_path)
+        full_tagger_path, relative_tagger_path = tagger_object.generate_name("tagger")
+        tagger.save(full_tagger_path)
 
-        tagger_object.model.name = tagger_path
+        tagger_object.model.name = relative_tagger_path
         tagger_object.precision = float(tagger.statistics['precision'])
         tagger_object.recall = float(tagger.statistics['recall'])
         tagger_object.f1_score = float(tagger.statistics['f1_score'])
         tagger_object.num_features = tagger.statistics['num_features']
         tagger_object.num_positives = tagger.statistics['num_positives']
         tagger_object.num_negatives = tagger.statistics['num_negatives']
-        tagger_object.model_size = round(float(os.path.getsize(tagger_path)) / 1000000, 1)  # bytes to mb
+        tagger_object.model_size = round(float(os.path.getsize(full_tagger_path)) / 1000000, 1)  # bytes to mb
         tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_tagger_plot(tagger.statistics))
         tagger_object.save()
 

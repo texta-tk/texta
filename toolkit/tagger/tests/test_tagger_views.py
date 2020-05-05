@@ -382,7 +382,7 @@ class TaggerViewTests(APITestCase):
         self.assertTrue(tagger_model_path.exists())
 
         # Check whether the model was saved into the right location.
-        self.assertTrue(str(tagger_model_dir) in str(tagger_model_path))
+        self.assertTrue(str(tagger_model_dir) in str(tagger.model.path))
 
         self.run_tag_text([imported_tagger_id])
 
