@@ -4,28 +4,22 @@ from django.urls import include, path
 from django.views.static import serve
 from rest_framework_nested import routers
 
+from toolkit.core.core_variable.views import CoreVariableViewSet
 from toolkit.core.health.views import HealthView
 from toolkit.core.project.views import ProjectViewSet
 from toolkit.core.task.views import TaskAPIView
 from toolkit.core.urls import router as core_router
 from toolkit.core.user_profile import views as profile_views
 from toolkit.dataset_import.urls import router as dataset_import_router
-from toolkit.elastic.urls import router as reindexer_router, index_router
+from toolkit.elastic.urls import index_router, router as reindexer_router
 from toolkit.elastic.views import ElasticGetIndices
 from toolkit.embedding.urls import embedding_router
 from toolkit.mlp.urls import mlp_router
 from toolkit.tagger.urls import router as tagger_router
 from toolkit.tools.swagger import schema_view
-from toolkit.topic_analyzer.views import ClusteringViewSet, ClusterViewSet
+from toolkit.topic_analyzer.views import ClusterViewSet, ClusteringViewSet
 from toolkit.torchtagger.urls import router as torchtagger_router
 
-from toolkit.core.core_variable.views import CoreVariableViewSet
-from toolkit.settings import MEDIA_DIR, MEDIA_URL
-
-
-@login_required
-def protected_serve(request, path, document_root=None, show_indexes=False):
-    return serve(request, path, document_root, show_indexes)
 
 
 router = routers.DefaultRouter()
@@ -52,9 +46,9 @@ app_name = 'toolkit_v1'
 
 urlpatterns = [
     # protected media
-    url(r'^%s(?P<path>.*)$' % MEDIA_URL, protected_serve, {'document_root': MEDIA_DIR}),
     # static
     url(r'api/v1/static/(?P<path>.*)$', serve, {'document_root': 'static'}),
+
     # documentation
     url(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     url(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
