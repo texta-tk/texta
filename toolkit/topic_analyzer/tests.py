@@ -3,7 +3,7 @@ import json
 
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APITransactionTestCase
 
 from toolkit.elastic.document import ElasticDocument
 from toolkit.test_settings import (TEST_FIELD, TEST_INDEX)
@@ -11,7 +11,13 @@ from toolkit.tools.utils_for_tests import create_test_user, print_output, projec
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 
 
-class TopicAnalyzerTests(APITestCase):
+class TopicAnalyzerTests(APITransactionTestCase):
+    """
+    Because cluster training is done using the on_commit hook because of its current architecture,
+    this test module is a bit different compared to the other application, for using APITransactionTestCase
+    instead of the APITestCase, which has setUpTestData() as a class function.
+    """
+
 
     def _train_topic_cluster(self):
         payload = {
@@ -25,21 +31,21 @@ class TopicAnalyzerTests(APITestCase):
         return response.data["id"]
 
 
-    @classmethod
-    def setUpTestData(cls):
+    def setUpTestData(self):
         # Owner of the project
-        cls.user = create_test_user('user', 'my@email.com', 'pw')
-        cls.admin_user = create_test_user("admin", "", "pw")
-        cls.admin_user.is_superuser = True
-        cls.admin_user.save()
+        self.user = create_test_user('user', 'my@email.com', 'pw')
+        self.admin_user = create_test_user("admin", "", "pw")
+        self.admin_user.is_superuser = True
+        self.admin_user.save()
 
-        cls.project = project_creation("projectAnalyzerProject", TEST_INDEX, cls.user)
-        cls.project.users.add(cls.user)
-        cls.project.users.add(cls.admin_user)
-        cls.clustering_url = reverse("v1:clustering-list", kwargs={"project_pk": cls.project.pk})
+        self.project = project_creation("projectAnalyzerProject", TEST_INDEX, self.user)
+        self.project.users.add(self.user)
+        self.project.users.add(self.admin_user)
+        self.clustering_url = reverse("v1:clustering-list", kwargs={"project_pk": self.project.pk})
 
 
     def setUp(self):
+        self.setUpTestData()
         self.client.login(username='user', password='pw')
         self.clustering_id = self._train_topic_cluster()
 

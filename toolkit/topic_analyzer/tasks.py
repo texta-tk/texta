@@ -8,14 +8,12 @@ from toolkit.base_task import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.phraser import Phraser
-from toolkit.helper_functions import apply_celery_task
 from toolkit.settings import ERROR_LOGGER
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.topic_analyzer.clustering import ClusterContent, Clustering
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 from toolkit.topic_analyzer.serializers import ClusteringSerializer
-from toolkit.topic_analyzer.views import ClusteringViewSet
 
 
 @task(name="start_clustering_task", base=BaseTask)
@@ -51,8 +49,6 @@ def perform_data_clustering(clustering_id):
         num_topics = serializer.data["num_topics"]
         significant_words_filter = serializer.data["significant_words_filter"]
 
-
-
         # Removing stopwords, ignored ids while fetching the documents.
         show_progress = ShowProgress(clustering_model.task, multiplier=1)
         show_progress.update_step("scrolling data")
@@ -63,8 +59,8 @@ def perform_data_clustering(clustering_id):
             phraser.load()
         else:
             phraser = None
-        
-        #Can't give parser to TextProcessor as some processing is also done in Clustering class
+
+        # Can't give parser to TextProcessor as some processing is also done in Clustering class
         text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
 
         elastic_search = ElasticSearcher(
@@ -171,9 +167,3 @@ def finish_clustering_task(clustering_id: int):
     clustering_model = ClusteringResult.objects.get(id=clustering_id)
     clustering_model.task.complete()
     return True
-
-
-def train_cluster(obj_id: int):
-    # This specific function was created to avoid annoying circular import errors.
-    chain = start_clustering_task.s() | perform_data_clustering.s() | save_clustering_results.s() | finish_clustering_task.s()
-    apply_celery_task(chain, obj_id)

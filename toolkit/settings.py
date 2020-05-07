@@ -215,6 +215,7 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERYD_PREFETCH_MULTIPLIER = 1
 
+
 CELERY_QUEUES = (
     Queue('long_term_tasks', exchange="long_term_tasks", routing_key='long_term_tasks'),
     Queue('short_term_tasks', exchange="short_term_tasks", routing_key='short_term_tasks'),
