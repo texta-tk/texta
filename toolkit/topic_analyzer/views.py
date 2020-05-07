@@ -112,6 +112,90 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         return Response({"message": "Cluster deleted."}, status=status.HTTP_200_OK)
 
 
+    @action(detail=True, methods=["post"], serializer_class=ClusteringIdsSerializer)
+    def expand_cluster(self, request, *args, **kwargs):
+        serializer = ClusteringIdsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        clustering_obj = ClusteringResult.objects.get(pk=kwargs["clustering_pk"])
+        current_cluster_obj = clustering_obj.cluster_result.get(pk=kwargs["pk"])
+        clustering_obj_clusters = clustering_obj.cluster_result.exclude(pk=kwargs["pk"])
+
+        indices = clustering_obj.get_indices()
+        stop_words = json.loads(clustering_obj.stop_words)
+        fields = json.loads(clustering_obj.fields)
+
+        documents_for_expanding = serializer.validated_data["ids"]
+        
+        # Find which of these documents already exist in some other cluster. Remove such documents from the original cluster. Update cluster parameters.
+        to_transfer_documents = []
+        for cluster_obj in clustering_obj_clusters:
+            cluster_documents = json.loads(cluster_obj.document_ids)
+            to_transfer = [doc_id for doc_id in cluster_documents if doc_id in documents_for_expanding]
+
+            if(len(to_transfer) > 0):
+                # Remove the documents to be transferred from the original cluster.
+                remaining_documents = [doc_id for doc_id in cluster_documents if doc_id not in to_transfer]
+                cluster_obj.document_ids = json.dumps(remaining_documents)
+
+                # Save the new similarity score.
+                cc = ClusterContent(doc_ids=remaining_documents, vectors_filepath=clustering_obj.vector_model.path)
+                cluster_obj.intracluster_similarity = float(cc.get_intracluster_similarity())
+
+                # Edit the significant words of the cluster from which we took the documents from.
+                sw = Cluster.get_significant_words(indices=indices, fields=fields, document_ids=remaining_documents, stop_words=stop_words)
+                cluster_obj.significant_words = json.dumps(sw)
+
+                to_transfer_documents += to_transfer
+                cluster_obj.save()
+
+        #Find which documents are new and do not belong to any cluster.
+        to_add_documents = [doc_id for doc_id in documents_for_expanding if doc_id not in to_transfer_documents]
+
+        # Get texts of these new documents so that document vectors can be calculated for these documents.
+        to_add_documents_texts = []
+        phraser = None
+        if(len(to_add_documents) > 0):
+            document_limit = clustering_obj.document_limit
+            ignored_ids = json.loads(clustering_obj.ignored_ids)
+            query = {"query": {"ids": {"values": to_add_documents}}}
+
+            text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words)
+            elastic_search = ElasticSearcher(
+                indices=indices,
+                query=query,
+                text_processor=text_processor,
+                ignore_ids=set(ignored_ids),
+                output=ElasticSearcher.OUT_TEXT_WITH_ID,
+                field_data=fields,
+                scroll_limit=document_limit
+            )
+
+            for doc_id, text in elastic_search:
+                to_add_documents_texts.append({"id": doc_id, "text": text})
+
+            if clustering_obj.embedding:
+                phraser = Phraser(embedding_id=clustering_obj.embedding.pk)
+                phraser.load()
+
+
+        # Save the new list of document ids.
+        cluster_documents = json.loads(current_cluster_obj.document_ids)
+        expanded_ids = cluster_documents + documents_for_expanding
+        current_cluster_obj.document_ids = json.dumps(expanded_ids)
+
+        # Update the similarity score since the documents were changed.
+        cc = ClusterContent(doc_ids=expanded_ids, vectors_filepath=clustering_obj.vector_model.path)
+        current_cluster_obj.intracluster_similarity = float(cc.get_intracluster_similarity(new_documents=to_add_documents_texts, phraser=phraser))
+
+        # Update the significant words since the documents were changed.
+        sw = Cluster.get_significant_words(indices=indices, fields=fields, document_ids=expanded_ids, stop_words=stop_words)
+        current_cluster_obj.significant_words = json.dumps(sw)
+
+        current_cluster_obj.save()
+        return Response({"message": "Documents successfully added to the cluster!"})
+
+
     @action(detail=True, methods=["post"], serializer_class=TransferClusterDocumentsSerializer)
     def transfer_documents(self, request, *args, **kwargs):
         serializer = TransferClusterDocumentsSerializer(data=request.data)
@@ -146,7 +230,7 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         unique_ids = list(set(cluster_documents + documents_to_transfer))
         cluster_for_transfer.document_ids = json.dumps(unique_ids)
 
-        # Update the score
+        # Update the score.
         cc = ClusterContent(doc_ids=unique_ids, vectors_filepath=clustering_obj.vector_model.path)
         cluster_for_transfer.intracluster_similarity = float(cc.get_intracluster_similarity())
 
@@ -156,7 +240,6 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
 
         cluster_for_transfer.save()
         return Response({"message": "Documents successfully added to the cluster!"})
-
 
     @action(detail=True, methods=["post"], serializer_class=ClusteringIdsSerializer)
     def add_documents(self, request, *args, **kwargs):
@@ -175,7 +258,6 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         existing_documents: List[dict] = ed.get_bulk(serializer.validated_data["ids"])
         existing_documents: List[str] = [document["_id"] for document in existing_documents]
 
-        # Remove duplicates with set and save the new list of document ids.
         saved_documents = json.loads(cluster_obj.document_ids)
         unique_ids = list(set(existing_documents + saved_documents))
         cluster_obj.document_ids = json.dumps(unique_ids)
@@ -220,7 +302,6 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
 
         cluster_obj.save()
         return Response({"message": str(len(new_ids)) + " new document(s) successfully added to the cluster!"})
-
 
     @action(detail=True, methods=["post"], serializer_class=ClusteringIdsSerializer)
     def remove_documents(self, request, *args, **kwargs):
