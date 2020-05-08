@@ -357,6 +357,7 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         cluster = Cluster.objects.get(pk=kwargs["pk"])
         indices = clustering_object.get_indices()
         doc_ids = json.loads(cluster.document_ids)
+        ignored_ids = json.loads(clustering_object.ignored_ids)
 
         fields = json.loads(clustering_object.fields)
         document_ids = [{"_id": doc_id} for doc_id in doc_ids]
@@ -366,7 +367,8 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         serializer.validated_data.pop("fields", None)
 
         es = ElasticSearcher(indices=indices)
-        result = es.more_like_this(indices=indices, mlt_fields=fields, like=document_ids, flatten=True, **serializer.validated_data)
+        result = es.more_like_this(indices=indices, mlt_fields=fields, like=document_ids, exclude=ignored_ids, flatten=True, **serializer.validated_data)
+
         return Response(result)
 
 

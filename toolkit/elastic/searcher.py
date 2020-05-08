@@ -64,13 +64,14 @@ class ElasticSearcher:
         return self.scroll()
 
 
-    def more_like_this(self, mlt_fields: List[str], like, min_term_freq=1, max_query_terms=12, min_doc_freq=5, min_word_length=0, max_word_length=0, stop_words=[], size=10, include_meta=False, indices: str = None, flatten: bool = False):
+    def more_like_this(self, mlt_fields: List[str], like, exclude=[], min_term_freq=1, max_query_terms=12, min_doc_freq=5, min_word_length=0, max_word_length=0, stop_words=[], size=10, include_meta=False, indices: str = None, flatten: bool = False):
         """
 
         Args:
             indices: Coma-separated string of the indices you wish to use.
             mlt_fields: List of strings of the fields you wish to use for analyzation.
             like: Can either be a text field or a list of document metas which is used as a baseline for fetching similar documents.
+            exclude: List of document ids that should be ignored.
             min_term_freq: The minimum term frequency below which the terms will be ignored from the input document.
             max_query_terms: The maximum number of query terms that will be selected. Increasing this value gives greater accuracy at the expense of query execution speed.
             min_doc_freq: The minimum document frequency below which the terms will be ignored from the input document.
@@ -86,7 +87,7 @@ class ElasticSearcher:
         indices = indices if indices else ",".join(self.indices)
         s = Search(using=self.core.es, index=indices)
         mlt = MoreLikeThis(like=like, fields=mlt_fields, min_term_freq=min_term_freq, max_query_terms=max_query_terms, min_doc_freq=min_doc_freq, min_word_length=min_word_length, max_word_length=max_word_length, stop_words=stop_words)
-        s = s.query(mlt)
+        s = s.query(mlt).exclude("ids", values=exclude)
         s = s.extra(size=size)
         if include_meta:
             response = [{"_id": hit.meta.id, "_type": hit.meta.doc_type, "_index": hit.meta.index, "_source": self.core.flatten(hit.to_dict()) if flatten else hit.to_dict()} for hit in s.execute()]
