@@ -15,13 +15,13 @@ from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.phraser import Phraser
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed
-from toolkit.helper_functions import apply_celery_task, add_finite_url_to_feedback
+from toolkit.helper_functions import add_finite_url_to_feedback, apply_celery_task
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.tagger.serializers import TaggerTagTextSerializer
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
-from toolkit.torchtagger.serializers import TorchTaggerSerializer
+from toolkit.torchtagger.serializers import TagRandomDocSerializer, TorchTaggerSerializer
 from toolkit.torchtagger.tasks import train_torchtagger
 from toolkit.torchtagger.torchtagger import TorchTagger
 from toolkit.view_constants import BulkDelete, FeedbackModelView
@@ -63,7 +63,6 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
             **kwargs
         )
 
-
         for index in Index.objects.filter(name__in=indices, is_open=True):
             tagger.indices.add(index)
 
@@ -104,23 +103,35 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response({"id": tagger_id, "message": "Successfully imported model and associated files."}, status=status.HTTP_201_CREATED)
 
 
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=['post'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """Returns prediction for a random document in Elasticsearch."""
+
         # get tagger object
         tagger_object = self.get_object()
+
         # check if tagger exists
         if not tagger_object.model:
             raise NonExistantModelError()
+
+        serializer = TagRandomDocSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        project_object = Project.objects.get(pk=project_pk)
+        indices = [index["name"] for index in serializer.validated_data["indices"]]
+        indices = project_object.get_available_or_all_project_indices(indices)
 
         # retrieve tagger fields
         tagger_fields = json.loads(tagger_object.fields)
         if not ElasticCore().check_if_indices_exist(tagger_object.project.get_indices()):
             raise ProjectValidationFailed(detail=f'One or more index from {list(tagger_object.project.get_indices())} do not exist')
+
         # retrieve random document
-        random_doc = ElasticSearcher(indices=tagger_object.project.get_indices()).random_documents(size=1)[0]
+        random_doc = ElasticSearcher(indices=indices).random_documents(size=1)[0]
+
         # filter out correct fields from the document
         random_doc_filtered = {k: v for k, v in random_doc.items() if k in tagger_fields}
+
         # apply tagger
         tagger_response = self.apply_tagger(tagger_object, random_doc_filtered, input_type='doc')
         response = {"document": random_doc, "prediction": tagger_response}

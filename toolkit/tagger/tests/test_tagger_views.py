@@ -8,7 +8,6 @@ from typing import List
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.settings import MODELS_DIR
 from toolkit.tagger.models import Tagger
@@ -18,8 +17,7 @@ from toolkit.test_settings import (TEST_FIELD,
                                    TEST_MATCH_TEXT,
                                    TEST_QUERY,
                                    TEST_VERSION_PREFIX)
-from toolkit.tools.utils_for_tests import project_creation
-from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
+from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
 class TaggerViewTests(APITestCase):
@@ -250,8 +248,11 @@ class TaggerViewTests(APITestCase):
     def run_tag_random_doc(self):
         """Tests the endpoint for the tag_random_doc action"""
         for test_tagger_id in self.test_tagger_ids:
+            payload = {
+                "indices": [{"name": TEST_INDEX}]
+            }
             url = f'{self.url}{test_tagger_id}/tag_random_doc/'
-            response = self.client.get(url)
+            response = self.client.post(url, format="json", data=payload)
             print_output('test_tag_random_doc:response.data', response.data)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             # Check if response is list

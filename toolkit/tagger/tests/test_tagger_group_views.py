@@ -5,17 +5,14 @@ from io import BytesIO
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
-from toolkit.elastic.core import ElasticCore
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.test_settings import (TEST_FACT_NAME,
                                    TEST_FIELD,
                                    TEST_FIELD_CHOICE,
                                    TEST_INDEX,
                                    TEST_VERSION_PREFIX)
-from toolkit.tools.utils_for_tests import project_creation
-from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
+from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
 class TaggerGroupViewTests(APITestCase):
@@ -115,7 +112,11 @@ class TaggerGroupViewTests(APITestCase):
 
     def run_tag_doc(self):
         """Tests the endpoint for the tag_doc action"""
-        payload = {"doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"}), "n_similar_docs": 20, "n_candidate_tags": 20}
+        payload = {
+            "doc": json.dumps({TEST_FIELD: "This is some test text for the Tagger Test"}),
+            "n_similar_docs": 20,
+            "n_candidate_tags": 20,
+        }
         url = f'{self.url}{self.test_tagger_group_id}/tag_doc/'
         response = self.client.post(url, payload)
         print_output('test_tag_doc_group:response.data', response.data)
@@ -126,8 +127,11 @@ class TaggerGroupViewTests(APITestCase):
 
     def run_tag_random_doc(self):
         """Tests the endpoint for the tag_random_doc action"""
+        payload = {
+            "indices": [{"name": TEST_INDEX}]
+        }
         url = f'{self.url}{self.test_tagger_group_id}/tag_random_doc/'
-        response = self.client.get(url)
+        response = self.client.post(url, format="json", data=payload)
         print_output('test_tag_random_doc_group:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response is list
@@ -229,7 +233,7 @@ class TaggerGroupViewTests(APITestCase):
 
         # Tests the endpoint for the tag_random_doc action"""
         url = f'{self.url}{tg.pk}/tag_random_doc/'
-        response = self.client.get(url)
+        response = self.client.post(url, format="json", data={"indices": [{"name": TEST_INDEX}]})
         print_output('test_tag_random_doc_group:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, dict))

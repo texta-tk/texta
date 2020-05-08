@@ -130,8 +130,11 @@ class TorchTaggerViewTests(TransactionTestCase):
 
     def run_tag_random_doc(self):
         """Tests the endpoint for the tag_random_doc action"""
+        payload = {
+            "indices": [{"name": TEST_INDEX}]
+        }
         url = f'{self.url}{self.test_tagger_id}/tag_random_doc/'
-        response = self.client.get(url)
+        response = self.client.post(url, format="json", data=payload)
         print_output('test_tag_random_doc:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check if response is list
@@ -164,7 +167,7 @@ class TorchTaggerViewTests(TransactionTestCase):
 
         # Tests the endpoint for the tag_random_doc action"""
         url = f'{self.url}{torchtagger.pk}/tag_random_doc/'
-        response = self.client.get(url)
+        response = self.client.post(url)
         print_output('test_tag_random_doc_group:response.data', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, dict))

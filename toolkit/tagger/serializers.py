@@ -6,19 +6,12 @@ from rest_framework import serializers
 from toolkit.core.task.serializers import TaskSerializer
 from toolkit.elastic.serializers import IndexSerializer
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
-from toolkit.tagger.choices import (
-    DEFAULT_SCORE_THRESHOLD,
-    DEFAULT_MAX_SAMPLE_SIZE,
-    DEFAULT_MIN_SAMPLE_SIZE,
-    DEFAULT_NEGATIVE_MULTIPLIER,
-    DEFAULT_NUM_DOCUMENTS,
-    DEFAULT_NUM_CANDIDATES,
-    DEFAULT_TAGGER_GROUP_FACT_NAME,
-    get_classifier_choices,
-    get_vectorizer_choices
-)
+from toolkit.tagger.choices import (DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE, DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_NUM_CANDIDATES, DEFAULT_NUM_DOCUMENTS, DEFAULT_SCORE_THRESHOLD, DEFAULT_TAGGER_GROUP_FACT_NAME, get_classifier_choices, get_vectorizer_choices)
 from toolkit.tagger.models import Tagger, TaggerGroup
-from toolkit.tools.logger import Logger
+
+
+class TagRandomDocSerializer(serializers.Serializer):
+    indices = IndexSerializer(many=True, default=[])
 
 
 class TaggerTagTextSerializer(serializers.Serializer):

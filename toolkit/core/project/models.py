@@ -53,9 +53,11 @@ class Project(models.Model):
                 raise ValidationError(f"Inserted indices {indices} are not available to you.")
 
             indices = [index.name for index in legit_indices]
+            indices = list(set(indices))  # Leave only unique names just in case.
             return indices
 
         else:
             indices = self.indices.all()
             indices = [index.name for index in indices]
+            indices = list(set(indices))  # Leave only unique names just in case.
             return indices
