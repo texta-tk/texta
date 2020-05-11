@@ -6,7 +6,7 @@ import secrets
 from typing import List
 
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import models, transaction
 from django.dispatch import receiver
 
 from toolkit.core.project.models import Project
@@ -15,10 +15,10 @@ from toolkit.elastic.aggregator import ElasticAggregator
 from toolkit.elastic.document import ElasticDocument
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
-from toolkit.settings import MODELS_DIR, ERROR_LOGGER
-from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
-from toolkit.tools.text_processor import StopWords
 from toolkit.embedding.models import Embedding
+from toolkit.settings import ERROR_LOGGER, MODELS_DIR
+from toolkit.tools.text_processor import StopWords
+from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
 
 
 class Cluster(models.Model):
@@ -96,7 +96,7 @@ class ClusteringResult(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
-    
+
     significant_words_filter = models.CharField(max_length=100, default="[0-9]+")
 
 
@@ -109,21 +109,30 @@ class ClusteringResult(models.Model):
 
 
     def train(self):
-        from toolkit.topic_analyzer.tasks import train_cluster
+        # Ensure nothing is saved into the DB if anything within this
+        # context manager throws an exception.
+        with transaction.atomic():
+            from toolkit.helper_functions import apply_celery_task
+            from toolkit.topic_analyzer.tasks import start_clustering_task, perform_data_clustering, save_clustering_results, finish_clustering_task
 
-        new_task = Task.objects.create(clusteringresult=self, status='created')
-        self.task = new_task
-        self.save()
+            new_task = Task.objects.create(clusteringresult=self, status='created')
+            self.task = new_task
+            self.save()
 
-        train_cluster(self.id)
+            # To avoid Celery race conditions in which the task is started in celery
+            # BEFORE the actual record is saved into the database as it is not automatically
+            # waited for.
+            chain = start_clustering_task.s() | perform_data_clustering.s() | save_clustering_results.s() | finish_clustering_task.s()
+            transaction.on_commit(
+                lambda: apply_celery_task(chain, self.id)
+            )
 
 
 @receiver(models.signals.post_delete, sender=ClusteringResult)
 def auto_delete_file_on_delete(sender, instance: ClusteringResult, **kwargs):
     """
-    Delete resources on the file-system upon tagger deletion.
-    Triggered on individual-queryset Tagger deletion and the deletion
-    of a TaggerGroup.
+    Delete resources on the file-system upon cluster deletion.
+
     """
     try:
         if instance.vector_model:
