@@ -88,3 +88,25 @@ class TestCoreVariableViews(TestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         # go back to being admin
         self.client.login(username="admin", password="pw")
+
+
+    def test_es_prefix_post(self):
+        # update TEXTA_ES_URL to *
+        payload = {"name": "TEXTA_ES_PREFIX", "value": "*"}
+        response = self.client.post(self.url, payload)
+        print_output('core_variable_post_incorrect_value:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # update TEXTA_ES_URL to normal value
+        payload = {"name": "TEXTA_ES_PREFIX", "value": "texta"}
+        response = self.client.post(self.url, payload)
+        print_output('core_variable_post_es_prefix:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue('name' in response.data)
+        self.assertTrue('value' in response.data)
+        self.assertTrue('env_value' in response.data)
+        self.assertTrue('url' in response.data)
+        variable_url = response.data['url']
+        # delete
+        response = self.client.delete(variable_url)
+        print_output('core_variable_delete_es_prefix:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
