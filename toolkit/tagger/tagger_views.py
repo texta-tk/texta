@@ -12,19 +12,17 @@ from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.embedding.phraser import Phraser
 from toolkit.exceptions import NonExistantModelError, SerializerNotValid
-from toolkit.helper_functions import apply_celery_task, add_finite_url_to_feedback
+from toolkit.helper_functions import add_finite_url_to_feedback, apply_celery_task
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import (
     GeneralTextSerializer,
     ProjectResourceImportModelSerializer)
 from toolkit.tagger.models import Tagger
-from toolkit.tagger.serializers import (TaggerListFeaturesSerializer, TaggerSerializer, TaggerTagDocumentSerializer, TaggerTagTextSerializer)
-from toolkit.tagger.tasks import train_tagger, apply_tagger
+from toolkit.tagger.serializers import (TagRandomDocSerializer, TaggerListFeaturesSerializer, TaggerSerializer, TaggerTagDocumentSerializer, TaggerTagTextSerializer)
+from toolkit.tagger.tasks import apply_tagger, train_tagger
 from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tagger.validators import validate_input_document
-from toolkit.tools.text_processor import TextProcessor
 from toolkit.view_constants import (
     BulkDelete,
     FeedbackModelView,
@@ -34,6 +32,7 @@ from toolkit.view_constants import (
 class TaggerFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
     task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+
 
     class Meta:
         model = Tagger
@@ -71,7 +70,6 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
 
         for index in Index.objects.filter(name__in=indices, is_open=True):
             tagger.indices.add(index)
-
 
         tagger.train()
 
@@ -229,7 +227,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response(tagger_response, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=['post'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """Returns prediction for a random document in Elasticsearch."""
         # get tagger object
@@ -242,13 +240,20 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         if not tagger_object.model.path:
             return Response({'error': 'model does not exist (yet?)'}, status=status.HTTP_400_BAD_REQUEST)
 
+        serializer = TagRandomDocSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        project_object = Project.objects.get(pk=project_pk)
+        indices = [index["name"] for index in serializer.validated_data["indices"]]
+        indices = project_object.get_available_or_all_project_indices(indices)
+
         # retrieve tagger fields
         tagger_fields = json.loads(tagger_object.fields)
         if not ElasticCore().check_if_indices_exist(tagger_object.project.get_indices()):
             return Response({'error': f'One or more index from {list(tagger_object.project.get_indices())} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve random document
-        random_doc = ElasticSearcher(indices=tagger_object.project.get_indices()).random_documents(size=1)[0]
+        random_doc = ElasticSearcher(indices=indices).random_documents(size=1)[0]
 
         # filter out correct fields from the document
         random_doc_filtered = {k: v for k, v in random_doc.items() if k in tagger_fields}

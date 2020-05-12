@@ -11,22 +11,22 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from toolkit.core.health.utils import get_redis_status
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.exceptions import MLPNotAvailable, NonExistantModelError, SerializerNotValid, RedisNotAvailable
-from toolkit.helper_functions import apply_celery_task, add_finite_url_to_feedback
+from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
+from toolkit.helper_functions import add_finite_url_to_feedback, apply_celery_task
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.tagger.models import TaggerGroup
-from toolkit.tagger.serializers import TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer
-from toolkit.tools.mlp_analyzer import MLPAnalyzer
+from toolkit.tagger.serializers import TagRandomDocSerializer, TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer
 from toolkit.tagger.tasks import apply_tagger, create_tagger_objects, train_tagger
 from toolkit.tagger.validators import validate_input_document
+from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.view_constants import BulkDelete, TagLogicViews
-from toolkit.core.health.utils import get_redis_status
 
 
 mlp_analyzer = MLPAnalyzer()
@@ -311,25 +311,37 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         return Response(tags, status=status.HTTP_200_OK)
 
 
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=['post'])
     def tag_random_doc(self, request, pk=None, project_pk=None):
         """
         API endpoint for tagging a random document.
         """
         # get hybrid tagger object
         hybrid_tagger_object = self.get_object()
+
         # check if any of the models ready
         if not hybrid_tagger_object.taggers.filter(task__status=Task.STATUS_COMPLETED):
             raise NonExistantModelError()
+
         # retrieve tagger fields from the first object
         tagger_fields = json.loads(hybrid_tagger_object.taggers.first().fields)
         # error if redis not available
+
         if not get_redis_status()['alive']:
             raise RedisNotAvailable('Redis not available. Check if Redis is running.')
-        if not ElasticCore().check_if_indices_exist(hybrid_tagger_object.project.get_indices()):
+
+        serializer = TagRandomDocSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        project_object = Project.objects.get(pk=project_pk)
+        indices = [index["name"] for index in serializer.validated_data["indices"]]
+        indices = project_object.get_available_or_all_project_indices(indices)
+
+        if not ElasticCore().check_if_indices_exist(indices):
             return Response({'error': f'One or more index from {list(hybrid_tagger_object.project.get_indices())} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+
         # retrieve random document
-        random_doc = ElasticSearcher(indices=hybrid_tagger_object.project.get_indices()).random_documents(size=1)[0]
+        random_doc = ElasticSearcher(indices=indices).random_documents(size=1)[0]
         # filter out correct fields from the document
         random_doc_filtered = {k: v for k, v in random_doc.items() if k in tagger_fields}
         # combine document field values into one string

@@ -1,13 +1,14 @@
-import json
-import re
 from rest_framework import serializers
 
+from toolkit.core.task.serializers import TaskSerializer
 from toolkit.elastic.serializers import IndexSerializer
+from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 from toolkit.torchtagger import choices
 from toolkit.torchtagger.models import TorchTagger
-from toolkit.constants import get_field_choices
-from toolkit.core.task.serializers import TaskSerializer
-from toolkit.serializer_constants import ProjectResourceUrlSerializer, FieldParseSerializer
+
+
+class TagRandomDocSerializer(serializers.Serializer):
+    indices = IndexSerializer(many=True, default=[])
 
 
 class TorchTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
@@ -25,11 +26,12 @@ class TorchTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, P
     plot = serializers.SerializerMethodField()
     url = serializers.SerializerMethodField()
 
+
     class Meta:
         model = TorchTagger
         fields = (
             'url', 'author_username', 'id', 'description', 'query', 'fields', 'embedding', 'f1_score', 'precision', 'recall', 'accuracy',
             'model_architecture', 'maximum_sample_size', 'minimum_sample_size', 'num_epochs', 'plot', 'task', 'fact_name', 'epoch_reports', 'indices'
         )
-        read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'plot', 'task' ,'fact_name', 'epoch_reports')
+        read_only_fields = ('project', 'fields', 'f1_score', 'precision', 'recall', 'accuracy', 'plot', 'task', 'fact_name', 'epoch_reports')
         fields_to_parse = ('fields', 'epoch_reports')
