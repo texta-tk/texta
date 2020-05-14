@@ -18,29 +18,29 @@ Creating environment:
 
 Running migrations:
 
-`python migrate.py`
+`python3 migrate.py`
 
 Running application:
 
-`python manage.py runserver`
+`python3 manage.py runserver`
 
 `celery -A toolkit.taskman worker -l info`
 
 Import testing data:
 
-`python import_test_data.py`
+`python3 import_test_data.py`
 
 Run all tests:
 
-`python manage.py test`
+`python3 manage.py test`
 
 Run tests for specific app:
 
-`python manage.py test appname (eg python manage.py test toolkit.neurotagger)`
+`python3 manage.py test appname (eg python3 manage.py test toolkit.neurotagger)`
 
 Run performance tests (not run by default as they are slow):
 
-`python manage.py test toolkit.performance_tests`
+`python3 manage.py test toolkit.performance_tests`
 
 Building Docker:
 
