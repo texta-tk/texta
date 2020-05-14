@@ -65,6 +65,9 @@ Running Docker with GPU support:
 * TEXTA_ADMIN_PASSWORD - Password of the admin user created on first run.
 * TEXTA_USE_CSRF - Disable CSRF for integration tests.
 
+* TEXTA_SHORT_TASK_WORKERS - Number of threads available for short term tasks (default=3).
+* TEXTA_LONG_TASK_WORKERS - Number of threads available for long term tasks (default=5)
+
 ## External services
 * TEXTA_ES_URL - URL of the Elasticsearch instance including the protocol, host and port (ex. http://localhost:9200).
 * TEXTA_MLP_URL - URL of the Texta MLP instance including the protocol, host and port (ex. http://localhost:5000).
