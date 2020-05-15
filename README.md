@@ -1,4 +1,4 @@
-# NB! This repository is deprecated. Please refer to new [REPO](https://git.texta.ee/texta/texta-rest) and [DOCUMENTATION](https://docs.texta.ee)
+# NB! This repository is deprecated. Please refer to our new [REPO](https://git.texta.ee/texta/texta-rest) and [DOCUMENTATION](https://docs.texta.ee)!
 
 Terminology EXtraction and Text Analytics (TEXTA) Toolkit provides resources for analysing free text datasets.
 
