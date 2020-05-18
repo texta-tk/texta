@@ -5,6 +5,7 @@ import re
 import secrets
 
 from celery.decorators import task
+from django.db import transaction
 
 from toolkit.base_task import BaseTask
 from toolkit.core.task.models import Task
@@ -76,20 +77,28 @@ def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries,
     return True
 
 
-@task(name="train_tagger", base=BaseTask, queue="long_term_tasks")
-def train_tagger(tagger_id):
-    """Task for training Text Tagger."""
-    logging.getLogger(INFO_LOGGER).info(f"Starting task 'train_tagger' for tagger with ID: {tagger_id}!")
-
-    # retrieve tagger & task objects
-    tagger_object = Tagger.objects.get(pk=tagger_id)
-    task_object = tagger_object.task
-    # create progress object
+@task(name="start_tagger_task", base=BaseTask, queue="long_term_tasks")
+def start_tagger_task(tagger_id: int):
+    tagger = Tagger.objects.get(pk=tagger_id)
+    task_object = tagger.task
     show_progress = ShowProgress(task_object, multiplier=1)
-    show_progress.update_step('scrolling positives')
+    show_progress.update_step('starting tagging')
     show_progress.update_view(0)
+    return tagger_id
+
+
+@task(name="train_tagger_task", base=BaseTask, queue="long_term_tasks")
+def train_tagger_task(tagger_id: int):
+    logging.getLogger(INFO_LOGGER).info(f"Starting task 'train_tagger' for tagger with ID: {tagger_id}!")
+    tagger_object = Tagger.objects.get(id=tagger_id)
+    task_object = tagger_object.task
 
     try:
+        # create progress object
+        show_progress = ShowProgress(task_object, multiplier=1)
+        show_progress.update_step('scrolling positives')
+        show_progress.update_view(0)
+
         # retrieve indices & field data
         indices = get_indices_from_object(tagger_object)
         field_data = json.loads(tagger_object.fields)
@@ -132,36 +141,65 @@ def train_tagger(tagger_id):
             vectorizer=tagger_object.vectorizer
         )
 
-        # update status to saving
-        show_progress.update_step('saving')
-        show_progress.update_view(0)
-
         # save tagger to disk
         tagger_path = tagger_object.generate_name("tagger")
         tagger.save(tagger_path)
 
-        tagger_object.model.name = tagger_path
-        tagger_object.precision = float(tagger.statistics['precision'])
-        tagger_object.recall = float(tagger.statistics['recall'])
-        tagger_object.f1_score = float(tagger.statistics['f1_score'])
-        tagger_object.num_features = tagger.statistics['num_features']
-        tagger_object.num_positives = tagger.statistics['num_positives']
-        tagger_object.num_negatives = tagger.statistics['num_negatives']
-        tagger_object.model_size = round(float(os.path.getsize(tagger_path)) / 1000000, 1)  # bytes to mb
-        tagger_object.plot.save(f'{secrets.token_hex(15)}.png', create_tagger_plot(tagger.statistics))
-        tagger_object.save()
+        task_object.save()
 
-        # declare the job done
-        task_object.complete()
-        logging.getLogger(INFO_LOGGER).info(f"Completed task 'train_tagger' for tagger with ID: {tagger_id}!")
-        return True
+        return {
+            "id": tagger_id,
+            "tagger_path": tagger_path,
+            "precision": float(tagger.statistics['precision']),
+            "recall": float(tagger.statistics['recall']),
+            "f1_score": float(tagger.statistics['f1_score']),
+            "num_features": tagger.statistics['num_features'],
+            "num_positives": tagger.statistics['num_positives'],
+            "num_negatives": tagger.statistics['num_negatives'],
+            "model_size": round(float(os.path.getsize(tagger_path)) / 1000000, 1),  # bytes to mb
+            "plot": f'{secrets.token_hex(15)}.png',
+            "statistics": tagger.statistics
+        }
 
     except Exception as e:
-        # declare the job failed
         logging.getLogger(ERROR_LOGGER).exception(e)
         task_object.add_error(str(e))
         task_object.update_status(Task.STATUS_FAILED)
-        raise
+        raise e
+
+
+@task(name="save_tagger_results", base=BaseTask, queue="long_term_tasks")
+def save_tagger_results(result_data: dict):
+    tagger_id = result_data['id']
+    logging.getLogger(INFO_LOGGER).info(f"Starting task results for tagger with ID: {tagger_id}!")
+    tagger_object = Tagger.objects.get(pk=tagger_id)
+    task_object = tagger_object.task
+    show_progress = ShowProgress(task_object, multiplier=1)
+
+    try:
+
+        # update status to saving
+        show_progress.update_step('saving')
+        show_progress.update_view(0)
+
+        tagger_object.object.model.name = result_data["tagger_path"]
+        tagger_object.precision = result_data["precision"]
+        tagger_object.recall = result_data["recall"]
+        tagger_object.f1_score = result_data["f1_score"]
+        tagger_object.num_features = result_data["num_features"]
+        tagger_object.num_positives = result_data["num_positives"]
+        tagger_object.num_negatives = result_data["num_negatives"]
+        tagger_object.model_size = tagger_object["model_size"]
+        tagger_object.plot.save(result_data["plot"], create_tagger_plot(result_data["statistics"]))
+
+        tagger_object.save()
+        task_object.complete()
+
+    except Exception as e:
+        logging.getLogger(ERROR_LOGGER).exception(e)
+        task_object.add_error(str(e))
+        task_object.update_status(Task.STATUS_FAILED)
+        raise e
 
 
 @task(name="apply_tagger", base=BaseTask)

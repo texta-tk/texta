@@ -20,7 +20,7 @@ from toolkit.serializer_constants import (
     ProjectResourceImportModelSerializer)
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.serializers import (TagRandomDocSerializer, TaggerListFeaturesSerializer, TaggerSerializer, TaggerTagDocumentSerializer, TaggerTagTextSerializer)
-from toolkit.tagger.tasks import apply_tagger, train_tagger
+from toolkit.tagger.tasks import apply_tagger, save_tagger_results, start_tagger_task, train_tagger_task
 from toolkit.tagger.text_tagger import TextTagger
 from toolkit.tagger.validators import validate_input_document
 from toolkit.view_constants import (
@@ -143,7 +143,8 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
     def retrain_tagger(self, request, pk=None, project_pk=None):
         """Starts retraining task for the Tagger model."""
         instance = self.get_object()
-        apply_celery_task(train_tagger, instance.pk)
+        chain = start_tagger_task.s() | train_tagger_task.s() | save_tagger_results.s()
+        apply_celery_task(chain, instance.pk)
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
 
 

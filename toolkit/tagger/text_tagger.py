@@ -1,14 +1,12 @@
-from toolkit.tagger.pipeline import get_pipeline_builder
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import roc_curve, auc
-import pandas as pd
-import numpy as np
 import joblib
-import json
+import numpy as np
+import pandas as pd
+from sklearn.metrics import auc, roc_curve
+from sklearn.model_selection import GridSearchCV, train_test_split
 
 from toolkit.settings import NUM_WORKERS
 from toolkit.tagger.models import Tagger
+from toolkit.tagger.pipeline import get_pipeline_builder
 from toolkit.tools.tagging_report import TaggingReport
 
 
@@ -16,7 +14,7 @@ class TextTagger:
 
     def __init__(self, tagger_id, workers=NUM_WORKERS, text_processor=None):
         self.model = None
-        self.statistics = None
+        self.statistics: dict = dict()
         self.tagger_id = int(tagger_id)
         self.workers = workers
         self.description = None
@@ -145,7 +143,7 @@ class TextTagger:
             text = self.text_processor.process(text)[0]
 
         # generate text map for dataframe
-        text_map = {feature_name:[text] for feature_name in field_features}
+        text_map = {feature_name: [text] for feature_name in field_features}
         df_text = pd.DataFrame(text_map)
 
         return self.model.predict(df_text)[0], max(self.model.predict_proba(df_text)[0])

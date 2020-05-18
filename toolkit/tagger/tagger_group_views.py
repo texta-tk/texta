@@ -23,7 +23,7 @@ from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
 from toolkit.tagger.models import TaggerGroup
 from toolkit.tagger.serializers import TagRandomDocSerializer, TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer
-from toolkit.tagger.tasks import apply_tagger, create_tagger_objects, train_tagger
+from toolkit.tagger.tasks import apply_tagger, create_tagger_objects, save_tagger_results, start_tagger_task, train_tagger_task
 from toolkit.tagger.validators import validate_input_document
 from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.view_constants import BulkDelete, TagLogicViews
@@ -163,12 +163,15 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         API endpoint for retraining tagger model.
         """
         instance = self.get_object()
+        chain = start_tagger_task.s() | train_tagger_task.s() | save_tagger_results.s()
+
         # start retraining tasks
         for tagger in instance.taggers.all():
             # update task status so statistics are correct during retraining
             tagger.status = Task.STATUS_CREATED
             tagger.save()
-            apply_celery_task(train_tagger, tagger.pk)
+            apply_celery_task(chain, tagger.pk)
+
         return Response({'success': 'retraining tasks created', 'tagger_group_id': instance.id}, status=status.HTTP_200_OK)
 
 
