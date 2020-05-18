@@ -67,10 +67,7 @@ Running Docker with GPU support:
 * TEXTA_CELERY_ALWAYS_EAGER - Whether to use Celerys async features or not, useful for testing purposes locally. By default False.
 * TEXTA_SHORT_TASK_WORKERS - Number of threads available for short term tasks (default=3).
 * TEXTA_LONG_TASK_WORKERS - Number of threads available for long term tasks (default=5)
-* TEXTA_MODELS_DIR - Optional parameter to a directory path into which models are stored in seperate folders according to their type (tagger, embedding etc)
-Please make sure that the data and models directory name is also set in the TEXTA_DATA_FOLDER_NAME and TEXTA_MODELS_FOLDER_NAME variables.
-* TEXTA_MODELS_FOLDER_NAME - Name of the folder into which models are stored.0
-* TEXTA_DATA_FOLDER_NAME - Name of the folder into which miscellaneous data is stored. Includes the folder for storing models.
+* TEXTA_RELATIVE_MODELS_DIR - Relative path of the directory in which all the different types of models are stored in. Defaults to "/data/models".
 
 ## External services
 * TEXTA_ES_URL - URL of the Elasticsearch instance including the protocol, host and port (ex. http://localhost:9200).

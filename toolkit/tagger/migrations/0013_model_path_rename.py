@@ -2,7 +2,7 @@ import pathlib
 
 from django.db import migrations
 
-from toolkit.settings import DATA_FOLDER_NAME, MODELS_FOLDER_NAME
+from toolkit.settings import RELATIVE_MODELS_PATH
 
 
 def transfer_existing_tagger_model_path(apps, schema_editor):
@@ -14,7 +14,7 @@ def transfer_existing_tagger_model_path(apps, schema_editor):
         if tagger.model:
             # Take only the file name without the source paths.
             file_name = pathlib.Path(tagger.model.name).name
-            new_path = pathlib.Path(DATA_FOLDER_NAME) / MODELS_FOLDER_NAME / "tagger" / file_name
+            new_path = pathlib.Path(RELATIVE_MODELS_PATH) / "tagger" / file_name
             tagger.model.name = str(new_path)
             tagger.save()
 

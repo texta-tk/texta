@@ -21,7 +21,7 @@ from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import apply_celery_task
-from toolkit.settings import DATA_FOLDER_NAME, INFO_LOGGER, MODELS_DIR, MODELS_FOLDER_NAME
+from toolkit.settings import BASE_DIR, INFO_LOGGER, RELATIVE_MODELS_PATH
 from toolkit.tagger.choices import (DEFAULT_CLASSIFIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE, DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_VECTORIZER)
 
 
@@ -75,9 +75,9 @@ class Tagger(models.Model):
         Returns: Full and relative file paths, full for saving the model object and relative for actual DB storage.
         """
         model_file_name = f'{name}_{str(self.pk)}_{secrets.token_hex(10)}'
-        full_path = os.path.join(MODELS_DIR, 'tagger', model_file_name)
-        relative_path = os.path.join(DATA_FOLDER_NAME, MODELS_FOLDER_NAME, "tagger", model_file_name)
-        return full_path, relative_path
+        full_path = pathlib.Path(BASE_DIR) / RELATIVE_MODELS_PATH / "tagger" / model_file_name
+        relative_path = pathlib.Path(RELATIVE_MODELS_PATH) / "tagger" / model_file_name
+        return str(full_path), str(relative_path)
 
 
     def to_json(self) -> dict:

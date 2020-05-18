@@ -1,15 +1,9 @@
-from .text_rnn.model import TextRNN
-from .text_rnn.config import Config as TextRNNConfig
-
-from .fasttext.model import fastText
 from .fasttext.config import Config as fastTextConfig
-
-from .rcnn.model import RCNN
+from .fasttext.model import fastText
 from .rcnn.config import Config as RCNNConfig
-
-
-#class TorchModel:
-
+from .rcnn.model import RCNN
+from .text_rnn.config import Config as TextRNNConfig
+from .text_rnn.model import TextRNN
 
 
 TORCH_MODELS = {

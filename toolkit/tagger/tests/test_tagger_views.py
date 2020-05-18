@@ -9,7 +9,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from toolkit.core.task.models import Task
-from toolkit.settings import MODELS_DIR
+from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.tagger.models import Tagger
 from toolkit.test_settings import (TEST_FIELD,
                                    TEST_FIELD_CHOICE,
@@ -377,7 +377,7 @@ class TaggerViewTests(APITestCase):
 
         tagger = Tagger.objects.get(id=imported_tagger_id)
 
-        tagger_model_dir = pathlib.Path(MODELS_DIR) / "tagger"
+        tagger_model_dir = pathlib.Path(RELATIVE_MODELS_PATH) / "tagger"
         tagger_model_path = pathlib.Path(tagger.model.name)
 
         self.assertTrue(tagger_model_path.exists())

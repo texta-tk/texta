@@ -10,7 +10,7 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
-from toolkit.settings import MODELS_DIR
+from toolkit.settings import RELATIVE_MODELS_PATH
 from toolkit.test_settings import TEST_FIELD_CHOICE, TEST_INDEX, TEST_VERSION_PREFIX
 from toolkit.tools.utils_for_tests import project_creation
 from toolkit.tools.utils_for_tests import create_test_user, print_output
@@ -173,7 +173,7 @@ class EmbeddingViewTests(TransactionTestCase):
 
         embedding = Embedding.objects.get(id=imported_embedding_id)
 
-        embedding_model_dir = pathlib.Path(MODELS_DIR) / "embedding"
+        embedding_model_dir = pathlib.Path(RELATIVE_MODELS_PATH) / "embedding"
         embedding_model_path = pathlib.Path(embedding.embedding_model.name)
         embedding_phraser_path = pathlib.Path(embedding.phraser_model.name)
 

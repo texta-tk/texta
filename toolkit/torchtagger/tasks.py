@@ -13,7 +13,7 @@ from toolkit.base_task import BaseTask
 from toolkit.elastic.data_sample import DataSample
 from toolkit.torchtagger.torchtagger import TorchTagger
 from toolkit.torchtagger.plots import create_torchtagger_plot
-from toolkit.settings import MODELS_DIR
+from toolkit.settings import RELATIVE_MODELS_PATH
 
 
 @task(name="train_torchtagger", base=BaseTask, queue="long_term_tasks")
@@ -51,7 +51,7 @@ def train_torchtagger(tagger_id, testing=False):
         # train tagger and get result statistics
         tagger_stats = tagger.train(data_sample)
         # save tagger to disk
-        tagger_path = os.path.join(MODELS_DIR, model_type, f'{model_type}_{tagger_id}_{secrets.token_hex(10)}')
+        tagger_path = os.path.join(RELATIVE_MODELS_PATH, model_type, f'{model_type}_{tagger_id}_{secrets.token_hex(10)}')
         tagger_path, text_field_path = tagger.save(tagger_path)
         # set tagger location
         tagger_object.model.name = tagger_path

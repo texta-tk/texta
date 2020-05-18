@@ -1,4 +1,5 @@
 import os
+import pathlib
 import warnings
 
 from corsheaders.defaults import default_headers
@@ -230,15 +231,12 @@ CELERY_DEFAULT_ROUTING_KEY = 'short_term_tasks'
 # we set num workers to 1 because celery tasks are not allowed to have deamon processes
 NUM_WORKERS = 1
 
-DATA_FOLDER_NAME = os.getenv("TEXTA_DATA_FOLDER_NAME", "data")
-MODELS_FOLDER_NAME = os.getenv("TEXTA_MODELS_FOLDER_NAME", "models")
-
-MODELS_DIR_DEFAULT = os.path.join(BASE_DIR, DATA_FOLDER_NAME, MODELS_FOLDER_NAME)
-MODELS_DIR = os.getenv("TEXTA_MODELS_DIR", os.path.join(BASE_DIR, DATA_FOLDER_NAME, MODELS_FOLDER_NAME))
+MODELS_DIR_DEFAULT = str(pathlib.Path("data") / "models")
+RELATIVE_MODELS_PATH = os.getenv("TEXTA_RELATIVE_MODELS_DIR", MODELS_DIR_DEFAULT)
 
 MODEL_TYPES = ["embedding", "tagger", "torchtagger"]
 for model_type in MODEL_TYPES:
-    model_dir = os.path.join(MODELS_DIR, model_type)
+    model_dir = os.path.join(RELATIVE_MODELS_PATH, model_type)
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
