@@ -26,6 +26,7 @@ CORE_SETTINGS = {
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("TEXTA_SECRET_KEY", "eqr9sjz-&baah&c%ejkaorp)a1$q63y0%*a^&fv=y$(bbe5+(b")
 # SECURITY WARNING: don"t run with debug turned on in production!
@@ -229,8 +230,11 @@ CELERY_DEFAULT_ROUTING_KEY = 'short_term_tasks'
 # we set num workers to 1 because celery tasks are not allowed to have deamon processes
 NUM_WORKERS = 1
 
-# create model dirs
-MODELS_DIR = os.path.join(BASE_DIR, "data", "models")
+DATA_FOLDER_NAME = os.getenv("TEXTA_DATA_FOLDER_NAME", "data")
+MODELS_FOLDER_NAME = os.getenv("TEXTA_MODELS_FOLDER_NAME", "models")
+
+MODELS_DIR_DEFAULT = os.path.join(BASE_DIR, DATA_FOLDER_NAME, MODELS_FOLDER_NAME)
+MODELS_DIR = os.getenv("TEXTA_MODELS_DIR", os.path.join(BASE_DIR, DATA_FOLDER_NAME, MODELS_FOLDER_NAME))
 
 MODEL_TYPES = ["embedding", "tagger", "torchtagger"]
 for model_type in MODEL_TYPES:

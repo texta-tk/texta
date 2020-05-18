@@ -91,8 +91,8 @@ def perform_data_clustering(clustering_id):
         clusters.cluster()
 
         # Save the vector path.
-        path = clustering_model.generate_name()
-        clusters.save_transformation(path)
+        full_vector_path, relative_vector_path = clustering_model.generate_name()
+        clusters.save_transformation(full_vector_path)
 
         clustering_info = {
             "pk": clustering_model.pk,
@@ -100,7 +100,7 @@ def perform_data_clustering(clustering_id):
             "fields": fields,
             "indices": indices,
             "display_fields": display_fields,
-            "vectors_filepath": path,
+            "vectors_filepath": relative_vector_path,
             "stop_words": stop_words,
             "significant_words_filter": significant_words_filter
         }

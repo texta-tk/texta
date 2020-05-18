@@ -19,7 +19,7 @@ from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
 from toolkit.helper_functions import apply_celery_task
-from toolkit.settings import MODELS_DIR
+from toolkit.settings import DATA_FOLDER_NAME, MODELS_DIR, MODELS_FOLDER_NAME
 from toolkit.torchtagger import choices
 
 
@@ -111,18 +111,18 @@ class TorchTagger(models.Model):
                     index_model, is_created = Index.objects.get_or_create(name=index)
                     torchtagger_model.indices.add(index_model)
 
-
-                new_tagger_name = torchtagger_model.generate_name("torchtagger")
-                with open(new_tagger_name, "wb") as fp:
+                full_model_path, relative_model_path = torchtagger_model.generate_name("torchtagger")
+                with open(full_model_path, "wb") as fp:
                     path = pathlib.Path(torchtagger_json["model"]).name
                     fp.write(archive.read(path))
-                    torchtagger_model.model.name = new_tagger_name
+                    torchtagger_model.model.name = relative_model_path
 
-                text_field = "{}_text_field".format(str(new_tagger_name))
+                text_field = "{}_text_field".format(str(full_model_path))
                 with open(text_field, "wb") as fp:
                     path = pathlib.Path(torchtagger_json["text_field"]).name
                     fp.write(archive.read(path))
-                    torchtagger_model.text_field.name = text_field
+                    relative_path = "{}_text_field".format(str(relative_model_path))
+                    torchtagger_model.text_field.name = relative_path
 
                 plot_name = pathlib.Path(torchtagger_json["plot"])
                 path = plot_name.name
@@ -159,8 +159,19 @@ class TorchTagger(models.Model):
             return tmp.read()
 
 
-    def generate_name(self, name):
-        return os.path.join(MODELS_DIR, 'torchtagger', f'{name}_{str(self.pk)}_{secrets.token_hex(10)}')
+    def generate_name(self, name: str):
+        """
+        Do not change this carelessly as import/export functionality depends on this.
+        Returns full and relative filepaths for the intended models.
+        Args:
+            name: Name for the model to distinguish itself from others in the same directory.
+
+        Returns: Full and relative file paths, full for saving the model object and relative for actual DB storage.
+        """
+        model_file_name = f'{name}_{str(self.pk)}_{secrets.token_hex(10)}'
+        full_path = os.path.join(MODELS_DIR, 'torchtagger', model_file_name)
+        relative_path = os.path.join(DATA_FOLDER_NAME, MODELS_FOLDER_NAME, "torchtagger", model_file_name)
+        return full_path, relative_path
 
 
     def __str__(self):

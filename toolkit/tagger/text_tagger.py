@@ -116,14 +116,17 @@ class TextTagger:
         return self.model.named_steps['feature_selector'].get_support()
 
 
-    def save(self, file_path):
+    def save(self, file_path: str) -> bool:
+        """
+        Saving the model to the filesystem using joblib.
+        """
         joblib.dump(self.model, file_path)
         return True
 
 
     def load(self):
         tagger_object = Tagger.objects.get(pk=self.tagger_id)
-        tagger_path = tagger_object.model.path
+        tagger_path = tagger_object.model.name
         self.model = joblib.load(tagger_path)
         self.description = tagger_object.description
         return True

@@ -77,14 +77,14 @@ def train_embedding(embedding_id):
 
         # Save models
         show_progress.update_step('saving')
-        model_path = embedding_object.generate_name("embedding")
-        phraser_path = embedding_object.generate_name("phraser")
-        model.save(model_path)
-        phraser.save(phraser_path)
+        full_model_path, relative_model_path = embedding_object.generate_name("embedding")
+        full_phraser_path, relative_phraser_path = embedding_object.generate_name("phraser")
+        model.save(full_model_path)
+        phraser.save(full_phraser_path)
 
         # save model paths
-        embedding_object.embedding_model.name = model_path
-        embedding_object.phraser_model.name = phraser_path
+        embedding_object.embedding_model.name = relative_model_path
+        embedding_object.phraser_model.name = relative_phraser_path
         embedding_object.vocab_size = len(model.wv.vocab)
         embedding_object.save()
 

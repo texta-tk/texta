@@ -142,10 +142,7 @@ def train_tagger_task(tagger_id: int):
         )
 
         # save tagger to disk
-        tagger_full_path = tagger_object.generate_name("tagger")
-        tagger_name = str(pathlib.Path(tagger_full_path).name)
-        tagger_relative_path = str(pathlib.Path("data") / "models" / "tagger" / tagger_name)
-
+        tagger_full_path, relative_tagger_path = tagger_object.generate_name("tagger")
         tagger.save(tagger_full_path)
         task_object.save()
 
@@ -156,7 +153,7 @@ def train_tagger_task(tagger_id: int):
 
         return {
             "id": tagger_id,
-            "tagger_path": tagger_relative_path,
+            "tagger_path": relative_tagger_path,
             "precision": float(tagger.statistics['precision']),
             "recall": float(tagger.statistics['recall']),
             "f1_score": float(tagger.statistics['f1_score']),
