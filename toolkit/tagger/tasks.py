@@ -1,20 +1,20 @@
 import json
 import logging
 import os
+import pathlib
 import re
 import secrets
 
 from celery.decorators import task
-from django.db import transaction
 
-from toolkit.base_task import BaseTask
+from toolkit.base_task import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.data_sample import DataSample
 from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.models import Index
 from toolkit.embedding.phraser import Phraser
 from toolkit.helper_functions import get_indices_from_object
-from toolkit.settings import ERROR_LOGGER, INFO_LOGGER
+from toolkit.settings import ERROR_LOGGER, INFO_LOGGER, MEDIA_URL
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.tagger.plots import create_tagger_plot
 from toolkit.tagger.text_tagger import TextTagger
@@ -77,7 +77,7 @@ def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries,
     return True
 
 
-@task(name="start_tagger_task", base=BaseTask, queue="long_term_tasks")
+@task(name="start_tagger_task", base=TransactionAwareTask, queue="long_term_tasks")
 def start_tagger_task(tagger_id: int):
     tagger = Tagger.objects.get(pk=tagger_id)
     task_object = tagger.task
@@ -87,7 +87,7 @@ def start_tagger_task(tagger_id: int):
     return tagger_id
 
 
-@task(name="train_tagger_task", base=BaseTask, queue="long_term_tasks")
+@task(name="train_tagger_task", base=TransactionAwareTask, queue="long_term_tasks")
 def train_tagger_task(tagger_id: int):
     logging.getLogger(INFO_LOGGER).info(f"Starting task 'train_tagger' for tagger with ID: {tagger_id}!")
     tagger_object = Tagger.objects.get(id=tagger_id)
@@ -142,23 +142,29 @@ def train_tagger_task(tagger_id: int):
         )
 
         # save tagger to disk
-        tagger_path = tagger_object.generate_name("tagger")
-        tagger.save(tagger_path)
+        tagger_full_path = tagger_object.generate_name("tagger")
+        tagger_name = str(pathlib.Path(tagger_full_path).name)
+        tagger_relative_path = str(pathlib.Path("data") / "models" / "tagger" / tagger_name)
 
+        tagger.save(tagger_full_path)
         task_object.save()
+
+        # Save the image before its path.
+        image_name = f'{secrets.token_hex(15)}.png'
+        tagger_object.plot.save(image_name, create_tagger_plot(tagger.statistics), save=False)
+        image_path = pathlib.Path(MEDIA_URL) / image_name
 
         return {
             "id": tagger_id,
-            "tagger_path": tagger_path,
+            "tagger_path": tagger_relative_path,
             "precision": float(tagger.statistics['precision']),
             "recall": float(tagger.statistics['recall']),
             "f1_score": float(tagger.statistics['f1_score']),
             "num_features": tagger.statistics['num_features'],
             "num_positives": tagger.statistics['num_positives'],
             "num_negatives": tagger.statistics['num_negatives'],
-            "model_size": round(float(os.path.getsize(tagger_path)) / 1000000, 1),  # bytes to mb
-            "plot": f'{secrets.token_hex(15)}.png',
-            "statistics": tagger.statistics
+            "model_size": round(float(os.path.getsize(tagger_full_path)) / 1000000, 1),  # bytes to mb
+            "plot": str(image_path)
         }
 
     except Exception as e:
@@ -168,29 +174,29 @@ def train_tagger_task(tagger_id: int):
         raise e
 
 
-@task(name="save_tagger_results", base=BaseTask, queue="long_term_tasks")
+@task(name="save_tagger_results", base=TransactionAwareTask, queue="long_term_tasks")
 def save_tagger_results(result_data: dict):
-    tagger_id = result_data['id']
-    logging.getLogger(INFO_LOGGER).info(f"Starting task results for tagger with ID: {tagger_id}!")
-    tagger_object = Tagger.objects.get(pk=tagger_id)
-    task_object = tagger_object.task
-    show_progress = ShowProgress(task_object, multiplier=1)
-
     try:
+
+        tagger_id = result_data['id']
+        logging.getLogger(INFO_LOGGER).info(f"Starting task results for tagger with ID: {tagger_id}!")
+        tagger_object = Tagger.objects.get(pk=tagger_id)
+        task_object = tagger_object.task
+        show_progress = ShowProgress(task_object, multiplier=1)
 
         # update status to saving
         show_progress.update_step('saving')
         show_progress.update_view(0)
 
-        tagger_object.object.model.name = result_data["tagger_path"]
+        tagger_object.model.name = result_data["tagger_path"]
         tagger_object.precision = result_data["precision"]
         tagger_object.recall = result_data["recall"]
         tagger_object.f1_score = result_data["f1_score"]
         tagger_object.num_features = result_data["num_features"]
         tagger_object.num_positives = result_data["num_positives"]
         tagger_object.num_negatives = result_data["num_negatives"]
-        tagger_object.model_size = tagger_object["model_size"]
-        tagger_object.plot.save(result_data["plot"], create_tagger_plot(result_data["statistics"]))
+        tagger_object.model_size = result_data["model_size"]
+        tagger_object.plot.name = result_data["plot"]
 
         tagger_object.save()
         task_object.complete()

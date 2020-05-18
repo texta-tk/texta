@@ -214,7 +214,7 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERYD_PREFETCH_MULTIPLIER = 1
-
+CELERY_ALWAYS_EAGER = False if os.getenv("TEXTA_CELERY_ALWAYS_EAGER", "False") == "False" else True
 
 CELERY_QUEUES = (
     Queue('long_term_tasks', exchange="long_term_tasks", routing_key='long_term_tasks'),
@@ -231,6 +231,7 @@ NUM_WORKERS = 1
 
 # create model dirs
 MODELS_DIR = os.path.join(BASE_DIR, "data", "models")
+
 MODEL_TYPES = ["embedding", "tagger", "torchtagger"]
 for model_type in MODEL_TYPES:
     model_dir = os.path.join(MODELS_DIR, model_type)

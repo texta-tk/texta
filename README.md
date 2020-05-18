@@ -64,7 +64,7 @@ Running Docker with GPU support:
 ## Deploy & Testing variables
 * TEXTA_ADMIN_PASSWORD - Password of the admin user created on first run.
 * TEXTA_USE_CSRF - Disable CSRF for integration tests.
-
+* TEXTA_CELERY_ALWAYS_EAGER - Whether to use Celerys async features or not, useful for testing purposes locally. By default False.
 * TEXTA_SHORT_TASK_WORKERS - Number of threads available for short term tasks (default=3).
 * TEXTA_LONG_TASK_WORKERS - Number of threads available for long term tasks (default=5)
 
