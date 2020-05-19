@@ -10,10 +10,10 @@ dependencies:
   - python=3.6
   - pip
   - pandas
-  - scikit-learn==0.22.1
+  - scikit-learn==0.*
   - matplotlib
   - graphviz
-  - gensim==3.7.*
+  - gensim==3.*
   - pydot
   - psutil
   - uwsgi
@@ -22,14 +22,14 @@ dependencies:
   - mysqlclient
   - pytorch-cpu
   - pip:
-    - django==2.1.*
+    - django==2.*
     - django-multiselectfield
     - django-rest-serializer-field-permissions
     - django-cors-headers
     - django-extensions
     - django-filter
     - django-rest-auth[with_social]
-    - djangorestframework==3.9.*
+    - djangorestframework==3.*
     - drf-nested-routers
     - celery==4.*
     - redis==3.*

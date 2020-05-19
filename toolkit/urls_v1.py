@@ -23,9 +23,9 @@ from toolkit.torchtagger.urls import router as torchtagger_router
 
 
 router = routers.DefaultRouter()
-router.register(r'projects', ProjectViewSet, base_name='project')
-router.register('users', profile_views.UserViewSet, base_name='user')
-router.register('core_variables', CoreVariableViewSet, base_name='corevariable')
+router.register(r'projects', ProjectViewSet, basename='project')
+router.register('users', profile_views.UserViewSet, basename='user')
+router.register('core_variables', CoreVariableViewSet, basename='corevariable')
 
 # add resources to projects
 project_router = routers.NestedDefaultRouter(router, r'projects', lookup='project')
@@ -38,9 +38,9 @@ project_router.registry.extend(torchtagger_router.registry)
 project_router.registry.extend(mlp_router.registry)
 
 # TODO Look for putting this into a better place.
-project_router.register(r'clustering', ClusteringViewSet, base_name='clustering')
+project_router.register(r'clustering', ClusteringViewSet, basename='clustering')
 clustering_router = routers.NestedSimpleRouter(project_router, r'clustering', lookup='clustering')
-clustering_router.register("clusters", ClusterViewSet, base_name="cluster")
+clustering_router.register("clusters", ClusterViewSet, basename="cluster")
 
 app_name = 'toolkit_v1'
 
