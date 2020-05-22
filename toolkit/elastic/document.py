@@ -33,26 +33,30 @@ class ElasticDocument:
             return False
 
 
-    def add_fact(self, fact: dict, doc_ids: List):
+    def __documents_to_update_actions(self, documents: List[dict]):
+        for document in documents:
+            yield {
+                "_index": document["_index"],
+                "_type": document["_type"],
+                "_id": document["_id"],
+                "_op_type": "update",
+                "doc": document["_source"]
+            }
+
+
+    def add_fact(self, fact: dict, doc_ids: List, indices: List):
         # Fetch the documents with the bulk function to get the facts,
         # and to validate that those ids also exist.
         documents = self.get_bulk(doc_ids=doc_ids, fields=["texta_facts"])
+        [self.core.add_texta_facts_mapping(i, i) for i in indices]  # Ensure facts mapping.
 
         for document in documents:
-            # If there is no texta_facts field in the index, add it.
-            if "texta_facts" not in document["_source"]:
-                self.core.add_texta_facts_mapping(document["_index"], document["_type"])
-                document["_source"]["texta_facts"] = [fact]
-                self.update(index=document["_index"], doc_type=document["_type"], doc_id=document["_id"], doc=document["_source"])
+            facts = document["_source"]["texta_facts"]
+            facts.append(fact)
+            facts = self.__remove_duplicate_facts(facts)
+            document["_source"]["texta_facts"] = facts
 
-            else:
-                # Avoid sending duplicates.
-                if self.__does_fact_exist(fact, document["_source"]["texta_facts"]):
-                    pass
-                else:
-                    document["_source"]["texta_facts"].append(fact)
-                    self.update(index=document["_index"], doc_type=document["_type"], doc_id=document["_id"], doc=document["_source"])
-
+        bulk(self.core.es, actions=self.__documents_to_update_actions(documents), refresh="wait_for", max_retries=10)
         return True
 
 
@@ -81,7 +85,7 @@ class ElasticDocument:
         s = Search(using=self.core.es, index=self.index)
         s = s.query("ids", values=doc_ids)
         s = s.source(fields)
-        s = s[:1000]
+        s = s[:10000]
         response = s.execute()
         if response:
             return [{"_index": document.meta.index, "_id": document.meta.id, "_type": document.meta.doc_type, "_source": self.core.flatten(document.to_dict()) if flatten else document.to_dict()} for document in response]

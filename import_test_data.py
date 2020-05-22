@@ -1,12 +1,14 @@
 #!/usr/bin/env python
-import json
 import argparse
+import json
 import zipfile
-from urllib.request import urlopen
 from io import BytesIO
+from urllib.request import urlopen
+
 from elasticsearch import Elasticsearch
 
 from toolkit.settings import CORE_SETTINGS, TEST_DATA_DIR
+
 
 ES_URL = CORE_SETTINGS["TEXTA_ES_URL"]
 ES_USERNAME = CORE_SETTINGS["TEXTA_ES_USERNAME"]
@@ -14,11 +16,11 @@ ES_PASSWORD = CORE_SETTINGS["TEXTA_ES_PASSWORD"]
 
 parser = argparse.ArgumentParser(description='Import the Elasticsearch index for unit tests.')
 parser.add_argument('-es', type=str, default=ES_URL,
-                   help='Elasticsearch host URL, default: localhost:9200')
+                    help='Elasticsearch host URL, default: localhost:9200')
 parser.add_argument('-i', type=str, default='texta_test_index',
-                   help='The final index name of the testing index, that will be added to Elasticsearch. If an old index exists, IT WILL BE DELETED!')
+                    help='The final index name of the testing index, that will be added to Elasticsearch. If an old index exists, IT WILL BE DELETED!')
 parser.add_argument('-lg', type=bool, default=False,
-                   help='Also import larger dataset for performance testing.')
+                    help='Also import larger dataset for performance testing.')
 
 args = parser.parse_args()
 
@@ -36,7 +38,7 @@ dataset_params = {
 es = Elasticsearch(HOST, http_auth=(ES_USERNAME, ES_PASSWORD))
 
 FACT_MAPPING = {
-    'test_mapping': {
+    'texta_test_index': {
         'properties': {
             'texta_facts': {
                 'type': 'nested',
@@ -59,7 +61,7 @@ def import_docs(params):
     test_data_zip = BytesIO(response.read())
     print("Reading test data.")
     with zipfile.ZipFile(test_data_zip) as z:
-        with z.open(params["file_name"]+'.jl') as f:
+        with z.open(params["file_name"] + '.jl') as f:
             lines = f.readlines()
     if not lines:
         print("Failed reading test data.")
@@ -73,7 +75,7 @@ def import_docs(params):
             line = line.strip()
             if line:
                 doc = json.dumps(json.loads(line))
-                es.index(index=params["index"], body=doc, doc_type="test_mapping")
+                es.index(index=params["index"], body=doc, doc_type="texta_test_index")
         print('Test Elasticsearch index imported successfully')
         print('')
 
@@ -87,6 +89,7 @@ def import_collections(params):
         z.extractall(TEST_DATA_DIR)
     print("Extracted test collections.")
 
+
 def main():
     try:
         print("Processing small dataset:")
@@ -94,11 +97,11 @@ def main():
         if LARGE == True:
             print("Processing large dataset:")
             import_docs(dataset_params["lg"])
-        import_collections(dataset_params["collection"])       
+        import_collections(dataset_params["collection"])
     except Exception as e:
         print(e)
         print('An error occurred during loading and importing the data')
-    
 
-if __name__ == "__main__": 
+
+if __name__ == "__main__":
     main()

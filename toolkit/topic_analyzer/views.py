@@ -380,11 +380,12 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
 
         cluster = Cluster.objects.get(pk=kwargs["pk"])
         clustering_object = ClusteringResult.objects.get(pk=kwargs["clustering_pk"])
+        indices = clustering_object.get_indices()
 
         doc_ids = json.loads(cluster.document_ids)
         ignored_ids = json.loads(clustering_object.ignored_ids)
 
-        ed.add_fact(fact=serializer.validated_data, doc_ids=doc_ids)
+        ed.add_fact(fact=serializer.validated_data, doc_ids=doc_ids, indices=indices)
 
         clustering_object.ignored_ids = json.dumps(doc_ids + ignored_ids)
         clustering_object.save()
