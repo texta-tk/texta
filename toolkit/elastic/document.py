@@ -51,7 +51,7 @@ class ElasticDocument:
         [self.core.add_texta_facts_mapping(i, i) for i in indices]  # Ensure facts mapping.
 
         for document in documents:
-            facts = document["_source"]["texta_facts"]
+            facts = document["_source"].get("texta_facts", [])
             facts.append(fact)
             facts = self.__remove_duplicate_facts(facts)
             document["_source"]["texta_facts"] = facts
