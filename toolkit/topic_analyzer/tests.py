@@ -333,3 +333,28 @@ class TopicAnalyzerTests(APITransactionTestCase):
         stored_stop_words = json.loads(clustering.stop_words)
         self.assertTrue(sorted(stop_words) == sorted(stored_stop_words))
         print_output("test_updating_clustering_instances_stop_words", 201)
+
+
+    def test_that_clusters_dont_contain_duplicate_document_ids(self):
+        url = reverse("v1:clustering-list", kwargs={"project_pk": self.project.pk})
+        payload = {
+            "description": "TopicCluster",
+            "fields": ["comment_subject", "comment_content"],
+            "vectorizer": "TfIdf Vectorizer"
+        }
+        response = self.client.post(url, data=payload, format="json")
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+
+        clustering = ClusteringResult.objects.get(pk=response.data["id"])
+        clusters = clustering.cluster_result.all()
+
+        ids = []
+
+        for cluster in clusters:
+            document_ids = json.loads(cluster.document_ids)
+            # Check for one document appearing multiple times in the cluster.
+            self.assertTrue(len(document_ids) == len(set(document_ids)))
+            for idx in document_ids:
+                ids.append(idx)
+
+        self.assertTrue(len(ids) == len(set(ids)))

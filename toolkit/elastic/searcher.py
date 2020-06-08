@@ -233,11 +233,13 @@ class ElasticSearcher:
                                     yield text
 
                         elif self.output == self.OUT_TEXT_WITH_ID:
+                            document = {}
                             for key, value in parsed_doc.items():
                                 if key in self.field_data:
                                     processed_field = self.text_processor.process(value)
                                     for text in processed_field:
-                                        yield hit["_id"], text
+                                        document[key] = text
+                            yield hit["_id"], document
 
 
                         elif self.output in (self.OUT_DOC, self.OUT_DOC_WITH_ID):

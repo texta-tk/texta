@@ -74,7 +74,7 @@ def perform_data_clustering(clustering_id):
             scroll_limit=document_limit
         )
 
-        docs = [{"id": doc_id, "text": text} for doc_id, text in elastic_search]
+        docs = [{"id": doc_id, "document": document} for doc_id, document in elastic_search]
 
         # Group em up~!
         clusters = Clustering(
