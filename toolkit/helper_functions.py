@@ -1,8 +1,6 @@
-from urllib.parse import urljoin
-import logging
 import os
-import sys
 import re
+import sys
 
 
 def apply_celery_task(task_func, *args):
@@ -45,7 +43,7 @@ def add_finite_url_to_feedback(decision_dict, request):
     """
     if "feedback" in decision_dict:
         feedback = decision_dict["feedback"]
-        url = "/api/v1/"+feedback["url"]
+        url = "/api/v1/" + feedback["url"]
         url = re.sub('/+', '/', url)
         decision_dict["feedback"]["url"] = request.build_absolute_uri(url)
     return decision_dict
@@ -58,7 +56,7 @@ def get_core_setting(setting_name):
     """
     # import here to avoid import loop
     from toolkit.core.core_variable.models import CoreVariable
-    from toolkit.settings import CORE_SETTINGS, ERROR_LOGGER
+    from toolkit.settings import CORE_SETTINGS
     # retrieve variable setting from db
     try:
         variable_match = CoreVariable.objects.filter(name=setting_name)
@@ -73,3 +71,9 @@ def get_core_setting(setting_name):
             return variable_match[0].value
     except Exception as e:
         return CORE_SETTINGS[setting_name]
+
+
+def resolve_staticfiles():
+    TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
+    storage = 'django.contrib.staticfiles.storage.StaticFilesStorage' if TESTING else 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    return storage

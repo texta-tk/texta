@@ -5,7 +5,7 @@ import warnings
 from corsheaders.defaults import default_headers
 from kombu import Exchange, Queue
 
-from .helper_functions import parse_list_env_headers
+from .helper_functions import parse_list_env_headers, resolve_staticfiles
 from .logging_settings import setup_logging
 
 
@@ -131,7 +131,7 @@ else:
     # Add additional middleware to turn off the CSRF handling in the SessionsMiddleware.
     MIDDLEWARE.append("toolkit.tools.common_utils.DisableCSRFMiddleware")
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = resolve_staticfiles()
 
 ROOT_URLCONF = "toolkit.urls"
 
