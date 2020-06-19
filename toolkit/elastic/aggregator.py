@@ -124,9 +124,9 @@ class ElasticAggregator:
         """
         Args:
             stop_words: Optional parameter to remove stop words from significant words.
-            indices: List of string to limit the indices we're looking from.
             document_ids: List of document ids to limit the range of the significant words.
             field: Path name of the field we're comparing text from for significant words.
+            exclude: regex string for which values to exclude.
 
         Returns: List of dicts with the aggregation results.
 

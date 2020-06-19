@@ -6,7 +6,7 @@ from time import sleep
 from typing import List
 
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APITransactionTestCase
 
 from toolkit.core.task.models import Task
 from toolkit.settings import RELATIVE_MODELS_PATH
@@ -20,27 +20,24 @@ from toolkit.test_settings import (TEST_FIELD,
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
-class TaggerViewTests(APITestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        # Owner of the project
-        cls.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
-        cls.project = project_creation("taggerTestProject", TEST_INDEX, cls.user)
-        cls.project.users.add(cls.user)
-        cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/taggers/'
-        cls.project_url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}'
-        cls.multitag_text_url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/multitag_text/'
-
-        # set vectorizer & classifier options
-        cls.vectorizer_opts = ('Count Vectorizer', 'Hashing Vectorizer', 'TfIdf Vectorizer')
-        cls.classifier_opts = ('Logistic Regression', 'LinearSVC')
-
-        # list tagger_ids for testing. is populated during training test
-        cls.test_tagger_ids = []
+class TaggerViewTests(APITransactionTestCase):
 
 
     def setUp(self):
+        # Owner of the project
+        self.user = create_test_user('taggerOwner', 'my@email.com', 'pw')
+        self.project = project_creation("taggerTestProject", TEST_INDEX, self.user)
+        self.project.users.add(self.user)
+        self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/taggers/'
+        self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
+        self.multitag_text_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/multitag_text/'
+
+        # set vectorizer & classifier options
+        self.vectorizer_opts = ('Count Vectorizer', 'Hashing Vectorizer', 'TfIdf Vectorizer')
+        self.classifier_opts = ('Logistic Regression', 'LinearSVC')
+
+        # list tagger_ids for testing. is populated during training test
+        self.test_tagger_ids = []
         self.client.login(username='taggerOwner', password='pw')
 
 

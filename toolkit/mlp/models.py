@@ -1,44 +1,41 @@
 import json
 
 from django.contrib.auth.models import User
-from django.db import models
-from django.db.models import signals
-from multiselectfield import MultiSelectField
+from django.db import models, transaction
 
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
-from toolkit.elastic.searcher import EMPTY_QUERY, ElasticSearcher
+from toolkit.elastic.models import Index
+from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.helper_functions import apply_celery_task
-from toolkit.mlp.choices import MLP_ANALYZER_CHOICES
 
 
-class MLPProcessor(models.Model):
+class MLPWorker(models.Model):
     description = models.CharField(max_length=MAX_DESC_LEN)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     query = models.TextField(default=json.dumps(EMPTY_QUERY))
+    indices = models.ManyToManyField(Index)
     fields = models.TextField(default=json.dumps([]))
+    analyzers = models.TextField(default=json.dumps([]))
+
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
-    analyzers = MultiSelectField(default=MLP_ANALYZER_CHOICES[0])
+
+
+    def get_indices(self):
+        return [index.name for index in self.indices.filter(is_open=True)]
 
 
     def __str__(self):
-        return self.description
+        return '{0} - {1}'.format(self.pk, self.description)
 
 
-    @classmethod
-    def start_mlp_task(cls, sender, instance, created, **kwargs):
-        if created:
-            indices = json.loads(instance.get_indices())
-            total = ElasticSearcher(query=instance.query, indices=indices).count()
+    def process(self):
+        new_task = Task.objects.create(mlpworker=self, status='created')
+        self.task = new_task
+        self.save()
 
-            new_task = Task.objects.create(mlpprocessor=instance, status='created', total=total)
-            instance.task = new_task
-            instance.save()
-
-            from toolkit.mlp.tasks import start_mlp
-            apply_celery_task(start_mlp, instance.pk)
-
-
-signals.post_save.connect(MLPProcessor.start_mlp_task, sender=MLPProcessor)
+        from toolkit.mlp.tasks import apply_mlp_on_index, end_mlp_task, start_mlp_worker
+        chain = start_mlp_worker.s() | apply_mlp_on_index.s() | end_mlp_task.s()
+        transaction.on_commit(lambda: apply_celery_task(chain, self.pk))

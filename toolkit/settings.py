@@ -221,6 +221,7 @@ CELERY_ALWAYS_EAGER = False if os.getenv("TEXTA_CELERY_ALWAYS_EAGER", "False") =
 CELERY_QUEUES = (
     Queue('long_term_tasks', exchange="long_term_tasks", routing_key='long_term_tasks'),
     Queue('short_term_tasks', exchange="short_term_tasks", routing_key='short_term_tasks'),
+    Queue('mlp_queue', exchange="mlp_queue", routing_key='mlp_queue'),
 )
 
 # By default use the queue for short term tasks, unless specified to use the long term one.
@@ -233,6 +234,9 @@ NUM_WORKERS = 1
 
 MODELS_DIR_DEFAULT = str(pathlib.Path("data") / "models")
 RELATIVE_MODELS_PATH = os.getenv("TEXTA_RELATIVE_MODELS_DIR", MODELS_DIR_DEFAULT)
+
+DEFAULT_MLP_LANGUAGE_CODES = parse_list_env_headers("TEXTA_LANGUAGE_CODES", ["et", "en", "ru"])
+MLP_MODEL_DIRECTORY = os.getenv("TEXTA_MLP_MODEL_DIRECTORY_PATH", MODELS_DIR_DEFAULT)
 
 MODEL_TYPES = ["embedding", "tagger", "torchtagger"]
 for model_type in MODEL_TYPES:

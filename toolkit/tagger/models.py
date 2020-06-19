@@ -153,7 +153,7 @@ class Tagger(models.Model):
         from toolkit.tagger.tasks import start_tagger_task, train_tagger_task, save_tagger_results
         logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for training of tagger: {self.to_json()}")
         chain = start_tagger_task.s() | train_tagger_task.s() | save_tagger_results.s()
-        apply_celery_task(chain, self.pk)
+        transaction.on_commit(lambda: apply_celery_task(chain, self.pk))
 
 
 @receiver(models.signals.post_delete, sender=Tagger)
