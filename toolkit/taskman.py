@@ -22,7 +22,7 @@ def debug_task(self):
 class MlpTask(BaseTask):
     ignore_result = False
     name = "MlpTask"
-    routing_key = "mlp_queue"
+
     _mlp = None
 
 
