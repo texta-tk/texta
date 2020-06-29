@@ -156,14 +156,14 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response(prediction, status=status.HTTP_200_OK)
 
 
-    def apply_tagger(self, tagger_object, tagger_input, input_type='text', lemmatizer=None, feedback=False):
+    def apply_tagger(self, tagger_object, tagger_input, input_type='text', lemmatize=None, feedback=False):
         # use phraser is embedding used
         if tagger_object.embedding:
             phraser = Phraser(tagger_object.embedding.id)
             phraser.load()
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, lemmatizer=lemmatizer)
+            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, lemmatize=lemmatize)
         else:
-            text_processor = TextProcessor(remove_stop_words=True, lemmatizer=lemmatizer)
+            text_processor = TextProcessor(remove_stop_words=True, lemmatize=lemmatize)
         # retrieve model
         tagger = TorchTagger(tagger_object.id)
         tagger.load()

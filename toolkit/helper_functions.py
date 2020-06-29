@@ -3,11 +3,11 @@ import re
 import sys
 
 
-def apply_celery_task(task_func, *args):
+def apply_celery_task(task_func, *args, **kwargs):
     if not 'test' in sys.argv:
-        return task_func.apply_async(args=(*args,))
+        return task_func.apply_async(args=(*args,), kwargs=kwargs)
     else:
-        return task_func.apply(args=(*args,))
+        return task_func.apply(args=(*args,), kwargs=kwargs)
 
 
 def get_indices_from_object(model_object):

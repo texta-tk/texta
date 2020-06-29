@@ -43,14 +43,15 @@ class MlpTask(BaseTask):
 
 
     def run(self, list_or_doc: str, *args, **kwargs):
+        analyzers = kwargs.get("analyzers", ["all"])
         if list_or_doc == "doc":
-            response = self.mlp.process_docs(docs=kwargs["docs"], analyzers=kwargs["analyzers"], doc_paths=kwargs["fields_to_parse"])
+            response = self.mlp.process_docs(docs=kwargs["docs"], analyzers=analyzers, doc_paths=kwargs["fields_to_parse"])
             return response
 
         elif list_or_doc == "list":
             response = []
             for text in kwargs["texts"]:
-                analyzed_text = self.mlp.process(text, kwargs["analyzers"])
+                analyzed_text = self.mlp.process(text, analyzers)
                 response.append(analyzed_text)
             return response
 

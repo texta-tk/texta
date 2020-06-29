@@ -1,16 +1,20 @@
-from toolkit.core.lexicon.models import Lexicon
-from toolkit.settings import BASE_DIR
-import requests
 import os
+
+from toolkit.helper_functions import apply_celery_task
+from toolkit.settings import BASE_DIR
+from toolkit.taskman import mlp_task
 
 
 class StopWords:
     """
     Stop word remover using existing lists.
     """
+
+
     def __init__(self, custom_stop_words=[]):
         self.stop_words = self._get_stop_words(custom_stop_words)
-    
+
+
     @staticmethod
     def _get_stop_words(custom_stop_words):
         stop_words = {}
@@ -21,9 +25,10 @@ class StopWords:
                     stop_words[stop_word] = True
 
         for custom_stop_word in custom_stop_words:
-            stop_words[custom_stop_word] = True     
+            stop_words[custom_stop_word] = True
 
         return stop_words
+
 
     def remove(self, text):
         if isinstance(text, str):
@@ -39,15 +44,17 @@ class TextProcessor:
     Processor for processing texts prior to modelling
     """
 
-    def __init__(self, lemmatizer=None, phraser=None, remove_stop_words=True, sentences=False, tokenize=False, custom_stop_words=[]):
-        self.lemmatizer = lemmatizer
+
+    def __init__(self, lemmatize: bool = False, phraser=None, remove_stop_words=True, sentences=False, tokenize=False, custom_stop_words=[]):
+        self.lemmatize = lemmatize
         self.phraser = phraser
         self.remove_stop_words = remove_stop_words
         self.sentences = sentences
         self.tokenize = tokenize
 
         self.stop_words = StopWords(custom_stop_words=custom_stop_words)
-    
+
+
     def process(self, input_text):
         if isinstance(input_text, str):
             stripped_text = input_text.strip()
@@ -64,8 +71,9 @@ class TextProcessor:
                 # make sure it is a string
                 text = str(text)
                 # lemmatize if asked
-                if self.lemmatizer:
-                    text = self.lemmatizer.lemmatize(text)
+                if self.lemmatize is True:
+                    mlp_output = apply_celery_task(mlp_task, "list", texts=[text], analyzers=["lemmas"]).get()[0]
+                    text = mlp_output["text"]["lemmas"]
                 # lower & strip
                 text = text.lower().strip()
                 # convert string to list of tokens

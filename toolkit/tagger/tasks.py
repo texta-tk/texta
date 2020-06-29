@@ -18,7 +18,6 @@ from toolkit.settings import ERROR_LOGGER, INFO_LOGGER, MEDIA_URL
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.tagger.plots import create_tagger_plot
 from toolkit.tagger.text_tagger import TextTagger
-from toolkit.tools.mlp_analyzer import MLPAnalyzer
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.tools.text_processor import TextProcessor
 
@@ -212,19 +211,16 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
 
     # get tagger object
     tagger_object = Tagger.objects.get(pk=tagger_id)
-    # get lemmatizer if needed
-    lemmatizer = None
-    if lemmatize:
-        lemmatizer = MLPAnalyzer()
+
     # create text processor object for tagger
     stop_words = tagger_object.stop_words.split(' ')
     if tagger_object.embedding:
         logging.getLogger(INFO_LOGGER).info(f"Applying embedding ID {tagger_object.embedding.id} for tagger with ID {tagger_object.pk}!")
         phraser = Phraser(tagger_object.embedding.id)
         phraser.load()
-        text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
+        text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, custom_stop_words=stop_words, lemmatize=lemmatize)
     else:
-        text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatizer=lemmatizer)
+        text_processor = TextProcessor(remove_stop_words=True, custom_stop_words=stop_words, lemmatize=lemmatize)
     # load tagger
     tagger = TextTagger(tagger_id)
     tagger.load()

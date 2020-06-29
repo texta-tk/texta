@@ -25,11 +25,8 @@ from toolkit.tagger.models import TaggerGroup
 from toolkit.tagger.serializers import TagRandomDocSerializer, TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer
 from toolkit.tagger.tasks import apply_tagger, create_tagger_objects, save_tagger_results, start_tagger_task, train_tagger_task
 from toolkit.tagger.validators import validate_input_document
-from toolkit.tools.mlp_analyzer import MLPAnalyzer
+from toolkit.taskman import mlp_task
 from toolkit.view_constants import BulkDelete, TagLogicViews
-
-
-mlp_analyzer = MLPAnalyzer()
 
 
 class TaggerGroupFilter(filters.FilterSet):
@@ -184,7 +181,8 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tags = []
         hybrid_tagger_object = self.get_object()
         taggers = {t.description.lower(): {"tag": t.description, "id": t.id} for t in hybrid_tagger_object.taggers.all()}
-        mlp_output = mlp_analyzer.process(text)
+        mlp_output = apply_celery_task(mlp_task, "list", texts=[text]).get()[0]
+
         # lemmatize
         if lemmatize and mlp_output:
             text = mlp_output["text"]["lemmas"]
