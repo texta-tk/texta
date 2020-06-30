@@ -5,7 +5,7 @@ from celery.decorators import task
 
 from toolkit.core.task.models import Task
 from toolkit.elastic.models import Reindexer
-from toolkit.base_task import BaseTask
+from toolkit.base_tasks import BaseTask
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher

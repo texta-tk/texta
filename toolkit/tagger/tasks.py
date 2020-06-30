@@ -7,14 +7,14 @@ import secrets
 
 from celery.decorators import task
 
-from toolkit.base_task import BaseTask, TransactionAwareTask
+from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.data_sample import DataSample
 from toolkit.elastic.feedback import Feedback
 from toolkit.elastic.models import Index
 from toolkit.embedding.phraser import Phraser
 from toolkit.helper_functions import get_indices_from_object
-from toolkit.settings import ERROR_LOGGER, INFO_LOGGER, MEDIA_URL
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOGGER, MEDIA_URL
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.tagger.plots import create_tagger_plot
 from toolkit.tagger.text_tagger import TextTagger
@@ -50,7 +50,7 @@ def create_tagger_batch(tagger_group_id, taggers_to_create):
         created_tagger.train()
 
 
-@task(name="create_tagger_objects", base=BaseTask, queue="long_term_tasks")
+@task(name="create_tagger_objects", base=BaseTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries, batch_size=100):
     """Task for creating Tagger objects inside Tagger Group to prevent database timeouts."""
     # create tagger objects
@@ -76,7 +76,7 @@ def create_tagger_objects(tagger_group_id, tagger_serializer, tags, tag_queries,
     return True
 
 
-@task(name="start_tagger_task", base=TransactionAwareTask, queue="long_term_tasks")
+@task(name="start_tagger_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def start_tagger_task(tagger_id: int):
     tagger = Tagger.objects.get(pk=tagger_id)
     task_object = tagger.task
@@ -86,7 +86,7 @@ def start_tagger_task(tagger_id: int):
     return tagger_id
 
 
-@task(name="train_tagger_task", base=TransactionAwareTask, queue="long_term_tasks")
+@task(name="train_tagger_task", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def train_tagger_task(tagger_id: int):
     logging.getLogger(INFO_LOGGER).info(f"Starting task 'train_tagger' for tagger with ID: {tagger_id}!")
     tagger_object = Tagger.objects.get(id=tagger_id)
@@ -170,7 +170,7 @@ def train_tagger_task(tagger_id: int):
         raise e
 
 
-@task(name="save_tagger_results", base=TransactionAwareTask, queue="long_term_tasks")
+@task(name="save_tagger_results", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def save_tagger_results(result_data: dict):
     try:
 

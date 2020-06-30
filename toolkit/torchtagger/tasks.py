@@ -9,14 +9,14 @@ from toolkit.embedding.phraser import Phraser
 from toolkit.core.task.models import Task
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
 from toolkit.tools.show_progress import ShowProgress
-from toolkit.base_task import BaseTask
+from toolkit.base_tasks import BaseTask
 from toolkit.elastic.data_sample import DataSample
 from toolkit.torchtagger.torchtagger import TorchTagger
 from toolkit.torchtagger.plots import create_torchtagger_plot
-from toolkit.settings import RELATIVE_MODELS_PATH
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
 
 
-@task(name="train_torchtagger", base=BaseTask, queue="long_term_tasks")
+@task(name="train_torchtagger", base=BaseTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def train_torchtagger(tagger_id, testing=False):
     try:
         # retrieve neurotagger & task objects

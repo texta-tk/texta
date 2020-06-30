@@ -9,6 +9,8 @@ from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.helper_functions import apply_celery_task
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
+
 
 class DatasetImport(models.Model):
     description = models.CharField(max_length=MAX_DESC_LEN)
@@ -29,7 +31,7 @@ class DatasetImport(models.Model):
         self.task = new_task
         self.save()
         from toolkit.dataset_import.tasks import import_dataset
-        apply_celery_task(import_dataset, self.pk)
+        apply_celery_task(import_dataset, self.pk, queue=CELERY_LONG_TERM_TASK_QUEUE)
 
 
 @receiver(models.signals.post_delete, sender=DatasetImport)

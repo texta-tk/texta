@@ -26,6 +26,7 @@ class MLPListsTests(APITestCase):
             ]
         }
 
+
     @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_normal_call(self):
         response = self.client.post(self.url, data=self.payload, format="json")
@@ -38,6 +39,7 @@ class MLPListsTests(APITestCase):
             self.assertTrue("pos_tags" in mlp and mlp["pos_tags"])
             self.assertTrue("lang" in mlp and mlp["lang"])
 
+
     @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_fact_processing(self):
         response = self.client.post(self.url, data={"texts": ["Ex- US President Barack Obama and his successor recently exchanged verbal barbs, with the former slamming the administration’s handling of the COVID-19 pandemic, and Donald Trump countering by calling him ‘grossly incompetent’."]},
@@ -45,6 +47,7 @@ class MLPListsTests(APITestCase):
         for doc in response.data:
             self.assertTrue(response.status_code == status.HTTP_200_OK)
             self.assertTrue(len(doc["texta_facts"]) > 0)
+
 
     @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_separate_analyzer_handling(self):
@@ -69,11 +72,12 @@ class MLPDocsTests(APITestCase):
         self.payload = {
             "docs": [
                 {"text": "Õnnetus leidis aset eile kella 17.25 ajal Raplamaal Märjamaa alevis Koluvere maantee 2 juures, kus alkoholijoobes 66-aastane mees sõitis mopeedautoga Bellier 503 ringristmikul teelt välja vastu liiklusmärki."},
-                {"text": "Ex- US President Barack Obama and his successor recently exchanged verbal barbs, with the former slamming the administration’s handling of the COVID-19 pandemic", },
+                {"text": "Ex- US President Barack Obama and his successor recently exchanged verbal barbs, with the former slamming the administration’s handling of the COVID-19 pandemic"},
                 {"text": "Приложение №1 для заботы о здоровье бесплатно по полису ОМС."}
             ],
             "fields_to_parse": ["text"]
         }
+
 
     @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_normal_call(self):
@@ -89,6 +93,7 @@ class MLPDocsTests(APITestCase):
                 self.assertTrue("pos_tags" in mlp and mlp["pos_tags"])
                 self.assertTrue("lang" in mlp and mlp["lang"])
 
+
     @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_fact_processing(self):
         docs = [{"text": "Ex- US President Barack Obama and his successor recently exchanged verbal barbs, with the former slamming the administration’s handling of the COVID-19 pandemic"}]
@@ -97,6 +102,7 @@ class MLPDocsTests(APITestCase):
         for document in response.data:
             self.assertTrue("texta_facts" in document)
             self.assertTrue(len(document["texta_facts"]) > 0)
+
 
     @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_separate_analyzer_handling(self):
@@ -109,6 +115,7 @@ class MLPDocsTests(APITestCase):
                 mlp = doc[mlp_field_key]
                 for field_name in mlp.keys():
                     self.assertTrue(field_name in demanded_keys)
+
 
     @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_nested_path_handling(self):
@@ -134,7 +141,8 @@ class MLPIndexProcessing(APITransactionTestCase):
         self.project = project_creation("mlpTestProject", TEST_INDEX, self.user)
         self.project.users.add(self.user)
         self.client.login(username='mlpUser', password='pw')
-        self.url = reverse("v1:mlp-list", kwargs={"project_pk": self.project.pk})
+        self.url = reverse("v1:mlp_index-list", kwargs={"project_pk": self.project.pk})
+
 
     @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_index_processing(self):

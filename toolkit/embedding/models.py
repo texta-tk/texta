@@ -17,7 +17,7 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.helper_functions import apply_celery_task
-from toolkit.settings import BASE_DIR, RELATIVE_MODELS_PATH
+from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
 
 
 class Embedding(models.Model):
@@ -182,7 +182,7 @@ class Embedding(models.Model):
         self.task = new_task
         self.save()
         from toolkit.embedding.tasks import train_embedding
-        apply_celery_task(train_embedding, self.pk)
+        apply_celery_task(train_embedding, self.pk, queue=CELERY_LONG_TERM_TASK_QUEUE)
 
 
     def __str__(self):

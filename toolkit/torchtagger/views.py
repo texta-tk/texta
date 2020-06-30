@@ -18,6 +18,7 @@ from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed
 from toolkit.helper_functions import add_finite_url_to_feedback, apply_celery_task
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.tagger.serializers import TaggerTagTextSerializer
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
@@ -77,7 +78,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
     def retrain_tagger(self, request, pk=None, project_pk=None):
         """Starts retraining task for the TorchTagger model."""
         instance = self.get_object()
-        apply_celery_task(train_torchtagger, instance.pk)
+        apply_celery_task(train_torchtagger, instance.pk, queue=CELERY_LONG_TERM_TASK_QUEUE)
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
 
 

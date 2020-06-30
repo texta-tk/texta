@@ -9,6 +9,7 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.helper_functions import apply_celery_task
+from toolkit.settings import CELERY_MLP_TASK_QUEUE
 
 
 class MLPWorker(models.Model):
@@ -38,4 +39,4 @@ class MLPWorker(models.Model):
 
         from toolkit.mlp.tasks import apply_mlp_on_index, end_mlp_task, start_mlp_worker
         chain = start_mlp_worker.s() | apply_mlp_on_index.s() | end_mlp_task.s()
-        transaction.on_commit(lambda: apply_celery_task(chain, self.pk))
+        transaction.on_commit(lambda: apply_celery_task(chain, self.pk, queue=CELERY_MLP_TASK_QUEUE))

@@ -13,8 +13,8 @@ from toolkit.core.project.models import Project
 from toolkit.elastic.models import Index
 from toolkit.mlp.models import MLPWorker
 from toolkit.mlp.serializers import MLPDocsSerializer, MLPListSerializer, MLPWorkerSerializer
+from toolkit.mlp.tasks import apply_mlp_on_docs, apply_mlp_on_list
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
-from toolkit.taskman import mlp_task
 from toolkit.view_constants import BulkDelete
 
 
@@ -32,7 +32,7 @@ class MlpDocsProcessor(APIView):
         analyzers = serializer.validated_data["analyzers"]
         fields_to_parse = serializer.validated_data["fields_to_parse"]
 
-        data = mlp_task.apply(args=("doc",), kwargs={"docs": docs, "analyzers": analyzers, "fields_to_parse": fields_to_parse}, queue="mlp_queue").get()
+        data = apply_mlp_on_docs.apply(kwargs={"docs": docs, "analyzers": analyzers, "fields_to_parse": fields_to_parse}, queue="mlp_queue").get()
 
         return Response(data)
 
@@ -50,7 +50,7 @@ class MLPListProcessor(APIView):
         texts = serializer.validated_data["texts"]
         analyzers = serializer.validated_data["analyzers"]
 
-        data = mlp_task.apply(args=("list",), kwargs={"texts": texts, "analyzers": analyzers}, queue="mlp_queue").get()
+        data = apply_mlp_on_list.apply(kwargs={"texts": texts, "analyzers": analyzers}, queue="mlp_queue").get()
 
         return Response(data)
 

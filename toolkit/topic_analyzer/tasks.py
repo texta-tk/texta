@@ -4,11 +4,11 @@ import logging
 from celery.decorators import task
 from django.db import transaction
 
-from toolkit.base_task import BaseTask
+from toolkit.base_tasks import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.phraser import Phraser
-from toolkit.settings import ERROR_LOGGER
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.topic_analyzer.clustering import ClusterContent, Clustering
@@ -27,7 +27,7 @@ def start_clustering_task(clustering_id: int):
     return clustering_id
 
 
-@task(name="perform_data_clustering", base=BaseTask, queue="long_term_tasks")
+@task(name="perform_data_clustering", base=BaseTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def perform_data_clustering(clustering_id):
     clustering_model = ClusteringResult.objects.get(id=clustering_id)
 

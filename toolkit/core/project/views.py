@@ -30,6 +30,7 @@ from toolkit.elastic.spam_detector import SpamDetector
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, RedisNotAvailable, SerializerNotValid
 from toolkit.helper_functions import add_finite_url_to_feedback, apply_celery_task
 from toolkit.permissions.project_permissions import (ExtraActionResource, IsSuperUser, ProjectAllowed)
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.tools.autocomplete import Autocomplete
@@ -281,7 +282,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             raise RedisNotAvailable()
         # tag text using celery group primitive
         group_task = group(apply_tagger.s(tagger.pk, text, input_type='text', lemmatize=lemmatize, feedback=feedback) for tagger in taggers)
-        group_results = [a for a in apply_celery_task(group_task).get() if a]
+        group_results = [a for a in apply_celery_task(group_task, queue=CELERY_SHORT_TERM_TASK_QUEUE).get() if a]
         # remove non-hits
         if hide_false == True:
             group_results = [a for a in group_results if a['result']]

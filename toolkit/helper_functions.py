@@ -3,11 +3,13 @@ import re
 import sys
 
 
-def apply_celery_task(task_func, *args, **kwargs):
+def apply_celery_task(task_func, *args, queue=None, **kwargs):
+    from toolkit.settings import CELERY_SHORT_TERM_TASK_QUEUE
+    queue = queue if queue else CELERY_SHORT_TERM_TASK_QUEUE
     if not 'test' in sys.argv:
-        return task_func.apply_async(args=(*args,), kwargs=kwargs)
+        return task_func.apply_async(args=(*args,), kwargs=kwargs, queue=queue)
     else:
-        return task_func.apply(args=(*args,), kwargs=kwargs)
+        return task_func.apply(args=(*args,), kwargs=kwargs, queue=queue)
 
 
 def get_indices_from_object(model_object):

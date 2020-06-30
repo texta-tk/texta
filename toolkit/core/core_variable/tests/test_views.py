@@ -46,36 +46,6 @@ class TestCoreVariableViews(TestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
 
-    def test_mlp_url_post(self):
-        # update TEXTA_MLP_URL to something incorrect
-        payload = {"name": "TEXTA_MLP_URL", "value": "somerandomstring"}
-        response = self.client.post(self.url, payload)
-        print_output('core_variable_post_incorrect_es_url:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        # update TEXTA_MLP_URL to something incorrect with protocol
-        payload = {"name": "TEXTA_MLP_URL", "value": "ftp://somerandomstring"}
-        response = self.client.post(self.url, payload)
-        print_output('core_variable_post_incorrect_es_url:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        # update TEXTA_MLP_URL to normal value
-        payload = {"name": "TEXTA_MLP_URL", "value": CORE_SETTINGS["TEXTA_MLP_URL"]}
-        response = self.client.post(self.url, payload)
-        print_output('core_variable_post_es_url:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue('name' in response.data)
-        self.assertTrue('value' in response.data)
-        self.assertTrue('env_value' in response.data)
-        self.assertTrue('url' in response.data)
-        mlp_variable_url = response.data['url']
-        # let's now check health
-        response = self.client.get(self.health_url)
-        self.assertEqual(response.data['services']['elastic']['alive'], True)   
-        # delete
-        response = self.client.delete(mlp_variable_url)
-        print_output('core_variable_delete_es_url:response.data', response.data)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
-
     def test_non_admin_forbidden(self):
         # login as non-admin user
         self.client.login(username="tester", password="pw")

@@ -18,6 +18,7 @@ from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import (
     GeneralTextSerializer,
     ProjectResourceImportModelSerializer)
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.serializers import (TagRandomDocSerializer, TaggerListFeaturesSerializer, TaggerSerializer, TaggerTagDocumentSerializer, TaggerTagTextSerializer)
 from toolkit.tagger.tasks import apply_tagger, save_tagger_results, start_tagger_task, train_tagger_task
@@ -144,7 +145,7 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         """Starts retraining task for the Tagger model."""
         instance = self.get_object()
         chain = start_tagger_task.s() | train_tagger_task.s() | save_tagger_results.s()
-        apply_celery_task(chain, instance.pk)
+        apply_celery_task(chain, instance.pk, queue=CELERY_LONG_TERM_TASK_QUEUE)
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
 
 

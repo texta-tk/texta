@@ -17,7 +17,7 @@ from toolkit.elastic.document import ElasticDocument
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
-from toolkit.settings import BASE_DIR, ERROR_LOGGER, RELATIVE_MODELS_PATH
+from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, RELATIVE_MODELS_PATH
 from toolkit.tools.text_processor import StopWords
 from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
 
@@ -136,7 +136,7 @@ class ClusteringResult(models.Model):
             # waited for.
             chain = start_clustering_task.s() | perform_data_clustering.s() | save_clustering_results.s() | finish_clustering_task.s()
             transaction.on_commit(
-                lambda: apply_celery_task(chain, self.id)
+                lambda: apply_celery_task(chain, self.id, queue=CELERY_LONG_TERM_TASK_QUEUE)
             )
 
 

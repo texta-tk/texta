@@ -4,7 +4,7 @@ from .dataset import Dataset
 from .models import DatasetImport
 from toolkit.core.task.models import Task
 from toolkit.tools.show_progress import ShowProgress
-from toolkit.base_task import BaseTask
+from toolkit.base_tasks import BaseTask
 from ..elastic.models import Index
 
 

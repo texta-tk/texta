@@ -1,8 +1,8 @@
 import os
 
 from toolkit.helper_functions import apply_celery_task
-from toolkit.settings import BASE_DIR
-from toolkit.taskman import mlp_task
+from toolkit.mlp.tasks import apply_mlp_on_list
+from toolkit.settings import BASE_DIR, CELERY_MLP_TASK_QUEUE
 
 
 class StopWords:
@@ -72,8 +72,9 @@ class TextProcessor:
                 text = str(text)
                 # lemmatize if asked
                 if self.lemmatize is True:
-                    mlp_output = apply_celery_task(mlp_task, "list", texts=[text], analyzers=["lemmas"]).get()[0]
-                    text = mlp_output["text"]["lemmas"]
+                    task = apply_celery_task(apply_mlp_on_list, queue=CELERY_MLP_TASK_QUEUE, texts=[text], analyzers=["lemmas"])
+                    mlp_output = task.get()
+                    text = mlp_output[0]["text"]["lemmas"]
                 # lower & strip
                 text = text.lower().strip()
                 # convert string to list of tokens
