@@ -115,7 +115,6 @@ REST_AUTH_SERIALIZERS = {
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -130,8 +129,6 @@ if USE_CSRF:
 else:
     # Add additional middleware to turn off the CSRF handling in the SessionsMiddleware.
     MIDDLEWARE.append("toolkit.tools.common_utils.DisableCSRFMiddleware")
-
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 ROOT_URLCONF = "toolkit.urls"
 
@@ -193,7 +190,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
-STATIC_URL = "api/v1/static/"
+STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 # OTHER ELASTICSEARCH OPTIONS

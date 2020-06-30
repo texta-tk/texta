@@ -17,6 +17,7 @@ dependencies:
   - pydot
   - psutil
   - uwsgi
+  - nginx
   - supervisor
   - psycopg2
   - mysqlclient
@@ -42,4 +43,3 @@ dependencies:
     - torchtext
     - xlrd
     - dill
-    - whitenoise

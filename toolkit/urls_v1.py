@@ -1,5 +1,4 @@
 from django.conf.urls import url
-from django.contrib.auth.decorators import login_required
 from django.urls import include, path
 from django.views.static import serve
 from rest_framework_nested import routers
@@ -19,7 +18,6 @@ from toolkit.tagger.urls import router as tagger_router
 from toolkit.tools.swagger import schema_view
 from toolkit.topic_analyzer.views import ClusterViewSet, ClusteringViewSet
 from toolkit.torchtagger.urls import router as torchtagger_router
-
 
 
 router = routers.DefaultRouter()
@@ -45,10 +43,6 @@ clustering_router.register("clusters", ClusterViewSet, basename="cluster")
 app_name = 'toolkit_v1'
 
 urlpatterns = [
-    # protected media
-    # static
-    url(r'api/v1/static/(?P<path>.*)$', serve, {'document_root': 'static'}),
-
     # documentation
     url(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     url(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),

@@ -23,6 +23,7 @@ RUN chown -R www-data:www-data /var/texta-rest \
 
 # System configuration files
 COPY docker/conf/supervisord.conf /opt/conda/envs/texta-rest/etc/supervisord/conf.d/supervisord.conf
+COPY docker/conf/nginx.conf /opt/conda/envs/texta-rest/etc/nginx/conf.d/nginx.conf
 ENV UWSGI_INI /var/texta-rest/docker/conf/texta-rest.ini
 
 # Set environment variables

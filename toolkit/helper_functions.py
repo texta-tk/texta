@@ -1,3 +1,6 @@
+from django.contrib.auth.decorators import login_required
+from django.views.static import serve
+
 from urllib.parse import urljoin
 import logging
 import os
@@ -73,3 +76,8 @@ def get_core_setting(setting_name):
             return variable_match[0].value
     except Exception as e:
         return CORE_SETTINGS[setting_name]
+
+
+@login_required
+def protected_serve(request, path, document_root=None, show_indexes=False):
+    return serve(request, path, document_root, show_indexes)
