@@ -9,7 +9,8 @@ from texta_lexicon_matcher.lexicon_matcher import LexiconMatcher
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.view_constants import BulkDelete
 from toolkit.core.project.models import Project
-from .serializers import RegexTaggerSerializer, RegexTaggerTagTextSerializer
+from .serializers import RegexTaggerSerializer, RegexTaggerTagTextsSerializer
+from toolkit.serializer_constants import GeneralTextSerializer
 from .models import RegexTagger
 
 
@@ -49,12 +50,31 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         )
 
 
-    @action(detail=True, methods=['post'], serializer_class=RegexTaggerTagTextSerializer)
+    @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
-        serializer = RegexTaggerTagTextSerializer(data=request.data)
-        # check if valid request
-        if not serializer.is_valid():
-            raise SerializerNotValid(detail=serializer.errors)
+        serializer = GeneralTextSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # load matcher
+        matcher = self._load_matcher()
+        # retrieve matches
+        result = matcher.get_matches(serializer.validated_data['text'])
+        return Response(result, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['post'], serializer_class=RegexTaggerTagTextsSerializer)
+    def tag_texts(self, request, pk=None, project_pk=None):
+        serializer = RegexTaggerTagTextsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # load matcher
+        matcher = self._load_matcher()
+        # retrieve matches
+        result = []
+        for text in serializer.validated_data['texts']:
+            result += matcher.get_matches(text)
+        return Response(result, status=status.HTTP_200_OK)
+
+
+    def _load_matcher(self):
         # retrieve tagger object
         regex_tagger_object = self.get_object()
         # parse lexicons
@@ -71,6 +91,4 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
             counter_slop = regex_tagger_object.counter_slop,
             return_fuzzy_match = regex_tagger_object.return_fuzzy_match
         )
-        # retrieve matches
-        result = matcher.get_matches(serializer.validated_data['text'])
-        return Response(result, status=status.HTTP_200_OK)
+        return matcher

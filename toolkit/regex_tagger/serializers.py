@@ -21,8 +21,7 @@ class RegexTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
         fields = ('id', #'url', 
                     'description', 'lexicon', 'counter_lexicon', 'operator', 'match_type', 'required_words',
                   'phrase_slop', 'counter_slop', 'return_fuzzy_match')
-        #fields_to_parse = ('lexicon', 'counter_lexicon')
 
 
-class RegexTaggerTagTextSerializer(serializers.Serializer):
-    text = serializers.CharField()
+class RegexTaggerTagTextsSerializer(serializers.Serializer):
+    texts = serializers.ListField(child=serializers.CharField(required=True))
