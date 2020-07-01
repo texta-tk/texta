@@ -3,7 +3,7 @@ import os
 import pathlib
 from io import BytesIO
 
-from django.test import TransactionTestCase
+from django.test import TransactionTestCase, override_settings
 from rest_framework import status
 
 from toolkit.core.project.models import Project
@@ -16,6 +16,7 @@ from toolkit.tools.utils_for_tests import project_creation
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 
+@override_settings(CELERY_ALWAYS_EAGER=True)
 class EmbeddingViewTests(TransactionTestCase):
 
     def setUp(self):

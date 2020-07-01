@@ -18,7 +18,6 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
-from toolkit.helper_functions import apply_celery_task
 from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
 from toolkit.torchtagger import choices
 
@@ -183,7 +182,7 @@ class TorchTagger(models.Model):
         self.task = new_task
         self.save()
         from toolkit.torchtagger.tasks import train_torchtagger
-        apply_celery_task(train_torchtagger, self.pk, queue=CELERY_LONG_TERM_TASK_QUEUE)
+        train_torchtagger.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
 
     def get_resource_paths(self):

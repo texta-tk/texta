@@ -1,22 +1,23 @@
-from celery.decorators import task
-import secrets
 import json
 import os
+import secrets
 
-from toolkit.helper_functions import get_indices_from_object
-from toolkit.tools.text_processor import TextProcessor
-from toolkit.embedding.phraser import Phraser
+from celery.decorators import task
+
+from toolkit.base_tasks import TransactionAwareTask
 from toolkit.core.task.models import Task
-from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
-from toolkit.tools.show_progress import ShowProgress
-from toolkit.base_tasks import BaseTask
 from toolkit.elastic.data_sample import DataSample
-from toolkit.torchtagger.torchtagger import TorchTagger
-from toolkit.torchtagger.plots import create_torchtagger_plot
+from toolkit.embedding.phraser import Phraser
+from toolkit.helper_functions import get_indices_from_object
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH
+from toolkit.tools.show_progress import ShowProgress
+from toolkit.tools.text_processor import TextProcessor
+from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
+from toolkit.torchtagger.plots import create_torchtagger_plot
+from toolkit.torchtagger.torchtagger import TorchTagger
 
 
-@task(name="train_torchtagger", base=BaseTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
+@task(name="train_torchtagger", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def train_torchtagger(tagger_id, testing=False):
     try:
         # retrieve neurotagger & task objects

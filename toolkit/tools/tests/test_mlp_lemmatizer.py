@@ -1,11 +1,11 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
-from toolkit.helper_functions import apply_celery_task
 from toolkit.mlp.tasks import apply_mlp_on_list
 from toolkit.settings import CELERY_MLP_TASK_QUEUE
 from toolkit.tools.utils_for_tests import print_output
 
 
+@override_settings(CELERY_ALWAYS_EAGER=True)
 class MLPLemmatizerTests(TestCase):
 
     @classmethod
@@ -22,7 +22,7 @@ class MLPLemmatizerTests(TestCase):
         Tests lemmatization in every language.
         """
         for test_text in self.test_texts:
-            mlp_output = apply_celery_task(apply_mlp_on_list, queue=CELERY_MLP_TASK_QUEUE, texts=[test_text], analyzers=["lemmas"]).get()[0]
+            mlp_output = apply_mlp_on_list.apply_async(kwargs={"texts": [test_text], "analyzers": ["lemmas"]}, queue=CELERY_MLP_TASK_QUEUE).get()[0]
             lemmas = mlp_output["text"]["lemmas"]
 
             print_output(f"test_mlp_lemmatization_{test_text['lang']}:result", lemmas)

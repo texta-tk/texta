@@ -36,7 +36,7 @@ class MLPWorkerSerializer(serializers.ModelSerializer):
     query = serializers.JSONField(help_text='Query in JSON format', required=False, default=EMPTY_QUERY)
     fields = serializers.ListField(required=True)
     analyzers = serializers.MultipleChoiceField(
-        choices=SUPPORTED_ANALYZERS,
+        choices=list(SUPPORTED_ANALYZERS),
         default=["all"]
     )
 

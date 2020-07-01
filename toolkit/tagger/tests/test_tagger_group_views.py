@@ -2,6 +2,7 @@ import json
 import pathlib
 from io import BytesIO
 
+from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
@@ -15,6 +16,7 @@ from toolkit.test_settings import (TEST_FACT_NAME,
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
+@override_settings(CELERY_ALWAYS_EAGER=True)
 class TaggerGroupViewTests(APITransactionTestCase):
 
     def setUp(self):

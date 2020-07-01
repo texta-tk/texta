@@ -1,6 +1,7 @@
 # Create your tests here.
 import json
 
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
@@ -11,6 +12,7 @@ from toolkit.tools.utils_for_tests import create_test_user, print_output, projec
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 
 
+@override_settings(CELERY_ALWAYS_EAGER=True)
 class TopicAnalyzerTests(APITransactionTestCase):
     """
     Because cluster training is done using the on_commit hook because of its current architecture,

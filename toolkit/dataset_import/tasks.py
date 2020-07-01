@@ -4,11 +4,11 @@ from .dataset import Dataset
 from .models import DatasetImport
 from toolkit.core.task.models import Task
 from toolkit.tools.show_progress import ShowProgress
-from toolkit.base_tasks import BaseTask
+from toolkit.base_tasks import BaseTask, TransactionAwareTask
 from ..elastic.models import Index
 
 
-@task(name="import_dataset", base=BaseTask)
+@task(name="import_dataset", base=TransactionAwareTask)
 def import_dataset(dataset_import_id):
     # retrieve object & task
     import_object = DatasetImport.objects.get(pk=dataset_import_id)

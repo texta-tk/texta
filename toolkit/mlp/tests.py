@@ -9,6 +9,7 @@ from toolkit.test_settings import (TEST_FIELD, TEST_INDEX)
 from toolkit.tools.utils_for_tests import create_test_user, project_creation
 
 
+@override_settings(CELERY_ALWAYS_EAGER=True)
 class MLPListsTests(APITestCase):
 
 
@@ -27,7 +28,6 @@ class MLPListsTests(APITestCase):
         }
 
 
-    @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_normal_call(self):
         response = self.client.post(self.url, data=self.payload, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
@@ -40,7 +40,6 @@ class MLPListsTests(APITestCase):
             self.assertTrue("lang" in mlp and mlp["lang"])
 
 
-    @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_fact_processing(self):
         response = self.client.post(self.url, data={"texts": ["Ex- US President Barack Obama and his successor recently exchanged verbal barbs, with the former slamming the administration’s handling of the COVID-19 pandemic, and Donald Trump countering by calling him ‘grossly incompetent’."]},
                                     format="json")
@@ -49,7 +48,6 @@ class MLPListsTests(APITestCase):
             self.assertTrue(len(doc["texta_facts"]) > 0)
 
 
-    @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_separate_analyzer_handling(self):
         response = self.client.post(self.url, data={**self.payload, "analyzers": ["lemmas"]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
@@ -60,6 +58,7 @@ class MLPListsTests(APITestCase):
                 self.assertTrue(key in demanded_keys)
 
 
+@override_settings(CELERY_ALWAYS_EAGER=True)
 class MLPDocsTests(APITestCase):
 
 
@@ -79,7 +78,6 @@ class MLPDocsTests(APITestCase):
         }
 
 
-    @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_normal_call(self):
         response = self.client.post(self.url, format="json", data=self.payload)
         for doc in response.data:
@@ -94,7 +92,6 @@ class MLPDocsTests(APITestCase):
                 self.assertTrue("lang" in mlp and mlp["lang"])
 
 
-    @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_fact_processing(self):
         docs = [{"text": "Ex- US President Barack Obama and his successor recently exchanged verbal barbs, with the former slamming the administration’s handling of the COVID-19 pandemic"}]
         fields_to_parse = ["text"]
@@ -104,7 +101,6 @@ class MLPDocsTests(APITestCase):
             self.assertTrue(len(document["texta_facts"]) > 0)
 
 
-    @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_separate_analyzer_handling(self):
         response = self.client.post(self.url, format="json", data={**self.payload, "analyzers": ["lemmas"]})
         self.assertTrue(response.status_code == status.HTTP_200_OK)
@@ -117,7 +113,6 @@ class MLPDocsTests(APITestCase):
                     self.assertTrue(field_name in demanded_keys)
 
 
-    @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_nested_path_handling(self):
         payload = {"docs": [{"text": {"text": "Tere maailm, ma olen veebis~!"}}], "fields_to_parse": ["text.text"]}
         response = self.client.post(self.url, data=payload, format="json")
@@ -133,6 +128,7 @@ class MLPDocsTests(APITestCase):
             self.assertTrue("lang" in mlp and mlp["lang"])
 
 
+@override_settings(CELERY_ALWAYS_EAGER=True)
 class MLPIndexProcessing(APITransactionTestCase):
 
 
@@ -144,7 +140,6 @@ class MLPIndexProcessing(APITransactionTestCase):
         self.url = reverse("v1:mlp_index-list", kwargs={"project_pk": self.project.pk})
 
 
-    @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_index_processing(self):
         query_string = "inimene"
         payload = {

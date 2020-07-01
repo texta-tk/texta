@@ -76,6 +76,7 @@ class MLPElasticWorkerViewset(viewsets.ModelViewSet, BulkDelete):
             project = Project.objects.get(id=self.kwargs['project_pk'])
             indices = [index["name"] for index in serializer.validated_data["indices"]]
             indices = project.get_available_or_all_project_indices(indices)
+            analyzers = list(serializer.validated_data["analyzers"])
 
             serializer.validated_data.pop("indices")
 
@@ -84,7 +85,7 @@ class MLPElasticWorkerViewset(viewsets.ModelViewSet, BulkDelete):
                 project=project,
                 fields=json.dumps(serializer.validated_data["fields"]),
                 query=json.dumps(serializer.validated_data["query"]),
-                analyzers=json.dumps(serializer.validated_data["analyzers"]),
+                analyzers=json.dumps(analyzers),
             )
 
             for index in Index.objects.filter(name__in=indices, is_open=True):

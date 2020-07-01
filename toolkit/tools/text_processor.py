@@ -1,6 +1,5 @@
 import os
 
-from toolkit.helper_functions import apply_celery_task
 from toolkit.mlp.tasks import apply_mlp_on_list
 from toolkit.settings import BASE_DIR, CELERY_MLP_TASK_QUEUE
 
@@ -72,7 +71,7 @@ class TextProcessor:
                 text = str(text)
                 # lemmatize if asked
                 if self.lemmatize is True:
-                    task = apply_celery_task(apply_mlp_on_list, queue=CELERY_MLP_TASK_QUEUE, texts=[text], analyzers=["lemmas"])
+                    task = apply_mlp_on_list.apply_async(kwargs={"texts": [text], "analyzers": ["lemmas"]}, queue=CELERY_MLP_TASK_QUEUE)
                     mlp_output = task.get()
                     text = mlp_output[0]["text"]["lemmas"]
                 # lower & strip

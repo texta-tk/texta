@@ -18,11 +18,11 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.query import Query
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, RedisNotAvailable, SerializerNotValid
-from toolkit.helper_functions import add_finite_url_to_feedback, apply_celery_task
+from toolkit.helper_functions import add_finite_url_to_feedback
 from toolkit.mlp.tasks import apply_mlp_on_list
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, CELERY_MLP_TASK_QUEUE, CELERY_SHORT_TERM_TASK_QUEUE
 from toolkit.tagger.models import TaggerGroup
 from toolkit.tagger.serializers import TagRandomDocSerializer, TaggerGroupSerializer, TaggerGroupTagDocumentSerializer, TaggerGroupTagTextSerializer
 from toolkit.tagger.tasks import apply_tagger, create_tagger_objects, save_tagger_results, start_tagger_task, train_tagger_task
@@ -102,7 +102,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
         # create taggers objects inside tagger group object
         # use async to make things faster
-        apply_celery_task(create_tagger_objects, tagger_group.pk, validated_tagger_data, tags, tag_queries, queue=CELERY_LONG_TERM_TASK_QUEUE)
+        create_tagger_objects.apply_async(args=(tagger_group.pk, validated_tagger_data, tags, tag_queries), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
         # retrieve headers and create response
         headers = self.get_success_headers(serializer.data)
@@ -168,7 +168,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
             # update task status so statistics are correct during retraining
             tagger.status = Task.STATUS_CREATED
             tagger.save()
-            apply_celery_task(chain, tagger.pk, queue=CELERY_LONG_TERM_TASK_QUEUE)
+            chain.apply_async(args=(tagger.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
 
         return Response({'success': 'retraining tasks created', 'tagger_group_id': instance.id}, status=status.HTTP_200_OK)
 
@@ -182,7 +182,8 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tags = []
         hybrid_tagger_object = self.get_object()
         taggers = {t.description.lower(): {"tag": t.description, "id": t.id} for t in hybrid_tagger_object.taggers.all()}
-        mlp_output = apply_celery_task(apply_mlp_on_list, queue=CELERY_SHORT_TERM_TASK_QUEUE, texts=[text], analyzers=["all"]).get()[0]
+        mlp_task = apply_mlp_on_list.apply_async(kwargs={"texts": [text], "analyzers": ["all"]}, queue=CELERY_MLP_TASK_QUEUE)
+        mlp_output = mlp_task.get()[0]
 
         # lemmatize
         if lemmatize and mlp_output:
@@ -368,7 +369,8 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tagger_objects = [tagger for tagger in tagger_objects if tagger.task.status == tagger.task.STATUS_COMPLETED]
         # predict tags
         group_task = group(apply_tagger.s(tagger.pk, text, input_type=input_type, lemmatize=lemmatize, feedback=feedback) for tagger in tagger_objects)
-        group_results = apply_celery_task(group_task, queue=CELERY_SHORT_TERM_TASK_QUEUE)
+        group_results = group_task.apply_async(queue=CELERY_SHORT_TERM_TASK_QUEUE)
+
         # retrieve results & remove non-hits
         tags = [tag for tag in group_results.get() if tag]
         # remove non-hits
