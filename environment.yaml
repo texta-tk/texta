@@ -44,4 +44,4 @@ dependencies:
       - xlrd
       - dill
       - http://pypi.texta.ee/texta-mlp/texta-mlp-1.3.2.tar.gz
-      - http://pypi.texta.ee/texta-lexicon-matcher/texta-lexicon-matcher-latest.tar.gz
+      - http://pypi.texta.ee/texta-lexicon-matcher/texta-lexicon-matcher-1.0.0.tar.gz
