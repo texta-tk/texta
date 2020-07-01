@@ -30,7 +30,7 @@ class CoreVariableSerializer(serializers.HyperlinkedModelSerializer):
     def get_env_value(self, obj):
         """Retrieves value for the variable from env."""
         variable_name = obj.name
-        return CORE_SETTINGS[variable_name]
+        return CORE_SETTINGS.get(variable_name, "")
 
     def validate(self, data):
         """Validate value by checking the URL availability."""
