@@ -1,8 +1,8 @@
 from typing import List
 
 import elasticsearch
-from elasticsearch_dsl.query import MoreLikeThis
 from elasticsearch_dsl import Search
+from elasticsearch_dsl.query import MoreLikeThis
 
 from toolkit.elastic.core import ElasticCore, elastic_connection
 
@@ -23,7 +23,8 @@ class ElasticSearcher:
     OUT_DOC_WITH_TOTAL_HL_AGGS = 'doc_with_total_hl_aggs'
 
 
-    def __init__(self, field_data=[],
+    def __init__(self,
+                 field_data=[],
                  indices=[],
                  query=EMPTY_QUERY,
                  scroll_size=ES_SCROLL_SIZE,
@@ -33,9 +34,22 @@ class ElasticSearcher:
                  ignore_ids=set(),
                  text_processor=None,
                  score_threshold=0.0,
-                 timeout='10m'):
+                 timeout='10m',
+                 scroll_timeout: str = None):
         """
-        Output options: document (default), text (lowered & stopwords removed), sentences (text + line splitting), raw (raw elastic output)
+
+        :param field_data: List of fields names you want returned from Elasticsearch. Specify the fields if you only need a single field to save on bandwidth and transfer speeds.
+        :param indices: List of index names from which to pull data.
+        :param query: Query for Elasticsearch.
+        :param scroll_size: How many items should be pulled with each scroll request.
+        :param output: Constant for determine document output.
+        :param callback_progress: Function to call after each successful scroll request.
+        :param scroll_limit: Number of maximum documents that are returned from the scrolling process.
+        :param ignore_ids: Iterable of Elasticsearch document ID's which are not returned.
+        :param text_processor: Text processor object to... process text.
+        :param score_threshold: Filters out documents which score value don't exceed the given limit.
+        :param timeout: Time in string for how long to wait for an Elasticsearch request.
+        :param scroll_timeout: Time in string for how long to keep scroll context in memory, if not explicitly set, defaults to request timeout.
         """
         self.core = ElasticCore()
         self.field_data: List[str] = field_data
@@ -49,6 +63,7 @@ class ElasticSearcher:
         self.callback_progress = callback_progress
         self.text_processor = text_processor
         self.timeout = timeout
+        self.scroll_timeout = scroll_timeout or timeout
 
         if self.callback_progress:
             total_elements = self.count()
@@ -95,6 +110,7 @@ class ElasticSearcher:
         else:
             response = [self.core.flatten(hit.to_dict()) if flatten else hit.to_dict() for hit in s.execute()]
             return response
+
 
     def update_query(self, query):
         self.query = query
@@ -193,7 +209,7 @@ class ElasticSearcher:
     # batch search makes an inital search, and then keeps pulling batches of results, until none are left.
     @elastic_connection
     def scroll(self):
-        page = self.core.es.search(index=self.indices, body=self.query, scroll=self.timeout, size=self.scroll_size)
+        page = self.core.es.search(index=self.indices, body=self.query, scroll=self.scroll_timeout, size=self.scroll_size)
         scroll_id = page['_scroll_id']
         current_page = 0
         # set page size
@@ -251,6 +267,10 @@ class ElasticSearcher:
 
             # return raw hit
             elif self.output == self.OUT_RAW:
+
+                if self.callback_progress:
+                    self.callback_progress.update(page_size)
+
                 # filter page by score
                 page = [doc for doc in page["hits"]["hits"] if doc['_score'] > lowest_allowed_score]
                 # if score too low, break scroll
@@ -264,7 +284,7 @@ class ElasticSearcher:
                     yield page
 
             # get new page
-            page = self.core.es.scroll(scroll_id=scroll_id, scroll=self.timeout)
+            page = self.core.es.scroll(scroll_id=scroll_id, scroll=self.scroll_timeout)
             scroll_id = page['_scroll_id']
             page_size = len(page['hits']['hits'])
             current_page += 1

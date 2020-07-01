@@ -1,6 +1,6 @@
 import json
 
-from django.test import TransactionTestCase
+from django.test import TransactionTestCase, override_settings
 
 from toolkit.tools.utils_for_tests import project_creation
 from toolkit.tools.text_processor import TextProcessor, StopWords
@@ -11,6 +11,7 @@ from toolkit.test_settings import TEST_INDEX, TEST_FIELD_CHOICE, TEST_VERSION_PR
 from toolkit.tools.utils_for_tests import create_test_user, print_output
 
 
+@override_settings(CELERY_ALWAYS_EAGER=True)
 class TextProcessorTests(TransactionTestCase):
 
     def setUp(self):

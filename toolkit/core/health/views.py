@@ -9,7 +9,6 @@ from rest_framework.response import Response
 from toolkit.core.health.utils import (
     get_active_tasks,
     get_elastic_status,
-    get_mlp_status,
     get_redis_status,
     get_version
 )
@@ -24,7 +23,6 @@ class HealthView(views.APIView):
 
         toolkit_status["services"]["elastic"] = get_elastic_status()
 
-        toolkit_status["services"]["mlp"] = get_mlp_status()
         toolkit_status["toolkit"]["version"] = get_version()
 
         disk_total, disk_used, disk_free = shutil.disk_usage("/")

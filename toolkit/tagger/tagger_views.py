@@ -2,6 +2,7 @@ import json
 import os
 
 import rest_framework.filters as drf_filters
+from django.db import transaction
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
@@ -13,11 +14,12 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.exceptions import NonExistantModelError, SerializerNotValid
-from toolkit.helper_functions import add_finite_url_to_feedback, apply_celery_task
+from toolkit.helper_functions import add_finite_url_to_feedback
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import (
     GeneralTextSerializer,
     ProjectResourceImportModelSerializer)
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.serializers import (TagRandomDocSerializer, TaggerListFeaturesSerializer, TaggerSerializer, TaggerTagDocumentSerializer, TaggerTagTextSerializer)
 from toolkit.tagger.tasks import apply_tagger, save_tagger_results, start_tagger_task, train_tagger_task
@@ -144,7 +146,8 @@ class TaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         """Starts retraining task for the Tagger model."""
         instance = self.get_object()
         chain = start_tagger_task.s() | train_tagger_task.s() | save_tagger_results.s()
-        apply_celery_task(chain, instance.pk)
+        transaction.on_commit(lambda: chain.apply_async(args=(instance.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE))
+
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
 
 

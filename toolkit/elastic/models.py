@@ -7,7 +7,7 @@ from django.db.models import signals
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.task.models import Task, Task, Task
 from toolkit.elastic.searcher import EMPTY_QUERY
-from toolkit.helper_functions import apply_celery_task
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 
 
 class Index(models.Model):
@@ -51,9 +51,10 @@ class Reindexer(models.Model):
             new_task = Task.objects.create(reindexer=instance, status='created')
             instance.task = new_task
             instance.save()
-            from toolkit.elastic.tasks import reindex_task
 
-            apply_celery_task(reindex_task, instance.pk)
+            from toolkit.elastic.tasks import reindex_task
+            reindex_task.apply_async(args=(instance.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
+
 
 
 signals.post_save.connect(Reindexer.create_reindexer_model, sender=Reindexer)

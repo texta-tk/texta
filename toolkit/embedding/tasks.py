@@ -5,19 +5,19 @@ import secrets
 from celery.decorators import task
 from gensim.models import word2vec
 
-from toolkit.base_task import BaseTask
+from toolkit.base_tasks import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.embedding import W2VEmbedding
 from toolkit.embedding.models import Embedding
 from toolkit.embedding.phraser import Phraser
-from toolkit.settings import RELATIVE_MODELS_PATH, NUM_WORKERS
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, RELATIVE_MODELS_PATH, NUM_WORKERS
 from toolkit.tools.show_progress import ShowProgress
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.helper_functions import get_indices_from_object
 
 
-@task(name="train_embedding", base=BaseTask, queue="long_term_tasks")
+@task(name="train_embedding", base=BaseTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def train_embedding(embedding_id):
     # retrieve embedding & task objects
     embedding_object = Embedding.objects.get(pk=embedding_id)

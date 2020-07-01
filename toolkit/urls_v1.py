@@ -14,6 +14,7 @@ from toolkit.elastic.urls import index_router, router as reindexer_router
 from toolkit.elastic.views import ElasticGetIndices
 from toolkit.embedding.urls import embedding_router
 from toolkit.mlp.urls import mlp_router
+from toolkit.mlp.views import MLPListProcessor, MlpDocsProcessor
 from toolkit.tagger.urls import router as tagger_router
 from toolkit.tools.swagger import schema_view
 from toolkit.topic_analyzer.views import ClusterViewSet, ClusteringViewSet
@@ -53,6 +54,8 @@ urlpatterns = [
     path('rest-auth/', include('rest_auth.urls')),
     path('rest-auth/registration/', include('rest_auth.registration.urls')),
     path("task/", TaskAPIView.as_view(), name="task_api"),
+    path("mlp/texts/", MLPListProcessor.as_view(), name="mlp_texts"),
+    path("mlp/docs/", MlpDocsProcessor.as_view(), name="mlp_docs"),
     url(r'^get_indices', ElasticGetIndices.as_view(), name="get_indices_for_project_creation"),
     # routers
     url(r'^', include(router.urls)),

@@ -5,7 +5,7 @@ import warnings
 from corsheaders.defaults import default_headers
 from kombu import Exchange, Queue
 
-from .helper_functions import parse_list_env_headers
+from .helper_functions import parse_list_env_headers, resolve_staticfiles
 from .logging_settings import setup_logging
 
 
@@ -20,7 +20,6 @@ CORE_SETTINGS = {
     "TEXTA_ES_PREFIX": os.getenv("TEXTA_ES_PREFIX", ""),
     "TEXTA_ES_USERNAME": os.getenv("TEXTA_ES_USER", ""),
     "TEXTA_ES_PASSWORD": os.getenv("TEXTA_ES_PASSWORD", ""),
-    "TEXTA_MLP_URL": os.getenv("TEXTA_MLP_URL", "http://mlp-dev.texta.ee:5000")
 }
 ### END OF CORE SETTINGS ###
 
@@ -214,10 +213,14 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERYD_PREFETCH_MULTIPLIER = 1
 CELERY_ALWAYS_EAGER = False if os.getenv("TEXTA_CELERY_ALWAYS_EAGER", "False") == "False" else True
+CELERY_LONG_TERM_TASK_QUEUE = "long_term_tasks"
+CELERY_SHORT_TERM_TASK_QUEUE = "short_term_tasks"
+CELERY_MLP_TASK_QUEUE = "mlp_queue"
 
 CELERY_QUEUES = (
-    Queue('long_term_tasks', exchange="long_term_tasks", routing_key='long_term_tasks'),
-    Queue('short_term_tasks', exchange="short_term_tasks", routing_key='short_term_tasks'),
+    Queue(CELERY_LONG_TERM_TASK_QUEUE, exchange=CELERY_LONG_TERM_TASK_QUEUE, routing_key=CELERY_LONG_TERM_TASK_QUEUE),
+    Queue(CELERY_SHORT_TERM_TASK_QUEUE, exchange=CELERY_SHORT_TERM_TASK_QUEUE, routing_key=CELERY_SHORT_TERM_TASK_QUEUE),
+    Queue(CELERY_MLP_TASK_QUEUE, exchange=CELERY_MLP_TASK_QUEUE, routing_key=CELERY_MLP_TASK_QUEUE),
 )
 
 # By default use the queue for short term tasks, unless specified to use the long term one.
@@ -230,6 +233,9 @@ NUM_WORKERS = 1
 
 MODELS_DIR_DEFAULT = str(pathlib.Path("data") / "models")
 RELATIVE_MODELS_PATH = os.getenv("TEXTA_RELATIVE_MODELS_DIR", MODELS_DIR_DEFAULT)
+
+DEFAULT_MLP_LANGUAGE_CODES = parse_list_env_headers("TEXTA_LANGUAGE_CODES", ["et", "en", "ru"])
+MLP_MODEL_DIRECTORY = os.getenv("TEXTA_MLP_MODEL_DIRECTORY_PATH", MODELS_DIR_DEFAULT)
 
 MODEL_TYPES = ["embedding", "tagger", "torchtagger"]
 for model_type in MODEL_TYPES:

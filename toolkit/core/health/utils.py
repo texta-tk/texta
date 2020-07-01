@@ -1,13 +1,13 @@
 import logging
-from urllib.parse import urlparse
-from celery.task.control import inspect
-import requests
-import redis
 import os
+from urllib.parse import urlparse
+
+import redis
+from celery.task.control import inspect
 
 from toolkit.elastic.core import ElasticCore
-from toolkit.settings import BASE_DIR, BROKER_URL, ERROR_LOGGER
 from toolkit.helper_functions import get_core_setting
+from toolkit.settings import BASE_DIR, BROKER_URL, ERROR_LOGGER
 
 
 def get_version():
@@ -21,22 +21,6 @@ def get_version():
     except IOError:
         version = 'unknown'
     return version
-
-
-def get_mlp_status(MLP_URL=get_core_setting("TEXTA_MLP_URL")):
-    """
-    Checks if MLP is available.
-    """
-    mlp_info = {"url": MLP_URL, "alive": False}
-    try:
-        response = requests.get(MLP_URL, timeout=3)
-        if response.status_code == 200:
-            mlp_info["status"] = response.json()
-            mlp_info["alive"] = True
-    except Exception as e:
-        logging.getLogger(ERROR_LOGGER).exception(e)
-        return mlp_info
-    return mlp_info
 
 
 def get_elastic_status(ES_URL=get_core_setting("TEXTA_ES_URL")):

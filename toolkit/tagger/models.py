@@ -20,8 +20,7 @@ from toolkit.core.task.models import Task
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
-from toolkit.helper_functions import apply_celery_task
-from toolkit.settings import BASE_DIR, INFO_LOGGER, RELATIVE_MODELS_PATH
+from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, INFO_LOGGER, RELATIVE_MODELS_PATH
 from toolkit.tagger.choices import (DEFAULT_CLASSIFIER, DEFAULT_MAX_SAMPLE_SIZE, DEFAULT_MIN_SAMPLE_SIZE, DEFAULT_NEGATIVE_MULTIPLIER, DEFAULT_VECTORIZER)
 
 
@@ -153,7 +152,7 @@ class Tagger(models.Model):
         from toolkit.tagger.tasks import start_tagger_task, train_tagger_task, save_tagger_results
         logging.getLogger(INFO_LOGGER).info(f"Celery: Starting task for training of tagger: {self.to_json()}")
         chain = start_tagger_task.s() | train_tagger_task.s() | save_tagger_results.s()
-        apply_celery_task(chain, self.pk)
+        transaction.on_commit(lambda: chain.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE))
 
 
 @receiver(models.signals.post_delete, sender=Tagger)

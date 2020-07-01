@@ -15,9 +15,10 @@ from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.embedding.phraser import Phraser
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed
-from toolkit.helper_functions import add_finite_url_to_feedback, apply_celery_task
+from toolkit.helper_functions import add_finite_url_to_feedback
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.tagger.serializers import TaggerTagTextSerializer
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.torchtagger.models import TorchTagger as TorchTaggerObject
@@ -77,7 +78,7 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
     def retrain_tagger(self, request, pk=None, project_pk=None):
         """Starts retraining task for the TorchTagger model."""
         instance = self.get_object()
-        apply_celery_task(train_torchtagger, instance.pk)
+        train_torchtagger.apply_async(args=(instance.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE)
         return Response({'success': 'retraining task created'}, status=status.HTTP_200_OK)
 
 
@@ -156,14 +157,14 @@ class TorchTaggerViewSet(viewsets.ModelViewSet, BulkDelete, FeedbackModelView):
         return Response(prediction, status=status.HTTP_200_OK)
 
 
-    def apply_tagger(self, tagger_object, tagger_input, input_type='text', lemmatizer=None, feedback=False):
+    def apply_tagger(self, tagger_object, tagger_input, input_type='text', lemmatize=None, feedback=False):
         # use phraser is embedding used
         if tagger_object.embedding:
             phraser = Phraser(tagger_object.embedding.id)
             phraser.load()
-            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, lemmatizer=lemmatizer)
+            text_processor = TextProcessor(phraser=phraser, remove_stop_words=True, lemmatize=lemmatize)
         else:
-            text_processor = TextProcessor(remove_stop_words=True, lemmatizer=lemmatizer)
+            text_processor = TextProcessor(remove_stop_words=True, lemmatize=lemmatize)
         # retrieve model
         tagger = TorchTagger(tagger_object.id)
         tagger.load()

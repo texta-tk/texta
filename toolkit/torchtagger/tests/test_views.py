@@ -2,18 +2,18 @@ import pathlib
 from io import BytesIO
 from time import sleep
 
-from django.test import TransactionTestCase
+from django.test import override_settings
 from rest_framework import status
+from rest_framework.test import APITransactionTestCase
 
-from toolkit.core.project.models import Project
 from toolkit.test_settings import (TEST_FACT_NAME, TEST_FIELD_CHOICE, TEST_INDEX, TEST_VERSION_PREFIX)
-from toolkit.tools.utils_for_tests import project_creation
-from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
+from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 from toolkit.torchtagger.models import TorchTagger
 from toolkit.torchtagger.torch_models.models import TORCH_MODELS
 
 
-class TorchTaggerViewTests(TransactionTestCase):
+@override_settings(CELERY_ALWAYS_EAGER=True)
+class TorchTaggerViewTests(APITransactionTestCase):
     def setUp(self):
         # Owner of the project
         self.user = create_test_user('torchTaggerOwner', 'my@email.com', 'pw')

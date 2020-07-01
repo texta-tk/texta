@@ -1,5 +1,6 @@
+from django.test import override_settings
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APITransactionTestCase
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
@@ -10,20 +11,18 @@ from toolkit.tools.utils_for_tests import project_creation
 from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
 
 
-class DatasetImportViewTests(APITestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        # Owner of the project
-        cls.user = create_test_user('Owner', 'my@email.com', 'pw')
-        cls.project = project_creation("testImportDatasetProject", None, cls.user)
-        cls.project.users.add(cls.user)
-        cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/dataset_imports/'
-        cls.project_url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}'
-        cls.created_indices = []
+@override_settings(CELERY_ALWAYS_EAGER=True)
+class DatasetImportViewTests(APITransactionTestCase):
 
 
     def setUp(self):
+        # Owner of the project
+        self.user = create_test_user('Owner', 'my@email.com', 'pw')
+        self.project = project_creation("testImportDatasetProject", None, self.user)
+        self.project.users.add(self.user)
+        self.url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}/dataset_imports/'
+        self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
+        self.created_indices = []
         self.client.login(username='Owner', password='pw')
 
 

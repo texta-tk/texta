@@ -17,9 +17,8 @@ from toolkit.core.task.models import Task
 from toolkit.embedding.phraser import Phraser
 from toolkit.tools.text_processor import TextProcessor
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
-from toolkit.topic_analyzer.serializers import ClusterSerializer, ClusteringSerializer, ClusteringIdsSerializer, TransferClusterDocumentsSerializer
+from toolkit.topic_analyzer.serializers import ClusterSerializer, ClusteringIdsSerializer, ClusteringSerializer, TransferClusterDocumentsSerializer
 from .clustering import ClusterContent
-from ..elastic.aggregator import ElasticAggregator
 from ..elastic.document import ElasticDocument
 from ..elastic.models import Index
 from ..elastic.searcher import ElasticSearcher
@@ -126,14 +125,14 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         fields = json.loads(clustering_obj.fields)
 
         documents_for_expanding = serializer.validated_data["ids"]
-        
+
         # Find which of these documents already exist in some other cluster. Remove such documents from the original cluster. Update cluster parameters.
         to_transfer_documents = []
         for cluster_obj in clustering_obj_clusters:
             cluster_documents = json.loads(cluster_obj.document_ids)
             to_transfer = [doc_id for doc_id in cluster_documents if doc_id in documents_for_expanding]
 
-            if(len(to_transfer) > 0):
+            if (len(to_transfer) > 0):
                 # Remove the documents to be transferred from the original cluster.
                 remaining_documents = [doc_id for doc_id in cluster_documents if doc_id not in to_transfer]
                 cluster_obj.document_ids = json.dumps(remaining_documents)
@@ -149,13 +148,13 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
                 to_transfer_documents += to_transfer
                 cluster_obj.save()
 
-        #Find which documents are new and do not belong to any cluster.
+        # Find which documents are new and do not belong to any cluster.
         to_add_documents = [doc_id for doc_id in documents_for_expanding if doc_id not in to_transfer_documents]
 
         # Get texts of these new documents so that document vectors can be calculated for these documents.
         to_add_documents_texts = []
         phraser = None
-        if(len(to_add_documents) > 0):
+        if (len(to_add_documents) > 0):
             document_limit = clustering_obj.document_limit
             ignored_ids = json.loads(clustering_obj.ignored_ids)
             query = {"query": {"ids": {"values": to_add_documents}}}
@@ -177,7 +176,6 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
             if clustering_obj.embedding:
                 phraser = Phraser(embedding_id=clustering_obj.embedding.pk)
                 phraser.load()
-
 
         # Save the new list of document ids.
         cluster_documents = json.loads(current_cluster_obj.document_ids)
@@ -241,6 +239,7 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         cluster_for_transfer.save()
         return Response({"message": "Documents successfully added to the cluster!"})
 
+
     @action(detail=True, methods=["post"], serializer_class=ClusteringIdsSerializer)
     def add_documents(self, request, *args, **kwargs):
         serializer = ClusteringIdsSerializer(data=request.data)
@@ -302,6 +301,7 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
 
         cluster_obj.save()
         return Response({"message": str(len(new_ids)) + " new document(s) successfully added to the cluster!"})
+
 
     @action(detail=True, methods=["post"], serializer_class=ClusteringIdsSerializer)
     def remove_documents(self, request, *args, **kwargs):
@@ -385,7 +385,7 @@ class ClusterViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         doc_ids = json.loads(cluster.document_ids)
         ignored_ids = json.loads(clustering_object.ignored_ids)
 
-        ed.add_fact(fact=serializer.validated_data, doc_ids=doc_ids, indices=indices)
+        ed.add_fact(fact=serializer.validated_data, doc_ids=doc_ids)
 
         clustering_object.ignored_ids = json.dumps(doc_ids + ignored_ids)
         clustering_object.save()

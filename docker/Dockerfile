@@ -39,5 +39,8 @@ EXPOSE 8001
 
 # Ignition!
 WORKDIR /var/texta-rest
+
+RUN /opt/conda/envs/texta-rest/bin/python manage.py collectstatic --no-input --clear
+
 ENTRYPOINT ["/var/texta-rest/docker/conf/entrypoint.sh"]
 CMD ["supervisord", "-n"]

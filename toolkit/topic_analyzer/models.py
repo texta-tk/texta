@@ -17,7 +17,7 @@ from toolkit.elastic.document import ElasticDocument
 from toolkit.elastic.models import Index
 from toolkit.elastic.searcher import EMPTY_QUERY
 from toolkit.embedding.models import Embedding
-from toolkit.settings import BASE_DIR, ERROR_LOGGER, RELATIVE_MODELS_PATH
+from toolkit.settings import BASE_DIR, CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, RELATIVE_MODELS_PATH
 from toolkit.tools.text_processor import StopWords
 from toolkit.topic_analyzer.choices import CLUSTERING_ALGORITHMS, VECTORIZERS
 
@@ -124,7 +124,6 @@ class ClusteringResult(models.Model):
         # Ensure nothing is saved into the DB if anything within this
         # context manager throws an exception.
         with transaction.atomic():
-            from toolkit.helper_functions import apply_celery_task
             from toolkit.topic_analyzer.tasks import start_clustering_task, perform_data_clustering, save_clustering_results, finish_clustering_task
 
             new_task = Task.objects.create(clusteringresult=self, status='created')
@@ -135,9 +134,7 @@ class ClusteringResult(models.Model):
             # BEFORE the actual record is saved into the database as it is not automatically
             # waited for.
             chain = start_clustering_task.s() | perform_data_clustering.s() | save_clustering_results.s() | finish_clustering_task.s()
-            transaction.on_commit(
-                lambda: apply_celery_task(chain, self.id)
-            )
+            transaction.on_commit(lambda: chain.apply_async(args=(self.pk,), queue=CELERY_LONG_TERM_TASK_QUEUE))
 
 
 @receiver(models.signals.post_delete, sender=ClusteringResult)

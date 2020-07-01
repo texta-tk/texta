@@ -1,6 +1,7 @@
 from typing import List
 
 from django.contrib.auth.models import User
+from django.urls import reverse
 from rest_framework import serializers
 
 from toolkit.core import choices as choices
@@ -143,10 +144,17 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
             'taggers',
             'tagger_groups',
             'torchtaggers',
-            'mlp'
+            'mlp_index',
+
         )
         for resource_name in resources:
             resource_dict[resource_name] = f'{base_url}{resource_name}/'
+
+        additional_urls = ['mlp_texts', 'mlp_docs']
+        for item in additional_urls:
+            view_url = reverse(f"v1:{item}")
+            resource_dict[item] = request.build_absolute_uri(view_url)
+
         return resource_dict
 
 

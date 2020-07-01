@@ -18,10 +18,14 @@ class ElasticDocument:
         self.index = index
 
 
-    def __remove_duplicate_facts(self, facts: List[dict]):
-        set_of_jsons = {json.dumps(d, sort_keys=True) for d in facts}  # set-comprehension
-        without_duplicates = [json.loads(fact) for fact in set_of_jsons]
-        return without_duplicates
+    @staticmethod
+    def remove_duplicate_facts(facts: List[dict]):
+        if facts:
+            set_of_jsons = {json.dumps(fact, sort_keys=True, ensure_ascii=False) for fact in facts}
+            without_duplicates = [json.loads(unique_fact) for unique_fact in set_of_jsons]
+            return without_duplicates
+        else:
+            return []
 
 
     def __does_fact_exist(self, fact: dict, existing_facts: List[dict]):
@@ -33,30 +37,26 @@ class ElasticDocument:
             return False
 
 
-    def __documents_to_update_actions(self, documents: List[dict]):
-        for document in documents:
-            yield {
-                "_index": document["_index"],
-                "_type": document["_type"],
-                "_id": document["_id"],
-                "_op_type": "update",
-                "doc": document["_source"]
-            }
-
-
-    def add_fact(self, fact: dict, doc_ids: List, indices: List):
+    def add_fact(self, fact: dict, doc_ids: List):
         # Fetch the documents with the bulk function to get the facts,
         # and to validate that those ids also exist.
         documents = self.get_bulk(doc_ids=doc_ids, fields=["texta_facts"])
-        [self.core.add_texta_facts_mapping(i, i) for i in indices]  # Ensure facts mapping.
 
         for document in documents:
-            facts = document["_source"].get("texta_facts", [])
-            facts.append(fact)
-            facts = self.__remove_duplicate_facts(facts)
-            document["_source"]["texta_facts"] = facts
+            # If there is no texta_facts field in the index, add it.
+            if "texta_facts" not in document["_source"]:
+                self.core.add_texta_facts_mapping(document["_index"], document["_type"])
+                document["_source"]["texta_facts"] = [fact]
+                self.update(index=document["_index"], doc_type=document["_type"], doc_id=document["_id"], doc=document["_source"])
 
-        bulk(self.core.es, actions=self.__documents_to_update_actions(documents), refresh="wait_for", max_retries=10)
+            else:
+                # Avoid sending duplicates.
+                if self.__does_fact_exist(fact, document["_source"]["texta_facts"]):
+                    pass
+                else:
+                    document["_source"]["texta_facts"].append(fact)
+                    self.update(index=document["_index"], doc_type=document["_type"], doc_id=document["_id"], doc=document["_source"])
+
         return True
 
 
@@ -98,6 +98,27 @@ class ElasticDocument:
         Updates document in ES by ID.
         """
         return self.core.es.update(index=index, doc_type=doc_type, id=doc_id, body={"doc": doc}, refresh="wait_for")
+
+
+    def bulk_update(self, actions, refresh="wait_for", chunk_size=100):
+        """
+        Intermediary function to commit bulk updates.
+        This function doesn't have actions processing because it's easier to use
+        when it's index unaware. Actions should be processed when needed.
+
+        Setting refresh to "wait_for" makes Python wait until the documents are actually indexed
+        to avoid version conflicts.
+
+        Args:
+            chunk_size: How many documents should be sent per batch.
+            refresh: Which behaviour to use for updating the index contents on a shard level.
+            actions: List of dictionaries or its generator containing raw Elasticsearch documents along with
+            a "doc" and "op_type" field that contains the fields that need updating. For ex:
+            {"_id": 1234, "_index": "reddit", "_type": "reddit", "op_type": "update", "doc": {"texta_facts": []}}
+
+        Returns: Elasticsearch response to the request.
+        """
+        return bulk(client=self.core.es, actions=actions, refresh=refresh, request_timeout=30, chunk_size=chunk_size)
 
 
     def add(self, doc):

@@ -1,18 +1,9 @@
+import os
+import re
+import sys
+
 from django.contrib.auth.decorators import login_required
 from django.views.static import serve
-
-from urllib.parse import urljoin
-import logging
-import os
-import sys
-import re
-
-
-def apply_celery_task(task_func, *args):
-    if not 'test' in sys.argv:
-        return task_func.apply_async(args=(*args,))
-    else:
-        return task_func.apply(args=(*args,))
 
 
 def get_indices_from_object(model_object):
@@ -48,7 +39,7 @@ def add_finite_url_to_feedback(decision_dict, request):
     """
     if "feedback" in decision_dict:
         feedback = decision_dict["feedback"]
-        url = "/api/v1/"+feedback["url"]
+        url = "/api/v1/" + feedback["url"]
         url = re.sub('/+', '/', url)
         decision_dict["feedback"]["url"] = request.build_absolute_uri(url)
     return decision_dict
@@ -61,7 +52,7 @@ def get_core_setting(setting_name):
     """
     # import here to avoid import loop
     from toolkit.core.core_variable.models import CoreVariable
-    from toolkit.settings import CORE_SETTINGS, ERROR_LOGGER
+    from toolkit.settings import CORE_SETTINGS
     # retrieve variable setting from db
     try:
         variable_match = CoreVariable.objects.filter(name=setting_name)
@@ -81,3 +72,9 @@ def get_core_setting(setting_name):
 @login_required
 def protected_serve(request, path, document_root=None, show_indexes=False):
     return serve(request, path, document_root, show_indexes)
+
+
+def resolve_staticfiles():
+    TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
+    storage = 'django.contrib.staticfiles.storage.StaticFilesStorage' if TESTING else 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    return storage
