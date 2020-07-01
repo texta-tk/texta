@@ -5,7 +5,7 @@ import warnings
 from corsheaders.defaults import default_headers
 from kombu import Exchange, Queue
 
-from .helper_functions import parse_list_env_headers, resolve_staticfiles
+from .helper_functions import parse_list_env_headers
 from .logging_settings import setup_logging
 
 

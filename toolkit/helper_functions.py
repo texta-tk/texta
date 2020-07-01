@@ -74,6 +74,7 @@ def protected_serve(request, path, document_root=None, show_indexes=False):
     return serve(request, path, document_root, show_indexes)
 
 
+# TODO Upon removal of whitenoise, this function becomes obsolete.
 def resolve_staticfiles():
     TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
     storage = 'django.contrib.staticfiles.storage.StaticFilesStorage' if TESTING else 'whitenoise.storage.CompressedManifestStaticFilesStorage'

@@ -44,4 +44,3 @@ dependencies:
       - torchtext
       - xlrd
       - dill
-      - whitenoise
