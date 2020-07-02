@@ -8,7 +8,8 @@ from django.core import serializers
 
 from toolkit.core.project.models import Project
 from toolkit.constants import MAX_DESC_LEN
-from .choices import OPERATOR_CHOICES, MATCH_TYPE_CHOICES
+#from .choices import OPERATOR_CHOICES, MATCH_TYPE_CHOICES
+from texta_lexicon_matcher.lexicon_matcher import SUPPORTED_MATCH_TYPES, SUPPORTED_OPERATIONS
 
 
 class RegexTagger(models.Model):
@@ -21,12 +22,14 @@ class RegexTagger(models.Model):
 
     lexicon = models.TextField(default='')
     counter_lexicon = models.TextField(default='')
-    operator = models.CharField(max_length=25, default=OPERATOR_CHOICES[0][0])
-    match_type = models.CharField(max_length=25, default=MATCH_TYPE_CHOICES[0][0])
-    required_words = models.FloatField(default=0.0)
+    operator = models.CharField(max_length=25, default=SUPPORTED_OPERATIONS[0])
+    match_type = models.CharField(max_length=25, default=SUPPORTED_MATCH_TYPES[0])
+    required_words = models.FloatField(default=1.0)
     phrase_slop = models.IntegerField(default=0)
     counter_slop = models.IntegerField(default=0)
+    n_allowed_edits = models.IntegerField(default=0)
     return_fuzzy_match = models.BooleanField(default=True)
+    ignore_case = models.BooleanField(default=True)
 
 
     def export_resources(self):

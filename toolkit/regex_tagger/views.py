@@ -143,6 +143,8 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
             required_words = regex_tagger_object.required_words,
             phrase_slop = regex_tagger_object.phrase_slop,
             counter_slop = regex_tagger_object.counter_slop,
-            return_fuzzy_match = regex_tagger_object.return_fuzzy_match
+            n_allowed_edits = regex_tagger_object.n_allowed_edits,
+            return_fuzzy_match = regex_tagger_object.return_fuzzy_match,
+            ignore_case = regex_tagger_object.ignore_case
         )
         return matcher
