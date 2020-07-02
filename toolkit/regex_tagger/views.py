@@ -1,8 +1,10 @@
 import json
+import os
 
 from rest_framework import permissions, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.http import HttpResponse
 
 from texta_lexicon_matcher.lexicon_matcher import LexiconMatcher
 
@@ -10,7 +12,7 @@ from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.view_constants import BulkDelete
 from toolkit.core.project.models import Project
 from .serializers import RegexTaggerSerializer, RegexTaggerTagTextsSerializer
-from toolkit.serializer_constants import GeneralTextSerializer
+from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceImportModelSerializer
 from .models import RegexTagger
 
 
@@ -72,6 +74,26 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         for text in serializer.validated_data['texts']:
             result += matcher.get_matches(text)
         return Response(result, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['get'])
+    def export_model(self, request, pk=None, project_pk=None):
+        """Returns model as zip file."""
+        zip_name = f'regex_tagger_model_{pk}.zip'
+        tagger_object: RegexTagger = self.get_object()
+        data = tagger_object.export_resources()
+        response = HttpResponse(data)
+        response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(zip_name)
+        return response
+
+
+    @action(detail=False, methods=["post"], serializer_class=ProjectResourceImportModelSerializer)
+    def import_model(self, request, pk=None, project_pk=None):
+        serializer = ProjectResourceImportModelSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        uploaded_file = serializer.validated_data['file']
+        tagger_id = RegexTagger.import_resources(uploaded_file, request, project_pk)
+        return Response({"id": tagger_id, "message": "Successfully imported model."}, status=status.HTTP_201_CREATED)
 
 
     def _load_matcher(self):

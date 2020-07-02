@@ -1,3 +1,5 @@
+from io import BytesIO
+
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -25,6 +27,7 @@ class RegexTaggerViewTests(APITestCase):
         self.run_test_regex_tagger_create()
         self.run_test_regex_tagger_tag_text()
         self.run_test_regex_tagger_tag_texts()
+        self.run_test_regex_tagger_export_import()
 
 
     def run_test_regex_tagger_create(self):
@@ -73,7 +76,7 @@ class RegexTaggerViewTests(APITestCase):
         '''Tests RegexTagger tagging.'''
         tagger_url = f'{self.url}{self.tagger_id}/tag_texts/'
 
-        ###test matching text
+        ### test matching text
         payload = {
             "texts": ["selles tekstis on mõrtsukas jossif stalini nimi", "selles tekstis on onkel adolf hitler"],
             "return_fuzzy_match": False
@@ -91,3 +94,26 @@ class RegexTaggerViewTests(APITestCase):
         print_output('test_regex_tagger_tag_texts_no_match:response.data', response.data)
         # check if we found anything
         assert len(response.json()) == 0
+    
+
+    def run_test_regex_tagger_export_import(self):
+        '''Tests RegexTagger export and import.'''
+        export_url = f'{self.url}{self.tagger_id}/export_model/'
+        # get model zip
+        response = self.client.get(export_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Post model zip
+        import_url = f'{self.url}import_model/'
+        response = self.client.post(import_url, data={'file': BytesIO(response.content)})
+        print_output('test_import_model:response.data', import_url)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        ### test matching text
+        tagger_url = f'{self.url}{self.tagger_id}/tag_texts/'
+        payload = {
+            "texts": ["selles tekstis on mõrtsukas jossif stalini nimi", "selles tekstis on onkel adolf hitler"],
+            "return_fuzzy_match": False
+        }
+        response = self.client.post(tagger_url, payload)
+        print_output('test_regex_tagger_tag_texts_match:response.data', response.data)
+        # check if we found anything
+        assert len(response.json()[0]) == 2
