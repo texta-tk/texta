@@ -4,26 +4,30 @@ import os
 from rest_framework import permissions, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+import rest_framework.filters as drf_filters
 from django.http import HttpResponse
+from django_filters import rest_framework as filters
 
 from texta_lexicon_matcher.lexicon_matcher import LexiconMatcher
 
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.view_constants import BulkDelete
 from toolkit.core.project.models import Project
-from .serializers import RegexTaggerSerializer, RegexTaggerTagTextsSerializer
+from .serializers import (
+    RegexTaggerSerializer, 
+    RegexTaggerTagTextsSerializer,
+    RegexMultitagTextSerializer
+)
 from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceImportModelSerializer
 from .models import RegexTagger
 
 
-# class TaggerFilter(filters.FilterSet):
-#     description = filters.CharFilter('description', lookup_expr='icontains')
-#     task_status = filters.CharFilter('task__status', lookup_expr='icontains')
+class RegexTaggerFilter(filters.FilterSet):
+    description = filters.CharFilter('description', lookup_expr='icontains')
 
-
-#     class Meta:
-#         model = Tagger
-#         fields = []
+    class Meta:
+        model = RegexTagger
+        fields = []
 
 
 class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
@@ -33,9 +37,9 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         permissions.IsAuthenticated,
     )
 
-    #filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
-    #filterset_class = TaggerFilter
-    #ordering_fields = ('id', 'author__username', 'description', 'fields', 'task__time_started', 'task__time_completed', 'f1_score', 'precision', 'recall', 'task__status')
+    filter_backends = (drf_filters.OrderingFilter, filters.DjangoFilterBackend)
+    filterset_class = RegexTaggerFilter
+    ordering_fields = ('id', 'author__username', 'description')
 
 
     def get_queryset(self):
@@ -56,8 +60,10 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
     def tag_text(self, request, pk=None, project_pk=None):
         serializer = GeneralTextSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        # retrieve tagger object
+        regex_tagger_object = self.get_object()
         # load matcher
-        matcher = self._load_matcher()
+        matcher = self._load_matcher(regex_tagger_object)
         # retrieve matches
         result = matcher.get_matches(serializer.validated_data['text'])
         return Response(result, status=status.HTTP_200_OK)
@@ -67,12 +73,34 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
     def tag_texts(self, request, pk=None, project_pk=None):
         serializer = RegexTaggerTagTextsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        # retrieve tagger object
+        regex_tagger_object = self.get_object()
         # load matcher
-        matcher = self._load_matcher()
+        matcher = self._load_matcher(regex_tagger_object)
         # retrieve matches
         result = []
         for text in serializer.validated_data['texts']:
             result += matcher.get_matches(text)
+        return Response(result, status=status.HTTP_200_OK)
+
+
+    @action(detail=False, methods=['post'], serializer_class=RegexMultitagTextSerializer)
+    def multitag_text(self, request, pk=None, project_pk=None):
+        serializer = RegexMultitagTextSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # filter taggers
+        project_object = Project.objects.get(id=project_pk)
+        regex_taggers = RegexTagger.objects.filter(project=project_object)
+        # filter again
+        if serializer.validated_data['taggers']:
+            regex_taggers = regex_taggers.filter(pk__in=serializer.validated_data['taggers'])
+        # apply taggers
+        result = []
+        for regex_tagger in regex_taggers:
+            # load matcher
+            matcher = self._load_matcher(regex_tagger)
+            # retrieve matches
+            result += matcher.get_matches(serializer.validated_data['text'])
         return Response(result, status=status.HTTP_200_OK)
 
 
@@ -96,9 +124,8 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         return Response({"id": tagger_id, "message": "Successfully imported model."}, status=status.HTTP_201_CREATED)
 
 
-    def _load_matcher(self):
-        # retrieve tagger object
-        regex_tagger_object = self.get_object()
+    @staticmethod
+    def _load_matcher(regex_tagger_object):
         # parse lexicons
         lexicon = json.loads(regex_tagger_object.lexicon)
         counter_lexicon = json.loads(regex_tagger_object.counter_lexicon)

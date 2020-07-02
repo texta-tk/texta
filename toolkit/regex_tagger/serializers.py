@@ -25,3 +25,9 @@ class RegexTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
 
 class RegexTaggerTagTextsSerializer(serializers.Serializer):
     texts = serializers.ListField(child=serializers.CharField(required=True))
+
+class RegexMultitagTextSerializer(serializers.Serializer):
+    text = serializers.CharField()
+    taggers = serializers.ListField(help_text='List of RegexTagger IDs to be used. Default: [] (uses all).',
+                                    child=serializers.IntegerField(),
+                                    default=[])

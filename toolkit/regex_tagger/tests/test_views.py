@@ -28,6 +28,7 @@ class RegexTaggerViewTests(APITestCase):
         self.run_test_regex_tagger_tag_text()
         self.run_test_regex_tagger_tag_texts()
         self.run_test_regex_tagger_export_import()
+        self.run_test_regex_tagger_multitag()
 
 
     def run_test_regex_tagger_create(self):
@@ -112,6 +113,20 @@ class RegexTaggerViewTests(APITestCase):
         payload = {
             "texts": ["selles tekstis on mõrtsukas jossif stalini nimi", "selles tekstis on onkel adolf hitler"],
             "return_fuzzy_match": False
+        }
+        response = self.client.post(tagger_url, payload)
+        print_output('test_regex_tagger_tag_texts_match:response.data', response.data)
+        # check if we found anything
+        assert len(response.json()[0]) == 2
+
+
+    def run_test_regex_tagger_multitag(self):
+        '''Tests multitag endpoint'''
+        tagger_url = f'{self.url}multitag_text/'
+         ### test matching text
+        payload = {
+            "text": ["selles tekstis on mõrtsukas jossif stalini nimi", "selles tekstis on onkel adolf hitler"],
+            "return_fuzzy_match": True
         }
         response = self.client.post(tagger_url, payload)
         print_output('test_regex_tagger_tag_texts_match:response.data', response.data)
