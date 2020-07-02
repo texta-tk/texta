@@ -14,7 +14,7 @@ from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.view_constants import BulkDelete
 from toolkit.core.project.models import Project
 from .serializers import (
-    RegexTaggerSerializer, 
+    RegexTaggerSerializer,
     RegexTaggerTagTextsSerializer,
     RegexMultitagTextSerializer
 )
@@ -100,7 +100,12 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
             # load matcher
             matcher = self._load_matcher(regex_tagger)
             # retrieve matches
-            result += matcher.get_matches(serializer.validated_data['text'])
+            matches = matcher.get_matches(serializer.validated_data['text'])
+            # add tagger id and description to each match
+            for match in matches:
+                match["tagger_id"] = regex_tagger.id
+                match["tagger_description"] = regex_tagger.description
+            result += matches
         return Response(result, status=status.HTTP_200_OK)
 
 
