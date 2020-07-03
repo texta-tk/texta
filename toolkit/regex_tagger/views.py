@@ -138,13 +138,14 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         matcher = LexiconMatcher(
             lexicon,
             counter_lexicon = counter_lexicon,
-            operation = regex_tagger_object.operator,
+            operator = regex_tagger_object.operator,
             match_type = regex_tagger_object.match_type,
             required_words = regex_tagger_object.required_words,
             phrase_slop = regex_tagger_object.phrase_slop,
             counter_slop = regex_tagger_object.counter_slop,
             n_allowed_edits = regex_tagger_object.n_allowed_edits,
             return_fuzzy_match = regex_tagger_object.return_fuzzy_match,
-            ignore_case = regex_tagger_object.ignore_case
+            ignore_case = regex_tagger_object.ignore_case,
+            ignore_punctuation = regex_tagger_object.ignore_punctuation
         )
         return matcher
