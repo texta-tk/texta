@@ -71,7 +71,7 @@ class TextProcessor:
                 text = str(text)
                 # lemmatize if asked
                 if self.lemmatize is True:
-                    task = apply_mlp_on_list.apply_async(kwargs={"texts": [text], "analyzers": ["lemmas"]}, queue=CELERY_MLP_TASK_QUEUE)
+                    task = apply_mlp_on_list.apply(kwargs={"texts": [text], "analyzers": ["lemmas"]}, queue=CELERY_MLP_TASK_QUEUE)
                     mlp_output = task.get()
                     text = mlp_output[0]["text"]["lemmas"]
                 # lower & strip

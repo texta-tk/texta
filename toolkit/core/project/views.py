@@ -282,7 +282,7 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             raise RedisNotAvailable()
         # tag text using celery group primitive
         group_task = group(apply_tagger.s(tagger.pk, text, input_type='text', lemmatize=lemmatize, feedback=feedback) for tagger in taggers)
-        group_results = [a for a in group_task.apply_async(queue=CELERY_SHORT_TERM_TASK_QUEUE).get() if a]
+        group_results = [a for a in group_task.apply(queue=CELERY_SHORT_TERM_TASK_QUEUE).get() if a]
 
         # remove non-hits
         if hide_false is True:

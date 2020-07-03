@@ -22,7 +22,7 @@ class MLPLemmatizerTests(TestCase):
         Tests lemmatization in every language.
         """
         for test_text in self.test_texts:
-            mlp_output = apply_mlp_on_list.apply_async(kwargs={"texts": [test_text], "analyzers": ["lemmas"]}, queue=CELERY_MLP_TASK_QUEUE).get()[0]
+            mlp_output = apply_mlp_on_list.apply(kwargs={"texts": [test_text], "analyzers": ["lemmas"]}, queue=CELERY_MLP_TASK_QUEUE).get()[0]
             lemmas = mlp_output["text"]["lemmas"]
 
             print_output(f"test_mlp_lemmatization_{test_text['lang']}:result", lemmas)
