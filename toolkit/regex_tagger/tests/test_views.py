@@ -17,6 +17,8 @@ class RegexTaggerViewTests(APITestCase):
         cls.project.users.add(cls.user)
         cls.url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/regex_taggers/'
 
+        cls.group_url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}/regex_tagger_groups/'
+
         cls.tagger_id = None
 
     def setUp(self):
@@ -29,6 +31,8 @@ class RegexTaggerViewTests(APITestCase):
         self.run_test_regex_tagger_tag_texts()
         self.run_test_regex_tagger_export_import()
         self.run_test_regex_tagger_multitag()
+
+        self.run_test_regex_group_create()
 
 
     def run_test_regex_tagger_create(self):
@@ -121,7 +125,7 @@ class RegexTaggerViewTests(APITestCase):
 
 
     def run_test_regex_tagger_multitag(self):
-        '''Tests multitag endpoint'''
+        '''Tests multitag endpoint.'''
         tagger_url = f'{self.url}multitag_text/'
          ### test matching text
         payload = {
@@ -132,3 +136,25 @@ class RegexTaggerViewTests(APITestCase):
         print_output('test_regex_tagger_tag_texts_match:response.data', response.data)
         # check if we found anything
         assert len(response.json()[0]) == 4
+
+
+    def run_test_regex_group_create(self):
+        '''Tests RegexTaggerGroup creation.'''
+        payload = {
+            "description": "test group",
+            "regex_taggers": [1,2]
+        }
+        response = self.client.post(self.group_url, payload)
+        print_output('test_regex_tagger_group_create:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        tagger_group_id = response.data['id']
+
+        ### test predicting
+
+        tagger_url = f'{self.group_url}multitag_text/'
+        payload = {
+            "text": "selles tekstis on mõrtsukas jossif stalini nimi",
+        }
+        response = self.client.post(tagger_url, payload)
+        print_output('test_regex_tagger_group_multitag_text:response.data', response.data)

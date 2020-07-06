@@ -58,3 +58,13 @@ class RegexTagger(models.Model):
                 new_model.project = Project.objects.get(id=pk)
                 new_model.save()
                 return new_model.id
+
+
+class RegexTaggerGroup(models.Model):
+    MODEL_TYPE = "regex_tagger_group"
+    MODEL_JSON_NAME = "model.json"
+
+    description = models.CharField(max_length=MAX_DESC_LEN)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    regex_taggers = models.ManyToManyField(RegexTagger, default=None)
