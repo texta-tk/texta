@@ -16,7 +16,7 @@ from .logging_settings import setup_logging
 # from toolkit.core.settings import get_core_setting
 # ES_URL = get_core_setting("ES_URL")
 CORE_SETTINGS = {
-    "TEXTA_ES_URL": os.getenv("TEXTA_ES_URL", "http://localhost:9200"),
+    "TEXTA_ES_URL": os.getenv("TEXTA_ES_URL", "http://elastic-dev.texta.ee:9200"),
     "TEXTA_ES_PREFIX": os.getenv("TEXTA_ES_PREFIX", ""),
     "TEXTA_ES_USERNAME": os.getenv("TEXTA_ES_USER", ""),
     "TEXTA_ES_PASSWORD": os.getenv("TEXTA_ES_PASSWORD", ""),
@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "toolkit.torchtagger",
     "toolkit.mlp",
     "toolkit.topic_analyzer",
+    "toolkit.regex_tagger",
     # TEXTA Extension Apps
     # "docscraper",
     # THIRD PARTY
