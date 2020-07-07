@@ -33,6 +33,10 @@ class RegexTagger(models.Model):
     ignore_punctuation = models.BooleanField(default=True)
 
 
+    def __str__(self):
+        return self.description
+
+
     def export_resources(self):
         with tempfile.SpooledTemporaryFile(encoding="utf8") as tmp:
             with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as archive:

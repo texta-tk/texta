@@ -45,14 +45,21 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
     def get_queryset(self):
         return RegexTagger.objects.filter(project=self.kwargs['project_pk'])
 
-
+    
     def perform_create(self, serializer):
         project = Project.objects.get(id=self.kwargs['project_pk'])
         tagger: RegexTagger = serializer.save(
             author=self.request.user,
             project=project,
-            lexicon=json.dumps(serializer.validated_data['lexicon']),
-            counter_lexicon=json.dumps(serializer.validated_data['counter_lexicon'])
+            lexicon=json.dumps(serializer.validated_data.get('lexicon', [])),
+            counter_lexicon=json.dumps(serializer.validated_data.get('counter_lexicon', []))
+        )
+
+
+    def perform_update(self, serializer):
+        serializer.save(
+            lexicon=json.dumps(serializer.validated_data.get('lexicon', [])),
+            counter_lexicon=json.dumps(serializer.validated_data.get('counter_lexicon', []))
         )
 
 
