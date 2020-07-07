@@ -1,8 +1,6 @@
 image: continuumio/miniconda3:latest
 
 services:
-  - name: docker.texta.ee/texta/mlp:latest
-    alias: texta-mlp
   - name: redis:latest
 
 stages:
@@ -19,7 +17,6 @@ Test:
   - ci-test
   variables:
     TEXTA_ES_URL: http://172.17.0.1:9200
-    TEXTA_MLP_URL: http://texta-mlp:5000
     TEXTA_REDIS_URL: redis://redis:6379
   script:
   - python manage.py test
