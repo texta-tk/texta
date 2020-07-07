@@ -1,3 +1,4 @@
+from celery.result import allow_join_result
 from django.test import TestCase, override_settings
 
 from toolkit.mlp.tasks import apply_mlp_on_list
@@ -22,8 +23,9 @@ class MLPLemmatizerTests(TestCase):
         Tests lemmatization in every language.
         """
         for test_text in self.test_texts:
-            mlp_output = apply_mlp_on_list.apply(kwargs={"texts": [test_text], "analyzers": ["lemmas"]}, queue=CELERY_MLP_TASK_QUEUE).get()[0]
-            lemmas = mlp_output["text"]["lemmas"]
+            with allow_join_result():
+                mlp = apply_mlp_on_list.apply_async(args=[test_text], kwargs={"analyzers": ["lemmas"]}, queue=CELERY_MLP_TASK_QUEUE).get()
+            lemmas = mlp[0]["text"]["lemmas"]
 
             print_output(f"test_mlp_lemmatization_{test_text['lang']}:result", lemmas)
             self.assertTrue(len(lemmas) > 0)

@@ -1,5 +1,7 @@
 import os
 
+from celery.result import allow_join_result
+
 from toolkit.mlp.tasks import apply_mlp_on_list
 from toolkit.settings import BASE_DIR, CELERY_MLP_TASK_QUEUE
 
@@ -71,9 +73,10 @@ class TextProcessor:
                 text = str(text)
                 # lemmatize if asked
                 if self.lemmatize is True:
-                    task = apply_mlp_on_list.apply(kwargs={"texts": [text], "analyzers": ["lemmas"]}, queue=CELERY_MLP_TASK_QUEUE)
-                    mlp_output = task.get()
-                    text = mlp_output[0]["text"]["lemmas"]
+                    with allow_join_result():
+                        mlp = apply_mlp_on_list.apply_async(args=[text], kwargs={"analyzers": ["lemmas"]}, queue=CELERY_MLP_TASK_QUEUE).get()
+                        text = mlp[0]["text"]["lemmas"]
+
                 # lower & strip
                 text = text.lower().strip()
                 # convert string to list of tokens

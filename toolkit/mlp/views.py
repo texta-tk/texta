@@ -2,6 +2,7 @@
 import json
 
 import rest_framework.filters as drf_filters
+from celery.result import allow_join_result
 from django.db import transaction
 from django_filters import rest_framework as filters
 from rest_framework import permissions, viewsets
@@ -13,8 +14,9 @@ from toolkit.core.project.models import Project
 from toolkit.elastic.models import Index
 from toolkit.mlp.models import MLPWorker
 from toolkit.mlp.serializers import MLPDocsSerializer, MLPListSerializer, MLPWorkerSerializer
-from toolkit.mlp.tasks import apply_mlp_on_docs, apply_mlp_on_list
+from toolkit.mlp.tasks import apply_mlp_on_list, apply_mlp_on_docs
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.settings import CELERY_MLP_TASK_QUEUE
 from toolkit.view_constants import BulkDelete
 
 
@@ -28,13 +30,14 @@ class MlpDocsProcessor(APIView):
         serializer = MLPDocsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        docs = serializer.validated_data["docs"]
-        analyzers = serializer.validated_data["analyzers"]
-        fields_to_parse = serializer.validated_data["fields_to_parse"]
+        docs = list(serializer.validated_data["docs"])
+        analyzers = list(serializer.validated_data["analyzers"])
+        fields_to_parse = list(serializer.validated_data["fields_to_parse"])
 
-        data = apply_mlp_on_docs.apply(kwargs={"docs": docs, "analyzers": analyzers, "fields_to_parse": fields_to_parse}, queue="mlp_queue").get()
+        with allow_join_result():
+            mlp = apply_mlp_on_docs.apply_async(kwargs={"docs": docs, "analyzers": analyzers, "fields_to_parse": fields_to_parse}, queue=CELERY_MLP_TASK_QUEUE).get()
 
-        return Response(data)
+        return Response(mlp)
 
 
 class MLPListProcessor(APIView):
@@ -48,11 +51,12 @@ class MLPListProcessor(APIView):
         serializer.is_valid(raise_exception=True)
 
         texts = serializer.validated_data["texts"]
-        analyzers = serializer.validated_data["analyzers"]
+        analyzers = list(serializer.validated_data["analyzers"])
 
-        data = apply_mlp_on_list.apply(kwargs={"texts": texts, "analyzers": analyzers}, queue="mlp_queue").get()
+        with allow_join_result():
+            mlp = apply_mlp_on_list.apply_async(kwargs={"texts": texts, "analyzers": analyzers}, queue=CELERY_MLP_TASK_QUEUE).get()
 
-        return Response(data)
+        return Response(mlp)
 
 
 class MLPElasticWorkerViewset(viewsets.ModelViewSet, BulkDelete):

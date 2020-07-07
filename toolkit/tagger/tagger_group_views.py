@@ -4,6 +4,7 @@ import re
 
 import rest_framework.filters as drf_filters
 from celery import group
+from celery.result import allow_join_result
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
 from rest_framework import mixins, permissions, status, viewsets
@@ -182,16 +183,19 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         tags = []
         hybrid_tagger_object = self.get_object()
         taggers = {t.description.lower(): {"tag": t.description, "id": t.id} for t in hybrid_tagger_object.taggers.all()}
-        mlp_task = apply_mlp_on_list.apply(kwargs={"texts": [text], "analyzers": ["all"]}, queue=CELERY_MLP_TASK_QUEUE)
-        mlp_output = mlp_task.get()[0]
+
+        if lemmatize or use_ner:
+            with allow_join_result():
+                mlp = apply_mlp_on_list.apply_async(args=[text], kwargs={"analyzers": ["all"]}, queue=CELERY_MLP_TASK_QUEUE).get()
+                mlp_result = mlp[0]
 
         # lemmatize
-        if lemmatize and mlp_output:
-            text = mlp_output["text"]["lemmas"]
+        if lemmatize and mlp_result:
+            text = mlp_result["text"]["lemmas"]
         # retrieve tags
-        if use_ner and mlp_output:
+        if use_ner and mlp_result:
             seen_tags = {}
-            for fact in mlp_output["texta_facts"]:
+            for fact in mlp_result["texta_facts"]:
                 fact_val = fact["str_val"].lower().strip()
                 if fact_val in taggers and fact_val not in seen_tags:
                     fact_val_dict = {
@@ -299,6 +303,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
             return input_document
         # combine document field values into one string
         combined_texts = '\n'.join(input_document.values())
+
         # declare tag candidates variables
         n_similar_docs = serializer.validated_data['n_similar_docs']
         n_candidate_tags = serializer.validated_data['n_candidate_tags']
