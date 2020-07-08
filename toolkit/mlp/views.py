@@ -50,7 +50,7 @@ class MLPListProcessor(APIView):
         serializer = MLPListSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        texts = serializer.validated_data["texts"]
+        texts = list(serializer.validated_data["texts"])
         analyzers = list(serializer.validated_data["analyzers"])
 
         with allow_join_result():

@@ -24,7 +24,7 @@ class MLPLemmatizerTests(TestCase):
         """
         for test_text in self.test_texts:
             with allow_join_result():
-                mlp = apply_mlp_on_list.apply_async(args=[test_text], kwargs={"analyzers": ["lemmas"]}, queue=CELERY_MLP_TASK_QUEUE).get()
+                mlp = apply_mlp_on_list.apply_async(kwargs={"texts": [test_text], "analyzers": ["lemmas"]}, queue=CELERY_MLP_TASK_QUEUE).get()
             lemmas = mlp[0]["text"]["lemmas"]
 
             print_output(f"test_mlp_lemmatization_{test_text['lang']}:result", lemmas)

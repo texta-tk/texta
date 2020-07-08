@@ -186,7 +186,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
         if lemmatize or use_ner:
             with allow_join_result():
-                mlp = apply_mlp_on_list.apply_async(args=[text], kwargs={"analyzers": ["all"]}, queue=CELERY_MLP_TASK_QUEUE).get()
+                mlp = apply_mlp_on_list.apply_async(kwargs={"texts": [text], "analyzers": ["all"]}, queue=CELERY_MLP_TASK_QUEUE).get()
                 mlp_result = mlp[0]
 
         # lemmatize
