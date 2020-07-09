@@ -247,7 +247,8 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
         logging.getLogger(INFO_LOGGER).info(f"Adding feedback for Tagger id: {tagger_object.pk}")
         project_pk = tagger_object.project.pk
         feedback_object = Feedback(project_pk, model_object=tagger_object)
-        feedback_id = feedback_object.store(text, decision)
+        processed_text = text_processor.process(text)[0]
+        feedback_id = feedback_object.store(processed_text, decision)
         feedback_url = f'/projects/{project_pk}/taggers/{tagger_object.pk}/feedback/'
         prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
 
