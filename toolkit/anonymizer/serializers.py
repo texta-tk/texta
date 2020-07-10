@@ -6,10 +6,10 @@ from .models import Anonymizer
 class AnonymizerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
     description = serializers.CharField()
 
-    allow_fuzzy_matching = serializers.BooleanField(default=True, required=False)
-    extract_single_last_names = serializers.BooleanField(default=True, required=False)
-    extract_single_first_names = serializers.BooleanField(default=True, required=False)
-    fuzzy_threshold = serializers.FloatField(default=0.9, required=False)
+    replace_misspelled_names = serializers.BooleanField(default=True, required=False)
+    replace_single_last_names = serializers.BooleanField(default=True, required=False)
+    replace_single_first_names = serializers.BooleanField(default=True, required=False)
+    misspelling_threshold = serializers.FloatField(default=0.9, min_value=0.0, max_value=1.0, required=False)
     mimic_casing = serializers.BooleanField(default=True, required=False)
 
     url = serializers.SerializerMethodField()
@@ -19,10 +19,10 @@ class AnonymizerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerial
         fields = ('id',
                   'url',
                   'description',
-                  'allow_fuzzy_matching',
-                  'extract_single_last_names',
-                  'extract_single_first_names',
-                  'fuzzy_threshold',
+                  'replace_misspelled_names',
+                  'replace_single_last_names',
+                  'replace_single_first_names',
+                  'misspelling_threshold',
                   'mimic_casing')
 
 

@@ -18,10 +18,10 @@ class Anonymizer(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    allow_fuzzy_matching = models.BooleanField(default=True)
-    extract_single_last_names = models.BooleanField(default=True)
-    extract_single_first_names = models.BooleanField(default=True)
-    fuzzy_threshold = models.FloatField(default=0.9)
+    replace_misspelled_names = models.BooleanField(default=True)
+    replace_single_last_names = models.BooleanField(default=True)
+    replace_single_first_names = models.BooleanField(default=True)
+    misspelling_threshold = models.FloatField(default=0.9)
     mimic_casing = models.BooleanField(default=True)
 
     def __str__(self):

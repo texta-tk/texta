@@ -1,4 +1,4 @@
-name: texta-rest-anon
+name: texta-rest
 
 channels:
   - conda-forge

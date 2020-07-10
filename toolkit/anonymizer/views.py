@@ -107,10 +107,10 @@ class AnonymizerViewSet(viewsets.ModelViewSet, BulkDelete):
     def _load_anonymizer(anonymizer_object):
         # create anonymizer
         anonymizer = NameAnonymizer(
-            allow_fuzzy_matching = anonymizer_object.allow_fuzzy_matching,
-            extract_single_last_names = anonymizer_object.extract_single_last_names,
-            extract_single_first_names = anonymizer_object.extract_single_last_names,
-            fuzzy_threshold = anonymizer_object.fuzzy_threshold,
+            replace_misspelled_names = anonymizer_object.replace_misspelled_names,
+            replace_single_last_names = anonymizer_object.replace_single_last_names,
+            replace_single_first_names = anonymizer_object.replace_single_last_names,
+            misspelling_threshold = anonymizer_object.misspelling_threshold,
             mimic_casing = anonymizer_object.mimic_casing,
         )
         return anonymizer
