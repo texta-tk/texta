@@ -20,6 +20,7 @@ from toolkit.tools.swagger import schema_view
 from toolkit.topic_analyzer.views import ClusterViewSet, ClusteringViewSet
 from toolkit.torchtagger.urls import router as torchtagger_router
 from toolkit.regex_tagger.urls import router as regex_tagger_router
+from toolkit.anonymizer.urls import router as anonymizer_router
 
 
 router = routers.DefaultRouter()
@@ -37,6 +38,7 @@ project_router.registry.extend(core_router.registry)
 project_router.registry.extend(torchtagger_router.registry)
 project_router.registry.extend(mlp_router.registry)
 project_router.registry.extend(regex_tagger_router.registry)
+project_router.registry.extend(anonymizer_router.registry)
 
 # TODO Look for putting this into a better place.
 project_router.register(r'clustering', ClusteringViewSet, basename='clustering')

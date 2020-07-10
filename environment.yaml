@@ -45,3 +45,4 @@ dependencies:
       - torchtext
       - xlrd
       - dill
+      - git+https://git.texta.ee/texta/texta-anonymizer-python.git
