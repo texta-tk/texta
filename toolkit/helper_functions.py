@@ -1,6 +1,6 @@
 import os
 import re
-import sys
+from typing import List
 
 from django.contrib.auth.decorators import login_required
 from django.views.static import serve
@@ -74,8 +74,7 @@ def protected_serve(request, path, document_root=None, show_indexes=False):
     return serve(request, path, document_root, show_indexes)
 
 
-# TODO Upon removal of whitenoise, this function becomes obsolete.
-def resolve_staticfiles():
-    TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
-    storage = 'django.contrib.staticfiles.storage.StaticFilesStorage' if TESTING else 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-    return storage
+def download_mlp_requirements(model_directory: str, supported_langs: List[str], logger):
+    from texta_mlp.mlp import MLP, ENTITY_MAPPER_DATA_URLS
+    MLP.download_entity_mapper_resources(model_directory, entity_mapper_urls=ENTITY_MAPPER_DATA_URLS, logger=logger)
+    MLP.download_stanza_resources(model_directory, supported_langs=supported_langs, logger=logger)

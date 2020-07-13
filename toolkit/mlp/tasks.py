@@ -15,7 +15,7 @@ from toolkit.tools.show_progress import ShowProgress
 
 
 # TODO Temporally as for now no other choice is found for sharing the models through the worker across the tasks.
-mlp: Optional[None] = None
+mlp: Optional[MLP] = None
 
 
 def load_mlp():

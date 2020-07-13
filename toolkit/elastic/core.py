@@ -83,6 +83,7 @@ class ElasticCore:
         return self.es.indices.delete(index=index, ignore=[400, 404])
 
 
+    @elastic_connection
     def get_mapping(self, index):
         return self.es.indices.get_mapping(index=index)
 

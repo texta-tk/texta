@@ -1,3 +1,4 @@
+import logging
 import os
 import pathlib
 import warnings
@@ -5,7 +6,7 @@ import warnings
 from corsheaders.defaults import default_headers
 from kombu import Exchange, Queue
 
-from .helper_functions import parse_list_env_headers
+from .helper_functions import download_mlp_requirements, parse_list_env_headers
 from .logging_settings import setup_logging
 
 
@@ -280,3 +281,7 @@ warnings.simplefilter(action="ignore", category=Warning)
 SWAGGER_SETTINGS = {
     "DEFAULT_AUTO_SCHEMA_CLASS": "toolkit.tools.swagger.CompoundTagsSchema"
 }
+
+SKIP_MLP_RESOURCES = False if os.getenv("SKIP_MLP_RESOURCES", "False") == "False" else True
+if SKIP_MLP_RESOURCES is False:
+    download_mlp_requirements(MLP_MODEL_DIRECTORY, DEFAULT_MLP_LANGUAGE_CODES, logging.getLogger(INFO_LOGGER))
