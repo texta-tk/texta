@@ -55,6 +55,20 @@ class DatasetImportViewTests(APITransactionTestCase):
                 response = self.client.delete(import_url)
                 self.assertTrue(response.status_code == 204)
 
+    def test_elasticsearch_index_name_validation(self):
+        file_path = TEST_DATASETS[0]
+        index_names = ["_start", "UPPERCASE_INDEX", "wild*_index", "colon:index"]
+        with open(file_path, 'rb') as fh:
+            for index in index_names:
+                payload = {
+                    "description": "Testimport",
+                    "file": fh,
+                    "index": index
+                }
+                response = self.client.post(self.url, payload)
+                print_output('test_import_dataset:response.data', response.data)
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
 
     def tearDown(self):
         # delete created indices
