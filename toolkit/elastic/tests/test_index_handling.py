@@ -1,3 +1,4 @@
+import elasticsearch_dsl
 import requests
 from django.urls import reverse
 from rest_framework import status
@@ -6,9 +7,8 @@ from rest_framework.test import APITestCase
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.models import Index
 from toolkit.settings import CORE_SETTINGS
-from toolkit.test_settings import TEST_INDEX, TEST_VERSION_PREFIX
-from toolkit.tools.utils_for_tests import project_creation
-from toolkit.tools.utils_for_tests import create_test_user
+from toolkit.test_settings import TEST_INDEX
+from toolkit.tools.utils_for_tests import create_test_user, project_creation
 
 
 ES_URL = CORE_SETTINGS["TEXTA_ES_URL"]
@@ -203,3 +203,19 @@ class ElasticIndexViewTests(APITestCase):
         self.assertTrue(second_index.status_code == status.HTTP_400_BAD_REQUEST)
         list_view = self.client.get(self.index_url)
         self.assertTrue(list_view.status_code == status.HTTP_200_OK)
+
+
+    def test_that_index_count_matches_reality(self):
+        ec = ElasticCore()
+        list_url = reverse("v1:index-list")
+        response = self.client.get(list_url)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        test_index = [index for index in response.data if index["name"] == TEST_INDEX][0]
+
+        counter = 0
+        # Use params to fetch 5k documents with first request.
+        s = elasticsearch_dsl.Search(using=ec.es, index=TEST_INDEX).params(size=5000)
+        for hit in s.scan():
+            counter += 1
+
+        self.assertTrue(counter == test_index["doc_count"])

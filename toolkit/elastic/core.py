@@ -2,6 +2,7 @@ import collections
 from typing import List, Tuple
 
 import elasticsearch
+import elasticsearch_dsl
 import requests
 from django.db import transaction
 from elasticsearch import Elasticsearch
@@ -276,9 +277,18 @@ class ElasticCore:
     def get_index_stats(self, indices: List):
         store = {}
         indices = ",".join(indices)
-        response = self.es.indices.stats(index=indices, metric="store,docs")
+
+        # Get size of indices.
+        response = self.es.indices.stats(index=indices, metric="store")
         for index_name in response["indices"].keys():
-            count = response["indices"][index_name]["total"]["docs"]["count"]
             size = response["indices"][index_name]["total"]["store"]["size_in_bytes"]
-            store[index_name] = {"doc_count": count, "size": size}
+            store[index_name] = {"size": size, "doc_count": 0}  # Initialize doc_count as zero and overwrite later.
+
+        # Get count of indices.
+        s = elasticsearch_dsl.Search(using=self.es, index=indices).extra(size=0)
+        s.aggs.bucket("by_all", "terms", field="_index", size=10000)
+        for hit in s.execute().aggs.by_all:
+            index_name = hit["key"]
+            store[index_name]["doc_count"] = hit["doc_count"]
+
         return store
