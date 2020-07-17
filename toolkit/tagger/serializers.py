@@ -62,14 +62,15 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
     plot = serializers.SerializerMethodField()
     query = serializers.JSONField(help_text='Query in JSON format', required=False)
     url = serializers.SerializerMethodField()
+    tagger_groups = serializers.SerializerMethodField(read_only=True)
 
 
     class Meta:
         model = Tagger
         fields = ('id', 'url', 'author_username', 'description', 'query', 'fields', 'embedding', 'vectorizer', 'classifier', 'stop_words',
                   'maximum_sample_size', 'score_threshold', 'negative_multiplier', 'precision', 'recall', 'f1_score',
-                  'num_features', 'num_positives', 'num_negatives', 'plot', 'task', "indices")
-        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'stop_words', 'num_positives', 'num_negatives')
+                  'num_features', 'num_positives', 'num_negatives', 'plot', 'task', "indices", "tagger_groups")
+        read_only_fields = ('precision', 'recall', 'f1_score', 'num_features', 'stop_words', 'num_positives', 'num_negatives', "tagger_groups")
         fields_to_parse = ('fields',)
 
 
@@ -85,6 +86,12 @@ class TaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, Projec
             # for multiple fields in a list
             for field_name in remove_fields:
                 self.fields.pop(field_name)
+
+
+    def get_tagger_groups(self, value: Tagger):
+        tgs = TaggerGroup.objects.filter(taggers__project_id=value.project.pk, taggers__id=value.pk)
+        descriptions = [tgs.description for tgs in tgs]
+        return descriptions
 
 
 class TaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):

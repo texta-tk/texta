@@ -3,6 +3,7 @@ import pathlib
 from io import BytesIO
 
 from django.test import override_settings
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
@@ -39,6 +40,7 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.run_models_retrain()
         self.create_taggers_with_empty_fields()
         self.run_model_export_import()
+        self.run_tagger_instances_have_mention_to_tagger_group()
 
 
     def run_create_tagger_group_training_and_task_signal(self):
@@ -235,3 +237,14 @@ class TaggerGroupViewTests(APITransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(isinstance(response.data, dict))
         self.assertTrue('tags' in response.data)
+
+
+    def run_tagger_instances_have_mention_to_tagger_group(self):
+        tg = TaggerGroup.objects.get(pk=self.test_tagger_group_id)
+        description = tg.description
+
+        for tagger in tg.taggers.all():
+            tagger_url = reverse("v1:tagger-detail", kwargs={"project_pk": self.project.pk, "pk": tagger.pk})
+            response = self.client.get(tagger_url)
+            self.assertTrue(response.status_code == status.HTTP_200_OK)
+            self.assertTrue(tg.description in response.data["tagger_groups"])
