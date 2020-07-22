@@ -1,5 +1,4 @@
 import os
-
 from django.contrib.auth.models import User
 from django.db import models
 from django.dispatch import receiver
@@ -43,3 +42,6 @@ def auto_delete_file_on_delete(sender, instance: DatasetImport, **kwargs):
     if instance.file:
         if os.path.isfile(instance.file.path):
             os.remove(instance.file.path)
+
+    if instance.task != Task.STATUS_COMPLETED:
+        instance.project.indices.filter(name=instance.index).delete()
