@@ -128,10 +128,10 @@ class ElasticDocument:
         return self.core.es.index(index=self.index, doc_type=self.index, body=doc, refresh='wait_for')
 
 
-    def bulk_add(self, docs, chunk_size=100):
+    def bulk_add(self, docs, chunk_size=100, raise_on_error=True, stats_only=True):
         """ _type is deprecated in ES 6"""
         actions = [{"_index": self.index, "_type": self.index, "_source": doc} for doc in docs]
-        return bulk(client=self.core.es, actions=actions, chunk_size=chunk_size, stats_only=True)
+        return bulk(client=self.core.es, actions=actions, chunk_size=chunk_size, stats_only=stats_only, raise_on_error=raise_on_error)
 
 
     def delete(self, doc_id):
