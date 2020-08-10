@@ -24,6 +24,7 @@ dependencies:
   - pytorch-cpu
   - pip:
       - django==2.*
+      - torchtext==0.6.0
       - django-multiselectfield
       - django-rest-serializer-field-permissions
       - django-cors-headers
@@ -42,6 +43,5 @@ dependencies:
       - joblib
       - python-json-logger
       - drf-yasg
-      - torchtext
       - xlrd
       - dill
