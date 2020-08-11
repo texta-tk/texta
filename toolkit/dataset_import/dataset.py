@@ -32,7 +32,7 @@ class Dataset:
 
         elif file_extension in (Dataset.TYPE_XLS, Dataset.TYPE_XLSX):
             # EXCEL
-            return True, pd.read_excel(self.file_path, header=0, sep=self.separator)
+            return True, pd.read_excel(self.file_path, header=0)
 
         elif file_extension == Dataset.TYPE_JSON:
             # JSON-LINES
