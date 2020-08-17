@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "toolkit.mlp",
     "toolkit.topic_analyzer",
     "toolkit.regex_tagger",
+    "toolkit.anonymizer",
     # TEXTA Extension Apps
     # "docscraper",
     # THIRD PARTY
@@ -261,7 +262,7 @@ UPLOAD_PATH = os.path.join(BASE_DIR, "data", "upload")
 if not os.path.exists(UPLOAD_PATH):
     os.makedirs(UPLOAD_PATH)
 
-# Path to the directory containing test files 
+# Path to the directory containing test files
 TEST_DATA_DIR = os.path.join(BASE_DIR, "data", "test")
 if not os.path.exists(TEST_DATA_DIR):
     os.makedirs(TEST_DATA_DIR)
