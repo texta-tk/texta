@@ -171,8 +171,9 @@ def whitespace_tokenizer(s):
 def get_pipeline_builder():
     pipe_builder = PipelineBuilder()
     ### Params are used with grid search to find optimal choices ###
-    # analyzer options: words and word-bound character-based ngrams
-    analyzer_params = ['word', 'char_wb']
+    # analyzer options: words 
+    # we're not using word-bound character-based ngrams, because those features rarely make any sense
+    analyzer_params = ['word']
     # ngram length options (min, max)
     ngram_params = [(1, 2)]
     # minimum term frequency options
