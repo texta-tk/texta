@@ -45,3 +45,4 @@ dependencies:
       - drf-yasg
       - xlrd
       - dill
+      - https://pypi.texta.ee/texta-anonymizer/texta-anonymizer-1.0.0.tar.gz
