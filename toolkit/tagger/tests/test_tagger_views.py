@@ -272,6 +272,8 @@ class TaggerViewTests(APITransactionTestCase):
                 # Check if response data is not empty, but a result instead
                 self.assertTrue(response.data)
                 self.assertTrue('features' in response.data)
+                # Check if any features listed
+                self.assertTrue(len(response.data['features']) > 0)
 
 
     def run_stop_word_list(self):
