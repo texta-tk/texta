@@ -74,8 +74,7 @@ class IndexViewSet(mixins.CreateModelMixin,
 
         # Doing a stats request with no indices causes trouble.
         if open_indices:
-            # We don't want to ping closed indices, otherwise we get an Elasticsearch side error.
-            stats = ec.get_index_stats(indices=[index["name"] for index in open_indices])
+            stats = ec.get_index_stats()
 
             # Update the paginated and sorted queryset results.
             for index in response.data:
@@ -95,7 +94,7 @@ class IndexViewSet(mixins.CreateModelMixin,
         response = super(IndexViewSet, self).retrieve(*args, *kwargs)
         if response.data["is_open"]:
             index_name = response.data["name"]
-            stats = ec.get_index_stats(indices=[index_name])
+            stats = ec.get_index_stats()
             response.data.update(**stats[index_name])
         else:
             response.data.update(size=0, doc_count=0)

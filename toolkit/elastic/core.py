@@ -274,9 +274,9 @@ class ElasticCore:
 
 
     @elastic_connection
-    def get_index_stats(self, indices: List):
+    def get_index_stats(self):
         store = {}
-        indices = ",".join(indices)
+        indices = "_all"
 
         # Get size of indices.
         response = self.es.indices.stats(index=indices, metric="store")
