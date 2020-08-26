@@ -1,10 +1,10 @@
-name: texta-rest
+name: texta-rest-gpu
 
 channels:
   - conda-forge
   - anaconda
   - bioconda
-  - pytorch
+  #- pytorch
 
 dependencies:
   - python=3.6
@@ -21,7 +21,7 @@ dependencies:
   - supervisor
   - psycopg2
   - mysqlclient
-  - pytorch
+  #- pytorch
   - pip:
       - django==2.*
       - django-multiselectfield
@@ -42,7 +42,8 @@ dependencies:
       - joblib
       - python-json-logger
       - drf-yasg
-      - torchtext==0.6.0
       - xlrd
       - dill
       - https://pypi.texta.ee/texta-anonymizer/texta-anonymizer-1.0.0.tar.gz
+      - torch==1.5.0
+      - torchtext==0.6.0
