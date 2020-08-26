@@ -10,13 +10,13 @@ stages:
 Test:
   before_script:
     - conda env create -f environment-nogpu.yaml && source activate texta-rest
-    - python import_test_data.py -es http://elastic-dev.texta.ee:9200
+    - python import_test_data.py -es http://172.17.0.1:9200
     - python migrate.py
   stage: test
   tags:
   - ci-test
   variables:
-    TEXTA_ES_URL: http://elastic-dev.texta.ee:9200
+    TEXTA_ES_URL: http://172.17.0.1:9200
     TEXTA_REDIS_URL: redis://redis:6379
   script:
   - python manage.py test
