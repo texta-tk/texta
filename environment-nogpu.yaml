@@ -9,7 +9,7 @@ dependencies:
   - python=3.6
   - pip
   - pandas
-  - scikit-learn==0.*
+  - scikit-learn==0.22.*
   - matplotlib
   - graphviz
   - gensim==3.*
