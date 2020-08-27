@@ -43,6 +43,6 @@ dependencies:
       - xlrd
       - dill
       - https://pypi.texta.ee/texta-anonymizer/texta-anonymizer-1.0.0.tar.gz
-      - torchtext==0.6.0
-      - torch==1.5.0+cpu
+      - torchtext==0.6.*
+      - torch==1.5.*+cpu
       - -f https://download.pytorch.org/whl/torch_stable.html
