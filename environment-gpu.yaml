@@ -28,8 +28,6 @@ dependencies:
       - django-extensions
       - django-filter
       - django-rest-auth[with_social]
-      - http://pypi.texta.ee/texta-mlp/texta-mlp-1.3.6.tar.gz
-      - http://pypi.texta.ee/texta-lexicon-matcher/texta-lexicon-matcher-1.0.2.tar.gz
       - djangorestframework==3.*
       - drf-nested-routers
       - celery==4.*
@@ -42,6 +40,9 @@ dependencies:
       - drf-yasg
       - xlrd
       - dill
-      - https://pypi.texta.ee/texta-anonymizer/texta-anonymizer-1.0.0.tar.gz
+      - texta-anonymizer==1.0.*
+      - texta-mlp==1.4.*
+      - texta-lexicon-matcher==1.0.*
       - torch==1.5.*
       - torchtext==0.6.*
+
