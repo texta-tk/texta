@@ -44,5 +44,5 @@ dependencies:
       - texta-mlp==1.4.*
       - texta-lexicon-matcher==1.0.*
       - torchtext==0.6.*
-      - torch==1.5.*+cpu
+      - torch==1.5.0+cpu
       - -f https://download.pytorch.org/whl/torch_stable.html
