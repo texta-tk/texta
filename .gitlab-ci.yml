@@ -9,15 +9,66 @@ stages:
 
 Test:
   before_script:
+    # SET UP UAA:
+    - apt-get update
+    # Install Java JDK
+    - mkdir -p /usr/share/man/man1/
+    - apt-get -y install openjdk-11-jdk --assume-yes
+    # Install Ruby
+    - apt-get -y install ubuntu-dev-tools
+    - apt-get -y install ruby-full
+
+    # Clone the CF UAA repo
+    - git clone git://github.com/cloudfoundry/uaa.git
+    - cd uaa
+    # Build and run the server in the background with &
+    - ./gradlew assemble
+    - ./gradlew run &
+
+    # Cd back into the root dir
+    - cd ..
+    # Set up toolkit (This also takes some time so uaac target wouldn't get a race con with gradlew run)
     - conda env create -f environment-nogpu.yaml && source activate texta-rest
     - python import_test_data.py -es http://172.17.0.1:9200
     - python migrate.py
+
+    # Run setup commands for UAA
+    - cd uaa
+    - gem install cf-uaac
+    - uaac target http://localhost:8080/uaa
+
+    # Authenticate as the admin client
+    - uaac token client get admin -s adminsecret
+
+    # Update the login client's redirect_uri
+    - uaac client update login --redirect_uri http://localhost:8000/api/v1/uaa/callback
+
+    # Authenticate as the login client:
+    - uaac token client get login -s loginsecret
+
+    # Create a new user:
+    - uaac user add test1 --emails test1@test1.com --password test1
+
+    # Cd back into the root dir
+    - cd ..
+
+
   stage: test
   tags:
   - ci-test
   variables:
     TEXTA_ES_URL: http://172.17.0.1:9200
     TEXTA_REDIS_URL: redis://redis:6379
+
+    # UAA
+    TEXTA_USE_UAA: "True"
+    TEXTA_UAA_URL: http://localhost:8080/uaa
+    TEXTA_UAA_REDIRECT_URI: http://localhost:8000/api/v1/uaa/callback
+    TEXTA_UAA_FRONT_REDIRECT_URL: http://localhost:4200/oauth
+    # The client "login" is included by default in UAA as an example
+    TEXTA_UAA_CLIENT_ID: login
+    TEXTA_UAA_CLIENT_SECRET: loginsecret
+
   script:
   - python manage.py test
 

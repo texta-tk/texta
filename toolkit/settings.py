@@ -90,6 +90,24 @@ CORS_ORIGIN_WHITELIST = parse_list_env_headers("TEXTA_CORS_ORIGIN_WHITELIST", ["
 CORS_ALLOW_HEADERS = list(default_headers) + ["x-xsrf-token"]
 CORS_ALLOW_CREDENTIALS = True
 
+
+# CF UAA OAUTH OPTIONS
+USE_UAA = False if os.getenv("TEXTA_USE_UAA", "False") == "False" else True
+# UAA server URL
+UAA_URL = os.getenv("TEXTA_UAA_URL", "http://localhost:8080/uaa")
+# Callback URL defined on the UAA server, to which the user will be redirected after logging in on UAA
+UAA_REDIRECT_URI = os.getenv("TEXTA_UAA_REDIRECT_URI", "http://localhost:8000/api/v1/uaa/callback")
+# TEXTA front URL where the user will be redirected after the redirect_uri
+UAA_FRONT_REDIRECT_URL = os.getenv("TEXTA_UAA_FRONT_REDIRECT_URL", "http://localhost:4200/oauth")
+# OAuth client application (eg texta_toolkit) id and secret.
+UAA_CLIENT_ID = os.getenv("TEXTA_UAA_CLIENT_ID", "login")
+UAA_CLIENT_SECRET = os.getenv("TEXTA_UAA_CLIENT_SECRET", "loginsecret")
+# For reference:
+# https://docs.cloudfoundry.org/concepts/architecture/uaa.html
+# https://docs.cloudfoundry.org/api/uaa/version/74.24.0/index.html
+# https://www.oauth.com/
+
+
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": (
         "rest_framework.renderers.JSONRenderer",
@@ -101,15 +119,20 @@ REST_FRAMEWORK = {
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.NamespaceVersioning",
     "DEFAULT_VERSION": "v1",
     "ALLOWED_VERSIONS": ["v1"],
-    "DEFAULT_AUTHENTICATION_CLASSES": (
+    "DEFAULT_AUTHENTICATION_CLASSES": [
         # For DRF API browser pages
         "rest_framework.authentication.SessionAuthentication",
         # For authenticating requests with the Token
         "rest_framework.authentication.TokenAuthentication",
-    ),
+    ],
     "DEFAULT_PAGINATION_CLASS": "toolkit.pagination.PageNumberPaginationDataOnly",
     "PAGE_SIZE": 30,
 }
+
+# Optionally include UaaAuthentication for CloudFoundry UAA OAuth 2.0 authentication
+if USE_UAA:
+    REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'].insert(0, "toolkit.uaa_auth.authentication.UaaAuthentication")
+
 
 REST_AUTH_SERIALIZERS = {
     "USER_DETAILS_SERIALIZER": "toolkit.core.user_profile.serializers.UserSerializer",
@@ -124,6 +147,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
 # we can optionally disable csrf for testing purposes
 USE_CSRF = False if os.getenv("TEXTA_USE_CSRF", "False") == "False" else True
 if USE_CSRF:
@@ -206,6 +230,7 @@ ES_CONNECTION_PARAMETERS = {
     "sniff_on_start": True if os.getenv("TEXTA_ES_SNIFF_ON_START", "True") == "True" else False,
     "sniff_on_connection_fail": True if os.getenv("TEXTA_ES_SNIFF_ON_FAIL", "True") == "True" else False
 }
+
 
 # CELERY OPTIONS
 BROKER_URL = os.getenv("TEXTA_REDIS_URL", "redis://localhost:6379")

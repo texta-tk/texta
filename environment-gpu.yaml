@@ -45,4 +45,7 @@ dependencies:
       - texta-lexicon-matcher==1.0.*
       - torch==1.5.*
       - torchtext==0.6.*
-
+      # For UAA
+      - pyjwt
+      # For UAA tests
+      - beautifulsoup4

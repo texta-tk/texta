@@ -22,3 +22,9 @@ TEST_DATASETS = (
 )
 TEST_IMPORT_DATASET = "texta-test-import-dataset"
 TEST_VERSION_PREFIX = "/api/v1"
+
+TEST_UAA_USERNAME = 'test1'
+TEST_UAA_PASSWORD = 'test1'
+
+# The port for APILiveServerTestCase
+TEST_LIVE_SERVER_PORT = 8000

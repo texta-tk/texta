@@ -21,6 +21,7 @@ from toolkit.topic_analyzer.views import ClusterViewSet, ClusteringViewSet
 from toolkit.torchtagger.urls import router as torchtagger_router
 from toolkit.regex_tagger.urls import router as regex_tagger_router
 from toolkit.anonymizer.urls import router as anonymizer_router
+from toolkit.uaa_auth.views import UAAView, RefreshUAATokenView
 
 
 router = routers.DefaultRouter()
@@ -67,4 +68,7 @@ urlpatterns = [
     url(r'^', include(project_router.urls)),
     url(r'^', include(clustering_router.urls)),
 
+    # UAA OAuth 2.0
+    url('uaa/callback', UAAView.as_view()),
+    url('uaa/refresh-token', RefreshUAATokenView.as_view()),
 ]
