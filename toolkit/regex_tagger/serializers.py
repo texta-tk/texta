@@ -1,9 +1,18 @@
 from rest_framework import serializers
-
-from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 from texta_lexicon_matcher.lexicon_matcher import SUPPORTED_MATCH_TYPES, SUPPORTED_OPERATORS
 
+from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 from .models import RegexTagger, RegexTaggerGroup
+from ..core.task.serializers import TaskSerializer
+from ..elastic.searcher import EMPTY_QUERY
+from ..elastic.serializers import IndexSerializer
+
+
+PRIORITY_CHOICES = (
+    ("first_span", "first_span"),
+    ("last_span", "last_span"),
+)
+
 
 class RegexTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer, FieldParseSerializer):
     description = serializers.CharField()
@@ -22,6 +31,7 @@ class RegexTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
     ignore_punctuation = serializers.BooleanField(default=True, required=False)
     url = serializers.SerializerMethodField()
 
+
     class Meta:
         model = RegexTagger
         fields = ('id', 'url', 'author_username',
@@ -31,6 +41,7 @@ class RegexTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
 
 class RegexTaggerTagTextsSerializer(serializers.Serializer):
     texts = serializers.ListField(child=serializers.CharField(required=True))
+
 
 class RegexMultitagTextSerializer(serializers.Serializer):
     text = serializers.CharField()
@@ -42,19 +53,32 @@ class RegexMultitagTextSerializer(serializers.Serializer):
 class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
     description = serializers.CharField()
     regex_taggers = serializers.ListField(help_text='List of RegexTagger IDs to be used.',
-        child=serializers.IntegerField(),
-        default=[], write_only=True)
+                                          child=serializers.IntegerField(),
+                                          default=[], write_only=True)
 
     url = serializers.SerializerMethodField()
+    task = TaskSerializer(read_only=True)
     author_username = serializers.CharField(source='author.username', read_only=True)
+
 
     class Meta:
         model = RegexTaggerGroup
-        fields = ('id', 'url', 'author_username', 'description', 'regex_taggers')
+        fields = ('id', 'url', 'author_username', 'task', 'description', 'regex_taggers')
 
 
 class RegexTaggerGroupMultitagTextSerializer(serializers.Serializer):
     text = serializers.CharField()
-    tagger_groups = serializers.ListField(help_text='List of RegexTaggerGroup IDs to be used. Default: [] (uses all).',
-                                    child=serializers.IntegerField(),
-                                    default=[])
+    tagger_groups = serializers.ListField(
+        help_text='List of RegexTaggerGroup IDs to be used. Default: [] (uses all).',
+        child=serializers.IntegerField(),
+        default=[]
+    )
+
+
+class ApplyRegexTaggerGroupSerializer(serializers.Serializer):
+    tagger_ids = serializers.ListField(required=True)
+    description = serializers.CharField(required=True)
+    priority = serializers.ChoiceField(default=None, choices=PRIORITY_CHOICES)
+    indices = IndexSerializer(many=True, default=[])
+    fields = serializers.ListField(required=True, child=serializers.CharField())
+    query = serializers.DictField(default=EMPTY_QUERY)

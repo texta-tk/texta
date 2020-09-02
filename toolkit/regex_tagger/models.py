@@ -11,6 +11,8 @@ from toolkit.constants import MAX_DESC_LEN
 
 from texta_lexicon_matcher.lexicon_matcher import SUPPORTED_MATCH_TYPES, SUPPORTED_OPERATORS
 
+from toolkit.core.task.models import Task
+
 
 class RegexTagger(models.Model):
     MODEL_TYPE = "regex_tagger"
@@ -68,3 +70,5 @@ class RegexTaggerGroup(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     regex_taggers = models.ManyToManyField(RegexTagger, default=None)
+
+    task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)

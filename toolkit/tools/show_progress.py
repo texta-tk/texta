@@ -1,8 +1,4 @@
-import json
-import logging
-
 from toolkit.core.task.models import Task
-from toolkit.settings import ERROR_LOGGER
 
 
 class ShowProgress(object):
@@ -10,7 +6,7 @@ class ShowProgress(object):
     """
 
 
-    def __init__(self, task, multiplier=None):
+    def __init__(self, task: Task, multiplier=None):
         self.n_total = None
         self.n_count = 0
         self.task_id = task.id

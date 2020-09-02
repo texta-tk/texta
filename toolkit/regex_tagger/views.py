@@ -1,27 +1,23 @@
 import json
 import os
 
-from rest_framework import permissions, viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
 import rest_framework.filters as drf_filters
+from django.db import transaction
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
-
+from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from texta_lexicon_matcher.lexicon_matcher import LexiconMatcher
 
-from toolkit.permissions.project_permissions import ProjectResourceAllowed
-from toolkit.view_constants import BulkDelete
 from toolkit.core.project.models import Project
-from .serializers import (
-    RegexTaggerSerializer,
-    RegexTaggerTagTextsSerializer,
-    RegexMultitagTextSerializer,
-    RegexTaggerGroupSerializer,
-    RegexTaggerGroupMultitagTextSerializer
-)
+from toolkit.core.task.models import Task
+from toolkit.permissions.project_permissions import ProjectResourceAllowed
+from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup
+from toolkit.regex_tagger.serializers import (ApplyRegexTaggerGroupSerializer, RegexMultitagTextSerializer, RegexTaggerGroupMultitagTextSerializer, RegexTaggerGroupSerializer, RegexTaggerSerializer, RegexTaggerTagTextsSerializer)
 from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceImportModelSerializer
-from .models import RegexTagger, RegexTaggerGroup
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
+from toolkit.view_constants import BulkDelete
 
 
 def load_matcher(regex_tagger_object):
@@ -31,22 +27,23 @@ def load_matcher(regex_tagger_object):
     # create matcher
     matcher = LexiconMatcher(
         lexicon,
-        counter_lexicon = counter_lexicon,
-        operator = regex_tagger_object.operator,
-        match_type = regex_tagger_object.match_type,
-        required_words = regex_tagger_object.required_words,
-        phrase_slop = regex_tagger_object.phrase_slop,
-        counter_slop = regex_tagger_object.counter_slop,
-        n_allowed_edits = regex_tagger_object.n_allowed_edits,
-        return_fuzzy_match = regex_tagger_object.return_fuzzy_match,
-        ignore_case = regex_tagger_object.ignore_case,
-        ignore_punctuation = regex_tagger_object.ignore_punctuation
+        counter_lexicon=counter_lexicon,
+        operator=regex_tagger_object.operator,
+        match_type=regex_tagger_object.match_type,
+        required_words=regex_tagger_object.required_words,
+        phrase_slop=regex_tagger_object.phrase_slop,
+        counter_slop=regex_tagger_object.counter_slop,
+        n_allowed_edits=regex_tagger_object.n_allowed_edits,
+        return_fuzzy_match=regex_tagger_object.return_fuzzy_match,
+        ignore_case=regex_tagger_object.ignore_case,
+        ignore_punctuation=regex_tagger_object.ignore_punctuation
     )
     return matcher
 
 
 class RegexTaggerFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
+
 
     class Meta:
         model = RegexTagger
@@ -155,6 +152,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
 class RegexTaggerGroupFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
 
+
     class Meta:
         model = RegexTaggerGroup
         fields = []
@@ -201,7 +199,7 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         regex_taggers_groups = RegexTaggerGroup.objects.filter(project=project_object)
         # filter again based on serializer
         if serializer.validated_data['tagger_groups']:
-            regex_taggers_groups = regex_tagger_groups.filter(pk__in=serializer.validated_data['tagger_groups'])
+            regex_taggers_groups = regex_taggers_groups.filter(pk__in=serializer.validated_data['tagger_groups'])
         # apply taggers
         result = []
         for regex_tagger_group in regex_taggers_groups:
@@ -216,4 +214,31 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
                     match["tagger_description"] = regex_tagger.description
                     match["fact"] = regex_tagger_group.description
                 result += matches
+
         return Response(result, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['post'], serializer_class=ApplyRegexTaggerGroupSerializer)
+    def apply_tagger_group(self, request, pk=None, project_pk=None):
+        from toolkit.regex_tagger.tasks import apply_regex_tagger
+
+        with transaction.atomic():
+            serializer = ApplyRegexTaggerGroupSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            tagger_object: RegexTaggerGroup = self.get_object()
+            tagger_object.task = Task.objects.create(regextaggergroup=tagger_object, status=Task.STATUS_CREATED)
+            tagger_object.save()
+
+            project = Project.objects.get(pk=project_pk)
+            indices = [index["name"] for index in serializer.validated_data["indices"]]
+            indices = project.get_available_or_all_project_indices(indices)
+
+            fields = serializer.validated_data["fields"]
+            query = serializer.validated_data["query"]
+
+            for index in indices:
+                apply_regex_tagger.apply_async(args=(pk, index, fields, query), queue=CELERY_LONG_TERM_TASK_QUEUE)
+
+            message = "Started process of applying RegexTaggerGroup with id: {}".format(tagger_object.id)
+            return Response({"message": message}, status=status.HTTP_200_OK)
