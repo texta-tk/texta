@@ -37,7 +37,8 @@ class UAATests(APILiveServerTestCase):
         response = self.client.get(url, format='json')
         # Check if the query parameter was returned, because UAA puts errors
         # into the query params
-        self.assertTrue('notcode' in response.data)
+        self.assertTrue('invalid_parameters' in response.data)
+        self.assertTrue('notcode' in response.data['invalid_parameters'])
         self.assertEqual(400, response.status_code)
         print_output("run_callback_incorrect_params", response.data)
 
@@ -50,9 +51,9 @@ class UAATests(APILiveServerTestCase):
         url = f'{self.url}/callback?code=someinvalidstring'
         response = self.client.get(url, format='json')
         # Check if the UAA server returned an error response through the callback view
+        print_output("run_callback_invalid_code", response.data)
         self.assertTrue('error' in response.data)
         self.assertEqual(400, response.status_code)
-        print_output("run_callback_invalid_code", response.data)
 
 
     def run_callback_and_refresh_and_access_token_success(self):
@@ -186,4 +187,3 @@ class UAATests(APILiveServerTestCase):
         self.assertTrue('error_description' in response.data)
         # Check if it gives a specific response
         self.assertTrue('invalid_token' in response.data['error'])
-
