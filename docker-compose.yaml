@@ -38,6 +38,9 @@ services:
   texta-rest:
     container_name: texta-rest
     image: docker.texta.ee/texta/texta-rest:latest
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
     ports:
       - 80:80
     env_file:
@@ -47,15 +50,6 @@ services:
     depends_on:
       - texta-postgres
       - texta-elasticsearch
-
-  texta-front:
-    container_name: texta-front
-    image: docker.texta.ee/texta/texta-rest-front:latest
-    ports:
-      - 4200:80
-    restart: always
-    env_file:
-      - ./env
 
 volumes:
   elastic-data:
