@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_auth import app_settings
 
 from toolkit.core.user_profile.serializers import UserSerializer
-from toolkit.settings import UAA_CLIENT_ID, UAA_CLIENT_SECRET, UAA_URL, UAA_FRONT_REDIRECT_URL, UAA_REDIRECT_URI
+from toolkit.settings import UAA_CLIENT_ID, UAA_CLIENT_SECRET, UAA_URL, UAA_FRONT_REDIRECT_URL, UAA_REDIRECT_URI, USE_UAA
 from toolkit.settings import INFO_LOGGER, ERROR_LOGGER
 
 
@@ -33,6 +33,10 @@ class UAAView(views.APIView):
         Endpoint used by the UAA login redirect_uri callback.
         Gets the access/refresh tokens for the user, and redirects them back to the frontend.
         """
+        if not USE_UAA:
+            logging.getLogger(INFO_LOGGER).info(f"Tried to access UAAView, but UAA is disabled as the value of USE_UAA is {USE_UAA}")
+            return Response('Authentication with UAA is not enabled.', status=status.HTTP_400_BAD_REQUEST)
+
         code = request.query_params.get('code', None)
         if code:
             resp = self._get_access_token(code)
@@ -61,7 +65,7 @@ class UAAView(views.APIView):
         else:
             logging.getLogger(INFO_LOGGER).info(f"UAAView access code asserted as False! code: {code}; request.query_params: {request.query_params}")
             # Send back the query params, as they might contain the error from UAA
-            return Response(request.query_params, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'invalid_parameters': request.query_params}, status=status.HTTP_400_BAD_REQUEST)
 
 
     def _get_access_token(self, code: str):
@@ -97,8 +101,11 @@ class RefreshUAATokenView(views.APIView):
 
     def post(self, request):
         """OAuth 2.0 Endpoint for refreshing the access_token using refresh_token."""
-        refresh_token = request.data.get('refresh_token')
+        if not USE_UAA:        
+            logging.getLogger(INFO_LOGGER).info(f"Tried to access RefreshUAATokenView, but UAA is disabled as the value of USE_UAA is {USE_UAA}")
+            return Response('Authentication with UAA is not enabled.', status=status.HTTP_400_BAD_REQUEST)
 
+        refresh_token = request.data.get('refresh_token')
         if refresh_token:
             resp = RefreshUAATokenView._refresh(refresh_token)
             
@@ -106,7 +113,7 @@ class RefreshUAATokenView(views.APIView):
             return Response(resp.json(), status=resp_status)
             
         return Response({'refresh_token': 'Parameter refresh_token missing!'}, status=status.HTTP_400_BAD_REQUEST)
-    
+
 
     def _refresh(refresh_token):
         body = {
@@ -119,4 +126,3 @@ class RefreshUAATokenView(views.APIView):
 
         # Make a request to the OAuth /token endpoint to refresh the token
         return requests.post(f'{UAA_URL}/oauth/token', headers=HEADERS, data=body)
-        
