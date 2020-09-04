@@ -40,7 +40,9 @@ def process_texta_facts(facts: List[str], priority: Optional[str] = None):
         return facts
 
 
-def update_generator(generator: ElasticSearcher, fields: List[str], taggers: List[dict], description: str):
+def update_generator(generator: ElasticSearcher, fields: List[str], group_tagger_id: int):
+    tagger = RegexTaggerGroup.objects.get(pk=group_tagger_id)
+
     for scroll_batch in generator:
         for raw_doc in scroll_batch:
             hit = raw_doc["_source"]
@@ -48,12 +50,8 @@ def update_generator(generator: ElasticSearcher, fields: List[str], taggers: Lis
 
             for field in fields:
                 text = hit.get(field, None)
-                for tagger in taggers:
-                    if text:
-                        matcher: LexiconMatcher = tagger["matcher"]
-                        matches = matcher.get_matches(text)
-                        new_texta_facts = [{"str_val": tagger["description"], "spans": json.dumps([match["spans"]]), "fact": description} for match in matches]
-                        existing_facts.extend(new_texta_facts)
+                results = tagger.apply([text], field=field)
+                existing_facts.extend(results)
 
             if existing_facts:
                 # Remove duplicates to avoid adding the same facts with repetitive use.
@@ -75,8 +73,6 @@ def apply_regex_tagger(tagger_group_id: int, index: str, fields: List[str], quer
         progress = ShowProgress(regex_tagger_group.task)
 
         ec = ElasticCore()
-        regex_taggers_group = RegexTaggerGroup.objects.get(pk=tagger_group_id)
-        taggers = load_taggers(regex_taggers_group)
 
         searcher = ElasticSearcher(
             indices=[index],
@@ -86,7 +82,7 @@ def apply_regex_tagger(tagger_group_id: int, index: str, fields: List[str], quer
             callback_progress=progress
         )
 
-        actions = update_generator(generator=searcher, fields=fields, taggers=taggers, description=regex_taggers_group.description)
+        actions = update_generator(generator=searcher, fields=fields, group_tagger_id=regex_tagger_group.pk)
         bulk(client=ec.es, actions=actions, refresh="wait_for")
         regex_tagger_group.task.complete()
         return True

@@ -43,6 +43,20 @@ class RegexTaggerTagTextsSerializer(serializers.Serializer):
     texts = serializers.ListField(child=serializers.CharField(required=True))
 
 
+class TagRandomDocSerializer(serializers.Serializer):
+    indices = IndexSerializer(many=True, default=[])
+    fields = serializers.ListField(child=serializers.CharField(), required=True, allow_empty=False)
+
+
+class RegexTaggerGroupTagDocumentSerializer(serializers.Serializer):
+    doc = serializers.JSONField(help_text=f'Document in JSON format.')
+    fields = serializers.ListField(child=serializers.CharField(), required=True, allow_empty=False)
+
+
+class RegexGroupTaggerTagTextSerializer(serializers.Serializer):
+    text = serializers.CharField(required=True)
+
+
 class RegexMultitagTextSerializer(serializers.Serializer):
     text = serializers.CharField()
     taggers = serializers.ListField(help_text='List of RegexTagger IDs to be used. Default: [] (uses all).',
