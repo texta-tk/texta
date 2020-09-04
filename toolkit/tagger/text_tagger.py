@@ -155,7 +155,7 @@ class TextTagger:
     def tag_doc(self, doc: dict):
         """
         Predicts on json document
-        :param text: input doc as json string
+        :param doc: input doc as json string
         :return: binary decision (1 is positive)
         """
         union_features = [x[0] for x in self.model.named_steps['union'].transformer_list if x[0].startswith('pipe_')]

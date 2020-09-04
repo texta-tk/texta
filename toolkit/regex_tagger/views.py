@@ -190,6 +190,7 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
                 # add tagger id and description to each match
                 for match in matches:
                     match["tagger_id"] = regex_tagger.id
+                    match["tagger_group_id"] = regex_tagger_group.id
                     match["tagger_description"] = regex_tagger.description
                     match["fact"] = regex_tagger_group.description
                 result += matches
