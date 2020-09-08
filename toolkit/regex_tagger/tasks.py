@@ -67,7 +67,7 @@ def update_generator(generator: ElasticSearcher, fields: List[str], group_tagger
 
 
 @task(name="apply_regex_tagger", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def apply_regex_tagger(tagger_group_id: int, index: str, fields: List[str], query: dict):
+def apply_regex_tagger(tagger_group_id: int, indices: list, fields: List[str], query: dict):
     try:
         regex_tagger_group = RegexTaggerGroup.objects.get(pk=tagger_group_id)
         progress = ShowProgress(regex_tagger_group.task)
@@ -75,7 +75,7 @@ def apply_regex_tagger(tagger_group_id: int, index: str, fields: List[str], quer
         ec = ElasticCore()
 
         searcher = ElasticSearcher(
-            indices=[index],
+            indices=indices,
             field_data=fields + ["texta_facts"],  # Get facts to add upon existing ones.
             query=query,
             output=ElasticSearcher.OUT_RAW,

@@ -1,17 +1,15 @@
+import json
 import tempfile
 import zipfile
-import json
 from typing import List
 
 from django.contrib.auth.models import User
-from django.db import models, transaction
 from django.core import serializers
-
-from toolkit.core.project.models import Project
-from toolkit.constants import MAX_DESC_LEN
-
+from django.db import models, transaction
 from texta_lexicon_matcher.lexicon_matcher import LexiconMatcher, SUPPORTED_MATCH_TYPES, SUPPORTED_OPERATORS
 
+from toolkit.constants import MAX_DESC_LEN
+from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 
 
@@ -55,6 +53,22 @@ class RegexTagger(models.Model):
     return_fuzzy_match = models.BooleanField(default=True)
     ignore_case = models.BooleanField(default=True)
     ignore_punctuation = models.BooleanField(default=True)
+
+
+    def match_texts(self, texts: List[str]):
+        results = []
+        for text in texts:
+            if text:
+                matcher = load_matcher(self)
+                matches = matcher.get_matches(text)
+                for match in matches:
+                    match.update(description=self.description, tagger_id=self.id)
+                results.extend(matches)
+        return results
+
+
+    def get_description(self):
+        return {"tagger_id": self.pk, "description": self.description}
 
 
     def export_resources(self):
