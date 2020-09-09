@@ -1,19 +1,16 @@
 from django.test import override_settings
 from rest_framework import status
-from rest_framework.test import APITestCase, APITransactionTestCase
+from rest_framework.test import APITransactionTestCase
 
-from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.dataset_import.models import DatasetImport
 from toolkit.elastic.core import ElasticCore
 from toolkit.test_settings import TEST_DATASETS, TEST_IMPORT_DATASET, TEST_VERSION_PREFIX
-from toolkit.tools.utils_for_tests import project_creation
-from toolkit.tools.utils_for_tests import create_test_user, print_output, remove_file
+from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation, remove_file
 
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
 class DatasetImportViewTests(APITransactionTestCase):
-
 
     def setUp(self):
         # Owner of the project

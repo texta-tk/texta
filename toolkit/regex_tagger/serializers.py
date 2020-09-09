@@ -37,7 +37,7 @@ class RegexTaggerSerializer(serializers.ModelSerializer, ProjectResourceUrlSeria
 
     def get_tagger_groups(self, value: RegexTagger):
         tgs = RegexTaggerGroup.objects.filter(regex_taggers__project_id=value.project.pk, regex_taggers__id=value.pk)
-        descriptions = [tgs.description for tgs in tgs]
+        descriptions = [{"tagger_group_id": tagger.pk, "description": tagger.description} for tagger in tgs]
         return descriptions
 
 
@@ -85,16 +85,14 @@ class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrl
     url = serializers.SerializerMethodField()
     task = TaskSerializer(read_only=True)
     author_username = serializers.CharField(source='author.username', read_only=True)
-    tagger_info = serializers.SerializerMethodField(read_only=True)
-
+    tagger_info = serializers.SerializerMethodField(read_only=True)  # Helper field for displaying tagger info in a friendly manner.
 
     def get_tagger_info(self, value: RegexTaggerGroup):
-        taggers = [tagger.get_description() for tagger in value.regex_taggers.all()]
-        return taggers
-
+        return [tagger.get_description() for tagger in value.regex_taggers.all()]
 
     class Meta:
         model = RegexTaggerGroup
+        # regex_taggers is the field which to use to manipulate the related RegexTagger model objects.
         fields = ('id', 'url', 'regex_taggers', 'author_username', 'task', 'description', 'tagger_info')
 
 
@@ -108,8 +106,8 @@ class RegexTaggerGroupMultitagTextSerializer(serializers.Serializer):
 
 
 class ApplyRegexTaggerGroupSerializer(serializers.Serializer):
-    description = serializers.CharField(required=True)
+    description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
     # priority = serializers.ChoiceField(default=None, choices=PRIORITY_CHOICES)
-    indices = IndexSerializer(many=True, default=[])
-    fields = serializers.ListField(required=True, child=serializers.CharField())
-    query = serializers.DictField(default=EMPTY_QUERY)
+    indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
+    fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
+    query = serializers.DictField(default=EMPTY_QUERY, help_text="Filter the documents which to scroll and apply to.")
