@@ -110,4 +110,4 @@ class ApplyRegexTaggerGroupSerializer(serializers.Serializer):
     # priority = serializers.ChoiceField(default=None, choices=PRIORITY_CHOICES)
     indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
-    query = serializers.DictField(default=EMPTY_QUERY, help_text="Filter the documents which to scroll and apply to.")
+    query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)

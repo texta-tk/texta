@@ -21,6 +21,8 @@ from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceI
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.view_constants import BulkDelete
 
+c = ElasticCore()
+
 
 class RegexTaggerFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
@@ -156,7 +158,8 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
 
         final_matches = []
         for field in fields:
-            text = input_document.get(field, None)
+            flattened_doc = c.flatten(input_document)
+            text = flattened_doc.get(field, None)
             matches = tagger_object.match_texts([text])
             final_matches.extend(matches)
 
@@ -197,8 +200,11 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
 
         final_matches = []
         for field in tagger_fields:
-            text = random_doc.get(field, None)
-            if text: results["texts"].append(text)
+            flattened_doc = c.flatten(random_doc)
+            text = flattened_doc.get(field, None)
+            if text:
+                results["texts"].append(text)
+
             matches = tagger_object.match_texts([text])
             final_matches.extend(matches)
 
@@ -358,7 +364,8 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
 
         final_matches = []
         for field in fields:
-            text = input_document.get(field, None)
+            flattened_doc = c.flatten(input_document)
+            text = flattened_doc.get(field, None)
             matches = tagger_object.match_texts([text])
             final_matches.extend(matches)
 
@@ -401,8 +408,10 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
 
         final_matches = []
         for field in tagger_fields:
-            text = random_doc.get(field, None)
-            if text: results["texts"].append(text)
+            flattened_doc = c.flatten(random_doc)
+            text = flattened_doc.get(field, None)
+            if text:
+                results["texts"].append(text)
             matches = tagger_object.match_texts([text])
             final_matches.extend(matches)
 
