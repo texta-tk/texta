@@ -12,7 +12,6 @@ from toolkit.tools.utils_for_tests import create_test_user, print_output, projec
 @override_settings(CELERY_ALWAYS_EAGER=True)
 class DatasetImportViewTests(APITransactionTestCase):
 
-
     def setUp(self):
         # Owner of the project
         self.user = create_test_user('Owner', 'my@email.com', 'pw')

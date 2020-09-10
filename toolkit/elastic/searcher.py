@@ -15,8 +15,8 @@ class ElasticSearcher:
     """
     Everything related to performing searches in Elasticsearch
     """
-    OUT_RAW = 'raw'
-    OUT_DOC = 'doc'
+    OUT_RAW = 'raw'  # Gives you a list of documents that belong to the scroll batch.
+    OUT_DOC = 'doc'  # Gives you only the _source content without index and id metadata.
     OUT_TEXT = 'text'
     OUT_TEXT_WITH_ID = "text_with_id"
     OUT_DOC_WITH_ID = 'doc_with_id'

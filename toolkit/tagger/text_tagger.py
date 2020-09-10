@@ -132,7 +132,7 @@ class TextTagger:
         return True
 
 
-    def tag_text(self, text):
+    def tag_text(self, text: str):
         """
         Predicts on raw text
         :param text: input text as string
@@ -152,10 +152,10 @@ class TextTagger:
         return self.model.predict(df_text)[0], max(self.model.predict_proba(df_text)[0])
 
 
-    def tag_doc(self, doc):
+    def tag_doc(self, doc: dict):
         """
         Predicts on json document
-        :param text: input doc as json string
+        :param doc: input doc as json string
         :return: binary decision (1 is positive)
         """
         union_features = [x[0] for x in self.model.named_steps['union'].transformer_list if x[0].startswith('pipe_')]

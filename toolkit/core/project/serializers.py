@@ -146,6 +146,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
             'torchtaggers',
             'regex_taggers',
             'anonymizers',
+            'regex_tagger_groups',
             'mlp_index',
 
         )
