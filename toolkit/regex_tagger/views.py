@@ -21,6 +21,7 @@ from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceI
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.view_constants import BulkDelete
 
+
 c = ElasticCore()
 
 
@@ -48,7 +49,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
     def get_queryset(self):
         return RegexTagger.objects.filter(project=self.kwargs['project_pk'])
 
-    
+
     def perform_create(self, serializer):
         project = Project.objects.get(id=self.kwargs['project_pk'])
         tagger: RegexTagger = serializer.save(
@@ -296,7 +297,9 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         from toolkit.regex_tagger.tasks import apply_regex_tagger
 
         with transaction.atomic():
-            serializer = ApplyRegexTaggerGroupSerializer(data=request.data)
+            # We're pulling the serializer with the function bc otherwise it will not
+            # fetch the context for whatever reason.
+            serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
 
             tagger_object: RegexTaggerGroup = self.get_object()

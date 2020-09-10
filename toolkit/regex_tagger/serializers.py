@@ -1,5 +1,3 @@
-import json
-
 from rest_framework import serializers
 from texta_lexicon_matcher.lexicon_matcher import SUPPORTED_MATCH_TYPES, SUPPORTED_OPERATORS
 
@@ -15,6 +13,9 @@ PRIORITY_CHOICES = (
     ("last_span", "last_span"),
 )
 
+MATCH_TYPE_CHOICES = [(match_type, match_type) for match_type in SUPPORTED_MATCH_TYPES]
+OPERATOR_CHOICES = [(operator, operator) for operator in SUPPORTED_OPERATORS]
+
 
 class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
     description = serializers.CharField()
@@ -22,8 +23,8 @@ class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, P
     lexicon = serializers.ListField(child=serializers.CharField(required=True))
     counter_lexicon = serializers.ListField(child=serializers.CharField(required=False), default=[])
 
-    operator = serializers.CharField(default=SUPPORTED_OPERATORS[0], required=False)
-    match_type = serializers.CharField(default=SUPPORTED_MATCH_TYPES[0], required=False)
+    operator = serializers.ChoiceField(default=SUPPORTED_OPERATORS[0], choices=OPERATOR_CHOICES, required=False)
+    match_type = serializers.ChoiceField(default=SUPPORTED_MATCH_TYPES[0], choices=MATCH_TYPE_CHOICES, required=False)
     required_words = serializers.FloatField(default=1.0, required=False)
     phrase_slop = serializers.IntegerField(default=0, required=False)
     counter_slop = serializers.IntegerField(default=0, required=False)
@@ -104,7 +105,7 @@ class RegexTaggerGroupMultitagTextSerializer(serializers.Serializer):
     )
 
 
-class ApplyRegexTaggerGroupSerializer(serializers.Serializer):
+class ApplyRegexTaggerGroupSerializer(FieldParseSerializer, serializers.Serializer):
     description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
     # priority = serializers.ChoiceField(default=None, choices=PRIORITY_CHOICES)
     indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
