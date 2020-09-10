@@ -75,10 +75,11 @@ class AnonymizerViewSet(viewsets.ModelViewSet, BulkDelete):
         # load anonymizer
         anonymizer = self._load_anonymizer(anonymizer_object)
         # anonymize texts
-        result = []
-        for text in serializer.validated_data['texts']:
-            anon_text = anonymizer.anonymize(text, serializer.validated_data['names'])
-            result.append(anon_text)
+        result = anonymizer.anonymize_texts(
+            serializer.validated_data['texts'],
+            serializer.validated_data['names'],
+            serializer.validated_data['consistent_replacement']
+        )
 
         return Response(result, status=status.HTTP_200_OK)
 
@@ -112,5 +113,6 @@ class AnonymizerViewSet(viewsets.ModelViewSet, BulkDelete):
             replace_single_first_names = anonymizer_object.replace_single_last_names,
             misspelling_threshold = anonymizer_object.misspelling_threshold,
             mimic_casing = anonymizer_object.mimic_casing,
+            auto_adjust_threshold = anonymizer_object.auto_adjust_threshold
         )
         return anonymizer

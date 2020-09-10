@@ -40,7 +40,7 @@ dependencies:
       - drf-yasg
       - xlrd
       - dill
-      - texta-anonymizer==1.0.*
+      - texta-anonymizer==1.1.*
       - texta-mlp==1.4.*
       - texta-lexicon-matcher==1.0.*
       - torchtext==0.6.*

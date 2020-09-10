@@ -68,7 +68,8 @@ class AnonymizerViewTests(APITestCase):
         ### test anonymizing texts
         payload = {
             "texts": ["selles tekstis on mõrtsukas Jossif Stalini nimi", "selles tekstis on onkel Adolf Hitler"],
-            "names": ["Stalin, Jossif", "Hitler, Adolf"]
+            "names": ["Stalin, Jossif", "Hitler, Adolf"],
+            "consistent_replacement": True
         }
         response = self.client.post(anonymizer_url, payload)
         print_output('test_anonymizer_anonymized_texts:response.data', response.data)
