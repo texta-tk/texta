@@ -27,4 +27,5 @@ TEST_UAA_USERNAME = 'test1'
 TEST_UAA_PASSWORD = 'test1'
 
 # The port for APILiveServerTestCase
-TEST_LIVE_SERVER_PORT = 8000
+# Made this env-readable to make it easier to run tests in a Docker build.
+TEST_LIVE_SERVER_PORT = int(os.getenv("TEXTA_TEST_LIVE_SERVER_PORT", 8000))

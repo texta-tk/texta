@@ -32,7 +32,6 @@ class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, P
     ignore_case = serializers.BooleanField(default=True, required=False)
     ignore_punctuation = serializers.BooleanField(default=True, required=False)
     url = serializers.SerializerMethodField()
-    url = serializers.SerializerMethodField()
     tagger_groups = serializers.SerializerMethodField(read_only=True)
 
 
@@ -42,21 +41,13 @@ class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, P
         return descriptions
 
 
-    def to_representation(self, instance):
-        data = super(RegexTaggerSerializer, self).to_representation(instance)
-        data["lexicon"] = json.loads(instance.lexicon)
-        data["counter_lexicon"] = json.loads(instance.counter_lexicon)
-        return data
-
-
     class Meta:
         model = RegexTagger
         fields = ('id', 'url', 'author_username',
                   'description', 'lexicon', 'counter_lexicon', 'operator', 'match_type', 'required_words',
                   'phrase_slop', 'counter_slop', 'n_allowed_edits', 'return_fuzzy_match', 'ignore_case',
-                  'ignore_punctuation')
+                  'ignore_punctuation', 'phrase_slop', 'counter_slop', 'n_allowed_edits', 'return_fuzzy_match', 'ignore_case', 'ignore_punctuation', 'tagger_groups')
         fields_to_parse = ('lexicon', 'counter_lexicon')
-                  'phrase_slop', 'counter_slop', 'n_allowed_edits', 'return_fuzzy_match', 'ignore_case', 'ignore_punctuation', 'tagger_groups')
 
 
 class RegexTaggerTagTextsSerializer(serializers.Serializer):
@@ -79,9 +70,11 @@ class RegexGroupTaggerTagTextSerializer(serializers.Serializer):
 
 class RegexMultitagTextSerializer(serializers.Serializer):
     text = serializers.CharField()
-    taggers = serializers.ListField(help_text='List of RegexTagger IDs to be used. Default: [] (uses all).',
-                                    child=serializers.IntegerField(),
-                                    default=[])
+    taggers = serializers.ListField(
+        help_text='List of RegexTagger IDs to be used. Default: [] (uses all).',
+        child=serializers.IntegerField(),
+        default=[]
+    )
 
 
 class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
@@ -91,8 +84,10 @@ class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrl
     author_username = serializers.CharField(source='author.username', read_only=True)
     tagger_info = serializers.SerializerMethodField(read_only=True)  # Helper field for displaying tagger info in a friendly manner.
 
+
     def get_tagger_info(self, value: RegexTaggerGroup):
         return [tagger.get_description() for tagger in value.regex_taggers.all()]
+
 
     class Meta:
         model = RegexTaggerGroup
