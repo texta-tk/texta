@@ -23,6 +23,7 @@ class Anonymizer(models.Model):
     replace_single_first_names = models.BooleanField(default=True)
     misspelling_threshold = models.FloatField(default=0.9)
     mimic_casing = models.BooleanField(default=True)
+    auto_adjust_threshold = models.BooleanField(default=False)
 
     def __str__(self):
         return self.description
