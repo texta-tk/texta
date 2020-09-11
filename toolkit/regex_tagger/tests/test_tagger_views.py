@@ -129,16 +129,18 @@ class RegexTaggerViewTests(APITestCase):
         response = self.client.post(tagger_url, payload)
         print_output('test_regex_tagger_tag_texts_match:response.data', response.data)
         # check if we found anything
-        assert len(response.json()[0]) == 2
+        assert len(response.json()[0]) == 1
+        assert len(response.json()) == 2
 
         ### test non-matching text
         payload = {
-            "texts": ["selles tekstis pole nimesid"],
+            "texts": ["selles tekstis pole nimesid", "selles ka mitte"],
         }
         response = self.client.post(tagger_url, payload)
         print_output('test_regex_tagger_tag_texts_no_match:response.data', response.data)
         # check if we found anything
-        assert len(response.json()) == 0
+        assert len(response.json()) == 2
+        assert len(response.json()[0]) == 0
 
 
     def run_test_regex_tagger_export_import(self):
@@ -161,7 +163,7 @@ class RegexTaggerViewTests(APITestCase):
         response = self.client.post(tagger_url, payload)
         print_output('test_regex_tagger_tag_texts_match:response.data', response.data)
         # check if we found anything
-        assert len(response.json()[0]) == 2
+        assert len(response.json()) == 2
 
 
     def run_test_regex_tagger_multitag(self):

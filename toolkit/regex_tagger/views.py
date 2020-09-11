@@ -98,7 +98,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         # retrieve matches
         result = []
         for text in serializer.validated_data['texts']:
-            result += matcher.get_matches(text)
+            result.append(matcher.get_matches(text))
         return Response(result, status=status.HTTP_200_OK)
 
 
