@@ -178,3 +178,20 @@ class RegexTaggerViewTests(APITestCase):
         print_output('test_regex_tagger_tag_texts_match:response.data', response.data)
         # check if we found anything
         assert len(response.json()[0]) == 4
+
+
+    def test_create_and_update_regex_tagger(self):
+        payload = {
+            "description": "TestRegexTagger",
+            "lexicon": ["jossif stalin", "adolf hitler"],
+            "counter_lexicon": ["benito mussolini"]
+        }
+        url = reverse("v1:regex_tagger-list", kwargs={"project_pk": self.project.pk})
+        response = self.client.post(url, payload, format="json")
+        self.assertTrue(response.status_code == status.HTTP_201_CREATED)
+
+        tagger_id = response.data["id"]
+        detail_url = reverse("v1:regex_tagger-detail", kwargs={"project_pk": self.project.pk, "pk": int(tagger_id)})
+        update_response = self.client.patch(detail_url, {"lexicon": ["jossif stalin"]}, format="json")
+        self.assertTrue(update_response.status_code == status.HTTP_200_OK)
+        self.assertTrue(update_response.data["lexicon"] == ["jossif stalin"])

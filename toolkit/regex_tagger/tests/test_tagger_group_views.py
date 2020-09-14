@@ -167,4 +167,5 @@ class RegexGroupTaggerTests(APITransactionTestCase):
         tagger_group_url = reverse("v1:regex_tagger_group-detail", kwargs={"project_pk": self.project.pk, "pk": self.tagger_group_id})
         update_response = self.client.patch(tagger_group_url, {"regex_taggers": [military_tagger["id"]]}, format="json")
         self.assertTrue(update_response.status_code == status.HTTP_200_OK)
+        self.assertTrue(update_response.data["regex_taggers"] == [military_tagger["id"]])
         print_output('test_editing_another_tagger_into_the_group:response.data', update_response.data)

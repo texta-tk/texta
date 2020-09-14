@@ -15,8 +15,11 @@ from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup, load_matcher
-from toolkit.regex_tagger.serializers import (ApplyRegexTaggerGroupSerializer, RegexGroupTaggerTagTextSerializer, RegexMultitagTextSerializer, RegexTaggerGroupMultitagTextSerializer, RegexTaggerGroupSerializer, RegexTaggerGroupTagDocumentSerializer, RegexTaggerSerializer,
-                                              RegexTaggerTagTextsSerializer, TagRandomDocSerializer)
+from toolkit.regex_tagger.serializers import (
+    ApplyRegexTaggerGroupSerializer, RegexGroupTaggerTagTextSerializer, RegexMultitagTextSerializer, RegexTaggerGroupMultitagTextSerializer,
+    RegexTaggerGroupSerializer, RegexTaggerGroupTagDocumentSerializer, RegexTaggerSerializer,
+    RegexTaggerTagTextsSerializer, TagRandomDocSerializer
+)
 from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceImportModelSerializer
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.view_constants import BulkDelete
@@ -50,30 +53,27 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         return RegexTagger.objects.filter(project=self.kwargs['project_pk'])
 
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer: RegexTaggerSerializer):
         project = Project.objects.get(id=self.kwargs['project_pk'])
-        tagger: RegexTagger = serializer.save(
+        serializer.save(
             author=self.request.user,
             project=project,
-            lexicon=json.dumps(serializer.validated_data.get('lexicon', [])),
-            counter_lexicon=json.dumps(serializer.validated_data.get('counter_lexicon', []))
+            lexicon=json.dumps(serializer.validated_data.get('lexicon', []), ensure_ascii=False),
+            counter_lexicon=json.dumps(serializer.validated_data.get('counter_lexicon', []), ensure_ascii=False)
         )
 
 
-    def perform_update(self, serializer):
+    def perform_update(self, serializer: RegexTaggerSerializer):
+        fields = ("lexicon", 'counter_lexicon')
+        # Only get those parameters if they are actually in there, otherwise you will overwrite them as empty
+        # when just another field is updated.
+        kwargs = {field: json.dumps(serializer.validated_data.get(field), ensure_ascii=False) for field in fields if field in serializer.validated_data}
+        project = Project.objects.get(id=self.kwargs['project_pk'])
         serializer.save(
-            lexicon=json.dumps(serializer.validated_data.get('lexicon', [])),
-            counter_lexicon=json.dumps(serializer.validated_data.get('counter_lexicon', []))
+            author=self.request.user,
+            project=project,
+            **kwargs
         )
-
-
-    def perform_update(self, serializer: RegexTaggerGroupSerializer):
-        super(RegexTaggerViewSet, self).perform_update(serializer)
-        available_taggers = RegexTagger.objects.filter(project=self.kwargs['project_pk'])
-        if "regex_taggers" in serializer.validated_data:
-            wished_taggers = available_taggers.filter(pk__in=serializer.validated_data["regex_tagger"])
-            model: RegexTaggerGroup = self.get_object()
-            model.regex_taggers.set(wished_taggers)
 
 
     @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
@@ -248,6 +248,19 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         return RegexTaggerGroup.objects.filter(project=self.kwargs['project_pk'])
 
 
+    def perform_update(self, serializer: RegexTaggerGroupSerializer):
+        super(RegexTaggerGroupViewSet, self).perform_update(serializer)
+
+        if "regex_taggers" in serializer.validated_data:
+            available_taggers = RegexTagger.objects.filter(project=self.kwargs['project_pk'])
+            # Serializer contains the tagger objects but query them again since they might not have permissions
+            # for them.
+            tagger_ids = [tagger.pk for tagger in serializer.validated_data["regex_taggers"]]
+            wished_taggers = available_taggers.filter(pk__in=tagger_ids)
+            model: RegexTaggerGroup = self.get_object()
+            model.regex_taggers.set(wished_taggers)
+
+
     def perform_create(self, serializer):
         project = Project.objects.get(id=self.kwargs['project_pk'])
         regex_tagger_group: RegexTaggerGroup = serializer.save(
@@ -257,10 +270,8 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         regex_tagger_ids = [tagger.pk for tagger in serializer.validated_data['regex_taggers']]
 
         # retrieve taggers
-        regex_taggers = RegexTagger.objects.filter(pk__in=regex_tagger_ids, project=project.pk)
-        for regex_tagger in regex_taggers:
-            regex_tagger_group.regex_taggers.add(regex_tagger)
-        regex_tagger_group.save()
+        regex_taggers = RegexTagger.objects.filter(project=project.pk).filter(pk__in=regex_tagger_ids)
+        regex_tagger_group.regex_taggers.set(regex_taggers)
 
 
     @action(detail=False, methods=['post'], serializer_class=RegexTaggerGroupMultitagTextSerializer)
