@@ -1,11 +1,11 @@
 image: continuumio/miniconda3:latest
 
 variables:
-  TEXTA_CALLBACK_URL:http://localhost:8000/api/v1/uaa/callback
-  UAA_USER:test1
-  UAA_EMAIL:test1@test1.com
-  UAA_PWD:test1
-  UAA_DOMAIN:http://localhost:8080/uaa
+  - TEXTA_CALLBACK_URL:http://localhost:8000/api/v1/uaa/callback
+  - UAA_USER:test1
+  - UAA_EMAIL:test1@test1.com
+  - UAA_PWD:test1
+  - UAA_DOMAIN:http://localhost:8080/uaa
 
 services:
   - name: redis:latest
