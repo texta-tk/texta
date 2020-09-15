@@ -349,7 +349,13 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
             'num_taggers': proj.tagger_set.count(),
             'num_tagger_groups': proj.taggergroup_set.count(),
             'num_embeddings': proj.embedding_set.count(),
-            'num_clusterings': proj.clusteringresult_set.count()
+            'num_clusterings': proj.clusteringresult_set.count(),
+            'num_regex_taggers': proj.regextagger_set.count(),
+            'num_regex_tagger_groups': proj.regextaggergroup_set.count(),
+            'num_anonymizers': proj.anonymizer_set.count(),
+            'num_mlp_workers': proj.mlpworker_set.count(),
+            'num_reindexers': proj.reindexer_set.count(),
+            'num_dataset_importers': proj.reindexer_set.count()
         }
 
         return Response(response, status=status.HTTP_200_OK)

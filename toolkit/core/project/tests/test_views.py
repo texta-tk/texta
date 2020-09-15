@@ -141,6 +141,13 @@ class ProjectViewTests(APITestCase):
         self.assertTrue('num_taggers' in response.data)
         self.assertTrue('num_tagger_groups' in response.data)
         self.assertTrue('num_embeddings' in response.data)
+        self.assertTrue('num_clusterings' in response.data)
+        self.assertTrue('num_regex_taggers' in response.data)
+        self.assertTrue('num_regex_tagger_groups' in response.data)
+        self.assertTrue('num_anonymizers' in response.data)
+        self.assertTrue('num_mlp_workers' in response.data)
+        self.assertTrue('num_reindexers' in response.data)
+        self.assertTrue('num_dataset_importers' in response.data)
 
 
     def test_search_by_query(self):
