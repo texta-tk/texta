@@ -85,7 +85,6 @@ class UAAView(views.APIView):
         user, created = User.objects.get_or_create(username=username, email=email)
         # Log in the user
         login(request, user)
-
         # Serialize the user
         serializer = UserSerializer(user, context={'request': request})
         return serializer
@@ -102,15 +101,17 @@ class RefreshUAATokenView(views.APIView):
         if not USE_UAA:        
             logging.getLogger(INFO_LOGGER).info(f"Tried to access RefreshUAATokenView, but UAA is disabled as the value of USE_UAA is {USE_UAA}")
             return Response('Authentication with UAA is not enabled.', status=status.HTTP_400_BAD_REQUEST)
-
+        # get & check refresh token
         refresh_token = request.data.get('refresh_token')
-        if refresh_token:
-            resp = RefreshUAATokenView._refresh(refresh_token)
-            
-            resp_status = status.HTTP_200_OK if resp.status_code == 200 else status.HTTP_403_FORBIDDEN
-            return Response(resp.json(), status=resp_status)
-            
-        return Response({'refresh_token': 'Parameter refresh_token missing!'}, status=status.HTTP_400_BAD_REQUEST)
+        if not refresh_token:
+            return Response({'refresh_token': 'Parameter refresh_token missing!'}, status=status.HTTP_400_BAD_REQUEST)
+        # try to refresh token
+        resp = RefreshUAATokenView._refresh(refresh_token)
+        # check if got 200
+        if resp.status_code != 200:
+            logging.getLogger(INFO_LOGGER).info(f"UAAView _get_access_token returned status {resp.status_code}!")
+            return Response(f"UAAView _get_access_token returned status {resp.status_code}!", status=status.HTTP_400_BAD_REQUEST)
+        return Response(resp.json(), status=status.HTTP_200_OK)
 
 
     def _refresh(refresh_token):
@@ -121,6 +122,5 @@ class RefreshUAATokenView(views.APIView):
             'token_format': 'opaque',
             'refresh_token': refresh_token
         }
-
         # Make a request to the OAuth /token endpoint to refresh the token
         return requests.post(f'{UAA_URL}/oauth/token', headers=HEADERS, data=body)
