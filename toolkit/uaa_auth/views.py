@@ -40,16 +40,14 @@ class UAAView(views.APIView):
         code = request.query_params.get('code', None)
         if code:
             resp = self._get_access_token(code)
-            resp_json = resp.json()
-
             # On error, send a 400 resp with the error with the json contents
             if resp.status_code != 200:
                 logging.getLogger(INFO_LOGGER).info(f"UAAView _get_access_token returned status {resp.status_code}! Response JSON: {resp.json()}")
                 return Response(resp_json, status=status.HTTP_400_BAD_REQUEST)
-            
+            # get response json
+            resp_json = resp.json()
             access_token = resp_json['access_token']
             refresh_token = resp_json['refresh_token']
-
             try:
                 # Decode the jwt id_token
                 decoded_id_token = jwt.decode(resp_json['id_token'], verify=False)
@@ -77,9 +75,9 @@ class UAAView(views.APIView):
             'token_format': 'opaque',
             'redirect_uri': UAA_REDIRECT_URI
         }
-
+        token_url = f'{UAA_URL}/oauth/token'
         # Make a request to the oauth/token endpoint to retrieve the access_token and user info
-        return requests.post(f'{UAA_URL}/oauth/token', headers=HEADERS, data=body)
+        return requests.post(token_url, headers=HEADERS, data=body)
 
 
     def _auth_uaa_user(email, username, request):
