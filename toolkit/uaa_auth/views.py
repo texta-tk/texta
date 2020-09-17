@@ -43,7 +43,7 @@ class UAAView(views.APIView):
             # On error, send a 400 resp with the error with the json contents
             if resp.status_code != 200:
                 logging.getLogger(INFO_LOGGER).info(f"UAAView _get_access_token returned status {resp.status_code}!")
-                return Response(resp_json, status=status.HTTP_400_BAD_REQUEST)
+                return Response(f"UAAView _get_access_token returned status {resp.status_code}!", status=status.HTTP_400_BAD_REQUEST)
             # get response json
             resp_json = resp.json()
             access_token = resp_json['access_token']
