@@ -18,16 +18,17 @@ class ElasticCore:
     """
         Class for holding most general settings and Elasticsearch object itself
     """
-
-
-    def __init__(self, ES_URL=get_core_setting("TEXTA_ES_URL")):
+    def __init__(self, ES_URL=get_core_setting("TEXTA_ES_URL"), check_connection=True):
         self.ES_URL = ES_URL
         self.ES_PREFIX = get_core_setting("TEXTA_ES_PREFIX")
         self.ES_USERNAME = get_core_setting("TEXTA_ES_USERNAME")
         self.ES_PASSWORD = get_core_setting("TEXTA_ES_PASSWORD")
         self.TEXTA_RESERVED = ['texta_facts']
-
-        self.connection = self._check_connection()
+        # do not connect if asked
+        if check_connection:
+            self.connection = self._check_connection()
+        else:
+            self.connection = False
         self.es = self._create_client_interface()
 
 
