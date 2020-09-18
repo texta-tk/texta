@@ -1,29 +1,24 @@
-import json
 import os
 
-from rest_framework import permissions, viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
 import rest_framework.filters as drf_filters
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
-
+from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from texta_anonymizer.anonymizer import Anonymizer as NameAnonymizer
 
-from toolkit.permissions.project_permissions import ProjectResourceAllowed
-from toolkit.view_constants import BulkDelete
 from toolkit.core.project.models import Project
-from .serializers import (
-    AnonymizerSerializer,
-    AnonymizerAnonymizeTextSerializer,
-    AnonymizerAnonymizeTextsSerializer
-)
+from toolkit.permissions.project_permissions import ProjectResourceAllowed
 from toolkit.serializer_constants import ProjectResourceImportModelSerializer
+from toolkit.view_constants import BulkDelete
 from .models import Anonymizer
+from .serializers import (AnonymizerAnonymizeTextSerializer, AnonymizerAnonymizeTextsSerializer, AnonymizerSerializer)
 
 
 class AnonymizerFilter(filters.FilterSet):
     description = filters.CharFilter('description', lookup_expr='icontains')
+
 
     class Meta:
         model = Anonymizer
@@ -52,6 +47,7 @@ class AnonymizerViewSet(viewsets.ModelViewSet, BulkDelete):
             author=self.request.user,
             project=project
         )
+
 
     @action(detail=True, methods=['post'], serializer_class=AnonymizerAnonymizeTextSerializer)
     def anonymize_text(self, request, pk=None, project_pk=None):
@@ -105,14 +101,14 @@ class AnonymizerViewSet(viewsets.ModelViewSet, BulkDelete):
 
 
     @staticmethod
-    def _load_anonymizer(anonymizer_object):
+    def _load_anonymizer(anonymizer_object: Anonymizer):
         # create anonymizer
         anonymizer = NameAnonymizer(
-            replace_misspelled_names = anonymizer_object.replace_misspelled_names,
-            replace_single_last_names = anonymizer_object.replace_single_last_names,
-            replace_single_first_names = anonymizer_object.replace_single_last_names,
-            misspelling_threshold = anonymizer_object.misspelling_threshold,
-            mimic_casing = anonymizer_object.mimic_casing,
-            auto_adjust_threshold = anonymizer_object.auto_adjust_threshold
+            replace_misspelled_names=anonymizer_object.replace_misspelled_names,
+            replace_single_last_names=anonymizer_object.replace_single_last_names,
+            replace_single_first_names=anonymizer_object.replace_single_last_names,
+            misspelling_threshold=anonymizer_object.misspelling_threshold,
+            mimic_casing=anonymizer_object.mimic_casing,
+            auto_adjust_threshold=anonymizer_object.auto_adjust_threshold
         )
         return anonymizer

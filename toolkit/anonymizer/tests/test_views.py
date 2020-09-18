@@ -1,13 +1,11 @@
 from io import BytesIO
-import json
 
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from toolkit.core.project.models import Project
-from toolkit.tools.utils_for_tests import project_creation
-from toolkit.tools.utils_for_tests import create_test_user, print_output
 from toolkit.test_settings import TEST_INDEX, TEST_VERSION_PREFIX
+from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
+
 
 class AnonymizerViewTests(APITestCase):
 
@@ -20,6 +18,7 @@ class AnonymizerViewTests(APITestCase):
 
         cls.anonymizer_id = None
 
+
     def setUp(self):
         self.client.login(username='user', password='pw')
 
@@ -29,6 +28,7 @@ class AnonymizerViewTests(APITestCase):
         self.run_test_anonymizer_anonymize_text()
         self.run_test_anonymizer_anonymize_texts()
         self.run_test_anonymizer_export_import()
+        self.run_test_check_for_validation_error()
 
 
     def run_test_anonymizer_create(self):
@@ -98,3 +98,14 @@ class AnonymizerViewTests(APITestCase):
         print_output('test_anonymizer_anonymized_texts:response.data', response.data)
         # check if response not empty
         assert len(response.json()[0]) > 0
+
+
+    def run_test_check_for_validation_error(self):
+        anonymizer_url = f'{self.url}{self.anonymizer_id}/anonymize_text/'
+        payload = {
+            "texts": ["selles tekstis on mõrtsukas Jossif Stalini nimi", "selles tekstis on onkel Adolf Hitler"],
+            "names": ["Stalin, Jossif", "Hitler Adolf"],
+        }
+        response = self.client.post(anonymizer_url, payload, format="json")
+        self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+        print_output("run_check_for_validation_error:response.data", response.data)

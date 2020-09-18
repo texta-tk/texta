@@ -17,7 +17,7 @@ TEXTA_LANGUAGE_CODES=et,en,ru
 #DJANGO_DATABASE_PORT=5432
 
 # UAA settings for TK
-TEXTA_USE_UAA=false
+USE_UAA=False
 TEXTA_UAA_REDIRECT_URI=http://localhost/api/v1/uaa/callback
 TEXTA_UAA_FRONT_REDIRECT_URL=http://localhost/oauth
 TEXTA_UAA_URL=http://localhost:8080/uaa
