@@ -354,11 +354,11 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         # retrieve tagger object
         texts = serializer.validated_data["texts"]
         tagger_object: RegexTaggerGroup = self.get_object()
-        matches = tagger_object.match_texts(texts=texts)
-        result = {"tagger_group_id": tagger_object.id, "description": tagger_object.description, "result": False, "matches": []}
-        if matches:
-            result["result"] = True
-            result["matches"] = matches
+
+        result = {"tagger_group_id": tagger_object.id, "description": tagger_object.description, "matches": []}
+        for text in texts:
+            matches = tagger_object.match_texts(texts=[text])
+            result["matches"].append(matches)
 
         return Response(result, status=status.HTTP_200_OK)
 

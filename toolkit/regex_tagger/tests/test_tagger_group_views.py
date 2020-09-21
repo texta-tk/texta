@@ -73,13 +73,16 @@ class RegexGroupTaggerTests(APITransactionTestCase):
     def test_tagging_a_list_of_texts(self):
         url = reverse("v1:regex_tagger_group-tag-texts", kwargs={"project_pk": self.project.pk, "pk": self.tagger_group_id})
         response = self.client.post(url, {"texts": ["Ettevõtte juhatuse liikme hobiks on pettus.", "Ohver läbis tugeva psühholoogilise tauma", "Pärnu maanteel toimus õnnetus."]})
-        self.assertEqual(response.data["result"], True)
         self.assertTrue("tagger_group_id" in response.data)
         self.assertTrue("description" in response.data)
+        self.assertEqual(len(response.data["matches"]), 3)
 
-        matches = [match["str_val"] for match in response.data["matches"]]
-        self.assertTrue("pettus" in matches)
-        self.assertTrue("õnnetus" in matches)
+        matches_text_1 = [match["str_val"] for match in response.data["matches"][0]]
+        matches_text_2 = response.data["matches"][1]
+        matches_text_3 = [match["str_val"] for match in response.data["matches"][2]]
+        self.assertTrue("pettus" in matches_text_1)
+        self.assertTrue("õnnetus" in matches_text_3)
+        self.assertEqual(len(matches_text_2), 0)
 
         print_output('test_tagging_a_list_of_texts:response.data', response.data)
 
