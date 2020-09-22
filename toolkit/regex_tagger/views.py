@@ -77,26 +77,50 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
     def tag_text(self, request, pk=None, project_pk=None):
         serializer = GeneralTextSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # retrieve tagger object
-        regex_tagger_object = self.get_object()
-        # load matcher
-        matcher = load_matcher(regex_tagger_object)
-        # retrieve matches
-        result = matcher.get_matches(serializer.validated_data['text'])
-        return Response(result, status=status.HTTP_200_OK)
+        tagger_object: RegexTagger = self.get_object()
+        text = serializer.validated_data['text']
+
+        # apply tagger
+        results = {
+            "tagger_id": tagger_object.pk,
+            "tag": tagger_object.description,
+            "result": False,
+            "matches": []
+        }
+
+        matches = tagger_object.match_texts([text], add_tagger_info=False)
+
+        if matches:
+            results["result"] = True
+            results["matches"] = matches
+        return Response(results, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['post'], serializer_class=RegexTaggerTagTextsSerializer)
     def tag_texts(self, request, pk=None, project_pk=None):
         serializer = RegexTaggerTagTextsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        regex_tagger_object: RegexTagger = self.get_object()
-        matcher = load_matcher(regex_tagger_object)
-        # retrieve matches
-        result = []
-        for text in serializer.validated_data['texts']:
-            result.append(matcher.get_matches(text))
-        return Response(result, status=status.HTTP_200_OK)
+        tagger_object: RegexTagger = self.get_object()
+        texts = serializer.validated_data['texts']
+
+        final_results = []
+
+        for text in texts:
+            results = {
+                "tagger_id": tagger_object.pk,
+                "tag": tagger_object.description,
+                "result": False,
+                "matches": []
+            }
+
+            matches = tagger_object.match_texts([text], add_tagger_info=False)
+
+            if matches:
+                results["result"] = True
+                results["matches"] = matches
+            final_results.append(results)
+
+        return Response(final_results, status=status.HTTP_200_OK)
 
 
     @action(detail=False, methods=['post'], serializer_class=RegexMultitagTextSerializer)
@@ -105,22 +129,24 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         serializer.is_valid(raise_exception=True)
         # filter taggers
         project_object = Project.objects.get(id=project_pk)
-        regex_taggers = RegexTagger.objects.filter(project=project_object)
+        tagger_objects = RegexTagger.objects.filter(project=project_object)
         # filter again
         if serializer.validated_data['taggers']:
-            regex_taggers = regex_taggers.filter(pk__in=serializer.validated_data['taggers'])
-        # apply taggers
+            regex_taggers = tagger_objects.filter(pk__in=serializer.validated_data['taggers'])
+
+        text = serializer.validated_data["text"]
+
         result = []
         for regex_tagger in regex_taggers:
-            # load matcher
-            matcher = load_matcher(regex_tagger)
-            # retrieve matches
-            matches = matcher.get_matches(serializer.validated_data['text'])
-            # add tagger id and description to each match
-            for match in matches:
-                match["tagger_id"] = regex_tagger.id
-                match["tagger_description"] = regex_tagger.description
-            result += matches
+            matches = regex_tagger.match_texts([text], add_tagger_info=False)
+
+            if matches:
+                new_tag = {
+                    "tagger_id": regex_tagger.id,
+                    "tag": regex_tagger.description,
+                    "matches": matches
+                }
+                result.append(new_tag)
         return Response(result, status=status.HTTP_200_OK)
 
 
@@ -156,7 +182,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         # apply tagger
         results = {
             "tagger_id": tagger_object.pk,
-            "description": tagger_object.description,
+            "tag": tagger_object.description,
             "result": False,
             "matches": []
         }
@@ -165,7 +191,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         for field in fields:
             flattened_doc = ElasticCore(check_connection=False).flatten(input_document)
             text = flattened_doc.get(field, None)
-            matches = tagger_object.match_texts([text])
+            matches = tagger_object.match_texts([text], add_tagger_info=False)
             final_matches.extend(matches)
 
         if final_matches:
@@ -197,7 +223,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         # apply tagger
         results = {
             "tagger_id": tagger_object.pk,
-            "description": tagger_object.description,
+            "tag": tagger_object.description,
             "result": False,
             "matches": [],
             "texts": []
@@ -210,7 +236,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
             if text:
                 results["texts"].append(text)
 
-            matches = tagger_object.match_texts([text])
+            matches = tagger_object.match_texts([text], add_tagger_info=False)
             final_matches.extend(matches)
 
         if final_matches:
@@ -246,7 +272,7 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
 
 
     def perform_update(self, serializer: RegexTaggerGroupSerializer):
-        super(RegexTaggerGroupViewSet, self).perform_update(serializer)
+        #super(RegexTaggerViewSet, self).perform_update(serializer)
 
         if "regex_taggers" in serializer.validated_data:
             available_taggers = RegexTagger.objects.filter(project=self.kwargs['project_pk'])
@@ -337,10 +363,11 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         text = serializer.validated_data["text"]
         tagger_object: RegexTaggerGroup = self.get_object()
         matches = tagger_object.match_texts([text])
-        result = {"tagger_group_id": tagger_object.id, "description": tagger_object.description, "result": False, "matches": []}
+        result = {"tagger_group_id": tagger_object.id, "tagger_group_tag": tagger_object.description, "result": False, "matches": []}
         if matches:
             result["result"] = True
             result["matches"] = matches
+
 
         return Response(result, status=status.HTTP_200_OK)
 
@@ -355,7 +382,7 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         texts = serializer.validated_data["texts"]
         tagger_object: RegexTaggerGroup = self.get_object()
 
-        result = {"tagger_group_id": tagger_object.id, "description": tagger_object.description, "matches": []}
+        result = {"tagger_group_id": tagger_object.id, "tagger_group_tag": tagger_object.description, "matches": []}
         for text in texts:
             matches = tagger_object.match_texts(texts=[text])
             result["matches"].append(matches)
@@ -375,7 +402,7 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         # apply tagger
         results = {
             "tagger_group_id": tagger_object.pk,
-            "description": tagger_object.description,
+            "tagger_group_tag": tagger_object.description,
             "result": False,
             "matches": []
         }
@@ -418,7 +445,7 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         # apply tagger
         results = {
             "tagger_group_id": tagger_object.pk,
-            "description": tagger_object.description,
+            "tagger_group_tag": tagger_object.description,
             "result": False,
             "matches": [],
             "texts": []

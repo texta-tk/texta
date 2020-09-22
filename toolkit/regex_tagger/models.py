@@ -59,14 +59,15 @@ class RegexTagger(models.Model):
         return self.description
 
 
-    def match_texts(self, texts: List[str]):
+    def match_texts(self, texts: List[str], add_tagger_info: bool=True):
         results = []
         for text in texts:
             if text:
                 matcher = load_matcher(self)
                 matches = matcher.get_matches(text)
-                for match in matches:
-                    match.update(description=self.description, tagger_id=self.id)
+                if add_tagger_info:
+                    for match in matches:
+                        match.update(tag=self.description, tagger_id=self.id)
                 results.extend(matches)
         return results
 
@@ -131,14 +132,16 @@ class RegexTaggerGroup(models.Model):
             return []
 
 
-    def match_texts(self, texts: List[str]):
+    def match_texts(self, texts: List[str], add_tagger_info: bool=True):
         results = []
         for text in texts:
             if text:
                 for tagger in self.regex_taggers.all():
+
                     matcher = load_matcher(tagger)
                     matches = matcher.get_matches(text)
-                    for match in matches:
-                        match.update(description=tagger.description, tagger_id=tagger.id)
+                    if add_tagger_info:
+                        for match in matches:
+                            match.update(tag=tagger.description, tagger_id=tagger.id)
                     results.extend(matches)
         return results

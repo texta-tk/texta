@@ -55,26 +55,26 @@ class RegexGroupTaggerTests(APITransactionTestCase):
         self.tagger_group_id = int(response.data["id"])
 
 
-    def test_tagging_single_text(self):
+    def test_regex_tagger_group_tag_text(self):
         url = reverse("v1:regex_tagger_group-tag-text", kwargs={"project_pk": self.project.pk, "pk": self.tagger_group_id})
         response = self.client.post(url, {"text": "Eile kell 10 õhtul sisenes varas keemiatehasesse, tema hooletuse tõttu tekkis põleng!"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        print_output('test_tagging_single_text:response.data', response.data)
+        print_output('test_regex_tagger_group_tag_text:response.data', response.data)
 
         self.assertEqual(response.data["result"], True)
         self.assertTrue("tagger_group_id" in response.data)
-        self.assertTrue("description" in response.data)
+        self.assertTrue("tagger_group_tag" in response.data)
 
         matches = [match["str_val"] for match in response.data["matches"]]
         self.assertTrue("varas" in matches)
         self.assertTrue("põleng" in matches)
 
 
-    def test_tagging_a_list_of_texts(self):
+    def test_regex_tagger_group_tag_texts(self):
         url = reverse("v1:regex_tagger_group-tag-texts", kwargs={"project_pk": self.project.pk, "pk": self.tagger_group_id})
         response = self.client.post(url, {"texts": ["Ettevõtte juhatuse liikme hobiks on pettus.", "Ohver läbis tugeva psühholoogilise tauma", "Pärnu maanteel toimus õnnetus."]})
         self.assertTrue("tagger_group_id" in response.data)
-        self.assertTrue("description" in response.data)
+        self.assertTrue("tagger_group_tag" in response.data)
         self.assertEqual(len(response.data["matches"]), 3)
 
         matches_text_1 = [match["str_val"] for match in response.data["matches"][0]]
@@ -84,10 +84,10 @@ class RegexGroupTaggerTests(APITransactionTestCase):
         self.assertTrue("õnnetus" in matches_text_3)
         self.assertEqual(len(matches_text_2), 0)
 
-        print_output('test_tagging_a_list_of_texts:response.data', response.data)
+        print_output('test_regex_tagger_group_tag_texts:response.data', response.data)
 
 
-    def test_multitag_functionality(self):
+    def test_regex_tagger_group_multitag_texts(self):
         url = reverse("v1:regex_tagger_group-multitag-text", kwargs={"project_pk": self.project.pk})
         payload = {
             "text": "Miks varas sai haavata!?",
@@ -103,7 +103,7 @@ class RegexGroupTaggerTests(APITransactionTestCase):
         self.assertTrue(tag["tagger_description"] == police_tagger.description)
         self.assertTrue(isinstance(response.data, list))
 
-        print_output('test_multitag_functionality:response.data', response.data)
+        print_output('test_regex_tagger_group_multitag_texts:response.data', response.data)
 
 
     def test_applying_the_regex_tagger_group_to_the_index(self):
@@ -128,7 +128,7 @@ class RegexGroupTaggerTests(APITransactionTestCase):
         print_output('test_applying_the_regex_tagger_group_to_the_index:response.data', response.data)
 
 
-    def test_tagging_nested_doc(self):
+    def test_regex_tagger_group_tagging_nested_doc(self):
         url = reverse("v1:regex_tagger_group-tag-doc", kwargs={"project_pk": self.project.pk, "pk": self.tagger_group_id})
         payload = {
             "doc": {
@@ -141,23 +141,23 @@ class RegexGroupTaggerTests(APITransactionTestCase):
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertEqual(response.data["result"], True)
         self.assertTrue("tagger_group_id" in response.data)
-        self.assertTrue("description" in response.data)
+        self.assertTrue("tagger_group_tag" in response.data)
 
         matches = [match["str_val"] for match in response.data["matches"]]
         self.assertTrue("varas" in matches)
         self.assertTrue("trauma" in matches)
-        print_output('test_tagging_nested_doc:response.data', response.data)
+        print_output('test_regex_tagger_group_tagging_nested_doc:response.data', response.data)
 
 
-    def test_tag_random_doc(self):
+    def test_regex_tagger_group_tag_random_doc(self):
         url = reverse("v1:regex_tagger_group-tag-random-doc", kwargs={"project_pk": self.project.pk, "pk": self.tagger_group_id})
         response = self.client.post(url, {"fields": [TEST_FIELD]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertTrue("tagger_group_id" in response.data)
-        self.assertTrue("description" in response.data)
+        self.assertTrue("tagger_group_tag" in response.data)
         self.assertTrue("texts" in response.data and isinstance(response.data["texts"], list))
         self.assertTrue(response.data["result"] is True or response.data["result"] is False)
-        print_output('test_tag_random_doc:response.data', response.data)
+        print_output('test_regex_tagger_group_tag_random_doc:response.data', response.data)
 
 
     def test_editing_another_tagger_into_the_group(self):

@@ -35,14 +35,11 @@ class RegexTaggerViewTests(APITestCase):
 
         self.police, self.medic, self.firefighter = ids
 
-
     def test(self):
         self.run_test_regex_tagger_create()
         self.run_test_regex_tagger_tag_text()
         self.run_test_regex_tagger_tag_texts()
         self.run_test_regex_tagger_export_import()
-        self.run_test_regex_tagger_multitag()
-
 
     def run_test_regex_tagger_create(self):
         """Tests RegexTagger creation."""
@@ -62,7 +59,7 @@ class RegexTaggerViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
 
-    def test_tag_nested_doc(self):
+    def test_regex_tagger_tag_nested_doc(self):
         url = reverse("v1:regex_tagger-tag-doc", kwargs={"project_pk": self.project.pk, "pk": self.police})
         payload = {
             "doc": {
@@ -75,22 +72,23 @@ class RegexTaggerViewTests(APITestCase):
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertEqual(response.data["result"], True)
         self.assertTrue("tagger_id" in response.data)
-        self.assertTrue("description" in response.data)
+        self.assertTrue("tag" in response.data)
 
         matches = [match["str_val"] for match in response.data["matches"]]
         self.assertTrue("varas" in matches)
-        print_output("test_tag_nested_doc:response.data", response.data)
+        print_output("test_regex_tagger_tag_nested_doc:response.data", response.data)
 
 
-    def test_tag_random_doc(self):
+    def test_regex_tagger_tag_random_doc(self):
         url = reverse("v1:regex_tagger-tag-random-doc", kwargs={"project_pk": self.project.pk, "pk": self.police})
         response = self.client.post(url, {"fields": [TEST_FIELD]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertTrue("tagger_id" in response.data)
-        self.assertTrue("description" in response.data)
+        self.assertTrue("tag" in response.data)
         self.assertTrue("texts" in response.data and isinstance(response.data["texts"], list))
         self.assertTrue(response.data["result"] == True or response.data["result"] == False)
-        print_output("test_tag_random_doc:response.data", response.data)
+        self.assertTrue("matches" in response.data)
+        print_output("test_regex_tagger_tag_random_doc:response.data", response.data)
 
 
     def run_test_regex_tagger_tag_text(self):
@@ -99,22 +97,31 @@ class RegexTaggerViewTests(APITestCase):
 
         ###test matching text
         payload = {
-            "text": "selles tekstis on mõrtsukas jossif stalini nimi",
-            "return_fuzzy_match": False
+            "text": "selles tekstis on mõrtsukas jossif stalini nimi"
         }
         response = self.client.post(tagger_url, payload)
         print_output('test_regex_tagger_tag_text_match:response.data', response.data)
         # check if we found anything
-        assert len(response.json()) > 0
+        self.assertTrue("tagger_id" in response.data)
+        self.assertTrue("tag" in response.data)
+        self.assertTrue("result" in response.data)
+        self.assertTrue("matches" in response.data)
+        self.assertEqual(response.data["result"], True)
+        self.assertEqual(len(response.data["matches"]), 1)
 
         ### test non-matching text
         payload = {
-            "text": "selles tekstis pole nimesid",
+            "text": "selles tekstis pole nimesid"
         }
         response = self.client.post(tagger_url, payload)
         print_output('test_regex_tagger_tag_text_no_match:response.data', response.data)
         # check if we found anything
-        assert len(response.json()) == 0
+        self.assertTrue("tagger_id" in response.data)
+        self.assertTrue("tag" in response.data)
+        self.assertTrue("result" in response.data)
+        self.assertTrue("matches" in response.data)
+        self.assertEqual(response.data["result"], False)
+        self.assertEqual(len(response.data["matches"]), 0)
 
 
     def run_test_regex_tagger_tag_texts(self):
@@ -123,24 +130,37 @@ class RegexTaggerViewTests(APITestCase):
 
         ### test matching text
         payload = {
-            "texts": ["selles tekstis on mõrtsukas jossif stalini nimi", "selles tekstis on onkel adolf hitler"],
-            "return_fuzzy_match": False
+            "texts": ["selles tekstis on mõrtsukas jossif stalini nimi", "selles tekstis on onkel adolf hitler"]
         }
         response = self.client.post(tagger_url, payload)
         print_output('test_regex_tagger_tag_texts_match:response.data', response.data)
         # check if we found anything
-        assert len(response.json()[0]) == 1
-        assert len(response.json()) == 2
+        self.assertEqual(len(response.data), 2)
+        self.assertTrue("tagger_id" in response.data[0])
+        self.assertTrue("tag" in response.data[0])
+        self.assertTrue("result" in response.data[0])
+        self.assertTrue("matches" in response.data[0])
+        self.assertEqual(response.data[0]["result"], True)
+        self.assertEqual(response.data[1]["result"], True)
+        self.assertEqual(len(response.data[0]["matches"]), 1)
+        self.assertEqual(len(response.data[1]["matches"]), 1)
 
         ### test non-matching text
         payload = {
-            "texts": ["selles tekstis pole nimesid", "selles ka mitte"],
+            "texts": ["selles tekstis pole nimesid", "selles ka mitte"]
         }
         response = self.client.post(tagger_url, payload)
         print_output('test_regex_tagger_tag_texts_no_match:response.data', response.data)
         # check if we found anything
-        assert len(response.json()) == 2
-        assert len(response.json()[0]) == 0
+        self.assertEqual(len(response.data), 2)
+        self.assertTrue("tagger_id" in response.data[0])
+        self.assertTrue("tag" in response.data[0])
+        self.assertTrue("result" in response.data[0])
+        self.assertTrue("matches" in response.data[0])
+        self.assertEqual(response.data[0]["result"], False)
+        self.assertEqual(response.data[1]["result"], False)
+        self.assertEqual(len(response.data[0]["matches"]), 0)
+        self.assertEqual(len(response.data[1]["matches"]), 0)
 
 
     def run_test_regex_tagger_export_import(self):
@@ -152,32 +172,42 @@ class RegexTaggerViewTests(APITestCase):
         # Post model zip
         import_url = f'{self.url}import_model/'
         response = self.client.post(import_url, data={'file': BytesIO(response.content)})
-        print_output('test_import_model:response.data', import_url)
+        print_output('test_regex_tagger_import_model:response.data', import_url)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         ### test matching text
         tagger_url = f'{self.url}{self.tagger_id}/tag_texts/'
         payload = {
-            "texts": ["selles tekstis on mõrtsukas jossif stalini nimi", "selles tekstis on onkel adolf hitler"],
-            "return_fuzzy_match": False
+            "texts": ["selles tekstis on mõrtsukas jossif stalini nimi", "selles tekstis on onkel adolf hitler"]
         }
         response = self.client.post(tagger_url, payload)
-        print_output('test_regex_tagger_tag_texts_match:response.data', response.data)
+        print_output('test_regex_tagger_imported_model_tag_texts_match:response.data', response.data)
         # check if we found anything
-        assert len(response.json()) == 2
+        self.assertEqual(len(response.json()), 2)
 
 
-    def run_test_regex_tagger_multitag(self):
+    def test_regex_tagger_multitag_text(self):
         """Tests multitag endpoint."""
-        tagger_url = f'{self.url}multitag_text/'
+        url = reverse("v1:regex_tagger-multitag-text", kwargs={"project_pk": self.project.pk})
+        #tagger_url = f'{self.url}multitag_text/'
         ### test matching text
         payload = {
-            "text": ["selles tekstis on mõrtsukas jossif stalini nimi", "selles tekstis on onkel adolf hitler"],
-            "return_fuzzy_match": True
+            "text": "maja teisel korrusel toimus põleng ning ohver sai tõsiseid vigastusi.",
+            "taggers": [self.police, self.medic, self.firefighter]
         }
-        response = self.client.post(tagger_url, payload)
-        print_output('test_regex_tagger_tag_texts_match:response.data', response.data)
+        response = self.client.post(url, payload, format="json")
+        print_output('test_regex_tagger_multitag_text:response.data', response.data)
         # check if we found anything
-        assert len(response.json()[0]) == 4
+        tags = [res["tag"] for res in response.data]
+        self.assertEqual(len(response.data), 2)
+        self.assertTrue("tagger_id" in response.data[0])
+        self.assertTrue("tag" in response.data[0])
+        self.assertTrue("matches" in response.data[0])
+        self.assertEqual(len(response.data[0]["matches"]), 1)
+        self.assertEqual(len(response.data[1]["matches"]), 1)
+        self.assertTrue("str_val" in response.data[0]["matches"][0])
+        self.assertTrue("spans" in response.data[0]["matches"][0])
+        self.assertTrue("kiirabi" in tags)
+        self.assertTrue("tuletõrje" in tags)
 
 
     def test_create_and_update_regex_tagger(self):
@@ -195,3 +225,4 @@ class RegexTaggerViewTests(APITestCase):
         update_response = self.client.patch(detail_url, {"lexicon": ["jossif stalin"]}, format="json")
         self.assertTrue(update_response.status_code == status.HTTP_200_OK)
         self.assertTrue(update_response.data["lexicon"] == ["jossif stalin"])
+        print_output('test_regex_tagger_create_and_update:response.data', response.data)
