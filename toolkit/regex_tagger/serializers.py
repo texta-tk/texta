@@ -77,7 +77,6 @@ class RegexMultitagTextSerializer(serializers.Serializer):
         default=[]
     )
 
-
 class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
     description = serializers.CharField()
     url = serializers.SerializerMethodField()

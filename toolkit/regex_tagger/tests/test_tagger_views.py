@@ -85,7 +85,7 @@ class RegexTaggerViewTests(APITestCase):
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertTrue("tagger_id" in response.data)
         self.assertTrue("tag" in response.data)
-        self.assertTrue("texts" in response.data and isinstance(response.data["texts"], list))
+        self.assertTrue("document" in response.data and isinstance(response.data["document"], dict))
         self.assertTrue(response.data["result"] == True or response.data["result"] == False)
         self.assertTrue("matches" in response.data)
         print_output("test_regex_tagger_tag_random_doc:response.data", response.data)
@@ -205,7 +205,7 @@ class RegexTaggerViewTests(APITestCase):
         self.assertEqual(len(response.data[0]["matches"]), 1)
         self.assertEqual(len(response.data[1]["matches"]), 1)
         self.assertTrue("str_val" in response.data[0]["matches"][0])
-        self.assertTrue("spans" in response.data[0]["matches"][0])
+        self.assertTrue("span" in response.data[0]["matches"][0])
         self.assertTrue("kiirabi" in tags)
         self.assertTrue("tuletõrje" in tags)
 

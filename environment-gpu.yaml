@@ -42,7 +42,7 @@ dependencies:
       - dill
       - texta-anonymizer==1.1.*
       - texta-mlp==1.4.*
-      - texta-lexicon-matcher==1.0.*
+      - texta-lexicon-matcher==1.1.*
       - torch==1.5.*
       - torchtext==0.6.*
       # For UAA

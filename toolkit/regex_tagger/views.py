@@ -136,6 +136,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
 
         text = serializer.validated_data["text"]
 
+
         result = []
         for regex_tagger in regex_taggers:
             matches = regex_tagger.match_texts([text], add_tagger_info=False)
@@ -176,7 +177,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         serializer.is_valid(raise_exception=True)
         tagger_object: RegexTagger = self.get_object()
 
-        input_document = serializer.validated_data['doc']
+        input_document = serializer.validated_data["doc"]
         fields = serializer.validated_data["fields"]
 
         # apply tagger
@@ -186,17 +187,20 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
             "result": False,
             "matches": []
         }
-
         final_matches = []
         for field in fields:
+
             flattened_doc = ElasticCore(check_connection=False).flatten(input_document)
             text = flattened_doc.get(field, None)
             matches = tagger_object.match_texts([text], add_tagger_info=False)
-            final_matches.extend(matches)
 
-        if final_matches:
-            results["result"] = True
-            results["matches"] = final_matches
+            if matches:
+                for match in matches:
+                    match.update(field=field)
+                final_matches.extend(matches)
+                results["result"] = True
+
+        results["matches"] = final_matches
 
         return Response(results, status=status.HTTP_200_OK)
 
@@ -215,10 +219,11 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         indices = project_object.get_available_or_all_project_indices(indices)
 
         # retrieve tagger fields
-        tagger_fields = serializer.validated_data["fields"]
+        fields = serializer.validated_data["fields"]
 
         # retrieve random document
         random_doc = ElasticSearcher(indices=indices).random_documents(size=1)[0]
+        flattened_doc = ElasticCore(check_connection=False).flatten(random_doc)
 
         # apply tagger
         results = {
@@ -226,23 +231,21 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
             "tag": tagger_object.description,
             "result": False,
             "matches": [],
-            "texts": []
+            "document": flattened_doc
         }
 
         final_matches = []
-        for field in tagger_fields:
-            flattened_doc = ElasticCore(check_connection=False).flatten(random_doc)
+        for field in fields:
             text = flattened_doc.get(field, None)
-            if text:
-                results["texts"].append(text)
-
             matches = tagger_object.match_texts([text], add_tagger_info=False)
-            final_matches.extend(matches)
 
-        if final_matches:
-            results["result"] = True
-            results["matches"] = final_matches
+            if matches:
+                for match in matches:
+                    match.update(field=field)
+                final_matches.extend(matches)
+                results["result"] = True
 
+        results["matches"] = final_matches
         return Response(results, status=status.HTTP_200_OK)
 
 
@@ -307,21 +310,58 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         # filter again based on serializer
         if serializer.validated_data['tagger_groups']:
             regex_taggers_groups = regex_taggers_groups.filter(pk__in=serializer.validated_data['tagger_groups'])
+
+        text = serializer.validated_data["text"]
         # apply taggers
         result = []
         for regex_tagger_group in regex_taggers_groups:
+            tags = []
             for regex_tagger in regex_tagger_group.regex_taggers.all():
-                # load matcher
-                matcher = load_matcher(regex_tagger)
-                # retrieve matches
-                matches = matcher.get_matches(serializer.validated_data['text'])
-                # add tagger id and description to each match
-                for match in matches:
-                    match["tagger_id"] = regex_tagger.id
-                    match["tagger_group_id"] = regex_tagger_group.id
-                    match["tagger_description"] = regex_tagger.description
-                    match["fact"] = regex_tagger_group.description
-                result += matches
+
+                matches = regex_tagger.match_texts([text], add_tagger_info=False)
+
+                if matches:
+                    new_tag = {
+                        "tagger_id": regex_tagger.id,
+                        "tag": regex_tagger.description,
+                        "matches": matches
+                    }
+                    tags.append(new_tag)
+            if tags:
+                new_tagger_group_tag = {
+                    "tagger_group_id": regex_tagger_group.id,
+                    "tagger_group_tag": regex_tagger_group.description,
+                    "tags": tags
+
+                }
+                result.append(new_tagger_group_tag)
+
+        return Response(result, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'], serializer_class=RegexTaggerGroupMultitagTextSerializer)
+    def simple_multitag_text(self, request, pk=None, project_pk=None):
+        serializer = RegexTaggerGroupMultitagTextSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # filter tagger groups present in project
+        project_object = Project.objects.get(id=project_pk)
+        regex_taggers_groups = RegexTaggerGroup.objects.filter(project=project_object)
+        # filter again based on serializer
+        if serializer.validated_data['tagger_groups']:
+            regex_taggers_groups = regex_taggers_groups.filter(pk__in=serializer.validated_data['tagger_groups'])
+
+        text = serializer.validated_data["text"]
+        # apply taggers
+        result = {}
+        for regex_tagger_group in regex_taggers_groups:
+            tags = []
+            for regex_tagger in regex_tagger_group.regex_taggers.all():
+
+                matches = regex_tagger.match_texts([text], add_tagger_info=False)
+
+                if matches:
+                    tags.append(regex_tagger.description)
+            if tags:
+                result[regex_tagger_group.description] = list(set(tags))
 
         return Response(result, status=status.HTTP_200_OK)
 
@@ -362,15 +402,30 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         # retrieve tagger object
         text = serializer.validated_data["text"]
         tagger_object: RegexTaggerGroup = self.get_object()
-        matches = tagger_object.match_texts([text])
-        result = {"tagger_group_id": tagger_object.id, "tagger_group_tag": tagger_object.description, "result": False, "matches": []}
-        if matches:
+        matches = tagger_object.match_texts([text], add_tagger_info=True)
+        result = {"tagger_group_id": tagger_object.id, "tagger_group_tag": tagger_object.description, "result": False, "tags": []}
+        if matches[0]:
             result["result"] = True
-            result["matches"] = matches
+            result["tags"] = matches[0]
 
 
         return Response(result, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'], serializer_class=RegexGroupTaggerTagTextSerializer)
+    def simple_tag_text(self, request, pk=None, project_pk=None):
+        serializer = RegexGroupTaggerTagTextSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # retrieve tagger object
+        text = serializer.validated_data["text"]
+        tagger_object: RegexTaggerGroup = self.get_object()
+        matches = tagger_object.match_texts([text], add_tagger_info=True)
+        result = []
+        if matches[0]:
+            for match in matches[0]:
+                result.append(match["tag"])
+        result = list(set(result))
+        return Response(result, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], serializer_class=RegexTaggerTagTextsSerializer)
     def tag_texts(self, request, pk=None, project_pk=None):
@@ -382,10 +437,8 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         texts = serializer.validated_data["texts"]
         tagger_object: RegexTaggerGroup = self.get_object()
 
-        result = {"tagger_group_id": tagger_object.id, "tagger_group_tag": tagger_object.description, "matches": []}
-        for text in texts:
-            matches = tagger_object.match_texts(texts=[text])
-            result["matches"].append(matches)
+        matches = tagger_object.match_texts(texts=texts, add_tagger_info=True)
+        result = {"tagger_group_id": tagger_object.id, "tagger_group_tag": tagger_object.description, "tags": matches}
 
         return Response(result, status=status.HTTP_200_OK)
 
@@ -396,7 +449,8 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         serializer.is_valid(raise_exception=True)
         tagger_object: RegexTaggerGroup = self.get_object()
 
-        input_document = serializer.validated_data['doc']
+        input_document = serializer.validated_data["doc"]
+        flattened_doc = ElasticCore(check_connection=False).flatten(input_document)
         fields = serializer.validated_data["fields"]
 
         # apply tagger
@@ -404,19 +458,38 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
             "tagger_group_id": tagger_object.pk,
             "tagger_group_tag": tagger_object.description,
             "result": False,
-            "matches": []
+            "tags": []
         }
 
         final_matches = []
+        buffer_matches = {}
+
         for field in fields:
-            flattened_doc = ElasticCore(check_connection=False).flatten(input_document)
             text = flattened_doc.get(field, None)
-            matches = tagger_object.match_texts([text])
-            final_matches.extend(matches)
+            matches_with_meta = tagger_object.match_texts([text], add_tagger_info=True)
+
+            # collect intermediate results to buffer for formatting resons:
+            for match_with_meta in matches_with_meta[0]:
+                if match_with_meta["tagger_id"] not in buffer_matches:
+                    buffer_matches[match_with_meta["tagger_id"]] = []
+                for match in match_with_meta["matches"]:
+                    match.update(field=field)
+                buffer_matches[match_with_meta["tagger_id"]].append(match_with_meta)
+
+        # format:
+        for tagger_id, matches_with_meta in list(buffer_matches.items()):
+            new_tag = {
+                "tagger_id": tagger_id,
+                "tag": matches_with_meta[0]["tag"],
+                "matches": []
+            }
+            for match_with_meta in matches_with_meta:
+                new_tag["matches"].extend(match_with_meta["matches"])
+            final_matches.append(new_tag)
 
         if final_matches:
+            results["tags"] = final_matches
             results["result"] = True
-            results["matches"] = final_matches
 
         return Response(results, status=status.HTTP_200_OK)
 
@@ -435,33 +508,51 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         indices = project_object.get_available_or_all_project_indices(indices)
 
         # retrieve tagger fields
-        tagger_fields = serializer.validated_data["fields"]
+        fields = serializer.validated_data["fields"]
         if not ElasticCore().check_if_indices_exist(tagger_object.project.get_indices()):
             return Response({'error': f'One or more index from {list(tagger_object.project.get_indices())} do not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
         # retrieve random document
         random_doc = ElasticSearcher(indices=indices).random_documents(size=1)[0]
+        flattened_doc = ElasticCore(check_connection=False).flatten(random_doc)
 
         # apply tagger
         results = {
             "tagger_group_id": tagger_object.pk,
             "tagger_group_tag": tagger_object.description,
             "result": False,
-            "matches": [],
-            "texts": []
+            "tags": [],
+            "document": flattened_doc
         }
 
         final_matches = []
-        for field in tagger_fields:
-            flattened_doc = ElasticCore(check_connection=False).flatten(random_doc)
+        buffer_matches = {}
+
+        for field in fields:
             text = flattened_doc.get(field, None)
-            if text:
-                results["texts"].append(text)
-            matches = tagger_object.match_texts([text])
-            final_matches.extend(matches)
+            matches_with_meta = tagger_object.match_texts([text], add_tagger_info=True)
+
+            # collect intermediate results to buffer for formatting resons:
+            for match_with_meta in matches_with_meta[0]:
+                if match_with_meta["tagger_id"] not in buffer_matches:
+                    buffer_matches[match_with_meta["tagger_id"]] = []
+                for match in match_with_meta["matches"]:
+                    match.update(field=field)
+                buffer_matches[match_with_meta["tagger_id"]].append(match_with_meta)
+
+        # format:
+        for tagger_id, matches_with_meta in list(buffer_matches.items()):
+            new_tag = {
+                "tagger_id": tagger_id,
+                "tag": matches_with_meta[0]["tag"],
+                "matches": []
+            }
+            for match_with_meta in matches_with_meta:
+                new_tag["matches"].extend(match_with_meta["matches"])
+            final_matches.append(new_tag)
 
         if final_matches:
+            results["tags"] = final_matches
             results["result"] = True
-            results["matches"] = final_matches
 
         return Response(results, status=status.HTTP_200_OK)

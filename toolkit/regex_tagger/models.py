@@ -59,7 +59,7 @@ class RegexTagger(models.Model):
         return self.description
 
 
-    def match_texts(self, texts: List[str], add_tagger_info: bool=True):
+    def match_texts(self, texts: List[str], add_tagger_info: bool=False):
         results = []
         for text in texts:
             if text:
@@ -70,7 +70,6 @@ class RegexTagger(models.Model):
                         match.update(tag=self.description, tagger_id=self.id)
                 results.extend(matches)
         return results
-
 
     def get_description(self):
         return {"tagger_id": self.pk, "description": self.description}
@@ -123,25 +122,34 @@ class RegexTaggerGroup(models.Model):
                     matcher = load_matcher(tagger)
                     matches = matcher.get_matches(text)
                     if field:
-                        texta_facts = [{"str_val": tagger.description, "spans": json.dumps([match["spans"]]), "fact": self.description, "doc_path": field} for match in matches]
+                        texta_facts = [{"str_val": tagger.description, "spans": json.dumps([match["span"]]), "fact": self.description, "doc_path": field} for match in matches]
                     else:
-                        texta_facts = [{"str_val": tagger.description, "spans": json.dumps([match["spans"]]), "fact": self.description} for match in matches]
+                        texta_facts = [{"str_val": tagger.description, "spans": json.dumps([match["span"]]), "fact": self.description} for match in matches]
                     results.extend(texta_facts)
             return results
         else:
             return []
 
 
-    def match_texts(self, texts: List[str], add_tagger_info: bool=True):
+    def match_texts(self, texts: List[str], add_tagger_info: bool=False):
         results = []
         for text in texts:
             if text:
+                text_tags = []
                 for tagger in self.regex_taggers.all():
 
                     matcher = load_matcher(tagger)
                     matches = matcher.get_matches(text)
                     if add_tagger_info:
-                        for match in matches:
-                            match.update(tag=tagger.description, tagger_id=tagger.id)
+                        new_tag = {
+                            "tag": tagger.description,
+                            "tagger_id": tagger.id,
+                            "matches": matches
+                        }
+                        if matches:
+                            text_tags.append(new_tag)
+                if add_tagger_info:
+                    results.append(text_tags)
+                else:
                     results.extend(matches)
         return results
