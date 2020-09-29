@@ -59,16 +59,29 @@ class RegexTagger(models.Model):
         return self.description
 
 
-    def match_texts(self, texts: List[str], add_tagger_info: bool=False):
+    def match_texts(self, texts: List[str], as_texta_facts: bool=False, field=""):
         results = []
         for text in texts:
             if text:
                 matcher = load_matcher(self)
                 matches = matcher.get_matches(text)
-                if add_tagger_info:
+                if as_texta_facts:
+                    new_facts = []
                     for match in matches:
-                        match.update(tag=self.description, tagger_id=self.id)
-                results.extend(matches)
+                        #print(match)
+                        new_fact = {
+                            "fact": self.description,
+                            "str_val": match["str_val"],
+                            "spans": json.dumps([match["span"]]),
+                            "doc_path": field,
+                            "tagger_id": self.id
+                        }
+                        new_facts.append(new_fact)
+                    results.extend(new_facts)
+
+                        #match.update(tag=self.description, tagger_id=self.id)
+                else:
+                    results.extend(matches)
         return results
 
     def get_description(self):
@@ -131,7 +144,7 @@ class RegexTaggerGroup(models.Model):
             return []
 
 
-    def match_texts(self, texts: List[str], add_tagger_info: bool=False):
+    def match_texts(self, texts: List[str], as_texta_facts: bool=False, field: str=""):
         results = []
         for text in texts:
             if text:
@@ -140,16 +153,21 @@ class RegexTaggerGroup(models.Model):
 
                     matcher = load_matcher(tagger)
                     matches = matcher.get_matches(text)
-                    if add_tagger_info:
-                        new_tag = {
-                            "tag": tagger.description,
-                            "tagger_id": tagger.id,
-                            "matches": matches
-                        }
-                        if matches:
-                            text_tags.append(new_tag)
-                if add_tagger_info:
-                    results.append(text_tags)
-                else:
-                    results.extend(matches)
+                    if as_texta_facts:
+                        new_facts = []
+
+                        for match in matches:
+                            new_fact = {
+                                "fact": tagger.description,
+                                "str_val": match["str_val"],
+                                "doc_path": field,
+                                "spans": json.dumps([match["span"]]),
+                                "tagger_id": tagger.id
+                            }
+                            new_facts.append(new_fact)
+
+                    if as_texta_facts:
+                        results.extend(new_facts)
+                    else:
+                        results.extend(matches)
         return results

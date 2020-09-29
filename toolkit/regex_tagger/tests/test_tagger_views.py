@@ -108,6 +108,12 @@ class RegexTaggerViewTests(APITestCase):
         self.assertTrue("matches" in response.data)
         self.assertEqual(response.data["result"], True)
         self.assertEqual(len(response.data["matches"]), 1)
+        fact = response.data["matches"][0]
+        self.assertTrue("fact" in fact)
+        self.assertTrue("str_val" in fact)
+        self.assertTrue("spans" in fact)
+        self.assertTrue("doc_path" in fact)
+        self.assertTrue("tagger_id" in fact)
 
         ### test non-matching text
         payload = {
