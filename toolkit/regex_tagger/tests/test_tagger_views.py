@@ -43,6 +43,20 @@ class RegexTaggerViewTests(APITestCase):
 
     def run_test_regex_tagger_create(self):
         """Tests RegexTagger creation."""
+
+        # Test invalid input:
+        invalid_payload = {
+            "description": "TestRegexTagger",
+            "lexicon": ["jossif stalin))", "adolf** hitler"],
+            "counter_lexicon": ["benito** (mussolini"]
+        }
+
+        response = self.client.post(self.url, invalid_payload)
+        print_output('test_regex_tagger_create_invalid_input:response.data', response.data)
+
+        # Check if returns validation error
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
         payload = {
             "description": "TestRegexTagger",
             "lexicon": ["jossif stalin", "adolf hitler"],
@@ -57,6 +71,7 @@ class RegexTaggerViewTests(APITestCase):
 
         # Check if lexicon gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
 
 
     def test_regex_tagger_tag_nested_doc(self):

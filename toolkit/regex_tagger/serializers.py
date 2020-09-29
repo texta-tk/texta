@@ -1,8 +1,8 @@
 from rest_framework import serializers
 from texta_lexicon_matcher.lexicon_matcher import SUPPORTED_MATCH_TYPES, SUPPORTED_OPERATORS
-
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 from .models import RegexTagger, RegexTaggerGroup
+from .validators import validate_patterns
 from ..core.task.serializers import TaskSerializer
 from ..elastic.searcher import EMPTY_QUERY
 from ..elastic.serializers import IndexSerializer
@@ -17,11 +17,12 @@ MATCH_TYPE_CHOICES = [(match_type, match_type) for match_type in SUPPORTED_MATCH
 OPERATOR_CHOICES = [(operator, operator) for operator in SUPPORTED_OPERATORS]
 
 
+
 class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
     description = serializers.CharField()
     author_username = serializers.CharField(source='author.username', read_only=True)
-    lexicon = serializers.ListField(child=serializers.CharField(required=True), help_text="Words/phrases/regex patterns to match.")
-    counter_lexicon = serializers.ListField(child=serializers.CharField(required=False), default=[], help_text="Words/phrases/regex patterns to nullify lexicon matches. Default=[]")
+    lexicon = serializers.ListField(child=serializers.CharField(required=True), validators=[validate_patterns], help_text="Words/phrases/regex patterns to match.")
+    counter_lexicon = serializers.ListField(child=serializers.CharField(required=False), default=[], validators=[validate_patterns], help_text="Words/phrases/regex patterns to nullify lexicon matches. Default=[]")
 
     operator = serializers.ChoiceField(default=SUPPORTED_OPERATORS[0], choices=OPERATOR_CHOICES, required=False, help_text="Logical operation between lexicon entries. Choices = ['and', 'or']. Default='or'")
     match_type = serializers.ChoiceField(default=SUPPORTED_MATCH_TYPES[0], choices=MATCH_TYPE_CHOICES, required=False, help_text="How to match lexicon entries to text. Choices = ['prefix', 'exact', 'subword']. Default='prefix'")
