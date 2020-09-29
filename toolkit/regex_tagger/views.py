@@ -85,6 +85,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
             "tagger_id": tagger_object.pk,
             "tag": tagger_object.description,
             "result": False,
+            "text": text,
             "matches": []
         }
 
@@ -377,8 +378,14 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         text = serializer.validated_data["text"]
         tagger_object: RegexTaggerGroup = self.get_object()
         matches = tagger_object.match_texts([text], as_texta_facts=True, field="text")
-        result = {"tagger_group_id": tagger_object.id, "tagger_group_tag": tagger_object.description, "result": False, "tags": []}
-        if matches[0]:
+        result = {
+            "tagger_group_id": tagger_object.id,
+            "tagger_group_tag": tagger_object.description,
+            "result": False,
+            "text": text,
+            "matches": []
+        }
+        if matches:
             result["result"] = True
             result["matches"] = matches
 

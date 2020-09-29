@@ -65,6 +65,8 @@ class RegexGroupTaggerTests(APITransactionTestCase):
         self.assertEqual(response.data["result"], True)
         self.assertTrue("tagger_group_id" in response.data)
         self.assertTrue("tagger_group_tag" in response.data)
+        self.assertTrue("text" in response.data)
+
 
         matches = []
         for tag in response.data["matches"]:

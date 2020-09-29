@@ -106,6 +106,7 @@ class RegexTaggerViewTests(APITestCase):
         self.assertTrue("tag" in response.data)
         self.assertTrue("result" in response.data)
         self.assertTrue("matches" in response.data)
+        self.assertTrue("text" in response.data)
         self.assertEqual(response.data["result"], True)
         self.assertEqual(len(response.data["matches"]), 1)
         fact = response.data["matches"][0]
