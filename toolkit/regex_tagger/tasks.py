@@ -48,8 +48,9 @@ def update_generator(generator: ElasticSearcher, fields: List[str], group_tagger
 
             for field in fields:
                 text = hit.get(field, None)
-                results = tagger.apply([text], field=field)
-                existing_facts.extend(results)
+                if text:
+                    results = tagger.apply([text], field=field)
+                    existing_facts.extend(results)
 
             if existing_facts:
                 # Remove duplicates to avoid adding the same facts with repetitive use.
@@ -65,12 +66,13 @@ def update_generator(generator: ElasticSearcher, fields: List[str], group_tagger
 
 
 @task(name="apply_regex_tagger", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def apply_regex_tagger(tagger_group_id: int, indices: list, fields: List[str], query: dict):
+def apply_regex_tagger(tagger_group_id: int, indices: List[str], fields: List[str], query: dict):
     try:
         regex_tagger_group = RegexTaggerGroup.objects.get(pk=tagger_group_id)
         progress = ShowProgress(regex_tagger_group.task)
 
         ec = ElasticCore()
+        [ec.add_texta_facts_mapping(index) for index in indices]
 
         searcher = ElasticSearcher(
             indices=indices,
