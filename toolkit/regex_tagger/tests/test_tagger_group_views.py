@@ -77,6 +77,7 @@ class RegexGroupTaggerTests(APITransactionTestCase):
         self.assertTrue("varas" in matches)
         self.assertTrue("põleng" in matches)
 
+
     @skip("Work in progress.")
     def test_regex_tagger_group_tag_texts(self):
         url = reverse("v1:regex_tagger_group-tag-texts", kwargs={"project_pk": self.project.pk, "pk": self.tagger_group_id})
@@ -121,6 +122,7 @@ class RegexGroupTaggerTests(APITransactionTestCase):
 
         print_output('test_regex_tagger_group_multitag_text:response.data', response.data)
 
+
     def test_applying_the_regex_tagger_group_to_the_index(self):
         ec = ElasticCore()
         tg_description = "toxic"
@@ -141,6 +143,7 @@ class RegexGroupTaggerTests(APITransactionTestCase):
 
         self.assertTrue(has_group_fact)
         print_output('test_applying_the_regex_tagger_group_to_the_index:response.data', response.data)
+
 
     @skip("Work in progress.")
     def test_regex_tagger_group_tagging_nested_doc(self):

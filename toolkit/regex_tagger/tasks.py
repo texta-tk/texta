@@ -1,10 +1,8 @@
-import json
 import logging
 from typing import List, Optional
 
 from celery.decorators import task
 from elasticsearch.helpers import bulk
-from texta_lexicon_matcher.lexicon_matcher import LexiconMatcher
 
 from toolkit.base_tasks import TransactionAwareTask
 from toolkit.elastic.core import ElasticCore
@@ -88,5 +86,5 @@ def apply_regex_tagger(tagger_group_id: int, indices: list, fields: List[str], q
         return True
 
     except Exception as e:
-        task.add_error(str(e))
         logging.getLogger(ERROR_LOGGER).exception(e)
+        regex_tagger_group.task.add_error(str(e))

@@ -28,7 +28,7 @@ dependencies:
       - django-extensions
       - django-filter
       - django-rest-auth[with_social]
-      - djangorestframework==3.*
+      - djangorestframework==3.11.*
       - drf-nested-routers
       - celery==4.*
       - redis==3.*
