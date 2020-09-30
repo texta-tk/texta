@@ -51,6 +51,17 @@ class AnonymizerViewTests(APITestCase):
         '''Tests Anonymizer text anonymization.'''
         anonymizer_url = f'{self.url}{self.anonymizer_id}/anonymize_text/'
 
+        ### test invalid input format
+        invalid_payload = {
+            "text": "selles tekstis on mõrtsukas Jossif Stalini nimi",
+            "names": ["Jossif Stalin"]
+        }
+
+        response = self.client.post(anonymizer_url, invalid_payload)
+        print_output('test_anonymizer_anonymize_text_invalid_input:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
         ###test anonymizing text
         payload = {
             "text": "selles tekstis on mõrtsukas Jossif Stalini nimi",
@@ -58,12 +69,24 @@ class AnonymizerViewTests(APITestCase):
         }
         response = self.client.post(anonymizer_url, payload)
         print_output('test_anonymizer_anonymized_text:response.data', response.data)
-        assert len(response.json()) > 0
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.json()) > 0)
 
 
     def run_test_anonymizer_anonymize_texts(self):
         '''Tests Anonymizer multiple texts anonymization.'''
         anonymizer_url = f'{self.url}{self.anonymizer_id}/anonymize_texts/'
+
+        ### test invalid input format
+        invalid_payload = {
+            "texts": ["selles tekstis on mõrtsukas Jossif Stalini nimi", "selles tekstis on onkel Adolf Hitler"],
+            "names": ["Stalin, Jossif", "Hitler Adolf"],
+            "consistent_replacement": True
+        }
+
+        response = self.client.post(anonymizer_url, invalid_payload)
+        print_output('test_anonymizer_anonymize_texts_invalid_input:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         ### test anonymizing texts
         payload = {
@@ -72,9 +95,11 @@ class AnonymizerViewTests(APITestCase):
             "consistent_replacement": True
         }
         response = self.client.post(anonymizer_url, payload)
-        print_output('test_anonymizer_anonymized_texts:response.data', response.data)
+        print_output('test_anonymizer_anonymize_texts:response.data', response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         # check if respnose not empy
-        assert len(response.json()[0]) > 0
+        self.assertTrue(len(response.json()[0]) > 0)
 
 
     def run_test_anonymizer_export_import(self):
@@ -95,9 +120,9 @@ class AnonymizerViewTests(APITestCase):
             "names": ["Stalin, Jossif", "Hitler, Adolf"]
         }
         response = self.client.post(anonymizer_url, payload)
-        print_output('test_anonymizer_anonymized_texts:response.data', response.data)
+        print_output('test_anonymizer_anonymize_texts:response.data', response.data)
         # check if response not empty
-        assert len(response.json()[0]) > 0
+        self.assertTrue(len(response.json()[0]) > 0)
 
 
     def run_test_check_for_validation_error(self):
@@ -107,5 +132,5 @@ class AnonymizerViewTests(APITestCase):
             "names": ["Stalin, Jossif", "Hitler Adolf"],
         }
         response = self.client.post(anonymizer_url, payload, format="json")
-        self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
-        print_output("run_check_for_validation_error:response.data", response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        print_output("test_check_for_validation_error:response.data", response.data)

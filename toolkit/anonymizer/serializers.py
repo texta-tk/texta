@@ -6,7 +6,6 @@ from rest_framework.exceptions import ValidationError
 from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 from .models import Anonymizer
 
-
 class AnonymizerSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
     description = serializers.CharField()
 
@@ -40,7 +39,7 @@ class AnonymizerAnonymizeTextSerializer(FieldParseSerializer, serializers.Serial
 
 
     def validate_names(self, value: List[str]):
-        error_message = "Value '{}' should be in format ['last_name,first_name']! Are you missing a coma?"
+        error_message = "Value '{}' should be in format ['last_name, first_name']! Are you missing a comma?"
         for name in value:
             if "," not in name:
                 raise ValidationError(error_message.format(name))
@@ -52,3 +51,10 @@ class AnonymizerAnonymizeTextsSerializer(FieldParseSerializer, serializers.Seria
     names = serializers.ListField(help_text='List of names to anonymize in form ["last_name, first_name"]',
                                   child=serializers.CharField(required=True))
     consistent_replacement = serializers.BooleanField(default=True, required=False, help_text='Replace name X in different texts with the same replacement string.')
+
+    def validate_names(self, value: List[str]):
+        error_message = "Value '{}' should be in format ['last_name, first_name']! Are you missing a comma?"
+        for name in value:
+            if "," not in name:
+                raise ValidationError(error_message.format(name))
+        return value
