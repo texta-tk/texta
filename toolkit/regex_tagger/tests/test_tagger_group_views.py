@@ -7,7 +7,7 @@ from unittest import skip
 
 from toolkit.elastic.core import ElasticCore
 from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX
+from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_INTEGER_FIELD
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -199,3 +199,11 @@ class RegexGroupTaggerTests(APITransactionTestCase):
         self.assertTrue(update_response.status_code == status.HTTP_200_OK)
         self.assertTrue(update_response.data["regex_taggers"] == [military_tagger["id"]])
         print_output('test_editing_another_tagger_into_the_group:response.data', update_response.data)
+
+
+    def test_that_non_text_fields_are_handled_properly(self):
+        url = reverse("v1:regex_tagger_group-tag-random-doc", kwargs={"project_pk": self.project.pk, "pk": self.tagger_group_id})
+        response = self.client.post(url, {"fields": [TEST_INTEGER_FIELD]}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.assertTrue(response.data["matches"] == [] and response.data["result"] is False)
+        print_output("test_that_non_text_fields_are_handled_properly:response.data", response.data)

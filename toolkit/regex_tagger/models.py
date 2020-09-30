@@ -59,16 +59,16 @@ class RegexTagger(models.Model):
         return self.description
 
 
-    def match_texts(self, texts: List[str], as_texta_facts: bool=False, field=""):
+    def match_texts(self, texts: List[str], as_texta_facts: bool = False, field=""):
         results = []
         for text in texts:
-            if text:
+            if text and isinstance(text, str):
                 matcher = load_matcher(self)
                 matches = matcher.get_matches(text)
                 if as_texta_facts:
                     new_facts = []
                     for match in matches:
-                        #print(match)
+                        # print(match)
                         new_fact = {
                             "fact": self.description,
                             "str_val": match["str_val"],
@@ -79,10 +79,11 @@ class RegexTagger(models.Model):
                         new_facts.append(new_fact)
                     results.extend(new_facts)
 
-                        #match.update(tag=self.description, tagger_id=self.id)
+                    # match.update(tag=self.description, tagger_id=self.id)
                 else:
                     results.extend(matches)
         return results
+
 
     def get_description(self):
         return {"tagger_id": self.pk, "description": self.description}
@@ -127,10 +128,10 @@ class RegexTaggerGroup(models.Model):
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
 
-    def apply(self, texts: List[str], field=None):
-        if texts:
-            results = []
-            for text in texts:
+    def apply(self, texts: List[str] = [], field=None):
+        results = []
+        for text in texts:
+            if isinstance(text, str) and text:
                 for tagger in self.regex_taggers.all():
                     matcher = load_matcher(tagger)
                     matches = matcher.get_matches(text)
@@ -139,16 +140,13 @@ class RegexTaggerGroup(models.Model):
                     else:
                         texta_facts = [{"str_val": tagger.description, "spans": json.dumps([match["span"]]), "fact": self.description} for match in matches]
                     results.extend(texta_facts)
-            return results
-        else:
-            return []
+        return results
 
 
-    def match_texts(self, texts: List[str], as_texta_facts: bool=False, field: str=""):
+    def match_texts(self, texts: List[str], as_texta_facts: bool = False, field: str = ""):
         results = []
         for text in texts:
-            if text:
-                text_tags = []
+            if text and isinstance(text, str):
                 for tagger in self.regex_taggers.all():
 
                     matcher = load_matcher(tagger)

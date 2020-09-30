@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_VERSION_PREFIX
+from toolkit.test_settings import TEST_FIELD, TEST_INDEX, TEST_INTEGER_FIELD, TEST_VERSION_PREFIX
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
@@ -31,9 +31,11 @@ class RegexTaggerViewTests(APITestCase):
         tagger_url = reverse("v1:regex_tagger-list", kwargs={"project_pk": self.project.pk})
         for payload in payloads:
             response = self.client.post(tagger_url, payload)
+            self.assertTrue(response.status_code == status.HTTP_201_CREATED)
             ids.append(int(response.data["id"]))
 
         self.police, self.medic, self.firefighter = ids
+
 
     def test(self):
         self.run_test_regex_tagger_create()
@@ -41,21 +43,9 @@ class RegexTaggerViewTests(APITestCase):
         self.run_test_regex_tagger_tag_texts()
         self.run_test_regex_tagger_export_import()
 
+
     def run_test_regex_tagger_create(self):
         """Tests RegexTagger creation."""
-
-        # Test invalid input:
-        invalid_payload = {
-            "description": "TestRegexTagger",
-            "lexicon": ["jossif stalin))", "adolf** hitler"],
-            "counter_lexicon": ["benito** (mussolini"]
-        }
-
-        response = self.client.post(self.url, invalid_payload)
-        print_output('test_regex_tagger_create_invalid_input:response.data', response.data)
-
-        # Check if returns validation error
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         payload = {
             "description": "TestRegexTagger",
@@ -71,7 +61,6 @@ class RegexTaggerViewTests(APITestCase):
 
         # Check if lexicon gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
 
 
     def test_regex_tagger_tag_nested_doc(self):
@@ -210,7 +199,7 @@ class RegexTaggerViewTests(APITestCase):
     def test_regex_tagger_multitag_text(self):
         """Tests multitag endpoint."""
         url = reverse("v1:regex_tagger-multitag-text", kwargs={"project_pk": self.project.pk})
-        #tagger_url = f'{self.url}multitag_text/'
+        # tagger_url = f'{self.url}multitag_text/'
         ### test matching text
         payload = {
             "text": "maja teisel korrusel toimus põleng ning ohver sai tõsiseid vigastusi.",
@@ -248,3 +237,25 @@ class RegexTaggerViewTests(APITestCase):
         self.assertTrue(update_response.status_code == status.HTTP_200_OK)
         self.assertTrue(update_response.data["lexicon"] == ["jossif stalin"])
         print_output('test_regex_tagger_create_and_update:response.data', response.data)
+
+
+    def test_that_non_text_fields_are_handled_properly(self):
+        url = reverse("v1:regex_tagger-tag-random-doc", kwargs={"project_pk": self.project.pk, "pk": self.police})
+        response = self.client.post(url, {"fields": [TEST_INTEGER_FIELD]}, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.assertTrue(response.data["matches"] == [] and response.data["result"] is False)
+        print_output("test_that_non_text_fields_are_handled_properly", response.data)
+
+
+    def test_that_creating_taggers_with_invalid_regex_creates_validation_exception(self):
+        invalid_payload = {
+            "description": "TestRegexTagger",
+            "lexicon": ["jossif stalin))", "adolf** hitler"],
+            "counter_lexicon": ["benito** (mussolini"]
+        }
+
+        response = self.client.post(self.url, invalid_payload)
+        print_output('test_regex_tagger_create_invalid_input:response.data', response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue("lexicon" in response.data)
+        self.assertTrue("counter_lexicon" in response.data)
