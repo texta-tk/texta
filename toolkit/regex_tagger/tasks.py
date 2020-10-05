@@ -49,7 +49,7 @@ def update_generator(generator: ElasticSearcher, fields: List[str], group_tagger
             for field in fields:
                 text = hit.get(field, None)
                 if text and isinstance(text, str):
-                    results = tagger.apply([text], field=field)
+                    results = tagger.apply([text], field_path=field)
                     existing_facts.extend(results)
 
             if existing_facts:

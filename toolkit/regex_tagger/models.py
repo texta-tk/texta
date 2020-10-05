@@ -1,7 +1,7 @@
 import json
 import tempfile
 import zipfile
-from typing import List
+from typing import List, Optional
 
 from django.contrib.auth.models import User
 from django.core import serializers
@@ -11,6 +11,9 @@ from texta_lexicon_matcher.lexicon_matcher import LexiconMatcher, SUPPORTED_MATC
 from toolkit.constants import MAX_DESC_LEN
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
+from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.document import ElasticDocument
+from toolkit.settings import TEXTA_TAGS_KEY
 
 
 def load_matcher(regex_tagger_object):
@@ -59,27 +62,25 @@ class RegexTagger(models.Model):
         return self.description
 
 
-    def match_texts(self, texts: List[str], as_texta_facts: bool = False, field=""):
+    def match_texts(self, texts: List[str], as_texta_facts: bool = False, field="", matcher: Optional[LexiconMatcher] = None):
         results = []
+        matcher = matcher or load_matcher(self)  # Optionally, you can insert another matcher of your choice.
         for text in texts:
             if text and isinstance(text, str):
-                matcher = load_matcher(self)
                 matches = matcher.get_matches(text)
                 if as_texta_facts:
                     new_facts = []
                     for match in matches:
-                        # print(match)
+                        source_string = json.dumps({"regextagger_id": self.pk})
                         new_fact = {
                             "fact": self.description,
                             "str_val": match["str_val"],
                             "spans": json.dumps([match["span"]]),
                             "doc_path": field,
-                            "tagger_id": self.id
+                            "source": source_string
                         }
                         new_facts.append(new_fact)
                     results.extend(new_facts)
-
-                    # match.update(tag=self.description, tagger_id=self.id)
                 else:
                     results.extend(matches)
         return results
@@ -128,15 +129,15 @@ class RegexTaggerGroup(models.Model):
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)
 
 
-    def apply(self, texts: List[str] = [], field=None):
+    def apply(self, texts: List[str] = [], field_path: Optional[str] = None):
         results = []
         for text in texts:
             if isinstance(text, str) and text:
                 for tagger in self.regex_taggers.all():
                     matcher = load_matcher(tagger)
                     matches = matcher.get_matches(text)
-                    if field:
-                        texta_facts = [{"str_val": tagger.description, "spans": json.dumps([match["span"]]), "fact": self.description, "doc_path": field} for match in matches]
+                    if field_path:
+                        texta_facts = [{"str_val": tagger.description, "spans": json.dumps([match["span"]]), "fact": self.description, "doc_path": field_path} for match in matches]
                     else:
                         texta_facts = [{"str_val": tagger.description, "spans": json.dumps([match["span"]]), "fact": self.description} for match in matches]
                     results.extend(texta_facts)
@@ -145,22 +146,22 @@ class RegexTaggerGroup(models.Model):
 
     def match_texts(self, texts: List[str], as_texta_facts: bool = False, field: str = ""):
         results = []
-        for text in texts:
-            if text and isinstance(text, str):
-                for tagger in self.regex_taggers.all():
-
-                    matcher = load_matcher(tagger)
+        for tagger in self.regex_taggers.all():
+            matcher = load_matcher(tagger)
+            for text in texts:
+                if text and isinstance(text, str):
                     matches = matcher.get_matches(text)
                     if as_texta_facts:
                         new_facts = []
 
                         for match in matches:
+                            source_string = json.dumps({"regextaggergroup_id": self.pk, "regextagger_id": tagger.pk})
                             new_fact = {
-                                "fact": tagger.description,
-                                "str_val": match["str_val"],
+                                "fact": self.description,
+                                "str_val": tagger.description,
                                 "doc_path": field,
                                 "spans": json.dumps([match["span"]]),
-                                "tagger_id": tagger.id
+                                "source": source_string
                             }
                             new_facts.append(new_fact)
 
@@ -169,3 +170,20 @@ class RegexTaggerGroup(models.Model):
                     else:
                         results.extend(matches)
         return results
+
+
+    def tag_docs(self, fields: List[str], docs: List[dict]):
+        # apply tagger
+        for doc in docs:
+            for field in fields:
+                flattened_doc = ElasticCore(check_connection=False).flatten(doc)
+                text = flattened_doc.get(field, None)
+                matches_as_facts = self.match_texts([text], as_texta_facts=True, field=field)
+                for fact in matches_as_facts:
+                    fact.update(fact=self.description)
+
+                pre_existing_facts = doc.get(TEXTA_TAGS_KEY, [])
+                filtered_facts = ElasticDocument.remove_duplicate_facts(pre_existing_facts + matches_as_facts)
+                doc[TEXTA_TAGS_KEY] = filtered_facts
+
+        return docs

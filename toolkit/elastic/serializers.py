@@ -25,6 +25,7 @@ class IndexSerializer(serializers.ModelSerializer):
         ]
     )
 
+
     def get_url(self, obj):
         index = reverse("v1:index-detail", kwargs={"pk": obj.pk})
         if "request" in self.context:
@@ -99,8 +100,12 @@ class ReindexerCreateSerializer(FieldParseSerializer, serializers.HyperlinkedMod
                                    required=False)
     query = serializers.JSONField(help_text='Add a query, if you wish to filter the new reindexed index.', required=False)
     new_index = serializers.CharField(help_text='Your new re-indexed index name', allow_blank=False, required=True)
-    random_size = serializers.IntegerField(help_text='Picks a subset of documents of chosen size at random. Disabled by default.',
-                                           required=False)
+    random_size = serializers.IntegerField(
+        help_text='Picks a subset of documents of chosen size at random. Disabled by default.',
+        required=False,
+        min_value=1,
+        max_value=10000
+    )
     field_type = serializers.ListField(help_text=f'Used to update the fieldname and the field type of chosen paths.',
                                        required=False)
     task = TaskSerializer(read_only=True)

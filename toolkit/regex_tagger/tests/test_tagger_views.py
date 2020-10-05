@@ -1,3 +1,4 @@
+import json
 from io import BytesIO
 
 from django.urls import reverse
@@ -118,7 +119,8 @@ class RegexTaggerViewTests(APITestCase):
         self.assertTrue("str_val" in fact)
         self.assertTrue("spans" in fact)
         self.assertTrue("doc_path" in fact)
-        self.assertTrue("tagger_id" in fact)
+        source = json.loads(fact["source"])
+        self.assertTrue("regextagger_id" in source)
 
         ### test non-matching text
         payload = {

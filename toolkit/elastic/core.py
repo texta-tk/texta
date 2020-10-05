@@ -11,13 +11,15 @@ from rest_framework.exceptions import ValidationError
 
 from toolkit.elastic.decorators import elastic_connection
 from toolkit.helper_functions import get_core_setting
-from toolkit.settings import ES_CONNECTION_PARAMETERS
+from toolkit.settings import ES_CONNECTION_PARAMETERS, TEXTA_TAGS_KEY
 
 
 class ElasticCore:
     """
         Class for holding most general settings and Elasticsearch object itself
     """
+
+
     def __init__(self, ES_URL=get_core_setting("TEXTA_ES_URL"), check_connection=True):
         self.ES_URL = ES_URL
         self.ES_PREFIX = get_core_setting("TEXTA_ES_PREFIX")
@@ -256,7 +258,7 @@ class ElasticCore:
         )
 
         # Set the name of the field along with its mapping body
-        m.field("texta_facts", texta_facts)
+        m.field(TEXTA_TAGS_KEY, texta_facts)
         m.save(index=index, using=self.es)
 
 

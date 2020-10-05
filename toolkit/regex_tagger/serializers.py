@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from texta_lexicon_matcher.lexicon_matcher import SUPPORTED_MATCH_TYPES, SUPPORTED_OPERATORS
-from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
+from toolkit.serializer_constants import FieldParseSerializer, FieldValidationSerializer, ProjectResourceUrlSerializer
 from .models import RegexTagger, RegexTaggerGroup
 from .validators import validate_patterns
 from ..core.task.serializers import TaskSerializer
@@ -15,7 +15,6 @@ PRIORITY_CHOICES = (
 
 MATCH_TYPE_CHOICES = [(match_type, match_type) for match_type in SUPPORTED_MATCH_TYPES]
 OPERATOR_CHOICES = [(operator, operator) for operator in SUPPORTED_OPERATORS]
-
 
 
 class RegexTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, ProjectResourceUrlSerializer):
@@ -61,6 +60,11 @@ class TagRandomDocSerializer(serializers.Serializer):
     fields = serializers.ListField(child=serializers.CharField(), required=True, allow_empty=False)
 
 
+class RegexTaggerTagDocsSerializer(serializers.Serializer):
+    docs = serializers.ListField(child=serializers.JSONField(), help_text="List of JSON documents to tag.")
+    fields = serializers.ListField(child=serializers.JSONField(), help_text="Dot separated paths of the JSON document to the text you wish to tag.")
+
+
 class RegexTaggerGroupTagDocumentSerializer(serializers.Serializer):
     doc = serializers.JSONField(help_text=f'Document in JSON format.')
     fields = serializers.ListField(child=serializers.CharField(), required=True, allow_empty=False)
@@ -77,6 +81,7 @@ class RegexMultitagTextSerializer(serializers.Serializer):
         child=serializers.IntegerField(),
         default=[]
     )
+
 
 class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrlSerializer):
     description = serializers.CharField()
