@@ -1,4 +1,5 @@
 import json
+from typing import List
 
 import elasticsearch_dsl
 from django.test import override_settings
@@ -26,40 +27,51 @@ class RegexGroupTaggerTests(APITransactionTestCase):
         return tg_response.data["id"], tagger_ids
 
 
-    def setUp(self) -> None:
+    def _set_up_project(self):
         self.user = create_test_user('tg_user', 'my@email.com', 'pw')
         self.project = project_creation("RegexGroupTaggerTestProject", TEST_INDEX, self.user)
         self.project.users.add(self.user)
         self.client.login(username='tg_user', password='pw')
 
-        self.tagger_group_list_url = reverse("v1:regex_tagger_group-list", kwargs={"project_pk": self.project.pk})
-        self.tagger_list_url = reverse("v1:regex_tagger-list", kwargs={"project_pk": self.project.pk})
 
+    def _set_up_tagger_group(self, payloads: List[dict], tg_description: str):
         ids = []
-        payloads = [
-            {"description": "politsei", "lexicon": ["varas", "röövel", "vägivald", "pettus"]},
-            {"description": "kiirabi", "lexicon": ["haav", "vigastus", "trauma"]},
-            {"description": "tuletõrje", "lexicon": ["põleng", "õnnetus"]}
-        ]
 
         tagger_url = reverse("v1:regex_tagger-list", kwargs={"project_pk": self.project.pk})
         for payload in payloads:
             response = self.client.post(tagger_url, payload)
             ids.append(int(response.data["id"]))
 
-        self.police, self.medic, self.firefighter = ids
-
         tg_payload = {
-            "description": "Hädaabi",
-            "regex_taggers": [self.police, self.medic, self.firefighter]
+            "description": tg_description,
+            "regex_taggers": ids
         }
-
         response = self.client.post(self.tagger_group_list_url, tg_payload)
-        self.tagger_group_id = int(response.data["id"])
+        ids.append(int(response.data["id"]))
+
+        return ids
+
+
+    def setUp(self) -> None:
+
+        self._set_up_project()
+        self.tagger_group_list_url = reverse("v1:regex_tagger_group-list", kwargs={"project_pk": self.project.pk})
+        self.tagger_list_url = reverse("v1:regex_tagger-list", kwargs={"project_pk": self.project.pk})
+
+        self.police_id, self.medic_id, self.firefighter_id, self.emergency_tagger_group_id = self._set_up_tagger_group([
+            {"description": "politsei", "lexicon": ["varas", "röövel", "vägivald", "pettus"]},
+            {"description": "kiirabi", "lexicon": ["haav", "vigastus", "trauma"]},
+            {"description": "tuletõrje", "lexicon": ["põleng", "õnnetus"]}
+        ], "Hädaabi")
+
+        self.stomach_pain_id, self.headache_id, self.pain_tagger_group_id = self._set_up_tagger_group([
+            {"description": "peavalu", "lexicon": ["migreen", "migreenid", "migreeni", "peavalu", "pea valutab", "valutab pea"]},
+            {"description": "kõhuvalu", "lexicon": ["kõht valutab", "kõhuvalu", "valutab kõht"]},
+        ], "Valu")
 
 
     def test_regex_tagger_group_tag_text(self):
-        url = reverse("v1:regex_tagger_group-tag-text", kwargs={"project_pk": self.project.pk, "pk": self.tagger_group_id})
+        url = reverse("v1:regex_tagger_group-tag-text", kwargs={"project_pk": self.project.pk, "pk": self.emergency_tagger_group_id})
         response = self.client.post(url, {"text": "Eile kell 10 õhtul sisenes varas keemiatehasesse, tema hooletuse tõttu tekkis põleng!"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         print_output('test_regex_tagger_group_tag_text:response.data', response.data)
@@ -88,7 +100,7 @@ class RegexGroupTaggerTests(APITransactionTestCase):
             "taggers": [tagger.pk for tagger in RegexTaggerGroup.objects.filter(project__id=self.project.pk)]
         }
         response = self.client.post(url, payload)
-        tg = RegexTaggerGroup.objects.get(pk=self.tagger_group_id)
+        tg = RegexTaggerGroup.objects.get(pk=self.emergency_tagger_group_id)
         police_tagger = RegexTagger.objects.get(description="politsei")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -123,7 +135,7 @@ class RegexGroupTaggerTests(APITransactionTestCase):
 
 
     def test_regex_tagger_group_tagging_nested_doc(self):
-        url = reverse("v1:regex_tagger_group-tag-docs", kwargs={"project_pk": self.project.pk, "pk": self.tagger_group_id})
+        url = reverse("v1:regex_tagger_group-tag-docs", kwargs={"project_pk": self.project.pk, "pk": self.emergency_tagger_group_id})
         payload = {
             "docs": [{
                 "text": {"police": "Varas peeti kinni!"},
@@ -139,7 +151,7 @@ class RegexGroupTaggerTests(APITransactionTestCase):
 
 
     def test_regex_tagger_group_tag_random_doc(self):
-        url = reverse("v1:regex_tagger_group-tag-random-doc", kwargs={"project_pk": self.project.pk, "pk": self.tagger_group_id})
+        url = reverse("v1:regex_tagger_group-tag-random-doc", kwargs={"project_pk": self.project.pk, "pk": self.emergency_tagger_group_id})
         response = self.client.post(url, {"fields": [TEST_FIELD]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertTrue("tagger_group_id" in response.data)
@@ -157,7 +169,7 @@ class RegexGroupTaggerTests(APITransactionTestCase):
             "lexicon": ["luure", "sõdur", "õppus", "staap"]
         }, format="json").data
 
-        tagger_group_url = reverse("v1:regex_tagger_group-detail", kwargs={"project_pk": self.project.pk, "pk": self.tagger_group_id})
+        tagger_group_url = reverse("v1:regex_tagger_group-detail", kwargs={"project_pk": self.project.pk, "pk": self.emergency_tagger_group_id})
         update_response = self.client.patch(tagger_group_url, {"regex_taggers": [military_tagger["id"]]}, format="json")
         self.assertTrue(update_response.status_code == status.HTTP_200_OK)
         self.assertTrue(update_response.data["regex_taggers"] == [military_tagger["id"]])
@@ -165,7 +177,7 @@ class RegexGroupTaggerTests(APITransactionTestCase):
 
 
     def test_that_non_text_fields_are_handled_properly(self):
-        url = reverse("v1:regex_tagger_group-tag-random-doc", kwargs={"project_pk": self.project.pk, "pk": self.tagger_group_id})
+        url = reverse("v1:regex_tagger_group-tag-random-doc", kwargs={"project_pk": self.project.pk, "pk": self.emergency_tagger_group_id})
         response = self.client.post(url, {"fields": [TEST_INTEGER_FIELD]}, format="json")
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertTrue(response.data["matches"] == [] and response.data["result"] is False)
@@ -173,12 +185,13 @@ class RegexGroupTaggerTests(APITransactionTestCase):
 
 
     def test_tagging_documents_with_no_matches(self):
-        tagger_group_url = reverse("v1:regex_tagger_group-tag-docs", kwargs={"project_pk": self.project.pk, "pk": self.tagger_group_id})
+        tagger_group_url = reverse("v1:regex_tagger_group-tag-docs", kwargs={"project_pk": self.project.pk, "pk": self.emergency_tagger_group_id})
         payload = {
             "docs": [{"text": "miks ei tulnud mulle politseinikud appi!"}, {"text_2": {"text": "Kõik on politseinike süü!"}}],
             "fields": ["text", "text_2.text"]
         }
         response = self.client.post(tagger_group_url, data=payload, format="json")
+        print_output("test_tagging_documents_with_no_matches::response.data", response.data)
         first_item, second_item = response.data
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertTrue("text" in first_item)
@@ -187,38 +200,43 @@ class RegexGroupTaggerTests(APITransactionTestCase):
 
 
     def test_tagging_documents_with_matches(self):
-        tagger_group_url = reverse("v1:regex_tagger_group-tag-docs", kwargs={"project_pk": self.project.pk, "pk": self.tagger_group_id})
+        tagger_group_url = reverse("v1:regex_tagger_group-tag-docs", kwargs={"project_pk": self.project.pk, "pk": self.emergency_tagger_group_id})
         payload = {
             "docs": [{"text": "see varas oli süüdi!"}, {"text_2": {"text": "See põleng on kohutav!"}}],
             "fields": ["text", "text_2.text"]
         }
+
         response = self.client.post(tagger_group_url, data=payload, format="json")
+        print_output("test_tagging_documents_with_matches::response.data", response.data)
         first_item, second_item = response.data
+        first_facts, second_facts = first_item[TEXTA_TAGS_KEY], second_item[TEXTA_TAGS_KEY]
         self.assertTrue(response.status_code == status.HTTP_200_OK)
         self.assertTrue("text" in first_item)
         self.assertTrue("text_2" in second_item and "text" in second_item["text_2"])
         self.assertTrue(TEXTA_TAGS_KEY in first_item and TEXTA_TAGS_KEY in second_item)
-        self.assertTrue(len(first_item[TEXTA_TAGS_KEY]) == 1 and len(second_item[TEXTA_TAGS_KEY]) == 1)
+        self.assertTrue(len(first_facts) == 1 and len(second_facts) == 1)
 
-        self.assertTrue(first_item[TEXTA_TAGS_KEY][0]["fact"] == "Hädaabi")
-        self.assertTrue(first_item[TEXTA_TAGS_KEY][0]["str_val"] == "politsei")
-        source = json.loads(first_item[TEXTA_TAGS_KEY][0]["source"])
-        self.assertTrue("regextagger_id" in source and source["regextagger_id"] == self.police)
-        self.assertTrue("regextaggergroup_id" in source and source["regextaggergroup_id"] == self.tagger_group_id)
+        fact = first_item[TEXTA_TAGS_KEY][0]
+        source = json.loads(fact["source"])
+        self.assertTrue(fact["fact"] == "Hädaabi")
+        self.assertTrue(fact["str_val"] == "politsei")
+        self.assertTrue("regextagger_id" in source and source["regextagger_id"] == self.police_id)
+        self.assertTrue("regextaggergroup_id" in source and source["regextaggergroup_id"] == self.emergency_tagger_group_id)
 
-        self.assertTrue(second_item[TEXTA_TAGS_KEY][0]["fact"] == "Hädaabi")
-        self.assertTrue(second_item[TEXTA_TAGS_KEY][0]["str_val"] == "tuletõrje")
-        source = json.loads(second_item[TEXTA_TAGS_KEY][0]["source"])
-        self.assertTrue("regextagger_id" in source and source["regextagger_id"] == self.firefighter)
-        self.assertTrue("regextaggergroup_id" in source and source["regextaggergroup_id"] == self.tagger_group_id)
+        fact = second_item[TEXTA_TAGS_KEY][0]
+        source = json.loads(fact["source"])
+        self.assertTrue(fact["fact"] == "Hädaabi")
+        self.assertTrue(fact["str_val"] == "tuletõrje")
+        self.assertTrue("regextagger_id" in source and source["regextagger_id"] == self.firefighter_id)
+        self.assertTrue("regextaggergroup_id" in source and source["regextaggergroup_id"] == self.emergency_tagger_group_id)
 
 
     def test_that_tagging_tagged_documents_wont_result_in_duplicate_facts(self):
-        tagger_group_url = reverse("v1:regex_tagger_group-tag-docs", kwargs={"project_pk": self.project.pk, "pk": self.tagger_group_id})
+        tagger_group_url = reverse("v1:regex_tagger_group-tag-docs", kwargs={"project_pk": self.project.pk, "pk": self.emergency_tagger_group_id})
         fact = {
             'doc_path': 'text',
             'fact': 'Hädaabi',
-            'source': json.dumps({"regextaggergroup_id": self.tagger_group_id, "regextagger_id": self.police}),
+            'source': json.dumps({"regextaggergroup_id": self.emergency_tagger_group_id, "regextagger_id": self.police_id}),
             'spans': '[[4, 9]]',
             'str_val': 'politsei'
         }
@@ -228,17 +246,65 @@ class RegexGroupTaggerTests(APITransactionTestCase):
             "fields": ["text"]
         }
         response = self.client.post(tagger_group_url, data=payload, format="json")
+        print_output("test_that_tagging_tagged_documents_wont_result_in_duplicate_facts::response.data", response.data)
+
+        first_match = response.data[0]
         self.assertTrue(response.status_code == status.HTTP_200_OK)
-        self.assertTrue("text" in response.data[0])
-        self.assertTrue(len(response.data[0][TEXTA_TAGS_KEY]) == 1)
+        self.assertTrue("text" in first_match)
+        facts = first_match[TEXTA_TAGS_KEY]
+        self.assertTrue(len(facts) == 1)
 
 
     def test_parsing_docs_where_field_is_missing(self):
-        tagger_group_url = reverse("v1:regex_tagger_group-tag-docs", kwargs={"project_pk": self.project.pk, "pk": self.tagger_group_id})
+        tagger_group_url = reverse("v1:regex_tagger_group-tag-docs", kwargs={"project_pk": self.project.pk, "pk": self.emergency_tagger_group_id})
         payload = {
             "docs": [{"text": "see varas oli süüdi!"}, {"tekst": "see põleng oli varas!"}],
             "fields": ["text"]
         }
         response = self.client.post(tagger_group_url, data=payload, format="json")
+        print_output("test_parsing_docs_where_field_is_missing::response.data", response.data)
+
         self.assertTrue(response.status_code == status.HTTP_200_OK)
-        self.assertTrue(len(response.data[0][TEXTA_TAGS_KEY]) == 1)
+        facts = response.data[0][TEXTA_TAGS_KEY]
+        self.assertTrue(len(facts) == 1)
+
+
+    def test_multitag_docs_works_on_multiple_groups(self):
+        payload = {
+            "docs": [{"text": "See varas tekitab ikka korraliku peavalu!"}, {"text": "Põleng tappis kolm, neljandal valutab kõht."}],
+            "fields": ["text"],
+            "tagger_groups": [self.emergency_tagger_group_id, self.pain_tagger_group_id]
+        }
+        url = reverse("v1:regex_tagger_group-multitag-docs", kwargs={"project_pk": self.project.pk})
+        response = self.client.post(url, data=payload, format="json")
+        print_output("test_multitag_docs_works_on_multiple_groups::response.data", response.data)
+
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        first_doc, second_doc = response.data
+        self.assertTrue("text" in first_doc and "text" in second_doc)  # Check that original doc is still there.
+
+        facts = []
+        for document in response.data:
+            for fact in document[TEXTA_TAGS_KEY]:
+                facts.append(fact)
+
+        str_vals = [fact["str_val"] for fact in facts]
+        tags = [fact["fact"] for fact in facts]
+
+        self.assertTrue({"politsei", "tuletõrje", "kõhuvalu", "peavalu"} == set(str_vals))
+        self.assertTrue({"Valu", "Hädaabi"} == set(tags))
+
+
+    def test_multitag_docs_handles_empty_field(self):
+        payload = {
+            "docs": [{"texta": "See varas tekitab ikka korraliku peavalu!"}, {"texta": "Põleng tappis kolm, neljandal valutab kõht."}],
+            "fields": ["text"],
+            "tagger_groups": [self.emergency_tagger_group_id, self.pain_tagger_group_id]
+        }
+        url = reverse("v1:regex_tagger_group-multitag-docs", kwargs={"project_pk": self.project.pk})
+        response = self.client.post(url, data=payload, format="json")
+        print_output("test_multitag_docs_handles_empty_field::response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        first_doc, second_doc = response.data
+        self.assertTrue("texta" in first_doc and "texta" in second_doc)  # Check that original doc is still there.
+        self.assertTrue(first_doc[TEXTA_TAGS_KEY] == [] and second_doc[TEXTA_TAGS_KEY] == [])  # Check for no matches.
