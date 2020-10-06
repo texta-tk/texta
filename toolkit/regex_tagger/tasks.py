@@ -8,9 +8,8 @@ from toolkit.base_tasks import TransactionAwareTask
 from toolkit.elastic.core import ElasticCore
 from toolkit.elastic.document import ElasticDocument
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.regex_tagger.models import RegexTaggerGroup
+from toolkit.regex_tagger.models import RegexTaggerGroup, load_matcher
 from toolkit.regex_tagger.serializers import PRIORITY_CHOICES
-from toolkit.regex_tagger.views import load_matcher
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER
 from toolkit.tools.show_progress import ShowProgress
 

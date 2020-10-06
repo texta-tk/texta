@@ -22,7 +22,7 @@ from toolkit.regex_tagger.serializers import (
     RegexTaggerTagDocsSerializer, RegexTaggerTagTextsSerializer, TagRandomDocSerializer
 )
 from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceImportModelSerializer
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, TEXTA_TAGS_KEY
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
 from toolkit.view_constants import BulkDelete
 
 
@@ -72,20 +72,6 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
             project=project,
             **kwargs
         )
-
-
-    @action(detail=True, methods=['post'], serializer_class=RegexTaggerTagDocsSerializer)
-    def tag_docs(self, request, pk=None, project_pk=None):
-        serializer: RegexTaggerSerializer = self.get_serializer()
-        serializer.is_valid(raise_exception=True)
-
-        tagger: RegexTagger = self.get_object()
-        docs = serializer.validated_data["docs"]
-        fields = serializer.validated_data["fields"]
-        matcher = tagger.get_matcher()
-
-        processed_docs = tagger.tag_docs(fields=fields, docs=docs, matcher=matcher)
-        return Response(processed_docs, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
@@ -491,5 +477,3 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         results = tagger_object.tag_docs(fields, docs)
 
         return Response(results, status=status.HTTP_200_OK)
-
-

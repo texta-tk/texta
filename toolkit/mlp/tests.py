@@ -117,7 +117,7 @@ class MLPDocsTests(APITestCase):
         payload = {"docs": [{"text": {"text": "Tere maailm, ma olen veebis~!"}}], "fields_to_parse": ["text.text"]}
         response = self.client.post(self.url, data=payload, format="json")
         for doc in response.data:
-            key_to_parse: str = payload["fields_to_parse"][0]
+            key_to_parse = payload["fields_to_parse"][0]
             keys = key_to_parse.split(".")
             mlp = doc[keys[0]][f"{keys[1]}_mlp"]
 
@@ -133,8 +133,9 @@ class MLPIndexProcessing(APITransactionTestCase):
 
 
     def setUp(self):
+        self.TEST_INDEX = TEST_INDEX + "_mlp"
         self.user = create_test_user('mlpUser', 'my@email.com', 'pw')
-        self.project = project_creation("mlpTestProject", TEST_INDEX, self.user)
+        self.project = project_creation("mlpTestProject", self.TEST_INDEX, self.user)
         self.project.users.add(self.user)
         self.client.login(username='mlpUser', password='pw')
         self.url = reverse("v1:mlp_index-list", kwargs={"project_pk": self.project.pk})
@@ -152,7 +153,7 @@ class MLPIndexProcessing(APITransactionTestCase):
 
         # Check if MLP was applied to the documents properly.
         mlp_field = f"{TEST_FIELD}_mlp"
-        s = ElasticSearcher(indices=[TEST_INDEX], output=ElasticSearcher.OUT_DOC, query=payload["query"])
+        s = ElasticSearcher(indices=[self.TEST_INDEX], output=ElasticSearcher.OUT_DOC, query=payload["query"])
         for hit in s:
             if TEST_FIELD in hit:
                 self.assertTrue(f"{TEST_FIELD}_mlp.lemmas" in hit)
