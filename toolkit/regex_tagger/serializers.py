@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from texta_lexicon_matcher.lexicon_matcher import SUPPORTED_MATCH_TYPES, SUPPORTED_OPERATORS
-from toolkit.serializer_constants import FieldParseSerializer, FieldValidationSerializer, ProjectResourceUrlSerializer
+
+from toolkit.serializer_constants import FieldParseSerializer, ProjectResourceUrlSerializer
 from .models import RegexTagger, RegexTaggerGroup
 from .validators import validate_patterns
 from ..core.task.serializers import TaskSerializer
@@ -92,7 +93,8 @@ class RegexTaggerGroupSerializer(serializers.ModelSerializer, ProjectResourceUrl
 
 
     def get_tagger_info(self, value: RegexTaggerGroup):
-        return [tagger.get_description() for tagger in value.regex_taggers.all()]
+        serializer = RegexTaggerSerializer(value.regex_taggers.all(), many=True, context={"request": self.context["request"]})
+        return serializer.data
 
 
     class Meta:
@@ -110,9 +112,21 @@ class RegexTaggerGroupMultitagTextSerializer(serializers.Serializer):
     )
 
 
+class RegexTaggerGroupMultitagDocsSerializer(serializers.Serializer):
+    docs = serializers.ListField(child=serializers.JSONField())
+    fields = serializers.ListField(child=serializers.CharField())
+    tagger_groups = serializers.ListField(
+        help_text='List of RegexTaggerGroup IDs to be used. Default: [] (uses all).',
+        child=serializers.IntegerField(),
+        default=[]
+    )
+
+
 class ApplyRegexTaggerGroupSerializer(FieldParseSerializer, serializers.Serializer):
     description = serializers.CharField(required=True, help_text="Text for distinguishing this task from others.")
     # priority = serializers.ChoiceField(default=None, choices=PRIORITY_CHOICES)
     indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
     query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
+
+

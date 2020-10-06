@@ -12,16 +12,17 @@ from rest_framework.response import Response
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
 from toolkit.elastic.core import ElasticCore
+from toolkit.elastic.document import ElasticDocument
 from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.permissions.project_permissions import ProjectResourceAllowed
-from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup, load_matcher
+from toolkit.regex_tagger.models import RegexTagger, RegexTaggerGroup
 from toolkit.regex_tagger.serializers import (
-    ApplyRegexTaggerGroupSerializer, RegexGroupTaggerTagTextSerializer, RegexMultitagTextSerializer, RegexTaggerGroupMultitagTextSerializer,
+    ApplyRegexTaggerGroupSerializer, RegexGroupTaggerTagTextSerializer, RegexMultitagTextSerializer, RegexTaggerGroupMultitagDocsSerializer, RegexTaggerGroupMultitagTextSerializer,
     RegexTaggerGroupSerializer, RegexTaggerGroupTagDocumentSerializer, RegexTaggerSerializer,
     RegexTaggerTagDocsSerializer, RegexTaggerTagTextsSerializer, TagRandomDocSerializer
 )
 from toolkit.serializer_constants import GeneralTextSerializer, ProjectResourceImportModelSerializer
-from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE
+from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, TEXTA_TAGS_KEY
 from toolkit.view_constants import BulkDelete
 
 
@@ -316,6 +317,32 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         regex_tagger_group.regex_taggers.set(regex_taggers)
 
 
+    @action(detail=False, methods=['post'], serializer_class=RegexTaggerGroupMultitagDocsSerializer)
+    def multitag_docs(self, request, pk=None, project_pk=None):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # filter tagger groups present in project
+        project_object = Project.objects.get(id=project_pk)
+        regex_taggers_groups = RegexTaggerGroup.objects.filter(project=project_object)
+        # filter again based on serializer
+        if serializer.validated_data['tagger_groups']:
+            regex_taggers_groups = regex_taggers_groups.filter(pk__in=serializer.validated_data['tagger_groups'])
+
+        docs = serializer.validated_data["docs"]
+        fields = serializer.validated_data["fields"]
+
+        # apply taggers
+        result = []
+        for regex_tagger_group in regex_taggers_groups:
+            matches = regex_tagger_group.tag_docs(fields, docs)
+            result.extend(matches)
+
+        result = ElasticDocument.remove_duplicate_facts(result)
+
+        return Response(result, status=status.HTTP_200_OK)
+
+
     @action(detail=False, methods=['post'], serializer_class=RegexTaggerGroupMultitagTextSerializer)
     def multitag_text(self, request, pk=None, project_pk=None):
         serializer = RegexTaggerGroupMultitagTextSerializer(data=request.data)
@@ -464,3 +491,5 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
         results = tagger_object.tag_docs(fields, docs)
 
         return Response(results, status=status.HTTP_200_OK)
+
+
