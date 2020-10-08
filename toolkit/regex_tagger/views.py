@@ -73,6 +73,14 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
             **kwargs
         )
 
+    @action(detail=True, methods=['post'], serializer_class=RegexTaggerSerializer)
+    def duplicate(self, request, pk=None, project_pk=None):
+        tagger_object: RegexTagger = self.get_object()
+        tagger_object.pk = None
+        tagger_object.description = f"{tagger_object.description}_copy"
+        tagger_object.save()
+        return Response(status=status.HTTP_200_OK)
+
 
     @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
     def tag_text(self, request, pk=None, project_pk=None):
