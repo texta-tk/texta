@@ -40,6 +40,7 @@ class RegexTaggerViewTests(APITestCase):
 
     def test(self):
         self.run_test_regex_tagger_create()
+        self.run_test_regex_tagger_duplicate()
         self.run_test_regex_tagger_tag_text()
         self.run_test_regex_tagger_tag_texts()
         self.run_test_regex_tagger_export_import()
@@ -62,6 +63,44 @@ class RegexTaggerViewTests(APITestCase):
 
         # Check if lexicon gets created
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def run_test_regex_tagger_duplicate(self):
+        """Tests RegexTagger duplication."""
+        duplication_url = f'{self.url}{self.tagger_id}/duplicate/'
+        original_tagger_url = f'{self.url}{self.tagger_id}/'
+
+        payload = {}
+
+        response = self.client.post(duplication_url, payload)
+
+        print_output('test_regex_tagger_duplicate:response.data', response.data)
+
+        duplicated_tagger_id = response.data["duplicate_id"]
+        duplicated_tagger_url = f'{self.url}{duplicated_tagger_id}/'
+
+        original_tagger_response = self.client.get(original_tagger_url)
+        duplicated_tagger_response = self.client.get(duplicated_tagger_url)
+
+        print_output('test_regex_tagger_duplication_original_tagger:response.data', original_tagger_response.data)
+        print_output('test_regex_tagger_duplication_duplicated_tagger:response.data', duplicated_tagger_response.data)
+
+        different_fields = ["id", "url"]
+        ignore_fields = ["author_username", "tagger_groups"]
+
+        # Check if object is duplicated correctly with different id, url and description
+        # but otherwise the same params (author_username and tagger_groups can be the same, but don't have to)
+        for key in original_tagger_response.data:
+            if key in ignore_fields:
+                continue
+            elif key in different_fields:
+                self.assertTrue(original_tagger_response.data[key] != duplicated_tagger_response.data[key])
+            elif key == "description":
+                self.assertTrue(f'{original_tagger_response.data[key]}_copy' == duplicated_tagger_response.data[key])
+            else:
+                self.assertTrue(original_tagger_response.data[key] == duplicated_tagger_response.data[key])
+
+        # Check if the duplication was successful
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
     def test_regex_tagger_tag_nested_doc(self):

@@ -78,8 +78,15 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
         tagger_object: RegexTagger = self.get_object()
         tagger_object.pk = None
         tagger_object.description = f"{tagger_object.description}_copy"
+        tagger_object.author = self.request.user
         tagger_object.save()
-        return Response(status=status.HTTP_200_OK)
+
+        response = {
+            "message": "Tagger duplicated successfully!",
+            "duplicate_id": tagger_object.pk
+        }
+
+        return Response(response, status=status.HTTP_200_OK)
 
 
     @action(detail=True, methods=['post'], serializer_class=GeneralTextSerializer)
