@@ -73,6 +73,7 @@ class RegexTaggerViewSet(viewsets.ModelViewSet, BulkDelete):
             **kwargs
         )
 
+
     @action(detail=True, methods=['post'], serializer_class=RegexTaggerSerializer)
     def duplicate(self, request, pk=None, project_pk=None):
         tagger_object: RegexTagger = self.get_object()
@@ -293,7 +294,7 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
 
 
     def perform_update(self, serializer: RegexTaggerGroupSerializer):
-        # super(RegexTaggerViewSet, self).perform_update(serializer)
+        serializer.save()
 
         if "regex_taggers" in serializer.validated_data:
             available_taggers = RegexTagger.objects.filter(project=self.kwargs['project_pk'])
@@ -403,8 +404,10 @@ class RegexTaggerGroupViewSet(viewsets.ModelViewSet, BulkDelete):
 
             fields = serializer.validated_data["fields"]
             query = serializer.validated_data["query"]
+            bulk_size = serializer.validated_data["bulk_size"]
+            max_chunk_bytes = serializer.validated_data["max_chunk_bytes"]
 
-            args = (pk, indices, fields, query)
+            args = (pk, indices, fields, query, bulk_size, max_chunk_bytes)
             transaction.on_commit(lambda: apply_regex_tagger.apply_async(args=args, queue=CELERY_LONG_TERM_TASK_QUEUE))
 
             message = "Started process of applying RegexTaggerGroup with id: {}".format(tagger_object.id)

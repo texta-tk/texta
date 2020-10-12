@@ -308,3 +308,11 @@ class RegexGroupTaggerTests(APITransactionTestCase):
         first_doc, second_doc = response.data
         self.assertTrue("texta" in first_doc and "texta" in second_doc)  # Check that original doc is still there.
         self.assertTrue(first_doc[TEXTA_TAGS_KEY] == [] and second_doc[TEXTA_TAGS_KEY] == [])  # Check for no matches.
+
+
+    def test_normal_field_edit_in_tagger_group(self):
+        payload = {"description": "hädaabi"}
+        tagger_group_url = reverse("v1:regex_tagger_group-detail", kwargs={"project_pk": self.project.pk, "pk": self.emergency_tagger_group_id})
+        response = self.client.patch(tagger_group_url, payload, format="json")
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        self.assertTrue(response.data["description"] == "hädaabi")

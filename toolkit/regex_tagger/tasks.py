@@ -1,8 +1,9 @@
+import json
 import logging
 from typing import List, Optional
 
 from celery.decorators import task
-from elasticsearch.helpers import bulk
+from elasticsearch.helpers import streaming_bulk
 
 from toolkit.base_tasks import TransactionAwareTask
 from toolkit.elastic.core import ElasticCore
@@ -65,7 +66,7 @@ def update_generator(generator: ElasticSearcher, fields: List[str], group_tagger
 
 
 @task(name="apply_regex_tagger", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
-def apply_regex_tagger(tagger_group_id: int, indices: List[str], fields: List[str], query: dict):
+def apply_regex_tagger(tagger_group_id: int, indices: List[str], fields: List[str], query: dict, bulk_size=100, max_chunk_bytes=104857600):
     try:
         regex_tagger_group = RegexTaggerGroup.objects.get(pk=tagger_group_id)
         progress = ShowProgress(regex_tagger_group.task)
@@ -78,14 +79,18 @@ def apply_regex_tagger(tagger_group_id: int, indices: List[str], fields: List[st
             field_data=fields + ["texta_facts"],  # Get facts to add upon existing ones.
             query=query,
             output=ElasticSearcher.OUT_RAW,
-            callback_progress=progress
+            callback_progress=progress,
         )
 
         actions = update_generator(generator=searcher, fields=fields, group_tagger_id=regex_tagger_group.pk)
-        bulk(client=ec.es, actions=actions, refresh="wait_for")
+        for success, info in streaming_bulk(client=ec.es, actions=actions, refresh="wait_for", chunk_size=bulk_size, max_chunk_bytes=max_chunk_bytes):
+            if not success:
+                logging.getLogger(ERROR_LOGGER).exception(json.dumps(info))
+
         regex_tagger_group.task.complete()
         return True
 
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
-        regex_tagger_group.task.add_error(str(e))
+        error_message = f"{str(e)[:100]}..."  # Take first 100 characters in case the error message is massive.
+        regex_tagger_group.task.add_error(error_message)
