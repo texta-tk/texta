@@ -162,7 +162,7 @@ class DataSample:
         self.show_progress.update_view(0)
         # iterator for retrieving negative examples
         negative_sample_iterator = ElasticSearcher(
-            indices=self.tagger_object.project.get_indices(),
+            indices=self.indices,
             field_data=json.loads(self.tagger_object.fields),
             output=ElasticSearcher.OUT_DOC,
             callback_progress=self.show_progress,
