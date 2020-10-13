@@ -165,7 +165,7 @@ def whitespace_tokenizer(s):
     """
     Split string on whitespace (e.g. when string is previously tokenized).
     """
-    return s.split(" ")
+    return [x for x in s.split() if len(x) > 1]
 
 
 def get_pipeline_builder():

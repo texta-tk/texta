@@ -1,6 +1,7 @@
 from gensim.models import word2vec, KeyedVectors
 from torch import FloatTensor
 import json
+import numpy as np
 
 from gensim.models import word2vec
 
@@ -57,8 +58,13 @@ class W2VEmbedding:
         negatives = [negative for negative in negatives if negative in self.model.wv.vocab]
 
         if positives:
-            similar_items = self.model.wv.most_similar(positive=positives, negative=negatives, topn=n)
-            similar_items = [{'phrase': s[0].replace('_', ' '), 'score': s[1], 'model': self.name} for s in similar_items if s[0] not in negatives]
+            similarities = self.model.wv.most_similar(positive=positives, topn=None)
+            top_similar_ixs = np.flip(similarities.argsort()[-(n+len(positives)+len(negatives)):])
+            similar_items = [(self.model.wv.index2word[ix], similarities[ix]) for ix in top_similar_ixs]
+            similar_items = [item for item in similar_items if (item[0] not in negatives and item[0] not in positives)][:n]
+            
+
+            similar_items = [{'phrase': s[0].replace('_', ' '), 'score': s[1], 'model': self.name} for s in similar_items]
             return similar_items
         else:
             return []
