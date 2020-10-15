@@ -128,5 +128,5 @@ class ApplyRegexTaggerGroupSerializer(FieldParseSerializer, serializers.Serializ
     indices = IndexSerializer(many=True, default=[], help_text="Which indices in the project to apply this to.")
     fields = serializers.ListField(required=True, child=serializers.CharField(), help_text="Which fields to extract the text from.")
     query = serializers.JSONField(help_text='Filter the documents which to scroll and apply to.', default=EMPTY_QUERY)
-    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=500, help_text="How many documents should be sent towards Elasticsearch at once.")
+    bulk_size = serializers.IntegerField(min_value=1, max_value=10000, default=1, help_text="How many documents should be sent towards Elasticsearch at once.")
     max_chunk_bytes = serializers.IntegerField(min_value=1, default=104857600, help_text="Data size in bytes that Elasticsearch should accept to prevent Entity Too Large errors.")
