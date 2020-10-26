@@ -92,8 +92,6 @@ class TopicAnalyzerTests(APITransactionTestCase):
             self.assertTrue(cluster["documents"])
             self.assertTrue(cluster["url"])
 
-            print(round(cluster["average_similarity"], 5))
-
             # Check average similarity
             self.assertTrue(round(cluster["average_similarity"], 5) <= 1.0)
 
