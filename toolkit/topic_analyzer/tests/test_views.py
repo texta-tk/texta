@@ -25,7 +25,10 @@ class TopicAnalyzerTests(APITransactionTestCase):
         payload = {
             "description": "TopicCluster",
             "fields": [TEST_FIELD],
-            "vectorizer": "TfIdf Vectorizer"
+            "vectorizer": "TfIdf Vectorizer",
+            "document_limit": 500,
+            "num_topics": 50,
+            "num_cluster": 10
         }
         response = self.client.post(self.clustering_url, format="json", data=payload)
         self.assertTrue(response.status_code == status.HTTP_201_CREATED)
@@ -88,6 +91,11 @@ class TopicAnalyzerTests(APITransactionTestCase):
             # Check if the fields are filled with content
             self.assertTrue(cluster["documents"])
             self.assertTrue(cluster["url"])
+
+            print(round(cluster["average_similarity"], 5))
+
+            # Check average similarity
+            self.assertTrue(round(cluster["average_similarity"], 5) <= 1.0)
 
             # Count should be handled by the serializer function.
             self.assertTrue(cluster["document_count"] == len(cluster["documents"]))
