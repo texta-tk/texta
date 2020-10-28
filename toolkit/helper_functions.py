@@ -1,8 +1,10 @@
 import os
+import pathlib
 import re
 from typing import List
 
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.views.static import serve
 
 
@@ -72,6 +74,20 @@ def get_core_setting(setting_name):
 @login_required
 def protected_serve(request, path, document_root=None, show_indexes=False):
     return serve(request, path, document_root, show_indexes)
+
+
+@login_required
+def protected_file_serve(request, project_id, application, file_name, document_root=None):
+    from toolkit.core.project.models import Project
+    from django.shortcuts import get_object_or_404
+
+    project = get_object_or_404(Project, pk=project_id)
+    user_allowed = project.users.filter(pk=request.user.pk).exists()
+    if user_allowed:
+        path = pathlib.Path(str(project_id)) / application / file_name
+        return serve(request, str(path), document_root)
+    else:
+        raise PermissionDenied()
 
 
 def download_mlp_requirements(model_directory: str, supported_langs: List[str], logger):

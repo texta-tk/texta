@@ -1,8 +1,8 @@
 from django.conf.urls import url
 from django.urls import include, path
-from django.views.static import serve
 from rest_framework_nested import routers
 
+from toolkit.anonymizer.urls import router as anonymizer_router
 from toolkit.core.core_variable.views import CoreVariableViewSet
 from toolkit.core.health.views import HealthView
 from toolkit.core.project.views import ProjectViewSet
@@ -10,18 +10,18 @@ from toolkit.core.task.views import TaskAPIView
 from toolkit.core.urls import router as core_router
 from toolkit.core.user_profile import views as profile_views
 from toolkit.dataset_import.urls import router as dataset_import_router
+from toolkit.docparser.views import DocparserView
 from toolkit.elastic.urls import index_router, router as reindexer_router
 from toolkit.elastic.views import ElasticGetIndices
 from toolkit.embedding.urls import embedding_router
 from toolkit.mlp.urls import mlp_router
 from toolkit.mlp.views import MLPListProcessor, MlpDocsProcessor
+from toolkit.regex_tagger.urls import router as regex_tagger_router
 from toolkit.tagger.urls import router as tagger_router
 from toolkit.tools.swagger import schema_view
 from toolkit.topic_analyzer.views import ClusterViewSet, ClusteringViewSet
 from toolkit.torchtagger.urls import router as torchtagger_router
-from toolkit.regex_tagger.urls import router as regex_tagger_router
-from toolkit.anonymizer.urls import router as anonymizer_router
-from toolkit.uaa_auth.views import UAAView, RefreshUAATokenView
+from toolkit.uaa_auth.views import RefreshUAATokenView, UAAView
 
 
 router = routers.DefaultRouter()
@@ -67,6 +67,7 @@ urlpatterns = [
     path("", include(index_router.urls), name="index"),
     url(r'^', include(project_router.urls)),
     url(r'^', include(clustering_router.urls)),
+    path('docparser/', DocparserView.as_view(), name="docparser"),
 
     # UAA OAuth 2.0
     url('uaa/callback', UAAView.as_view()),

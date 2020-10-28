@@ -90,10 +90,10 @@ CSRF_COOKIE_NAME = "XSRF-TOKEN"
 CORS_ORIGIN_WHITELIST = parse_list_env_headers("TEXTA_CORS_ORIGIN_WHITELIST", ["http://localhost:4200"])
 CORS_ALLOW_HEADERS = list(default_headers) + ["x-xsrf-token"]
 CORS_ALLOW_CREDENTIALS = True
-
+CORS_ALLOW_ALL_ORIGINS = False if os.getenv("TEXTA_CORS_ALLOW_ALL_ORIGINS", "false").lower() == "false" else True
 
 # CF UAA OAUTH OPTIONS
-USE_UAA = False if os.getenv("TEXTA_USE_UAA", "False") == "False" else True
+USE_UAA = False if os.getenv("TEXTA_USE_UAA", "false").lower() == "false" else True
 # UAA server URL
 UAA_URL = os.getenv("TEXTA_UAA_URL", "http://localhost:8080/uaa")
 # Callback URL defined on the UAA server, to which the user will be redirected after logging in on UAA
@@ -134,7 +134,6 @@ REST_FRAMEWORK = {
 if USE_UAA:
     REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'].insert(0, "toolkit.uaa_auth.authentication.UaaAuthentication")
 
-
 REST_AUTH_SERIALIZERS = {
     "USER_DETAILS_SERIALIZER": "toolkit.core.user_profile.serializers.UserSerializer",
 }
@@ -150,7 +149,7 @@ MIDDLEWARE = [
 ]
 
 # we can optionally disable csrf for testing purposes
-USE_CSRF = False if os.getenv("TEXTA_USE_CSRF", "False") == "False" else True
+USE_CSRF = False if os.getenv("TEXTA_USE_CSRF", "false").lower() == "false" else True
 if USE_CSRF:
     MIDDLEWARE.append("django.middleware.csrf.CsrfViewMiddleware")
 else:
@@ -222,16 +221,15 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 # OTHER ELASTICSEARCH OPTIONS
 ES_CONNECTION_PARAMETERS = {
-    "use_ssl": True if os.getenv("TEXTA_ES_USE_SSL", None) == "True" else None,
-    "verify_certs": True if os.getenv("TEXTA_ES_VERIFY_CERTS", None) == "True" else None,
+    "use_ssl": False if os.getenv("TEXTA_ES_USE_SSL", "false").lower() == "false" else True,
+    "verify_certs": False if os.getenv("TEXTA_ES_VERIFY_CERTS", "false").lower() == "false" else True,
     "ca_certs": os.getenv("TEXTA_ES_CA_CERT_PATH", None),
     "client_cert": os.getenv("TEXTA_ES_CLIENT_CERT_PATH", None),
     "client_key": os.getenv("TEXTA_ES_CLIENT_KEY_PATH", None),
     "timeout": int(os.getenv("TEXTA_ES_TIMEOUT")) if os.getenv("TEXTA_ES_TIMEOUT", None) else 10,
-    "sniff_on_start": True if os.getenv("TEXTA_ES_SNIFF_ON_START", "True") == "True" else False,
-    "sniff_on_connection_fail": True if os.getenv("TEXTA_ES_SNIFF_ON_FAIL", "True") == "True" else False
+    "sniff_on_start": True if os.getenv("TEXTA_ES_SNIFF_ON_START", "true").lower() == "true" else True,
+    "sniff_on_connection_fail": True if os.getenv("TEXTA_ES_SNIFF_ON_FAIL", "true").lower() == "true" else False
 }
-
 
 # CELERY OPTIONS
 BROKER_URL = os.getenv("TEXTA_REDIS_URL", "redis://localhost:6379")
@@ -241,7 +239,7 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERYD_PREFETCH_MULTIPLIER = 1
-CELERY_ALWAYS_EAGER = False if os.getenv("TEXTA_CELERY_ALWAYS_EAGER", "False") == "False" else True
+CELERY_ALWAYS_EAGER = False if os.getenv("TEXTA_CELERY_ALWAYS_EAGER", "false").lower() == "false" else True
 CELERY_LONG_TERM_TASK_QUEUE = "long_term_tasks"
 CELERY_SHORT_TERM_TASK_QUEUE = "short_term_tasks"
 CELERY_MLP_TASK_QUEUE = "mlp_queue"
@@ -309,6 +307,9 @@ SWAGGER_SETTINGS = {
     "DEFAULT_AUTO_SCHEMA_CLASS": "toolkit.tools.swagger.CompoundTagsSchema"
 }
 
-SKIP_MLP_RESOURCES = False if os.getenv("SKIP_MLP_RESOURCES", "False") == "False" else True
+SKIP_MLP_RESOURCES = False if os.getenv("SKIP_MLP_RESOURCES", "false").lower() == "false" else True
 if SKIP_MLP_RESOURCES is False:
     download_mlp_requirements(MLP_MODEL_DIRECTORY, DEFAULT_MLP_LANGUAGE_CODES, logging.getLogger(INFO_LOGGER))
+
+RELATIVE_PROJECT_DATA_PATH = os.getenv("TOOLKIT_PROJECT_DATA_PATH", "data/projects/")
+pathlib.Path(RELATIVE_PROJECT_DATA_PATH).mkdir(parents=True, exist_ok=True)

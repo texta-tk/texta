@@ -75,3 +75,4 @@ data/test/*
 celerybeat-schedule
 
 /data/upload/
+data/projects/
