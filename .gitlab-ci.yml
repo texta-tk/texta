@@ -30,12 +30,12 @@ Test:
   before_script:
     - conda env create -f environment-nogpu.yaml && source activate texta-rest
     - python import_test_data.py -es $TEXTA_ES_URL
-    - sh wait-for-uaa.sh
     - python migrate.py
   stage: test
   tags:
     - ci-test
   script:
+    - sh wait-for-uaa.sh
     - python manage.py test
 
 Build:
