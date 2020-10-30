@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "toolkit.topic_analyzer",
     "toolkit.regex_tagger",
     "toolkit.anonymizer",
+    "toolkit.docparser",
     # TEXTA Extension Apps
     # "docscraper",
     # THIRD PARTY
@@ -74,7 +75,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "rest_auth.registration",
     "django_extensions",
-    "drf_yasg"
+    "drf_yasg",
 ]
 
 # For registration (see: https://django-rest-auth.readthedocs.io/en/latest/installation.html#registration-optional)
