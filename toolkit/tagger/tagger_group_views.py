@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import logging
 
 import rest_framework.filters as drf_filters
 from celery import group
@@ -12,6 +13,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from toolkit.settings import ERROR_LOGGER, INFO_LOGGER
 from toolkit.core.health.utils import get_redis_status
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
@@ -185,13 +187,17 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         taggers = {t.description.lower(): {"tag": t.description, "id": t.id} for t in hybrid_tagger_object.taggers.all()}
 
         if lemmatize or use_ner:
+            logging.getLogger(INFO_LOGGER).info(f"[Get MLP] Applying lemmatization and NER...")
             with allow_join_result():
                 mlp = apply_mlp_on_list.apply_async(kwargs={"texts": [text], "analyzers": ["all"]}, queue=CELERY_MLP_TASK_QUEUE).get()
                 mlp_result = mlp[0]
+                logging.getLogger(INFO_LOGGER).info(f"[Get MLP] Finished applying MLP.")
 
         # lemmatize
         if lemmatize and mlp_result:
             text = mlp_result["text"]["lemmas"]
+            lemmas_exists = True if text.strip() else False
+            logging.getLogger(INFO_LOGGER).info(f"[Get MLP] Lemmatization result exists: {lemmas_exists}")
         # retrieve tags
         if use_ner and mlp_result:
             seen_tags = {}
@@ -206,6 +212,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
                     }
                     tags.append(fact_val_dict)
                     seen_tags[fact_val] = True
+            logging.getLogger(INFO_LOGGER).info(f"[Get MLP] Detected {len(tags)} with NER.")
         return text, tags
 
 
@@ -217,13 +224,16 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         hybrid_tagger_object = self.get_object()
         field_paths = json.loads(hybrid_tagger_object.taggers.first().fields)
         indices = hybrid_tagger_object.project.get_indices()
+        logging.getLogger(INFO_LOGGER).info(f"[Get Tag Candidates] Selecting from following indices: {indices}.")
         ignore_tags = {tag["tag"]: True for tag in ignore_tags}
         # create query
         query = Query()
         query.add_mlt(field_paths, text)
         # create Searcher object for MLT
         es_s = ElasticSearcher(indices=indices, query=query.query)
+        logging.getLogger(INFO_LOGGER).info(f"[Get Tag Candidates] Trying to retrieve {n_similar_docs} documents from Elastic...")
         docs = es_s.search(size=n_similar_docs)
+        logging.getLogger(INFO_LOGGER).info(f"[Get Tag Candidates] Successfully retrieved {len(docs)} documents from Elastic.")
         # dict for tag candidates from elastic
         tag_candidates = {}
         # retrieve tags from elastic response
@@ -238,6 +248,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
                             tag_candidates[fact_val] += 1
         # sort and limit candidates
         tag_candidates = [item[0] for item in sorted(tag_candidates.items(), key=lambda k: k[1], reverse=True)][:max_candidates]
+        logging.getLogger(INFO_LOGGER).info(f"[Get Tag Candidates] Retrieved {len(tag_candidates)} tag candidates.")
         return tag_candidates
 
 
@@ -246,6 +257,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         """
         API endpoint for tagging raw text with tagger group.
         """
+        logging.getLogger(INFO_LOGGER).info(f"[Tag Text] Starting tag_text...")
         data = request.data
         serializer = TaggerGroupTagTextSerializer(data=data)
         # check if valid request
@@ -279,6 +291,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         """
         API endpoint for tagging JSON documents with tagger group.
         """
+        logging.getLogger(INFO_LOGGER).info(f"[Tag Doc] Starting tag_doc...")
         data = request.data
         serializer = TaggerGroupTagDocumentSerializer(data=data)
         # check if valid request
@@ -324,6 +337,7 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
         """
         API endpoint for tagging a random document.
         """
+        logging.getLogger(INFO_LOGGER).info(f"[Tag Random doc] Starting tag_random_doc...")
         # get hybrid tagger object
         hybrid_tagger_object = self.get_object()
 
@@ -366,20 +380,25 @@ class TaggerGroupViewSet(mixins.CreateModelMixin,
 
     def apply_tagger_group(self, text, tag_candidates, request, input_type='text', lemmatize=False, feedback=False):
         # get tagger group object
+        logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Starting apply_tagger_group...")
         tagger_group_object = self.get_object()
         # get tagger objects
         candidates_str = "|".join(tag_candidates)
         tagger_objects = tagger_group_object.taggers.filter(description__iregex=f"^({candidates_str})$")
         # filter out completed
         tagger_objects = [tagger for tagger in tagger_objects if tagger.task.status == tagger.task.STATUS_COMPLETED]
+        logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Loaded {len(tagger_objects)} tagger objects.")
         # predict tags
         group_task = group(apply_tagger.s(tagger.pk, text, input_type=input_type, lemmatize=lemmatize, feedback=feedback) for tagger in tagger_objects)
         group_results = group_task.apply_async(queue=CELERY_SHORT_TERM_TASK_QUEUE)
+        logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Group task applied.")
 
         # retrieve results & remove non-hits
         tags = [tag for tag in group_results.get() if tag]
+        logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Retrieved results for {len(tags)} taggers.")
         # remove non-hits
         tags = [tag for tag in tags if tag['result']]
+        logging.getLogger(INFO_LOGGER).info(f"[Apply Tagger Group] Retrieved {len(tags)} positive tags.")
         # if feedback was enabled, add urls
         tags = [add_finite_url_to_feedback(tag, request) for tag in tags]
         # sort by probability and return
