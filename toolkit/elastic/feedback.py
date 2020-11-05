@@ -5,6 +5,7 @@ from toolkit.elastic.query import Query
 from toolkit.tools.logger import Logger
 from toolkit.helper_functions import get_core_setting
 
+from datetime import datetime
 import json
 
 
@@ -89,7 +90,8 @@ class Feedback:
             "model_id": str(self.model_object.pk),
             "model_type": self.model_object.MODEL_TYPE,
             "predicted_content": json.dumps(predicted_content),
-            "original_prediction": str(prediction)
+            "original_prediction": str(prediction),
+            "prediction_time": datetime.now()
         }
 
         try:
@@ -106,6 +108,7 @@ class Feedback:
         try:
             document = self.es_doc.get(feedback_id)
             document["_source"]["correct_result"] = json.dumps(correct_result)
+            document["_source"]["feedback_time"] = datetime.now()
             self.es_doc.update(index=document["_index"], doc_type=document["_type"], doc_id=feedback_id, doc=document["_source"])
             return {"success": "Tagger feedback updated."}
 
