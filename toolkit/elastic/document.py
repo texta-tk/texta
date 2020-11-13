@@ -45,7 +45,7 @@ class ElasticDocument:
         for document in documents:
             # If there is no texta_facts field in the index, add it.
             if "texta_facts" not in document["_source"]:
-                self.core.add_texta_facts_mapping(document["_index"], document["_type"])
+                self.core.add_texta_facts_mapping(document["_index"], [document["_type"]])
                 document["_source"]["texta_facts"] = [fact]
                 self.update(index=document["_index"], doc_type=document["_type"], doc_id=document["_id"], doc=document["_source"])
 
