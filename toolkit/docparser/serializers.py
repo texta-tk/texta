@@ -7,7 +7,7 @@ from toolkit.core.project.models import Project
 class DocparserSerializer(serializers.Serializer):
     project_id = serializers.IntegerField(min_value=0)
     file = serializers.FileField()
-    indices = serializers.ListField(child=serializers.CharField())
+    indices = serializers.ListField(child=serializers.CharField(), default=[])
 
 
     def validate_project_id(self, value: int):

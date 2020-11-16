@@ -1,4 +1,5 @@
 # Create your tests here.
+import os
 import pathlib
 
 from django.conf import settings
@@ -8,6 +9,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from toolkit.core.project.models import Project
+from toolkit.helper_functions import hash_file
 from toolkit.test_settings import TEST_INDEX
 from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
@@ -25,6 +27,13 @@ class TestDocparserAPIView(APITestCase):
         self.file = SimpleUploadedFile("text.txt", b"file_content", content_type="text/html")
         self.client.login(username='Owner', password='pw')
         self._basic_pipeline_functionality()
+        self.file_path = self._get_file_path()
+
+
+    def _get_file_path(self):
+        file_hash = hash_file(self.file)
+        path = pathlib.Path(settings.RELATIVE_PROJECT_DATA_PATH) / str(self.project.pk) / "docparser" / f"{file_hash}.txt"
+        return path
 
 
     def _basic_pipeline_functionality(self):
@@ -40,9 +49,8 @@ class TestDocparserAPIView(APITestCase):
 
 
     def test_file_appearing_in_proper_structure(self):
-        path = pathlib.Path(settings.RELATIVE_PROJECT_DATA_PATH) / str(self.project.pk) / "docparser" / "text.txt"
-        print_output("test_file_appearing_in_proper_structure", path.exists())
-        self.assertTrue(path.exists())
+        print_output("test_file_appearing_in_proper_structure", self.file_path.exists())
+        self.assertTrue(self.file_path.exists())
 
 
     def test_being_rejected_without_login(self):
@@ -83,7 +91,8 @@ class TestDocparserAPIView(APITestCase):
 
 
     def test_that_serving_media_works_for_authenticated_users(self):
-        url = reverse("protected_serve", kwargs={"project_id": self.project.pk, "application": "docparser", "file_name": "text.txt"})
+        file_name = self.file_path.name
+        url = reverse("protected_serve", kwargs={"project_id": self.project.pk, "application": "docparser", "file_name": file_name})
         response = self.client.get(url)
         print_output("test_that_serving_media_works_for_authenticated_users", True)
         self.assertTrue(response.status_code == status.HTTP_200_OK)
@@ -91,7 +100,8 @@ class TestDocparserAPIView(APITestCase):
 
     def test_that_serving_media_doesnt_work_for_unauthenticated_users(self):
         self.client.logout()
-        url = reverse("protected_serve", kwargs={"project_id": self.project.pk, "application": "docparser", "file_name": "text.txt"})
+        file_name = self.file_path.name
+        url = reverse("protected_serve", kwargs={"project_id": self.project.pk, "application": "docparser", "file_name": file_name})
         response = self.client.get(url)
         print_output("test_that_serving_media_doesnt_work_for_unauthenticated_users", True)
         self.assertTrue(response.status_code == status.HTTP_302_FOUND)
@@ -100,9 +110,31 @@ class TestDocparserAPIView(APITestCase):
 
     def test_media_access_for_unauthorized_projects(self):
         self.client.login(username="unauthorized", password="pw")
-        url = reverse("protected_serve", kwargs={"project_id": self.project.pk, "application": "docparser", "file_name": "text.txt"})
+        file_name = self.file_path.name
+        url = reverse("protected_serve", kwargs={"project_id": self.project.pk, "application": "docparser", "file_name": file_name})
         response = self.client.get(url)
         print_output("test_media_access_for_unauthorized_projects", True)
         self.assertTrue(response.status_code == status.HTTP_403_FORBIDDEN)
         self.client.logout()
         self.client.login(username='Owner', password='pw')  # Login again for the sake of other tests.
+
+
+    def test_that_saved_file_size_isnt_zero(self):
+        """
+        Necessary because of a prior bug where the wrapper would save a file
+        with the right name but not it's contents.
+        """
+        file_size = os.path.getsize(self.file_path)
+        self.assertTrue(file_size > 1)
+        print_output("test_that_saved_file_size_isnt_zero::file_size:int", file_size)
+
+
+    def test_payload_with_empty_indices(self):
+        url = reverse("v1:docparser")
+        payload = {
+            "file": SimpleUploadedFile("text.txt", b"file_content", content_type="text/html"),
+            "project_id": self.project.pk,
+        }
+        response = self.client.post(url, data=payload)
+        print_output("_basic_pipeline_functionality:response.data", response.data)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
