@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 
 import redis
 from celery.task.control import inspect
+from rest_framework import exceptions
 
 from toolkit.elastic.core import ElasticCore
 from toolkit.helper_functions import get_core_setting
@@ -28,11 +29,14 @@ def get_elastic_status(ES_URL=get_core_setting("TEXTA_ES_URL")):
     Checks Elasticsearch connection status and version.
     """
     es_info = {"url": ES_URL, "alive": False}
-    es_core = ElasticCore(ES_URL=ES_URL)
-    if es_core.connection:
-        es_info["alive"] = True
-        es_info["status"] = es_core.es.info()
-    return es_info
+    try:
+        es_core = ElasticCore(ES_URL=ES_URL)
+        if es_core.connection:
+            es_info["alive"] = True
+            es_info["status"] = es_core.es.info()
+        return es_info
+    except exceptions.ValidationError:
+        return es_info
 
 
 def get_redis_status():

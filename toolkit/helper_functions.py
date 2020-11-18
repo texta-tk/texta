@@ -1,6 +1,8 @@
+import hashlib
 import os
 import pathlib
 import re
+from functools import partial
 from typing import List
 
 from django.contrib.auth.decorators import login_required
@@ -100,3 +102,11 @@ def chunks(lst: list, n: int):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
+
+
+def hash_file(file, block_size=65536):
+    hasher = hashlib.md5()
+    for buf in iter(partial(file.read, block_size), b''):
+        hasher.update(buf)
+
+    return hasher.hexdigest()

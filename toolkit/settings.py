@@ -14,7 +14,7 @@ from .logging_settings import setup_logging
 # NOTE: THESE ARE INITIAL VARIABLES IMPORTED FROM THE ENVIRONMENT
 # DO NOT IMPORT THESE VARIABLES IN APPS, BECAUSE THEY CAN BE OVERWRITTEN WITH VALUES FROM DB
 # INSTEAD USE get_setting_val() function, e.g.:
-# from toolkit.core.settings import get_core_setting
+# from toolkit.helper_functions import get_core_setting
 # ES_URL = get_core_setting("ES_URL")
 CORE_SETTINGS = {
     "TEXTA_ES_URL": os.getenv("TEXTA_ES_URL", "http://elastic-dev.texta.ee:9200"),

@@ -79,7 +79,10 @@ def apply_mlp_on_index(self, mlp_id: int):
         scroll_timeout="30m"
     )
 
-    [searcher.core.add_texta_facts_mapping(index=index) for index in indices]
+    for index in indices:
+        doc_types = searcher.core.get_index_doc_types(index)
+        searcher.core.add_texta_facts_mapping(index=index, doc_types=doc_types)
+
     actions = process_actions(searcher, analyzers, field_data, mlp=mlp)
 
     # Send the data towards Elasticsearch
