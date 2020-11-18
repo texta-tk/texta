@@ -150,7 +150,7 @@ class DataSample:
         # set positive ids to ignore while scrolling for negatives
         for doc in feedback_sample:
             self.ignore_ids.add(doc["_id"])
-            content = json.loads(doc['predicted_content'])
+            content = json.loads(doc['content'])
             feedback_sample_content.append(content)
         if self.join_fields:
             feedback_sample_content = self._join_fields(feedback_sample_content)

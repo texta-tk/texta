@@ -78,18 +78,18 @@ class Feedback:
         model_fields = json.loads(self.model_object.fields)
         return {field_path: text for field_path in model_fields}
 
-    def store(self, predicted_content, prediction):
+    def store(self, content, prediction):
         """
         Stores document with initial prediction in ES.
         """
         # if predicted on text, generate doc
-        if isinstance(predicted_content, str):
-            predicted_content = self._text_to_doc(predicted_content)
+        if isinstance(content, str):
+            content = self._text_to_doc(content)
         # generate feedback doc wrapping predicted doc
         feedback_doc = {
             "model_id": str(self.model_object.pk),
             "model_type": self.model_object.MODEL_TYPE,
-            "predicted_content": json.dumps(predicted_content),
+            "content": json.dumps(content),
             "original_prediction": str(prediction),
             "prediction_time": datetime.now()
         }
