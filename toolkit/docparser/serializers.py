@@ -8,6 +8,7 @@ class DocparserSerializer(serializers.Serializer):
     project_id = serializers.IntegerField(min_value=0)
     file = serializers.FileField()
     indices = serializers.ListField(child=serializers.CharField(), default=[])
+    file_name = serializers.CharField()
 
 
     def validate_project_id(self, value: int):

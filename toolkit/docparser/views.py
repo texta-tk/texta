@@ -33,17 +33,15 @@ class DocparserView(GenericAPIView):
         project_id = serializer.validated_data["project_id"]
         indices = serializer.validated_data.get("indices", [])
         file_wrapper = serializer.validated_data["file"]
+        file_name = serializer.validated_data["file_name"]
+
         content = file_wrapper.file.read()
         project = get_object_or_404(Project, pk=project_id)
-
-        extension = pathlib.Path(file_wrapper.name).suffix
-        file_hash = hash_file(file_wrapper.file)
-        new_name = file_hash + extension
 
         for index in indices:
             model, is_created = Index.objects.get_or_create(name=index)
             project.indices.add(model)
 
-        self.__save_file(project_id, content, new_name)
+        self.__save_file(project_id, content, file_name)
 
         return Response({"detail": "Saved file into the project!"}, status=status.HTTP_200_OK)
