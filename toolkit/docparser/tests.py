@@ -19,6 +19,7 @@ class TestDocparserAPIView(APITestCase):
     def setUp(self) -> None:
         self.user = create_test_user('Owner', 'my@email.com', 'pw')
         self.unauthorized_user = create_test_user('unauthorized', 'my@email.com', 'pw')
+        self.file_name = "d41d8cd98f00b204e9800998ecf8427e.txt"
 
         self.project = project_creation("test_doc_parser", index_title=None, author=self.user)
         self.project.users.add(self.user)
@@ -31,8 +32,7 @@ class TestDocparserAPIView(APITestCase):
 
 
     def _get_file_path(self):
-        file_hash = hash_file(self.file)
-        path = pathlib.Path(settings.RELATIVE_PROJECT_DATA_PATH) / str(self.project.pk) / "docparser" / f"{file_hash}.txt"
+        path = pathlib.Path(settings.RELATIVE_PROJECT_DATA_PATH) / str(self.project.pk) / "docparser" / self.file_name
         return path
 
 
@@ -41,7 +41,8 @@ class TestDocparserAPIView(APITestCase):
         payload = {
             "file": self.file,
             "project_id": self.project.pk,
-            "indices": [TEST_INDEX]
+            "indices": [TEST_INDEX],
+            "file_name": self.file_name
         }
         response = self.client.post(url, data=payload)
         print_output("_basic_pipeline_functionality:response.data", response.data)
@@ -134,6 +135,7 @@ class TestDocparserAPIView(APITestCase):
         payload = {
             "file": SimpleUploadedFile("text.txt", b"file_content", content_type="text/html"),
             "project_id": self.project.pk,
+            "file_name": self.file_name
         }
         response = self.client.post(url, data=payload)
         print_output("_basic_pipeline_functionality:response.data", response.data)
