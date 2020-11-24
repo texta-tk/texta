@@ -314,3 +314,5 @@ if SKIP_MLP_RESOURCES is False:
 
 RELATIVE_PROJECT_DATA_PATH = os.getenv("TOOLKIT_PROJECT_DATA_PATH", "data/projects/")
 pathlib.Path(RELATIVE_PROJECT_DATA_PATH).mkdir(parents=True, exist_ok=True)
+
+SEARCHER_FOLDER_KEY = "searcher"

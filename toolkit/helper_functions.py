@@ -110,3 +110,9 @@ def hash_file(file, block_size=65536):
         hasher.update(buf)
 
     return hasher.hexdigest()
+
+
+def hash_string(content: str):
+    content_bytes = content.encode('utf-8')
+    hash_str = hashlib.md5(content_bytes).hexdigest()
+    return hash_str

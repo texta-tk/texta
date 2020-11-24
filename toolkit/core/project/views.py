@@ -1,6 +1,12 @@
+import json
+import pathlib
+
+import elasticsearch
+import elasticsearch_dsl
 import rest_framework.filters as drf_filters
 from celery import group
 from django.db.models import Count
+from django.urls import reverse
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
@@ -11,7 +17,7 @@ from rest_framework.response import Response
 from toolkit.core.health.utils import get_redis_status
 from toolkit.core.project.models import Project
 from toolkit.core.project.serializers import (
-    ProjectGetFactsSerializer,
+    ExportSearcherResultsSerializer, ProjectGetFactsSerializer,
     ProjectGetSpamSerializer,
     ProjectMultiTagSerializer,
     ProjectSearchByQuerySerializer,
@@ -28,9 +34,9 @@ from toolkit.elastic.searcher import ElasticSearcher
 from toolkit.elastic.serializers import ElasticScrollSerializer
 from toolkit.elastic.spam_detector import SpamDetector
 from toolkit.exceptions import NonExistantModelError, ProjectValidationFailed, RedisNotAvailable, SerializerNotValid
-from toolkit.helper_functions import add_finite_url_to_feedback
+from toolkit.helper_functions import add_finite_url_to_feedback, hash_string
 from toolkit.permissions.project_permissions import (ExtraActionResource, IsSuperUser, ProjectAllowed)
-from toolkit.settings import CELERY_SHORT_TERM_TASK_QUEUE
+from toolkit.settings import CELERY_SHORT_TERM_TASK_QUEUE, RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
 from toolkit.tagger.models import Tagger
 from toolkit.tagger.tasks import apply_tagger
 from toolkit.tools.autocomplete import Autocomplete
@@ -76,6 +82,42 @@ class ProjectViewSet(viewsets.ModelViewSet, FeedbackIndexView):
         if not current_user.is_superuser:
             return queryset.filter(users=current_user)
         return queryset
+
+
+    @action(detail=True, methods=["post"], serializer_class=ExportSearcherResultsSerializer, permission_classes=[IsAuthenticated, ExtraActionResource])
+    def export_search(self, request, pk=None, project_pk=None):
+        try:
+            serializer: ExportSearcherResultsSerializer = self.get_serializer(data=request.data)
+            model: Project = self.get_object()
+            serializer.is_valid(raise_exception=True)
+
+            # Use the query as a hash to avoid creating duplicate files.
+            query = serializer.validated_data["query"]
+            query_str = json.dumps(query, sort_keys=True, ensure_ascii=False)
+
+            indices = model.get_available_or_all_project_indices(serializer.validated_data["indices"])
+            indices = ",".join(indices)
+
+            original_query = elasticsearch_dsl.Search().from_dict(query)
+            with_es = original_query.using(ElasticCore().es)
+            index_limitation = with_es.index(indices)
+            limit_by_n_docs = index_limitation.extra(size=10000)
+
+            path = pathlib.Path(RELATIVE_PROJECT_DATA_PATH) / str(pk) / SEARCHER_FOLDER_KEY
+            path.mkdir(parents=True, exist_ok=True)
+            file_name = f"{hash_string(query_str)}.jl"
+
+            with open(path / file_name, "w+", encoding="utf8") as fp:
+                for item in limit_by_n_docs.scan():
+                    item = item.to_dict()
+                    json_string = json.dumps(item, ensure_ascii=False)
+                    fp.write(f"{json_string}\n")
+
+            url = reverse("protected_serve", kwargs={"project_id": int(pk), "application": SEARCHER_FOLDER_KEY, "file_name": file_name})
+            return Response(request.build_absolute_uri(url))
+
+        except elasticsearch.exceptions.RequestError:
+            return Response({"detail": "Could not parse the query you sent!"}, status=status.HTTP_400_BAD_REQUEST)
 
 
     @action(detail=True, methods=["post"], serializer_class=ElasticScrollSerializer, permission_classes=[IsAuthenticated, ExtraActionResource])

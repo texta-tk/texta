@@ -1,12 +1,16 @@
+import os
+import pathlib
+
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from toolkit.core.project.models import Project
 from toolkit.elastic.core import ElasticCore
-from toolkit.test_settings import TEST_FACT_NAME, TEST_INDEX, TEST_QUERY, TEST_VERSION_PREFIX
-from toolkit.tools.utils_for_tests import project_creation
-from toolkit.tools.utils_for_tests import create_test_user, print_output
+from toolkit.elastic.models import Index
+from toolkit.settings import RELATIVE_PROJECT_DATA_PATH, SEARCHER_FOLDER_KEY
+from toolkit.test_settings import REINDEXER_TEST_INDEX, TEST_FACT_NAME, TEST_INDEX, TEST_QUERY, TEST_VERSION_PREFIX
+from toolkit.tools.utils_for_tests import create_test_user, print_output, project_creation
 
 
 class ProjectViewTests(APITestCase):
@@ -24,20 +28,27 @@ class ProjectViewTests(APITestCase):
     """
 
 
-    def setUp(cls):
+    def setUp(self):
         # Create a new project_user, all project extra actions need to be permissible for this project_user.
-        cls.user = create_test_user(name='user', password='pw')
+        self.user = create_test_user(name='user', password='pw')
 
-        cls.admin = create_test_user(name='admin', password='pw')
-        cls.admin.is_superuser = True
-        cls.admin.save()
+        self.admin = create_test_user(name='admin', password='pw')
+        self.admin.is_superuser = True
+        self.admin.save()
 
-        cls.project_user = create_test_user(name='project_user', password='pw')
-        cls.project = project_creation("testproj", TEST_INDEX, cls.user)
-        cls.project.users.add(cls.project_user)
-        cls.client = APIClient()
-        cls.client.login(username='project_user', password='pw')
-        cls.project_url = f'{TEST_VERSION_PREFIX}/projects/{cls.project.id}'
+        self.project_user = create_test_user(name='project_user', password='pw')
+        self.project = project_creation("testproj", TEST_INDEX, self.user)
+        self.project.users.add(self.project_user)
+        self.client = APIClient()
+        self.client.login(username='project_user', password='pw')
+        self.project_url = f'{TEST_VERSION_PREFIX}/projects/{self.project.id}'
+        self.export_url = reverse("v1:project-export-search", kwargs={"pk": self.project.pk})
+
+
+    def __add_indices_to_project(self, index_names: []):
+        for index in index_names:
+            index_model, is_created = Index.objects.get_or_create(name=index)
+            self.project.indices.add(index_model)
 
 
     def test_get_fields(self):
@@ -150,10 +161,37 @@ class ProjectViewTests(APITestCase):
         self.assertTrue('num_dataset_importers' in response.data)
 
 
+    def test_search_export(self):
+        payload = {"indices": [TEST_INDEX, REINDEXER_TEST_INDEX]}
+        response = self.client.post(self.export_url, data=payload, format="json")
+        hosted_url = response.data
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+        path = pathlib.Path(RELATIVE_PROJECT_DATA_PATH) / str(self.project.pk) / SEARCHER_FOLDER_KEY
+        self.assertTrue(path.exists() is True)
+        for path in path.glob("*.jl"):
+            file_size = os.path.getsize(path)
+            self.assertTrue(file_size > 1)  # Check that file actually has content
+
+        # Check if file is downloadable.
+        response = self.client.get(hosted_url)
+        self.assertTrue(response.status_code == status.HTTP_200_OK)
+
+        # Try to access it without authorization.
+        self.client.logout()
+        response = self.client.get(hosted_url)
+        self.assertTrue(response.status_code != status.HTTP_200_OK)
+
+
+    def test_search_export_with_invalid_query(self):
+        payload = {"indices": [TEST_INDEX], "query": {"this": "is invalid"}}
+        response = self.client.post(self.export_url, data=payload, format="json")
+        self.assertTrue(response.status_code == status.HTTP_400_BAD_REQUEST)
+
+
     def test_search_by_query(self):
         url = f'{self.project_url}/search_by_query/'
         # check that project user has access and response is success
-        self.client.login(username='project_user', password='pw')
+        self.client.login(username='project_usser', password='pw')
         payload = {"query": TEST_QUERY}
         response = self.client.post(url, payload, format='json')
         print_output("search_by_query_project_user", response.data)
