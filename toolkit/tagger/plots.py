@@ -14,8 +14,7 @@ def create_tagger_plot(statistics: dict):
     """
     This function is for plotting tagger statistics.
     """
-    plt.figure(figsize=(12, 4))
-
+    plt.figure(figsize=(8, 4))
     # calculate & plot roc curve
     plt.subplot(1, 3, 1)
     lw = 2
@@ -26,7 +25,6 @@ def create_tagger_plot(statistics: dict):
     plt.ylabel('True Positive Rate')
     plt.title('Receiver operating characteristic')
     plt.legend(loc="lower right")
-
     # plot confusion matrix
     plt.subplot(1, 3, 2)
     classes = ['negative', 'positive']
@@ -45,13 +43,4 @@ def create_tagger_plot(statistics: dict):
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
     plt.tight_layout()
-
-    # calculate & plot feature coefficients
-    feature_coefs = sorted(statistics['feature_coefs'])
-    plt.subplot(1, 3, 3)
-    plt.plot(feature_coefs)
-    plt.ylabel('Coefficient')
-    plt.xlabel('Features')
-    plt.title('Feature coefficient distribution')
-
     return save_plot(plt)

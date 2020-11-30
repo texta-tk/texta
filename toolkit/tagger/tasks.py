@@ -21,6 +21,7 @@ from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER, INFO_LOG
 from toolkit.tagger.models import Tagger, TaggerGroup
 from toolkit.tagger.plots import create_tagger_plot
 from toolkit.tools.show_progress import ShowProgress
+from toolkit.tools.celery_lemmatizer import CeleryLemmatizer
 
 
 def create_tagger_batch(tagger_group_id, taggers_to_create):
@@ -115,10 +116,8 @@ def train_tagger_task(tagger_id: int):
             tagger_object,
             indices=indices,
             field_data=field_data,
-            show_progress=show_progress,
-            #text_processor=text_processor
+            show_progress=show_progress
         )
-
         # update status to training
         show_progress.update_step("training")
         show_progress.update_view(0)
@@ -129,10 +128,36 @@ def train_tagger_task(tagger_id: int):
             classifier=tagger_object.classifier,
             vectorizer=tagger_object.vectorizer)
         tagger.train(
-            data_sample.data["true"],
-            data_sample.data["false"],
-            field_list=json.loads(tagger_object.fields)
+            data_sample.data,
+            field_list=field_data
         )
+
+        # save tagger to disk
+        tagger_full_path, relative_tagger_path = tagger_object.generate_name("tagger")
+        tagger.save(tagger_full_path)
+        task_object.save()
+
+        # Save the image before its path.
+        image_name = f'{secrets.token_hex(15)}.png'
+        tagger_object.plot.save(image_name, create_tagger_plot(tagger.report.to_dict()), save=False)
+        image_path = pathlib.Path(MEDIA_URL) / image_name
+
+        # get num positives & negatives
+        num_positives = len(data_sample.data["true"])
+        num_negatives = len(data_sample.data["false"])
+
+        return {
+            "id": tagger_id,
+            "tagger_path": relative_tagger_path,
+            "precision": float(tagger.report.precision),
+            "recall": float(tagger.report.recall),
+            "f1_score": float(tagger.report.f1_score),
+            "num_features": tagger.report.num_features,
+            "num_positives": num_positives,
+            "num_negatives": num_negatives,
+            "model_size": round(float(os.path.getsize(tagger_full_path)) / 1000000, 1),  # bytes to mb
+            "plot": str(image_path)
+        }
 
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
@@ -144,32 +169,25 @@ def train_tagger_task(tagger_id: int):
 @task(name="save_tagger_results", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
 def save_tagger_results(result_data: dict):
     try:
-
         tagger_id = result_data['id']
-        tagger_object = Tagger.objects.get(pk=tagger_id)
         logging.getLogger(INFO_LOGGER).info(f"Starting task results for tagger with ID: {tagger_id}!")
+        tagger_object = Tagger.objects.get(pk=tagger_id)
         task_object = tagger_object.task
         show_progress = ShowProgress(task_object, multiplier=1)
         # update status to saving
-        show_progress.update_step("saving")
+        show_progress.update_step('saving')
         show_progress.update_view(0)
-        # save tagger to disk
-        tagger_path = tagger_object.generate_name("tagger")
-        tagger.save(tagger_path)
-        # set info about the model
-        tagger_object.model.name = tagger_path
-        tagger_object.precision = float(tagger.statistics["precision"])
-        tagger_object.recall = float(tagger.statistics["recall"])
-        tagger_object.f1_score = float(tagger.statistics["f1_score"])
-        tagger_object.num_features = tagger.statistics["num_features"]
-        tagger_object.num_positives = tagger.statistics["num_positives"]
-        tagger_object.num_negatives = tagger.statistics["num_negatives"]
-        tagger_object.model_size = round(float(os.path.getsize(tagger_path)) / 1000000, 1)  # bytes to mb
-        tagger_object.plot.save(f"{secrets.token_hex(15)}.png", create_tagger_plot(tagger.statistics))
+        tagger_object.model.name = result_data["tagger_path"]
+        tagger_object.precision = result_data["precision"]
+        tagger_object.recall = result_data["recall"]
+        tagger_object.f1_score = result_data["f1_score"]
+        tagger_object.num_features = result_data["num_features"]
+        tagger_object.num_positives = result_data["num_positives"]
+        tagger_object.num_negatives = result_data["num_negatives"]
+        tagger_object.model_size = result_data["model_size"]
+        tagger_object.plot.name = result_data["plot"]
         tagger_object.save()
-        # declare the job done
         task_object.complete()
-
     except Exception as e:
         logging.getLogger(ERROR_LOGGER).exception(e)
         task_object.add_error(str(e))
@@ -181,10 +199,10 @@ def save_tagger_results(result_data: dict):
 def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=None):
     """Task for applying tagger to text."""
     logging.getLogger(INFO_LOGGER).info(f"Starting task 'apply_tagger' for tagger with ID: {tagger_id} with params (input_type : {input_type}, lemmatize: {lemmatize}, feedback: {feedback})!")
-
     # get tagger object
     tagger_object = Tagger.objects.get(pk=tagger_id)
-
+    # get lemmatizer
+    lemmatizer = CeleryLemmatizer()
     # create text processor object for tagger
     stop_words = tagger_object.stop_words.split(' ')
     # load embedding
@@ -220,8 +238,8 @@ def apply_tagger(tagger_id, text, input_type='text', lemmatize=False, feedback=N
         logging.getLogger(INFO_LOGGER).info(f"Adding feedback for Tagger id: {tagger_object.pk}")
         project_pk = tagger_object.project.pk
         feedback_object = Feedback(project_pk, model_object=tagger_object)
-        processed_text = text_processor.process(text)[0]
-        feedback_id = feedback_object.store(processed_text, decision)
+        processed_text = tagger.text_processor.process(text)[0]
+        feedback_id = feedback_object.store(processed_text, prediction)
         feedback_url = f'/projects/{project_pk}/taggers/{tagger_object.pk}/feedback/'
         prediction['feedback'] = {'id': feedback_id, 'url': feedback_url}
 

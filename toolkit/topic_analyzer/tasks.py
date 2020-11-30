@@ -1,16 +1,16 @@
 import json
 import logging
-
 from celery.decorators import task
 from django.db import transaction
+
+from texta_tools.embedding import Phraser
+from texta_tools.text_processor import TextProcessor
 
 from toolkit.base_tasks import BaseTask
 from toolkit.core.task.models import Task
 from toolkit.elastic.searcher import ElasticSearcher
-from toolkit.embedding.phraser import Phraser
 from toolkit.settings import CELERY_LONG_TERM_TASK_QUEUE, ERROR_LOGGER
 from toolkit.tools.show_progress import ShowProgress
-from toolkit.tools.text_processor import TextProcessor
 from toolkit.topic_analyzer.clustering import ClusterContent, Clustering
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 from toolkit.topic_analyzer.serializers import ClusteringSerializer
@@ -76,7 +76,7 @@ def perform_data_clustering(clustering_id):
 
         docs = [{"id": doc_id, "document": document} for doc_id, document in elastic_search]
 
-        # Group em up~!
+        # Group em up!
         clusters = Clustering(
             docs=docs,
             num_clusters=num_clusters,
