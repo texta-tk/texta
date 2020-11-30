@@ -32,6 +32,7 @@ class Embedding(models.Model):
     max_documents = models.IntegerField(default=0)
     min_freq = models.IntegerField(default=10)
     vocab_size = models.IntegerField(default=0)
+    use_phraser = models.BooleanField(default=True)
 
     embedding_model = models.FileField(null=True, verbose_name='', default=None)
     task = models.OneToOneField(Task, on_delete=models.SET_NULL, null=True)

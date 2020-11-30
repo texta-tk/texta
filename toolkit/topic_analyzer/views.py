@@ -14,7 +14,7 @@ from rest_framework.response import Response
 
 from toolkit.core.project.models import Project
 from toolkit.core.task.models import Task
-from texta_tools.phraser import Phraser
+from texta_tools.embedding import Phraser
 from texta_tools.text_processor import TextProcessor
 from toolkit.topic_analyzer.models import Cluster, ClusteringResult
 from toolkit.topic_analyzer.serializers import ClusterSerializer, ClusteringIdsSerializer, ClusteringSerializer, TransferClusterDocumentsSerializer

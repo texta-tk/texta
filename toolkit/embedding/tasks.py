@@ -26,6 +26,7 @@ def train_embedding(embedding_id):
         indices = get_indices_from_object(embedding_object)
         field_data = json.loads(embedding_object.fields)
         max_documents = embedding_object.max_documents
+        use_phraser = embedding_object.use_phraser
         # iterator for texts
         sentences = ElasticSearcher(query=json.loads(embedding_object.query),
                                     indices=indices,
@@ -34,7 +35,7 @@ def train_embedding(embedding_id):
                                     scroll_limit=max_documents)
         # create embedding object & train
         embedding = W2VEmbedding()
-        embedding.train(sentences)
+        embedding.train(sentences, use_phraser=use_phraser)
         # save model
         show_progress.update_step('saving')
         full_model_path, relative_model_path = embedding_object.generate_name("embedding")

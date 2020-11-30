@@ -43,7 +43,7 @@ dependencies:
       - texta-anonymizer==1.1.*
       - texta-mlp==1.4.*
       - texta-lexicon-matcher==1.1.*
-      - texta-tools==1.0.*
+      - texta-tools==1.1.*
       - texta-tagger==1.1.*
       - texta-torch-tagger==1.0.*
       - torch==1.5.*

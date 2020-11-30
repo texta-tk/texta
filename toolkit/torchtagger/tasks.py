@@ -15,7 +15,7 @@ from toolkit.base_tasks import TransactionAwareTask
 from toolkit.elastic.data_sample import DataSample
 from toolkit.torchtagger.plots import create_torchtagger_plot
 from toolkit.settings import RELATIVE_MODELS_PATH, CELERY_LONG_TERM_TASK_QUEUE
-from toolkit.helper_functions import get_core_setting
+from toolkit.helper_functions import get_core_setting, get_indices_from_object
 
 
 @task(name="train_torchtagger", base=TransactionAwareTask, queue=CELERY_LONG_TERM_TASK_QUEUE)
@@ -26,24 +26,32 @@ def train_torchtagger(tagger_id, testing=False):
         task_object = tagger_object.task
         model_type = TorchTaggerObject.MODEL_TYPE
         show_progress = ShowProgress(task_object, multiplier=1)
+        # get fields & indices
+        fields = json.loads(tagger_object.fields)
+        indices = get_indices_from_object(tagger_object)
         # load embedding
         embedding = W2VEmbedding()
-        # get MLP tokenizer if asked
+        embedding.load_django(tagger_object.embedding)
         # create Datasample object for retrieving positive and negative sample
-        data_sample = DataSample(tagger_object, show_progress=show_progress, join_fields=True)
+        data_sample = DataSample(
+            tagger_object,
+            indices,
+            fields,
+            show_progress=show_progress,
+            join_fields=True
+        )
         show_progress.update_step('training')
         show_progress.update_view(0.0)
         # create TorchTagger
         tagger = TorchTagger(
             embedding,
-            model_arch=tagger_object.model_architecture,
-            num_epochs=int(tagger_object.num_epochs)
+            model_arch=tagger_object.model_architecture
         )
         # train tagger and get result statistics
         tagger_stats = tagger.train(data_sample.data, num_epochs=int(tagger_object.num_epochs))
         # save tagger to disk
         tagger_path = os.path.join(RELATIVE_MODELS_PATH, model_type, f'{model_type}_{tagger_id}_{secrets.token_hex(10)}')
-        tagger_path, text_field_path = tagger.save(tagger_path)
+        tagger.save(tagger_path)
         # set tagger location
         tagger_object.model.name = tagger_path
         # save tagger plot
@@ -62,6 +70,7 @@ def train_torchtagger(tagger_id, testing=False):
         # declare the job done
         task_object.complete()
         return True
+
 
     except Exception as e:
         task_object.add_error(str(e))

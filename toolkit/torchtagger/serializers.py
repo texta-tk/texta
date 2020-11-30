@@ -21,7 +21,6 @@ class TorchTaggerSerializer(FieldParseSerializer, serializers.ModelSerializer, P
     maximum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MAX_SAMPLE_SIZE, required=False)
     minimum_sample_size = serializers.IntegerField(default=choices.DEFAULT_MIN_SAMPLE_SIZE, required=False)
     num_epochs = serializers.IntegerField(default=choices.DEFAULT_NUM_EPOCHS, required=False)
-    tokenize = serializers.BooleanField(default=False, required=False, help_text='Tokenize texts using MLP while training. Default: False.')
 
     task = TaskSerializer(read_only=True)
     plot = serializers.SerializerMethodField()
